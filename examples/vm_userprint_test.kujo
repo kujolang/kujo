@@ -1,0 +1,6 @@
+// Test with user function
+func my_print(x) {
+    // stub
+}
+
+my_print(42)

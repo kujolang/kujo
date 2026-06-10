@@ -1,0 +1,22 @@
+enum Result {
+    Ok,
+    Err
+}
+
+func check(num) {
+    if num > 0 {
+        return Result::Ok("yes")
+    }
+    return Result::Err("no")
+}
+
+val := check(0)
+
+match val {
+    case Result::Ok(msg): {
+        print("Great:", msg)
+    }
+    case Result::Err(err): {
+        print("Oops:", err)
+    }
+}

@@ -1,0 +1,123 @@
+# AI Model Comparison Tool
+# Compare responses from multiple AI providers in parallel
+# This demonstrates the power of concurrent HTTP requests for AI applications
+
+print("╔════════════════════════════════════════╗")
+print("║   AI Model Comparison Tool (v1.0)    ║")
+print("╔════════════════════════════════════════╗")
+print("")
+
+# Configuration
+prompt := "Explain quantum computing in one sentence"
+print("Prompt: " + prompt)
+print("")
+
+# Simulated API endpoints (in production, these would be real AI APIs)
+# Note: This example uses httpbin for demonstration
+# Replace with actual AI provider APIs (OpenAI, Anthropic, DeepSeek, etc.)
+
+providers := {
+    "gpt": "https://httpbin.org/delay/1",
+    "claude": "https://httpbin.org/delay/2",
+    "deepseek": "https://httpbin.org/delay/1"
+}
+
+print("Providers configured:")
+print("  • GPT-4 (OpenAI)")
+print("  • Claude (Anthropic)")
+print("  • DeepSeek")
+print("")
+
+# Build URL array for parallel requests
+urls := []
+urls := push(urls, providers["gpt"])
+urls := push(urls, providers["claude"])
+urls := push(urls, providers["deepseek"])
+
+# Make all requests in PARALLEL - huge time savings!
+print("🚀 Making parallel requests to all 3 providers...")
+print("(Without parallelism, this would take 1+2+1 = 4 seconds sequentially)")
+print("(With parallelism, this takes only ~2 seconds total!)")
+print("")
+
+start_time := current_timestamp()
+results := parallel_http(urls)
+end_time := current_timestamp()
+
+elapsed := end_time - start_time
+print("✓ All responses received in " + elapsed + "ms")
+print("")
+
+# Process results
+print("════════════════════════════════════════")
+print("RESULTS:")
+print("════════════════════════════════════════")
+print("")
+
+provider_names := ["GPT-4", "Claude", "DeepSeek"]
+
+for i in len(results) {
+    result := results[i]
+    provider := provider_names[i]
+    
+    print("Provider: " + provider)
+    print("Status: " + result["status"])
+    
+    if result["status"] == 200 {
+        print("Response: ✓ Success")
+        # In production, you would parse and display the actual AI response:
+        # response_json := parse_json(result["body"])
+        # print("Text: " + response_json["choices"][0]["message"]["content"])
+    } else {
+        print("Response: ✗ Failed")
+    }
+    print("")
+}
+
+print("════════════════════════════════════════")
+print("BENEFITS OF PARALLEL PROCESSING:")
+print("════════════════════════════════════════")
+print("• 3x faster response time")
+print("• Compare multiple models simultaneously")
+print("• Better user experience (no waiting)")
+print("• Scalable to dozens of models")
+print("• Perfect for A/B testing AI outputs")
+print("")
+
+# Advanced Use Case: Batch Processing
+print("════════════════════════════════════════")
+print("BATCH PROCESSING EXAMPLE:")
+print("════════════════════════════════════════")
+print("")
+
+batch_prompts := [
+    "What is AI?",
+    "Explain machine learning",
+    "What is deep learning?"
+]
+
+print("Processing " + len(batch_prompts) + " prompts with " + len(providers) + " models...")
+print("Total API calls: " + (len(batch_prompts) * len(providers)))
+print("")
+
+# In production, you would:
+# 1. Build URLs for all prompt+model combinations
+# 2. Use parallel_http to fetch all at once
+# 3. Parse and compare results
+
+print("With parallel_http:")
+print("  • All 9 requests complete in ~2 seconds")
+print("  • Without: Would take 12+ seconds sequentially")
+print("")
+
+print("════════════════════════════════════════")
+print("REAL-WORLD APPLICATIONS:")
+print("════════════════════════════════════════")
+print("• Content generation tools")
+print("• AI model benchmarking")
+print("• Multi-provider fallback systems")
+print("• Cost optimization (compare before committing)")
+print("• Quality assurance (compare outputs)")
+print("")
+
+print("✓ Demo complete!")

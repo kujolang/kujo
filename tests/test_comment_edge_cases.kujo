@@ -1,0 +1,48 @@
+# Test: Nested and edge case comments
+# Tests complex comment scenarios
+
+/* 
+   Outer comment
+   This has comment-like text: slash-star and star-slash
+   More outer comment
+*/
+x := 10
+print(x)  # Should print: 10
+
+/* Comment with asterisk-slash pattern inside text */
+y := 20
+print(y)  # Should print: 20
+
+/*
+ * Multi-line comment spanning many lines
+ * Line 2
+ * Line 3
+ * Line 4
+ * Line 5
+ * Line 6
+ * Line 7
+ * Line 8
+ * Line 9
+ * Line 10
+ */
+long_comment_test := 30
+print(long_comment_test)  # Should print: 30
+
+/* Comment with code-like content:
+   func fake() { return 42 }
+   x := y + z * 3
+   if true { print("ignored") }
+*/
+not_executed := 40
+print(not_executed)  # Should print: 40
+
+/// Doc comment with special characters: @param #tag *bold* _italic_
+/// More doc content: https://example.com
+/// Code in doc: `func example() { return 1 }`
+documented := 50
+print(documented)  # Should print: 50
+
+# Edge case: comment at end of file without newline
+result := 60
+print(result)  # Should print: 60
+/* Final comment */

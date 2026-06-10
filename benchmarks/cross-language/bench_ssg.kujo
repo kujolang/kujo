@@ -1,0 +1,61 @@
+# Kujo async SSG benchmark
+# Emits machine-readable metrics consumed by `kujo bench-ssg`
+
+file_count := 10000
+batch_size := 256
+profile_async := env_or("KUJO_BENCH_SSG_PROFILE_ASYNC", "0") == "1"
+tmp_root := env_or("KUJO_BENCH_SSG_TMP_DIR", "tmp")
+create_dir(tmp_root)
+base_dir := tmp_root + "/kujo_ssg_bench_" + to_string(performance_now())
+input_dir := base_dir + "/input"
+output_dir := base_dir + "/output"
+
+create_dir(base_dir)
+create_dir(input_dir)
+create_dir(output_dir)
+
+# Seed markdown source files
+source_paths := []
+source_bodies := []
+i := 0
+while i < file_count {
+    source_path := input_dir + "/post_" + to_string(i) + ".md"
+    source_body := "# Post " + to_string(i) + "\n\nGenerated page " + to_string(i)
+    source_paths := push(source_paths, source_path)
+    source_bodies := push(source_bodies, source_body)
+    i := i + 1
+}
+
+await async_write_files(source_paths, source_bodies, batch_size)
+
+# Benchmark render pipeline (async read + async write)
+start_ms := performance_now()
+
+rendered := await ssg_read_render_and_write_pages(source_paths, output_dir, batch_size)
+checksum := rendered["checksum"]
+read_stage_ms := rendered["read_ms"]
+render_write_stage_ms := rendered["render_write_ms"]
+
+elapsed_ms := performance_now() - start_ms
+files_per_sec := (to_float(file_count) * 1000.0) / elapsed_ms
+
+print("KUJO_SSG_FILES=" + to_string(file_count))
+print("KUJO_SSG_BUILD_MS=" + to_string(elapsed_ms))
+print("KUJO_SSG_FILES_PER_SEC=" + to_string(files_per_sec))
+print("KUJO_SSG_CHECKSUM=" + to_string(checksum))
+if profile_async {
+    print("KUJO_SSG_READ_MS=" + to_string(read_stage_ms))
+    print("KUJO_SSG_RENDER_WRITE_MS=" + to_string(render_write_stage_ms))
+}
+
+# Cleanup generated files
+cleanup_index := 0
+while cleanup_index < file_count {
+    delete_file(input_dir + "/post_" + to_string(cleanup_index) + ".md")
+    delete_file(output_dir + "/post_" + to_string(cleanup_index) + ".html")
+    cleanup_index := cleanup_index + 1
+}
+
+os_rmdir(input_dir)
+os_rmdir(output_dir)
+os_rmdir(base_dir)

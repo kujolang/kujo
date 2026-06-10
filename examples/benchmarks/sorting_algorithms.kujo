@@ -1,0 +1,263 @@
+# Real-World Benchmark: Sorting Algorithms
+# Compares QuickSort, MergeSort, and built-in sort implementations
+
+# QuickSort implementation
+func quicksort(arr) {
+    if len(arr) <= 1 {
+        return arr
+    }
+    
+    pivot := arr[len(arr) / 2]
+    left := []
+    middle := []
+    right := []
+    
+    for x in arr {
+        if x < pivot {
+            left := left + [x]
+        } else if x == pivot {
+            middle := middle + [x]
+        } else {
+            right := right + [x]
+        }
+    }
+    
+    return quicksort(left) + middle + quicksort(right)
+}
+
+# MergeSort implementation
+func merge(left, right) {
+    result := []
+    i := 0
+    j := 0
+    
+    while i < len(left) and j < len(right) {
+        if left[i] <= right[j] {
+            result := result + [left[i]]
+            i := i + 1
+        } else {
+            result := result + [right[j]]
+            j := j + 1
+        }
+    }
+    
+    # Add remaining elements
+    while i < len(left) {
+        result := result + [left[i]]
+        i := i + 1
+    }
+    
+    while j < len(right) {
+        result := result + [right[j]]
+        j := j + 1
+    }
+    
+    return result
+}
+
+func mergesort(arr) {
+    if len(arr) <= 1 {
+        return arr
+    }
+    
+    mid := len(arr) / 2
+    left := []
+    right := []
+    
+    for i in range(mid) {
+        left := left + [arr[i]]
+    }
+    
+    for i in range(mid, len(arr)) {
+        right := right + [arr[i]]
+    }
+    
+    return merge(mergesort(left), mergesort(right))
+}
+
+# Create test data
+func create_random_array(size, max_value) {
+    arr := []
+    for i in range(size) {
+        # Simple pseudo-random number generation
+        val := ((i * 7919 + 104729) % max_value)
+        arr := arr + [val]
+    }
+    return arr
+}
+
+func create_sorted_array(size) {
+    arr := []
+    for i in range(size) {
+        arr := arr + [i]
+    }
+    return arr
+}
+
+func create_reverse_sorted_array(size) {
+    arr := []
+    for i in range(size) {
+        arr := arr + [size - i]
+    }
+    return arr
+}
+
+func create_nearly_sorted_array(size) {
+    arr := create_sorted_array(size)
+    # Swap a few elements
+    swaps := size / 10
+    for i in range(swaps) {
+        idx1 := (i * 13) % size
+        idx2 := (i * 17) % size
+        temp := arr[idx1]
+        arr[idx1] := arr[idx2]
+        arr[idx2] := temp
+    }
+    return arr
+}
+
+# Verify sorting correctness
+func is_sorted(arr) {
+    for i in range(len(arr) - 1) {
+        if arr[i] > arr[i + 1] {
+            return false
+        }
+    }
+    return true
+}
+
+# Benchmark functions
+func benchmark_quicksort(arr, name) {
+    start := time_ms()
+    sorted_arr := quicksort(arr)
+    elapsed := time_ms() - start
+    
+    if not is_sorted(sorted_arr) {
+        throw "QuickSort failed for " + name
+    }
+    
+    return {
+        "algorithm": "QuickSort",
+        "dataset": name,
+        "size": len(arr),
+        "time_ms": elapsed,
+        "items_per_sec": (len(arr) / elapsed) * 1000
+    }
+}
+
+func benchmark_mergesort(arr, name) {
+    start := time_ms()
+    sorted_arr := mergesort(arr)
+    elapsed := time_ms() - start
+    
+    if not is_sorted(sorted_arr) {
+        throw "MergeSort failed for " + name
+    }
+    
+    return {
+        "algorithm": "MergeSort",
+        "dataset": name,
+        "size": len(arr),
+        "time_ms": elapsed,
+        "items_per_sec": (len(arr) / elapsed) * 1000
+    }
+}
+
+func benchmark_builtin_sort(arr, name) {
+    start := time_ms()
+    sorted_arr := sort(arr)
+    elapsed := time_ms() - start
+    
+    if not is_sorted(sorted_arr) {
+        throw "Built-in sort failed for " + name
+    }
+    
+    return {
+        "algorithm": "Built-in",
+        "dataset": name,
+        "size": len(arr),
+        "time_ms": elapsed,
+        "items_per_sec": (len(arr) / elapsed) * 1000
+    }
+}
+
+# Main benchmark execution
+print("=== Sorting Algorithms Benchmark ===")
+print("")
+
+# Test different array sizes and patterns
+sizes := [50, 100, 200, 500]
+
+for size in sizes {
+    print("Testing with", size, "elements:")
+    print("")
+    
+    # Random data
+    print("  1. Random Data")
+    random_arr := create_random_array(size, 1000)
+    
+    qs_result := benchmark_quicksort(random_arr, "random")
+    print("    QuickSort:", qs_result["time_ms"], "ms,", 
+          int(qs_result["items_per_sec"]), "items/s")
+    
+    ms_result := benchmark_mergesort(random_arr, "random")
+    print("    MergeSort:", ms_result["time_ms"], "ms,", 
+          int(ms_result["items_per_sec"]), "items/s")
+    
+    builtin_result := benchmark_builtin_sort(random_arr, "random")
+    print("    Built-in:", builtin_result["time_ms"], "ms,", 
+          int(builtin_result["items_per_sec"]), "items/s")
+    print("")
+    
+    # Already sorted data (worst case for QuickSort with bad pivot)
+    print("  2. Already Sorted Data")
+    sorted_arr := create_sorted_array(size)
+    
+    qs_sorted := benchmark_quicksort(sorted_arr, "sorted")
+    print("    QuickSort:", qs_sorted["time_ms"], "ms")
+    
+    ms_sorted := benchmark_mergesort(sorted_arr, "sorted")
+    print("    MergeSort:", ms_sorted["time_ms"], "ms")
+    
+    builtin_sorted := benchmark_builtin_sort(sorted_arr, "sorted")
+    print("    Built-in:", builtin_sorted["time_ms"], "ms")
+    print("")
+    
+    # Reverse sorted data
+    print("  3. Reverse Sorted Data")
+    reverse_arr := create_reverse_sorted_array(size)
+    
+    qs_reverse := benchmark_quicksort(reverse_arr, "reverse")
+    print("    QuickSort:", qs_reverse["time_ms"], "ms")
+    
+    ms_reverse := benchmark_mergesort(reverse_arr, "reverse")
+    print("    MergeSort:", ms_reverse["time_ms"], "ms")
+    
+    builtin_reverse := benchmark_builtin_sort(reverse_arr, "reverse")
+    print("    Built-in:", builtin_reverse["time_ms"], "ms")
+    print("")
+    
+    # Nearly sorted data
+    print("  4. Nearly Sorted Data (", size / 10, " swaps)")
+    nearly_arr := create_nearly_sorted_array(size)
+    
+    qs_nearly := benchmark_quicksort(nearly_arr, "nearly_sorted")
+    print("    QuickSort:", qs_nearly["time_ms"], "ms")
+    
+    ms_nearly := benchmark_mergesort(nearly_arr, "nearly_sorted")
+    print("    MergeSort:", ms_nearly["time_ms"], "ms")
+    
+    builtin_nearly := benchmark_builtin_sort(nearly_arr, "nearly_sorted")
+    print("    Built-in:", builtin_nearly["time_ms"], "ms")
+    print("")
+    
+    print("  ---")
+    print("")
+}
+
+print("=== Benchmark Complete ===")
+print("")
+print("Analysis:")
+print("  - QuickSort: Average O(n log n), worst case O(n²) on sorted data")
+print("  - MergeSort: Guaranteed O(n log n), stable sort")
+print("  - Built-in: Optimized native implementation")

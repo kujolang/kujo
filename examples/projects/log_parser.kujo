@@ -1,0 +1,194 @@
+# Log Parser
+# Demonstrates file I/O, string functions, and data processing
+
+print("=== Log Parser ===")
+print("")
+
+# Create sample log file
+print("Creating sample log file...")
+log_content := "2026-01-22 10:15:23 INFO User login successful: alice@example.com
+2026-01-22 10:16:45 ERROR Database connection failed: timeout
+2026-01-22 10:17:12 INFO User logout: bob@example.com
+2026-01-22 10:18:33 WARNING High memory usage: 85%
+2026-01-22 10:19:01 ERROR File not found: /data/config.json
+2026-01-22 10:20:15 INFO User login successful: carol@example.com
+2026-01-22 10:21:47 ERROR Authentication failed: invalid token
+2026-01-22 10:22:30 INFO User logout: alice@example.com
+2026-01-22 10:23:11 WARNING Disk space low: 10% remaining
+2026-01-22 10:24:05 INFO System backup completed successfully"
+
+# Write log file
+write_result := write_file("app.log", log_content)
+if write_result {
+	print("Sample log file created: app.log")
+} else {
+	print("Failed to create log file")
+}
+print("")
+
+# Read and parse log file
+print("=== Reading Log File ===")
+log_data := read_file("app.log")
+lines := split(log_data, "
+")
+print("Total log entries: " + len(lines))
+print("")
+
+# Parse log entries
+struct LogEntry {
+	timestamp: string,
+	level: string,
+	message: string
+}
+
+print("=== Parsing Entries ===")
+entries := []
+
+for line in lines {
+	# Split by spaces to extract parts
+	parts := split(line, " ")
+	
+	if len(parts) >= 4 {
+		timestamp := parts[0] + " " + parts[1]
+		level := parts[2]
+		
+		# Join remaining parts as message
+		message_parts := slice(parts, 3, len(parts))
+		message := join(message_parts, " ")
+		
+		entry := LogEntry {
+			timestamp: timestamp,
+			level: level,
+			message: message
+		}
+		
+		entries := push(entries, entry)
+	}
+}
+
+print("Parsed " + len(entries) + " entries")
+print("")
+
+# Filter by log level
+print("=== ERROR Logs ===")
+errors := filter(entries, func(entry) {
+	return entry.level == "ERROR"
+})
+
+for error in errors {
+	print("[" + error.timestamp + "] " + error.message)
+}
+print("Total errors: " + len(errors))
+print("")
+
+print("=== WARNING Logs ===")
+warnings := filter(entries, func(entry) {
+	return entry.level == "WARNING"
+})
+
+for warning in warnings {
+	print("[" + warning.timestamp + "] " + warning.message)
+}
+print("Total warnings: " + len(warnings))
+print("")
+
+# Search for specific patterns
+print("=== Searching for 'User' Events ===")
+user_events := filter(entries, func(entry) {
+	return contains(entry.message, "User")
+})
+
+for event in user_events {
+	print("[" + event.level + "] " + event.message)
+}
+print("Total user events: " + len(user_events))
+print("")
+
+# Find first error
+print("=== First Error Detected ===")
+first_error := find(entries, func(entry) {
+	return entry.level == "ERROR"
+})
+
+if first_error != 0 {
+	print("Timestamp: " + first_error.timestamp)
+	print("Message: " + first_error.message)
+} else {
+	print("No errors found")
+}
+print("")
+
+# Count log levels
+print("=== Log Level Summary ===")
+info_count := reduce(entries, 0, func(acc, entry) {
+	if entry.level == "INFO" {
+		return acc + 1
+	}
+	return acc
+})
+print("INFO: " + info_count)
+
+error_count := reduce(entries, 0, func(acc, entry) {
+	if entry.level == "ERROR" {
+		return acc + 1
+	}
+	return acc
+})
+print("ERROR: " + error_count)
+
+warning_count := reduce(entries, 0, func(acc, entry) {
+	if entry.level == "WARNING" {
+		return acc + 1
+	}
+	return acc
+})
+print("WARNING: " + warning_count)
+print("")
+
+# Extract all email addresses from logs
+print("=== Extracting Email Addresses ===")
+emails := []
+
+for entry in entries {
+	if contains(entry.message, "@") {
+		# Find the word containing @
+		words := split(entry.message, " ")
+		for word in words {
+			if contains(word, "@") {
+				# Remove trailing punctuation
+				email := word
+				if ends_with(email, ":") {
+					email := substring(email, 0, len(email) - 1)
+				}
+				emails := push(emails, email)
+			}
+		}
+	}
+}
+
+print("Found emails: ", emails)
+print("")
+
+# Generate summary report
+print("=== Summary Report ===")
+report := "Log Analysis Report
+==================
+Total Entries: " + len(entries) + "
+INFO: " + info_count + "
+WARNING: " + warning_count + "
+ERROR: " + error_count + "
+
+Critical Issues: " + error_count + " errors need attention
+"
+
+# Write report
+write_result2 := write_file("log_report.txt", report)
+if write_result2 {
+	print("Report generated: log_report.txt")
+} else {
+	print("Failed to generate report")
+}
+
+print("")
+print("=== Analysis Complete ===")
+print("Generated files: app.log, log_report.txt")

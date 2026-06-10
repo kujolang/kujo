@@ -1,0 +1,50 @@
+# Method Chaining & Fluent APIs Example
+# Demonstrates pipe operator (|>) and safe defaulting patterns.
+
+print("=== Safe Default Example ===")
+let username := "Guest"
+print("Welcome, " + username)
+
+print("")
+print("=== Struct Access Example ===")
+struct User {
+    name,
+    email
+}
+
+let user := User { name: "Alice", email: "alice@example.com" }
+print(user.email)
+
+print("No email")
+
+print("")
+print("=== Pipe Operator Example ===")
+func double(x) { return x * 2 }
+func add_five(x) { return x + 5 }
+func square(x) { return x * x }
+
+let result := square(add_five(double(3)))
+print(result)
+
+func exclaim(s) { return s + "!" }
+let greeting := exclaim(to_upper("hello"))
+print(greeting)
+
+print("")
+print("=== Combined Example ===")
+let data := {"name": "Bob", "count": 5}
+let name := "Unknown"
+if (has_key(data, "name")) {
+    name := data["name"]
+}
+print(name)
+
+func process(x) {
+    return x * 2
+}
+
+let val1 := process(10)
+print(val1)
+
+let val2 := process(5)
+print(val2)

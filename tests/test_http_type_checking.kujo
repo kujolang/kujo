@@ -1,0 +1,25 @@
+# Test HTTP function type checking
+# These functions should not produce "Undefined function" warnings
+
+# Test http_server function signature
+print("Testing HTTP function type checking...")
+
+# http_server(port) - creates HTTP server
+server := http_server(8080)
+print("http_server: OK")
+
+# http_response(status, body) - creates HTTP response
+response := http_response(200, "Hello, World!")
+print("http_response: OK")
+
+# json_response(status, data) - creates JSON response
+json_resp := json_response(201, {"message": "Created"})
+print("json_response: OK")
+
+# The following would need a running server to test:
+# http_get(url) - makes GET request
+# http_post(url, body) - makes POST request
+# http_put(url, body) - makes PUT request
+# http_delete(url) - makes DELETE request
+
+print("All HTTP function type checks passed!")

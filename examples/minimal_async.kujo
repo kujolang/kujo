@@ -1,0 +1,6 @@
+// Minimal async test
+async func compute() {
+    return 5;
+}
+
+let result = compute();

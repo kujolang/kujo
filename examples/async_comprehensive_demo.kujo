@@ -1,0 +1,61 @@
+// Async/Await Demonstration
+// Shows Promise-based concurrency in Kujo
+
+// Test 1: Basic async function
+async func compute() {
+    let result = 2 + 2;
+    return result * 10;
+}
+
+let promise1 = compute();
+let value1 = await promise1;
+assert(value1 == 40, "Test 1 failed: expected 40, got " + str(value1));
+
+// Test 2: Async function with parameters
+async func multiply(a, b) {
+    return a * b;
+}
+
+let promise2 = multiply(7, 6);
+let value2 = await promise2;
+assert(value2 == 42, "Test 2 failed: expected 42, got " + str(value2));
+
+// Test 3: Multiple concurrent async calls
+async func add(x, y) {
+    return x + y;
+}
+
+let p1 = add(10, 20);
+let p2 = add(30, 40);
+let p3 = add(50, 60);
+
+let r1 = await p1;
+let r2 = await p2;
+let r3 = await p3;
+
+assert(r1 == 30, "Test 3a failed");
+assert(r2 == 70, "Test 3b failed");
+assert(r3 == 110, "Test 3c failed");
+
+// Test 4: Await can be used multiple times on the same promise (cached result)
+let shared_promise = compute();
+let first_await = await shared_promise;
+let second_await = await shared_promise;
+assert(first_await == second_await, "Test 4 failed: cached result mismatch");
+
+// Test 5: Async function calling another async
+async func helper() {
+    return 100;
+}
+
+async func caller() {
+    let inner_promise = helper();
+    let inner_result = await inner_promise;
+    return inner_result + 23;
+}
+
+let outer_promise = caller();
+let outer_result = await outer_promise;
+assert(outer_result == 123, "Test 5 failed: expected 123, got " + str(outer_result));
+
+println("✓ All async/await tests passed!");

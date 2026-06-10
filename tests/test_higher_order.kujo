@@ -1,0 +1,163 @@
+# Test file for array higher-order functions
+# Tests: map, filter, reduce, find
+
+# Test 1: map - basic transformation
+numbers := [1, 2, 3, 4, 5]
+squared := map(numbers, func(x) {
+    return x * x
+})
+print(squared)
+# Expected: [1, 4, 9, 16, 25]
+
+# Test 2: map - string transformation
+words := ["hello", "world", "kujo"]
+uppercased := map(words, func(w) {
+    return to_upper(w)
+})
+print(uppercased)
+# Expected: ["HELLO", "WORLD", "KUJO"]
+
+# Test 3: filter - basic filtering
+nums := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+evens := filter(nums, func(n) {
+    return n % 2 == 0
+})
+print(evens)
+# Expected: [2, 4, 6, 8, 10]
+
+# Test 4: filter - string filtering
+names := ["Alice", "Bob", "Charlie", "David"]
+short_names := filter(names, func(name) {
+    return len(name) < 6
+})
+print(short_names)
+# Expected: ["Alice", "Bob", "David"]
+
+# Test 5: reduce - sum
+values := [1, 2, 3, 4, 5]
+sum := reduce(values, 0, func(acc, x) {
+    return acc + x
+})
+print(sum)
+# Expected: 15
+
+# Test 6: reduce - product
+factors := [2, 3, 4]
+product := reduce(factors, 1, func(acc, x) {
+    return acc * x
+})
+print(product)
+# Expected: 24
+
+# Test 7: reduce - string concatenation
+letters := ["R", "u", "f", "f"]
+word := reduce(letters, "", func(acc, letter) {
+    return acc + letter
+})
+print(word)
+# Expected: Kujo
+
+# Test 8: find - basic search
+data := [10, 20, 30, 40, 50]
+found := find(data, func(x) {
+    return x > 25
+})
+print(found)
+# Expected: 30
+
+# Test 9: find - not found (returns 0)
+items := [1, 2, 3, 4, 5]
+not_found := find(items, func(x) {
+    return x > 10
+})
+print(not_found)
+# Expected: 0
+
+# Test 10: find - string search
+fruits := ["apple", "banana", "cherry", "date"]
+found_fruit := find(fruits, func(f) {
+    return starts_with(f, "c")
+})
+print(found_fruit)
+# Expected: cherry
+
+# Test 11: map with empty array
+empty := []
+mapped_empty := map(empty, func(x) {
+    return x * 2
+})
+print(mapped_empty)
+# Expected: []
+
+# Test 12: filter with empty array
+filtered_empty := filter(empty, func(x) {
+    return x > 0
+})
+print(filtered_empty)
+# Expected: []
+
+# Test 13: reduce with empty array
+reduced_empty := reduce(empty, 42, func(acc, x) {
+    return acc + x
+})
+print(reduced_empty)
+# Expected: 42
+
+# Test 14: find with empty array
+find_empty := find(empty, func(x) {
+    return true
+})
+print(find_empty)
+# Expected: 0
+
+# Test 15: Complex chaining example
+# Get even numbers, square them, then sum
+result := reduce(
+    map(
+        filter([1, 2, 3, 4, 5, 6], func(n) { return n % 2 == 0 }),
+        func(n) { return n * n }
+    ),
+    0,
+    func(acc, n) { return acc + n }
+)
+print(result)
+# Expected: 56 (2^2 + 4^2 + 6^2 = 4 + 16 + 36)
+
+# Test 16: map with boolean predicate
+checks := [0, 1, 2, 0, 3]
+is_nonzero := map(checks, func(x) {
+    return x != 0
+})
+print(is_nonzero)
+# Expected: [false, true, true, false, true]
+
+# Test 17: filter all elements match
+all_positive := [1, 2, 3, 4, 5]
+filtered_all := filter(all_positive, func(x) {
+    return x > 0
+})
+print(filtered_all)
+# Expected: [1, 2, 3, 4, 5]
+
+# Test 18: filter no elements match
+no_match := [1, 2, 3, 4, 5]
+filtered_none := filter(no_match, func(x) {
+    return x > 10
+})
+print(filtered_none)
+# Expected: []
+
+# Test 19: reduce with string initial
+texts := ["Hello", " ", "World", "!"]
+message := reduce(texts, "Message: ", func(acc, text) {
+    return acc + text
+})
+print(message)
+# Expected: Message: Hello World!
+
+# Test 20: find first element
+first_match := find([5, 10, 15, 20], func(x) {
+    return x >= 5
+})
+print(first_match)
+# Expected: 5

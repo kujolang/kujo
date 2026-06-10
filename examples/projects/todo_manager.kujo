@@ -1,0 +1,39 @@
+# Minimal Todo Manager
+
+struct Todo {
+	title: string,
+	done: bool
+}
+
+print("Creating todos...")
+
+todo1 := Todo { title: "Learn Kujo", done: false }
+todo2 := Todo { title: "Build project", done: false }
+
+todos := [todo1, todo2]
+
+print("Todo list:")
+for t in todos {
+	if t.done {
+		print("[x] " + t.title)
+	} else {
+		print("[ ] " + t.title)
+	}
+}
+
+print("")
+print("Marking first todo as done...")
+todos[0].done := true
+
+print("Updated list:")
+for t in todos {
+	# Workaround for block scoping: use conditional expression pattern
+	if t.done {
+		print("[x] " + t.title)
+	} else {
+		print("[ ] " + t.title)
+	}
+}
+
+print("")
+print("Done!")

@@ -1,0 +1,35 @@
+# Simple binary file test
+print("Testing binary file operations...")
+
+# Test 1: Basic write and read
+print("Test 1: Write and read binary file")
+let test_data := "Hello World"
+let test_file := "/tmp/kujo_simple_test.bin"
+
+# Create some binary data using base64
+let binary := decode_base64(encode_base64(test_data))
+print("Created binary data")
+
+# Write to file
+let write_result := write_binary_file(test_file, binary, true)
+
+if write_result {
+    print("✓ Successfully wrote binary file")
+    
+    # Read it back
+    let read_data := read_binary_file(test_file)
+    print("✓ Read binary file back")
+    
+    # Check size
+    let size := len(read_data)
+    if size > 0.0 {
+        print("✓ File has data (size > 0)")
+    } else {
+        print("✗ File appears empty")
+    }
+} else {
+    print("✗ Failed to write binary file")
+}
+
+print()
+print("Test complete")

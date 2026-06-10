@@ -1,0 +1,28 @@
+# Test without self parameter first (backward compatibility)
+print("Test 1: Without self parameter");
+
+struct OldStyle {
+    x: float,
+    
+    func get_x() {
+        return x;
+    }
+}
+
+p1 := OldStyle { x: 42.0 };
+print(p1.get_x());  # Should print 42.0
+
+print("\nTest 2: With self parameter");
+
+struct NewStyle {
+    x: float,
+    
+    func get_x(self) {
+        return self.x;
+    }
+}
+
+p2 := NewStyle { x: 99.0 };
+print(p2.get_x());  # Should print 99.0
+
+print("\n✅ Tests passed!");

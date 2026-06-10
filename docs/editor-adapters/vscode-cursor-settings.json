@@ -1,0 +1,11 @@
+{
+  "files.associations": {
+    "*.kujo": "kujo"
+  },
+  "kujo.lsp.enabled": true,
+  "kujo.lsp.command": [
+    "kujo",
+    "lsp"
+  ],
+  "kujo.lsp.trace.server": "off"
+}

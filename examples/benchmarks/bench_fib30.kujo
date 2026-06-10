@@ -1,0 +1,18 @@
+func fib(n) {
+    if n < 2 { return n }
+    return fib(n-1) + fib(n-2)
+}
+
+// Warm up JIT
+let i = 0
+while i < 200 {
+    let _ = fib(20)
+    i = i + 1
+}
+
+// Benchmark
+let start = time_ns()
+let result = fib(30)
+let elapsed_ms = (time_ns() - start) / 1000000.0
+
+print("fib(30) =", result, "in", elapsed_ms, "ms")

@@ -1,0 +1,125 @@
+# Array Utilities Demo
+# Demonstrates the new array utility functions added in v0.7.0
+
+print("=== Array Utilities Demo ===")
+print()
+
+# Sample data
+nums := [3, 1, 4, 1, 5, 9, 2, 6, 5, 3]
+print("Original array: ${nums}")
+print()
+
+# 1. Sort - arrange in ascending order
+print("1. SORT - Arrange in ascending order")
+sorted := sort(nums)
+print("   sort(nums) = ${sorted}")
+print()
+
+# 2. Reverse - reverse the order
+print("2. REVERSE - Reverse the order")
+reversed := reverse(nums)
+print("   reverse(nums) = ${reversed}")
+print()
+
+# 3. Unique - remove duplicates
+print("3. UNIQUE - Remove duplicates (preserves order)")
+unique_nums := unique(nums)
+print("   unique(nums) = ${unique_nums}")
+print()
+
+# 4. Sum - calculate total
+print("4. SUM - Calculate total")
+total := sum(nums)
+print("   sum(nums) = ${total}")
+print()
+
+# 5. Any - check if any element satisfies condition
+print("5. ANY - Check if any element satisfies condition")
+has_large := any(nums, func(x) { return x > 8 })
+has_negative := any(nums, func(x) { return x < 0 })
+print("   any(nums, x > 8) = ${has_large}")
+print("   any(nums, x < 0) = ${has_negative}")
+print()
+
+# 6. All - check if all elements satisfy condition
+print("6. ALL - Check if all elements satisfy condition")
+all_positive := all(nums, func(x) { return x > 0 })
+all_large := all(nums, func(x) { return x > 8 })
+print("   all(nums, x > 0) = ${all_positive}")
+print("   all(nums, x > 8) = ${all_large}")
+print()
+
+# Chaining operations
+print("=== Chaining Operations ===")
+print("Get unique values, sort them, and reverse:")
+result := reverse(sort(unique(nums)))
+print("   reverse(sort(unique(nums))) = ${result}")
+print()
+
+# Working with strings
+print("=== Working with Strings ===")
+words := ["banana", "apple", "cherry", "apple", "date", "banana"]
+print("Words: ${words}")
+print()
+
+sorted_words := sort(words)
+print("Sorted: ${sorted_words}")
+
+unique_words := unique(words)
+print("Unique: ${unique_words}")
+print()
+
+# Practical example: Data analysis
+print("=== Practical Example: Student Scores ===")
+scores := [85, 92, 78, 92, 88, 95, 78, 90, 88, 85]
+print("Student scores: ${scores}")
+print()
+
+# Calculate statistics
+total_score := sum(scores)
+num_students := len(scores)
+average := total_score / num_students
+print("Total: ${total_score}")
+print("Number of students: ${num_students}")
+print("Average score: ${average}")
+print()
+
+# Check performance
+has_excellent := any(scores, func(s) { return s >= 90 })
+all_passing := all(scores, func(s) { return s >= 60 })
+print("Has excellent (>=90): ${has_excellent}")
+print("All passing (>=60): ${all_passing}")
+print()
+
+# Show score distribution
+unique_scores := sort(unique(scores))
+print("Unique scores (sorted): ${unique_scores}")
+print()
+
+# Working with mixed types
+print("=== Mixed Integer and Float ===")
+mixed := [3, 1.5, 4, 2.2, 5.7, 1]
+print("Mixed array: ${mixed}")
+sorted_mixed := sort(mixed)
+print("Sorted: ${sorted_mixed}")
+total_mixed := sum(mixed)
+print("Sum: ${total_mixed}")
+print()
+
+# Edge cases
+print("=== Edge Cases ===")
+empty := []
+print("Empty array: ${empty}")
+print("sum([]) = ${sum(empty)}")
+print("sort([]) = ${sort(empty)}")
+print("any([], x > 0) = ${any(empty, func(x) { return x > 0 })}")
+print("all([], x > 0) = ${all(empty, func(x) { return x > 0 })}")
+print()
+
+single := [42]
+print("Single element: ${single}")
+print("reverse([42]) = ${reverse(single)}")
+print("unique([42]) = ${unique(single)}")
+print()
+
+print("=== Demo Complete ===")

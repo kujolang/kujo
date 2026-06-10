@@ -1,0 +1,32 @@
+# Test file for REPL basic operations
+# This file tests variable assignment, expressions, and function definitions
+
+# Variable assignment and arithmetic
+let x := 10
+let y := 20
+x + y
+
+# String operations
+let name := "Kujo"
+let greeting := "Hello, " + name
+greeting
+
+# Function definition and call
+func double(n) {
+    return n * 2
+}
+double(21)
+
+# Array operations
+let numbers := [1, 2, 3, 4, 5]
+numbers
+
+# Dictionary operations
+let person := {"name": "Alice", "age": 30}
+person
+
+# Boolean expressions
+let result := 5 > 3
+result
+
+:quit

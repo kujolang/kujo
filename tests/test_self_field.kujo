@@ -1,0 +1,21 @@
+# Test self.field access
+print("Test: Access self.field");
+
+struct Test {
+    x: float,
+    
+    func get_field(self) {
+        print("In get_field");
+        val := self.x;
+        print("Got value:");
+        print(val);
+        return val;
+    }
+}
+
+print("Creating...");
+t := Test { x: 123.0 };
+print("Calling...");
+result := t.get_field();
+print("Final result:");
+print(result);

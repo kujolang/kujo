@@ -1,0 +1,52 @@
+# Test range() and format() functions
+
+# Test range() with 1 argument (stop)
+print("range(5):", range(5))
+print("range(0):", range(0))
+print("range(-5):", range(0 - 5))
+
+# Test range() with 2 arguments (start, stop)
+print("range(2, 7):", range(2, 7))
+print("range(5, 5):", range(5, 5))
+print("range(10, 5):", range(10, 5))
+print("range(-3, 3):", range(0 - 3, 3))
+
+# Test range() with 3 arguments (start, stop, step)
+print("range(0, 10, 2):", range(0, 10, 2))
+print("range(0, 10, 3):", range(0, 10, 3))
+print("range(10, 0, -1):", range(10, 0, 0 - 1))
+print("range(10, 0, -2):", range(10, 0, 0 - 2))
+print("range(1, 20, 5):", range(1, 20, 5))
+
+# Test format() with %s
+name := "Alice"
+print(format("Hello %s!", name))
+print(format("Welcome %s and %s", "Bob", "Charlie"))
+
+# Test format() with %d
+count := 42
+print(format("Count: %d", count))
+print(format("We have %d apples and %d oranges", 5, 3))
+
+# Test format() with %f
+pi := 3.14159
+print(format("Pi is approximately %f", pi))
+print(format("Coordinates: (%f, %f)", 1.5, 2.7))
+
+# Test format() with mixed placeholders
+age := 25
+height := 5.8
+print(format("%s is %d years old and %f feet tall", "John", age, height))
+
+# Test format() with escaped %%
+print(format("100%% complete"))
+print(format("Success rate: %d%%", 95))
+
+# Test log() and exp()
+print("log(E):", log(E))
+print("log(10):", log(10))
+print("exp(0):", exp(0))
+print("exp(1):", exp(1))
+print("exp(2):", exp(2))
+
+print("\nAll tests passed!")

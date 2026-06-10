@@ -1,0 +1,105 @@
+# Spread Operator Tests
+# Tests for spread operator in arrays and dicts
+
+# Test 1: Array spread - basic
+arr1 := [1, 2, 3]
+arr2 := [4, 5, 6]
+combined := [...arr1, ...arr2]
+print("Test 1 - Basic array spread:")
+print(combined)
+
+# Test 2: Array spread - mixed with literals
+result := [0, ...arr1, 99, ...arr2, 100]
+print("Test 2 - Mixed array spread:")
+print(result)
+
+# Test 3: Array spread - single spread
+nums := [10, 20, 30]
+copy := [...nums]
+print("Test 3 - Array copy:")
+print(copy)
+
+# Test 4: Dict spread - basic merge
+dict1 := {"a": 1, "b": 2}
+dict2 := {"c": 3, "d": 4}
+merged := {...dict1, ...dict2}
+print("Test 4 - Dict merge:")
+print(merged)
+
+# Test 5: Dict spread - override
+defaults := {"timeout": 30, "retry": 3, "debug": false}
+config := {...defaults, "timeout": 60, "debug": true}
+print("Test 5 - Dict override:")
+print(config)
+
+# Test 6: Dict spread - later values win
+base := {"x": 1, "y": 2}
+override := {"y": 99, "z": 100}
+final := {...base, ...override}
+print("Test 6 - Later values win:")
+print(final)
+
+# Test 7: Empty array spread
+empty := []
+with_empty := [1, ...empty, 2]
+print("Test 7 - Empty array spread:")
+print(with_empty)
+
+# Test 8: Empty dict spread
+empty_dict := {}
+with_empty_dict := {"a": 1, ...empty_dict, "b": 2}
+print("Test 8 - Empty dict spread:")
+print(with_empty_dict)
+
+# Test 9: Multiple array spreads
+a := [1, 2]
+b := [3, 4]
+c := [5, 6]
+all := [...a, ...b, ...c]
+print("Test 9 - Multiple array spreads:")
+print(all)
+
+# Test 10: Multiple dict spreads
+d1 := {"a": 1}
+d2 := {"b": 2}
+d3 := {"c": 3}
+all_dict := {...d1, ...d2, ...d3}
+print("Test 10 - Multiple dict spreads:")
+print(all_dict)
+
+# Test 11: Nested spread in arrays
+inner := [2, 3]
+outer := [1, ...inner, 4]
+nested := [0, ...outer, 5]
+print("Test 11 - Nested array spread:")
+print(nested)
+
+# Test 12: Dict spread with computed values
+user := {"name": "Alice", "age": 30}
+enhanced := {...user, "email": "alice@example.com", "verified": true}
+print("Test 12 - Dict spread with new fields:")
+print(enhanced)
+
+# Test 13: Array spread at different positions
+nums := [5, 6, 7]
+at_start := [...nums, 8, 9]
+at_end := [3, 4, ...nums]
+print("Test 13a - Spread at start:")
+print(at_start)
+print("Test 13b - Spread at end:")
+print(at_end)
+
+# Test 14: Spread preserves values
+original := [1, 2, 3]
+spread_copy := [...original]
+print("Test 14 - Spread preserves values:")
+print("Original:")
+print(original)
+print("Copy:")
+print(spread_copy)
+
+# Test 15: Dict spread with string keys
+info := {"key1": "value1", "key2": "value2"}
+more_info := {...info, "key3": "value3"}
+print("Test 15 - Dict spread with strings:")
+print(more_info)

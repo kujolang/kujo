@@ -1,0 +1,79 @@
+{
+  "name": "kujo-language-tools",
+  "displayName": "Kujo Language Tools",
+  "description": "Syntax highlighting and LSP integration for Kujo (.kujo) files.",
+  "version": "0.1.0",
+  "publisher": "kujolang",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:kujo"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "kujo",
+        "aliases": [
+          "Kujo",
+          "kujo"
+        ],
+        "extensions": [
+          ".kujo"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "kujo",
+        "scopeName": "source.kujo",
+        "path": "./syntaxes/kujo.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Kujo Language Tools",
+      "properties": {
+        "kujo.lsp.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Kujo LSP integration for .kujo files."
+        },
+        "kujo.lsp.command": {
+          "type": "array",
+          "default": [
+            "kujo",
+            "lsp"
+          ],
+          "description": "Command array used to launch Kujo LSP (example: ['kujo', 'lsp']).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "kujo.lsp.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace level for LSP communication logs."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "check": "node ./scripts/check.js"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12"
+  }
+}

@@ -1,0 +1,16 @@
+# Test void method call
+
+struct Test {
+    value: float,
+    
+    func show() {
+        print("Value:");
+        print(value);
+    }
+}
+
+print("Before");
+t := Test { value: 42.0 };
+print("Created struct");
+t.show();
+print("After");

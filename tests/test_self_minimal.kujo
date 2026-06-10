@@ -1,0 +1,19 @@
+# Super simple self test
+print("Creating struct...");
+
+struct Test {
+    x: float,
+    
+    func simple(self) {
+        print("Inside simple method");
+        print("About to return");
+        return 42.0;
+    }
+}
+
+print("Instantiating...");
+t := Test { x: 5.0 };
+print("Calling method...");
+result := t.simple();
+print("Result:");
+print(result);

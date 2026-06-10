@@ -1,0 +1,17 @@
+# Test array return from method with param
+
+struct ArrayHolder {
+    arr: array,
+    
+    func combine(other) {
+        result := [1.0, 2.0, 3.0];
+        return result;
+    }
+}
+
+a1 := ArrayHolder { arr: [1.0] };
+a2 := ArrayHolder { arr: [2.0] };
+a3 := a1.combine(a2);
+print(len(a3));
+
+print("Test complete");

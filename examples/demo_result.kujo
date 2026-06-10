@@ -1,0 +1,22 @@
+enum Result {
+    Ok,
+    Err
+}
+
+func divide(a, b) {
+    if b == 0 {
+        return Result::Err("cannot divide by zero")
+    }
+    return Result::Ok(a / b)
+}
+
+val := divide(10, 2)
+
+match val {
+    case Result::Ok(res): {
+        print("✅ Result:", res)
+    }
+    case Result::Err(err): {
+        print("❌ Error:", err)
+    }
+}

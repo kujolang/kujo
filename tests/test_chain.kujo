@@ -1,0 +1,15 @@
+# Test method chaining
+struct B {
+    x: float,
+    
+    func set_x(self, val) {
+        return B { x: val };
+    }
+}
+
+print("Testing chaining...");
+b1 := B { x: 1.0 };
+print("Created b1");
+b2 := b1.set_x(10.0);
+print("Called set_x");
+print(b2.x);

@@ -1,0 +1,46 @@
+# Test VM with various built-in functions
+
+# Math functions
+print("=== Math Functions ===")
+print("abs(-5):", abs(-5))
+print("sqrt(16):", sqrt(16))
+print("pow(2, 3):", pow(2, 3))
+print("floor(3.7):", floor(3.7))
+print("ceil(3.2):", ceil(3.2))
+print("round(3.5):", round(3.5))
+print("min(5, 3):", min(5, 3))
+print("max(5, 3):", max(5, 3))
+
+# String functions
+print("\n=== String Functions ===")
+let str := "hello world"
+print("len('hello world'):", len(str))
+print("to_upper('hello'):", to_upper("hello"))
+print("to_lower('WORLD'):", to_lower("WORLD"))
+print("capitalize('hello'):", capitalize("hello"))
+print("trim('  spaces  '):", trim("  spaces  "))
+
+# Array functions
+print("\n=== Array Functions ===")
+let arr := [1, 2, 3, 4, 5]
+print("Array:", arr)
+print("len(array):", len(arr))
+let arr2 := push(arr, 6)
+print("After push(6):", arr2)
+let arr3 := pop(arr2)
+print("After pop():", arr3)
+
+# Range function
+print("\n=== Range Function ===")
+let nums := range(5)
+print("range(5):", nums)
+let nums2 := range(2, 8)
+print("range(2, 8):", nums2)
+
+# Type conversions
+print("\n=== Type Conversions ===")
+print("to_int('42'):", to_int("42"))
+print("to_float('3.14'):", to_float("3.14"))
+print("to_string(123):", to_string(123))
+
+print("\n=== All tests complete! ===")

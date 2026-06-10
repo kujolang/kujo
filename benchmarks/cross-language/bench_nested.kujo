@@ -1,0 +1,18 @@
+func nested_loops(n) { 
+    sum := 0
+    i := 0
+    while i < n { 
+        j := 0
+        while j < n { 
+            sum := sum + 1
+            j := j + 1
+        }
+        i := i + 1
+    }
+    return sum
+}
+
+t := performance_now()
+r := nested_loops(1000)
+e := performance_now() - t
+print(e)

@@ -1,0 +1,17 @@
+// Basic module demonstrating exports
+// This file can be imported by other Kujo programs
+
+export fn add(a, b) {
+    return a + b;
+}
+
+export fn multiply(a, b) {
+    return a * b;
+}
+
+export let PI = 3.14159;
+
+// Private function - not exported
+fn internal_helper() {
+    return "private";
+}

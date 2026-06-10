@@ -1,0 +1,254 @@
+# HTTP Streaming Example
+# Demonstrates streaming large HTTP responses efficiently
+
+print("=== HTTP Streaming Demo ===\n")
+
+# 1. Basic streaming concept
+print("1. Understanding HTTP Streaming")
+print("=====================================")
+print("Traditional HTTP requests load entire response into memory.")
+print("Streaming allows processing large files chunk by chunk.")
+print("")
+
+# 2. Download a file using streaming
+print("2. Streaming File Download")
+print("=====================================")
+
+func download_with_streaming(url) {
+    print("Downloading from: " + url)
+    print("Using http_get_stream() for efficient memory usage...")
+    
+    try {
+        # http_get_stream returns binary data
+        data := http_get_stream(url)
+        size := len(data)
+        
+        print("✓ Downloaded " + to_string(size) + " bytes")
+        return data
+    } except err {
+        print("✗ Download failed: " + err.message)
+        return null
+    }
+}
+
+# Example: Download a small test file
+print("Example: Download test content")
+test_url := "https://httpbin.org/bytes/1024"  # 1KB test data
+
+print("Note: This example requires internet connection")
+print("Attempting download from: " + test_url)
+print("")
+
+# Uncomment to actually download:
+# test_data := download_with_streaming(test_url)
+# if test_data != null {
+#     print("Download successful!")
+#     print("Data size: " + to_string(len(test_data)) + " bytes")
+# }
+
+print("(Skipping actual download for demo)")
+print("")
+
+# 3. Process streaming data
+print("3. Processing Streaming Data")
+print("=====================================")
+
+func download_and_process(url, process_fn) {
+    print("Downloading and processing: " + url)
+    
+    try {
+        # Get stream data
+        data := http_get_stream(url)
+        
+        # Process the data
+        result := process_fn(data)
+        
+        print("✓ Processing complete")
+        return result
+    } except err {
+        print("✗ Error: " + err.message)
+        return null
+    }
+}
+
+# Example processor: Count bytes
+func count_bytes(data) {
+    return len(data)
+}
+
+print("Created processor function: count_bytes()")
+print("")
+
+# 4. Streaming large API responses
+print("4. Streaming API Responses")
+print("=====================================")
+
+func fetch_large_api_response(api_url) {
+    print("Fetching large API response...")
+    print("URL: " + api_url)
+    
+    try {
+        # Use streaming for large JSON responses
+        data := http_get_stream(api_url)
+        
+        # Convert binary data to string for JSON parsing
+        # Note: In real code, you'd handle encoding properly
+        print("✓ Fetched " + to_string(len(data)) + " bytes")
+        
+        return data
+    } except err {
+        print("✗ Fetch failed: " + err.message)
+        return null
+    }
+}
+
+print("Created function: fetch_large_api_response()")
+print("")
+
+# 5. Download and save files
+print("5. Download and Save Files")
+print("=====================================")
+
+func download_file_to_disk(url, filename) {
+    print("Downloading: " + url)
+    print("Saving to: " + filename)
+    
+    try {
+        # Stream download
+        data := http_get_stream(url)
+        
+        # Save to file
+        write_binary_file(filename, data)
+        
+        print("✓ File saved: " + filename)
+        print("  Size: " + to_string(len(data)) + " bytes")
+        return true
+    } except err {
+        print("✗ Download failed: " + err.message)
+        return false
+    }
+}
+
+print("Created function: download_file_to_disk()")
+print("")
+
+# Example usage
+print("Example usage:")
+print("download_file_to_disk example omitted in auto-run mode")
+print("")
+
+# 6. Progress tracking for large downloads
+print("6. Progress Tracking")
+print("=====================================")
+
+func download_with_progress(url, filename) {
+    print("Starting download...")
+    print("URL: " + url)
+    
+    start_time := now()
+    
+    try {
+        # Download
+        data := http_get_stream(url)
+        
+        # Save
+        write_binary_file(filename, data)
+        
+        # Calculate duration
+        duration := now() - start_time
+        size_mb := len(data) / 1048576
+        
+        print("")
+        print("✓ Download complete!")
+        print("  File: " + filename)
+        print("  Size: " + to_string(size_mb) + " MB")
+        print("  Time: " + to_string(duration) + " seconds")
+        
+        if duration > 0 {
+            speed := size_mb / duration
+            print("  Speed: " + to_string(speed) + " MB/s")
+        }
+        
+        return true
+    } except err {
+        print("✗ Download error: " + err.message)
+        return false
+    }
+}
+
+print("Created function: download_with_progress()")
+print("")
+
+# 7. Batch file downloads
+print("7. Batch File Downloads")
+print("=====================================")
+
+func download_multiple_files(urls, output_dir) {
+    print("Downloading " + to_string(len(urls)) + " files...")
+    print("Output directory: " + output_dir)
+    print("")
+    
+    downloaded := 0
+    failed := 0
+    
+    for i := 0; i < len(urls); i := i + 1 {
+        url := urls[i]
+        filename := output_dir + "/file_" + to_string(i) + ".dat"
+        
+        print("Downloading " + to_string(i + 1) + "/" + to_string(len(urls)) + ": " + url)
+        
+        try {
+            data := http_get_stream(url)
+            write_binary_file(filename, data)
+            downloaded := downloaded + 1
+            print("  ✓ Saved: " + filename)
+        } except err {
+            failed := failed + 1
+            print("  ✗ Failed: " + err.message)
+        }
+    }
+    
+    print("")
+    print("Results:")
+    print("  Downloaded: " + to_string(downloaded))
+    print("  Failed: " + to_string(failed))
+    
+    return {"downloaded": downloaded, "failed": failed}
+}
+
+print("Created function: download_multiple_files()")
+print("")
+
+# 8. Real-world use cases
+print("8. Real-World Use Cases")
+print("=====================================")
+print("HTTP streaming is useful for:")
+print("")
+print("• AI Model Outputs")
+print("  - Download large AI model responses")
+print("  - Stream generated images/videos")
+print("")
+print("• Data Processing")
+print("  - Download large CSV/JSON datasets")
+print("  - Process without loading entire file")
+print("")
+print("• Media Downloads")
+print("  - Images, videos, audio files")
+print("  - PDFs and documents")
+print("")
+print("• Batch Operations")
+print("  - Multiple file downloads")
+print("  - Data pipeline processing")
+print("")
+
+print("=== Demo Complete ===")
+print("")
+print("Key Functions:")
+print("- http_get_stream(url) -> bytes")
+print("- write_binary_file(filename, data)")
+print("- read_binary_file(filename) -> bytes")
+print("")
+print("Benefits:")
+print("✓ Memory efficient for large files")
+print("✓ Better performance for big downloads")
+print("✓ Essential for AI/ML pipelines")

@@ -1,0 +1,24 @@
+# Test try/except/throw error handling
+
+func safe_divide(a, b) {
+    if b == 0 {
+        throw("division by zero")
+    }
+    return a / b
+}
+
+# Test normal case
+try {
+    result := safe_divide(10, 2)
+    print("10 / 2 =", result)
+} except err {
+    print("Error:", err)
+}
+
+# Test error case
+try {
+    result := safe_divide(10, 0)
+    print("10 / 0 =", result)
+} except err {
+    print("Caught:", err)
+}

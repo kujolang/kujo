@@ -1,0 +1,769 @@
+# Test suite for generator functionality  
+# Run with: kujo test-run tests/generators_test.kujo
+#
+# NOTE: Current limitation - Generators with yields inside loop blocks
+# only execute once. Yields must be sequential statements, not inside loops.
+# This is due to PC-based execution tracking at statement level.
+# Future work: Implement bytecode VM or state machine transformation for full loop support.
+
+test_group "Basic Generator Syntax" {
+    test "generator function can be defined with func*" {
+        func* simple() {
+            yield 1
+        }
+        
+        gen := simple()
+        assert_equal(type(gen), "generator")
+    }
+    
+    test "generator yields single value" {
+        func* single() {
+            yield 42
+        }
+        
+        result := []
+        for val in single() {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 1)
+        assert_equal(result[0], 42)
+    }
+    
+    test "generator yields multiple sequential values" {
+        func* three() {
+            yield 1
+            yield 2
+            yield 3
+        }
+        
+        result := []
+        for val in three() {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 3)
+        assert_equal(result[0], 1)
+        assert_equal(result[1], 2)
+        assert_equal(result[2], 3)
+    }
+    
+    test "generator can be called inline in for-loop" {
+        func* nums() {
+            yield 10
+            yield 20
+        }
+        
+        sum := 0
+        for n in nums() {
+            sum := sum + n
+        }
+        
+        assert_equal(sum, 30)
+    }
+    
+    test "generator variable can be iterated" {
+        func* nums() {
+            yield 5
+            yield 10
+        }
+        
+        gen := nums()
+        sum := 0
+        for n in gen {
+            sum := sum + n
+        }
+        
+        assert_equal(sum, 15)
+    }
+}
+
+test_group "Generator State Preservation" {
+    test "generator preserves local variables between yields" {
+        func* counter() {
+            let i := 0
+            yield i
+            i := i + 1
+            yield i
+            i := i + 1
+            yield i
+        }
+        
+        result := []
+        for val in counter() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 1)
+        assert_equal(result[2], 2)
+    }
+    
+    test "multiple local variables preserved" {
+        func* state_test() {
+            let a := 0
+            let b := 1
+            yield a
+            yield b
+            let c := a + b
+            yield c
+        }
+        
+        result := []
+        for val in state_test() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 1)
+        assert_equal(result[2], 1)
+    }
+    
+    test "conditional yields with state" {
+        func* conditional() {
+            let x := 10
+            if x > 5 {
+                yield x
+            }
+            x := x + 10
+            yield x
+        }
+        
+        result := []
+        for val in conditional() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 10)
+        assert_equal(result[1], 20)
+    }
+}
+
+test_group "Generator Parameters" {
+    test "generator accepts single parameter" {
+        func* echo(msg) {
+            yield msg
+            yield msg
+        }
+        
+        result := []
+        for val in echo("hello") {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 2)
+        assert_equal(result[0], "hello")
+        assert_equal(result[1], "hello")
+    }
+    
+    test "generator accepts multiple parameters" {
+        func* greet(first, last) {
+            yield first
+            yield last
+        }
+        
+        result := []
+        for val in greet("John", "Doe") {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 2)
+        assert_equal(result[0], "John")
+        assert_equal(result[1], "Doe")
+    }
+    
+    test "generator parameters are independent per call" {
+        func* repeat_twice(val) {
+            yield val
+            yield val
+        }
+        
+        # First call
+        result1 := []
+        for val in repeat_twice("a") {
+            result1 := result1 + [val]
+        }
+        
+        # Second call
+        result2 := []
+        for val in repeat_twice("b") {
+            result2 := result2 + [val]
+        }
+        
+        assert_equal(len(result1), 2)
+        assert_equal(len(result2), 2)
+        assert_equal(result1[0], "a")
+        assert_equal(result2[0], "b")
+    }
+}
+
+test_group "Generator Control Flow" {
+    test "break exits generator iteration early" {
+        func* many() {
+            yield 1
+            yield 2
+            yield 3
+            yield 4
+            yield 5
+        }
+        
+        count := 0
+        for val in many() {
+            count := count + 1
+            if count >= 3 {
+                break
+            }
+        }
+        
+        assert_equal(count, 3)
+    }
+    
+    test "empty generator yields no values" {
+        func* empty() {
+            # No yields
+        }
+        
+        count := 0
+        for val in empty() {
+            count := count + 1
+        }
+        
+        assert_equal(count, 0)
+    }
+}
+
+test_group "Generator Edge Cases" {
+    test "generator with only one yield" {
+        func* one() {
+            yield "only"
+        }
+        
+        result := []
+        for val in one() {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 1)
+        assert_equal(result[0], "only")
+    }
+    
+    test "generator with complex expressions in yield" {
+        func* calculated() {
+            let x := 10
+            yield x * 2 + 5
+            yield x + 10
+        }
+        
+        result := []
+        for val in calculated() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 25)  # 10 * 2 + 5
+        assert_equal(result[1], 20)  # 10 + 10
+    }
+    
+    test "multiple generators in same scope" {
+        func* gen1() {
+            yield 1
+        }
+        
+        func* gen2() {
+            yield 2
+        }
+        
+        result1 := []
+        for val in gen1() {
+            result1 := result1 + [val]
+        }
+        
+        result2 := []
+        for val in gen2() {
+            result2 := result2 + [val]
+        }
+        
+        assert_equal(result1[0], 1)
+        assert_equal(result2[0], 2)
+    }
+    
+    test "generator iteration with variable shadowing" {
+        func* nums() {
+            yield 1
+            yield 2
+        }
+        
+        # Outer val
+        val := 100
+        
+        # Loop val should shadow
+        result := []
+        for val in nums() {
+            result := result + [val]
+        }
+        
+        # Check loop worked
+        assert_equal(len(result), 2)
+        assert_equal(result[0], 1)
+    }
+    
+    test "generator with string yields" {
+        func* words() {
+            yield "hello"
+            yield "world"
+        }
+        
+        result := []
+        for word in words() {
+            result := result + [word]
+        }
+        
+        assert_equal(len(result), 2)
+        assert_equal(result[0], "hello")
+        assert_equal(result[1], "world")
+    }
+    
+    test "generator with array yields" {
+        func* arrays() {
+            yield [1, 2]
+            yield [3, 4]
+        }
+        
+        result := []
+        for arr in arrays() {
+            result := result + [arr]
+        }
+        
+        assert_equal(len(result), 2)
+        assert_equal(len(result[0]), 2)
+        assert_equal(result[0][0], 1)
+    }
+}
+
+    test "generator function can be defined with func*" {
+        func* simple() {
+            yield 1
+            yield 2
+        }
+        
+        gen := simple()
+        assert_equal(type(gen), "generator")
+    }
+    
+    test "generator yields single value" {
+        func* single() {
+            yield 42
+        }
+        
+        result := []
+        for val in single() {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 1)
+        assert_equal(result[0], 42)
+    }
+    
+    test "generator yields multiple values in sequence" {
+        func* three() {
+            yield 1
+            yield 2
+            yield 3
+        }
+        
+        result := []
+        for val in three() {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 3)
+        assert_equal(result[0], 1)
+        assert_equal(result[1], 2)
+        assert_equal(result[2], 3)
+    }
+    
+    test "generator can be called inline in for-loop" {
+        func* nums() {
+            yield 10
+            yield 20
+        }
+        
+        sum := 0
+        for n in nums() {
+            sum := sum + n
+        }
+        
+        assert_equal(sum, 30)
+    }
+    
+    test "generator variable can be iterated" {
+        func* nums() {
+            yield 5
+            yield 10
+        }
+        
+        gen := nums()
+        sum := 0
+        for n in gen {
+            sum := sum + n
+        }
+        
+        assert_equal(sum, 15)
+    }
+}
+
+test_group "Generator State Preservation" {
+    test "generator preserves local variables between yields" {
+        func* counter() {
+            let i := 0
+            yield i
+            i := i + 1
+            yield i
+            i := i + 1
+            yield i
+        }
+        
+        result := []
+        for val in counter() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 1)
+        assert_equal(result[2], 2)
+    }
+    
+    test "generator with loop state works" {
+        func* range_gen(max) {
+            let i := 0
+            loop {
+                if i >= max {
+                    break
+                }
+                yield i
+                i := i + 1
+            }
+        }
+        
+        result := []
+        for val in range_gen(5) {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 5)
+        assert_equal(result[0], 0)
+        assert_equal(result[4], 4)
+    }
+    
+    test "multiple local variables preserved" {
+        func* fibonacci_gen() {
+            let a := 0
+            let b := 1
+            yield a
+            yield b
+            let c := a + b
+            yield c
+        }
+        
+        result := []
+        for val in fibonacci_gen() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 1)
+        assert_equal(result[2], 1)
+    }
+}
+
+test_group "Generator Parameters" {
+    test "generator accepts single parameter" {
+        func* echo(msg) {
+            yield msg
+            yield msg
+        }
+        
+        result := []
+        for val in echo("hello") {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 2)
+        assert_equal(result[0], "hello")
+        assert_equal(result[1], "hello")
+    }
+    
+    test "generator accepts multiple parameters" {
+        func* range_with_step(start, end, step) {
+            let i := start
+            loop {
+                if i >= end {
+                    break
+                }
+                yield i
+                i := i + step
+            }
+        }
+        
+        result := []
+        for val in range_with_step(0, 10, 2) {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 5)
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 2)
+        assert_equal(result[4], 8)
+    }
+    
+    test "generator parameters are independent per call" {
+        func* repeat(val, times) {
+            let i := 0
+            loop {
+                if i >= times {
+                    break
+                }
+                yield val
+                i := i + 1
+            }
+        }
+        
+        # First call
+        result1 := []
+        for val in repeat("a", 2) {
+            result1 := result1 + [val]
+        }
+        
+        # Second call
+        result2 := []
+        for val in repeat("b", 3) {
+            result2 := result2 + [val]
+        }
+        
+        assert_equal(len(result1), 2)
+        assert_equal(len(result2), 3)
+        assert_equal(result1[0], "a")
+        assert_equal(result2[0], "b")
+    }
+}
+
+test_group "Generator Control Flow" {
+    test "break exits generator iteration early" {
+        func* infinite() {
+            let i := 0
+            loop {
+                yield i
+                i := i + 1
+            }
+        }
+        
+        count := 0
+        for val in infinite() {
+            count := count + 1
+            if count >= 3 {
+                break
+            }
+        }
+        
+        assert_equal(count, 3)
+    }
+    
+    test "empty generator yields no values" {
+        func* empty() {
+            # No yields
+        }
+        
+        count := 0
+        for val in empty() {
+            count := count + 1
+        }
+        
+        assert_equal(count, 0)
+    }
+    
+    test "generator with conditional yields" {
+        func* evens(max) {
+            let i := 0
+            loop {
+                if i >= max {
+                    break
+                }
+                if i % 2 == 0 {
+                    yield i
+                }
+                i := i + 1
+            }
+        }
+        
+        result := []
+        for val in evens(10) {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 5)
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 2)
+        assert_equal(result[4], 8)
+    }
+}
+
+test_group "Classic Generator Patterns" {
+    test "fibonacci generator produces correct sequence" {
+        func* fibonacci() {
+            let a := 0
+            let b := 1
+            loop {
+                yield a
+                let temp := a
+                a := b
+                b := temp + b
+                # Only generate first 10 for testing
+                if a > 50 {
+                    break
+                }
+            }
+        }
+        
+        result := []
+        for val in fibonacci() {
+            result := result + [val]
+        }
+        
+        # Check first few fibonacci numbers
+        assert_equal(result[0], 0)
+        assert_equal(result[1], 1)
+        assert_equal(result[2], 1)
+        assert_equal(result[3], 2)
+        assert_equal(result[4], 3)
+        assert_equal(result[5], 5)
+        assert_equal(result[6], 8)
+    }
+    
+    test "counter generator with limits" {
+        func* count_to(max) {
+            let i := 0
+            loop {
+                if i >= max {
+                    break
+                }
+                yield i
+                i := i + 1
+            }
+        }
+        
+        result := []
+        for n in count_to(5) {
+            result := result + [n]
+        }
+        
+        assert_equal(len(result), 5)
+        assert_equal(result[0], 0)
+        assert_equal(result[4], 4)
+    }
+    
+    test "fizzbuzz generator" {
+        func* fizzbuzz(max) {
+            let i := 1
+            loop {
+                if i > max {
+                    break
+                }
+                if i % 15 == 0 {
+                    yield "FizzBuzz"
+                } else if i % 3 == 0 {
+                    yield "Fizz"
+                } else if i % 5 == 0 {
+                    yield "Buzz"
+                } else {
+                    yield i
+                }
+                i := i + 1
+            }
+        }
+        
+        result := []
+        for val in fizzbuzz(15) {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 15)
+        assert_equal(result[0], 1)
+        assert_equal(result[2], "Fizz")    # 3
+        assert_equal(result[4], "Buzz")    # 5
+        assert_equal(result[14], "FizzBuzz") # 15
+    }
+}
+
+test_group "Generator Edge Cases" {
+    test "generator with only one yield" {
+        func* one() {
+            yield "only"
+        }
+        
+        result := []
+        for val in one() {
+            result := result + [val]
+        }
+        
+        assert_equal(len(result), 1)
+        assert_equal(result[0], "only")
+    }
+    
+    test "generator with complex expressions in yield" {
+        func* calculated() {
+            let x := 10
+            yield x * 2 + 5
+            yield x + 10
+        }
+        
+        result := []
+        for val in calculated() {
+            result := result + [val]
+        }
+        
+        assert_equal(result[0], 25)  # 10 * 2 + 5
+        assert_equal(result[1], 20)  # 10 + 10
+    }
+    
+    test "multiple generators in same scope" {
+        func* gen1() {
+            yield 1
+        }
+        
+        func* gen2() {
+            yield 2
+        }
+        
+        result1 := []
+        for val in gen1() {
+            result1 := result1 + [val]
+        }
+        
+        result2 := []
+        for val in gen2() {
+            result2 := result2 + [val]
+        }
+        
+        assert_equal(result1[0], 1)
+        assert_equal(result2[0], 2)
+    }
+    
+    test "generator iteration with variable shadowing" {
+        func* nums() {
+            yield 1
+            yield 2
+        }
+        
+        # Outer val
+        val := 100
+        
+        # Loop val should shadow
+        result := []
+        for val in nums() {
+            result := result + [val]
+        }
+        
+        # Check loop worked
+        assert_equal(len(result), 2)
+        assert_equal(result[0], 1)
+    }
+}

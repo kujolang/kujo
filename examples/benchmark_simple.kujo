@@ -1,0 +1,49 @@
+# Simple Performance Benchmark for VM vs Interpreter
+# Tests basic operations without external dependencies
+
+# Fibonacci (recursive)
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+# Arithmetic loop
+func arithmetic(iterations) {
+    sum := 0
+    i := 0
+    while i < iterations {
+        sum := sum + i * 2 - 1
+        i := i + 1
+    }
+    return sum
+}
+
+# Function call depth
+func nested(n) {
+    if n <= 0 {
+        return 0
+    }
+    return 1 + nested(n - 1)
+}
+
+print("=== Kujo Performance Benchmark ===")
+print("")
+
+print("Test 1: Fibonacci(15)")
+result := fib(15)
+print("Result: ", result)
+print("")
+
+print("Test 2: Arithmetic (10,000 iterations)")
+result := arithmetic(10000)
+print("Result: ", result)
+print("")
+
+print("Test 3: Nested calls (100 deep)")
+result := nested(100)
+print("Result: ", result)
+print("")
+
+print("=== Benchmark Complete ===")

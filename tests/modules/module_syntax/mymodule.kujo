@@ -1,0 +1,5 @@
+export func public_function(x) {
+    return x * 2
+}
+
+export let PUBLIC_CONSTANT := 42

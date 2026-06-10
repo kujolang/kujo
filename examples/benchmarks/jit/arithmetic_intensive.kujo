@@ -1,0 +1,41 @@
+# JIT Benchmark: Arithmetic-Intensive Workload
+# Tests JIT performance on pure integer arithmetic
+# This should trigger type specialization for optimal performance
+
+func arithmetic_intensive(iterations) {
+    sum := 0
+    product := 1
+    
+    i := 0
+    while i < iterations {
+        # Heavy arithmetic that should be specialized
+        sum := sum + i
+        product := product * 2
+        temp := sum - product
+        result := temp + (i * 3)
+        sum := sum + result
+        
+        i := i + 1
+    }
+    
+    return sum
+}
+
+print("=== JIT Arithmetic Intensive Benchmark ===")
+print("")
+
+# Warm-up: trigger JIT compilation (threshold = 100)
+print("Warming up JIT compiler...")
+for i in range(150) {
+    arithmetic_intensive(15)
+}
+
+# Now run with JIT-compiled code
+print("Running benchmark with JIT-compiled code...")
+result := arithmetic_intensive(10000)
+
+print("Result: ", result)
+print("")
+print("Note: After ~100 executions, function gets JIT-compiled")
+print("Expected: Type specialization for Int operations")
+print("Expected: Significant speedup after JIT kicks in")

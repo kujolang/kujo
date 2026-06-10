@@ -1,0 +1,12 @@
+# Minimal test
+let test_ok := Ok(5)
+print("Created OK value")
+match test_ok {
+    case Ok(v): {
+        print("In OK branch")
+    }
+    case Err(e): {
+        print("In Err branch")
+    }
+}
+print("After match")

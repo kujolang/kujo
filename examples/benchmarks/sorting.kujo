@@ -1,0 +1,47 @@
+# Bubble Sort Benchmark - Array Operations
+# Tests: Array access, array mutation, nested loops, comparisons
+
+func bubble_sort(arr) {
+    let n := len(arr)
+    let i := 0
+    loop {
+        if i >= n {
+            break
+        }
+        let j := 0
+        loop {
+            if j >= n - i - 1 {
+                break
+            }
+            if arr[j] > arr[j + 1] {
+                # Swap
+                let temp := arr[j]
+                arr[j] := arr[j + 1]
+                arr[j + 1] := temp
+            }
+            j := j + 1
+        }
+        i := i + 1
+    }
+    return arr
+}
+
+# Create array to sort
+let arr := []
+let i := 0
+loop {
+    if i >= 1000 {
+        break
+    }
+    arr := push(arr, 1000 - i)  # Reverse order (worst case)
+    i := i + 1
+}
+
+# Run benchmark
+let start := performance_now()
+let sorted := bubble_sort(arr)
+let end := performance_now()
+
+print("Sorted array of 1000 elements")
+print("First 5: [", sorted[0], ",", sorted[1], ",", sorted[2], ",", sorted[3], ",", sorted[4], "]")
+print("Time taken: ", (end - start), " ms")

@@ -1,0 +1,6 @@
+# Test current unary operator behavior
+x := -5.0;
+print(x);
+
+y := !true;
+print(y);

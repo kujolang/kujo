@@ -1,0 +1,91 @@
+# Integer Type Tests
+print("=== Integer Type Tests ===")
+
+# Test 1: Integer literals
+x := 42
+print("Integer literal:", x, type(x))
+assert(type(x) == "int", "Integer literal should be int type")
+
+# Test 2: Float literals
+y := 42.0
+print("Float literal:", y, type(y))
+assert(type(y) == "float", "Float literal should be float type")
+
+# Test 3: Integer arithmetic
+a := 10
+b := 3
+sum := a + b
+diff := a - b
+prod := a * b
+quot := a / b
+mod := a % b
+print("10 + 3 =", sum, "(type:", type(sum), ")")
+print("10 - 3 =", diff, "(type:", type(diff), ")")
+print("10 * 3 =", prod, "(type:", type(prod), ")")
+print("10 / 3 =", quot, "(type:", type(quot), "- integer division truncates)")
+print("10 % 3 =", mod, "(type:", type(mod), ")")
+assert(sum == 13, "Integer addition")
+assert(diff == 7, "Integer subtraction")
+assert(prod == 30, "Integer multiplication")
+assert(quot == 3, "Integer division should truncate")
+assert(mod == 1, "Integer modulo")
+
+# Test 4: Mixed Int/Float operations
+int_val := 5
+float_val := 2.5
+mixed_sum := int_val + float_val
+mixed_prod := int_val * float_val
+print("5 (int) + 2.5 (float) =", mixed_sum, "(type:", type(mixed_sum), ")")
+print("5 (int) * 2.5 (float) =", mixed_prod, "(type:", type(mixed_prod), ")")
+assert(type(mixed_sum) == "float", "Int + Float should be Float")
+assert(type(mixed_prod) == "float", "Int * Float should be Float")
+
+# Test 5: Type preservation in arrays
+arr := [1, 2, 3]
+print("Array of integers:", arr)
+print("First element type:", type(arr[0]))
+assert(type(arr[0]) == "int", "Array elements should preserve int type")
+
+# Test 6: For loop with integer
+count := 0
+for i in 5 {
+    count := count + 1
+    print("Loop iteration", i, "(type:", type(i), ")")
+}
+assert(count == 5, "Loop should iterate 5 times")
+assert(type(count) == "int", "Counter should be int")
+
+# Test 7: String operations with integers
+str := "hello"
+substr := substring(str, 1, 3)
+print("substring('hello', 1, 3) =", substr)
+repeated := repeat("x", 5)
+print("repeat('x', 5) =", repeated)
+assert(repeated == "xxxxx", "Repeat with integer")
+
+# Test 8: Array length returns int
+numbers := [1, 2, 3, 4, 5]
+length := len(numbers)
+print("len([1,2,3,4,5]) =", length, "(type:", type(length), ")")
+assert(type(length) == "int", "len() should return int")
+assert(length == 5, "Length should be 5")
+
+# Test 9: Comparisons
+print("10 > 5 =", 10 > 5)
+print("10 < 5 =", 10 < 5)
+print("10 == 10 =", 10 == 10)
+print("5 (int) > 3.5 (float) =", 5 > 3.5)
+assert(10 > 5, "Integer comparison >")
+assert(5 < 10, "Integer comparison <")
+assert(10 == 10, "Integer comparison ==")
+assert(5 > 3.5, "Mixed int/float comparison")
+
+# Test 10: Parse functions preserve types
+parsed_int := parse_int("123")
+parsed_float := parse_float("123.45")
+print("parse_int('123') =", parsed_int, "(type:", type(parsed_int), ")")
+print("parse_float('123.45') =", parsed_float, "(type:", type(parsed_float), ")")
+assert(type(parsed_int) == "int", "parse_int should return int")
+assert(type(parsed_float) == "float", "parse_float should return float")
+
+print("\n✅ All integer type tests passed!")

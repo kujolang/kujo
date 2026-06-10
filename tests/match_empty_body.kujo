@@ -1,0 +1,8 @@
+# Test with empty body
+value := Ok(42)
+print("Before match")
+match value {
+    case Ok: {}
+    case Err: {}
+}
+print("After match")

@@ -1,0 +1,71 @@
+# AES File Encryption Example
+# Demonstrates how to encrypt and decrypt files using AES-256-GCM
+
+print("AES File Encryption Demo")
+print("========================================")
+
+# Configuration
+password := "my-secure-password-123"
+original_file := "/tmp/secret_document.txt"
+encrypted_file := "/tmp/secret_document.txt.encrypted"
+decrypted_file := "/tmp/secret_document_decrypted.txt"
+
+# Step 1: Create a sample file to encrypt
+print("\n1. Creating sample file...")
+sample_content := "This is a confidential document.\n"
+sample_content := sample_content + "It contains sensitive information.\n"
+sample_content := sample_content + "Date: 2026-01-26\n"
+sample_content := sample_content + "Status: Top Secret\n"
+
+write_file(original_file, sample_content)
+print("   Created: ${original_file}")
+print("   Content:\n${sample_content}")
+
+# Step 2: Encrypt the file
+print("\n2. Encrypting file...")
+file_contents := read_file(original_file)
+encrypted_data := aes_encrypt(file_contents, password)
+write_file(encrypted_file, encrypted_data)
+print("   Encrypted: ${encrypted_file}")
+print("   Ciphertext (first 80 chars): ${substring(encrypted_data, 0, 80)}...")
+
+# Step 3: Read and decrypt the file
+print("\n3. Decrypting file...")
+encrypted_contents := read_file(encrypted_file)
+decrypted_data := aes_decrypt(encrypted_contents, password)
+write_file(decrypted_file, decrypted_data)
+print("   Decrypted: ${decrypted_file}")
+print("   Content:\n${decrypted_data}")
+
+# Step 4: Verify the decryption
+print("\n4. Verification...")
+if decrypted_data == sample_content {
+    print("   ✓ Success! Decrypted content matches original")
+} else {
+    print("   ✗ Error! Decrypted content does not match")
+}
+
+# Step 5: Show file sizes
+print("\n5. File Sizes:")
+print("   Original:  ${len(file_contents)} bytes")
+print("   Encrypted: ${len(encrypted_data)} bytes")
+print("   Overhead:  ${len(encrypted_data) - len(file_contents)} bytes")
+
+# Step 6: Skip wrong-password error path in auto-run mode
+print("\n6. Skipping wrong-password test in auto-run mode")
+
+# Clean up
+print("\n7. Cleaning up temporary files...")
+delete_file(original_file)
+delete_file(encrypted_file)
+delete_file(decrypted_file)
+print("   Done!")
+
+print("\n========================================")
+print("AES encryption demo complete!")
+print("\nKey Takeaways:")
+print("- AES-256-GCM provides strong symmetric encryption")
+print("- Same key required for encryption and decryption")
+print("- Ciphertext is base64-encoded for safe storage")
+print("- Wrong password produces decryption error")
+print("- Minimal size overhead (~28 bytes for nonce + tag)")

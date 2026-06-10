@@ -1,0 +1,88 @@
+# Performance Benchmark for VM vs Interpreter
+# This benchmark tests various operations to compare execution speed
+
+# Fibonacci calculation (recursive)
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+# Arithmetic operations
+func arithmetic_test(iterations) {
+    sum := 0
+    i := 0
+    while i < iterations {
+        sum := sum + i * 2 - 1
+        i := i + 1
+    }
+    return sum
+}
+
+# Array operations
+func array_test(size) {
+    arr := []
+    i := 0
+    while i < size {
+        arr := arr + [i]
+        i := i + 1
+    }
+    
+    sum := 0
+    j := 0
+    while j < len(arr) {
+        sum := sum + arr[j]
+        j := j + 1
+    }
+    return sum
+}
+
+# Function calls
+func nested_calls(n) {
+    if n <= 0 {
+        return 0
+    }
+    return 1 + nested_calls(n - 1)
+}
+
+print("=== Kujo Performance Benchmark ===")
+print("")
+
+# Benchmark 1: Fibonacci
+print("Benchmark 1: Fibonacci(20)")
+start := time()
+result := fib(20)
+elapsed := time() - start
+print("Result: ", result)
+print("Time: ", elapsed, "s")
+print("")
+
+# Benchmark 2: Arithmetic
+print("Benchmark 2: Arithmetic (100,000 iterations)")
+start := time()
+result := arithmetic_test(100000)
+elapsed := time() - start
+print("Result: ", result)
+print("Time: ", elapsed, "s")
+print("")
+
+# Benchmark 3: Arrays
+print("Benchmark 3: Array operations (1,000 elements)")
+start := time()
+result := array_test(1000)
+elapsed := time() - start
+print("Result: ", result)
+print("Time: ", elapsed, "s")
+print("")
+
+# Benchmark 4: Function calls
+print("Benchmark 4: Nested function calls (1,000 deep)")
+start := time()
+result := nested_calls(1000)
+elapsed := time() - start
+print("Result: ", result)
+print("Time: ", elapsed, "s")
+print("")
+
+print("=== Benchmark Complete ===")

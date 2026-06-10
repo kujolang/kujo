@@ -1,0 +1,150 @@
+# Simple Note-Taking Application
+# Demonstrates: file I/O, user input, lexical scoping, loops, error handling
+
+print("note_taking_app: interactive example skipped in VM auto-run mode")
+exit(0)
+
+notes_dir := "/tmp/kujo_notes"
+index_file := notes_dir + "/index.txt"
+
+# Initialize notes directory
+exists := file_exists(notes_dir)
+if exists == "false" {
+    create_dir(notes_dir)
+    write_file(index_file, "")
+    print("Created notes directory")
+}
+
+# Display menu
+print("=================================")
+print("   Simple Note-Taking App")
+print("=================================")
+print("")
+print("1. Create new note")
+print("2. List all notes")
+print("3. Read a note")
+print("4. Append to a note")
+print("5. Exit")
+print("")
+
+choice := input("Choose an option (1-5): ")
+
+# Create new note
+if choice == "1" {
+    print("")
+    note_name := input("Enter note name (no spaces): ")
+    note_file := notes_dir + "/" + note_name + ".txt"
+    
+    # Check if note already exists
+    note_exists := file_exists(note_file)
+    if note_exists == "true" {
+        print("Error: Note already exists!")
+    } else {
+        print("Enter note content (type 'DONE' to finish):")
+        print("")
+        
+        # Get note content
+        content := ""
+        line_count := 0
+        
+        # Read first line
+        line1 := input("> ")
+        if line1 == "DONE" {
+            # Empty note
+        } else {
+            content := line1 + "\n"
+            line_count := line_count + 1
+            
+            # Read more lines
+            loop {
+                line := input("> ")
+                if line == "DONE" {
+                    break
+                }
+                content := content + line + "\n"
+                line_count := line_count + 1
+                
+                if line_count > 20 {
+                    print("(Max 20 lines reached)")
+                    break
+                }
+            }
+        }
+        
+        # Save note
+        try {
+            write_file(note_file, content)
+            append_file(index_file, note_name + "\n")
+            print("\nNote saved successfully!")
+        } except err {
+            print("Error saving note: " + err)
+        }
+    }
+}
+
+# List all notes
+if choice == "2" {
+    print("\n=== Your Notes ===")
+    try {
+        lines := read_lines(index_file)
+        count := 0
+        
+        for note in lines {
+            if note == "" {
+                # Skip empty lines
+            } else {
+                print("  - " + note)
+                count := count + 1
+            }
+        }
+        
+        if count == 0 {
+            print("  (No notes yet)")
+        }
+    } except err {
+        print("Error reading notes: " + err)
+    }
+}
+
+# Read a note
+if choice == "3" {
+    print("")
+    note_name := input("Enter note name: ")
+    note_file := notes_dir + "/" + note_name + ".txt"
+    
+    try {
+        content := read_file(note_file)
+        print("\n=== " + note_name + " ===")
+        print(content)
+        print("========================")
+    } except err {
+        print("Error: Could not read note - " + err)
+    }
+}
+
+# Append to note
+if choice == "4" {
+    print("")
+    note_name := input("Enter note name: ")
+    note_file := notes_dir + "/" + note_name + ".txt"
+    
+    note_exists := file_exists(note_file)
+    if note_exists == "false" {
+        print("Error: Note does not exist!")
+    } else {
+        print("Enter text to append:")
+        new_content := input("> ")
+        
+        try {
+            append_file(note_file, "\n" + new_content)
+            print("Content appended successfully!")
+        } except err {
+            print("Error appending: " + err)
+        }
+    }
+}
+
+# Exit
+if choice == "5" {
+    print("Thank you for using Note-Taking App!")
+}

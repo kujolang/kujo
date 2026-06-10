@@ -1,0 +1,423 @@
+/*
+ * Simple Blog API
+ * 
+ * A RESTful API for managing blog posts and comments.
+ * Demonstrates: CRUD operations, nested resources, validation, filtering
+ * 
+ * Features:
+ * - POST /posts - Create a new post
+ * - GET /posts - List all posts (with optional filtering)
+ * - GET /posts/:id - Get a specific post
+ * - PUT /posts/:id - Update a post
+ * - DELETE /posts/:id - Delete a post
+ * - POST /posts/:id/comments - Add comment to post
+ * - GET /posts/:id/comments - Get comments for post
+ * 
+ * Run: cargo run --quiet -- run examples/projects/blog_api.kujo
+ * Then test with:
+ *   curl -X POST http://localhost:5000/posts -d '{"title": "Hello", "content": "World"}'
+ *   curl http://localhost:5000/posts
+ */
+
+# In-memory storage
+posts := []
+comments := {}
+next_post_id := 1
+next_comment_id := 1
+
+# Validate post data
+func validate_post(data) {
+    errors := []
+    
+    if !has_key(data, "title") || len(data["title"]) == 0 {
+        push(errors, "Title is required")
+    } else if len(data["title"]) > 100 {
+        push(errors, "Title must be 100 characters or less")
+    }
+    
+    if !has_key(data, "content") || len(data["content"]) == 0 {
+        push(errors, "Content is required")
+    }
+    
+    if !has_key(data, "author") || len(data["author"]) == 0 {
+        push(errors, "Author is required")
+    }
+    
+    return errors
+}
+
+# Find post by ID
+func find_post(post_id) {
+    for post in posts {
+        if post["id"] == post_id {
+            return post
+        }
+    }
+    return 0
+}
+
+# Find post index by ID
+func find_post_index(post_id) {
+    idx := 0
+    for post in posts {
+        if post["id"] == post_id {
+            return idx
+        }
+        idx := idx + 1
+    }
+    return -1
+}
+
+# Create post summary
+func create_post_summary(post) {
+    content := post["content"]
+    summary := content
+    
+    if len(content) > 100 {
+        summary := substring(content, 0, 100) + "..."
+    }
+    
+    comment_count := 0
+    if has_key(comments, to_json(post["id"])) {
+        comment_count := len(comments[to_json(post["id"])])
+    }
+    
+    return {
+        "id": post["id"],
+        "title": post["title"],
+        "author": post["author"],
+        "summary": summary,
+        "comment_count": comment_count,
+        "created_at": post["created_at"]
+    }
+}
+
+print("📝 Simple Blog API")
+print("=" * 50)
+
+server := http_server(5000)
+
+# Create new post
+server := server.route("POST", "/posts", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        # Validate
+        validation_errors := validate_post(data)
+        if len(validation_errors) > 0 {
+            return json_response(400, {
+                "error": "Validation failed",
+                "details": validation_errors
+            })
+        }
+        
+        # Create post
+        post := {
+            "id": next_post_id,
+            "title": data["title"],
+            "content": data["content"],
+            "author": data["author"],
+            "created_at": now(),
+            "updated_at": now()
+        }
+        
+        push(posts, post)
+        next_post_id := next_post_id + 1
+        
+        print("✓ Created post #" + to_json(post["id"]) + ": " + post["title"])
+        
+        return json_response(201, post)
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# List all posts (with optional filtering)
+server := server.route("GET", "/posts", func(request) {
+    try {
+        # Check for author filter in request body
+        author_filter := ""
+        
+        if len(request.body) > 0 {
+            data := parse_json(request.body)
+            if has_key(data, "author") {
+                author_filter := data["author"]
+            }
+        }
+        
+        post_list := []
+        
+        for post in posts {
+            # Apply author filter if specified
+            if len(author_filter) > 0 {
+                if post["author"] != author_filter {
+                    continue
+                }
+            }
+            
+            push(post_list, create_post_summary(post))
+        }
+        
+        return json_response(200, {
+            "posts": post_list,
+            "total": len(post_list)
+        })
+        
+    } except err {
+        return json_response(500, {
+            "error": "Server error: " + err.message
+        })
+    }
+})
+
+# Get specific post
+server := server.route("GET", "/post", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "id") {
+            return json_response(400, {
+                "error": "Missing 'id' parameter"
+            })
+        }
+        
+        post_id := data["id"]
+        post := find_post(post_id)
+        
+        if post == 0 {
+            return json_response(404, {
+                "error": "Post not found"
+            })
+        }
+        
+        # Include comments
+        post_comments := []
+        comment_key := to_json(post_id)
+        
+        if has_key(comments, comment_key) {
+            post_comments := comments[comment_key]
+        }
+        
+        result := post
+        result["comments"] := post_comments
+        result["comment_count"] := len(post_comments)
+        
+        return json_response(200, result)
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# Update post
+server := server.route("PUT", "/posts", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "id") {
+            return json_response(400, {
+                "error": "Missing 'id' parameter"
+            })
+        }
+        
+        post_id := data["id"]
+        idx := find_post_index(post_id)
+        
+        if idx == -1 {
+            return json_response(404, {
+                "error": "Post not found"
+            })
+        }
+        
+        # Update fields
+        post := posts[idx]
+        
+        if has_key(data, "title") {
+            post["title"] := data["title"]
+        }
+        
+        if has_key(data, "content") {
+            post["content"] := data["content"]
+        }
+        
+        post["updated_at"] := now()
+        posts[idx] := post
+        
+        print("✓ Updated post #" + to_json(post_id))
+        
+        return json_response(200, post)
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# Delete post
+server := server.route("DELETE", "/posts", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "id") {
+            return json_response(400, {
+                "error": "Missing 'id' parameter"
+            })
+        }
+        
+        post_id := data["id"]
+        idx := find_post_index(post_id)
+        
+        if idx == -1 {
+            return json_response(404, {
+                "error": "Post not found"
+            })
+        }
+        
+        # Remove post (simplified - in real implementation would use array.remove())
+        new_posts := []
+        for post in posts {
+            if post["id"] != post_id {
+                push(new_posts, post)
+            }
+        }
+        posts := new_posts
+        
+        # Remove associated comments
+        comment_key := to_json(post_id)
+        if has_key(comments, comment_key) {
+            remove(comments, comment_key)
+        }
+        
+        print("✓ Deleted post #" + to_json(post_id))
+        
+        return json_response(200, {
+            "message": "Post deleted successfully"
+        })
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# Add comment to post
+server := server.route("POST", "/comments", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "post_id") {
+            return json_response(400, {
+                "error": "Missing 'post_id' parameter"
+            })
+        }
+        
+        if !has_key(data, "author") || !has_key(data, "content") {
+            return json_response(400, {
+                "error": "Missing 'author' or 'content' parameter"
+            })
+        }
+        
+        post_id := data["post_id"]
+        post := find_post(post_id)
+        
+        if post == 0 {
+            return json_response(404, {
+                "error": "Post not found"
+            })
+        }
+        
+        # Create comment
+        comment := {
+            "id": next_comment_id,
+            "post_id": post_id,
+            "author": data["author"],
+            "content": data["content"],
+            "created_at": now()
+        }
+        
+        next_comment_id := next_comment_id + 1
+        
+        # Store comment
+        comment_key := to_json(post_id)
+        if !has_key(comments, comment_key) {
+            comments[comment_key] := []
+        }
+        
+        post_comments := comments[comment_key]
+        push(post_comments, comment)
+        comments[comment_key] := post_comments
+        
+        print("✓ Added comment #" + to_json(comment["id"]) + " to post #" + to_json(post_id))
+        
+        return json_response(201, comment)
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# Get stats
+server := server.route("GET", "/stats", func(request) {
+    total_posts := len(posts)
+    total_comments := 0
+    
+    for key in comments {
+        total_comments := total_comments + len(comments[key])
+    }
+    
+    return json_response(200, {
+        "total_posts": total_posts,
+        "total_comments": total_comments,
+        "uptime": "running"
+    })
+})
+
+# API documentation
+server := server.route("GET", "/", func(request) {
+    return json_response(200, {
+        "service": "Simple Blog API",
+        "version": "1.0",
+        "endpoints": {
+            "POST /posts": "Create post (body: {\"title\": \"...\", \"content\": \"...\", \"author\": \"...\"})",
+            "GET /posts": "List all posts (optional body: {\"author\": \"...\"})",
+            "GET /post": "Get specific post (body: {\"id\": 1})",
+            "PUT /posts": "Update post (body: {\"id\": 1, \"title\": \"...\"})",
+            "DELETE /posts": "Delete post (body: {\"id\": 1})",
+            "POST /comments": "Add comment (body: {\"post_id\": 1, \"author\": \"...\", \"content\": \"...\"})",
+            "GET /stats": "Get statistics"
+        }
+    })
+})
+
+print("")
+print("🚀 Server running on http://localhost:5000")
+print("")
+print("Try these commands:")
+print("  # Create a post:")
+print("  curl -X POST http://localhost:5000/posts -d '{\"title\": \"My First Post\", \"content\": \"Hello, world!\", \"author\": \"Alice\"}'")
+print("")
+print("  # List all posts:")
+print("  curl http://localhost:5000/posts")
+print("")
+print("  # Get a specific post:")
+print("  curl http://localhost:5000/post -d '{\"id\": 1}'")
+print("")
+print("  # Add a comment:")
+print("  curl -X POST http://localhost:5000/comments -d '{\"post_id\": 1, \"author\": \"Bob\", \"content\": \"Great post!\"}'")
+print("")
+print("  # Get stats:")
+print("  curl http://localhost:5000/stats")
+print("")
+print("Press Ctrl+C to stop")
+print("=" * 50)
+
+server.listen()

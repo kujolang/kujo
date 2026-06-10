@@ -1,0 +1,34 @@
+# Simple test for operator overloading
+
+print("Starting test...");
+
+struct Vector {
+    x: float,
+    y: float,
+    
+    func op_add(other) {
+        print("Inside __add__ method");
+        print("self.x = " + to_string(x));
+        print("self.y = " + to_string(y));
+        print("other.x = " + to_string(other.x));
+        print("other.y = " + to_string(other.y));
+        return Vector { x: x + other.x, y: y + other.y };
+    }
+}
+
+print("Defined Vector struct");
+
+v1 := Vector { x: 1.0, y: 2.0 };
+print("Created v1");
+
+v2 := Vector { x: 3.0, y: 4.0 };
+print("Created v2");
+
+print("About to add vectors...");
+v3 := v1 + v2;
+print("Added vectors");
+
+print("v3.x = " + to_string(v3.x));
+print("v3.y = " + to_string(v3.y));
+
+print("Test complete!");

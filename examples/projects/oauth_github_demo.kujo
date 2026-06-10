@@ -1,0 +1,181 @@
+/*
+ * OAuth2 GitHub Integration Demo
+ * 
+ * Demonstrates OAuth2 authorization flow for GitHub authentication.
+ * 
+ * NEW v0.6.0 Features:
+ * - oauth2_auth_url(client_id, redirect_uri, auth_url, scope) - Generate authorization URLs
+ * - oauth2_get_token(code, client_id, client_secret, token_url, redirect_uri) - Exchange code for token
+ * 
+ * Setup:
+ *   1. Create a GitHub OAuth App: https://github.com/settings/developers
+ *   2. Set callback URL to: http://localhost:9090/callback
+ *   3. Set environment variables:
+ *      export GITHUB_CLIENT_ID="your-client-id"
+ *      export GITHUB_CLIENT_SECRET="your-client-secret"
+ * 
+ * Run: cargo run --quiet -- run examples/projects/oauth_github_demo.kujo
+ * 
+ * Flow:
+ *   1. Visit http://localhost:9090/
+ *   2. Click "Login with GitHub"
+ *   3. Authorize on GitHub
+ *   4. Get redirected back with access token
+ */
+
+print("=== OAuth2 GitHub Integration (v0.6.0) ===\n")
+
+# GitHub OAuth Configuration
+GITHUB_CLIENT_ID := env("GITHUB_CLIENT_ID") ?? "your-client-id-here"
+GITHUB_CLIENT_SECRET := env("GITHUB_CLIENT_SECRET") ?? "your-client-secret-here"
+GITHUB_AUTH_URL := "https://github.com/login/oauth/authorize"
+GITHUB_TOKEN_URL := "https://github.com/login/oauth/access_token"
+REDIRECT_URI := "http://localhost:9090/callback"
+SCOPE := "user:email"
+
+# Create HTTP server
+server := http_server(9090)
+
+# GET / - Home page with GitHub login
+server := server.route("GET", "/", func(req) {
+    # Generate OAuth authorization URL
+    auth_url := oauth2_auth_url(
+        GITHUB_CLIENT_ID,
+        REDIRECT_URI,
+        GITHUB_AUTH_URL,
+        SCOPE
+    )
+    
+    html := "<html><head><title>GitHub OAuth Demo</title><style>"
+    html := html + "body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }"
+    html := html + "h1 { color: #333; } .btn { display: inline-block; padding: 12px 24px; "
+    html := html + "background: #24292e; color: white; text-decoration: none; border-radius: 6px; }"
+    html := html + ".info { background: #f6f8fa; padding: 15px; border-radius: 6px; margin: 20px 0; }"
+    html := html + ".code { background: #f6f8fa; padding: 10px; border-radius: 4px; overflow-x: auto; }"
+    html := html + "</style></head><body>"
+    html := html + "<h1>🔐 GitHub OAuth2 Demo</h1>"
+    html := html + "<p>This demo shows how to use OAuth2 to authenticate with GitHub.</p>"
+    html := html + "<div class='info'>"
+    html := html + "<strong>Setup Required:</strong><br>"
+    html := html + "1. Create OAuth App at GitHub<br>"
+    html := html + "2. Set GITHUB_CLIENT_ID env variable<br>"
+    html := html + "3. Set GITHUB_CLIENT_SECRET env variable<br>"
+    html := html + "4. Set callback URL to: " + REDIRECT_URI
+    html := html + "</div>"
+    html := html + "<a href='" + auth_url + "' class='btn'>Login with GitHub</a>"
+    html := html + "<h3>Generated Authorization URL:</h3>"
+    html := html + "<div class='code'>" + auth_url + "</div>"
+    html := html + "<h3>How it works:</h3>"
+    html := html + "<ol>"
+    html := html + "<li>Click button to be redirected to GitHub</li>"
+    html := html + "<li>Authorize this application</li>"
+    html := html + "<li>GitHub redirects back with authorization code</li>"
+    html := html + "<li>We exchange code for access token</li>"
+    html := html + "<li>Use token to make API requests</li>"
+    html := html + "</ol>"
+    html := html + "</body></html>"
+    
+    return html_response(200, html)
+})
+
+# GET /callback - OAuth callback handler
+server := server.route("GET", "/callback", func(req) {
+    html := "<html><head><title>OAuth Callback</title><style>"
+    html := html + "body { font-family: Arial; max-width: 600px; margin: 50px auto; padding: 20px; }"
+    html := html + ".success { background: #d4edda; padding: 20px; border-radius: 6px; border: 1px solid #c3e6cb; }"
+    html := html + "code { background: #f6f8fa; padding: 2px 6px; border-radius: 3px; font-family: monospace; }"
+    html := html + "pre { background: #f6f8fa; padding: 15px; border-radius: 4px; overflow-x: auto; }"
+    html := html + "</style></head><body>"
+    html := html + "<h1>OAuth Callback</h1>"
+    html := html + "<div class='success'>"
+    html := html + "<h3>✓ Callback Received!</h3>"
+    html := html + "<p>In a production app, this handler would:</p>"
+    html := html + "<ol>"
+    html := html + "<li>Extract the authorization code from query params</li>"
+    html := html + "<li>Call <code>oauth2_get_token()</code> to exchange it</li>"
+    html := html + "<li>Store the access token securely</li>"
+    html := html + "<li>Make authenticated API requests to GitHub</li>"
+    html := html + "</ol>"
+    html := html + "<p><strong>Code Example:</strong></p>"
+    html := html + "<pre># Extract code from query params\n"
+    html := html + "code := req.query.code\n\n"
+    html := html + "# Exchange code for access token\n"
+    html := html + "token_data := oauth2_get_token(\n"
+    html := html + "    code,\n"
+    html := html + "    GITHUB_CLIENT_ID,\n"
+    html := html + "    GITHUB_CLIENT_SECRET,\n"
+    html := html + "    GITHUB_TOKEN_URL,\n"
+    html := html + "    REDIRECT_URI\n"
+    html := html + ")\n\n"
+    html := html + "# Use the access token\n"
+    html := html + "access_token := token_data.access_token\n"
+    html := html + "# Make API requests with token...</pre>"
+    html := html + "</div>"
+    html := html + "<br><a href='/'>Back to Home</a>"
+    html := html + "</body></html>"
+    
+    print("✓ OAuth callback received")
+    
+    return html_response(200, html)
+})
+
+# GET /test - Test OAuth functions
+server := server.route("GET", "/test", func(req) {
+    # Generate authorization URL
+    auth_url := oauth2_auth_url(
+        GITHUB_CLIENT_ID,
+        REDIRECT_URI,
+        GITHUB_AUTH_URL,
+        SCOPE
+    )
+    
+    html := "<html><head><title>Test OAuth Functions</title><style>"
+    html := html + "body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }"
+    html := html + ".code { background: #f6f8fa; padding: 15px; border-radius: 6px; overflow-x: auto; word-break: break-all; }"
+    html := html + "h3 { color: #333; }"
+    html := html + "</style></head><body>"
+    html := html + "<h1>Test OAuth2 Functions</h1>"
+    html := html + "<h3>1. Authorization URL Generation</h3>"
+    html := html + "<p>Generated using <code>oauth2_auth_url()</code>:</p>"
+    html := html + "<div class='code'>" + auth_url + "</div>"
+    html := html + "<h3>2. Token Exchange</h3>"
+    html := html + "<p>After user authorizes, call <code>oauth2_get_token(code, ...)</code></p>"
+    html := html + "<p>Returns JSON: <code>{\"access_token\": \"...\", \"token_type\": \"bearer\", ...}</code></p>"
+    html := html + "<h3>3. Works with Other Providers</h3>"
+    html := html + "<p>Same functions work for Google, Discord, etc. Just change the URLs:</p>"
+    html := html + "<ul>"
+    html := html + "<li><strong>Google:</strong> https://accounts.google.com/o/oauth2/v2/auth</li>"
+    html := html + "<li><strong>Discord:</strong> https://discord.com/api/oauth2/authorize</li>"
+    html := html + "</ul>"
+    html := html + "<br><a href='/'>Back to Home</a>"
+    html := html + "</body></html>"
+    
+    return html_response(200, html)
+})
+
+print("OAuth2 GitHub Demo")
+print("==================")
+print("Port: 9090")
+print("Redirect URI: " + REDIRECT_URI)
+print("")
+print("Configuration:")
+if GITHUB_CLIENT_ID == "your-client-id-here" {
+    print("  Client ID: [NOT SET]")
+} else {
+    print("  Client ID: [CONFIGURED]")
+}
+if GITHUB_CLIENT_SECRET == "your-client-secret-here" {
+    print("  Client Secret: [NOT SET]")
+} else {
+    print("  Client Secret: [CONFIGURED]")
+}
+print("")
+print("Endpoints:")
+print("  GET / - Home page with GitHub login")
+print("  GET /callback - OAuth callback handler")
+print("  GET /test - Test OAuth functions")
+print("")
+print("Visit http://localhost:9090 to start!")
+print("Press Ctrl+C to stop\n")
+
+server.listen()

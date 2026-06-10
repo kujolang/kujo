@@ -1,0 +1,19 @@
+# Test with NEW variable each time
+
+db := db_connect("sqlite", ":memory:")
+db_execute(db, "CREATE TABLE test (id INTEGER)", [])
+
+print("1. First begin...")
+db_begin(db)
+
+print("2. Second begin into new var...")
+try {
+    error_value := db_begin(db)
+    print("3. Got result!")
+    print(error_value)
+} except error {
+    print("3. Caught expected double-begin error")
+}
+
+print("Done!")
+db_close(db)

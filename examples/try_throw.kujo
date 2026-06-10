@@ -1,0 +1,9 @@
+func risky() {
+    throw("danger zone")
+}
+
+try {
+    risky()
+} except err {
+    print("Caught error:", err)
+}

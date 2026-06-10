@@ -1,0 +1,335 @@
+# Real-World Benchmark: String Processing
+# Tests various string operations: concatenation, searching, parsing, transformations
+
+func benchmark_string_concatenation(num_iterations) {
+    # Test different concatenation strategies
+    
+    # Strategy 1: Direct concatenation with +
+    start := time_ms()
+    result := ""
+    for i in range(num_iterations) {
+        result := result + "item" + str(i) + ","
+    }
+    time1 := time_ms() - start
+    
+    # Strategy 2: Array join (more efficient)
+    start := time_ms()
+    parts := []
+    for i in range(num_iterations) {
+        parts := parts + ["item" + str(i)]
+    }
+    result2 := join(parts, ",")
+    time2 := time_ms() - start
+    
+    return {
+        "operation": "concatenation",
+        "iterations": num_iterations,
+        "direct_concat_ms": time1,
+        "array_join_ms": time2,
+        "speedup": time1 / time2
+    }
+}
+
+func benchmark_string_searching(text_size, num_searches) {
+    # Create large text
+    base := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+    text := ""
+    for i in range(text_size / len(base)) {
+        text := text + base + str(i) + " "
+    }
+    
+    # Search for patterns
+    patterns := ["Lorem", "dolor", "consectetur", "adipiscing", "nonexistent"]
+    
+    start := time_ms()
+    
+    total_found := 0
+    for _ in range(num_searches) {
+        for pattern in patterns {
+            if contains(text, pattern) {
+                total_found := total_found + 1
+            }
+        }
+    }
+    
+    elapsed := time_ms() - start
+    
+    return {
+        "operation": "searching",
+        "text_size": len(text),
+        "num_searches": num_searches * len(patterns),
+        "time_ms": elapsed,
+        "searches_per_sec": ((num_searches * len(patterns)) / elapsed) * 1000,
+        "found": total_found
+    }
+}
+
+func benchmark_string_splitting() {
+    # Create CSV-like data
+    lines := []
+    for i in range(100) {
+        line := "user" + str(i) + ",email" + str(i) + "@test.com," + str(20 + i) + ",active"
+        lines := lines + [line]
+    }
+    text := join(lines, "\n")
+    
+    # Benchmark splitting and parsing
+    start := time_ms()
+    
+    parsed_users := []
+    text_lines := split(text, "\n")
+    
+    for line in text_lines {
+        fields := split(line, ",")
+        if len(fields) >= 4 {
+            user := {
+                "username": fields[0],
+                "email": fields[1],
+                "age": fields[2],
+                "status": fields[3]
+            }
+            parsed_users := parsed_users + [user]
+        }
+    }
+    
+    elapsed := time_ms() - start
+    
+    return {
+        "operation": "splitting_parsing",
+        "lines": len(text_lines),
+        "users_parsed": len(parsed_users),
+        "time_ms": elapsed,
+        "lines_per_sec": (len(text_lines) / elapsed) * 1000
+    }
+}
+
+func benchmark_string_transformations(num_operations) {
+    test_strings := [
+        "hello world",
+        "The Quick Brown Fox",
+        "test@example.com",
+        "snake_case_variable",
+        "kebab-case-name"
+    ]
+    
+    # Test various transformations
+    start := time_ms()
+    
+    for _ in range(num_operations) {
+        for s in test_strings {
+            # Upper/lower case
+            upper := upper_case(s)
+            lower := lower_case(s)
+            
+            # Trimming
+            padded := "  " + s + "  "
+            trimmed := trim(padded)
+            
+            # Replacement
+            replaced := replace(s, "e", "3")
+            
+            # Case conversions
+            camel := to_camel_case(s)
+            snake := to_snake_case(s)
+            kebab := to_kebab_case(s)
+        }
+    }
+    
+    elapsed := time_ms() - start
+    ops_total := num_operations * len(test_strings) * 9  # 9 operations per string
+    
+    return {
+        "operation": "transformations",
+        "num_operations": ops_total,
+        "time_ms": elapsed,
+        "ops_per_sec": (ops_total / elapsed) * 1000
+    }
+}
+
+func benchmark_string_pattern_matching(num_iterations) {
+    # Simulate log file parsing with pattern matching
+    log_entries := [
+        "[INFO] 2026-01-27 10:00:00 Application started",
+        "[ERROR] 2026-01-27 10:01:23 Connection timeout",
+        "[WARN] 2026-01-27 10:02:45 High memory usage",
+        "[INFO] 2026-01-27 10:03:12 Request processed",
+        "[DEBUG] 2026-01-27 10:04:00 Cache hit",
+        "[ERROR] 2026-01-27 10:05:33 Database error"
+    ]
+    
+    start := time_ms()
+    
+    info_count := 0
+    error_count := 0
+    warn_count := 0
+    debug_count := 0
+    
+    for _ in range(num_iterations) {
+        for entry in log_entries {
+            if contains(entry, "[INFO]") {
+                info_count := info_count + 1
+            } else if contains(entry, "[ERROR]") {
+                error_count := error_count + 1
+            } else if contains(entry, "[WARN]") {
+                warn_count := warn_count + 1
+            } else if contains(entry, "[DEBUG]") {
+                debug_count := debug_count + 1
+            }
+        }
+    }
+    
+    elapsed := time_ms() - start
+    total_processed := num_iterations * len(log_entries)
+    
+    return {
+        "operation": "pattern_matching",
+        "entries_processed": total_processed,
+        "time_ms": elapsed,
+        "entries_per_sec": (total_processed / elapsed) * 1000,
+        "info": info_count,
+        "errors": error_count,
+        "warnings": warn_count,
+        "debug": debug_count
+    }
+}
+
+func benchmark_string_validation(num_validations) {
+    # Email validation patterns
+    test_emails := [
+        "valid@example.com",
+        "user.name@test.co.uk",
+        "invalid@",
+        "@invalid.com",
+        "no-at-sign.com",
+        "valid+tag@domain.org"
+    ]
+    
+    start := time_ms()
+    
+    valid_count := 0
+    invalid_count := 0
+    
+    for _ in range(num_validations) {
+        for email in test_emails {
+            # Simple validation rules
+            has_at := contains(email, "@")
+            has_dot := contains(email, ".")
+            parts := split(email, "@")
+            
+            if has_at and has_dot and len(parts) == 2 and len(parts[0]) > 0 and len(parts[1]) > 0 {
+                valid_count := valid_count + 1
+            } else {
+                invalid_count := invalid_count + 1
+            }
+        }
+    }
+    
+    elapsed := time_ms() - start
+    total_checked := num_validations * len(test_emails)
+    
+    return {
+        "operation": "validation",
+        "validations": total_checked,
+        "time_ms": elapsed,
+        "validations_per_sec": (total_checked / elapsed) * 1000,
+        "valid": valid_count,
+        "invalid": invalid_count
+    }
+}
+
+func benchmark_substring_operations(num_operations) {
+    text := "The quick brown fox jumps over the lazy dog. This is a test string for substring operations."
+    
+    start := time_ms()
+    
+    for _ in range(num_operations) {
+        # Various substring operations
+        part1 := substring(text, 0, 10)
+        part2 := substring(text, 10, 20)
+        part3 := substring(text, len(text) - 10, len(text))
+        
+        # Index operations
+        idx1 := index_of(text, "fox")
+        idx2 := index_of(text, "test")
+        idx3 := index_of(text, "missing")  # -1
+        
+        # Length checks
+        length := len(text)
+        empty := len("")
+    }
+    
+    elapsed := time_ms() - start
+    ops_total := num_operations * 9  # 9 operations per iteration
+    
+    return {
+        "operation": "substring_ops",
+        "operations": ops_total,
+        "time_ms": elapsed,
+        "ops_per_sec": (ops_total / elapsed) * 1000
+    }
+}
+
+# Main benchmark execution
+print("=== String Processing Benchmark ===")
+print("")
+
+print("1. String Concatenation Benchmark")
+concat_sizes := [50, 100, 200]
+for size in concat_sizes {
+    result := benchmark_string_concatenation(size)
+    print("  Iterations:", size)
+    print("    Direct concat:", result["direct_concat_ms"], "ms")
+    print("    Array join:", result["array_join_ms"], "ms")
+    print("    Speedup:", round(result["speedup"] * 100) / 100, "x")
+}
+print("")
+
+print("2. String Searching Benchmark")
+search_result := benchmark_string_searching(1000, 100)
+print("  Text size:", search_result["text_size"], "chars")
+print("  Searches:", search_result["num_searches"])
+print("  Time:", search_result["time_ms"], "ms")
+print("  Throughput:", int(search_result["searches_per_sec"]), "searches/s")
+print("")
+
+print("3. String Splitting & Parsing Benchmark")
+split_result := benchmark_string_splitting()
+print("  Lines parsed:", split_result["lines"])
+print("  Users created:", split_result["users_parsed"])
+print("  Time:", split_result["time_ms"], "ms")
+print("  Throughput:", int(split_result["lines_per_sec"]), "lines/s")
+print("")
+
+print("4. String Transformations Benchmark")
+transform_result := benchmark_string_transformations(50)
+print("  Operations:", transform_result["num_operations"])
+print("  Time:", transform_result["time_ms"], "ms")
+print("  Throughput:", int(transform_result["ops_per_sec"]), "ops/s")
+print("")
+
+print("5. Pattern Matching Benchmark (Log Parsing)")
+pattern_result := benchmark_string_pattern_matching(100)
+print("  Entries processed:", pattern_result["entries_processed"])
+print("  Time:", pattern_result["time_ms"], "ms")
+print("  Throughput:", int(pattern_result["entries_per_sec"]), "entries/s")
+print("  Found: INFO:", pattern_result["info"], 
+      "| ERROR:", pattern_result["errors"],
+      "| WARN:", pattern_result["warnings"])
+print("")
+
+print("6. String Validation Benchmark (Email)")
+validation_result := benchmark_string_validation(100)
+print("  Validations:", validation_result["validations"])
+print("  Time:", validation_result["time_ms"], "ms")
+print("  Throughput:", int(validation_result["validations_per_sec"]), "validations/s")
+print("  Valid:", validation_result["valid"], "| Invalid:", validation_result["invalid"])
+print("")
+
+print("7. Substring Operations Benchmark")
+substring_result := benchmark_substring_operations(500)
+print("  Operations:", substring_result["operations"])
+print("  Time:", substring_result["time_ms"], "ms")
+print("  Throughput:", int(substring_result["ops_per_sec"]), "ops/s")
+print("")
+
+print("=== Benchmark Complete ===")

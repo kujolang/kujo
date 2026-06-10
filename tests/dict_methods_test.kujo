@@ -1,0 +1,41 @@
+# Test Dict/Map Methods
+
+# Create test dicts
+dict1 := {"a": 1, "b": 2, "c": 3}
+dict2 := {"d": 4, "e": 5}
+
+# Test keys
+print("keys:", keys(dict1))
+
+# Test values
+print("values:", values(dict1))
+
+# Test items
+print("items:", items(dict1))
+
+# Test has_key
+print("has_key 'a':", has_key(dict1, "a"))
+print("has_key 'z':", has_key(dict1, "z"))
+
+# Test get
+print("get 'a':", get(dict1, "a"))
+print("get 'z' with default:", get(dict1, "z", 99))
+
+# Test merge
+merged := merge(dict1, dict2)
+print("merge:", merged)
+
+# Test clear (array)
+arr := [1, 2, 3]
+arr_cleared := clear(arr)
+print("clear array:", arr_cleared)
+
+# Test clear (dict)
+dict_cleared := clear(dict1)
+print("clear dict:", dict_cleared)
+
+# Test remove (dict)
+result := remove(dict1, "b")
+print("remove 'b' from dict:", result)
+
+print("\nAll dict method tests passed!")

@@ -1,0 +1,30 @@
+# Higher-Order Functions Benchmark
+# Tests: Function values, closures, map/filter/reduce operations
+
+func create_adder(x) {
+    return func(y) { return x + y }
+}
+
+func benchmark_hof(count) {
+    # Create array
+    let arr := range(count)
+    
+    # Map
+    let doubled := map(arr, func(x) { return x * 2 })
+    
+    # Filter
+    let evens := filter(doubled, func(x) { return x % 2 == 0 })
+    
+    # Reduce
+    let sum := reduce(evens, func(acc, x) { return acc + x }, 0)
+    
+    return sum
+}
+
+# Run benchmark
+let start := performance_now()
+let result := benchmark_hof(1000)
+let end := performance_now()
+
+print("HOF result: ", result)
+print("Time taken: ", (end - start), " ms")

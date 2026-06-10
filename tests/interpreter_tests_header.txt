@@ -1,0 +1,24 @@
+// Integration tests for the Kujo interpreter
+//
+// These tests verify the interpreter's behavior by running complete Kujo programs
+// and checking the results. Tests cover:
+// - Variable assignment and scoping
+// - Control flow (if/else, loops, match)
+// - Functions and closures
+// - Data structures (arrays, dicts, structs)
+// - Error handling
+// - Built-in functions
+
+use kujo::interpreter::{Interpreter, Value};
+use kujo::lexer::tokenize;
+use kujo::parser::Parser;
+
+fn run_code(code: &str) -> Interpreter {
+    let tokens = tokenize(code);
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse();
+    let mut interp = Interpreter::new();
+    interp.eval_stmts(&program);
+    interp
+}
+

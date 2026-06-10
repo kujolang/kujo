@@ -1,0 +1,40 @@
+{
+  "name": "error_payload_consistency",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "method": "textDocument/definition",
+      "params": {
+        "position": {
+          "line": 0,
+          "character": 0
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "method": "workspace/unsupportedMethod",
+      "params": {}
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "id": 3,
+      "error": {
+        "code": -32602,
+        "message": "Missing textDocument.uri"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 4,
+      "error": {
+        "code": -32601,
+        "message": "Method 'workspace/unsupportedMethod' is not supported"
+      }
+    }
+  ]
+}

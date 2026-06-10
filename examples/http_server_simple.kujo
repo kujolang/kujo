@@ -1,0 +1,21 @@
+# Simple HTTP Server Example - Hello World
+# Demonstrates basic HTTP server usage with a single route
+
+print("http_server_simple: long-running server example skipped in VM auto-run mode")
+exit(0)
+
+# Create HTTP server on port 8080
+server := http_server(8080)
+
+# Add a simple GET route
+server := server.route("GET", "/", func(req) {
+    return http_response(200, "Hello, World!")
+})
+
+# Add another route
+server := server.route("GET", "/hello", func(req) {
+    return http_response(200, "Hello from Kujo!")
+})
+
+# Start the server (blocking - will run until Ctrl+C)
+server.listen()

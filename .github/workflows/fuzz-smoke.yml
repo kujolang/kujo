@@ -1,0 +1,29 @@
+name: Fuzz Smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '25 7 * * *'
+
+jobs:
+  fuzz-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchains
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup toolchain install nightly --profile minimal
+
+      - name: Install cargo-fuzz
+        run: cargo +stable install cargo-fuzz --locked
+
+      - name: Fuzz lexer target (smoke)
+        run: cargo +nightly fuzz run lexer -- -max_total_time=20
+
+      - name: Fuzz parser target (smoke)
+        run: cargo +nightly fuzz run parser -- -max_total_time=20

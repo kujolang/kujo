@@ -1,0 +1,3 @@
+[RUFCLI001] [cli] error: serve max header bytes must be greater than 0
+  --> serve_invalid_header_limit.kujo:1:1
+  = help: Pass a positive integer to --max-header-bytes

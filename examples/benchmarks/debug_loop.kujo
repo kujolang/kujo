@@ -1,0 +1,16 @@
+# Debug loop with prints
+let sum := 0
+let i := 0
+print("Starting loop, sum=", sum, " i=", i)
+
+loop {
+    if i >= 3 {
+        print("Breaking at i=", i)
+        break
+    }
+    print("Before: sum=", sum, " i=", i)
+    sum := sum + i
+    i := i + 1
+    print("After: sum=", sum, " i=", i)
+}
+print("Final sum: ", sum)

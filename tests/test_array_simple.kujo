@@ -1,0 +1,5 @@
+# Simple array test
+arr := [1, 2, 3]
+print("arr:", arr)
+arr2 := push(arr, 4)
+print("after push:", arr2)

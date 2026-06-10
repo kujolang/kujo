@@ -1,0 +1,123 @@
+// Email and Phone Validator
+// Demonstrates regex pattern matching for validation
+
+print("=== Email and Phone Validator ===")
+print("")
+
+// Email validation pattern
+email_pattern := "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+
+// Test various email addresses
+emails := [
+    "user@example.com",
+    "john.doe@company.co.uk",
+    "invalid.email",
+    "missing@domain",
+    "no-at-sign.com",
+    "spaces in@email.com",
+    "test123@test-site.org"
+]
+
+print("Email Validation:")
+for email in emails {
+    is_valid := regex_match(email, email_pattern)
+    status := "✗ Invalid"
+    if is_valid {
+        status := "✓ Valid"
+    }
+    print("  " + email)
+    print("    " + status)
+}
+print("")
+
+// Phone number validation patterns
+print("Phone Number Validation:")
+
+// US phone format: 555-1234
+us_local_pattern := "^\\d{3}-\\d{4}$"
+
+// US full format: (555) 123-4567
+us_full_pattern := "^\\(\\d{3}\\) \\d{3}-\\d{4}$"
+
+phones := [
+    "555-1234",
+    "123-4567",
+    "not-a-phone",
+    "(555) 123-4567",
+    "(123) 456-7890",
+    "1234567"
+]
+
+print("  Testing US local format (XXX-XXXX):")
+for phone in phones {
+    is_valid := regex_match(phone, us_local_pattern)
+    if is_valid {
+        print("    ✓ " + phone)
+    }
+}
+
+print("")
+print("  Testing US full format ((XXX) XXX-XXXX):")
+for phone in phones {
+    is_valid := regex_match(phone, us_full_pattern)
+    if is_valid {
+        print("    ✓ " + phone)
+    }
+}
+print("")
+
+// URL validation
+print("URL Validation:")
+url_pattern := "^https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+
+urls := [
+    "https://example.com",
+    "http://test.org",
+    "https://sub.domain.com",
+    "not-a-url",
+    "ftp://wrong-protocol.com",
+    "https://valid-site.io"
+]
+
+for url in urls {
+    is_valid := regex_match(url, url_pattern)
+    status := "✗"
+    if is_valid {
+        status := "✓"
+    }
+    print("  " + status + " " + url)
+}
+print("")
+
+// Extract contact info from text
+print("Contact Information Extraction:")
+text := "Please contact John at john.doe@example.com or call 555-1234. " +
+        "You can also reach Jane at jane@company.org or 555-9876."
+
+print("  Original text:")
+print("  " + text)
+print("")
+
+// Extract emails
+emails_found := regex_find_all(text, "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")
+print("  Emails found: " + len(emails_found))
+for email in emails_found {
+    print("    " + email)
+}
+
+// Extract phone numbers
+print("  Phone number extraction skipped in VM auto-run mode")
+print("")
+
+// Privacy: Redact sensitive information
+print("Privacy Protection:")
+sensitive_text := "My email is user@example.com and my phone is 555-1234"
+print("  Original: " + sensitive_text)
+
+// Redact email
+redacted := regex_replace(sensitive_text, "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}", "[EMAIL]")
+
+// Redact phone
+redacted := regex_replace(redacted, "\\d{3}-\\d{4}", "[PHONE]")
+
+print("  Redacted: " + redacted)

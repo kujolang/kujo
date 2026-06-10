@@ -1,0 +1,105 @@
+# Comprehensive Test for Function Cleanup Bug Fix
+# 
+# This test verifies that functions containing loops no longer hang
+# during program cleanup. Previously, deeply nested AST structures
+# would cause stack overflow during Rust's automatic drop.
+
+print("=== Testing Function Cleanup Bug Fix ===")
+print("")
+
+# Test 1: Simple function with loop
+print("Test 1: Simple loop in function")
+func test_simple() {
+    x := 0
+    for i in 3 {
+        x := x + 1
+    }
+    return x
+}
+result1 := test_simple()
+print("  Result:", result1, "(expected 3)")
+
+# Test 2: Nested loops in function
+print("Test 2: Nested loops in function")
+func test_nested() {
+    total := 0
+    for i in 3 {
+        for j in 2 {
+            total := total + 1
+        }
+    }
+    return total
+}
+result2 := test_nested()
+print("  Result:", result2, "(expected 6)")
+
+# Test 3: Loop with conditional
+print("Test 3: Loop with conditional in function")
+func test_conditional() {
+    evens := 0
+    for i in 10 {
+        if i % 2 == 0 {
+            evens := evens + 1
+        }
+    }
+    return evens
+}
+result3 := test_conditional()
+print("  Result:", result3, "(expected 5)")
+
+# Test 4: Multiple functions with loops
+print("Test 4: Multiple functions with loops")
+func helper1() {
+    sum := 0
+    for i in 5 {
+        sum := sum + i
+    }
+    return sum
+}
+func helper2() {
+    product := 1
+    for i in 4 {
+        product := product * (i + 1)
+    }
+    return product
+}
+result4a := helper1()
+result4b := helper2()
+print("  Results:", result4a, result4b, "(expected 10 24)")
+
+# Test 5: Function that returns a function (higher-order)
+print("Test 5: Higher-order function with loops")
+func make_counter() {
+    count := 0
+    # Anonymous function with loop
+    return func() {
+        for i in 1 {
+            count := count + 1
+        }
+        return count
+    }
+}
+counter := make_counter()
+result5a := counter()
+result5b := counter()
+print("  Results:", result5a, result5b, "(expected 1 2)")
+
+# Test 6: Recursive-like function with loops
+print("Test 6: Complex function with multiple control structures")
+func complex_test(n) {
+    result := []
+    for i in n {
+        if i > 0 {
+            for j in i {
+                result := push(result, j)
+            }
+        }
+    }
+    return result
+}
+result6 := complex_test(4)
+print("  Result length:", len(result6), "(expected 6)")
+
+print("")
+print("=== All Tests Completed Successfully! ===")
+print("Program exiting cleanly without hanging...")

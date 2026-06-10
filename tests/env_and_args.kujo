@@ -1,0 +1,90 @@
+# Test: Environment Variables and Command-Line Arguments
+# Tests for new built-in functions: env_or, env_int, env_float, env_bool, env_required, env_set, env_list
+
+print("=== Environment Variable Tests ===")
+
+# Test: env_set and env - basic get/set
+env_set("TEST_VAR", "hello")
+let value := env("TEST_VAR")
+print(value)
+
+# Test: env_or - get with default
+env_set("EXISTS", "world")
+let with_value := env_or("EXISTS", "default")
+let with_default := env_or("DOES_NOT_EXIST", "default_value")
+print(with_value)
+print(with_default)
+
+# Test: env_int - parse as integer
+env_set("PORT", "8080")
+let port := env_int("PORT")
+print(port)
+print(type(port))
+
+# Test: env_int - with invalid value (should error)
+env_set("INVALID_INT", "not_a_number")
+try {
+    let bad := env_int("INVALID_INT")
+    print("Should not reach here")
+} except error {
+    print("Caught expected error for invalid int")
+}
+
+# Test: env_float - parse as float
+env_set("TIMEOUT", "30.5")
+let timeout := env_float("TIMEOUT")
+print(timeout)
+print(type(timeout))
+
+# Test: env_bool - parse as boolean
+env_set("DEBUG", "true")
+let debug_enabled := env_bool("DEBUG")
+print(debug_enabled)
+print(type(debug_enabled))
+
+env_set("VERBOSE", "1")
+let verbose := env_bool("VERBOSE")
+print(verbose)
+
+env_set("QUIET", "false")
+let quiet := env_bool("QUIET")
+print(quiet)
+
+env_set("OFF", "0")
+let off := env_bool("OFF")
+print(off)
+
+# Test: env_required - error if not set
+env_set("API_KEY", "secret123")
+let api_key := env_required("API_KEY")
+print(api_key)
+
+# Test: env_required - missing variable
+try {
+    let missing := env_required("THIS_DOES_NOT_EXIST")
+    print("Should not reach here")
+} except error {
+    print("Caught expected error for missing required var")
+}
+
+# Test: env_list - get all environment variables
+let all_env := env_list()
+print(type(all_env))
+
+# Check that our test variables are in the list
+let has_test_var := has_key(all_env, "TEST_VAR")
+let has_port := has_key(all_env, "PORT")
+print(has_test_var)
+print(has_port)
+
+print("=== Command-Line Arguments Tests ===")
+
+# Test: args - get command-line arguments
+let cli_args := args()
+print(type(cli_args))
+
+# Note: When running this test, the args will depend on how it's invoked
+# For now, just verify it returns an array
+print("Args is array")
+
+print("=== All Tests Complete ===")

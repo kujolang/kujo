@@ -1,0 +1,70 @@
+# TCP Client Example
+# Demonstrates connecting to a TCP server and sending/receiving data
+# Run with: kujo run examples/tcp_client.kujo
+
+print("=== TCP Client Example ===")
+print("")
+
+print("This example requires a local TCP echo server.")
+print("Skipping live connection attempt in auto-run mode.")
+print("Run tcp_echo_server.kujo first, then remove this guard to test interactively.")
+print("")
+print("=== Client Example Complete ===")
+exit(0)
+
+# Configuration - connect to echo server
+host := "127.0.0.1"
+port := 8080
+
+print("Connecting to ${host}:${port}...")
+
+# Connect to the server
+client := tcp_connect(host, port)
+
+if type(client) == "tcpstream" {
+    print("✓ Connected to server")
+    print("")
+    
+    # Receive welcome message
+    welcome := tcp_receive(client, 1024)
+    print(welcome)
+    
+    # Send a few test messages
+    messages := [
+        "Hello, Server!",
+        "How are you?",
+        "Testing TCP communication",
+        "This is the last message"
+    ]
+    
+    for message in messages {
+        # Send message
+        print("Sending: ${message}")
+        bytes_sent := tcp_send(client, message + "\n")
+        print("  → Sent ${bytes_sent} bytes")
+        
+        # Receive echo response
+        response := tcp_receive(client, 1024)
+        print("  ← ${trim(response)}")
+        print("")
+    }
+    
+    # Send quit command
+    print("Sending quit command...")
+    tcp_send(client, "quit\n")
+    
+    # Receive goodbye message
+    goodbye := tcp_receive(client, 1024)
+    print(goodbye)
+    
+    # Close connection
+    tcp_close(client)
+    print("✓ Connection closed")
+} else {
+    print("✗ Failed to connect to server")
+    print("Make sure the echo server is running:")
+    print("  kujo run examples/tcp_echo_server.kujo")
+}
+
+print("")
+print("=== Client Example Complete ===")

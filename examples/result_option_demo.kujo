@@ -1,0 +1,245 @@
+# Result and Option Types Demo
+# Demonstrates Rust-style error handling and null safety in Kujo
+
+print("=== Result Type Examples ===")
+print()
+
+# Example 1: Division with error handling
+func divide(a, b) {
+    if b == 0 {
+        return Err("Cannot divide by zero")
+    }
+    return Ok(a / b)
+}
+
+print("Example 1: Safe Division")
+let result1 := divide(10, 2)
+match result1 {
+    case Ok(value): {
+        print("10 / 2 = " + to_string(value))
+    }
+    case Err(error): {
+        print("Error: " + error)
+    }
+}
+
+let result2 := divide(10, 0)
+match result2 {
+    case Ok(value): {
+        print("10 / 0 = " + to_string(value))
+    }
+    case Err(error): {
+        print("Error: " + error)
+    }
+}
+print()
+
+# Example 2: File parsing simulation
+print("Example 2: Parse User Input")
+
+func parse_age(input) {
+    # Simulate parsing - in real code this would convert string to int
+    if input == "invalid" {
+        return Err("Invalid age format")
+    }
+    if input == "negative" {
+        return Err("Age cannot be negative")
+    }
+    return Ok(25)  # Simulated valid age
+}
+
+func validate_age(age) {
+    if age < 0 {
+        return Err("Age cannot be negative")
+    }
+    if age > 150 {
+        return Err("Age seems unrealistic")
+    }
+    return Ok(age)
+}
+
+let age_input := "valid"
+let parsed := parse_age(age_input)
+
+match parsed {
+    case Ok(age): {
+        let validated := validate_age(age)
+        match validated {
+            case Ok(valid_age): {
+                print("Valid age: " + to_string(valid_age))
+            }
+            case Err(error): {
+                print("Validation error: " + error)
+            }
+        }
+    }
+    case Err(error): {
+        print("Parse error: " + error)
+    }
+}
+print()
+
+# Example 3: Option Type for nullable values
+print("=== Option Type Examples ===")
+print()
+
+print("Example 3: User Lookup")
+
+func find_user_by_id(id) {
+    if id == 1 {
+        return Some("Alice")
+    }
+    if id == 2 {
+        return Some("Bob")
+    }
+    if id == 3 {
+        return Some("Charlie")
+    }
+    return None
+}
+
+let users := [1, 2, 99, 3]
+for user_id in users {
+    let user := find_user_by_id(user_id)
+    match user {
+        case Some(name): {
+            print("User " + to_string(user_id) + ": " + name)
+        }
+        case None: {
+            print("User " + to_string(user_id) + ": Not found")
+        }
+    }
+}
+print()
+
+# Example 4: Configuration with optional values
+print("Example 4: Configuration with Defaults")
+
+func get_config(key) {
+    if key == "timeout" {
+        return Some(30)
+    }
+    if key == "retries" {
+        return Some(3)
+    }
+    return None
+}
+
+let config_keys := ["timeout", "retries", "cache", "max_connections"]
+for key in config_keys {
+    let value := get_config(key)
+    match value {
+        case Some(v): {
+            print(key + " = " + to_string(v))
+        }
+        case None: {
+            print(key + " = (not set)")
+        }
+    }
+}
+print()
+
+# Example 5: Try operator for clean error propagation
+print("=== Try Operator (?) Examples ===")
+print()
+
+print("Example 5: Chaining Operations")
+
+func fetch_data() {
+    return Ok(10)
+}
+
+func process_data(data) {
+    if data < 5 {
+        return Err("Data value too low")
+    }
+    return Ok(data * 2)
+}
+
+func save_result(result) {
+    if result > 100 {
+        return Err("Result too large to save")
+    }
+    return Ok("Saved: " + to_string(result))
+}
+
+# Without try operator - manual error checking
+func pipeline_manual() {
+    let data := fetch_data()
+    match data {
+        case Ok(d): {
+            let processed := process_data(d)
+            match processed {
+                case Ok(p): {
+                    let saved := save_result(p)
+                    return saved
+                }
+                case Err(e): {
+                    return Err(e)
+                }
+            }
+        }
+        case Err(e): {
+            return Err(e)
+        }
+    }
+}
+
+# With try operator - clean and readable
+func pipeline_with_try() {
+    let data := fetch_data()?
+    let processed := process_data(data)?
+    let saved := save_result(processed)?
+    return saved
+}
+
+print("Pipeline with manual error checking:")
+let manual_result := pipeline_manual()
+match manual_result {
+    case Ok(msg): {
+        print("  " + msg)
+    }
+    case Err(error): {
+        print("  Error: " + error)
+    }
+}
+
+print("Pipeline with try operator:")
+let try_result := pipeline_with_try()
+match try_result {
+    case Ok(msg): {
+        print("  " + msg)
+    }
+    case Err(error): {
+        print("  Error: " + error)
+    }
+}
+print()
+
+# Example 6: Nested Result values
+print("Example 6: Nested Results")
+
+func outer_operation() {
+    let inner_result := Ok(42)
+    return Ok(inner_result)
+}
+
+let nested := outer_operation()
+match nested {
+    case Ok(inner): {
+        match inner {
+            case Ok(value): {
+                print("Nested value: " + to_string(value))
+            }
+            case Err(error): {
+                print("Inner error: " + error)
+            }
+        }
+    }
+    case Err(error): {
+        print("Outer error: " + error)
+    }
+}
+print()
+
+print("=== Demo Complete ===")

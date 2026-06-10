@@ -1,0 +1,7 @@
+func add(a, b) {
+    return a + b
+}
+
+if add(1, 2) == 3 {
+    print("ok")
+}

@@ -1,0 +1,65 @@
+// Async/Await Demo - showcasing Promise-based concurrency
+
+print("=== Async/Await Demo ===\n");
+
+// Define an async function that simulates work
+async func fetch_data(id) {
+    print("Starting fetch for ID: " + str(id));
+    
+    // Simulate some work (in real implementation, this might be I/O)
+    let result = "Data for " + str(id);
+    
+    print("Completed fetch for ID: " + str(id));
+    return result;
+}
+
+// Test 1: Basic async/await
+print("\n--- Test 1: Basic Async Call ---");
+let promise1 = fetch_data(1);
+print("Promise created, type: " + type(promise1));
+let result1 = await promise1;
+print("Result: " + result1);
+
+// Test 2: Multiple concurrent async calls
+print("\n--- Test 2: Concurrent Async Calls ---");
+let p1 = fetch_data(10);
+let p2 = fetch_data(20);
+let p3 = fetch_data(30);
+
+print("All promises created - now awaiting...");
+let r1 = await p1;
+let r2 = await p2;
+let r3 = await p3;
+
+print("Results:");
+print("  R1: " + r1);
+print("  R2: " + r2);
+print("  R3: " + r3);
+
+// Test 3: Async function with computations
+async func calculate_sum(a, b) {
+    let sum = a + b;
+    print("Computed sum: " + str(sum));
+    return sum;
+}
+
+print("\n--- Test 3: Async Computation ---");
+let sum_promise = calculate_sum(42, 58);
+let sum_result = await sum_promise;
+print("Final sum: " + str(sum_result));
+
+// Test 4: Nested async calls
+async func outer_async() {
+    print("Outer async started");
+    let inner_promise = fetch_data(999);
+    let inner_result = await inner_promise;
+    print("Outer async got: " + inner_result);
+    return "Outer complete with: " + inner_result;
+}
+
+print("\n--- Test 4: Nested Async ---");
+let nested_promise = outer_async();
+let nested_result = await nested_promise;
+print("Nested result: " + nested_result);
+
+print("\n=== Demo Complete ===");

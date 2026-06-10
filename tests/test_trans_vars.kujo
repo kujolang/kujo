@@ -1,0 +1,19 @@
+# Test different variable names
+
+db := db_connect("sqlite", ":memory:")
+db_execute(db, "CREATE TABLE test (id INTEGER)", [])
+
+print("1. First begin...")
+first_result := db_begin(db)
+print("Result: " + str(first_result))
+
+print("2. Second begin (should error)...")
+try {
+    second_result := db_begin(db)
+    print("Result: " + str(second_result))
+} except error {
+    print("Caught expected second-begin error")
+}
+
+print("Done!")
+db_close(db)

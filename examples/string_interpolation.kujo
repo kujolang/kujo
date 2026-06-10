@@ -1,0 +1,104 @@
+# String Interpolation Examples
+# Demonstrates the ${} syntax for embedding expressions in strings
+
+print("=== Basic String Interpolation ===")
+
+# Simple variable interpolation
+name := "Alice"
+greeting := "Hello, ${name}!"
+print(greeting)
+
+# Number interpolation
+age := 25
+bio := "I am ${age} years old"
+print(bio)
+
+print("\n=== Expression Interpolation ===")
+
+# Arithmetic expressions
+x := 10
+y := 5
+result := "The sum of ${x} and ${y} is ${x + y}"
+print(result)
+
+# Multiple expressions
+width := 5
+height := 3
+area_msg := "Rectangle: ${width} x ${height} = ${width * height}"
+print(area_msg)
+
+print("\n=== Complex Expressions ===")
+
+# Parenthesized expressions
+a := 2
+b := 3
+c := 4
+computation := "Result: (${a} + ${b}) * ${c} = ${(a + b) * c}"
+print(computation)
+
+# Comparison expressions
+score := 85
+passing := 60
+status := "Score ${score} is ${score >= passing} for passing (>= ${passing})"
+print(status)
+
+print("\n=== Function Calls in Interpolation ===")
+
+func double(n) {
+    return n * 2
+}
+
+func square(n) {
+    return n * n
+}
+
+num := 7
+result1 := "Double of ${num} is ${double(num)}"
+result2 := "Square of ${num} is ${square(num)}"
+print(result1)
+print(result2)
+
+print("\n=== Struct Fields in Interpolation ===")
+
+struct Person {
+    first_name: string,
+    last_name: string,
+    age: int
+}
+
+person := Person { first_name: "Bob", last_name: "Smith", age: 30 }
+intro := "My name is ${person.first_name} ${person.last_name} and I'm ${person.age} years old"
+print(intro)
+
+print("\n=== Practical Use Cases ===")
+
+# Formatting output
+items := 5
+price := 9.99
+total := items * price
+receipt := "Items: ${items} x $${price} = $${total}"
+print(receipt)
+
+# Template strings
+username := "admin"
+action := "login"
+timestamp := 1234567890
+log_msg := "[${timestamp}] User '${username}' performed action: ${action}"
+print(log_msg)
+
+# Building URLs or paths
+base := "https://api.example.com"
+endpoint := "users"
+user_id := 42
+url := "${base}/${endpoint}/${user_id}"
+print(url)
+
+print("\n=== String Concatenation Alternative ===")
+
+# Before (without interpolation)
+old_way := "Hello, " + name + "! You are " + "25" + " years old."
+print("Old way: " + old_way)
+
+# After (with interpolation)
+new_way := "Hello, ${name}! You are ${age} years old."
+print("New way: " + new_way)

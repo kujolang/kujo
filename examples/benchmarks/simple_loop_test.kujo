@@ -1,0 +1,11 @@
+# Simple arithmetic test
+let sum := 0
+let i := 0
+loop {
+    if i >= 10 {
+        break
+    }
+    sum := sum + i
+    i := i + 1
+}
+print("Sum: ", sum)

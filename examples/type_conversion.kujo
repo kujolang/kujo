@@ -1,0 +1,60 @@
+# Type Conversion Functions Demo
+# Demonstrates to_int(), to_float(), to_string(), and to_bool()
+
+print("=== Type Conversion Examples ===")
+print("")
+
+# to_int() - Convert to integer
+print("--- to_int() ---")
+print("to_int(3.14) = " + to_string(to_int(3.14)))
+print("to_int(9.99) = " + to_string(to_int(9.99)))
+print("to_int(42) = " + to_string(to_int("42")))
+print("to_int(true) = " + to_string(to_int(true)))
+print("to_int(false) = " + to_string(to_int(false)))
+print("")
+
+# to_float() - Convert to floating-point
+print("--- to_float() ---")
+print("to_float(42) = " + to_string(to_float(42)))
+print("to_float(3.14) = " + to_string(to_float("3.14")))
+print("to_float(true) = " + to_string(to_float(true)))
+print("to_float(false) = " + to_string(to_float(false)))
+print("")
+
+# to_string() - Convert to string
+print("--- to_string() ---")
+print("to_string(42) = " + to_string(42))
+print("to_string(3.14) = " + to_string(3.14))
+print("to_string(true) = " + to_string(true))
+arr := [1, 2, 3]
+print("to_string([1, 2, 3]) = " + to_string(arr))
+print("")
+
+# to_bool() - Convert to boolean
+print("--- to_bool() ---")
+print("to_bool(1) = " + to_string(to_bool(1)))
+print("to_bool(0) = " + to_string(to_bool(0)))
+print("to_bool(3.14) = " + to_string(to_bool(3.14)))
+print("to_bool(0.0) = " + to_string(to_bool(0.0)))
+print("to_bool(hello) = " + to_string(to_bool("hello")))
+empty := ""
+print("to_bool(empty) = " + to_string(to_bool(empty)))
+print("to_bool(false string) = " + to_string(to_bool("false")))
+print("")
+
+# Real-world example
+print("=== Practical Example ===")
+age := to_int("25")
+balance := to_float("150.75")
+print("Age: " + to_string(age))
+print("Balance: " + to_string(balance))
+
+if age >= 18 {
+    print("Status: Adult")
+}
+print("")
+
+# Chaining
+print("=== Chaining ===")
+result := to_bool(to_int("42"))
+print("to_bool(to_int(42)) = " + to_string(result))

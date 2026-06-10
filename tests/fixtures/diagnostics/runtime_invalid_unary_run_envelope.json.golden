@@ -1,0 +1,19 @@
+{
+  "call_stack": [],
+  "command": "run",
+  "contract_version": "1.0.0-draft",
+  "diagnostic": {
+    "code": "RUFRUN001",
+    "column": 0,
+    "file": null,
+    "help": null,
+    "line": 0,
+    "message": "Invalid unary operation: - bool",
+    "severity": "error",
+    "subsystem": "runtime"
+  },
+  "exit_code": 4,
+  "kind": "runtime_diagnostic",
+  "runtime_kind": "Runtime Error",
+  "status": "error"
+}

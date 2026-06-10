@@ -1,0 +1,5 @@
+# Test range simple
+print("Testing range(-3, 3):")
+result := range(-3, 3)
+print(result)
+print("Length:", len(result))

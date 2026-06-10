@@ -1,0 +1,43 @@
+// Test unary operator overloading with structs
+
+struct Vector {
+    x: float,
+    y: float,
+    
+    func op_neg() {
+        return Vector { x: -x, y: -y }
+    },
+    
+    func display() {
+        print("Vector(" + to_string(x) + ", " + to_string(y) + ")\n")
+    }
+}
+
+v := Vector { x: 3.0, y: 4.0 }
+v.display()
+
+neg_v := -v
+neg_v.display()
+
+// Struct with logical not overloading
+struct Flag {
+    value: bool,
+    
+    func op_not() {
+        return Flag { value: !value }
+    },
+    
+    func display() {
+        print("Flag(" + to_string(value) + ")\n")
+    }
+}
+
+f := Flag { value: true }
+f.display()
+
+not_f := !f
+not_f.display()
+
+// Double negation
+double_not := !!f
+double_not.display()

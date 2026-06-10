@@ -1,0 +1,190 @@
+// Benchmark Runner Script for Kujo
+// 
+// Runs all benchmarks in both interpreter and VM modes and compares performance.
+// This demonstrates Kujo's capability as a real-world scripting language.
+
+let benchmarks := [
+    "fibonacci.kujo",
+    "primes.kujo",
+    "sorting.kujo",
+    "strings.kujo",
+    "dict_ops.kujo",
+    "nested_loops.kujo",
+    "higher_order.kujo"
+]
+
+func extract_time(output) {
+    // Extract time from output (assumes "Time taken: X ms" format)
+    let lines := split(output, "\n")
+    let i := 0
+    loop {
+        if i >= len(lines) { break }
+        let line := lines[i]
+        if contains(line, "Time taken:") {
+            let parts := split(line, "Time taken:")
+            if len(parts) >= 2 {
+                let time_part := split(parts[1], "ms")
+                if len(time_part) >= 1 {
+                    return to_float(trim(time_part[0]))
+                }
+            }
+        }
+        i := i + 1
+    }
+    return 0.0
+}
+
+func run_benchmark(file, vm_mode) {
+    // Run a single benchmark and extract timing
+    let cmd := "./target/release/kujo run "
+    if vm_mode {
+        cmd := cmd + "--vm "
+    }
+    cmd := cmd + "examples/benchmarks/" + file
+    
+    let output := execute(cmd)
+    return extract_time(output)
+}
+
+func median(values) {
+    // Calculate median of an array
+    let sorted := sort(values)
+    let n := len(sorted)
+    if n == 0 { return 0.0 }
+    if n % 2 == 1 {
+        return sorted[n / 2]
+    }
+    return (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
+}
+
+func repeat_str(s, count) {
+    let result := ""
+    let i := 0
+    loop {
+        if i >= count { break }
+        result := result + s
+        i := i + 1
+    }
+    return result
+}
+
+func section(title) {
+    print(repeat_str("=", 80))
+    print(title)
+    print(repeat_str("=", 80))
+    print("")
+}
+
+func kv(label, value) {
+    print("  " + label + ": " + value)
+}
+
+func blank() {
+    print("")
+}
+
+func main() {
+    section("Kujo VM Performance Benchmark Suite")
+    
+    let results := []
+    
+    let i := 0
+    loop {
+        if i >= len(benchmarks) { break }
+        let benchmark := benchmarks[i]
+        
+        print("Running " + benchmark + "...")
+        
+        // Run in interpreter mode (3 times, take median)
+        let interp_times := []
+        let j := 0
+        loop {
+            if j >= 3 { break }
+            let t := run_benchmark(benchmark, false)
+            if t > 0.0 {
+                interp_times := push(interp_times, t)
+            }
+            j := j + 1
+        }
+        
+        // Run in VM mode (3 times, take median)
+        let vm_times := []
+        j := 0
+        loop {
+            if j >= 3 { break }
+            let t := run_benchmark(benchmark, true)
+            if t > 0.0 {
+                vm_times := push(vm_times, t)
+            }
+            j := j + 1
+        }
+        
+        if len(interp_times) > 0 && len(vm_times) > 0 {
+            let interp_median := median(interp_times)
+            let vm_median := median(vm_times)
+            let speedup := 0.0
+            if vm_median > 0.0 {
+                speedup := interp_median / vm_median
+            }
+            
+            let result := {
+                "name": benchmark,
+                "interp": interp_median,
+                "vm": vm_median,
+                "speedup": speedup
+            }
+            results := push(results, result)
+            
+            kv("Interpreter", to_string(round(interp_median * 100.0) / 100.0) + " ms")
+            kv("VM", to_string(round(vm_median * 100.0) / 100.0) + " ms")
+            kv("Speedup", to_string(round(speedup * 100.0) / 100.0) + "x")
+            blank()
+        }
+        
+        i := i + 1
+    }
+    
+    // Summary
+    section("Summary")
+    
+    // Header
+    let name_pad := repeat_str(" ", 16)
+    let interp_pad := repeat_str(" ", 5)
+    let vm_pad := repeat_str(" ", 9)
+    let header := "Benchmark" + name_pad + "Interpreter (ms)" + interp_pad + "VM (ms)" + vm_pad + "Speedup"
+    print(header)
+    print(repeat_str("-", 80))
+    
+    // Results
+    let total_speedup := 0.0
+    i := 0
+    loop {
+        if i >= len(results) { break }
+        let r := results[i]
+        
+        let name_col := r["name"] + repeat_str(" ", 25 - len(r["name"]))
+        let interp_col := to_string(round(r["interp"] * 100.0) / 100.0)
+        interp_col := interp_col + repeat_str(" ", 21 - len(interp_col))
+        let vm_col := to_string(round(r["vm"] * 100.0) / 100.0)
+        vm_col := vm_col + repeat_str(" ", 16 - len(vm_col))
+        let speedup_col := to_string(round(r["speedup"] * 100.0) / 100.0) + "x"
+        
+        print(name_col + interp_col + vm_col + speedup_col)
+        total_speedup := total_speedup + r["speedup"]
+        
+        i := i + 1
+    }
+    
+    blank()
+    let avg_speedup := total_speedup / to_float(len(results))
+    kv("Average speedup", to_string(round(avg_speedup * 100.0) / 100.0) + "x")
+    blank()
+    
+    if avg_speedup >= 10.0 {
+        print("✅ SUCCESS: VM achieves 10x+ speedup target!")
+    } else {
+        print("⚠️  VM speedup (" + to_string(round(avg_speedup * 100.0) / 100.0) + "x) below 10x target")
+    }
+}
+
+main()

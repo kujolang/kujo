@@ -1,0 +1,236 @@
+// File: tests/testing_framework.kujo
+//
+// Comprehensive test suite demonstrating the Kujo Testing Framework.
+// This file covers all assertion functions and test framework features.
+
+// Global setup that runs before all tests
+test_setup {
+    print("Setting up test suite...")
+}
+
+// Global teardown that runs after all tests
+test_teardown {
+    print("Cleaning up test suite...")
+}
+
+// Test 1: assert_equal with integers
+test "assert_equal with matching integers" {
+    actual := 42
+    expected := 42
+    assert_equal(actual, expected)
+}
+
+// Test 2: assert_equal with strings
+test "assert_equal with matching strings" {
+    greeting := "Hello, World!"
+    assert_equal(greeting, "Hello, World!")
+}
+
+// Test 3: assert_equal with floats
+test "assert_equal with matching floats" {
+    pi := 3.14159
+    assert_equal(pi, 3.14159)
+}
+
+// Test 4: assert_equal with arrays
+test "assert_equal with matching arrays" {
+    arr := [1, 2, 3, 4, 5]
+    expected := [1, 2, 3, 4, 5]
+    assert_equal(arr, expected)
+}
+
+// Test 5: assert_equal with dictionaries
+test "assert_equal with matching dictionaries" {
+    user := {"name": "Alice", "age": 30}
+    expected := {"name": "Alice", "age": 30}
+    assert_equal(user, expected)
+}
+
+// Test 6: assert_true with boolean true
+test "assert_true with true value" {
+    is_valid := true
+    assert_true(is_valid)
+}
+
+// Test 7: assert_true with truthy expression
+test "assert_true with truthy expression" {
+    count := 5
+    assert_true(count > 0)
+}
+
+// Test 8: assert_true with comparison
+test "assert_true with comparison result" {
+    result := 10 == 10
+    assert_true(result)
+}
+
+// Test 9: assert_false with boolean false
+test "assert_false with false value" {
+    is_empty := false
+    assert_false(is_empty)
+}
+
+// Test 10: assert_false with falsy expression
+test "assert_false with falsy expression" {
+    count := -5
+    assert_false(count > 0)
+}
+
+// Test 11: assert_false with comparison
+test "assert_false with comparison result" {
+    result := 5 == 10
+    assert_false(result)
+}
+
+// Test 12: assert_contains with array element
+test "assert_contains with element in array" {
+    numbers := [1, 2, 3, 4, 5]
+    assert_contains(numbers, 3)
+}
+
+// Test 13: assert_contains with string element
+test "assert_contains with element in string array" {
+    fruits := ["apple", "banana", "cherry"]
+    assert_contains(fruits, "banana")
+}
+
+// Test 14: assert_contains with first element
+test "assert_contains with first element" {
+    items := ["first", "second", "third"]
+    assert_contains(items, "first")
+}
+
+// Test 15: assert_contains with last element
+test "assert_contains with last element" {
+    items := ["alpha", "beta", "gamma"]
+    assert_contains(items, "gamma")
+}
+
+// Test 16: Complex test with multiple assertions
+test "complex test with multiple assertions" {
+    // Create a simple calculator
+    func add(a, b) {
+        return a + b
+    }
+    func subtract(a, b) {
+        return a - b
+    }
+    func multiply(a, b) {
+        return a * b
+    }
+    
+    // Test addition
+    result := add(5, 3)
+    assert_equal(result, 8)
+    assert_true(result > 0)
+    
+    // Test subtraction
+    result := subtract(10, 4)
+    assert_equal(result, 6)
+    assert_true(result > 0)
+    
+    // Test multiplication
+    result := multiply(4, 5)
+    assert_equal(result, 20)
+    assert_true(result > 0)
+}
+
+// Test 17: Test with array operations
+test "array operations" {
+    numbers := [1, 2, 3, 4, 5]
+    
+    // Check array length
+    assert_equal(len(numbers), 5)
+    
+    // Check first and last elements
+    assert_equal(numbers[0], 1)
+    assert_equal(numbers[4], 5)
+    
+    // Check contains
+    assert_contains(numbers, 3)
+    assert_true(len(numbers) > 0)
+}
+
+// Test 18: Test with string operations
+test "string operations" {
+    text := "Hello, Kujo!"
+    
+    // Check string length
+    assert_equal(len(text), 12)
+    
+    // Check string content
+    assert_true(len(text) > 0)
+    assert_false(len(text) == 0)
+}
+
+// Test 19: Test with dictionary operations
+test "dictionary operations" {
+    person := {"name": "Bob", "age": 25, "city": "NYC"}
+    
+    // Check dictionary size
+    assert_equal(len(person), 3)
+    
+    // Check values
+    assert_equal(person["name"], "Bob")
+    assert_equal(person["age"], 25)
+    assert_equal(person["city"], "NYC")
+    
+    // Check truthy conditions
+    assert_true(len(person) > 0)
+    assert_false(len(person) == 0)
+}
+
+// Test 20: Test with null values
+test "null value handling" {
+    value := null
+    
+    // Null should equal null
+    assert_equal(value, null)
+    assert_equal(null, null)
+}
+
+// Test 21: Edge case - empty array
+test "empty array edge case" {
+    empty := []
+    
+    assert_equal(len(empty), 0)
+    assert_true(len(empty) == 0)
+    assert_false(len(empty) > 0)
+}
+
+// Test 22: Edge case - empty string
+test "empty string edge case" {
+    empty := ""
+    
+    assert_equal(len(empty), 0)
+    assert_equal(empty, "")
+    assert_false(len(empty) > 0)
+}
+
+// Test 23: Edge case - empty dictionary
+test "empty dictionary edge case" {
+    empty := {}
+    
+    assert_equal(len(empty), 0)
+    assert_true(len(empty) == 0)
+}
+
+// Test 24: Negative numbers
+test "negative number comparisons" {
+    negative := -10
+    
+    assert_equal(negative, -10)
+    assert_true(negative < 0)
+    assert_false(negative > 0)
+}
+
+// Test 25: Boolean operations
+test "boolean logic operations" {
+    a := true
+    b := false
+    
+    assert_true(a)
+    assert_false(b)
+    assert_false(a && b)
+    assert_true(a || b)
+}

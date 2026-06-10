@@ -1,0 +1,19 @@
+# Dictionary examples
+
+# Create a dictionary
+let person := {"name": "Alice", "age": 30, "city": "Portland"};
+print("Person:", person);
+
+# Access values
+print("Name:", person["name"]);
+print("Age:", person["age"]);
+print("City:", person["city"]);
+
+# Nested dictionaries
+let user := {
+    "username": "alice123",
+    "profile": {"email": "alice@example.com", "verified": 1}
+};
+print("User:", user);
+print("Username:", user["username"]);
+print("Profile:", user["profile"]);

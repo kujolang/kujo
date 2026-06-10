@@ -1,0 +1,25 @@
+# Type Annotations Example
+# Demonstrates the new type annotation syntax
+
+# Variable with type annotation
+let x: int := 42
+let name: string := "Alice"
+let price: float := 19.99
+let count: int := 1
+
+# Function with parameter and return type annotations
+func add(a: int, b: int) -> int {
+    return a + b
+}
+
+func greet(name: string) -> string {
+    return "Hello, " + name
+}
+
+# Mixed - some with types, some without
+let untyped := 100
+const TYPED_CONSTANT: int := 500
+
+# Call the functions
+let sum := add(10, 20)
+let greeting := greet("Bob")

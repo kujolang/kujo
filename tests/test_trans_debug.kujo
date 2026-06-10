@@ -1,0 +1,19 @@
+# Debug Transaction Test
+
+db := db_connect("sqlite", ":memory:")
+db_execute(db, "CREATE TABLE test (id INTEGER)", [])
+
+print("1. First begin...")
+r1 := db_begin(db)
+print("Result 1: " + str(r1))
+
+print("2. Calling begin again...")
+try {
+    # Don't store result, just print directly
+    print(db_begin(db))
+} except error {
+    print("Caught expected second-begin error")
+}
+
+print("Done!")
+db_close(db)

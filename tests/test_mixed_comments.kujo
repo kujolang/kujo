@@ -1,0 +1,40 @@
+# Test: Mixed comment types
+# Tests all comment types working together
+
+# This is a single-line comment
+x := 1
+print(x)  # Should print: 1
+
+/* This is a multi-line comment
+   on multiple lines */
+y := 2
+print(y)  # Should print: 2
+
+/// This is a doc comment
+z := 3
+print(z)  # Should print: 3
+
+# Single-line
+/* Multi-line */ /// Doc comment
+combined := 4
+print(combined)  # Should print: 4
+
+/*
+ * Documentation block
+ * explaining this function
+ */
+/// Additional doc comment
+func calculate(n) {
+    # Internal comment
+    /* nested multi-line */ 
+    /// internal doc comment
+    return n * 2
+}
+
+result := calculate(5)
+print(result)  # Should print: 10
+
+# Mix of all comment types in various positions
+value := /* inline multi */ 10 + # inline single
+        5 /// inline doc
+print(value)  # Should print: 15

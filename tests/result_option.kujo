@@ -1,0 +1,259 @@
+# Test: Result and Option Types
+# Tests for Result<T, E> and Option<T> types with pattern matching and try operator
+
+# Test 1: Create Ok value
+let result1 := Ok(42)
+print(result1)  # Should print: Ok(42)
+
+# Test 2: Create Err value
+let result2 := Err("something went wrong")
+print(result2)  # Should print: Err(something went wrong)
+
+# Test 3: Create Some value
+let option1 := Some(100)
+print(option1)  # Should print: Some(100)
+
+# Test 4: Create None value
+let option2 := None
+print(option2)  # Should print: None
+
+# Test 5: Pattern match on Ok
+match Ok(5) {
+    case Ok(value): {
+        print("Got OK with value: " + to_string(value))
+    }
+    case Err(error): {
+        print("Got error: " + error)
+    }
+}
+# Expected output: Got OK with value: 5
+
+# Test 6: Pattern match on Err
+match Err("failed") {
+    case Ok(value): {
+        print("Got OK with value: " + to_string(value))
+    }
+    case Err(error): {
+        print("Got error: " + error)
+    }
+}
+# Expected output: Got error: failed
+
+# Test 7: Pattern match on Some
+match Some(42) {
+    case Some(value): {
+        print("Got Some with value: " + to_string(value))
+    }
+    case None: {
+        print("Got None")
+    }
+}
+# Expected output: Got Some with value: 42
+
+# Test 8: Pattern match on None
+match None {
+    case Some(value): {
+        print("Got Some with value: " + to_string(value))
+    }
+    case None: {
+        print("Got None")
+    }
+}
+# Expected output: Got None
+
+# Test 9: Function returning Result - success case
+func divide(a, b) {
+    if b == 0 {
+        return Err("Division by zero")
+    }
+    return Ok(a / b)
+}
+
+let div_result := divide(10, 2)
+match div_result {
+    case Ok(value): {
+        print("Division result: " + to_string(value))
+    }
+    case Err(error): {
+        print("Division error: " + error)
+    }
+}
+# Expected output: Division result: 5
+
+# Test 10: Function returning Result - error case
+let div_result2 := divide(10, 0)
+match div_result2 {
+    case Ok(value): {
+        print("Division result: " + to_string(value))
+    }
+    case Err(error): {
+        print("Division error: " + error)
+    }
+}
+# Expected output: Division error: Division by zero
+
+# Test 11: Function returning Option - some case
+func find_user(id) {
+    if id == 1 {
+        return Some("Alice")
+    }
+    return None
+}
+
+let user := find_user(1)
+match user {
+    case Some(name): {
+        print("Found user: " + name)
+    }
+    case None: {
+        print("User not found")
+    }
+}
+# Expected output: Found user: Alice
+
+# Test 12: Function returning Option - none case
+let user2 := find_user(99)
+match user2 {
+    case Some(name): {
+        print("Found user: " + name)
+    }
+    case None: {
+        print("User not found")
+    }
+}
+# Expected output: User not found
+
+# Test 13: Try operator with Ok value
+func test_try_ok() {
+    let result := Ok(42)?
+    return Ok(result * 2)
+}
+
+let try_result := test_try_ok()
+match try_result {
+    case Ok(value): {
+        print("Try OK result: " + to_string(value))
+    }
+    case Err(error): {
+        print("Try OK error: " + error)
+    }
+}
+# Expected output: Try OK result: 84
+
+# Test 14: Try operator with Err value - early return
+func test_try_err() {
+    let result := Err("failed")?
+    # This line should not execute
+    return Ok(99)
+}
+
+let try_result2 := test_try_err()
+match try_result2 {
+    case Ok(value): {
+        print("Try Err result: " + to_string(value))
+    }
+    case Err(error): {
+        print("Try Err error: " + error)
+    }
+}
+# Expected output: Try Err error: failed
+
+# Test 15: Chaining try operators
+func fetch_data() {
+    return Ok(10)
+}
+
+func process_data(data) {
+    if data > 5 {
+        return Ok(data * 2)
+    }
+    return Err("data too small")
+}
+
+func complex_operation() {
+    let data := fetch_data()?
+    let processed := process_data(data)?
+    return Ok(processed + 5)
+}
+
+let chain_result := complex_operation()
+match chain_result {
+    case Ok(value): {
+        print("Chained result: " + to_string(value))
+    }
+    case Err(error): {
+        print("Chained error: " + error)
+    }
+}
+# Expected output: Chained result: 25
+
+# Test 16: Nested Result values
+let nested := Ok(Ok(42))
+match nested {
+    case Ok(inner): {
+        match inner {
+            case Ok(value): {
+                print("Nested OK value: " + to_string(value))
+            }
+            case Err(error): {
+                print("Inner error: " + error)
+            }
+        }
+    }
+    case Err(error): {
+        print("Outer error: " + error)
+    }
+}
+# Expected output: Nested OK value: 42
+
+# Test 17: Result with different value types
+let result_string := Ok("success")
+let result_int := Ok(123)
+let result_float := Ok(3.14)
+let result_bool := Ok(true)
+
+print(result_string)  # Ok(success)
+print(result_int)     # Ok(123)
+print(result_float)   # Ok(3.14)
+print(result_bool)    # Ok(true)
+
+# Test 18: Option with different value types
+let option_string := Some("text")
+let option_int := Some(456)
+let option_float := Some(2.71)
+let option_bool := Some(false)
+
+print(option_string)  # Some(text)
+print(option_int)     # Some(456)
+print(option_float)   # Some(2.71)
+print(option_bool)    # Some(false)
+
+# Test 19: Result in array
+let results := [Ok(1), Err("error"), Ok(2), Ok(3)]
+print("Results array:")
+for result in results {
+    match result {
+        case Ok(value): {
+            print("  OK: " + to_string(value))
+        }
+        case Err(error): {
+            print("  ERR: " + error)
+        }
+    }
+}
+
+# Test 20: Option in array
+let options := [Some(10), None, Some(20), Some(30), None]
+print("Options array:")
+for option in options {
+    match option {
+        case Some(value): {
+            print("  Some: " + to_string(value))
+        }
+        case None: {
+            print("  None")
+        }
+    }
+}
+
+print("All Result and Option tests completed!")

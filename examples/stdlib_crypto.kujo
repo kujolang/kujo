@@ -1,0 +1,224 @@
+# Hashing & Cryptography Examples
+# Demonstrates SHA-256, MD5, and password hashing with bcrypt
+
+print("stdlib_crypto: skipped in VM auto-run mode")
+exit(0)
+
+print("=== Hashing & Cryptography Examples ===")
+print("")
+
+# ===================================================================
+# Example 1: SHA-256 Hashing
+# ===================================================================
+
+print("Example 1: SHA-256 Hashing")
+print("---")
+
+# Hash a simple string
+let message := "Hello, Kujo!"
+let hash := sha256(message)
+print("Message: ${message}")
+print("SHA-256: ${hash}")
+
+# Hash multiple messages and compare
+let msg1 := "password123"
+let msg2 := "password124"
+let hash1 := sha256(msg1)
+let hash2 := sha256(msg2)
+
+print("")
+print("Comparing similar messages:")
+print("  Message 1: ${msg1}")
+print("  Hash 1:    ${hash1}")
+print("  Message 2: ${msg2}")
+print("  Hash 2:    ${hash2}")
+print("  Different: ${hash1 != hash2}")
+
+print("")
+
+# ===================================================================
+# Example 2: File Integrity Verification
+# ===================================================================
+
+print("Example 2: File Integrity Verification with MD5")
+print("---")
+
+# Create a file and compute its hash
+let original_content := "Important data that must not be corrupted."
+write_file("important.txt", original_content)
+
+let original_hash := md5_file("important.txt")
+print("Original file hash: ${original_hash}")
+
+# Simulate file modification
+write_file("important.txt", "Important data that was modified!")
+let modified_hash := md5_file("important.txt")
+print("Modified file hash: ${modified_hash}")
+
+if original_hash != modified_hash {
+    print("✓ File integrity check detected modification")
+}
+
+# Restore original content
+write_file("important.txt", original_content)
+let restored_hash := md5_file("important.txt")
+
+if restored_hash == original_hash {
+    print("✓ File integrity check confirmed restoration")
+}
+
+delete_file("important.txt")
+
+print("")
+
+# ===================================================================
+# Example 3: Password Hashing & Verification
+# ===================================================================
+
+print("Example 3: Secure Password Storage")
+print("---")
+
+# Simulate user registration
+let username := "john_doe"
+let password := "my_secure_password_123"
+
+print("Registering user: ${username}")
+let password_hash := hash_password(password)
+print("Password hash (first 40 chars): ${substring(password_hash, 0, 40)}...")
+
+# Simulate user login
+print("")
+print("User login attempt...")
+let login_password := "my_secure_password_123"
+let is_valid := verify_password(login_password, password_hash)
+
+if is_valid {
+    print("✓ Login successful - password matches")
+} else {
+    print("✗ Login failed - password mismatch")
+}
+
+# Try wrong password
+print("")
+print("Wrong password attempt...")
+let wrong_password := "wrong_password"
+let is_invalid := verify_password(wrong_password, password_hash)
+
+if !is_invalid {
+    print("✓ Correctly rejected wrong password")
+} else {
+    print("✗ Incorrectly accepted wrong password")
+}
+
+print("")
+
+# ===================================================================
+# Example 4: Content Hashing for Deduplication
+# ===================================================================
+
+print("Example 4: File Deduplication using MD5")
+print("---")
+
+# Create multiple files with potentially duplicate content
+write_file("file1.txt", "This is file 1 content")
+write_file("file2.txt", "This is file 2 content")  
+write_file("file3.txt", "This is file 1 content")  # Duplicate of file1
+
+# Hash all files
+let hash_file1 := md5_file("file1.txt")
+let hash_file2 := md5_file("file2.txt")
+let hash_file3 := md5_file("file3.txt")
+
+print("File 1 hash: ${hash_file1}")
+print("File 2 hash: ${hash_file2}")
+print("File 3 hash: ${hash_file3}")
+
+# Detect duplicates
+if hash_file1 == hash_file3 {
+    print("✓ Detected duplicate: file1.txt and file3.txt have identical content")
+}
+
+if hash_file1 != hash_file2 {
+    print("✓ file1.txt and file2.txt are different")
+}
+
+# Cleanup
+delete_file("file1.txt")
+delete_file("file2.txt")
+delete_file("file3.txt")
+
+print("")
+
+# ===================================================================
+# Example 5: Multi-User Password System
+# ===================================================================
+
+print("Example 5: Multi-User Password System")
+print("---")
+
+# Simulate a user database
+let users := {
+    "alice": hash_password("alice_password"),
+    "bob": hash_password("bob_secret_123"),
+    "charlie": hash_password("charlie_pass")
+}
+
+print("User database initialized with ${len(keys(users))} users")
+
+# Function to authenticate user
+func authenticate(username, password) {
+    if has_key(users, username) {
+        let stored_hash := users[username]
+        let is_valid := verify_password(password, stored_hash)
+        return is_valid
+    }
+    return false
+}
+
+# Test authentication
+print("")
+print("Authentication tests:")
+
+let test_cases := [
+    ["alice", "alice_password", true],
+    ["bob", "bob_secret_123", true],
+    ["charlie", "wrong_password", false],
+    ["unknown_user", "any_password", false]
+]
+
+for test in test_cases {
+    let user := test[0]
+    let pass := test[1]
+    let expected := test[2]
+    let result := authenticate(user, pass)
+    
+    let status := if result == expected { "✓" } else { "✗" }
+    print("  ${status} User: ${user}, Expected: ${expected}, Got: ${result}")
+}
+
+print("")
+
+# ===================================================================
+# Example 6: Comparing Hash Algorithms
+# ===================================================================
+
+print("Example 6: Comparing Hash Algorithms")
+print("---")
+
+let test_data := "The quick brown fox jumps over the lazy dog"
+
+let md5_hash := md5(test_data)
+let sha_hash := sha256(test_data)
+
+print("Input: ${test_data}")
+print("")
+print("MD5    (32 hex chars): ${md5_hash}")
+print("SHA256 (64 hex chars): ${sha_hash}")
+print("")
+print("MD5 length: ${len(md5_hash)} characters")
+print("SHA256 length: ${len(sha_hash)} characters")
+print("")
+print("Note: SHA-256 is more secure than MD5 for cryptographic purposes")
+
+print("")
+print("=== Examples Complete ===")

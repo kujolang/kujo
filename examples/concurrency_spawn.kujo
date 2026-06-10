@@ -1,0 +1,54 @@
+# Spawn - Background Tasks Example
+# Demonstrates running code in background threads
+
+print("=== Spawn Background Tasks Demo ===")
+print("")
+
+# Example 1: Basic spawn
+print("1. Basic spawn - fire and forget")
+print("Main thread: Starting...")
+
+spawn {
+    print("  Background thread: Hello from spawn!")
+    print("  Background thread: Processing...")
+    print("  Background thread: Done!")
+}
+
+print("Main thread: Continues immediately (doesn't wait for spawn)")
+print("")
+
+# Example 2: Multiple spawns
+print("2. Multiple background tasks")
+for i in 3 {
+    spawn {
+        print("  Worker " + (i + 1) + ": Starting task...")
+        # In a real app, this would do actual work
+        print("  Worker " + (i + 1) + ": Completed!")
+    }
+}
+
+print("Main thread: Spawned 3 workers")
+print("")
+
+# Example 3: Real-world use case - log processing
+print("3. Real-world example: Background log processing")
+
+spawn {
+    print("  Log processor: Analyzing logs...")
+    print("  Log processor: Found 142 entries")
+    print("  Log processor: Processing complete")
+}
+
+print("Main thread: Started log processor in background")
+print("Main thread: User can continue working...")
+print("")
+
+print("=== Important Notes ===")
+print("• Spawned code runs in isolation (separate environment)")
+print("• Cannot modify variables from parent scope")
+print("• Perfect for fire-and-forget tasks")
+print("• Use channels for communication between threads")
+print("")
+
+# Give background threads time to finish (in real code, use channels for sync)
+sleep(100)

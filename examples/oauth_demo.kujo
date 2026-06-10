@@ -1,0 +1,166 @@
+# OAuth2 Authentication Flow Example
+# Demonstrates how to implement OAuth2 authorization for third-party APIs
+
+print("=== OAuth2 Authentication Demo ===\n")
+
+# Configuration for OAuth2 provider (e.g., GitHub, Google, etc.)
+oauth_config := {
+    "client_id": "your-client-id-here",
+    "client_secret": "your-client-secret-here",
+    "redirect_uri": "https://yourapp.com/oauth/callback",
+    "auth_url": "https://provider.com/oauth/authorize",
+    "token_url": "https://provider.com/oauth/token",
+    "scopes": "user:read user:write repo:read"
+}
+
+print("OAuth2 Configuration:")
+print(oauth_config)
+print("")
+
+# Step 1: Generate authorization URL
+print("Step 1: Generate Authorization URL")
+print("=====================================")
+
+authorization_url := oauth2_auth_url(
+    oauth_config["client_id"],
+    oauth_config["redirect_uri"],
+    oauth_config["auth_url"],
+    oauth_config["scopes"]
+)
+
+print("Authorization URL:")
+print(authorization_url)
+print("")
+print("Direct your users to this URL to grant permissions.")
+print("")
+
+# Step 2: Explain the callback process
+print("Step 2: Handle OAuth Callback")
+print("=====================================")
+print("After user authorizes, they'll be redirected to:")
+print(oauth_config["redirect_uri"] + "?code=AUTHORIZATION_CODE&state=STATE")
+print("")
+print("Extract the 'code' parameter from the callback URL.")
+print("")
+
+# Step 3: Exchange authorization code for access token
+print("Step 3: Exchange Code for Access Token")
+print("=====================================")
+print("Note: This requires a real authorization code from the OAuth flow.")
+print("For demonstration, we'll show how the function would be called:")
+print("")
+
+# Simulated authorization code (in real app, this comes from callback)
+auth_code := "simulated-auth-code-123"
+
+print("Authorization code: " + auth_code)
+print("")
+
+# In a real application, you would call:
+# token_response := oauth2_get_token(
+#     auth_code,
+#     oauth_config["client_id"],
+#     oauth_config["client_secret"],
+#     oauth_config["token_url"],
+#     oauth_config["redirect_uri"]
+# )
+#
+# The response would contain:
+# {
+#     "access_token": "...",
+#     "token_type": "Bearer",
+#     "expires_in": 3600,
+#     "refresh_token": "...",
+#     "scope": "user:read user:write"
+# }
+
+print("Example token response structure:")
+example_token_response := {
+    "access_token": "gho_16C7e42F292c6912E7710c838347Ae178B4a",
+    "token_type": "Bearer",
+    "expires_in": 3600,
+    "refresh_token": "ghr_1B4a2e77838dfefe5d2aa4046f30e21e82e22ad2",
+    "scope": "user:read user:write repo:read"
+}
+
+print(example_token_response)
+print("")
+
+# Step 4: Use access token for API requests
+print("Step 4: Use Access Token for API Requests")
+print("=====================================")
+
+access_token := example_token_response["access_token"]
+
+print("Making authenticated API request...")
+print("Authorization: Bearer " + access_token)
+print("")
+
+# Example: Make authenticated API request
+# response := http_get("https://api.provider.com/user", {
+#     "Authorization": "Bearer " + access_token
+# })
+
+print("You can now use this token in the Authorization header")
+print("for all API requests to the provider.")
+print("")
+
+# Step 5: Complete OAuth2 helper example
+print("Step 5: Complete OAuth2 Helper Functions")
+print("=====================================")
+
+func start_oauth_flow(config) {
+    # Generate authorization URL
+    auth_url := oauth2_auth_url(
+        config["client_id"],
+        config["redirect_uri"],
+        config["auth_url"],
+        config["scopes"]
+    )
+    
+    print("Redirect user to: " + auth_url)
+    return auth_url
+}
+
+func handle_oauth_callback(code, config) {
+    # Exchange code for access token
+    print("Exchanging authorization code for access token...")
+    
+    try {
+        token_data := oauth2_get_token(
+            code,
+            config["client_id"],
+            config["client_secret"],
+            config["token_url"],
+            config["redirect_uri"]
+        )
+        
+        print("✓ Token exchange successful!")
+        return token_data
+    } except err {
+        print("✗ Token exchange failed: " + err.message)
+        return {"error": err.message}
+    }
+}
+
+print("Helper functions created:")
+print("- start_oauth_flow(config)")
+print("- handle_oauth_callback(code, config)")
+print("")
+
+# Example usage
+print("Example: Starting OAuth flow...")
+flow_url := start_oauth_flow(oauth_config)
+print("Flow URL generated: " + flow_url)
+print("")
+
+print("=== OAuth2 Demo Complete ===")
+print("")
+print("Real-world integration steps:")
+print("1. Register your app with the OAuth provider")
+print("2. Get client_id and client_secret")
+print("3. Use oauth2_auth_url() to redirect users")
+print("4. Handle callback to extract authorization code")
+print("5. Use oauth2_get_token() to get access token")
+print("6. Store and use access_token for API requests")
+print("7. Implement token refresh before expiration")

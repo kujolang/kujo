@@ -1,0 +1,38 @@
+# Test JSON Edge Cases
+print("=== JSON Edge Cases Tests ===")
+
+# Test 1: Empty array
+empty_arr := parse_json("[]")
+print("Empty array:", empty_arr)
+
+# Test 2: Nested empty objects
+nested_empty := parse_json("{\"outer\": {}, \"inner\": {}}")
+print("Nested empty:", nested_empty)
+
+# Test 3: Deep nesting
+deep := parse_json("{\"a\": {\"b\": {\"c\": {\"d\": \"value\"}}}}")
+print("Deep value:", deep["a"]["b"]["c"]["d"])
+
+# Test 4: Unicode strings (if supported)
+unicode_str := parse_json("{\"message\": \"Hello \\u0041\\u0042\\u0043\"}")
+print("Unicode:", unicode_str["message"])
+
+# Test 5: Numbers with decimals
+decimals := parse_json("{\"pi\": 3.14159, \"e\": 2.71828}")
+print("Pi:", decimals["pi"])
+print("E:", decimals["e"])
+
+# Test 6: Large numbers
+large := parse_json("{\"big\": 999999999}")
+print("Large number:", large["big"])
+
+# Test 7: Empty strings
+empty_str := parse_json("{\"empty\": \"\"}")
+print("Empty string:", empty_str["empty"])
+
+# Test 8: Arrays of objects
+arr_of_obj := parse_json("[{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]")
+print("First ID:", arr_of_obj[0]["id"])
+print("Second ID:", arr_of_obj[1]["id"])
+
+print("=== All edge case tests passed ===")

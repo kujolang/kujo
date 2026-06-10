@@ -1,0 +1,11 @@
+# Test if/else print
+
+x := true
+
+if x {
+	print("True branch")
+} else {
+	print("False branch")
+}
+
+print("Done")

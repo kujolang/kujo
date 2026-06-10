@@ -1,0 +1,13 @@
+# Simplest possible struct return test
+
+struct Vec2 {
+    x: float,
+    y: float
+}
+
+print("Creating v1...");
+v1 := Vec2 { x: 1.0, y: 2.0 };
+print("v1 created");
+print(v1.x);
+print(v1.y);
+print("Done");

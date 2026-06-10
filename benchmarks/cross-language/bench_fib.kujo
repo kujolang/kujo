@@ -1,0 +1,11 @@
+func fib(n) { 
+    if n <= 1 { 
+        return n 
+    } 
+    return fib(n-1) + fib(n-2) 
+}
+
+t := performance_now()
+r := fib(30)
+e := performance_now() - t
+print(e)

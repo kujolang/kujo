@@ -1,0 +1,56 @@
+{
+  "name": "completion_ordering",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/completion_ordering.kujo",
+          "text": "let zz_beta := 1\nlet zz_alpha := 2\nzz\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "textDocument/completion",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/completion_ordering.kujo"
+        },
+        "position": {
+          "line": 2,
+          "character": 2
+        }
+      }
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/completion_ordering.kujo",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "result": {
+        "isIncomplete": false,
+        "items": [
+          {
+            "label": "zz_alpha",
+            "kind": 6
+          },
+          {
+            "label": "zz_beta",
+            "kind": 6
+          }
+        ]
+      }
+    }
+  ]
+}

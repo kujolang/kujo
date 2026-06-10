@@ -1,0 +1,83 @@
+// System Information Tool
+// Demonstrates system operation functions from stdlib
+
+print("=== System Information Tool ===")
+print("")
+
+// Display environment variables
+print("1. Environment Variables:")
+env_vars := ["HOME", "PATH", "USER", "SHELL", "PWD"]
+for var_name in env_vars {
+    value := env(var_name)
+    if len(value) > 0 {
+        // Truncate long values for display
+        display_value := value
+        if len(value) > 50 {
+            display_value := substring(value, 0, 47) + "..."
+        }
+        print("  " + var_name + " = " + display_value)
+    } else {
+        print("  " + var_name + " = (not set)")
+    }
+}
+print("")
+
+// Command-line arguments
+print("2. Command-Line Arguments:")
+cli_args := args()
+arg_count := len(cli_args)
+print("  Number of arguments: " + arg_count)
+if arg_count > 0 {
+    print("  Arguments:")
+    for i in range(arg_count) {
+        print("    [" + i + "] " + cli_args[i])
+    }
+} else {
+    print("  (No arguments provided)")
+    print("  Tip: Run with: kujo run examples/system_info.kujo arg1 arg2")
+}
+print("")
+
+// System commands
+print("3. System Commands:")
+print("  Current date/time:")
+date_output := execute("date")
+print("    " + trim(date_output))
+
+print("")
+print("  Current directory:")
+pwd_output := execute("pwd")
+print("    " + trim(pwd_output))
+
+print("")
+print("  Disk usage (root):")
+if contains(env("OS"), "Windows") {
+    disk_output := execute("dir")
+} else {
+    disk_output := execute("df -h / | tail -1")
+}
+print("    " + trim(disk_output))
+
+print("")
+
+// Timing operations
+print("4. Timing Test:")
+print("  Starting 500ms sleep...")
+start := now()
+sleep(500)
+end := now()
+elapsed := (end - start) * 1000
+print("  Elapsed time: " + elapsed + "ms")
+print("")
+
+// System info summary
+print("5. Quick System Summary:")
+print("  User:        " + env("USER"))
+print("  Home:        " + env("HOME"))
+print("  Shell:       " + env("SHELL"))
+print("  Timestamp:   " + now())
+print("  Formatted:   " + format_date(now(), "YYYY-MM-DD HH:mm:ss"))
+
+print("")
+print("Note: Use execute() carefully in production!")
+print("      Some commands may not be available on all systems.")

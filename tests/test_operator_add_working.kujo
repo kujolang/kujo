@@ -1,0 +1,20 @@
+# Test operator overloading with Vector addition
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func op_add(other) {
+        result := Vec2 { x: x + other.x, y: y + other.y }
+        return result
+    }
+}
+
+v1 := Vec2 { x: 1.0, y: 2.0 };
+v2 := Vec2 { x: 3.0, y: 4.0 };
+v3 := v1 + v2;
+
+print("v3.x:");
+print(v3.x);
+print("v3.y:");
+print(v3.y);

@@ -1,0 +1,17 @@
+# Simpler test - just check that functions exist and return values
+print("=== Testing Assertions ===")
+
+# Success cases should return true
+v1 := assert_equal(5, 5)
+print("✓ assert_equal(5, 5) returned: " + type(v1))
+
+v2 := assert_true(true)
+print("✓ assert_true(true) returned: " + type(v2))
+
+v3 := assert_false(false)
+print("✓ assert_false(false) returned: " + type(v3))
+
+v4 := assert_contains([1, 2, 3], 2)
+print("✓ assert_contains([1,2,3], 2) returned: " + type(v4))
+
+print("\nAll assertions work!")

@@ -1,0 +1,16 @@
+# Test method that returns struct
+
+struct Vector {
+    x: float,
+    y: float
+}
+
+func make_vector() {
+    return Vector { x: 3.0, y: 4.0 };
+}
+
+v := make_vector();
+print(v.x);
+print(v.y);
+
+print("Test complete");

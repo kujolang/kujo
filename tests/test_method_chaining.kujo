@@ -1,0 +1,190 @@
+# Test file for method chaining operators: ??, ?., and |>
+# Tests null coalescing, optional chaining, and pipe operators
+
+print("=== Testing Null Coalescing Operator (??) ===")
+
+# Basic null coalescing
+let value1 := null ?? "default"
+print(value1)  # Should print: default
+
+let value2 := "actual" ?? "default"
+print(value2)  # Should print: actual
+
+# Chained null coalescing
+let value3 := null ?? null ?? "fallback"
+print(value3)  # Should print: fallback
+
+let value4 := null ?? "first" ?? "second"
+print(value4)  # Should print: first
+
+# With numbers
+let num1 := null ?? 42
+print(num1)  # Should print: 42
+
+let num2 := 10 ?? 42
+print(num2)  # Should print: 10
+
+print("")
+print("=== Testing Optional Chaining Operator (?.) ===")
+
+# Create a struct with fields
+struct User {
+    name,
+    profile
+}
+
+struct Profile {
+    email,
+    bio
+}
+
+# Test with null object
+let null_user := null
+let email1 := null_user?.name
+print(email1)  # Should print: null
+
+# Test with real object but null field
+let user1 := User {
+    name: "Alice",
+    profile: null
+}
+let email2 := user1?.profile
+print(email2)  # Should print: null
+
+# Test with nested structure
+let profile := Profile {
+    email: "alice@example.com",
+    bio: "Software developer"
+}
+
+let user2 := User {
+    name: "Alice",
+    profile: profile
+}
+
+let email3 := user2?.profile
+print(email3)  # Should print: Profile { email: alice@example.com, bio: Software developer }
+
+# Test with dictionary
+let dict1 := {"name": "Bob", "age": 30}
+let name1 := dict1?.name
+print(name1)  # Should print: Bob
+
+let missing := dict1?.missing_field
+print(missing)  # Should print: null
+
+let null_dict := null
+let name2 := null_dict?.name
+print(name2)  # Should print: null
+
+# Combine optional chaining with null coalescing
+let default_name := null_dict?.name ?? "Anonymous"
+print(default_name)  # Should print: Anonymous
+
+let actual_name := dict1?.name ?? "Anonymous"
+print(actual_name)  # Should print: Bob
+
+print("")
+print("=== Testing Pipe Operator (|>) ===")
+
+# Simple function pipe
+func double(x) {
+    return x * 2
+}
+
+let result1 := 5 |> double
+print(result1)  # Should print: 10
+
+# Multiple pipes in sequence  
+func add_ten(x) {
+    return x + 10
+}
+
+func square(x) {
+    return x * x
+}
+
+let result2 := 3 |> double |> add_ten |> square
+print(result2)  # Should print: 256 (3*2 = 6, 6+10 = 16, 16*16 = 256)
+
+# Pipe with string functions
+func exclaim(s) {
+    return s + "!"
+}
+
+func repeat_twice(s) {
+    return s + " " + s
+}
+
+let result3 := "hello" |> exclaim |> repeat_twice
+print(result3)  # Should print: hello! hello!
+
+# Pipe with built-in functions
+let result4 := "HELLO" |> to_lower
+print(result4)  # Should print: hello
+
+let result5 := "  test  " |> trim
+print(result5)  # Should print: test
+
+# Pipe with closures
+func make_multiplier(factor) {
+    return func(x) {
+        return x * factor
+    }
+}
+
+let triple := make_multiplier(3)
+let result6 := 7 |> triple
+print(result6)  # Should print: 21
+
+print("")
+print("=== Testing Combined Operators ===")
+
+# Combine all three operators
+func process_user(user) {
+    return user?.name ?? "Unknown User"
+}
+
+let user_a := User { name: "Alice", profile: null }
+let user_b := null
+
+let name_a := user_a |> process_user
+print(name_a)  # Should print: Alice
+
+let name_b := user_b |> process_user  
+print(name_b)  # Should print: Unknown User
+
+# Complex data pipeline
+func extract_email(user) {
+    return user?.profile
+}
+
+func get_email_field(profile) {
+    return profile?.email ?? "no-email@example.com"
+}
+
+let user_with_email := User {
+    name: "Bob",
+    profile: Profile {
+        email: "bob@test.com",
+        bio: "Tester"
+    }
+}
+
+let user_no_email := User {
+    name: "Charlie",
+    profile: null
+}
+
+let email_bob := user_with_email |> extract_email |> get_email_field
+print(email_bob)  # Should print: no-email@example.com (because ?. on struct returns the struct, not field)
+
+let email_charlie := user_no_email |> extract_email
+print(email_charlie)  # Should print: null
+
+# Using null coalescing at the end
+let final_email := email_charlie ?? "default@example.com"
+print(final_email)  # Should print: default@example.com
+
+print("")
+print("=== All Tests Complete ===")

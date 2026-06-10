@@ -1,0 +1,38 @@
+# Higher-Order Functions with Closures
+# Demonstrates closures with map, filter, and reduce
+
+# Create filter functions using closures
+func create_threshold_filter(threshold) {
+    return func(x) {
+        return x > threshold
+    }
+}
+
+func create_multiplier_map(factor) {
+    return func(x) {
+        return x * factor
+    }
+}
+
+numbers := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Filter numbers greater than 5
+filter_gt5 := create_threshold_filter(5)
+large_numbers := filter(numbers, filter_gt5)
+print("Numbers > 5:")
+print(large_numbers)
+
+# Double all numbers
+double_map := create_multiplier_map(2)
+doubled := map(numbers, double_map)
+print("\nDoubled numbers:")
+print(doubled)
+
+# Chain operations with closures
+filter_gt3 := create_threshold_filter(3)
+triple_map := create_multiplier_map(3)
+result := map(filter(numbers, filter_gt3), triple_map)
+print("\nNumbers > 3, tripled:")
+print(result)
+
+print("\n✓ Higher-order function closure test complete!")

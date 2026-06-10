@@ -1,0 +1,34 @@
+==================
+Function definition
+==================
+
+func greet(name) {
+  return name
+}
+
+---
+
+(source_file
+  (function_definition
+    (identifier)
+    (parameter_list
+      (identifier))
+    (block
+      (return_statement
+        (identifier)))))
+
+==================
+Variable declaration and call
+==================
+
+let value := greet("kujo")
+
+---
+
+(source_file
+  (variable_declaration
+    (identifier)
+    (call_expression
+      (identifier)
+      (argument_list
+        (string)))))

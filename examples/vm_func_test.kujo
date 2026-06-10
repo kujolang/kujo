@@ -1,0 +1,6 @@
+// Test function call
+func hello() {
+    return 42
+}
+
+x := hello()

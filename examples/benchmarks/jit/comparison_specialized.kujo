@@ -1,0 +1,48 @@
+# JIT Benchmark: Specialized (Pure Int) Operations
+# Tests JIT performance with consistent Int types - enables full specialization
+# This should achieve best possible JIT performance
+
+func pure_int_arithmetic(iterations) {
+    # Pure integer arithmetic - ideal for specialization
+    a := 10
+    b := 20
+    c := 30
+    sum := 0
+    
+    i := 0
+    while i < iterations {
+        # All operations on Int values
+        temp := a + b
+        temp := temp * c
+        temp := temp - i
+        sum := sum + temp
+        
+        # More int operations
+        a := a + 1
+        b := b + 2
+        c := c + 3
+        
+        i := i + 1
+    }
+    
+    return sum
+}
+
+print("=== JIT Specialized (Pure Int) Benchmark ===")
+print("")
+
+# Warm-up to trigger JIT
+print("Warming up JIT compiler...")
+for i in range(150) {
+    pure_int_arithmetic(15)
+}
+
+# Benchmark
+print("Running benchmark...")
+result := pure_int_arithmetic(10000)
+
+print("Result: ", result)
+print("")
+print("Expected: Fastest performance due to Int specialization")
+print("Expected: All operations use specialized i64 code paths")
+print("Expected: Guards validate types, then direct Int operations")

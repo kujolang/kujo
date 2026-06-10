@@ -1,0 +1,52 @@
+# Webhook Receiver Example
+# Demonstrates receiving webhook POSTs and processing data
+
+print("http_webhook: long-running server example skipped in VM auto-run mode")
+exit(0)
+
+# Webhook log storage
+let webhooks := []
+
+# Create server
+server := http_server(8000)
+
+# Webhook endpoint
+server := server.route("POST", "/webhook", func(req) {
+    # Parse incoming webhook data
+    let data := parse_json(req.body)
+    
+    # Log the webhook
+    let log_entry := {
+        "timestamp": now(),
+        "data": data
+    }
+    push(webhooks, log_entry)
+    
+    print("Received webhook:", to_json(data))
+    
+    # Return success
+    return json_response(200, {
+        "success": true,
+        "message": "Webhook received",
+        "count": len(webhooks)
+    })
+})
+
+# Status endpoint to see all received webhooks
+server := server.route("GET", "/status", func(req) {
+    return json_response(200, {
+        "total_webhooks": len(webhooks),
+        "webhooks": webhooks
+    })
+})
+
+# Health check
+server := server.route("GET", "/health", func(req) {
+    return json_response(200, {"status": "healthy"})
+})
+
+print("Webhook receiver running on http://localhost:8000")
+print("Send POST requests to: http://localhost:8000/webhook")
+print("View status at: http://localhost:8000/status")
+print("")
+server.listen()

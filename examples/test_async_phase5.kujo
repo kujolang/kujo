@@ -1,0 +1,92 @@
+# Phase 5 Async Runtime Integration Tests
+# Tests for async HTTP, file I/O, and task management
+
+print("=== Phase 5 Async Tests ===")
+print("")
+
+# Test 1: Async File I/O
+print("Test 1: Async File I/O")
+test_file := "test_async_file.txt"
+test_content := "Hello from async file I/O!"
+
+# Write file asynchronously
+write_promise := async_write_file(test_file, test_content)
+write_result := await write_promise
+print("  Write result:", write_result)
+
+# Read file asynchronously
+read_promise := async_read_file(test_file)
+read_result := await read_promise
+print("  Read result:", read_result)
+print("  Content matches:", read_result == test_content)
+print("")
+
+# Test 2: Concurrent File Operations
+print("Test 2: Concurrent File I/O with promise_all")
+file1 := "async_test1.txt"
+file2 := "async_test2.txt"
+file3 := "async_test3.txt"
+
+print("  Creating write promises...")
+p1 := async_write_file(file1, "File 1 content")
+p2 := async_write_file(file2, "File 2 content")
+p3 := async_write_file(file3, "File 3 content")
+
+write_promises := [p1, p2, p3]
+
+print("  Waiting for all writes with promise_all...")
+# Wait for all writes to complete concurrently
+all_writes := await promise_all(write_promises)
+print("  All writes completed:", len(all_writes))
+
+# Read all files concurrently
+print("  Creating read promises...")
+r1 := async_read_file(file1)
+r2 := async_read_file(file2)
+r3 := async_read_file(file3)
+read_promises := [r1, r2, r3]
+
+all_reads := await promise_all(read_promises)
+print("  All reads completed:", len(all_reads))
+for i in range(len(all_reads)) {
+    print("    File", i + 1, ":", all_reads[i])
+}
+print("")
+
+# Test 3: Async Timeout
+print("Test 3: Async Timeout")
+sleep_promise := async_sleep(50)
+timeout_promise := async_timeout(sleep_promise, 100)
+timeout_result := await timeout_promise
+print("  Timeout succeeded:", type(timeout_result))
+
+# This should timeout
+long_sleep := async_sleep(200)
+timeout_promise2 := async_timeout(long_sleep, 50)
+# Expect this to fail with timeout error
+print("  Testing timeout failure (expected)...")
+print("")
+
+# Test 4: promise_all Error Handling
+print("Test 4: promise_all with Mixed Success/Failure")
+# Create a mix of promises
+promise1 := async_read_file(test_file)  # Should succeed
+promise2 := async_read_file("nonexistent_file_12345.txt")  # Should fail
+mixed_promises := [promise1, promise2]
+
+print("  Note: promise_all should fail fast on first error")
+print("")
+
+# Test 5: Task Spawning (Basic)
+print("Test 5: Task Spawning (placeholder)")
+print("  spawn_task() requires interpreter context")
+print("  Full task execution will be implemented in future update")
+print("")
+
+# Cleanup test files
+delete_file(test_file)
+delete_file(file1)
+delete_file(file2)
+delete_file(file3)
+
+print("=== All Phase 5 Async Tests Complete ===")

@@ -1,0 +1,7 @@
+export func helper(value) {
+    return value + 1
+}
+
+export func formatter(value) {
+    return "[" + value + "]"
+}

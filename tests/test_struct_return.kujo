@@ -1,0 +1,16 @@
+# Test creating struct in method
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func double() {
+        result := Vec2 { x: x * 2.0, y: y * 2.0 };
+        return result;
+    }
+}
+
+v1 := Vec2 { x: 1.0, y: 2.0 };
+v2 := v1.double();
+print(v2.x);
+print(v2.y);

@@ -1,0 +1,169 @@
+{
+  "name": "multi_file_workspace_symbol_rename_references",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/multi_a.kujo",
+          "text": "func shared_name(value) {\n  return value\n}\nlet result := shared_name(1)\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/multi_b.kujo",
+          "text": "func shared_name(other) {\n  return other\n}\nlet sample := shared_name(2)\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 201,
+      "method": "workspace/symbol",
+      "params": {
+        "query": "shared_name"
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 202,
+      "method": "textDocument/references",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/multi_a.kujo"
+        },
+        "position": {
+          "line": 3,
+          "character": 16
+        },
+        "context": {
+          "includeDeclaration": true
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 203,
+      "method": "textDocument/rename",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/multi_a.kujo"
+        },
+        "position": {
+          "line": 3,
+          "character": 16
+        },
+        "newName": "renamed_local"
+      }
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/multi_a.kujo",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/multi_b.kujo",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 201,
+      "result": [
+        {
+          "name": "shared_name",
+          "location": {
+            "uri": "file:///tmp/multi_a.kujo"
+          }
+        },
+        {
+          "name": "shared_name",
+          "location": {
+            "uri": "file:///tmp/multi_b.kujo"
+          }
+        }
+      ]
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 202,
+      "result": [
+        {
+          "uri": "file:///tmp/multi_a.kujo",
+          "range": {
+            "start": {
+              "line": 0,
+              "character": 5
+            },
+            "end": {
+              "line": 0,
+              "character": 6
+            }
+          }
+        },
+        {
+          "uri": "file:///tmp/multi_a.kujo",
+          "range": {
+            "start": {
+              "line": 3,
+              "character": 14
+            },
+            "end": {
+              "line": 3,
+              "character": 15
+            }
+          }
+        }
+      ]
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 203,
+      "result": {
+        "changes": {
+          "file:///tmp/multi_a.kujo": [
+            {
+              "range": {
+                "start": {
+                  "line": 0,
+                  "character": 5
+                },
+                "end": {
+                  "line": 0,
+                  "character": 16
+                }
+              },
+              "newText": "renamed_local"
+            },
+            {
+              "range": {
+                "start": {
+                  "line": 3,
+                  "character": 14
+                },
+                "end": {
+                  "line": 3,
+                  "character": 25
+                }
+              },
+              "newText": "renamed_local"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

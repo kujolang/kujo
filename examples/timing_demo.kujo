@@ -1,0 +1,71 @@
+# Timing Functions Demo
+# Demonstrates current_timestamp() and performance_now()
+
+print("╔═══════════════════════════════════════╗")
+print("║     Timing Functions Demo (v0.7.0)   ║")
+print("╚═══════════════════════════════════════╝")
+print("")
+
+# Test 1: current_timestamp()
+print("Test 1: current_timestamp()")
+print("─────────────────────────────────")
+ts1 := current_timestamp()
+print(ts1)
+print("This is milliseconds since UNIX epoch (Jan 1, 1970)")
+print("")
+
+# Test 2: performance_now()
+print("Test 2: performance_now()")
+print("─────────────────────────────────")
+perf1 := performance_now()
+print(perf1)
+print("This is milliseconds since program start")
+print("")
+
+# Test 3: Measure elapsed time
+print("Test 3: Measure elapsed time")
+print("─────────────────────────────────")
+start := performance_now()
+
+# Simulate some work
+i := 0
+while i < 1000000 {
+    i := i + 1
+}
+
+end := performance_now()
+elapsed := end - start
+print("Loop completed in " + elapsed + "ms")
+print("")
+
+# Test 4: Timestamp difference
+print("Test 4: Timestamp arithmetic")
+print("─────────────────────────────────")
+ts_start := current_timestamp()
+sleep(0.1)  # Sleep for 100ms
+ts_end := current_timestamp()
+diff := ts_end - ts_start
+print("Sleep duration:")
+print(diff)
+print("(expected ~100ms)")
+print("")
+
+# Test 5: Multiple calls show progression
+print("Test 5: Sequential timing calls")
+print("─────────────────────────────────")
+p1 := performance_now()
+sleep(0.05)
+p2 := performance_now()
+sleep(0.05)
+p3 := performance_now()
+
+print("Time 1:")
+print(p1)
+print("Time 2:")
+print(p2)
+print("Time 3:")
+print(p3)
+print("")
+
+print("✓ All timing functions working correctly!")
+

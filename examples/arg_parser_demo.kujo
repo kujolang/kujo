@@ -1,0 +1,91 @@
+# Example: Advanced CLI Tool with Argument Parser
+# Demonstrates comprehensive command-line argument parsing with arg_parser()
+
+print("=== File Processing CLI Tool ===")
+print("")
+
+# Create argument parser
+let parser := arg_parser()
+
+# Add various types of arguments
+let parser := parser.add_argument("--input", "short", "-i", "type", "string", "help", "Input file path (optional for demo)")
+let parser := parser.add_argument("--output", "short", "-o", "type", "string", "default", "output.txt", "help", "Output file path")
+let parser := parser.add_argument("--verbose", "short", "-v", "type", "bool", "help", "Enable verbose logging")
+let parser := parser.add_argument("--quiet", "short", "-q", "type", "bool", "help", "Suppress all output except errors")
+let parser := parser.add_argument("--format", "short", "-f", "type", "string", "default", "text", "help", "Output format (text, json, xml)")
+let parser := parser.add_argument("--limit", "short", "-l", "type", "int", "default", "100", "help", "Maximum number of records to process")
+let parser := parser.add_argument("--timeout", "short", "-t", "type", "float", "default", "30.5", "help", "Timeout in seconds")
+let parser := parser.add_argument("--force", "type", "bool", "help", "Force overwrite of existing files")
+let parser := parser.add_argument("--threads", "type", "int", "default", "4", "help", "Number of processing threads")
+
+# Show help text
+print("Available options:")
+print("==================")
+let help_text := parser.help()
+print(help_text)
+print("")
+
+# Parse command-line arguments
+print("Parsing command-line arguments...")
+try {
+    let parsed_args := parser.parse()
+    
+    print("Successfully parsed arguments!")
+    print("")
+    print("Configuration:")
+    
+    # Access parsed values - using direct access without has_key check
+    let input_val := parsed_args["input"]
+    let output_val := parsed_args["output"]
+    let verbose_val := parsed_args["verbose"]
+    let quiet_val := parsed_args["quiet"]
+    let format_val := parsed_args["format"]
+    let limit_val := parsed_args["limit"]
+    let timeout_val := parsed_args["timeout"]
+    let force_val := parsed_args["force"]
+    let threads_val := parsed_args["threads"]
+    
+    print("  Input file: ${input_val}")
+    print("  Output file: ${output_val}")
+    print("  Verbose mode: ${verbose_val}")
+    print("  Quiet mode: ${quiet_val}")
+    print("  Output format: ${format_val}")
+    print("  Record limit: ${limit_val}")
+    print("  Timeout: ${timeout_val}s")
+    print("  Force overwrite: ${force_val}")
+    print("  Processing threads: ${threads_val}")
+    
+    print("")
+    print("=== Configuration Complete ===")
+    print("")
+    
+    # Demonstrate usage based on flags
+    if verbose_val {
+        print("[VERBOSE] Starting file processing...")
+        print("[VERBOSE] Opening input file...")
+        print("[VERBOSE] Initializing processor...")
+    }
+    
+    if quiet_val {
+        # In quiet mode, suppress regular output
+        print("[QUIET MODE] Only showing critical information")
+    }
+    
+    print("Processing would start here with the configured options.")
+    
+} except error {
+    print("ERROR: Failed to parse arguments")
+    print(error["message"])
+    print("")
+    print("Use -h or --help to see usage information")
+    exit(1)
+}
+
+print("")
+print("=== Example Complete ===")
+print("")
+print("Try running this example with different arguments:")
+print("  kujo run examples/arg_parser_demo.kujo --input data.csv --verbose")
+print("  kujo run examples/arg_parser_demo.kujo -i input.txt -o output.txt -v")
+print("  kujo run examples/arg_parser_demo.kujo --input file.dat --limit 50 --timeout 10.5")
+print("  kujo run examples/arg_parser_demo.kujo -i test.txt --format json --force")

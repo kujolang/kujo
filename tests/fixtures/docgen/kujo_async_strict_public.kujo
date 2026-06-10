@@ -1,0 +1,7 @@
+async func private_async_helper() {
+    return 1
+}
+
+pub async func public_async_missing_docs() {
+    return 2
+}

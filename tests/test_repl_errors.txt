@@ -1,0 +1,26 @@
+# Test file for REPL error handling
+# This file tests that errors are caught and displayed properly
+
+# Division by zero (should handle gracefully)
+10 / 0
+
+# Undefined variable (should show error but continue)
+undefined_var
+
+# Function with error
+func bad_func() {
+    throw("This is an error")
+}
+
+# Try-except in REPL
+try {
+    bad_func()
+} except err {
+    print("Caught error: " + err.message)
+}
+
+# Continue after error
+let x := 42
+x * 2
+
+:quit

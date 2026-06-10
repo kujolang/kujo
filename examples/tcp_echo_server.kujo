@@ -1,0 +1,89 @@
+# TCP Echo Server Example
+# Demonstrates TCP socket server that echoes back client messages
+
+print("tcp_echo_server: long-running server example skipped in VM auto-run mode")
+exit(0)
+# Run with: kujo run examples/tcp_echo_server.kujo
+
+print("=== TCP Echo Server ===")
+print("")
+
+# Configuration
+host := "127.0.0.1"
+port := 8080
+
+print("Starting TCP echo server on ${host}:${port}")
+print("To test, run in another terminal:")
+print("  nc ${host} ${port}")
+print("or use examples/tcp_client.kujo")
+print("")
+
+# Create and bind the listener
+listener := tcp_listen(host, port)
+print("✓ Server listening on ${host}:${port}")
+print("Waiting for connections... (Ctrl+C to stop)")
+print("")
+
+# Server loop - accept and handle connections
+loop {
+    # Accept incoming connection
+    client := tcp_accept(listener)
+    print("✓ Client connected: ${type(client)}")
+    
+    # Send welcome message
+    welcome := "Welcome to TCP Echo Server! Type 'quit' to disconnect.\n"
+    tcp_send(client, welcome)
+    
+    # Handle client communication
+    connection_active := true
+    loop {
+        if !connection_active {
+            break
+        }
+        
+        # Receive data from client (up to 1024 bytes)
+        data := tcp_receive(client, 1024)
+        
+        # Check if we received data
+        if type(data) == "string" {
+            if len(data) > 0 {
+                # Trim whitespace for command checking
+                trimmed := trim(data)
+                print("Received: ${trimmed}")
+                
+                # Check for quit command
+                if trimmed == "quit" || trimmed == "exit" {
+                    response := "Goodbye!\n"
+                    tcp_send(client, response)
+                    print("Client disconnected")
+                    connection_active := false
+                    break
+                }
+                
+                # Echo the message back
+                echo_response := "Echo: ${data}"
+                tcp_send(client, echo_response)
+            } else {
+                # Empty data means client disconnected
+                print("Client disconnected (connection closed)")
+                connection_active := false
+                break
+            }
+        } else {
+            # Handle binary data or errors
+            print("Received non-string data or error")
+            connection_active := false
+            break
+        }
+    }
+    
+    # Close the client connection
+    tcp_close(client)
+    print("Connection closed")
+    print("")
+    print("Waiting for next connection...")
+}
+
+# Cleanup (this won't be reached in the loop, but good practice)
+tcp_close(listener)
+print("Server stopped")

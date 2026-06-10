@@ -1,0 +1,147 @@
+# Data Analyzer
+# Demonstrates array higher-order functions for data processing
+
+struct DataPoint {
+	value: float,
+	category: string,
+	valid: bool
+}
+
+print("=== Data Analyzer ===")
+print("")
+
+# Sample dataset
+data := [
+	DataPoint { value: 45.5, category: "A", valid: true },
+	DataPoint { value: 78.2, category: "B", valid: true },
+	DataPoint { value: -5.0, category: "A", valid: false },
+	DataPoint { value: 92.1, category: "A", valid: true },
+	DataPoint { value: 34.7, category: "B", valid: true },
+	DataPoint { value: 0.0, category: "C", valid: false },
+	DataPoint { value: 67.8, category: "B", valid: true },
+	DataPoint { value: 88.9, category: "A", valid: true }
+]
+
+print("Total data points: " + len(data))
+print("")
+
+# Filter valid data points
+print("=== Step 1: Filter Valid Data ===")
+valid_data := filter(data, func(point) {
+	return point.valid
+})
+print("Valid data points: " + len(valid_data))
+print("")
+
+# Extract values from valid data
+print("=== Step 2: Extract Values ===")
+values := map(valid_data, func(point) {
+	return point.value
+})
+print("Values: ", values)
+print("")
+
+# Calculate statistics
+print("=== Step 3: Calculate Statistics ===")
+
+# Sum
+total := reduce(values, 0, func(acc, val) {
+	return acc + val
+})
+print("Total: " + total)
+
+# Average
+average := total / len(values)
+print("Average: " + average)
+
+# Maximum
+max_val := reduce(values, 0, func(acc, val) {
+	if val > acc {
+		return val
+	}
+	return acc
+})
+print("Maximum: " + max_val)
+
+# Minimum (start with first value)
+min_val := reduce(values, 999999, func(acc, val) {
+	if val < acc {
+		return val
+	}
+	return acc
+})
+print("Minimum: " + min_val)
+print("")
+
+# Find specific data
+print("=== Step 4: Find Specific Data ===")
+high_performer := find(valid_data, func(point) {
+	return point.value > 85
+})
+
+if high_performer != 0 {
+	print("Found high performer:")
+	print("  Value: " + high_performer.value)
+	print("  Category: " + high_performer.category)
+} else {
+	print("No high performers found")
+}
+print("")
+
+# Category analysis
+print("=== Step 5: Category Analysis ===")
+
+# Filter category A
+category_a := filter(valid_data, func(point) {
+	return point.category == "A"
+})
+print("Category A count: " + len(category_a))
+
+# Calculate category A average
+a_values := map(category_a, func(point) { return point.value })
+a_total := reduce(a_values, 0, func(acc, val) { return acc + val })
+a_average := a_total / len(a_values)
+print("Category A average: " + a_average)
+print("")
+
+# Filter category B
+category_b := filter(valid_data, func(point) {
+	return point.category == "B"
+})
+print("Category B count: " + len(category_b))
+
+# Calculate category B average
+b_values := map(category_b, func(point) { return point.value })
+b_total := reduce(b_values, 0, func(acc, val) { return acc + val })
+b_average := b_total / len(b_values)
+print("Category B average: " + b_average)
+print("")
+
+# Advanced: Chain operations for data above average
+print("=== Step 6: Above Average Analysis ===")
+above_average := filter(valid_data, func(point) {
+	return point.value > average
+})
+print("Data points above average: " + len(above_average))
+
+above_avg_categories := map(above_average, func(point) {
+	return point.category
+})
+print("Their categories: ", above_avg_categories)
+print("")
+
+# Count occurrences using reduce
+print("=== Step 7: Performance Score ===")
+# Calculate a weighted score (values normalized and summed)
+normalized := map(values, func(val) {
+	return val / max_val * 100
+})
+print("Normalized scores: ", normalized)
+
+performance_score := reduce(normalized, 0, func(acc, val) {
+	return acc + val
+}) / len(normalized)
+print("Overall performance score: " + performance_score + "%")
+print("")
+
+print("=== Analysis Complete ===")

@@ -1,0 +1,20 @@
+# Kujo parallel_map benchmark for cross-language ProcessPool comparison
+
+values := [
+    "value_1", "value_2", "value_3", "value_4", "value_5", "value_6", "value_7", "value_8",
+    "value_9", "value_10", "value_11", "value_12", "value_13", "value_14", "value_15", "value_16"
+]
+
+iterations := 0
+checksum := 0
+start_ms := performance_now()
+
+while iterations < 500 {
+    mapped := await parallel_map(values, upper, 8)
+    checksum := checksum + len(join(mapped, ""))
+    iterations := iterations + 1
+}
+
+elapsed_ms := performance_now() - start_ms
+print("KUJO_PARALLEL_MAP_MS=" + to_string(elapsed_ms))
+print("KUJO_PARALLEL_MAP_CHECKSUM=" + to_string(checksum))

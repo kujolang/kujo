@@ -1,0 +1,12 @@
+# Test without semicolon
+
+struct Test {
+    value: float,
+    
+    func show() {
+        print("InShow");
+    }
+}
+
+t := Test { value: 42.0 }
+t.show()

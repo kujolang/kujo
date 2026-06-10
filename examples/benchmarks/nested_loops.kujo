@@ -1,0 +1,37 @@
+# Nested Loops Benchmark - Pure Computation
+# Tests: Basic arithmetic, nested loop performance, variable updates
+
+func nested_loops(n) {
+    let sum := 0
+    let i := 0
+    loop {
+        if i >= n {
+            break
+        }
+        let j := 0
+        loop {
+            if j >= n {
+                break
+            }
+            let k := 0
+            loop {
+                if k >= 10 {
+                    break
+                }
+                sum := sum + i + j + k
+                k := k + 1
+            }
+            j := j + 1
+        }
+        i := i + 1
+    }
+    return sum
+}
+
+# Run benchmark
+let start := performance_now()
+let result := nested_loops(100)
+let end := performance_now()
+
+print("Nested loops result: ", result)
+print("Time taken: ", (end - start), " ms")

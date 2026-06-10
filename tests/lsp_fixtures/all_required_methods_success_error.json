@@ -1,0 +1,102 @@
+{
+  "name": "all_required_methods_success_error",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/all_required_methods.kujo",
+          "text": "func qq_fn(value) {\n  return value\n}\nlet qq_var := qq_fn(1)\nqq\n"
+        }
+      }
+    },
+
+    { "jsonrpc": "2.0", "id": 10, "method": "textDocument/completion", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "position": { "line": 4, "character": 2 } } },
+    { "jsonrpc": "2.0", "id": 110, "method": "textDocument/completion", "params": { "position": { "line": 0, "character": 0 } } },
+
+    { "jsonrpc": "2.0", "id": 11, "method": "textDocument/hover", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "position": { "line": 3, "character": 14 } } },
+    { "jsonrpc": "2.0", "id": 111, "method": "textDocument/hover", "params": { "position": { "line": 0, "character": 0 } } },
+
+    { "jsonrpc": "2.0", "id": 12, "method": "textDocument/definition", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "position": { "line": 3, "character": 14 } } },
+    { "jsonrpc": "2.0", "id": 112, "method": "textDocument/definition", "params": { "position": { "line": 0, "character": 0 } } },
+
+    { "jsonrpc": "2.0", "id": 13, "method": "textDocument/references", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "position": { "line": 3, "character": 14 }, "context": { "includeDeclaration": true } } },
+    { "jsonrpc": "2.0", "id": 113, "method": "textDocument/references", "params": { "position": { "line": 0, "character": 0 } } },
+
+    { "jsonrpc": "2.0", "id": 14, "method": "textDocument/rename", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "position": { "line": 3, "character": 14 }, "newName": "qq_renamed" } },
+    { "jsonrpc": "2.0", "id": 114, "method": "textDocument/rename", "params": { "position": { "line": 0, "character": 0 }, "newName": "qq_renamed" } },
+
+    { "jsonrpc": "2.0", "id": 15, "method": "textDocument/codeAction", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" } } },
+    { "jsonrpc": "2.0", "id": 115, "method": "textDocument/codeAction", "params": { } },
+
+    { "jsonrpc": "2.0", "id": 16, "method": "textDocument/formatting", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "options": { "tabSize": 2 } } },
+    { "jsonrpc": "2.0", "id": 116, "method": "textDocument/formatting", "params": { "options": { "tabSize": 2 } } },
+
+    { "jsonrpc": "2.0", "id": 17, "method": "textDocument/rangeFormatting", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "range": { "start": { "line": 0, "character": 0 }, "end": { "line": 1, "character": 0 } }, "options": { "tabSize": 2 } } },
+    { "jsonrpc": "2.0", "id": 117, "method": "textDocument/rangeFormatting", "params": { "options": { "tabSize": 2 } } },
+
+    { "jsonrpc": "2.0", "id": 18, "method": "textDocument/documentSymbol", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" } } },
+    { "jsonrpc": "2.0", "id": 118, "method": "textDocument/documentSymbol", "params": { } },
+
+    { "jsonrpc": "2.0", "id": 19, "method": "workspace/symbol", "params": { "query": "qq" } },
+    { "jsonrpc": "2.0", "id": 119, "method": "workspace/symbol", "params": { "query": "qq" } },
+
+    { "jsonrpc": "2.0", "id": 20, "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" } } },
+    { "jsonrpc": "2.0", "id": 120, "method": "textDocument/semanticTokens/full", "params": { } },
+
+    { "jsonrpc": "2.0", "id": 21, "method": "textDocument/inlayHint", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" }, "range": { "start": { "line": 0, "character": 0 }, "end": { "line": 5, "character": 0 } } } },
+    { "jsonrpc": "2.0", "id": 121, "method": "textDocument/inlayHint", "params": { "range": { "start": { "line": 0, "character": 0 }, "end": { "line": 5, "character": 0 } } } },
+
+    { "jsonrpc": "2.0", "id": 22, "method": "textDocument/codeLens", "params": { "textDocument": { "uri": "file:///tmp/all_required_methods.kujo" } } },
+    { "jsonrpc": "2.0", "id": 122, "method": "textDocument/codeLens", "params": { } }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/all_required_methods.kujo"
+      }
+    },
+
+    { "jsonrpc": "2.0", "id": 10, "result": { "items": [ { "label": "qq_fn" } ] } },
+    { "jsonrpc": "2.0", "id": 110, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 11, "result": { "contents": { "kind": "markdown" } } },
+    { "jsonrpc": "2.0", "id": 111, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 12, "result": { "uri": "file:///tmp/all_required_methods.kujo" } },
+    { "jsonrpc": "2.0", "id": 112, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 13, "result": [ { "uri": "file:///tmp/all_required_methods.kujo" } ] },
+    { "jsonrpc": "2.0", "id": 113, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 14, "result": { "changes": { "file:///tmp/all_required_methods.kujo": [ { "newText": "qq_renamed" } ] } } },
+    { "jsonrpc": "2.0", "id": 114, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 15, "result": [] },
+    { "jsonrpc": "2.0", "id": 115, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 16, "result": [] },
+    { "jsonrpc": "2.0", "id": 116, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 17, "result": [] },
+    { "jsonrpc": "2.0", "id": 117, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 18, "result": [ { "name": "qq_fn" } ] },
+    { "jsonrpc": "2.0", "id": 118, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 19, "result": [ { "name": "qq_fn" } ] },
+    { "jsonrpc": "2.0", "id": 119, "result": [ { "name": "qq_fn" } ] },
+
+    { "jsonrpc": "2.0", "id": 20, "result": { "data": [0, 0, 4, 15, 0] } },
+    { "jsonrpc": "2.0", "id": 120, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 21, "result": [] },
+    { "jsonrpc": "2.0", "id": 121, "error": { "code": -32602 } },
+
+    { "jsonrpc": "2.0", "id": 22, "result": [ { "command": { "command": "kujo.symbolInfo" } } ] },
+    { "jsonrpc": "2.0", "id": 122, "error": { "code": -32602 } }
+  ]
+}

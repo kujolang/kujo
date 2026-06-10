@@ -1,0 +1,16 @@
+# Test struct definition with simple return
+print("Defining struct...");
+
+struct Test {
+    x: float,
+    
+    func dummy(self) {
+        y := 42.0;
+        return y;
+    }
+}
+
+print("Struct defined!");
+print("Creating instance...");
+t := Test { x: 10.0 };
+print("Created!");

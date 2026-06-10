@@ -1,0 +1,10 @@
+{
+  "code": "RUFLEX005",
+  "column": 9,
+  "file": "lexer_invalid_escape.kujo",
+  "help": "Fix the lexical error in source and run again.",
+  "line": 1,
+  "message": "Invalid escape sequence: \\\\q",
+  "severity": "error",
+  "subsystem": "lexer"
+}

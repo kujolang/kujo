@@ -1,0 +1,183 @@
+# String Functions Example
+# Demonstrates the enhanced string manipulation functions in Kujo
+
+print("=== String Functions Demo ===")
+print("")
+
+# 1. starts_with() - Check if string starts with prefix
+print("1. starts_with()")
+filename := "example.kujo"
+is_kujo := starts_with(filename, "example")
+print("  starts_with('example.kujo', 'example'): ${is_kujo}")
+
+url := "https://example.com"
+is_https := starts_with(url, "https://")
+print("  starts_with('https://example.com', 'https://'): ${is_https}")
+print("")
+
+# 2. ends_with() - Check if string ends with suffix
+print("2. ends_with()")
+script := "app.kujo"
+is_script := ends_with(script, ".kujo")
+print("  ends_with('app.kujo', '.kujo'): ${is_script}")
+
+image := "photo.png"
+is_jpeg := ends_with(image, ".jpg")
+print("  ends_with('photo.png', '.jpg'): ${is_jpeg}")
+print("")
+
+# 3. index_of() - Find position of substring
+print("3. index_of()")
+message := "hello world, hello universe"
+pos1 := index_of(message, "world")
+print("  index_of('hello world, hello universe', 'world'): ${pos1}")
+
+pos2 := index_of(message, "hello")
+print("  index_of('hello world, hello universe', 'hello'): ${pos2}")
+
+pos3 := index_of(message, "xyz")
+print("  index_of('hello world, hello universe', 'xyz'): ${pos3}")
+print("")
+
+# 4. repeat() - Repeat string multiple times
+print("4. repeat()")
+pattern := repeat("*", 10)
+print("  repeat('*', 10): ${pattern}")
+
+laugh := repeat("ha", 5)
+print("  repeat('ha', 5): ${laugh}")
+
+dashes := repeat("-", 20)
+print("  ${dashes}")
+print("")
+
+# 5. split() - Split string into array
+print("5. split()")
+csv := "apple,banana,cherry,date"
+fruits := split(csv, ",")
+print("  split('apple,banana,cherry,date', ','): [")
+for fruit in fruits {
+    print("    ${fruit}")
+}
+print("  ]")
+print("")
+
+path := "/home/user/documents/file.txt"
+parts := split(path, "/")
+print("  split('/home/user/documents/file.txt', '/'): [")
+for part in parts {
+    if len(part) > 0 {
+        print("    ${part}")
+    }
+}
+print("  ]")
+print("")
+
+# 6. join() - Join array elements into string
+print("6. join()")
+words := ["Kujo", "is", "awesome"]
+sentence := join(words, " ")
+print("  join(['Kujo', 'is', 'awesome'], ' '): ${sentence}")
+
+numbers := [1, 2, 3, 4, 5]
+nums_str := join(numbers, "-")
+print("  join([1, 2, 3, 4, 5], '-'): ${nums_str}")
+print("")
+
+# Practical Example: CSV Processing
+print("=== Practical Example: CSV Processing ===")
+csv_line := "Alice,30,Engineer"
+fields := split(csv_line, ",")
+name := fields[0]
+age := fields[1]
+job := fields[2]
+print("Name: ${name}, Age: ${age}, Job: ${job}")
+print("")
+
+# Practical Example: URL Validation
+print("=== Practical Example: URL Validation ===")
+func is_valid_url(url) {
+    https := starts_with(url, "https://")
+    http := starts_with(url, "http://")
+    if https {
+        return true
+    }
+    if http {
+        return true
+    }
+    return false
+}
+
+url1 := "https://example.com"
+url2 := "ftp://server.com"
+print("  is_valid_url('${url1}'): ${is_valid_url(url1)}")
+print("  is_valid_url('${url2}'): ${is_valid_url(url2)}")
+print("")
+
+# Practical Example: File Extension Check
+print("=== Practical Example: File Extension Check ===")
+func get_file_type(filename) {
+    if ends_with(filename, ".kujo") {
+        return "Kujo Script"
+    }
+    if ends_with(filename, ".txt") {
+        return "Text File"
+    }
+    if ends_with(filename, ".jpg") {
+        return "JPEG Image"
+    }
+    if ends_with(filename, ".png") {
+        return "PNG Image"
+    }
+    return "Unknown"
+}
+
+files := ["script.kujo", "notes.txt", "photo.jpg", "data.csv"]
+for file in files {
+    file_type := get_file_type(file)
+    print("  ${file}: ${file_type}")
+}
+print("")
+
+# Practical Example: String Pattern Matching
+print("=== Practical Example: Find and Replace Position ===")
+text := "The quick brown fox jumps over the lazy dog"
+search := "fox"
+pos := index_of(text, search)
+if pos >= 0 {
+    print("  Found '${search}' at position ${pos}")
+    before := substring(text, 0, pos)
+    after_start := pos + len(search)
+    after := substring(text, after_start, len(text))
+    replaced := "${before}cat${after}"
+    print("  Original: ${text}")
+    print("  Replaced: ${replaced}")
+}
+print("")
+
+# Practical Example: Generating Patterns
+print("=== Practical Example: Pattern Generation ===")
+func draw_box(width) {
+    border := repeat("*", width)
+    print(border)
+    middle := "*${repeat(' ', width - 2)}*"
+    print(middle)
+    print(middle)
+    print(border)
+}
+
+print("  Drawing a 10x4 box:")
+draw_box(10)
+print("")
+
+# Practical Example: Split and Rejoin
+print("=== Practical Example: Split and Rejoin ===")
+sentence := "one two three four five"
+words := split(sentence, " ")
+reversed := [words[4], words[3], words[2], words[1], words[0]]
+reversed_sentence := join(reversed, " ")
+print("  Original: ${sentence}")
+print("  Reversed: ${reversed_sentence}")
+print("")
+
+print("=== Demo Complete! ===")

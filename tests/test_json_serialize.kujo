@@ -1,0 +1,43 @@
+# Test JSON Serialization - to_json()
+print("=== JSON Serialization Tests ===")
+
+# Test 1: Serialize number
+num := 42
+json1 := to_json(num)
+print("Number to JSON:", json1)
+
+# Test 2: Serialize string
+str := "Hello, World!"
+json2 := to_json(str)
+print("String to JSON:", json2)
+
+# Test 3: Serialize boolean
+flag := 1  # true
+json3 := to_json(flag)
+print("Boolean to JSON:", json3)
+
+# Test 4: Serialize array
+arr := [1, 2, 3, 4, 5]
+json4 := to_json(arr)
+print("Array to JSON:", json4)
+
+# Test 5: Serialize dictionary
+dict := {"name": "Bob", "age": 25}
+json5 := to_json(dict)
+print("Dict to JSON:", json5)
+
+# Test 6: Serialize nested structure
+nested := {"user": {"name": "Charlie", "settings": {"theme": "dark"}}}
+json6 := to_json(nested)
+print("Nested to JSON:", json6)
+
+# Test 7: Round-trip test
+original := {"test": "value", "number": 123}
+json_str := to_json(original)
+parsed := parse_json(json_str)
+print("Original:", original)
+print("JSON string:", json_str)
+print("Parsed back:", parsed)
+print("Value matches:", parsed["test"])
+
+print("=== All serialization tests passed ===")

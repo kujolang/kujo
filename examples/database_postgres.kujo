@@ -1,0 +1,117 @@
+# PostgreSQL Database Example
+# Demonstrates the unified database API with PostgreSQL
+#
+# PREREQUISITES:
+# 1. Install PostgreSQL: brew install postgresql (macOS)
+# 2. Start PostgreSQL: brew services start postgresql
+# 3. Create test database: createdb kujo_test
+# 4. Run this example: cargo run -- run examples/database_postgres.kujo
+#
+# Note: This example uses default local PostgreSQL settings
+# Connection string format: "host=localhost user=postgres dbname=kujo_test"
+
+print("=== PostgreSQL Database Example ===")
+print("")
+print("Attempting to connect to PostgreSQL...")
+print("Note: Adjust connection string if your PostgreSQL uses different settings")
+print("")
+
+print("database_postgres: requires a live PostgreSQL instance; skipping in VM auto-run mode")
+exit(0)
+
+# Connect to PostgreSQL using unified database API
+# Common connection strings:
+# - macOS default: "host=localhost user=YOUR_USERNAME dbname=kujo_test"
+# - Linux default: "host=localhost user=postgres password=postgres dbname=kujo_test"
+# Replace 'YOUR_USERNAME' with your system username
+db := db_connect("postgres", "host=localhost dbname=kujo_test")
+
+print("✓ Connected to PostgreSQL!")
+print("")
+
+# Create a users table
+print("Creating users table...")
+db_execute(db, "DROP TABLE IF EXISTS users CASCADE", [])
+db_execute(db, "CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT, age INTEGER)", [])
+print("✓ Table created")
+print("")
+
+# Insert some test data
+print("Inserting test users...")
+db_execute(db, "INSERT INTO users (name, email, age) VALUES ($1, $2, $3)", ["Alice Johnson", "alice@example.com", 30])
+db_execute(db, "INSERT INTO users (name, email, age) VALUES ($1, $2, $3)", ["Bob Smith", "bob@example.com", 25])
+db_execute(db, "INSERT INTO users (name, email, age) VALUES ($1, $2, $3)", ["Carol Martinez", "carol@example.com", 35])
+db_execute(db, "INSERT INTO users (name, email) VALUES ($1, $2)", ["Dave Wilson", "dave@example.com"])
+print("✓ Inserted 4 users")
+print("")
+
+# Query all users
+print("Querying all users:")
+users := db_query(db, "SELECT * FROM users ORDER BY id", [])
+for user in users {
+    print("  ID: " + to_string(user["id"]) + ", Name: " + user["name"] + ", Email: " + user["email"])
+}
+print("")
+
+# Query specific user with parameters
+print("Querying user with name 'Bob Smith':")
+bob := db_query(db, "SELECT * FROM users WHERE name = $1", ["Bob Smith"])
+if len(bob) > 0 {
+    print("  Found: " + bob[0]["name"] + " (" + bob[0]["email"] + "), Age: " + to_string(bob[0]["age"]))
+}
+print("")
+
+# Update a user
+print("Updating Alice's email and age...")
+rows_affected := db_execute(db, "UPDATE users SET email = $1, age = $2 WHERE name = $3", ["alice.j@newmail.com", 31, "Alice Johnson"])
+print("  Updated " + to_string(rows_affected) + " row(s)")
+print("")
+
+# Verify the update
+alice := db_query(db, "SELECT * FROM users WHERE name = $1", ["Alice Johnson"])
+print("Alice's updated info: " + alice[0]["email"] + ", Age: " + to_string(alice[0]["age"]))
+print("")
+
+# Query users by age range
+print("Querying users aged 30-35:")
+aged_users := db_query(db, "SELECT name, age FROM users WHERE age BETWEEN $1 AND $2 ORDER BY age", [30, 35])
+for user in aged_users {
+    print("  " + user["name"] + ": " + to_string(user["age"]) + " years old")
+}
+print("")
+
+# Count total users
+count_result := db_query(db, "SELECT COUNT(*) as total FROM users", [])
+print("Total users in database: " + to_string(count_result[0]["total"]))
+print("")
+
+# Delete a user
+print("Deleting user 'Dave Wilson'...")
+db_execute(db, "DELETE FROM users WHERE name = $1", ["Dave Wilson"])
+count_after := db_query(db, "SELECT COUNT(*) as total FROM users", [])
+print("Users remaining: " + to_string(count_after[0]["total"]))
+print("")
+
+# Clean up - drop the table
+print("Cleaning up...")
+db_execute(db, "DROP TABLE users", [])
+print("✓ Table dropped")
+print("")
+
+# Close the database connection
+db_close(db)
+print("✓ Database connection closed")
+print("")
+
+print("✅ PostgreSQL database operations completed successfully!")
+print("")
+print("Key Features Demonstrated:")
+print("  ✓ Connection to PostgreSQL")
+print("  ✓ Table creation and deletion")
+print("  ✓ INSERT with parameterized queries ($1, $2, $3)")
+print("  ✓ SELECT with WHERE clause and parameters")
+print("  ✓ UPDATE with multiple parameters")
+print("  ✓ DELETE operations")
+print("  ✓ NULL value handling")
+print("  ✓ Aggregate functions (COUNT)")
+print("  ✓ Range queries (BETWEEN)")

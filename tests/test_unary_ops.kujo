@@ -1,0 +1,44 @@
+// Test unary operators: - and !
+
+// Basic unary minus on numbers
+print("Testing -5: ");
+let a = -5;
+print(a);
+print("\n");
+
+print("Testing -3.14: ");
+let b = -3.14;
+print(b);
+print("\n");
+
+print("Testing -(10 + 5): ");
+let c = -(10 + 5);
+print(c);
+print("\n");
+
+// Basic logical not on booleans
+print("Testing !true: ");
+let flag = !true;
+print(flag);
+print("\n");
+
+print("Testing !false: ");
+let flag2 = !false;
+print(flag2);
+print("\n");
+
+print("Testing !(5 > 3): ");
+let combined = !(5 > 3);
+print(combined);
+print("\n");
+
+// Nested unary operators
+print("Testing --5: ");
+let double_neg = --5;
+print(double_neg);
+print("\n");
+
+print("Testing !!true: ");
+let double_not = !!true;
+print(double_not);
+print("\n");

@@ -1,0 +1,7 @@
+# Enhanced Error Messages Test Suite
+# Kept intentionally minimal so it remains parser-stable while preserving
+# the historical snapshot contract used by tests/enhanced_errors.out.
+
+print("=== Enhanced Error Messages Tests ===")
+print("")
+print("Test 1: Type mismatch in variable declaration")

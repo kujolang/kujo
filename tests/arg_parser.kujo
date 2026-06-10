@@ -1,0 +1,99 @@
+# Test: Command-Line Argument Parser
+# Tests for arg_parser() functionality
+
+print("=== ArgParser Tests ===")
+
+# Test 1: Basic parser creation
+let parser := arg_parser()
+print(type(parser))
+
+# Test 2: Add simple flag (boolean)
+mut parser2 := arg_parser()
+parser2 = parser2.add_argument("--verbose", "short", "-v", "type", "bool", "help", "Enable verbose output")
+print("Added verbose flag")
+
+# Test 3: Add required string option
+mut parser3 := arg_parser()
+parser3 = parser3.add_argument("--name", "type", "string", "required", true, "help", "User name")
+print("Added required name option")
+
+# Test 4: Add integer option with default
+mut parser4 := arg_parser()
+parser4 = parser4.add_argument("--port", "type", "int", "default", "8080", "help", "Port number")
+print("Added port option with default")
+
+# Test 5: Multiple arguments
+mut parser5 := arg_parser()
+parser5 = parser5.add_argument("--verbose", "short", "-v", "type", "bool", "help", "Verbose mode")
+parser5 = parser5.add_argument("--config", "short", "-c", "type", "string", "required", true, "help", "Config file")
+parser5 = parser5.add_argument("--port", "short", "-p", "type", "int", "default", "3000", "help", "Server port")
+print("Added multiple arguments")
+
+# Test 6: Parse with no arguments (using defaults)
+# For testing, we'll simulate by creating parser with optional args
+mut parser6 := arg_parser()
+parser6 = parser6.add_argument("--debug", "type", "bool", "help", "Debug mode")
+parser6 = parser6.add_argument("--timeout", "type", "int", "default", "30", "help", "Timeout seconds")
+# Note: parse() will use actual CLI args, so results depend on how test is run
+print("Parser 6 configured")
+
+# Test 7: Generate help text
+mut parser7 := arg_parser()
+parser7 = parser7.add_argument("--verbose", "short", "-v", "type", "bool", "help", "Enable verbose output")
+parser7 = parser7.add_argument("--config", "short", "-c", "type", "string", "required", true, "help", "Configuration file path")
+parser7 = parser7.add_argument("--port", "type", "int", "default", "8080", "help", "Port to listen on")
+let help_text := parser7.help()
+print("Help text generated:")
+print(help_text)
+
+# Test 8: Type checking - integer
+mut parser8 := arg_parser()
+parser8 = parser8.add_argument("--count", "type", "int", "help", "Number of items")
+print("Integer type argument added")
+
+# Test 9: Type checking - float
+mut parser9 := arg_parser()
+parser9 = parser9.add_argument("--ratio", "type", "float", "help", "Ratio value")
+print("Float type argument added")
+
+# Test 10: Boolean flags
+mut parser10 := arg_parser()
+parser10 = parser10.add_argument("--enable", "type", "bool", "help", "Enable feature")
+parser10 = parser10.add_argument("--disable", "type", "bool", "help", "Disable feature")
+print("Boolean flags added")
+
+# Test 11: Required vs optional
+mut parser11 := arg_parser()
+parser11 = parser11.add_argument("--required-field", "required", true, "type", "string", "help", "This is required")
+parser11 = parser11.add_argument("--optional-field", "required", false, "type", "string", "help", "This is optional")
+print("Required and optional arguments configured")
+
+# Test 12: Default values
+mut parser12 := arg_parser()
+parser12 = parser12.add_argument("--host", "type", "string", "default", "localhost", "help", "Host address")
+parser12 = parser12.add_argument("--retries", "type", "int", "default", "3", "help", "Retry attempts")
+print("Default values configured")
+
+# Test 13: Short and long forms
+mut parser13 := arg_parser()
+parser13 = parser13.add_argument("--output", "short", "-o", "type", "string", "help", "Output file")
+parser13 = parser13.add_argument("--input", "short", "-i", "type", "string", "help", "Input file")
+print("Short and long forms configured")
+
+# Test 14: Complex configuration
+mut parser14 := arg_parser()
+parser14 = parser14.add_argument("--verbose", "short", "-v", "type", "bool", "help", "Verbose mode")
+parser14 = parser14.add_argument("--quiet", "short", "-q", "type", "bool", "help", "Quiet mode")
+parser14 = parser14.add_argument("--config", "short", "-c", "type", "string", "required", true, "help", "Config file")
+parser14 = parser14.add_argument("--port", "short", "-p", "type", "int", "default", "8080", "help", "Port")
+parser14 = parser14.add_argument("--timeout", "short", "-t", "type", "float", "default", "30.5", "help", "Timeout")
+print("Complex configuration done")
+
+# Test 15: Chaining add_argument calls
+mut parser15 := arg_parser()
+parser15 = parser15.add_argument("--one", "type", "string", "help", "First arg")
+parser15 = parser15.add_argument("--two", "type", "string", "help", "Second arg")
+parser15 = parser15.add_argument("--three", "type", "string", "help", "Third arg")
+print("Chained add_argument calls work")
+
+print("=== All ArgParser Tests Complete ===")

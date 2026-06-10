@@ -1,0 +1,169 @@
+# Real-World Benchmark: JSON Parsing & Serialization
+# Tests JSON parsing and serialization with various data sizes and complexities
+
+func create_large_json(size) {
+    # Create a large JSON structure with nested objects and arrays
+    users := []
+    for i in range(size) {
+        user := {
+            "id": i,
+            "name": "User" + str(i),
+            "email": "user" + str(i) + "@example.com",
+            "age": 20 + (i % 50),
+            "active": (i % 2) == 0,
+            "tags": ["tag" + str(i % 5), "tag" + str((i + 1) % 5)],
+            "profile": {
+                "bio": "This is user " + str(i),
+                "joined": 2020 + (i % 5),
+                "posts": i * 3,
+                "followers": i * 10
+            }
+        }
+        users := users + [user]
+    }
+    
+    return {
+        "version": "1.0",
+        "total": size,
+        "users": users,
+        "metadata": {
+            "generated": 2026,
+            "type": "benchmark",
+            "compression": false
+        }
+    }
+}
+
+func benchmark_json_serialization(size) {
+    # Create data structure
+    data := create_large_json(size)
+    
+    # Serialize to JSON
+    start := time_ms()
+    json_str := to_json(data)
+    elapsed := time_ms() - start
+    
+    return {
+        "operation": "serialization",
+        "size": size,
+        "time_ms": elapsed,
+        "json_length": len(json_str)
+    }
+}
+
+func benchmark_json_parsing(size) {
+    # Create and serialize data first
+    data := create_large_json(size)
+    json_str := to_json(data)
+    
+    # Parse JSON
+    start := time_ms()
+    parsed := parse_json(json_str)
+    elapsed := time_ms() - start
+    
+    # Verify correctness
+    if parsed["total"] != size {
+        throw "Parse error: total mismatch"
+    }
+    
+    return {
+        "operation": "parsing",
+        "size": size,
+        "time_ms": elapsed,
+        "json_length": len(json_str),
+        "users_count": len(parsed["users"])
+    }
+}
+
+func benchmark_json_roundtrip(size) {
+    # Create original data
+    original := create_large_json(size)
+    
+    # Round-trip: serialize -> parse -> serialize -> parse
+    start := time_ms()
+    
+    json1 := to_json(original)
+    parsed1 := parse_json(json1)
+    json2 := to_json(parsed1)
+    parsed2 := parse_json(json2)
+    
+    elapsed := time_ms() - start
+    
+    # Verify correctness
+    if parsed2["total"] != size {
+        throw "Round-trip error: data corruption"
+    }
+    
+    return {
+        "operation": "roundtrip",
+        "size": size,
+        "time_ms": elapsed,
+        "cycles": 2
+    }
+}
+
+func benchmark_nested_json() {
+    # Create deeply nested structure
+    depth := 10
+    current := {"value": 42}
+    
+    for i in range(depth) {
+        current := {"level": i, "data": current}
+    }
+    
+    # Serialize deeply nested structure
+    start := time_ms()
+    json_str := to_json(current)
+    elapsed_ser := time_ms() - start
+    
+    # Parse deeply nested structure
+    start := time_ms()
+    parsed := parse_json(json_str)
+    elapsed_parse := time_ms() - start
+    
+    return {
+        "operation": "nested",
+        "depth": depth,
+        "serialize_ms": elapsed_ser,
+        "parse_ms": elapsed_parse,
+        "total_ms": elapsed_ser + elapsed_parse
+    }
+}
+
+# Main benchmark execution
+print("=== JSON Parsing & Serialization Benchmark ===")
+print("")
+
+# Test different data sizes
+sizes := [10, 50, 100, 500]
+
+print("1. JSON Serialization Benchmark")
+for size in sizes {
+    result := benchmark_json_serialization(size)
+    print("  Size:", size, "users ->", result["time_ms"], "ms,", result["json_length"], "bytes")
+}
+print("")
+
+print("2. JSON Parsing Benchmark")
+for size in sizes {
+    result := benchmark_json_parsing(size)
+    print("  Size:", size, "users ->", result["time_ms"], "ms,", result["users_count"], "parsed")
+}
+print("")
+
+print("3. JSON Round-Trip Benchmark")
+for size in sizes {
+    result := benchmark_json_roundtrip(size)
+    print("  Size:", size, "users ->", result["time_ms"], "ms (", result["cycles"], "cycles)")
+}
+print("")
+
+print("4. Nested JSON Benchmark")
+nested_result := benchmark_nested_json()
+print("  Depth:", nested_result["depth"])
+print("  Serialize:", nested_result["serialize_ms"], "ms")
+print("  Parse:", nested_result["parse_ms"], "ms")
+print("  Total:", nested_result["total_ms"], "ms")
+print("")
+
+print("=== Benchmark Complete ===")

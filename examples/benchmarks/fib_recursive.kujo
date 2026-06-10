@@ -1,0 +1,12 @@
+# Fibonacci Recursive Benchmark
+# Tests: Function call overhead, recursion, stack management
+
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+# Compute fibonacci(20) - not too deep
+let result := fib(20)

@@ -1,0 +1,25 @@
+// Test file for standard library built-in functions
+
+// Test math functions
+print("Math functions:");
+print("abs(-5) =", abs(-5));
+print("sqrt(16) =", sqrt(16));
+print("pow(2, 3) =", pow(2, 3));
+print("floor(3.7) =", floor(3.7));
+print("ceil(3.2) =", ceil(3.2));
+print("round(3.5) =", round(3.5));
+print("min(10, 5) =", min(10, 5));
+print("max(10, 5) =", max(10, 5));
+print("PI =", PI);
+print("E =", E);
+
+// Test string functions
+print("");
+print("String functions:");
+print("len('hello') =", len("hello"));
+print("to_upper('hello') =", to_upper("hello"));
+print("to_lower('WORLD') =", to_lower("WORLD"));
+print("trim('  test  ') =", trim("  test  "));
+print("substring('hello', 1, 4) =", substring("hello", 1, 4));
+print("contains('hello world', 'world') =", contains("hello world", "world"));
+print("replace_str('hello', 'l', 'L') =", replace_str("hello", "l", "L"));

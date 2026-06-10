@@ -1,0 +1,30 @@
+# Fibonacci Benchmark
+# Tests recursive function performance with JIT compilation
+
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+# Warmup to trigger JIT compilation (100 calls threshold)
+print("Warming up JIT...")
+let i := 0
+while i < 110 {
+    let _ := fib(10)
+    i := i + 1
+}
+print("JIT compilation complete")
+
+# Run benchmarks
+print("")
+print("=== Fibonacci Benchmark ===")
+
+# fib(25) is quick enough to run
+let start := time_us()
+let result := fib(25)
+let elapsed := time_us() - start
+print("fib(25) = ", result, " (should be 75025)")
+print("Time: ", elapsed, " microseconds")
+print("Time: ", elapsed / 1000000.0, " seconds")

@@ -1,0 +1,14 @@
+# Test struct creation only
+
+print("Test 1");
+
+struct Test {
+    x: float,
+}
+
+print("Test 2");
+
+t := Test { x: 5.0 };
+print(t.x);
+
+print("Test 3");

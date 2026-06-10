@@ -1,0 +1,10 @@
+# Test assignment in if block
+
+x := "initial"
+print("Before if:", x)
+
+if true {
+	x := "updated"
+}
+
+print("After if:", x)

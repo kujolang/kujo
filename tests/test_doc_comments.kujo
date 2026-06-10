@@ -1,0 +1,40 @@
+# Test: Doc comments functionality
+# This file tests the /// doc comment syntax
+
+/// This function adds two numbers
+/// @param a The first number
+/// @return The sum of a and b
+func add(a, b) {
+    return a + b
+}
+
+/// Main function demonstrating doc comments
+/// Doc comments are used to document code
+func main() {
+    /// Local variable with doc comment
+    x := 5
+    
+    /// Another variable
+    y := 10
+    
+    /// Call the add function
+    result := add(x, y)
+    print(result)  # Should print: 15
+}
+
+main()
+
+/// This is a documented variable
+documented_var := "Hello, Kujo!"
+print(documented_var)  # Should print: Hello, Kujo!
+
+/// Struct documentation
+/// This documents the User struct
+struct User {
+    name: string
+    age: int
+}
+
+/// Create a user instance
+user := User { name: "Alice", age: 30 }
+print(user.name)  # Should print: Alice

@@ -1,0 +1,26 @@
+# Dictionary Operations Benchmark
+# Tests: HashMap creation, lookups, insertions, iteration
+
+# Create dictionary
+let dict := {}
+let i := 0
+while i < 100 {
+    let key := "key" + to_string(i)
+    dict[key] := i * i
+    i := i + 1
+}
+
+# Lookup all values
+let sum := 0
+let i := 0
+while i < 100 {
+    let key := "key" + to_string(i)
+    sum := sum + dict[key]
+    i := i + 1
+}
+
+# Iterate over keys
+let keys_list := keys(dict)
+let count := len(keys_list)
+
+let result := sum + count

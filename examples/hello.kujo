@@ -1,0 +1,5 @@
+func greet() {
+    print("Kujo Kujo!")
+}
+
+greet()

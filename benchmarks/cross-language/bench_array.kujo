@@ -1,0 +1,14 @@
+func array_sum(n) { 
+    sum := 0
+    i := 0
+    while i < n { 
+        sum := sum + i
+        i := i + 1
+    }
+    return sum
+}
+
+t := performance_now()
+r := array_sum(1000000)
+e := performance_now() - t
+print(e)

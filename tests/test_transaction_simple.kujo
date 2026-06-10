@@ -1,0 +1,38 @@
+# Simple Transaction Test
+
+print("Testing basic transaction...")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table
+db_execute(db, "CREATE TABLE test (id INTEGER, name TEXT)", [])
+
+# Test begin
+print("Testing db_begin...")
+result := db_begin(db)
+print("Begin result type: " + type(result))
+print("Begin result: " + str(result))
+
+if type(result) == "Error" {
+    print("ERROR: " + str(result))
+} else {
+    print("✓ Begin succeeded")
+}
+
+# Test double begin
+print("\nTesting double begin...")
+try {
+    result2 := db_begin(db)
+    print("Second begin result type: " + type(result2))
+    print("Second begin result: " + str(result2))
+} except error {
+    print("Caught expected double-begin error")
+}
+
+# Commit first transaction
+print("\nCommitting...")
+result3 := db_commit(db)
+print("Commit result: " + str(result3))
+
+print("\nDone!")
+db_close(db)

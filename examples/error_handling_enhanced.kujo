@@ -1,0 +1,357 @@
+# Enhanced Error Handling Features in Kujo
+#
+# This example demonstrates all new error handling capabilities:
+# - Error properties: err.message, err.stack, err.line
+# - Custom error types with structs
+# - Error chaining with cause property
+# - Stack traces from nested function calls
+
+print("==================================================")
+print("Enhanced Error Handling Examples")
+print("==================================================")
+print("")
+
+# ==============================================================================
+# Example 1: Accessing Error Properties
+# ==============================================================================
+
+print("--- Example 1: Error Properties ---")
+try {
+    throw("This is an error message")
+} except err {
+    print("Error message: " + err.message)
+    print("Line number: " + err.line)
+    print("Stack depth: " + len(err.stack))
+}
+print("")
+
+# ==============================================================================
+# Example 2: Custom Error Types with Structs
+# ==============================================================================
+
+print("--- Example 2: Custom Error Types ---")
+
+struct ValidationError {
+    field: string,
+    message: string,
+    value: string
+}
+
+func validate_email(email: string) {
+    if !contains(email, "@") {
+        error := ValidationError {
+            field: "email",
+            message: "Email must contain @ symbol",
+            value: email
+        }
+        throw(error)
+    }
+    return true
+}
+
+try {
+    validate_email("invalid-email")
+} except err {
+    print("Validation failed: " + err.message)
+}
+
+try {
+    validate_email("user@example.com")
+    print("Email validation passed!")
+} except err {
+    print("This won't print")
+}
+print("")
+
+# ==============================================================================
+# Example 3: Stack Traces in Function Calls
+# ==============================================================================
+
+print("--- Example 3: Stack Traces ---")
+
+func function_a() {
+    function_b()
+}
+
+func function_b() {
+    function_c()
+}
+
+func function_c() {
+    throw("Error from function_c")
+}
+
+try {
+    function_a()
+} except err {
+    print("Caught error: " + err.message)
+    print("Stack trace:")
+    
+    i := 0
+    while i < len(err.stack) {
+        frame := err.stack[i]
+        print("  [" + i + "] " + frame)
+        i := i + 1
+    }
+}
+print("")
+
+# ==============================================================================
+# Example 4: Error Chaining
+# ==============================================================================
+
+print("--- Example 4: Error Chaining ---")
+
+struct DatabaseError {
+    message: string,
+    cause: string
+}
+
+func query_database(query: string) {
+    throw("Connection timeout")
+}
+
+func fetch_user_data(user_id: int) {
+    try {
+        query_database("SELECT * FROM users WHERE id = " + user_id)
+    } except db_err {
+        error := DatabaseError {
+            message: "Failed to fetch user data for ID " + user_id,
+            cause: db_err.message
+        }
+        throw(error)
+    }
+}
+
+try {
+    fetch_user_data(123)
+} except err {
+    print("Application error: " + err.message)
+}
+print("")
+
+# ==============================================================================
+# Example 5: Multiple Error Types
+# ==============================================================================
+
+print("--- Example 5: Multiple Error Types ---")
+
+struct NetworkError {
+    message: string,
+    status: int
+}
+
+struct ParseError {
+    message: string,
+    data: string
+}
+
+func process_request(simulate_network: bool, simulate_parse: bool) {
+    if simulate_network {
+        error := NetworkError {
+            message: "Failed to connect to server",
+            status: 500
+        }
+        throw(error)
+    }
+    
+    if simulate_parse {
+        error := ParseError {
+            message: "Invalid JSON format",
+            data: "{invalid}"
+        }
+        throw(error)
+    }
+    
+    return "Success"
+}
+
+try {
+    process_request(true, false)
+} except err {
+    print("Network error: " + err.message)
+}
+
+try {
+    process_request(false, true)
+} except err {
+    print("Parse error: " + err.message)
+}
+
+try {
+    result := process_request(false, false)
+    print("Request succeeded: " + result)
+} except err {
+    print("This won't print")
+}
+print("")
+
+# ==============================================================================
+# Example 6: Error Recovery Pattern
+# ==============================================================================
+
+print("--- Example 6: Error Recovery ---")
+
+func safe_divide(a: float, b: float) {
+    if b == 0.0 {
+        throw("Division by zero")
+    }
+    return a / b
+}
+
+operations := [[10.0, 2.0], [20.0, 0.0], [15.0, 3.0], [8.0, 0.0]]
+successful := 0
+failed := 0
+
+i := 0
+while i < len(operations) {
+    op := operations[i]
+    a := op[0]
+    b := op[1]
+    
+    try {
+        result := safe_divide(a, b)
+        print("✓ " + a + " / " + b + " = " + result)
+        successful := successful + 1
+    } except err {
+        print("✗ " + a + " / " + b + " failed: " + err.message)
+        failed := failed + 1
+    }
+    
+    i := i + 1
+}
+
+print("Summary: " + successful + " succeeded, " + failed + " failed")
+print("")
+
+# ==============================================================================
+# Example 7: Nested Try-Except
+# ==============================================================================
+
+print("--- Example 7: Nested Try-Except ---")
+
+func risky_inner() {
+    throw("Inner error")
+}
+
+func risky_outer() {
+    throw("Outer error")
+}
+
+try {
+    print("Outer try block started")
+    
+    try {
+        print("Inner try block started")
+        risky_inner()
+    } except inner_err {
+        print("Caught inner error: " + inner_err.message)
+    }
+    
+    print("Between try-except blocks")
+    risky_outer()
+    
+} except outer_err {
+    print("Caught outer error: " + outer_err.message)
+}
+print("")
+
+# ==============================================================================
+# Example 8: Real-World Scenario - User Registration
+# ==============================================================================
+
+print("--- Example 8: User Registration Validation ---")
+
+struct User {
+    username: string,
+    email: string,
+    age: int
+}
+
+func validate_username(username: string) {
+    if len(username) < 3 {
+        throw("Username must be at least 3 characters long")
+    }
+    if len(username) > 20 {
+        throw("Username cannot exceed 20 characters")
+    }
+}
+
+func validate_user_email(email: string) {
+    if len(email) == 0 {
+        throw("Email is required")
+    }
+    if !contains(email, "@") {
+        throw("Email must contain @ symbol")
+    }
+    if !contains(email, ".") {
+        throw("Email must contain a domain")
+    }
+}
+
+func validate_user_age(age: int) {
+    if age < 13 {
+        throw("User must be at least 13 years old")
+    }
+    if age > 120 {
+        throw("Age must be realistic")
+    }
+}
+
+func create_user(username: string, email: string, age: int) {
+    validate_username(username)
+    validate_user_email(email)
+    validate_user_age(age)
+    
+    user := User {
+        username: username,
+        email: email,
+        age: age
+    }
+    
+    return user
+}
+
+# Test Case 1: Invalid username
+print("Test 1: Invalid username")
+try {
+    user := create_user("ab", "test@example.com", 25)
+    print("User created successfully")
+} except err {
+    print("Registration failed: " + err.message)
+}
+
+# Test Case 2: Invalid email
+print("Test 2: Invalid email")
+try {
+    user := create_user("john_doe", "invalid-email", 25)
+    print("User created successfully")
+} except err {
+    print("Registration failed: " + err.message)
+}
+
+# Test Case 3: Invalid age
+print("Test 3: Invalid age")
+try {
+    user := create_user("john_doe", "john@example.com", 10)
+    print("User created successfully")
+} except err {
+    print("Registration failed: " + err.message)
+}
+
+# Test Case 4: Valid user
+print("Test 4: Valid user")
+try {
+    user := create_user("john_doe", "john@example.com", 25)
+    print("✓ User created successfully!")
+    print("  Username: john_doe")
+    print("  Email: john@example.com")
+    print("  Age: 25")
+} except err {
+    print("Registration failed: " + err.message)
+}
+print("")
+
+print("==================================================")
+print("All examples completed successfully!")
+print("==================================================")

@@ -1,0 +1,38 @@
+# JIT Benchmark: Nested Loops
+# Tests JIT performance on nested loop structures
+# Inner loop should trigger JIT compilation
+
+func nested_loops(outer, inner) {
+    total := 0
+    
+    i := 0
+    while i < outer {
+        j := 0
+        while j < inner {
+            # Simple arithmetic in hot inner loop
+            total := total + i * j
+            j := j + 1
+        }
+        i := i + 1
+    }
+    
+    return total
+}
+
+print("=== JIT Nested Loops Benchmark ===")
+print("")
+
+# Warm-up inner loop
+print("Warming up JIT compiler...")
+for i in range(150) {
+    nested_loops(10, 20)
+}
+
+# Benchmark
+print("Running benchmark (100 x 500 = 50,000 iterations)...")
+result := nested_loops(100, 500)
+
+print("Result: ", result)
+print("")
+print("Expected: Inner loop JIT-compiled after first few outer iterations")
+print("Expected: Significant speedup vs pure interpreter")

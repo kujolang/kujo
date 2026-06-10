@@ -1,0 +1,10 @@
+# Minimal test
+
+print("Test 1")
+
+struct Vector {
+    x: float
+    y: float
+}
+
+print("Test 2")

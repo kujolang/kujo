@@ -1,0 +1,37 @@
+name: lsp-contract-matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lsp-contracts:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release artifact
+        run: cargo build --release
+
+      - name: Verify LSP entrypoint in artifact
+        run: ./target/release/kujo lsp --help
+
+      - name: Run protocol contract tests
+        run: |
+          cargo test --test cli_json_contracts
+          cargo test --test lsp_conformance_harness
+          cargo test --test lsp_external_clients_smoke
+          cargo test --test lsp_latency_guardrails
+          cargo test --test lsp_reliability_track
+          cargo test --test editor_adapter_contracts
+          cargo test --test tree_sitter_kujo_assets

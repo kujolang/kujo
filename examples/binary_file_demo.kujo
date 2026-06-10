@@ -1,0 +1,141 @@
+# Binary File Operations Demo
+#
+# This example demonstrates practical binary file operations including:
+# - Reading and writing binary files
+# - Base64 encoding/decoding for API transfers
+# - Working with binary data from different sources
+
+print("=== Kujo Binary File Operations Demo ===")
+print()
+
+# Example 1: Create and manipulate binary data
+print("Example 1: Creating and saving binary data")
+print("-------------------------------------------")
+
+# Create some text and convert to binary
+let message := "Hello from Kujo! This is binary data."
+let binary_data := decode_base64(encode_base64(message))
+
+# Save to a binary file
+let filename := "/tmp/kujo_demo.bin"
+write_binary_file(filename, binary_data)
+print("✓ Saved binary data to: " + filename)
+
+# Read it back
+let loaded_data := read_binary_file(filename)
+print("✓ Loaded binary data from file")
+print("  File size: " + len(loaded_data) + " bytes")
+print()
+
+# Example 2: Base64 encoding for API transfers
+print("Example 2: Base64 encoding for APIs")
+print("-------------------------------------------")
+
+# Imagine you're sending binary data to an API that expects base64-encoded JSON
+let api_data := "Important binary payload"
+let encoded_for_api := encode_base64(api_data)
+
+print("Original data: " + api_data)
+print("Base64 encoded: " + encoded_for_api)
+print()
+
+# Simulate receiving base64 data from an API and decoding it
+let received_base64 := encoded_for_api
+let decoded_data := decode_base64(received_base64)
+
+# Save the decoded binary data
+write_binary_file("/tmp/api_download.bin", decoded_data)
+print("✓ Decoded API data and saved to file")
+print()
+
+# Example 3: Copying binary files
+print("Example 3: Binary file copy operation")
+print("-------------------------------------------")
+
+let source_file := "/tmp/kujo_demo.bin"
+let dest_file := "/tmp/kujo_demo_copy.bin"
+
+# Read source
+let file_content := read_binary_file(source_file)
+print("✓ Read source file: " + source_file)
+
+# Write to destination
+write_binary_file(dest_file, file_content)
+print("✓ Copied to: " + dest_file)
+print()
+
+# Example 4: Preparing data for JSON APIs
+print("Example 4: Embedding binary data in JSON")
+print("-------------------------------------------")
+
+# When you need to send binary data via JSON APIs, use base64
+let image_data := "pretend this is image bytes"
+let image_base64 := encode_base64(image_data)
+
+# Create a JSON payload (we'll use to_json once we have a dict)
+print("Binary data (original): " + image_data)
+print("Binary data (base64):   " + image_base64)
+print()
+print("This base64 string can be embedded in JSON:")
+print("  { \"image\": \"" + image_base64 + "\", \"format\": \"png\" }")
+print()
+
+# Example 5: Multiple binary file handling
+print("Example 5: Batch file operations")
+print("-------------------------------------------")
+
+let files := ["/tmp/file1.bin", "/tmp/file2.bin", "/tmp/file3.bin"]
+let contents := ["Content for file 1", "Content for file 2", "Content for file 3"]
+
+# Write multiple binary files
+let index := 0
+for content in contents {
+    let binary := decode_base64(encode_base64(content))
+    let filepath := files[index]
+    write_binary_file(filepath, binary)
+    print("✓ Created: " + filepath)
+    index := index + 1
+}
+print()
+
+# Read them all back and verify
+print("Verifying all files...")
+index := 0
+for filepath in files {
+    let data := read_binary_file(filepath)
+    let size := len(data)
+    if size > 0 {
+        print("✓ " + filepath + " - OK")
+    } else {
+        print("✗ " + filepath + " - FAILED")
+    }
+    index := index + 1
+}
+print()
+
+# Example 6: Working with larger data
+print("Example 6: Handling larger binary data")
+print("-------------------------------------------")
+
+# Create larger content by repeating
+let chunk := "0123456789ABCDEF"
+let large_content := chunk + chunk + chunk + chunk + chunk + chunk + chunk + chunk
+let large_binary := decode_base64(encode_base64(large_content))
+
+let large_file := "/tmp/kujo_large.bin"
+write_binary_file(large_file, large_binary)
+
+let loaded_large := read_binary_file(large_file)
+print("✓ Wrote and read large file")
+print("  Size: " + len(loaded_large) + " bytes")
+print()
+
+print("=== Demo Complete ===")
+print()
+print("Use cases for binary files:")
+print("• Downloading images, PDFs, archives from APIs")
+print("• Processing uploaded files in web applications")
+print("• Storing and retrieving encrypted data")
+print("• Working with media files (images, audio, video)")
+print("• Embedding binary data in JSON via base64")
+print("• Creating backup systems")

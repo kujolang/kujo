@@ -1,0 +1,32 @@
+# Debug method chaining
+
+struct Test {
+    value: float,
+    
+    func add(self, x) {
+        print("In add, value:");
+        print(self.value);
+        print("x:");
+        print(x);
+        result := self.value + x;
+        print("result:");
+        print(result);
+        return result;
+    }
+    
+    func chain(self, x) {
+        print("In chain");
+        temp := self.add(x);
+        print("temp:");
+        print(temp);
+        doubled := temp * 2.0;
+        print("doubled:");
+        print(doubled);
+        return doubled;
+    }
+}
+
+t := Test { value: 10.0 };
+result := t.chain(5.0);
+print("Final result:");
+print(result);

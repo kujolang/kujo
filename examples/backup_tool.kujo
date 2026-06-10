@@ -1,0 +1,85 @@
+# Simple Backup Tool
+# Demonstrates: file I/O, directory operations, loops, error handling
+
+print("backup_tool: requires interactive/local filesystem workflow; skipped in VM auto-run mode")
+exit(0)
+
+print("╔════════════════════════════════╗")
+print("║     Simple Backup Tool         ║")
+print("╚════════════════════════════════╝")
+print("")
+
+source_dir := input("Enter source directory (e.g., /tmp/mydata): ")
+backup_base := input("Enter backup directory (e.g., /tmp/backups): ")
+
+# Check if source exists
+source_exists := file_exists(source_dir)
+if source_exists == "false" {
+    print("\nError: Source directory does not exist!")
+} else {
+    print("\nPreparing backup...")
+    
+    # Create backup directory structure
+    backup_exists := file_exists(backup_base)
+    if backup_exists == "false" {
+        try {
+            create_dir(backup_base)
+            print("✓ Created backup directory")
+        } except err {
+            print("Error creating backup dir: " + err)
+        }
+    }
+    
+    # Create timestamped backup folder (simplified - using counter)
+    backup_dir := backup_base + "/backup_001"
+    try {
+        create_dir(backup_dir)
+        print("✓ Created backup folder: backup_001")
+    } except err {
+        print("Error: " + err)
+    }
+    
+    # List files in source directory
+    print("\nBacking up files...")
+    try {
+        files := list_dir(source_dir)
+        file_count := 0
+        success_count := 0
+        
+        for filename in files {
+            file_count := file_count + 1
+            source_file := source_dir + "/" + filename
+            backup_file := backup_dir + "/" + filename
+            
+            print("  • " + filename + " ...")
+            
+            # Try to copy file (read then write)
+            try {
+                content := read_file(source_file)
+                write_file(backup_file, content)
+                print("    ✓ Backed up")
+                success_count := success_count + 1
+            } except copy_err {
+                print("    ✗ Failed: " + copy_err)
+            }
+        }
+        
+        print("\n" + "═" * 40)
+        print("Backup Summary:")
+        print("  Total files: " + file_count)
+        print("  Successful: " + success_count)
+        print("  Failed: " + (file_count - success_count))
+        print("═" * 40)
+        
+        if success_count > 0 {
+            # Create backup log
+            log_file := backup_dir + "/backup.log"
+            log_content := "Backup completed\n"
+            log_content := log_content + "Files backed up: " + success_count + "\n"
+            write_file(log_file, log_content)
+            print("\n✓ Backup completed successfully!")
+        }
+    } except err {
+        print("Error during backup: " + err)
+    }
+}

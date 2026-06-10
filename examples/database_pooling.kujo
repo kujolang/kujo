@@ -1,0 +1,188 @@
+# Example: Connection Pooling in Kujo
+# Demonstrates how to use connection pools for better performance in high-traffic applications
+
+print("=== Connection Pooling Examples ===\n")
+
+# ============================================================================
+# Example 1: Basic Connection Pool
+# ============================================================================
+print("Example 1: Basic Connection Pool")
+print("-" * 40)
+
+# Create a connection pool
+pool := db_pool("sqlite", "pooling_example.db", {
+    "min_connections": 3,
+    "max_connections": 10,
+    "connection_timeout": 30
+})
+
+print("Created connection pool")
+stats := db_pool_stats(pool)
+print("  Max connections: " + str(stats["max"]))
+print("  Current total: " + str(stats["total"]))
+
+# ============================================================================
+# Example 2: Using Pooled Connections
+# ============================================================================
+print("\nExample 2: Using Pooled Connections")
+print("-" * 40)
+
+# Acquire a connection from the pool
+conn := db_pool_acquire(pool)
+print("Acquired connection from pool")
+
+# Create a table (if not exists)
+db_execute(conn, "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)", [])
+
+# Use the connection
+db_execute(conn, "DELETE FROM users", []) # Clear existing data
+db_execute(conn, "INSERT INTO users (name, email) VALUES (?, ?)", ["Alice", "alice@example.com"])
+db_execute(conn, "INSERT INTO users (name, email) VALUES (?, ?)", ["Bob", "bob@example.com"])
+
+# Query data
+rows := db_query(conn, "SELECT * FROM users", [])
+print("Found " + str(len(rows)) + " users")
+
+# Release the connection back to the pool
+db_pool_release(pool, conn)
+print("Released connection back to pool")
+
+stats := db_pool_stats(pool)
+print("  Available: " + str(stats["available"]))
+print("  In use: " + str(stats["in_use"]))
+
+# ============================================================================
+# Example 3: Multiple Concurrent Operations
+# ============================================================================
+print("\nExample 3: Multiple Concurrent Operations")
+print("-" * 40)
+
+# Simulate multiple concurrent requests
+print("Simulating 5 concurrent database operations...")
+
+conn1 := db_pool_acquire(pool)
+conn2 := db_pool_acquire(pool)
+conn3 := db_pool_acquire(pool)
+conn4 := db_pool_acquire(pool)
+conn5 := db_pool_acquire(pool)
+
+stats := db_pool_stats(pool)
+print("Pool stats after acquiring 5 connections:")
+print("  In use: " + str(stats["in_use"]))
+print("  Available: " + str(stats["available"]))
+
+# Each connection can do independent work
+db_execute(conn1, "INSERT INTO users (name, email) VALUES (?, ?)", ["Charlie", "charlie@example.com"])
+db_execute(conn2, "INSERT INTO users (name, email) VALUES (?, ?)", ["Diana", "diana@example.com"])
+db_execute(conn3, "INSERT INTO users (name, email) VALUES (?, ?)", ["Eve", "eve@example.com"])
+
+count1 := db_query(conn4, "SELECT COUNT(*) as cnt FROM users", [])
+count2 := db_query(conn5, "SELECT COUNT(*) as cnt FROM users", [])
+
+print("Total users: " + str(count1[0]["cnt"]))
+
+# Release all connections
+db_pool_release(pool, conn1)
+db_pool_release(pool, conn2)
+db_pool_release(pool, conn3)
+db_pool_release(pool, conn4)
+db_pool_release(pool, conn5)
+
+print("All connections released")
+
+# ============================================================================
+# Example 4: Pooling with Transactions
+# ============================================================================
+print("\nExample 4: Pooling with Transactions")
+print("-" * 40)
+
+# Create accounts table
+conn := db_pool_acquire(pool)
+db_execute(conn, "CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY, name TEXT, balance REAL)", [])
+db_execute(conn, "DELETE FROM accounts", [])
+db_execute(conn, "INSERT INTO accounts VALUES (1, 'Alice', 1000.0)", [])
+db_execute(conn, "INSERT INTO accounts VALUES (2, 'Bob', 500.0)", [])
+db_pool_release(pool, conn)
+
+# Perform a transfer using a transaction
+conn := db_pool_acquire(pool)
+print("Starting transaction...")
+
+db_begin(conn)
+db_execute(conn, "UPDATE accounts SET balance = balance - ? WHERE id = ?", [200.0, 1])
+db_execute(conn, "UPDATE accounts SET balance = balance + ? WHERE id = ?", [200.0, 2])
+db_commit(conn)
+
+print("Transaction committed")
+
+# Check results
+rows := db_query(conn, "SELECT name, balance FROM accounts ORDER BY id", [])
+print("Alice's balance: $" + str(rows[0]["balance"]))
+print("Bob's balance: $" + str(rows[1]["balance"]))
+
+db_pool_release(pool, conn)
+
+# ============================================================================
+# Example 5: Pool Statistics Monitoring
+# ============================================================================
+print("\nExample 5: Pool Statistics Monitoring")
+print("-" * 40)
+
+print("Current pool statistics:")
+stats := db_pool_stats(pool)
+print("  Available connections: " + str(stats["available"]))
+print("  Connections in use: " + str(stats["in_use"]))
+print("  Total connections created: " + str(stats["total"]))
+print("  Maximum allowed: " + str(stats["max"]))
+
+# Show how the pool grows as needed
+print("\nAcquiring connections to demonstrate growth...")
+conns := []
+i := 0
+while i < 7 {
+    conn := db_pool_acquire(pool)
+    conns := conns + [conn]
+    i := i + 1
+}
+
+stats := db_pool_stats(pool)
+print("After acquiring 7 connections:")
+print("  Total created: " + str(stats["total"]))
+print("  In use: " + str(stats["in_use"]))
+
+# Release all
+i := 0
+while i < len(conns) {
+    db_pool_release(pool, conns[i])
+    i := i + 1
+}
+
+print("All connections released")
+
+# ============================================================================
+# Example 6: Best Practices
+# ============================================================================
+print("\nExample 6: Best Practices")
+print("-" * 40)
+
+print("Connection Pool Best Practices:")
+print("  1. Always release connections after use")
+print("  2. Use transactions for atomic operations")
+print("  3. Set appropriate max_connections for your workload")
+print("  4. Monitor pool statistics to tune settings")
+print("  5. Close the pool when shutting down")
+
+# Clean shutdown
+db_pool_close(pool)
+print("\nPool closed successfully")
+
+# ============================================================================
+# Summary
+# ============================================================================
+print("\n" + "=" * 50)
+print("Connection pooling allows:")
+print("  ✓ Reusing connections (faster than creating new ones)")
+print("  ✓ Limiting concurrent connections")
+print("  ✓ Better performance under high load")
+print("  ✓ Resource management and cleanup")
+print("=" * 50)

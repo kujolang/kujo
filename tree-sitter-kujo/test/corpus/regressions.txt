@@ -1,0 +1,82 @@
+==================
+Async function and await call
+==================
+
+async func fetch_name(id) {
+  return id
+}
+
+let value := await fetch_name(1)
+
+---
+
+(source_file
+  (function_definition
+    (identifier)
+    (parameter_list
+      (identifier))
+    (block
+      (return_statement
+        (identifier))))
+  (variable_declaration
+    (identifier)
+    (await_expression
+      (call_expression
+        (identifier)
+        (argument_list
+          (number))))))
+
+==================
+Struct declaration and field access
+==================
+
+struct User {
+  name,
+  age,
+}
+
+let user := User {
+  name: "kujo",
+  age: 1,
+}
+
+let current := user.name
+
+---
+
+(source_file
+  (struct_definition
+    (identifier))
+  (variable_declaration
+    (identifier)
+    (struct_literal
+      (identifier)))
+  (variable_declaration
+    (identifier)
+    (field_access
+      (identifier)
+      (identifier))))
+
+==================
+Match with option patterns
+==================
+
+let maybe := Some(1)
+match maybe {
+  case Some(value):
+    print(value)
+  case None:
+    print("none")
+}
+
+---
+
+(source_file
+  (variable_declaration
+    (identifier)
+    (call_expression
+      (identifier)
+      (argument_list
+        (number))))
+  (match_statement
+    (identifier)))

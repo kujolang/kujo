@@ -1,0 +1,84 @@
+# UDP Echo Example
+# Demonstrates UDP socket communication with datagrams
+# Run with: kujo run examples/udp_echo.kujo
+
+print("=== UDP Echo Example ===")
+print("")
+
+# Configuration
+server_host := "127.0.0.1"
+server_port := 9000
+client_port := 9001
+
+print("Setting up UDP communication...")
+print("  Server: ${server_host}:${server_port}")
+print("  Client: ${server_host}:${client_port}")
+print("")
+
+# Create server socket
+server := udp_bind(server_host, server_port)
+print("✓ Server socket bound to port ${server_port}")
+
+# Create client socket
+client := udp_bind(server_host, client_port)
+print("✓ Client socket bound to port ${client_port}")
+print("")
+
+# Test messages
+messages := [
+    "Hello, UDP!",
+    "Message number 2",
+    "Testing datagrams",
+    "Final message"
+]
+
+print("Sending and receiving UDP datagrams...")
+print("")
+
+for msg in messages {
+    # Client sends message to server
+    print("📤 Client sending: ${msg}")
+    bytes_sent := udp_send_to(client, msg, server_host, server_port)
+    print("   Sent ${bytes_sent} bytes")
+    
+    # Server receives the datagram
+    result := udp_receive_from(server, 1024)
+    print("📥 Server received:")
+    print("   Data: ${result["data"]}")
+    print("   From: ${result["from"]}")
+    print("   Size: ${result["size"]} bytes")
+    
+    # Server echoes back to the client's port
+    echo_msg := "Echo: ${result["data"]}"
+    udp_send_to(server, echo_msg, server_host, client_port)
+    print("   Server echoed back")
+    
+    # Client receives the echo
+    echo_result := udp_receive_from(client, 1024)
+    print("📥 Client received echo: ${echo_result["data"]}")
+    print("")
+}
+
+# Test binary data
+print("Testing binary data transmission...")
+binary_data := bytes([72, 101, 108, 108, 111])  # "Hello"
+print("📤 Sending binary: ${binary_data}")
+udp_send_to(client, binary_data, server_host, server_port)
+
+binary_result := udp_receive_from(server, 1024)
+print("📥 Received: ${binary_result["data"]}")
+print("")
+
+# Cleanup
+udp_close(server)
+udp_close(client)
+
+print("✓ Sockets closed")
+print("")
+print("=== UDP Echo Example Complete ===")
+print("")
+print("Key UDP Features Demonstrated:")
+print("  • Datagram message boundaries preserved")
+print("  • Sender address included in receive")
+print("  • No connection establishment needed")
+print("  • Binary data support")

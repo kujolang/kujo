@@ -1,0 +1,43 @@
+# For-in Loop Examples
+
+# Array iteration
+print("=== Array Iteration ===");
+fruits := ["apple", "banana", "cherry"];
+for fruit in fruits {
+    print("I like", fruit);
+}
+
+# Nested array
+matrix := [[1, 2], [3, 4], [5, 6]];
+for row in matrix {
+    print("Row:", row);
+}
+
+# Dict iteration (over keys)
+person := {"name": "Alice", "age": 30, "city": "Portland"};
+print("\n=== Dict Iteration (Keys) ===");
+for key in person {
+    print("Key:", key);
+}
+
+# String iteration
+text := "Kujo";
+print("\n=== String Iteration ===");
+for char in text {
+    print("Char:", char);
+}
+
+# Range iteration
+print("\n=== Range Iteration ===");
+for i in 5 {
+    print("Count:", i);
+}
+
+# Practical example: Sum array
+print("\n=== Sum Array ===");
+numbers := [10, 20, 30, 40, 50];
+sum := 0;
+for num in numbers {
+    sum := sum + num;
+}
+print("Sum:", sum);

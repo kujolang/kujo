@@ -1,0 +1,202 @@
+// Test regular expression functions
+
+print("Testing regex functions...")
+print("")
+
+// Test regex_match for pattern matching
+print("1. regex_match() - Pattern Matching:")
+
+// Email validation
+email1 := "user@example.com"
+email2 := "invalid.email"
+email_pattern := "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+
+match1 := regex_match(email1, email_pattern)
+match2 := regex_match(email2, email_pattern)
+
+print("  Email: " + email1 + " -> " + to_string(match1))
+print("  Email: " + email2 + " -> " + to_string(match2))
+
+if match1 && !match2 {
+    print("  ✓ regex_match correctly validates emails")
+} else {
+    print("  ✗ regex_match email validation failed")
+}
+
+// Phone number validation
+phone1 := "555-1234"
+phone2 := "not-a-phone"
+phone_pattern := "^\\d{3}-\\d{4}$"
+
+phone_match1 := regex_match(phone1, phone_pattern)
+phone_match2 := regex_match(phone2, phone_pattern)
+
+print("  Phone: " + phone1 + " -> " + to_string(phone_match1))
+print("  Phone: " + phone2 + " -> " + to_string(phone_match2))
+
+if phone_match1 && !phone_match2 {
+    print("  ✓ regex_match validates phone numbers")
+} else {
+    print("  ✗ regex_match phone validation failed")
+}
+print("")
+
+// Test regex_find_all for extracting matches
+print("2. regex_find_all() - Finding Matches:")
+
+text1 := "Call me at 555-1234 or 555-5678"
+phones := regex_find_all(text1, "\\d{3}-\\d{4}")
+print("  Text: " + text1)
+print("  Found " + to_string(len(phones)) + " phone numbers")
+for phone in phones {
+    print("    " + phone)
+}
+
+if len(phones) == 2 {
+    print("  ✓ regex_find_all found all phone numbers")
+} else {
+    print("  ✗ regex_find_all failed")
+}
+
+// Extract all words
+text2 := "The quick brown fox jumps"
+words := regex_find_all(text2, "\\w+")
+print("  Found " + to_string(len(words)) + " words in: " + text2)
+if len(words) == 5 {
+    print("  ✓ regex_find_all extracted all words")
+} else {
+    print("  ✗ regex_find_all word extraction failed")
+}
+
+// Extract numbers
+text3 := "I have 5 apples and 10 oranges"
+numbers := regex_find_all(text3, "\\d+")
+print("  Numbers found: " + to_string(len(numbers)))
+for num in numbers {
+    print("    " + num)
+}
+if len(numbers) == 2 {
+    print("  ✓ regex_find_all extracted numbers")
+} else {
+    print("  ✗ regex_find_all number extraction failed")
+}
+print("")
+
+// Test regex_replace for substitution
+print("3. regex_replace() - Pattern Replacement:")
+
+// Redact phone numbers
+text4 := "Call me at 555-1234 or 555-5678"
+redacted := regex_replace(text4, "\\d{3}-\\d{4}", "XXX-XXXX")
+print("  Original: " + text4)
+print("  Redacted: " + redacted)
+
+if contains(redacted, "XXX-XXXX") && contains(redacted, "555") == 0 {
+    print("  ✓ regex_replace redacted phone numbers")
+} else {
+    print("  ✗ regex_replace failed")
+}
+
+// Replace multiple spaces with single space
+text5 := "Too    many     spaces"
+normalized := regex_replace(text5, " +", " ")
+print("  Original: '" + text5 + "'")
+print("  Normalized: '" + normalized + "'")
+
+if normalized == "Too many spaces" {
+    print("  ✓ regex_replace normalized whitespace")
+} else {
+    print("  ✗ regex_replace whitespace normalization failed")
+}
+
+// Remove all digits
+text6 := "abc123def456"
+no_digits := regex_replace(text6, "\\d", "")
+print("  Original: " + text6)
+print("  No digits: " + no_digits)
+
+if no_digits == "abcdef" {
+    print("  ✓ regex_replace removed all digits")
+} else {
+    print("  ✗ regex_replace digit removal failed")
+}
+print("")
+
+// Test regex_split for tokenization
+print("4. regex_split() - String Splitting:")
+
+// Split by numbers
+text7 := "one123two456three"
+parts1 := regex_split(text7, "\\d+")
+print("  Text: " + text7)
+print("  Split by digits: " + to_string(len(parts1)) + " parts")
+for part in parts1 {
+    print("    '" + part + "'")
+}
+
+if len(parts1) == 3 {
+    print("  ✓ regex_split by digits works")
+} else {
+    print("  ✗ regex_split by digits failed")
+}
+
+// Split by whitespace
+text8 := "word1   word2\tword3\nword4"
+parts2 := regex_split(text8, "\\s+")
+print("  Split by whitespace: " + to_string(len(parts2)) + " words")
+
+if len(parts2) == 4 {
+    print("  ✓ regex_split by whitespace works")
+} else {
+    print("  ✗ regex_split by whitespace failed: got " + to_string(len(parts2)))
+}
+
+// Split CSV-like data
+text9 := "apple,banana,cherry"
+parts3 := regex_split(text9, ",")
+print("  CSV: " + text9)
+print("  Parts: " + to_string(len(parts3)))
+
+if len(parts3) == 3 {
+    print("  ✓ regex_split CSV parsing works")
+} else {
+    print("  ✗ regex_split CSV parsing failed")
+}
+print("")
+
+// Advanced patterns
+print("5. Advanced Pattern Matching:")
+
+// URL validation
+url1 := "https://example.com"
+url2 := "not-a-url"
+url_pattern := "^https?://[a-zA-Z0-9.-]+"
+
+url_valid1 := regex_match(url1, url_pattern)
+url_valid2 := regex_match(url2, url_pattern)
+
+print("  URL: " + url1 + " -> " + to_string(url_valid1))
+print("  URL: " + url2 + " -> " + to_string(url_valid2))
+
+if url_valid1 && !url_valid2 {
+    print("  ✓ URL pattern matching works")
+} else {
+    print("  ✗ URL pattern matching failed")
+}
+
+// Extract hashtags
+text10 := "Check out #kujo and #programming"
+hashtags := regex_find_all(text10, "#\\w+")
+print("  Found " + to_string(len(hashtags)) + " hashtags:")
+for tag in hashtags {
+    print("    " + tag)
+}
+
+if len(hashtags) == 2 {
+    print("  ✓ Hashtag extraction works")
+} else {
+    print("  ✗ Hashtag extraction failed")
+}
+
+print("")
+print("Regex function tests completed!")

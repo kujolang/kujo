@@ -1,0 +1,23 @@
+# Exact repro of todo manager issue
+
+struct Todo {
+	title: string,
+	done: bool
+}
+
+todo1 := Todo { title: "First", done: false }
+todo2 := Todo { title: "Second", done: false }
+
+todos := [todo1, todo2]
+
+print("Before:")
+for t in todos {
+	print(t.done)
+}
+
+todos[0].done := true
+
+print("After:")
+for t in todos {
+	print(t.done)
+}

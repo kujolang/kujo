@@ -1,0 +1,94 @@
+// Path Utilities Demo
+// Demonstrates path manipulation functions from stdlib
+
+print("=== Path Utilities Demo ===")
+print("")
+
+// Build paths
+print("1. Building Paths:")
+home_dir := "/home/user"
+docs_path := join_path(home_dir, "Documents", "projects", "kujo")
+print("  Home directory: " + home_dir)
+print("  Documents path: " + docs_path)
+
+config_path := join_path(home_dir, ".config", "kujo", "settings.json")
+print("  Config path:    " + config_path)
+print("")
+
+// Extract path components
+print("2. Extracting Path Components:")
+full_path := "/home/user/projects/kujo/examples/demo.kujo"
+print("  Full path:  " + full_path)
+print("  Directory:  " + dirname(full_path))
+print("  Filename:   " + basename(full_path))
+print("")
+
+// More path examples
+paths := [
+    "/usr/local/bin/kujo",
+    "src/interpreter.rs",
+    "README.md",
+    "/etc/config/settings.json"
+]
+
+print("3. Path Analysis:")
+for path in paths {
+    dir := dirname(path)
+    file := basename(path)
+    print("  Path:      " + path)
+    print("    Dir:     " + dir)
+    print("    File:    " + file)
+    print("")
+}
+
+// Check if paths exist
+print("4. Checking Path Existence:")
+test_paths := [
+    "Cargo.toml",
+    "src",
+    "README.md",
+    "nonexistent_file.txt",
+    "examples"
+]
+
+for path in test_paths {
+    exists := path_exists(path)
+    status := "✗ Not found"
+    if exists {
+        status := "✓ Exists"
+    }
+    print("  " + path + ": " + status)
+}
+print("")
+
+// Build a project structure
+print("5. Project Structure Builder:")
+project_name := "my_app"
+base := join_path("projects", project_name)
+
+dirs := [
+    base,
+    join_path(base, "src"),
+    join_path(base, "tests"),
+    join_path(base, "docs"),
+    join_path(base, "examples")
+]
+
+files := [
+    join_path(base, "README.md"),
+    join_path(base, "Cargo.toml"),
+    join_path(base, "src", "main.rs"),
+    join_path(base, "src", "lib.rs"),
+    join_path(base, "tests", "test_basic.rs")
+]
+
+print("  Project: " + project_name)
+print("  Directories to create:")
+for dir in dirs {
+    print("    " + dir)
+}
+print("")
+print("  Files to create:")
+for file in files {
+    print("    " + file)
+}

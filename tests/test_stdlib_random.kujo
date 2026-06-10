@@ -1,0 +1,78 @@
+// Test random number generation functions
+// Set seed for deterministic output
+set_random_seed(12345)
+
+print("Testing random functions...")
+
+// Test random() - should return float between 0.0 and 1.0
+r1 := random()
+print("random() = " + to_string(r1))
+
+if r1 >= 0.0 && r1 <= 1.0 {
+    print("✓ random() returns value in [0.0, 1.0]")
+} else {
+    print("✗ random() out of range")
+}
+
+// Test random_int(min, max)
+r2 := random_int(1, 10)
+print("random_int(1, 10) = " + to_string(r2))
+
+if r2 >= 1.0 && r2 <= 10.0 {
+    print("✓ random_int(1, 10) returns value in [1, 10]")
+} else {
+    print("✗ random_int() out of range")
+}
+
+// Test with negative range
+r3 := random_int(-5, 5)
+print("random_int(-5, 5) = " + to_string(r3))
+
+if r3 >= -5.0 && r3 <= 5.0 {
+    print("✓ random_int(-5, 5) returns value in [-5, 5]")
+} else {
+    print("✗ random_int() with negative range failed")
+}
+
+// Test random_choice with array
+fruits := ["apple", "banana", "orange", "grape", "mango"]
+choice := random_choice(fruits)
+print("random_choice(fruits) = " + choice)
+
+// Verify it's one of the items
+found := 0
+for fruit in fruits {
+    if fruit == choice {
+        found := 1
+    }
+}
+
+if found == 1 {
+    print("✓ random_choice returned valid array element")
+} else {
+    print("✗ random_choice returned invalid element")
+}
+
+// Test random_choice with numbers
+numbers := [10, 20, 30, 40, 50]
+num_choice := random_choice(numbers)
+print("random_choice(numbers) = " + to_string(num_choice))
+
+// Test multiple calls produce different results (probabilistic)
+same_count := 0
+prev := random()
+for i in range(10) {
+    curr := random()
+    if curr == prev {
+        same_count := same_count + 1
+    }
+    prev := curr
+}
+
+if same_count < 5 {
+    print("✓ random() produces varying results")
+} else {
+    print("⚠ random() may not be sufficiently random")
+}
+
+print("Random function tests completed!")

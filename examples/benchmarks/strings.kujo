@@ -1,0 +1,28 @@
+# String Processing Benchmark - String Operations and Built-ins
+# Tests: String manipulation, built-in function calls, loops
+
+func process_strings(count) {
+    let result := []
+    let i := 0
+    loop {
+        if i >= count {
+            break
+        }
+        let str := "hello world " + to_string(i)
+        str := to_upper(str)
+        str := replace(str, " ", "-")
+        str := trim(str)
+        result := push(result, str)
+        i := i + 1
+    }
+    return result
+}
+
+# Run benchmark
+let start := performance_now()
+let result := process_strings(5000)
+let end := performance_now()
+
+print("Processed ", len(result), " strings")
+print("Sample: ", result[0])
+print("Time taken: ", (end - start), " ms")

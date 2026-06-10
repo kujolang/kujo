@@ -1,0 +1,30 @@
+# Test to see the actual values
+func make_counter() {
+    mut count := 0
+    print("Initial count in make_counter:")
+    print(count)
+    return func() {
+        print("  count before increment:")
+        print(count)
+        count = count + 1
+        print("  count after increment:")
+        print(count)
+        return count
+    }
+}
+
+counter := make_counter()
+print("=== First call ===")
+result1 := counter()
+print("Returned:")
+print(result1)
+
+print("=== Second call ===")
+result2 := counter()
+print("Returned:")
+print(result2)
+
+print("=== Third call ===")
+result3 := counter()
+print("Returned:")
+print(result3)

@@ -1,0 +1,27 @@
+# Test: Multi-line comments basic functionality
+# This file tests the /* */ multi-line comment syntax
+
+/* This is a simple multi-line comment */
+x := 10
+print(x)  # Should print: 10
+
+/*
+ * This is a multi-line comment
+ * that spans several lines
+ */
+y := 20
+print(y)  # Should print: 20
+
+/* Comment before variable */ z := 30
+print(z)  # Should print: 30
+
+a := 40 /* inline comment */ + 5
+print(a)  # Should print: 45
+
+/* 
+   Multi-line comment with
+   various characters: !@#$%^&*()
+   and special symbols: []{}|\"'
+*/
+result := 100
+print(result)  # Should print: 100

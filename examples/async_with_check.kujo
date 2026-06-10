@@ -1,0 +1,23 @@
+// Test async/await with output
+
+async func get_number() {
+    return 42;
+}
+
+let promise = get_number();
+let result = await promise;
+
+// Use dictionary to create output since println might not work
+let output = dict();
+output["result"] := result;
+output["type"] := type(result);
+print(output);
+
+// Check the value
+if (result == 42) {
+    // Success!
+    let x = 1;
+} else {
+    // Failure
+    let x = 0;
+}

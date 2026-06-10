@@ -1,0 +1,12 @@
+# Type Error Tests
+# Tests various type mismatches
+
+# Type mismatch in variable declaration
+let x: int := "hello"
+
+# Type mismatch in function call
+func add(a: int, b: int) -> int {
+    return a + b
+}
+
+let result := add("1", "2")

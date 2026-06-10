@@ -1,0 +1,70 @@
+# JSON Support Demo
+# Demonstrates parse_json() and to_json() functions
+
+print("=== Kujo JSON Support Demo ===")
+print("")
+
+# Example 1: Parse a configuration file
+print("1. Parsing Configuration")
+config_json := "{\"app_name\": \"My App\", \"version\": \"1.0.0\", \"settings\": {\"debug\": true, \"port\": 8080}}"
+config := parse_json(config_json)
+print("App name:", config["app_name"])
+print("Version:", config["version"])
+print("Debug mode:", config["settings"]["debug"])
+print("Port:", config["settings"]["port"])
+print("")
+
+# Example 2: Working with API response
+print("2. Simulating API Response")
+api_response := "{\"users\": [{\"id\": 1, \"name\": \"Alice\"}, {\"id\": 2, \"name\": \"Bob\"}], \"total\": 2}"
+data := parse_json(api_response)
+print("Total users:", data["total"])
+print("First user:", data["users"][0]["name"])
+print("Second user:", data["users"][1]["name"])
+print("")
+
+# Example 3: Creating and serializing data
+print("3. Creating and Serializing Data")
+user := {"username": "john_doe", "email": "john@example.com", "age": 28, "premium": 1}
+user_json := to_json(user)
+print("User as JSON:", user_json)
+print("")
+
+# Example 4: Round-trip conversion
+print("4. Round-Trip Conversion")
+original := {"status": "success", "data": [1, 2, 3], "message": "Operation completed"}
+print("Original:", original)
+
+# Convert to JSON
+json_string := to_json(original)
+print("As JSON string:", json_string)
+
+# Parse back
+restored := parse_json(json_string)
+print("Restored:", restored)
+print("Status:", restored["status"])
+print("Data:", restored["data"])
+print("")
+
+# Example 5: Nested structures
+print("5. Complex Nested Structures")
+company := {
+    "name": "Tech Corp",
+    "departments": [
+        {"name": "Engineering", "employees": 50},
+        {"name": "Sales", "employees": 30}
+    ],
+    "founded": 2020
+}
+
+company_json := to_json(company)
+print("Company JSON:", company_json)
+
+# Parse and access nested data
+company_data := parse_json(company_json)
+print("Company name:", company_data["name"])
+print("First department:", company_data["departments"][0]["name"])
+print("Engineers count:", company_data["departments"][0]["employees"])
+print("")
+
+print("=== Demo Complete ===")

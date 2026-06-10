@@ -1,0 +1,17 @@
+// Test factorial structure without mult
+func factorial(n) {
+    print("factorial:", n)
+    if n <= 1 {
+        print("returning 1")
+        return 1
+    }
+    sub_result := factorial(n - 1)
+    print("got sub_result:", sub_result, "for n:", n)
+    result := n * sub_result
+    print("returning:", result)
+    return result
+}
+
+print("Starting...")
+result := factorial(3)
+print("factorial(3) =", result)

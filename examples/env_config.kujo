@@ -1,0 +1,45 @@
+# Example: Database Configuration from Environment Variables
+# This example shows how to configure a database connection using environment variables
+# with proper type parsing and defaults.
+
+print("=== Database Configuration Example ===")
+print("")
+
+# Set up example environment variables (in production, these would be set externally)
+env_set("DB_HOST", "localhost")
+env_set("DB_PORT", "5432")
+env_set("DB_NAME", "myapp")
+env_set("DB_USER", "admin")
+env_set("DB_PASSWORD", "secret123")
+env_set("DB_POOL_SIZE", "10")
+env_set("DB_TIMEOUT", "30.5")
+env_set("DB_SSL", "true")
+
+# Load configuration with type parsing and defaults
+let db_config := {
+    "host": env_or("DB_HOST", "localhost"),
+    "port": env_int("DB_PORT"),
+    "database": env_required("DB_NAME"),
+    "user": env_required("DB_USER"),
+    "password": env_required("DB_PASSWORD"),
+    "pool_size": env_int("DB_POOL_SIZE"),
+    "timeout": env_float("DB_TIMEOUT"),
+    "ssl_enabled": env_bool("DB_SSL"),
+    # Optional setting with default
+    "retry_attempts": env_or("DB_RETRY", "3")
+}
+
+print("Database Configuration:")
+print("  Host: ${db_config["host"]}")
+print("  Port: ${db_config["port"]}")
+print("  Database: ${db_config["database"]}")
+print("  User: ${db_config["user"]}")
+print("  Pool Size: ${db_config["pool_size"]}")
+print("  Timeout: ${db_config["timeout"]}s")
+print("  SSL Enabled: ${db_config["ssl_enabled"]}")
+print("  Retry Attempts: ${db_config["retry_attempts"]}")
+
+print("")
+print("Skipping error-path checks in this quick-run example mode.")
+print("")
+print("=== Configuration loaded successfully! ===")

@@ -1,0 +1,27 @@
+# Test operator overloading without type annotation
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func op_add(other) {
+        print("In op_add");
+        print("x:");
+        print(x);
+        print("other.x:");
+        print(other.x);
+        result := Vec2 { x: x + other.x, y: y + other.y };
+        print("Created result");
+        return result;
+    }
+}
+
+print("Creating v1");
+v1 := Vec2 { x: 1.0, y: 2.0 };
+print("Creating v2");
+v2 := Vec2 { x: 3.0, y: 4.0 };
+print("Adding v1 + v2");
+v3 := v1 + v2;
+print("Result:");
+print(v3.x);
+print(v3.y);

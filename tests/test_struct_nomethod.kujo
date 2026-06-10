@@ -1,0 +1,10 @@
+# Test struct without methods
+
+print("Test 1");
+
+struct Vec2 {
+    x: float,
+    y: float
+}
+
+print("Test 2");

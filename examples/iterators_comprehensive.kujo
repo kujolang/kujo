@@ -1,0 +1,76 @@
+# Iterators and Generators Demo
+# Demonstrates the iterator functionality in Kujo
+
+print("=" * 50)
+print("ITERATOR DEMONSTRATION")
+print("=" * 50)
+
+# Basic array iteration with filter
+print("\n1. Filter - Get even numbers")
+numbers := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+even_numbers := numbers.filter(func(n) { return n % 2 == 0 }).collect()
+print(even_numbers)  # [2, 4, 6, 8, 10]
+
+# Map transformation
+print("\n2. Map - Double all numbers")
+doubled := numbers.map(func(n) { return n * 2 }).collect()
+print(doubled)  # [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+# Chaining multiple operations
+print("\n3. Chaining - Filter then map")
+result := numbers
+    .filter(func(n) { return n > 5 })
+    .map(func(n) { return n * n })
+    .collect()
+print(result)  # [36, 49, 64, 81, 100]
+
+# Using take to limit results
+print("\n4. Take - Get first 3 items")
+first_three := numbers.take(3).collect()
+print(first_three)  # [1, 2, 3]
+
+# Complex chaining
+print("\n5. Complex chaining - filter, map, and take")
+complex_result := numbers
+    .filter(func(n) { return n % 2 == 1 })  # Odd numbers
+    .map(func(n) { return n * 3 })          # Triple them
+    .take(3)                                 # Take first 3
+    .collect()
+print(complex_result)  # [3, 9, 15]
+
+# String operations
+print("\n6. String filtering and transformation")
+words := ["hello", "world", "kujo", "programming", "language"]
+long_words := words
+    .filter(func(w) { return len(w) > 5 })
+    .map(func(w) { return to_upper(w) })
+    .collect()
+print(long_words)  # ["PROGRAMMING", "LANGUAGE"]
+
+# Practical example: data processing pipeline
+print("\n7. Practical example - Process scores")
+scores := [45, 67, 89, 23, 91, 56, 78, 34, 92, 88]
+passing_scores := scores
+    .filter(func(s) { return s >= 60 })      # Only passing grades
+    .map(func(s) { return s + 5 })           # Curve: add 5 points
+    .take(5)                                  # Top 5
+    .collect()
+print("Top 5 curved passing scores:")
+print(passing_scores)
+
+# Custom predicate functions
+print("\n8. Using stored functions")
+is_positive := func(n) { return n > 0 }
+square := func(n) { return n * n }
+
+mixed_numbers := [-5, 3, -2, 7, -1, 9]
+result := mixed_numbers
+    .filter(is_positive)
+    .map(square)
+    .collect()
+print("Positive numbers squared:")
+print(result)  # [9, 49, 81]
+
+print("\n" + "=" * 50)
+print("All iterator demonstrations completed!")
+print("=" * 50)

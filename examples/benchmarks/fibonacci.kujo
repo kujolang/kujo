@@ -1,0 +1,17 @@
+# Fibonacci Benchmark - Recursive Function Calls
+# Tests: Function call overhead, stack management, recursion
+
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+# Run benchmark
+let start := performance_now()
+let result := fib(30)
+let end := performance_now()
+
+print("Fibonacci(30) = ", result)
+print("Time taken: ", (end - start), " ms")

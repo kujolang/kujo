@@ -1,0 +1,14 @@
+# Test method that references fields
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func show() {
+        print(x);
+    }
+}
+
+print("Before");
+v1 := Vec2 { x: 5.0, y: 10.0 };
+print("After");

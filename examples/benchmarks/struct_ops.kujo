@@ -1,0 +1,32 @@
+# Struct/Object Access Benchmark
+# Tests: Struct creation, field access, method calls
+
+struct Point {
+    x, y,
+    
+    func distance(self, other) {
+        let dx := other.x - self.x
+        let dy := other.y - self.y
+        return sqrt(dx * dx + dy * dy)
+    }
+}
+
+# Create multiple points
+let points := []
+let i := 0
+while i < 100 {
+    points := push(points, Point { x: i, y: i * 2 })
+    i := i + 1
+}
+
+# Access and compute distances
+let total := 0.0
+let i := 0
+while i < len(points) - 1 {
+    let p1 := points[i]
+    let p2 := points[i + 1]
+    total := total + p1.distance(p2)
+    i := i + 1
+}
+
+let result := total

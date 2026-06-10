@@ -1,0 +1,28 @@
+# Test struct with method that returns struct
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func double() {
+        print("In double method");
+        print("  self.x:");
+        print(x);
+        print("  self.y:");
+        print(y);
+        print("Creating new Vec2...");
+        result := Vec2 { x: x * 2.0, y: y * 2.0 };
+        print("Created new Vec2");
+        return result;
+    }
+}
+
+print("Creating v1...");
+v1 := Vec2 { x: 1.0, y: 2.0 };
+print("Calling double()...");
+v2 := v1.double();
+print("Returned from double()");
+print("v2.x:");
+print(v2.x);
+print("v2.y:");
+print(v2.y);

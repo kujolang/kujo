@@ -1,0 +1,108 @@
+# Comprehensive exception handling tests for VM
+
+print("=== Test 1: Simple throw/catch ===")
+try {
+    throw("simple error")
+} except err {
+    print("Caught:", err.message)
+}
+
+print("\n=== Test 2: Throw from function ===")
+func error_function() {
+    throw("error from function")
+}
+
+try {
+    error_function()
+} except err {
+    print("Caught:", err.message)
+}
+
+print("\n=== Test 3: Nested try blocks ===")
+try {
+    print("Outer try")
+    try {
+        print("Inner try")
+        throw("inner error")
+        print("Should not print")
+    } except inner_err {
+        print("Inner catch:", inner_err.message)
+    }
+    print("Back in outer try")
+} except outer_err {
+    print("Outer catch:", outer_err.message)
+}
+
+print("\n=== Test 4: Exception in nested functions ===")
+func level3() {
+    throw("error at level 3")
+}
+
+func level2() {
+    level3()
+}
+
+func level1() {
+    level2()
+}
+
+try {
+    level1()
+} except err {
+    print("Caught from nested:", err.message)
+}
+
+print("\n=== Test 5: Multiple sequential try blocks ===")
+try {
+    throw("error 1")
+} except err {
+    print("First catch:", err.message)
+}
+
+try {
+    throw("error 2")
+} except err {
+    print("Second catch:", err.message)
+}
+
+print("\n=== Test 6: No exception (normal path) ===")
+try {
+    x := 10 + 20
+    print("No error, x =", x)
+} except err {
+    print("Should not catch")
+}
+
+print("\n=== Test 7: Exception after some execution ===")
+try {
+    print("Before error")
+    x := 5
+    print("x =", x)
+    throw("delayed error")
+    print("Should not print")
+} except err {
+    print("Caught:", err.message)
+}
+
+print("\n=== Test 8: Throw in catch block ===")
+try {
+    try {
+        throw("first error")
+    } except inner_err {
+        print("Inner caught:", inner_err.message)
+        throw("error from catch block")
+    }
+} except outer_err {
+    print("Outer caught:", outer_err.message)
+}
+
+print("\n=== Test 9: Access error properties ===")
+try {
+    throw("detailed error")
+} except err {
+    print("Message:", err.message)
+    print("Line:", err.line)
+    print("Has stack:", type(err.stack) == "Array")
+}
+
+print("\n=== All tests completed ===")

@@ -1,0 +1,413 @@
+# Crypto Module Test Suite
+# Run with: kujo test-run tests/stdlib_crypto_test.kujo
+# Comprehensive tests for AES and RSA encryption
+
+print("Running Crypto Module Tests...")
+print("============================================================")
+
+passed := 0
+failed := 0
+
+# =============================================================================
+# AES Encryption Tests
+# =============================================================================
+
+print("\n--- AES Encryption Tests ---")
+
+# Setup
+plaintext := "Hello, World!"
+key := "my-secret-key"
+
+# Test 1: Basic AES roundtrip
+encrypted := aes_encrypt(plaintext, key)
+decrypted := aes_decrypt(encrypted, key)
+if decrypted == plaintext {
+    print("✓ Test 1: AES encrypt/decrypt roundtrip")
+    passed := passed + 1
+} else {
+    print("✗ Test 1: Failed")
+    failed := failed + 1
+}
+
+# Test 2: Different keys produce different ciphertext
+key2 := "different-key"
+encrypted2 := aes_encrypt(plaintext, key2)
+if encrypted != encrypted2 {
+    print("✓ Test 2: Different keys produce different ciphertext")
+    passed := passed + 1
+} else {
+    print("✗ Test 2: Failed")
+    failed := failed + 1
+}
+
+# Test 3: Wrong key fails
+try {
+    wrong_decrypted := aes_decrypt(encrypted, "wrong-key")
+    if is_error(wrong_decrypted) {
+        print("✓ Test 3: Wrong key produces error")
+        passed := passed + 1
+    } else {
+        print("✗ Test 3: Failed")
+        failed := failed + 1
+    }
+} except error {
+    print("✓ Test 3: Wrong key produces error")
+    passed := passed + 1
+}
+
+# Test 4: Empty string
+empty_encrypted := aes_encrypt("", key)
+empty_decrypted := aes_decrypt(empty_encrypted, key)
+if empty_decrypted == "" {
+    print("✓ Test 4: AES handles empty string")
+    passed := passed + 1
+} else {
+    print("✗ Test 4: Failed")
+    failed := failed + 1
+}
+
+# Test 5: Special characters
+special := "!@#$%^&*()_+-=[]{}|;':\",./<>?"
+special_enc := aes_encrypt(special, key)
+special_dec := aes_decrypt(special_enc, key)
+if special_dec == special {
+    print("✓ Test 5: AES handles special characters")
+    passed := passed + 1
+} else {
+    print("✗ Test 5: Failed")
+    failed := failed + 1
+}
+
+# Test 6: Unicode
+unicode := "Hello 世界 🌍"
+unicode_enc := aes_encrypt(unicode, key)
+unicode_dec := aes_decrypt(unicode_enc, key)
+if unicode_dec == unicode {
+    print("✓ Test 6: AES handles unicode")
+    passed := passed + 1
+} else {
+    print("✗ Test 6: Failed")
+    failed := failed + 1
+}
+
+# Test 7: Multiline
+multiline := "Line 1\nLine 2\nLine 3"
+multiline_enc := aes_encrypt(multiline, key)
+multiline_dec := aes_decrypt(multiline_enc, key)
+if multiline_dec == multiline {
+    print("✓ Test 7: AES handles multiline")
+    passed := passed + 1
+} else {
+    print("✗ Test 7: Failed")
+    failed := failed + 1
+}
+
+# Test 8: Non-empty ciphertext
+if len(encrypted) > 0 {
+    print("✓ Test 8: AES produces non-empty ciphertext")
+    passed := passed + 1
+} else {
+    print("✗ Test 8: Failed")
+    failed := failed + 1
+}
+
+# Test 9: Invalid base64
+try {
+    invalid_result := aes_decrypt("not-valid-base64!!!", key)
+    if is_error(invalid_result) {
+        print("✓ Test 9: Invalid base64 produces error")
+        passed := passed + 1
+    } else {
+        print("✗ Test 9: Failed")
+        failed := failed + 1
+    }
+} except error {
+    print("✓ Test 9: Invalid base64 produces error")
+    passed := passed + 1
+}
+
+# Test 10: AES bytes functions
+bytes_data := "binary data"
+bytes_enc := aes_encrypt_bytes(bytes_data, key)
+bytes_dec := aes_decrypt_bytes(bytes_enc, key)
+if bytes_dec == bytes_data {
+    print("✓ Test 10: AES bytes encrypt/decrypt")
+    passed := passed + 1
+} else {
+    print("✗ Test 10: Failed")
+    failed := failed + 1
+}
+
+# =============================================================================
+# RSA Encryption Tests
+# =============================================================================
+
+print("\n--- RSA Encryption Tests ---")
+
+# Generate one keypair for all RSA tests (to save time)
+print("Generating 2048-bit RSA keypair...")
+keypair := rsa_generate_keypair(2048)
+
+# Test 11: Keypair generated
+if is_dict(keypair) {
+    print("✓ Test 11: RSA keypair generated")
+    passed := passed + 1
+} else {
+    print("✗ Test 11: Failed")
+    failed := failed + 1
+}
+
+# Test 12: Has public key
+if has_key(keypair, "public") {
+    print("✓ Test 12: Has public key")
+    passed := passed + 1
+} else {
+    print("✗ Test 12: Failed")
+    failed := failed + 1
+}
+
+# Test 13: Has private key
+if has_key(keypair, "private") {
+    print("✓ Test 13: Has private key")
+    passed := passed + 1
+} else {
+    print("✗ Test 13: Failed")
+    failed := failed + 1
+}
+
+public_key := keypair["public"]
+private_key := keypair["private"]
+
+# Test 14: Public key PEM format
+if contains(public_key, "BEGIN PUBLIC KEY") {
+    print("✓ Test 14: Public key PEM format")
+    passed := passed + 1
+} else {
+    print("✗ Test 14: Failed")
+    failed := failed + 1
+}
+
+# Test 15: Private key PEM format
+if contains(private_key, "BEGIN PRIVATE KEY") {
+    print("✓ Test 15: Private key PEM format")
+    passed := passed + 1
+} else {
+    print("✗ Test 15: Failed")
+    failed := failed + 1
+}
+
+# Test 16: RSA encrypt/decrypt roundtrip
+rsa_plaintext := "Secret message"
+rsa_encrypted := rsa_encrypt(rsa_plaintext, public_key)
+rsa_decrypted := rsa_decrypt(rsa_encrypted, private_key)
+if rsa_decrypted == rsa_plaintext {
+    print("✓ Test 16: RSA encrypt/decrypt roundtrip")
+    passed := passed + 1
+} else {
+    print("✗ Test 16: Failed")
+    failed := failed + 1
+}
+
+# Test 17: RSA is non-deterministic (random padding)
+rsa_enc1 := rsa_encrypt(rsa_plaintext, public_key)
+rsa_enc2 := rsa_encrypt(rsa_plaintext, public_key)
+if rsa_enc1 != rsa_enc2 {
+    print("✓ Test 17: RSA encryption is non-deterministic")
+    passed := passed + 1
+} else {
+    print("✗ Test 17: Failed")
+    failed := failed + 1
+}
+
+# Test 18: Both decrypt correctly
+rsa_dec1 := rsa_decrypt(rsa_enc1, private_key)
+rsa_dec2 := rsa_decrypt(rsa_enc2, private_key)
+if rsa_dec1 == rsa_plaintext && rsa_dec2 == rsa_plaintext {
+    print("✓ Test 18: Different ciphertexts decrypt correctly")
+    passed := passed + 1
+} else {
+    print("✗ Test 18: Failed")
+    failed := failed + 1
+}
+
+# Test 19: Special characters
+rsa_special := "Special: !@#$%^&*()"
+rsa_special_enc := rsa_encrypt(rsa_special, public_key)
+rsa_special_dec := rsa_decrypt(rsa_special_enc, private_key)
+if rsa_special_dec == rsa_special {
+    print("✓ Test 19: RSA handles special characters")
+    passed := passed + 1
+} else {
+    print("✗ Test 19: Failed")
+    failed := failed + 1
+}
+
+# Test 20: Wrong key fails
+# Generate second keypair only for this test
+keypair2 := rsa_generate_keypair(2048)
+wrong_key := keypair2["private"]
+try {
+    wrong_decrypt := rsa_decrypt(rsa_encrypted, wrong_key)
+    if is_error(wrong_decrypt) {
+        print("✓ Test 20: Wrong key produces error")
+        passed := passed + 1
+    } else {
+        print("✗ Test 20: Failed")
+        failed := failed + 1
+    }
+} except error {
+    print("✓ Test 20: Wrong key produces error")
+    passed := passed + 1
+}
+
+# =============================================================================
+# RSA Signature Tests
+# =============================================================================
+
+print("\n--- RSA Signature Tests ---")
+
+# Test 21: Sign/verify roundtrip
+message := "This is a signed message"
+signature := rsa_sign(message, private_key)
+is_valid := rsa_verify(message, signature, public_key)
+if is_valid == true {
+    print("✓ Test 21: RSA sign/verify roundtrip")
+    passed := passed + 1
+} else {
+    print("✗ Test 21: Failed")
+    failed := failed + 1
+}
+
+# Test 22: Signature not empty
+if len(signature) > 0 {
+    print("✓ Test 22: Signature is not empty")
+    passed := passed + 1
+} else {
+    print("✗ Test 22: Failed")
+    failed := failed + 1
+}
+
+# Test 23: Modified message fails
+modified_message := "This is a different message"
+is_invalid := rsa_verify(modified_message, signature, public_key)
+if is_invalid == false {
+    print("✓ Test 23: Modified message fails verification")
+    passed := passed + 1
+} else {
+    print("✗ Test 23: Failed")
+    failed := failed + 1
+}
+
+# Test 24: Wrong key signature fails
+signature2 := rsa_sign(message, wrong_key)
+is_invalid2 := rsa_verify(message, signature2, public_key)
+if is_invalid2 == false {
+    print("✓ Test 24: Wrong key signature fails")
+    passed := passed + 1
+} else {
+    print("✗ Test 24: Failed")
+    failed := failed + 1
+}
+
+# Test 25: Empty message
+empty_sig := rsa_sign("", private_key)
+empty_valid := rsa_verify("", empty_sig, public_key)
+if empty_valid == true {
+    print("✓ Test 25: RSA signs empty messages")
+    passed := passed + 1
+} else {
+    print("✗ Test 25: Failed")
+    failed := failed + 1
+}
+
+# =============================================================================
+# RSA Key Size Tests
+# =============================================================================
+
+print("\n--- RSA Key Size Tests ---")
+
+# Test 26: 4096-bit keypair (slow, be patient)
+print("Generating 4096-bit RSA keypair (this may take a moment)...")
+keypair_4096 := rsa_generate_keypair(4096)
+if is_dict(keypair_4096) {
+    print("✓ Test 26: 4096-bit keypair generated")
+    passed := passed + 1
+} else {
+    print("✗ Test 26: Failed")
+    failed := failed + 1
+}
+
+# Test 27: 4096-bit works
+large_key_enc := rsa_encrypt("Test", keypair_4096["public"])
+large_key_dec := rsa_decrypt(large_key_enc, keypair_4096["private"])
+if large_key_dec == "Test" {
+    print("✓ Test 27: 4096-bit key works")
+    passed := passed + 1
+} else {
+    print("✗ Test 27: Failed")
+    failed := failed + 1
+}
+
+# Test 28: Invalid key size
+try {
+    invalid_keypair := rsa_generate_keypair(1024)
+    if is_error(invalid_keypair) {
+        print("✓ Test 28: Invalid key size produces error")
+        passed := passed + 1
+    } else {
+        print("✗ Test 28: Failed")
+        failed := failed + 1
+    }
+} except error {
+    print("✓ Test 28: Invalid key size produces error")
+    passed := passed + 1
+}
+
+# =============================================================================
+# Integration Tests
+# =============================================================================
+
+print("\n--- Integration Tests ---")
+
+# Test 29: Hybrid encryption (RSA + AES)
+data := "Sensitive information"
+aes_key := "session-key-12345"
+encrypted_data := aes_encrypt(data, aes_key)
+encrypted_key := rsa_encrypt(aes_key, public_key)
+decrypted_key := rsa_decrypt(encrypted_key, private_key)
+decrypted_data := aes_decrypt(encrypted_data, decrypted_key)
+if decrypted_data == data {
+    print("✓ Test 29: Hybrid encryption (RSA + AES)")
+    passed := passed + 1
+} else {
+    print("✗ Test 29: Failed")
+    failed := failed + 1
+}
+
+# Test 30: Sign encrypted data
+encrypted_msg := aes_encrypt("Important", key)
+msg_signature := rsa_sign(encrypted_msg, private_key)
+sig_valid := rsa_verify(encrypted_msg, msg_signature, public_key)
+if sig_valid {
+    print("✓ Test 30: Can sign encrypted data")
+    passed := passed + 1
+} else {
+    print("✗ Test 30: Failed")
+    failed := failed + 1
+}
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+print("\n============================================================")
+total := passed + failed
+print("Test Results: ${passed}/${total} passed")
+
+if failed == 0 {
+    print("✓ All crypto tests passed!")
+} else {
+    print("✗ ${failed} test(s) failed")
+}
+
+print("============================================================")

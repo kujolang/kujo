@@ -1,0 +1,116 @@
+// Test path operation functions
+
+print("Testing path operation functions...")
+
+// Test join_path with multiple components
+path1 := join_path("/home", "user", "documents", "file.txt")
+print("join_path('/home', 'user', 'documents', 'file.txt'):")
+print("  " + path1)
+
+if contains(path1, "home") && contains(path1, "user") && contains(path1, "documents") {
+    print("✓ join_path combines path components")
+} else {
+    print("✗ join_path failed")
+}
+
+// Test with relative paths
+path2 := join_path("src", "interpreter.rs")
+print("join_path('src', 'interpreter.rs') = " + path2)
+
+// Test dirname - extract directory from path
+dir1 := dirname("/home/user/documents/file.txt")
+print("dirname('/home/user/documents/file.txt') = " + dir1)
+
+if contains(dir1, "documents") {
+    print("✓ dirname extracts directory correctly")
+} else {
+    print("✗ dirname failed: " + dir1)
+}
+
+// Test dirname with relative path
+dir2 := dirname("src/interpreter.rs")
+print("dirname('src/interpreter.rs') = " + dir2)
+
+if dir2 == "src" {
+    print("✓ dirname works with relative paths")
+} else {
+    print("⚠ dirname relative path: " + dir2)
+}
+
+// Test dirname on directory path
+dir3 := dirname("/home/user/documents")
+print("dirname('/home/user/documents') = " + dir3)
+
+// Test basename - extract filename from path
+base1 := basename("/home/user/documents/file.txt")
+print("basename('/home/user/documents/file.txt') = " + base1)
+
+if base1 == "file.txt" {
+    print("✓ basename extracts filename correctly")
+} else {
+    print("✗ basename failed: " + base1)
+}
+
+// Test basename with just filename
+base2 := basename("example.kujo")
+print("basename('example.kujo') = " + base2)
+
+if base2 == "example.kujo" {
+    print("✓ basename works with just filename")
+} else {
+    print("✗ basename single file failed: " + base2)
+}
+
+// Test basename on directory
+base3 := basename("/home/user/documents/")
+print("basename('/home/user/documents/') = " + base3)
+
+// Test path_exists with actual files
+// Test for Cargo.toml which should exist in project root
+cargo_exists := path_exists("Cargo.toml")
+print("path_exists('Cargo.toml') = " + to_string(cargo_exists))
+
+if cargo_exists {
+    print("✓ path_exists finds existing file")
+} else {
+    print("⚠ path_exists: Cargo.toml not found (may need to run from project root)")
+}
+
+// Test for non-existent file
+fake_exists := path_exists("nonexistent_file_12345.txt")
+print("path_exists('nonexistent_file_12345.txt') = " + to_string(fake_exists))
+
+if !fake_exists {
+    print("✓ path_exists returns false for non-existent file")
+} else {
+    print("✗ path_exists should return false")
+}
+
+// Test with directory
+src_exists := path_exists("src")
+print("path_exists('src') = " + to_string(src_exists))
+
+if src_exists {
+    print("✓ path_exists works with directories")
+} else {
+    print("⚠ path_exists: src directory check (may need to run from project root)")
+}
+
+// Integration test: build path and decompose it
+full_path := join_path("home", "user", "test.kujo")
+dir := dirname(full_path)
+file := basename(full_path)
+
+print("")
+print("Integration test:")
+print("  full_path = " + full_path)
+print("  dirname = " + dir)
+print("  basename = " + file)
+
+if file == "test.kujo" {
+    print("✓ Path integration test passed")
+} else {
+    print("✗ Path integration test failed")
+}
+
+print("Path operation tests completed!")

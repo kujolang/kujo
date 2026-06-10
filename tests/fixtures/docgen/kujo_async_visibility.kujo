@@ -1,0 +1,23 @@
+async func internal_async() {
+    return 1
+}
+
+pub async func exported_async() {
+    return 2
+}
+
+struct PrivateWorker {
+    pub async func visible_but_private(self) {
+        return 3
+    }
+}
+
+pub struct PublicWorker {
+    async func hidden_async(self) {
+        return 4
+    }
+
+    pub async func visible_async(self) {
+        return 5
+    }
+}

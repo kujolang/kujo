@@ -1,0 +1,160 @@
+/*
+ * Streaming File Downloader Demo
+ * 
+ * Demonstrates memory-efficient file downloading using HTTP streaming.
+ * 
+ * NEW v0.6.0 Features:
+ * - http_get_stream(url) - Memory-efficient streaming downloads
+ * - Handles large files without memory overflow
+ * - Binary file operations
+ * 
+ * Run: cargo run --quiet -- run examples/projects/streaming_downloader.kujo
+ * 
+ * Use cases:
+ * - Download large files (videos, datasets, backups)
+ * - Batch download operations
+ * - Memory-efficient file processing
+ */
+
+print("=== Streaming File Downloader (v0.6.0) ===\n")
+
+# Configuration
+OUTPUT_DIR := "downloads"
+
+# Create output directory
+if !path_exists(OUTPUT_DIR) {
+    create_dir(OUTPUT_DIR)
+    print("Created directory: " + OUTPUT_DIR)
+}
+
+print("Streaming File Downloader")
+print("=========================")
+print("Output directory: " + OUTPUT_DIR)
+print("")
+
+# Example 1: Download single file with streaming
+print("Example 1: Single File Download")
+print("--------------------------------")
+
+url := "https://httpbin.org/image/jpeg"
+filename := "test_image.jpg"
+output_path := OUTPUT_DIR + "/" + filename
+
+print("URL: " + url)
+print("Output: " + output_path)
+print("Downloading...")
+
+try {
+    # Use http_get_stream for efficient download
+    data := http_get_stream(url)
+    size := len(data)
+    
+    # Save to file
+    write_binary_file(output_path, data)
+    
+    # Format size
+    size_kb := size / 1024
+    print("✓ Downloaded: " + to_json(round(size_kb * 100) / 100) + " KB")
+    print("✓ Saved to: " + output_path)
+    
+} except err {
+    print("✗ Download failed: " + err.message)
+}
+
+print("")
+
+# Example 2: Download multiple files
+print("Example 2: Batch Download")
+print("-------------------------")
+
+# Test URLs
+urls := [
+    "https://httpbin.org/image/png",
+    "https://httpbin.org/image/webp"
+]
+
+filenames := ["test_image.png", "test_image.webp"]
+
+total_size := 0
+success_count := 0
+failed_count := 0
+
+for i := 0; i < len(urls); i := i + 1 {
+    url := urls[i]
+    filename := filenames[i]
+    output_path := OUTPUT_DIR + "/" + filename
+    
+    print("[" + to_json(i + 1) + "/" + to_json(len(urls)) + "] " + filename)
+    print("  URL: " + url)
+    
+    # Skip if already exists
+    if file_exists(output_path) {
+        print("  ⊘ Already exists")
+        success_count := success_count + 1
+    } else {
+        try {
+            print("  Downloading...")
+            data := http_get_stream(url)
+            size := len(data)
+            
+            write_binary_file(output_path, data)
+            
+            total_size := total_size + size
+            success_count := success_count + 1
+            
+            size_kb := size / 1024
+            print("  ✓ Downloaded: " + to_json(round(size_kb * 100) / 100) + " KB")
+            
+        } except err {
+            print("  ✗ Failed: " + err.message)
+            failed_count := failed_count + 1
+        }
+    }
+    
+    print("")
+}
+
+print("=== Batch Download Complete ===")
+print("Success: " + to_json(success_count))
+print("Failed: " + to_json(failed_count))
+
+if total_size > 0 {
+    total_kb := total_size / 1024
+    print("Total downloaded: " + to_json(round(total_kb * 100) / 100) + " KB")
+}
+
+print("")
+
+# Example 3: Verify downloaded files
+print("Example 3: Verify Downloaded Files")
+print("-----------------------------------")
+
+if path_exists(OUTPUT_DIR) {
+    files := list_dir(OUTPUT_DIR)
+    
+    print("Files in " + OUTPUT_DIR + ":")
+    
+    for i := 0; i < len(files); i := i + 1 {
+        file := files[i]
+        filepath := OUTPUT_DIR + "/" + file
+        
+        if file_exists(filepath) {
+            # Read file to get size
+            data := read_binary_file(filepath)
+            size := len(data)
+            size_kb := size / 1024
+            
+            print("  - " + file + " (" + to_json(round(size_kb * 100) / 100) + " KB)")
+        }
+    }
+}
+
+print("")
+print("=== All Examples Complete ===\n")
+print("Production Tips:")
+print("  - Use http_get_stream() for large files to save memory")
+print("  - Implement retry logic for failed downloads")
+print("  - Add progress callbacks for UI updates")
+print("  - Validate downloaded files with checksums")
+print("  - Handle network timeouts and errors")
+print("  - Use parallel downloads for better performance")

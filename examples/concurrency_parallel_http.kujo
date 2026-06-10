@@ -1,0 +1,71 @@
+# Parallel HTTP Requests Example
+# Demonstrates fetching multiple URLs concurrently for faster processing
+
+print("=== Parallel HTTP Requests Demo ===")
+print("")
+
+# Example 1: Fetching multiple API endpoints in parallel
+print("1. Fetching multiple status codes in parallel...")
+urls := [
+    "https://httpbin.org/status/200",
+    "https://httpbin.org/status/201",
+    "https://httpbin.org/status/404"
+]
+
+# Make all requests in parallel - much faster than sequential!
+results := parallel_http(urls)
+
+print("Received " + len(results) + " responses")
+for i in len(results) {
+    result := results[i]
+    status := result["status"]
+    print("  URL " + (i + 1) + ": Status " + status)
+}
+print("")
+
+# Example 2: Fetching JSON data from multiple endpoints
+print("2. Fetching JSON data in parallel...")
+api_urls := [
+    "https://httpbin.org/get",
+    "https://httpbin.org/user-agent",
+    "https://httpbin.org/headers"
+]
+
+api_results := parallel_http(api_urls)
+print("Fetched " + len(api_results) + " API responses concurrently")
+print("")
+
+# Example 3: Real-world use case - AI model comparison
+print("3. AI Model Comparison Use Case")
+print("(Simulated with status endpoints)")
+
+# In a real AI tool, you would fetch from multiple AI providers:
+# - OpenAI GPT
+# - Anthropic Claude
+# - DeepSeek
+# This allows you to compare responses in real-time!
+
+model_urls := [
+    "https://httpbin.org/status/200",  # Simulating OpenAI
+    "https://httpbin.org/status/200",  # Simulating Claude
+    "https://httpbin.org/status/200"   # Simulating DeepSeek
+]
+
+print("Making parallel requests to 3 AI providers...")
+model_results := parallel_http(model_urls)
+
+success_count := 0
+for result in model_results {
+    if result["status"] == 200 {
+        success_count := success_count + 1
+    }
+}
+
+print("✓ " + success_count + " out of " + len(model_results) + " models responded successfully")
+print("")
+
+print("=== Benefits of Parallel HTTP ===")
+print("• 3x faster when querying 3 APIs simultaneously")
+print("• Perfect for AI tools comparing multiple models")
+print("• Ideal for batch processing and data pipelines")
+print("• Non-blocking - your code continues immediately")

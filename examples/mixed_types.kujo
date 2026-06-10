@@ -1,0 +1,24 @@
+# Mixed Typed and Untyped Code
+# Demonstrates gradual typing - mixing typed and untyped declarations
+
+# Untyped variables (type inferred)
+let x := 10
+let name := "Alice"
+
+# Typed variables
+let count: int := 5
+let price: float := 9.99
+
+# Untyped function
+func double(n) {
+    return n * 2
+}
+
+# Typed function  
+func add_numbers(a: int, b: int) -> int {
+    return a + b
+}
+
+# Mix typed and untyped
+let doubled := double(count)
+let sum := add_numbers(x, count)

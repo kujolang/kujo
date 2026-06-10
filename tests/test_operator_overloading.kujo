@@ -1,0 +1,175 @@
+# Test: Operator Overloading
+# Tests operator overloading for structs with op_ methods
+
+# Test 1: Vector struct with arithmetic operators
+struct Vector {
+    x: float,
+    y: float,
+    
+    func op_add(other) {
+        return Vector { x: x + other.x, y: y + other.y };
+    },
+    
+    func op_sub(other) {
+        return Vector { x: x - other.x, y: y - other.y };
+    },
+    
+    func op_mul(scalar) {
+        return Vector { x: x * scalar, y: y * scalar };
+    },
+    
+    func op_div(scalar) {
+        return Vector { x: x / scalar, y: y / scalar };
+    },
+    
+    func op_eq(other) {
+        return x == other.x && y == other.y;
+    },
+    
+    func op_ne(other) {
+        return x != other.x || y != other.y;
+    },
+    
+    func to_string() {
+        return "Vector(" + to_string(x) + ", " + to_string(y) + ")";
+    }
+}
+
+v1 := Vector { x: 3.0, y: 4.0 };
+v2 := Vector { x: 1.0, y: 2.0 };
+
+print("v1: " + v1.to_string());
+print("v2: " + v2.to_string());
+
+v3 := v1 + v2;
+print("v1 + v2 = " + v3.to_string());
+
+v4 := v1 - v2;
+print("v1 - v2 = " + v4.to_string());
+
+v5 := v1 * 2.0;
+print("v1 * 2.0 = " + v5.to_string());
+
+v6 := v1 / 2.0;
+print("v1 / 2.0 = " + v6.to_string());
+
+v7 := Vector { x: 3.0, y: 4.0 };
+v8 := Vector { x: 1.0, y: 2.0 };
+v9 := Vector { x: 3.0, y: 4.0 };
+
+if v7 == v9 {
+    print("v7 == v9: true");
+}
+
+if v7 != v8 {
+    print("v7 != v8: true");
+}
+
+# Test 2: Money struct with arithmetic and comparison operators
+struct Money {
+    amount: float,
+    currency: string,
+    
+    func op_add(other) {
+        return Money { amount: amount + other.amount, currency: currency };
+    },
+    
+    func op_sub(other) {
+        return Money { amount: amount - other.amount, currency: currency };
+    },
+    
+    func op_mul(multiplier) {
+        return Money { amount: amount * multiplier, currency: currency };
+    },
+    
+    func op_div(divisor) {
+        return Money { amount: amount / divisor, currency: currency };
+    },
+    
+    func op_eq(other) {
+        return amount == other.amount && currency == other.currency;
+    },
+    
+    func op_lt(other) {
+        return amount < other.amount;
+    },
+    
+    func op_gt(other) {
+        return amount > other.amount;
+    },
+    
+    func op_le(other) {
+        return amount <= other.amount;
+    },
+    
+    func op_ge(other) {
+        return amount >= other.amount;
+    },
+    
+    func to_string() {
+        return currency + to_string(amount);
+    }
+}
+
+m1 := Money { amount: 100.0, currency: "$" };
+m2 := Money { amount: 50.0, currency: "$" };
+
+print("m1: " + m1.to_string());
+print("m2: " + m2.to_string());
+
+m3 := m1 + m2;
+print("m1 + m2 = " + m3.to_string());
+
+m4 := m1 - m2;
+print("m1 - m2 = " + m4.to_string());
+
+m5 := m1 * 2.0;
+print("m1 * 2.0 = " + m5.to_string());
+
+m6 := m1 / 2.0;
+print("m1 / 2.0 = " + m6.to_string());
+
+m7 := Money { amount: 100.0, currency: "$" };
+m8 := Money { amount: 50.0, currency: "$" };
+m9 := Money { amount: 100.0, currency: "$" };
+
+if m7 == m9 {
+    print("m7 == m9: true");
+}
+
+if m7 > m8 {
+    print("m7 > m8: true");
+}
+
+if m8 < m7 {
+    print("m8 < m7: true");
+}
+
+if m7 >= m9 {
+    print("m7 >= m9: true");
+}
+
+if m8 <= m7 {
+    print("m8 <= m7: true");
+}
+
+# Test 3: Point struct with modulo operator
+struct Point {
+    x: float,
+    y: float,
+    
+    func op_mod(divisor) {
+        return Point { x: x % divisor, y: y % divisor };
+    },
+    
+    func to_string() {
+        return "(" + x + ", " + y + ")";
+    }
+}
+
+p1 := Point { x: 10.0, y: 15.0 };
+print("p1: " + p1.to_string());
+p2 := p1 % 3.0;
+print("p1 % 3.0 = " + p2.to_string());
+
+print("All operator overloading tests passed!");

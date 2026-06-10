@@ -1,0 +1,69 @@
+# Unified Database API Example
+# Demonstrates the new db_connect(db_type, connection_string) syntax
+# that supports multiple database backends (SQLite, PostgreSQL, MySQL)
+
+print("=== Unified Database API Demo ===")
+print("")
+
+# Connect to SQLite database using the unified API
+print("Connecting to SQLite database...")
+db := db_connect("sqlite", "test_unified.db")
+print("Connected!")
+print("")
+
+# Create a users table
+print("Creating users table...")
+db_execute(db, "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)", [])
+print("")
+
+# Insert some test data
+print("Inserting test users...")
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Alice Johnson", "alice@example.com"])
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Bob Smith", "bob@example.com"])
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Carol Martinez", "carol@example.com"])
+print("Inserted 3 users")
+print("")
+
+# Query all users
+print("Querying all users:")
+users := db_query(db, "SELECT * FROM users", [])
+for user in users {
+    print("  ID: " + to_string(user["id"]) + ", Name: " + user["name"] + ", Email: " + user["email"])
+}
+print("")
+
+# Query specific user with parameters
+print("Querying user with name 'Bob Smith':")
+bob := db_query(db, "SELECT * FROM users WHERE name = ?", ["Bob Smith"])
+if len(bob) > 0 {
+    print("  Found: " + bob[0]["name"] + " (" + bob[0]["email"] + ")")
+}
+print("")
+
+# Update a user
+print("Updating Alice's email...")
+rows_affected := db_execute(db, "UPDATE users SET email = ? WHERE name = ?", ["alice.j@newmail.com", "Alice Johnson"])
+print("  Updated " + to_string(rows_affected) + " row(s)")
+print("")
+
+# Verify the update
+alice := db_query(db, "SELECT * FROM users WHERE name = ?", ["Alice Johnson"])
+print("Alice's new email: " + alice[0]["email"])
+print("")
+
+# Count total users
+count_result := db_query(db, "SELECT COUNT(*) as total FROM users", [])
+print("Total users in database: " + to_string(count_result[0]["total"]))
+print("")
+
+# Close the database connection
+db_close(db)
+print("Database connection closed")
+print("")
+
+# NOTE: PostgreSQL and MySQL support coming soon!
+# Future syntax will be:
+# db := db_connect("postgres", "host=localhost dbname=myapp user=admin password=secret")
+# db := db_connect("mysql", "mysql://user:pass@localhost:3306/myapp")
+print("✓ SQLite database operations completed successfully!")
+print("✓ PostgreSQL and MySQL support coming in future release")

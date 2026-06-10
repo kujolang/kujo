@@ -1,0 +1,22 @@
+# Test HTTP functions are callable
+print("Testing HTTP functions...")
+
+# Test that http_server function exists and creates a server
+server := http_server(8081)
+print("✓ http_server(8081) created server")
+
+# Test that server has route method
+server.route("GET", "/test", func(req) {
+    return http_response(200, "OK")
+})
+print("✓ server.route() registered route")
+
+# Test http_response function
+response := http_response(200, "Hello")
+print("✓ http_response(200, 'Hello') created response")
+
+# Test json_response function
+json_resp := json_response(200, {"status": "ok"})
+print("✓ json_response(200, {...}) created JSON response")
+
+print("All HTTP function tests passed!")

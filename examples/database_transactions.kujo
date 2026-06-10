@@ -1,0 +1,177 @@
+# Example: Database Transactions in Kujo
+# Demonstrates how to use transactions for atomic operations
+
+print("=== Database Transaction Examples ===\n")
+
+# ============================================================================
+# Example 1: Basic Transaction
+# ============================================================================
+print("Example 1: Basic Transaction")
+print("-" * 40)
+
+db := db_connect("sqlite", "example_transactions.db")
+
+# Create a simple table
+db_execute(db, "CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY, name TEXT, balance REAL)", [])
+
+# Clear any existing data
+db_execute(db, "DELETE FROM accounts", [])
+
+# Begin a transaction
+db_begin(db)
+
+# Insert multiple records atomically
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Alice", 1000.0])
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Bob", 1500.0])
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Charlie", 2000.0])
+
+# Commit the transaction
+db_commit(db)
+
+print("✓ Created 3 accounts in a transaction")
+
+# ============================================================================
+# Example 2: Money Transfer (Atomic Operation)
+# ============================================================================
+print("\nExample 2: Money Transfer")
+print("-" * 40)
+
+# Check initial balances
+rows := db_query(db, "SELECT name, balance FROM accounts ORDER BY name", [])
+print("Before transfer:")
+print("  Alice: $" + str(rows[0]["balance"]))
+print("  Bob: $" + str(rows[1]["balance"]))
+
+# Transfer $250 from Alice to Bob
+db_begin(db)
+
+# Debit from Alice
+db_execute(db, "UPDATE accounts SET balance = balance - ? WHERE name = ?", [250.0, "Alice"])
+
+# Credit to Bob
+db_execute(db, "UPDATE accounts SET balance = balance + ? WHERE name = ?", [250.0, "Bob"])
+
+# Commit the transfer
+db_commit(db)
+
+# Check final balances
+rows := db_query(db, "SELECT name, balance FROM accounts ORDER BY name", [])
+print("\nAfter transfer:")
+print("  Alice: $" + str(rows[0]["balance"]))
+print("  Bob: $" + str(rows[1]["balance"]))
+print("✓ Transfer completed atomically")
+
+# ============================================================================
+# Example 3: Transaction Rollback
+# ============================================================================
+print("\nExample 3: Transaction Rollback")
+print("-" * 40)
+
+# Get current balance
+rows := db_query(db, "SELECT balance FROM accounts WHERE name = ?", ["Charlie"])
+original_balance := rows[0]["balance"]
+print("Charlie's original balance: $" + str(original_balance))
+
+# Start a transaction
+db_begin(db)
+
+# Make some changes
+db_execute(db, "UPDATE accounts SET balance = balance - ? WHERE name = ?", [500.0, "Charlie"])
+
+# Check the balance within the transaction
+rows := db_query(db, "SELECT balance FROM accounts WHERE name = ?", ["Charlie"])
+print("Charlie's balance in transaction: $" + str(rows[0]["balance"]))
+
+# Rollback the transaction
+db_rollback(db)
+
+# Check the balance after rollback
+rows := db_query(db, "SELECT balance FROM accounts WHERE name = ?", ["Charlie"])
+print("Charlie's balance after rollback: $" + str(rows[0]["balance"]))
+print("✓ Transaction rolled back successfully")
+
+# ============================================================================
+# Example 4: Using Last Insert ID
+# ============================================================================
+print("\nExample 4: Using Last Insert ID")
+print("-" * 40)
+
+# Create orders table
+db_execute(db, "CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer TEXT, amount REAL, status TEXT)", [])
+db_execute(db, "DELETE FROM orders", [])
+
+# Begin transaction
+db_begin(db)
+
+# Insert an order and get its ID
+db_execute(db, "INSERT INTO orders (customer, amount, status) VALUES (?, ?, ?)", ["Alice", 99.99, "pending"])
+order_id := db_last_insert_id(db)
+print("Created order with ID: " + str(order_id))
+
+# Update the order using the ID
+db_execute(db, "UPDATE orders SET status = ? WHERE id = ?", ["confirmed", order_id])
+
+# Commit
+db_commit(db)
+
+# Verify
+rows := db_query(db, "SELECT * FROM orders WHERE id = ?", [order_id])
+print("Order status: " + rows[0]["status"])
+print("✓ Last insert ID works correctly")
+
+# ============================================================================
+# Example 5: Complex Multi-Table Transaction
+# ============================================================================
+print("\nExample 5: Complex Multi-Table Transaction")
+print("-" * 40)
+
+# Create inventory table
+db_execute(db, "CREATE TABLE IF NOT EXISTS inventory (product TEXT PRIMARY KEY, quantity INTEGER)", [])
+db_execute(db, "DELETE FROM inventory", [])
+db_execute(db, "INSERT INTO inventory (product, quantity) VALUES (?, ?)", ["Widget", 100])
+db_execute(db, "INSERT INTO inventory (product, quantity) VALUES (?, ?)", ["Gadget", 50])
+
+# Create order_items table
+db_execute(db, "CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER, product TEXT, quantity INTEGER)", [])
+db_execute(db, "DELETE FROM order_items", [])
+
+print("Initial inventory:")
+rows := db_query(db, "SELECT product, quantity FROM inventory ORDER BY product", [])
+print("  Gadget: " + str(rows[0]["quantity"]) + " units")
+print("  Widget: " + str(rows[1]["quantity"]) + " units")
+
+# Process an order with inventory update (atomic)
+db_begin(db)
+
+# Create order
+db_execute(db, "INSERT INTO orders (customer, amount, status) VALUES (?, ?, ?)", ["Bob", 149.99, "pending"])
+order_id := db_last_insert_id(db)
+
+# Add order items
+db_execute(db, "INSERT INTO order_items (order_id, product, quantity) VALUES (?, ?, ?)", [order_id, "Widget", 3])
+db_execute(db, "INSERT INTO order_items (order_id, product, quantity) VALUES (?, ?, ?)", [order_id, "Gadget", 2])
+
+# Update inventory (deduct sold items)
+db_execute(db, "UPDATE inventory SET quantity = quantity - ? WHERE product = ?", [3, "Widget"])
+db_execute(db, "UPDATE inventory SET quantity = quantity - ? WHERE product = ?", [2, "Gadget"])
+
+# Confirm order
+db_execute(db, "UPDATE orders SET status = ? WHERE id = ?", ["confirmed", order_id])
+
+# Commit entire operation
+db_commit(db)
+
+print("\nAfter order processing:")
+rows := db_query(db, "SELECT product, quantity FROM inventory ORDER BY product", [])
+print("  Gadget: " + str(rows[0]["quantity"]) + " units")
+print("  Widget: " + str(rows[1]["quantity"]) + " units")
+print("✓ Complex multi-table transaction completed")
+
+# ============================================================================
+# Cleanup
+# ============================================================================
+db_close(db)
+
+print("\n" + "=" * 50)
+print("All transaction examples completed successfully!")
+print("=" * 50)

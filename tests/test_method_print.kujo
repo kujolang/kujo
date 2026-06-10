@@ -1,0 +1,17 @@
+# Minimal test - does print work in method body?
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func show() {
+        print("In method test");
+        print(x);
+    }
+}
+
+print("Before creating v1");
+v1 := Vec2 { x: 5.0, y: 10.0 };
+print("Created v1, calling show");
+v1.show();
+print("Done");

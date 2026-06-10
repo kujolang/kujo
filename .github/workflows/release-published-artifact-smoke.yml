@@ -1,0 +1,53 @@
+name: release-published-artifact-smoke
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  validate-published-artifact-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Download and verify published artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_name="${{ github.event.release.tag_name }}"
+          repo="${{ github.repository }}"
+          arch="$(uname -m)"
+          if [[ "${arch}" == "aarch64" ]]; then
+            arch="arm64"
+          fi
+
+          if [[ "${RUNNER_OS}" == "Linux" ]]; then
+            target_suffix="linux-${arch}"
+          else
+            target_suffix="macos-${arch}"
+          fi
+
+          archive_name="kujo-${tag_name}-${target_suffix}.tar.gz"
+          checksum_name="${archive_name}.sha256"
+          base_url="https://github.com/${repo}/releases/download/${tag_name}"
+
+          curl -sSfL "${base_url}/${archive_name}" -o "${archive_name}"
+          curl -sSfL "${base_url}/${checksum_name}" -o "${checksum_name}"
+
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum -c "${checksum_name}"
+          else
+            shasum -a 256 -c "${checksum_name}"
+          fi
+
+          extract_root="$(mktemp -d)"
+          tar -xzf "${archive_name}" -C "${extract_root}"
+          binary_path="${extract_root}/kujo"
+
+          "${binary_path}" --version
+          echo 'print("artifact-smoke")' > "${extract_root}/hello.kujo"
+          "${binary_path}" run "${extract_root}/hello.kujo"
+          "${binary_path}" lsp --help

@@ -1,0 +1,26 @@
+# Test basic arithmetic and comparisons
+
+x := 10
+y := 5
+
+result := x + y
+print("10 + 5 =", result)
+
+result := x - y
+print("10 - 5 =", result)
+
+result := x * y
+print("10 * 5 =", result)
+
+result := x / y
+print("10 / 5 =", result)
+
+if x > y {
+    print("10 > 5: true")
+}
+
+if x == y {
+    print("10 == 5: true")
+} else {
+    print("10 == 5: false")
+}

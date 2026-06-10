@@ -1,0 +1,19 @@
+# Test file for error context improvements
+# This file intentionally contains errors to test call stack display
+
+func level3() {
+    # This will cause an undefined variable error
+    result := undefined_var + 5
+    return result
+}
+
+func level2() {
+    return level3()
+}
+
+func level1() {
+    return level2()
+}
+
+# Call the chain
+level1()

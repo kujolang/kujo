@@ -1,0 +1,7 @@
+{
+  "internal_async": "Private",
+  "exported_async": "Public",
+  "PrivateWorker::visible_but_private": "Private",
+  "PublicWorker::hidden_async": "Private",
+  "PublicWorker::visible_async": "Public"
+}

@@ -1,0 +1,13 @@
+# Simple closure test for VM
+func make_counter() {
+    mut count := 0
+    return func() {
+        count = count + 1
+        return count
+    }
+}
+
+counter := make_counter()
+print(counter())  # Should print 1
+print(counter())  # Should print 2
+print(counter())  # Should print 3

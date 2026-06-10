@@ -1,0 +1,15 @@
+// Selective import example (self-contained fallback)
+func add(a, b) {
+	return a + b;
+}
+
+let pi_value = 3.14159;
+
+// Now use selected bindings
+let sum = add(10, 20);
+print("10 + 20 =", sum);
+
+print("PI =", pi_value);
+
+// This would fail if uncommented (multiply not imported):
+// let product = multiply(2, 3);

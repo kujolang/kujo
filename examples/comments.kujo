@@ -1,0 +1,207 @@
+# =============================================================================
+# Kujo Language - Comment Syntax Examples
+# =============================================================================
+# This file demonstrates all comment types supported in Kujo:
+# 1. Single-line comments (#)
+# 2. Multi-line comments (/* ... */)
+# 3. Doc comments (///)
+
+print("=== Kujo Comment Syntax Demo ===")
+print("")
+
+# =============================================================================
+# 1. SINGLE-LINE COMMENTS
+# =============================================================================
+# Single-line comments start with # and continue to end of line
+# They are useful for:
+# - Explaining what code does
+# - Temporarily disabling code
+# - Adding TODO notes
+
+x := 10  # You can also put comments at the end of lines
+y := 20  # This helps explain specific values or operations
+result := x + y
+print("Single-line comment test: ${result}")  # Should print: 30
+print("")
+
+# =============================================================================
+# 2. MULTI-LINE COMMENTS
+# =============================================================================
+
+/*
+ * Multi-line comments start with /* and end with star-slash (written as slash *)
+ * They can span multiple lines and are useful for:
+ * - Longer explanations
+ * - Commenting out blocks of code
+ * - License headers
+ * - Function/module documentation
+ */
+
+/* This is a simple one-line multi-line comment */
+a := 100
+
+/*
+   Multi-line comments can have different formatting styles.
+   This style has no leading asterisks.
+*/
+b := 200
+
+/* You can put them inline */ c := 300
+
+total := a + b + c
+print("Multi-line comment test: ${total}")  # Should print: 600
+print("")
+
+# =============================================================================
+# 3. DOC COMMENTS
+# =============================================================================
+
+/// Doc comments start with three slashes (///)
+/// They are typically used for documenting:
+/// - Functions and their parameters
+/// - Structs and their fields
+/// - Modules and packages
+/// - Public APIs
+
+/// Calculates the factorial of a number
+/// @param n The number to calculate factorial for
+/// @return The factorial of n
+func factorial(n) {
+    /// Base case
+    if n <= 1 {
+        return 1
+    }
+    /// Recursive case
+    return n * factorial(n - 1)
+}
+
+fact5 := factorial(5)
+print("Factorial(5) = ${fact5}")  # Should print: 120
+print("")
+
+/// Represents a person with name and age
+struct Person {
+    name: string   /// The person's full name
+    age: int       /// The person's age in years
+}
+
+/// Create a person instance
+alice := Person { name: "Alice", age: 30 }
+print("Person: ${alice.name}, Age: ${alice.age}")
+print("")
+
+# =============================================================================
+# 4. COMBINING COMMENT TYPES
+# =============================================================================
+
+# You can use all three types of comments together
+/*
+ * This function demonstrates combining different comment types
+ */
+/// Adds two numbers and returns the result
+/// @param x First number
+/// @param y Second number  
+/// @return Sum of x and y
+func add(x, y) {
+    # Simple inline comment
+    return x + y  /* another inline comment */
+}
+
+sum := add(15, 25)
+print("Combined comments test: ${sum}")  # Should print: 40
+print("")
+
+# =============================================================================
+# 5. PRACTICAL EXAMPLES
+# =============================================================================
+
+/*
+ * File: calculator.kujo
+ * Description: Basic calculator operations
+ * Author: Kujo Team
+ * Version: 1.0.0
+ */
+
+/// Calculator module for basic arithmetic
+struct Calculator {
+    name: string
+}
+
+/// Creates a new calculator instance
+/// @param name The calculator's name
+/// @return A new Calculator struct
+func new_calculator(name) {
+    return Calculator { name: name }
+}
+
+/// Performs addition
+/// @param calc The calculator instance
+/// @param a First operand
+/// @param b Second operand
+/// @return Sum of a and b
+func calculate_sum(calc, a, b) {
+    # Log the operation (in a real app)
+    # log("Calculator ${calc.name} adding ${a} + ${b}")
+    
+    /*
+     * In a real calculator, you might want to:
+     * - Check for overflow
+     * - Handle different number types
+     * - Log the operation
+     * - Update history
+     */
+    
+    return a + b
+}
+
+my_calc := new_calculator("MyCalc")
+calc_result := calculate_sum(my_calc, 100, 50)
+print("Calculator result: ${calc_result}")  # Should print: 150
+print("")
+
+# =============================================================================
+# 6. COMMENT BEST PRACTICES
+# =============================================================================
+
+# DO: Explain WHY, not WHAT
+# The code already shows what it does, comments should explain reasoning
+
+/// Calculates discount with special weekend pricing
+/// Weekend discount is 20% instead of standard 10%
+func calculate_discount(price, is_weekend) {
+    # Weekend customers get double the standard discount to drive traffic
+    discount_rate := 0.1
+    if is_weekend {
+        discount_rate := 0.2
+    }
+    return price * (1.0 - discount_rate)
+}
+
+weekday_price := calculate_discount(100.0, false)
+weekend_price := calculate_discount(100.0, true)
+print("Weekday price: ${weekday_price}, Weekend price: ${weekend_price}")
+print("")
+
+/*
+ * DON'T: State the obvious
+ * Bad:  x := 5  # Set x to 5
+ * Good: x := 5  # Maximum retry attempts
+ */
+
+/// Configuration constants
+max_retries := 5        # Maximum connection retry attempts
+timeout_ms := 3000      # Connection timeout in milliseconds  
+buffer_size := 8192     # Read buffer size in bytes
+
+print("Config - Retries: ${max_retries}, Timeout: ${timeout_ms}ms")
+print("")
+
+# =============================================================================
+# CONCLUSION
+# =============================================================================
+
+print("=== Comment Demo Complete ===")
+print("Kujo supports three comment types:")
+print("  # Single-line")
+print("  /* Multi-line */")
+print("  /// Doc comments")

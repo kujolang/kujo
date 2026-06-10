@@ -1,0 +1,94 @@
+# Profile individual dict operations
+
+# Test 1: Dict creation and population
+func test_dict_populate(n) {
+    map := {}
+    i := 0
+    while i < n {
+        map[i] := i * 2
+        i := i + 1
+    }
+    return map
+}
+
+# Test 2: Dict lookup
+func test_dict_lookup(map, n) {
+    sum := 0
+    i := 0
+    while i < n {
+        sum := sum + map[i]
+        i := i + 1
+    }
+    return sum
+}
+
+# Test 3: Simple loop (baseline)
+func test_simple_loop(n) {
+    sum := 0
+    i := 0
+    while i < n {
+        sum := sum + i
+        i := i + 1
+    }
+    return sum
+}
+
+n := 1000
+
+print("=== Dict Performance Profiling ===")
+print("")
+
+print("1. Simple loop (baseline)...")
+start := performance_now()
+result := test_simple_loop(n)
+elapsed := performance_now() - start
+print("   Result: ")
+print(result)
+print("   Time: ")
+print(elapsed)
+print("ms")
+print("")
+
+print("2. Dict population...")
+start := performance_now()
+map := test_dict_populate(n)
+elapsed := performance_now() - start
+print("   Created dict with ")
+print(len(map))
+print(" items")
+print("   Time: ")
+print(elapsed)
+print("ms")
+print("")
+
+print("3. Dict lookup...")
+start := performance_now()
+result := test_dict_lookup(map, n)
+elapsed := performance_now() - start
+print("   Result: ")
+print(result)
+print("   Time: ")
+print(elapsed)
+print("ms")
+print("")
+
+print("4. Combined (like benchmark)...")
+start := performance_now()
+map := {}
+i := 0
+while i < n {
+    map[i] := i * 2
+    i := i + 1
+}
+sum := 0
+i := 0
+while i < n {
+    sum := sum + map[i]
+    i := i + 1
+}
+elapsed := performance_now() - start
+print("   Result: ")
+print(sum)
+print("   Time: ")
+print(elapsed)
+print("ms")

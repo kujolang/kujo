@@ -1,0 +1,293 @@
+# Enhanced Collections Test Suite
+# Tests for advanced array, dict, and string methods added in v0.8.0
+
+print("=== Enhanced Collections Tests ===")
+print()
+
+# ==========================================
+# ADVANCED ARRAY METHODS
+# ==========================================
+
+print("--- Array: chunk() ---")
+arr := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+chunks2 := chunk(arr, 2)
+print(chunks2)
+# Expected: [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+
+chunks3 := chunk(arr, 3)
+print(chunks3)
+# Expected: [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]
+
+print()
+
+print("--- Array: flatten() ---")
+nested := [[1, 2], [3, 4], [5, 6]]
+flat := flatten(nested)
+print(flat)
+# Expected: [1, 2, 3, 4, 5, 6]
+
+mixed := [[1, 2], 3, [4, 5], 6]
+flat_mixed := flatten(mixed)
+print(flat_mixed)
+# Expected: [1, 2, 3, 4, 5, 6]
+
+print()
+
+print("--- Array: zip() ---")
+nums := [1, 2, 3]
+letters := ["a", "b", "c"]
+zipped := zip(nums, letters)
+print(zipped)
+# Expected: [[1, "a"], [2, "b"], [3, "c"]]
+
+# Different lengths
+short := [1, 2]
+long := ["a", "b", "c", "d"]
+zipped_diff := zip(short, long)
+print(zipped_diff)
+# Expected: [[1, "a"], [2, "b"]]
+
+print()
+
+print("--- Array: enumerate() ---")
+fruits := ["apple", "banana", "cherry"]
+enumerated := enumerate(fruits)
+print(enumerated)
+# Expected: [[0, "apple"], [1, "banana"], [2, "cherry"]]
+
+print()
+
+print("--- Array: take() ---")
+numbers := [10, 20, 30, 40, 50]
+first3 := take(numbers, 3)
+print(first3)
+# Expected: [10, 20, 30]
+
+# Take more than available
+first10 := take(numbers, 10)
+print(first10)
+# Expected: [10, 20, 30, 40, 50]
+
+# Take 0
+none := take(numbers, 0)
+print(none)
+# Expected: []
+
+print()
+
+print("--- Array: skip() ---")
+vals := [1, 2, 3, 4, 5]
+skip2 := skip(vals, 2)
+print(skip2)
+# Expected: [3, 4, 5]
+
+# Skip more than available
+skip10 := skip(vals, 10)
+print(skip10)
+# Expected: []
+
+print()
+
+print("--- Array: windows() ---")
+data := [1, 2, 3, 4, 5]
+windows2 := windows(data, 2)
+print(windows2)
+# Expected: [[1, 2], [2, 3], [3, 4], [4, 5]]
+
+windows3 := windows(data, 3)
+print(windows3)
+# Expected: [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+
+# Window size larger than array
+windows10 := windows(data, 10)
+print(windows10)
+# Expected: []
+
+print()
+
+# ==========================================
+# ADVANCED STRING METHODS
+# ==========================================
+
+print("--- String: pad_left() ---")
+num_str := "5"
+padded_left := pad_left(num_str, 3, "0")
+print(padded_left)
+# Expected: "005"
+
+name := "Jo"
+padded_name := pad_left(name, 5, " ")
+print("[" + padded_name + "]")
+# Expected: "[   Jo]"
+
+print()
+
+print("--- String: pad_right() ---")
+label := "Name:"
+padded_right := pad_right(label, 10, " ")
+print("[" + padded_right + "]")
+# Expected: "[Name:     ]"
+
+print()
+
+print("--- String: lines() ---")
+multiline := "line1\nline2\nline3"
+line_array := lines(multiline)
+print(line_array)
+# Expected: ["line1", "line2", "line3"]
+
+print()
+
+print("--- String: words() ---")
+sentence := "hello world from kujo"
+word_array := words(sentence)
+print(word_array)
+# Expected: ["hello", "world", "from", "kujo"]
+
+# Multiple spaces
+spaced := "one  two   three"
+spaced_words := words(spaced)
+print(spaced_words)
+# Expected: ["one", "two", "three"]
+
+print()
+
+print("--- String: str_reverse() ---")
+text := "hello"
+reversed_text := str_reverse(text)
+print(reversed_text)
+# Expected: "olleh"
+
+palindrome := "racecar"
+reversed_pal := str_reverse(palindrome)
+print(reversed_pal)
+# Expected: "racecar"
+
+print()
+
+print("--- String: slugify() ---")
+title := "Hello World!"
+slug1 := slugify(title)
+print(slug1)
+# Expected: "hello-world"
+
+complex := "My Blog Post - Part 1"
+slug2 := slugify(complex)
+print(slug2)
+# Expected: "my-blog-post-part-1"
+
+print()
+
+print("--- String: truncate() ---")
+long_text := "Hello World"
+truncated := truncate(long_text, 8, "...")
+print(truncated)
+# Expected: "Hello..."
+
+# Already short enough
+short_text := "Hi"
+not_truncated := truncate(short_text, 10, "...")
+print(not_truncated)
+# Expected: "Hi"
+
+print()
+
+print("--- String: to_camel_case() ---")
+snake := "hello_world"
+camel1 := to_camel_case(snake)
+print(camel1)
+# Expected: "helloWorld"
+
+kebab := "my-var-name"
+camel2 := to_camel_case(kebab)
+print(camel2)
+# Expected: "myVarName"
+
+spaced_text := "user name field"
+camel3 := to_camel_case(spaced_text)
+print(camel3)
+# Expected: "userNameField"
+
+print()
+
+print("--- String: to_snake_case() ---")
+camel_str := "helloWorld"
+snake1 := to_snake_case(camel_str)
+print(snake1)
+# Expected: "hello_world"
+
+pascal := "MyClassName"
+snake2 := to_snake_case(pascal)
+print(snake2)
+# Expected: "my_class_name"
+
+print()
+
+print("--- String: to_kebab_case() ---")
+camel_var := "userName"
+kebab1 := to_kebab_case(camel_var)
+print(kebab1)
+# Expected: "user-name"
+
+snake_var := "my_function_name"
+kebab2 := to_kebab_case(snake_var)
+print(kebab2)
+# Expected: "my-function-name"
+
+print()
+
+# ==========================================
+# ADVANCED DICT METHODS
+# ==========================================
+
+print("--- Dict: invert() ---")
+dict1 := {"a": "1", "b": "2", "c": "3"}
+inverted := invert(dict1)
+print(inverted)
+# Expected: {"1": "a", "2": "b", "3": "c"}
+
+print()
+
+print("--- Dict: update() ---")
+base := {"name": "Alice", "age": "30"}
+updates := {"age": "31", "city": "NYC"}
+updated := update(base, updates)
+print(updated)
+# Expected: {"name": "Alice", "age": "31", "city": "NYC"}
+
+print()
+
+print("--- Dict: get_default() ---")
+config := {"timeout": "30", "retry": "3"}
+timeout_val := get_default(config, "timeout", "60")
+print(timeout_val)
+# Expected: "30"
+
+missing_val := get_default(config, "debug", "false")
+print(missing_val)
+# Expected: "false"
+
+print()
+
+# ==========================================
+# CHAINING EXAMPLES
+# ==========================================
+
+print("--- Chaining Array Methods ---")
+# Take first 6, chunk into pairs, flatten back
+original := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+chained := flatten(chunk(take(original, 6), 2))
+print(chained)
+# Expected: [1, 2, 3, 4, 5, 6]
+
+print()
+
+print("--- Chaining String Methods ---")
+raw_title := "My  Blog   Post"
+clean_slug := slugify(to_kebab_case(raw_title))
+print(clean_slug)
+# Expected: "my-blog-post"
+
+print()
+
+print("=== All Enhanced Collections Tests Complete ===")

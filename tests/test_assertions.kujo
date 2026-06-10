@@ -1,0 +1,53 @@
+# Quick test to verify assertions work
+print("Testing assertion functions...")
+
+# Test assert_equal - success case
+result := assert_equal(5, 5)
+print("assert_equal(5, 5): " + str(result))
+
+# Test assert_equal - failure case (wrapped in try/except)
+try {
+    result := assert_equal(5, 10)
+    print("assert_equal(5, 10): " + str(result))
+} except error {
+    print("assert_equal(5, 10) failed as expected: " + error.message)
+}
+
+# Test assert_true - success
+result := assert_true(true)
+print("assert_true(true): " + str(result))
+
+# Test assert_true - failure
+try {
+    result := assert_true(false)
+    print("assert_true(false): " + str(result))
+} except error {
+    print("assert_true(false) failed as expected: " + error.message)
+}
+
+# Test assert_false - success
+result := assert_false(false)
+print("assert_false(false): " + str(result))
+
+# Test assert_false - failure
+try {
+    result := assert_false(true)
+    print("assert_false(true): " + str(result))
+} except error {
+    print("assert_false(true) failed as expected: " + error.message)
+}
+
+# Test assert_contains - success
+arr := [1, 2, 3, 4, 5]
+result := assert_contains(arr, 3)
+print("assert_contains([1,2,3,4,5], 3): " + str(result))
+
+# Test assert_contains - failure
+try {
+    result := assert_contains(arr, 10)
+    print("assert_contains([1,2,3,4,5], 10): " + str(result))
+} except error {
+    print("assert_contains([1,2,3,4,5], 10) failed as expected: " + error.message)
+}
+
+print("All assertion tests complete!")

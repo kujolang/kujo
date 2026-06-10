@@ -1,0 +1,126 @@
+# Spread Operator Demo
+# Shows practical usage of spread operators in Kujo
+
+print("=== Array Spreading ===")
+
+# Combine arrays
+fruits := ["apple", "banana"]
+vegetables := ["carrot", "broccoli"]
+food := [...fruits, ...vegetables]
+print("All food: " + to_string(food))
+
+# Add elements while spreading
+numbers := [2, 3, 4]
+extended := [1, ...numbers, 5, 6]
+print("Extended numbers: " + to_string(extended))
+
+# Clone an array
+original := [10, 20, 30]
+clone := [...original]
+print("Clone: " + to_string(clone))
+
+print("")
+print("=== Dict Spreading ===")
+
+# Merge dictionaries
+defaults := {
+    "timeout": 30,
+    "retry": 3,
+    "debug": false,
+    "verbose": false
+}
+
+custom := {
+    "timeout": 60,
+    "debug": true
+}
+
+# Later values override earlier ones
+config := {...defaults, ...custom}
+print("Config: " + to_string(config))
+
+# Add fields while spreading
+user := {"name": "Alice", "age": 30}
+enhanced := {...user, "verified": true, "premium": false}
+print("Enhanced user: " + to_string(enhanced))
+
+print("")
+print("=== Practical Example: Building Configurations ===")
+
+# Base configuration
+base_config := {
+    "host": "localhost",
+    "port": 8080,
+    "cors": true
+}
+
+# Development overrides
+dev_config := {
+    ...base_config,
+    "debug": true,
+    "hot_reload": true
+}
+
+# Production overrides
+prod_config := {
+    ...base_config,
+    "host": "api.example.com",
+    "port": 443,
+    "cache": true,
+    "compression": true
+}
+
+print("Dev config: " + to_string(dev_config))
+print("Prod config: " + to_string(prod_config))
+
+print("")
+print("=== Practical Example: Array Manipulation ===")
+
+# Merge multiple data sources
+users_batch1 := [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+users_batch2 := [{"id": 3, "name": "Charlie"}]
+users_batch3 := [{"id": 4, "name": "Dave"}, {"id": 5, "name": "Eve"}]
+
+all_users := [...users_batch1, ...users_batch2, ...users_batch3]
+print("Total users: " + to_string(len(all_users)))
+
+# Add header and footer rows
+data_rows := [
+    [1, "Product A", 99.99],
+    [2, "Product B", 149.99]
+]
+
+header := ["ID", "Name", "Price"]
+footer := ["", "Total", 249.98]
+
+full_table := [header, ...data_rows, footer]
+print("Table rows: " + to_string(len(full_table)))
+
+print("")
+print("=== Function Call Spreading (future feature) ===")
+# Note: Function argument spreading not yet implemented
+# This is planned for a future version:
+# args := [10, 20, 30]
+# result := some_function(...args)
+
+print("")
+print("=== Combining Techniques ===")
+
+# Use both destructuring and spreading together
+original_user := {
+    "id": 123,
+    "name": "Alice",
+    "email": "alice@example.com",
+    "role": "admin"
+}
+
+# Extract id, spread the rest, add new field
+{id, ...rest} := original_user
+updated_user := {...rest, "id": id, "verified": true, "lastLogin": "2026-01-25"}
+print("Updated user: " + to_string(updated_user))
+
+# Array example
+numbers := [1, 2, 3, 4, 5, 6]
+[first, ...middle] := numbers
+result := [0, first, ...middle, 100]
+print("Transformed: " + to_string(result))

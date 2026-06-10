@@ -1,0 +1,115 @@
+# === RUST ===
+/target
+**/*.rs.bk
+**/*.rs.bak
+**/*.swp
+**/*.swo
+**/*.tmp
+**/*.old
+**/*.log
+
+# Rust toolchain and test snapshots
+rust-toolchain.toml
+/tests/*.out
+
+# Cargo specific
+/.cargo/
+/.rustfmt.toml
+
+# === TEST SNAPSHOTS ===
+*.snap
+/tests/__snapshots__/
+/tests/*.out
+
+# === BUILD SYSTEMS ===
+/build/
+/dist/
+/out/
+/bin/
+/debug/
+/release/
+/kujo
+
+# === EDITORS ===
+# VS Code
+.vscode/
+.code-workspace
+
+# JetBrains IDEs (CLion, RustRover, IntelliJ)
+.idea/
+*.iml
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+# === SYSTEM ===
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+*.bak
+*.tmp
+*.log
+*.swp
+
+# === OTHER ===
+*.log
+*.lock
+*.pid
+*.patch
+*.orig
+*.rej
+*.bak
+*.old
+*.zip
+*.gz
+*.tar
+*.7z
+
+# Keep lockfile tracked for reproducible binary releases
+!/Cargo.lock
+
+# === BY PRODUCTS ===
+*.dSYM/
+*.rlib
+*.so
+*.dll
+*.exe
+*.obj
+*.pdb
+
+# === GITHUB ===
+.github/tmp/
+
+# === WORKSPACE ===
+/tmp/
+
+# === TEST ARTIFACTS ===
+# Prevent test files from polluting root directory
+/extracted/
+/extracted_dir/
+/organize_test/
+/test_dir/
+blocked.txt
+test_roadmap_spec.kujo
+/examples/ssg/
+
+# === DATABASES ===
+*.db
+*.sqlite
+*.sqlite3
+
+# === BENCHMARKS ===
+benchmark_output.txt
+/benchmarks/cross-language/benchmark_output.txt
+/benchmarks/cross-language/results/
+
+# === PRIVATE SHOWCASES ===
+/showcases/
+
+# === LOCAL AUDIT REPORTS ===
+/docs/UNSAFE_CODE_AUDIT.md
+/docs/UNFINISHED_AND_MVP_AUDIT.md
+/docs/KUJO_FEATURE_INVENTORY.md
+/docs/AI_CENTRIC_GAP_ANALYSIS.md

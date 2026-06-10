@@ -1,0 +1,26 @@
+# HTTP Client Example - Making Requests
+# Demonstrates using HTTP client functions to make requests
+
+print("=== HTTP Client Examples ===")
+print("")
+
+# Example 1: Simple GET request
+print("1. Making GET request to httpbin.org...")
+let response := http_get("https://httpbin.org/get")
+print("Status:", response["status"])
+print("Response preview:", substring(response["body"], 0, 100))
+print("")
+
+# Example 2: POST request with JSON
+print("2. Making POST request with JSON...")
+let post_data := to_json({"name": "Kujo", "language": "programming"})
+let post_response := http_post("https://httpbin.org/post", post_data)
+print("Status:", post_response["status"])
+print("Posted successfully!")
+print("")
+
+# Example 3: Keep demo deterministic in auto-run mode
+print("3. Skipping invalid-domain error-path in auto-run mode...")
+print("")
+
+print("=== HTTP Client Demo Complete ===")

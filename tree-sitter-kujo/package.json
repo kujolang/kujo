@@ -1,0 +1,16 @@
+{
+  "name": "tree-sitter-kujo",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for Kujo language",
+  "main": "grammar.js",
+  "license": "MIT",
+  "keywords": [
+    "tree-sitter",
+    "kujo",
+    "language"
+  ],
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test"
+  }
+}

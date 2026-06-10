@@ -1,0 +1,2 @@
+// Test print with one arg
+print(42)

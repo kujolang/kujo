@@ -1,0 +1,7 @@
+pub func public_api() {
+    return 1
+}
+
+func broken( {
+    return 2
+}

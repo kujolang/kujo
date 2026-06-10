@@ -1,0 +1,249 @@
+#!/usr/bin/env kujo
+# Log Analyzer - Advanced CLI Tool
+# Showcases: arg_parser, file I/O, regex, data structures, error handling, formatting
+
+parser := arg_parser()
+parser.add_argument("--file", "-f", type="string", required=true, help="Log file to analyze")
+parser.add_argument("--pattern", "-p", type="string", help="Regex pattern to filter logs")
+parser.add_argument("--level", "-l", type="string", help="Filter by level (ERROR, WARN, INFO)")
+parser.add_argument("--top", "-t", type="int", default=10, help="Show top N results")
+parser.add_argument("--json", "-j", type="bool", help="Output as JSON")
+parser.add_argument("--stats", "-s", type="bool", help="Show statistics only")
+
+args := parser.parse()
+
+# Data structures for analysis
+stats := {
+    "total_lines": 0,
+    "error_count": 0,
+    "warn_count": 0,
+    "info_count": 0,
+    "debug_count": 0,
+    "errors": [],
+    "warnings": [],
+    "ip_addresses": {},
+    "http_codes": {},
+    "timestamps": []
+}
+
+# Read and analyze log file
+func analyze_log(filepath, pattern_filter, level_filter) {
+    result := read_file(filepath)
+    
+    match result {
+        case Err(error): {
+            print("Error reading file: " + error)
+            return Err(error)
+        }
+        case Ok(content): {
+            lines := split(content, "\n")
+            stats._total_lines = length(lines)
+            
+            for line in lines {
+                if length(line) == 0 {
+                    continue
+                }
+                
+                # Apply pattern filter if specified
+                if pattern_filter != null {
+                    if !regex_match(line, pattern_filter) {
+                        continue
+                    }
+                }
+                
+                # Count log levels
+                if contains(line, "ERROR") {
+                    stats._error_count = stats._error_count + 1
+                    if length(stats._errors) < 100 {
+                        push(stats._errors, line)
+                    }
+                }
+                if contains(line, "WARN") {
+                    stats._warn_count = stats._warn_count + 1
+                    if length(stats._warnings) < 100 {
+                        push(stats._warnings, line)
+                    }
+                }
+                if contains(line, "INFO") {
+                    stats._info_count = stats._info_count + 1
+                }
+                if contains(line, "DEBUG") {
+                    stats._debug_count = stats._debug_count + 1
+                }
+                
+                # Extract IP addresses (simple pattern)
+                ip_pattern := "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b"
+                if regex_match(line, ip_pattern) {
+                    matches := regex_find_all(line, ip_pattern)
+                    for ip in matches {
+                        if has_key(stats._ip_addresses, ip) {
+                            stats._ip_addresses[ip] = stats._ip_addresses[ip] + 1
+                        } else {
+                            stats._ip_addresses[ip] = 1
+                        }
+                    }
+                }
+                
+                # Extract HTTP status codes
+                code_pattern := "\\s(\\d{3})\\s"
+                if regex_match(line, code_pattern) {
+                    codes := regex_find_all(line, "\\d{3}")
+                    for code in codes {
+                        if has_key(stats._http_codes, code) {
+                            stats._http_codes[code] = stats._http_codes[code] + 1
+                        } else {
+                            stats._http_codes[code] = 1
+                        }
+                    }
+                }
+            }
+            
+            return Ok(stats)
+        }
+    }
+}
+
+# Format and display results
+func display_results(stats, top_n, as_json, stats_only) {
+    if as_json {
+        print(to_json(stats))
+        return null
+    }
+    
+    print("═══════════════════════════════════════════════════")
+    print("📊 Log Analysis Report")
+    print("═══════════════════════════════════════════════════")
+    print("")
+    
+    print("📝 Overview:")
+    print("  Total lines: " + to_string(stats._total_lines))
+    print("  Errors:      " + to_string(stats._error_count) + " (" + to_string(calculate_percentage(stats._error_count, stats._total_lines)) + "%)")
+    print("  Warnings:    " + to_string(stats._warn_count) + " (" + to_string(calculate_percentage(stats._warn_count, stats._total_lines)) + "%)")
+    print("  Info:        " + to_string(stats._info_count) + " (" + to_string(calculate_percentage(stats._info_count, stats._total_lines)) + "%)")
+    print("  Debug:       " + to_string(stats._debug_count) + " (" + to_string(calculate_percentage(stats._debug_count, stats._total_lines)) + "%)")
+    print("")
+    
+    if stats_only {
+        return null
+    }
+    
+    # Show top errors
+    if stats._error_count > 0 {
+        print("🔴 Recent Errors (showing " + to_string(min(length(stats._errors), top_n)) + "):")
+        error_limit := min(length(stats._errors), top_n)
+        for i in range(0, error_limit) {
+            print("  " + to_string(i + 1) + ". " + truncate(stats._errors[i], 80))
+        }
+        print("")
+    }
+    
+    # Show top IP addresses
+    if length(keys(stats._ip_addresses)) > 0 {
+        print("🌐 Top IP Addresses:")
+        sorted_ips := sort_dict_by_value(stats._ip_addresses, top_n)
+        for [ip, count] in sorted_ips {
+            print("  " + pad_right(ip, 15) + " : " + to_string(count) + " requests")
+        }
+        print("")
+    }
+    
+    # Show HTTP status codes
+    if length(keys(stats._http_codes)) > 0 {
+        print("📡 HTTP Status Codes:")
+        sorted_codes := sort_dict_by_value(stats._http_codes, top_n)
+        for [code, count] in sorted_codes {
+            status_emoji := get_status_emoji(code)
+            print("  " + status_emoji + " " + code + " : " + to_string(count) + " responses")
+        }
+        print("")
+    }
+    
+    print("═══════════════════════════════════════════════════")
+}
+
+# Helper functions
+func calculate_percentage(part, total) {
+    if total == 0 {
+        return 0.0
+    }
+    return round((to_float(part) / to_float(total)) * 100.0, 2)
+}
+
+func sort_dict_by_value(dict, limit) {
+    # Convert to array of [key, value] pairs
+    pairs := []
+    for key in keys(dict) {
+        push(pairs, [key, dict[key]])
+    }
+    
+    # Bubble sort by value (descending)
+    for i in range(0, length(pairs) - 1) {
+        for j in range(0, length(pairs) - i - 1) {
+            if pairs[j][1] < pairs[j + 1][1] {
+                temp := pairs[j]
+                pairs[j] = pairs[j + 1]
+                pairs[j + 1] = temp
+            }
+        }
+    }
+    
+    # Return top N
+    result := []
+    count := min(limit, length(pairs))
+    for i in range(0, count) {
+        push(result, pairs[i])
+    }
+    return result
+}
+
+func get_status_emoji(code) {
+    code_int := to_int(code)
+    if code_int >= 200 and code_int < 300 {
+        return "✅"
+    }
+    if code_int >= 300 and code_int < 400 {
+        return "↪️"
+    }
+    if code_int >= 400 and code_int < 500 {
+        return "⚠️"
+    }
+    if code_int >= 500 {
+        return "❌"
+    }
+    return "❓"
+}
+
+func truncate(text, max_len) {
+    if length(text) <= max_len {
+        return text
+    }
+    return slice(text, 0, max_len - 3) + "..."
+}
+
+func pad_right(text, width) {
+    if length(text) >= width {
+        return text
+    }
+    spaces := ""
+    for i in range(0, width - length(text)) {
+        spaces = spaces + " "
+    }
+    return text + spaces
+}
+
+# Main execution
+print("🔍 Starting log analysis...")
+print("")
+
+result := analyze_log(args._file, args._pattern, args._level)
+
+match result {
+    case Ok(analysis): {
+        display_results(analysis, args._top, args._json, args._stats)
+        print("✅ Analysis complete!")
+    }
+    case Err(error): {
+        print("❌ Analysis failed: " + error)
+        exit(1)
+    }
+}

@@ -1,0 +1,499 @@
+# IO Module Comprehensive Test Suite
+#
+# Tests for advanced binary I/O operations:
+# - io_read_bytes: Read specific number of bytes
+# - io_write_bytes: Write binary data to file
+# - io_append_bytes: Append binary data to file
+# - io_read_at: Read bytes at specific offset
+# - io_write_at: Write bytes at specific offset
+# - io_seek_read: Read from offset to end
+# - io_file_metadata: Get comprehensive file metadata
+# - io_truncate: Truncate or extend file to size
+# - io_copy_range: Copy specific byte range between files
+
+print("=== IO Module Test Suite ===")
+print()
+
+# Test 1: io_read_bytes - read specific number of bytes
+print("Test 1: io_read_bytes - read specific number of bytes")
+let test_file := "/tmp/kujo_io_read_bytes.bin"
+let test_content := "Hello, World! This is a test file with some content."
+let test_bytes := decode_base64(encode_base64(test_content))
+write_binary_file(test_file, test_bytes, true)
+
+# Read first 5 bytes
+let first_5 := io_read_bytes(test_file, 5)
+let first_5_str := encode_base64(first_5)
+let expected_5 := encode_base64(decode_base64(encode_base64("Hello")))
+
+if first_5_str == expected_5 {
+    print("✓ io_read_bytes correctly read first 5 bytes")
+} else {
+    print("✗ io_read_bytes failed to read first 5 bytes")
+}
+
+# Read first 13 bytes
+let first_13 := io_read_bytes(test_file, 13)
+let first_13_str := encode_base64(first_13)
+let expected_13 := encode_base64(decode_base64(encode_base64("Hello, World!")))
+
+if first_13_str == expected_13 {
+    print("✓ io_read_bytes correctly read first 13 bytes")
+} else {
+    print("✗ io_read_bytes failed to read first 13 bytes")
+}
+print()
+
+# Test 2: io_write_bytes - write binary data
+print("Test 2: io_write_bytes - write binary data")
+let write_test_file := "/tmp/kujo_io_write_bytes.bin"
+let write_data := decode_base64(encode_base64("Binary data written"))
+let write_result := io_write_bytes(write_test_file, write_data)
+
+if write_result {
+    let read_back := read_binary_file(write_test_file)
+    let read_str := encode_base64(read_back)
+    let expected_str := encode_base64(write_data)
+    
+    if read_str == expected_str {
+        print("✓ io_write_bytes successfully wrote binary data")
+    } else {
+        print("✗ io_write_bytes data mismatch")
+    }
+} else {
+    print("✗ io_write_bytes failed to write file")
+}
+print()
+
+# Test 3: io_append_bytes - append binary data
+print("Test 3: io_append_bytes - append binary data")
+let append_test_file := "/tmp/kujo_io_append_bytes.bin"
+let initial_data := decode_base64(encode_base64("Initial"))
+let append_data := decode_base64(encode_base64(" Appended"))
+
+io_write_bytes(append_test_file, initial_data)
+let append_result := io_append_bytes(append_test_file, append_data)
+
+if append_result {
+    let full_content := read_binary_file(append_test_file)
+    let full_str := encode_base64(full_content)
+    let expected_full := encode_base64(decode_base64(encode_base64("Initial Appended")))
+    
+    if full_str == expected_full {
+        print("✓ io_append_bytes successfully appended data")
+    } else {
+        print("✗ io_append_bytes content mismatch")
+    }
+} else {
+    print("✗ io_append_bytes failed")
+}
+print()
+
+# Test 4: io_read_at - read bytes at specific offset
+print("Test 4: io_read_at - read bytes at specific offset")
+let offset_test_file := "/tmp/kujo_io_offset.bin"
+let offset_content := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+let offset_bytes := decode_base64(encode_base64(offset_content))
+io_write_bytes(offset_test_file, offset_bytes)
+
+# Read 5 bytes starting at offset 10 (should be "ABCDE")
+let at_offset := io_read_at(offset_test_file, 10, 5)
+let at_offset_str := encode_base64(at_offset)
+let expected_offset := encode_base64(decode_base64(encode_base64("ABCDE")))
+
+if at_offset_str == expected_offset {
+    print("✓ io_read_at correctly read from offset")
+} else {
+    print("✗ io_read_at failed to read at offset")
+}
+
+# Read 10 bytes starting at offset 20 (should be "KLMNOPQRST")
+let at_offset_20 := io_read_at(offset_test_file, 20, 10)
+let at_offset_20_str := encode_base64(at_offset_20)
+let expected_20 := encode_base64(decode_base64(encode_base64("KLMNOPQRST")))
+
+if at_offset_20_str == expected_20 {
+    print("✓ io_read_at correctly read 10 bytes from offset 20")
+} else {
+    print("✗ io_read_at failed at offset 20")
+}
+print()
+
+# Test 5: io_write_at - write bytes at specific offset
+print("Test 5: io_write_at - write bytes at specific offset")
+let write_at_file := "/tmp/kujo_io_write_at.bin"
+let base_content := "AAAAAAAAAA"  # 10 A's
+let base_bytes := decode_base64(encode_base64(base_content))
+io_write_bytes(write_at_file, base_bytes)
+
+# Write "BBB" at offset 3
+let insert_data := decode_base64(encode_base64("BBB"))
+io_write_at(write_at_file, insert_data, 3)
+
+let modified_content := read_binary_file(write_at_file)
+let modified_str := encode_base64(modified_content)
+# Should be "AAABBBAAA" (A's at 0-2, B's at 3-5, A's at 6-9)
+let expected_modified := encode_base64(decode_base64(encode_base64("AAABBBAAAA")))
+
+if modified_str == expected_modified {
+    print("✓ io_write_at correctly wrote at offset")
+} else {
+    print("✗ io_write_at failed to write at offset")
+}
+print()
+
+# Test 6: io_seek_read - read from offset to end
+print("Test 6: io_seek_read - read from offset to end")
+let seek_test_file := "/tmp/kujo_io_seek.bin"
+let seek_content := "0123456789ABCDEFGHIJ"
+let seek_bytes := decode_base64(encode_base64(seek_content))
+io_write_bytes(seek_test_file, seek_bytes)
+
+# Read from offset 10 to end (should be "ABCDEFGHIJ")
+let from_10 := io_seek_read(seek_test_file, 10)
+let from_10_str := encode_base64(from_10)
+let expected_10 := encode_base64(decode_base64(encode_base64("ABCDEFGHIJ")))
+
+if from_10_str == expected_10 {
+    print("✓ io_seek_read correctly read from offset to end")
+} else {
+    print("✗ io_seek_read failed")
+}
+
+# Read from offset 15 to end (should be "FGHIJ")
+let from_15 := io_seek_read(seek_test_file, 15)
+let from_15_str := encode_base64(from_15)
+let expected_15 := encode_base64(decode_base64(encode_base64("FGHIJ")))
+
+if from_15_str == expected_15 {
+    print("✓ io_seek_read correctly read from offset 15")
+} else {
+    print("✗ io_seek_read failed at offset 15")
+}
+print()
+
+# Test 7: io_file_metadata - get file metadata
+print("Test 7: io_file_metadata - get comprehensive file metadata")
+let meta_test_file := "/tmp/kujo_io_metadata.bin"
+let meta_content := "Metadata test file with some content"
+let meta_bytes := decode_base64(encode_base64(meta_content))
+io_write_bytes(meta_test_file, meta_bytes)
+
+let metadata := io_file_metadata(meta_test_file)
+
+# Check size (should match content length)
+let expected_size := len(meta_bytes)
+if metadata["size"] == expected_size {
+    print("✓ io_file_metadata correctly reports file size")
+} else {
+    print("✗ io_file_metadata size mismatch")
+}
+
+# Check is_file
+if metadata["is_file"] == true {
+    print("✓ io_file_metadata correctly identifies as file")
+} else {
+    print("✗ io_file_metadata failed to identify as file")
+}
+
+# Check is_dir (should be false for files)
+if metadata["is_dir"] == false {
+    print("✓ io_file_metadata correctly identifies not a directory")
+} else {
+    print("✗ io_file_metadata incorrectly identified as directory")
+}
+
+# Check readonly (should be false for newly created files)
+if metadata["readonly"] == false {
+    print("✓ io_file_metadata correctly reports readonly status")
+} else {
+    print("✗ io_file_metadata readonly mismatch")
+}
+
+# Check that modified timestamp exists and is reasonable (> 0)
+if metadata["modified"] > 0 {
+    print("✓ io_file_metadata includes modified timestamp")
+} else {
+    print("✗ io_file_metadata missing or invalid modified timestamp")
+}
+print()
+
+# Test 8: io_file_metadata on directory
+print("Test 8: io_file_metadata - directory metadata")
+let test_dir := "/tmp/kujo_io_test_dir"
+create_dir(test_dir)
+
+let dir_metadata := io_file_metadata(test_dir)
+
+if dir_metadata["is_dir"] == true {
+    print("✓ io_file_metadata correctly identifies directory")
+} else {
+    print("✗ io_file_metadata failed to identify directory")
+}
+
+if dir_metadata["is_file"] == false {
+    print("✓ io_file_metadata correctly identifies not a file")
+} else {
+    print("✗ io_file_metadata incorrectly identified directory as file")
+}
+print()
+
+# Test 9: io_truncate - truncate file to smaller size
+print("Test 9: io_truncate - truncate file to smaller size")
+let trunc_test_file := "/tmp/kujo_io_truncate.bin"
+let trunc_content := "1234567890ABCDEFGHIJ"
+let trunc_bytes := decode_base64(encode_base64(trunc_content))
+io_write_bytes(trunc_test_file, trunc_bytes)
+
+# Truncate to 10 bytes
+io_truncate(trunc_test_file, 10)
+
+let truncated := read_binary_file(trunc_test_file)
+let truncated_len := len(truncated)
+
+if truncated_len == 10.0 {
+    print("✓ io_truncate correctly truncated to 10 bytes")
+    
+    let truncated_str := encode_base64(truncated)
+    let expected_trunc := encode_base64(decode_base64(encode_base64("1234567890")))
+    
+    if truncated_str == expected_trunc {
+        print("✓ io_truncate preserved correct data")
+    } else {
+        print("✗ io_truncate data mismatch")
+    }
+} else {
+    print("✗ io_truncate failed to truncate to correct size")
+}
+print()
+
+# Test 10: io_truncate - extend file to larger size
+print("Test 10: io_truncate - extend file to larger size")
+let extend_test_file := "/tmp/kujo_io_extend.bin"
+let extend_content := "12345"
+let extend_bytes := decode_base64(encode_base64(extend_content))
+io_write_bytes(extend_test_file, extend_bytes)
+
+# Extend to 10 bytes (should pad with zeros)
+io_truncate(extend_test_file, 10)
+
+let extended := read_binary_file(extend_test_file)
+let extended_len := len(extended)
+
+if extended_len == 10.0 {
+    print("✓ io_truncate correctly extended to 10 bytes")
+} else {
+    print("✗ io_truncate failed to extend to correct size")
+}
+print()
+
+# Test 11: io_copy_range - copy specific byte range
+print("Test 11: io_copy_range - copy specific byte range")
+let source_file := "/tmp/kujo_io_copy_source.bin"
+let dest_file := "/tmp/kujo_io_copy_dest.bin"
+let source_content := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+let source_bytes := decode_base64(encode_base64(source_content))
+io_write_bytes(source_file, source_bytes)
+
+# Copy 10 bytes starting at offset 10 (should be "ABCDEFGHIJ")
+io_copy_range(source_file, dest_file, 10, 10)
+
+let copied_content := read_binary_file(dest_file)
+let copied_str := encode_base64(copied_content)
+let expected_copied := encode_base64(decode_base64(encode_base64("ABCDEFGHIJ")))
+
+if copied_str == expected_copied {
+    print("✓ io_copy_range correctly copied byte range")
+} else {
+    print("✗ io_copy_range data mismatch")
+}
+
+let copied_len := len(copied_content)
+if copied_len == 10.0 {
+    print("✓ io_copy_range copied correct number of bytes")
+} else {
+    print("✗ io_copy_range size mismatch")
+}
+print()
+
+# Test 12: io_copy_range - copy from beginning
+print("Test 12: io_copy_range - copy from beginning")
+let copy_begin_dest := "/tmp/kujo_io_copy_begin.bin"
+io_copy_range(source_file, copy_begin_dest, 0, 5)
+
+let begin_content := read_binary_file(copy_begin_dest)
+let begin_str := encode_base64(begin_content)
+let expected_begin := encode_base64(decode_base64(encode_base64("01234")))
+
+if begin_str == expected_begin {
+    print("✓ io_copy_range correctly copied from beginning")
+} else {
+    print("✗ io_copy_range failed to copy from beginning")
+}
+print()
+
+# Test 13: io_read_bytes - edge case: read more bytes than file contains
+print("Test 13: io_read_bytes - read more bytes than available")
+let small_file := "/tmp/kujo_io_small.bin"
+let small_content := "12345"
+let small_bytes := decode_base64(encode_base64(small_content))
+io_write_bytes(small_file, small_bytes)
+
+# Try to read 100 bytes from 5-byte file
+let read_many := io_read_bytes(small_file, 100)
+let read_many_len := len(read_many)
+
+if read_many_len == 5.0 {
+    print("✓ io_read_bytes correctly handles reading more than available")
+} else {
+    print("✗ io_read_bytes length mismatch")
+}
+print()
+
+# Test 14: io_read_at - edge case: read at end of file
+print("Test 14: io_read_at - read at end of file")
+let end_read_file := "/tmp/kujo_io_end_read.bin"
+let end_content := "1234567890"
+let end_bytes := decode_base64(encode_base64(end_content))
+io_write_bytes(end_read_file, end_bytes)
+
+# Read at offset 10 (end of file)
+let at_end := io_read_at(end_read_file, 10, 5)
+let at_end_len := len(at_end)
+
+if at_end_len == 0.0 {
+    print("✓ io_read_at correctly handles reading at end of file")
+} else {
+    print("✗ io_read_at unexpected data at end")
+}
+print()
+
+# Test 15: io_append_bytes - append to non-existent file
+print("Test 15: io_append_bytes - create file if doesn't exist")
+let new_file := "/tmp/kujo_io_new_append.bin"
+# Delete file if it exists
+try {
+    delete_file(new_file)
+} except err {
+    # File didn't exist, that's fine
+    let ignore := null
+}
+
+let new_data := decode_base64(encode_base64("New file"))
+io_append_bytes(new_file, new_data)
+
+let new_content := read_binary_file(new_file)
+let new_str := encode_base64(new_content)
+let expected_new := encode_base64(new_data)
+
+if new_str == expected_new {
+    print("✓ io_append_bytes creates file if doesn't exist")
+} else {
+    print("✗ io_append_bytes failed to create file")
+}
+print()
+
+# Test 16: Multiple io_append_bytes calls
+print("Test 16: Multiple io_append_bytes calls")
+let multi_append_file := "/tmp/kujo_io_multi_append.bin"
+io_write_bytes(multi_append_file, decode_base64(encode_base64("A")))
+io_append_bytes(multi_append_file, decode_base64(encode_base64("B")))
+io_append_bytes(multi_append_file, decode_base64(encode_base64("C")))
+io_append_bytes(multi_append_file, decode_base64(encode_base64("D")))
+
+let multi_content := read_binary_file(multi_append_file)
+let multi_str := encode_base64(multi_content)
+let expected_multi := encode_base64(decode_base64(encode_base64("ABCD")))
+
+if multi_str == expected_multi {
+    print("✓ Multiple io_append_bytes calls work correctly")
+} else {
+    print("✗ Multiple io_append_bytes failed")
+}
+print()
+
+# Test 17: io_seek_read - read from beginning (offset 0)
+print("Test 17: io_seek_read - read from beginning")
+let seek_zero_file := "/tmp/kujo_io_seek_zero.bin"
+let zero_content := "ABCDEFGHIJ"
+io_write_bytes(seek_zero_file, decode_base64(encode_base64(zero_content)))
+
+let from_zero := io_seek_read(seek_zero_file, 0)
+let from_zero_str := encode_base64(from_zero)
+let expected_zero := encode_base64(decode_base64(encode_base64(zero_content)))
+
+if from_zero_str == expected_zero {
+    print("✓ io_seek_read works from offset 0")
+} else {
+    print("✗ io_seek_read failed from offset 0")
+}
+print()
+
+# Test 18: io_write_at - write at beginning
+print("Test 18: io_write_at - write at beginning (offset 0)")
+let write_zero_file := "/tmp/kujo_io_write_zero.bin"
+io_write_bytes(write_zero_file, decode_base64(encode_base64("XXXXX")))
+io_write_at(write_zero_file, decode_base64(encode_base64("AB")), 0)
+
+let write_zero_content := read_binary_file(write_zero_file)
+let write_zero_str := encode_base64(write_zero_content)
+let expected_write_zero := encode_base64(decode_base64(encode_base64("ABXXX")))
+
+if write_zero_str == expected_write_zero {
+    print("✓ io_write_at works at offset 0")
+} else {
+    print("✗ io_write_at failed at offset 0")
+}
+print()
+
+# Test 19: Empty file operations
+print("Test 19: Operations on empty file")
+let empty_file := "/tmp/kujo_io_empty.bin"
+io_write_bytes(empty_file, decode_base64(encode_base64("")))
+
+let empty_metadata := io_file_metadata(empty_file)
+if empty_metadata["size"] == 0 {
+    print("✓ io_file_metadata correctly reports size 0 for empty file")
+} else {
+    print("✗ io_file_metadata size mismatch for empty file")
+}
+
+let empty_read := io_read_bytes(empty_file, 10)
+if len(empty_read) == 0.0 {
+    print("✓ io_read_bytes correctly handles empty file")
+} else {
+    print("✗ io_read_bytes unexpected data from empty file")
+}
+print()
+
+# Test 20: io_copy_range - copy entire file
+print("Test 20: io_copy_range - copy entire small file")
+let full_source := "/tmp/kujo_io_full_source.bin"
+let full_dest := "/tmp/kujo_io_full_dest.bin"
+let full_content := "Complete"
+io_write_bytes(full_source, decode_base64(encode_base64(full_content)))
+
+io_copy_range(full_source, full_dest, 0, 8)
+
+let full_copied := read_binary_file(full_dest)
+let full_copied_str := encode_base64(full_copied)
+let expected_full := encode_base64(decode_base64(encode_base64(full_content)))
+
+if full_copied_str == expected_full {
+    print("✓ io_copy_range can copy entire file")
+} else {
+    print("✗ io_copy_range full file copy failed")
+}
+print()
+
+print("=== IO Module Test Suite Complete ===")
+print()
+print("Summary:")
+print("- Tested io_read_bytes with various sizes")
+print("- Tested io_write_bytes and io_append_bytes")
+print("- Tested offset-based reading/writing (io_read_at, io_write_at)")
+print("- Tested io_seek_read for reading from offset to end")
+print("- Tested io_file_metadata for files and directories")
+print("- Tested io_truncate for both shrinking and extending files")
+print("- Tested io_copy_range for copying byte ranges")
+print("- Tested edge cases: empty files, reading past EOF, etc.")

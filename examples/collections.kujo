@@ -1,0 +1,24 @@
+# Combined arrays and dictionaries example
+
+# Array of dictionaries
+let users := [
+    {"name": "Alice", "score": 95},
+    {"name": "Bob", "score": 87},
+    {"name": "Charlie", "score": 92}
+];
+
+print("Users:", users);
+print("First user:", users[0]);
+print("First user name:", users[0]["name"]);
+print("Second user score:", users[1]["score"]);
+
+# Dictionary with array values
+let scores := {
+    "math": [95, 87, 92],
+    "english": [88, 91, 85],
+    "science": [90, 86, 94]
+};
+
+print("Scores:", scores);
+print("Math scores:", scores["math"]);
+print("First math score:", scores["math"][0]);

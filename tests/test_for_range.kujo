@@ -1,0 +1,10 @@
+# Test for loop with range
+arr := range(1, 6)
+print("arr:", arr)
+print("Type:", type(arr))
+
+sum := 0
+for i in arr {
+    sum = sum + i
+}
+print("Sum:", sum)

@@ -1,0 +1,19 @@
+# JIT Performance Benchmark - Simple Version
+# Tests JIT compilation with basic loops
+
+print("=== Kujo JIT Benchmark ===")
+print("")
+
+# Simple loop that should trigger JIT compilation
+print("Running 1000 iteration loop...")
+sum := 0
+for i in range(1000) {
+    sum := sum + i
+}
+print("Sum:")
+print(sum)
+print("")
+
+print("=== Complete ===")
+print("The loop above should have been JIT compiled")
+print("after the first 100 iterations.")

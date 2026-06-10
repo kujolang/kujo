@@ -1,0 +1,26 @@
+# Partial Application Example
+# Demonstrates closures capturing arguments for partial application
+
+# Create specialized functions using closures
+func make_multiplier(factor) {
+    return func(x) {
+        return factor * x
+    }
+}
+
+# Create double and triple functions
+double := make_multiplier(2)
+triple := make_multiplier(3)
+quadruple := make_multiplier(4)
+
+print("Partial application:")
+print("double(5) = " + double(5))        # Should print 10
+print("triple(5) = " + triple(5))        # Should print 15
+print("quadruple(5) = " + quadruple(5))  # Should print 20
+
+# Test with different values
+print("\nWith different values:")
+print("double(10) = " + double(10))      # Should print 20
+print("triple(7) = " + triple(7))        # Should print 21
+
+print("\n✓ Partial application test complete!")

@@ -1,0 +1,109 @@
+name: release-binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run release gate checks
+        env:
+          KUJO_ENABLE_SOCKET_TESTS: "1"
+        run: bash scripts/release_gate.sh
+
+  build-release-artifacts:
+    needs: release-gate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Validate binary commands
+        run: |
+          ./target/release/kujo --version
+          ./target/release/kujo run examples/hello.kujo
+          ./target/release/kujo lsp --help
+
+      - name: Package artifact and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_name="${GITHUB_REF_NAME:-manual}"
+          arch="$(uname -m)"
+          if [[ "${arch}" == "aarch64" ]]; then
+            arch="arm64"
+          fi
+
+          if [[ "${RUNNER_OS}" == "Linux" ]]; then
+            target_suffix="linux-${arch}"
+          else
+            target_suffix="macos-${arch}"
+          fi
+
+          mkdir -p dist
+          cp target/release/kujo dist/kujo
+          archive_name="kujo-${tag_name}-${target_suffix}.tar.gz"
+          tar -czf "${archive_name}" -C dist kujo
+
+          if command -v sha256sum >/dev/null 2>&1; then
+            sha256sum "${archive_name}" > "${archive_name}.sha256"
+          else
+            shasum -a 256 "${archive_name}" > "${archive_name}.sha256"
+          fi
+
+      - name: Upload artifact bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: |
+            kujo-*.tar.gz
+            kujo-*.tar.gz.sha256
+
+  publish-release-assets:
+    needs: build-release-artifacts
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Build consolidated checksums file
+        shell: bash
+        run: |
+          set -euo pipefail
+          find release-artifacts -name '*.sha256' -type f -print0 | sort -z | xargs -0 cat > release-artifacts/checksums.txt
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-artifacts/**/*.tar.gz
+            release-artifacts/**/*.sha256
+            release-artifacts/checksums.txt

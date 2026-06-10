@@ -1,0 +1,7 @@
+id,first_name,last_name,email,age,status
+1,John,Doe,john.doe@example.com,30,active
+2,Jane,Smith,jane.smith@example.com,25,active
+3,Bob,Wilson,bob@invalid,45,inactive
+4,Alice,Johnson,alice.johnson@example.com,28,active
+5,Charlie,Brown,,35,active
+6,David,Lee,david.lee@example.com,22,pending

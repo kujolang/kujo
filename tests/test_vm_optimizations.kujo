@@ -1,0 +1,155 @@
+# Test file for VM bytecode optimizations
+# Tests constant folding, dead code elimination, and peephole optimizations
+
+print("=== VM Optimization Tests ===")
+
+# Test 1: Constant Folding - Arithmetic
+print("\n1. Constant Folding - Arithmetic")
+x := 2 + 3 * 4  # Should be folded to 14 at compile time
+print("2 + 3 * 4 = ${x}")
+assert(x == 14, "Constant folding: 2 + 3 * 4 should be 14")
+
+y := 100 - 50 / 2  # Should be folded to 75
+print("100 - 50 / 2 = ${y}")
+assert(y == 75, "Constant folding: 100 - 50 / 2 should be 75")
+
+z := 10 * 10 + 5  # Should be folded to 105
+print("10 * 10 + 5 = ${z}")
+assert(z == 105, "Constant folding: 10 * 10 + 5 should be 105")
+
+# Test 2: Constant Folding - Boolean Operations
+print("\n2. Constant Folding - Boolean")
+a := true && false  # Should be folded to false
+print("true && false = ${a}")
+assert(a == false, "Constant folding: true && false should be false")
+
+b := true || false  # Should be folded to true
+print("true || false = ${b}")
+assert(b == true, "Constant folding: true || false should be true")
+
+c := !false  # Should be folded to true
+print("!false = ${c}")
+assert(c == true, "Constant folding: !false should be true")
+
+# Test 3: Constant Folding - String Concatenation
+print("\n3. Constant Folding - String Concatenation")
+greeting := "Hello" + " " + "World"  # Should be folded to "Hello World"
+print("Concatenated: ${greeting}")
+assert(greeting == "Hello World", "Constant folding: string concat should work")
+
+# Test 4: Constant Folding - Comparisons
+print("\n4. Constant Folding - Comparisons")
+cmp1 := 5 > 3  # Should be folded to true
+print("5 > 3 = ${cmp1}")
+assert(cmp1 == true, "Constant folding: 5 > 3 should be true")
+
+cmp2 := 10 == 10  # Should be folded to true
+print("10 == 10 = ${cmp2}")
+assert(cmp2 == true, "Constant folding: 10 == 10 should be true")
+
+cmp3 := 5 < 3  # Should be folded to false
+print("5 < 3 = ${cmp3}")
+assert(cmp3 == false, "Constant folding: 5 < 3 should be false")
+
+# Test 5: Mixed Constant Folding
+print("\n5. Mixed Constant Folding")
+result := (10 + 5) * 2 - 3  # Should be folded to 27
+print("(10 + 5) * 2 - 3 = ${result}")
+assert(result == 27, "Complex constant folding should work")
+
+# Test 6: Constant Folding with Negative Numbers
+print("\n6. Constant Folding - Negation")
+neg1 := -(5 + 3)  # Should be folded to -8
+print("-(5 + 3) = ${neg1}")
+assert(neg1 == -8, "Constant folding: -(5 + 3) should be -8")
+
+# Test 7: Floating Point Constant Folding
+print("\n7. Constant Folding - Floats")
+f1 := 3.14 * 2.0  # Should be folded to 6.28
+print("3.14 * 2.0 = ${f1}")
+assert(f1 == 6.28, "Constant folding: 3.14 * 2.0 should be 6.28")
+
+f2 := 10.0 / 2.0  # Should be folded to 5.0
+print("10.0 / 2.0 = ${f2}")
+assert(f2 == 5.0, "Constant folding: 10.0 / 2.0 should be 5.0")
+
+# Test 8: Non-foldable expressions (runtime values)
+print("\n8. Runtime Expressions (Not Folded)")
+runtime_x := 10
+runtime_y := 20
+runtime_sum := runtime_x + runtime_y  # Cannot be folded (runtime values)
+print("Runtime: ${runtime_x} + ${runtime_y} = ${runtime_sum}")
+assert(runtime_sum == 30, "Runtime expressions should work")
+
+# Test 9: Partial Constant Folding
+print("\n9. Partial Constant Folding")
+partial := 5 * 2 + runtime_x  # 5 * 2 can be folded to 10
+print("5 * 2 + runtime_x = ${partial}")
+assert(partial == 20, "Partial constant folding should work")
+
+# Test 10: Dead Code Elimination
+print("\n10. Dead Code Elimination")
+func with_dead_code() {
+    return 42
+    # Everything below should be eliminated as dead code
+    print("This should never execute")
+    x := 100
+    return x
+}
+
+dead_result := with_dead_code()
+print("Function with dead code returned: ${dead_result}")
+assert(dead_result == 42, "Dead code elimination: function should return 42")
+
+# Test 11: Dead Code in Conditionals
+print("\n11. Dead Code in Conditionals")
+if true {
+    print("This executes")
+} else {
+    # This entire block is dead code (condition is always true at compile time)
+    print("This never executes")
+}
+
+# Test 12: Optimization Doesn't Break Functionality
+print("\n12. Complex Expression (Should Work Correctly)")
+# Mix of constant and runtime operations
+const_part := 100
+runtime_part := 50
+complex_result := (const_part * 2 + 50) / 5 - runtime_part
+print("Complex expression result: ${complex_result}")
+assert(complex_result == 0, "Complex expression: (200 + 50) / 5 - 50 should be 0")
+
+# Test 13: Zero Division Prevention
+print("\n13. Division by Zero Not Folded")
+# The optimizer correctly does NOT fold 10 / 0 to prevent compile-time errors
+# Division by zero is left as runtime code
+print("Division by zero would error at runtime (optimizer doesn't fold it)")
+
+# Test 14: Optimization with Functions
+print("\n14. Optimizations in Functions")
+func optimized_func() {
+    # These constants should be folded
+    a := 10 + 20
+    b := 30 * 2
+    c := a + b
+    return c
+}
+
+opt_result := optimized_func()
+print("Optimized function result: ${opt_result}")
+assert(opt_result == 90, "Function optimization: should return 90")
+
+# Test 15: Optimization with Loops
+print("\n15. Optimizations in Loops")
+loop_sum := 0
+loop_i := 0
+while loop_i < 5 {
+    # Constant 2 * 3 should be folded to 6
+    increment_val := 2 * 3
+    loop_sum := loop_sum + increment_val
+    loop_i := loop_i + 1
+}
+print("Loop with constant folding: sum = ${loop_sum}")
+print("Expected: 30, Got: ${loop_sum}")
+
+print("\n=== All VM Optimization Tests Passed! ===")

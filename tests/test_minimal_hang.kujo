@@ -1,0 +1,13 @@
+# Simplest test - struct with method, then instantiate
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func show() {
+        print("method");
+    }
+}
+
+v1 := Vec2 { x: 1.0, y: 2.0 };
+print("done");

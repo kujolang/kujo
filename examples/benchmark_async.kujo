@@ -1,0 +1,71 @@
+# Async Performance Demonstration
+# Shows performance benefits of concurrent async operations
+
+print("=== Async Performance Demonstration ===")
+print("")
+
+# Demo 1: Concurrent vs Sequential Sleeps
+print("Demo 1: Sleep Operations (3x 100ms)")
+
+# Sequential sleeps
+print("  Running 3 sleeps sequentially...")
+start_seq := time()
+await async_sleep(100)
+await async_sleep(100)
+await async_sleep(100)
+end_seq := time()
+seq_time := end_seq - start_seq
+print("  Sequential time:", seq_time, "ms (expected ~300ms)")
+
+# Concurrent sleeps
+print("  Running 3 sleeps concurrently...")
+start_con := time()
+p1 := async_sleep(100)
+p2 := async_sleep(100)
+p3 := async_sleep(100)
+results := await promise_all([p1, p2, p3])
+end_con := time()
+con_time := end_con - start_con
+print("  Concurrent time:", con_time, "ms (expected ~100ms)")
+
+if seq_time > 0 and con_time > 0 {
+    speedup := seq_time / con_time
+    print("  Speedup:", speedup, "x")
+}
+print("")
+
+# Demo 2: Concurrent File Operations
+print("Demo 2: File I/O Operations (3 writes + 3 reads)")
+
+# Create 3 files concurrently
+print("  Writing 3 files concurrently...")
+start_w := time()
+w1 := async_write_file("demo1.txt", "Content for file 1")
+w2 := async_write_file("demo2.txt", "Content for file 2")
+w3 := async_write_file("demo3.txt", "Content for file 3")
+write_results := await promise_all([w1, w2, w3])
+end_w := time()
+write_time := end_w - start_w
+print("  Write time:", write_time, "ms")
+
+# Read 3 files concurrently
+print("  Reading 3 files concurrently...")
+start_r := time()
+r1 := async_read_file("demo1.txt")
+r2 := async_read_file("demo2.txt")
+r3 := async_read_file("demo3.txt")
+read_results := await promise_all([r1, r2, r3])
+end_r := time()
+read_time := end_r - start_r
+print("  Read time:", read_time, "ms")
+print("  Files read successfully:", len(read_results))
+
+# Cleanup
+delete_file("demo1.txt")
+delete_file("demo2.txt")
+delete_file("demo3.txt")
+
+print("")
+print("=== Demo Complete ===")
+print("Async/await with promise_all enables efficient concurrent I/O operations")
+

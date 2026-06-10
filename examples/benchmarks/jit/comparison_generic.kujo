@@ -1,0 +1,56 @@
+# JIT Benchmark: Generic (Mixed Type) Operations
+# Tests JIT performance when types are mixed - prevents specialization
+# This should fall back to generic code paths
+
+func mixed_types(iterations) {
+    # Mix integers and floats to prevent specialization
+    sum := 0
+    
+    i := 0
+    while i < iterations {
+        if i % 2 == 0 {
+            sum := sum + i        # Int
+        } else {
+            sum := sum + i        # Still Int, but pattern confuses optimizer
+        }
+        i := i + 1
+    }
+    
+    return sum
+}
+
+func truly_mixed(iterations) {
+    # Actually mix types
+    result := 0
+    
+    i := 0
+    while i < iterations {
+        if i % 10 == 0 {
+            # Occasionally use float (prevents specialization)
+            temp := to_float(i) * 1.5
+            result := result + to_int(temp)
+        } else {
+            # Mostly use int
+            result := result + i
+        }
+        i := i + 1
+    }
+    
+    return result
+}
+
+print("=== JIT Generic/Mixed Type Benchmark ===")
+print("")
+
+print("Test 1: Predictable pattern (should specialize)...")
+result1 := mixed_types(10000)
+print("Result: ", result1)
+
+print("")
+print("Test 2: Mixed types (generic fallback)...")
+result2 := truly_mixed(10000)
+print("Result: ", result2)
+
+print("")
+print("Expected: Both execute correctly")
+print("Expected: Type specialization optimization improves performance")

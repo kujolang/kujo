@@ -1,0 +1,24 @@
+# Debug the todo manager issue
+
+struct Todo {
+	title: string,
+	done: bool
+}
+
+todos := [
+	Todo { title: "First", done: false },
+	Todo { title: "Second", done: true }
+]
+
+print("Testing loop:")
+for t in todos {
+	print("  Loop iteration - title:", t.title, "done:", t.done)
+	status := "[ ]"
+	print("  Initial status:", status)
+	if t.done {
+		status := "[x]"
+		print("  In if block, status:", status)
+	}
+	print("  Final status:", status)
+	print("")
+}

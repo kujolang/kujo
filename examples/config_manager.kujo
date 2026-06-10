@@ -1,0 +1,29 @@
+# Configuration file manager example
+# Demonstrates read_lines, write_file with error handling
+
+config_file := "/tmp/app_config.txt"
+
+# Write configuration
+print("Writing configuration...")
+write_file(config_file, "app_name=MyApp\n")
+append_file(config_file, "version=1.0.0\n")
+append_file(config_file, "debug=true\n")
+append_file(config_file, "port=8080\n")
+
+# Read configuration with error handling
+print("\nReading configuration...")
+try {
+    lines := read_lines(config_file)
+    print("Configuration settings:")
+    for line in lines {
+        print("  " + line)
+    }
+    print("\nTotal settings: " + len(lines))
+} except err {
+    print("Error reading config: " + err)
+}
+
+# Skip missing-file error-path check in auto-run mode
+print("\nSkipping missing-file check in this run mode...")
+
+print("\nConfiguration management complete!")

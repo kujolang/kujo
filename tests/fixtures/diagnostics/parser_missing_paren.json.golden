@@ -1,0 +1,10 @@
+{
+  "code": "RUFPARSE001",
+  "column": 1,
+  "file": "parser_missing_paren.kujo",
+  "help": "Fix the parse error and rerun Kujo.",
+  "line": 2,
+  "message": "Expected ')' to close function call arguments but found Eof",
+  "severity": "error",
+  "subsystem": "parser"
+}

@@ -1,0 +1,19 @@
+{
+  "call_stack": [],
+  "command": "run",
+  "contract_version": "1.0.0-draft",
+  "diagnostic": {
+    "code": "RUFVM001",
+    "column": 0,
+    "file": null,
+    "help": null,
+    "line": 0,
+    "message": "Cannot call non-function; the value being called is not callable. Pass a function, closure, or imported callable value instead.",
+    "severity": "error",
+    "subsystem": "vm"
+  },
+  "exit_code": 4,
+  "kind": "runtime_diagnostic",
+  "runtime_kind": "Runtime Error",
+  "status": "error"
+}

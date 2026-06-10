@@ -1,0 +1,47 @@
+# Test JSON Parsing - parse_json()
+print("=== JSON Parsing Tests ===")
+
+# Test 1: Parse empty object
+data := parse_json("{}")
+print("Empty object:", data)
+
+# Test 2: Parse object with properties
+user := parse_json("{\"name\": \"Alice\", \"age\": 30, \"active\": true}")
+print("User object:", user)
+print("Name:", user["name"])
+print("Age:", user["age"])
+print("Active:", user["active"])
+
+# Test 3: Parse array
+numbers := parse_json("[1, 2, 3, 4, 5]")
+print("Numbers array:", numbers)
+print("First:", numbers[0])
+print("Last:", numbers[4])
+
+# Test 4: Parse nested object
+config := parse_json("{\"database\": {\"host\": \"localhost\", \"port\": 5432}, \"debug\": true}")
+print("Config:", config)
+print("Database:", config["database"])
+print("Host:", config["database"]["host"])
+print("Port:", config["database"]["port"])
+
+# Test 5: Parse null values
+data2 := parse_json("{\"value\": null}")
+print("Null value:", data2["value"])
+
+# Test 6: Parse mixed types array
+mixed := parse_json("[1, \"hello\", true, null, 3.14]")
+print("Mixed array:", mixed)
+print("Number:", mixed[0])
+print("String:", mixed[1])
+print("Boolean:", mixed[2])
+print("Null:", mixed[3])
+print("Float:", mixed[4])
+
+# Test 7: Parse nested arrays
+matrix := parse_json("[[1, 2], [3, 4], [5, 6]]")
+print("Matrix:", matrix)
+print("First row:", matrix[0])
+print("Element [1][1]:", matrix[1][1])
+
+print("=== All parsing tests passed ===")

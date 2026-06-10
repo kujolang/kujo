@@ -1,0 +1,39 @@
+# Dictionary Operations Benchmark
+# Tests: Dict creation, access, updates, iteration
+
+func dict_operations(count) {
+    let dict := {}
+    
+    # Insert
+    let i := 0
+    loop {
+        if i >= count {
+            break
+        }
+        let key := "key_" + to_string(i)
+        dict[key] := i * 2
+        i := i + 1
+    }
+    
+    # Read and sum
+    let sum := 0
+    let keys_list := keys(dict)
+    let j := 0
+    loop {
+        if j >= len(keys_list) {
+            break
+        }
+        sum := sum + dict[keys_list[j]]
+        j := j + 1
+    }
+    
+    return sum
+}
+
+# Run benchmark
+let start := performance_now()
+let result := dict_operations(5000)
+let end := performance_now()
+
+print("Dict sum: ", result)
+print("Time taken: ", (end - start), " ms")

@@ -1,0 +1,16 @@
+func make_mult(factor) {
+    print("factor in make_mult: " + factor)
+    inner := func(x) {
+        print("x in inner: " + x)
+        print("factor in inner: " + factor)
+        result := factor * x
+        print("result: " + result)
+        return result
+    }
+    return inner
+}
+
+double := make_mult(2)
+print("Calling double(5)...")
+result := double(5)
+print("Final result: " + result)

@@ -1,0 +1,56 @@
+# Pattern Matching Examples
+
+# Example 1: Simple value matching
+print("Example 1: Value matching");
+
+x := 2;
+match x {
+    case 1: {
+        print("one");
+    }
+    case 2: {
+        print("two");
+    }
+    case _: {
+        print("other");
+    }
+}
+
+# Example 2: With enum tags
+print("Example 2: Enum matching");
+
+enum Status {
+    Success,
+    Failure
+}
+
+result := Status::Success("completed");
+
+match result {
+    case Status::Success(msg): {
+        print(msg);
+    }
+    case Status::Failure(err): {
+        print(err);
+    }
+}
+
+# Example 3: Multiple patterns
+print("Example 3: Multiple values");
+
+numbers := [1, 2, 5, 10];
+for num in numbers {
+    match num {
+        case 1: {
+            print("first");
+        }
+        case 2: {
+            print("second");
+        }
+        case _: {
+            print("other");
+        }
+    }
+}
+
+print("Done");

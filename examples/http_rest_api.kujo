@@ -1,0 +1,53 @@
+# REST API Example - Todo List
+# Demonstrates a complete REST API with JSON responses
+
+print("http_rest_api: long-running server example skipped in VM auto-run mode")
+exit(0)
+
+# In-memory todo list
+let todos := []
+let next_id := 1
+
+# Create HTTP server
+server := http_server(3000)
+
+# GET /todos - List all todos
+server := server.route("GET", "/todos", func(req) {
+    return json_response(200, todos)
+})
+
+# POST /todos - Create a new todo
+server := server.route("POST", "/todos", func(req) {
+    # Parse JSON body
+    let data := parse_json(req.body)
+    
+    # Create new todo
+    let todo := {
+        "id": next_id,
+        "title": data["title"],
+        "completed": false
+    }
+    
+    # Add to list
+    push(todos, todo)
+    next_id := next_id + 1
+    
+    return json_response(201, todo)
+})
+
+# GET /todos/:id - Get a specific todo (simplified - matches any path)
+server := server.route("GET", "/todo", func(req) {
+    if len(todos) > 0 {
+        return json_response(200, todos[0])
+    }
+    return json_response(404, {"error": "Not found"})
+})
+
+# Start server
+print("Todo API server running on http://localhost:3000")
+print("Endpoints:")
+print("  GET  /todos     - List all todos")
+print("  POST /todos     - Create a todo (send JSON: {\"title\": \"...\"})") 
+print("  GET  /todo      - Get first todo")
+print("")
+server.listen()

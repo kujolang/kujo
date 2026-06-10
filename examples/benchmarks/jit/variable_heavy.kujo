@@ -1,0 +1,61 @@
+# JIT Benchmark: Variable-Heavy Workload
+# Tests JIT performance with many local variables
+# This exercises type profiling and specialization infrastructure
+
+func variable_heavy(iterations) {
+    a := 0
+    b := 1
+    c := 2
+    d := 3
+    e := 4
+    f := 5
+    g := 6
+    h := 7
+    
+    i := 0
+    while i < iterations {
+        # Lots of variable operations
+        a := a + b
+        b := b + c
+        c := c + d
+        d := d + e
+        e := e + f
+        f := f + g
+        g := g + h
+        h := h + a
+        
+        # More complex expressions
+        temp1 := a * 2
+        temp2 := b * 3
+        temp3 := c * 4
+        temp4 := d * 5
+        
+        a := temp1 - temp2
+        b := temp2 + temp3
+        c := temp3 - temp4
+        d := temp4 + temp1
+        
+        i := i + 1
+    }
+    
+    return a + b + c + d + e + f + g + h
+}
+
+print("=== JIT Variable-Heavy Benchmark ===")
+print("")
+
+# Warm-up
+print("Warming up JIT compiler...")
+for i in range(150) {
+    variable_heavy(15)
+}
+
+# Benchmark
+print("Running benchmark...")
+result := variable_heavy(5000)
+
+print("Result: ", result)
+print("")
+print("Expected: Specialized code for 8 local variables")
+print("Expected: Guard generation for type safety")
+print("Expected: Fast execution after JIT compilation")

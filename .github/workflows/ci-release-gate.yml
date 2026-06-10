@@ -1,0 +1,78 @@
+name: ci-release-gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  release-gate-minimal-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run minimal release gate smoke
+        run: bash scripts/release_gate.sh --minimal
+
+  fmt-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run formatting check
+        run: cargo fmt --check
+
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  vm-interpreter-parity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run repo hygiene guard
+        run: bash scripts/repo_hygiene_audit.sh
+
+      - name: Run VM/interpreter parity suite
+        run: cargo test --test vm_interpreter_parity_surfaces
+
+  release-gate:
+    needs: [release-gate-minimal-smoke, fmt-check, clippy, vm-interpreter-parity]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run release gate checks
+        env:
+          KUJO_ENABLE_SOCKET_TESTS: "1"
+        run: bash scripts/release_gate.sh

@@ -1,0 +1,10 @@
+{
+  "code": "RUFCLI001",
+  "column": 1,
+  "file": "cli_invalid_flag.kujo",
+  "help": "Use `kujo --help` to list valid commands",
+  "line": 1,
+  "message": "Invalid CLI invocation",
+  "severity": "error",
+  "subsystem": "cli"
+}

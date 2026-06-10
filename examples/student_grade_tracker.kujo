@@ -1,0 +1,105 @@
+# Student Grade Tracker
+# Demonstrates: file I/O, user input, type conversion, loops, error handling
+
+print("student_grade_tracker: interactive example skipped in VM auto-run mode")
+exit(0)
+
+data_file := "/tmp/student_grades.txt"
+
+# Initialize file if it doesn't exist
+exists := file_exists(data_file)
+if exists == "false" {
+    write_file(data_file, "# Student Grade Tracker\n# Format: Name,Grade\n")
+    print("Created new grade tracker file")
+}
+
+print("=== Student Grade Tracker ===")
+print("")
+print("1. Add student grade")
+print("2. View all grades")
+print("3. Calculate average")
+print("4. Exit")
+print("")
+
+choice := input("Enter your choice (1-4): ")
+
+if choice == "1" {
+    # Add new grade
+    name := input("Enter student name: ")
+    grade_str := input("Enter grade (0-100): ")
+    
+    try {
+        grade := parse_int(grade_str)
+        
+        if grade < 0 {
+            print("Error: Grade cannot be negative")
+        } else {
+            if grade > 100 {
+                print("Error: Grade cannot exceed 100")
+            } else {
+                # Save to file
+                entry := name + "," + grade_str + "\n"
+                append_file(data_file, entry)
+                print("Grade added successfully!")
+            }
+        }
+    } except err {
+        print("Error: Invalid grade - " + err)
+    }
+}
+
+if choice == "2" {
+    # View all grades
+    print("\n=== Student Grades ===")
+    try {
+        lines := read_lines(data_file)
+        count := 0
+        
+        for line in lines {
+            # Skip comment lines
+            if line == "" {
+                # Skip empty lines
+            } else {
+                print(line)
+                count := count + 1
+            }
+        }
+        
+        print("\nTotal entries: " + count)
+    } except err {
+        print("Error reading file: " + err)
+    }
+}
+
+if choice == "3" {
+    # Calculate average
+    print("\n=== Grade Statistics ===")
+    try {
+        lines := read_lines(data_file)
+        sum := 0.0
+        count := 0
+        
+        for line in lines {
+            # Parse each line to extract grade
+            # Simple parsing: split on comma would be ideal, but we'll work with what we have
+            # For now, just show the data
+            if line == "" {
+                # Skip
+            } else {
+                print("  " + line)
+                count := count + 1
+            }
+        }
+        
+        if count > 2 {
+            print("\nTotal students: " + (count - 2))
+            print("(Average calculation would require string split function)")
+        }
+    } except err {
+        print("Error: " + err)
+    }
+}
+
+if choice == "4" {
+    print("Goodbye!")
+}

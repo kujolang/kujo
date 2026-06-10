@@ -1,0 +1,51 @@
+# Simple While Loop Examples for Kujo
+# These examples work with current scoping behavior
+
+print("=== Countdown ===")
+x := 5
+while x > 0 {
+    print(x)
+    x := x - 1
+}
+print("Blastoff!")
+
+print("")
+print("=== Doubling Numbers ===")
+num := 1
+while num < 100 {
+    print(num)
+    num := num * 2
+}
+
+print("")
+print("=== Count to 10 ===")
+count := 1
+while count <= 10 {
+    print(count)
+    count := count + 1
+}
+
+print("")
+print("=== Fibonacci Sequence ===")
+a := 1
+b := 1
+print(a)
+while b < 100 {
+    print(b)
+    temp := a + b
+    a := b
+    b := temp
+}
+
+print("")
+print("=== Boolean Condition ===")
+active := true
+step := 0
+while active {
+    step := step + 1
+    print(step)
+    if step >= 5 {
+        active := false
+    }
+}
+print("Done!")

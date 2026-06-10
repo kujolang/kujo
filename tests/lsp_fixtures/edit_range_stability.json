@@ -1,0 +1,76 @@
+{
+  "name": "edit_range_stability",
+  "messages": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/didOpen",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/edit_range_stability.kujo",
+          "text": "func zz_target() {\n    return 1\n}\nlet value := zz_target()\n"
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "textDocument/rename",
+      "params": {
+        "textDocument": {
+          "uri": "file:///tmp/edit_range_stability.kujo"
+        },
+        "position": {
+          "line": 3,
+          "character": 14
+        },
+        "newName": "zz_renamed"
+      }
+    }
+  ],
+  "expected": [
+    {
+      "jsonrpc": "2.0",
+      "method": "textDocument/publishDiagnostics",
+      "params": {
+        "uri": "file:///tmp/edit_range_stability.kujo",
+        "diagnostics": []
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "result": {
+        "changes": {
+          "file:///tmp/edit_range_stability.kujo": [
+            {
+              "range": {
+                "start": {
+                  "line": 0,
+                  "character": 5
+                },
+                "end": {
+                  "line": 0,
+                  "character": 14
+                }
+              },
+              "newText": "zz_renamed"
+            },
+            {
+              "range": {
+                "start": {
+                  "line": 3,
+                  "character": 13
+                },
+                "end": {
+                  "line": 3,
+                  "character": 22
+                }
+              },
+              "newText": "zz_renamed"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

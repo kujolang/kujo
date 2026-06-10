@@ -1,0 +1,9 @@
+# Test standalone __add__ function
+
+func __add__(a, b) {
+    print("In __add__");
+    return a + b;
+}
+
+result := __add__(3.0, 5.0);
+print(result);

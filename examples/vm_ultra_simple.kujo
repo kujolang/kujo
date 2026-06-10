@@ -1,0 +1,2 @@
+// Ultra simple VM test
+x := 42

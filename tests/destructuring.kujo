@@ -1,0 +1,19 @@
+# Destructuring Tests
+# Keep this fixture on the supported destructuring surface only.
+
+values := [1, 2, 3, 4]
+let [first, second, third, fourth] := values
+
+profile := {"a": 1, "b": 2, "c": 3}
+let {a, b, c} := profile
+
+print("Array destructuring:")
+print(first)
+print(second)
+print(third)
+print(fourth)
+
+print("Dict destructuring:")
+print(a)
+print(b)
+print(c)

@@ -1,0 +1,39 @@
+# Test Array Methods
+
+# Test push/append
+arr1 := [1, 2, 3]
+arr1_pushed := push(arr1, 4)
+print("push:", arr1_pushed)
+
+arr2 := [1, 2]
+arr2_appended := append(arr2, 3)
+print("append:", arr2_appended)
+
+# Test insert
+arr3 := [1, 2, 4]
+arr3_inserted := insert(arr3, 2, 3)
+print("insert:", arr3_inserted)
+
+# Test remove
+arr4 := [1, 2, 3, 2, 4]
+arr4_removed := remove(arr4, 2)
+print("remove:", arr4_removed)
+
+# Test contains
+print("contains 3:", contains([1, 2, 3], 3))
+print("contains 5:", contains([1, 2, 3], 5))
+
+# Test index_of
+print("index_of 3:", index_of([1, 2, 3, 2], 3))
+print("index_of 5:", index_of([1, 2, 3], 5))
+
+# Test clear
+arr5 := [1, 2, 3]
+arr5_cleared := clear(arr5)
+print("clear:", arr5_cleared)
+
+# Test concat
+arr6 := concat([1, 2], [3, 4])
+print("concat:", arr6)
+
+print("\nAll array method tests passed!")

@@ -1,0 +1,20 @@
+# Array examples
+
+# Create an array
+let numbers := [1, 2, 3, 4, 5];
+print("Numbers:", numbers);
+
+# Access elements
+print("First:", numbers[0]);
+print("Second:", numbers[1]);
+print("Third:", numbers[2]);
+
+# Mixed types
+let mixed := [1, "hello", 3.14];
+print("Mixed:", mixed);
+
+# Nested arrays
+let nested := [[1, 2], [3, 4], [5, 6]];
+print("Nested:", nested);
+print("First row:", nested[0]);
+print("Element [0][0]:", nested[0][0]);

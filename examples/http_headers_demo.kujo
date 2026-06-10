@@ -1,0 +1,109 @@
+# HTTP Headers Demo
+# Demonstrates HTTP header manipulation in Kujo
+
+print("=== HTTP Headers Feature Demo ===\n")
+
+# Example 1: Basic header manipulation
+print("1. Adding custom headers to responses:")
+print("   Creating a response with custom headers...")
+
+response := http_response(200, "Success")
+response := set_header(response, "X-API-Version", "1.0")
+response := set_header(response, "X-Request-ID", "abc-123-def-456")
+response := set_header(response, "Cache-Control", "max-age=3600")
+
+print("   ✓ Added X-API-Version, X-Request-ID, and Cache-Control\n")
+
+# Example 2: Bulk header setting
+print("2. Setting multiple headers at once:")
+
+headers := dict()
+headers["X-Custom-Header"] := "CustomValue"
+headers["X-Rate-Limit"] := "1000"
+headers["X-Rate-Remaining"] := "999"
+headers["Access-Control-Allow-Origin"] := "*"
+
+api_response := http_response(200, "API Response")
+api_response := set_headers(api_response, headers)
+
+print("   ✓ Set 4 headers in one operation\n")
+
+# Example 3: JSON responses with automatic Content-Type
+print("3. JSON responses automatically include Content-Type:")
+
+user_data := {
+    "id": 123,
+    "name": "Alice",
+    "email": "alice@example.com"
+}
+
+json_resp := json_response(200, user_data)
+print("   ✓ Content-Type: application/json added automatically\n")
+
+# Example 4: Redirects with custom headers
+print("4. Redirects with additional headers:")
+
+redirect_headers := dict()
+redirect_headers["X-Redirect-Reason"] := "Resource moved permanently"
+redirect_headers["Cache-Control"] := "no-store"
+
+redirect := redirect_response("https://new-location.com", redirect_headers)
+print("   ✓ Location + custom headers included\n")
+
+# Example 5: CORS headers for APIs
+print("5. Setting CORS headers for cross-origin requests:")
+
+cors_headers := dict()
+cors_headers["Access-Control-Allow-Origin"] := "*"
+cors_headers["Access-Control-Allow-Methods"] := "GET, POST, PUT, DELETE"
+cors_headers["Access-Control-Allow-Headers"] := "Content-Type, Authorization"
+cors_headers["Access-Control-Max-Age"] := "86400"
+
+cors_response := http_response(200, "{\"status\": \"ok\"}")
+cors_response := set_headers(cors_response, cors_headers)
+print("   ✓ CORS headers configured for API endpoint\n")
+
+# Example 6: Security headers
+print("6. Adding security headers:")
+
+security_headers := dict()
+security_headers["X-Content-Type-Options"] := "nosniff"
+security_headers["X-Frame-Options"] := "DENY"
+security_headers["X-XSS-Protection"] := "1; mode=block"
+security_headers["Strict-Transport-Security"] := "max-age=31536000; includeSubDomains"
+
+secure_response := http_response(200, "Secure content")
+secure_response := set_headers(secure_response, security_headers)
+print("   ✓ Common security headers added\n")
+
+# Example 7: Chaining operations
+print("7. Chaining header operations:")
+
+chained := http_response(201, "Resource created")
+chained := set_header(chained, "Location", "/api/users/123")
+chained := set_header(chained, "X-Created-At", "2026-01-23T10:00:00Z")
+chained := set_header(chained, "Content-Type", "application/json")
+print("   ✓ Chained 3 header operations\n")
+
+# Example 8: Practical API endpoint simulation
+print("8. Complete API response example:")
+
+api_data := {
+    "status": "success",
+    "data": {
+        "users": ["Alice", "Bob", "Charlie"],
+        "count": 3
+    }
+}
+
+api_full_response := json_response(200, api_data)
+api_full_response := set_header(api_full_response, "X-API-Version", "2.0")
+api_full_response := set_header(api_full_response, "X-Request-ID", "req-789")
+api_full_response := set_header(api_full_response, "X-Response-Time", "42ms")
+api_full_response := set_header(api_full_response, "Cache-Control", "no-cache")
+
+print("   ✓ Complete API response with data + headers\n")
+
+print("=== Demo Complete ===")
+print("HTTP headers feature allows full control over response headers")
+print("for building production-ready HTTP APIs and web services.")

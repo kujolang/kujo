@@ -1,0 +1,15 @@
+# Comprehensive Benchmark Suite Runner
+# Runs all benchmarks and compares interpreter vs VM performance
+
+print("=" * 60)
+print("Kujo Benchmark Suite")
+print("=" * 60)
+print("")
+
+# Note: Run this file with both modes:
+# kujo run examples/benchmarks/run_all.kujo        (interpreter mode)
+# kujo run --vm examples/benchmarks/run_all.kujo   (VM mode)
+
+print("Running benchmarks...")
+print("(Run this with and without --vm flag to compare)")
+print("")

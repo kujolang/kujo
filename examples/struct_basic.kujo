@@ -1,0 +1,23 @@
+# Basic struct definition and usage
+
+struct Point {
+    x: float,
+    y: float
+}
+
+# Create a Point instance
+p1 := Point { x: 3.0, y: 4.0 };
+print(p1);
+
+# Access fields
+print(p1.x);
+print(p1.y);
+
+# Create another point
+p2 := Point { x: 0.0, y: 0.0 };
+print(p2);
+
+# Modify fields (note: direct field assignment not yet supported)
+# p1.x := 10.0;  # Not yet implemented
+
+print("Struct tests complete");

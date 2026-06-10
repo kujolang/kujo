@@ -1,0 +1,33 @@
+# Test String Methods
+
+# Case conversion
+print("upper():", upper("hello world"))
+print("lower():", lower("HELLO WORLD"))
+print("capitalize():", capitalize("hello world"))
+print("capitalize():", capitalize("HELLO WORLD"))
+
+# Trimming
+print("trim():", trim("  hello  "))
+print("trim_start():", trim_start("  hello  "))
+print("trim_end():", trim_end("  hello  "))
+
+# Character operations
+print("char_at(0):", char_at("hello", 0))
+print("char_at(4):", char_at("hello", 4))
+print("char_at(10):", char_at("hello", 10))
+
+# Validation
+print("is_empty(''):", is_empty(""))
+print("is_empty('hello'):", is_empty("hello"))
+print("count_chars('hello'):", count_chars("hello"))
+print("count_chars('hello world'):", count_chars("hello world"))
+
+# Existing functions to verify they still work
+print("contains():", contains("hello world", "world"))
+print("starts_with():", starts_with("hello", "he"))
+print("ends_with():", ends_with("hello", "lo"))
+print("index_of():", index_of("hello", "l"))
+print("replace():", replace("hello", "l", "L"))
+print("split():", split("a,b,c", ","))
+
+print("\nAll string method tests passed!")

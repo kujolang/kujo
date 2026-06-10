@@ -1,0 +1,22 @@
+name: field-notes-guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  field-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate new field-note files follow template and naming
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: bash .github/scripts/check-new-field-notes.sh

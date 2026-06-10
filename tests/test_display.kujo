@@ -1,0 +1,17 @@
+# Test display method
+
+struct Vector {
+    x: float,
+    y: float,
+    
+    func display() {
+        print("Vector(");
+        print(x);
+        print(", ");
+        print(y);
+        print(")");
+    }
+}
+
+v := Vector { x: 5.0, y: 10.0 };
+v.display();

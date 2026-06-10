@@ -1,0 +1,8 @@
+# Minimal test
+struct T {
+    x: float,
+    func f(self) {
+        return 1.0;
+    }
+}
+print("Done");

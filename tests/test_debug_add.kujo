@@ -1,0 +1,21 @@
+# Debug: check if op_add exists
+
+struct Vector {
+    x: float,
+    y: float,
+    
+    func op_add(other) {
+        print("In op_add!");
+        return x + other.x;
+    }
+}
+
+v1 := Vector { x: 1.0, y: 2.0 };
+v2 := Vector { x: 3.0, y: 4.0 };
+print("Calling op_add via method:");
+result := v1.op_add(v2);
+print(result);
+
+print("Calling op_add via operator:");
+result2 := v1 + v2;
+print(result2);

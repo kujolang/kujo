@@ -1,0 +1,105 @@
+# Test HTTP Headers Feature
+# Tests header manipulation, automatic headers, and request header extraction
+
+# Test 1: Basic http_response should have no headers by default
+print("Test 1: Basic HTTP response")
+response1 := http_response(200, "OK")
+print(type(response1))
+
+# Test 2: set_header adds a single header
+print("\nTest 2: set_header adds single header")
+response2 := http_response(200, "Hello")
+response2_with_header := set_header(response2, "X-Custom-Header", "CustomValue")
+print("Added custom header")
+
+# Test 3: set_headers adds multiple headers
+print("\nTest 3: set_headers adds multiple headers")
+response3 := http_response(200, "Content")
+headers := {
+    "X-Custom-1": "Value1",
+    "X-Custom-2": "Value2",
+    "Cache-Control": "no-cache"
+}
+response3_with_headers := set_headers(response3, headers)
+print("Added multiple headers")
+
+# Test 4: json_response automatically sets Content-Type
+print("\nTest 4: json_response sets Content-Type automatically")
+data := {"message": "Hello", "status": "success"}
+json_resp := json_response(200, data)
+print("JSON response created with auto Content-Type")
+
+# Test 5: Chaining header operations
+print("\nTest 5: Chain multiple set_header calls")
+response5 := http_response(201, "Created")
+response5 := set_header(response5, "X-Request-ID", "abc-123")
+response5 := set_header(response5, "X-Timestamp", "2026-01-23")
+response5 := set_header(response5, "Cache-Control", "max-age=3600")
+print("Chained three headers successfully")
+
+# Test 6: redirect_response with custom headers
+print("\nTest 6: redirect_response with custom headers")
+extra_headers := {
+    "X-Redirect-Reason": "Temporary",
+    "Cache-Control": "no-store"
+}
+redirect_resp := redirect_response("https://example.com", extra_headers)
+print("Redirect with custom headers created")
+
+# Test 7: Error handling - invalid arguments
+print("\nTest 7: Error handling")
+try {
+    bad_resp := set_header("not-a-response", "Key", "Value")
+    print("ERROR: Should have thrown error")
+} except error {
+    print("Correctly caught error for invalid response")
+}
+
+try {
+    response := http_response(200, "OK")
+    bad_resp := set_header(response, 123, "Value")  # Non-string key
+    print("ERROR: Should have thrown error")
+} except error {
+    print("Correctly caught error for non-string key")
+}
+
+# Test 8: Headers in different response types
+print("\nTest 8: Headers work with all response types")
+
+# Plain response with headers
+plain := http_response(200, "Plain text")
+plain := set_header(plain, "Content-Type", "text/plain")
+print("Plain response with Content-Type")
+
+# JSON response (auto Content-Type)
+json := json_response(200, {"key": "value"})
+print("JSON response with auto Content-Type")
+
+# Redirect (auto Location header)
+redir := redirect_response("https://new-url.com")
+print("Redirect with auto Location header")
+
+# Test 9: Overwriting headers
+print("\nTest 9: Overwriting existing headers")
+response9 := http_response(200, "Content")
+response9 := set_header(response9, "X-Version", "1.0")
+print("Set X-Version to 1.0")
+response9 := set_header(response9, "X-Version", "2.0")
+print("Updated X-Version to 2.0 (overwrite)")
+
+# Test 10: Empty headers dictionary
+print("\nTest 10: Empty headers dictionary")
+response10 := http_response(200, "OK")
+empty_headers := {}
+response10 := set_headers(response10, empty_headers)
+print("Set empty headers (no-op)")
+
+# Test 11: Case sensitivity in header names
+print("\nTest 11: Header name variations")
+response11 := http_response(200, "OK")
+response11 := set_header(response11, "content-type", "text/html")
+response11 := set_header(response11, "Content-Type", "application/json")
+response11 := set_header(response11, "CONTENT-TYPE", "text/plain")
+print("Set same header with different cases (last one wins)")
+
+print("\nAll header tests completed!")

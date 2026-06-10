@@ -1,0 +1,26 @@
+# Function Call Overhead Benchmark
+# Tests: Function call performance, parameter passing
+
+func add(a, b) {
+    return a + b
+}
+
+func multiply(a, b) {
+    return a * b
+}
+
+func compute(x, y, z) {
+    let result := add(x, y)
+    result := multiply(result, z)
+    return result
+}
+
+# Call functions many times
+let sum := 0
+let i := 0
+while i < 1000 {
+    sum := sum + compute(i, i + 1, 2)
+    i := i + 1
+}
+
+let result := sum

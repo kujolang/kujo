@@ -1,0 +1,32 @@
+// Simple VM test - basic arithmetic and functions
+
+print("=== VM Test: Basic Arithmetic ===")
+x := 10
+y := 5
+print("x + y =", x + y)
+print("x * y =", x * y)
+print("x - y =", x - y)
+
+print("\n=== VM Test: Functions ===")
+func add(a, b) {
+    return a + b
+}
+
+result := add(15, 27)
+print("add(15, 27) =", result)
+
+func factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+print("factorial(5) =", factorial(5))
+
+print("\n=== VM Test: Arrays ===")
+arr := [1, 2, 3, 4, 5]
+print("Array:", arr)
+print("arr[2] =", arr[2])
+
+print("\n=== VM Test Complete ===")

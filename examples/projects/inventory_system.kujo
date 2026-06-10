@@ -1,0 +1,201 @@
+# Inventory System
+# Demonstrates enums, pattern matching, and complex struct operations
+
+# Define product status enum
+enum ProductStatus {
+	InStock,
+	LowStock,
+	OutOfStock,
+	Discontinued
+}
+
+# Product struct
+struct Product {
+	id: string,
+	name: string,
+	quantity: float,
+	price: float,
+	category: string
+}
+
+print("=== Inventory Management System ===")
+print("")
+
+# Initialize inventory
+print("Initializing inventory...")
+products := [
+	Product { id: "P001", name: "Laptop", quantity: 15, price: 999.99, category: "Electronics" },
+	Product { id: "P002", name: "Mouse", quantity: 45, price: 29.99, category: "Electronics" },
+	Product { id: "P003", name: "Keyboard", quantity: 3, price: 79.99, category: "Electronics" },
+	Product { id: "P004", name: "Desk Chair", quantity: 0, price: 199.99, category: "Furniture" },
+	Product { id: "P005", name: "Monitor", quantity: 8, price: 299.99, category: "Electronics" },
+	Product { id: "P006", name: "Desk Lamp", quantity: 22, price: 39.99, category: "Furniture" },
+	Product { id: "P007", name: "USB Cable", quantity: 2, price: 9.99, category: "Accessories" },
+	Product { id: "P008", name: "Webcam", quantity: 12, price: 89.99, category: "Electronics" }
+]
+
+print("Loaded " + len(products) + " products")
+print("")
+
+# Display all products
+print("=== Current Inventory ===")
+for product in products {
+	status := "UNKNOWN"
+	
+	# Determine status based on quantity
+	if product.quantity == 0 {
+		status := "OUT OF STOCK"
+	} else {
+		if product.quantity < 5 {
+			status := "LOW STOCK"
+		} else {
+			if product.quantity >= 5 {
+				status := "IN STOCK"
+			}
+		}
+	}
+	
+	print("[" + status + "] " + product.name + " (ID: " + product.id + ")")
+	print("  Quantity: " + product.quantity + " | Price: $" + product.price)
+	print("  Category: " + product.category)
+	print("")
+}
+
+# Find products by category
+print("=== Electronics Category ===")
+electronics := filter(products, func(p) {
+	return p.category == "Electronics"
+})
+
+print("Found " + len(electronics) + " electronics products:")
+for item in electronics {
+	print("- " + item.name + " ($" + item.price + ")")
+}
+print("")
+
+# Calculate category totals
+electronics_total := reduce(electronics, 0, func(acc, p) {
+	return acc + (p.price * p.quantity)
+})
+print("Total electronics inventory value: $" + electronics_total)
+print("")
+
+# Find low stock items
+print("=== Low Stock Alert ===")
+low_stock := filter(products, func(p) {
+	return p.quantity > 0 and p.quantity < 5
+})
+
+if len(low_stock) > 0 {
+	print("⚠️  WARNING: " + len(low_stock) + " items need restocking!")
+	for item in low_stock {
+		print("- " + item.name + ": only " + item.quantity + " left")
+	}
+} else {
+	print("✓ All items adequately stocked")
+}
+print("")
+
+# Find out of stock items
+print("=== Out of Stock ===")
+out_of_stock := filter(products, func(p) {
+	return p.quantity == 0
+})
+
+if len(out_of_stock) > 0 {
+	print("🚫 " + len(out_of_stock) + " items are out of stock:")
+	for item in out_of_stock {
+		print("- " + item.name + " ($" + item.price + ")")
+	}
+} else {
+	print("✓ No items out of stock")
+}
+print("")
+
+# Find most expensive product
+print("=== Price Analysis ===")
+most_expensive := reduce(products, products[0], func(current_max, p) {
+	if p.price > current_max.price {
+		return p
+	}
+	return current_max
+})
+print("Most expensive: " + most_expensive.name + " at $" + most_expensive.price)
+
+# Find cheapest product
+cheapest := reduce(products, products[0], func(current_min, p) {
+	if p.price < current_min.price {
+		return p
+	}
+	return current_min
+})
+print("Cheapest: " + cheapest.name + " at $" + cheapest.price)
+print("")
+
+# Calculate total inventory value
+print("=== Inventory Valuation ===")
+total_value := reduce(products, 0, func(acc, p) {
+	return acc + (p.price * p.quantity)
+})
+print("Total inventory value: $" + total_value)
+
+# Calculate average product price
+total_price := reduce(products, 0, func(acc, p) {
+	return acc + p.price
+})
+average_price := total_price / len(products)
+print("Average product price: $" + average_price)
+print("")
+
+# Find product by ID
+print("=== Product Lookup ===")
+search_id := "P003"
+found_product := find(products, func(p) {
+	return p.id == search_id
+})
+
+if found_product != 0 {
+	print("Found product " + search_id + ":")
+	print("  Name: " + found_product.name)
+	print("  Price: $" + found_product.price)
+	print("  Quantity: " + found_product.quantity)
+	print("  Category: " + found_product.category)
+} else {
+	print("Product " + search_id + " not found")
+}
+print("")
+
+# Simulate restocking
+print("=== Restocking Simulation ===")
+print("Restocking low stock items...")
+
+# Find items that need restocking
+items_to_restock := filter(products, func(p) {
+	return p.quantity < 10
+})
+
+print("Items to restock: " + len(items_to_restock))
+for item in items_to_restock {
+	restock_amount := 20 - item.quantity
+	print("- Ordering " + restock_amount + " units of " + item.name)
+}
+print("")
+
+# Generate stock report
+print("=== Stock Report Summary ===")
+in_stock_count := reduce(products, 0, func(acc, p) {
+	if p.quantity >= 5 {
+		return acc + 1
+	}
+	return acc
+})
+print("✓ Well-stocked items: " + in_stock_count)
+
+low_stock_count := len(low_stock)
+print("⚠️  Low stock items: " + low_stock_count)
+
+out_stock_count := len(out_of_stock)
+print("🚫 Out of stock items: " + out_stock_count)
+
+print("")
+print("=== Inventory Check Complete ===")

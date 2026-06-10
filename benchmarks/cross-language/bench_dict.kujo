@@ -1,0 +1,20 @@
+func hash_map_ops(n) { 
+    map := {}
+    i := 0
+    while i < n { 
+        map[i] := i * 2
+        i := i + 1
+    }
+    sum := 0
+    i := 0
+    while i < n { 
+        sum := sum + map[i]
+        i := i + 1
+    }
+    return sum
+}
+
+t := performance_now()
+r := hash_map_ops(1000)
+e := performance_now() - t
+print(e)

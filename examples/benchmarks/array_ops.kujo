@@ -1,0 +1,28 @@
+# Array Operations Benchmark - map, filter, reduce operations
+# Tests: Higher-order functions, closure creation, array iteration
+
+# Create test array
+let nums := []
+let i := 0
+while i < 100 {
+    nums := push(nums, i)
+    i := i + 1
+}
+
+# Map: square all numbers
+let squared := map(nums, func(x) {
+    return x * x
+})
+
+# Filter: keep even numbers
+let evens := filter(squared, func(x) {
+    return x % 2 == 0
+})
+
+# Reduce: sum all values
+let sum := reduce(evens, 0, func(acc, x) {
+    return acc + x
+})
+
+# Result
+let result := sum

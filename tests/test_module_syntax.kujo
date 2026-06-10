@@ -1,0 +1,12 @@
+// Test file to verify import/export parsing
+// This exercises module imports and exports against local fixture modules.
+
+from modules.module_syntax.mymodule import public_function, PUBLIC_CONSTANT
+from modules.module_syntax.utils import helper, formatter
+
+let doubled := public_function(21)
+let helper_value := helper(10)
+let formatted := formatter("kujo")
+let constant_value := PUBLIC_CONSTANT
+
+// Keep the fixture output-free; the pass criterion is successful execution.

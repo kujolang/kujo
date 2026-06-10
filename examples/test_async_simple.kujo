@@ -1,0 +1,37 @@
+# Simple async test
+
+print("Test 1: Single async write")
+promise1 := async_write_file("test1.txt", "content1")
+result1 := await promise1
+print("Result 1:", result1)
+
+print("")
+print("Test 2: Single async read")
+promise2 := async_read_file("test1.txt")
+result2 := await promise2
+print("Result 2:", result2)
+
+print("")
+print("Test 3: Two writes separately")
+promise3 := async_write_file("test2.txt", "content2")
+result3 := await promise3
+print("Result 3:", result3)
+
+promise4 := async_write_file("test3.txt", "content3")
+result4 := await promise4
+print("Result 4:", result4)
+
+print("")
+print("Test 4: promise_all with 2 sleeps")
+p1 := async_sleep(10)
+p2 := async_sleep(10)
+promises := [p1, p2]
+print("Calling promise_all...")
+all_result := await promise_all(promises)
+print("promise_all result:", all_result)
+
+print("")
+print("Done")
+delete_file("test1.txt")
+delete_file("test2.txt")
+delete_file("test3.txt")

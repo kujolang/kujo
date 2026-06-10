@@ -1,0 +1,23 @@
+# Nested struct example
+
+struct Address {
+    street: string,
+    city: string,
+}
+
+struct Person {
+    name: string,
+    age: float,
+}
+
+// Create person and address
+let addr := Address { street: "123 Main St", city: "Portland" };
+let person := Person { name: "Alice", age: 30.0 };
+
+print("Address:", addr);
+print("Street:", addr.street);
+print("City:", addr.city);
+
+print("Person:", person);
+print("Name:", person.name);
+print("Age:", person.age);

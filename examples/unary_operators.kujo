@@ -1,0 +1,189 @@
+// Unary Operator Overloading Examples
+// Demonstrates unary minus (-) and logical not (!) operator overloading
+
+print("=== Unary Operator Overloading Demo ===\n");
+print("\n");
+
+// ===== BUILT-IN UNARY OPERATORS =====
+print("1. Built-in unary operators:\n");
+print("   -5 = " + str(-5) + "\n");
+print("   -3.14 = " + str(-3.14) + "\n");
+print("   !true = " + str(!true) + "\n");
+print("   !false = " + str(!false) + "\n");
+print("\n");
+
+// ===== VECTOR NEGATION =====
+print("2. Vector negation with op_neg:\n");
+
+struct Vector2D {
+    x: float,
+    y: float,
+    
+    fn op_neg(self) {
+        return Vector2D { x: -self.x, y: -self.y };
+    }
+    
+    fn display(self) {
+        print("   Vector2D(" + str(self.x) + ", " + str(self.y) + ")\n");
+    }
+}
+
+let v1 = Vector2D { x: 3.0, y: 4.0 };
+print("   v1 = ");
+v1.display();
+
+let v2 = -v1;
+print("   -v1 = ");
+v2.display();
+
+let v3 = --v1;  // Double negation
+print("   --v1 = ");
+v3.display();
+print("\n");
+
+// ===== COMPLEX NUMBERS =====
+print("3. Complex number negation:\n");
+
+struct Complex {
+    real: float,
+    imag: float,
+    
+    fn op_neg(self) {
+        return Complex { real: -self.real, imag: -self.imag };
+    }
+    
+    fn display(self) {
+        if (self.imag >= 0.0) {
+            print("   " + str(self.real) + " + " + str(self.imag) + "i\n");
+        } else {
+            print("   " + str(self.real) + " - " + str(-self.imag) + "i\n");
+        }
+    }
+}
+
+let c1 = Complex { real: 3.0, imag: 4.0 };
+print("   c1 = ");
+c1.display();
+
+let c2 = -c1;
+print("   -c1 = ");
+c2.display();
+print("\n");
+
+// ===== BOOLEAN FLAG =====
+print("4. Boolean flag toggle with op_not:\n");
+
+struct Flag {
+    enabled: bool,
+    name: string,
+    
+    fn op_not(self) {
+        return Flag { enabled: !self.enabled, name: self.name };
+    }
+    
+    fn display(self) {
+        let status = "disabled";
+        if (self.enabled) {
+            status = "enabled";
+        }
+        print("   " + self.name + ": " + status + "\n");
+    }
+}
+
+let debug_flag = Flag { enabled: true, name: "Debug Mode" };
+debug_flag.display();
+
+let toggled = !debug_flag;
+print("   After toggle: ");
+toggled.display();
+
+let double_toggle = !!debug_flag;
+print("   After double toggle: ");
+double_toggle.display();
+print("\n");
+
+// ===== TEMPERATURE =====
+print("5. Temperature with sign flip:\n");
+
+struct Temperature {
+    value: float,
+    unit: string,
+    
+    fn op_neg(self) {
+        return Temperature { value: -self.value, unit: self.unit };
+    }
+    
+    fn display(self) {
+        print("   " + str(self.value) + " " + self.unit + "\n");
+    }
+}
+
+let temp = Temperature { value: 25.0, unit: "°C" };
+print("   Normal: ");
+temp.display();
+
+let opposite = -temp;
+print("   Opposite: ");
+opposite.display();
+print("\n");
+
+// ===== COMBINING WITH BINARY OPERATORS =====
+print("6. Combining unary with binary operators:\n");
+
+let a = 5;
+let b = 3;
+let result1 = -a + b;
+print("   -5 + 3 = " + str(result1) + "\n");
+
+let result2 = -a * -b;
+print("   -5 * -3 = " + str(result2) + "\n");
+
+let flag1 = true;
+let flag2 = false;
+let bool_result = !flag1 && flag2;
+print("   !true && false = " + str(bool_result) + "\n");
+
+let bool_result2 = !flag1 || !flag2;
+print("   !true || !false = " + str(bool_result2) + "\n");
+print("\n");
+
+// ===== VECTOR ARITHMETIC =====
+print("7. Vector arithmetic with unary operators:\n");
+
+struct Vector3D {
+    x: float,
+    y: float,
+    z: float,
+    
+    fn op_neg(self) {
+        return Vector3D { x: -self.x, y: -self.y, z: -self.z };
+    }
+    
+    fn op_add(self, other) {
+        return Vector3D { 
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z
+        };
+    }
+    
+    fn display(self) {
+        print("   (" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ")\n");
+    }
+}
+
+let vec_a = Vector3D { x: 1.0, y: 2.0, z: 3.0 };
+let vec_b = Vector3D { x: 4.0, y: 5.0, z: 6.0 };
+
+print("   a = ");
+vec_a.display();
+
+print("   b = ");
+vec_b.display();
+
+let vec_result = vec_a + -vec_b;  // a + (-b) = a - b
+print("   a + (-b) = ");
+vec_result.display();
+
+print("\n");
+print("=== Demo Complete ===\n");

@@ -1,0 +1,205 @@
+# URL Shortener Service with SQLite Database
+# 
+# A complete HTTP service that creates and resolves shortened URLs.
+# Demonstrates: HTTP server, routing, JSON handling, SQLite database storage
+#
+# Security: URLs are stored securely in a SQLite database, not exposed via JSON endpoints
+
+# Initialize SQLite database
+db := db_connect("urls.db")
+
+# Create tables if they don't exist
+db_execute(db, "CREATE TABLE IF NOT EXISTS urls (code TEXT PRIMARY KEY, original_url TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP)", [])
+db_execute(db, "CREATE TABLE IF NOT EXISTS stats (code TEXT PRIMARY KEY, clicks INTEGER DEFAULT 0)", [])
+
+print("Database initialized: urls.db")
+
+# Generate a random short code
+func generate_code() {
+    # Characters for random code generation
+    chars := "abcdefghijklmnopqrstuvwxyz0123456789"
+    code := ""
+    
+    # Generate 6-character code
+    for i in 6 {
+        idx := random_int(0, len(chars) - 1)
+        char := substring(chars, idx, idx + 1)
+        code := code + char
+    }
+    
+    return code
+}
+
+# Check if code exists in database
+func code_exists(code) {
+    results := db_query(db, "SELECT code FROM urls WHERE code = ?", [code])
+    return len(results) > 0
+}
+
+# Validate URL format
+func is_valid_url(url) {
+    return starts_with(url, "http://") || starts_with(url, "https://")
+}
+
+print("URL Shortener Service (SQLite-backed)")
+print("==================================================")
+
+server := http_server(3000)
+
+# Create shortened URL
+server := server.route("POST", "/shorten", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "url") {
+            return json_response(400, {
+                "error": "Missing url field"
+            })
+        }
+        
+        original_url := data["url"]
+        
+        if !is_valid_url(original_url) {
+            return json_response(400, {
+                "error": "Invalid URL format"
+            })
+        }
+        
+        # Generate unique code
+        code := generate_code()
+        while code_exists(code) {
+            code := generate_code()
+        }
+        
+        # Store URL in database
+        db_execute(db, "INSERT INTO urls (code, original_url) VALUES (?, ?)", [code, original_url])
+        db_execute(db, "INSERT INTO stats (code, clicks) VALUES (?, 0)", [code])
+        
+        return json_response(201, {
+            "code": code,
+            "short_url": "http://localhost:3000/" + code,
+            "original_url": original_url
+        })
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid JSON"
+        })
+    }
+})
+
+# Redirect to original URL (dynamic route with :code parameter)
+server := server.route("GET", "/:code", func(request) {
+    code := request.params["code"]
+    
+    # Look up URL in database
+    results := db_query(db, "SELECT original_url FROM urls WHERE code = ?", [code])
+    
+    if len(results) == 0 {
+        return json_response(404, {"error": "URL not found", "code": code})
+    }
+    
+    # Increment click count
+    db_execute(db, "UPDATE stats SET clicks = clicks + 1 WHERE code = ?", [code])
+    
+    original_url := results[0]["original_url"]
+    
+    # Return actual HTTP redirect (302)
+    return redirect_response(original_url)
+})
+
+# Get URL statistics (requires code in request body for security)
+server := server.route("POST", "/stats", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "code") {
+            return json_response(400, {"error": "Missing code field"})
+        }
+        
+        code := data["code"]
+        
+        # Look up URL and stats in database
+        url_results := db_query(db, "SELECT original_url FROM urls WHERE code = ?", [code])
+        stats_results := db_query(db, "SELECT clicks FROM stats WHERE code = ?", [code])
+        
+        if len(url_results) == 0 {
+            return json_response(404, {"error": "URL not found"})
+        }
+        
+        clicks := 0
+        if len(stats_results) > 0 {
+            clicks := stats_results[0]["clicks"]
+        }
+        
+        return json_response(200, {
+            "code": code,
+            "url": url_results[0]["original_url"],
+            "clicks": clicks
+        })
+    } except err {
+        return json_response(400, {"error": "Invalid request"})
+    }
+})
+
+# Count URLs (no data exposed, just count)
+server := server.route("GET", "/count", func(request) {
+    results := db_query(db, "SELECT COUNT(*) as count FROM urls", [])
+    count := 0
+    if len(results) > 0 {
+        count := results[0]["count"]
+    }
+    
+    return json_response(200, {
+        "count": count
+    })
+})
+
+# Health check
+server := server.route("GET", "/health", func(request) {
+    # Get URL count from database
+    results := db_query(db, "SELECT COUNT(*) as count FROM urls", [])
+    count := 0
+    if len(results) > 0 {
+        count := results[0]["count"]
+    }
+    
+    return json_response(200, {
+        "status": "healthy",
+        "urls_count": count,
+        "storage": "sqlite"
+    })
+})
+
+# Root endpoint
+server := server.route("GET", "/", func(request) {
+    return json_response(200, {
+        "message": "URL Shortener API (Secure SQLite Edition)",
+        "version": "2.0",
+        "endpoints": [
+            "POST /shorten - Create short URL",
+            "GET /:code - Redirect to original URL",
+            "POST /stats - Get stats for a code (requires code in body)",
+            "GET /count - Get total URL count",
+            "GET /health - Health check"
+        ],
+        "security": "URLs stored securely in SQLite database"
+    })
+})
+
+print("Server running on http://localhost:3000")
+print("")
+print("Try these commands:")
+print("  # Create short URL:")
+print("  curl -X POST http://localhost:3000/shorten -d '{\"url\": \"https://github.com/kujolang/kujo\"}'")
+print("")
+print("  # Get statistics (POST, requires code):")
+print("  curl -X POST http://localhost:3000/stats -d '{\"code\": \"abc123\"}'")
+print("")
+print("  # Get URL count:")
+print("  curl http://localhost:3000/count")
+print("")
+print("Press Ctrl+C to stop")
+print("==================================================")
+
+server.listen()

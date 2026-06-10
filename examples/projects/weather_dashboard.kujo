@@ -1,0 +1,298 @@
+/*
+ * Weather Dashboard API
+ * 
+ * Aggregates weather data from multiple sources and provides a unified API.
+ * Demonstrates: HTTP client, external API calls, data transformation, caching
+ * 
+ * Features:
+ * - GET /weather/:city - Get current weather for a city
+ * - GET /forecast/:city - Get 5-day forecast
+ * - GET /compare - Compare weather between cities
+ * - GET /cache - View cached data
+ * 
+ * Note: Uses mock data since we don't have real API keys
+ * 
+ * Run: cargo run --quiet -- run examples/projects/weather_dashboard.kujo
+ * Then test with:
+ *   curl http://localhost:4000/weather/London
+ *   curl http://localhost:4000/compare?cities=London,Paris,Tokyo
+ */
+
+# In-memory cache for weather data
+weather_cache := {}
+cache_duration := 300  # 5 minutes in seconds
+
+# Mock weather data generator (simulates external API)
+func generate_mock_weather(city) {
+    temps := [15.0, 18.0, 22.0, 25.0, 20.0, 16.0, 12.0]
+    conditions := ["Sunny", "Cloudy", "Rainy", "Partly Cloudy", "Clear"]
+    
+    idx := len(city) % len(temps)
+    cond_idx := len(city) % len(conditions)
+    
+    min_humidity := 40 * 1.0
+    max_humidity := 80 * 1.0
+    min_wind := 5 * 1.0
+    max_wind := 25 * 1.0
+    
+    return {
+        "city": city,
+        "temperature": temps[idx],
+        "condition": conditions[cond_idx],
+        "humidity": random_int(min_humidity, max_humidity),
+        "wind_speed": random_int(min_wind, max_wind),
+        "timestamp": now()
+    }
+}
+
+# Check if cached data is still fresh
+func is_cache_fresh(city) {
+    if !has_key(weather_cache, city) {
+        return false
+    }
+    
+    cached := weather_cache[city]
+    age := now() - cached["timestamp"]
+    
+    return age < cache_duration
+}
+
+# Get weather with caching
+func get_weather_data(city) {
+    city_lower := to_lower(city)
+    
+    if is_cache_fresh(city_lower) {
+        print("📦 Cache hit: " + city)
+        return weather_cache[city_lower]
+    }
+    
+    print("🌐 Fetching fresh data: " + city)
+    
+    # In real app, this would be an HTTP call to weather API:
+    # result := http_get("https://api.weather.com/v1/weather?city=" + city)
+    
+    # For demo, use mock data
+    data := generate_mock_weather(city)
+    weather_cache[city_lower] := data
+    
+    return data
+}
+
+# Calculate weather summary
+func get_weather_summary(data) {
+    temp := data["temperature"]
+    condition := data["condition"]
+    
+    summary := ""
+    if temp > 25.0 {
+        summary := "🔥 Hot"
+    } else if temp > 15.0 {
+        summary := "☀️ Pleasant"
+    } else {
+        summary := "❄️ Cold"
+    }
+    
+    return summary + " - " + condition
+}
+
+print("🌤️  Weather Dashboard API")
+print("=" * 50)
+
+server := http_server(4000)
+
+# Get current weather for a city
+server := server.route("GET", "/weather", func(request) {
+    try {
+        # Parse city from request body
+        data := parse_json(request.body)
+        
+        if !has_key(data, "city") {
+            return json_response(400, {
+                "error": "Missing 'city' parameter"
+            })
+        }
+        
+        city := data["city"]
+        weather_data := get_weather_data(city)
+        summary := get_weather_summary(weather_data)
+        
+        return json_response(200, {
+            "city": weather_data["city"],
+            "temperature": weather_data["temperature"],
+            "condition": weather_data["condition"],
+            "humidity": weather_data["humidity"],
+            "wind_speed": weather_data["wind_speed"],
+            "summary": summary,
+            "cached": is_cache_fresh(to_lower(city))
+        })
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# Get forecast (mock implementation)
+server := server.route("GET", "/forecast", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "city") {
+            return json_response(400, {
+                "error": "Missing 'city' parameter"
+            })
+        }
+        
+        city := data["city"]
+        forecast := []
+        
+        # Generate 5-day forecast
+        min_temp_delta := -5 * 1.0
+        max_temp_delta := 5 * 1.0
+        
+        for i in range(5) {
+            day_data := generate_mock_weather(city)
+            day_data["day"] := i + 1
+            day_data["temperature"] := day_data["temperature"] + random_int(min_temp_delta, max_temp_delta)
+            push(forecast, day_data)
+        }
+        
+        return json_response(200, {
+            "city": city,
+            "forecast": forecast,
+            "days": len(forecast)
+        })
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# Compare weather between multiple cities
+server := server.route("POST", "/compare", func(request) {
+    try {
+        data := parse_json(request.body)
+        
+        if !has_key(data, "cities") {
+            return json_response(400, {
+                "error": "Missing 'cities' array parameter"
+            })
+        }
+        
+        cities := data["cities"]
+        comparison := []
+        
+        for city in cities {
+            weather_data := get_weather_data(city)
+            summary := get_weather_summary(weather_data)
+            
+            city_info := {
+                "city": weather_data["city"],
+                "temperature": weather_data["temperature"],
+                "condition": weather_data["condition"],
+                "summary": summary
+            }
+            push(comparison, city_info)
+        }
+        
+        # Find warmest and coldest
+        warmest := comparison[0]
+        coldest := comparison[0]
+        
+        for city_data in comparison {
+            if city_data["temperature"] > warmest["temperature"] {
+                warmest := city_data
+            }
+            if city_data["temperature"] < coldest["temperature"] {
+                coldest := city_data
+            }
+        }
+        
+        return json_response(200, {
+            "cities": comparison,
+            "warmest": warmest["city"],
+            "coldest": coldest["city"],
+            "count": len(comparison)
+        })
+        
+    } except err {
+        return json_response(400, {
+            "error": "Invalid request: " + err.message
+        })
+    }
+})
+
+# View cache contents
+server := server.route("GET", "/cache", func(request) {
+    cached_cities := []
+    
+    for city in weather_cache {
+        cached_data := weather_cache[city]
+        age := now() - cached_data["timestamp"]
+        
+        push(cached_cities, {
+            "city": city,
+            "age_seconds": age,
+            "fresh": age < cache_duration
+        })
+    }
+    
+    return json_response(200, {
+        "cached_cities": cached_cities,
+        "total": len(cached_cities),
+        "cache_duration": cache_duration
+    })
+})
+
+# Clear cache
+server := server.route("POST", "/cache/clear", func(request) {
+    count := len(keys(weather_cache))
+    weather_cache := {}
+    
+    print("🗑️  Cache cleared (" + to_json(count) + " entries)")
+    
+    return json_response(200, {
+        "message": "Cache cleared",
+        "entries_removed": count
+    })
+})
+
+# API documentation
+server := server.route("GET", "/", func(request) {
+    return json_response(200, {
+        "service": "Weather Dashboard API",
+        "version": "1.0",
+        "endpoints": {
+            "GET /weather": "Get current weather (body: {\"city\": \"London\"})",
+            "GET /forecast": "Get 5-day forecast (body: {\"city\": \"London\"})",
+            "POST /compare": "Compare cities (body: {\"cities\": [\"London\", \"Paris\"]})",
+            "GET /cache": "View cached data",
+            "POST /cache/clear": "Clear cache"
+        },
+        "note": "Uses mock data for demonstration"
+    })
+})
+
+print("")
+print("🚀 Server running on http://localhost:4000")
+print("")
+print("Try these commands:")
+print("  # Get weather:")
+print("  curl http://localhost:4000/weather -d '{\"city\": \"London\"}'")
+print("")
+print("  # Get forecast:")
+print("  curl http://localhost:4000/forecast -d '{\"city\": \"Paris\"}'")
+print("")
+print("  # Compare cities:")
+print("  curl -X POST http://localhost:4000/compare -d '{\"cities\": [\"London\", \"Paris\", \"Tokyo\"]}'")
+print("")
+print("  # View cache:")
+print("  curl http://localhost:4000/cache")
+print("")
+print("Press Ctrl+C to stop")
+print("=" * 50)
+
+server.listen()

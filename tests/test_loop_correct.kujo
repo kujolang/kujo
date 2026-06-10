@@ -1,0 +1,8 @@
+# Test loop without function
+x := 0
+for i in 3 {
+    x := x + 1
+    print("i:", i, "x:", x)
+}
+print("Final x:", x)
+print("Done!")

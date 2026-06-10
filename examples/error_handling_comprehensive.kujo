@@ -1,0 +1,67 @@
+# Comprehensive error handling demonstration
+
+# Example 1: Division function with error
+func divide(a, b) {
+    if b == 0 {
+        throw("Cannot divide by zero");
+    }
+    return a / b;
+}
+
+print("Example 1: Valid division");
+try {
+    result := divide(10, 2);
+    print(result);
+} except err {
+    print(err);
+}
+
+print("Example 2: Division by zero");
+try {
+    result := divide(10, 0);
+    print(result);
+} except err {
+    print(err);
+}
+
+# Example 2: Nested function errors
+print("Example 3: Nested errors");
+
+func outer_func() {
+    inner_func();
+}
+
+func inner_func() {
+    throw("Deep error");
+}
+
+try {
+    outer_func();
+} except err {
+    print(err);
+}
+
+# Example 3: Validation
+print("Example 4: Input validation");
+
+func validate_age(age) {
+    if age < 0 {
+        throw("Age cannot be negative");
+    }
+    if age > 150 {
+        throw("Age unrealistic");
+    }
+    return age;
+}
+
+test_ages := [-5, 25, 200];
+for age in test_ages {
+    try {
+        valid := validate_age(age);
+        print(valid);
+    } except err {
+        print(err);
+    }
+}
+
+print("All tests complete");

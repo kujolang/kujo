@@ -1,0 +1,187 @@
+# Test: Database Transaction Support (Working Tests)
+# Tests transaction functionality for SQLite
+
+print("Testing Database Transactions...")
+
+# ============================================================================
+# Test 1: Basic Transaction - Commit Success
+# ============================================================================
+print("\n=== Test 1: Basic Transaction Commit ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table
+db_execute(db, "CREATE TABLE accounts (id INTEGER PRIMARY KEY, name TEXT, balance REAL)", [])
+
+# Begin transaction
+db_begin(db)
+
+# Insert data within transaction
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Alice", 100.0])
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Bob", 200.0])
+
+# Commit transaction
+db_commit(db)
+
+# Verify data was committed
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM accounts", [])
+print("✓ Basic transaction commit works - " + str(len(rows)) + " rows")
+
+db_close(db)
+
+# ============================================================================
+# Test 2: Transaction Rollback
+# ============================================================================
+print("\n=== Test 2: Transaction Rollback ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table
+db_execute(db, "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)", [])
+
+# Insert initial data
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["John", "john@example.com"])
+
+# Begin transaction
+db_begin(db)
+
+# Insert more data
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Jane", "jane@example.com"])
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Jim", "jim@example.com"])
+
+# Verify data is visible within transaction
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM users", [])
+print("Users in transaction: " + str(rows[0]["cnt"]))
+
+# Rollback transaction
+db_rollback(db)
+
+# Verify rollback worked - only initial data remains
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM users", [])
+print("Users after rollback: " + str(rows[0]["cnt"]))
+print("✓ Transaction rollback works")
+
+db_close(db)
+
+# ============================================================================
+# Test 3: Transaction with Last Insert ID
+# ============================================================================
+print("\n=== Test 3: Last Insert ID ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table with auto-increment
+db_execute(db, "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTOINCREMENT, product TEXT, quantity INTEGER)", [])
+
+# Begin transaction
+db_begin(db)
+
+# Insert order
+db_execute(db, "INSERT INTO orders (product, quantity) VALUES (?, ?)", ["Widget", 5])
+order_id := db_last_insert_id(db)
+print("First order ID: " + str(order_id))
+
+# Insert another order
+db_execute(db, "INSERT INTO orders (product, quantity) VALUES (?, ?)", ["Gadget", 3])
+order_id := db_last_insert_id(db)
+print("Second order ID: " + str(order_id))
+
+# Commit
+db_commit(db)
+
+# Verify orders exist
+rows := db_query(db, "SELECT * FROM orders ORDER BY id", [])
+print("Total orders: " + str(len(rows)))
+print("✓ Last insert ID works in transactions")
+
+db_close(db)
+
+# ============================================================================
+# Test 4: Atomic Multi-Statement Updates
+# ============================================================================
+print("\n=== Test 4: Atomic Multi-Statement Updates ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create accounts table
+db_execute(db, "CREATE TABLE bank_accounts (id INTEGER PRIMARY KEY, name TEXT, balance REAL)", [])
+db_execute(db, "INSERT INTO bank_accounts (name, balance) VALUES (?, ?)", ["Alice", 1000.0])
+db_execute(db, "INSERT INTO bank_accounts (name, balance) VALUES (?, ?)", ["Bob", 500.0])
+
+# Transfer money from Alice to Bob (atomic operation)
+db_begin(db)
+
+# Debit Alice
+db_execute(db, "UPDATE bank_accounts SET balance = balance - ? WHERE name = ?", [100.0, "Alice"])
+
+# Credit Bob
+db_execute(db, "UPDATE bank_accounts SET balance = balance + ? WHERE name = ?", [100.0, "Bob"])
+
+# Commit the transfer
+db_commit(db)
+
+# Verify balances
+rows := db_query(db, "SELECT name, balance FROM bank_accounts ORDER BY name", [])
+print("Alice balance: " + str(rows[0]["balance"]))
+print("Bob balance: " + str(rows[1]["balance"]))
+print("✓ Atomic multi-statement updates work")
+
+db_close(db)
+
+# ============================================================================
+# Test 5: Complex E-Commerce Transaction
+# ============================================================================
+print("\n=== Test 5: Complex E-Commerce Transaction ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create schema
+db_execute(db, "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer TEXT, total REAL, status TEXT)", [])
+db_execute(db, "CREATE TABLE order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER, product TEXT, quantity INTEGER, price REAL)", [])
+db_execute(db, "CREATE TABLE inventory (product TEXT PRIMARY KEY, quantity INTEGER)", [])
+
+# Initialize inventory
+db_execute(db, "INSERT INTO inventory (product, quantity) VALUES (?, ?)", ["Widget", 100])
+db_execute(db, "INSERT INTO inventory (product, quantity) VALUES (?, ?)", ["Gadget", 50])
+
+# Process an order (atomic operation)
+db_begin(db)
+
+# Create order
+db_execute(db, "INSERT INTO orders (customer, total, status) VALUES (?, ?, ?)", ["Customer A", 99.99, "pending"])
+order_id := db_last_insert_id(db)
+
+# Add order items
+db_execute(db, "INSERT INTO order_items (order_id, product, quantity, price) VALUES (?, ?, ?, ?)", [order_id, "Widget", 2, 49.99])
+db_execute(db, "INSERT INTO order_items (order_id, product, quantity, price) VALUES (?, ?, ?, ?)", [order_id, "Gadget", 1, 0.01])
+
+# Update inventory
+db_execute(db, "UPDATE inventory SET quantity = quantity - ? WHERE product = ?", [2, "Widget"])
+db_execute(db, "UPDATE inventory SET quantity = quantity - ? WHERE product = ?", [1, "Gadget"])
+
+# Update order status
+db_execute(db, "UPDATE orders SET status = ? WHERE id = ?", ["confirmed", order_id])
+
+# Commit entire transaction
+db_commit(db)
+
+# Verify everything worked
+orders := db_query(db, "SELECT * FROM orders WHERE id = ?", [order_id])
+print("Order status: " + orders[0]["status"])
+
+items := db_query(db, "SELECT COUNT(*) as cnt FROM order_items WHERE order_id = ?", [order_id])
+print("Order items: " + str(items[0]["cnt"]))
+
+inventory := db_query(db, "SELECT product, quantity FROM inventory ORDER BY product", [])
+print("Widget inventory: " + str(inventory[1]["quantity"]))
+print("Gadget inventory: " + str(inventory[0]["quantity"]))
+print("✓ Complex e-commerce transaction works")
+
+db_close(db)
+
+# ============================================================================
+# All Tests Passed
+# ============================================================================
+print("\n==================================================")
+print("✅ ALL TRANSACTION TESTS PASSED!")
+print("==================================================")

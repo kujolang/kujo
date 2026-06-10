@@ -1,0 +1,4 @@
+// Simple VM test with print
+print("Hello from VM!")
+x := 42
+print(x)

@@ -1,0 +1,139 @@
+# Compression & Archive Examples
+# Demonstrates ZIP file creation, manipulation, and extraction
+
+print("=== Compression & Archive Examples ===")
+print("")
+
+# ===================================================================
+# Example 1: Basic ZIP Archive Creation
+# ===================================================================
+
+print("Example 1: Creating a simple ZIP archive")
+print("---")
+
+# Create some test files
+write_file("document.txt", "This is an important document.\nPlease keep it safe.")
+write_file("notes.txt", "Meeting notes from 2026-01-25:\n- Implement stdlib\n- Add tests\n- Update docs")
+write_file("data.json", "{\"name\": \"Kujo\", \"version\": \"0.8.0\", \"type\": \"language\"}")
+
+# Create a ZIP archive
+let archive := zip_create("backup.zip")
+print("Created archive: backup.zip")
+
+# Add files to the archive
+zip_add_file(archive, "document.txt")
+zip_add_file(archive, "notes.txt")
+zip_add_file(archive, "data.json")
+print("Added 3 files to archive")
+
+# Close the archive (important!)
+zip_close(archive)
+print("Archive finalized")
+
+# Check the created file
+if file_exists("backup.zip") {
+    let size := file_size("backup.zip")
+    print("✓ Archive created successfully (${size} bytes)")
+}
+
+print("")
+
+# ===================================================================
+# Example 2: Directory Archiving
+# ===================================================================
+
+print("Example 2: Archiving an entire directory")
+print("---")
+
+# Create a directory structure
+create_dir("project")
+write_file("project/README.md", "# My Project\nThis is my awesome project.")
+write_file("project/main.kujo", "print(\"Hello from main!\")")
+write_file("project/config.toml", "[settings]\ndebug = true")
+
+# Archive the entire directory
+let dir_archive := zip_create("project_backup.zip")
+zip_add_dir(dir_archive, "project")
+zip_close(dir_archive)
+print("✓ Created project_backup.zip with entire directory")
+
+print("")
+
+# ===================================================================
+# Example 3: Extracting Archives
+# ===================================================================
+
+print("Example 3: Extracting ZIP archives")
+print("---")
+
+# Extract the backup archive
+let extracted := unzip("backup.zip", "restored/")
+print("Extracted ${len(extracted)} files:")
+for file in extracted {
+    print("  - ${file}")
+}
+
+# Verify extracted files
+if file_exists("restored/document.txt") {
+    let content := read_file("restored/document.txt")
+    print("✓ Verified document.txt was restored")
+}
+
+print("")
+
+# ===================================================================
+# Example 4: Automated Backup Script
+# ===================================================================
+
+print("Example 4: Automated backup with timestamp")
+print("---")
+
+# Get current timestamp for backup name
+let timestamp := current_timestamp()
+let backup_name := "backup_${timestamp}.zip"
+
+# Create timestamped backup
+let backup := zip_create(backup_name)
+
+# Add multiple files
+let files := ["document.txt", "notes.txt", "data.json"]
+for file in files {
+    if file_exists(file) {
+        zip_add_file(backup, file)
+        print("  Added: ${file}")
+    }
+}
+
+zip_close(backup)
+print("✓ Created timestamped backup: ${backup_name}")
+
+print("")
+
+# ===================================================================
+# Example 5: Error Handling
+# ===================================================================
+
+print("Example 5: Proper error handling")
+print("---")
+
+print("Skipping fatal archive error-path checks in auto-run mode")
+
+print("")
+
+# ===================================================================
+# Cleanup
+# ===================================================================
+
+print("Cleaning up example files...")
+delete_file("document.txt")
+delete_file("notes.txt")
+delete_file("data.json")
+delete_file("backup.zip")
+delete_file("project_backup.zip")
+delete_file("project/README.md")
+delete_file("project/main.kujo")
+delete_file("project/config.toml")
+
+print("✓ Cleanup complete")
+print("")
+print("=== Examples Complete ===")

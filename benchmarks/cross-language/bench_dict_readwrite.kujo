@@ -1,0 +1,53 @@
+# Test dict operations separately
+
+func dict_writes_only(n) {
+    map := {}
+    i := 0
+    while i < n {
+        map[i] := i * 2
+        i := i + 1
+    }
+    return len(map)
+}
+
+func dict_reads_only(n) {
+    # Pre-populate
+    map := {}
+    i := 0
+    while i < n {
+        map[i] := i * 2
+        i := i + 1
+    }
+    
+    # Now just read
+    sum := 0
+    i := 0
+    while i < n {
+        sum := sum + map[i]
+        i := i + 1
+    }
+    return sum
+}
+
+n := 1000
+
+print("=== Dict Writes Only ===")
+start := performance_now()
+result := dict_writes_only(n)
+elapsed := performance_now() - start
+print("Result: ")
+print(result)
+print("Time: ")
+print(elapsed)
+print("ms")
+print("")
+
+print("=== Dict Reads Only ===")
+start := performance_now()
+result := dict_reads_only(n)
+elapsed := performance_now() - start
+print("Result: ")
+print(result)
+print("Time: ")
+print(elapsed)
+print("ms")

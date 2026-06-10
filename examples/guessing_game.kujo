@@ -1,0 +1,44 @@
+#
+# Number Guessing Game
+#
+# Demonstrates input(), parse_int(), loops, and conditionals
+#
+
+print("=== Number Guessing Game ===")
+print("I'm thinking of a number between 1 and 100")
+print()
+
+# Secret number (in real version, would use random)
+secret := 42
+
+guesses := 0
+won := 0  # Using 0/1 instead of true/false
+
+for i in 10 {
+    guess_str := input("Enter your guess: ")
+    
+    try {
+        guess := parse_int(guess_str)
+        guesses := guesses + 1
+        
+        if guess == secret {
+            print("Congratulations! You guessed it in", guesses, "tries!")
+            won := 1
+        } else if guess < secret {
+            print("Too low! Try again.")
+        } else {
+            print("Too high! Try again.")
+        }
+        
+        if won == 1 {
+            # Exit the loop (we'd need a break statement for this to work properly)
+            print("Game over!")
+        }
+    } except err {
+        print("Please enter a valid number!")
+    }
+}
+
+if won == 0 {
+    print("Sorry, you ran out of guesses. The number was", secret)
+}

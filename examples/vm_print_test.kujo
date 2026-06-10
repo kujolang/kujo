@@ -1,0 +1,3 @@
+// Simple VM test with print
+x := 42
+print("x =", x)

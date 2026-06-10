@@ -1,0 +1,46 @@
+# Simple test of error properties
+print("Test 1: Basic error properties")
+try {
+    throw("Test message")
+} except err {
+    print("Message: " + err.message)
+}
+
+print("")
+print("Test 2: Custom struct error")
+
+struct MyError {
+    field: string,
+    message: string
+}
+
+try {
+    error := MyError {
+        field: "test",
+        message: "Custom error"
+    }
+    throw(error)
+} except err {
+    print("Caught: " + err.message)
+}
+
+print("")
+print("Test 3: Stack trace")
+
+func inner() {
+    throw("Inner error")
+}
+
+func outer() {
+    inner()
+}
+
+try {
+    outer()
+} except err {
+    print("Error: " + err.message)
+    print("Stack has " + len(err.stack) + " frames")
+}
+
+print("")
+print("All tests passed!")

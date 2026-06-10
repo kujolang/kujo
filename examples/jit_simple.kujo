@@ -1,0 +1,14 @@
+# Performance Test - Simple Arithmetic Loop
+# This tests pure arithmetic without variables
+# Should be ideal for JIT compilation
+
+# Pure stack-based loop - no variables
+# This is a simplified version that should JIT compile well
+
+result := 0
+for i in range(100) {
+    result := result + 1
+}
+
+print("Result:")
+print(result)

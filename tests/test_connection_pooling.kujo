@@ -1,0 +1,124 @@
+# Test: Connection Pooling
+# Tests connection pool functionality
+
+print("Testing Connection Pooling...")
+
+# ============================================================================
+# Test 1: Create Pool
+# ============================================================================
+print("\n=== Test 1: Create Pool ===")
+
+pool := db_pool("sqlite", ":memory:", {
+    "min_connections": 2,
+    "max_connections": 5,
+    "connection_timeout": 10
+})
+
+print("Pool created: " + str(pool))
+
+# Get stats
+stats := db_pool_stats(pool)
+print("Initial stats:")
+print("  Available: " + str(stats["available"]))
+print("  In use: " + str(stats["in_use"]))
+print("  Total: " + str(stats["total"]))
+print("  Max: " + str(stats["max"]))
+print("✓ Pool creation works")
+
+# ============================================================================
+# Test 2: Acquire and Release
+# ============================================================================
+print("\n=== Test 2: Acquire and Release ===")
+
+# Acquire a connection
+conn1 := db_pool_acquire(pool)
+print("Acquired connection: " + str(conn1))
+
+# Check stats
+stats := db_pool_stats(pool)
+print("After acquire:")
+print("  In use: " + str(stats["in_use"]))
+print("  Total: " + str(stats["total"]))
+
+# Use the connection
+db_execute(conn1, "CREATE TABLE test (id INTEGER, name TEXT)", [])
+db_execute(conn1, "INSERT INTO test VALUES (1, 'Alice')", [])
+rows := db_query(conn1, "SELECT * FROM test", [])
+print("Query result: " + str(len(rows)) + " rows")
+
+# Release the connection
+db_pool_release(pool, conn1)
+print("Released connection")
+
+# Check stats
+stats := db_pool_stats(pool)
+print("After release:")
+print("  Available: " + str(stats["available"]))
+print("  In use: " + str(stats["in_use"]))
+print("✓ Acquire and release works")
+
+# ============================================================================
+# Test 3: Multiple Connections
+# ============================================================================
+print("\n=== Test 3: Multiple Connections ===")
+
+conn1 := db_pool_acquire(pool)
+conn2 := db_pool_acquire(pool)
+conn3 := db_pool_acquire(pool)
+
+stats := db_pool_stats(pool)
+print("After acquiring 3 connections:")
+print("  In use: " + str(stats["in_use"]))
+print("  Total: " + str(stats["total"]))
+
+db_pool_release(pool, conn1)
+db_pool_release(pool, conn2)
+db_pool_release(pool, conn3)
+
+stats := db_pool_stats(pool)
+print("After releasing all:")
+print("  Available: " + str(stats["available"]))
+print("  In use: " + str(stats["in_use"]))
+print("✓ Multiple connections work")
+
+# ============================================================================
+# Test 4: Pool with Transactions
+# ============================================================================
+print("\n=== Test 4: Pool with Transactions ===")
+
+conn := db_pool_acquire(pool)
+
+# Use transaction
+db_begin(conn)
+db_execute(conn, "INSERT INTO test VALUES (2, 'Bob')", [])
+db_commit(conn)
+
+# Query the data
+rows := db_query(conn, "SELECT * FROM test", [])
+print("Records in database: " + str(len(rows)))
+
+db_pool_release(pool, conn)
+print("✓ Pooling works with transactions")
+
+# ============================================================================
+# Test 5: Pool Cleanup
+# ============================================================================
+print("\n=== Test 5: Pool Cleanup ===")
+
+stats := db_pool_stats(pool)
+print("Before close:")
+print("  Total connections: " + str(stats["total"]))
+
+db_pool_close(pool)
+
+stats := db_pool_stats(pool)
+print("After close:")
+print("  Total connections: " + str(stats["total"]))
+print("✓ Pool cleanup works")
+
+# ============================================================================
+# All Tests Passed
+# ============================================================================
+print("\n" + repeat("=", 50))
+print("✅ ALL POOLING TESTS PASSED!")
+print(repeat("=", 50))

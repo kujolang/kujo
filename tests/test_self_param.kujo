@@ -1,0 +1,47 @@
+# Test self parameter in struct methods
+
+struct Calculator {
+    base: float,
+    
+    # Method with self parameter calling another method
+    func add(self, x) {
+        return self.base + x;
+    }
+    
+    # Method calling another method on self
+    func chain(self, x) {
+        temp := self.add(x);
+        return temp * 2.0;
+    }
+    
+    # Method returning new struct instance
+    func with_base(self, new_base) {
+        return Calculator { base: new_base };
+    }
+    
+    # Builder pattern - modify and return self
+    func set_base(self, new_base) {
+        return Calculator { base: new_base };
+    }
+}
+
+print("Test 1: Basic self.field access");
+calc := Calculator { base: 10.0 };
+result := calc.add(5.0);
+print(result);  # Should print 15.0
+
+print("\nTest 2: self.method() call");
+result2 := calc.chain(5.0);
+print(result2);  # Should print 30.0 ((10+5)*2)
+
+print("\nTest 3: Method returning struct");
+calc2 := calc.with_base(100.0);
+result3 := calc2.add(50.0);
+print(result3);  # Should print 150.0
+
+print("\nTest 4: Builder pattern");
+calc3 := calc.set_base(20.0);
+result4 := calc3.add(10.0);
+print(result4);  # Should print 30.0
+
+print("\n✅ All self parameter tests passed!");

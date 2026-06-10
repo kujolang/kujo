@@ -1,0 +1,16 @@
+# Test to see if subsequent calls work
+func make_counter() {
+    mut count := 0
+    return func() {
+        count = count + 1
+        return count
+    }
+}
+
+counter := make_counter()
+print("First call:")
+print(counter())
+print("Second call:")
+print(counter())
+print("Third call:")
+print(counter())

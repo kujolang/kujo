@@ -1,0 +1,9 @@
+func make_mult(factor) {
+    return func(x) {
+        return factor * x
+    }
+}
+
+double := make_mult(2)
+result := double(5)
+print("Result: " + result)

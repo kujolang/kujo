@@ -1,0 +1,6 @@
+# Debug range
+print("Testing range with different inputs:")
+print("range(5):", range(5))
+print("range(0, 5):", range(0, 5))
+print("range(-3, 3):", range(-3, 3))
+print("range(-5, -1):", range(-5, -1))

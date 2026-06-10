@@ -1,0 +1,44 @@
+# Array Operations Comparison Benchmark for Kujo
+# Tests: map, filter, reduce operations on large arrays
+
+func benchmark_array_ops(size) {
+    print("Array size: " + to_string(size))
+    
+    # Create array
+    let arr := []
+    for i in range(size) {
+        arr := push(arr, i)
+    }
+    
+    # Map: double each element
+    let start := performance_now()
+    let doubled := arr.map(func(x) {
+        return x * 2
+    })
+    let map_time := performance_now() - start
+    print("Map time: " + to_string(map_time) + "ms")
+    
+    # Filter: keep only evens
+    start := performance_now()
+    let evens := arr.filter(func(x) {
+        return x % 2 == 0
+    })
+    let filter_time := performance_now() - start
+    print("Filter time: " + to_string(filter_time) + "ms")
+    
+    # Reduce: sum all elements
+    start := performance_now()
+    let sum := reduce(arr, 0, func(acc, x) {
+        return acc + x
+    })
+    let reduce_time := performance_now() - start
+    print("Reduce time: " + to_string(reduce_time) + "ms")
+    
+    let total := map_time + filter_time + reduce_time
+    print("Total time: " + to_string(total) + "ms")
+    print("Sum: " + to_string(sum))
+}
+
+print("Kujo Array Operations Benchmark")
+print("================================")
+benchmark_array_ops(20000)

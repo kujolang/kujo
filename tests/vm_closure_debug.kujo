@@ -1,0 +1,16 @@
+# Debug closure - should show captured variables
+func outer(x) {
+    print("In outer, x =")
+    print(x)
+    func inner(y) {
+        print("In inner, y =")
+        print(y)
+        return x + y
+    }
+    return inner
+}
+
+f := outer(5)
+result := f(3)
+print("Result:")
+print(result)

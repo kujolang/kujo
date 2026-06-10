@@ -1,0 +1,36 @@
+# Example: Command-Line Tool with Argument Parsing
+# This example shows how to build a simple CLI tool that processes command-line arguments.
+# Note: The current Kujo CLI doesn't support passing arguments to scripts yet.
+# This is a demonstration of how argument parsing would work.
+
+print("=== Simple CLI Tool ===")
+print("")
+
+# Get command-line arguments
+let cli_args := args()
+
+print("Received ${len(cli_args)} command-line arguments")
+
+if len(cli_args) == 0 {
+    print("")
+    print("Usage: kujo run examples/cli_tool.kujo [OPTIONS] FILES...")
+    print("")
+    print("Options:")
+    print("  -v, --verbose    Enable verbose output")
+    print("  -o, --output     Specify output file (default: output.txt)")
+    print("  -h, --help       Show this help message")
+    print("")
+    print("Arguments:")
+    print("  FILES...         Input files to process")
+    print("")
+    print("Note: CLI argument passing not yet implemented in Kujo")
+    print("This example demonstrates the API for when it's available.")
+} else {
+    print("Arguments received:")
+    for arg in cli_args {
+        print("  - ${arg}")
+    }
+}
+
+print("")
+print("=== Tool finished ===")

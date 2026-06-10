@@ -1,0 +1,21 @@
+# Test field assignment
+
+struct Item {
+	name: string,
+	done: bool
+}
+
+item := Item { name: "Test", done: false }
+print("Before:", item.done)
+
+item.done := true
+print("After:", item.done)
+
+print("")
+print("Now test with array:")
+
+items := [Item { name: "First", done: false }]
+print("Before:", items[0].done)
+
+items[0].done := true
+print("After:", items[0].done)

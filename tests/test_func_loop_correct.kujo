@@ -1,0 +1,13 @@
+# Test function with loop
+func test_loop() {
+    x := 0
+    for i in 3 {
+        x := x + 1
+    }
+    return x
+}
+
+print("Calling test_loop...")
+result := test_loop()
+print("Result:", result)
+print("Done!")

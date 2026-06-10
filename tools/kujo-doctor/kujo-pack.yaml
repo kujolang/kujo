@@ -1,0 +1,20 @@
+id: kujo-doctor
+namespace: doctor
+name: Kujo Doctor
+version: 0.1.0
+description: Generic development environment and repository readiness checks.
+
+commands:
+  - name: doctor
+    summary: Run generic Kujo Doctor checks.
+    entry: builtin
+    safe: true
+    writes_files: false
+    runs_processes: true
+    requires_network: false
+
+contributes:
+  doctor_profiles:
+    - name: generic
+      summary: Generic development environment and repository readiness checks.
+      entry: builtin

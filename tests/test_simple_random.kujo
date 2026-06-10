@@ -1,0 +1,18 @@
+// Simple test for random functions
+// Set seed for deterministic output
+set_random_seed(42)
+
+print("Testing random()...")
+r := random()
+print(r)
+
+print("Testing random_int(1, 10)...")
+ri := random_int(1, 10)
+print(ri)
+
+print("Testing random_choice...")
+arr := ["apple", "banana", "orange"]
+choice := random_choice(arr)
+print(choice)
+
+print("All tests done!")

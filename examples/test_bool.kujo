@@ -1,0 +1,15 @@
+# Test boolean values
+# Minimal stable boolean smoke test
+
+print("=== Boolean Smoke Test ===")
+t := true
+f := false
+print("t =", t)
+print("f =", f)
+
+print("\n=== Comparisons ===")
+print("5 == 5:", 5 == 5)
+print("5 == 6:", 5 == 6)
+print("10 > 5:", 10 > 5)
+
+print("\n=== Boolean Demo Complete ===")

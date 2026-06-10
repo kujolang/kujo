@@ -1,0 +1,14 @@
+# Test struct with method that has print
+
+print("Test 1");
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func show() {
+        print("In method");
+    }
+}
+
+print("Test 2");

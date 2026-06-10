@@ -1,0 +1,16 @@
+# Simple fib for debugging verifier error
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+# Warmup to trigger JIT
+mut i := 0
+while i < 110 {
+    fib(5)
+    i = i + 1
+}
+
+print("fib(10) = ", fib(10))

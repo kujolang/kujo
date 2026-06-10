@@ -1,0 +1,78 @@
+# Comprehensive test of built-in functions for arrays and dicts
+
+print("=== Array Functions ===");
+
+# Test push()
+arr := [1, 2, 3];
+print("Original array:");
+print(arr);
+arr := push(arr, 4);
+print("After push(arr, 4):");
+print(arr);
+
+# Test pop()
+popped := pop(arr);
+print("After pop() - array:");
+print(arr);
+print("Popped value:");
+print(popped);
+
+# Test slice()
+numbers := [10, 20, 30, 40, 50];
+print("Original:");
+print(numbers);
+sub := slice(numbers, 1, 4);
+print("slice(numbers, 1, 4):");
+print(sub);
+
+# Test concat()
+arr1 := [1, 2, 3];
+arr2 := [4, 5, 6];
+combined := concat(arr1, arr2);
+print("concat([1,2,3], [4,5,6]):");
+print(combined);
+
+# Test len() with array
+print("len(combined):");
+print(len(combined));
+
+print("");
+print("=== Dict Functions ===");
+
+# Test keys()
+person := {"name": "Alice", "age": 30, "city": "Portland"};
+print("Dictionary:");
+print(person);
+dict_keys := keys(person);
+print("keys(person):");
+print(dict_keys);
+
+# Test values()
+dict_values := values(person);
+print("values(person):");
+print(dict_values);
+
+# Test has_key()
+print("has_key(person, 'name'):");
+print(has_key(person, "name"));
+print("has_key(person, 'email'):");
+print(has_key(person, "email"));
+
+# Test remove()
+removed_val := remove(person, "age");
+print("After remove(person, 'age') - dict:");
+print(person);
+print("Removed value:");
+print(removed_val);
+
+# Test len() with dict
+print("len(person):");
+print(len(person));
+
+print("");
+print("=== String Functions (with len) ===");
+text := "Hello World";
+print("String:");
+print(text);
+print("len(text):");
+print(len(text));

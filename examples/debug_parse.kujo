@@ -1,0 +1,2 @@
+// Test to debug why print("hello") parses as array
+print("hello")

@@ -1,0 +1,7 @@
+# Test variable reassignment
+sum := 0
+print("Initial sum:", sum)
+sum = sum + 1
+print("After +1:", sum)
+sum = sum + 2
+print("After +2:", sum)

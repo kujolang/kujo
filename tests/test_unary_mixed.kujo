@@ -1,0 +1,44 @@
+// Test mixing unary and binary operators
+
+// Arithmetic combinations
+let result1 = -5 + 10;
+print(result1);
+print("\n");
+
+let result2 = 10 + -5;
+print(result2);
+print("\n");
+
+let result3 = -5 * -3;
+print(result3);
+print("\n");
+
+let result4 = -(5 + 3) * 2;
+print(result4);
+print("\n");
+
+// Boolean combinations
+let bool1 = !true && false;
+print(bool1);
+print("\n");
+
+let bool2 = !false || false;
+print(bool2);
+print("\n");
+
+let bool3 = !(true && false);
+print(bool3);
+print("\n");
+
+let bool4 = !true || !false;
+print(bool4);
+print("\n");
+
+// Complex expressions
+let complex1 = -5 + 3 * -2;
+print(complex1);
+print("\n");
+
+let complex2 = !(5 > 3) && (10 < 20);
+print(complex2);
+print("\n");

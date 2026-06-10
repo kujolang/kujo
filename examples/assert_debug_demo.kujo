@@ -1,0 +1,207 @@
+# Assert & Debug Functions Demo
+# Demonstrates runtime assertions and debug output for testing and troubleshooting
+
+print("=== Assert & Debug Functions Demo ===\n")
+
+# 1. Basic Assertions
+print("1. Basic Assertions")
+print("-------------------")
+
+# Assertions that pass return true
+result := assert(true, "This always passes")
+print("assert(true) returned:", result)
+
+result2 := assert(5 > 3, "Math works")
+print("assert(5 > 3) returned:", result2)
+
+# Truthy values pass
+result3 := assert(1, "Non-zero is truthy")
+print("assert(1) returned:", result3)
+
+print()
+
+# 2. Assertions in Functions  
+print("2. Guard Functions with Assertions")
+print("-----------------------------------")
+
+func safe_divide(a, b) {
+    if b == 0 {
+        return assert(false, "Division by zero not allowed")
+    }
+    return a / b
+}
+
+good_result := safe_divide(10, 2)
+print("safe_divide(10, 2) =", good_result)
+
+# This would return an error:
+# bad_result := safe_divide(10, 0)
+
+print()
+
+# 3. Debug Output - Simple Values
+print("3. Debug Output - Simple Values")
+print("--------------------------------")
+
+debug("Hello, World!")
+debug(42)
+debug(3.14159)
+debug(true)
+debug("<null sample omitted>")
+
+print()
+
+# 4. Debug with Multiple Arguments
+print("4. Debug with Multiple Arguments")
+print("---------------------------------")
+
+user_id := 12345
+timestamp := current_timestamp()
+debug("User", user_id, "logged in at", timestamp)
+
+print()
+
+# 5. Debug Complex Data Structures
+print("5. Debug Complex Structures")
+print("----------------------------")
+
+user := {
+    "name": "Alice",
+    "age": 30,
+    "active": true,
+    "scores": [95, 87, 92]
+}
+
+debug(user)
+
+numbers := [1, 2, 3, 4, 5]
+debug("Array:", numbers)
+
+# Nested structures
+data := {
+    "users": [
+        {"name": "Bob", "id": 1},
+        {"name": "Carol", "id": 2}
+    ],
+    "count": 2
+}
+debug("Nested:", data)
+
+print()
+
+# 6. Debug in Loops
+print("6. Debug in Loops (Finding Issues)")
+print("-----------------------------------")
+
+nums := [5, 3, 0, -2, 8]
+for n in nums {
+    debug("Checking:", n)
+    if n < 0 {
+        print("  -> Found negative:", n)
+        break
+    }
+}
+
+print()
+
+# 7. Combining Assert and Debug
+print("7. Combining Assert and Debug")
+print("------------------------------")
+
+func safe_sqrt(x) {
+    debug("Calculating sqrt of:", x)
+    
+    check := assert(x >= 0, "Cannot take sqrt of negative")
+    if type(check) == "error" {
+        debug("ERROR: Assertion failed!")
+        return check
+    }
+    
+    result := sqrt(x)
+    debug("Result:", result)
+    return result
+}
+
+print("sqrt(16) =", safe_sqrt(16))
+
+# This would fail:
+# print("sqrt(-4) =", safe_sqrt(-4))
+
+print()
+
+# 8. Input Validation Example
+print("8. Practical Validation Example")
+print("--------------------------------")
+
+func validate_positive(n, name) {
+    debug("Validating", name, "=", n)
+    return assert(n > 0, name + " must be positive")
+}
+
+# All validations pass
+width := 100
+height := 200
+
+check1 := validate_positive(width, "width")
+check2 := validate_positive(height, "height")
+
+if check1 == true && check2 == true {
+    area := width * height
+    print("Area:", area, "square units")
+}
+
+print()
+
+# 9. Debugging Function Calls
+print("9. Debugging Function Call Flow")
+print("--------------------------------")
+
+func calculate(a, b, op) {
+    debug("calculate() called with:", a, op, b)
+    
+    if op == "+" {
+        return a + b
+    } else if op == "-" {
+        return a - b
+    } else if op == "*" {
+        return a * b
+    } else if op == "/" {
+        return safe_divide(a, b)
+    }
+    
+    return 0
+}
+
+result1 := calculate(10, 5, "+")
+print("10 + 5 =", result1)
+
+result2 := calculate(10, 5, "*")
+print("10 * 5 =", result2)
+
+print()
+
+# 10. Assert with Array Operations
+print("10. Assert with Data Validation")
+print("--------------------------------")
+
+func process_scores(scores) {
+    debug("Processing scores:", scores)
+    
+    check := assert(len(scores) > 0, "Scores array cannot be empty")
+    if type(check) == "error" {
+        return check
+    }
+    
+    total := sum(scores)
+    avg := total / len(scores)
+    
+    debug("Total:", total, "Average:", avg)
+    return avg
+}
+
+student_scores := [85, 90, 78, 92, 88]
+average := process_scores(student_scores)
+print("Class average:", average)
+
+print()
+print("=== Demo Complete ===")

@@ -1,0 +1,12 @@
+# Test just struct definition
+print("Defining struct...");
+
+struct Test {
+    x: float,
+    
+    func dummy(self) {
+        return self.x;
+    }
+}
+
+print("Struct defined successfully!");

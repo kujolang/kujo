@@ -1,0 +1,10 @@
+// Simple async test
+
+async func get_value() {
+    return 42;
+}
+
+let p = get_value();
+println("Promise type: ", type(p));
+let result = await p;
+println("Result: ", result);

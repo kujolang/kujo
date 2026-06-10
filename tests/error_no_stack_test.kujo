@@ -1,0 +1,2 @@
+# Test error with no call stack (global scope error)
+x := nonexistent_variable + 10

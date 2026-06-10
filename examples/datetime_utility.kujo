@@ -1,0 +1,52 @@
+// Date/Time Utility
+// Demonstrates date/time functions from stdlib
+
+print("=== Date/Time Utility ===")
+print("")
+
+// Current timestamp
+timestamp := now()
+print("Current Unix Timestamp: " + timestamp)
+print("")
+
+// Format current date/time in various ways
+print("Formatted Date/Time:")
+print("  ISO Format:       " + format_date(timestamp, "YYYY-MM-DD"))
+print("  US Format:        " + format_date(timestamp, "MM/DD/YYYY"))
+print("  European Format:  " + format_date(timestamp, "DD/MM/YYYY"))
+print("  Full DateTime:    " + format_date(timestamp, "YYYY-MM-DD HH:mm:ss"))
+print("  Time Only:        " + format_date(timestamp, "HH:mm:ss"))
+print("")
+
+// Historical dates
+print("Historical Dates:")
+moon_landing := parse_date("1969-07-20", "YYYY-MM-DD")
+print("  Moon Landing:     " + format_date(moon_landing, "YYYY-MM-DD") + " (" + moon_landing + ")")
+
+independence := parse_date("1776-07-04", "YYYY-MM-DD")
+print("  US Independence:  " + format_date(independence, "YYYY-MM-DD") + " (" + independence + ")")
+
+millennium := parse_date("2000-01-01", "YYYY-MM-DD")
+print("  Y2K Millennium:   " + format_date(millennium, "YYYY-MM-DD") + " (" + millennium + ")")
+print("")
+
+// Date calculations
+print("Date Calculations:")
+today := now()
+week_ago := today - (7 * 24 * 60 * 60)  // 7 days in seconds
+print("  Today:            " + format_date(today, "YYYY-MM-DD"))
+print("  Week Ago:         " + format_date(week_ago, "YYYY-MM-DD"))
+
+month_future := today + (30 * 24 * 60 * 60)  // ~30 days in seconds
+print("  ~30 Days Later:   " + format_date(month_future, "YYYY-MM-DD"))
+print("")
+
+// Age calculator
+print("Age Calculator:")
+birth_date := parse_date("1990-05-15", "YYYY-MM-DD")
+age_seconds := today - birth_date
+age_days := age_seconds / (24 * 60 * 60)
+age_years := age_days / 365.25
+print("  Birth Date:       " + format_date(birth_date, "YYYY-MM-DD"))
+print("  Age (approx):     " + floor(age_years) + " years")
+print("  Days Lived:       " + floor(age_days) + " days")

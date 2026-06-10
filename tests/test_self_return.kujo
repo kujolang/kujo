@@ -1,0 +1,12 @@
+# Test self.field in return
+struct T {
+    x: float,
+    func f(self) {
+        return self.x;
+    }
+}
+print("Defined");
+t := T { x: 42.0 };
+print("Created");
+r := t.f();
+print(r);

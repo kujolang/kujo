@@ -1,0 +1,18 @@
+# Test function calls and arguments
+
+func add(a, b) {
+    return a + b
+}
+
+func multiply(a, b) {
+    return a * b
+}
+
+sum := add(7, 3)
+print("add(7, 3) =", sum)
+
+product := multiply(4, 5)
+print("multiply(4, 5) =", product)
+
+nested := add(multiply(2, 3), 4)
+print("add(multiply(2, 3), 4) =", nested)

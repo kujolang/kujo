@@ -1,0 +1,60 @@
+# Profile array operations vs dict operations
+
+func test_array_ops(n) {
+    arr := []
+    i := 0
+    while i < n {
+        arr := push(arr, i * 2)
+        i := i + 1
+    }
+    sum := 0
+    i := 0
+    while i < n {
+        sum := sum + arr[i]
+        i := i + 1
+    }
+    return sum
+}
+
+func test_dict_ops(n) {
+    map := {}
+    i := 0
+    while i < n {
+        map[i] := i * 2
+        i := i + 1
+    }
+    sum := 0
+    i := 0
+    while i < n {
+        sum := sum + map[i]
+        i := i + 1
+    }
+    return sum
+}
+
+n := 1000
+
+print("Testing n=")
+print(n)
+print("")
+
+print("Array operations...")
+start := performance_now()
+result := test_array_ops(n)
+elapsed := performance_now() - start
+print("  Result: ")
+print(result)
+print("  Time: ")
+print(elapsed)
+print("ms")
+print("")
+
+print("Dict operations...")
+start := performance_now()
+result := test_dict_ops(n)
+elapsed := performance_now() - start
+print("  Result: ")
+print(result)
+print("  Time: ")
+print(elapsed)
+print("ms")

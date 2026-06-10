@@ -1,0 +1,36 @@
+# Test file for REPL multi-line input
+# This file tests that multi-line constructs work correctly
+
+# Multi-line function
+func factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+factorial(5)
+
+# Multi-line if-else
+let value := 15
+if value > 10 {
+    print("Value is greater than 10")
+} else {
+    print("Value is 10 or less")
+}
+
+# Multi-line loop
+let sum := 0
+for i in 5 {
+    sum := sum + i
+}
+sum
+
+# Multi-line struct definition
+struct Point {
+    x: float,
+    y: float
+}
+let p := Point { x: 3.0, y: 4.0 }
+p
+
+:quit

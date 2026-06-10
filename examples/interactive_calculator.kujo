@@ -1,0 +1,44 @@
+#
+# Interactive Calculator Example
+#
+print("interactive_calculator: interactive example skipped in VM auto-run mode")
+exit(0)
+#
+# Demonstrates user input and type conversion functions
+#
+
+print("=== Simple Calculator ===")
+print()
+
+# Get first number
+num1_str := input("Enter first number: ")
+num1 := parse_float(num1_str)
+
+# Get operation
+operation := input("Enter operation (+, -, *, /): ")
+
+# Get second number
+num2_str := input("Enter second number: ")
+num2 := parse_float(num2_str)
+
+# Perform calculation
+result := 0.0
+if operation == "+" {
+    result := num1 + num2
+    print(num1, "+", num2, "=", result)
+} else if operation == "-" {
+    result := num1 - num2
+    print(num1, "-", num2, "=", result)
+} else if operation == "*" {
+    result := num1 * num2
+    print(num1, "*", num2, "=", result)
+} else if operation == "/" {
+    if num2 == 0 {
+        print("Error: Division by zero!")
+    } else {
+        result := num1 / num2
+        print(num1, "/", num2, "=", result)
+    }
+} else {
+    print("Unknown operation:", operation)
+}

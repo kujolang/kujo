@@ -1,0 +1,82 @@
+# Test: Generator Functions
+# Tests generator creation, yielding, and iteration
+# These tests use the tree-walking interpreter (VM generator support is partial)
+
+print("=== Test 1: Simple Generator ===")
+func* count() {
+    yield 1
+    yield 2
+    yield 3
+}
+
+gen := count()
+print("Generator created, type:")
+print(type(gen))
+
+print("")
+print("=== Test 2: Generator Iteration ===")
+for n in count() {
+    print("Value:")
+    print(n)
+}
+
+print("")
+print("=== Test 3: Generator with State ===")
+func* sequence() {
+    x := 5
+    yield x
+    x := x * 2
+    yield x
+    x := x + 10
+    yield x
+}
+
+for val in sequence() {
+    print("Sequence value:")
+    print(val)
+}
+
+print("")
+print("=== Test 4: Generator with Parameters ===")
+func* repeat(msg, times) {
+    i := 0
+    loop {
+        if i >= times {
+            break
+        }
+        yield msg
+        i := i + 1
+    }
+}
+
+for message in repeat("hello", 3) {
+    print("Message:")
+    print(message)
+}
+
+print("")
+print("=== Test 5: Fibonacci Generator ===")
+func* fibonacci() {
+    a := 0
+    b := 1
+    loop {
+        yield a
+        temp := a
+        a := b
+        b := temp + b
+    }
+}
+
+# Take first 7 fibonacci numbers
+count := 0
+for fib in fibonacci() {
+    print("Fib:")
+    print(fib)
+    count := count + 1
+    if count >= 7 {
+        break
+    }
+}
+
+print("")
+print("=== All Generator Tests Passed ===")

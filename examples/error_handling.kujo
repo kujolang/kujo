@@ -1,0 +1,16 @@
+# Test better error messages with try/except
+func process(x) {
+    if x == 0 {
+        throw("Cannot process zero value")
+    }
+    return x * 2
+}
+
+try {
+    result := process(0)
+    print("Result:", result)
+} except err {
+    print("Error caught:", err)
+}
+
+print("Program continues after error handling")

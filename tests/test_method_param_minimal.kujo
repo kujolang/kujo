@@ -1,0 +1,17 @@
+# Minimal test case for method with parameter
+
+struct Test {
+    x: float,
+    
+    func add_value(val) {
+        return x + val;
+    }
+}
+
+print("Creating struct instance...");
+t := Test { x: 5.0 };
+print("Created struct");
+print("Calling method...");
+result := t.add_value(10.0);
+print("Result:");
+print(result);

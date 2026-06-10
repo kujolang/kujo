@@ -1,0 +1,100 @@
+# JIT Loop Tests
+# Run with: kujo test-run tests/jit_loop_tests.kujo
+# Tests for Step 11: Loop Back-Edge Fix
+# These should all work once loop JIT is implemented
+
+# Test 1: Simple counter loop
+print("Test 1: Simple counter loop")
+mut loop_sum := 0
+mut i := 0
+while i < 10 {
+    loop_sum = loop_sum + i
+    i = i + 1
+}
+if loop_sum == 45 {
+    print("PASS: sum = 45")
+} else {
+    print("FAIL: sum =", loop_sum, "expected 45")
+}
+
+# Test 2: Loop with function call
+print("")
+print("Test 2: Loop with function call")
+func double(x) {
+    return x * 2
+}
+mut total := 0
+mut j := 0
+while j < 5 {
+    total = total + double(j)
+    j = j + 1
+}
+# 0*2 + 1*2 + 2*2 + 3*2 + 4*2 = 0 + 2 + 4 + 6 + 8 = 20
+if total == 20 {
+    print("PASS: total = 20")
+} else {
+    print("FAIL: total =", total, "expected 20")
+}
+
+# Test 3: Nested loops
+print("")
+print("Test 3: Nested loops")
+mut result := 0
+mut a := 0
+mut b := 0
+while a < 3 {
+    b = 0
+    while b < 4 {
+        result = result + 1
+        b = b + 1
+    }
+    a = a + 1
+}
+# 3 * 4 = 12 iterations
+if result == 12 {
+    print("PASS: result = 12")
+} else {
+    print("FAIL: result =", result, "expected 12")
+}
+
+# Test 4: Loop calling recursive function (stress test for JIT)
+print("")
+print("Test 4: Loop calling recursive fib")
+func fib(n) {
+    if n <= 1 { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+mut fib_sum := 0
+mut k := 0
+while k < 10 {
+    fib_sum = fib_sum + fib(k)
+    k = k + 1
+}
+# fib(0..9) = 0+1+1+2+3+5+8+13+21+34 = 88
+if fib_sum == 88 {
+    print("PASS: fib_sum = 88")
+} else {
+    print("FAIL: fib_sum =", fib_sum, "expected 88")
+}
+
+# Test 5: Loop performance benchmark
+print("")
+print("Test 5: Loop performance (10000 iterations)")
+mut start := time_us()
+mut perf_sum := 0
+mut p := 0
+while p < 10000 {
+    perf_sum := perf_sum + p
+    p = p + 1
+}
+let elapsed := time_us() - start
+print("Sum:", perf_sum, "(expected 49995000)")
+print("Time:", elapsed, "us")
+if perf_sum == 49995000 {
+    print("PASS: Correct result")
+} else {
+    print("FAIL: Wrong result")
+}
+
+print("")
+print("=== All loop tests complete ===")

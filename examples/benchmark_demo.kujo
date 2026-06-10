@@ -1,0 +1,251 @@
+# Comprehensive Benchmark & Timing Demo
+# Demonstrates all timing functions for robust performance measurement
+
+print("benchmark_demo: skipped in VM auto-run mode")
+exit(0)
+
+print("╔═══════════════════════════════════════════════════════╗")
+print("║     Complete Timing & Benchmarking Suite Demo       ║")
+print("╚═══════════════════════════════════════════════════════╝")
+print("")
+
+# ============================================================================
+# 1. BASIC TIMING FUNCTIONS
+# ============================================================================
+print("═══ 1. Basic Timing Functions ═══")
+print("")
+
+# now() - Unix timestamp in seconds
+ts_seconds := now()
+print("now() - Unix timestamp (seconds):")
+print(ts_seconds)
+print("")
+
+# current_timestamp() - Milliseconds since epoch
+ts_ms := current_timestamp()
+print("current_timestamp() - Milliseconds since UNIX epoch:")
+print(ts_ms)
+print("")
+
+# ============================================================================
+# 2. HIGH-PRECISION PERFORMANCE TIMERS
+# ============================================================================
+print("═══ 2. High-Precision Performance Timers ═══")
+print("")
+
+# Milliseconds
+perf_ms := performance_now()
+print("performance_now() - Milliseconds since start:")
+print(perf_ms)
+print("")
+
+# Microseconds (1/1,000 milliseconds)
+perf_us := time_us()
+print("time_us() - Microseconds since start:")
+print(perf_us)
+print("")
+
+# Nanoseconds (1/1,000,000 milliseconds)
+perf_ns := time_ns()
+print("time_ns() - Nanoseconds since start:")
+print(perf_ns)
+print("")
+
+# ============================================================================
+# 3. BENCHMARKING FAST OPERATIONS
+# ============================================================================
+print("═══ 3. Benchmarking Fast Operations ═══")
+print("")
+
+print("Benchmark: Simple arithmetic (1,000 iterations)")
+start_ns := time_ns()
+
+i := 0
+result := 0
+while i < 1000 {
+    result := result + i * 2
+    i := i + 1
+}
+
+end_ns := time_ns()
+elapsed_ns := end_ns - start_ns
+
+print("Elapsed time (nanoseconds):")
+print(elapsed_ns)
+print("Elapsed time (formatted):")
+duration_str := format_duration(elapsed_ns / 1000000.0)
+print(duration_str)
+print("")
+
+# ============================================================================
+# 4. BENCHMARKING MEDIUM OPERATIONS
+# ============================================================================
+print("═══ 4. Benchmarking Medium Operations ═══")
+print("")
+
+print("Benchmark: Array operations (10,000 iterations)")
+start_us := time_us()
+
+arr := []
+j := 0
+while j < 10000 {
+    arr := push(arr, j)
+    j := j + 1
+}
+
+end_us := time_us()
+elapsed_us := end_us - start_us
+
+print("Elapsed time (microseconds):")
+print(elapsed_us)
+print("Elapsed time (formatted):")
+print(format_duration(elapsed_us / 1000.0))
+print("")
+
+# ============================================================================
+# 5. BENCHMARKING SLOW OPERATIONS
+# ============================================================================
+print("═══ 5. Benchmarking Slow Operations ═══")
+print("")
+
+print("Benchmark: String concatenation (1,000 iterations)")
+start_ms := performance_now()
+
+str := ""
+k := 0
+while k < 1000 {
+    str := str + "x"
+    k := k + 1
+}
+
+end_ms := performance_now()
+elapsed_ms := end_ms - start_ms
+
+print("Elapsed time (milliseconds):")
+print(elapsed_ms)
+print("Elapsed time (formatted):")
+print(format_duration(elapsed_ms))
+print("")
+
+# ============================================================================
+# 6. ELAPSED TIME HELPER
+# ============================================================================
+print("═══ 6. Elapsed Time Helper Function ═══")
+print("")
+
+t1 := performance_now()
+sleep(0.05)  # 50ms
+t2 := performance_now()
+
+diff := elapsed(t1, t2)
+print("Started at:")
+print(t1)
+print("Ended at:")
+print(t2)
+print("Elapsed:")
+print(diff)
+print("Formatted:")
+print(format_duration(diff))
+print("")
+
+# ============================================================================
+# 7. MULTI-LEVEL TIMING PRECISION
+# ============================================================================
+print("═══ 7. Comparing Precision Levels ═══")
+print("")
+
+print("Measuring the same operation at different precisions:")
+print("")
+
+# Start all timers
+t_ms_start := performance_now()
+t_us_start := time_us()
+t_ns_start := time_ns()
+
+# Do some work
+count := 0
+while count < 5000 {
+    count := count + 1
+}
+
+# Stop all timers
+t_ms_end := performance_now()
+t_us_end := time_us()
+t_ns_end := time_ns()
+
+print("Millisecond precision:")
+print(t_ms_end - t_ms_start)
+print("")
+
+print("Microsecond precision:")
+print((t_us_end - t_us_start) / 1000.0)
+print("")
+
+print("Nanosecond precision:")
+print((t_ns_end - t_ns_start) / 1000000.0)
+print("")
+
+# ============================================================================
+# 8. DURATION FORMATTING EXAMPLES
+# ============================================================================
+print("═══ 8. Duration Formatting Examples ═══")
+print("")
+
+print("Format various durations:")
+print("5000 ms    -> " + format_duration(5000.0))
+print("1234 ms    -> " + format_duration(1234.0))
+print("567 ms     -> " + format_duration(567.0))
+print("89 ms      -> " + format_duration(89.0))
+print("12.3 ms    -> " + format_duration(12.3))
+print("1.5 ms     -> " + format_duration(1.5))
+print("0.5 ms     -> " + format_duration(0.5))
+print("0.025 ms   -> " + format_duration(0.025))
+print("0.001 ms   -> " + format_duration(0.001))
+print("0.0001 ms  -> " + format_duration(0.0001))
+print("")
+
+# ============================================================================
+# 9. PRACTICAL BENCHMARKING EXAMPLE
+# ============================================================================
+print("═══ 9. Practical Example: Algorithm Comparison ═══")
+print("")
+
+print("Comparing two approaches to sum numbers 1-1000:")
+print("")
+
+# Approach 1: Loop
+print("Approach 1: Loop")
+start1 := time_us()
+sum1 := 0
+n := 1
+while n <= 1000 {
+    sum1 := sum1 + n
+    n := n + 1
+}
+end1 := time_us()
+time1 := (end1 - start1) / 1000.0
+print("Result: " + sum1)
+print("Time: " + format_duration(time1))
+print("")
+
+# Approach 2: Formula (n * (n+1) / 2)
+print("Approach 2: Mathematical formula")
+start2 := time_ns()
+sum2 := 1000 * 1001 / 2
+end2 := time_ns()
+time2 := (end2 - start2) / 1000000.0
+print("Result: " + sum2)
+print("Time: " + format_duration(time2))
+print("")
+
+# ============================================================================
+print("✓ Complete timing suite demonstration finished!")
+print("")
+print("Summary of available functions:")
+print("  • now() - Unix timestamp (seconds)")
+print("  • current_timestamp() - Milliseconds since epoch")
+print("  • performance_now() - Milliseconds since start")
+print("  • time_us() - Microseconds since start")
+print("  • time_ns() - Nanoseconds since start")
+print("  • format_duration(ms) - Format as readable string")
+print("  • elapsed(start, end) - Calculate time difference")

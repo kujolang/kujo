@@ -1,0 +1,19 @@
+enum Result {
+    Ok,
+    Err
+}
+
+func check(x) {
+    return Result::Err("bad input")
+}
+
+res := check(999)
+
+match res {
+    case Result::Ok(msg): {
+        print("Success:", msg)
+    }
+    case Result::Err(e): {
+        print("Error:", e)
+    }
+}

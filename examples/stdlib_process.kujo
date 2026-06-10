@@ -1,0 +1,220 @@
+# Process Management Examples
+# Demonstrates process spawning and command piping
+
+print("=== Process Management Examples ===")
+print("")
+
+# ===================================================================
+# Example 1: Basic Process Spawning
+# ===================================================================
+
+print("Example 1: Running a simple command")
+print("---")
+
+# Run echo command
+let result := spawn_process(["echo", "Hello from spawned process!"])
+
+print("Exit code: ${result.exitcode}")
+print("Success: ${result.success}")
+print("Output: ${trim(result.stdout)}")
+
+if result.success && result.exitcode == 0 {
+    print("✓ Process completed successfully")
+}
+
+print("")
+
+# ===================================================================
+# Example 2: Directory Listing
+# ===================================================================
+
+print("Example 2: Listing directory contents")
+print("---")
+
+# List files in current directory
+let ls_result := spawn_process(["ls", "-l"])
+
+if ls_result.success {
+    print("✓ Directory listing successful")
+    let lines := split(ls_result.stdout, "\n")
+    print("Found ${len(lines)} lines of output")
+    print("")
+    print("First 5 lines:")
+    let count := 0
+    for line in lines {
+        if count < 5 && len(trim(line)) > 0 {
+            print("  ${line}")
+            count := count + 1
+        }
+    }
+}
+
+print("")
+
+# ===================================================================
+# Example 3: Environment Information
+# ===================================================================
+
+print("Example 3: Getting system information")
+print("---")
+
+# Get current user
+let whoami_result := spawn_process(["whoami"])
+if whoami_result.success {
+    print("Current user: ${trim(whoami_result.stdout)}")
+}
+
+# Get current directory
+let pwd_result := spawn_process(["pwd"])
+if pwd_result.success {
+    print("Current directory: ${trim(pwd_result.stdout)}")
+}
+
+# Get date
+let date_result := spawn_process(["date"])
+if date_result.success {
+    print("System date: ${trim(date_result.stdout)}")
+}
+
+print("")
+
+# ===================================================================
+# Example 4: File Operations via Processes
+# ===================================================================
+
+print("Example 4: File operations using commands")
+print("---")
+
+# Create a test file
+write_file("process_test.txt", "Line 1\nLine 2\nLine 3\nLine 4\nLine 5")
+
+# Count lines using wc
+let wc_result := spawn_process(["wc", "-l", "process_test.txt"])
+if wc_result.success {
+    print("Line count result: ${trim(wc_result.stdout)}")
+}
+
+# Get first 3 lines using head
+let head_result := spawn_process(["head", "-n", "3", "process_test.txt"])
+if head_result.success {
+    print("First 3 lines:")
+    print(head_result.stdout)
+}
+
+delete_file("process_test.txt")
+
+print("")
+
+# ===================================================================
+# Example 5: Command Piping
+# ===================================================================
+
+print("Example 5: Piping commands together")
+print("---")
+
+# Create test data
+write_file("log_data.txt", "INFO: Application started\nERROR: Connection failed\nINFO: Retry attempt\nERROR: Timeout\nINFO: Success")
+
+# Pipe: cat file | grep ERROR | wc -l
+let pipe_result := pipe_commands([
+    ["cat", "log_data.txt"],
+    ["grep", "ERROR"],
+    ["wc", "-l"]
+])
+
+print("Number of ERROR lines: ${trim(pipe_result)}")
+
+# Another pipe: cat file | grep INFO
+let info_result := pipe_commands([
+    ["cat", "log_data.txt"],
+    ["grep", "INFO"]
+])
+
+print("INFO lines:")
+print(info_result)
+
+delete_file("log_data.txt")
+
+print("")
+
+# ===================================================================
+# Example 6: Log Analysis Pipeline
+# ===================================================================
+
+print("Example 6: Analyzing log files with pipes")
+print("---")
+
+# Create a sample log file
+let log_content := "2026-01-25 10:00:01 INFO Server started\n"
+log_content := log_content + "2026-01-25 10:00:05 DEBUG Connection established\n"
+log_content := log_content + "2026-01-25 10:00:10 INFO Request received\n"
+log_content := log_content + "2026-01-25 10:00:15 ERROR Database connection failed\n"
+log_content := log_content + "2026-01-25 10:00:20 INFO Retry attempt\n"
+log_content := log_content + "2026-01-25 10:00:25 INFO Success\n"
+log_content := log_content + "2026-01-25 10:00:30 ERROR Timeout\n"
+
+write_file("server.log", log_content)
+
+# Count total lines
+let total := pipe_commands([
+    ["cat", "server.log"],
+    ["wc", "-l"]
+])
+print("Total log lines: ${trim(total)}")
+
+# Count ERROR entries
+let errors := pipe_commands([
+    ["cat", "server.log"],
+    ["grep", "ERROR"],
+    ["wc", "-l"]
+])
+print("ERROR entries: ${trim(errors)}")
+
+# Count INFO entries
+let info := pipe_commands([
+    ["cat", "server.log"],
+    ["grep", "INFO"],
+    ["wc", "-l"]
+])
+print("INFO entries: ${trim(info)}")
+
+delete_file("server.log")
+
+print("")
+
+# ===================================================================
+# Example 7: Error Handling
+# ===================================================================
+
+print("Example 7: Handling process errors")
+print("---")
+
+print("Skipping fatal error-path checks in auto-run mode")
+print("")
+
+# ===================================================================
+# Example 8: Building a Simple Script Runner
+# ===================================================================
+
+print("Example 8: Script runner with multiple commands")
+print("---")
+
+# Define a list of commands to run
+let commands := [
+    ["echo", "Step 1: Initialize"],
+    ["echo", "Step 2: Process data"],
+    ["echo", "Step 3: Complete"]
+]
+
+print("Running multi-step script:")
+for cmd in commands {
+    let result := spawn_process(cmd)
+    if result.success {
+        print("  ✓ ${trim(result.stdout)}")
+    } else {
+        print("  ✗ Failed: ${cmd[0]}")
+    }
+}
+
+print("")
+print("=== Examples Complete ===")

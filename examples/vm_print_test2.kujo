@@ -1,0 +1,3 @@
+// Test with simpler print
+x := 42
+y := print

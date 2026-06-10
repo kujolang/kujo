@@ -1,0 +1,27 @@
+# Test iterator and generator features
+
+# Test 1: Array with method calls (should work with our current implementation)
+print("Test 1: Array method chaining")
+numbers := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Test filter
+even := numbers.filter(func(n) { return n % 2 == 0 }).collect()
+print("Even numbers:")
+print(even)
+
+# Test map
+doubled := numbers.map(func(n) { return n * 2 }).collect()
+print("Doubled numbers:")
+print(doubled)
+
+# Test chaining
+result := numbers.filter(func(n) { return n % 2 == 0 }).map(func(n) { return n * 2 }).collect()
+print("Even numbers doubled:")
+print(result)
+
+# Test take
+first_three := numbers.take(3).collect()
+print("First 3 numbers:")
+print(first_three)
+
+print("All tests completed!")

@@ -1,0 +1,82 @@
+# Contact Manager
+# Demonstrates dicts, structs, string functions, and error handling
+
+struct Contact {
+	name: string,
+	email: string,
+	category: string
+}
+
+print("=== Contact Manager ===")
+print("")
+
+# Create contact dictionary
+contacts := {}
+
+# Add contacts
+alice := Contact { name: "Alice Johnson", email: "alice@work.com", category: "Work" }
+bob := Contact { name: "Bob Smith", email: "bob@personal.com", category: "Personal" }
+carol := Contact { name: "Carol Williams", email: "carol@work.com", category: "Work" }
+
+contacts["Alice"] := alice
+contacts["Bob"] := bob
+contacts["Carol"] := carol
+
+print("Added 3 contacts")
+print("")
+
+# List all contacts
+print("=== All Contacts ===")
+names := keys(contacts)
+for name in names {
+	contact := contacts[name]
+	print("Name: " + contact.name)
+	print("Email: " + contact.email)
+	print("Category: " + contact.category)
+	print("")
+}
+
+# Search for work contacts
+print("=== Work Contacts ===")
+for name in names {
+	contact := contacts[name]
+	if contact.category == "Work" {
+		print(contact.name + " - " + contact.email)
+	}
+}
+print("")
+
+# Search by email domain
+print("=== Searching for work.com emails ===")
+for name in names {
+	contact := contacts[name]
+	if contains(contact.email, "work.com") {
+		print(contact.name + ": " + contact.email)
+	}
+}
+print("")
+
+# Test error handling
+print("=== Testing Error Handling ===")
+try {
+	# Try to access non-existent contact
+	test := contacts["Nonexistent"]
+	print("Found: " + test.name)
+} except err {
+	print("Caught error: Contact not found")
+}
+
+# Check if contact exists
+print("")
+print("=== Checking Contact Existence ===")
+if has_key(contacts, "Alice") {
+	print("Alice is in the contacts")
+}
+
+if has_key(contacts, "Unknown") == false {
+	print("Unknown is not in the contacts")
+}
+
+print("")
+print("Total contacts: 3")
+print("Contact manager demo complete!")

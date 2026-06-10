@@ -1,0 +1,10 @@
+print("Testing load_image with error handling...")
+
+try {
+    img := load_image("nonexistent.jpg")
+    print("Loaded: " + img)
+} except error {
+    print("Caught error: " + error.message)
+}
+
+print("Test completed!")

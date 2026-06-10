@@ -1,0 +1,44 @@
+// Random Number Generator Tool
+// Demonstrates random functions from stdlib
+
+print("=== Random Number Generator ===")
+print("")
+
+// Generate random floats
+print("1. Random Floats (0.0 to 1.0):")
+for i in range(5) {
+    r := random()
+    print("  " + r)
+}
+
+print("")
+print("2. Random Dice Rolls (1-6):")
+for i in range(10) {
+    roll := random_int(1, 6)
+    print("  Roll " + (i + 1) + ": " + roll)
+}
+
+print("")
+print("3. Random Password Generator:")
+chars := ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "2", "3", "4", "5", "6", "7", "8", "9"]
+password := ""
+for i in range(12) {
+    char := random_choice(chars)
+    password := password + char
+}
+print("  Generated password: " + password)
+
+print("")
+print("4. Random Color Picker:")
+colors := ["Red", "Blue", "Green", "Yellow", "Purple", "Orange", "Pink", "Cyan"]
+for i in range(3) {
+    color := random_choice(colors)
+    print("  Color " + (i + 1) + ": " + color)
+}
+
+print("")
+print("5. Lottery Number Generator (6 numbers, 1-49):")
+for i in range(6) {
+    num := random_int(1, 49)
+    print("  " + num)
+}

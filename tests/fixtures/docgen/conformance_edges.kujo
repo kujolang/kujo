@@ -1,0 +1,16 @@
+/// Exported async task docs
+pub async func exported_async_task(value) {
+    return value
+}
+
+pub func public_without_docs_kujo(value) {
+    return value
+}
+
+/// Private container docs
+struct HiddenWorker {
+    /// Promoted method docs
+    pub func promoted(task) {
+        return task
+    }
+}

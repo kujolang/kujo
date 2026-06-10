@@ -1,0 +1,11 @@
+# Test just struct definition
+
+struct Test {
+    x: float,
+    
+    func add_value(val) {
+        return x + val;
+    }
+}
+
+print("Struct defined");

@@ -1,0 +1,19 @@
+# Test calling struct method without struct creation
+
+print("Test 1");
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func double() {
+        print("In double method");
+        print(x);
+    }
+}
+
+print("Test 2");
+v1 := Vec2 { x: 5.0, y: 10.0 };
+print("Test 3");
+v1.double();
+print("Test 4");

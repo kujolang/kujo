@@ -1,0 +1,153 @@
+// Log File Parser
+// Demonstrates regex for log analysis and data extraction
+
+print("=== Log File Parser ===")
+print("")
+
+// Sample log entries
+logs := [
+    "[2026-01-23 10:15:30] INFO: Application started successfully",
+    "[2026-01-23 10:15:31] DEBUG: Loading configuration from config.json",
+    "[2026-01-23 10:15:32] INFO: Connected to database",
+    "[2026-01-23 10:16:45] WARNING: High memory usage detected: 85%",
+    "[2026-01-23 10:17:12] ERROR: Failed to connect to API endpoint",
+    "[2026-01-23 10:17:15] INFO: Retrying connection...",
+    "[2026-01-23 10:17:18] ERROR: Connection timeout after 3 attempts",
+    "[2026-01-23 10:18:00] INFO: Fallback mode activated"
+]
+
+print("Sample Logs:")
+for log in logs {
+    print("  " + log)
+}
+print("")
+
+// Extract timestamps
+print("1. Extracting Timestamps:")
+timestamp_pattern := "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}"
+for log in logs {
+    timestamps := regex_find_all(log, timestamp_pattern)
+    if len(timestamps) > 0 {
+        print("  " + timestamps[0])
+    }
+}
+print("")
+
+// Filter by log level
+print("2. Filtering by Log Level:")
+
+print("  ERROR logs:")
+error_pattern := "\\[.*\\] ERROR:"
+for log in logs {
+    is_error := regex_match(log, error_pattern)
+    if is_error {
+        print("    " + log)
+    }
+}
+
+print("")
+print("  WARNING logs:")
+warning_pattern := "\\[.*\\] WARNING:"
+for log in logs {
+    is_warning := regex_match(log, warning_pattern)
+    if is_warning {
+        print("    " + log)
+    }
+}
+print("")
+
+// Extract log level and message
+print("3. Parsing Log Structure:")
+log_pattern := "\\[(.*?)\\] (\\w+):"
+for log in logs {
+    parts := regex_split(log, "\\] \\w+: ")
+    if len(parts) >= 2 {
+        // Extract just the message part
+        message := parts[1]
+        
+        // Get log level
+        levels := regex_find_all(log, "INFO|DEBUG|WARNING|ERROR")
+        if len(levels) > 0 {
+            level := levels[0]
+            print("  [" + level + "] " + message)
+        }
+    }
+}
+print("")
+
+// Extract numeric values (percentages, counts, etc.)
+print("4. Extracting Numeric Data:")
+for log in logs {
+    numbers := regex_find_all(log, "\\d+%?")
+    if len(numbers) > 0 {
+        print("  " + log)
+        print("    Found: " + join(numbers, ", "))
+    }
+}
+print("")
+
+// Redact sensitive information
+print("5. Redacting Sensitive Data:")
+sensitive_log := "[2026-01-23 11:00:00] INFO: User john@example.com logged in from IP 192.168.1.100"
+print("  Original: " + sensitive_log)
+
+// Redact email
+redacted := regex_replace(sensitive_log, "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}", "[EMAIL]")
+
+// Redact IP address
+redacted := regex_replace(redacted, "\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "[IP]")
+
+print("  Redacted: " + redacted)
+print("")
+
+// Extract file paths
+print("6. Finding File References:")
+code_log := "[2026-01-23] Loading /etc/config/app.conf and /var/log/app.log"
+print("  Log: " + code_log)
+
+paths := regex_find_all(code_log, "/[a-zA-Z0-9/_.-]+")
+print("  File paths found:")
+for path in paths {
+    print("    " + path)
+}
+print("")
+
+// URL extraction
+print("7. Extracting URLs:")
+api_log := "[2026-01-23] Calling https://api.example.com/v1/users and http://backup-api.org/status"
+print("  Log: " + api_log)
+
+urls := regex_find_all(api_log, "https?://[a-zA-Z0-9.-]+(/[a-zA-Z0-9/_-]*)?")
+print("  URLs found:")
+for url in urls {
+    print("    " + url)
+}
+print("")
+
+// Count log entries by type
+print("8. Log Statistics:")
+info_count := 0
+debug_count := 0
+warning_count := 0
+error_count := 0
+
+for log in logs {
+    if regex_match(log, "INFO:") {
+        info_count := info_count + 1
+    }
+    if regex_match(log, "DEBUG:") {
+        debug_count := debug_count + 1
+    }
+    if regex_match(log, "WARNING:") {
+        warning_count := warning_count + 1
+    }
+    if regex_match(log, "ERROR:") {
+        error_count := error_count + 1
+    }
+}
+
+print("  INFO: " + info_count)
+print("  DEBUG: " + debug_count)
+print("  WARNING: " + warning_count)
+print("  ERROR: " + error_count)
+print("  Total: " + len(logs))

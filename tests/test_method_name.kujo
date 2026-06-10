@@ -1,0 +1,18 @@
+# Test double underscore method names
+
+print("Test 1");
+
+struct Test {
+    x: float,
+    
+    func normal_method() {
+        return x * 2.0;
+    }
+}
+
+print("Test 2");
+
+t := Test { x: 5.0 };
+print(t.normal_method());
+
+print("Test 3");

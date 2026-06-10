@@ -1,0 +1,215 @@
+// test_collections.kujo - Comprehensive tests for Set, Queue, and Stack collections
+
+print("=== Set Tests ===")
+
+// Test 1: Creating a set from an array with duplicates
+arr := [1, 2, 3, 2, 1, 4, 3]
+set := Set(arr)
+print("Set from [1,2,3,2,1,4,3]:")
+print(set_to_array(set))  // Should print [1, 2, 3, 4]
+
+// Test 2: Set add operation
+set2 := Set([1, 2, 3])
+set2 := set_add(set2, 4)
+set2 := set_add(set2, 2)  // Adding duplicate should not change set
+print("After adding 4 and 2 (duplicate) to [1,2,3]:")
+print(set_to_array(set2))  // Should print [1, 2, 3, 4]
+
+// Test 3: Set has operation
+set3 := Set([10, 20, 30])
+has_20 := set_has(set3, 20)
+has_40 := set_has(set3, 40)
+print("Set has 20:", has_20)  // Should be true
+print("Set has 40:", has_40)  // Should be false
+
+// Test 4: Set remove operation
+set4 := Set([1, 2, 3, 4, 5])
+set4 := set_remove(set4, 3)
+set4 := set_remove(set4, 99)  // Removing non-existent item should not error
+print("After removing 3 from [1,2,3,4,5]:")
+print(set_to_array(set4))  // Should print [1, 2, 4, 5]
+
+// Test 5: Set union operation
+set_a := Set([1, 2, 3])
+set_b := Set([3, 4, 5])
+union := set_union(set_a, set_b)
+print("Union of [1,2,3] and [3,4,5]:")
+print(set_to_array(union))  // Should print [1, 2, 3, 4, 5]
+
+// Test 6: Set intersection operation
+set_c := Set([1, 2, 3, 4])
+set_d := Set([3, 4, 5, 6])
+intersect := set_intersect(set_c, set_d)
+print("Intersection of [1,2,3,4] and [3,4,5,6]:")
+print(set_to_array(intersect))  // Should print [3, 4]
+
+// Test 7: Set difference operation
+set_e := Set([1, 2, 3, 4])
+set_f := Set([3, 4, 5])
+diff := set_difference(set_e, set_f)
+print("Difference [1,2,3,4] - [3,4,5]:")
+print(set_to_array(diff))  // Should print [1, 2]
+
+// Test 8: Set with strings
+str_set := Set(["apple", "banana", "apple", "cherry"])
+print("String set from duplicates:")
+print(set_to_array(str_set))  // Should print ["apple", "banana", "cherry"]
+str_set := set_add(str_set, "date")
+print("After adding 'date':")
+print(set_to_array(str_set))
+
+// Test 9: Empty set
+empty_set := Set([])
+print("Empty set length:", len(empty_set))  // Should be 0
+empty_set := set_add(empty_set, "first")
+print("After adding to empty set:")
+print(set_to_array(empty_set))  // Should print ["first"]
+
+// Test 10: Set length
+set_len := Set([1, 2, 3, 4, 5])
+print("Set length:", len(set_len))  // Should be 5
+
+print("")
+print("=== Queue Tests ===")
+
+// Test 11: Creating an empty queue
+queue1 := Queue([])
+is_empty := queue_is_empty(queue1)
+print("Empty queue is empty:", is_empty)  // Should be true
+
+// Test 12: Enqueue operations
+queue2 := Queue([])
+queue2 := queue_enqueue(queue2, "first")
+queue2 := queue_enqueue(queue2, "second")
+queue2 := queue_enqueue(queue2, "third")
+print("Queue after enqueuing 3 items:")
+print(queue_to_array(queue2))  // Should print ["first", "second", "third"]
+
+// Test 13: Dequeue operation
+queue3 := Queue(["a", "b", "c"])
+result := queue_dequeue(queue3)
+queue3 := result[0]
+item := result[1]
+print("Dequeued item:", item)  // Should be "a"
+print("Queue after dequeue:")
+print(queue_to_array(queue3))  // Should print ["b", "c"]
+
+// Test 14: Peek operation
+queue4 := Queue([10, 20, 30])
+front := queue_peek(queue4)
+print("Front of queue:", front)  // Should be 10
+print("Queue still has:", len(queue4), "items")  // Should be 3
+
+// Test 15: Dequeue from empty queue
+empty_queue := Queue([])
+result2 := queue_dequeue(empty_queue)
+empty_queue := result2[0]
+item2 := result2[1]
+print("Dequeue from empty returns:", item2)  // Should be null
+
+// Test 16: Peek empty queue
+empty_peek := queue_peek(Queue([]))
+print("Peek empty queue:", empty_peek)  // Should be null
+
+// Test 17: Queue is_empty after operations
+queue5 := Queue([1])
+print("Queue with 1 item is empty:", queue_is_empty(queue5))  // Should be false
+result3 := queue_dequeue(queue5)
+queue5 := result3[0]
+print("Queue after removing only item is empty:", queue_is_empty(queue5))  // Should be true
+
+// Test 18: Queue from array
+queue6 := Queue([100, 200, 300, 400])
+print("Queue created from array:")
+print(queue_to_array(queue6))  // Should print [100, 200, 300, 400]
+
+// Test 19: Queue length
+queue7 := Queue([1, 2, 3, 4, 5, 6])
+print("Queue length:", len(queue7))  // Should be 6
+
+// Test 20: FIFO behavior verification
+fifo := Queue([])
+fifo := queue_enqueue(fifo, "A")
+fifo := queue_enqueue(fifo, "B")
+fifo := queue_enqueue(fifo, "C")
+result4 := queue_dequeue(fifo)
+fifo := result4[0]
+first_out := result4[1]
+result5 := queue_dequeue(fifo)
+fifo := result5[0]
+second_out := result5[1]
+print("FIFO: First out:", first_out, ", Second out:", second_out)  // Should be A, B
+
+print("")
+print("=== Stack Tests ===")
+
+// Test 21: Creating an empty stack
+stack1 := Stack([])
+is_empty_stack := stack_is_empty(stack1)
+print("Empty stack is empty:", is_empty_stack)  // Should be true
+
+// Test 22: Push operations
+stack2 := Stack([])
+stack2 := stack_push(stack2, "bottom")
+stack2 := stack_push(stack2, "middle")
+stack2 := stack_push(stack2, "top")
+print("Stack after pushing 3 items:")
+print(stack_to_array(stack2))  // Should print ["bottom", "middle", "top"]
+
+// Test 23: Pop operation
+stack3 := Stack(["a", "b", "c"])
+result6 := stack_pop(stack3)
+stack3 := result6[0]
+popped := result6[1]
+print("Popped item:", popped)  // Should be "c"
+print("Stack after pop:")
+print(stack_to_array(stack3))  // Should print ["a", "b"]
+
+// Test 24: Peek operation
+stack4 := Stack([10, 20, 30])
+top := stack_peek(stack4)
+print("Top of stack:", top)  // Should be 30
+print("Stack still has:", len(stack4), "items")  // Should be 3
+
+// Test 25: Pop from empty stack
+empty_stack := Stack([])
+result7 := stack_pop(empty_stack)
+empty_stack := result7[0]
+popped_item := result7[1]
+print("Pop from empty returns:", popped_item)  // Should be null
+
+// Test 26: Peek empty stack
+empty_peek_stack := stack_peek(Stack([]))
+print("Peek empty stack:", empty_peek_stack)  // Should be null
+
+// Test 27: Stack is_empty after operations
+stack5 := Stack([1])
+print("Stack with 1 item is empty:", stack_is_empty(stack5))  // Should be false
+result8 := stack_pop(stack5)
+stack5 := result8[0]
+print("Stack after removing only item is empty:", stack_is_empty(stack5))  // Should be true
+
+// Test 28: Stack from array
+stack6 := Stack([100, 200, 300, 400])
+print("Stack created from array:")
+print(stack_to_array(stack6))  // Should print [100, 200, 300, 400]
+
+// Test 29: Stack length
+stack7 := Stack([1, 2, 3, 4, 5, 6, 7])
+print("Stack length:", len(stack7))  // Should be 7
+
+// Test 30: LIFO behavior verification
+lifo := Stack([])
+lifo := stack_push(lifo, "A")
+lifo := stack_push(lifo, "B")
+lifo := stack_push(lifo, "C")
+result9 := stack_pop(lifo)
+lifo := result9[0]
+first_pop := result9[1]
+result10 := stack_pop(lifo)
+lifo := result10[0]
+second_pop := result10[1]
+print("LIFO: First pop:", first_pop, ", Second pop:", second_pop)  // Should be C, B
+
+print("")
+print("=== All Collection Tests Complete ===")

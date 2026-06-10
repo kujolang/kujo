@@ -1,0 +1,4 @@
+# Just create and print an Ok value
+let ok_value := Ok(42)
+print("Created OK")
+print(ok_value)

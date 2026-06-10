@@ -1,0 +1,15 @@
+# Test operator overloading with op_add
+
+struct Number {
+    value: float,
+    
+    func op_add(other) {
+        return value + other.value;
+    }
+}
+
+n1 := Number { value: 10.0 };
+n2 := Number { value: 20.0 };
+n3 := n1 + n2;
+print(n3);
+print("Test complete");

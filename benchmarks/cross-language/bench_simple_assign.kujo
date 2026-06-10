@@ -1,0 +1,21 @@
+# Test LoadVar overhead
+
+func count_assignments(n) {
+    count := 0
+    i := 0
+    while i < n {
+        count := count + 1
+        i := i + 1
+    }
+    return count
+}
+
+print("Testing simple assignments with n=10000")
+start := performance_now()
+result := count_assignments(10000)
+elapsed := performance_now() - start
+print("Result: ")
+print(result)
+print("Time: ")
+print(elapsed)
+print("ms")

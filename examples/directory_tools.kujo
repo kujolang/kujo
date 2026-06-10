@@ -1,0 +1,31 @@
+# Directory operations example
+# Demonstrates create_dir, list_dir, file_exists
+
+base_dir := "/tmp/kujo_workspace"
+
+# Create directory structure
+print("Creating directory structure...")
+create_dir(base_dir)
+create_dir(base_dir + "/src")
+create_dir(base_dir + "/tests")
+create_dir(base_dir + "/docs")
+
+# Create some files
+write_file(base_dir + "/README.md", "# My Project\n\nWelcome!")
+write_file(base_dir + "/src/main.kujo", "print(\"Hello, World!\")")
+write_file(base_dir + "/tests/test.kujo", "# Tests here")
+
+# List directory contents
+print("\nDirectory contents:")
+files := list_dir(base_dir)
+for file in files {
+    print("  - " + file)
+}
+
+# Check if specific files exist
+readme_exists := file_exists(base_dir + "/README.md")
+config_exists := file_exists(base_dir + "/config.yaml")
+
+print("\nFile checks:")
+print("  README.md exists: " + readme_exists)
+print("  config.yaml exists: " + config_exists)

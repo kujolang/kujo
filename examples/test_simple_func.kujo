@@ -1,0 +1,7 @@
+// Test simple function
+func simple(n) {
+    return n + 10
+}
+
+result := simple(5)
+print("simple(5) =", result)

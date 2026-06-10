@@ -1,0 +1,12 @@
+# OS Module Examples
+# Minimal stable subset for VM auto-run
+
+print("=== OS Module Examples ===")
+
+cwd := os_getcwd()
+print("Current directory: " + cwd)
+
+env_vars := os_environ()
+print("Environment variable count: " + to_string(len(env_vars)))
+
+print("=== OS Module Demo Complete ===")

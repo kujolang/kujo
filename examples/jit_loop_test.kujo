@@ -1,0 +1,40 @@
+# JIT Loop Test
+# This program tests the JIT compiler with a hot loop
+# The loop should be compiled to native code after 100 iterations
+
+print("Testing JIT compilation with a hot loop...")
+
+# Simple arithmetic loop
+sum := 0
+for i in range(1000) {
+    sum := sum + i
+}
+
+print("Sum calculated successfully")
+print(sum)
+
+# Nested loop test
+result := 0
+for i in range(100) {
+    for j in range(100) {
+        result := result + (i * j)
+    }
+}
+
+print("Nested loop result:")
+print(result)
+
+# Comparison and logical operations in a loop
+count := 0
+for i in range(500) {
+    if i % 2 == 0 {
+        if i > 10 {
+            count := count + 1
+        }
+    }
+}
+
+print("Count of even numbers > 10:")
+print(count)
+
+print("JIT test complete!")

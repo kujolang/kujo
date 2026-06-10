@@ -1,0 +1,34 @@
+enum Option {
+    Some,
+    None
+}
+
+enum Result {
+    Ok,
+    Err
+}
+
+func get(val) {
+    if val == 1 {
+        return Result::Ok(Option::Some("yay"))
+    }
+    return Result::Ok(Option::None)
+}
+
+res := get(2)
+
+match res {
+    case Result::Ok(inner): {
+        match inner {
+            case Option::Some(msg): {
+                print("Message:", msg)
+            }
+            case Option::None: {
+                print("Nothing there")
+            }
+        }
+    }
+    case Result::Err(err): {
+        print("Error:", err)
+    }
+}

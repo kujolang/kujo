@@ -1,0 +1,112 @@
+# File Operations Demo
+# Demonstrates the new file operation functions added in v0.7.0
+
+print("=== File Operations Demo ===")
+print()
+
+# Create a test file
+print("1. Creating test file...")
+write_file("demo_test.txt", "Hello, Kujo!\nThis is a test file.\n")
+print("   ✓ Created demo_test.txt")
+print()
+
+# Check file size
+print("2. Checking file size...")
+size := file_size("demo_test.txt")
+print("   File size: ${size} bytes")
+print()
+
+# Copy the file
+print("3. Copying file...")
+copy_file("demo_test.txt", "demo_test_copy.txt")
+print("   ✓ Copied to demo_test_copy.txt")
+print()
+
+# Verify both files exist
+print("4. Verifying both files exist...")
+exists1 := file_exists("demo_test.txt")
+exists2 := file_exists("demo_test_copy.txt")
+print("   Original exists: ${exists1}")
+print("   Copy exists: ${exists2}")
+print()
+
+# Check sizes match
+print("5. Comparing file sizes...")
+size1 := file_size("demo_test.txt")
+size2 := file_size("demo_test_copy.txt")
+if size1 == size2 {
+    print("   ✓ Sizes match: ${size1} bytes")
+} else {
+    print("   ✗ Size mismatch!")
+}
+print()
+
+# Rename the original
+print("6. Renaming original file...")
+rename_file("demo_test.txt", "demo_renamed.txt")
+print("   ✓ Renamed to demo_renamed.txt")
+print()
+
+# List current directory to see files
+print("7. Files in current directory:")
+files := list_dir(".")
+for file in files {
+    if contains(file, "demo_") {
+        print("   - ${file}")
+    }
+}
+print()
+
+# Clean up
+print("8. Cleaning up...")
+delete_file("demo_renamed.txt")
+delete_file("demo_test_copy.txt")
+print("   ✓ Deleted all test files")
+print()
+
+# Verify cleanup
+print("9. Verification:")
+check1 := file_exists("demo_test.txt")
+check2 := file_exists("demo_test_copy.txt")
+check3 := file_exists("demo_renamed.txt")
+
+if !check1 && !check2 && !check3 {
+    print("   ✓ All files successfully removed")
+} else {
+    print("   ✗ Some files still exist")
+}
+print()
+
+print("=== Demo Complete ===")
+
+# Practical example: Backup system
+print()
+print("=== Practical Example: Simple Backup ===")
+print()
+
+# Create a config file
+config := "database_host=localhost\ndatabase_port=5432\n"
+write_file("app_config.txt", config)
+print("Created app_config.txt (${len(config)} bytes)")
+
+# Create backup
+if file_exists("app_config.txt") {
+    copy_file("app_config.txt", "app_config.backup.txt")
+    size := file_size("app_config.backup.txt")
+    print("Backup created: app_config.backup.txt (${size} bytes)")
+}
+
+# Modify the config
+new_config := "database_host=prod-server\ndatabase_port=5432\n"
+write_file("app_config.txt", new_config)
+print("Modified app_config.txt")
+
+# Compare sizes
+original_size := file_size("app_config.txt")
+backup_size := file_size("app_config.backup.txt")
+print("Original: ${original_size} bytes, Backup: ${backup_size} bytes")
+
+# Cleanup
+delete_file("app_config.txt")
+delete_file("app_config.backup.txt")
+print("Cleanup complete")

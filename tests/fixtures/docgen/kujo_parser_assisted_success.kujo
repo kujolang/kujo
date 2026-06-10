@@ -1,0 +1,18 @@
+export func exported_fn(value) {
+    return value
+}
+
+func private_fn(value) {
+    return value
+}
+
+export struct Runner {
+    func run(self, value) {
+        return value
+    }
+}
+
+export enum Status {
+    Ready,
+    Failed,
+}

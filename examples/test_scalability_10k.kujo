@@ -1,0 +1,99 @@
+# Test scalability with 10,000+ concurrent operations
+# This tests the parallel processing infrastructure at scale
+
+print("Starting 10K concurrent operations test...")
+
+# Test 1: 10K promises with parallel_map
+print("\n=== Test 1: parallel_map with 10K items ===")
+start_time := now()
+
+items := range(0, 10000)
+# Use a simple operation - just return the square
+result_promise := parallel_map(items, func(x) { return x * x }, 100)
+results := await result_promise
+
+elapsed := now() - start_time
+print("Processed 10,000 items in ${elapsed}s")
+print("Result count: ${len(results)}")
+if len(results) > 0 {
+    print("First result: ${results[0]}")
+    if len(results) >= 10000 {
+        print("Last result: ${results[9999]}")
+    }
+}
+
+# Test 2: promise_all with 10K promises
+print("\n=== Test 2: promise_all with 10K async operations ===")
+# Note: spawn_task requires async functions, so we'll use promise_all with parallel_map results
+start_time := now()
+
+# Create multiple parallel_map operations
+items1 := range(0, 1000)
+items2 := range(1000, 2000)
+items3 := range(2000, 3000)
+items4 := range(3000, 4000)
+items5 := range(4000, 5000)
+items6 := range(5000, 6000)
+items7 := range(6000, 7000)
+items8 := range(7000, 8000)
+items9 := range(8000, 9000)
+items10 := range(9000, 10000)
+
+promises := [
+    parallel_map(items1, func(x) { return x * 2 }, 100),
+    parallel_map(items2, func(x) { return x * 2 }, 100),
+    parallel_map(items3, func(x) { return x * 2 }, 100),
+    parallel_map(items4, func(x) { return x * 2 }, 100),
+    parallel_map(items5, func(x) { return x * 2 }, 100),
+    parallel_map(items6, func(x) { return x * 2 }, 100),
+    parallel_map(items7, func(x) { return x * 2 }, 100),
+    parallel_map(items8, func(x) { return x * 2 }, 100),
+    parallel_map(items9, func(x) { return x * 2 }, 100),
+    parallel_map(items10, func(x) { return x * 2 }, 100)
+]
+
+result_arrays := await promise_all(promises, 10)
+elapsed := now() - start_time
+total_results := 0
+for arr in result_arrays {
+    total_results := total_results + len(arr)
+}
+print("Processed ${total_results} items via promise_all in ${elapsed}s")
+
+# Test 3: par_each with 10K items (side effects)
+print("\n=== Test 3: par_each with 10K items ===")
+start_time := now()
+
+items := range(0, 10000)
+result_promise := par_each(items, func(x) { 
+    # Return a value (par_each discards it)
+    return x * x + x * 2
+}, 100)
+await result_promise
+
+elapsed := now() - start_time
+print("Processed 10,000 items with par_each in ${elapsed}s")
+
+# Test 4: Large-scale single parallel operation
+print("\n=== Test 4: Single parallel operation with 10K items ===")
+start_time := now()
+
+# Just repeat test 1 to verify consistency
+items := range(0, 10000)
+result_promise := parallel_map(items, func(x) {
+    return x + 100
+}, 100)
+results := await result_promise
+
+elapsed := now() - start_time
+print("Processed 10,000 operations in ${elapsed}s")
+print("Result count: ${len(results)}")
+if len(results) > 0 {
+    print("Verification - First result: ${results[0]} (should be 100)")
+    if len(results) >= 10000 {
+        print("Verification - Last result: ${results[9999]} (should be 10099)")
+    }
+}
+
+print("\n=== Scalability Test Complete ===")
+print("All tests passed!")

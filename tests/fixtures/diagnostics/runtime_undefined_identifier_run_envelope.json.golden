@@ -1,0 +1,17 @@
+{
+  "command": "run",
+  "contract_version": "1.0.0-draft",
+  "diagnostic": {
+    "code": "RUFRUN001",
+    "column": 1,
+    "file": "runtime_undefined_identifier.kujo",
+    "help": null,
+    "line": 1,
+    "message": "Undefined variable: missing_value",
+    "severity": "error",
+    "subsystem": "runtime"
+  },
+  "exit_code": 4,
+  "kind": "runtime_diagnostic",
+  "status": "error"
+}

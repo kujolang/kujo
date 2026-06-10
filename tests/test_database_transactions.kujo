@@ -1,0 +1,335 @@
+# Test: Database Transaction Support
+# Tests transaction functionality for SQLite, PostgreSQL, and MySQL
+
+print("Testing Database Transactions...")
+
+# ============================================================================
+# Test 1: Basic Transaction - Commit Success
+# ============================================================================
+print("\n=== Test 1: Basic Transaction Commit ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table
+db_execute(db, "CREATE TABLE accounts (id INTEGER PRIMARY KEY, name TEXT, balance REAL)", [])
+
+# Begin transaction
+result := db_begin(db)
+assert(result == true, "db_begin should return true")
+
+# Insert data within transaction
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Alice", 100.0])
+db_execute(db, "INSERT INTO accounts (name, balance) VALUES (?, ?)", ["Bob", 200.0])
+
+# Commit transaction
+result := db_commit(db)
+assert(result == true, "db_commit should return true")
+
+# Verify data was committed
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM accounts", [])
+assert(len(rows) == 1, "Should get one result row")
+assert(rows[0]["cnt"] == 2.0, "Should have 2 accounts after commit")
+
+print("✓ Basic transaction commit works")
+
+db_close(db)
+
+# ============================================================================
+# Test 2: Transaction Rollback
+# ============================================================================
+print("\n=== Test 2: Transaction Rollback ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table
+db_execute(db, "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)", [])
+
+# Insert initial data
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["John", "john@example.com"])
+
+# Begin transaction
+db_begin(db)
+
+# Insert more data
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Jane", "jane@example.com"])
+db_execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", ["Jim", "jim@example.com"])
+
+# Verify data is visible within transaction
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM users", [])
+assert(rows[0]["cnt"] == 3.0, "Should have 3 users in transaction")
+
+# Rollback transaction
+result := db_rollback(db)
+assert(result == true, "db_rollback should return true")
+
+# Verify rollback worked - only initial data remains
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM users", [])
+assert(rows[0]["cnt"] == 1.0, "Should have only 1 user after rollback")
+
+rows := db_query(db, "SELECT name FROM users", [])
+assert(rows[0]["name"] == "John", "Only John should remain")
+
+print("✓ Transaction rollback works")
+
+db_close(db)
+
+# ============================================================================
+# Test 3: Transaction with Last Insert ID
+# ============================================================================
+print("\n=== Test 3: Last Insert ID ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table with auto-increment
+db_execute(db, "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTOINCREMENT, product TEXT, quantity INTEGER)", [])
+
+# Begin transaction
+db_begin(db)
+
+# Insert order
+db_execute(db, "INSERT INTO orders (product, quantity) VALUES (?, ?)", ["Widget", 5])
+order_id := db_last_insert_id(db)
+assert(order_id == 1.0, "First insert should have ID 1")
+
+# Insert another order
+db_execute(db, "INSERT INTO orders (product, quantity) VALUES (?, ?)", ["Gadget", 3])
+order_id := db_last_insert_id(db)
+assert(order_id == 2.0, "Second insert should have ID 2")
+
+# Commit
+db_commit(db)
+
+# Verify orders exist
+rows := db_query(db, "SELECT * FROM orders ORDER BY id", [])
+assert(len(rows) == 2, "Should have 2 orders")
+assert(rows[0]["product"] == "Widget", "First order should be Widget")
+assert(rows[1]["product"] == "Gadget", "Second order should be Gadget")
+
+print("✓ Last insert ID works in transactions")
+
+db_close(db)
+
+# ============================================================================
+# Test 4: Error Handling - Double Begin
+# ============================================================================
+print("\n=== Test 4: Error Handling ===")
+
+db := db_connect("sqlite", ":memory:")
+db_execute(db, "CREATE TABLE test (id INTEGER)", [])
+
+# Begin transaction
+db_begin(db)
+
+# Try to begin again - should fail
+try {
+    result := db_begin(db)
+    assert(type(result) == "Error", "Double begin should fail")
+} except error {
+    print("Caught expected double-begin error")
+}
+
+# Commit the first transaction
+db_commit(db)
+
+# Now we can begin again
+result := db_begin(db)
+assert(result == true, "Should be able to begin after commit")
+db_commit(db)
+
+print("✓ Double begin prevented")
+
+db_close(db)
+
+# ============================================================================
+# Test 5: Error Handling - Commit/Rollback without Begin
+# ============================================================================
+print("\n=== Test 5: Commit/Rollback without Begin ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Try to commit without begin
+try {
+    result := db_commit(db)
+    assert(type(result) == "Error", "Commit without begin should fail")
+} except error {
+    print("Caught expected commit-without-begin error")
+}
+
+# Try to rollback without begin
+try {
+    result := db_rollback(db)
+    assert(type(result) == "Error", "Rollback without begin should fail")
+} except error {
+    print("Caught expected rollback-without-begin error")
+}
+
+print("✓ Commit/rollback without begin prevented")
+
+db_close(db)
+
+# ============================================================================
+# Test 6: Multi-Statement Transaction (Atomic Updates)
+# ============================================================================
+print("\n=== Test 6: Atomic Multi-Statement Updates ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create accounts table
+db_execute(db, "CREATE TABLE bank_accounts (id INTEGER PRIMARY KEY, name TEXT, balance REAL)", [])
+db_execute(db, "INSERT INTO bank_accounts (name, balance) VALUES (?, ?)", ["Alice", 1000.0])
+db_execute(db, "INSERT INTO bank_accounts (name, balance) VALUES (?, ?)", ["Bob", 500.0])
+
+# Transfer money from Alice to Bob (atomic operation)
+db_begin(db)
+
+# Debit Alice
+db_execute(db, "UPDATE bank_accounts SET balance = balance - ? WHERE name = ?", [100.0, "Alice"])
+
+# Credit Bob
+db_execute(db, "UPDATE bank_accounts SET balance = balance + ? WHERE name = ?", [100.0, "Bob"])
+
+# Commit the transfer
+db_commit(db)
+
+# Verify balances
+rows := db_query(db, "SELECT name, balance FROM bank_accounts ORDER BY name", [])
+assert(rows[0]["name"] == "Alice", "First account is Alice")
+assert(rows[0]["balance"] == 900.0, "Alice should have 900")
+assert(rows[1]["name"] == "Bob", "Second account is Bob")
+assert(rows[1]["balance"] == 600.0, "Bob should have 600")
+
+print("✓ Atomic multi-statement updates work")
+
+db_close(db)
+
+# ============================================================================
+# Test 7: Transaction with Failed Operation Rollback
+# ============================================================================
+print("\n=== Test 7: Transaction with Error Handling ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table with unique constraint
+db_execute(db, "CREATE TABLE products (id INTEGER PRIMARY KEY, sku TEXT UNIQUE, name TEXT)", [])
+db_execute(db, "INSERT INTO products (sku, name) VALUES (?, ?)", ["SKU001", "Product A"])
+
+# Try to insert duplicate SKU in a transaction
+db_begin(db)
+db_execute(db, "INSERT INTO products (sku, name) VALUES (?, ?)", ["SKU002", "Product B"])
+
+# This should fail due to unique constraint
+try {
+    result := db_execute(db, "INSERT INTO products (sku, name) VALUES (?, ?)", ["SKU001", "Duplicate"])
+
+    # Check if it's an error
+    if type(result) == "Error" {
+        # Rollback on error
+        db_rollback(db)
+        print("✓ Error detected, transaction rolled back")
+    } else {
+        db_commit(db)
+    }
+} except error {
+    db_rollback(db)
+    print("✓ Error detected, transaction rolled back")
+}
+
+# Verify only original product exists (rollback worked)
+rows := db_query(db, "SELECT COUNT(*) as cnt FROM products", [])
+assert(rows[0]["cnt"] == 1.0, "Should have only 1 product after rollback")
+
+db_close(db)
+
+# ============================================================================
+# Test 8: Complex E-Commerce Transaction
+# ============================================================================
+print("\n=== Test 8: Complex E-Commerce Transaction ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create schema
+db_execute(db, "CREATE TABLE orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer TEXT, total REAL, status TEXT)", [])
+db_execute(db, "CREATE TABLE order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER, product TEXT, quantity INTEGER, price REAL)", [])
+db_execute(db, "CREATE TABLE inventory (product TEXT PRIMARY KEY, quantity INTEGER)", [])
+
+# Initialize inventory
+db_execute(db, "INSERT INTO inventory (product, quantity) VALUES (?, ?)", ["Widget", 100])
+db_execute(db, "INSERT INTO inventory (product, quantity) VALUES (?, ?)", ["Gadget", 50])
+
+# Process an order (atomic operation)
+db_begin(db)
+
+# Create order
+db_execute(db, "INSERT INTO orders (customer, total, status) VALUES (?, ?, ?)", ["Customer A", 99.99, "pending"])
+order_id := db_last_insert_id(db)
+
+# Add order items
+db_execute(db, "INSERT INTO order_items (order_id, product, quantity, price) VALUES (?, ?, ?, ?)", [order_id, "Widget", 2, 49.99])
+db_execute(db, "INSERT INTO order_items (order_id, product, quantity, price) VALUES (?, ?, ?, ?)", [order_id, "Gadget", 1, 0.01])
+
+# Update inventory
+db_execute(db, "UPDATE inventory SET quantity = quantity - ? WHERE product = ?", [2, "Widget"])
+db_execute(db, "UPDATE inventory SET quantity = quantity - ? WHERE product = ?", [1, "Gadget"])
+
+# Update order status
+db_execute(db, "UPDATE orders SET status = ? WHERE id = ?", ["confirmed", order_id])
+
+# Commit entire transaction
+db_commit(db)
+
+# Verify everything worked
+orders := db_query(db, "SELECT * FROM orders WHERE id = ?", [order_id])
+assert(len(orders) == 1, "Should have 1 order")
+assert(orders[0]["status"] == "confirmed", "Order should be confirmed")
+
+items := db_query(db, "SELECT COUNT(*) as cnt FROM order_items WHERE order_id = ?", [order_id])
+assert(items[0]["cnt"] == 2.0, "Should have 2 order items")
+
+inventory := db_query(db, "SELECT product, quantity FROM inventory ORDER BY product", [])
+assert(inventory[0]["product"] == "Gadget", "First product is Gadget")
+assert(inventory[0]["quantity"] == 49.0, "Gadget inventory should be 49")
+assert(inventory[1]["product"] == "Widget", "Second product is Widget")
+assert(inventory[1]["quantity"] == 98.0, "Widget inventory should be 98")
+
+print("✓ Complex e-commerce transaction works")
+
+db_close(db)
+
+# ============================================================================
+# Test 9: Transaction Isolation (Read Uncommitted Data)
+# ============================================================================
+print("\n=== Test 9: Transaction Isolation ===")
+
+db := db_connect("sqlite", ":memory:")
+
+# Create table
+db_execute(db, "CREATE TABLE messages (id INTEGER PRIMARY KEY, text TEXT)", [])
+db_execute(db, "INSERT INTO messages (text) VALUES (?)", ["Original"])
+
+# Begin transaction
+db_begin(db)
+
+# Modify data
+db_execute(db, "UPDATE messages SET text = ? WHERE id = ?", ["Modified", 1])
+
+# Read within transaction - should see modified data
+rows := db_query(db, "SELECT text FROM messages WHERE id = ?", [1])
+assert(rows[0]["text"] == "Modified", "Should see modified data in transaction")
+
+# Rollback
+db_rollback(db)
+
+# Read after rollback - should see original data
+rows := db_query(db, "SELECT text FROM messages WHERE id = ?", [1])
+assert(rows[0]["text"] == "Original", "Should see original data after rollback")
+
+print("✓ Transaction isolation works")
+
+db_close(db)
+
+# ============================================================================
+# All Tests Passed
+# ============================================================================
+print("\n==================================================")
+print("✅ ALL TRANSACTION TESTS PASSED!")
+print("==================================================")

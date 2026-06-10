@@ -1,0 +1,170 @@
+# Test: Bytecode VM - Basic Arithmetic
+# Tests basic arithmetic operations through bytecode compilation
+
+let x := 5 + 3
+print(x)  # Should print: 8
+
+let y := 10 - 2
+print(y)  # Should print: 8
+
+let z := 4 * 3
+print(z)  # Should print: 12
+
+let w := 20 / 4
+print(w)  # Should print: 5
+
+let r := 17 % 5
+print(r)  # Should print: 2
+
+# Test: Bytecode VM - Variables and Assignment
+mut a := 42
+print(a)  # Should print: 42
+
+a = 100
+print(a)  # Should print: 100
+
+# Test: Bytecode VM - Comparison Operations
+let cmp1 := 5 == 5
+print(cmp1)  # Should print: true
+
+let cmp2 := 5 != 3
+print(cmp2)  # Should print: true
+
+let cmp3 := 10 > 5
+print(cmp3)  # Should print: true
+
+let cmp4 := 3 < 7
+print(cmp4)  # Should print: true
+
+let cmp5 := 5 <= 5
+print(cmp5)  # Should print: true
+
+let cmp6 := 10 >= 8
+print(cmp6)  # Should print: true
+
+# Test: Bytecode VM - Logical Operations
+let log1 := true && true
+print(log1)  # Should print: true
+
+let log2 := true && false
+print(log2)  # Should print: false
+
+let log3 := false || true
+print(log3)  # Should print: true
+
+let log4 := !false
+print(log4)  # Should print: true
+
+# Test: Bytecode VM - If Statements
+if true {
+    print("if works")  # Should print: if works
+}
+
+if false {
+    print("should not print")
+} else {
+    print("else works")  # Should print: else works
+}
+
+let condition := 5 > 3
+if condition {
+    print("condition true")  # Should print: condition true
+}
+
+# Test: Bytecode VM - While Loops
+mut counter := 0
+while counter < 3 {
+    print(counter)  # Should print: 0, 1, 2
+    counter := counter + 1
+}
+
+# Test: Bytecode VM - For Loops
+for i in [1, 2, 3] {
+    print(i)  # Should print: 1, 2, 3
+}
+
+# Test: Bytecode VM - Arrays
+let arr := [1, 2, 3, 4, 5]
+print(arr)  # Should print: [1, 2, 3, 4, 5]
+
+print(arr[0])  # Should print: 1
+print(arr[2])  # Should print: 3
+
+mut arr2 := [10, 20, 30]
+arr2[1] := 99
+print(arr2)  # Should print: [10, 99, 30]
+
+# Test: Bytecode VM - Dictionaries
+mut person := {"name": "Alice", "age": 30}
+print(person)  # Should print: {"name": "Alice", "age": 30}
+
+print(person["name"])  # Should print: Alice
+print(person["age"])   # Should print: 30
+
+person["age"] := 31
+print(person["age"])   # Should print: 31
+
+# Test: Bytecode VM - Strings
+let str1 := "Hello"
+let str2 := "World"
+let combined := str1 + " " + str2
+print(combined)  # Should print: Hello World
+
+# Test: Bytecode VM - String Indexing
+let text := "Kujo"
+print(text[0])  # Should print: R
+print(text[1])  # Should print: u
+
+# Test: Bytecode VM - Functions (Basic)
+func add(a, b) {
+    return a + b
+}
+
+let total := add(10, 20)
+print(total)  # Should print: 30
+
+# Test: Bytecode VM - Functions with Multiple Returns
+func max_of_two(a, b) {
+    if a > b {
+        return a
+    } else {
+        return b
+    }
+}
+
+print(max_of_two(15, 10))  # Should print: 15
+print(max_of_two(5, 20))   # Should print: 20
+
+# Test: Bytecode VM - Nested Expressions
+let nested := (5 + 3) * (10 - 2)
+print(nested)  # Should print: 64
+
+# Test: Bytecode VM - Complex Conditions
+let complex := (5 > 3) && (10 < 20) && (7 == 7)
+print(complex)  # Should print: true
+
+# Test: Bytecode VM - Simple Function Return
+func divide(a, b) {
+    if b == 0 {
+        return 0
+    }
+    return a / b
+}
+
+let result1 := divide(10, 2)
+print(result1)
+
+# Test: Bytecode VM - Array Search
+func find_value(arr, target) {
+    for item in arr {
+        if item == target {
+            return true
+        }
+    }
+    return false
+}
+
+let found := find_value([1, 2, 3], 2)
+print(found)
+
+print("All bytecode VM tests completed!")

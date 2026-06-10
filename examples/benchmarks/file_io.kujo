@@ -1,0 +1,236 @@
+# Real-World Benchmark: File I/O Operations
+# Tests sequential and random file access patterns
+
+func create_test_data(size_kb) {
+    # Create test data of specified size
+    chunk := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.\n"
+    chunk_size := len(chunk)
+    
+    data := ""
+    bytes_needed := size_kb * 1024
+    repetitions := bytes_needed / chunk_size
+    
+    for i in range(repetitions) {
+        data := data + chunk
+    }
+    
+    return data
+}
+
+func benchmark_sequential_write(filename, size_kb) {
+    # Create test data
+    data := create_test_data(size_kb)
+    
+    # Write sequentially
+    start := time_ms()
+    write_file(filename, data)
+    elapsed := time_ms() - start
+    
+    return {
+        "operation": "sequential_write",
+        "size_kb": size_kb,
+        "time_ms": elapsed,
+        "throughput_kbps": (size_kb / elapsed) * 1000
+    }
+}
+
+func benchmark_sequential_read(filename) {
+    # Read entire file
+    start := time_ms()
+    content := read_file(filename)
+    elapsed := time_ms() - start
+    
+    size_kb := len(content) / 1024
+    
+    return {
+        "operation": "sequential_read",
+        "size_kb": size_kb,
+        "time_ms": elapsed,
+        "throughput_kbps": (size_kb / elapsed) * 1000
+    }
+}
+
+func benchmark_append_operations(filename, num_appends) {
+    # Test file append performance
+    write_file(filename, "")  # Create empty file
+    
+    line := "This is a test line for append operations.\n"
+    
+    start := time_ms()
+    for i in range(num_appends) {
+        append_file(filename, line + str(i) + "\n")
+    }
+    elapsed := time_ms() - start
+    
+    return {
+        "operation": "append",
+        "num_appends": num_appends,
+        "time_ms": elapsed,
+        "ops_per_sec": (num_appends / elapsed) * 1000
+    }
+}
+
+func benchmark_line_by_line_processing(filename) {
+    # Simulate log file processing
+    content := read_file(filename)
+    lines := split(content, "\n")
+    
+    start := time_ms()
+    
+    # Process each line
+    word_count := 0
+    char_count := 0
+    
+    for line in lines {
+        if len(line) > 0 {
+            char_count := char_count + len(line)
+            # Count words (split by space)
+            words := split(line, " ")
+            word_count := word_count + len(words)
+        }
+    }
+    
+    elapsed := time_ms() - start
+    
+    return {
+        "operation": "line_processing",
+        "lines": len(lines),
+        "words": word_count,
+        "chars": char_count,
+        "time_ms": elapsed
+    }
+}
+
+func benchmark_file_copy(source, dest) {
+    # Read and write - simulates file copy
+    start := time_ms()
+    
+    content := read_file(source)
+    write_file(dest, content)
+    
+    elapsed := time_ms() - start
+    
+    size_kb := len(content) / 1024
+    
+    return {
+        "operation": "file_copy",
+        "size_kb": size_kb,
+        "time_ms": elapsed,
+        "throughput_kbps": (size_kb / elapsed) * 1000
+    }
+}
+
+func benchmark_multiple_small_files(base_dir, num_files) {
+    # Create directory if needed
+    content := "Small file content: " + str(time_ms())
+    
+    start := time_ms()
+    
+    # Write multiple small files
+    for i in range(num_files) {
+        filename := base_dir + "/file_" + str(i) + ".txt"
+        write_file(filename, content + " " + str(i))
+    }
+    
+    write_elapsed := time_ms() - start
+    
+    # Read all files back
+    start := time_ms()
+    
+    total_content := ""
+    for i in range(num_files) {
+        filename := base_dir + "/file_" + str(i) + ".txt"
+        total_content := total_content + read_file(filename)
+    }
+    
+    read_elapsed := time_ms() - start
+    
+    # Cleanup
+    for i in range(num_files) {
+        filename := base_dir + "/file_" + str(i) + ".txt"
+        delete_file(filename)
+    }
+    
+    return {
+        "operation": "multiple_small_files",
+        "num_files": num_files,
+        "write_ms": write_elapsed,
+        "read_ms": read_elapsed,
+        "total_ms": write_elapsed + read_elapsed,
+        "write_ops_per_sec": (num_files / write_elapsed) * 1000,
+        "read_ops_per_sec": (num_files / read_elapsed) * 1000
+    }
+}
+
+# Main benchmark execution
+print("=== File I/O Benchmark ===")
+print("")
+
+# Test files
+test_dir := "./tmp"
+ensure_directory(test_dir)
+
+print("1. Sequential Write Benchmark")
+sizes := [10, 50, 100, 500]
+for size in sizes {
+    filename := test_dir + "/write_test_" + str(size) + "kb.txt"
+    result := benchmark_sequential_write(filename, size)
+    print("  Write", size, "KB ->", result["time_ms"], "ms,", 
+          int(result["throughput_kbps"]), "KB/s")
+}
+print("")
+
+print("2. Sequential Read Benchmark")
+for size in sizes {
+    filename := test_dir + "/write_test_" + str(size) + "kb.txt"
+    result := benchmark_sequential_read(filename)
+    print("  Read", int(result["size_kb"]), "KB ->", result["time_ms"], "ms,", 
+          int(result["throughput_kbps"]), "KB/s")
+}
+print("")
+
+print("3. Append Operations Benchmark")
+append_counts := [10, 50, 100]
+for count in append_counts {
+    filename := test_dir + "/append_test.txt"
+    result := benchmark_append_operations(filename, count)
+    print("  Append", count, "times ->", result["time_ms"], "ms,", 
+          int(result["ops_per_sec"]), "ops/s")
+    delete_file(filename)
+}
+print("")
+
+print("4. Line-by-Line Processing Benchmark")
+test_file := test_dir + "/write_test_100kb.txt"
+result := benchmark_line_by_line_processing(test_file)
+print("  Lines:", result["lines"], "| Words:", result["words"], 
+      "| Chars:", result["chars"])
+print("  Time:", result["time_ms"], "ms")
+print("")
+
+print("5. File Copy Benchmark")
+source := test_dir + "/write_test_100kb.txt"
+dest := test_dir + "/copy_test.txt"
+result := benchmark_file_copy(source, dest)
+print("  Copy", int(result["size_kb"]), "KB ->", result["time_ms"], "ms,", 
+      int(result["throughput_kbps"]), "KB/s")
+delete_file(dest)
+print("")
+
+print("6. Multiple Small Files Benchmark")
+file_counts := [10, 25, 50]
+for count in file_counts {
+    result := benchmark_multiple_small_files(test_dir, count)
+    print("  Files:", count, "->", 
+          "Write:", result["write_ms"], "ms (", int(result["write_ops_per_sec"]), "ops/s),",
+          "Read:", result["read_ms"], "ms (", int(result["read_ops_per_sec"]), "ops/s)")
+}
+print("")
+
+# Cleanup
+for size in sizes {
+    filename := test_dir + "/write_test_" + str(size) + "kb.txt"
+    delete_file(filename)
+}
+
+print("=== Benchmark Complete ===")

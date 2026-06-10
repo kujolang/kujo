@@ -1,0 +1,14 @@
+# Simple test to demonstrate enhanced error messages
+
+# Test 1: Type mismatch - should show helpful message
+let x: int := "hello"
+
+# Test 2: Undefined function with suggestion
+func calculate_sum(a, b) {
+    return a + b
+}
+
+# Typo - should suggest calculate_sum
+result := calculat_sum(5, 3)
+
+print("Done")

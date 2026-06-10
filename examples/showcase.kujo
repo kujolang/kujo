@@ -1,0 +1,127 @@
+# Comprehensive Kujo Language Feature Demo
+# This example showcases all major features of the Kujo language
+
+print("=== Kujo Language Feature Showcase ===")
+print()
+
+# 1. Variables and Constants
+print("1. Variables & Constants:")
+x := 10
+mut y := 5
+const PI := 3.14159
+print("  x =", x, ", y =", y, ", PI =", PI)
+y := 20
+print("  After mutation: y =", y)
+print()
+
+# 2. Arithmetic Operations
+print("2. Arithmetic:")
+print("  10 + 5 =", x + 5)
+print("  10 - 5 =", x - 5)
+print("  10 * 5 =", x * 5)
+print("  10 / 5 =", x / 5)
+print()
+
+# 3. Comparison Operators
+print("3. Comparisons:")
+if 10 > 5 {
+    print("  10 > 5: true")
+}
+if 10 == 10 {
+    print("  10 == 10: true")
+}
+if 5 < 10 {
+    print("  5 < 10: true")
+}
+print()
+
+# 4. Functions
+print("4. Functions:")
+func greet(name) {
+    return "Hello, " + name
+}
+
+func factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+msg := greet("World")
+print("  ", msg)
+fact := factorial(5)
+print("  factorial(5) =", fact)
+print()
+
+# 5. Enums and Pattern Matching
+print("5. Enums & Pattern Matching:")
+enum Status {
+    Success,
+    Error,
+    Pending
+}
+
+func check_status(code) {
+    if code == 0 {
+        return Status::Success("Operation completed")
+    }
+    if code == 1 {
+        return Status::Error("Something went wrong")
+    }
+    return Status::Pending
+}
+
+result := check_status(0)
+match result {
+    case Status::Success(msg): {
+        print("  ✓", msg)
+    }
+    case Status::Error(err): {
+        print("  ✗", err)
+    }
+    case Status::Pending: {
+        print("  ⏳ Still processing...")
+    }
+}
+print()
+
+# 6. Error Handling
+print("6. Error Handling:")
+func divide(a, b) {
+    if b == 0 {
+        throw("Cannot divide by zero")
+    }
+    return a / b
+}
+
+try {
+    res := divide(10, 2)
+    print("  10 / 2 =", res)
+} except err {
+    print("  Error:", err)
+}
+
+try {
+    res := divide(10, 0)
+    print("  10 / 0 =", res)
+} except err {
+    print("  Caught error:", err)
+}
+print()
+
+# 7. Nested Function Calls
+print("7. Complex Expressions:")
+func add(a, b) {
+    return a + b
+}
+
+func multiply(a, b) {
+    return a * b
+}
+
+result := add(multiply(3, 4), multiply(2, 5))
+print("  (3 * 4) + (2 * 5) =", result)
+print()
+
+print("=== All Features Working! ===")

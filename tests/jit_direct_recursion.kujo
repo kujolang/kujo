@@ -1,0 +1,196 @@
+// Test suite for JIT Direct Recursion (Phase 7 Step 12)
+// Run with: kujo test-run tests/jit_direct_recursion.kujo
+// Tests that direct JIT recursion provides correct results
+// Performance testing should show significant speedup over standard JIT
+
+print("=== JIT Direct Recursion Tests ===")
+print("")
+
+// ============================================
+// Test 1: Simple recursive fibonacci
+// This is the primary target for direct recursion optimization
+// ============================================
+print("Test 1: Recursive Fibonacci (correctness)")
+
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+// Test small values for correctness
+assert_equal(fib(0), 0)
+assert_equal(fib(1), 1)
+assert_equal(fib(2), 1)
+assert_equal(fib(3), 2)
+assert_equal(fib(4), 3)
+assert_equal(fib(5), 5)
+assert_equal(fib(6), 8)
+assert_equal(fib(7), 13)
+assert_equal(fib(8), 21)
+assert_equal(fib(9), 34)
+assert_equal(fib(10), 55)
+
+print("Test 1 PASSED: All small fib values correct")
+print("")
+
+// ============================================
+// Test 2: Larger fibonacci to trigger JIT
+// Need 100+ calls to trigger JIT compilation
+// ============================================
+print("Test 2: Fibonacci with JIT warm-up")
+
+// Warm up the JIT by calling fib many times
+for i in range(0, 15) {
+    let _ := fib(i)  // Warm up calls
+}
+
+// Now test with JIT potentially active
+let fib15 := fib(15)
+assert_equal(fib15, 610)
+
+let fib20 := fib(20)
+assert_equal(fib20, 6765)
+
+print("Test 2 PASSED: Larger fib values correct after JIT warm-up")
+print("")
+
+// ============================================
+// Test 3: Factorial (another single-arg recursive function)
+// ============================================
+print("Test 3: Recursive Factorial")
+
+func factorial(n) {
+    if n <= 1 {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+// Test small values
+assert_equal(factorial(0), 1)
+assert_equal(factorial(1), 1)
+assert_equal(factorial(2), 2)
+assert_equal(factorial(3), 6)
+assert_equal(factorial(4), 24)
+assert_equal(factorial(5), 120)
+assert_equal(factorial(10), 3628800)
+
+// Warm up JIT
+for i in range(0, 15) {
+    let _ := factorial(i)
+}
+
+// Test after JIT warm-up
+assert_equal(factorial(12), 479001600)
+
+print("Test 3 PASSED: Factorial values correct")
+print("")
+
+// ============================================
+// Test 4: Sum function (tail-recursive pattern)
+// ============================================
+print("Test 4: Recursive Sum")
+
+func sum_to(n) {
+    if n <= 0 {
+        return 0
+    }
+    return n + sum_to(n - 1)
+}
+
+assert_equal(sum_to(0), 0)
+assert_equal(sum_to(1), 1)
+assert_equal(sum_to(5), 15)
+assert_equal(sum_to(10), 55)
+assert_equal(sum_to(100), 5050)
+
+print("Test 4 PASSED: Sum values correct")
+print("")
+
+// ============================================
+// Test 5: Non-recursive single-arg function
+// Should not affect normal JIT compilation
+// ============================================
+print("Test 5: Non-recursive function (control)")
+
+func double(n) {
+    return n * 2
+}
+
+// Warm up
+for i in range(0, 150) {
+    let _ := double(i)
+}
+
+assert_equal(double(0), 0)
+assert_equal(double(5), 10)
+assert_equal(double(100), 200)
+
+print("Test 5 PASSED: Non-recursive function works correctly")
+print("")
+
+// ============================================
+// Test 6: Multi-arg recursive function
+// Should fall back to standard JIT path
+// ============================================
+print("Test 6: Multi-arg recursive function")
+
+func power(base, exp) {
+    if exp <= 0 {
+        return 1
+    }
+    return base * power(base, exp - 1)
+}
+
+assert_equal(power(2, 0), 1)
+assert_equal(power(2, 1), 2)
+assert_equal(power(2, 10), 1024)
+assert_equal(power(3, 4), 81)
+
+print("Test 6 PASSED: Multi-arg recursive function works correctly")
+print("")
+
+// ============================================
+// Test 7: Edge cases
+// ============================================
+print("Test 7: Edge cases")
+
+func count_down(n) {
+    if n <= 0 {
+        return 0
+    }
+    return 1 + count_down(n - 1)
+}
+
+// Test with larger values (stress test)
+assert_equal(count_down(50), 50)
+assert_equal(count_down(100), 100)
+
+// Test fib with edge cases
+assert_equal(fib(0), 0)
+assert_equal(fib(1), 1)
+
+print("Test 7 PASSED: Edge cases handled correctly")
+print("")
+
+// ============================================
+// Performance Test: Benchmark fib(25)
+// This should be noticeably faster with direct recursion
+// ============================================
+print("Test 8: Performance benchmark (fib(25))")
+
+let start := time_ns()
+let result := fib(25)
+let end := time_ns()
+let duration_ns := end - start
+let duration_ms := duration_ns / 1000000.0
+
+print("fib(25) = " + to_string(result) + " (took ~" + to_string(to_int(duration_ms)) + "ms)")
+assert_equal(result, 75025)
+
+print("Test 8 PASSED: Benchmark complete")
+print("")
+
+print("=== All JIT Direct Recursion Tests PASSED ===")

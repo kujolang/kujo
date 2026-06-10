@@ -1,0 +1,43 @@
+# Comprehensive test of struct method parameter features
+
+struct Calculator {
+    base: float,
+    
+    # Method with single parameter
+    func add(self, x) {
+        return self.base + x;
+    }
+    
+    # Method with multiple parameters
+    func multiply_and_add(self, a, b) {
+        result := self.base + (a * b);
+        return result;
+    }
+    
+    # Method that calls another method
+    func chain(self, x) {
+        temp := self.add(x);
+        return temp * 2.0;
+    }
+    
+    # Method that creates and returns new struct
+    func with_base(self, new_base) {
+        return Calculator { base: new_base };
+    }
+}
+
+print("Testing single parameter:");
+c := Calculator { base: 10.0 };
+print(c.add(5.0));  # Should print 15.0
+
+print("\nTesting multiple parameters:");
+print(c.multiply_and_add(3.0, 4.0));  # Should print 22.0 (10 + 3*4)
+
+print("\nTesting method chaining:");
+print(c.chain(5.0));  # Should print 30.0 ((10+5)*2)
+
+print("\nTesting struct return:");
+c2 := c.with_base(100.0);
+print(c2.add(50.0));  # Should print 150.0
+
+print("\n✅ All method parameter features work!");

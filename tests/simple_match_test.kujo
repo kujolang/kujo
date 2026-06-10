@@ -1,0 +1,13 @@
+# Simple match test
+print("Before match")
+
+match Ok(5) {
+    case Ok(value): {
+        print("Got OK with value: " + to_string(value))
+    }
+    case Err(error): {
+        print("Got error: " + error)
+    }
+}
+
+print("After match")

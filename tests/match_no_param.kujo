@@ -1,0 +1,12 @@
+# Test without pattern variable
+let result := Ok(42)
+print("Created OK")
+match result {
+    case Ok: {
+        print("Matched OK!")
+    }
+    case Err: {
+        print("Matched Err")
+    }
+}
+print("Done")

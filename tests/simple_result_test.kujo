@@ -1,0 +1,29 @@
+# Simple Result and Option test
+
+# Test 1: Basic Result values
+let r1 := Ok(42)
+print(r1)
+
+let r2 := Err("error")
+print(r2)
+
+# Test 2: Basic Option values
+let o1 := Some(100)
+print(o1)
+
+let o2 := None
+print(o2)
+
+# Test 3: Simple pattern match on Ok
+print("Testing pattern match on Ok...")
+let test_ok := Ok(5)
+match test_ok {
+    case Ok(v): {
+        print("Matched OK")
+    }
+    case Err(e): {
+        print("Matched Err")
+    }
+}
+
+print("Done!")

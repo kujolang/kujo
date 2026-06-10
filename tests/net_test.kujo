@@ -1,0 +1,209 @@
+# Network Module Tests - TCP and UDP Socket Communication
+# Tests TCP client-server and UDP datagram functionality
+
+print("=== Network Module Tests ===")
+print("")
+
+# Test 1: TCP Listen and Connect
+print("Test 1: TCP Listen and Connect")
+test_setup {
+    # This runs before each test
+}
+
+test "tcp_listen creates a listener on specified port" {
+    listener := tcp_listen("127.0.0.1", 9001)
+    type_val := type(listener)
+    assert_equal(type_val, "tcplistener")
+    tcp_close(listener)
+}
+
+test "tcp_connect connects to a server" {
+    # Start a listener
+    listener := tcp_listen("127.0.0.1", 9002)
+    
+    # In a real scenario, we'd accept in a separate thread
+    # For now, we'll test that connection attempt is created
+    client := tcp_connect("127.0.0.1", 9002)
+    type_val := type(client)
+    assert_equal(type_val, "tcpstream")
+    
+    tcp_close(client)
+    tcp_close(listener)
+}
+
+test "tcp_send and tcp_receive transfer data" {
+    # Start server
+    listener := tcp_listen("127.0.0.1", 9003)
+    
+    # Connect client
+    client := tcp_connect("127.0.0.1", 9003)
+    
+    # Accept connection
+    server_conn := tcp_accept(listener)
+    
+    # Send data from client
+    message := "Hello, Server!"
+    bytes_sent := tcp_send(client, message)
+    assert_equal(bytes_sent, 14)
+    
+    # Receive on server side
+    received := tcp_receive(server_conn, 1024)
+    assert_equal(received, message)
+    
+    # Send response from server
+    response := "Hello, Client!"
+    tcp_send(server_conn, response)
+    
+    # Receive on client side
+    client_received := tcp_receive(client, 1024)
+    assert_equal(client_received, response)
+    
+    # Cleanup
+    tcp_close(client)
+    tcp_close(server_conn)
+    tcp_close(listener)
+}
+
+test "tcp_send works with binary data" {
+    listener := tcp_listen("127.0.0.1", 9004)
+    client := tcp_connect("127.0.0.1", 9004)
+    server_conn := tcp_accept(listener)
+    
+    # Send binary data
+    binary_data := bytes([72, 101, 108, 108, 111])  # "Hello" in ASCII
+    bytes_sent := tcp_send(client, binary_data)
+    assert_equal(bytes_sent, 5)
+    
+    # Receive
+    received := tcp_receive(server_conn, 1024)
+    assert_equal(received, "Hello")
+    
+    tcp_close(client)
+    tcp_close(server_conn)
+    tcp_close(listener)
+}
+
+# Test 2: UDP Socket Communication
+print("")
+print("Test 2: UDP Socket Communication")
+
+test "udp_bind creates a socket on specified port" {
+    socket := udp_bind("127.0.0.1", 9100)
+    type_val := type(socket)
+    assert_equal(type_val, "udpsocket")
+    udp_close(socket)
+}
+
+test "udp_send_to and udp_receive_from transfer datagrams" {
+    # Create sender and receiver sockets
+    receiver := udp_bind("127.0.0.1", 9101)
+    sender := udp_bind("127.0.0.1", 9102)
+    
+    # Send datagram
+    message := "UDP Test Message"
+    bytes_sent := udp_send_to(sender, message, "127.0.0.1", 9101)
+    assert_true(bytes_sent > 0)
+    
+    # Receive datagram
+    result := udp_receive_from(receiver, 1024)
+    assert_equal(type(result), "dict")
+    assert_equal(result["data"], message)
+    assert_contains(result, "from")
+    assert_contains(result, "size")
+    
+    udp_close(sender)
+    udp_close(receiver)
+}
+
+test "udp_send_to works with binary data" {
+    receiver := udp_bind("127.0.0.1", 9103)
+    sender := udp_bind("127.0.0.1", 9104)
+    
+    # Send binary data
+    binary_data := bytes([85, 68, 80])  # "UDP" in ASCII
+    bytes_sent := udp_send_to(sender, binary_data, "127.0.0.1", 9103)
+    assert_equal(bytes_sent, 3)
+    
+    # Receive
+    result := udp_receive_from(receiver, 1024)
+    assert_equal(result["data"], "UDP")
+    
+    udp_close(sender)
+    udp_close(receiver)
+}
+
+test "udp datagrams preserve message boundaries" {
+    receiver := udp_bind("127.0.0.1", 9105)
+    sender := udp_bind("127.0.0.1", 9106)
+    
+    # Send multiple messages
+    udp_send_to(sender, "Message1", "127.0.0.1", 9105)
+    udp_send_to(sender, "Message2", "127.0.0.1", 9105)
+    
+    # Receive first message
+    result1 := udp_receive_from(receiver, 1024)
+    assert_equal(result1["data"], "Message1")
+    
+    # Receive second message
+    result2 := udp_receive_from(receiver, 1024)
+    assert_equal(result2["data"], "Message2")
+    
+    udp_close(sender)
+    udp_close(receiver)
+}
+
+# Test 3: Socket Options and Configuration
+print("")
+print("Test 3: Socket Options")
+
+test "tcp_set_nonblocking configures TCP stream" {
+    listener := tcp_listen("127.0.0.1", 9200)
+    client := tcp_connect("127.0.0.1", 9200)
+    
+    result := tcp_set_nonblocking(client, true)
+    assert_equal(result, true)
+    
+    result := tcp_set_nonblocking(client, false)
+    assert_equal(result, true)
+    
+    tcp_close(client)
+    tcp_close(listener)
+}
+
+test "tcp_set_nonblocking configures TCP listener" {
+    listener := tcp_listen("127.0.0.1", 9201)
+    
+    result := tcp_set_nonblocking(listener, true)
+    assert_equal(result, true)
+    
+    result := tcp_set_nonblocking(listener, false)
+    assert_equal(result, true)
+    
+    tcp_close(listener)
+}
+
+# Test 4: Type Checking
+print("")
+print("Test 4: Type Checking")
+
+test "network values have correct types" {
+    listener := tcp_listen("127.0.0.1", 9300)
+    assert_equal(type(listener), "tcplistener")
+    
+    client := tcp_connect("127.0.0.1", 9300)
+    assert_equal(type(client), "tcpstream")
+    
+    server_conn := tcp_accept(listener)
+    assert_equal(type(server_conn), "tcpstream")
+    
+    tcp_close(client)
+    tcp_close(server_conn)
+    tcp_close(listener)
+    
+    udp := udp_bind("127.0.0.1", 9301)
+    assert_equal(type(udp), "udpsocket")
+    udp_close(udp)
+}
+
+print("")
+print("=== All Network Tests Completed ===")

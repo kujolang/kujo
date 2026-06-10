@@ -1,0 +1,10 @@
+{
+  "code": "RUFPARSE001",
+  "column": 9,
+  "file": "semantic_invalid_assignment.kujo",
+  "help": "Fix the parse error and rerun Kujo.",
+  "line": 2,
+  "message": "Expected expression",
+  "severity": "error",
+  "subsystem": "parser"
+}

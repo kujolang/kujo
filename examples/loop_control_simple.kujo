@@ -1,0 +1,70 @@
+# Loop Control Examples - Break and Continue
+# Demonstrates break and continue statements in Kujo
+
+print("=== Break in While Loop ===")
+x := 0
+while true {
+    print(x)
+    x := x + 1
+    if x >= 5 {
+        break
+    }
+}
+print("Broke out of loop")
+
+print("")
+print("=== Continue in While Loop ===")
+y := 0
+while y < 10 {
+    y := y + 1
+    if y % 2 == 0 {
+        continue
+    }
+    print(y)
+}
+
+print("")
+print("=== Break in For Loop ===")
+for i in 10 {
+    if i > 5 {
+        break
+    }
+    print(i)
+}
+print("For loop finished early")
+
+print("")
+print("=== Continue in For Loop ===")
+print("Odd numbers only:")
+for num in 10 {
+    if num % 2 == 0 {
+        continue
+    }
+    print(num)
+}
+
+print("")
+print("=== Nested Loops with Break ===")
+for outer in 3 {
+    print("Outer:")
+    print(outer)
+    for inner in 5 {
+        if inner >= 3 {
+            break
+        }
+        print(inner)
+    }
+}
+
+print("")
+print("=== Search Pattern ===")
+target := 42
+n := 0
+while n < 100 {
+    n := n + 1
+    if n == target {
+        print("Found target:")
+        print(n)
+        break
+    }
+}

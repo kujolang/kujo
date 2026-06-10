@@ -1,0 +1,18 @@
+# Test struct instantiation
+
+print("Test 1");
+
+struct Vec2 {
+    x: float,
+    y: float,
+    
+    func double() {
+        print("In double method");
+    }
+}
+
+print("Test 2");
+v1 := Vec2 { x: 1.0, y: 2.0 };
+print("Test 3");
+print(v1.x);
+print("Test 4");

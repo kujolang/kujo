@@ -1,0 +1,21 @@
+# String Manipulation Benchmark
+# Tests: String concatenation, substring operations, string functions
+
+let base := "Hello, World!"
+let result := ""
+
+# String concatenation in loop
+let i := 0
+while i < 50 {
+    result := result + base
+    i := i + 1
+}
+
+# String operations
+let len_val := len(result)
+let upper_val := to_upper(result)
+let lower_val := to_lower(result)
+let split_vals := split(result, ",")
+
+# Final result
+let final := len_val

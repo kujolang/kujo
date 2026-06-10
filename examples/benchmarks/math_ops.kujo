@@ -1,0 +1,20 @@
+# Mathematical Computations Benchmark
+# Tests: Arithmetic operations, trigonometry, mathematical functions
+
+# Compute sum of squares
+let sum := 0
+let i := 1
+while i <= 100 {
+    sum := sum + (i * i)
+    i := i + 1
+}
+
+# Some mathematical operations
+let a := sqrt(144.0)
+let b := pow(2.0, 10.0)
+let c := abs(-42)
+let d := min(100, 200)
+let e := max(50, 75)
+
+# Result
+let result := sum + a + b + c + d + e

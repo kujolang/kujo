@@ -1,0 +1,19 @@
+# Simple test of self parameter
+print("Starting test...");
+
+struct Point {
+    x: float,
+    y: float,
+    
+    func get_x(self) {
+        print("In get_x method");
+        return self.x;
+    }
+}
+
+print("Creating point...");
+p := Point { x: 5.0, y: 10.0 };
+print("Calling method...");
+result := p.get_x();
+print("Result:");
+print(result);

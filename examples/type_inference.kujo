@@ -1,0 +1,14 @@
+# Type Inference Tests
+# Variables without type annotations - types are inferred
+
+let integer_val := 42
+let float_val := 3.14
+let string_val := "hello"
+
+# Type inference in functions
+func calculate(x, y) {
+    return x + y
+}
+
+let result1 := calculate(10, 20)
+let result2 := calculate(1.5, 2.5)

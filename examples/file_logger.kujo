@@ -1,0 +1,21 @@
+# Simple file logger example
+# Demonstrates write_file, append_file, and read_file
+
+log_file := "/tmp/app.log"
+
+# Write initial log entry
+write_file(log_file, "[START] Application started\n")
+print("Log file created")
+
+# Append more log entries
+append_file(log_file, "[INFO] Processing data...\n")
+append_file(log_file, "[INFO] Data processed successfully\n")
+append_file(log_file, "[END] Application finished\n")
+print("Log entries added")
+
+# Read and display the log
+print("\nLog contents:")
+print("=" * 50)
+content := read_file(log_file)
+print(content)
+print("=" * 50)

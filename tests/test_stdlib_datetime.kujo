@@ -1,0 +1,94 @@
+// Test date/time functions
+
+print("Testing date/time functions...")
+
+// Test now() - get current timestamp
+timestamp := now()
+// Don't print actual timestamp - it changes each run
+// print("now() = " + timestamp)
+
+if timestamp > 1000000000.0 {
+    print("✓ now() returns valid Unix timestamp")
+} else {
+    print("✗ now() returned invalid timestamp")
+}
+
+// Test format_date with various formats
+formatted1 := format_date(timestamp, "YYYY-MM-DD")
+// Don't print actual date - it changes each run
+// print("format_date(now, 'YYYY-MM-DD') = " + formatted1)
+
+if len(formatted1) == 10 {
+    print("✓ format_date with YYYY-MM-DD works")
+} else {
+    print("✗ format_date YYYY-MM-DD failed")
+}
+
+formatted2 := format_date(timestamp, "YYYY-MM-DD HH:mm:ss")
+// Don't print actual datetime - it changes each run
+// print("format_date(now, 'YYYY-MM-DD HH:mm:ss') = " + formatted2)
+
+if len(formatted2) == 19 {
+    print("✓ format_date with full datetime works")
+} else {
+    print("✗ format_date full datetime failed")
+}
+
+// Test specific known timestamp
+known_ts := 1640995200.0  // 2022-01-01 00:00:00 UTC
+known_formatted := format_date(known_ts, "YYYY-MM-DD")
+print("format_date(1640995200, 'YYYY-MM-DD') = " + known_formatted)
+
+if known_formatted == "2022-01-01" {
+    print("✓ format_date formats known timestamp correctly")
+} else {
+    print("✗ format_date known timestamp failed: expected 2022-01-01")
+}
+
+// Test parse_date
+parsed := parse_date("2026-01-23", "YYYY-MM-DD")
+// Don't print actual timestamp - it's a unix timestamp number
+// print("parse_date('2026-01-23', 'YYYY-MM-DD') = " + parsed)
+
+if parsed > 0.0 {
+    print("✓ parse_date returns valid timestamp")
+    
+    // Round-trip test
+    roundtrip := format_date(parsed, "YYYY-MM-DD")
+    print("Round-trip: " + roundtrip)
+    
+    if roundtrip == "2026-01-23" {
+        print("✓ parse_date round-trip works correctly")
+    } else {
+        print("✗ parse_date round-trip failed")
+    }
+} else {
+    print("✗ parse_date failed")
+}
+
+// Test parsing different dates
+date1 := parse_date("2020-12-31", "YYYY-MM-DD")
+date2 := parse_date("2021-01-01", "YYYY-MM-DD")
+
+if date2 > date1 {
+    print("✓ parse_date correctly orders dates")
+} else {
+    print("✗ parse_date date ordering failed")
+}
+
+// Test formatting with custom patterns - don't print actual values (they change)
+custom1 := format_date(timestamp, "DD/MM/YYYY")
+if len(custom1) == 10 {
+    print("✓ Custom format DD/MM/YYYY works")
+} else {
+    print("✗ Custom format DD/MM/YYYY failed")
+}
+
+custom2 := format_date(timestamp, "HH:mm")
+if len(custom2) == 5 {
+    print("✓ Custom format HH:mm works")
+} else {
+    print("✗ Custom format HH:mm failed")
+}
+
+print("Date/time function tests completed!")

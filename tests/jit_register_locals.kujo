@@ -1,0 +1,93 @@
+// Test JIT Register-Based Locals Optimization
+// Run with: kujo test-run tests/jit_register_locals.kujo
+// This test verifies that local variables use fast stack slots
+// instead of runtime function calls for variable access
+
+// Test 1: Simple local variable read/write
+func test_simple_local() {
+    mut x := 42
+    mut y := x + 8
+    return y
+}
+
+// Call multiple times to trigger JIT
+mut result1 := 0
+for i in range(150) {
+    result1 = test_simple_local()
+}
+print("Test 1 - Simple local: " + to_string(result1))
+assert_equal(result1, 50)
+
+// Test 2: Multiple local variables
+func test_multiple_locals() {
+    mut a := 10
+    mut b := 20
+    mut c := 30
+    mut sum := a + b + c
+    return sum
+}
+
+mut result2 := 0
+for i in range(150) {
+    result2 = test_multiple_locals()
+}
+print("Test 2 - Multiple locals: " + to_string(result2))
+assert_equal(result2, 60)
+
+// Test 3: Local variable with arithmetic
+func test_arithmetic_locals() {
+    mut x := 5
+    mut y := 3
+    mut product := x * y
+    mut quotient := x / y
+    mut remainder := x % y
+    return product + remainder
+}
+
+mut result3 := 0
+for i in range(150) {
+    result3 = test_arithmetic_locals()
+}
+print("Test 3 - Arithmetic locals: " + to_string(result3))
+assert_equal(result3, 17)
+
+// Test 4: Local variable reassignment
+func test_reassignment() {
+    mut x := 1
+    x := x + 1
+    x := x + 1
+    x := x + 1
+    x := x + 1
+    return x
+}
+
+mut result4 := 0
+for i in range(150) {
+    result4 = test_reassignment()
+}
+print("Test 4 - Reassignment: " + to_string(result4))
+assert_equal(result4, 5)
+
+// Test 5: Fibonacci (main performance test)
+func fib(n) {
+    if n <= 1 {
+        return n
+    }
+    return fib(n - 1) + fib(n - 2)
+}
+
+// Call fib many times to trigger JIT
+mut fib_result := 0
+for i in range(150) {
+    fib_result = fib(10)
+}
+print("Test 5 - Fibonacci(10): " + to_string(fib_result))
+assert_equal(fib_result, 55)
+
+// Test 6: Fibonacci with larger input (correctness test)
+let fib25 := fib(25)
+print("Test 6 - Fibonacci(25): " + to_string(fib25))
+assert_equal(fib25, 75025)
+
+print("")
+print("All JIT register-based locals tests passed!")

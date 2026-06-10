@@ -1,0 +1,236 @@
+# Standard Library Expansion Tests
+# Tests for compression, hashing, and process management functions
+
+print("=== Standard Library Tests ===")
+print("")
+
+# ===================================================================
+# COMPRESSION & ARCHIVE TESTS
+# ===================================================================
+
+print("--- Compression Tests ---")
+
+# Test zip_create, zip_add_file, zip_close
+let test_file := "test_data.txt"
+write_file(test_file, "Hello from Kujo!\nThis is test data for compression.")
+
+let archive := zip_create("test_archive.zip")
+print("Created zip archive: ${archive}")
+
+let added := zip_add_file(archive, test_file)
+if added {
+    print("✓ Successfully added file to zip")
+} else {
+    print("✗ Failed to add file to zip")
+}
+
+let closed := zip_close(archive)
+if closed {
+    print("✓ Successfully closed zip archive")
+} else {
+    print("✗ Failed to close zip archive")
+}
+
+# Verify the zip file was created
+if file_exists("test_archive.zip") {
+    print("✓ Zip file created successfully")
+    let size := file_size("test_archive.zip")
+    print("  Zip file size: ${size} bytes")
+} else {
+    print("✗ Zip file not found")
+}
+
+# Test unzip
+let extracted := unzip("test_archive.zip", "extracted/")
+print("Extracted files: ${len(extracted)}")
+for file in extracted {
+    print("  - ${file}")
+    if file_exists(file) {
+        print("    ✓ File exists")
+    }
+}
+
+# Clean up test files
+delete_file(test_file)
+delete_file("test_archive.zip")
+# Note: In a real test suite, we'd clean up extracted/ directory too
+
+print("")
+
+# Test zip_add_dir
+print("--- Directory Compression Test ---")
+create_dir("test_dir")
+write_file("test_dir/file1.txt", "File 1 content")
+write_file("test_dir/file2.txt", "File 2 content")
+
+let dir_archive := zip_create("dir_archive.zip")
+let dir_added := zip_add_dir(dir_archive, "test_dir")
+if dir_added {
+    print("✓ Successfully added directory to zip")
+} else {
+    print("✗ Failed to add directory to zip")
+}
+
+zip_close(dir_archive)
+
+if file_exists("dir_archive.zip") {
+    print("✓ Directory archive created")
+    let extracted_dir := unzip("dir_archive.zip", "extracted_dir/")
+    print("  Extracted ${len(extracted_dir)} items")
+}
+
+# Clean up
+delete_file("test_dir/file1.txt")
+delete_file("test_dir/file2.txt")
+delete_file("dir_archive.zip")
+
+print("")
+
+# ===================================================================
+# HASHING & CRYPTO TESTS
+# ===================================================================
+
+print("--- Hashing Tests ---")
+
+# Test SHA-256
+let test_string := "Hello, Kujo!"
+let sha_hash := sha256(test_string)
+print("SHA-256 hash: ${sha_hash}")
+if len(sha_hash) == 64 {
+    print("✓ SHA-256 hash has correct length (64 hex chars)")
+} else {
+    print("✗ SHA-256 hash has incorrect length: ${len(sha_hash)}")
+}
+
+# Test MD5
+let md5_hash := md5(test_string)
+print("MD5 hash: ${md5_hash}")
+if len(md5_hash) == 32 {
+    print("✓ MD5 hash has correct length (32 hex chars)")
+} else {
+    print("✗ MD5 hash has incorrect length: ${len(md5_hash)}")
+}
+
+# Test MD5 file hashing
+let hash_test_file := "hash_test.txt"
+write_file(hash_test_file, "Test content for file hashing")
+let file_md5 := md5_file(hash_test_file)
+print("File MD5 hash: ${file_md5}")
+if len(file_md5) == 32 {
+    print("✓ File MD5 hash has correct length")
+} else {
+    print("✗ File MD5 hash has incorrect length")
+}
+delete_file(hash_test_file)
+
+print("")
+
+# ===================================================================
+# PASSWORD HASHING TESTS
+# ===================================================================
+
+print("--- Password Hashing Tests ---")
+
+let password := "my_secure_password"
+let hashed := hash_password(password)
+print("Password hash length: ${len(hashed)}")
+
+if len(hashed) > 50 {
+    print("✓ Bcrypt hash has reasonable length")
+} else {
+    print("✗ Bcrypt hash seems too short")
+}
+
+# Test password verification
+let is_valid := verify_password(password, hashed)
+if is_valid {
+    print("✓ Password verification succeeded")
+} else {
+    print("✗ Password verification failed")
+}
+
+# Test wrong password
+let is_invalid := verify_password("wrong_password", hashed)
+if !is_invalid {
+    print("✓ Wrong password correctly rejected")
+} else {
+    print("✗ Wrong password incorrectly accepted")
+}
+
+print("")
+
+# ===================================================================
+# PROCESS MANAGEMENT TESTS
+# ===================================================================
+
+print("--- Process Management Tests ---")
+
+# Test spawn_process with echo command
+let echo_result := spawn_process(["echo", "Hello from spawned process"])
+print("Process exit code: ${echo_result.exitcode}")
+print("Process stdout: ${trim(echo_result.stdout)}")
+print("Process success: ${echo_result.success}")
+
+if echo_result.success {
+    print("✓ Process executed successfully")
+} else {
+    print("✗ Process failed")
+}
+
+if contains(echo_result.stdout, "Hello from spawned process") {
+    print("✓ Process output is correct")
+} else {
+    print("✗ Process output is incorrect")
+}
+
+print("")
+
+# Test spawn_process with a deterministic command
+print("--- Deterministic Command Test ---")
+let cmd_result := spawn_process(["printf", "alpha\nbeta\ngamma\n"])
+if cmd_result.success {
+    print("✓ printf command executed successfully")
+    let lines := split(trim(cmd_result.stdout), "\n")
+    print("  Output has ${len(lines)} lines")
+} else {
+    print("✗ printf command failed")
+}
+
+print("")
+
+# Test pipe_commands
+print("--- Pipe Commands Test ---")
+
+# Create test file for piping
+write_file("pipe_test.txt", "line1\nline2\nline3\nline4\nline5\n")
+
+# Pipe: cat file | wc -l (count lines)
+let pipe_result := pipe_commands([
+    ["cat", "pipe_test.txt"],
+    ["wc", "-l"]
+])
+
+print("Pipe result: ${trim(pipe_result)}")
+
+if contains(pipe_result, "5") {
+    print("✓ Pipe commands executed correctly")
+} else {
+    print("✗ Pipe commands result unexpected")
+}
+
+delete_file("pipe_test.txt")
+
+print("")
+
+# Test error handling with invalid command
+print("--- Error Handling Test ---")
+try {
+    let bad_result := spawn_process(["nonexistent_command_xyz"])
+    print("✗ Should have thrown error for invalid command")
+} except error {
+    print("✓ Invalid command correctly threw error")
+    print("  Error: ${error.message}")
+}
+
+print("")
+print("=== All Standard Library Tests Complete ===")

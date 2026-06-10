@@ -1,0 +1,3 @@
+[RUFCLI001] [cli] error: Invalid CLI invocation
+  --> cli_invalid_flag.kujo:1:1
+  = help: Use `kujo --help` to list valid commands

@@ -1,0 +1,260 @@
+// collections_advanced.kujo - Practical examples of Set, Queue, and Stack usage
+
+print("=== Set: Unique Visitor Tracking ===")
+// Track unique visitors to a website
+visitors := Set([])
+visits := ["user123", "user456", "user123", "user789", "user456", "user123"]
+
+for visit in visits {
+    visitors := set_add(visitors, visit)
+}
+
+print("Total unique visitors:", len(visitors))
+print("Unique visitor IDs:", set_to_array(visitors))
+
+// Check if specific user visited
+has_user := set_has(visitors, "user789")
+print("user789 visited:", has_user)
+
+print("")
+print("=== Set: Tag Management System ===")
+// Blog post tags
+post1_tags := Set(["python", "tutorial", "beginners"])
+post2_tags := Set(["python", "advanced", "async"])
+
+// Find common tags
+common_tags := set_intersect(post1_tags, post2_tags)
+print("Common tags:", set_to_array(common_tags))
+
+// All unique tags across posts
+all_tags := set_union(post1_tags, post2_tags)
+print("All unique tags:", set_to_array(all_tags))
+
+// Tags only in post1
+post1_only := set_difference(post1_tags, post2_tags)
+print("Tags only in post1:", set_to_array(post1_only))
+
+print("")
+print("=== Set: De-duplicate Email List ===")
+// Remove duplicate emails from mailing list
+emails := [
+    "john@example.com",
+    "jane@example.com",
+    "john@example.com",
+    "bob@example.com",
+    "jane@example.com"
+]
+
+unique_emails := Set(emails)
+print("Original email count:", len(emails))
+print("Unique email count:", len(unique_emails))
+print("Cleaned email list:", set_to_array(unique_emails))
+
+print("")
+print("=== Queue: Task Processing System ===")
+// Simple job queue
+task_queue := Queue([])
+print("Created empty task queue")
+
+// Add tasks
+task_queue := queue_enqueue(task_queue, "Process order #1001")
+task_queue := queue_enqueue(task_queue, "Send email to customer")
+task_queue := queue_enqueue(task_queue, "Update inventory")
+task_queue := queue_enqueue(task_queue, "Generate report")
+
+print("Tasks in queue:", len(task_queue))
+
+// Process tasks in FIFO order
+while !queue_is_empty(task_queue) {
+    result := queue_dequeue(task_queue)
+    task_queue := result[0]
+    task := result[1]
+    print("Processing:", task)
+}
+
+print("All tasks processed. Queue is empty:", queue_is_empty(task_queue))
+
+print("")
+print("=== Queue: Customer Support Ticketing ===")
+// Customer support ticket queue
+tickets := Queue([])
+
+// Customers submit tickets
+tickets := queue_enqueue(tickets, {"id": 1, "customer": "Alice", "issue": "Login problem"})
+tickets := queue_enqueue(tickets, {"id": 2, "customer": "Bob", "issue": "Payment failed"})
+tickets := queue_enqueue(tickets, {"id": 3, "customer": "Charlie", "issue": "Feature request"})
+
+print("Tickets waiting:", len(tickets))
+
+// Support agent handles next ticket
+next_ticket := queue_peek(tickets)
+print("Next ticket to handle: Customer", next_ticket["customer"], "-", next_ticket["issue"])
+
+// Process the ticket
+result := queue_dequeue(tickets)
+tickets := result[0]
+processed := result[1]
+print("Processed ticket #", processed["id"])
+print("Remaining tickets:", len(tickets))
+
+print("")
+print("=== Queue: Message Queue for Chat System ===")
+// Simple message queue
+messages := Queue([])
+
+// Users send messages
+messages := queue_enqueue(messages, "Alice: Hello everyone!")
+messages := queue_enqueue(messages, "Bob: Hey Alice!")
+messages := queue_enqueue(messages, "Charlie: Good morning!")
+
+print("Messages in queue:", len(messages))
+
+// Display messages in order received
+msg_count := len(messages)
+i := 0
+while i < msg_count {
+    result := queue_dequeue(messages)
+    messages := result[0]
+    msg := result[1]
+    print("  ", msg)
+    i := i + 1
+}
+
+print("")
+print("=== Stack: Browser History ===")
+// Browser back/forward history
+history := Stack([])
+
+// User navigates websites
+history := stack_push(history, "https://google.com")
+history := stack_push(history, "https://github.com")
+history := stack_push(history, "https://stackoverflow.com")
+history := stack_push(history, "https://reddit.com")
+
+print("Current page:", stack_peek(history))
+print("History depth:", len(history))
+
+// User clicks back button
+result := stack_pop(history)
+history := result[0]
+previous_page := result[1]
+print("Went back from:", previous_page)
+print("Now on:", stack_peek(history))
+
+print("")
+print("=== Stack: Undo/Redo System ===")
+// Simple text editor undo stack
+undo_stack := Stack([])
+document := ""
+
+// User types
+document := "Hello"
+undo_stack := stack_push(undo_stack, document)
+
+document := "Hello World"
+undo_stack := stack_push(undo_stack, document)
+
+document := "Hello World!"
+undo_stack := stack_push(undo_stack, document)
+
+print("Current document:", document)
+print("Undo states available:", len(undo_stack))
+
+// User presses undo
+result := stack_pop(undo_stack)
+undo_stack := result[0]
+current := result[1]
+
+result := stack_pop(undo_stack)
+undo_stack := result[0]
+previous := result[1]
+
+print("After undo:", previous)
+
+print("")
+print("=== Stack: Depth-First Traversal Simulation ===")
+// Stack is perfect for depth-first operations
+nodes := Stack([])
+nodes := stack_push(nodes, "Root")
+nodes := stack_push(nodes, "Child-A")
+nodes := stack_push(nodes, "Child-B")
+
+print("Traversing tree (depth-first):")
+while !stack_is_empty(nodes) {
+    result := stack_pop(nodes)
+    nodes := result[0]
+    node := result[1]
+    print("  Visiting:", node)
+}
+
+print("")
+print("=== Stack: Function Call Stack Simulation ===")
+// Simulate function call stack
+call_stack := Stack([])
+
+print("Program starts")
+call_stack := stack_push(call_stack, "main()")
+print("Call stack:", stack_to_array(call_stack))
+
+print("main() calls process_data()")
+call_stack := stack_push(call_stack, "process_data()")
+print("Call stack:", stack_to_array(call_stack))
+
+print("process_data() calls validate()")
+call_stack := stack_push(call_stack, "validate()")
+print("Call stack:", stack_to_array(call_stack))
+
+print("validate() returns")
+result := stack_pop(call_stack)
+call_stack := result[0]
+print("Call stack:", stack_to_array(call_stack))
+
+print("process_data() returns")
+result := stack_pop(call_stack)
+call_stack := result[0]
+print("Call stack:", stack_to_array(call_stack))
+
+print("")
+print("=== Combining Collections ===")
+// Use multiple collection types together
+// Example: Task prioritization system
+
+// High priority tasks (stack - LIFO for urgent items)
+urgent_tasks := Stack([])
+urgent_tasks := stack_push(urgent_tasks, "Fix critical bug")
+urgent_tasks := stack_push(urgent_tasks, "Server down - emergency")
+
+// Normal priority tasks (queue - FIFO)
+normal_tasks := Queue([])
+normal_tasks := queue_enqueue(normal_tasks, "Review PR #123")
+normal_tasks := queue_enqueue(normal_tasks, "Update documentation")
+normal_tasks := queue_enqueue(normal_tasks, "Write unit tests")
+
+// Unique assignees (set)
+assignees := Set(["Alice", "Bob", "Alice", "Charlie", "Bob"])
+
+print("System Status:")
+print("  Urgent tasks:", len(urgent_tasks))
+print("  Normal tasks:", len(normal_tasks))
+print("  Team members:", len(assignees))
+print("  Team:", set_to_array(assignees))
+
+// Process urgent tasks first (LIFO - last urgent becomes first)
+if !stack_is_empty(urgent_tasks) {
+    result := stack_pop(urgent_tasks)
+    urgent_tasks := result[0]
+    task := result[1]
+    print("")
+    print("🚨 Processing URGENT:", task)
+}
+
+// Then process normal tasks (FIFO)
+if !queue_is_empty(normal_tasks) {
+    result := queue_dequeue(normal_tasks)
+    normal_tasks := result[0]
+    task := result[1]
+    print("📋 Processing normal:", task)
+}
+
+print("")
+print("=== Collections Examples Complete ===")
