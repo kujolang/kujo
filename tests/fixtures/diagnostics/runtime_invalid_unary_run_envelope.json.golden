@@ -6,7 +6,7 @@
     "code": "RUFRUN001",
     "column": 0,
     "file": null,
-    "help": null,
+    "help": "Use a value type supported by this unary operator, or convert the value first.",
     "line": 0,
     "message": "Invalid unary operation: - bool",
     "severity": "error",

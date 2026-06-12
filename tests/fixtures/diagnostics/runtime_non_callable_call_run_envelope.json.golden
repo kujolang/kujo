@@ -6,7 +6,7 @@
     "code": "RUFVM001",
     "column": 0,
     "file": null,
-    "help": null,
+    "help": "Call only functions, closures, methods, or imported callable values.",
     "line": 0,
     "message": "Cannot call non-function; the value being called is not callable. Pass a function, closure, or imported callable value instead.",
     "severity": "error",

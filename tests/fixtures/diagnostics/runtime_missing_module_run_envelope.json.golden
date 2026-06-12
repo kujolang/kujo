@@ -6,7 +6,7 @@
     "code": "RUFVM001",
     "column": 0,
     "file": null,
-    "help": null,
+    "help": "Check that the module exists as <module>.kujo or as a dotted src/... path under the package root.",
     "line": 0,
     "message": "Module not found: missing_module; Check that 'missing_module' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.",
     "severity": "error",

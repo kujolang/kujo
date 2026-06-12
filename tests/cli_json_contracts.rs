@@ -656,12 +656,14 @@ fn run_runtime_json_diagnostic_contract_includes_missing_module_help() {
     let body = parse_stdout_json(&output);
     let diagnostic = &body["diagnostic"];
     let message = diagnostic["message"].as_str().expect("message should be a string");
+    let help = diagnostic["help"].as_str().expect("help should be a string");
     assert!(message.contains("Module not found: missing_module"));
     assert!(
         message.contains("flat <module>.kujo file") && message.contains("src/..."),
         "expected module resolution help text, got: {}",
         message
     );
+    assert!(help.contains("<module>.kujo") && help.contains("src/..."));
 }
 
 #[test]
@@ -683,12 +685,14 @@ fn run_runtime_json_diagnostic_contract_reports_capability_hint() {
     let body = parse_stdout_json(&output);
     let diagnostic = &body["diagnostic"];
     let message = diagnostic["message"].as_str().expect("message should be a string");
+    let help = diagnostic["help"].as_str().expect("help should be a string");
     assert!(message.contains("Capability denied: filesystem-write required for write_file"));
     assert!(
         message.contains("--allow-fs-write"),
         "expected capability hint in runtime diagnostic message, got: {}",
         message
     );
+    assert!(help.contains("--allow-*"));
 }
 
 #[test]
@@ -709,10 +713,35 @@ fn run_runtime_json_diagnostic_contract_reports_non_callable_call_hint() {
     let body = parse_stdout_json(&output);
     let diagnostic = &body["diagnostic"];
     let message = diagnostic["message"].as_str().expect("message should be a string");
+    let help = diagnostic["help"].as_str().expect("help should be a string");
     assert!(message.contains("Cannot call non-function"));
     assert!(
         message.contains("callable value"),
         "expected callable remediation hint, got: {}",
         message
     );
+    assert!(help.contains("functions") && help.contains("callable values"));
+}
+
+#[test]
+fn run_runtime_json_diagnostic_contract_reports_invalid_binary_help() {
+    let dir = unique_temp_dir("run_runtime_json_invalid_binary");
+    let file = dir.join("invalid_binary.kujo");
+    write_fixture(&file, "print(true + 1)\n");
+
+    let output = run_kujo(&[
+        "run",
+        file.to_str().expect("path should be utf-8"),
+        "--json-runtime-diagnostics",
+    ]);
+
+    assert_eq!(output.status.code(), Some(4));
+    assert!(output.stderr.is_empty(), "runtime diagnostics should emit stdout-only JSON");
+
+    let body = parse_stdout_json(&output);
+    let diagnostic = &body["diagnostic"];
+    let message = diagnostic["message"].as_str().expect("message should be a string");
+    let help = diagnostic["help"].as_str().expect("help should be a string");
+    assert!(message.contains("Invalid binary operation"));
+    assert!(help.contains("operands") && help.contains("convert values"));
 }

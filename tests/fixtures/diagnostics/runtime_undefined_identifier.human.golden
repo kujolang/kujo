@@ -1,2 +1,3 @@
 [RUFRUN001] [runtime] error: Undefined variable: missing_value
   --> runtime_undefined_identifier.kujo:1:1
+  = help: Define this name before using it, check the spelling, or import the module that provides it.

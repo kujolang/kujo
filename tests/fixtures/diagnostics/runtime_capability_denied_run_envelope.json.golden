@@ -6,7 +6,7 @@
     "code": "RUFVM001",
     "column": 0,
     "file": null,
-    "help": null,
+    "help": "Rerun with the required --allow-* flag, or remove the host-effect operation.",
     "line": 0,
     "message": "Capability denied: filesystem-write required for write_file; rerun with --allow-fs-write",
     "severity": "error",

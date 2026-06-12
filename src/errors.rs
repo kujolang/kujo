@@ -162,6 +162,51 @@ pub fn run_runtime_diagnostic_envelope_json(
     })
 }
 
+pub fn runtime_help_for_message(message: &str) -> Option<String> {
+    if message.starts_with("Undefined variable:") || message.contains(" is not defined") {
+        return Some(
+            "Define this name before using it, check the spelling, or import the module that provides it."
+                .to_string(),
+        );
+    }
+
+    if message.starts_with("Module not found:") {
+        return Some(
+            "Check that the module exists as <module>.kujo or as a dotted src/... path under the package root."
+                .to_string(),
+        );
+    }
+
+    if message.starts_with("Cannot call non-function") || message.contains("not callable") {
+        return Some(
+            "Call only functions, closures, methods, or imported callable values.".to_string(),
+        );
+    }
+
+    if message.starts_with("Capability denied:") {
+        return Some(
+            "Rerun with the required --allow-* flag, or remove the host-effect operation."
+                .to_string(),
+        );
+    }
+
+    if message.starts_with("Invalid binary operation:") {
+        return Some(
+            "Use operands whose types support this operator, or convert values before applying it."
+                .to_string(),
+        );
+    }
+
+    if message.starts_with("Invalid unary operation:") {
+        return Some(
+            "Use a value type supported by this unary operator, or convert the value first."
+                .to_string(),
+        );
+    }
+
+    None
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiagnosticSeverity {
     Error,
@@ -417,7 +462,12 @@ impl KujoError {
 
     /// Create a runtime error
     pub fn runtime_error(message: String, location: SourceLocation) -> Self {
-        Self::new(ErrorKind::RuntimeError, message, location)
+        let help = runtime_help_for_message(&message);
+        let mut error = Self::new(ErrorKind::RuntimeError, message, location);
+        if let Some(help) = help {
+            error.help = Some(help);
+        }
+        error
     }
 
     /// Create an undefined variable error
@@ -427,6 +477,10 @@ impl KujoError {
             format!("Variable '{}' is not defined", name),
             location,
         )
+        .with_help(
+            "Define this name before using it, check the spelling, or import the module that provides it."
+                .to_string(),
+        )
     }
 
     /// Create an undefined function error
@@ -435,6 +489,10 @@ impl KujoError {
             ErrorKind::UndefinedFunction,
             format!("Function '{}' is not defined", name),
             location,
+        )
+        .with_help(
+            "Define this function before calling it, check the spelling, or import it from a module."
+                .to_string(),
         )
     }
 }
