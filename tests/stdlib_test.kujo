@@ -10,6 +10,31 @@ print("")
 
 print("--- Compression Tests ---")
 
+func delete_file_if_exists(path) {
+    if file_exists(path) {
+        delete_file(path)
+    }
+}
+
+func remove_dir_if_exists(path) {
+    if file_exists(path) {
+        os_rmdir(path)
+    }
+}
+
+# Keep filesystem-sensitive archive tests deterministic across repeated runs.
+delete_file_if_exists("test_data.txt")
+delete_file_if_exists("test_archive.zip")
+delete_file_if_exists("extracted/test_data.txt")
+remove_dir_if_exists("extracted")
+delete_file_if_exists("test_dir/file1.txt")
+delete_file_if_exists("test_dir/file2.txt")
+remove_dir_if_exists("test_dir")
+delete_file_if_exists("dir_archive.zip")
+delete_file_if_exists("extracted_dir/file1.txt")
+delete_file_if_exists("extracted_dir/file2.txt")
+remove_dir_if_exists("extracted_dir")
+
 # Test zip_create, zip_add_file, zip_close
 let test_file := "test_data.txt"
 write_file(test_file, "Hello from Kujo!\nThis is test data for compression.")
@@ -51,9 +76,10 @@ for file in extracted {
 }
 
 # Clean up test files
-delete_file(test_file)
-delete_file("test_archive.zip")
-# Note: In a real test suite, we'd clean up extracted/ directory too
+delete_file_if_exists(test_file)
+delete_file_if_exists("test_archive.zip")
+delete_file_if_exists("extracted/test_data.txt")
+remove_dir_if_exists("extracted")
 
 print("")
 
@@ -80,9 +106,13 @@ if file_exists("dir_archive.zip") {
 }
 
 # Clean up
-delete_file("test_dir/file1.txt")
-delete_file("test_dir/file2.txt")
-delete_file("dir_archive.zip")
+delete_file_if_exists("test_dir/file1.txt")
+delete_file_if_exists("test_dir/file2.txt")
+remove_dir_if_exists("test_dir")
+delete_file_if_exists("dir_archive.zip")
+delete_file_if_exists("extracted_dir/file1.txt")
+delete_file_if_exists("extracted_dir/file2.txt")
+remove_dir_if_exists("extracted_dir")
 
 print("")
 

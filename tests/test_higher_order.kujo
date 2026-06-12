@@ -55,7 +55,7 @@ word := reduce(letters, "", func(acc, letter) {
     return acc + letter
 })
 print(word)
-# Expected: Kujo
+# Expected: Ruff
 
 # Test 8: find - basic search
 data := [10, 20, 30, 40, 50]

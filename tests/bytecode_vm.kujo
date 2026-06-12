@@ -112,7 +112,7 @@ print(combined)  # Should print: Hello World
 
 # Test: Bytecode VM - String Indexing
 let text := "Kujo"
-print(text[0])  # Should print: R
+print(text[0])  # Should print: K
 print(text[1])  # Should print: u
 
 # Test: Bytecode VM - Functions (Basic)

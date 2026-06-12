@@ -1,30 +1,37 @@
 # Type Introspection Demo
 # Demonstrates runtime type checking and inspection
 
-print("=== Type Introspection Demo ===\n")
+func section(title) {
+    print("")
+    print("== " + title + " ==")
+}
+
+func kv(label, value) {
+    print("  " + label + ": " + to_string(value))
+}
+
+section("Type Introspection Demo")
 
 # 1. Basic Type Inspection
-print("1. Basic Type Inspection:")
-print("  type(42):", type(42))
-print("  type(3.14):", type(3.14))
-print("  type(\"hello\"):", type("hello"))
-print("  type(true):", type(true))
-print("  type(0):", type(0))
-print("  type([1, 2, 3]):", type([1, 2, 3]))
-print("  type({\"a\": 1}):", type({"a": 1}))
-print()
+section("1. Basic Type Inspection")
+kv("type(42)", type(42))
+kv("type(3.14)", type(3.14))
+kv("type(\"hello\")", type("hello"))
+kv("type(true)", type(true))
+kv("type(0)", type(0))
+kv("type([1, 2, 3])", type([1, 2, 3]))
+kv("type({\"a\": 1})", type({"a": 1}))
 
 # 2. Type Predicates
-print("2. Type Predicates:")
+section("2. Type Predicates")
 x := 42
-print("  x = 42")
-print("  is_int(x):", is_int(x))
-print("  is_float(x):", is_float(x))
-print("  is_string(x):", is_string(x))
-print()
+kv("x", x)
+kv("is_int(x)", is_int(x))
+kv("is_float(x)", is_float(x))
+kv("is_string(x)", is_string(x))
 
 # 3. Defensive Coding Example
-print("3. Defensive Coding:")
+section("3. Defensive Coding")
 func process_value(val) {
     if is_int(val) {
         return val * 2
@@ -38,14 +45,13 @@ func process_value(val) {
     return 0
 }
 
-print("  process_value(10):", process_value(10))
-print("  process_value(\"hello\"):", process_value("hello"))
-print("  process_value([1, 2, 3]):", process_value([1, 2, 3]))
-print("  process_value(true):", process_value(true))
-print()
+kv("process_value(10)", process_value(10))
+kv("process_value(\"hello\")", process_value("hello"))
+kv("process_value([1, 2, 3])", process_value([1, 2, 3]))
+kv("process_value(true)", process_value(true))
 
 # 4. Type Validation
-print("4. Type Validation:")
+section("4. Type Validation")
 func validate_user(data) {
     if !is_dict(data) {
         return "Error: User data must be a dictionary"
@@ -62,17 +68,15 @@ func validate_user(data) {
 valid_user := {"name": "Alice", "age": 30}
 invalid_user := {"name": "Bob", "age": "thirty"}
 
-print("  Valid user:", validate_user(valid_user))
-print("  Invalid user:", validate_user(invalid_user))
-print()
+kv("Valid user", validate_user(valid_user))
+kv("Invalid user", validate_user(invalid_user))
 
 # 5. Type Identification
-print("5. Type Identification:")
+section("5. Type Identification")
 items := [42, 3.14, "hello", [1, 2, 3], {"key": "value"}, true, 0]
 
 for item in items {
-    print("  Item type:", type(item))
+    kv("Item type", type(item))
 }
-print()
 
-print("=== Demo Complete ===")
+section("Demo Complete")

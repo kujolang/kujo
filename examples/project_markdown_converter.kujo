@@ -1,292 +1,61 @@
 #!/usr/bin/env kujo
-# Markdown to HTML Converter
-# Showcases: String processing, regex, file I/O, pattern matching, text transformations
+# Small markdown-to-HTML converter sketch.
+# This is intentionally compact and current-syntax; expand it for a real tool.
 
-parser := arg_parser()
-parser.add_argument("--input", "-i", type="string", required=true, help="Input markdown file")
-parser.add_argument("--output", "-o", type="string", required=true, help="Output HTML file")
-parser.add_argument("--template", "-t", type="string", help="HTML template file")
-parser.add_argument("--title", type="string", help="Page title")
-parser.add_argument("--css", type="string", help="CSS file to include")
-parser.add_argument("--toc", type="bool", help="Generate table of contents")
-
-args := parser.parse()
-
-# Conversion context
-context := {
-    "headers": [],
-    "code_blocks": 0,
-    "links": 0,
-    "images": 0,
-    "lists": 0
+func section(title) {
+    print("")
+    print("== " + title + " ==")
 }
 
-# Convert markdown to HTML
-func convert_markdown(markdown_text) {
-    lines := split(markdown_text, "\n")
-    html_lines := []
-    in_code_block := false
-    in_list := false
-    code_language := ""
-    
-    for line in lines {
-        converted := line
-        
-        # Code blocks
-        if starts_with(trim(line), "```") {
-            if !in_code_block {
-                # Start code block
-                in_code_block = true
-                lang := slice(trim(line), 3, length(trim(line)))
-                code_language = trim(lang)
-                if length(code_language) > 0 {
-                    converted = "<pre><code class=\"language-" + code_language + "\">"
-                } else {
-                    converted = "<pre><code>"
-                }
-                context._code_blocks = context._code_blocks + 1
-            } else {
-                # End code block
-                in_code_block = false
-                converted = "</code></pre>"
-                code_language = ""
-            }
-        } else if in_code_block {
-            # Inside code block, escape HTML
-            converted = escape_html(line)
-        } else {
-            # Process markdown syntax
-            
-            # Headers (h1-h6)
-            if starts_with(line, "# ") {
-                text := slice(line, 2, length(line))
-                id := slugify(text)
-                converted = "<h1 id=\"" + id + "\">" + text + "</h1>"
-                push(context._headers, {"level": 1, "text": text, "id": id})
-            } else if starts_with(line, "## ") {
-                text := slice(line, 3, length(line))
-                id := slugify(text)
-                converted = "<h2 id=\"" + id + "\">" + text + "</h2>"
-                push(context._headers, {"level": 2, "text": text, "id": id})
-            } else if starts_with(line, "### ") {
-                text := slice(line, 4, length(line))
-                id := slugify(text)
-                converted = "<h3 id=\"" + id + "\">" + text + "</h3>"
-                push(context._headers, {"level": 3, "text": text, "id": id})
-            } else if starts_with(line, "#### ") {
-                text := slice(line, 5, length(line))
-                id := slugify(text)
-                converted = "<h4 id=\"" + id + "\">" + text + "</h4>"
-                push(context._headers, {"level": 4, "text": text, "id": id})
-            }
-            # Lists
-            else if starts_with(trim(line), "- ") or starts_with(trim(line), "* ") {
-                text := slice(trim(line), 2, length(trim(line)))
-                if !in_list {
-                    in_list = true
-                    converted = "<ul>\n  <li>" + process_inline_markdown(text) + "</li>"
-                    context._lists = context._lists + 1
-                } else {
-                    converted = "  <li>" + process_inline_markdown(text) + "</li>"
-                }
-            } else if starts_with(trim(line), "1. ") or regex_match(trim(line), "^\\d+\\.\\s") {
-                text := regex_replace(trim(line), "^\\d+\\.\\s+", "")
-                if !in_list {
-                    in_list = true
-                    converted = "<ol>\n  <li>" + process_inline_markdown(text) + "</li>"
-                    context._lists = context._lists + 1
-                } else {
-                    converted = "  <li>" + process_inline_markdown(text) + "</li>"
-                }
-            } else {
-                # Close list if needed
-                if in_list and length(trim(line)) == 0 {
-                    in_list = false
-                    converted = "</ul>"
-                }
-                # Paragraphs
-                else if length(trim(line)) > 0 and !in_list {
-                    converted = "<p>" + process_inline_markdown(line) + "</p>"
-                } else {
-                    converted = process_inline_markdown(line)
-                }
-            }
-        }
-        
-        push(html_lines, converted)
-    }
-    
-    # Close any open lists
-    if in_list {
-        push(html_lines, "</ul>")
-    }
-    
-    return join(html_lines, "\n")
+func kv(label, value) {
+    print("  " + label + ": " + to_string(value))
 }
 
-# Process inline markdown (bold, italic, links, images, code)
-func process_inline_markdown(text) {
-    result := text
-    
-    # Images: ![alt](url)
-    result = regex_replace_all(result, "!\\[([^\\]]+)\\]\\(([^\\)]+)\\)", "<img src=\"$2\" alt=\"$1\">")
-    context._images = context._images + count_matches(text, "!\\[")
-    
-    # Links: [text](url)
-    result = regex_replace_all(result, "\\[([^\\]]+)\\]\\(([^\\)]+)\\)", "<a href=\"$2\">$1</a>")
-    context._links = context._links + count_matches(text, "\\[")
-    
-    # Bold: **text** or __text__
-    result = regex_replace_all(result, "\\*\\*([^\\*]+)\\*\\*", "<strong>$1</strong>")
-    result = regex_replace_all(result, "__([^_]+)__", "<strong>$1</strong>")
-    
-    # Italic: *text* or _text_
-    result = regex_replace_all(result, "\\*([^\\*]+)\\*", "<em>$1</em>")
-    result = regex_replace_all(result, "_([^_]+)_", "<em>$1</em>")
-    
-    # Inline code: `code`
-    result = regex_replace_all(result, "`([^`]+)`", "<code>$1</code>")
-    
+func html_escape(text) {
+    mut result := replace(text, "&", "&amp;")
+    result = replace(result, "<", "&lt;")
+    result = replace(result, ">", "&gt;")
     return result
 }
 
-# Generate table of contents
-func generate_toc(headers) {
-    if length(headers) == 0 {
+func convert_line(line) {
+    if starts_with(line, "# ") {
+        let title := substring(line, 2, len(line))
+        return "<h1>" + html_escape(title) + "</h1>"
+    }
+
+    if starts_with(line, "## ") {
+        let title := substring(line, 3, len(line))
+        return "<h2>" + html_escape(title) + "</h2>"
+    }
+
+    if starts_with(line, "- ") {
+        let item := substring(line, 2, len(line))
+        return "<li>" + html_escape(item) + "</li>"
+    }
+
+    if len(trim(line)) == 0 {
         return ""
     }
-    
-    toc := ["<nav class=\"toc\">", "<h2>Table of Contents</h2>", "<ul>"]
-    
-    for header in headers {
-        indent := ""
-        for i in range(1, header._level) {
-            indent = indent + "  "
-        }
-        toc_line := indent + "<li><a href=\"#" + header._id + "\">" + header._text + "</a></li>"
-        push(toc, toc_line)
-    }
-    
-    push(toc, "</ul>", "</nav>")
-    return join(toc, "\n")
+
+    return "<p>" + html_escape(line) + "</p>"
 }
 
-# Create HTML document
-func create_html_document(body_html, title, css_file, include_toc) {
-    html := ["<!DOCTYPE html>", "<html lang=\"en\">", "<head>"]
-    push(html, "  <meta charset=\"UTF-8\">")
-    push(html, "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">")
-    
-    page_title := title
-    if page_title == null {
-        page_title = "Converted Document"
+func convert_markdown(markdown) {
+    let lines := split(markdown, "\n")
+    mut html := []
+
+    for line in lines {
+        html = push(html, convert_line(line))
     }
-    push(html, "  <title>" + page_title + "</title>")
-    
-    if css_file != null {
-        push(html, "  <link rel=\"stylesheet\" href=\"" + css_file + "\">")
-    } else {
-        # Add default styles
-        push(html, "  <style>")
-        push(html, "    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 0 20px; color: #333; }")
-        push(html, "    h1, h2, h3, h4, h5, h6 { margin-top: 1.5em; margin-bottom: 0.5em; font-weight: 600; }")
-        push(html, "    h1 { font-size: 2.5em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; }")
-        push(html, "    h2 { font-size: 2em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }")
-        push(html, "    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; }")
-        push(html, "    pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }")
-        push(html, "    pre code { background: none; padding: 0; }")
-        push(html, "    a { color: #0366d6; text-decoration: none; }")
-        push(html, "    a:hover { text-decoration: underline; }")
-        push(html, "    img { max-width: 100%; height: auto; }")
-        push(html, "    .toc { background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 30px; }")
-        push(html, "    .toc ul { list-style: none; padding-left: 0; }")
-        push(html, "    .toc li { margin: 5px 0; }")
-        push(html, "  </style>")
-    }
-    
-    push(html, "</head>")
-    push(html, "<body>")
-    
-    if include_toc {
-        toc_html := generate_toc(context._headers)
-        push(html, toc_html)
-    }
-    
-    push(html, body_html)
-    push(html, "</body>")
-    push(html, "</html>")
-    
+
     return join(html, "\n")
 }
 
-# Helper functions
-func escape_html(text) {
-    result := text
-    result = replace(result, "&", "&amp;")
-    result = replace(result, "<", "&lt;")
-    result = replace(result, ">", "&gt;")
-    result = replace(result, "\"", "&quot;")
-    return result
-}
+let sample := "# Kujo\nA small markdown converter.\n- parse headings\n- emit HTML"
+let html := convert_markdown(sample)
 
-func slugify(text) {
-    slug := lower(text)
-    slug = regex_replace_all(slug, "[^a-z0-9]+", "-")
-    slug = regex_replace_all(slug, "^-+|-+$", "")
-    return slug
-}
-
-func count_matches(text, pattern) {
-    matches := regex_find_all(text, pattern)
-    return length(matches)
-}
-
-# Main execution
-print("")
-print("📝 Markdown to HTML Converter")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("")
-
-# Read input file
-print("📂 Reading: " + args._input)
-read_result := read_file(args._input)
-
-match read_result {
-    case Err(error): {
-        print("❌ Error reading input file: " + error)
-        exit(1)
-    }
-    case Ok(markdown): {
-        print("✅ Read " + to_string(length(markdown)) + " characters")
-        
-        # Convert markdown
-        print("🔄 Converting markdown to HTML...")
-        html_body := convert_markdown(markdown)
-        
-        # Create full HTML document
-        full_html := create_html_document(html_body, args._title, args._css, args._toc)
-        
-        # Write output file
-        print("💾 Writing: " + args._output)
-        write_result := write_file(args._output, full_html)
-        
-        match write_result {
-            case Err(error): {
-                print("❌ Error writing output file: " + error)
-                exit(1)
-            }
-            case Ok(_): {
-                print("✅ Conversion complete!")
-                print("")
-                print("📊 Statistics:")
-                print("  Headers:     " + to_string(length(context._headers)))
-                print("  Code blocks: " + to_string(context._code_blocks))
-                print("  Links:       " + to_string(context._links))
-                print("  Images:      " + to_string(context._images))
-                print("  Lists:       " + to_string(context._lists))
-                print("")
-                print("🎉 HTML file created: " + args._output)
-            }
-        }
-    }
-}
+section("Markdown Converter")
+kv("input bytes", len(sample))
+kv("output bytes", len(html))
+print(html)

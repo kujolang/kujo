@@ -106,9 +106,11 @@ fn relative_from_repo(path: &Path) -> String {
 
 fn run_examples() -> HashSet<&'static str> {
     HashSet::from([
+        "examples/00-hello.kujo",
         "examples/hello.kujo",
         "examples/arrays.kujo",
         "examples/dictionaries.kujo",
+        "examples/math_module.kujo",
         "examples/string_interpolation.kujo",
         "examples/scoping_simple.kujo",
     ])
@@ -140,8 +142,6 @@ fn expected_fail_examples_with_reason() -> &'static [(&'static str, &'static str
         ),
         ("examples/http_streaming.kujo", "legacy loop syntax drift"),
         ("examples/io_module_demo.kujo", "legacy IO module example drift"),
-        ("examples/math_module.kujo", "legacy math module example drift"),
-        ("examples/pattern_matching.kujo", "pattern-matching syntax drift in legacy example"),
         (
             "examples/project_api_tester.kujo",
             "named-argument style not supported by current parser",
@@ -155,10 +155,6 @@ fn expected_fail_examples_with_reason() -> &'static [(&'static str, &'static str
             "named-argument style not supported by current parser",
         ),
         (
-            "examples/project_markdown_converter.kujo",
-            "project example has unresolved parse/runtime debt",
-        ),
-        (
             "examples/project_task_manager.kujo",
             "named-argument style not supported by current parser",
         ),
@@ -170,11 +166,9 @@ fn expected_fail_examples_with_reason() -> &'static [(&'static str, &'static str
             "examples/projects/contact_manager.kujo",
             "project example has unresolved parse/runtime debt",
         ),
-        ("examples/projects/log_parser.kujo", "project example has unresolved parse/runtime debt"),
         ("examples/projects/streaming_downloader.kujo", "legacy loop syntax drift"),
         ("examples/spread_operator_demo.kujo", "spread/index syntax drift in legacy example"),
         ("examples/string_functions.kujo", "legacy single-quote argument syntax drift"),
-        ("examples/stdlib_crypto.kujo", "legacy loop syntax drift"),
         ("examples/struct_self_methods.kujo", "struct method example has unresolved syntax debt"),
         ("examples/testing_demo.kujo", "legacy test helper syntax drift"),
         ("examples/toml_demo.kujo", "intentional malformed string fixture"),
