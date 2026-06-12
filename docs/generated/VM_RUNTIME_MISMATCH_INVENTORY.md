@@ -1,14 +1,14 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-06-09
-Runner: `/Users/robertdevore/Documents/Kujolang/kujo-repos/kujo/target/debug/kujo`
+Generated: 2026-06-11
+Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
 Fixture root: `tests`
 
 | Fixture | VM Exit | Interpreter Exit | VM Matches Snapshot | Interpreter Matches Snapshot | Delta Type | Mismatch Bucket | Owner | Priority | Rationale |
 | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
 | `tests/arg_parser.kujo` | 0 | 4 | yes | no | `interpreter_only_mismatch` | `runtime-parity-bug` | runtime-owner | `P0` | runtime-path mismatch against snapshot indicates parity defect or runtime-specific contract drift |
 | `tests/array_methods_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/bytecode_vm.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/bytecode_vm.kujo` | 0 | 0 | no | no | `both_mismatch_same_output` | `stale-snapshot-expectation` | docs-owner | `P1` | both runtimes agree on output but snapshot expectation diverges |
 | `tests/destructuring.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/dict_methods_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/enhanced_errors.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -35,10 +35,10 @@ Fixture root: `tests`
 | `tests/image_processing_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/integer_types.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/iterators_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/jit_direct_recursion.kujo` | 143 | 4 | no | no | `both_mismatch_different_output` | `runtime-parity-bug` | runtime-owner | `P0` | both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations |
+| `tests/jit_direct_recursion.kujo` | 124 | 4 | no | no | `both_mismatch_different_output` | `runtime-parity-bug` | runtime-owner | `P0` | both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations |
 | `tests/jit_inline_cache.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/jit_loop_tests.kujo` | 0 | 4 | no | no | `both_mismatch_different_output` | `runtime-parity-bug` | runtime-owner | `P0` | both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations |
-| `tests/jit_register_locals.kujo` | 143 | 0 | no | yes | `vm_only_mismatch` | `runtime-parity-bug` | runtime-owner | `P0` | runtime-path mismatch against snapshot indicates parity defect or runtime-specific contract drift |
+| `tests/jit_register_locals.kujo` | 124 | 0 | no | yes | `vm_only_mismatch` | `runtime-parity-bug` | runtime-owner | `P0` | runtime-path mismatch against snapshot indicates parity defect or runtime-specific contract drift |
 | `tests/match_empty_body.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/match_no_param.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/minimal_match_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -53,10 +53,10 @@ Fixture root: `tests`
 | `tests/simple_ok.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/simple_result_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/spread_operator.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/stdlib_crypto_test.kujo` | 143 | 143 | no | no | `both_mismatch_different_output` | `runtime-parity-bug` | runtime-owner | `P0` | both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations |
+| `tests/stdlib_crypto_test.kujo` | 124 | 124 | no | no | `both_mismatch_different_output` | `runtime-parity-bug` | runtime-owner | `P0` | both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations |
 | `tests/stdlib_io_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/stdlib_os_path_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/stdlib_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/stdlib_test.kujo` | 0 | 0 | no | no | `both_mismatch_same_output` | `stale-snapshot-expectation` | docs-owner | `P1` | both runtimes agree on output but snapshot expectation diverges |
 | `tests/string_methods_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_arithmetic.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_array_contains.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -90,7 +90,7 @@ Fixture root: `tests`
 | `tests/test_function_drop_fix.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_functions.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_generators.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/test_higher_order.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/test_higher_order.kujo` | 0 | 0 | no | no | `both_mismatch_same_output` | `stale-snapshot-expectation` | docs-owner | `P1` | both runtimes agree on output but snapshot expectation diverges |
 | `tests/test_http.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_http_headers.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_http_type_checking.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -176,20 +176,20 @@ Fixture root: `tests`
 | `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 
 Summary: `168` fixtures scanned
-- both match snapshot: `156`
+- both match snapshot: `153`
 - VM-only mismatch: `1`
 - interpreter-only mismatch: `2`
-- both mismatch: `9`
+- both mismatch: `12`
 
 Mismatch classification totals (priority order):
 - P0 runtime-parity-bug (`runtime-owner`): `8`
-- P1 stale-snapshot-expectation (`docs-owner`): `4`
+- P1 stale-snapshot-expectation (`docs-owner`): `7`
 - P1 parser-invalid-fixture (`language-owner`): `0`
 - P2 harness-debt (`harness-owner`): `0`
 - P2 intentional-divergence (`runtime-owner`): `0`
 
 VM coverage gate:
 - metric: `vm_matches_snapshot / fixtures_scanned`
-- vm_matches_snapshot: `158/168` (`94.0%`)
+- vm_matches_snapshot: `155/168` (`92.3%`)
 - target threshold: `70.0%`
 - gate status: `PASS`

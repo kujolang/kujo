@@ -100,29 +100,56 @@ trim_file() {
   sed -e 's/[[:space:]]*$//' "$path" | sed -e '${/^$/d;}'
 }
 
+run_with_timeout() {
+  local timeout_seconds="$1"
+  shift
+
+  if command -v timeout >/dev/null 2>&1; then
+    timeout --preserve-status --kill-after=5s "${timeout_seconds}s" "$@"
+    return $?
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$timeout_seconds" "$@" <<'PY'
+import subprocess
+import sys
+
+timeout = float(sys.argv[1])
+cmd = sys.argv[2:]
+
+try:
+    completed = subprocess.run(
+        cmd,
+        stdout=sys.stdout.buffer,
+        stderr=subprocess.DEVNULL,
+        timeout=timeout,
+        check=False,
+    )
+    sys.exit(completed.returncode)
+except subprocess.TimeoutExpired:
+    sys.exit(124)
+PY
+    return $?
+  fi
+
+  "$@"
+}
+
 run_fixture() {
   local fixture="$1"
   local runtime="$2"
   local output_file="$3"
   local status_file="$4"
-  local timeout_cmd=()
-
-  if command -v timeout >/dev/null 2>&1; then
-    timeout_cmd=(timeout --preserve-status --kill-after=5s "${FIXTURE_TIMEOUT_SECONDS}s")
-  fi
+  local -a cmd=("$RUNNER" run "$fixture")
 
   if [[ "$runtime" == "interpreter" ]]; then
-    if "${timeout_cmd[@]}" "$RUNNER" run "$fixture" --interpreter >"$output_file" 2>/dev/null; then
-      echo "0" > "$status_file"
-    else
-      echo "$?" > "$status_file"
-    fi
+    cmd+=("--interpreter")
+  fi
+
+  if run_with_timeout "$FIXTURE_TIMEOUT_SECONDS" "${cmd[@]}" >"$output_file" 2>/dev/null; then
+    echo "0" > "$status_file"
   else
-    if "${timeout_cmd[@]}" "$RUNNER" run "$fixture" >"$output_file" 2>/dev/null; then
-      echo "0" > "$status_file"
-    else
-      echo "$?" > "$status_file"
-    fi
+    echo "$?" > "$status_file"
   fi
 }
 
@@ -171,6 +198,11 @@ classify_mismatch_cause() {
     return
   fi
 
+  if [[ "$delta_type" == "both_mismatch_different_output" ]]; then
+    echo "runtime-parity-bug|runtime-owner|P0|both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations"
+    return
+  fi
+
   if [[ "$vm_exit" == "124" || "$interpreter_exit" == "124" || "$vm_exit" == "137" || "$interpreter_exit" == "137" ]]; then
     echo "harness-debt|harness-owner|P2|fixture exceeded inventory generation timeout and needs a dedicated harness follow-up"
     return
@@ -180,7 +212,6 @@ classify_mismatch_cause() {
     echo "intentional-divergence|runtime-owner|P2|known generator-surface divergence should be documented and contract-locked"
     return
   fi
-
   echo "runtime-parity-bug|runtime-owner|P0|both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations"
 }
 

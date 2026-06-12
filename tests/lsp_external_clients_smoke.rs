@@ -28,6 +28,10 @@ fn python_external_client_can_launch_kujo_lsp() {
 
 #[test]
 fn node_external_client_can_launch_kujo_lsp() {
+    if Command::new("node").arg("--version").output().is_err() {
+        return;
+    }
+
     let script = root().join("tools/lsp_smoke_clients/node_client.mjs");
     let output = Command::new("node")
         .arg(script)
