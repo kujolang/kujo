@@ -1,0 +1,9 @@
+# Expected output:
+# tool: kujo
+# status: ready
+
+let tool := "kujo"
+let status := "ready"
+
+print("tool: " + tool)
+print("status: " + status)

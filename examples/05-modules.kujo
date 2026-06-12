@@ -1,0 +1,7 @@
+# Parse-only module import tour.
+# To run this pattern, create the imported files beside your script or inside a package root.
+
+import math_helpers
+from metrics import average, total
+from src.util import value
+from src.core.math import add

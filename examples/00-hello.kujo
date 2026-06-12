@@ -1,0 +1,4 @@
+# Expected output:
+# Kujo Kujo!
+
+print("Kujo Kujo!")

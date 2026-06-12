@@ -1,0 +1,10 @@
+# Expected output:
+# pass: build score
+
+let score := 42
+
+if score >= 40 {
+    print("pass: build score")
+} else {
+    print("retry: build score")
+}

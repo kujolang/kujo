@@ -1,0 +1,11 @@
+# Expected output with no script arguments:
+# {"command":"summarize","items":0,"ok":true}
+
+func response(command, items) {
+    return {"ok": true, "command": command, "items": len(items)}
+}
+
+let command := "summarize"
+let input_items := args()
+
+print(to_json(response(command, input_items)))

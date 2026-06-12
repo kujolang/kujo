@@ -1,161 +1,158 @@
-# Kujo Examples - Comprehensive Feature Showcase
+# Kujo Examples
 
-This directory contains example programs demonstrating Kujo's features.
+This directory contains Kujo programs for learning the language, validating features, and exploring larger scripts. Start with the canonical learning path below; the showcase and legacy sections are useful, but they are not the first style source for new code.
 
-## 🎯 Featured Examples
+## Running Examples
 
-These examples showcase core Kujo features such as **lexical scoping**, **user input**, **type conversion**, and **file I/O**.
+From the repository root:
+
+```bash
+cargo run -- run examples/hello.kujo
+cargo run -- check examples/arrays.kujo --quiet
+```
+
+Use `cargo run --quiet -- ...` when you want to hide Cargo build output.
+
+## Learning Path
+
+1. Hello: `hello.kujo`
+2. Variables and output: `01-variables.kujo`, `test_print.kujo`, `string_interpolation.kujo`
+3. Control flow: `03-control-flow.kujo`, `test_if_else.kujo`, `for_loops.kujo`
+4. Data structures: `04-data.kujo`, `arrays.kujo`, `dictionaries.kujo`, `collections.kujo`
+5. Functions: `02-functions.kujo`, `test_simple_func.kujo`, `closures_higher_order.kujo`
+6. Modules: `05-modules.kujo`, `basic_import.kujo`, `selective_import.kujo`
+7. File I/O: `file_logger.kujo`, `directory_tools.kujo`, `config_manager.kujo`
+8. Complete apps and tools: `06-agent-tool.kujo`, `note_taking_app.kujo`, `quiz_game.kujo`, `expense_tracker.kujo`
+
+## Canonical Learning Examples
+
+These files are intended as current, copyable examples. `tests/docs_examples.rs` either runs them directly or checks that they parse.
+
+### First Programs
+
+- `hello.kujo`: smallest runnable hello program.
+- `00-hello.kujo`: numbered one-line hello program.
+- `01-variables.kujo`: bindings and direct output.
+- `02-functions.kujo`: small function plus loop.
+- `03-control-flow.kujo`: minimal branch.
+- `04-data.kujo`: array and dictionary access.
+- `05-modules.kujo`: parse-only import syntax tour.
+- `06-agent-tool.kujo`: small JSON-oriented tool shape.
+- `math_module.kujo`: self-contained math helper/module-style example.
+- `pattern_matching.kujo`: current `match` and enum pattern syntax.
+- `test_print.kujo`: direct printing.
+- `string_interpolation.kujo`: interpolation basics.
+- `comments.kujo`: comment syntax.
+
+### Core Language
+
+- `arrays.kujo`: array operations.
+- `dictionaries.kujo`: dictionary/hash map operations.
+- `collections.kujo`: collection overview.
+- `for_loops.kujo`: for-in iteration.
+- `test_if_else.kujo`: conditional branches.
+- `test_simple_func.kujo`: function definition and calls.
+- `closures_higher_order.kujo`: higher-order function basics.
+
+### Modules and Tools
+
+- `basic_import.kujo`: basic module imports.
+- `selective_import.kujo`: importing specific functions.
+- `cli_tool.kujo`: command-line tool structure.
+- `arg_parser_demo.kujo`: argument parsing patterns.
+- `env_config.kujo`: environment-driven configuration.
+
+### File and System Work
+
+- `file_logger.kujo`: write, append, and read a simple log.
+- `directory_tools.kujo`: directory creation, listing, and existence checks.
+- `config_manager.kujo`: configuration file management.
+- `file_operations_demo.kujo`: broader file operation examples.
+- `path_utilities.kujo`: path helper usage.
+
+## Showcases
+
+These are larger examples for exploring practical scripts after the learning path.
 
 ### Interactive Applications
 
-#### 📝 **note_taking_app.kujo**
-A complete note-taking application with menu system.
-- **Features**: Create, read, list, and append to notes
-- **Demonstrates**: File I/O, user input, directory operations, loops, lexical scoping
-- **Try it**: `cargo run --quiet -- run examples/note_taking_app.kujo`
+- `note_taking_app.kujo`: create, read, list, and append notes.
+- `student_grade_tracker.kujo`: track grades with persistence and validation.
+- `expense_tracker.kujo`: personal expense tracking.
+- `quiz_game.kujo`: programming quiz with scoring.
+- `password_generator.kujo`: password generation and storage.
+- `backup_tool.kujo`: directory backup utility.
 
-#### 📊 **student_grade_tracker.kujo**
-Track student grades with data persistence.
-- **Features**: Add grades, view all entries, validate input
-- **Demonstrates**: File I/O, parse_int, error handling, input validation
-- **Try it**: `cargo run --quiet -- run examples/student_grade_tracker.kujo`
+### Networking, Data, and Services
 
-#### 💰 **expense_tracker.kujo**
-Personal expense tracking system.
-- **Features**: Add expenses, view history, accumulator pattern
-- **Demonstrates**: parse_float, file operations, lexical scoping
-- **Try it**: `cargo run --quiet -- run examples/expense_tracker.kujo`
+- `http_client.kujo`: HTTP client basics.
+- `http_download.kujo`: downloading content.
+- `http_rest_api.kujo`: REST-oriented HTTP example.
+- `json_demo.kujo`: JSON handling.
+- `stdlib_crypto.kujo`: hashing and password helper examples.
+- `database_postgres.kujo`: PostgreSQL demo.
+- `database_transactions.kujo`: transaction flow.
+- `examples/projects/todo_manager.kujo`: complete TODO application.
+- `examples/projects/blog_api.kujo`: API-oriented project example.
+- `examples/projects/log_parser.kujo`: log parsing and summary project.
+- `project_markdown_converter.kujo`: compact markdown-to-HTML converter sketch.
 
-#### 🎮 **quiz_game.kujo**
-Interactive programming quiz with score tracking.
-- **Features**: Multiple question types, score calculation, percentage display
-- **Demonstrates**: User input, parse_int, lexical scoping, accumulators
-- **Try it**: `cargo run --quiet -- run examples/quiz_game.kujo`
+### Benchmarks and Runtime Demos
 
-#### 🔐 **password_generator.kujo**
-Simple password generator and storage manager.
-- **Features**: Generate passwords, store credentials, view entries
-- **Demonstrates**: Loops, file I/O, parse_int, conditional logic
-- **Try it**: `cargo run --quiet -- run examples/password_generator.kujo`
+- `examples/benchmarks/`: benchmark fixtures and comparisons.
+- `benchmark_demo.kujo`: benchmark helper usage.
+- `jit_simple.kujo`: JIT-oriented runtime demo.
+- `async_await_demo.kujo`: async/await basics.
+- `concurrency_spawn.kujo`: spawn/concurrency demo.
 
-#### 💾 **backup_tool.kujo**
-Automated backup utility for directories.
-- **Features**: List files, copy files, create backup logs
-- **Demonstrates**: Directory operations, list_dir, file_exists, error handling
-- **Try it**: `cargo run --quiet -- run examples/backup_tool.kujo`
+## Legacy or Expected-Fail Examples
 
-### Quick Start Examples
+The files below are intentionally non-canonical right now. They are tracked in `tests/docs_examples.rs` as expected-fail examples with reasons, so they should not be copied as current syntax until repaired and removed from that list.
 
-#### 🎲 **guessing_game.kujo** _(Original)_
-Number guessing game with input validation.
-- `cargo run --quiet -- run examples/guessing_game.kujo`
+| File | Reason |
+|---|---|
+| `examples/benchmark_async.kujo` | Legacy control-flow syntax drift. |
+| `examples/benchmarks/file_io.kujo` | Benchmark fixture contains parser-incompatible syntax. |
+| `examples/benchmarks/sorting_algorithms.kujo` | Benchmark fixture kept as negative-coverage debt. |
+| `examples/benchmarks/string_processing.kujo` | Benchmark fixture kept as negative-coverage debt. |
+| `examples/ssg/ssg_async.kujo` | Legacy async and loop syntax drift in SSG fixture. |
+| `examples/ssg/test_parse_perf.kujo` | Intentional malformed string fixture. |
+| `examples/ssg/test_trim.kujo` | Legacy test keyword syntax drift in SSG fixture. |
+| `examples/csv_demo.kujo` | Legacy stdlib/example syntax drift. |
+| `examples/database_mysql.kujo` | Requires unsupported or drifted database demo syntax. |
+| `examples/destructuring_demo.kujo` | Destructuring surface still has parse drift in docs example. |
+| `examples/http_streaming.kujo` | Legacy loop syntax drift. |
+| `examples/io_module_demo.kujo` | Legacy IO module example drift. |
+| `examples/project_api_tester.kujo` | Named-argument style not supported by current parser. |
+| `examples/project_data_pipeline.kujo` | Pipeline project example has unresolved syntax debt. |
+| `examples/project_log_analyzer.kujo` | Named-argument style not supported by current parser. |
+| `examples/project_task_manager.kujo` | Named-argument style not supported by current parser. |
+| `examples/project_web_scraper.kujo` | Named-argument style not supported by current parser. |
+| `examples/projects/contact_manager.kujo` | Project example has unresolved parse/runtime debt. |
+| `examples/projects/streaming_downloader.kujo` | Legacy loop syntax drift. |
+| `examples/spread_operator_demo.kujo` | Spread/index syntax drift in legacy example. |
+| `examples/string_functions.kujo` | Legacy single-quote argument syntax drift. |
+| `examples/struct_self_methods.kujo` | Struct method example has unresolved syntax debt. |
+| `examples/testing_demo.kujo` | Legacy test helper syntax drift. |
+| `examples/toml_demo.kujo` | Intentional malformed string fixture. |
+| `examples/unary_operators.kujo` | Legacy unary syntax drift. |
+| `examples/yaml_demo.kujo` | Intentional malformed string fixture. |
 
-#### 🧮 **interactive_calculator.kujo** _(Original)_
-Calculator supporting +, -, *, / operations.
-- `cargo run --quiet -- run examples/interactive_calculator.kujo`
+## Feature Coverage
 
-#### 👋 **interactive_greeting.kujo** _(Original)_
-Simple greeting with name and age input.
-- `cargo run --quiet -- run examples/interactive_greeting.kujo`
+| Feature | Current examples |
+|---|---|
+| Lexical scoping | `scoping.kujo`, `scoping_simple.kujo`, `quiz_game.kujo` |
+| User input | `interactive_greeting.kujo`, `guessing_game.kujo`, `quiz_game.kujo` |
+| Type conversion | `type_conversion.kujo`, `interactive_calculator.kujo`, `expense_tracker.kujo` |
+| File I/O | `file_logger.kujo`, `directory_tools.kujo`, `backup_tool.kujo` |
+| Error handling | `error_handling.kujo`, `error_handling_comprehensive.kujo`, `try_throw.kujo` |
+| Structs | `struct_basic.kujo`, `struct_methods.kujo`, `struct_nested.kujo`, `structs_comprehensive.kujo` |
+| Arrays and dictionaries | `arrays.kujo`, `dictionaries.kujo`, `collections.kujo` |
 
-### File I/O Basics
+## Tips
 
-#### 📄 **file_logger.kujo**
-Simple logging with write, append, and read operations.
-- `cargo run --quiet -- run examples/file_logger.kujo`
-
-#### 📁 **directory_tools.kujo**
-Directory creation, listing, and file existence checks.
-- `cargo run --quiet -- run examples/directory_tools.kujo`
-
-#### ⚙️ **config_manager.kujo**
-Configuration file management with error handling.
-- `cargo run --quiet -- run examples/config_manager.kujo`
-
-## 📚 Core Language Examples
-
-### Data Structures
-- **arrays.kujo** - Array operations and methods
-- **dictionaries.kujo** - Dictionary/hash map operations
-- **collections.kujo** - Collections overview
-
-### Control Flow
-- **for_loops.kujo** - For-in iteration
-- **test_if_else.kujo** - Conditional statements
-- **pattern_matching.kujo** - Match/case statements
-
-### Structs & Methods
-- **struct_basic.kujo** - Basic struct definitions
-- **struct_methods.kujo** - Methods on structs
-- **structs_comprehensive.kujo** - Complete struct features
-- **struct_nested.kujo** - Nested struct instances
-
-### Error Handling
-- **error_handling.kujo** - Try/except basics
-- **error_handling_comprehensive.kujo** - Advanced error handling
-- **try_throw.kujo** - Throwing and catching errors
-
-### Type System
-- **type_annotations.kujo** - Type annotation examples
-- **type_inference.kujo** - Type inference demonstration
-- **type_errors.kujo** - Type checking errors
-
-### Functions & Modules
-- **basic_import.kujo** - Module imports
-- **selective_import.kujo** - Importing specific functions
-- **math_module.kujo** - Using math functions
-
-## 🎨 Advanced Examples
-
-### Project Templates (examples/projects/)
-- **todo_manager.kujo** - Complete TODO list application
-- **contact_manager.kujo** - Contact management system
-
-## 🚀 Running Examples
-
-```bash
-# Interactive examples (with user input)
-cargo run --quiet -- run examples/note_taking_app.kujo
-cargo run --quiet -- run examples/quiz_game.kujo
-cargo run --quiet -- run examples/expense_tracker.kujo
-
-# Non-interactive demonstrations
-cargo run --quiet -- run examples/file_logger.kujo
-cargo run --quiet -- run examples/directory_tools.kujo
-cargo run --quiet -- run examples/scoping.kujo
-```
-
-## 💡 Learning Path
-
-1. **Start Here**: `hello.kujo`, `basic_import.kujo`
-2. **Control Flow**: `test_if_else.kujo`, `for_loops.kujo`
-3. **Data Structures**: `arrays.kujo`, `dictionaries.kujo`
-4. **User Input**: `interactive_greeting.kujo`, `guessing_game.kujo`
-5. **File I/O**: `file_logger.kujo`, `config_manager.kujo`
-6. **Complete Apps**: `note_taking_app.kujo`, `quiz_game.kujo`
-
-## 📖 Feature Coverage
-
-| Feature | Examples |
-|---------|----------|
-| **Lexical Scoping** | scoping.kujo, quiz_game.kujo, note_taking_app.kujo |
-| **User Input** | All interactive_*.kujo, quiz_game.kujo |
-| **Type Conversion** | parse_int: guessing_game.kujo, student_grade_tracker.kujo |
-|  | parse_float: interactive_calculator.kujo, expense_tracker.kujo |
-| **File I/O (Read/Write)** | file_logger.kujo, note_taking_app.kujo, backup_tool.kujo |
-| **Directory Operations** | directory_tools.kujo, backup_tool.kujo |
-| **Error Handling** | All try/except examples, config_manager.kujo |
-| **Structs** | struct_*.kujo examples |
-| **Pattern Matching** | pattern_matching.kujo |
-| **Arrays & Dicts** | arrays.kujo, dictionaries.kujo, collections.kujo |
-
-## 🔧 Tips
-
-- Use `--quiet` flag with cargo to hide compilation messages
-- Interactive examples wait for user input - press Ctrl+C to exit
-- File I/O examples create temporary files in `/tmp/`
-- Check each example's comments for detailed explanations
-
----
-
-**New to Kujo?** Start with `hello.kujo` and `interactive_greeting.kujo` to get a feel for the language!
+- Interactive examples wait for user input; press Ctrl+C to exit.
+- File I/O examples may create temporary files under `/tmp/`.
+- Check each example's comments for detailed explanations.
+- When in doubt, use `cargo run -- check <path> --quiet` before copying a larger example.

@@ -78,6 +78,8 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [docs/STANDARD_LIBRARY.md](docs/STANDARD_LIBRARY.md)
 - [docs/DOCGEN.md](docs/DOCGEN.md)
 - [docs/CLI_MACHINE_READABLE_CONTRACTS.md](docs/CLI_MACHINE_READABLE_CONTRACTS.md)
+- [AGENTS.md](AGENTS.md)
+- [docs/AGENT_READABILITY_DESIGN_NOTES.md](docs/AGENT_READABILITY_DESIGN_NOTES.md)
 - [docs/INSTALL_MATRIX.md](docs/INSTALL_MATRIX.md)
 - [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md)
 - [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)
@@ -115,6 +117,36 @@ kujo --version
 Create `hello.kujo`:
 
 ```kujo
+func greet() {
+    print("Kujo Kujo!")
+}
+
+greet()
+```
+
+Run it:
+
+```bash
+kujo run hello.kujo
+```
+
+Expected output:
+
+```text
+Kujo Kujo!
+```
+
+The same minimal program is tracked as `examples/hello.kujo`:
+
+```bash
+cargo run -- run examples/hello.kujo
+```
+
+### Next Program
+
+Once the first run works, try a small report that uses functions, arrays, dictionaries, and branches:
+
+```kujo
 func total(values) {
     mut sum := 0
     for value in values {
@@ -136,7 +168,13 @@ if report["total"] > 40 {
 Run it:
 
 ```bash
-kujo run hello.kujo
+kujo run report.kujo
+```
+
+Expected output:
+
+```text
+ok: build = 42
 ```
 
 Need a project skeleton?
