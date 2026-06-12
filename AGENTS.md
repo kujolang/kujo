@@ -86,3 +86,4 @@ Include `docs/generated/**`, benchmark output directories, or `examples/ssg/cont
 - Do not redesign language syntax during cleanup tasks.
 - Avoid broad refactors of `src/vm.rs`, `src/jit.rs`, or interpreter internals unless a specific checklist item requires it.
 - Prefer small output helpers and renderer tests before moving CLI formatting code.
+- In Kujo examples, avoid long runs of literal `print(...)` calls. Prefer small local helpers such as `print_lines(lines)`, `section(title)`, `kv(label, value)`, and `ok(message)` when they remove repetition without hiding the language feature being demonstrated.

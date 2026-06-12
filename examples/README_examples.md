@@ -155,4 +155,5 @@ The files below are intentionally non-canonical right now. They are tracked in `
 - Interactive examples wait for user input; press Ctrl+C to exit.
 - File I/O examples may create temporary files under `/tmp/`.
 - Check each example's comments for detailed explanations.
+- Prefer `print_lines(lines)`, `section(title)`, `kv(label, value)`, and `ok(message)` helpers when an example has repeated output blocks.
 - When in doubt, use `cargo run -- check <path> --quiet` before copying a larger example.
