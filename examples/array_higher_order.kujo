@@ -1,109 +1,112 @@
 # Array Higher-Order Functions Example
 # Demonstrates map, filter, reduce, and find with practical use cases
 
-print("=== Array Higher-Order Functions ===")
-print()
+func print_lines(lines) {
+    for line in lines {
+        print(line)
+    }
+}
+
+func section(title, description) {
+    print_lines([
+        title,
+        "   " + description,
+        ""
+    ])
+}
+
+func show_pair(title, first_label, first_value, second_label, second_value) {
+    print("   " + title + ":")
+    print("   " + first_label + ": " + to_string(first_value))
+    print("   " + second_label + ": " + to_string(second_value))
+    print()
+}
+
+func show_value(title, label, value) {
+    print("   " + title + ":")
+    print("   " + label + ": " + to_string(value))
+    print()
+}
+
+func show_step(label, value) {
+    print("   " + label + ": " + to_string(value))
+}
+
+print_lines([
+    "=== Array Higher-Order Functions ===",
+    ""
+])
 
 # ============================================================================
 # MAP - Transform each element
 # ============================================================================
-print("1. MAP - Transform elements")
-print("   Applies a function to each element, returning a new array")
-print()
+section("1. MAP - Transform elements", "Applies a function to each element, returning a new array")
 
 # Example 1: Square numbers
 numbers := [1, 2, 3, 4, 5]
 squared := map(numbers, func(x) {
     return x * x
 })
-print("   Square numbers:")
-print("   Input:  ", numbers)
-print("   Output: ", squared)
-print()
+show_pair("Square numbers", "Input", numbers, "Output", squared)
 
 # Example 2: Convert temperatures from Celsius to Fahrenheit
 celsius := [0, 10, 20, 30, 40]
 fahrenheit := map(celsius, func(c) {
     return c * 9 / 5 + 32
 })
-print("   Celsius to Fahrenheit:")
-print("   Celsius:    ", celsius)
-print("   Fahrenheit: ", fahrenheit)
-print()
+show_pair("Celsius to Fahrenheit", "Celsius", celsius, "Fahrenheit", fahrenheit)
 
 # Example 3: String manipulation
 names := ["alice", "bob", "charlie"]
 capitalized := map(names, func(name) {
     return to_upper(name)
 })
-print("   Capitalize names:")
-print("   Input:  ", names)
-print("   Output: ", capitalized)
-print()
+show_pair("Capitalize names", "Input", names, "Output", capitalized)
 
 # ============================================================================
 # FILTER - Select elements matching a condition
 # ============================================================================
-print("2. FILTER - Select matching elements")
-print("   Returns only elements where the function returns true")
-print()
+section("2. FILTER - Select matching elements", "Returns only elements where the function returns true")
 
 # Example 1: Filter even numbers
 all_numbers := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 evens := filter(all_numbers, func(n) {
     return n % 2 == 0
 })
-print("   Even numbers:")
-print("   Input:  ", all_numbers)
-print("   Output: ", evens)
-print()
+show_pair("Even numbers", "Input", all_numbers, "Output", evens)
 
 # Example 2: Filter positive numbers
 mixed := [-5, 3, -2, 8, -1, 10]
 positives := filter(mixed, func(n) {
     return n > 0
 })
-print("   Positive numbers:")
-print("   Input:  ", mixed)
-print("   Output: ", positives)
-print()
+show_pair("Positive numbers", "Input", mixed, "Output", positives)
 
 # Example 3: Filter strings by length
 words := ["a", "hello", "hi", "world", "ok", "programming"]
 long_words := filter(words, func(word) {
     return len(word) > 2
 })
-print("   Words longer than 2 characters:")
-print("   Input:  ", words)
-print("   Output: ", long_words)
-print()
+show_pair("Words longer than 2 characters", "Input", words, "Output", long_words)
 
 # ============================================================================
 # REDUCE - Accumulate values into a single result
 # ============================================================================
-print("3. REDUCE - Accumulate values")
-print("   Combines all elements into a single value")
-print()
+section("3. REDUCE - Accumulate values", "Combines all elements into a single value")
 
 # Example 1: Sum of numbers
 values := [1, 2, 3, 4, 5]
 sum := reduce(values, 0, func(acc, x) {
     return acc + x
 })
-print("   Sum of array:")
-print("   Input: ", values)
-print("   Sum:   ", sum)
-print()
+show_pair("Sum of array", "Input", values, "Sum", sum)
 
 # Example 2: Product of numbers
 factors := [2, 3, 4, 5]
 product := reduce(factors, 1, func(acc, x) {
     return acc * x
 })
-print("   Product of array:")
-print("   Input:   ", factors)
-print("   Product: ", product)
-print()
+show_pair("Product of array", "Input", factors, "Product", product)
 
 # Example 3: Join strings
 words2 := ["Kujo", "is", "awesome"]
@@ -113,10 +116,7 @@ sentence := reduce(words2, "", func(acc, word) {
     }
     return acc + " " + word
 })
-print("   Join words into sentence:")
-print("   Input:    ", words2)
-print("   Sentence: ", sentence)
-print()
+show_pair("Join words into sentence", "Input", words2, "Sentence", sentence)
 
 # Example 4: Find maximum value
 data := [42, 15, 88, 23, 67, 91, 5]
@@ -126,74 +126,58 @@ max_value := reduce(data, 0, func(acc, x) {
     }
     return acc
 })
-print("   Find maximum:")
-print("   Input: ", data)
-print("   Max:   ", max_value)
-print()
+show_pair("Find maximum", "Input", data, "Max", max_value)
 
 # ============================================================================
 # FIND - Locate first matching element
 # ============================================================================
-print("4. FIND - Locate first match")
-print("   Returns the first element where the function returns true")
-print()
+section("4. FIND - Locate first match", "Returns the first element where the function returns true")
 
 # Example 1: Find first number greater than threshold
 nums := [3, 7, 12, 18, 24]
 first_above_10 := find(nums, func(n) {
     return n > 10
 })
-print("   First number > 10:")
-print("   Input:  ", nums)
-print("   Found:  ", first_above_10)
-print()
+show_pair("First number > 10", "Input", nums, "Found", first_above_10)
 
 # Example 2: Find string starting with specific letter
 fruits := ["apple", "banana", "cherry", "date", "elderberry"]
 starts_with_c := find(fruits, func(fruit) {
     return starts_with(fruit, "c")
 })
-print("   First fruit starting with 'c':")
-print("   Input: ", fruits)
-print("   Found: ", starts_with_c)
-print()
+show_pair("First fruit starting with 'c'", "Input", fruits, "Found", starts_with_c)
 
 # Example 3: Find not found (returns 0)
 small_nums := [1, 2, 3, 4, 5]
 large := find(small_nums, func(n) {
     return n > 100
 })
-print("   Find number > 100 (not found):")
-print("   Input: ", small_nums)
-print("   Found: ", large)
-print()
+show_pair("Find number > 100 (not found)", "Input", small_nums, "Found", large)
 
 # ============================================================================
 # CHAINING - Combine multiple operations
 # ============================================================================
-print("5. CHAINING - Combine operations")
-print("   Chain multiple higher-order functions together")
-print()
+section("5. CHAINING - Combine operations", "Chain multiple higher-order functions together")
 
 # Example: Process data through multiple transformations
 # Get even numbers, square them, then sum the results
 original := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-print("   Original array: ", original)
+show_step("Original array", original)
 
 step1 := filter(original, func(n) {
     return n % 2 == 0
 })
-print("   After filter (evens): ", step1)
+show_step("After filter (evens)", step1)
 
 step2 := map(step1, func(n) {
     return n * n
 })
-print("   After map (squared): ", step2)
+show_step("After map (squared)", step2)
 
 result := reduce(step2, 0, func(acc, n) {
     return acc + n
 })
-print("   After reduce (sum): ", result)
+show_step("After reduce (sum)", result)
 print()
 
 # Compact version - all in one expression
@@ -205,62 +189,63 @@ compact_result := reduce(
     0,
     func(acc, n) { return acc + n }
 )
-print("   Compact version result: ", compact_result)
-print()
+show_value("Compact version", "Result", compact_result)
 
 # ============================================================================
 # PRACTICAL EXAMPLES
 # ============================================================================
-print("6. PRACTICAL EXAMPLES")
-print()
+print_lines([
+    "6. PRACTICAL EXAMPLES",
+    ""
+])
 
 # Example 1: Process student scores
 print("   Student score processing:")
 scores := [45, 78, 92, 55, 88, 67, 94, 82]
-print("   All scores:    ", scores)
+show_step("All scores", scores)
 
 passing_scores := filter(scores, func(score) {
     return score >= 60
 })
-print("   Passing (≥60): ", passing_scores)
+show_step("Passing (≥60)", passing_scores)
 
 average := reduce(passing_scores, 0, func(acc, score) {
     return acc + score
 }) / len(passing_scores)
-print("   Average:       ", average)
+show_step("Average", average)
 print()
 
 # Example 2: Data validation
 print("   Data validation:")
 user_inputs := ["", "hello", "", "world", "", "test"]
-print("   Raw inputs:    ", user_inputs)
+show_step("Raw inputs", user_inputs)
 
 valid_inputs := filter(user_inputs, func(input) {
     return len(input) > 0
 })
-print("   Valid inputs:  ", valid_inputs)
+show_step("Valid inputs", valid_inputs)
 
 count := reduce(valid_inputs, 0, func(acc, _) {
     return acc + 1
 })
-print("   Valid count:   ", count)
+show_step("Valid count", count)
 print()
 
 # Example 3: Price calculations
 print("   Price calculations:")
 prices := [19.99, 29.99, 39.99, 49.99]
-print("   Original prices: ", prices)
+show_step("Original prices", prices)
 
 # Apply 20% discount
 discounted := map(prices, func(price) {
     return price * 0.8
 })
-print("   After 20% off:   ", discounted)
+show_step("After 20% off", discounted)
 
 total := reduce(discounted, 0, func(acc, price) {
     return acc + price
 })
-print("   Total:           ", total)
+show_step("Total", total)
 print()
 
 print("=== Complete! ===")

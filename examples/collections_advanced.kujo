@@ -1,5 +1,24 @@
 // collections_advanced.kujo - Practical examples of Set, Queue, and Stack usage
 
+func print_lines(lines) {
+    for line in lines {
+        print(line)
+    }
+}
+
+func section(title) {
+    print("")
+    print(title)
+}
+
+func kv(label, value) {
+    print(label + ": " + to_string(value))
+}
+
+func indented_kv(label, value) {
+    print("  " + label + ": " + to_string(value))
+}
+
 print("=== Set: Unique Visitor Tracking ===")
 // Track unique visitors to a website
 visitors := Set([])
@@ -9,33 +28,31 @@ for visit in visits {
     visitors := set_add(visitors, visit)
 }
 
-print("Total unique visitors:", len(visitors))
-print("Unique visitor IDs:", set_to_array(visitors))
+kv("Total unique visitors", len(visitors))
+kv("Unique visitor IDs", set_to_array(visitors))
 
 // Check if specific user visited
 has_user := set_has(visitors, "user789")
-print("user789 visited:", has_user)
+kv("user789 visited", has_user)
 
-print("")
-print("=== Set: Tag Management System ===")
+section("=== Set: Tag Management System ===")
 // Blog post tags
 post1_tags := Set(["python", "tutorial", "beginners"])
 post2_tags := Set(["python", "advanced", "async"])
 
 // Find common tags
 common_tags := set_intersect(post1_tags, post2_tags)
-print("Common tags:", set_to_array(common_tags))
+kv("Common tags", set_to_array(common_tags))
 
 // All unique tags across posts
 all_tags := set_union(post1_tags, post2_tags)
-print("All unique tags:", set_to_array(all_tags))
+kv("All unique tags", set_to_array(all_tags))
 
 // Tags only in post1
 post1_only := set_difference(post1_tags, post2_tags)
-print("Tags only in post1:", set_to_array(post1_only))
+kv("Tags only in post1", set_to_array(post1_only))
 
-print("")
-print("=== Set: De-duplicate Email List ===")
+section("=== Set: De-duplicate Email List ===")
 // Remove duplicate emails from mailing list
 emails := [
     "john@example.com",
@@ -46,12 +63,11 @@ emails := [
 ]
 
 unique_emails := Set(emails)
-print("Original email count:", len(emails))
-print("Unique email count:", len(unique_emails))
-print("Cleaned email list:", set_to_array(unique_emails))
+kv("Original email count", len(emails))
+kv("Unique email count", len(unique_emails))
+kv("Cleaned email list", set_to_array(unique_emails))
 
-print("")
-print("=== Queue: Task Processing System ===")
+section("=== Queue: Task Processing System ===")
 // Simple job queue
 task_queue := Queue([])
 print("Created empty task queue")
@@ -62,7 +78,7 @@ task_queue := queue_enqueue(task_queue, "Send email to customer")
 task_queue := queue_enqueue(task_queue, "Update inventory")
 task_queue := queue_enqueue(task_queue, "Generate report")
 
-print("Tasks in queue:", len(task_queue))
+kv("Tasks in queue", len(task_queue))
 
 // Process tasks in FIFO order
 while !queue_is_empty(task_queue) {
@@ -72,10 +88,9 @@ while !queue_is_empty(task_queue) {
     print("Processing:", task)
 }
 
-print("All tasks processed. Queue is empty:", queue_is_empty(task_queue))
+kv("All tasks processed. Queue is empty", queue_is_empty(task_queue))
 
-print("")
-print("=== Queue: Customer Support Ticketing ===")
+section("=== Queue: Customer Support Ticketing ===")
 // Customer support ticket queue
 tickets := Queue([])
 
@@ -84,7 +99,7 @@ tickets := queue_enqueue(tickets, {"id": 1, "customer": "Alice", "issue": "Login
 tickets := queue_enqueue(tickets, {"id": 2, "customer": "Bob", "issue": "Payment failed"})
 tickets := queue_enqueue(tickets, {"id": 3, "customer": "Charlie", "issue": "Feature request"})
 
-print("Tickets waiting:", len(tickets))
+kv("Tickets waiting", len(tickets))
 
 // Support agent handles next ticket
 next_ticket := queue_peek(tickets)
@@ -94,11 +109,10 @@ print("Next ticket to handle: Customer", next_ticket["customer"], "-", next_tick
 result := queue_dequeue(tickets)
 tickets := result[0]
 processed := result[1]
-print("Processed ticket #", processed["id"])
-print("Remaining tickets:", len(tickets))
+kv("Processed ticket #", processed["id"])
+kv("Remaining tickets", len(tickets))
 
-print("")
-print("=== Queue: Message Queue for Chat System ===")
+section("=== Queue: Message Queue for Chat System ===")
 // Simple message queue
 messages := Queue([])
 
@@ -107,7 +121,7 @@ messages := queue_enqueue(messages, "Alice: Hello everyone!")
 messages := queue_enqueue(messages, "Bob: Hey Alice!")
 messages := queue_enqueue(messages, "Charlie: Good morning!")
 
-print("Messages in queue:", len(messages))
+kv("Messages in queue", len(messages))
 
 // Display messages in order received
 msg_count := len(messages)
@@ -120,8 +134,7 @@ while i < msg_count {
     i := i + 1
 }
 
-print("")
-print("=== Stack: Browser History ===")
+section("=== Stack: Browser History ===")
 // Browser back/forward history
 history := Stack([])
 
@@ -131,18 +144,17 @@ history := stack_push(history, "https://github.com")
 history := stack_push(history, "https://stackoverflow.com")
 history := stack_push(history, "https://reddit.com")
 
-print("Current page:", stack_peek(history))
-print("History depth:", len(history))
+kv("Current page", stack_peek(history))
+kv("History depth", len(history))
 
 // User clicks back button
 result := stack_pop(history)
 history := result[0]
 previous_page := result[1]
-print("Went back from:", previous_page)
-print("Now on:", stack_peek(history))
+kv("Went back from", previous_page)
+kv("Now on", stack_peek(history))
 
-print("")
-print("=== Stack: Undo/Redo System ===")
+section("=== Stack: Undo/Redo System ===")
 // Simple text editor undo stack
 undo_stack := Stack([])
 document := ""
@@ -157,8 +169,8 @@ undo_stack := stack_push(undo_stack, document)
 document := "Hello World!"
 undo_stack := stack_push(undo_stack, document)
 
-print("Current document:", document)
-print("Undo states available:", len(undo_stack))
+kv("Current document", document)
+kv("Undo states available", len(undo_stack))
 
 // User presses undo
 result := stack_pop(undo_stack)
@@ -169,10 +181,9 @@ result := stack_pop(undo_stack)
 undo_stack := result[0]
 previous := result[1]
 
-print("After undo:", previous)
+kv("After undo", previous)
 
-print("")
-print("=== Stack: Depth-First Traversal Simulation ===")
+section("=== Stack: Depth-First Traversal Simulation ===")
 // Stack is perfect for depth-first operations
 nodes := Stack([])
 nodes := stack_push(nodes, "Root")
@@ -187,35 +198,33 @@ while !stack_is_empty(nodes) {
     print("  Visiting:", node)
 }
 
-print("")
-print("=== Stack: Function Call Stack Simulation ===")
+section("=== Stack: Function Call Stack Simulation ===")
 // Simulate function call stack
 call_stack := Stack([])
 
 print("Program starts")
 call_stack := stack_push(call_stack, "main()")
-print("Call stack:", stack_to_array(call_stack))
+kv("Call stack", stack_to_array(call_stack))
 
 print("main() calls process_data()")
 call_stack := stack_push(call_stack, "process_data()")
-print("Call stack:", stack_to_array(call_stack))
+kv("Call stack", stack_to_array(call_stack))
 
 print("process_data() calls validate()")
 call_stack := stack_push(call_stack, "validate()")
-print("Call stack:", stack_to_array(call_stack))
+kv("Call stack", stack_to_array(call_stack))
 
 print("validate() returns")
 result := stack_pop(call_stack)
 call_stack := result[0]
-print("Call stack:", stack_to_array(call_stack))
+kv("Call stack", stack_to_array(call_stack))
 
 print("process_data() returns")
 result := stack_pop(call_stack)
 call_stack := result[0]
-print("Call stack:", stack_to_array(call_stack))
+kv("Call stack", stack_to_array(call_stack))
 
-print("")
-print("=== Combining Collections ===")
+section("=== Combining Collections ===")
 // Use multiple collection types together
 // Example: Task prioritization system
 
@@ -234,10 +243,10 @@ normal_tasks := queue_enqueue(normal_tasks, "Write unit tests")
 assignees := Set(["Alice", "Bob", "Alice", "Charlie", "Bob"])
 
 print("System Status:")
-print("  Urgent tasks:", len(urgent_tasks))
-print("  Normal tasks:", len(normal_tasks))
-print("  Team members:", len(assignees))
-print("  Team:", set_to_array(assignees))
+indented_kv("Urgent tasks", len(urgent_tasks))
+indented_kv("Normal tasks", len(normal_tasks))
+indented_kv("Team members", len(assignees))
+indented_kv("Team", set_to_array(assignees))
 
 // Process urgent tasks first (LIFO - last urgent becomes first)
 if !stack_is_empty(urgent_tasks) {
@@ -256,5 +265,7 @@ if !queue_is_empty(normal_tasks) {
     print("📋 Processing normal:", task)
 }
 
-print("")
-print("=== Collections Examples Complete ===")
+print_lines([
+    "",
+    "=== Collections Examples Complete ==="
+])

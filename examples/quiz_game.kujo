@@ -4,10 +4,35 @@
 print("quiz_game: interactive example skipped in VM auto-run mode")
 exit(0)
 
-print("╔════════════════════════════════╗")
-print("║     Programming Quiz Game      ║")
-print("╚════════════════════════════════╝")
-print("")
+func print_lines(lines) {
+    for line in lines {
+        print(line)
+    }
+}
+
+func ask_choice(question, a, b, c) {
+    print_lines([
+        question,
+        "  a) " + a,
+        "  b) " + b,
+        "  c) " + c
+    ])
+}
+
+func correct() {
+    print("✓ Correct!\n")
+}
+
+func wrong(message) {
+    print("✗ Wrong. " + message + "\n")
+}
+
+print_lines([
+    "╔════════════════════════════════╗",
+    "║     Programming Quiz Game      ║",
+    "╚════════════════════════════════╝",
+    ""
+])
 
 name := input("Enter your name: ")
 print("\nWelcome, " + name + "! Let's test your knowledge.")
@@ -18,17 +43,19 @@ score := 0
 total := 0
 
 # Question 1
-print("Question 1: What does CPU stand for?")
-print("  a) Central Processing Unit")
-print("  b) Computer Personal Unit")
-print("  c) Central Program Utility")
+ask_choice(
+    "Question 1: What does CPU stand for?",
+    "Central Processing Unit",
+    "Computer Personal Unit",
+    "Central Program Utility"
+)
 answer1 := input("Your answer (a/b/c): ")
 
 if answer1 == "a" {
-    print("✓ Correct!\n")
+    correct()
     score := score + 1
 } else {
-    print("✗ Wrong. The answer is 'a'.\n")
+    wrong("The answer is 'a'.")
 }
 total := total + 1
 
@@ -39,10 +66,10 @@ answer2 := input("Your answer: ")
 try {
     num := parse_int(answer2)
     if num == 15 {
-        print("✓ Correct!\n")
+        correct()
         score := score + 1
     } else {
-        print("✗ Wrong. The answer is 15.\n")
+        wrong("The answer is 15.")
     }
     total := total + 1
 } except err {
@@ -51,17 +78,19 @@ try {
 }
 
 # Question 3
-print("Question 3: Which language is Kujo written in?")
-print("  a) Python")
-print("  b) Rust")
-print("  c) Go")
+ask_choice(
+    "Question 3: Which language is Kujo written in?",
+    "Python",
+    "Rust",
+    "Go"
+)
 answer3 := input("Your answer (a/b/c): ")
 
 if answer3 == "b" {
-    print("✓ Correct!\n")
+    correct()
     score := score + 1
 } else {
-    print("✗ Wrong. The answer is 'b' (Rust).\n")
+    wrong("The answer is 'b' (Rust).")
 }
 total := total + 1
 
@@ -72,10 +101,10 @@ answer4 := input("Your answer: ")
 try {
     num := parse_int(answer4)
     if num == 12 {
-        print("✓ Correct!\n")
+        correct()
         score := score + 1
     } else {
-        print("✗ Wrong. The answer is 12.\n")
+        wrong("The answer is 12.")
     }
     total := total + 1
 } except err {
@@ -84,17 +113,19 @@ try {
 }
 
 # Question 5
-print("Question 5: What does API stand for?")
-print("  a) Advanced Programming Interface")
-print("  b) Application Programming Interface")
-print("  c) Automated Program Integration")
+ask_choice(
+    "Question 5: What does API stand for?",
+    "Advanced Programming Interface",
+    "Application Programming Interface",
+    "Automated Program Integration"
+)
 answer5 := input("Your answer (a/b/c): ")
 
 if answer5 == "b" {
-    print("✓ Correct!\n")
+    correct()
     score := score + 1
 } else {
-    print("✗ Wrong. The answer is 'b'.\n")
+    wrong("The answer is 'b'.")
 }
 total := total + 1
 
@@ -103,13 +134,15 @@ total := total + 1
 percentage := (score * 100) / total
 
 # Display results
-print("═" * 40)
-print("           QUIZ RESULTS")
-print("═" * 40)
-print("Player: " + name)
-print("Score: " + score + " / " + total)
-print("Percentage: " + percentage + "%")
-print("")
+print_lines([
+    "═" * 40,
+    "           QUIZ RESULTS",
+    "═" * 40,
+    "Player: " + name,
+    "Score: " + score + " / " + total,
+    "Percentage: " + percentage + "%",
+    ""
+])
 
 if score == total {
     print("★ PERFECT SCORE! Excellent work!")
@@ -125,5 +158,7 @@ if score == total {
     }
 }
 
-print("═" * 40)
-print("\nThanks for playing, " + name + "!")
+print_lines([
+    "═" * 40,
+    "\nThanks for playing, " + name + "!"
+])
