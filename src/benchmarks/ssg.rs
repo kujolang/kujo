@@ -865,6 +865,210 @@ pub fn collect_ssg_trend_warnings_with_threshold(
     warnings
 }
 
+fn format_ssg_benchmark_stats_line(label: &str, stats: &SsgRunStatistics, unit: &str) -> String {
+    format!(
+        "{} (median): {:.3} {} [mean {:.3}, p90 {:.3}, p95 {:.3}, min {:.3}, max {:.3}, stddev {:.3}]",
+        label, stats.median, unit, stats.mean, stats.p90, stats.p95, stats.min, stats.max, stats.stddev
+    )
+}
+
+fn format_ssg_throughput_stats_line(label: &str, stats: &SsgRunStatistics) -> String {
+    format!(
+        "{} (median): {:.2} files/sec [mean {:.2}, p90 {:.2}, p95 {:.2}, min {:.2}, max {:.2}, stddev {:.2}]",
+        label, stats.median, stats.mean, stats.p90, stats.p95, stats.min, stats.max, stats.stddev
+    )
+}
+
+fn format_ssg_speedup_stats_line(label: &str, stats: &SsgRunStatistics) -> String {
+    format!(
+        "{} (median): {:.2}x [mean {:.2}x, p90 {:.2}x, p95 {:.2}x, min {:.2}x, max {:.2}x, stddev {:.2}]",
+        label, stats.median, stats.mean, stats.p90, stats.p95, stats.min, stats.max, stats.stddev
+    )
+}
+
+fn append_ssg_stage_profile_lines(
+    lines: &mut Vec<String>,
+    label: &str,
+    profile: Option<&SsgStageProfileStatistics>,
+) {
+    if let Some(profile) = profile {
+        lines.push(format!("{} stage breakdown (median):", label));
+        lines.push(crate::cli_output::format_kv(
+            "read stage",
+            format!("{:.3} ms", profile.read_ms.median),
+        ));
+        lines.push(crate::cli_output::format_kv(
+            "render/write stage",
+            format!("{:.3} ms", profile.render_write_ms.median),
+        ));
+        let stage_profile = SsgStageProfile {
+            read_ms: profile.read_ms.median,
+            render_write_ms: profile.render_write_ms.median,
+        };
+        if let Some((stage_name, stage_ms, stage_percent)) = stage_profile.bottleneck_stage() {
+            lines.push(format!(
+                "  bottleneck: {} ({:.3} ms, {:.2}% of profiled median)",
+                stage_name, stage_ms, stage_percent
+            ));
+        }
+    } else {
+        lines.push(format!(
+            "{} stage breakdown: unavailable (metrics not emitted by script)",
+            label
+        ));
+    }
+}
+
+fn format_ssg_trend_delta(metric: &SsgTrendMetric, unit_suffix: &str) -> String {
+    let absolute = if metric.absolute_delta >= 0.0 {
+        format!("+{:.3}{}", metric.absolute_delta, unit_suffix)
+    } else {
+        format!("{:.3}{}", metric.absolute_delta, unit_suffix)
+    };
+
+    match metric.percent_delta {
+        Some(percent) if percent >= 0.0 => format!("{} (+{:.2}%)", absolute, percent),
+        Some(percent) => format!("{} ({:.2}%)", absolute, percent),
+        None => format!("{} (n/a %)", absolute),
+    }
+}
+
+/// Render the human SSG benchmark report.
+pub fn render_ssg_benchmark_report(
+    summary: &SsgBenchmarkAggregateResult,
+    trend_report: Option<&SsgBenchmarkTrendReport>,
+    warmup_runs: usize,
+    throughput_gate: Option<SsgThroughputGateStatus>,
+    profile_async: bool,
+    warning_thresholds: SsgWarningThresholds,
+) -> Vec<String> {
+    let mut lines = Vec::new();
+
+    lines.push("Kujo async SSG benchmark".to_string());
+    lines.push("------------------------".to_string());
+    lines.push(format!("Warmup runs: {}", warmup_runs));
+    lines.push(format!("Runs: {}", summary.kujo_build_ms.runs));
+    lines.push(format!("Files rendered: {}", summary.files));
+    lines.push(format!("Kujo checksum: {}", summary.kujo_checksum));
+    lines.push(format_ssg_benchmark_stats_line("Kujo build time", &summary.kujo_build_ms, "ms"));
+    lines.push(format_ssg_throughput_stats_line("Kujo throughput", &summary.kujo_files_per_sec));
+
+    if let Some(gate) = throughput_gate {
+        lines.push(format_ssg_throughput_gate_summary(gate));
+    }
+
+    if profile_async {
+        append_ssg_stage_profile_lines(&mut lines, "Kujo", summary.kujo_stage_profile.as_ref());
+    }
+
+    if let (Some(python_build_ms), Some(python_files_per_sec)) =
+        (summary.python_build_ms.as_ref(), summary.python_files_per_sec.as_ref())
+    {
+        lines.push(format_ssg_benchmark_stats_line("Python build time", python_build_ms, "ms"));
+        lines.push(format_ssg_throughput_stats_line("Python throughput", python_files_per_sec));
+
+        if let Some(speedup) = summary.kujo_vs_python_speedup.as_ref() {
+            lines.push(format_ssg_speedup_stats_line("Kujo speedup vs Python", speedup));
+        }
+
+        if profile_async {
+            append_ssg_stage_profile_lines(
+                &mut lines,
+                "Python",
+                summary.python_stage_profile.as_ref(),
+            );
+        }
+    }
+
+    if let Some(trends) = trend_report {
+        lines.push(format!("Measured trend (first→last across {} runs):", trends.measured_runs));
+        lines.push(format!(
+            "  Kujo build time: {:.3} ms → {:.3} ms [{}]",
+            trends.kujo_build_ms.first,
+            trends.kujo_build_ms.last,
+            format_ssg_trend_delta(&trends.kujo_build_ms, " ms")
+        ));
+        lines.push(format!(
+            "  Kujo throughput: {:.2} files/sec → {:.2} files/sec [{}]",
+            trends.kujo_files_per_sec.first,
+            trends.kujo_files_per_sec.last,
+            format_ssg_trend_delta(&trends.kujo_files_per_sec, " files/sec")
+        ));
+
+        if let Some(metric) = trends.python_build_ms.as_ref() {
+            lines.push(format!(
+                "  Python build time: {:.3} ms → {:.3} ms [{}]",
+                metric.first,
+                metric.last,
+                format_ssg_trend_delta(metric, " ms")
+            ));
+        }
+
+        if let Some(metric) = trends.python_files_per_sec.as_ref() {
+            lines.push(format!(
+                "  Python throughput: {:.2} files/sec → {:.2} files/sec [{}]",
+                metric.first,
+                metric.last,
+                format_ssg_trend_delta(metric, " files/sec")
+            ));
+        }
+
+        if let Some(metric) = trends.kujo_vs_python_speedup.as_ref() {
+            lines.push(format!(
+                "  Kujo/Python speedup: {:.2}x → {:.2}x [{}]",
+                metric.first,
+                metric.last,
+                format_ssg_trend_delta(metric, "x")
+            ));
+        }
+
+        let trend_warnings =
+            collect_ssg_trend_warnings_with_threshold(trends, warning_thresholds.trend_percent);
+        if !trend_warnings.is_empty() {
+            lines.push(format_ssg_trend_warning_header(warning_thresholds));
+            for warning in trend_warnings {
+                lines.push(crate::cli_output::format_list_item(warning));
+            }
+            for hint in collect_ssg_warning_operator_hints(warning_thresholds) {
+                lines.push(crate::cli_output::format_list_item(format!("hint: {}", hint)));
+            }
+        }
+    }
+
+    let variability_warnings = collect_ssg_variability_warnings_with_threshold(
+        summary,
+        warning_thresholds.variability_percent,
+    );
+    let mean_median_drift_warnings = collect_ssg_mean_median_drift_warnings_with_threshold(
+        summary,
+        warning_thresholds.mean_median_drift_percent,
+    );
+    let range_spread_warnings = collect_ssg_range_spread_warnings_with_threshold(
+        summary,
+        warning_thresholds.range_spread_percent,
+    );
+    if !variability_warnings.is_empty()
+        || !mean_median_drift_warnings.is_empty()
+        || !range_spread_warnings.is_empty()
+    {
+        lines.push(format_ssg_measurement_warning_header(warning_thresholds));
+        for warning in variability_warnings {
+            lines.push(crate::cli_output::format_list_item(warning));
+        }
+        for warning in mean_median_drift_warnings {
+            lines.push(crate::cli_output::format_list_item(warning));
+        }
+        for warning in range_spread_warnings {
+            lines.push(crate::cli_output::format_list_item(warning));
+        }
+        for hint in collect_ssg_warning_operator_hints(warning_thresholds) {
+            lines.push(crate::cli_output::format_list_item(format!("hint: {}", hint)));
+        }
+    }
+
+    lines
+}
+
 fn parse_metric_value(output: &str, metric_key: &str) -> Result<f64, String> {
     for line in output.lines() {
         let trimmed = line.trim();
@@ -1196,6 +1400,131 @@ mod tests {
         let mut perms = fs::metadata(path).expect("stub metadata should resolve").permissions();
         perms.set_mode(0o755);
         fs::set_permissions(path, perms).expect("stub executable should be chmod +x");
+    }
+
+    fn stats(
+        runs: usize,
+        mean: f64,
+        median: f64,
+        p90: f64,
+        p95: f64,
+        min: f64,
+        max: f64,
+        stddev: f64,
+    ) -> SsgRunStatistics {
+        SsgRunStatistics { runs, mean, median, p90, p95, min, max, stddev }
+    }
+
+    #[test]
+    fn test_render_ssg_benchmark_report_snapshot() {
+        let summary = SsgBenchmarkAggregateResult {
+            files: 12,
+            kujo_checksum: 99,
+            kujo_build_ms: stats(3, 110.0, 100.0, 130.0, 140.0, 90.0, 150.0, 20.0),
+            kujo_files_per_sec: stats(3, 22.0, 20.0, 26.0, 28.0, 18.0, 30.0, 4.0),
+            kujo_stage_profile: Some(SsgStageProfileStatistics {
+                read_ms: stats(3, 32.0, 30.0, 35.0, 36.0, 28.0, 40.0, 3.0),
+                render_write_ms: stats(3, 75.0, 70.0, 85.0, 90.0, 65.0, 95.0, 8.0),
+            }),
+            python_build_ms: Some(stats(3, 210.0, 200.0, 230.0, 240.0, 190.0, 250.0, 30.0)),
+            python_files_per_sec: Some(stats(3, 11.0, 10.0, 13.0, 14.0, 9.0, 15.0, 2.0)),
+            python_stage_profile: Some(SsgStageProfileStatistics {
+                read_ms: stats(3, 125.0, 120.0, 140.0, 145.0, 115.0, 150.0, 10.0),
+                render_write_ms: stats(3, 85.0, 80.0, 95.0, 100.0, 75.0, 105.0, 8.0),
+            }),
+            kujo_vs_python_speedup: Some(stats(3, 2.1, 2.0, 2.3, 2.4, 1.9, 2.5, 0.3)),
+        };
+        let trends = SsgBenchmarkTrendReport {
+            measured_runs: 3,
+            kujo_build_ms: SsgTrendMetric {
+                first: 100.0,
+                last: 112.0,
+                absolute_delta: 12.0,
+                percent_delta: Some(12.0),
+            },
+            kujo_files_per_sec: SsgTrendMetric {
+                first: 20.0,
+                last: 18.0,
+                absolute_delta: -2.0,
+                percent_delta: Some(-10.0),
+            },
+            python_build_ms: Some(SsgTrendMetric {
+                first: 200.0,
+                last: 190.0,
+                absolute_delta: -10.0,
+                percent_delta: Some(-5.0),
+            }),
+            python_files_per_sec: Some(SsgTrendMetric {
+                first: 10.0,
+                last: 11.0,
+                absolute_delta: 1.0,
+                percent_delta: Some(10.0),
+            }),
+            kujo_vs_python_speedup: Some(SsgTrendMetric {
+                first: 2.0,
+                last: 1.8,
+                absolute_delta: -0.2,
+                percent_delta: Some(-10.0),
+            }),
+        };
+        let gate = SsgThroughputGateStatus {
+            threshold_ms: 150.0,
+            observed_median_ms: 100.0,
+            margin_ms: 50.0,
+            margin_percent: 33.333333,
+            passed: true,
+        };
+        let thresholds = SsgWarningThresholds {
+            variability_percent: 1000.0,
+            trend_percent: 10.0,
+            mean_median_drift_percent: 1000.0,
+            range_spread_percent: 1000.0,
+        };
+
+        let rendered =
+            render_ssg_benchmark_report(&summary, Some(&trends), 1, Some(gate), true, thresholds)
+                .join("\n");
+
+        let expected = [
+            "Kujo async SSG benchmark",
+            "------------------------",
+            "Warmup runs: 1",
+            "Runs: 3",
+            "Files rendered: 12",
+            "Kujo checksum: 99",
+            "Kujo build time (median): 100.000 ms [mean 110.000, p90 130.000, p95 140.000, min 90.000, max 150.000, stddev 20.000]",
+            "Kujo throughput (median): 20.00 files/sec [mean 22.00, p90 26.00, p95 28.00, min 18.00, max 30.00, stddev 4.00]",
+            "Throughput gate [PASS]: Kujo median build 100.000 ms <= target 150.000 ms (margin +50.000 ms, +33.33%)",
+            "Kujo stage breakdown (median):",
+            "  read stage: 30.000 ms",
+            "  render/write stage: 70.000 ms",
+            "  bottleneck: render/write (70.000 ms, 70.00% of profiled median)",
+            "Python build time (median): 200.000 ms [mean 210.000, p90 230.000, p95 240.000, min 190.000, max 250.000, stddev 30.000]",
+            "Python throughput (median): 10.00 files/sec [mean 11.00, p90 13.00, p95 14.00, min 9.00, max 15.00, stddev 2.00]",
+            "Kujo speedup vs Python (median): 2.00x [mean 2.10x, p90 2.30x, p95 2.40x, min 1.90x, max 2.50x, stddev 0.30]",
+            "Python stage breakdown (median):",
+            "  read stage: 120.000 ms",
+            "  render/write stage: 80.000 ms",
+            "  bottleneck: read (120.000 ms, 60.00% of profiled median)",
+            "Measured trend (first→last across 3 runs):",
+            "  Kujo build time: 100.000 ms → 112.000 ms [+12.000 ms (+12.00%)]",
+            "  Kujo throughput: 20.00 files/sec → 18.00 files/sec [-2.000 files/sec (-10.00%)]",
+            "  Python build time: 200.000 ms → 190.000 ms [-10.000 ms (-5.00%)]",
+            "  Python throughput: 10.00 files/sec → 11.00 files/sec [+1.000 files/sec (+10.00%)]",
+            "  Kujo/Python speedup: 2.00x → 1.80x [-0.200x (-10.00%)]",
+            "Trend stability warnings (drift >= 10.00%):",
+            "  - Kujo build time trend drift is high (+12.00% >= 10.00%; first 100.000, last 112.000, delta +12.000)",
+            "  - Kujo throughput trend drift is high (-10.00% >= 10.00%; first 20.000, last 18.000, delta -2.000)",
+            "  - Python throughput trend drift is high (+10.00% >= 10.00%; first 10.000, last 11.000, delta +1.000)",
+            "  - Kujo vs Python speedup trend drift is high (-10.00% >= 10.00%; first 2.000, last 1.800, delta -0.200)",
+            "  - hint: Tune CV sensitivity with --variability-warning-threshold <PERCENT>",
+            "  - hint: Tune trend sensitivity with --trend-warning-threshold <PERCENT>",
+            "  - hint: Tune skew sensitivity with --mean-median-drift-warning-threshold <PERCENT>",
+            "  - hint: Tune range-spread sensitivity with --range-spread-warning-threshold <PERCENT>",
+            "  - hint: Current thresholds: CV 1000.00%, trend 10.00%, mean/median 1000.00%, range spread 1000.00%",
+        ]
+        .join("\n");
+        assert_eq!(rendered, expected);
     }
 
     #[cfg(unix)]

@@ -2236,15 +2236,8 @@ async fn async_main() {
             range_spread_warning_threshold,
         } => {
             use benchmarks::ssg::{
-                analyze_ssg_benchmark_trends,
-                collect_ssg_mean_median_drift_warnings_with_threshold,
-                collect_ssg_range_spread_warnings_with_threshold,
-                collect_ssg_trend_warnings_with_threshold,
-                collect_ssg_variability_warnings_with_threshold,
-                collect_ssg_warning_operator_hints, evaluate_ssg_throughput_gate,
-                format_ssg_measurement_warning_header, format_ssg_throughput_gate_summary,
-                format_ssg_trend_warning_header, SsgStageProfile, SsgTrendMetric,
-                SsgWarningThresholds,
+                analyze_ssg_benchmark_trends, evaluate_ssg_throughput_gate,
+                render_ssg_benchmark_report, SsgWarningThresholds,
             };
             use benchmarks::{aggregate_ssg_results, run_ssg_benchmark_series};
 
@@ -2332,156 +2325,22 @@ async fn async_main() {
                 }
             };
 
-            println!("Kujo async SSG benchmark");
-            println!("------------------------");
-            println!("Warmup runs: {}", warmup_runs);
-            println!("Runs: {}", summary.kujo_build_ms.runs);
-            println!("Files rendered: {}", summary.files);
-            println!("Kujo checksum: {}", summary.kujo_checksum);
-            println!(
-                "Kujo build time (median): {:.3} ms [mean {:.3}, p90 {:.3}, p95 {:.3}, min {:.3}, max {:.3}, stddev {:.3}]",
-                summary.kujo_build_ms.median,
-                summary.kujo_build_ms.mean,
-                summary.kujo_build_ms.p90,
-                summary.kujo_build_ms.p95,
-                summary.kujo_build_ms.min,
-                summary.kujo_build_ms.max,
-                summary.kujo_build_ms.stddev
-            );
-            println!(
-                "Kujo throughput (median): {:.2} files/sec [mean {:.2}, p90 {:.2}, p95 {:.2}, min {:.2}, max {:.2}, stddev {:.2}]",
-                summary.kujo_files_per_sec.median,
-                summary.kujo_files_per_sec.mean,
-                summary.kujo_files_per_sec.p90,
-                summary.kujo_files_per_sec.p95,
-                summary.kujo_files_per_sec.min,
-                summary.kujo_files_per_sec.max,
-                summary.kujo_files_per_sec.stddev
-            );
-
             let throughput_gate = if let Some(gate_threshold_ms) = throughput_gate_ms {
-                let gate = match evaluate_ssg_throughput_gate(
-                    summary.kujo_build_ms.median,
-                    gate_threshold_ms,
-                ) {
-                    Ok(gate) => gate,
-                    Err(e) => {
-                        eprintln!("SSG throughput gate validation failed: {}", e);
-                        std::process::exit(CliExitCode::RuntimeError.code());
-                    }
-                };
-                println!("{}", format_ssg_throughput_gate_summary(gate));
-                Some(gate)
+                Some(
+                    match evaluate_ssg_throughput_gate(
+                        summary.kujo_build_ms.median,
+                        gate_threshold_ms,
+                    ) {
+                        Ok(gate) => gate,
+                        Err(e) => {
+                            eprintln!("SSG throughput gate validation failed: {}", e);
+                            std::process::exit(CliExitCode::RuntimeError.code());
+                        }
+                    },
+                )
             } else {
                 None
             };
-
-            if profile_async {
-                if let Some(kujo_profile) = summary.kujo_stage_profile.as_ref() {
-                    println!("Kujo stage breakdown (median):");
-                    println!(
-                        "{}",
-                        cli_output::format_kv(
-                            "read stage",
-                            format!("{:.3} ms", kujo_profile.read_ms.median),
-                        )
-                    );
-                    println!(
-                        "{}",
-                        cli_output::format_kv(
-                            "render/write stage",
-                            format!("{:.3} ms", kujo_profile.render_write_ms.median),
-                        )
-                    );
-                    let profile = SsgStageProfile {
-                        read_ms: kujo_profile.read_ms.median,
-                        render_write_ms: kujo_profile.render_write_ms.median,
-                    };
-                    if let Some((stage_name, stage_ms, stage_percent)) = profile.bottleneck_stage()
-                    {
-                        println!(
-                            "  bottleneck: {} ({:.3} ms, {:.2}% of profiled median)",
-                            stage_name, stage_ms, stage_percent
-                        );
-                    }
-                } else {
-                    println!("Kujo stage breakdown: unavailable (metrics not emitted by script)");
-                }
-            }
-
-            if let (Some(python_build_ms), Some(python_files_per_sec)) =
-                (summary.python_build_ms.as_ref(), summary.python_files_per_sec.as_ref())
-            {
-                println!(
-                    "Python build time (median): {:.3} ms [mean {:.3}, p90 {:.3}, p95 {:.3}, min {:.3}, max {:.3}, stddev {:.3}]",
-                    python_build_ms.median,
-                    python_build_ms.mean,
-                    python_build_ms.p90,
-                    python_build_ms.p95,
-                    python_build_ms.min,
-                    python_build_ms.max,
-                    python_build_ms.stddev
-                );
-                println!(
-                    "Python throughput (median): {:.2} files/sec [mean {:.2}, p90 {:.2}, p95 {:.2}, min {:.2}, max {:.2}, stddev {:.2}]",
-                    python_files_per_sec.median,
-                    python_files_per_sec.mean,
-                    python_files_per_sec.p90,
-                    python_files_per_sec.p95,
-                    python_files_per_sec.min,
-                    python_files_per_sec.max,
-                    python_files_per_sec.stddev
-                );
-
-                if let Some(speedup) = summary.kujo_vs_python_speedup.as_ref() {
-                    println!(
-                        "Kujo speedup vs Python (median): {:.2}x [mean {:.2}x, p90 {:.2}x, p95 {:.2}x, min {:.2}x, max {:.2}x, stddev {:.2}]",
-                        speedup.median,
-                        speedup.mean,
-                        speedup.p90,
-                        speedup.p95,
-                        speedup.min,
-                        speedup.max,
-                        speedup.stddev
-                    );
-                }
-
-                if profile_async {
-                    if let Some(python_profile) = summary.python_stage_profile.as_ref() {
-                        println!("Python stage breakdown (median):");
-                        println!(
-                            "{}",
-                            cli_output::format_kv(
-                                "read stage",
-                                format!("{:.3} ms", python_profile.read_ms.median),
-                            )
-                        );
-                        println!(
-                            "{}",
-                            cli_output::format_kv(
-                                "render/write stage",
-                                format!("{:.3} ms", python_profile.render_write_ms.median),
-                            )
-                        );
-                        let profile = SsgStageProfile {
-                            read_ms: python_profile.read_ms.median,
-                            render_write_ms: python_profile.render_write_ms.median,
-                        };
-                        if let Some((stage_name, stage_ms, stage_percent)) =
-                            profile.bottleneck_stage()
-                        {
-                            println!(
-                                "  bottleneck: {} ({:.3} ms, {:.2}% of profiled median)",
-                                stage_name, stage_ms, stage_percent
-                            );
-                        }
-                    } else {
-                        println!(
-                            "Python stage breakdown: unavailable (metrics not emitted by script)"
-                        );
-                    }
-                }
-            }
 
             let trend_report = match analyze_ssg_benchmark_trends(&run_results) {
                 Ok(value) => value,
@@ -2491,108 +2350,15 @@ async fn async_main() {
                 }
             };
 
-            if let Some(trends) = trend_report {
-                let format_delta = |metric: &SsgTrendMetric, unit_suffix: &str| {
-                    let absolute = if metric.absolute_delta >= 0.0 {
-                        format!("+{:.3}{}", metric.absolute_delta, unit_suffix)
-                    } else {
-                        format!("{:.3}{}", metric.absolute_delta, unit_suffix)
-                    };
-
-                    match metric.percent_delta {
-                        Some(percent) if percent >= 0.0 => {
-                            format!("{} (+{:.2}%)", absolute, percent)
-                        }
-                        Some(percent) => format!("{} ({:.2}%)", absolute, percent),
-                        None => format!("{} (n/a %)", absolute),
-                    }
-                };
-
-                println!("Measured trend (first→last across {} runs):", trends.measured_runs);
-                println!(
-                    "  Kujo build time: {:.3} ms → {:.3} ms [{}]",
-                    trends.kujo_build_ms.first,
-                    trends.kujo_build_ms.last,
-                    format_delta(&trends.kujo_build_ms, " ms")
-                );
-                println!(
-                    "  Kujo throughput: {:.2} files/sec → {:.2} files/sec [{}]",
-                    trends.kujo_files_per_sec.first,
-                    trends.kujo_files_per_sec.last,
-                    format_delta(&trends.kujo_files_per_sec, " files/sec")
-                );
-
-                if let Some(metric) = trends.python_build_ms.as_ref() {
-                    println!(
-                        "  Python build time: {:.3} ms → {:.3} ms [{}]",
-                        metric.first,
-                        metric.last,
-                        format_delta(metric, " ms")
-                    );
-                }
-
-                if let Some(metric) = trends.python_files_per_sec.as_ref() {
-                    println!(
-                        "  Python throughput: {:.2} files/sec → {:.2} files/sec [{}]",
-                        metric.first,
-                        metric.last,
-                        format_delta(metric, " files/sec")
-                    );
-                }
-
-                if let Some(metric) = trends.kujo_vs_python_speedup.as_ref() {
-                    println!(
-                        "  Kujo/Python speedup: {:.2}x → {:.2}x [{}]",
-                        metric.first,
-                        metric.last,
-                        format_delta(metric, "x")
-                    );
-                }
-
-                let trend_warnings = collect_ssg_trend_warnings_with_threshold(
-                    &trends,
-                    warning_thresholds.trend_percent,
-                );
-                if !trend_warnings.is_empty() {
-                    println!("{}", format_ssg_trend_warning_header(warning_thresholds));
-                    for warning in trend_warnings {
-                        println!("{}", cli_output::format_list_item(warning));
-                    }
-                    for hint in collect_ssg_warning_operator_hints(warning_thresholds) {
-                        println!("{}", cli_output::format_list_item(format!("hint: {}", hint)));
-                    }
-                }
-            }
-
-            let variability_warnings = collect_ssg_variability_warnings_with_threshold(
+            for line in render_ssg_benchmark_report(
                 &summary,
-                warning_thresholds.variability_percent,
-            );
-            let mean_median_drift_warnings = collect_ssg_mean_median_drift_warnings_with_threshold(
-                &summary,
-                warning_thresholds.mean_median_drift_percent,
-            );
-            let range_spread_warnings = collect_ssg_range_spread_warnings_with_threshold(
-                &summary,
-                warning_thresholds.range_spread_percent,
-            );
-            if !variability_warnings.is_empty()
-                || !mean_median_drift_warnings.is_empty()
-                || !range_spread_warnings.is_empty()
-            {
-                println!("{}", format_ssg_measurement_warning_header(warning_thresholds));
-                for warning in variability_warnings {
-                    println!("{}", cli_output::format_list_item(warning));
-                }
-                for warning in mean_median_drift_warnings {
-                    println!("{}", cli_output::format_list_item(warning));
-                }
-                for warning in range_spread_warnings {
-                    println!("{}", cli_output::format_list_item(warning));
-                }
-                for hint in collect_ssg_warning_operator_hints(warning_thresholds) {
-                    println!("{}", cli_output::format_list_item(format!("hint: {}", hint)));
-                }
+                trend_report.as_ref(),
+                warmup_runs,
+                throughput_gate,
+                profile_async,
+                warning_thresholds,
+            ) {
+                println!("{}", line);
             }
 
             if let Some(gate) = throughput_gate {
@@ -2676,21 +2442,27 @@ async fn async_main() {
             let completion_items = lsp_completion::complete(&code, line, column);
 
             if json {
-                let json_items: Vec<serde_json::Value> = completion_items
-                    .iter()
-                    .map(|item| {
-                        serde_json::json!({
-                            "label": item.label,
-                            "kind": item.kind.as_str(),
-                        })
-                    })
-                    .collect();
-
-                emit_json_or_internal_error(&json_items, "completion results");
-            } else {
-                for item in completion_items {
-                    println!("{}\t{}", item.label, item.kind.as_str());
+                #[derive(serde::Serialize)]
+                struct CompletionOutput {
+                    label: String,
+                    kind: String,
                 }
+
+                if let Err(error) =
+                    cli_output::emit_json_array(&completion_items, |item| CompletionOutput {
+                        label: item.label.clone(),
+                        kind: item.kind.as_str().to_string(),
+                    })
+                {
+                    report_json_internal_error_and_exit(
+                        format!("Failed to serialize completion results: {}", error),
+                        CliExitCode::InternalError,
+                    );
+                }
+            } else {
+                cli_output::emit_tsv_rows(
+                    completion_items.iter().map(|item| [item.label.as_str(), item.kind.as_str()]),
+                );
             }
         }
 
@@ -2699,26 +2471,37 @@ async fn async_main() {
             let definition = lsp_definition::find_definition(&code, line, column);
 
             if json {
-                let output = match definition {
-                    Some(location) => serde_json::json!({
-                        "name": location.name,
-                        "line": location.line,
-                        "column": location.column,
-                        "kind": location.kind.as_str(),
-                    }),
-                    None => serde_json::Value::Null,
-                };
+                #[derive(serde::Serialize)]
+                struct DefinitionOutput {
+                    name: String,
+                    line: usize,
+                    column: usize,
+                    kind: String,
+                }
 
-                emit_json_or_internal_error(&output, "definition result");
+                if let Err(error) =
+                    cli_output::emit_optional_json_record(definition.as_ref(), |location| {
+                        DefinitionOutput {
+                            name: location.name.clone(),
+                            line: location.line,
+                            column: location.column,
+                            kind: location.kind.as_str().to_string(),
+                        }
+                    })
+                {
+                    report_json_internal_error_and_exit(
+                        format!("Failed to serialize definition result: {}", error),
+                        CliExitCode::InternalError,
+                    );
+                }
             } else {
                 match definition {
                     Some(location) => {
+                        let position =
+                            format!("{}:{}:{}", file.display(), location.line, location.column);
                         println!(
-                            "{}\t{}:{}:{}",
-                            location.name,
-                            file.display(),
-                            location.line,
-                            location.column
+                            "{}",
+                            cli_output::format_tsv_row([location.name.as_str(), position.as_str()])
                         );
                     }
                     None => {
@@ -2734,30 +2517,25 @@ async fn async_main() {
                 lsp_references::find_references(&code, line, column, include_definition);
 
             if json {
-                let json_items: Vec<serde_json::Value> = references
-                    .iter()
-                    .map(|reference| {
-                        serde_json::json!({
-                            "line": reference.line,
-                            "column": reference.column,
-                            "is_definition": reference.is_definition,
-                        })
+                if let Err(error) = cli_output::emit_json_array(&references, |reference| {
+                    serde_json::json!({
+                        "line": reference.line,
+                        "column": reference.column,
+                        "is_definition": reference.is_definition,
                     })
-                    .collect();
-
-                emit_json_or_internal_error(&json_items, "references result");
-            } else {
-                for reference in references {
-                    let role = if reference.is_definition { "definition" } else { "reference" };
-
-                    println!(
-                        "{}\t{}:{}:{}",
-                        role,
-                        file.display(),
-                        reference.line,
-                        reference.column
+                }) {
+                    report_json_internal_error_and_exit(
+                        format!("Failed to serialize references result: {}", error),
+                        CliExitCode::InternalError,
                     );
                 }
+            } else {
+                cli_output::emit_tsv_rows(references.iter().map(|reference| {
+                    let role = if reference.is_definition { "definition" } else { "reference" };
+                    let position =
+                        format!("{}:{}:{}", file.display(), reference.line, reference.column);
+                    [role.to_string(), position]
+                }));
             }
         }
 
@@ -2766,28 +2544,33 @@ async fn async_main() {
             let hover_info = lsp_hover::hover(&code, line, column);
 
             if json {
-                let output = match hover_info {
-                    Some(info) => serde_json::json!({
-                        "symbol": info.symbol,
-                        "kind": info.kind,
-                        "detail": info.detail,
-                        "line": info.line,
-                        "column": info.column,
-                    }),
-                    None => serde_json::Value::Null,
-                };
-
-                emit_json_or_internal_error(&output, "hover result");
+                if let Err(error) =
+                    cli_output::emit_optional_json_record(hover_info.as_ref(), |info| {
+                        serde_json::json!({
+                            "symbol": info.symbol,
+                            "kind": info.kind,
+                            "detail": info.detail,
+                            "line": info.line,
+                            "column": info.column,
+                        })
+                    })
+                {
+                    report_json_internal_error_and_exit(
+                        format!("Failed to serialize hover result: {}", error),
+                        CliExitCode::InternalError,
+                    );
+                }
             } else {
                 match hover_info {
                     Some(info) => {
+                        let position = format!("{}:{}:{}", file.display(), info.line, info.column);
                         println!(
-                            "{}\t{}\t{}:{}:{}",
-                            info.symbol,
-                            info.detail,
-                            file.display(),
-                            info.line,
-                            info.column
+                            "{}",
+                            cli_output::format_tsv_row([
+                                info.symbol.as_str(),
+                                info.detail.as_str(),
+                                position.as_str(),
+                            ])
                         );
                     }
                     None => {
@@ -2802,23 +2585,26 @@ async fn async_main() {
             let diagnostics = lsp_diagnostics::diagnose(&code);
 
             if json {
-                let json_items: Vec<serde_json::Value> =
-                    diagnostics.iter().map(|diagnostic| diagnostic.to_json_value()).collect();
-
-                emit_json_or_internal_error(&json_items, "diagnostics result");
+                if let Err(error) = cli_output::emit_json_array(&diagnostics, |diagnostic| {
+                    diagnostic.to_json_value()
+                }) {
+                    report_json_internal_error_and_exit(
+                        format!("Failed to serialize diagnostics result: {}", error),
+                        CliExitCode::InternalError,
+                    );
+                }
             } else {
-                for diagnostic in diagnostics {
-                    println!(
-                        "{}\t{}:{}:{}\t[{}] [{}] {}",
-                        diagnostic.severity.as_str(),
-                        file.display(),
-                        diagnostic.line,
-                        diagnostic.column,
+                cli_output::emit_tsv_rows(diagnostics.iter().map(|diagnostic| {
+                    let position =
+                        format!("{}:{}:{}", file.display(), diagnostic.line, diagnostic.column);
+                    let message = format!(
+                        "[{}] [{}] {}",
                         diagnostic.code,
                         diagnostic.subsystem.as_str(),
                         diagnostic.message
                     );
-                }
+                    [diagnostic.severity.as_str().to_string(), position, message]
+                }));
             }
         }
 
@@ -2864,13 +2650,11 @@ async fn async_main() {
             } else {
                 println!("renamed\t{} edits", rename_result.edits.len());
                 for edit in rename_result.edits.iter() {
+                    let position = format!("{}:{}:{}", file.display(), edit.line, edit.column);
+                    let rename = format!("{} -> {}", edit.old_name, edit.new_name);
                     println!(
-                        "{}:{}:{}\t{} -> {}",
-                        file.display(),
-                        edit.line,
-                        edit.column,
-                        edit.old_name,
-                        edit.new_name
+                        "{}",
+                        cli_output::format_tsv_row([position.as_str(), rename.as_str()])
                     );
                 }
             }
@@ -2881,32 +2665,26 @@ async fn async_main() {
             let actions = lsp_code_actions::code_actions(&code);
 
             if json {
-                let json_items: Vec<serde_json::Value> = actions
-                    .iter()
-                    .map(|action| {
-                        serde_json::json!({
-                            "title": action.title,
-                            "kind": action.kind,
-                            "line": action.line,
-                            "column": action.column,
-                            "replacement": action.replacement,
-                            "description": action.description,
-                        })
+                if let Err(error) = cli_output::emit_json_array(&actions, |action| {
+                    serde_json::json!({
+                        "title": action.title,
+                        "kind": action.kind,
+                        "line": action.line,
+                        "column": action.column,
+                        "replacement": action.replacement,
+                        "description": action.description,
                     })
-                    .collect();
-
-                emit_json_or_internal_error(&json_items, "code actions result");
-            } else {
-                for action in actions.iter() {
-                    println!(
-                        "{}\t{}:{}:{}\t{}",
-                        action.title,
-                        file.display(),
-                        action.line,
-                        action.column,
-                        action.replacement
+                }) {
+                    report_json_internal_error_and_exit(
+                        format!("Failed to serialize code actions result: {}", error),
+                        CliExitCode::InternalError,
                     );
                 }
+            } else {
+                cli_output::emit_tsv_rows(actions.iter().map(|action| {
+                    let position = format!("{}:{}:{}", file.display(), action.line, action.column);
+                    [action.title.clone(), position, action.replacement.clone()]
+                }));
             }
         }
 

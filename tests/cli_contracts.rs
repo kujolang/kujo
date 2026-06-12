@@ -166,9 +166,45 @@ fn cli_lsp_complete_plain_and_json_modes_are_stable() {
     assert_eq!(plain.status.code(), Some(0));
     assert!(plain.stderr.is_empty(), "plain completion should not write stderr");
     let plain_stdout = String::from_utf8(plain.stdout).expect("stdout should be utf-8");
-    assert!(
-        plain_stdout.lines().all(|line| line.contains('\t')),
-        "plain completion lines should remain tab-delimited label/kind rows"
+    assert_eq!(
+        plain_stdout,
+        [
+            "abs\tbuiltin",
+            "aes_decrypt\tbuiltin",
+            "aes_decrypt_bytes\tbuiltin",
+            "aes_encrypt\tbuiltin",
+            "aes_encrypt_bytes\tbuiltin",
+            "ai_chat\tbuiltin",
+            "ai_embedding\tbuiltin",
+            "ai_stream_chat\tbuiltin",
+            "ai_tool_loop\tbuiltin",
+            "all\tbuiltin",
+            "alpha\tvariable",
+            "any\tbuiltin",
+            "append\tbuiltin",
+            "append_file\tbuiltin",
+            "arg_parser\tbuiltin",
+            "args\tbuiltin",
+            "array\tbuiltin",
+            "assert\tbuiltin",
+            "assert_contains\tbuiltin",
+            "assert_equal\tbuiltin",
+            "assert_false\tbuiltin",
+            "assert_true\tbuiltin",
+            "async_http_get\tbuiltin",
+            "async_http_post\tbuiltin",
+            "async_read_file\tbuiltin",
+            "async_read_files\tbuiltin",
+            "async_sleep\tbuiltin",
+            "async_timeout\tbuiltin",
+            "async_write_file\tbuiltin",
+            "async_write_files\tbuiltin",
+            "await_all\tbuiltin",
+            "await_task\tbuiltin",
+            "",
+        ]
+        .join("\n"),
+        "plain completion rows should remain byte-compatible"
     );
 
     let json = run_kujo(&[
