@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Artifact version/name for manual runs (defaults to manual-<run number>)"
+        required: false
+        type: string
 
 jobs:
   release-gate:
@@ -25,10 +30,32 @@ jobs:
   build-release-artifacts:
     needs: release-gate
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version || format('manual-{0}', github.run_number) }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: macos-15-intel
+            platform: macos-x64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: macos-15
+            platform: macos-arm64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: windows-latest
+            platform: windows-x64
+            binary_name: kujo.exe
+            archive_ext: zip
+            archive_kind: zip
 
     steps:
       - name: Checkout
@@ -37,49 +64,63 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Configure OpenSSL for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not $env:VCPKG_INSTALLATION_ROOT) {
+            $env:VCPKG_INSTALLATION_ROOT = "C:\vcpkg"
+          }
+          vcpkg install openssl:x64-windows-static-md
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Build release binary
         run: cargo build --release --locked
 
       - name: Validate binary commands
+        shell: bash
         run: |
-          ./target/release/kujo --version
-          ./target/release/kujo run examples/hello.kujo
-          ./target/release/kujo lsp --help
+          set -euo pipefail
+          binary_path="target/release/${{ matrix.binary_name }}"
+          "${binary_path}" --version
+          "${binary_path}" run examples/hello.kujo
+          "${binary_path}" lsp --help
 
       - name: Package artifact and checksum
         shell: bash
         run: |
           set -euo pipefail
-          tag_name="${GITHUB_REF_NAME:-manual}"
-          arch="$(uname -m)"
-          if [[ "${arch}" == "aarch64" ]]; then
-            arch="arm64"
-          fi
-
-          if [[ "${RUNNER_OS}" == "Linux" ]]; then
-            target_suffix="linux-${arch}"
-          else
-            target_suffix="macos-${arch}"
-          fi
-
+          binary_name="${{ matrix.binary_name }}"
+          binary_path="target/release/${binary_name}"
+          archive_name="kujo-${RELEASE_NAME}-${{ matrix.platform }}.${{ matrix.archive_ext }}"
           mkdir -p dist
-          cp target/release/kujo dist/kujo
-          archive_name="kujo-${tag_name}-${target_suffix}.tar.gz"
-          tar -czf "${archive_name}" -C dist kujo
+          cp "${binary_path}" "dist/${binary_name}"
+
+          if [[ "${{ matrix.archive_kind }}" == "zip" ]]; then
+            pwsh -NoLogo -NoProfile -Command "Compress-Archive -Path 'dist/${binary_name}' -DestinationPath '${archive_name}' -Force"
+          else
+            tar -czf "${archive_name}" -C dist "${binary_name}"
+          fi
 
           if command -v sha256sum >/dev/null 2>&1; then
             sha256sum "${archive_name}" > "${archive_name}.sha256"
-          else
+          elif command -v shasum >/dev/null 2>&1; then
             shasum -a 256 "${archive_name}" > "${archive_name}.sha256"
+          else
+            pwsh -NoLogo -NoProfile -Command "\$hash = (Get-FileHash -Algorithm SHA256 '${archive_name}').Hash.ToLower(); \"\$hash  ${archive_name}\" | Set-Content '${archive_name}.sha256'"
           fi
 
       - name: Upload artifact bundle
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.os }}
+          name: release-${{ matrix.platform }}
           path: |
             kujo-*.tar.gz
             kujo-*.tar.gz.sha256
+            kujo-*.zip
+            kujo-*.zip.sha256
 
   publish-release-assets:
     needs: build-release-artifacts
@@ -105,5 +146,6 @@ jobs:
         with:
           files: |
             release-artifacts/**/*.tar.gz
+            release-artifacts/**/*.zip
             release-artifacts/**/*.sha256
             release-artifacts/checksums.txt

@@ -10,7 +10,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: macos-15-intel
+            platform: macos-x64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: macos-15
+            platform: macos-arm64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: windows-latest
+            platform: windows-x64
+            binary_name: kujo.exe
+            archive_ext: zip
+            archive_kind: zip
 
     steps:
       - name: Download and verify published artifact
@@ -19,18 +39,7 @@ jobs:
           set -euo pipefail
           tag_name="${{ github.event.release.tag_name }}"
           repo="${{ github.repository }}"
-          arch="$(uname -m)"
-          if [[ "${arch}" == "aarch64" ]]; then
-            arch="arm64"
-          fi
-
-          if [[ "${RUNNER_OS}" == "Linux" ]]; then
-            target_suffix="linux-${arch}"
-          else
-            target_suffix="macos-${arch}"
-          fi
-
-          archive_name="kujo-${tag_name}-${target_suffix}.tar.gz"
+          archive_name="kujo-${tag_name}-${{ matrix.platform }}.${{ matrix.archive_ext }}"
           checksum_name="${archive_name}.sha256"
           base_url="https://github.com/${repo}/releases/download/${tag_name}"
 
@@ -39,13 +48,26 @@ jobs:
 
           if command -v sha256sum >/dev/null 2>&1; then
             sha256sum -c "${checksum_name}"
-          else
+          elif command -v shasum >/dev/null 2>&1; then
             shasum -a 256 -c "${checksum_name}"
+          else
+            expected="$(cut -d ' ' -f 1 "${checksum_name}" | tr '[:upper:]' '[:lower:]')"
+            actual="$(pwsh -NoLogo -NoProfile -Command "(Get-FileHash -Algorithm SHA256 '${archive_name}').Hash.ToLower()")"
+            [[ "${expected}" == "${actual}" ]]
           fi
 
-          extract_root="$(mktemp -d)"
-          tar -xzf "${archive_name}" -C "${extract_root}"
-          binary_path="${extract_root}/kujo"
+          extract_root="${PWD}/artifact-extract"
+          rm -rf "${extract_root}"
+          mkdir -p "${extract_root}"
+
+          if [[ "${{ matrix.archive_kind }}" == "zip" ]]; then
+            pwsh -NoLogo -NoProfile -Command "Expand-Archive -Path '${archive_name}' -DestinationPath '${extract_root}' -Force"
+          else
+            tar -xzf "${archive_name}" -C "${extract_root}"
+          fi
+
+          binary_path="${extract_root}/${{ matrix.binary_name }}"
+          chmod +x "${binary_path}" 2>/dev/null || true
 
           "${binary_path}" --version
           echo 'print("artifact-smoke")' > "${extract_root}/hello.kujo"
