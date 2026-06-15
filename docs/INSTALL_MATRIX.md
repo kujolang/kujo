@@ -13,6 +13,7 @@ This document defines supported installation paths and known platform caveats fo
 | Local production-like build | `cargo build --release` | `./target/release/kujo` | Performance verification, smoke checks | Preferred for realistic runtime/perf behavior. |
 | Install on current machine via Cargo | `cargo install --path .` | `kujo` on `PATH` | Operator/dev host install without package manager | Re-run after local upgrades to refresh binary. |
 | Pinned commit install | `cargo install --git https://github.com/kujolang/kujo --rev <sha>` | `kujo` on `PATH` | Reproducible deployment from known commit | Use immutable commit SHA, not floating branches. |
+| Prebuilt release binary | Download `kujo-<TAG>-<PLATFORM>.<EXT>` from GitHub Releases | Standalone `kujo`/`kujo.exe` | End users and onboarding without Rust/Cargo | See `docs/RELEASE_BINARIES.md` for asset names and checksum verification. |
 | CI reproducible build artifact | `cargo build --locked --release` | Deterministic release binary (lockfile pinned) | CI pipelines and artifact promotion | Fails fast if lockfile drift occurs. |
 
 ## Platform Caveats
@@ -31,6 +32,18 @@ This document defines supported installation paths and known platform caveats fo
 
 - Use Rust MSVC toolchain for best compatibility.
 - Path separator differences are covered by contract tests, but custom scripts should prefer Kujo-native path helpers (`path_join`, `path_absolute`) over hand-built separators.
+
+## Prebuilt Release Targets
+
+The tagged release workflow publishes:
+
+- `kujo-<TAG>-linux-x64.tar.gz`
+- `kujo-<TAG>-macos-x64.tar.gz`
+- `kujo-<TAG>-macos-arm64.tar.gz`
+- `kujo-<TAG>-windows-x64.zip`
+
+Each archive has a matching `.sha256` file and is included in the consolidated
+`checksums.txt`.
 
 ## Distribution Guidance (Pre-v1)
 

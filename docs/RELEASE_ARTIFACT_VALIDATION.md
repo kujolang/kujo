@@ -6,9 +6,10 @@ This document defines reproducible artifact validation steps for Kujo release ca
 
 - Rust toolchain: stable Rust `1.86+`
 - Supported release validation OS targets:
-  - Linux: `ubuntu-latest` (GitHub Actions baseline)
-  - macOS: `macos-latest` (GitHub Actions baseline)
-- CPU architecture baseline for these flows: `x86_64`
+  - Linux x64: `ubuntu-latest` (GitHub Actions baseline)
+  - macOS Intel: `macos-15-intel` (GitHub Actions baseline)
+  - macOS Apple Silicon: `macos-15` (GitHub Actions baseline)
+  - Windows x64: `windows-latest` (GitHub Actions baseline)
 
 If additional OS or architecture targets are released, this document and the validation matrix must be updated in the same change.
 
@@ -35,6 +36,7 @@ Cross-platform checksum tools:
 
 - Linux: `sha256sum`
 - macOS: `shasum -a 256`
+- Windows: `Get-FileHash -Algorithm SHA256`
 
 ## Reproducible Binary Verification Steps (Manual)
 
@@ -74,7 +76,10 @@ The clean-environment install + checksum flow is enforced in:
 
 - `.github/workflows/release-artifact-validation-matrix.yml`
 
-This workflow runs on Linux and macOS for push and pull request events.
+This workflow runs on Linux and macOS for push and pull request events. Tagged
+release archives are built and post-publish smoked for Linux x64, macOS x64,
+macOS arm64, and Windows x64 by the release workflows documented in
+`docs/RELEASE_BINARIES.md`.
 
 ## Evidence Requirements
 

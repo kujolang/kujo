@@ -17,10 +17,12 @@ Kujo requires **Rust 1.86+** to build from source.
 Minimum release validation assumptions for current supported install flow:
 
 - Rust stable `1.86+`
-- Linux (`ubuntu-latest` baseline)
-- macOS (`macos-latest` baseline)
+- Linux x64 (`ubuntu-latest` baseline)
+- macOS Intel (`macos-15-intel` baseline)
+- macOS Apple Silicon (`macos-15` baseline)
+- Windows x64 (`windows-latest` baseline)
 
-See `docs/RELEASE_ARTIFACT_VALIDATION.md` for cross-platform clean-environment validation and checksum verification flow.
+See `docs/RELEASE_BINARIES.md` and `docs/RELEASE_ARTIFACT_VALIDATION.md` for cross-platform release asset naming, clean-environment validation, and checksum verification flow.
 
 ### Install Rust
 
@@ -49,16 +51,17 @@ Set the release tag and detect platform:
 ```bash
 KUJO_VERSION="v1.0.0"
 
-if [[ "$(uname -s)" == "Darwin" ]]; then
-   KUJO_OS="macos"
-else
-   KUJO_OS="linux"
-fi
+case "$(uname -s)" in
+   Darwin) KUJO_OS="macos" ;;
+   Linux) KUJO_OS="linux" ;;
+   *) echo "Use the Windows PowerShell instructions below for Windows."; exit 1 ;;
+esac
 
-KUJO_ARCH="$(uname -m)"
-if [[ "${KUJO_ARCH}" == "aarch64" ]]; then
-   KUJO_ARCH="arm64"
-fi
+case "$(uname -m)" in
+   x86_64) KUJO_ARCH="x64" ;;
+   arm64|aarch64) KUJO_ARCH="arm64" ;;
+   *) echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
+esac
 
 KUJO_TARGET="${KUJO_OS}-${KUJO_ARCH}"
 ```
@@ -95,6 +98,25 @@ export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 kujo run examples/hello.kujo
 kujo lsp --help
+```
+
+Windows PowerShell:
+
+```powershell
+$KujoVersion = "v1.0.0"
+$Archive = "kujo-$KujoVersion-windows-x64.zip"
+$BaseUrl = "https://github.com/kujolang/kujo/releases/download/$KujoVersion"
+
+Invoke-WebRequest "$BaseUrl/$Archive" -OutFile $Archive
+Invoke-WebRequest "$BaseUrl/$Archive.sha256" -OutFile "$Archive.sha256"
+
+$Expected = (Get-Content "$Archive.sha256").Split(" ")[0].ToLower()
+$Actual = (Get-FileHash -Algorithm SHA256 $Archive).Hash.ToLower()
+if ($Expected -ne $Actual) { throw "Checksum mismatch" }
+
+New-Item -ItemType Directory -Force "$HOME\.kujo\bin" | Out-Null
+Expand-Archive $Archive -DestinationPath "$HOME\.kujo\bin" -Force
+& "$HOME\.kujo\bin\kujo.exe" --version
 ```
 
 ## Build from Source

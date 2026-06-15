@@ -231,7 +231,7 @@ cargo publish --dry-run
 cargo publish
 ```
 
-4. Publish GitHub release artifacts (Linux/macOS binaries + checksums) via release workflows.
+4. Publish GitHub release artifacts (Linux/macOS/Windows binaries + checksums) via release workflows.
 
 5. Run published-artifact smoke validation and record outcomes.
 
