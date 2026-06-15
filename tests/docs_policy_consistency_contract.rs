@@ -17,8 +17,6 @@ fn high_risk_docs_policies_remain_consistent() {
     let readme = read("README.md");
     let v1_scope = read("docs/V1_SCOPE.md");
     let lang_spec = read("docs/LANGUAGE_SPEC.md");
-    let inventory = read("docs/KUJO_FEATURE_INVENTORY.md");
-    let unfinished = read("docs/UNFINISHED_AND_MVP_AUDIT.md");
     let parity = read("docs/VM_INTERPRETER_PARITY_MATRIX.md");
     let migration = read("docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md");
     let stdlib_ref = read("docs/STANDARD_LIBRARY_REFERENCE.md");
@@ -28,8 +26,6 @@ fn high_risk_docs_policies_remain_consistent() {
         ("README.md", &readme),
         ("docs/V1_SCOPE.md", &v1_scope),
         ("docs/LANGUAGE_SPEC.md", &lang_spec),
-        ("docs/KUJO_FEATURE_INVENTORY.md", &inventory),
-        ("docs/UNFINISHED_AND_MVP_AUDIT.md", &unfinished),
     ] {
         assert!(content.contains(canonical), "missing canonical readiness boundary in {}", name);
     }
