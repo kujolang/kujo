@@ -131,9 +131,6 @@ fn expected_fail_examples_with_reason() -> &'static [(&'static str, &'static str
             "examples/benchmarks/string_processing.kujo",
             "benchmark fixture kept as negative-coverage debt",
         ),
-        ("examples/ssg/ssg_async.kujo", "legacy async and loop syntax drift in SSG fixture"),
-        ("examples/ssg/test_parse_perf.kujo", "intentional malformed string fixture"),
-        ("examples/ssg/test_trim.kujo", "legacy test keyword syntax drift in SSG fixture"),
         ("examples/csv_demo.kujo", "legacy stdlib/example syntax drift"),
         ("examples/database_mysql.kujo", "requires unsupported or drifted database demo syntax"),
         (

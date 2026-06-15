@@ -115,9 +115,6 @@ The files below are intentionally non-canonical right now. They are tracked in `
 | `examples/benchmarks/file_io.kujo` | Benchmark fixture contains parser-incompatible syntax. |
 | `examples/benchmarks/sorting_algorithms.kujo` | Benchmark fixture kept as negative-coverage debt. |
 | `examples/benchmarks/string_processing.kujo` | Benchmark fixture kept as negative-coverage debt. |
-| `examples/ssg/ssg_async.kujo` | Legacy async and loop syntax drift in SSG fixture. |
-| `examples/ssg/test_parse_perf.kujo` | Intentional malformed string fixture. |
-| `examples/ssg/test_trim.kujo` | Legacy test keyword syntax drift in SSG fixture. |
 | `examples/csv_demo.kujo` | Legacy stdlib/example syntax drift. |
 | `examples/database_mysql.kujo` | Requires unsupported or drifted database demo syntax. |
 | `examples/destructuring_demo.kujo` | Destructuring surface still has parse drift in docs example. |
