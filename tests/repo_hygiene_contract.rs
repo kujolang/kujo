@@ -78,6 +78,7 @@ fn seed_hygiene_policy_repo(root: &Path) {
     for entry in [
         ".editorconfig",
         ".gitignore",
+        "AGENTS.md",
         "CHANGELOG.md",
         "CONTRIBUTING.md",
         "Cargo.lock",
@@ -112,6 +113,7 @@ fn tracked_root_surface_matches_hygiene_allowlist() {
     let expected = vec![
         ".editorconfig".to_string(),
         ".gitignore".to_string(),
+        "AGENTS.md".to_string(),
         "CHANGELOG.md".to_string(),
         "CONTRIBUTING.md".to_string(),
         "Cargo.lock".to_string(),

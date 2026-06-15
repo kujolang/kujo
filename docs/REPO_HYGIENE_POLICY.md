@@ -15,6 +15,7 @@ Current allowed tracked root files:
 
 - `.editorconfig`
 - `.gitignore`
+- `AGENTS.md`
 - `CHANGELOG.md`
 - `CONTRIBUTING.md`
 - `Cargo.lock`
