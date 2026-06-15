@@ -54,7 +54,7 @@ cargo run -- test --runtime vm
 cargo run -- test --runtime dual
 ```
 
-The 2026-06-11 readability audit found drift in `tests/test_higher_order.kujo`, `tests/bytecode_vm.kujo`, and `tests/stdlib_test.kujo`; those fixtures have been realigned. Treat any future direct fixture failure as new drift and inspect expected versus actual output before updating snapshots.
+Treat any future direct fixture failure as new drift and inspect expected versus actual output before updating snapshots.
 
 ## Search Hygiene
 
