@@ -14,11 +14,7 @@ fn readiness_boundary_wording_is_consistent_across_core_scope_docs() {
     let canonical =
         "Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.";
 
-    let docs = [
-        "README.md",
-        "docs/V1_SCOPE.md",
-        "docs/LANGUAGE_SPEC.md",
-    ];
+    let docs = ["README.md", "docs/V1_SCOPE.md", "docs/LANGUAGE_SPEC.md"];
 
     for doc in docs {
         let content = read(doc);
