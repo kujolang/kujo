@@ -346,6 +346,8 @@ mod tests {
             "to_kebab_case",
             "substring",
             "capitalize",
+            "escape_xml",
+            "render_markdown",
             "trim",
             "trim_start",
             "trim_end",

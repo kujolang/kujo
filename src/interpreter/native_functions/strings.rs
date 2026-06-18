@@ -4,7 +4,88 @@
 
 use crate::builtins;
 use crate::interpreter::{DictMap, Value};
+use once_cell::sync::Lazy;
+use regex::Regex;
 use std::sync::Arc;
+
+// Native port of the SSG's inline-markdown pass. Byte-identical to the Kujo
+// implementation (same patterns, same replacement strings, same cheap substring
+// guards), but compiled once instead of recompiling regexes per call.
+static MD_IMG: Lazy<Regex> = Lazy::new(|| Regex::new(r"!\[([^\]]*)\]\(([^\)]+)\)").unwrap());
+static MD_LINK: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^\)]+)\)").unwrap());
+static MD_BOLD: Lazy<Regex> = Lazy::new(|| Regex::new(r"\*\*([^\*]+)\*\*").unwrap());
+static MD_ITALIC: Lazy<Regex> = Lazy::new(|| Regex::new(r"\*([^\*]+)\*").unwrap());
+static MD_CODE: Lazy<Regex> = Lazy::new(|| Regex::new(r"`([^`]+)`").unwrap());
+
+fn inline_markdown_native(text: &str) -> String {
+    let mut out = text.to_string();
+    if out.contains("![") {
+        out = MD_IMG.replace_all(&out, "<img src=\"$2\" alt=\"$1\">").into_owned();
+    }
+    if out.contains('[') {
+        out = MD_LINK.replace_all(&out, "<a href=\"$2\">$1</a>").into_owned();
+    }
+    if out.contains("**") {
+        out = MD_BOLD.replace_all(&out, "<strong>$1</strong>").into_owned();
+    }
+    if out.contains('*') {
+        out = MD_ITALIC.replace_all(&out, "<em>$1</em>").into_owned();
+    }
+    if out.contains('`') {
+        out = MD_CODE.replace_all(&out, "<code>$1</code>").into_owned();
+    }
+    out
+}
+
+// Native port of markdown_to_html: paragraphs, ATX headings (#/##/###),
+// unordered lists (- / *), and blockquotes (>), with the inline pass above.
+fn render_markdown_native(markdown: &str) -> String {
+    let mut html_lines: Vec<String> = Vec::new();
+    let mut in_list = false;
+    for raw_line in markdown.split('\n') {
+        let line = raw_line.trim();
+        if line.starts_with("- ") || line.starts_with("* ") {
+            let item_text = inline_markdown_native(line[2..].trim());
+            if !in_list {
+                in_list = true;
+                html_lines.push("<ul>".to_string());
+            }
+            html_lines.push(format!("<li>{}</li>", item_text));
+            continue;
+        }
+        if in_list {
+            html_lines.push("</ul>".to_string());
+            in_list = false;
+        }
+        if line.is_empty() {
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("### ") {
+            html_lines.push(format!("<h3>{}</h3>", inline_markdown_native(rest.trim())));
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("## ") {
+            html_lines.push(format!("<h2>{}</h2>", inline_markdown_native(rest.trim())));
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("# ") {
+            html_lines.push(format!("<h1>{}</h1>", inline_markdown_native(rest.trim())));
+            continue;
+        }
+        if let Some(rest) = line.strip_prefix("> ") {
+            html_lines.push(format!(
+                "<blockquote><p>{}</p></blockquote>",
+                inline_markdown_native(rest.trim())
+            ));
+            continue;
+        }
+        html_lines.push(format!("<p>{}</p>", inline_markdown_native(line)));
+    }
+    if in_list {
+        html_lines.push("</ul>".to_string());
+    }
+    html_lines.join("\n")
+}
 
 fn require_string_arg<'a>(
     args: &'a [Value],
@@ -65,6 +146,43 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                 Value::Str(Arc::new(builtins::capitalize(&**s)))
             } else {
                 Value::Error("capitalize() requires a string argument".to_string())
+            }
+        }
+
+        // Single-pass XML/HTML attribute+text escaper. Mirrors the canonical
+        // five-entity escape (&, <, >, ", ') exactly, but in one native pass
+        // instead of five interpreted string replacements — a hot path for SSG
+        // rendering. Accepts any value and stringifies it for ergonomics.
+        "escape_xml" => {
+            if let Some(value) = args.first() {
+                let source = match value {
+                    Value::Str(s) => s.as_ref().clone(),
+                    other => crate::interpreter::Interpreter::stringify_value(other),
+                };
+                let mut out = String::with_capacity(source.len() + 16);
+                for c in source.chars() {
+                    match c {
+                        '&' => out.push_str("&amp;"),
+                        '<' => out.push_str("&lt;"),
+                        '>' => out.push_str("&gt;"),
+                        '"' => out.push_str("&quot;"),
+                        '\'' => out.push_str("&apos;"),
+                        _ => out.push(c),
+                    }
+                }
+                Value::Str(Arc::new(out))
+            } else {
+                Value::Error("escape_xml() requires one argument".to_string())
+            }
+        }
+
+        // Native markdown renderer for the SSG hot path (one of the largest
+        // per-page costs when interpreted). Byte-identical to the Kujo version.
+        "render_markdown" => {
+            if let Some(Value::Str(s)) = args.first() {
+                Value::Str(Arc::new(render_markdown_native(s.as_ref())))
+            } else {
+                Value::Error("render_markdown() requires a string argument".to_string())
             }
         }
 

@@ -514,6 +514,8 @@ impl Interpreter {
             "to_lower",
             "lower",
             "capitalize",
+            "escape_xml",
+            "render_markdown",
             "trim",
             "trim_start",
             "trim_end",
@@ -916,6 +918,8 @@ impl Interpreter {
         self.env.define("to_lower".to_string(), Value::NativeFunction("to_lower".to_string()));
         self.env.define("lower".to_string(), Value::NativeFunction("lower".to_string())); // Alias
         self.env.define("capitalize".to_string(), Value::NativeFunction("capitalize".to_string()));
+        self.env.define("escape_xml".to_string(), Value::NativeFunction("escape_xml".to_string()));
+        self.env.define("render_markdown".to_string(), Value::NativeFunction("render_markdown".to_string()));
         self.env.define("trim".to_string(), Value::NativeFunction("trim".to_string()));
         self.env.define("trim_start".to_string(), Value::NativeFunction("trim_start".to_string()));
         self.env.define("trim_end".to_string(), Value::NativeFunction("trim_end".to_string()));
