@@ -87,6 +87,362 @@ fn render_markdown_native(markdown: &str) -> String {
     html_lines.join("\n")
 }
 
+// --- Native page-layout renderer -------------------------------------------
+// Byte-identical port of build.kujo's render_layout + its string helpers. This
+// is the single largest interpreted per-page cost in the SSG; doing it in one
+// native pass removes the ~18 ms/page the bytecode VM spent on escapes,
+// JSON-LD assembly, dict building, and template fills.
+
+fn rl_dict_get<'a>(v: &'a Value, key: &str) -> Option<&'a Value> {
+    match v {
+        Value::Dict(d) => d.get(key),
+        Value::FixedDict { keys, values } => {
+            keys.iter().position(|k| k.as_ref() == key).and_then(|i| values.get(i))
+        }
+        _ => None,
+    }
+}
+
+// to_string() for the value types the SSG stores in these dicts.
+fn rl_to_string(v: &Value) -> String {
+    match v {
+        Value::Str(s) => s.as_ref().clone(),
+        Value::Bool(b) => b.to_string(),
+        Value::Int(n) => n.to_string(),
+        Value::Float(f) => f.to_string(),
+        Value::Null => "null".to_string(),
+        _ => String::new(),
+    }
+}
+
+// to_string(dict[key]) without trimming; "" when absent.
+fn rl_raw(dict: &Value, key: &str) -> String {
+    rl_dict_get(dict, key).map(rl_to_string).unwrap_or_default()
+}
+
+fn rl_bool(dict: &Value, key: &str) -> bool {
+    matches!(rl_dict_get(dict, key), Some(Value::Bool(true)))
+}
+
+// meta_string(meta, key, fallback): trimmed non-empty value, else fallback.
+fn rl_meta(meta: &Value, key: &str, fallback: &str) -> String {
+    match rl_dict_get(meta, key) {
+        Some(value) => {
+            let s = rl_to_string(value);
+            let t = s.trim();
+            if t.is_empty() {
+                fallback.to_string()
+            } else {
+                t.to_string()
+            }
+        }
+        None => fallback.to_string(),
+    }
+}
+
+fn rl_xml_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
+fn rl_json_escape(s: &str) -> String {
+    s.replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+        .replace('\t', "\\t")
+}
+
+fn rl_normalize_route(route: &str) -> String {
+    let clean = route.trim();
+    if clean.is_empty() {
+        return String::new();
+    }
+    let mut s = clean.to_string();
+    if let Some(stripped) = s.strip_prefix('/') {
+        s = stripped.to_string();
+    }
+    if !s.ends_with('/') {
+        s.push('/');
+    }
+    s
+}
+
+fn rl_route_depth(route: &str) -> usize {
+    let clean = rl_normalize_route(route);
+    if clean.is_empty() {
+        return 0;
+    }
+    clean.split('/').filter(|p| !p.trim().is_empty()).count()
+}
+
+fn rl_route_prefix(route: &str) -> String {
+    "../".repeat(rl_route_depth(route))
+}
+
+fn rl_strip_trailing_slash(s: &str) -> &str {
+    s.strip_suffix('/').unwrap_or(s)
+}
+
+fn rl_route_absolute_url(site_url: &str, route: &str) -> String {
+    let site = site_url.trim();
+    if site.is_empty() {
+        return String::new();
+    }
+    let site = rl_strip_trailing_slash(site);
+    let clean_route = rl_normalize_route(route);
+    if clean_route.is_empty() {
+        format!("{}/", site)
+    } else {
+        format!("{}/{}", site, clean_route)
+    }
+}
+
+fn rl_absolute_media_url(path_value: &str, site_url: &str) -> String {
+    let media_path = path_value.trim();
+    if media_path.is_empty() {
+        return String::new();
+    }
+    if media_path.starts_with("http://")
+        || media_path.starts_with("https://")
+        || media_path.starts_with("//")
+    {
+        return media_path.to_string();
+    }
+    let site = site_url.trim();
+    if site.is_empty() {
+        return String::new();
+    }
+    let site = rl_strip_trailing_slash(site);
+    if media_path.starts_with('/') {
+        format!("{}{}", site, media_path)
+    } else {
+        format!("{}/{}", site, media_path)
+    }
+}
+
+fn rl_resolve_media_url(path_value: &str, relative_prefix: &str) -> String {
+    let media_path = path_value.trim();
+    if media_path.is_empty() {
+        return String::new();
+    }
+    if media_path.starts_with("http://")
+        || media_path.starts_with("https://")
+        || media_path.starts_with("//")
+        || media_path.starts_with('/')
+    {
+        return media_path.to_string();
+    }
+    format!("{}{}", relative_prefix, media_path)
+}
+
+fn rl_build_page_title(seo_title: &str, site_title: &str) -> String {
+    let base = seo_title.trim();
+    let base = if base.is_empty() { site_title.trim() } else { base };
+    let site = site_title.trim();
+    if site.is_empty() || base == site {
+        base.to_string()
+    } else {
+        format!("{} | {}", base, site)
+    }
+}
+
+fn render_layout_native(
+    layout_template: &str,
+    settings: &Value,
+    route: &str,
+    page_title: &str,
+    meta_description: &str,
+    navigation: &str,
+    content: &str,
+    page_meta: &Value,
+) -> String {
+    let prefix = rl_route_prefix(route);
+    let style_file =
+        if rl_bool(settings, "minify") { "assets/css/style.min.css" } else { "assets/css/style.css" };
+
+    let seo_title = rl_meta(page_meta, "seo_title", page_title);
+    let mut seo_description = rl_meta(page_meta, "seo_description", meta_description);
+    if seo_description.is_empty() {
+        seo_description = rl_raw(settings, "site_tagline").trim().to_string();
+    }
+    let seo_keywords = rl_meta(page_meta, "seo_keywords", "SSG, Static Site Generator");
+    let author_meta = rl_meta(page_meta, "author", "Robert DeVore");
+    let mut lang = rl_meta(page_meta, "lang", "en").to_lowercase();
+    if lang.is_empty() {
+        lang = "en".to_string();
+    }
+
+    let site_url = rl_raw(settings, "site_url").trim().to_string();
+    let mut canonical_url = rl_meta(page_meta, "canonical", "");
+    if canonical_url.is_empty() {
+        canonical_url = rl_route_absolute_url(&site_url, route);
+    } else if !site_url.is_empty()
+        && !canonical_url.starts_with("http://")
+        && !canonical_url.starts_with("https://")
+        && !canonical_url.starts_with("//")
+    {
+        let site_root = rl_strip_trailing_slash(site_url.trim());
+        canonical_url = if canonical_url.starts_with('/') {
+            format!("{}{}", site_root, canonical_url)
+        } else {
+            format!("{}/{}", site_root, canonical_url)
+        };
+    }
+
+    let mut og_url = canonical_url.clone();
+    if og_url.is_empty() {
+        og_url = rl_route_absolute_url(&site_url, route);
+    }
+
+    let raw_featured = rl_meta(page_meta, "featured_image", "");
+    let mut social_image = rl_absolute_media_url(&raw_featured, &site_url);
+    if social_image.is_empty() {
+        social_image = rl_resolve_media_url(&raw_featured, &prefix);
+    }
+
+    let canonical_tag = if canonical_url.is_empty() {
+        String::new()
+    } else {
+        format!("<link rel=\"canonical\" href=\"{}\">", rl_xml_escape(&canonical_url))
+    };
+
+    let (og_image_tag, twitter_image_tag) = if social_image.is_empty() {
+        (String::new(), String::new())
+    } else {
+        let safe_image = rl_xml_escape(&social_image);
+        (
+            format!("<meta property=\"og:image\" content=\"{}\">", safe_image),
+            format!("<meta name=\"twitter:image\" content=\"{}\">", safe_image),
+        )
+    };
+
+    let mut og_type = rl_meta(page_meta, "og_type", "website").to_lowercase();
+    if og_type != "article" {
+        og_type = "website".to_string();
+    }
+    let mut og_locale = lang.replace('-', "_");
+    if og_locale == "en" {
+        og_locale = "en_US".to_string();
+    }
+
+    let published_iso = rl_meta(page_meta, "published_iso", "");
+    let mut og_article_tags = String::new();
+    if og_type == "article" {
+        if !published_iso.is_empty() {
+            og_article_tags.push_str(&format!(
+                "<meta property=\"article:published_time\" content=\"{}\">",
+                rl_xml_escape(&published_iso)
+            ));
+        }
+        if !author_meta.is_empty() {
+            og_article_tags.push_str(&format!(
+                "<meta property=\"article:author\" content=\"{}\">",
+                rl_xml_escape(&author_meta)
+            ));
+        }
+    }
+
+    let rss_link_tag = if !site_url.is_empty() && !rl_bool(settings, "no_aux") {
+        format!(
+            "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"{}\" href=\"{}feed/index.xml\">",
+            rl_xml_escape(&rl_raw(settings, "site_title")),
+            prefix
+        )
+    } else {
+        String::new()
+    };
+
+    let favicon_tag =
+        format!("<link rel=\"icon\" type=\"image/svg+xml\" href=\"{}favicon.svg\">", prefix);
+
+    let schema_type = if og_type == "article" { "BlogPosting" } else { "WebSite" };
+    let mut json_ld_parts: Vec<String> = vec![
+        "\"@context\":\"https://schema.org\"".to_string(),
+        format!("\"@type\":\"{}\"", schema_type),
+        format!("\"headline\":\"{}\"", rl_json_escape(&seo_title)),
+        format!("\"name\":\"{}\"", rl_json_escape(&seo_title)),
+        format!("\"description\":\"{}\"", rl_json_escape(&seo_description)),
+        format!("\"url\":\"{}\"", rl_json_escape(&og_url)),
+    ];
+    if !social_image.is_empty() {
+        json_ld_parts.push(format!("\"image\":\"{}\"", rl_json_escape(&social_image)));
+    }
+    if og_type == "article" {
+        json_ld_parts.push(format!(
+            "\"author\":{{\"@type\":\"Person\",\"name\":\"{}\"}}",
+            rl_json_escape(&author_meta)
+        ));
+        if !published_iso.is_empty() {
+            json_ld_parts.push(format!("\"datePublished\":\"{}\"", rl_json_escape(&published_iso)));
+        }
+    }
+    json_ld_parts.push(format!(
+        "\"publisher\":{{\"@type\":\"Organization\",\"name\":\"{}\"}}",
+        rl_json_escape(&rl_raw(settings, "site_title"))
+    ));
+    let json_ld =
+        format!("<script type=\"application/ld+json\">{{{}}}</script>", json_ld_parts.join(","));
+
+    let computed_title = rl_build_page_title(&seo_title, &rl_raw(settings, "site_title"));
+    let safe_title = rl_xml_escape(&computed_title);
+    let safe_seo_title = rl_xml_escape(&seo_title);
+    let safe_description = rl_xml_escape(&seo_description);
+    let safe_keywords = rl_xml_escape(&seo_keywords);
+    let safe_author = rl_xml_escape(&author_meta);
+    let safe_og_url = rl_xml_escape(&og_url);
+    let safe_site_title = rl_xml_escape(&rl_raw(settings, "site_title"));
+    let safe_site_tagline = rl_xml_escape(&rl_raw(settings, "site_tagline"));
+    let safe_og_locale = rl_xml_escape(&og_locale);
+    let home_path = format!("{}index.html", prefix);
+    let stylesheet_path = format!("{}{}", prefix, style_file);
+
+    // apply_template: sequential {{key}} substitution in the same key order as
+    // build.kujo's dict literal (byte-identical to the interpreted path).
+    let pairs: [(&str, &str); 25] = [
+        ("site_name", &safe_site_title),
+        ("site_title", &safe_site_title),
+        ("site_tagline", &safe_site_tagline),
+        ("navigation", navigation),
+        ("relative_path", &prefix),
+        ("home_path", &home_path),
+        ("page_title", &safe_title),
+        ("meta_description", &safe_description),
+        ("seo_title", &safe_seo_title),
+        ("seo_description", &safe_description),
+        ("seo_keywords", &safe_keywords),
+        ("author_meta", &safe_author),
+        ("canonical_tag", &canonical_tag),
+        ("og_url", &safe_og_url),
+        ("og_type", &og_type),
+        ("og_locale", &safe_og_locale),
+        ("og_image_tag", &og_image_tag),
+        ("og_article_tags", &og_article_tags),
+        ("twitter_image_tag", &twitter_image_tag),
+        ("rss_link_tag", &rss_link_tag),
+        ("favicon_tag", &favicon_tag),
+        ("json_ld", &json_ld),
+        ("lang", &lang),
+        ("stylesheet_path", &stylesheet_path),
+        ("content", content),
+    ];
+    let mut out = layout_template.to_string();
+    for (key, value) in pairs.iter() {
+        out = out.replace(&format!("{{{{{}}}}}", key), value);
+    }
+    out
+}
+
 fn require_string_arg<'a>(
     args: &'a [Value],
     index: usize,
@@ -184,6 +540,27 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             } else {
                 Value::Error("render_markdown() requires a string argument".to_string())
             }
+        }
+
+        // Native page-layout renderer (see render_layout_native above).
+        // args: layout_template, settings, route, page_title, meta_description,
+        //       navigation, content, page_meta
+        "render_layout_native" => {
+            if args.len() != 8 {
+                return Some(Value::Error(format!(
+                    "render_layout_native() expects 8 arguments, got {}",
+                    args.len()
+                )));
+            }
+            let s = |i: usize| -> &str {
+                match args.get(i) {
+                    Some(Value::Str(v)) => v.as_str(),
+                    _ => "",
+                }
+            };
+            Value::Str(Arc::new(render_layout_native(
+                s(0), &args[1], s(2), s(3), s(4), s(5), s(6), &args[7],
+            )))
         }
 
         "trim" => {
