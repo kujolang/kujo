@@ -82,6 +82,11 @@ ShipCheck scan source:
     - Confirm `.github/workflows/release-published-artifact-smoke.yml` passes for the published release.
     - Record artifact URLs, checksum values, and command logs in a dated `notes/` evidence file.
     - Mark the relevant release-artifact checklist rows only after real evidence exists.
+  - Blocker 2026-06-19:
+    - This item requires the actual `v1.0.0` tag/publication event and post-publish artifact evidence.
+    - It is intentionally not completed in this release-readiness round because the active instruction forbids tagging, publishing, or marking tag-time artifact sign-off complete unless explicitly given `UNBLOCK_V1_RELEASE`.
+    - Evidence note: `notes/2026-06-19_v1_0_tag_time_artifact_blocker.md`.
+    - Current file evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still has tag-time rows unchecked, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` still tracks `V1U-OPEN-003`/`V1U-FINAL-003` as release-flight items.
 
 - [x] **V1RR-P0-003: Run a fresh final gate bundle on the current tree.**
   - Problem: the active docs include strong pass evidence from 2026-05-26 and 2026-06-08, but release readiness needs evidence from the final candidate tree.
