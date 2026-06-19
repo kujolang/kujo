@@ -83,4 +83,4 @@ Before tagging `v1.0.0`, confirm:
 
 1. Earlier stabilization checklist evidence remains linked from the active roadmap and release-readiness checklist.
 2. Contract docs/tests and release process docs are in sync.
-3. Release notes clearly distinguish `v1.0.0` guaranteed surfaces vs deferred backlog.
+3. `CHANGELOG.md` release notes clearly distinguish `v1.0.0` guaranteed surfaces vs deferred backlog.

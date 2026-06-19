@@ -131,12 +131,18 @@ ShipCheck scan source:
     - Current counts after `V1RR-P0-006`: TODO/FIXME/HACK triage has `29` markers and `0` unclassified; unsafe inventory has `65` total matches, `55` executable, `10` non-executable, and `0` unknown; VM mismatch inventory has `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
     - Updated active checklist/docs prose that still quoted stale generated totals or zero-parity wording.
 
-- [ ] **V1RR-P0-005: Cut a real `CHANGELOG.md` release section.**
+- [x] **V1RR-P0-005: Cut a real `CHANGELOG.md` release section.**
   - Problem: `CHANGELOG.md` currently only has `[Unreleased]`, while the release docs require concrete user-impact notes.
   - Acceptance:
     - Add `[1.0.0] - YYYY-MM-DD` with `Added`, `Changed`, `Fixed`, `Security`, `Performance`, and `Removed` sections where applicable.
     - Include compatibility-impacting changes, security hardening, VM-first runtime posture, deferred/experimental surfaces, and migration notes.
     - Ensure release docs and `docs/V1_SCOPE.md` point to the changelog as final release evidence.
+  - Evidence 2026-06-19:
+    - Added `CHANGELOG.md` section `[1.0.0] - 2026-06-19` with `Added`, `Changed`, `Fixed`, `Security`, `Performance`, and `Removed` subsections.
+    - Release note explicitly states the pre-tag release-candidate boundary: crate metadata is staged at `1.0.0`, while final tag, crate publication, and binary artifact sign-off remain governed by tag-time release evidence.
+    - Updated `docs/V1_SCOPE.md` handoff checklist to name `CHANGELOG.md` as the release-note evidence surface.
+    - Evidence note: `notes/2026-06-19_v1_0_changelog_release_section.md`.
+    - Command logs and exit status manifest: `notes/release_evidence/2026-06-19_p0-005/status.tsv`.
 
 - [x] **V1RR-P0-006: Reconcile the `kujo test` fixture-count story.**
   - Problem: several active docs report `cargo run -- test --runtime vm`/`dual` as passing while also showing summaries like `137/150`. That can be correct if expected-fail fixtures are policy-governed, but it needs to be unmistakable before launch.
