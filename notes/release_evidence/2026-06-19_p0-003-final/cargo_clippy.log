@@ -1,0 +1,12 @@
+$ cargo clippy --all-targets --all-features -- -D warnings
+started_at=2026-06-19T17:36:36-0400
+    Checking postgres-types v0.2.14
+    Checking mysql_common v0.35.5
+    Checking oauth2 v4.4.2
+    Checking jsonwebtoken v10.3.0
+    Checking tokio-postgres v0.7.18
+    Checking postgres v0.19.12
+    Checking mysql_async v0.36.2
+    Checking kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 03s
+ended_at=2026-06-19T17:37:40-0400

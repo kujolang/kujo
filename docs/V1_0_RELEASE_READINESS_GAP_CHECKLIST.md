@@ -83,7 +83,7 @@ ShipCheck scan source:
     - Record artifact URLs, checksum values, and command logs in a dated `notes/` evidence file.
     - Mark the relevant release-artifact checklist rows only after real evidence exists.
 
-- [ ] **V1RR-P0-003: Run a fresh final gate bundle on the current tree.**
+- [x] **V1RR-P0-003: Run a fresh final gate bundle on the current tree.**
   - Problem: the active docs include strong pass evidence from 2026-05-26 and 2026-06-08, but release readiness needs evidence from the final candidate tree.
   - Acceptance:
     - Run and record:
@@ -104,8 +104,14 @@ ShipCheck scan source:
       - `bash scripts/release_candidate_gate.sh --full`
     - If socket-sensitive suites are intentionally skipped, capture the exact environment reason and run the documented alternate gate.
     - Archive command output paths and summary in a dated `notes/` evidence file.
+  - Evidence 2026-06-19:
+    - Final candidate-tree evidence note: `notes/2026-06-19_v1_0_final_gate_bundle_evidence.md`.
+    - Command logs and exit status manifest: `notes/release_evidence/2026-06-19_p0-003-final/status.tsv`.
+    - All required commands passed with exit code `0`, including `cargo fmt --check`, `cargo check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test`, the focused contract suites, `cargo run -- test --runtime vm`, `cargo run -- test --runtime dual`, and `bash scripts/release_candidate_gate.sh --full`.
+    - No socket-sensitive suite was skipped; the full release candidate gate ran `serve_command_integration` serially and passed.
+    - Gate follow-up fixed formatting drift in two interpreter files, refreshed generated artifacts, documented missing stdlib entries, updated the lockfile for `tokio-postgres`/`postgres-protocol` advisories, and added an explicit `cargo audit --ignore RUSTSEC-2023-0071` exception for the no-fixed-upgrade `rsa` advisory.
 
-- [ ] **V1RR-P0-004: Refresh generated evidence and active checklist snapshots.**
+- [x] **V1RR-P0-004: Refresh generated evidence and active checklist snapshots.**
   - Problem: multiple active checklists cite generated counts and dated evidence. The June notes already call out that generated artifacts can drift after source churn.
   - Acceptance:
     - Regenerate and validate at least:
@@ -118,6 +124,12 @@ ShipCheck scan source:
       - `cargo test --test vm_runtime_mismatch_inventory_contract`
       - `cargo test --test generated_artifact_freshness_contract`
     - Update any checklist prose that quotes stale counts, line totals, or dates.
+  - Evidence 2026-06-19:
+    - Generated evidence note: `notes/2026-06-19_v1_0_generated_evidence_refresh.md`.
+    - Command logs and exit status manifest: `notes/release_evidence/2026-06-19_p0-004/status.tsv`.
+    - Regenerated `docs/generated/V1_CODE_TODO_TRIAGE.md`, `docs/generated/UNSAFE_INVENTORY.md`, `docs/generated/UNSAFE_INVENTORY.csv`, `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md`, and `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.csv`.
+    - Current counts: TODO/FIXME/HACK triage has `29` markers and `0` unclassified; unsafe inventory has `65` total matches, `55` executable, `10` non-executable, and `0` unknown; VM mismatch inventory has `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
+    - Updated active checklist/docs prose that still quoted stale generated totals or zero-parity wording.
 
 - [ ] **V1RR-P0-005: Cut a real `CHANGELOG.md` release section.**
   - Problem: `CHANGELOG.md` currently only has `[Unreleased]`, while the release docs require concrete user-impact notes.

@@ -83,6 +83,9 @@ Drive Kujo from "near release-ready" to "enterprise-grade and universally useful
       - `cargo run -- test --runtime dual` (summary `136/150`, process exit `0`)
     - Focused parity regression suite passed:
       - `cargo test --test vm_interpreter_parity_surfaces` (100/100).
+  - 2026-06-19 refresh note:
+    - Regenerated `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
+    - The 2026-05-26 closure evidence remains historical; it is no longer the current generated inventory state for final release review.
 
 - [x] **ER-P0-004**: Harden network/process/file capability defaults and docs alignment.
   - Scope: revalidate `--untrusted` guardrails against SSRF-style destinations, process execution limits, and path boundaries.

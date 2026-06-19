@@ -49,16 +49,15 @@ This matrix tracks parity for roadmap item `V1-COMP-001`.
 
 ### `kujo test` Default Runtime Decision (2026-05-21)
 
-Updated evidence snapshot: 2026-05-24
+Updated evidence snapshot: 2026-06-19
 
 - Decision: keep default `kujo test` runtime at `dual` for now.
 - Evidence:
-  - `cargo run -- test --runtime vm` currently reports `Passed 129/150`.
-  - `cargo run -- test --runtime dual` currently reports `Passed 129/150` with deterministic split metadata (`vm_primary=129`, `interpreter_fallback=0`).
-  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` reports `runtime-parity-bug: 0` and `harness-debt: 0`; remaining mismatches are stale snapshot expectations (`docs-owner`) instead of runtime-path drift.
+  - `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual` passed in the 2026-06-19 release gate bundle (`notes/release_evidence/2026-06-19_p0-003-final/status.tsv`).
+  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` currently reports `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
 - Risk analysis:
-  - Remaining fixture misses are currently snapshot-contract debt rather than VM runtime drift, so fallback is no longer covering parity failures.
-  - Keeping `dual` continues deterministic compatibility signaling while snapshot refresh work completes.
+  - The generated inventory no longer supports an intentional-divergence-only parity claim; the P0 runtime rows need burn-down or explicit reclassification before final release sign-off.
+  - Keeping `dual` continues deterministic compatibility signaling while the release-readiness checklist reconciles fixture counts and mismatch ownership.
 - VM-only workflows remain explicitly available through `--runtime vm` for strict validation and migration gating.
 
 ## VM-First Practical Recommendations

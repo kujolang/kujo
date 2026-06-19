@@ -46,7 +46,7 @@ tests/simple_match_test.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapsho
 tests/simple_ok.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/simple_result_test.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/spread_operator.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
-tests/stdlib_crypto_test.kujo,143,143,no,no,both_mismatch_same_output,stale-snapshot-expectation,docs-owner,P1,both runtimes agree on output but snapshot expectation diverges
+tests/stdlib_crypto_test.kujo,143,143,no,no,both_mismatch_different_output,runtime-parity-bug,runtime-owner,P0,both runtimes diverge from snapshot and from each other; indicating runtime-path parity drift rather than stale fixture expectations
 tests/stdlib_io_test.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/stdlib_os_path_test.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/stdlib_test.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes

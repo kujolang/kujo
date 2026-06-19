@@ -22,6 +22,11 @@ Those two release-flight items remain governed by `docs/PRE_V1_MASTER_UNFINISHED
 
 Non-release unchecked total: **0** primary blocker items.
 
+## Current Generated Artifact Refresh (2026-06-19)
+
+- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
+- This supersedes the 2026-05-24 and 2026-05-25 zero-mismatch closure snapshots for current release-review purposes. Treat the completed rows below as historical closure evidence; the refreshed P0 rows are tracked by `V1RR-P0-004` and should be resolved or explicitly deferred by the active release-readiness checklist.
+
 ## A) Remaining Blockers / Stoppers
 
 - [x] **RNR-PAR-001**: Close `V1VM-PAR-004` by reducing non-intentional VM parity mismatches to intentional-divergence-only.

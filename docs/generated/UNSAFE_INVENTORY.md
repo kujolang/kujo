@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-06-15
+Generated: 2026-06-19
 Command: rg -n --glob '*.rs' --glob '!tests/unsafe_inventory_contract.rs' '\bunsafe\b' src tests benches fuzz
 
 ## Summary

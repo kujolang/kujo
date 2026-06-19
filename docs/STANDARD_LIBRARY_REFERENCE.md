@@ -50,6 +50,10 @@ Recently promoted helper surfaces worth calling out:
 | `to_upper` | stable | `v := to_upper("hello")` |
 | `to_lower` | stable | `v := to_lower("HELLO")` |
 | `trim` | stable | `v := trim("  hi  ")` |
+| `escape_xml` | stable | `safe := escape_xml("<tag>")` |
+| `render_markdown` | preview | `html := render_markdown("# Title")` |
+| `render_listing_card` | preview | `html := render_listing_card(route, title, excerpt, image, terms, label)` |
+| `render_layout_native` | preview | `html := render_layout_native(template, settings, route, title, description, navigation, content, meta)` |
 | `contains` | stable | `ok := contains("abcdef", "cd")` |
 | `replace_str` | stable | `v := replace_str("a-b", "-", "_")` |
 | `split` | stable | `parts := split("a,b", ",")` |
