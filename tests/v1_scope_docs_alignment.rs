@@ -17,8 +17,11 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
         .expect("failed to read docs/OPTIONAL_TYPING_DESIGN.md for alignment");
 
     assert!(
-        readme.contains("Kujo is not yet ready for a `1.0.0` release."),
-        "README must keep explicit pre-1.0 readiness wording"
+        readme.contains(
+            "The project is currently at `1.0.0` in `Cargo.toml` for release-candidate validation."
+        ) && readme
+            .contains("Kujo has not yet published the final `v1.0.0` tag or release artifacts."),
+        "README must keep explicit pre-tag release-candidate wording"
     );
     assert!(
         readme.contains("docs/V1_SCOPE.md") && readme.contains("docs/OPTIONAL_TYPING_DESIGN.md"),

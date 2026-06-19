@@ -8,8 +8,8 @@ Last updated: 2026-05-16
 
 This document defines the Kujo language and tooling compatibility contract for the active v1.0.0 baseline draft.
 
-This draft status does not imply that Kujo is release-ready; see `ROADMAP.md` for the active 1.0 readiness gate and remaining blockers.
-Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.
+This draft status does not imply that Kujo is final-release ready; see `ROADMAP.md` for the active 1.0 readiness gate and remaining blockers.
+Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 
 It is normative for:
 

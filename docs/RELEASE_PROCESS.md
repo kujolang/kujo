@@ -1,6 +1,7 @@
 # Kujo Release Process
 
 Current active target: `1.0.0`
+Current release state: pre-tag `1.0.0` release-candidate metadata; `Cargo.toml` is staged at `1.0.0`, but the final tag, publication, and binary artifact sign-off are not complete until dated release evidence exists.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.
@@ -15,8 +16,9 @@ Kujo follows semantic versioning-oriented release classes:
 
 Major-release policy note:
 
-- Kujo is now at `1.0.0`.
-- Future major-version changes must include explicit compatibility and migration guidance.
+- Kujo's crate metadata may be staged at `1.0.0` during release-candidate validation.
+- Staged `1.0.0` metadata does not by itself mean the final `v1.0.0` release has been tagged, published, or artifact-validated.
+- Future major-version changes must include explicit compatibility and migration guidance after the final `v1.0.0` release is published.
 
 ## 2. Compatibility Policy
 

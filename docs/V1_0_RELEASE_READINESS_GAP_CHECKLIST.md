@@ -16,8 +16,7 @@ Kujo appears to have completed most implementation hardening checklists, but it 
 
 The highest-signal gaps found in the docs are:
 
-- `Cargo.toml` and `docs/RELEASE_PROCESS.md` say the project is already at `1.0.0`.
-- `README.md`, `docs/ARCHITECTURE.md`, and `docs/V1_SCOPE.md` still describe Kujo as pre-`1.0.0` or `v0.14.0`.
+- Release-state truth set is reconciled as pre-tag `1.0.0` release-candidate readiness, with `Cargo.toml` staged at `1.0.0` but final tag/publish/artifact evidence still open.
 - `ROADMAP.md` has its final release checklist fully checked, but `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still have tag-time publication/sign-off items unchecked.
 - `CHANGELOG.md` only has `[Unreleased]`; there is no final `[1.0.0]` release section.
 - Several stale docs/notes still describe fixed or superseded failures as current critical blockers, especially image method dispatch and older assignment/dict mutation bugs.
@@ -61,13 +60,18 @@ ShipCheck scan source:
 
 ## P0 - Must Close Before Release Readiness Review
 
-- [ ] **V1RR-P0-001: Reconcile the release-state truth set.**
+- [x] **V1RR-P0-001: Reconcile the release-state truth set.**
   - Problem: release-state docs disagree. `Cargo.toml` is `1.0.0`; `docs/RELEASE_PROCESS.md` says Kujo is now at `1.0.0`; `README.md` says Kujo is not ready for `1.0.0`; `docs/ARCHITECTURE.md` says current crate version is `0.14.0`; `docs/V1_SCOPE.md` says `v0.14.0 scope gate baseline`.
   - Acceptance:
     - Decide whether the repo is pre-tag `1.0.0`, an RC, or already `1.0.0`.
     - Update `README.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/V1_SCOPE.md`, `docs/RELEASE_PROCESS.md`, and any version-state contract tests to tell one story.
     - Add a short dated evidence note explaining the chosen state and why `Cargo.toml` should remain `1.0.0` or be changed.
     - Run `cargo test --test readme_contracts`, `cargo test --test architecture_docs_contract`, `cargo test --test release_process_docs_contract`, and `cargo test --test docs_policy_consistency_contract`.
+  - Evidence 2026-06-19:
+    - Chosen state: pre-tag `1.0.0` release-candidate readiness. `Cargo.toml` remains `1.0.0` so release-candidate validation and release-state guards exercise final crate metadata, but the final tag, crate publication, and binary artifact sign-off remain incomplete until tag-time evidence exists.
+    - Updated `README.md`, `ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/V1_SCOPE.md`, `docs/RELEASE_PROCESS.md`, canonical boundary wording in related policy docs, and release-state contract tests.
+    - Added evidence note: `notes/2026-06-19_v1_0_release_state_reconciliation.md`.
+    - Validation passed: `cargo test --test readme_contracts`; `cargo test --test architecture_docs_contract`; `cargo test --test release_process_docs_contract`; `cargo test --test docs_policy_consistency_contract`; `cargo test --test v1_maturity_boundary_alignment_contract`; `cargo test --test stdlib_reference_policy_contract`; `bash .github/scripts/check-release-state.sh`; `rustfmt --check tests/v1_scope_docs_alignment.rs tests/architecture_docs_contract.rs tests/docs_policy_consistency_contract.rs tests/v1_maturity_boundary_alignment_contract.rs tests/stdlib_reference_policy_contract.rs`.
 
 - [ ] **V1RR-P0-002: Close tag-time artifact publication/sign-off blockers.**
   - Problem: `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` still has `V1U-OPEN-003` and `V1U-FINAL-003` unchecked, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still has all tag-time sign-off rows unchecked.

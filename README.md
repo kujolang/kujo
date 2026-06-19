@@ -14,7 +14,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Package workflows are deterministic: `kujo init`, `kujo package-add`, `kujo package-install`, and `kujo package-install --frozen` work with nested source layouts and reproducible `kujo.lock` snapshots.
 - Native helper coverage has expanded for everyday scripting work: hashing (`sha256`, `sha256_file`, `md5`), file inspection (`read_file_lossy`, `path_is_symlink`), formatting (`pad_start`, `pad_end`), introspection (`type_of`, `is_truthy`), and stderr output (`eprint`) are all available without shelling out.
 - Native capability controls are available for trusted and untrusted execution modes.
-- Kujo remains pre-1.0, and release readiness is still bounded by `ROADMAP.md` and the pre-v1 checklist.
+- Kujo is in pre-tag `1.0.0` release-candidate readiness: the crate metadata is staged at `1.0.0`, but final tag/publish evidence is still bounded by `ROADMAP.md`, the pre-v1 checklist, and the release artifact checklist.
 
 ## Why Kujo
 
@@ -29,10 +29,11 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 
 ## 1.0 Readiness Status
 
-- Kujo is not yet ready for a `1.0.0` release.
+- The project is currently at `1.0.0` in `Cargo.toml` for release-candidate validation.
+- Kujo has not yet published the final `v1.0.0` tag or release artifacts.
 - [ROADMAP.md](ROADMAP.md) is the single source of truth for release readiness and blocker tracking.
-- Kujo `1.0.0` must not be released until all P0/P1 roadmap items and the final release checklist are complete.
-- Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.
+- Kujo `1.0.0` must not be released until all P0/P1 roadmap items, the final release checklist, and tag-time artifact evidence are complete.
+- Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 - Deferred/non-goal boundaries are tracked in [docs/V1_SCOPE.md](docs/V1_SCOPE.md) and [docs/OPTIONAL_TYPING_DESIGN.md](docs/OPTIONAL_TYPING_DESIGN.md).
 
 ## Safety Model Snapshot

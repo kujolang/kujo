@@ -12,7 +12,7 @@ fn read(path: &str) -> String {
 #[test]
 fn high_risk_docs_policies_remain_consistent() {
     let canonical =
-        "Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.";
+        "Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.";
 
     let readme = read("README.md");
     let v1_scope = read("docs/V1_SCOPE.md");

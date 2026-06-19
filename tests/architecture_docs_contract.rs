@@ -12,7 +12,7 @@ fn architecture_doc_matches_current_runtime_posture() {
 
     for marker in [
         "# Kujo Architecture",
-        "Current crate version: `0.14.0`",
+        "Current crate version: `1.0.0` (pre-tag release-candidate metadata)",
         "VM (default `kujo run` path)",
         "Tree-walking interpreter (explicit fallback path)",
         "Package bootstrap and lockfile verification are tracked as separate tooling contracts",
@@ -21,6 +21,7 @@ fn architecture_doc_matches_current_runtime_posture() {
         "Supports `--runtime dual|vm|interpreter`.",
         "Top-level generator iteration (`func*` + `yield`) is intentionally divergent",
         "docs/VM_INTERPRETER_PARITY_MATRIX.md",
+        "docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md",
     ] {
         assert!(content.contains(marker), "architecture doc should contain marker {:?}", marker);
     }
