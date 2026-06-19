@@ -22,7 +22,7 @@ Purpose: capture additive, non-breaking work that can improve safety, maintainab
 ## Evidence Refresh (2026-06-19)
 
 - `docs/generated/UNSAFE_INVENTORY.md` now reports `65` total `unsafe` matches, `55` executable, `10` non-executable, and `0` unknown classifications.
-- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`. The older zero-parity closure notes remain historical evidence, not current release-review state.
+- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`. The older zero-parity closure notes remain historical evidence, not current release-review state.
 - Refresh evidence is captured in `notes/2026-06-19_v1_0_generated_evidence_refresh.md`.
 
 ---

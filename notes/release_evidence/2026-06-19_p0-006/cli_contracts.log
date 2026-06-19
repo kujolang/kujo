@@ -1,0 +1,34 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.09s
+     Running tests/cli_contracts.rs (target/debug/deps/cli_contracts-5723a12c29fb5e61)
+
+running 27 tests
+test cli_help_exits_zero ... ok
+test cli_lsp_rename_invalid_identifier_uses_runtime_error_stderr ... ok
+test cli_lsp_diagnostics_missing_file_uses_io_error_and_stderr ... ok
+test cli_lsp_rename_keyword_identifier_uses_runtime_error_stderr ... ok
+test cli_doctor_rejects_unknown_profile ... ok
+test cli_lsp_diagnostics_json_is_valid_json ... ok
+test cli_doctor_lists_profiles ... ok
+test cli_check_does_not_execute_script_side_effects ... ok
+test cli_check_json_success_is_valid_json ... ok
+test cli_reserved_alias_name_is_rejected_before_workflow_routing ... ok
+test cli_pack_run_rejects_reserved_namespace ... ok
+test cli_run_missing_file_exits_with_io_error_code ... ok
+test cli_run_parse_error_exits_with_lex_parse_code ... ok
+test cli_check_verbose_and_quiet_output_are_deterministic ... ok
+test cli_lsp_complete_plain_and_json_modes_are_stable ... ok
+test cli_run_runtime_error_json_mode_emits_stdout_payload ... ok
+test cli_run_runtime_error_exits_with_runtime_code ... ok
+test cli_run_executes_program_output ... ok
+test cli_usage_errors_use_usage_exit_code ... ok
+test cli_version_exits_zero_and_prints_crate_version ... ok
+test cli_test_discovers_and_runs_expected_fixtures ... ok
+test cli_test_runtime_dual_mode_keeps_vm_primary_for_vm_drift_fixture ... ok
+test cli_test_runtime_vm_mode_executes_vm_drift_fixture_without_snapshot_mismatch ... ok
+test cli_pack_run_executes_pack_local_command_and_supports_json ... ok
+test cli_test_reports_nonzero_fixture_exit_codes_as_failures ... ok
+test cli_test_reports_fixture_failures_with_verification_exit_code ... ok
+test cli_doctor_json_contract_is_stable ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.21s
+

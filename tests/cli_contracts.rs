@@ -325,6 +325,10 @@ fn cli_test_discovers_and_runs_expected_fixtures() {
     let snapshot = tests_dir.join("sample.out");
     write_fixture(&fixture, "print(\"fixture-ok\")\n");
     write_fixture(&snapshot, "fixture-ok\n");
+    write_fixture(
+        &tests_dir.join("framework.kujo"),
+        "# Run with: kujo test-run tests/framework.kujo\nprint(\"not-discovered-here\")\n",
+    );
 
     let output = run_kujo_in_dir(&["test"], &workspace);
     assert_eq!(output.status.code(), Some(0));
@@ -333,6 +337,10 @@ fn cli_test_discovers_and_runs_expected_fixtures() {
     let stdout = String::from_utf8(output.stdout).expect("stdout should be utf-8");
     assert!(stdout.contains("Passed 1/1 tests"), "test should discover and run fixture files");
     assert!(stdout.contains("[✓]"), "test should report passing fixture");
+    assert!(
+        stdout.contains("Fixture outcomes: passed=1, failed=0, skipped=1, expected_fail=0"),
+        "test summary should distinguish passed, failed, skipped, and expected-fail counts"
+    );
     assert!(
         stdout.contains("Runtime strategy: dual"),
         "test command without explicit --runtime should default to dual strategy"
@@ -434,6 +442,10 @@ fn cli_test_reports_fixture_failures_with_verification_exit_code() {
         assert!(
             stdout.contains("[✗]"),
             "kujo test --runtime {runtime} should report failing fixtures"
+        );
+        assert!(
+            stdout.contains("Fixture outcomes: passed=0, failed=1, skipped=0, expected_fail=0"),
+            "kujo test --runtime {runtime} should summarize failed fixtures"
         );
         assert!(
             stdout.contains("Expected:"),

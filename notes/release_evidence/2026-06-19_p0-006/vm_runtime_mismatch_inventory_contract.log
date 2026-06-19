@@ -1,0 +1,10 @@
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.90s
+     Running tests/vm_runtime_mismatch_inventory_contract.rs (target/debug/deps/vm_runtime_mismatch_inventory_contract-07e51506b11e76bd)
+
+running 2 tests
+test vm_runtime_mismatch_inventory_script_generates_expected_outputs ... ok
+test vm_runtime_mismatch_inventory_script_is_deterministic_for_capped_scan ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.89s
+

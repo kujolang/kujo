@@ -2295,11 +2295,12 @@ impl Parser {
             return 5;
         };
 
-        let mut passed = 0;
-        let mut total = 0;
-        let mut vm_primary_passed = 0;
-        let mut interpreter_primary_passed = 0;
-        let mut dual_fallback_passed = 0;
+        let mut passed: usize = 0;
+        let mut total: usize = 0;
+        let mut vm_primary_passed: usize = 0;
+        let mut interpreter_primary_passed: usize = 0;
+        let mut dual_fallback_passed: usize = 0;
+        let mut skipped_test_run_fixtures: usize = 0;
         let mut had_failures = false;
 
         for entry in entries.flatten() {
@@ -2310,6 +2311,7 @@ impl Parser {
                 }
                 let content = fs::read_to_string(&path).unwrap_or_default();
                 if content.lines().take(3).any(|line| line.contains("Run with: kujo test-run")) {
+                    skipped_test_run_fixtures += 1;
                     if verbose {
                         println!("[i] Skipping test-run fixture: {}", path.display());
                     }
@@ -2526,7 +2528,14 @@ impl Parser {
             }
         }
 
+        let failed = total.saturating_sub(passed);
+        let expected_fail = 0usize;
+        let discovered = total + skipped_test_run_fixtures + expected_fail;
         println!("\n[✓] Passed {}/{} tests", passed, total);
+        println!(
+            "[i] Fixture outcomes: passed={}, failed={}, skipped={}, expected_fail={}, runnable={}, discovered={}",
+            passed, failed, skipped_test_run_fixtures, expected_fail, total, discovered
+        );
         if matches!(runtime_strategy, TestRuntimeStrategy::Dual) {
             println!(
                 "[i] Runtime strategy: dual (vm_primary={}, interpreter_fallback={})",

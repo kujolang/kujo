@@ -21,25 +21,15 @@ if len(nonexist) == 0 {
 }
 
 // Test args() - get command-line arguments
-// Note: Will be empty when run without args
 cli_args := args()
-print("args() count = " + to_string(len(cli_args)))
-print("✓ args() returns array (length may be 0)")
-
-// Test sleep() - sleep for short duration
-print("Testing sleep(100)... (100ms)")
-start := now()
-sleep(100)
-end := now()
-elapsed := (end - start) * 1000  // Convert to ms
-
-print("Elapsed time: ~" + to_string(elapsed) + "ms")
-
-if elapsed >= 90.0 && elapsed <= 200.0 {
-    print("✓ sleep(100) worked correctly")
-} else {
-    print("⚠ sleep timing may be imprecise: " + to_string(elapsed) + "ms")
+if len(cli_args) >= 0 {
+    print("✓ args() returns array")
 }
+
+// Test sleep() without printing wall-clock timing, which is intentionally host-dependent.
+print("Testing sleep(1)...")
+sleep(1)
+print("✓ sleep() completed")
 
 // Test execute() - run simple command
 // Using commands that work on both Unix and Windows

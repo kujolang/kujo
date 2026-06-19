@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.00s
+     Running tests/docs_examples.rs (target/debug/deps/docs_examples-8b7235dfc0647cb2)
+
+running 5 tests
+test expected_fail_doc_blocks_remain_empty ... ok
+test run_and_expected_fail_example_sets_do_not_overlap ... ok
+test expected_fail_examples_have_reasons_and_exist ... ok
+test docs_kujo_snippets_parse_or_expected_fail ... ok
+test examples_smoke_parse_run_or_expected_fail ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.63s
+

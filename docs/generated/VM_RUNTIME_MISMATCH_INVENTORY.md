@@ -53,7 +53,7 @@ Fixture root: `tests`
 | `tests/simple_ok.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/simple_result_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/spread_operator.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/stdlib_crypto_test.kujo` | 143 | 143 | no | no | `both_mismatch_different_output` | `runtime-parity-bug` | runtime-owner | `P0` | both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations |
+| `tests/stdlib_crypto_test.kujo` | 143 | 143 | no | no | `both_mismatch_same_output` | `stale-snapshot-expectation` | docs-owner | `P1` | both runtimes agree on output but snapshot expectation diverges |
 | `tests/stdlib_io_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/stdlib_os_path_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/stdlib_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -135,7 +135,7 @@ Fixture root: `tests`
 | `tests/test_stdlib_datetime.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_stdlib_paths.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_stdlib_random.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/test_stdlib_system.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `runtime-parity-bug` | runtime-owner | `P0` | runtime-path mismatch against snapshot indicates parity defect or runtime-specific contract drift |
+| `tests/test_stdlib_system.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_struct_def_only.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_struct_empty_method.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_struct_instantiate.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -176,14 +176,14 @@ Fixture root: `tests`
 | `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 
 Summary: `168` fixtures scanned
-- both match snapshot: `156`
+- both match snapshot: `157`
 - VM-only mismatch: `1`
-- interpreter-only mismatch: `2`
+- interpreter-only mismatch: `1`
 - both mismatch: `9`
 
 Mismatch classification totals (priority order):
-- P0 runtime-parity-bug (`runtime-owner`): `8`
-- P1 stale-snapshot-expectation (`docs-owner`): `4`
+- P0 runtime-parity-bug (`runtime-owner`): `6`
+- P1 stale-snapshot-expectation (`docs-owner`): `5`
 - P1 parser-invalid-fixture (`language-owner`): `0`
 - P2 harness-debt (`harness-owner`): `0`
 - P2 intentional-divergence (`runtime-owner`): `0`

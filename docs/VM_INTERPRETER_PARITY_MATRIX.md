@@ -53,11 +53,12 @@ Updated evidence snapshot: 2026-06-19
 
 - Decision: keep default `kujo test` runtime at `dual` for now.
 - Evidence:
-  - `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual` passed in the 2026-06-19 release gate bundle (`notes/release_evidence/2026-06-19_p0-003-final/status.tsv`).
-  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` currently reports `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
+  - `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual` passed in the 2026-06-19 `V1RR-P0-006` evidence bundle (`notes/release_evidence/2026-06-19_p0-006/status.tsv`).
+  - Both modes report `Passed 144/144 tests` plus `Fixture outcomes: passed=144, failed=0, skipped=6, expected_fail=0, runnable=144, discovered=150`.
+  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` currently reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
 - Risk analysis:
   - The generated inventory no longer supports an intentional-divergence-only parity claim; the P0 runtime rows need burn-down or explicit reclassification before final release sign-off.
-  - Keeping `dual` continues deterministic compatibility signaling while the release-readiness checklist reconciles fixture counts and mismatch ownership.
+  - Keeping `dual` continues deterministic compatibility signaling while the release-readiness checklist continues mismatch ownership burn-down.
 - VM-only workflows remain explicitly available through `--runtime vm` for strict validation and migration gating.
 
 ## VM-First Practical Recommendations

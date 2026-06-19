@@ -195,6 +195,7 @@ Each command has a stable top-level payload kind (array/object/null as applicabl
 `kujo test` is intentionally human-readable, but these summary fields are contract-tested for operator tooling:
 
 - `Runtime strategy: <mode>` is always emitted in summary output.
+- `Fixture outcomes: passed=<N>, failed=<N>, skipped=<N>, expected_fail=<N>, runnable=<N>, discovered=<N>` is always emitted in summary output. `runnable` is the denominator used by `Passed <N>/<N> tests`; `discovered` additionally includes fixtures skipped because they declare `Run with: kujo test-run`.
 - `--runtime dual` summary includes split counters:
   - `vm_primary=<N>`
   - `interpreter_fallback=<N>`
@@ -203,6 +204,7 @@ Each command has a stable top-level payload kind (array/object/null as applicabl
 Coverage is locked in `tests/cli_contracts.rs`:
 
 - `cli_test_discovers_and_runs_expected_fixtures`
+- `cli_test_reports_fixture_failures_with_verification_exit_code`
 - `cli_test_runtime_dual_mode_keeps_vm_primary_for_vm_drift_fixture`
 - `cli_test_runtime_vm_mode_executes_vm_drift_fixture_without_snapshot_mismatch`
 

@@ -128,7 +128,7 @@ ShipCheck scan source:
     - Generated evidence note: `notes/2026-06-19_v1_0_generated_evidence_refresh.md`.
     - Command logs and exit status manifest: `notes/release_evidence/2026-06-19_p0-004/status.tsv`.
     - Regenerated `docs/generated/V1_CODE_TODO_TRIAGE.md`, `docs/generated/UNSAFE_INVENTORY.md`, `docs/generated/UNSAFE_INVENTORY.csv`, `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md`, and `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.csv`.
-    - Current counts: TODO/FIXME/HACK triage has `29` markers and `0` unclassified; unsafe inventory has `65` total matches, `55` executable, `10` non-executable, and `0` unknown; VM mismatch inventory has `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
+    - Current counts after `V1RR-P0-006`: TODO/FIXME/HACK triage has `29` markers and `0` unclassified; unsafe inventory has `65` total matches, `55` executable, `10` non-executable, and `0` unknown; VM mismatch inventory has `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
     - Updated active checklist/docs prose that still quoted stale generated totals or zero-parity wording.
 
 - [ ] **V1RR-P0-005: Cut a real `CHANGELOG.md` release section.**
@@ -138,13 +138,20 @@ ShipCheck scan source:
     - Include compatibility-impacting changes, security hardening, VM-first runtime posture, deferred/experimental surfaces, and migration notes.
     - Ensure release docs and `docs/V1_SCOPE.md` point to the changelog as final release evidence.
 
-- [ ] **V1RR-P0-006: Reconcile the `kujo test` fixture-count story.**
+- [x] **V1RR-P0-006: Reconcile the `kujo test` fixture-count story.**
   - Problem: several active docs report `cargo run -- test --runtime vm`/`dual` as passing while also showing summaries like `137/150`. That can be correct if expected-fail fixtures are policy-governed, but it needs to be unmistakable before launch.
   - Acceptance:
     - Document why `137/150` is a passing release result, or reduce the remaining fixture misses if they are not intentionally expected-fail.
     - Cross-check `examples/README_examples.md` and `tests/docs_examples.rs` expected-fail policy.
     - Ensure `kujo test` output clearly distinguishes expected-fail, skipped, failed, and passed fixtures.
     - Run `cargo test --test docs_examples`, `cargo run -- test --runtime vm`, and `cargo run -- test --runtime dual`.
+  - Evidence 2026-06-19:
+    - Evidence note: `notes/2026-06-19_v1_0_kujo_test_fixture_count_reconciliation.md`.
+    - Command logs and exit status manifest: `notes/release_evidence/2026-06-19_p0-006/status.tsv`.
+    - `kujo test` now emits explicit fixture outcome counters: `passed`, `failed`, `skipped`, `expected_fail`, `runnable`, and `discovered`.
+    - Current VM and dual sweeps both pass with `Passed 144/144 tests` and `Fixture outcomes: passed=144, failed=0, skipped=6, expected_fail=0, runnable=144, discovered=150`.
+    - The six skipped fixtures are `kujo test-run` framework fixtures, not hidden failures or expected-fail release fixtures. Expected-fail policy remains scoped to examples/docs smoke coverage in `tests/docs_examples.rs` and `examples/README_examples.md`.
+    - Stabilized `tests/test_stdlib_system.kujo` by removing host-dependent printed argument/timing values; regenerated VM mismatch inventory now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
 
 - [ ] **V1RR-P0-007: Resolve ShipCheck release warnings or document them as intentional.**
   - Problem: ShipCheck passes with warnings, but release readiness should not leave ambiguous metadata warnings unexplained.

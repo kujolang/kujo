@@ -24,7 +24,7 @@ Non-release unchecked total: **0** primary blocker items.
 
 ## Current Generated Artifact Refresh (2026-06-19)
 
-- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 8`, `P1 stale-snapshot-expectation: 4`, and `P2 harness-debt: 0`.
+- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
 - This supersedes the 2026-05-24 and 2026-05-25 zero-mismatch closure snapshots for current release-review purposes. Treat the completed rows below as historical closure evidence; the refreshed P0 rows are tracked by `V1RR-P0-004` and should be resolved or explicitly deferred by the active release-readiness checklist.
 
 ## A) Remaining Blockers / Stoppers
