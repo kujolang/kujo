@@ -159,13 +159,21 @@ ShipCheck scan source:
     - The six skipped fixtures are `kujo test-run` framework fixtures, not hidden failures or expected-fail release fixtures. Expected-fail policy remains scoped to examples/docs smoke coverage in `tests/docs_examples.rs` and `examples/README_examples.md`.
     - Stabilized `tests/test_stdlib_system.kujo` by removing host-dependent printed argument/timing values; regenerated VM mismatch inventory now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
 
-- [ ] **V1RR-P0-007: Resolve ShipCheck release warnings or document them as intentional.**
+- [x] **V1RR-P0-007: Resolve ShipCheck release warnings or document them as intentional.**
   - Problem: ShipCheck passes with warnings, but release readiness should not leave ambiguous metadata warnings unexplained.
   - Acceptance:
     - Make ShipCheck detect the existing format/lint commands, or document why `cargo fmt --check` and `cargo clippy --all-targets --all-features -- -D warnings` are intentionally outside its detection.
     - Decide whether absence of `kennel.toml` is expected for the language runtime repo.
     - Document the entry point explicitly (`src/main.rs` / binary `kujo`) in the place ShipCheck expects, or add a release exception.
     - Re-run ShipCheck `scan` and `checklist` and record the result.
+  - Evidence 2026-06-19:
+    - Added release exception doc: `docs/SHIPCHECK_RELEASE_EXCEPTIONS.md`.
+    - Updated `docs/RELEASE_PROCESS.md` to link the exception note and name the Cargo-owned commands/entry point.
+    - Decision: do not add a `kennel.toml` or Makefile solely to satisfy ShipCheck 0.1 detectors; the canonical release commands remain `scripts/release_gate.sh --full` / `scripts/release_candidate_gate.sh --full`, and the runtime entry point remains Cargo binary `kujo` from `src/main.rs`.
+    - Re-ran ShipCheck `scan` and `checklist`; scan still passes with the same four intentional warnings, now documented as release exceptions.
+    - Evidence note: `notes/2026-06-19_v1_0_shipcheck_release_exceptions.md`.
+    - Command logs and exit status manifest: `notes/release_evidence/2026-06-19_p0-007/status.tsv`.
+
 
 ## P1 - Strongly Recommended Before Launch
 

@@ -164,6 +164,17 @@ Rules:
 - Call out compatibility-impacting changes explicitly.
 - Include migration guidance when behavior changes could break automation or scripts.
 
+## 5.1 ShipCheck Release Exceptions
+
+ShipCheck is run as an additional release-readiness scan, but the Kujo runtime repository has Cargo-owned metadata that ShipCheck's generic detectors do not fully recognize yet.
+
+Documented v1.0 exceptions live in `docs/SHIPCHECK_RELEASE_EXCEPTIONS.md` and cover:
+
+- Cargo format command: `cargo fmt --check`
+- Cargo lint command: `cargo clippy --all-targets --all-features -- -D warnings`
+- Intentional absence of `kennel.toml` for the language/runtime crate
+- Cargo binary entry point: `src/main.rs` / `kujo`
+
 ## 6. Pre-Release Checklist (Before Version Bump)
 
 1. Confirm local repository state.
