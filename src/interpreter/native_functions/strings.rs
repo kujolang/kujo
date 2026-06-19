@@ -87,6 +87,115 @@ fn render_markdown_native(markdown: &str) -> String {
     html_lines.join("\n")
 }
 
+// --- Native listing-card renderer ------------------------------------------
+// Byte-identical port of build.kujo's listing_card_html + its helpers
+// (route_to_path, listing_card_media_url, listing_card_tags_html). Called 25×
+// per listing page over hundreds of pages on large sites.
+fn lc_escape(source: &str) -> String {
+    let mut out = String::with_capacity(source.len() + 16);
+    for c in source.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&apos;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
+fn lc_route_to_path(route: &str) -> String {
+    let mut clean = route.trim().to_string();
+    if clean.is_empty() {
+        return "/".to_string();
+    }
+    if let Some(rest) = clean.strip_prefix('/') {
+        clean = rest.to_string();
+    }
+    if !clean.ends_with('/') {
+        clean.push('/');
+    }
+    format!("/{}", clean)
+}
+
+fn lc_media_url(path_value: &str) -> String {
+    let mut media = path_value.trim().to_string();
+    if media.is_empty() {
+        return String::new();
+    }
+    loop {
+        if let Some(rest) = media.strip_prefix("../") {
+            media = rest.to_string();
+            continue;
+        }
+        if let Some(rest) = media.strip_prefix("./") {
+            media = rest.to_string();
+            continue;
+        }
+        break;
+    }
+    if media.starts_with("http://")
+        || media.starts_with("https://")
+        || media.starts_with("//")
+        || media.starts_with('/')
+    {
+        media
+    } else {
+        format!("/{}", media)
+    }
+}
+
+fn render_listing_card_native(
+    route: &str,
+    title: &str,
+    excerpt: &str,
+    featured_image: &str,
+    terms: &[String],
+    action_label: &str,
+) -> String {
+    let safe_href = lc_escape(&lc_route_to_path(route));
+    let safe_title = lc_escape(title);
+    let safe_excerpt = lc_escape(excerpt);
+    let media_url = lc_media_url(featured_image);
+    let safe_media_url = lc_escape(&media_url);
+    let title_attr = lc_escape(title);
+
+    let mut tags_html = String::new();
+    for term in terms.iter().take(3) {
+        tags_html.push_str("<span class=\"tag listing-tag\">");
+        tags_html.push_str(&lc_escape(term));
+        tags_html.push_str("</span>");
+    }
+    let tags_block = if tags_html.is_empty() {
+        String::new()
+    } else {
+        format!("<div class=\"listing-card-tags\">{}</div>", tags_html)
+    };
+
+    let trimmed_label = action_label.trim();
+    let button_text = if trimmed_label.is_empty() { "Read More" } else { trimmed_label };
+    let safe_button_text = lc_escape(button_text);
+
+    let media_block = if media_url.is_empty() {
+        format!(
+            "<a class=\"listing-card-image-link\" href=\"{}\"><span class=\"listing-card-image-placeholder\" aria-hidden=\"true\"></span></a>",
+            safe_href
+        )
+    } else {
+        format!(
+            "<a class=\"listing-card-image-link\" href=\"{}\"><img src=\"{}\" alt=\"Featured image for {}\" class=\"listing-card-image\" loading=\"lazy\" decoding=\"async\"></a>",
+            safe_href, safe_media_url, title_attr
+        )
+    };
+
+    format!(
+        "<li class=\"listing-card\">{}<div class=\"listing-card-body\">{}<h2 class=\"listing-card-title\"><a href=\"{}\" class=\"text-links\">{}</a></h2><p class=\"listing-card-excerpt\">{}</p><a href=\"{}\" class=\"listing-card-button\">{}</a></div></li>",
+        media_block, tags_block, safe_href, safe_title, safe_excerpt, safe_href, safe_button_text
+    )
+}
+
 // --- Native page-layout renderer -------------------------------------------
 // Byte-identical port of build.kujo's render_layout + its string helpers. This
 // is the single largest interpreted per-page cost in the SSG; doing it in one
@@ -540,6 +649,34 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             } else {
                 Value::Error("render_markdown() requires a string argument".to_string())
             }
+        }
+
+        // Native listing-card renderer (see render_listing_card_native above).
+        // args: route, title, excerpt, featured_image, terms(array), action_label
+        "render_listing_card" => {
+            if args.len() != 6 {
+                return Some(Value::Error(
+                    "render_listing_card() expects 6 arguments".to_string(),
+                ));
+            }
+            let s = |v: &Value| -> String {
+                match v {
+                    Value::Str(t) => t.as_ref().clone(),
+                    other => crate::interpreter::Interpreter::stringify_value(other),
+                }
+            };
+            let terms: Vec<String> = match &args[4] {
+                Value::Array(arr) => arr.iter().map(s).collect(),
+                _ => Vec::new(),
+            };
+            Value::Str(Arc::new(render_listing_card_native(
+                &s(&args[0]),
+                &s(&args[1]),
+                &s(&args[2]),
+                &s(&args[3]),
+                &terms,
+                &s(&args[5]),
+            )))
         }
 
         // Native page-layout renderer (see render_layout_native above).

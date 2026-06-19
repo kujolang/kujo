@@ -516,6 +516,7 @@ impl Interpreter {
             "capitalize",
             "escape_xml",
             "render_markdown",
+            "render_listing_card",
             "render_layout_native",
             "trim",
             "trim_start",
@@ -921,6 +922,7 @@ impl Interpreter {
         self.env.define("capitalize".to_string(), Value::NativeFunction("capitalize".to_string()));
         self.env.define("escape_xml".to_string(), Value::NativeFunction("escape_xml".to_string()));
         self.env.define("render_markdown".to_string(), Value::NativeFunction("render_markdown".to_string()));
+        self.env.define("render_listing_card".to_string(), Value::NativeFunction("render_listing_card".to_string()));
         self.env.define("render_layout_native".to_string(), Value::NativeFunction("render_layout_native".to_string()));
         self.env.define("trim".to_string(), Value::NativeFunction("trim".to_string()));
         self.env.define("trim_start".to_string(), Value::NativeFunction("trim_start".to_string()));
