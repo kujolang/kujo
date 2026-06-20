@@ -6,6 +6,7 @@ use crate::interpreter::{DictMap, Value};
 use crate::runtime_limits;
 use crate::{builtins, network_policy};
 use reqwest::Method;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -47,15 +48,12 @@ fn value_to_f64(value: &Value) -> Option<f64> {
 fn parse_ai_headers(options: &DictMap, surface: &str) -> Result<Vec<(String, String)>, Value> {
     let mut headers = Vec::new();
     if let Some(raw_headers) = options.get("headers") {
-        let header_dict = match raw_headers {
-            Value::Dict(dict) => dict,
-            _ => {
-                return Err(Value::Error(format!(
-                    "{}() requires options.headers to be a dictionary of string values",
-                    surface
-                )));
-            }
-        };
+        let header_dict = dict_like_from_value(raw_headers).ok_or_else(|| {
+            Value::Error(format!(
+                "{}() requires options.headers to be a dictionary of string values",
+                surface
+            ))
+        })?;
 
         for (key, value) in header_dict.iter() {
             match value {
@@ -248,15 +246,12 @@ fn merge_ai_extra_body(
     let Some(extra_body) = options.get("body") else {
         return Ok(());
     };
-    let extra_body = match extra_body {
-        Value::Dict(dict) => dict,
-        _ => {
-            return Err(Value::Error(format!(
-                "{}() requires options.body to be a dictionary when provided",
-                surface
-            )));
-        }
-    };
+    let extra_body = dict_like_from_value(extra_body).ok_or_else(|| {
+        Value::Error(format!(
+            "{}() requires options.body to be a dictionary when provided",
+            surface
+        ))
+    })?;
 
     for (key, value) in extra_body.iter() {
         if reserved_keys.iter().any(|reserved| *reserved == key.as_ref()) {
@@ -281,6 +276,83 @@ fn truncate_for_error(text: &str, max_chars: usize) -> String {
         out.push(ch);
     }
     out
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    format!("{:x}", hasher.finalize())
+}
+
+fn is_ai_hash_excluded_header(name: &str) -> bool {
+    matches!(
+        name.to_ascii_lowercase().as_str(),
+        "authorization"
+            | "proxy-authorization"
+            | "api-key"
+            | "x-api-key"
+            | "date"
+            | "user-agent"
+            | "x-request-id"
+            | "request-id"
+            | "idempotency-key"
+    )
+}
+
+fn canonical_ai_hash_headers(headers: &[(String, String)]) -> Value {
+    let mut entries: Vec<(String, String)> = headers
+        .iter()
+        .filter_map(|(name, value)| {
+            if is_ai_hash_excluded_header(name) {
+                None
+            } else {
+                Some((name.to_ascii_lowercase(), value.clone()))
+            }
+        })
+        .collect();
+    entries.sort_by(|left, right| left.0.cmp(&right.0).then_with(|| left.1.cmp(&right.1)));
+
+    Value::Array(Arc::new(
+        entries
+            .into_iter()
+            .map(|(name, value)| {
+                let mut entry = DictMap::default();
+                entry.insert("name".into(), Value::Str(Arc::new(name)));
+                entry.insert("value".into(), Value::Str(Arc::new(value)));
+                Value::Dict(Arc::new(entry))
+            })
+            .collect(),
+    ))
+}
+
+fn build_ai_request_hash_value(
+    prompt_or_messages: &Value,
+    options: &DictMap,
+) -> Result<Value, Value> {
+    let config = parse_ai_request_config(options, "ai_request_hash")?;
+    let messages = parse_ai_messages(prompt_or_messages, "ai_request_hash")?;
+
+    let mut payload = DictMap::default();
+    payload.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
+    payload.insert("messages".into(), Value::Array(Arc::new(messages)));
+    merge_ai_extra_body(&mut payload, options, &["model", "messages"], "ai_request_hash")?;
+
+    let mut normalized = DictMap::default();
+    normalized.insert("_hash_version".into(), Value::Int(1));
+    normalized.insert("endpoint".into(), Value::Str(Arc::new(config.endpoint.trim().to_string())));
+    normalized.insert("model".into(), Value::Str(Arc::new(config.model)));
+    normalized.insert("headers".into(), canonical_ai_hash_headers(&config.headers));
+    normalized.insert("body".into(), Value::Dict(Arc::new(payload)));
+
+    Ok(Value::Dict(Arc::new(normalized)))
+}
+
+fn ai_request_hash_value(prompt_or_messages: &Value, options: &DictMap) -> Result<String, Value> {
+    let normalized = build_ai_request_hash_value(prompt_or_messages, options)?;
+    let canonical_json = builtins::to_json(&normalized).map_err(|error| {
+        Value::Error(format!("ai_request_hash() failed to serialize normalized request: {}", error))
+    })?;
+    Ok(sha256_hex(canonical_json.as_bytes()))
 }
 
 fn run_ai_request(
@@ -721,6 +793,30 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Err(error) => {
                     Value::Result { is_ok: false, value: Box::new(Value::Str(Arc::new(error))) }
                 }
+            }
+        }
+
+        "ai_request_hash" => {
+            if arg_values.len() != 2 {
+                return Some(Value::Error(format!(
+                    "ai_request_hash() expects 2 arguments (prompt_or_messages, options), got {}",
+                    arg_values.len()
+                )));
+            }
+
+            let options = match arg_values.get(1).and_then(dict_like_from_value) {
+                Some(options) => options,
+                None => {
+                    return Some(Value::Error(
+                        "ai_request_hash() requires an options dictionary as second argument"
+                            .to_string(),
+                    ));
+                }
+            };
+
+            match ai_request_hash_value(&arg_values[0], &options) {
+                Ok(hash) => Value::Str(Arc::new(hash)),
+                Err(error) => return Some(error),
             }
         }
 
@@ -1604,6 +1700,99 @@ mod tests {
         options.insert("endpoint".into(), str_value(endpoint));
         options.insert("model".into(), str_value(model));
         Value::Dict(Arc::new(options))
+    }
+
+    fn ai_hash_options(
+        endpoint: &str,
+        model: &str,
+        api_key: &str,
+        authorization: &str,
+        trace_header: &str,
+    ) -> Value {
+        let mut headers = DictMap::default();
+        headers.insert("Authorization".into(), str_value(authorization));
+        headers.insert("X-Trace".into(), str_value(trace_header));
+
+        let mut body = DictMap::default();
+        body.insert("temperature".into(), Value::Float(0.2));
+        body.insert("max_tokens".into(), Value::Int(64));
+
+        let mut options = DictMap::default();
+        options.insert("body".into(), Value::Dict(Arc::new(body)));
+        options.insert("headers".into(), Value::Dict(Arc::new(headers)));
+        options.insert("api_key".into(), str_value(api_key));
+        options.insert("model".into(), str_value(model));
+        options.insert("endpoint".into(), str_value(endpoint));
+        Value::Dict(Arc::new(options))
+    }
+
+    fn ai_request_hash_for(prompt: &str, options: Value) -> String {
+        let result = handle("ai_request_hash", &[str_value(prompt), options])
+            .expect("ai_request_hash should return a value");
+        match result {
+            Value::Str(hash) => hash.as_ref().clone(),
+            other => panic!("expected ai_request_hash to return string, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_ai_request_hash_is_stable_and_credential_independent() {
+        let endpoint = "https://api.example.test/v1/chat/completions";
+        let left = ai_request_hash_for(
+            "Summarize Kujo",
+            ai_hash_options(endpoint, "gpt-mock", "key-one", "Bearer key-one", "trace-1"),
+        );
+        let right = ai_request_hash_for(
+            "Summarize Kujo",
+            ai_hash_options(endpoint, "gpt-mock", "key-two", "Bearer key-two", "trace-1"),
+        );
+
+        assert_eq!(left, right);
+        assert_eq!(left.len(), 64);
+        assert!(left.chars().all(|ch| ch.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_ai_request_hash_changes_for_semantic_request_inputs() {
+        let endpoint = "https://api.example.test/v1/chat/completions";
+        let base = ai_request_hash_for(
+            "Summarize Kujo",
+            ai_hash_options(endpoint, "gpt-mock", "key", "Bearer key", "trace-1"),
+        );
+        let different_model = ai_request_hash_for(
+            "Summarize Kujo",
+            ai_hash_options(endpoint, "gpt-other", "key", "Bearer key", "trace-1"),
+        );
+        let different_prompt = ai_request_hash_for(
+            "Explain Kujo",
+            ai_hash_options(endpoint, "gpt-mock", "key", "Bearer key", "trace-1"),
+        );
+        let different_relevant_header = ai_request_hash_for(
+            "Summarize Kujo",
+            ai_hash_options(endpoint, "gpt-mock", "key", "Bearer key", "trace-2"),
+        );
+
+        assert_ne!(base, different_model);
+        assert_ne!(base, different_prompt);
+        assert_ne!(base, different_relevant_header);
+    }
+
+    #[test]
+    fn test_ai_request_hash_validation_errors_match_ai_helpers() {
+        let missing_options = handle("ai_request_hash", &[str_value("hello"), Value::Int(1)])
+            .expect("ai_request_hash should return a value");
+        assert!(
+            matches!(missing_options, Value::Error(message) if message.contains("requires an options dictionary"))
+        );
+
+        let mut options = DictMap::default();
+        options.insert("model".into(), str_value("gpt-mock"));
+        let missing_endpoint =
+            handle("ai_request_hash", &[str_value("hello"), Value::Dict(Arc::new(options))])
+                .expect("ai_request_hash should return a value");
+        assert!(
+            matches!(missing_endpoint, Value::Error(message) if message.contains("requires options.endpoint"))
+        );
     }
 
     #[test]

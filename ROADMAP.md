@@ -47,6 +47,11 @@ Observed summary:
 
 This VM test was not a release-execution detail. It proved the runtime could silently convert a missing map key in an in-place operation into `Int(0)` instead of reporting a runtime error. `V1-TEST-001` has restored the base test suite by making missing map keys runtime errors across VM/interpreter map indexing paths.
 
+### Core AI-Native Enhancement Track
+
+- Item 8 from `research/kujo-language-deep-dive/CORE_AI_NATIVE_ENHANCEMENTS_PROPOSAL.md` is implemented: `ai_request_hash(prompt_or_messages, options)` now provides deterministic, credential-independent request keys for future cassette replay and userland caching.
+- Remaining core AI-native items are tracked in that proposal's Progress Tracker and should continue in phase order without adding retry policy, provider routing, RAG, agents, MCP, eval, observability, or registry behavior to core.
+
 ## 2. Priority And Severity Definitions
 
 Priority:

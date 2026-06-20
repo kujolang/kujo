@@ -738,6 +738,7 @@ impl Interpreter {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "ai_request_hash",
             "ai_chat",
             "ai_stream_chat",
             "ai_embedding",
@@ -1300,6 +1301,10 @@ impl Interpreter {
         self.env.define(
             "http_get_binary".to_string(),
             Value::NativeFunction("http_get_binary".to_string()),
+        );
+        self.env.define(
+            "ai_request_hash".to_string(),
+            Value::NativeFunction("ai_request_hash".to_string()),
         );
         self.env.define("ai_chat".to_string(), Value::NativeFunction("ai_chat".to_string()));
         self.env.define(
@@ -2720,6 +2725,10 @@ impl Interpreter {
                 2,
                 3,
                 vec!["items".to_string(), "mapper".to_string(), "concurrency".to_string()],
+            ),
+            "ai_request_hash" => CallableArity::exact(
+                "ai_request_hash",
+                vec!["prompt_or_messages".to_string(), "options".to_string()],
             ),
             "ai_chat" => CallableArity::exact(
                 "ai_chat",

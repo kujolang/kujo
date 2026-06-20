@@ -1,0 +1,38 @@
+func kv(label, value) {
+    print(label + ": " + value)
+}
+
+let options_a := {
+    "endpoint": "https://api.example.test/v1/chat/completions",
+    "model": "gpt-demo",
+    "api_key": "credential-one",
+    "headers": {
+        "Authorization": "Bearer credential-one",
+        "X-App": "kujo"
+    },
+    "body": {
+        "temperature": 0,
+        "max_tokens": 32
+    }
+}
+
+let options_b := {
+    "endpoint": "https://api.example.test/v1/chat/completions",
+    "model": "gpt-demo",
+    "api_key": "credential-two",
+    "headers": {
+        "Authorization": "Bearer credential-two",
+        "X-App": "kujo"
+    },
+    "body": {
+        "temperature": 0,
+        "max_tokens": 32
+    }
+}
+
+let hash_a := ai_request_hash("Summarize Kujo", options_a)
+let hash_b := ai_request_hash("Summarize Kujo", options_b)
+
+kv("hash_length", to_string(len(hash_a)))
+kv("same_without_credentials", to_string(hash_a == hash_b))
+kv("hash", hash_a)

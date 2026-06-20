@@ -72,6 +72,7 @@ fn test_builtin_names_include_release_hardening_contract_entries() {
         "udp_send_to",
         "udp_receive_from",
         "udp_close",
+        "ai_request_hash",
         "ai_chat",
         "ai_stream_chat",
         "ai_embedding",

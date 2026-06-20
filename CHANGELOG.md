@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `ai_request_hash(prompt_or_messages, options)` for deterministic, credential-independent AI request cache/cassette keys without network I/O.
+
 ## [1.0.0] - 2026-06-19
 
 Release-candidate note: the crate metadata is staged at `1.0.0`, but the final `v1.0.0` tag, crate publication, and binary artifact sign-off remain incomplete until the release artifact checklist has dated evidence.
