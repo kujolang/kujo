@@ -1,5 +1,5 @@
 use crate::runtime_limits;
-use reqwest::blocking::{Client, Response};
+use reqwest::blocking::{Client, Response as BlockingResponse};
 use std::io::Read;
 use std::net::{IpAddr, TcpStream, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
@@ -174,8 +174,15 @@ pub fn build_http_client(timeout: Duration) -> Result<Client, String> {
         .map_err(|error| format!("Failed to create HTTP client: {}", error))
 }
 
+pub fn build_async_http_client(timeout: Duration) -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .timeout(timeout)
+        .build()
+        .map_err(|error| format!("Failed to create async HTTP client: {}", error))
+}
+
 pub fn read_http_response_bytes(
-    response: Response,
+    response: BlockingResponse,
     surface: &str,
 ) -> Result<(u16, reqwest::header::HeaderMap, Vec<u8>), String> {
     let status = response.status().as_u16();
@@ -207,6 +214,45 @@ pub fn read_http_response_bytes(
     }
 
     Ok((status, headers, bytes))
+}
+
+pub async fn read_async_http_response_text(
+    mut response: reqwest::Response,
+    surface: &str,
+) -> Result<(u16, reqwest::header::HeaderMap, String), String> {
+    let status = response.status().as_u16();
+    let headers = response.headers().clone();
+
+    if let Some(content_length) = response.content_length() {
+        if content_length > MAX_NETWORK_BODY_BYTES as u64 {
+            return Err(format!(
+                "{} failed: response body exceeds maximum network body size ({} bytes > {} bytes)",
+                surface, content_length, MAX_NETWORK_BODY_BYTES
+            ));
+        }
+    }
+
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response
+        .chunk()
+        .await
+        .map_err(|error| format!("{} failed while reading response body: {}", surface, error))?
+    {
+        let next_len = bytes.len().saturating_add(chunk.len());
+        if next_len > MAX_NETWORK_BODY_BYTES {
+            return Err(format!(
+                "{} failed: response body exceeds maximum network body size ({} bytes > {} bytes)",
+                surface, next_len, MAX_NETWORK_BODY_BYTES
+            ));
+        }
+        bytes.extend_from_slice(&chunk);
+    }
+
+    let body = String::from_utf8(bytes).map_err(|error| {
+        format!("{} failed: response body is not valid UTF-8: {}", surface, error)
+    })?;
+
+    Ok((status, headers, body))
 }
 
 pub fn apply_tcp_stream_timeouts(stream: &TcpStream, surface: &str) -> Result<(), String> {

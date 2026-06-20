@@ -17,3 +17,4 @@ pub const DEFAULT_MAX_VM_CALL_DEPTH: usize = 256;
 
 pub const MAX_FILE_IO_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_NETWORK_BODY_BYTES: usize = 8 * 1024 * 1024;
+pub const MAX_PARALLEL_HTTP_REQUESTS: usize = 128;

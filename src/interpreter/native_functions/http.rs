@@ -3,6 +3,7 @@
 // HTTP client native functions
 
 use crate::interpreter::{DictMap, Value};
+use crate::runtime_limits;
 use crate::{builtins, network_policy};
 use reqwest::Method;
 use std::collections::HashMap;
@@ -471,12 +472,26 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::Array(urls)) = arg_values.first() {
-                let url_strings: Vec<String> = urls
-                    .iter()
-                    .filter_map(
-                        |v| if let Value::Str(s) = v { Some(s.as_ref().clone()) } else { None },
-                    )
-                    .collect();
+                if urls.len() > runtime_limits::MAX_PARALLEL_HTTP_REQUESTS {
+                    return Some(Value::Error(format!(
+                        "parallel_http() request count exceeds maximum ({} > {})",
+                        urls.len(),
+                        runtime_limits::MAX_PARALLEL_HTTP_REQUESTS
+                    )));
+                }
+
+                let mut url_strings = Vec::with_capacity(urls.len());
+                for (index, value) in urls.iter().enumerate() {
+                    match value {
+                        Value::Str(s) => url_strings.push(s.as_ref().clone()),
+                        _ => {
+                            return Some(Value::Error(format!(
+                                "parallel_http() URL at index {} must be a string",
+                                index
+                            )));
+                        }
+                    }
+                }
 
                 let mut handles = Vec::new();
                 for url in url_strings {

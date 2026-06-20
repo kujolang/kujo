@@ -131,6 +131,10 @@ struct CapabilityArgs {
     /// Allow random-number generation APIs.
     #[arg(long, default_value_t = false)]
     allow_random: bool,
+
+    /// Force outbound HTTP/TCP/UDP clients to reject private, local, link-local, multicast, and unspecified destinations.
+    #[arg(long, default_value_t = false)]
+    deny_private_net: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -869,6 +873,11 @@ fn build_runtime_capability_policy(args: &CapabilityArgs) -> RuntimeCapabilityPo
 }
 
 fn apply_untrusted_network_destination_policy_defaults(args: &CapabilityArgs) {
+    if args.deny_private_net {
+        std::env::set_var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+        return;
+    }
+
     if args.allow_all || !args.untrusted {
         return;
     }
@@ -2820,6 +2829,18 @@ mod tests {
             assert_eq!(
                 std::env::var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV).ok(),
                 Some("allow_all".to_string())
+            );
+        });
+    }
+
+    #[test]
+    fn deny_private_net_forces_strict_destination_policy_in_trusted_mode() {
+        with_outbound_policy_env(Some("allow_all"), || {
+            let args = CapabilityArgs { deny_private_net: true, ..CapabilityArgs::default() };
+            apply_untrusted_network_destination_policy_defaults(&args);
+            assert_eq!(
+                std::env::var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV).ok(),
+                Some("deny_private".to_string())
             );
         });
     }

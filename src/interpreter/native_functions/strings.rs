@@ -9,22 +9,62 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::sync::Arc;
 
-// Native port of the SSG's inline-markdown pass. Byte-identical to the Kujo
-// implementation (same patterns, same replacement strings, same cheap substring
-// guards), but compiled once instead of recompiling regexes per call.
+// Native port of the SSG's inline-markdown pass, with HTML/attribute escaping
+// at the native boundary so untrusted Markdown cannot inject active content.
 static MD_IMG: Lazy<Regex> = Lazy::new(|| Regex::new(r"!\[([^\]]*)\]\(([^\)]+)\)").unwrap());
 static MD_LINK: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^\)]+)\)").unwrap());
 static MD_BOLD: Lazy<Regex> = Lazy::new(|| Regex::new(r"\*\*([^\*]+)\*\*").unwrap());
 static MD_ITALIC: Lazy<Regex> = Lazy::new(|| Regex::new(r"\*([^\*]+)\*").unwrap());
 static MD_CODE: Lazy<Regex> = Lazy::new(|| Regex::new(r"`([^`]+)`").unwrap());
 
+fn is_safe_markdown_url(url: &str) -> bool {
+    let trimmed = url.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+    let lower = trimmed.to_ascii_lowercase();
+    if lower.starts_with("http://")
+        || lower.starts_with("https://")
+        || lower.starts_with("mailto:")
+        || lower.starts_with('/')
+        || lower.starts_with('#')
+        || lower.starts_with("./")
+        || lower.starts_with("../")
+    {
+        return true;
+    }
+    !lower.contains(':')
+}
+
+fn safe_markdown_url(url: &str) -> String {
+    if is_safe_markdown_url(url) {
+        // inline_markdown_native escapes the source before applying Markdown
+        // substitutions, so safe captures are already attribute-safe.
+        url.trim().to_string()
+    } else {
+        "#".to_string()
+    }
+}
+
 fn inline_markdown_native(text: &str) -> String {
-    let mut out = text.to_string();
+    let mut out = lc_escape(text);
     if out.contains("![") {
-        out = MD_IMG.replace_all(&out, "<img src=\"$2\" alt=\"$1\">").into_owned();
+        out = MD_IMG
+            .replace_all(&out, |captures: &regex::Captures| {
+                format!(
+                    "<img src=\"{}\" alt=\"{}\">",
+                    safe_markdown_url(&captures[2]),
+                    &captures[1]
+                )
+            })
+            .into_owned();
     }
     if out.contains('[') {
-        out = MD_LINK.replace_all(&out, "<a href=\"$2\">$1</a>").into_owned();
+        out = MD_LINK
+            .replace_all(&out, |captures: &regex::Captures| {
+                format!("<a href=\"{}\">{}</a>", safe_markdown_url(&captures[2]), &captures[1])
+            })
+            .into_owned();
     }
     if out.contains("**") {
         out = MD_BOLD.replace_all(&out, "<strong>$1</strong>").into_owned();
@@ -1044,7 +1084,7 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                             html.push_str("<html><body><h1>Post ");
                             html.push_str(index_str.as_str());
                             html.push_str("</h1><article>");
-                            html.push_str(source_body.as_ref());
+                            html.push_str(&lc_escape(source_body.as_ref()));
                             html.push_str("</article></body></html>");
 
                             checksum += html.len() as i64;
@@ -1314,6 +1354,28 @@ mod tests {
     }
 
     #[test]
+    fn test_ssg_render_pages_escapes_source_html() {
+        let args = vec![Value::Array(Arc::new(vec![str_value("<script>alert(1)</script>")]))];
+
+        let result = handle("ssg_render_pages", &args).unwrap();
+        match result {
+            Value::Dict(dict) => match dict.get("pages") {
+                Some(Value::Array(values)) => {
+                    assert!(
+                        matches!(&values[0], Value::Str(s) if s.contains("&lt;script&gt;alert(1)&lt;/script&gt;"))
+                    );
+                    assert!(
+                        matches!(&values[0], Value::Str(s) if !s.contains("<script>")),
+                        "rendered page should not contain raw script"
+                    );
+                }
+                other => panic!("Expected pages array, got {:?}", other),
+            },
+            other => panic!("Expected Dict result from ssg_render_pages, got {:?}", other),
+        }
+    }
+
+    #[test]
     fn test_ssg_render_pages_requires_array_argument() {
         let args = vec![str_value("not-an-array")];
         let result = handle("ssg_render_pages", &args).unwrap();
@@ -1454,6 +1516,29 @@ mod tests {
         assert!(
             matches!(replace_error, Value::Error(message) if message.contains("regex_replace requires three string arguments"))
         );
+    }
+
+    #[test]
+    fn test_render_markdown_escapes_html_and_unsafe_link_targets() {
+        let rendered = handle(
+            "render_markdown",
+            &[str_value(
+                "# Hi <script>alert(1)</script>\n[click](javascript:alert(1))\n[q](https://example.test?a=1&b=2)",
+            )],
+        )
+        .unwrap();
+
+        match rendered {
+            Value::Str(html) => {
+                assert!(html.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
+                assert!(!html.contains("<script>"));
+                assert!(html.contains("<a href=\"#\">click</a>"));
+                assert!(!html.contains("javascript:alert"));
+                assert!(html.contains("<a href=\"https://example.test?a=1&amp;b=2\">q</a>"));
+                assert!(!html.contains("&amp;amp;"));
+            }
+            other => panic!("Expected rendered markdown string, got {:?}", other),
+        }
     }
 
     #[test]

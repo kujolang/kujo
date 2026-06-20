@@ -4,6 +4,7 @@
 // Provides async functions for sleep, timeouts, Promise.all, Promise.race, etc.
 
 use crate::interpreter::{AsyncRuntime, DictMap, Value};
+use crate::network_policy;
 use crate::vm::VM;
 use futures::stream::{FuturesUnordered, StreamExt};
 use rayon::prelude::*;
@@ -179,6 +180,21 @@ fn ssg_should_prefetch_single_worker_read(
     remaining_reads > 0 && read_in_flight_len == 0 && !has_pending_write
 }
 
+fn ssg_escape_html(source: &str) -> String {
+    let mut out = String::with_capacity(source.len() + 16);
+    for c in source.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&#39;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 async fn ssg_write_rendered_html_page(
     output_path: &str,
     html_prefix: &str,
@@ -186,10 +202,11 @@ async fn ssg_write_rendered_html_page(
 ) -> std::io::Result<usize> {
     let mut output_file = tokio::fs::File::create(output_path).await?;
     let mut total_written: usize = 0;
+    let escaped_source_body = ssg_escape_html(source_body);
 
     let mut segments = [
         IoSlice::new(html_prefix.as_bytes()),
-        IoSlice::new(source_body.as_bytes()),
+        IoSlice::new(escaped_source_body.as_bytes()),
         IoSlice::new(SSG_HTML_SUFFIX.as_bytes()),
     ];
     let mut remaining_segments = &mut segments[..];
@@ -230,10 +247,11 @@ fn ssg_write_rendered_html_page_sync_bytes(
 ) -> std::io::Result<usize> {
     let mut output_file = std::fs::File::create(output_path)?;
     let mut total_written: usize = 0;
+    let escaped_source_body = std::str::from_utf8(source_body).ok().map(ssg_escape_html);
 
     let mut segments = [
         IoSlice::new(html_prefix),
-        IoSlice::new(source_body),
+        IoSlice::new(escaped_source_body.as_deref().map(str::as_bytes).unwrap_or(source_body)),
         IoSlice::new(SSG_HTML_SUFFIX.as_bytes()),
     ];
     let mut remaining_segments = &mut segments[..];
@@ -930,29 +948,34 @@ pub fn handle(
                 }
             };
 
+            if let Err(error) =
+                network_policy::enforce_http_url_destination_policy(url.as_ref(), "async_http_get")
+            {
+                return Some(Value::Error(error));
+            }
+
             // Create channel for result
             let (tx, rx) = tokio::sync::oneshot::channel();
 
             // Spawn async HTTP request
             AsyncRuntime::spawn_task(async move {
                 let result = async {
-                    let client = reqwest::Client::new();
+                    let client = network_policy::build_async_http_client(
+                        network_policy::default_http_timeout(),
+                    )?;
                     let response = client
                         .get(url.as_ref())
                         .send()
                         .await
-                        .map_err(|e| format!("HTTP GET failed: {}", e))?;
+                        .map_err(|e| format!("async_http_get failed: {}", e))?;
 
-                    let status = response.status().as_u16() as i64;
-                    let headers_map = response.headers().clone();
-                    let body = response
-                        .text()
-                        .await
-                        .map_err(|e| format!("Failed to read response body: {}", e))?;
+                    let (status, headers_map, body) =
+                        network_policy::read_async_http_response_text(response, "async_http_get")
+                            .await?;
 
                     // Build result dictionary
                     let mut result_dict = DictMap::default();
-                    result_dict.insert("status".into(), Value::Int(status));
+                    result_dict.insert("status".into(), Value::Int(status as i64));
                     result_dict.insert("body".into(), Value::Str(Arc::new(body)));
 
                     // Convert headers to dict
@@ -1012,6 +1035,12 @@ pub fn handle(
                 }
             };
 
+            if let Err(error) =
+                network_policy::enforce_http_url_destination_policy(url.as_ref(), "async_http_post")
+            {
+                return Some(Value::Error(error));
+            }
+
             // Optional headers
             let headers = if args.len() == 3 {
                 match &args[2] {
@@ -1032,7 +1061,9 @@ pub fn handle(
             // Spawn async HTTP request
             AsyncRuntime::spawn_task(async move {
                 let result = async {
-                    let client = reqwest::Client::new();
+                    let client = network_policy::build_async_http_client(
+                        network_policy::default_http_timeout(),
+                    )?;
                     let mut request = client.post(url.as_ref()).body(body.as_ref().clone());
 
                     // Add custom headers if provided
@@ -1044,19 +1075,18 @@ pub fn handle(
                         }
                     }
 
-                    let response =
-                        request.send().await.map_err(|e| format!("HTTP POST failed: {}", e))?;
-
-                    let status = response.status().as_u16() as i64;
-                    let headers_map = response.headers().clone();
-                    let response_body = response
-                        .text()
+                    let response = request
+                        .send()
                         .await
-                        .map_err(|e| format!("Failed to read response body: {}", e))?;
+                        .map_err(|e| format!("async_http_post failed: {}", e))?;
+
+                    let (status, headers_map, response_body) =
+                        network_policy::read_async_http_response_text(response, "async_http_post")
+                            .await?;
 
                     // Build result dictionary
                     let mut result_dict = DictMap::default();
-                    result_dict.insert("status".into(), Value::Int(status));
+                    result_dict.insert("status".into(), Value::Int(status as i64));
                     result_dict.insert("body".into(), Value::Str(Arc::new(response_body)));
 
                     // Convert headers to dict
@@ -2555,7 +2585,7 @@ mod tests {
     use std::collections::HashMap;
     use std::fs;
     use std::sync::atomic::{AtomicU64, Ordering};
-    use std::sync::{Arc, Mutex};
+    use std::sync::{Arc, Mutex, OnceLock};
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
     fn string_value(s: &str) -> Value {
@@ -2589,6 +2619,32 @@ mod tests {
         .join();
     }
 
+    fn with_outbound_policy_env<F>(policy: Option<&str>, run: F)
+    where
+        F: FnOnce(),
+    {
+        static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
+        let previous_policy =
+            std::env::var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV).ok();
+
+        match policy {
+            Some(value) => {
+                std::env::set_var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV, value)
+            }
+            None => std::env::remove_var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV),
+        }
+
+        run();
+
+        match previous_policy {
+            Some(value) => {
+                std::env::set_var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV, value)
+            }
+            None => std::env::remove_var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV),
+        }
+    }
+
     #[test]
     fn read_cached_promise_result_returns_error_when_lock_poisoned() {
         let is_polled = Arc::new(Mutex::new(false));
@@ -2615,6 +2671,34 @@ mod tests {
             Err(message) => assert!(message.contains("shared async state lock poisoned")),
             Ok(_) => panic!("expected poisoned lock error"),
         }
+    }
+
+    #[test]
+    fn async_http_helpers_enforce_destination_policy_before_spawning_requests() {
+        with_outbound_policy_env(Some("deny_private"), || {
+            let mut interp = Interpreter::new();
+
+            let get_result =
+                handle(&mut interp, "async_http_get", &[string_value("http://127.0.0.1:1")])
+                    .expect("async_http_get should be handled");
+            assert!(
+                matches!(&get_result, Value::Error(message) if message.contains("blocked by outbound destination policy")),
+                "expected strict destination policy error, got {:?}",
+                get_result
+            );
+
+            let post_result = handle(
+                &mut interp,
+                "async_http_post",
+                &[string_value("http://127.0.0.1:1"), string_value("payload")],
+            )
+            .expect("async_http_post should be handled");
+            assert!(
+                matches!(&post_result, Value::Error(message) if message.contains("blocked by outbound destination policy")),
+                "expected strict destination policy error, got {:?}",
+                post_result
+            );
+        });
     }
 
     fn unique_temp_dir(prefix: &str) -> String {
@@ -3285,6 +3369,30 @@ mod tests {
 
         assert_eq!(html, expected_html);
         assert_eq!(html_len, expected_html.len());
+
+        let _ = fs::remove_dir_all(&output_dir);
+    }
+
+    #[test]
+    fn test_ssg_write_rendered_html_page_escapes_source_html() {
+        let output_dir = unique_temp_dir("kujo_ssg_streamed_html_escape");
+        fs::create_dir_all(&output_dir).unwrap();
+        let output_path = format!("{}/post_0.html", output_dir);
+        let html_prefix = "<html><body><h1>Post 0</h1><article>";
+
+        AsyncRuntime::block_on(async {
+            ssg_write_rendered_html_page(
+                output_path.as_str(),
+                html_prefix,
+                "<script>alert(1)</script>",
+            )
+            .await
+            .unwrap()
+        });
+
+        let html = fs::read_to_string(output_path.as_str()).unwrap();
+        assert!(html.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
+        assert!(!html.contains("<script>"));
 
         let _ = fs::remove_dir_all(&output_dir);
     }

@@ -4142,6 +4142,26 @@ mod tests {
         );
         assert!(matches!(parallel_http_empty, Value::Array(results) if results.is_empty()));
 
+        let parallel_http_bad_element = call_native_function(
+            &mut interpreter,
+            "parallel_http",
+            &[Value::Array(Arc::new(vec![Value::Int(1)]))],
+        );
+        assert!(
+            matches!(parallel_http_bad_element, Value::Error(message) if message.contains("URL at index 0 must be a string"))
+        );
+
+        let oversized_urls = Value::Array(Arc::new(
+            (0..=crate::runtime_limits::MAX_PARALLEL_HTTP_REQUESTS)
+                .map(|_| Value::Str(Arc::new("https://example.com".to_string())))
+                .collect(),
+        ));
+        let parallel_http_too_many =
+            call_native_function(&mut interpreter, "parallel_http", &[oversized_urls]);
+        assert!(
+            matches!(parallel_http_too_many, Value::Error(message) if message.contains("request count exceeds maximum"))
+        );
+
         let mut payload = crate::interpreter::DictMap::default();
         payload.insert("sub".into(), Value::Str(Arc::new("user-123".to_string())));
         payload.insert("role".into(), Value::Str(Arc::new("admin".to_string())));
@@ -5452,7 +5472,7 @@ mod tests {
         assert!(matches!(close_listener, Value::Bool(true)));
         client_thread.join().expect("tcp client thread should complete");
 
-        let Some(udp_port) = available_udp_port() else {
+        let Some(_) = available_udp_port() else {
             eprintln!("Skipping UDP size-limit assertions: sandbox denied UDP bind permissions");
             return;
         };
@@ -5460,7 +5480,7 @@ mod tests {
         let receiver_socket = call_native_function(
             &mut udp_interpreter,
             "udp_bind",
-            &[Value::Str(Arc::new("127.0.0.1".to_string())), Value::Int(udp_port)],
+            &[Value::Str(Arc::new("127.0.0.1".to_string())), Value::Int(0)],
         );
         let receiver_value = match receiver_socket {
             Value::UdpSocket { .. } => receiver_socket,
