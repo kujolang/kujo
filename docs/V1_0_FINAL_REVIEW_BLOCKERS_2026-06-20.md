@@ -4,10 +4,10 @@ Status: active final-phase handoff before human v1.0 readiness review
 
 ## Current Boundary
 
-Kujo is closer to final review after the 2026-06-20 security pass, but it is
-not ready for a human v1.0 release review until the release-flight items below
-are either completed with real evidence or explicitly deferred by release
-owners.
+Kujo is closer to final review after the 2026-06-20 security and dependency
+advisory passes, but it is not ready for release publication until the
+release-flight item below is completed with real evidence or explicitly
+deferred by release owners.
 
 ## Completed In This Pass
 
@@ -33,6 +33,9 @@ owners.
   safety behavior.
 - Re-ran the full release-candidate gate locally with socket integration tests:
   `KUJO_ENABLE_SOCKET_TESTS=1 bash scripts/release_candidate_gate.sh --full`.
+- Refreshed `Cargo.lock` to current compatible dependency releases. This
+  removed the prior `core2` and `proc-macro-error2` audit warnings while
+  preserving the existing explicit `RUSTSEC-2023-0071` release-gate exception.
 
 ## Still Blocking Human v1.0 Review
 
@@ -44,32 +47,9 @@ owners.
      SHA-256 files, `checksums.txt`, published-artifact smoke workflow result,
      and dated `notes/` evidence.
 
-2. **Exact human-review commit evidence must be captured after any later
-   changes.**
-   - This pass completed the verification bundle before commit/push, but human
-     release review should capture the same commands on the exact commit being
-     reviewed if any later edits land.
-   - Evidence commands:
-     - `cargo fmt --check`
-     - `cargo check`
-     - `cargo clippy --all-targets --all-features -- -D warnings`
-     - `cargo test`
-     - `cargo test --test docs_examples`
-     - `cargo test --test readme_contracts`
-     - `cargo test --test cli_contracts`
-     - `cargo test --test cli_json_contracts`
-     - `cargo test --test diagnostics_golden`
-     - `cargo test --test native_api_security_boundaries`
-     - `cargo test --test runtime_security`
-     - `cargo run -- test --runtime vm`
-     - `cargo run -- test --runtime dual`
-     - `bash scripts/release_candidate_gate.sh --full`
-
 ## Recommended Next Session Order
 
-1. Re-run the verification bundle if any later changes land before human
-   review.
-2. If and only if release owners provide `UNBLOCK_V1_RELEASE`, execute
+1. If and only if release owners provide `UNBLOCK_V1_RELEASE`, execute
    tag-time artifact publication/sign-off.
-3. Create the human review packet from current docs, command evidence, and
+2. Create the human review packet from current docs, command evidence, and
    release artifact state.

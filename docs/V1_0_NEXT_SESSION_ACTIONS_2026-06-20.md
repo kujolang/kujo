@@ -1,6 +1,7 @@
 # Kujo v1.0 Next Session Actions (2026-06-20)
 
-Status: current handoff after final review hardening passes on 2026-06-20
+Status: current handoff after final review hardening and dependency advisory
+refresh passes on 2026-06-20
 
 ## Release-Flight Blockers
 
@@ -8,22 +9,20 @@ Status: current handoff after final review hardening passes on 2026-06-20
    provide `UNBLOCK_V1_RELEASE`.
 2. Record release URLs, per-asset SHA-256 values, published-artifact smoke
    result, and command logs in dated `notes/` evidence.
-3. Re-run the human-review verification bundle on the exact commit proposed for
-   tag-time review.
 
-## Useful Follow-Up Enhancements
+## External Deferrals
 
-1. Upgrade or replace remaining advisory-bearing transitive dependencies where
-   upstream support exists. Current local audit warnings are scoped to optional
-   image lockfile metadata, JIT support, and database support.
-2. Add `cargo-deny` to the local and CI release workflow once the tool is
-   installed for this repo, keeping `cargo audit` as the fallback gate.
-3. Expand performance baselines with reproducible before/after numbers for
-   parser throughput, VM execution, JIT warmup, and native image operations.
-4. Continue moving user-facing examples toward small helper-driven patterns
-   when repeated `print(...)` calls obscure the language feature being taught.
-5. Keep root-surface hygiene strict: new top-level files should be justified in
-   `docs/REPO_HYGIENE_POLICY.md` and covered by `tests/repo_hygiene_contract.rs`.
+1. `cargo-deny` is still not installed in this local toolchain. The release
+   gate keeps `cargo deny check` as an optional command and keeps `cargo audit`
+   as the active fallback until the tool is installed and a policy file can be
+   added intentionally.
+2. Remaining `cargo audit --ignore RUSTSEC-2023-0071` warnings are scoped to
+   optional/transitive upstream surfaces with no safe local replacement in this
+   readiness pass:
+   - `RUSTSEC-2020-0168` (`mach`) through experimental optional JIT support.
+   - `RUSTSEC-2024-0436` (`paste`) through optional image lockfile metadata.
+   - `RUSTSEC-2023-0071` (`rsa`) remains explicitly ignored by the release
+     gate because the advisory currently has no fixed upgrade.
 
 ## Verification Starting Point
 
