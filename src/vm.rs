@@ -890,6 +890,12 @@ impl VM {
                 Value::ErrorObject { cause: Some(cause), .. } => {
                     stack.push((cause.as_ref(), depth + 1));
                 }
+                #[cfg(feature = "runtime-db")]
+                Value::Database { .. } | Value::DatabasePool { .. } => {}
+                #[cfg(feature = "runtime-image")]
+                Value::Image { .. } => {}
+                #[cfg(feature = "runtime-archive")]
+                Value::ZipArchive { .. } => {}
                 Value::HttpResponse { .. }
                 | Value::Int(_)
                 | Value::Float(_)
@@ -908,10 +914,6 @@ impl VM {
                 | Value::Enum(_)
                 | Value::DenseIntDictInt(_)
                 | Value::DenseIntDictIntFull(_)
-                | Value::Database { .. }
-                | Value::DatabasePool { .. }
-                | Value::Image { .. }
-                | Value::ZipArchive { .. }
                 | Value::TcpListener { .. }
                 | Value::TcpStream { .. }
                 | Value::UdpSocket { .. }
@@ -4732,6 +4734,7 @@ impl VM {
                             self.stack.push(object.clone());
                             Value::NativeFunction(format!("__channel_method_{}", field))
                         }
+                        #[cfg(feature = "runtime-image")]
                         Value::Image { .. } => {
                             // Mirror channel method marker behavior for image method dispatch.
                             self.stack.push(object.clone());
