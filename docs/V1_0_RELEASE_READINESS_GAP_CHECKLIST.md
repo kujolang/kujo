@@ -252,7 +252,7 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-19_p1-003/status.tsv`.
 
-- [ ] **V1RR-P1-004: Revalidate clean checkout and feature-matrix builds.**
+- [x] **V1RR-P1-004: Revalidate clean checkout and feature-matrix builds.**
   - Problem: release docs mention optional runtime features and reduced builds, but final release evidence should prove current combinations still compile.
   - Acceptance:
     - In a clean checkout or clean worktree, run:
@@ -262,6 +262,34 @@ ShipCheck scan source:
       - `cargo check --no-default-features --features runtime-db,runtime-image,runtime-archive`
     - Record binary sizes using `scripts/measure_binary_size.sh`.
     - Confirm install docs still match artifact names and features.
+  - Evidence 2026-06-19:
+    - Clean detached worktree: `/tmp/kujo-v1-p1-004-clean` at commit
+      `734e406`.
+    - Initial clean feature-matrix run exposed reduced-build compile failures
+      from optional runtime crates referenced outside feature gates.
+    - Fixed the reduced-build failures by gating optional database, image, and
+      archive `Value` variants and associated formatter/type/method branches.
+    - Final clean-worktree matrix passed:
+      `cargo build --release`,
+      `cargo check --no-default-features`,
+      `cargo check --no-default-features --features runtime-jit`, and
+      `cargo check --no-default-features --features runtime-db,runtime-image,runtime-archive`.
+    - `scripts/measure_binary_size.sh` recorded:
+      debug `91,338,800` bytes, release `22,596,532` bytes, stripped release
+      `22,596,636` bytes on `x86_64-apple-darwin`.
+    - Ran `cargo test --test runtime_path_matrix_contract` after the
+      feature-gate fix to confirm the command-level runtime-path docs contract
+      still passes.
+    - Reviewed `INSTALLATION.md`, `docs/RELEASE_BINARIES.md`,
+      `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`,
+      `docs/RELEASE_ARTIFACT_VALIDATION.md`, `docs/INSTALL_MATRIX.md`, and
+      `docs/LOCAL_BINARY_INSTALL_GUIDE.md`; official release artifact names
+      remain tag-based (`kujo-<TAG>-<platform>`) while the local guide
+      intentionally uses date+commit names for unsigned test artifacts.
+    - Evidence note:
+      `notes/2026-06-19_v1_0_clean_feature_matrix_revalidation.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-004/status.tsv`.
 
 - [ ] **V1RR-P1-005: Revalidate untrusted-mode and host-effect examples.**
   - Problem: safety docs are strong, but final launch quality depends on examples not accidentally teaching unsafe defaults.

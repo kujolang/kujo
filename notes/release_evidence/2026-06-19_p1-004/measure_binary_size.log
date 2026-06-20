@@ -1,0 +1,20 @@
+$ bash scripts/measure_binary_size.sh
+timestamp: 2026-06-20T02:27:27Z
+host: Darwin MacBook-Pro 25.3.0 Darwin Kernel Version 25.3.0: Wed Jan 28 20:53:28 PST 2026; root:xnu-12377.91.3~2/RELEASE_X86_64 x86_64
+rustc: rustc 1.96.0 (ac68faa20 2026-05-25)
+cargo: cargo 1.96.0 (30a34c682 2026-05-25)
+rustc_verbose:
+  rustc 1.96.0 (ac68faa20 2026-05-25)
+  binary: rustc
+  commit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96
+  commit-date: 2026-05-25
+  host: x86_64-apple-darwin
+  release: 1.96.0
+  LLVM version: 22.1.2
+   Compiling kujo v1.0.0 (/private/tmp/kujo-v1-p1-004-clean)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 42.58s
+    Finished `release` profile [optimized] target(s) in 0.93s
+binary_size_bytes:
+  debug: 91338800
+  release: 22596532
+  release_stripped: 22596636
