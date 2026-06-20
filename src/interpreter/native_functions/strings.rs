@@ -4,6 +4,7 @@
 
 use crate::builtins;
 use crate::interpreter::{DictMap, Value};
+use crate::runtime_limits;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::sync::Arc;
@@ -583,6 +584,39 @@ fn require_number_arg(
     }
 }
 
+fn require_non_negative_i64_arg(
+    args: &[Value],
+    index: usize,
+    function_name: &str,
+    label: &str,
+) -> Result<i64, Value> {
+    let value = require_number_arg(args, index, function_name, label)?;
+    if !value.is_finite() {
+        return Err(Value::Error(format!("{}() {} must be a finite number", function_name, label)));
+    }
+    if value < 0.0 {
+        return Err(Value::Error(format!(
+            "{}() {} must be greater than or equal to 0",
+            function_name, label
+        )));
+    }
+    if value > i64::MAX as f64 {
+        return Err(Value::Error(format!("{}() {} is too large", function_name, label)));
+    }
+    Ok(value as i64)
+}
+
+fn ensure_generated_string_chars(function_name: &str, requested_chars: usize) -> Result<(), Value> {
+    if requested_chars > runtime_limits::MAX_GENERATED_STRING_CHARS {
+        return Err(Value::Error(format!(
+            "{}() output would exceed maximum generated string length {}",
+            function_name,
+            runtime_limits::MAX_GENERATED_STRING_CHARS
+        )));
+    }
+    Ok(())
+}
+
 pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
     let result = match name {
         "len" => {
@@ -804,15 +838,19 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
-            let start = match require_number_arg(args, 1, "substring", "start and end") {
+            let start = match require_non_negative_i64_arg(args, 1, "substring", "start") {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
-            let end = match require_number_arg(args, 2, "substring", "start and end") {
+            let end = match require_non_negative_i64_arg(args, 2, "substring", "end") {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
-            Value::Str(Arc::new(builtins::substring(s, start, end)))
+            if end < start {
+                Value::Error("substring() end must be greater than or equal to start".to_string())
+            } else {
+                Value::Str(Arc::new(builtins::substring(s, start as f64, end as f64)))
+            }
         }
 
         "replace_str" | "replace" => {
@@ -873,11 +911,15 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
-            let count = match require_number_arg(args, 1, "repeat", "count") {
+            let count = match require_non_negative_i64_arg(args, 1, "repeat", "count") {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
-            Value::Str(Arc::new(builtins::repeat(s, count)))
+            let requested_chars = s.chars().count().saturating_mul(count as usize);
+            if let Err(error) = ensure_generated_string_chars("repeat", requested_chars) {
+                return Some(error);
+            }
+            Value::Str(Arc::new(builtins::repeat(s, count as f64)))
         }
 
         "split" => {
@@ -1088,9 +1130,21 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             {
                 let width = match width_val {
                     Value::Int(n) => *n,
-                    Value::Float(n) => *n as i64,
+                    Value::Float(n) if n.is_finite() => *n as i64,
+                    Value::Float(_) => {
+                        return Some(Value::Error(format!("{}() width must be finite", name)))
+                    }
                     _ => return Some(Value::Error(format!("{}() width must be a number", name))),
                 };
+                if width < 0 {
+                    return Some(Value::Error(format!(
+                        "{}() width must be greater than or equal to 0",
+                        name
+                    )));
+                }
+                if let Err(error) = ensure_generated_string_chars(name, width as usize) {
+                    return Some(error);
+                }
                 Value::Str(Arc::new(builtins::str_pad_left(&**s, width, &**pad_char)))
             } else {
                 Value::Error(format!("{}() requires 3 arguments: string, width, char", name))
@@ -1103,9 +1157,21 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             {
                 let width = match width_val {
                     Value::Int(n) => *n,
-                    Value::Float(n) => *n as i64,
+                    Value::Float(n) if n.is_finite() => *n as i64,
+                    Value::Float(_) => {
+                        return Some(Value::Error(format!("{}() width must be finite", name)))
+                    }
                     _ => return Some(Value::Error(format!("{}() width must be a number", name))),
                 };
+                if width < 0 {
+                    return Some(Value::Error(format!(
+                        "{}() width must be greater than or equal to 0",
+                        name
+                    )));
+                }
+                if let Err(error) = ensure_generated_string_chars(name, width as usize) {
+                    return Some(error);
+                }
                 Value::Str(Arc::new(builtins::str_pad_right(&**s, width, &**pad_char)))
             } else {
                 Value::Error(format!("{}() requires 3 arguments: string, width, char", name))
@@ -1152,11 +1218,19 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             {
                 let max_len = match len_val {
                     Value::Int(n) => *n,
-                    Value::Float(n) => *n as i64,
+                    Value::Float(n) if n.is_finite() => *n as i64,
+                    Value::Float(_) => {
+                        return Some(Value::Error("truncate() length must be finite".to_string()))
+                    }
                     _ => {
                         return Some(Value::Error("truncate() length must be a number".to_string()))
                     }
                 };
+                if max_len < 0 {
+                    return Some(Value::Error(
+                        "truncate() length must be greater than or equal to 0".to_string(),
+                    ));
+                }
                 Value::Str(Arc::new(builtins::str_truncate(&**s, max_len, &**suffix)))
             } else {
                 Value::Error("truncate() requires 3 arguments: string, length, suffix".to_string())
@@ -1481,7 +1555,7 @@ mod tests {
         )
         .unwrap();
         assert!(
-            matches!(substring_wrong_bound, Value::Error(message) if message.contains("substring() start and end must be a number"))
+            matches!(substring_wrong_bound, Value::Error(message) if message.contains("substring() end must be a number"))
         );
 
         let split_wrong_delimiter = handle("split", &[str_value("a,b"), Value::Int(1)]).unwrap();
@@ -1497,6 +1571,60 @@ mod tests {
         let count_chars_wrong_type = handle("count_chars", &[Value::Null]).unwrap();
         assert!(
             matches!(count_chars_wrong_type, Value::Error(message) if message.contains("count_chars() requires a string argument"))
+        );
+    }
+
+    #[test]
+    fn test_core_string_helpers_reject_invalid_lengths_without_panicking() {
+        let substring_negative =
+            handle("substring", &[str_value("kujo"), Value::Int(-1), Value::Int(2)]).unwrap();
+        assert!(
+            matches!(substring_negative, Value::Error(message) if message.contains("substring() start must be greater than or equal to 0"))
+        );
+
+        let substring_reversed =
+            handle("substring", &[str_value("kujo"), Value::Int(3), Value::Int(1)]).unwrap();
+        assert!(
+            matches!(substring_reversed, Value::Error(message) if message.contains("substring() end must be greater than or equal to start"))
+        );
+
+        let repeat_negative = handle("repeat", &[str_value("kujo"), Value::Int(-1)]).unwrap();
+        assert!(
+            matches!(repeat_negative, Value::Error(message) if message.contains("repeat() count must be greater than or equal to 0"))
+        );
+
+        let repeat_too_large = handle(
+            "repeat",
+            &[str_value("x"), Value::Int(runtime_limits::MAX_GENERATED_STRING_CHARS as i64 + 1)],
+        )
+        .unwrap();
+        assert!(
+            matches!(repeat_too_large, Value::Error(message) if message.contains("repeat() output would exceed maximum generated string length"))
+        );
+
+        let pad_start_negative =
+            handle("pad_start", &[str_value("kujo"), Value::Int(-1), str_value("0")]).unwrap();
+        assert!(
+            matches!(pad_start_negative, Value::Error(message) if message.contains("pad_start() width must be greater than or equal to 0"))
+        );
+
+        let pad_end_too_large = handle(
+            "pad_end",
+            &[
+                str_value("kujo"),
+                Value::Int(runtime_limits::MAX_GENERATED_STRING_CHARS as i64 + 1),
+                str_value("."),
+            ],
+        )
+        .unwrap();
+        assert!(
+            matches!(pad_end_too_large, Value::Error(message) if message.contains("pad_end() output would exceed maximum generated string length"))
+        );
+
+        let truncate_negative =
+            handle("truncate", &[str_value("kujo"), Value::Int(-1), str_value("...")]).unwrap();
+        assert!(
+            matches!(truncate_negative, Value::Error(message) if message.contains("truncate() length must be greater than or equal to 0"))
         );
     }
 

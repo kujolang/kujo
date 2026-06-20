@@ -6,6 +6,7 @@
 
 use crate::interpreter::{DictMap, Value};
 use crate::network_policy;
+use crate::runtime_limits;
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -179,78 +180,76 @@ pub fn random_id(length: usize) -> String {
 /// range(start, stop) - generate [start, start+1, ..., stop-1]
 /// range(start, stop, step) - generate [start, start+step, start+2*step, ..., <stop]
 pub fn range(args: &[Value]) -> Result<Vec<Value>, String> {
+    fn value_to_i64(value: &Value) -> Result<i64, String> {
+        match value {
+            Value::Int(n) => Ok(*n),
+            Value::Float(f) if f.is_finite() => Ok(*f as i64),
+            Value::Float(_) => Err("range() requires finite numeric arguments".to_string()),
+            _ => Err("range() requires numeric arguments".to_string()),
+        }
+    }
+
+    fn checked_range_len(start: i64, stop: i64, step: i64) -> Result<usize, String> {
+        if step == 0 {
+            return Err("range() step cannot be zero".to_string());
+        }
+
+        if (step > 0 && start >= stop) || (step < 0 && start <= stop) {
+            return Ok(0);
+        }
+
+        let distance = if step > 0 {
+            (stop as i128) - (start as i128)
+        } else {
+            (start as i128) - (stop as i128)
+        };
+        let step_abs = (step as i128).abs();
+        let len = ((distance - 1) / step_abs) + 1;
+        let max = runtime_limits::MAX_GENERATED_SEQUENCE_ITEMS as i128;
+        if len > max {
+            return Err(format!(
+                "range() would generate {} items, exceeding maximum generated sequence length {}",
+                len,
+                runtime_limits::MAX_GENERATED_SEQUENCE_ITEMS
+            ));
+        }
+
+        Ok(len as usize)
+    }
+
+    fn build_range(start: i64, stop: i64, step: i64) -> Result<Vec<Value>, String> {
+        let len = checked_range_len(start, stop, step)?;
+        let mut result = Vec::with_capacity(len);
+        let mut current = start;
+        for index in 0..len {
+            result.push(Value::Int(current));
+            if index + 1 < len {
+                current = current.checked_add(step).ok_or_else(|| {
+                    "range() overflowed while generating sequence values".to_string()
+                })?;
+            }
+        }
+        Ok(result)
+    }
+
     match args.len() {
         1 => {
             // range(stop)
-            let stop = match &args[0] {
-                Value::Int(n) => *n,
-                Value::Float(f) => *f as i64,
-                _ => return Err("range() requires numeric arguments".to_string()),
-            };
-
-            if stop < 0 {
-                return Ok(vec![]);
-            }
-
-            Ok((0..stop).map(Value::Int).collect())
+            let stop = value_to_i64(&args[0])?;
+            build_range(0, stop, 1)
         }
         2 => {
             // range(start, stop)
-            let start = match &args[0] {
-                Value::Int(n) => *n,
-                Value::Float(f) => *f as i64,
-                _ => return Err("range() requires numeric arguments".to_string()),
-            };
-            let stop = match &args[1] {
-                Value::Int(n) => *n,
-                Value::Float(f) => *f as i64,
-                _ => return Err("range() requires numeric arguments".to_string()),
-            };
-
-            if start >= stop {
-                return Ok(vec![]);
-            }
-
-            Ok((start..stop).map(Value::Int).collect())
+            let start = value_to_i64(&args[0])?;
+            let stop = value_to_i64(&args[1])?;
+            build_range(start, stop, 1)
         }
         3 => {
             // range(start, stop, step)
-            let start = match &args[0] {
-                Value::Int(n) => *n,
-                Value::Float(f) => *f as i64,
-                _ => return Err("range() requires numeric arguments".to_string()),
-            };
-            let stop = match &args[1] {
-                Value::Int(n) => *n,
-                Value::Float(f) => *f as i64,
-                _ => return Err("range() requires numeric arguments".to_string()),
-            };
-            let step = match &args[2] {
-                Value::Int(n) => *n,
-                Value::Float(f) => *f as i64,
-                _ => return Err("range() requires numeric arguments".to_string()),
-            };
-
-            if step == 0 {
-                return Err("range() step cannot be zero".to_string());
-            }
-
-            let mut result = Vec::new();
-            if step > 0 {
-                let mut current = start;
-                while current < stop {
-                    result.push(Value::Int(current));
-                    current += step;
-                }
-            } else {
-                let mut current = start;
-                while current > stop {
-                    result.push(Value::Int(current));
-                    current += step;
-                }
-            }
-
-            Ok(result)
+            let start = value_to_i64(&args[0])?;
+            let stop = value_to_i64(&args[1])?;
+            let step = value_to_i64(&args[2])?;
+            build_range(start, stop, step)
         }
         _ => Err("range() requires 1, 2, or 3 arguments".to_string()),
     }
@@ -2341,6 +2340,30 @@ mod tests {
         assert_eq!(repeat("ha", 3.0), "hahaha");
         assert_eq!(split("a,b,c", ","), vec!["a", "b", "c"]);
         assert_eq!(join(&["a".to_string(), "b".to_string(), "c".to_string()], ","), "a,b,c");
+    }
+
+    #[test]
+    fn test_range_rejects_non_finite_and_oversized_sequences_without_overflowing() {
+        assert!(matches!(
+            range(&[Value::Float(f64::NAN)]),
+            Err(message) if message.contains("finite numeric")
+        ));
+        assert!(matches!(
+            range(&[Value::Int(0), Value::Int(runtime_limits::MAX_GENERATED_SEQUENCE_ITEMS as i64 + 1)]),
+            Err(message) if message.contains("exceeding maximum generated sequence length")
+        ));
+        let near_max = range(&[Value::Int(i64::MAX - 1), Value::Int(i64::MAX), Value::Int(2)])
+            .expect("single-item edge range should not overflow after final item");
+        assert!(matches!(near_max.as_slice(), [Value::Int(value)] if *value == i64::MAX - 1));
+        let descending = range(&[Value::Int(5), Value::Int(0), Value::Int(-2)]).unwrap();
+        let ints: Vec<i64> = descending
+            .iter()
+            .map(|value| match value {
+                Value::Int(n) => *n,
+                other => panic!("expected integer range value, got {:?}", other),
+            })
+            .collect();
+        assert_eq!(ints, vec![5, 3, 1]);
     }
 
     #[test]

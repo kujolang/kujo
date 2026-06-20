@@ -4,6 +4,7 @@
 
 use crate::builtins;
 use crate::interpreter::{DictMap, Value};
+use crate::runtime_limits;
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
@@ -462,6 +463,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         ))
                     }
                 };
+                if !min.is_finite() || !max.is_finite() {
+                    return Some(Value::Error(
+                        "random_int requires finite number arguments".to_string(),
+                    ));
+                }
+                if min > max {
+                    return Some(Value::Error(
+                        "random_int min must be less than or equal to max".to_string(),
+                    ));
+                }
                 Value::Int(builtins::random_int(min, max) as i64)
             } else {
                 Value::Error("random_int requires two number arguments: min and max".to_string())
@@ -505,6 +516,11 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Int(length)) = arg_values.first() {
                 if *length < 0 {
                     Value::Error("random_id length must be >= 0".to_string())
+                } else if *length as usize > runtime_limits::MAX_GENERATED_STRING_CHARS {
+                    Value::Error(format!(
+                        "random_id length exceeds maximum generated string length {}",
+                        runtime_limits::MAX_GENERATED_STRING_CHARS
+                    ))
                 } else {
                     Value::Str(Arc::new(builtins::random_id(*length as usize)))
                 }
@@ -1280,6 +1296,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 mod tests {
     use super::handle;
     use crate::interpreter::{DictMap, Value};
+    use crate::runtime_limits;
     use std::sync::Arc;
 
     fn string_value(value: &str) -> Value {
@@ -1509,6 +1526,26 @@ mod tests {
             arg_parser_extra,
             Value::Error(message) if message.contains("arg_parser() expects 0 arguments")
         ));
+    }
+
+    #[test]
+    fn test_random_helpers_reject_invalid_bounds_without_panicking() {
+        let reversed = handle("random_int", &[Value::Int(10), Value::Int(1)]).unwrap();
+        assert!(
+            matches!(reversed, Value::Error(message) if message.contains("min must be less than or equal to max"))
+        );
+
+        let non_finite = handle("random_int", &[Value::Float(f64::NAN), Value::Int(1)]).unwrap();
+        assert!(matches!(non_finite, Value::Error(message) if message.contains("finite number")));
+
+        let too_large = handle(
+            "random_id",
+            &[Value::Int(runtime_limits::MAX_GENERATED_STRING_CHARS as i64 + 1)],
+        )
+        .unwrap();
+        assert!(
+            matches!(too_large, Value::Error(message) if message.contains("random_id length exceeds maximum generated string length"))
+        );
     }
 
     #[test]
