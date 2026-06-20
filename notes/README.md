@@ -2,6 +2,8 @@
 
 - `GOTCHAS.md` — Curated, deduplicated sharp edges. Read this first.
 - `FIELD_NOTES_SYSTEM.md` — Mandatory workflow and session-note template.
+- `FIELD_NOTE_FOLLOWUP_TRIAGE.md` — Maintained classification index for
+  historical unchecked note follow-ups (`active`, `post-v1`, or `archive`).
 
 High-signal session notes:
 

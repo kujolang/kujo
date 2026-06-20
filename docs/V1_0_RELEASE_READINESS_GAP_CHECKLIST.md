@@ -375,11 +375,27 @@ ShipCheck scan source:
 
 ## P2 - Post-Signoff Polish Or Explicit Deferral
 
-- [ ] **V1RR-P2-001: Triage historical field-note TODOs into archive vs active backlog.**
+- [x] **V1RR-P2-001: Triage historical field-note TODOs into archive vs active backlog.**
   - Problem: `notes/` contains many unchecked follow-ups from old implementation sessions. Most are not v1 blockers, but their unchecked state makes broad doc review noisy.
   - Acceptance:
     - Create or update an index that classifies field-note follow-ups as `archive`, `post-v1`, or `active`.
     - Ensure active items point to a maintained checklist, not only a historical note.
+  - Completed (2026-06-20):
+    - Created `notes/FIELD_NOTE_FOLLOWUP_TRIAGE.md` as the maintained
+      classification index for historical note follow-ups.
+    - Recorded that `rg -l "^- \\[ \\]" notes -g '*.md'` found `194` note
+      files with unchecked checkbox follow-ups.
+    - Classified follow-ups as `active`, `post-v1`, or `archive` and routed
+      active release-readiness themes only to maintained destinations:
+      `V1RR-P0-002`, `V1RR-P2-002`, `V1RR-P2-003`, and `V1RR-P2-004`.
+    - Linked `notes/README.md` to the new triage index.
+    - Added `tests/field_note_followup_triage_contract.rs` so the index must
+      retain the audited count, classification markers, and maintained
+      checklist/doc destinations.
+    - Evidence note:
+      `notes/2026-06-20_v1_0_field_note_followup_triage.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-20_p2-001/status.tsv`.
 
 - [ ] **V1RR-P2-002: Decide package registry/Kennel launch boundaries.**
   - Problem: ShipCheck warns about missing `kennel.toml`, and package workflow docs describe deterministic local package workflows. Registry/publish expectations should be explicit.
