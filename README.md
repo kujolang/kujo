@@ -14,6 +14,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Package workflows are deterministic: `kujo init`, `kujo package-add`, `kujo package-install`, and `kujo package-install --frozen` work with nested source layouts and reproducible `kujo.lock` snapshots.
 - Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport.
 - Native helper coverage has expanded for everyday scripting work: hashing (`sha256`, `sha256_file`, `md5`), file inspection (`read_file_lossy`, `path_is_symlink`), formatting (`pad_start`, `pad_end`), introspection (`type_of`, `is_truthy`), and stderr output (`eprint`) are all available without shelling out.
+- Runtime-generated sequence and string helpers now reject unsafe edge cases such as non-finite range bounds, reversed random bounds, negative string widths/counts, and oversized generated outputs instead of panicking or attempting unbounded allocation.
 - Native capability controls are available for trusted and untrusted execution modes.
 - Kujo is in pre-tag `1.0.0` release-candidate readiness: the crate metadata is staged at `1.0.0`, but final tag/publish evidence is still bounded by `ROADMAP.md`, the pre-v1 checklist, and the release artifact checklist.
 
@@ -23,6 +24,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Practical native APIs (filesystem, process, network, async, crypto, database).
 - The native standard library keeps growing with practical helper surfaces for checksums, padding, truthiness, file inspection, and stderr-friendly output, which makes common automation scripts more self-contained.
 - Security policy controls for trusted and untrusted execution.
+- Bounded native helper behavior for generated arrays, ranges, random IDs, and string expansion.
 - Module workflows that support both flat and dotted imports.
 - Package bootstrap and lockfile workflows that stay deterministic across repeated installs.
 - Strong diagnostics, contract tests, and release-gate automation.
@@ -86,6 +88,7 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md)
 - [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)
 - [docs/VM_INTERPRETER_PARITY_MATRIX.md](docs/VM_INTERPRETER_PARITY_MATRIX.md)
+- [docs/ENTERPRISE_READINESS_NEXT_SESSION_2026-06-20.md](docs/ENTERPRISE_READINESS_NEXT_SESSION_2026-06-20.md)
 
 For script ergonomics, see the output/report style guidance in [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md) and [docs/STANDARD_LIBRARY_REFERENCE.md](docs/STANDARD_LIBRARY_REFERENCE.md).
 
