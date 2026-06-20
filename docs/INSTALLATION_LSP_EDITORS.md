@@ -1,6 +1,6 @@
 # Install/Upgrade Path For Editor LSP Integrations
 
-Status: v0.13.0
+Status: v1.0.0 release-candidate editor/LSP install baseline; supersedes the original v0.13.0 adapter install note
 
 ## Install From Source
 

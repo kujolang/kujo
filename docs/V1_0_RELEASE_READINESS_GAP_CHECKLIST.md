@@ -323,12 +323,33 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-19_p1-005/status.tsv`.
 
-- [ ] **V1RR-P1-006: Final docs freshness pass for versioned baselines.**
+- [x] **V1RR-P1-006: Final docs freshness pass for versioned baselines.**
   - Problem: several docs still carry older baseline labels (`v0.13.0`, `v0.14.0`) even when they may remain active guidance.
   - Acceptance:
     - Review `docs/ARCHITECTURE.md`, `docs/V1_SCOPE.md`, `docs/LSP_RELIABILITY.md`, `docs/TREE_SITTER_KUJO.md`, `docs/INSTALLATION_LSP_EDITORS.md`, and editor/tool docs.
     - Decide per document whether the old version label is intentional historical baseline or stale release-state text.
     - Update or annotate each one.
+  - Evidence 2026-06-19:
+    - Updated `docs/LSP_RELIABILITY.md`, `docs/TREE_SITTER_KUJO.md`,
+      `docs/INSTALLATION_LSP_EDITORS.md`, and
+      `docs/EDITOR_ADAPTER_BASELINES.md` from bare `v0.13.0`/`v0.14.0`
+      status labels to v1.0.0 release-candidate baseline wording that names
+      the older version as historical provenance.
+    - Updated `docs/INSTALL_MATRIX.md` distribution guidance from stale
+      `Pre-v1` / `pre-1.0` wording to pre-tag `v1.0.0` wording aligned with
+      staged `1.0.0` crate metadata.
+    - Annotated `docs/V1_SCOPE.md` so `v0.13.0`/`v0.14.0` references are
+      explicitly historical stabilization baselines, not current release-state
+      claims.
+    - Updated `docs/ARCHITECTURE.md` from `pre-v1 closure work` to
+      pre-tag `v1.0.0` closure work.
+    - Tool/package versions such as `tools/vscode-kujo-extension` `0.1.0` and
+      Kujo Doctor schema/package `0.1.0` were left unchanged because they are
+      component versions, not Kujo release-state labels.
+    - Evidence note:
+      `notes/2026-06-19_v1_0_versioned_baseline_freshness.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-006/status.tsv`.
 
 - [ ] **V1RR-P1-007: Normalize release-freeze/unblock language.**
   - Problem: `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` repeatedly says tag-time work is blocked until `UNBLOCK_V1_RELEASE`. That may have been session-specific rather than standing release policy.

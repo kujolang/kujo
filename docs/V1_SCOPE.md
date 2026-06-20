@@ -8,7 +8,7 @@ Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate u
 
 ## In-Scope For v1.0.0
 
-- Stable core language syntax carried forward from the `v0.13.0`/`v0.14.0` baseline docs into the staged `1.0.0` crate metadata.
+- Stable core language syntax carried forward from the historical `v0.13.0`/`v0.14.0` stabilization baseline docs into the staged `1.0.0` crate metadata.
 - Stable runtime behavior for currently documented core execution paths:
   - CLI script execution (`kujo run` VM default + interpreter fallback)
   - core control flow, function, collection, and error-flow semantics covered by tests

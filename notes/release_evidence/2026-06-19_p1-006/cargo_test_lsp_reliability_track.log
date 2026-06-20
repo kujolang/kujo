@@ -1,0 +1,12 @@
+$ cargo test --test lsp_reliability_track
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.32s
+     Running tests/lsp_reliability_track.rs (target/debug/deps/lsp_reliability_track-c28380d4de970c88)
+
+running 3 tests
+test malformed_sequences_and_lifecycle_churn_are_resilient ... ok
+test startup_and_first_response_latency_stay_within_guardrails ... ok
+test repeated_completion_and_diagnostics_requests_keep_document_state_bounded ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.91s
+

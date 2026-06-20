@@ -115,7 +115,7 @@ Current explicit divergence examples include:
 Kujo is in pre-tag `1.0.0` release-candidate readiness.
 
 - `ROADMAP.md` is the release-readiness source of truth.
-- `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` tracks unresolved pre-v1 closure work.
+- `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` tracks unresolved pre-tag `v1.0.0` closure work.
 - `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` tracks tag-time artifact evidence that must not be marked complete before real publication.
 
 ## 8. Related Docs
