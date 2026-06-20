@@ -17,7 +17,7 @@
 | Item 5 — Token estimation & context fitting | Pending | TBD |
 | Item 6 — `secret(...)` value type with runtime-enforced redaction | Pending | TBD |
 | Item 7 — AI egress capability + endpoint allowlist | Pending | TBD |
-| Item 8 — Deterministic request hashing / cache key | Pending | TBD |
+| Item 8 — Deterministic request hashing / cache key | Completed | `1e669be` |
 | Item 9 — True streaming with a Kujo callback (or chunk iterator) | Pending | TBD |
 | Item 10 — Portable multimodal message builders | Pending | TBD |
 
