@@ -20,6 +20,15 @@ owners.
   entries instead of silently dropping invalid inputs.
 - Escaped raw HTML in `render_markdown(...)` and native SSG HTML helpers, and
   replaced unsafe Markdown link/image schemes with `#`.
+- Trimmed dependency exposure by removing the unused Rust `oauth2` crate,
+  moving `reqwest` to `0.12`, and disabling AVIF image features in Kujo's
+  build while preserving common image formats.
+- Converted the benchmark authoring checklist from unchecked task rows into
+  non-blocking quality criteria, and added a Markdown hygiene contract so new
+  unchecked rows outside release-flight docs are caught by tests.
+- Fixed two real fixture isolation bugs in `tests/stdlib_io_test.kujo` and
+  `tests/stdlib_test.kujo` so concurrent VM and dual runtime test runs no
+  longer collide on shared temporary files.
 - Updated README and security/stdlib docs to describe the new operator-facing
   safety behavior.
 - Re-ran the full release-candidate gate locally with socket integration tests:
@@ -35,16 +44,7 @@ owners.
      SHA-256 files, `checksums.txt`, published-artifact smoke workflow result,
      and dated `notes/` evidence.
 
-2. **Unchecked historical/future checkboxes still exist in archived notes.**
-   - Source: `notes/**` and benchmark planning docs contain older future-work
-     checkboxes that are not all v1 release blockers.
-   - Required action: keep primary blocker tracking scoped to canonical docs
-     (`ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`,
-     `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`, and active v1 readiness
-     checklists), or run a dedicated archive-note normalization pass to mark
-     stale note checkboxes as historical.
-
-3. **Exact human-review commit evidence must be captured after any later
+2. **Exact human-review commit evidence must be captured after any later
    changes.**
    - This pass completed the verification bundle before commit/push, but human
      release review should capture the same commands on the exact commit being
@@ -67,11 +67,9 @@ owners.
 
 ## Recommended Next Session Order
 
-1. Decide whether to normalize historical note checkboxes or keep them outside
-   release-blocker accounting.
-2. Re-run the verification bundle if any later changes land before human
+1. Re-run the verification bundle if any later changes land before human
    review.
-3. If and only if release owners provide `UNBLOCK_V1_RELEASE`, execute
+2. If and only if release owners provide `UNBLOCK_V1_RELEASE`, execute
    tag-time artifact publication/sign-off.
-4. Create the human review packet from current docs, command evidence, and
+3. Create the human review packet from current docs, command evidence, and
    release artifact state.

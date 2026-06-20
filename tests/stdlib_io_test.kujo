@@ -14,9 +14,11 @@
 print("=== IO Module Test Suite ===")
 print()
 
+let test_prefix := "/tmp/kujo_io_" + to_string(time_ns()) + "_"
+
 # Test 1: io_read_bytes - read specific number of bytes
 print("Test 1: io_read_bytes - read specific number of bytes")
-let test_file := "/tmp/kujo_io_read_bytes.bin"
+let test_file := test_prefix + "read_bytes.bin"
 let test_content := "Hello, World! This is a test file with some content."
 let test_bytes := decode_base64(encode_base64(test_content))
 write_binary_file(test_file, test_bytes, true)
@@ -46,7 +48,7 @@ print()
 
 # Test 2: io_write_bytes - write binary data
 print("Test 2: io_write_bytes - write binary data")
-let write_test_file := "/tmp/kujo_io_write_bytes.bin"
+let write_test_file := test_prefix + "write_bytes.bin"
 let write_data := decode_base64(encode_base64("Binary data written"))
 let write_result := io_write_bytes(write_test_file, write_data)
 
@@ -67,7 +69,7 @@ print()
 
 # Test 3: io_append_bytes - append binary data
 print("Test 3: io_append_bytes - append binary data")
-let append_test_file := "/tmp/kujo_io_append_bytes.bin"
+let append_test_file := test_prefix + "append_bytes.bin"
 let initial_data := decode_base64(encode_base64("Initial"))
 let append_data := decode_base64(encode_base64(" Appended"))
 
@@ -91,7 +93,7 @@ print()
 
 # Test 4: io_read_at - read bytes at specific offset
 print("Test 4: io_read_at - read bytes at specific offset")
-let offset_test_file := "/tmp/kujo_io_offset.bin"
+let offset_test_file := test_prefix + "offset.bin"
 let offset_content := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 let offset_bytes := decode_base64(encode_base64(offset_content))
 io_write_bytes(offset_test_file, offset_bytes)
@@ -121,7 +123,7 @@ print()
 
 # Test 5: io_write_at - write bytes at specific offset
 print("Test 5: io_write_at - write bytes at specific offset")
-let write_at_file := "/tmp/kujo_io_write_at.bin"
+let write_at_file := test_prefix + "write_at.bin"
 let base_content := "AAAAAAAAAA"  # 10 A's
 let base_bytes := decode_base64(encode_base64(base_content))
 io_write_bytes(write_at_file, base_bytes)
@@ -144,7 +146,7 @@ print()
 
 # Test 6: io_seek_read - read from offset to end
 print("Test 6: io_seek_read - read from offset to end")
-let seek_test_file := "/tmp/kujo_io_seek.bin"
+let seek_test_file := test_prefix + "seek.bin"
 let seek_content := "0123456789ABCDEFGHIJ"
 let seek_bytes := decode_base64(encode_base64(seek_content))
 io_write_bytes(seek_test_file, seek_bytes)
@@ -174,7 +176,7 @@ print()
 
 # Test 7: io_file_metadata - get file metadata
 print("Test 7: io_file_metadata - get comprehensive file metadata")
-let meta_test_file := "/tmp/kujo_io_metadata.bin"
+let meta_test_file := test_prefix + "metadata.bin"
 let meta_content := "Metadata test file with some content"
 let meta_bytes := decode_base64(encode_base64(meta_content))
 io_write_bytes(meta_test_file, meta_bytes)
@@ -220,7 +222,7 @@ print()
 
 # Test 8: io_file_metadata on directory
 print("Test 8: io_file_metadata - directory metadata")
-let test_dir := "/tmp/kujo_io_test_dir"
+let test_dir := test_prefix + "test_dir"
 create_dir(test_dir)
 
 let dir_metadata := io_file_metadata(test_dir)
@@ -240,7 +242,7 @@ print()
 
 # Test 9: io_truncate - truncate file to smaller size
 print("Test 9: io_truncate - truncate file to smaller size")
-let trunc_test_file := "/tmp/kujo_io_truncate.bin"
+let trunc_test_file := test_prefix + "truncate.bin"
 let trunc_content := "1234567890ABCDEFGHIJ"
 let trunc_bytes := decode_base64(encode_base64(trunc_content))
 io_write_bytes(trunc_test_file, trunc_bytes)
@@ -269,7 +271,7 @@ print()
 
 # Test 10: io_truncate - extend file to larger size
 print("Test 10: io_truncate - extend file to larger size")
-let extend_test_file := "/tmp/kujo_io_extend.bin"
+let extend_test_file := test_prefix + "extend.bin"
 let extend_content := "12345"
 let extend_bytes := decode_base64(encode_base64(extend_content))
 io_write_bytes(extend_test_file, extend_bytes)
@@ -289,8 +291,8 @@ print()
 
 # Test 11: io_copy_range - copy specific byte range
 print("Test 11: io_copy_range - copy specific byte range")
-let source_file := "/tmp/kujo_io_copy_source.bin"
-let dest_file := "/tmp/kujo_io_copy_dest.bin"
+let source_file := test_prefix + "copy_source.bin"
+let dest_file := test_prefix + "copy_dest.bin"
 let source_content := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 let source_bytes := decode_base64(encode_base64(source_content))
 io_write_bytes(source_file, source_bytes)
@@ -318,7 +320,7 @@ print()
 
 # Test 12: io_copy_range - copy from beginning
 print("Test 12: io_copy_range - copy from beginning")
-let copy_begin_dest := "/tmp/kujo_io_copy_begin.bin"
+let copy_begin_dest := test_prefix + "copy_begin.bin"
 io_copy_range(source_file, copy_begin_dest, 0, 5)
 
 let begin_content := read_binary_file(copy_begin_dest)
@@ -334,7 +336,7 @@ print()
 
 # Test 13: io_read_bytes - edge case: read more bytes than file contains
 print("Test 13: io_read_bytes - read more bytes than available")
-let small_file := "/tmp/kujo_io_small.bin"
+let small_file := test_prefix + "small.bin"
 let small_content := "12345"
 let small_bytes := decode_base64(encode_base64(small_content))
 io_write_bytes(small_file, small_bytes)
@@ -352,7 +354,7 @@ print()
 
 # Test 14: io_read_at - edge case: read at end of file
 print("Test 14: io_read_at - read at end of file")
-let end_read_file := "/tmp/kujo_io_end_read.bin"
+let end_read_file := test_prefix + "end_read.bin"
 let end_content := "1234567890"
 let end_bytes := decode_base64(encode_base64(end_content))
 io_write_bytes(end_read_file, end_bytes)
@@ -370,7 +372,7 @@ print()
 
 # Test 15: io_append_bytes - append to non-existent file
 print("Test 15: io_append_bytes - create file if doesn't exist")
-let new_file := "/tmp/kujo_io_new_append.bin"
+let new_file := test_prefix + "new_append.bin"
 # Delete file if it exists
 try {
     delete_file(new_file)
@@ -395,7 +397,7 @@ print()
 
 # Test 16: Multiple io_append_bytes calls
 print("Test 16: Multiple io_append_bytes calls")
-let multi_append_file := "/tmp/kujo_io_multi_append.bin"
+let multi_append_file := test_prefix + "multi_append.bin"
 io_write_bytes(multi_append_file, decode_base64(encode_base64("A")))
 io_append_bytes(multi_append_file, decode_base64(encode_base64("B")))
 io_append_bytes(multi_append_file, decode_base64(encode_base64("C")))
@@ -414,7 +416,7 @@ print()
 
 # Test 17: io_seek_read - read from beginning (offset 0)
 print("Test 17: io_seek_read - read from beginning")
-let seek_zero_file := "/tmp/kujo_io_seek_zero.bin"
+let seek_zero_file := test_prefix + "seek_zero.bin"
 let zero_content := "ABCDEFGHIJ"
 io_write_bytes(seek_zero_file, decode_base64(encode_base64(zero_content)))
 
@@ -431,7 +433,7 @@ print()
 
 # Test 18: io_write_at - write at beginning
 print("Test 18: io_write_at - write at beginning (offset 0)")
-let write_zero_file := "/tmp/kujo_io_write_zero.bin"
+let write_zero_file := test_prefix + "write_zero.bin"
 io_write_bytes(write_zero_file, decode_base64(encode_base64("XXXXX")))
 io_write_at(write_zero_file, decode_base64(encode_base64("AB")), 0)
 
@@ -448,7 +450,7 @@ print()
 
 # Test 19: Empty file operations
 print("Test 19: Operations on empty file")
-let empty_file := "/tmp/kujo_io_empty.bin"
+let empty_file := test_prefix + "empty.bin"
 io_write_bytes(empty_file, decode_base64(encode_base64("")))
 
 let empty_metadata := io_file_metadata(empty_file)
@@ -468,8 +470,8 @@ print()
 
 # Test 20: io_copy_range - copy entire file
 print("Test 20: io_copy_range - copy entire small file")
-let full_source := "/tmp/kujo_io_full_source.bin"
-let full_dest := "/tmp/kujo_io_full_dest.bin"
+let full_source := test_prefix + "full_source.bin"
+let full_dest := test_prefix + "full_dest.bin"
 let full_content := "Complete"
 io_write_bytes(full_source, decode_base64(encode_base64(full_content)))
 

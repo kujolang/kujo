@@ -22,6 +22,11 @@ func remove_dir_if_exists(path) {
     }
 }
 
+let original_cwd := os_getcwd()
+let test_root := "/tmp/kujo_stdlib_" + uuid_v4()
+create_dir(test_root)
+os_chdir(test_root)
+
 # Keep filesystem-sensitive archive tests deterministic across repeated runs.
 delete_file_if_exists("test_data.txt")
 delete_file_if_exists("test_archive.zip")
@@ -264,3 +269,6 @@ try {
 
 print("")
 print("=== All Standard Library Tests Complete ===")
+
+os_chdir(original_cwd)
+remove_dir_if_exists(test_root)
