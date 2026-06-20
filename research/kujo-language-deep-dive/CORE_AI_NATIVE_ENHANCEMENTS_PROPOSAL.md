@@ -11,7 +11,7 @@
 | Item | Status | Commit |
 | --- | --- | --- |
 | Item 1 — Structured response envelope | Pending | TBD |
-| Item 2 — Native AI record/replay | Pending | TBD |
+| Item 2 — Native AI record/replay | Completed | `a7652ff` |
 | Item 3 — JSON Schema validation builtin | Pending | TBD |
 | Item 4 — Native vector math for embeddings | Pending | TBD |
 | Item 5 — Token estimation & context fitting | Pending | TBD |
