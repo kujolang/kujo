@@ -12,12 +12,12 @@ fn repo_root() -> PathBuf {
 fn normalized_markdown(text: &str) -> String {
     let mut normalized = String::with_capacity(text.len());
     for line in text.lines() {
-        let rewritten = if let Some(rest) = line.strip_prefix("Generated: ") {
-            format!("Generated: <normalized:{}>", rest)
-        } else if let Some(rest) = line.strip_prefix("Date: ") {
-            format!("Date: <normalized:{}>", rest)
-        } else if let Some(rest) = line.strip_prefix("Runner: ") {
-            format!("Runner: <normalized:{}>", rest)
+        let rewritten = if line.starts_with("Generated: ") {
+            "Generated: <normalized>".to_string()
+        } else if line.starts_with("Date: ") {
+            "Date: <normalized>".to_string()
+        } else if line.starts_with("Runner: ") {
+            "Runner: <normalized>".to_string()
         } else {
             line.to_string()
         };
