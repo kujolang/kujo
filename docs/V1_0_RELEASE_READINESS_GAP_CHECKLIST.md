@@ -215,12 +215,29 @@ ShipCheck scan source:
     - Either close the cluster with tests and docs, or document it as post-v1 in `docs/OPTIONAL_TYPING_DESIGN.md` and `docs/V1_SCOPE.md`.
     - Run `cargo test type_checker::tests::`, `cargo test --test optional_typing_v1_contract`, and `cargo test --test v1_code_todo_triage_contract`.
 
-- [ ] **V1RR-P1-003: Align JIT and performance docs with release posture.**
+- [x] **V1RR-P1-003: Align JIT and performance docs with release posture.**
   - Problem: `docs/VM_INTERPRETER_PARITY_MATRIX.md` says JIT is experimental/opt-in via `kujo run --jit`, while `docs/PERFORMANCE.md` says JIT activates automatically after 100 iterations and needs no flags.
   - Acceptance:
     - Update `docs/PERFORMANCE.md`, `README.md`, and any JIT references to consistently describe default VM behavior, JIT feature flags, opt-in status, and unsupported-surface fallback.
     - Include current benchmark evidence and avoid unsupported performance promises.
     - Run relevant docs contract tests and JIT-focused tests.
+  - Evidence 2026-06-19:
+    - Replaced stale automatic-JIT and broad speedup claims in
+      `docs/PERFORMANCE.md` with the current release posture: VM-first
+      default, interpreter fallback/debug path, experimental `kujo run --jit`
+      opt-in, `runtime-jit` feature wiring, and deterministic VM fallback for
+      unsupported JIT surfaces.
+    - Updated `README.md` runtime recommendations and CLI overview to name
+      `--jit` as experimental opt-in with VM fallback.
+    - Annotated `docs/VM_INSTRUCTIONS.md` so its older future-optimization
+      section points to the current JIT posture instead of contradicting it.
+    - Current benchmark evidence is limited to committed artifacts:
+      `docs/PERF_HOT_PATH_AUDIT_2026-05-26.md`,
+      `docs/generated/VM_IMPORT_HEAVY_PERF_COMPARISON.md`, and
+      `docs/generated/VM_IMPORT_HEAVY_CACHE_LOOKUP.md`.
+    - Evidence note: `notes/2026-06-19_v1_0_jit_performance_posture_alignment.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-003/status.tsv`.
 
 - [ ] **V1RR-P1-004: Revalidate clean checkout and feature-matrix builds.**
   - Problem: release docs mention optional runtime features and reduced builds, but final release evidence should prove current combinations still compile.

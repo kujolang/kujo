@@ -189,6 +189,7 @@ kujo run /path/to/kennel/kennel.kujo --interpreter -- new my-tool
 - Use VM by default (`kujo run <file>`).
 - Developers should not need `--interpreter` for ordinary modular project layouts.
 - Use `--interpreter` only as an explicit compatibility/debug path when isolating runtime-path issues.
+- Use `--jit` only as an experimental opt-in for JIT-compatible bytecode surfaces; unsupported surfaces fall back to VM execution with deterministic messaging.
 - Use `kujo package-install --frozen` to verify manifests and lockfiles without rewriting them.
 - Migration guidance and diagnostics workflow: [docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md](docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md)
 
@@ -197,6 +198,7 @@ kujo run /path/to/kennel/kennel.kujo --interpreter -- new my-tool
 Common commands:
 
 - `kujo run <file>`: execute Kujo scripts on the VM path.
+- `kujo run --jit <file>`: opt in to experimental JIT execution for compatible bytecode surfaces, with VM fallback for unsupported surfaces.
 - `kujo run --interpreter <file>`: execute on the interpreter fallback path.
 - `kujo check <file>`: validate source without execution.
 - `kujo doctor`: run first-party diagnostics and environment checks.

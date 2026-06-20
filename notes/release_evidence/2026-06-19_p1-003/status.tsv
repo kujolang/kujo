@@ -1,0 +1,9 @@
+command	status	log
+cargo test --test jit_execution_contract	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_jit_execution_contract.log
+cargo test --test jit_safety_contract_checker	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_jit_safety_contract_checker.log
+cargo test jit::tests	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_jit_module_tests.log
+cargo test --test readme_contracts	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_readme_contracts.log
+cargo test --test runtime_path_matrix_contract	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_runtime_path_matrix_contract.log
+cargo test --test vm_import_heavy_perf_comparison_contract	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_vm_import_heavy_perf_comparison_contract.log
+cargo test --test vm_import_heavy_cache_lookup_contract	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_vm_import_heavy_cache_lookup_contract.log
+cargo test --test docs_examples	0	notes/release_evidence/2026-06-19_p1-003/cargo_test_docs_examples.log

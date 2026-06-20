@@ -1,0 +1,12 @@
+== cargo test --test jit_execution_contract ==
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.06s
+     Running tests/jit_execution_contract.rs (target/debug/deps/jit_execution_contract-54eeeb403e193335)
+
+running 3 tests
+test cli_run_without_jit_opt_in_executes_program_normally ... ok
+test cli_run_with_jit_opt_in_accepts_supported_surface_without_warning ... ok
+test cli_run_with_jit_opt_in_reports_unsupported_surface_and_falls_back ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+

@@ -1,0 +1,17 @@
+== cargo test --test jit_safety_contract_checker ==
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.49s
+     Running tests/jit_safety_contract_checker.rs (target/debug/deps/jit_safety_contract_checker-4e9d3f7499680268)
+
+running 8 tests
+test checker_rejects_unknown_argument ... ok
+test checker_help_lists_schema_and_modes ... ok
+test checker_fails_on_missing_contract ... ok
+test checker_allow_missing_reports_but_succeeds ... ok
+test checker_ignores_unsafe_extern_type_aliases ... ok
+test checker_fails_on_wrong_heading_spelling ... ok
+test checker_fails_on_malformed_contract ... ok
+test checker_passes_on_valid_fixture ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
