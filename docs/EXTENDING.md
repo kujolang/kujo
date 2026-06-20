@@ -468,7 +468,7 @@ Use `Arc<Mutex<T>>` for functions that maintain state:
 ```toml
 # Cargo.toml
 [dependencies]
-reqwest = { version = "0.11", features = ["blocking"] }
+reqwest = { version = "0.12", features = ["blocking"] }
 ```
 
 **Step 2: Create Function**
@@ -516,7 +516,7 @@ print(response)
 
 ```toml
 [dependencies]
-image = "0.24"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp"] }
 ```
 
 **Step 2: Add Value Variant**
