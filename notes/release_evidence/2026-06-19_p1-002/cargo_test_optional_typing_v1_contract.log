@@ -1,0 +1,12 @@
+$ cargo test --test optional_typing_v1_contract
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.98s
+     Running tests/optional_typing_v1_contract.rs (target/debug/deps/optional_typing_v1_contract-38545b26a43d8b2a)
+
+running 4 tests
+test v1_annotations_are_preserved_as_parser_metadata ... ok
+test v1_annotations_do_not_enforce_runtime_types_by_default ... ok
+test v1_selective_imports_do_not_trigger_false_undefined_function_warnings ... ok
+test v1_optional_typing_warnings_are_interpreter_only ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+

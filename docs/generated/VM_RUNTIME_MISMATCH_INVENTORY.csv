@@ -128,7 +128,7 @@ tests/test_standalone_dunder.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,sn
 tests/test_stdlib_datetime.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_stdlib_paths.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_stdlib_random.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
-tests/test_stdlib_system.kujo,0,0,yes,no,interpreter_only_mismatch,runtime-parity-bug,runtime-owner,P0,runtime-path mismatch against snapshot indicates parity defect or runtime-specific contract drift
+tests/test_stdlib_system.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_struct_def_only.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_struct_empty_method.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_struct_instantiate.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes

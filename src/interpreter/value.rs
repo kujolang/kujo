@@ -5,18 +5,24 @@
 
 use crate::ast::Stmt;
 use ahash::AHasher;
+#[cfg(feature = "runtime-image")]
 use image::DynamicImage;
+#[cfg(feature = "runtime-db")]
 use mysql_async::Conn as MysqlConn;
 use nohash_hasher::NoHashHasher;
+#[cfg(feature = "runtime-db")]
 use postgres::Client as PostgresClient;
+#[cfg(feature = "runtime-db")]
 use rusqlite::Connection as SqliteConnection;
 use std::collections::HashMap;
+#[cfg(feature = "runtime-archive")]
 use std::fs::File;
 use std::hash::BuildHasherDefault;
 use std::ops::Deref;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
+#[cfg(feature = "runtime-archive")]
 use zip::ZipWriter;
 
 // Forward declaration - Environment is in a sibling module
@@ -333,6 +339,7 @@ mod tests {
 
 /// Database connection types
 /// Infrastructure for database.rs stub module
+#[cfg(feature = "runtime-db")]
 #[derive(Clone)]
 pub enum DatabaseConnection {
     #[allow(dead_code)]
@@ -345,6 +352,7 @@ pub enum DatabaseConnection {
 
 /// Connection pool for database connections
 /// Infrastructure for database.rs stub module
+#[cfg(feature = "runtime-db")]
 #[derive(Clone)]
 pub struct ConnectionPool {
     #[allow(dead_code)]
@@ -365,6 +373,7 @@ pub struct ConnectionPool {
     pub(crate) total_created: Arc<Mutex<usize>>,
 }
 
+#[cfg(feature = "runtime-db")]
 impl ConnectionPool {
     #[allow(dead_code)]
     pub fn new(
@@ -615,6 +624,7 @@ pub enum Value {
     HttpResponse { status: u16, body: String, headers: HashMap<String, String> },
     /// Database connection
     /// Infrastructure for database.rs stub module
+    #[cfg(feature = "runtime-db")]
     #[allow(dead_code)]
     Database {
         connection: DatabaseConnection,
@@ -624,12 +634,15 @@ pub enum Value {
     },
     /// Database connection pool
     /// Infrastructure for database.rs stub module
+    #[cfg(feature = "runtime-db")]
     #[allow(dead_code)]
     DatabasePool { pool: Arc<Mutex<ConnectionPool>> },
     /// Image data
+    #[cfg(feature = "runtime-image")]
     Image { data: Arc<Mutex<DynamicImage>>, format: String },
     /// Zip archive writer
     /// Infrastructure for zip.rs stub module
+    #[cfg(feature = "runtime-archive")]
     #[allow(dead_code)]
     ZipArchive { writer: Arc<Mutex<Option<ZipWriter<File>>>>, path: String },
     /// TCP listener for accepting connections
@@ -837,17 +850,21 @@ impl std::fmt::Debug for Value {
             Value::HttpResponse { status, body, .. } => {
                 write!(f, "HttpResponse(status={}, body_len={})", status, body.len())
             }
+            #[cfg(feature = "runtime-db")]
             Value::Database { db_type, connection_string, .. } => {
                 write!(f, "Database(type={}, connection={})", db_type, connection_string)
             }
+            #[cfg(feature = "runtime-db")]
             Value::DatabasePool { pool } => {
                 let p = pool.lock().unwrap();
                 write!(f, "DatabasePool(type={}, max={})", p.db_type, p.max_connections)
             }
+            #[cfg(feature = "runtime-image")]
             Value::Image { format, data } => {
                 let img = data.lock().unwrap();
                 write!(f, "Image({}x{}, format={})", img.width(), img.height(), format)
             }
+            #[cfg(feature = "runtime-archive")]
             Value::ZipArchive { path, .. } => {
                 write!(f, "ZipArchive(path={})", path)
             }

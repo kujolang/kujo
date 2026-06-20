@@ -1,6 +1,7 @@
 # Kujo Release Process
 
 Current active target: `1.0.0`
+Current release state: pre-tag `1.0.0` release-candidate metadata; `Cargo.toml` is staged at `1.0.0`, but the final tag, publication, and binary artifact sign-off are not complete until dated release evidence exists.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.
@@ -15,8 +16,9 @@ Kujo follows semantic versioning-oriented release classes:
 
 Major-release policy note:
 
-- Kujo is now at `1.0.0`.
-- Future major-version changes must include explicit compatibility and migration guidance.
+- Kujo's crate metadata may be staged at `1.0.0` during release-candidate validation.
+- Staged `1.0.0` metadata does not by itself mean the final `v1.0.0` release has been tagged, published, or artifact-validated.
+- Future major-version changes must include explicit compatibility and migration guidance after the final `v1.0.0` release is published.
 
 ## 2. Compatibility Policy
 
@@ -56,6 +58,22 @@ Exit code classes are contract-stable for automation:
 - `kujo package-install` regenerates lockfile state deterministically (stable ordering and schema metadata).
 - `kujo package-install --frozen` is the verify mode and must fail when `kujo.lock` is missing or out of date relative to `kujo.toml`.
 - Release candidates should include a lockfile verification pass for package workflow fixtures and examples that use manifests.
+
+### 2.6 Package registry and Kennel boundary
+
+- Kujo v1.0 package scope is local manifest and lockfile determinism:
+  `kujo init`, `kujo package-add`, `kujo package-install`, and
+  `kujo package-install --frozen`.
+- Workflow packs are local extension points discovered from project-local,
+  user-local, and explicit environment paths.
+- Kujo v1.0 does not include a public Kennel registry, remote package
+  resolution, registry authentication, package upload transport, or a
+  first-party `kennel.toml` for the language/runtime repository.
+- `kujo package-publish` is metadata preview only; `--publish` is reserved for
+  future registry transport and must fail deterministically until that transport
+  exists.
+- Future registry semantics belong in `docs/KENNEL_NAMESPACE_PLAN.md` and must
+  not be described as a v1.0 release promise.
 
 ## 3. Required CI And Local Gates
 
@@ -162,6 +180,17 @@ Rules:
 - Call out compatibility-impacting changes explicitly.
 - Include migration guidance when behavior changes could break automation or scripts.
 
+## 5.1 ShipCheck Release Exceptions
+
+ShipCheck is run as an additional release-readiness scan, but the Kujo runtime repository has Cargo-owned metadata that ShipCheck's generic detectors do not fully recognize yet.
+
+Documented v1.0 exceptions live in `docs/SHIPCHECK_RELEASE_EXCEPTIONS.md` and cover:
+
+- Cargo format command: `cargo fmt --check`
+- Cargo lint command: `cargo clippy --all-targets --all-features -- -D warnings`
+- Intentional absence of `kennel.toml` for the language/runtime crate
+- Cargo binary entry point: `src/main.rs` / `kujo`
+
 ## 6. Pre-Release Checklist (Before Version Bump)
 
 1. Confirm local repository state.
@@ -208,6 +237,22 @@ bash .github/scripts/check-release-state.sh
 ```
 
 ## 8. Tagging And Publication Order
+
+### 8.0 Explicit Release Directive
+
+Tagging, crate publication, GitHub release publication, and tag-time artifact
+sign-off require an explicit `UNBLOCK_V1_RELEASE` directive in the current
+release-execution context.
+
+Without that directive, maintainers and automation may run dry-run gates,
+prepare release evidence, and record blockers, but must not:
+
+- create or push the final `v1.0.0` tag
+- run `cargo publish`
+- publish GitHub release assets
+- mark tag-time artifact sign-off rows complete
+
+This is standing release policy, not a session-specific preference.
 
 1. Create release commit.
 

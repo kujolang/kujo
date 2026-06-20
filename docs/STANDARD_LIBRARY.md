@@ -57,6 +57,10 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `to_lower` | `to_lower(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_lower(...)` |
 | `lower` | `lower(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := lower(...)` |
 | `capitalize` | `capitalize(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := capitalize(...)` |
+| `escape_xml` | `escape_xml(...)` | handler-defined | dynamic (Value) | Value::Error on missing argument or invalid args/types/operation; capability-denied when gated. | `none` | `result := escape_xml(...)` |
+| `render_markdown` | `render_markdown(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := render_markdown(...)` |
+| `render_listing_card` | `render_listing_card(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := render_listing_card(...)` |
+| `render_layout_native` | `render_layout_native(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := render_layout_native(...)` |
 | `trim` | `trim(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := trim(...)` |
 | `trim_start` | `trim_start(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := trim_start(...)` |
 | `trim_end` | `trim_end(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := trim_end(...)` |

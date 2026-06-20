@@ -1,0 +1,13 @@
+$ cargo test --test unsafe_inventory_contract
+started_at=2026-06-19T17:18:21-0400
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.89s
+     Running tests/unsafe_inventory_contract.rs (target/debug/deps/unsafe_inventory_contract-07651c901937cffe)
+
+running 3 tests
+test unsafe_inventory_enforces_current_executable_budget ... ok
+test unsafe_inventory_script_generates_expected_artifacts ... ok
+test unsafe_inventory_script_is_deterministic_for_repo_scan ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+ended_at=2026-06-19T17:18:23-0400

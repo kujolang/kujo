@@ -1,0 +1,8 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.63s
+     Running tests/lsp_external_clients_smoke.rs (target/debug/deps/lsp_external_clients_smoke-62126870ea602e6b)
+
+running 2 tests
+test python_external_client_can_launch_kujo_lsp ... ok
+test node_external_client_can_launch_kujo_lsp ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s

@@ -1,0 +1,9 @@
+cargo_fmt_check	0	notes/release_evidence/2026-06-20_p2-002/cargo_fmt_check.log
+package_module_workflow_integration	0	notes/release_evidence/2026-06-20_p2-002/package_module_workflow_integration.log
+package_registry_boundary_docs_contract	0	notes/release_evidence/2026-06-20_p2-002/package_registry_boundary_docs_contract.log
+readme_contracts	0	notes/release_evidence/2026-06-20_p2-002/readme_contracts.log
+release_process_docs_contract	0	notes/release_evidence/2026-06-20_p2-002/release_process_docs_contract.log
+docs_policy_consistency_contract	0	notes/release_evidence/2026-06-20_p2-002/docs_policy_consistency_contract.log
+docs_examples	0	notes/release_evidence/2026-06-20_p2-002/docs_examples.log
+package_boundary_markers	0	notes/release_evidence/2026-06-20_p2-002/package_boundary_markers.log
+git_diff_check	0	notes/release_evidence/2026-06-20_p2-002/git_diff_check.log

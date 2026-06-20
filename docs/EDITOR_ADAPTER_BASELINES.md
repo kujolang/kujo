@@ -1,4 +1,6 @@
-# Editor Adapter Baselines (v0.13.0)
+# Editor Adapter Baselines
+
+Status: v1.0.0 release-candidate adapter baseline; originally introduced during the v0.13.0 editor-adapter track.
 
 This document defines canonical thin-adapter setup paths for Kujo editor integrations.
 
@@ -43,7 +45,9 @@ Implementation expectations:
 Notes:
 
 - The first-party extension baseline contributes Kujo language registration, TextMate grammar highlighting, and optional Kujo LSP client startup.
-- VS Code forks (for example Codex-compatible builds) can consume the same `.vsix` package path.
+- VS Code forks, including Cursor and other VS Code-compatible builds, can
+  consume the same `.vsix` package path when their extension host supports the
+  package's declared VS Code engine range.
 
 ## Neovim
 
@@ -69,14 +73,53 @@ Implementation expectations:
 - map `.kujo` files to Kujo language id/server profile
 - leave semantic behavior to server responses
 
+## Generic LSP Clients
+
+Canonical path:
+
+- command: `kujo lsp`
+- transport: stdio JSON-RPC with `Content-Length` framed messages
+- protocol contract: `docs/PROTOCOL_CONTRACTS.md`
+
+Implementation expectations:
+
+- launch Kujo as an external language server process
+- send standard `initialize`/`initialized`/`shutdown`/`exit` lifecycle messages
+- reuse server responses instead of reimplementing Kujo parsing or symbol logic
+
+## v1.0 Launch Matrix
+
+This matrix confirms the launch path for each editor family without pinning
+fast-moving editor host versions as Kujo release facts.
+
+| Editor family | Launch path | Repo-owned v1.0 status | Validation evidence |
+| --- | --- | --- | --- |
+| VS Code / Cursor / VS Code-compatible forks | First-party extension baseline plus `kujo lsp` | Supported as a thin extension/configuration layer | `tools/vscode-kujo-extension/package.json`, `docs/editor-adapters/vscode-cursor-settings.json`, `npm run check`, `cargo test --test editor_adapter_contracts` |
+| Neovim | `nvim-lspconfig` descriptor launching `kujo lsp` | Supported as a documented setup snippet | `docs/editor-adapters/neovim-lspconfig.lua`, `cargo test --test editor_adapter_contracts` |
+| JetBrains | Generic external LSP plugin profile launching `kujo lsp` | Supported as documented generic LSP configuration | `docs/editor-adapters/jetbrains-lsp.md`, `cargo test --test editor_adapter_contracts` |
+| Generic LSP clients | stdio JSON-RPC launching `kujo lsp` | Supported protocol path | `tools/lsp_smoke_clients/python_client.py`, `tools/lsp_smoke_clients/node_client.mjs`, `cargo test --test lsp_external_clients_smoke`, `cargo test --test lsp_conformance_harness` |
+
+Host-specific installation UIs, marketplace publication, and editor-specific
+UX polish remain outside the Kujo runtime release contract. They should not
+change the canonical server command or protocol semantics.
+
 ## Smoke Contract
 
-Baseline adapter descriptors are contract-tested in:
+Baseline adapter descriptors and launch smoke are contract-tested in:
 
 - `tests/editor_adapter_contracts.rs`
+- `tests/editor_launch_matrix_contract.rs`
+- `tests/lsp_external_clients_smoke.rs`
+- `tests/lsp_conformance_harness.rs`
+- `tests/lsp_reliability_track.rs`
+- `tests/lsp_latency_guardrails.rs`
+- `tests/tree_sitter_kujo_assets.rs`
 
 Smoke scope:
 
 - descriptor files exist
 - each descriptor explicitly points to `kujo lsp`
 - canonical launch path is consistent across editor families
+- external Python and Node LSP clients can launch `kujo lsp`
+- LSP protocol fixtures, reliability guardrails, latency guardrails, and
+  Tree-sitter editor assets remain valid

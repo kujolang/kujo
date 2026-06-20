@@ -1,0 +1,13 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.60s
+     Running `target/debug/kujo lsp --help`
+Launch Kujo as a long-running Language Server Protocol server (JSON-RPC over stdio)
+
+Usage: kujo lsp [OPTIONS]
+
+Options:
+      --deterministic-logs
+          Emit deterministic request/response logs to stderr for debugging
+      --request-timeout-ms <REQUEST_TIMEOUT_MS>
+          Timeout budget in milliseconds for a single LSP request [default: 5000]
+  -h, --help
+          Print help

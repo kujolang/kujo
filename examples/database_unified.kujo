@@ -1,6 +1,8 @@
 # Unified Database API Example
 # Demonstrates the new db_connect(db_type, connection_string) syntax
 # that supports multiple database backends (SQLite, PostgreSQL, MySQL)
+# Host-effect demo: trusted local workflow. In untrusted mode, run with
+# --allow-database and narrow filesystem permissions if the database path is local.
 
 print("=== Unified Database API Demo ===")
 print("")

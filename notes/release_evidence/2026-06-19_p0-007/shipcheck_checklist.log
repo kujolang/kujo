@@ -1,0 +1,58 @@
+Compiler optimization: 0 constants folded, 15 dead instructions removed, 0 peephole optimizations
+# Release Checklist
+
+**Repository:** .
+
+## Pre-Release Checks
+
+- [ ] All tests pass
+- [ ] Linting passes
+- [ ] Formatting is consistent
+- [ ] CI is green on main branch
+
+## Documentation
+
+- [ ] README is up to date with install instructions
+- [ ] README has usage examples
+- [ ] Examples directory has current examples
+- [ ] API docs are regenerated (if applicable)
+- [ ] CHANGELOG.md is updated with this version's changes
+
+## Version & Metadata
+
+- [ ] Version bumped in kennel.toml (or equivalent)
+- [ ] Version tag created: `git tag v<VERSION>`
+- [ ] Package manifest fields are correct (name, description, license)
+- [ ] Entry point is correct and tested
+
+## Release Artifacts
+
+- [ ] Build succeeds from clean checkout
+- [ ] Release artifacts generated (binary, archive, etc.)
+- [ ] Release notes drafted
+- [ ] Release published (GitHub Release, registry, etc.)
+
+## Post-Release
+
+- [ ] Release tagged and pushed: `git push --tags`
+- [ ] Announcement posted (if applicable)
+- [ ] Downstream dependencies tested
+
+## Current State (from ShipCheck scan)
+
+[PASS] Git repository detected
+[PASS] README found: README.md
+[PASS] LICENSE found: LICENSE
+[PASS] Ignore files found: .gitignore
+[PASS] Test directory found: tests/
+[WARN] No lint command detected
+[WARN] No format command detected
+[PASS] CI configuration found: .github/workflows/
+[PASS] README has install/quickstart instructions
+[PASS] README has usage/examples
+[PASS] Examples directory found with 183 entries
+[PASS] Documentation directory found with 65 entries
+[PASS] Cargo.toml found with version field
+[PASS] Changelog found: CHANGELOG.md
+[WARN] No kennel.toml found
+[WARN] No clear entry point detected

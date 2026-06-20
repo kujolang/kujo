@@ -12,9 +12,10 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - VM runtime parity for modular workflows has been significantly hardened.
 - Dotted module import workflows are supported on the default VM path.
 - Package workflows are deterministic: `kujo init`, `kujo package-add`, `kujo package-install`, and `kujo package-install --frozen` work with nested source layouts and reproducible `kujo.lock` snapshots.
+- Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport.
 - Native helper coverage has expanded for everyday scripting work: hashing (`sha256`, `sha256_file`, `md5`), file inspection (`read_file_lossy`, `path_is_symlink`), formatting (`pad_start`, `pad_end`), introspection (`type_of`, `is_truthy`), and stderr output (`eprint`) are all available without shelling out.
 - Native capability controls are available for trusted and untrusted execution modes.
-- Kujo remains pre-1.0, and release readiness is still bounded by `ROADMAP.md` and the pre-v1 checklist.
+- Kujo is in pre-tag `1.0.0` release-candidate readiness: the crate metadata is staged at `1.0.0`, but final tag/publish evidence is still bounded by `ROADMAP.md`, the pre-v1 checklist, and the release artifact checklist.
 
 ## Why Kujo
 
@@ -29,10 +30,11 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 
 ## 1.0 Readiness Status
 
-- Kujo is not yet ready for a `1.0.0` release.
+- The project is currently at `1.0.0` in `Cargo.toml` for release-candidate validation.
+- Kujo has not yet published the final `v1.0.0` tag or release artifacts.
 - [ROADMAP.md](ROADMAP.md) is the single source of truth for release readiness and blocker tracking.
-- Kujo `1.0.0` must not be released until all P0/P1 roadmap items and the final release checklist are complete.
-- Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.
+- Kujo `1.0.0` must not be released until all P0/P1 roadmap items, the final release checklist, and tag-time artifact evidence are complete.
+- Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 - Deferred/non-goal boundaries are tracked in [docs/V1_SCOPE.md](docs/V1_SCOPE.md) and [docs/OPTIONAL_TYPING_DESIGN.md](docs/OPTIONAL_TYPING_DESIGN.md).
 
 ## Safety Model Snapshot
@@ -188,7 +190,10 @@ kujo run /path/to/kennel/kennel.kujo --interpreter -- new my-tool
 - Use VM by default (`kujo run <file>`).
 - Developers should not need `--interpreter` for ordinary modular project layouts.
 - Use `--interpreter` only as an explicit compatibility/debug path when isolating runtime-path issues.
+- Use `--jit` only as an experimental opt-in for JIT-compatible bytecode surfaces; unsupported surfaces fall back to VM execution with deterministic messaging.
 - Use `kujo package-install --frozen` to verify manifests and lockfiles without rewriting them.
+- Treat `kujo package-publish` as metadata preview only; `--publish` is reserved
+  for future registry transport and is rejected in v1.0.
 - Migration guidance and diagnostics workflow: [docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md](docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md)
 
 ## CLI Overview
@@ -196,6 +201,7 @@ kujo run /path/to/kennel/kennel.kujo --interpreter -- new my-tool
 Common commands:
 
 - `kujo run <file>`: execute Kujo scripts on the VM path.
+- `kujo run --jit <file>`: opt in to experimental JIT execution for compatible bytecode surfaces, with VM fallback for unsupported surfaces.
 - `kujo run --interpreter <file>`: execute on the interpreter fallback path.
 - `kujo check <file>`: validate source without execution.
 - `kujo doctor`: run first-party diagnostics and environment checks.
@@ -203,6 +209,7 @@ Common commands:
 - `kujo test`: run snapshot fixture corpus (`--runtime vm|dual|interpreter`, `--update`).
 - `kujo test-run <file>`: run Kujo `test "..." {}` declarations in a file.
 - `kujo init`, `kujo package-add`, `kujo package-install`, `kujo package-install --frozen`: create and verify reproducible package manifests and lockfiles.
+- `kujo package-publish`: preview package publish metadata only; no public registry publish occurs in v1.0.
 - `kujo serve [dir]`: static file server for local preview/testing.
 - `kujo lsp`: run Kujo’s LSP server.
 

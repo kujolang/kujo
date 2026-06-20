@@ -33,11 +33,13 @@ pub use environment::{BindingKind, Environment};
 #[allow(unused_imports)]
 pub use test_runner::{TestCase, TestReport, TestResult, TestRunner};
 // Database infrastructure - used by stub database.rs module
-#[allow(unused_imports)]
 pub use value::{
-    CallableArity, ConnectionPool, DatabaseConnection, DenseIntDict, DenseIntDictInt,
-    DenseIntDictIntFull, DictMap, IntDictMap, LeakyFunctionBody, Value,
+    CallableArity, DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap, IntDictMap,
+    LeakyFunctionBody, Value,
 };
+#[cfg(feature = "runtime-db")]
+#[allow(unused_imports)]
+pub use value::{ConnectionPool, DatabaseConnection};
 
 // Internal-only imports
 use control_flow::ControlFlow;
@@ -58,8 +60,10 @@ use aes_gcm::{
 };
 #[allow(unused_imports)]
 use md5::Md5;
+#[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
 use mysql_async::{prelude::*, Conn as MysqlConn, Opts as MysqlOpts};
+#[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
 use postgres::{Client as PostgresClient, NoTls};
 #[allow(unused_imports)]
@@ -67,6 +71,7 @@ use rsa::{
     pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey, LineEnding},
     Oaep, RsaPrivateKey, RsaPublicKey,
 };
+#[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
 use rusqlite::Connection as SqliteConnection;
 #[allow(unused_imports)]
@@ -83,6 +88,7 @@ use std::io::Write;
 #[allow(unused_imports)]
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+#[cfg(feature = "runtime-archive")]
 #[allow(unused_imports)]
 use zip::{write::FileOptions, ZipArchive, ZipWriter};
 
@@ -921,9 +927,18 @@ impl Interpreter {
         self.env.define("lower".to_string(), Value::NativeFunction("lower".to_string())); // Alias
         self.env.define("capitalize".to_string(), Value::NativeFunction("capitalize".to_string()));
         self.env.define("escape_xml".to_string(), Value::NativeFunction("escape_xml".to_string()));
-        self.env.define("render_markdown".to_string(), Value::NativeFunction("render_markdown".to_string()));
-        self.env.define("render_listing_card".to_string(), Value::NativeFunction("render_listing_card".to_string()));
-        self.env.define("render_layout_native".to_string(), Value::NativeFunction("render_layout_native".to_string()));
+        self.env.define(
+            "render_markdown".to_string(),
+            Value::NativeFunction("render_markdown".to_string()),
+        );
+        self.env.define(
+            "render_listing_card".to_string(),
+            Value::NativeFunction("render_listing_card".to_string()),
+        );
+        self.env.define(
+            "render_layout_native".to_string(),
+            Value::NativeFunction("render_layout_native".to_string()),
+        );
         self.env.define("trim".to_string(), Value::NativeFunction("trim".to_string()));
         self.env.define("trim_start".to_string(), Value::NativeFunction("trim_start".to_string()));
         self.env.define("trim_end".to_string(), Value::NativeFunction("trim_end".to_string()));
@@ -4136,6 +4151,7 @@ impl Interpreter {
                         }
                     }
 
+                    #[cfg(feature = "runtime-image")]
                     if let Value::Image { .. } = &obj_val {
                         if field == "save" {
                             if let Err(error) =
@@ -4993,6 +5009,7 @@ impl Interpreter {
                             .cloned()
                             .unwrap_or_else(|| Value::Error(format!("Field not found: {}", field)))
                     }
+                    #[cfg(feature = "runtime-image")]
                     Value::Image { data, format } => {
                         // Access image properties
                         match field.as_str() {
@@ -5270,6 +5287,7 @@ impl Interpreter {
         result
     }
 
+    #[cfg(feature = "runtime-image")]
     pub(crate) fn call_image_method_impl(
         obj: &Value,
         method: &str,
@@ -5471,6 +5489,16 @@ impl Interpreter {
         Some(result)
     }
 
+    #[cfg(not(feature = "runtime-image"))]
+    pub(crate) fn call_image_method_impl(
+        obj: &Value,
+        method: &str,
+        args: &[Value],
+    ) -> Option<Value> {
+        let _ = (obj, method, args);
+        None
+    }
+
     fn channel_send(
         &self,
         chan: &Arc<Mutex<(std::sync::mpsc::Sender<Value>, std::sync::mpsc::Receiver<Value>)>>,
@@ -5516,6 +5544,7 @@ impl Interpreter {
     /// Call a method on a value (used for iterator chaining and other method calls)
     fn call_method(&mut self, obj: Value, method: &str, args: Vec<Value>) -> Value {
         if method == "save" {
+            #[cfg(feature = "runtime-image")]
             if matches!(&obj, Value::Image { .. }) {
                 if let Err(error) =
                     self.require_capability(NativeCapability::FilesystemWrite, "save")
@@ -6237,50 +6266,54 @@ impl Interpreter {
     /// Cleanup method to rollback any active transactions before interpreter is dropped
     /// This prevents hanging when SQLite connections are dropped while in transaction
     pub fn cleanup(&mut self) {
-        // Get all variables from the environment
-        let var_names: Vec<String> =
-            self.env.scopes.iter().flat_map(|scope| scope.keys().cloned()).collect();
+        #[cfg(feature = "runtime-db")]
+        {
+            // Get all variables from the environment
+            let var_names: Vec<String> =
+                self.env.scopes.iter().flat_map(|scope| scope.keys().cloned()).collect();
 
-        for var_name in var_names {
-            if let Some(Value::Database { connection, db_type, in_transaction, .. }) =
-                self.env.get(&var_name)
-            {
-                // Check if in transaction
-                let is_in_trans = {
-                    match in_transaction.lock() {
-                        Ok(in_trans) => *in_trans,
-                        Err(_) => false,
-                    }
-                };
+            for var_name in var_names {
+                if let Some(Value::Database { connection, db_type, in_transaction, .. }) =
+                    self.env.get(&var_name)
+                {
+                    // Check if in transaction
+                    let is_in_trans = {
+                        match in_transaction.lock() {
+                            Ok(in_trans) => *in_trans,
+                            Err(_) => false,
+                        }
+                    };
 
-                if is_in_trans {
-                    // Rollback the transaction
-                    match (connection, db_type.as_str()) {
-                        (DatabaseConnection::Sqlite(conn_arc), "sqlite") => {
-                            if let Ok(conn) = conn_arc.lock() {
-                                let _ = conn.execute("ROLLBACK", []);
-                            }
-                        }
-                        (DatabaseConnection::Postgres(client_arc), "postgres") => {
-                            if let Ok(mut client) = client_arc.lock() {
-                                let _ = client.execute("ROLLBACK", &[]);
-                            }
-                        }
-                        (DatabaseConnection::Mysql(conn_arc), "mysql") => {
-                            if let Ok(mut conn) = conn_arc.lock() {
-                                if let Ok(runtime) = tokio::runtime::Runtime::new() {
-                                    let _ = runtime.block_on(async {
-                                        conn.exec_drop("ROLLBACK", mysql_async::Params::Empty).await
-                                    });
+                    if is_in_trans {
+                        // Rollback the transaction
+                        match (connection, db_type.as_str()) {
+                            (DatabaseConnection::Sqlite(conn_arc), "sqlite") => {
+                                if let Ok(conn) = conn_arc.lock() {
+                                    let _ = conn.execute("ROLLBACK", []);
                                 }
                             }
+                            (DatabaseConnection::Postgres(client_arc), "postgres") => {
+                                if let Ok(mut client) = client_arc.lock() {
+                                    let _ = client.execute("ROLLBACK", &[]);
+                                }
+                            }
+                            (DatabaseConnection::Mysql(conn_arc), "mysql") => {
+                                if let Ok(mut conn) = conn_arc.lock() {
+                                    if let Ok(runtime) = tokio::runtime::Runtime::new() {
+                                        let _ = runtime.block_on(async {
+                                            conn.exec_drop("ROLLBACK", mysql_async::Params::Empty)
+                                                .await
+                                        });
+                                    }
+                                }
+                            }
+                            _ => {}
                         }
-                        _ => {}
-                    }
 
-                    // Update transaction flag
-                    if let Ok(mut in_trans) = in_transaction.lock() {
-                        *in_trans = false;
+                        // Update transaction flag
+                        if let Ok(mut in_trans) = in_transaction.lock() {
+                            *in_trans = false;
+                        }
                     }
                 }
             }

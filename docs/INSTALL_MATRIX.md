@@ -45,9 +45,9 @@ The tagged release workflow publishes:
 Each archive has a matching `.sha256` file and is included in the consolidated
 `checksums.txt`.
 
-## Distribution Guidance (Pre-v1)
+## Distribution Guidance (Pre-Tag v1.0.0)
 
-- Kujo remains pre-1.0; do not claim API/runtime stability beyond documented contract surfaces.
+- Kujo has staged `1.0.0` crate metadata but remains pre-tag until release-artifact evidence is complete; do not claim final release availability beyond documented contract surfaces.
 - Prefer commit-pinned installs for production automation until v1 release gates are closed.
 - Validate with:
   - `cargo test --test cli_contracts`

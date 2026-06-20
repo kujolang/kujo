@@ -1,0 +1,107 @@
+$ cargo check --no-default-features --features runtime-db,runtime-image,runtime-archive
+    Checking kujo v1.0.0 (/private/tmp/kujo-v1-p1-004-clean)
+warning: function `hashmap_profile_bump_get_intdict` is never used
+   --> src/vm.rs:184:15
+    |
+184 | pub(crate) fn hashmap_profile_bump_get_intdict() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `hashmap_profile_bump_get_dense` is never used
+   --> src/vm.rs:188:15
+    |
+188 | pub(crate) fn hashmap_profile_bump_get_dense() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `hashmap_profile_bump_get_dense_int` is never used
+   --> src/vm.rs:192:15
+    |
+192 | pub(crate) fn hashmap_profile_bump_get_dense_int() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `hashmap_profile_bump_get_dict_intkey` is never used
+   --> src/vm.rs:196:15
+    |
+196 | pub(crate) fn hashmap_profile_bump_get_dict_intkey() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `hashmap_profile_bump_set_intdict` is never used
+   --> src/vm.rs:200:15
+    |
+200 | pub(crate) fn hashmap_profile_bump_set_intdict() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `hashmap_profile_bump_set_dense` is never used
+   --> src/vm.rs:204:15
+    |
+204 | pub(crate) fn hashmap_profile_bump_set_dense() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `hashmap_profile_bump_set_dense_int` is never used
+   --> src/vm.rs:208:15
+    |
+208 | pub(crate) fn hashmap_profile_bump_set_dense_int() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `hashmap_profile_bump_set_dict_intkey` is never used
+   --> src/vm.rs:212:15
+    |
+212 | pub(crate) fn hashmap_profile_bump_set_dict_intkey() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `kujo` (lib) generated 8 warnings
+warning: unused import: `DenseIntDictIntFull`
+  --> src/interpreter/mod.rs:37:51
+   |
+37 |     CallableArity, DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap, IntDictMap,
+   |                                                   ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: associated function `with_var_names` is never used
+  --> src/jit_disabled.rs:58:12
+   |
+23 | impl VMContext {
+   | -------------- associated function in this implementation
+...
+58 |     pub fn with_var_names(
+   |            ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: fields `param_count` and `supports_direct_recursion` are never read
+   --> src/jit_disabled.rs:107:9
+    |
+104 | pub struct CompiledFnInfo {
+    |            -------------- fields in this struct
+...
+107 |     pub param_count: usize,
+    |         ^^^^^^^^^^^
+108 |     pub supports_direct_recursion: bool,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `CompiledFnInfo` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+
+warning: fields `total_functions`, `compiled_functions`, and `enabled` are never read
+   --> src/jit_disabled.rs:113:9
+    |
+112 | pub struct JitStats {
+    |            -------- fields in this struct
+113 |     pub total_functions: usize,
+    |         ^^^^^^^^^^^^^^^
+114 |     pub compiled_functions: usize,
+    |         ^^^^^^^^^^^^^^^^^^
+115 |     pub enabled: bool,
+    |         ^^^^^^^
+    |
+    = note: `JitStats` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: function `hashmap_profile_bump_get_intdict` is never used
+   --> src/vm.rs:184:15
+    |
+184 | pub(crate) fn hashmap_profile_bump_get_intdict() {
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: `kujo` (bin "kujo") generated 12 warnings (7 duplicates) (run `cargo fix --bin "kujo" -p kujo` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 15.35s

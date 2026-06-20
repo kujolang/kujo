@@ -1,5 +1,22 @@
 # Image Conversion Agent Handoff
 
+## Current Status - Superseded For v1.0 Release Readiness
+
+As of 2026-06-19, this handoff is historical context, not an active
+release blocker. The original `img.save(...)`/`img.resize(...)` dispatch
+failure has been superseded by current implementation and tests:
+
+- `tests/image_conversion_integration.rs` covers PNG -> WebP, JPEG -> WebP,
+  and WebP -> PNG round trips in both interpreter and VM execution paths.
+- The same test file covers missing input paths, unsupported output
+  extensions, and invalid image method argument types.
+- `notes/2026-04-29_17-02_image-method-dispatch-parity.md` records the
+  implementation session that closed the VM method-dispatch parity gap.
+
+Keep the rest of this file only as the implementation handoff that led to
+the current behavior. Do not treat the "Verified Current Behavior" section
+below as current release status.
+
 ## Background
 
 This handoff captures the current state of image conversion support in Kujo and defines the implementation plan for enabling reliable format conversion (for example, JPEG/PNG to WebP).

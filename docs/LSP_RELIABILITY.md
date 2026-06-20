@@ -1,6 +1,6 @@
 # Kujo LSP Reliability Track
 
-Status: v0.14.0 reliability checklist baseline
+Status: v1.0.0 release-candidate reliability baseline; originally introduced during the v0.14.0 reliability track
 
 ## Lifecycle Churn Contract
 

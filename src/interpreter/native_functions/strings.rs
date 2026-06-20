@@ -377,8 +377,11 @@ fn render_layout_native(
     page_meta: &Value,
 ) -> String {
     let prefix = rl_route_prefix(route);
-    let style_file =
-        if rl_bool(settings, "minify") { "assets/css/style.min.css" } else { "assets/css/style.css" };
+    let style_file = if rl_bool(settings, "minify") {
+        "assets/css/style.min.css"
+    } else {
+        "assets/css/style.css"
+    };
 
     let seo_title = rl_meta(page_meta, "seo_title", page_title);
     let mut seo_description = rl_meta(page_meta, "seo_description", meta_description);
@@ -655,9 +658,7 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
         // args: route, title, excerpt, featured_image, terms(array), action_label
         "render_listing_card" => {
             if args.len() != 6 {
-                return Some(Value::Error(
-                    "render_listing_card() expects 6 arguments".to_string(),
-                ));
+                return Some(Value::Error("render_listing_card() expects 6 arguments".to_string()));
             }
             let s = |v: &Value| -> String {
                 match v {
@@ -696,7 +697,14 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                 }
             };
             Value::Str(Arc::new(render_layout_native(
-                s(0), &args[1], s(2), s(3), s(4), s(5), s(6), &args[7],
+                s(0),
+                &args[1],
+                s(2),
+                s(3),
+                s(4),
+                s(5),
+                s(6),
+                &args[7],
             )))
         }
 

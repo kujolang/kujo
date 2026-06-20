@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.57s
+     Running tests/package_module_workflow_integration.rs (target/debug/deps/package_module_workflow_integration-cb8bd9e129ac423f)
+
+running 8 tests
+test package_module_cycle_error_reports_import_chain ... ok
+test package_module_workflow_supports_dotted_from_imports_for_nested_source_layout ... ok
+test package_publish_is_metadata_preview_and_rejects_registry_publish_transport ... ok
+test package_module_run_refreshes_after_module_file_change ... ok
+test package_module_workflow_nested_layout_is_runtime_mode_consistent_and_keeps_flat_imports ... ok
+test package_module_workflow_vm_default_supports_nested_layout_and_frozen_lockfile ... ok
+test package_install_frozen_detects_lockfile_drift_and_verifies_after_regeneration ... ok
+test package_module_workflow_end_to_end_contract ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
+

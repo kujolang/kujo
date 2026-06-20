@@ -17,7 +17,7 @@ v1 contract policy for tiers:
 - `preview`: in-scope for v1 usage, but not frozen; behavior may tighten during pre-v1 hardening and must be treated as non-guaranteed until promoted.
 - `experimental`: explicitly non-guaranteed for v1 compatibility commitments; available for advanced workflows only and may change or be restricted without stability guarantees.
 
-Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.
+Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 Deferred/non-goal policy source: `docs/V1_SCOPE.md`.
 
 Source of truth:
@@ -50,6 +50,10 @@ Recently promoted helper surfaces worth calling out:
 | `to_upper` | stable | `v := to_upper("hello")` |
 | `to_lower` | stable | `v := to_lower("HELLO")` |
 | `trim` | stable | `v := trim("  hi  ")` |
+| `escape_xml` | stable | `safe := escape_xml("<tag>")` |
+| `render_markdown` | preview | `html := render_markdown("# Title")` |
+| `render_listing_card` | preview | `html := render_listing_card(route, title, excerpt, image, terms, label)` |
+| `render_layout_native` | preview | `html := render_layout_native(template, settings, route, title, description, navigation, content, meta)` |
 | `contains` | stable | `ok := contains("abcdef", "cd")` |
 | `replace_str` | stable | `v := replace_str("a-b", "-", "_")` |
 | `split` | stable | `parts := split("a,b", ",")` |
@@ -155,6 +159,10 @@ Access semantics:
 
 ## File System and Paths
 
+The examples in this section assume trusted mode. For untrusted scripts, start
+with `kujo run --untrusted` and add only the required filesystem capability
+flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
+
 | Function | Tier | Example |
 | --- | --- | --- |
 | `read_file` | stable | `txt := read_file("notes.txt")` |
@@ -180,6 +188,11 @@ Write-file overwrite contract:
 	- `write_file(path, content, {"overwrite": true})`
 
 ## Environment, Process, and Concurrency
+
+The process/env examples assume trusted mode. For untrusted scripts, grant only
+the required capability (`--allow-process-exec`, `--allow-shell-exec`,
+`--allow-env-read`, or `--allow-env-write`), and prefer argv-array process APIs
+over shell strings when handling user input.
 
 | Function | Tier | Example |
 | --- | --- | --- |
@@ -220,6 +233,11 @@ Type taxonomy quick reference:
 
 ## Network, HTTP, and Auth
 
+Network examples assume trusted mode. In untrusted mode, outbound clients need
+`--allow-net-client`, listeners need `--allow-net-server`, and private/local
+destinations remain subject to the outbound destination policy described in
+`docs/NATIVE_API_SECURITY_POSTURE.md`.
+
 | Function | Tier | Example |
 | --- | --- | --- |
 | `http_get` | preview | `res := http_get("https://example.com")` |
@@ -235,6 +253,11 @@ Type taxonomy quick reference:
 | `oauth2_get_token` | preview | `tok := oauth2_get_token(cfg)` |
 
 ## Database, Compression, Crypto, and Image
+
+Database, archive, and image examples assume trusted mode. In untrusted mode,
+database calls need `--allow-database`; archive writes/extraction and image
+conversion need filesystem write permission; and image loading needs
+filesystem read permission.
 
 | Function | Tier | Example |
 | --- | --- | --- |

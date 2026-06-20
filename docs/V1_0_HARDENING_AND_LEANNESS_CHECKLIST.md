@@ -9,8 +9,8 @@ Purpose: capture additive, non-breaking work that can improve safety, maintainab
 
 ## Evidence Snapshot (2026-05-22)
 
-- Unsafe inventory currently reports `53` total `unsafe` matches, `49` executable, concentrated in `src/jit.rs` (`docs/generated/UNSAFE_INVENTORY.md`).
-- VM parity currently reports `40` `runtime-parity-bug` mismatches and `0` `harness-debt` mismatches after classifier hardening (`docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md`).
+- Unsafe inventory reported `53` total `unsafe` matches, `49` executable, concentrated in `src/jit.rs` at this snapshot (`docs/generated/UNSAFE_INVENTORY.md`).
+- VM parity reported `40` `runtime-parity-bug` mismatches and `0` `harness-debt` mismatches after classifier hardening at this snapshot (`docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md`).
 - Large dependency surface is always compiled in current default build (`Cargo.toml`), including heavy stacks: `tokio`, `reqwest`, `mysql_async`, `postgres`, `rusqlite` (`bundled`), `image`, `zip`, and `cranelift*`.
 - DRY duplication exists in runtime logic, for example HTTP route/query parsing duplicated in both `src/interpreter/mod.rs` and `src/vm.rs`.
 - Outbound network is capability-gated, but there is no built-in destination class policy (private/loopback/link-local deny-by-default) in `src/network_policy.rs` for HTTP/TCP client calls.
@@ -18,6 +18,12 @@ Purpose: capture additive, non-breaking work that can improve safety, maintainab
   - `src/interpreter/native_functions/network.rs`
   - `src/interpreter/native_functions/database.rs`
   - `src/interpreter/native_functions/concurrency.rs`
+
+## Evidence Refresh (2026-06-19)
+
+- `docs/generated/UNSAFE_INVENTORY.md` now reports `65` total `unsafe` matches, `55` executable, `10` non-executable, and `0` unknown classifications.
+- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`. The older zero-parity closure notes remain historical evidence, not current release-review state.
+- Refresh evidence is captured in `notes/2026-06-19_v1_0_generated_evidence_refresh.md`.
 
 ---
 

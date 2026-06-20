@@ -301,13 +301,19 @@ Return                   # Return result
 
 ## Future Optimizations
 
-Phase 2 (Basic Optimizations) will add:
+This section is historical design context. For the current v1.0
+release-readiness posture, the VM is the default runtime and JIT is an
+experimental `kujo run --jit` opt-in with deterministic VM fallback for
+unsupported surfaces. See `docs/PERFORMANCE.md` and
+`docs/VM_INTERPRETER_PARITY_MATRIX.md`.
+
+Phase 2 (Basic Optimizations) planned:
 - Constant folding at compile time
 - Dead code elimination
 - Peephole optimization
 - Inline caching for polymorphic operations
 
-Phase 3 (JIT Compilation) will add:
+Phase 3 (JIT Compilation) planned:
 - Hot path detection
 - Native code generation
 - Type specialization

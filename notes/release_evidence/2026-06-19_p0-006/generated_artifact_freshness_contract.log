@@ -1,0 +1,12 @@
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.82s
+     Running tests/generated_artifact_freshness_contract.rs (target/debug/deps/generated_artifact_freshness_contract-fc7a71544aecebba)
+
+running 3 tests
+test generated_unsafe_inventory_artifact_is_fresh_and_matches_generator_output ... ok
+test generated_todo_triage_artifact_is_fresh_and_matches_generator_output ... ok
+test generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_output has been running for over 60 seconds
+test generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_output ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 115.97s
+

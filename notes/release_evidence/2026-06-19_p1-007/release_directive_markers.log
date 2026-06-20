@@ -1,0 +1,43 @@
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:162:    sign-off require the explicit `UNBLOCK_V1_RELEASE` directive defined in
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:168:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` Tag-Time Sign-Off section remains release-event dependent.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:172:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` section remains unchecked and requires post-publish artifact URLs/checksums/smoke results.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:174:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still has all `Tag-Time Sign-Off` checkboxes unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:176:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` items remain unchecked and require post-publish evidence.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:180:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` items remain unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:184:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` remains unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:190:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` section still requires post-publish release URLs/checksum records/workflow status.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:192:    Evidence: `rg -n "Tag-Time Sign-Off|Publish the actual|checksums" docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` shows `Tag-Time Sign-Off` items still unchecked (including publish + checksum attachment rows).
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:194:    Evidence: `rg -n "Tag-Time Sign-Off|Publish the actual|checksums" docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still shows unchecked tag-time publish/sign-off rows.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:196:    Evidence: `rg -n "Tag-Time Sign-Off|Publish the actual|checksums" docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still shows unchecked tag-time rows.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:198:    Evidence: `rg -n "Tag-Time Sign-Off|Publish the actual|checksums" docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still shows unchecked tag-time rows.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:200:    Evidence: `rg -n "Tag-Time Sign-Off|Publish the actual|checksums" docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still shows unchecked rows.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:202:    Evidence: `rg -n "Tag-Time Sign-Off|Publish the actual|checksums" docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still shows unchecked tag-time rows.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:204:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` rows remain unchecked and require post-publish artifact URLs/checksum attachments/workflow status.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:206:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` still has unchecked `Tag-Time Sign-Off` rows requiring actual release publication outputs.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:207:  - Blocker (2026-05-21): Release-freeze revalidation for active loop; publication/sign-off work is blocked until explicit `UNBLOCK_V1_RELEASE` instruction is provided.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:208:    Evidence: Current session instructions prohibit release/tag/publish/sign-off actions without the exact `UNBLOCK_V1_RELEASE` directive, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` tag-time rows remain unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:209:  - Blocker (2026-05-21): Release-freeze revalidation for loop 2; tag-time publish/sign-off remains blocked without explicit `UNBLOCK_V1_RELEASE`.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:210:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` rows are still unchecked and require real publish-event outputs disallowed by current session constraints.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:211:  - Blocker (2026-05-21): Release-freeze revalidation for loop 3; no `UNBLOCK_V1_RELEASE` directive is present, so tag-time publication/sign-off remains blocked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:213:  - Blocker (2026-05-21): Release-freeze revalidation for loop 4; no `UNBLOCK_V1_RELEASE` directive is present, so tag-time publication/sign-off remains blocked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:214:    Evidence: Release publication/sign-off actions are still frozen in current session constraints and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` rows remain unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:215:  - Blocker (2026-05-21): Release-freeze revalidation for current loop; no explicit `UNBLOCK_V1_RELEASE` directive is present, so tag-time publication/sign-off remains blocked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:216:    Evidence: Session constraints still prohibit release/tag/publish/sign-off actions without `UNBLOCK_V1_RELEASE`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` rows remain unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:455:    sign-off require the explicit `UNBLOCK_V1_RELEASE` directive defined in
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:461:    Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` rows are still unchecked and require real release URLs + checksum/sign-off workflow outcomes.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:464:  - Blocker (2026-05-21): Release-freeze revalidation for active loop; tag-time artifact completion is blocked until explicit `UNBLOCK_V1_RELEASE` instruction is provided.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:465:    Evidence: Current session instructions block release publication/sign-off actions without `UNBLOCK_V1_RELEASE`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` items are still unchecked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:466:  - Blocker (2026-05-21): Release-freeze revalidation for loop 2; final tag-time artifact completion remains blocked without explicit `UNBLOCK_V1_RELEASE`.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:468:  - Blocker (2026-05-21): Release-freeze revalidation for loop 3; no `UNBLOCK_V1_RELEASE` directive is present, so final tag-time artifact completion remains blocked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:470:  - Blocker (2026-05-21): Release-freeze revalidation for loop 4; no `UNBLOCK_V1_RELEASE` directive is present, so final tag-time artifact completion remains blocked.
+docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md:472:  - Blocker (2026-05-21): Release-freeze revalidation for current loop; no explicit `UNBLOCK_V1_RELEASE` directive is present, so final tag-time artifact completion remains blocked.
+docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md:34:## Tag-Time Sign-Off
+docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md:37:under the explicit `UNBLOCK_V1_RELEASE` directive defined in
+docs/RELEASE_PROCESS.md:225:### 8.0 Explicit Release Directive
+docs/RELEASE_PROCESS.md:228:sign-off require an explicit `UNBLOCK_V1_RELEASE` directive in the current
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:87:    - It is intentionally not completed in this release-readiness round because the active instruction forbids tagging, publishing, or marking tag-time artifact sign-off complete unless explicitly given `UNBLOCK_V1_RELEASE`.
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:355:  - Problem: `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` repeatedly says tag-time work is blocked until `UNBLOCK_V1_RELEASE`. That may have been session-specific rather than standing release policy.
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:357:    - Decide whether `UNBLOCK_V1_RELEASE` remains the required explicit release directive.
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:360:    - Kept `UNBLOCK_V1_RELEASE` as the standing explicit release directive and
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:362:      `8.0 Explicit Release Directive`.
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:366:    - Annotated the historical `UNBLOCK_V1_RELEASE` blocker loops in

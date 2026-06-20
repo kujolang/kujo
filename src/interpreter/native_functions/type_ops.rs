@@ -218,9 +218,13 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::Channel(_) => "channel",
                     Value::HttpServer { .. } => "httpserver",
                     Value::HttpResponse { .. } => "httpresponse",
+                    #[cfg(feature = "runtime-db")]
                     Value::Database { .. } => "database",
+                    #[cfg(feature = "runtime-db")]
                     Value::DatabasePool { .. } => "databasepool",
+                    #[cfg(feature = "runtime-image")]
                     Value::Image { .. } => "image",
+                    #[cfg(feature = "runtime-archive")]
                     Value::ZipArchive { .. } => "ziparchive",
                     Value::TcpListener { .. } => "tcplistener",
                     Value::TcpStream { .. } => "tcpstream",

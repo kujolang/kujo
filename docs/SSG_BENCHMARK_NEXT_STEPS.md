@@ -1,13 +1,18 @@
 # Kujo SSG Reproducible Benchmark Suite - Next Steps
 
+Status: future benchmark campaign plan; not v1.0 launch evidence.
+
 ## Related Document
+- See `docs/BENCHMARK_PUBLICATION_POLICY.md` for the v1.0 distinction between
+  launch-safe claims and internal regression signals.
 - See `docs/HETZNER_BENCHMARK_SETUP_AND_PRICING.md` for dedicated benchmark host selection, pricing snapshots, and campaign setup guidance.
 
 ## Objective
 Create a benchmark process that is:
 - Reproducible across runs and machines
 - Fair across Kujo, Hugo, Pelican, and Astro
-- Credible for marketing claims
+- Credible for future marketing claims only after raw artifacts, correctness
+  checks, and environment metadata are preserved
 - Useful for catching performance regressions over time
 
 ## Success Criteria
@@ -133,6 +138,8 @@ For each scenario, include:
 - Notes on caveats and non-equivalent features
 
 ### 13) Marketing-safe claim format
+Use this section only after satisfying `docs/BENCHMARK_PUBLICATION_POLICY.md`.
+
 Prefer:
 - "In our reproducible benchmark suite, Kujo built 10,000 pages in Xs median cold time on <hardware>."
 

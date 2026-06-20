@@ -1,0 +1,2513 @@
+$ cargo test
+started_at=2026-06-19T17:37:40-0400
+   Compiling typenum v1.20.1
+   Compiling cmov v0.5.4
+   Compiling const-oid v0.10.2
+   Compiling rand_core v0.10.1
+   Compiling cpufeatures v0.3.0
+   Compiling getrandom v0.4.3
+   Compiling chacha20 v0.10.0
+   Compiling ctutils v0.4.2
+   Compiling rand v0.10.1
+   Compiling generic-array v0.14.7
+   Compiling hybrid-array v0.4.12
+   Compiling crypto-common v0.2.2
+   Compiling block-buffer v0.12.1
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling inout v0.1.4
+   Compiling sec1 v0.7.3
+   Compiling crypto-bigint v0.5.5
+   Compiling cipher v0.4.4
+   Compiling universal-hash v0.5.1
+   Compiling aead v0.5.2
+   Compiling digest v0.10.7
+   Compiling polyval v0.6.2
+   Compiling aes v0.8.4
+   Compiling ctr v0.9.2
+   Compiling blowfish v0.9.1
+   Compiling sha2 v0.10.9
+   Compiling hmac v0.12.1
+   Compiling signature v2.2.0
+   Compiling sha1 v0.10.6
+   Compiling curve25519-dalek v4.1.3
+   Compiling md-5 v0.10.6
+   Compiling ghash v0.5.1
+   Compiling digest v0.11.3
+   Compiling hkdf v0.12.4
+   Compiling rfc6979 v0.4.0
+   Compiling ed25519 v2.2.3
+   Compiling pbkdf2 v0.12.2
+   Compiling bcrypt v0.15.1
+   Compiling mysql_common v0.35.5
+   Compiling lzma-rust2 v0.15.8
+   Compiling rsa v0.9.10
+   Compiling aes-gcm v0.10.3
+   Compiling oauth2 v4.4.2
+   Compiling sha2 v0.11.0
+   Compiling md-5 v0.11.0
+   Compiling elliptic-curve v0.13.8
+   Compiling hmac v0.13.0
+   Compiling ed25519-dalek v2.2.0
+   Compiling primeorder v0.13.6
+   Compiling ecdsa v0.16.9
+   Compiling postgres-protocol v0.6.12
+   Compiling zip v7.2.0
+   Compiling p256 v0.13.2
+   Compiling p384 v0.13.1
+   Compiling postgres-types v0.2.14
+   Compiling jsonwebtoken v10.3.0
+   Compiling tokio-postgres v0.7.18
+   Compiling mysql_async v0.36.2
+   Compiling postgres v0.19.12
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5m 21s
+     Running unittests src/lib.rs (target/debug/deps/kujo-1113ac95280f6849)
+
+running 682 tests
+test benchmarks::profiler::tests::test_jit_stats ... ok
+test benchmarks::cross_language::tests::test_speedup_calculations ... ok
+test benchmarks::cross_language::tests::test_parse_metric_value_extracts_float ... ok
+test benchmarks::cross_language::tests::test_parse_metric_value_trims_spaces ... ok
+test benchmarks::cross_language::tests::test_parse_checksum_extracts_integer ... ok
+test benchmarks::cross_language::tests::test_parse_metric_value_missing_key_returns_error ... ok
+test benchmarks::cross_language::tests::test_parse_checksum_invalid_value_returns_error ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_empty_fails ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_inconsistent_files_fails ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_inconsistent_python_presence_fails ... ok
+test benchmarks::reporter::tests::render_summary_text_includes_totals_and_speedups ... ok
+test benchmarks::reporter::tests::render_comparison_table_text_is_deterministic ... ok
+test benchmarks::profiler::tests::test_memory_profile_tracking ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_handles_zero_first_value_percent_delta ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_rejects_inconsistent_python_presence ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_returns_none_for_single_run ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_with_python_and_speedup ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_without_python ... ok
+test benchmarks::profiler::tests::test_cpu_profile_recording ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_without_python ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_with_python ... ok
+test benchmarks::ssg::tests::test_collect_ssg_mean_median_drift_warnings_flags_high_drift_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_mean_median_drift_warnings_custom_threshold_can_trigger_warning ... ok
+test benchmarks::ssg::tests::test_collect_ssg_mean_median_drift_warnings_skips_stable_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_range_spread_warnings_flags_high_spread_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_range_spread_warnings_respects_threshold_override ... ok
+test benchmarks::profiler::tests::generate_flamegraph_data_is_stable_for_known_profile ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_custom_threshold_can_trigger_warning ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_flags_large_percent_deltas ... ok
+test benchmarks::profiler::tests::test_profiler_workflow ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_requires_three_measured_runs ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_skips_small_or_percentless_deltas ... ok
+test benchmarks::profiler::tests::render_profile_report_text_is_deterministic_and_no_color ... ok
+test benchmarks::ssg::tests::test_collect_ssg_variability_warnings_custom_threshold_can_suppress_warning ... ok
+test benchmarks::ssg::tests::test_collect_ssg_variability_warnings_flags_high_variability_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_variability_warnings_skips_low_variability_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_warning_operator_hints_contains_all_override_flags ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_passes_when_median_within_threshold ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_fails_when_median_exceeds_threshold ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_rejects_invalid_observed_median ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_rejects_invalid_threshold ... ok
+test benchmarks::ssg::tests::test_format_ssg_measurement_warning_header_includes_threshold_values ... ok
+test benchmarks::ssg::tests::test_format_ssg_throughput_gate_summary_reports_status_and_margin ... ok
+test benchmarks::ssg::tests::test_format_ssg_trend_warning_header_includes_threshold_value ... ok
+test benchmarks::ssg::tests::test_parse_checksum_extracts_integer ... ok
+test benchmarks::ssg::tests::test_parse_checksum_invalid_value_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_extracts_float ... ok
+test benchmarks::ssg::tests::test_parse_metric_usize_extracts_integer ... ok
+test benchmarks::ssg::tests::test_parse_metric_usize_invalid_value_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_missing_key_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_optional_absent_returns_none ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_optional_present ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_optional_invalid_returns_error ... ok
+test benchmarks::ssg::tests::test_resolve_tmp_dir_override_none_returns_none ... ok
+test benchmarks::ssg::tests::test_resolve_tmp_dir_override_rejects_non_utf8_path ... ok
+test benchmarks::ssg::tests::test_resolve_tmp_dir_override_some_returns_string_path ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_rejects_missing_kujo_script_preflight ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_rejects_zero_measured_runs ... ok
+test benchmarks::ssg::tests::test_render_ssg_benchmark_report_snapshot ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_rejects_missing_python_script_preflight ... ok
+test benchmarks::ssg::tests::test_run_statistics_coefficient_of_variation_percent ... ok
+test benchmarks::ssg::tests::test_run_statistics_coefficient_of_variation_zero_mean_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_empty_samples_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_from_samples_even_count ... ok
+test benchmarks::ssg::tests::test_run_statistics_from_samples_odd_count ... ok
+test benchmarks::ssg::tests::test_run_statistics_high_mean_median_drift_requires_three_runs ... ok
+test benchmarks::ssg::tests::test_run_statistics_high_variability_requires_three_runs ... ok
+test benchmarks::ssg::tests::test_run_statistics_mean_median_drift_percent ... ok
+test benchmarks::ssg::tests::test_run_statistics_mean_median_drift_percent_zero_median_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_percentiles_are_monotonic_with_distribution_bounds ... ok
+test benchmarks::ssg::tests::test_run_statistics_percentiles_single_sample_equal_sample ... ok
+test benchmarks::ssg::tests::test_run_statistics_range_spread_percent_zero_median_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_range_spread_percent ... ok
+test benchmarks::ssg::tests::test_speedup_calculation ... ok
+test benchmarks::ssg::tests::test_speedup_calculation_handles_zero_kujo_duration ... ok
+test benchmarks::ssg::tests::test_speedup_calculation_without_python_result ... ok
+test benchmarks::ssg::tests::test_stage_profile_bottleneck_read ... ok
+test benchmarks::ssg::tests::test_stage_profile_bottleneck_render_write ... ok
+test benchmarks::ssg::tests::test_stage_profile_bottleneck_zero_total_returns_none ... ok
+test benchmarks::ssg::tests::test_stage_profile_total_profiled_ms ... ok
+test benchmarks::stats::tests::test_compare_speedup ... ok
+test benchmarks::stats::tests::test_format_duration ... ok
+test benchmarks::runner::tests::test_simple_benchmark ... ok
+test benchmarks::stats::tests::test_statistics ... ok
+test builtins::tests::test_format_date_rejects_non_finite_timestamp_without_panicking ... ok
+test benchmarks::timer::tests::test_time_once ... ok
+test builtins::tests::test_format_date_rejects_out_of_range_timestamp_without_panicking ... ok
+test builtins::tests::test_math_functions ... ok
+test builtins::tests::test_safe_duration_since_unix_epoch_clamps_pre_epoch_values_to_zero ... ok
+test benchmarks::timer::tests::test_timer ... ok
+test builtins::tests::test_safe_duration_since_unix_epoch_returns_positive_duration_for_post_epoch ... ok
+test benchmarks::runner::tests::test_benchmark_error_handling ... ok
+test benchmarks::timer::tests::test_benchmark ... ok
+test builtins::tests::test_string_functions ... ok
+test builtins::tests::test_to_json_array_does_not_duplicate_entries ... ok
+test builtins::tests::test_to_json_fixed_dict_serializes_successfully ... ok
+test builtins::tests::test_json_roundtrip_array_of_objects_preserves_cardinality ... ok
+test builtins::tests::test_to_json_pretty_includes_newlines_and_indentation ... ok
+test cli_output::tests::to_pretty_json_serializes_objects ... ok
+test cli_output::tests::to_pretty_json_surfaces_serialization_errors ... ok
+test cli_output::tests::optional_json_record_serializes_record_or_null ... ok
+test cli_output::tests::format_helpers_render_stable_shapes ... ok
+test cli_output::tests::to_json_array_maps_rows_and_surfaces_serialization_errors ... ok
+test docgen::adapters::common::tests::visibility_helpers_cover_modifier_name_and_container_rules ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_reports_warmup_failures ... ok
+test docgen::adapters::tests::capability_index_and_language_ids_are_sorted_and_aligned ... ok
+test docgen::adapters::tests::adapter_lookup_handles_language_and_extension_normalization ... ok
+test docgen::adapters::tests::static_lookup_avoids_legacy_full_registry_construction_cost ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_fails_when_required_kujo_metric_missing ... ok
+test docgen::discovery::tests::discover_emits_max_depth_diagnostic ... ok
+test docgen::discovery::tests::discover_diagnostics_have_deterministic_sorted_order ... ok
+test docgen::discovery::tests::discover_emits_max_file_size_diagnostic ... ok
+test docgen::discovery::tests::discover_emits_max_files_diagnostic_and_truncates ... ok
+test docgen::discovery::tests::discover_handles_mixed_utf8_and_non_utf8_sources ... ok
+test docgen::discovery::tests::discover_skip_counts_are_zero_without_skips ... ok
+test docgen::discovery::tests::discover_skips_non_utf8_source_with_deterministic_diagnostic ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_reports_measured_failures ... ok
+test docgen::gaps::tests::build_gaps_uses_indexed_call_sites_and_preserves_known_call_sites_output ... ok
+test doc_generator::tests::extract_doc_items_reads_comments_and_examples ... ok
+test docgen::gaps::tests::gap_call_site_index_matches_legacy_order_and_limit_semantics ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_fails_on_python_checksum_mismatch ... ok
+test docgen::render::tests::source_link_template_rejects_unsafe_paths ... ok
+test errors::tests::line_column_conversion_handles_multiline_utf8 ... ok
+test errors::tests::source_span_from_start_and_len_tracks_byte_bounds ... ok
+test docgen::render::tests::source_link_template_renders_expected_url ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_fails_when_required_python_metric_missing ... ok
+test docgen::adapters::tests::c_style_adapter_conformance_preserves_typescript_and_javascript_contracts ... ok
+test http_request_utils::tests::split_http_path_and_query_ignores_empty_keys_and_accepts_missing_values ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_profile_toggle_controls_stage_profile_capture ... ok
+test docgen::gaps::tests::large_input_call_site_index_scans_each_source_line_once ... ok
+test http_request_utils::tests::split_http_path_and_query_parses_pairs_without_decoding ... ok
+test http_request_utils::tests::split_http_path_and_query_with_decoded_falls_back_to_raw_on_invalid_encoding ... ok
+test http_request_utils::tests::split_http_path_and_query_with_decoded_parses_percent_and_plus_components ... ok
+test http_request_utils::tests::split_http_path_and_query_without_query_returns_empty_metadata ... ok
+test interpreter::async_runtime::tests::test_block_on_simple ... ok
+test interpreter::async_runtime::tests::test_runtime_initialization ... ok
+test formatter::tests::formatter_wraps_long_comma_separated_lines ... ok
+test interpreter::async_runtime::tests::test_spawn_task ... ok
+test interpreter::async_runtime::tests::test_timeout_expired ... ok
+test interpreter::async_runtime::tests::test_timeout_success ... ok
+test docgen::adapters::tests::cached_regex_extractors_remain_stable_for_success_failure_and_edge_inputs ... ok
+test interpreter::native_functions::async_ops::tests::cache_promise_result_returns_error_when_lock_poisoned ... ok
+test interpreter::native_functions::async_ops::tests::read_cached_promise_result_returns_error_when_lock_poisoned ... ok
+test interpreter::native_functions::async_ops::tests::test_async_read_files_propagates_missing_file_error ... ok
+test interpreter::native_functions::async_ops::tests::test_async_read_files_reads_multiple_files_in_order ... ok
+test interpreter::native_functions::async_ops::tests::test_async_read_files_rejects_invalid_path_element ... ok
+test interpreter::native_functions::async_ops::tests::test_async_write_files_validates_lengths_and_types ... ok
+test interpreter::native_functions::async_ops::tests::test_get_task_pool_size_rejects_arguments ... ok
+test interpreter::native_functions::async_ops::tests::test_async_write_files_writes_all_files_and_returns_bools ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_alias_error_shape_matches_parallel_map_for_validation ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_propagates_rejected_promise ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_rejects_non_array_input ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_warmups_are_excluded_from_measured_results ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_rejects_non_callable_mapper ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_validates_concurrency_limit ... ok
+test interpreter::async_runtime::tests::test_concurrent_tasks_under_timeout_budget ... ok
+test interpreter::async_runtime::tests::test_sleep ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_async_read_file_preserves_order_with_limit ... ok
+test interpreter::native_functions::async_ops::tests::test_par_map_alias_matches_parallel_map_behavior ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_resolves_to_null_on_success ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rayon_len_mixed_collection_inputs ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_propagates_rejected_promises ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rayon_validates_mapper_input_types ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rejects_non_callable_mapper ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_validates_concurrency_limit ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_handles_non_promise_results ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rayon_upper_and_lower_aliases ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_and_prefixes_for_batch_generates_parallel_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_and_prefixes_for_batch_handles_empty_input ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_and_prefixes_for_batch_reuses_cached_prefixes_for_same_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_for_batch_generates_stable_indexed_paths ... ok
+test interpreter::native_functions::async_ops::tests::test_set_task_pool_size_round_trip ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_render_prefixes_for_batch_generates_stable_prefixes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_get_or_build_output_file_suffixes_reuses_cached_arc_for_same_count ... ok
+test interpreter::native_functions::async_ops::tests::test_set_task_pool_size_validates_input ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_get_or_create_rayon_pool_reuses_existing_pool_for_same_size ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_rayon_cpu_cap_returns_at_least_one ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_get_or_create_rayon_pool_distinguishes_thread_counts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_ahead_limit_expands_up_to_double_concurrency ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_ahead_limit_handles_zero_inputs_defensively ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_ahead_limit_is_capped_by_file_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_empty_input_returns_zero_summary ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_bytecode_mapper_uses_vm_jit_lane ... ok
+test interpreter::native_functions::async_ops::tests::test_par_map_alias_with_bytecode_mapper ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_checksum_matches_written_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_extreme_concurrency_limit_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_propagates_read_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_propagates_write_failure ... ok
+test formatter::tests::formatter_sorts_leading_import_block ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_unicode_checksum_matches_written_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_validates_argument_contracts ... ok
+test interpreter::async_runtime::tests::test_concurrent_tasks ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_source_file_bytes_reuses_buffer_across_large_then_small_reads ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_checksum_matches_rendered_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_empty_input_returns_zero_summary ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_single_worker_preserves_output_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_writes_html_and_returns_stage_metrics ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_high_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_propagates_write_failure ... ok
+test formatter::tests::formatter_normalizes_spacing_and_indentation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_single_worker_prefetch_preserves_index_mapping ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_unicode_checksum_matches_written_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_validates_argument_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_writes_html_and_returns_summary ... ok
+test doc_generator::tests::generate_docs_writes_module_and_builtin_pages ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_cached_pool_repeated_calls_preserve_checksum_contract ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_allows_non_utf8_source_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_oversized_concurrency_limit_clamps_to_cpu_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_large_batch_single_worker_completes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_can_skip_stage_timers ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_single_worker_preserves_output_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_cpu_cap_equal_concurrency_limit_produces_correct_output ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_propagates_read_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_high_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_checksum_matches_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_propagates_write_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_rejects_shape_mismatch ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_large_batch_low_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_reads_and_writes_correctly ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_propagates_write_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_rejects_shape_mismatch ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_mixed_source_sizes_preserve_page_isolation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_reads_and_writes_correctly ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_unicode_checksum_matches_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_preserves_checksum_and_stage_toggle ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_timing_fields_are_non_negative ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_prefetch_single_worker_read_requires_remaining_without_pending_write ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_false_when_write_lane_is_saturated ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_false_without_backlog ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_handles_zero_limit_defensively ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_with_pending_backlog_and_available_slot ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_checksum_matches_prefix_plus_body_plus_suffix_length ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_single_worker_preserves_index_mapping ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_output_matches_expected_html_structure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_unicode_content_checksum_is_byte_accurate ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_small_concurrency_limit_respected_below_cpu_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_target_read_in_flight_allows_full_window_with_empty_write_backlog ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_write_failure_propagates_error ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_target_read_in_flight_handles_zero_limits_defensively ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_target_read_in_flight_scales_down_as_write_backlog_grows ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_propagates_create_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_handles_empty_source_body ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_returns_total_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_handles_large_source_body_without_truncation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_returns_utf8_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_streams_exact_content_and_length ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_bytes_supports_non_utf8_source_body ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_propagates_create_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_handles_empty_source_body ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_returns_utf8_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_streams_exact_content_and_length ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_handles_large_source_body_without_truncation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_cumulative_timing_grows_with_file_count ... ok
+test interpreter::native_functions::collections::tests::test_array_and_higher_order_collection_strict_arity_contracts ... ok
+test interpreter::native_functions::collections::tests::test_array_collection_behavior_contracts ... ok
+test interpreter::native_functions::collections::tests::test_collection_helpers_reject_wrong_types_instead_of_silent_fallbacks ... ok
+test interpreter::native_functions::collections::tests::test_fixed_dict_invert_update_get_default_contracts ... ok
+test interpreter::native_functions::collections::tests::test_fixed_dict_merge_clear_remove_contracts ... ok
+test interpreter::native_functions::crypto::tests::test_crypto_argument_validation_contracts ... ok
+test interpreter::native_functions::crypto::tests::test_md5_file_hashes_file_contents ... ok
+test interpreter::native_functions::crypto::tests::test_aes_encrypt_bytes_and_decrypt_bytes_round_trip ... ok
+test interpreter::native_functions::crypto::tests::test_aes_encrypt_and_decrypt_round_trip ... ok
+test interpreter::native_functions::crypto::tests::test_sha256_and_md5_hashes_match_known_values ... ok
+test interpreter::native_functions::database::tests::test_db_argument_shape_errors ... ok
+test interpreter::native_functions::crypto::tests::test_sha256_file_hashes_binary_contents ... ok
+test interpreter::native_functions::database::tests::test_db_pool_accepts_fixed_dict_optional_config ... ok
+test interpreter::native_functions::database::tests::test_db_pool_acquire_release_stats_close_sqlite ... ok
+test interpreter::native_functions::database::tests::test_db_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_large_batch_preserves_checksum ... ok
+test interpreter::native_functions::database::tests::test_db_connect_execute_query_close_sqlite ... ok
+test interpreter::native_functions::database::tests::test_db_transaction_begin_commit_and_rollback_sqlite ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_large_batch_low_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::http::tests::test_ai_helpers_surface_contract_failures_and_edge_validation ... ok
+test interpreter::native_functions::http::tests::test_http_argument_shape_contract_errors ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_reports_error_when_any_partition_read_fails ... ok
+test interpreter::native_functions::http::tests::test_http_response_helpers_and_header_mutation ... ok
+test interpreter::native_functions::http::tests::test_redirect_and_server_helpers ... ok
+test interpreter::native_functions::io::tests::test_io_argument_shape_errors ... ok
+test interpreter::native_functions::io::tests::test_io_copy_range ... ok
+test interpreter::native_functions::io::tests::test_io_eprint_returns_null ... ok
+test interpreter::native_functions::io::tests::test_io_file_metadata_and_truncate ... ok
+test interpreter::native_functions::io::tests::test_io_read_at_write_at_and_seek_read ... ok
+test interpreter::native_functions::io::tests::test_io_read_write_append_bytes_round_trip ... ok
+test interpreter::native_functions::io::tests::test_io_strict_arity_rejects_trailing_arguments ... ok
+test interpreter::native_functions::json::tests::test_base64_encode_decode ... ok
+test interpreter::native_functions::json::tests::test_data_format_and_base64_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::json::tests::test_data_format_argument_validation_errors ... ok
+test interpreter::native_functions::json::tests::test_parse_csv_and_to_csv ... ok
+test interpreter::native_functions::json::tests::test_parse_json_and_to_json_round_trip ... ok
+test interpreter::native_functions::json::tests::test_parse_toml_and_to_toml ... ok
+test interpreter::native_functions::json::tests::test_parse_yaml_and_to_yaml ... ok
+test interpreter::native_functions::math::tests::test_bitwise_api_contracts ... ok
+test interpreter::native_functions::math::tests::test_math_api_domain_and_success_contracts ... ok
+test interpreter::native_functions::math::tests::test_math_api_rejects_missing_and_invalid_arguments ... ok
+test interpreter::native_functions::math::tests::test_math_api_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::strings::tests::test_contains_and_index_of_argument_shape_errors ... ok
+test interpreter::native_functions::strings::tests::test_contains_and_index_of_delegate_array_case_to_collections ... ok
+test interpreter::native_functions::strings::tests::test_contains_and_index_of_string_behavior ... ok
+test interpreter::native_functions::strings::tests::test_contains_supports_dictionary_keys ... ok
+test interpreter::native_functions::strings::tests::test_core_string_helpers_reject_wrong_types_instead_of_silent_fallbacks ... ok
+test interpreter::native_functions::strings::tests::test_regex_argument_validation_errors ... ok
+test interpreter::native_functions::strings::tests::test_regex_match_and_find_all ... ok
+test interpreter::native_functions::strings::tests::test_regex_replace_and_split ... ok
+test interpreter::native_functions::strings::tests::test_ssg_build_output_paths_success_custom_extension ... ok
+test interpreter::native_functions::strings::tests::test_ssg_build_output_paths_success_default_extension ... ok
+test interpreter::native_functions::strings::tests::test_ssg_build_output_paths_validates_argument_contracts ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_requires_array_argument ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_requires_string_elements ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_success_returns_pages_and_checksum ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_validates_argument_count ... ok
+test interpreter::native_functions::strings::tests::test_substr_alias_matches_substring_behavior ... ok
+test interpreter::native_functions::system::tests::test_arg_parser_returns_struct_shape ... ok
+test interpreter::native_functions::system::tests::test_args_returns_array ... ok
+test interpreter::native_functions::system::tests::test_env_bool_invalid_value_returns_error_object ... ok
+test interpreter::native_functions::system::tests::test_env_int_missing_variable_returns_error_object ... ok
+test interpreter::native_functions::system::tests::test_env_set_and_env_round_trip ... ok
+test interpreter::native_functions::system::tests::test_execute_status_returns_process_result_struct ... ok
+test interpreter::native_functions::system::tests::test_kv_set_and_get_round_trip ... ok
+test interpreter::native_functions::system::tests::test_parse_date_invalid_input_returns_error_object ... ok
+test interpreter::native_functions::system::tests::test_pipe_commands_rejects_invalid_argument_shape ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_partitioned_large_batch_checksum_matches_written_bytes ... ok
+test interpreter::native_functions::system::tests::test_process_api_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::system::tests::test_random_time_env_and_args_api_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::system::tests::test_spawn_process_rejects_invalid_argument_shape ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_preserves_large_index_heading_contract ... ok
+test interpreter::native_functions::system::tests::test_uuid_random_id_and_time_helpers ... ok
+test interpreter::native_functions::tests::test_release_hardening_advanced_string_methods_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_array_and_higher_order_collection_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_alias_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_batch_file_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_file_wrapper_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_http_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_sleep_timeout_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_builtin_dispatch_coverage_for_declared_builtins ... ok
+test interpreter::native_functions::tests::test_release_hardening_builtin_dispatch_coverage_for_recent_apis ... ok
+test interpreter::native_functions::tests::test_release_hardening_channel_and_task_handle_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_collections_and_format_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_contains_index_of_argument_and_polymorphic_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_conversion_and_bytes_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_core_alias_behavior_parity_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_crypto_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_data_format_and_regex_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_database_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::http::tests::test_ai_chat_non_json_response_returns_deterministic_failure_result ... ok
+test interpreter::native_functions::http::tests::test_ai_embedding_extracts_numeric_vector_regression ... ok
+test interpreter::native_functions::http::tests::test_http_request_supports_single_request_dictionary_form ... ok
+test interpreter::native_functions::http::tests::test_ai_chat_success_path_returns_normalized_result_and_request_payload ... ok
+test docgen::gaps::tests::repeated_external_host_checks_reuse_single_http_client ... ok
+test interpreter::native_functions::tests::test_release_hardening_gif_to_webp_dispatch_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_http_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_io_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_len_polymorphic_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_http_advanced_api_behavior_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_load_image_dispatch_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_filesystem_core_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_math_behavior_and_error_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_process_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_strict_arity_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_set_constructor_dispatch_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_set_queue_stack_method_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_load_image_round_trip_behavior ... ok
+test interpreter::native_functions::tests::test_release_hardening_shared_state_and_task_pool_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_string_transform_and_tokenization_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_string_utility_behavior_and_error_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_system_random_and_time_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_type_and_is_introspection_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_zip_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_zip_module_round_trip_behaviors ... ok
+test interpreter::native_functions::tests::test_unknown_native_function_returns_explicit_error ... ok
+test interpreter::native_functions::tests::test_vm_for_iterable_normalization_contracts ... ok
+test interpreter::native_functions::type_ops::tests::test_assertion_api_strict_arity_contracts ... ok
+test interpreter::native_functions::type_ops::tests::test_conversion_and_introspection_api_strict_arity_contracts ... ok
+test interpreter::native_functions::type_ops::tests::test_debug_remains_variadic ... ok
+test interpreter::runtime_limit_tests::function_context_allows_boundary_minus_one ... ok
+test interpreter::runtime_limit_tests::function_context_rejects_call_stack_at_limit ... ok
+test interpreter::runtime_limit_tests::function_context_rejects_depth_at_limit ... ok
+test interpreter::value::tests::cloned_function_body_can_be_dropped_multiple_times ... ok
+test interpreter::value::tests::cloned_handles_share_same_function_body_storage ... ok
+test interpreter::value::tests::drops_deeply_nested_function_body_without_recursion_overflow ... ok
+test interpreter::value::tests::function_body_retains_statements ... ok
+test interpreter::value::tests::value_compare_order_rejects_unsupported_types ... ok
+test interpreter::value::tests::value_equals_supports_function_and_native_identity ... ok
+test interpreter::value::tests::value_equals_supports_numeric_cross_type_and_nested_collections ... ok
+test interpreter::value::tests::value_truthiness_semantics_match_runtime_contract ... ok
+test jit::tests::benchmark_cache_lookup_performance ... ignored
+test jit::tests::benchmark_compilation_overhead ... ignored
+test jit::tests::benchmark_guard_generation_overhead ... ignored
+test jit::tests::benchmark_specialization_decision_overhead ... ignored
+test jit::tests::benchmark_specialized_arithmetic_chain ... ignored
+test jit::tests::benchmark_specialized_vs_generic_addition ... ignored
+test jit::tests::benchmark_type_profiling_overhead ... ignored
+test jit::tests::invoke_compiled_fn_with_arg_wrapper_forwards_argument ... ok
+test jit::tests::invoke_compiled_fn_wrapper_calls_function_pointer ... ok
+test interpreter::native_functions::system::tests::test_pipe_commands_returns_string_output_for_single_command_pipeline ... ok
+test docgen::gaps::tests::repeated_local_anchor_checks_use_cached_file_index_per_path ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_size_limit_contracts ... ok
+test jit::tests::test_compilation_without_guards_when_no_specialization ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_round_trip_behaviors ... ok
+test interpreter::native_functions::tests::test_release_hardening_env_os_path_and_assert_contracts ... ok
+test jit::tests::test_compilation_with_specialization_context ... ok
+test jit::tests::test_compile_logical_ops ... ok
+test jit::tests::test_all_arithmetic_ops_with_specialization ... ok
+test jit::tests::test_compilation_without_specialization_fallback ... ok
+test jit::tests::test_compile_comparisons ... ok
+test jit::tests::test_compile_simple_arithmetic ... ok
+test jit::tests::test_compile_stack_operations ... ok
+test jit::tests::test_float_specialization_profile ... ok
+test jit::tests::test_guard_failure_despecialization ... ok
+test jit::tests::test_guard_success_tracking ... ok
+test jit::tests::test_compile_simple_loop ... ok
+test jit::tests::test_execute_compiled_code ... ok
+test interpreter::native_functions::tests::test_release_hardening_ssg_render_pages_dispatch_contracts ... ok
+test jit::tests::test_hot_path_detection ... ok
+test jit::tests::test_guard_generation_with_specialization ... ok
+test jit::tests::test_compile_with_variables ... ok
+test jit::tests::test_int_specialized_division ... ok
+test jit::tests::test_execute_with_variables ... ok
+test jit::tests::test_int_specialized_addition ... ok
+test jit::tests::test_int_specialized_subtraction ... ok
+test jit::tests::test_jit_compiler_creation ... ok
+test jit::tests::test_jit_enable_disable ... ok
+test jit::tests::test_return_value_optimization ... ok
+test jit::tests::test_jit_stats ... ok
+test jit::tests::test_int_specialized_multiplication ... ok
+test jit::tests::test_type_profiling ... ok
+test jit::tests::test_type_profiling_mixed_types ... ok
+test lexer::tests::huge_integer_reports_overflow_diagnostic ... ok
+test lexer::tests::huge_float_reports_overflow_diagnostic ... ok
+test lexer::tests::invalid_escape_reports_diagnostic ... ok
+test lexer::tests::invalid_character_reports_diagnostic ... ok
+test interpreter::native_functions::system::tests::test_spawn_process_returns_process_result_struct ... ok
+test lexer::tests::long_identifier_reports_limit_diagnostic ... ok
+test lexer::tests::mixed_line_endings_preserve_line_column ... ok
+test lexer::tests::null_byte_reports_diagnostic ... ok
+test lexer::tests::token_byte_offsets_are_monotonic ... ok
+test lexer::tests::tokenize_with_file_attaches_file_path ... ok
+test lexer::tests::tokenizes_compound_assignment_operators ... ok
+test lexer::tests::unterminated_block_comment_reports_diagnostic ... ok
+test lexer::tests::unterminated_string_reports_diagnostic ... ok
+test lexer::tests::valid_program_still_tokenizes ... ok
+test jit::tests::test_specialized_arithmetic_chain ... ok
+test jit::tests::validate_phase4_infrastructure_complete ... ok
+test lsp_code_actions::tests::action_for_unclosed_bracket ... ok
+test jit::tests::test_multiple_specialized_variables_guards ... ok
+test lsp_code_actions::tests::action_for_unclosed_parenthesis ... ok
+test lsp_code_actions::tests::action_for_unmatched_closing_brace ... ok
+test lexer::tests::long_string_reports_limit_diagnostic ... ok
+test lsp_code_actions::tests::no_actions_for_valid_source ... ok
+test lsp_completion::tests::identifier_prefix_tracks_word_before_cursor ... ok
+test linter::tests::lint_reports_unreachable_code ... ok
+test lsp_completion::tests::completion_prefers_user_defined_symbol_kind_on_name_collision ... ok
+test lsp_definition::tests::falls_back_to_future_definition_when_no_previous_match_exists ... ok
+test linter::tests::lint_reports_missing_error_handling_pattern ... ok
+test lsp_definition::tests::finds_function_definition_for_call_site ... ok
+test linter::tests::lint_reports_obvious_type_mismatch ... ok
+test linter::tests::lint_reports_unused_variable_and_offers_fix ... ok
+test lsp_definition::tests::prefers_nearest_previous_definition_for_shadowed_variables ... ok
+test lsp_definition::tests::resolves_parameter_definition_from_function_body_usage ... ok
+test lsp_definition::tests::returns_none_when_cursor_is_not_on_identifier ... ok
+test lsp_diagnostics::tests::diagnostics_capture_parser_messages ... ok
+test lsp_diagnostics::tests::diagnostics_include_lexer_failures ... ok
+test lsp_diagnostics::tests::diagnostics_empty_for_valid_program ... ok
+test lsp_completion::tests::completion_includes_builtin_function_and_variable_matches ... ok
+test lsp_diagnostics::tests::diagnostics_report_unclosed_opening_parenthesis ... ok
+test lsp_hover::tests::hover_returns_builtin_details ... ok
+test lsp_hover::tests::hover_returns_function_details_for_user_function ... ok
+test lsp_hover::tests::hover_returns_none_when_cursor_not_on_identifier ... ok
+test lsp_diagnostics::tests::diagnostics_report_unmatched_closing_brace ... ok
+test lsp_hover::tests::hover_returns_parameter_details ... ok
+test lsp_references::tests::excludes_definition_when_requested ... ok
+test lsp_references::tests::finds_all_function_references_including_definition ... ok
+test lsp_references::tests::returns_empty_when_cursor_is_not_symbol_reference ... ok
+test lsp_references::tests::keeps_shadowed_variables_scoped_to_selected_definition ... ok
+test lsp_rename::tests::rejects_invalid_identifier_name ... ok
+test lsp_rename::tests::rejects_reserved_keyword_name ... ok
+test lsp_rename::tests::rename_stays_within_selected_shadow_scope ... ok
+test lsp_rename::tests::returns_error_when_cursor_not_on_identifier ... ok
+test lsp_rename::tests::renames_function_definition_and_call_sites ... ok
+test lsp_server::tests::cancelled_request_returns_cancelled_error ... ok
+test lsp_server::tests::did_open_publishes_diagnostics_for_document ... ok
+test lsp_server::tests::document_symbol_returns_function_and_variable_entries ... ok
+test lsp_server::tests::lifecycle_exit_without_shutdown_returns_failure_exit ... ok
+test lsp_server::tests::initialize_advertises_advanced_lsp_capabilities ... ok
+test lsp_server::tests::advanced_methods_return_deterministic_shapes ... ok
+test lsp_server::tests::lifecycle_initialize_shutdown_exit_returns_clean_exit ... ok
+test lsp_server::tests::non_object_json_message_does_not_panic_or_emit_response ... ok
+test lsp_server::tests::completion_request_uses_shared_analysis_logic ... ok
+test lsp_server::tests::workspace_symbol_filters_results_by_query ... ok
+test lsp_server::tests::random_invalid_payload_shapes_do_not_panic ... ok
+test module::tests::get_symbol_reports_missing_symbol_deterministically ... ok
+test module::tests::load_module_collects_explicit_exports_only ... ok
+test module::tests::load_module_rejects_dotted_module_names_with_empty_segments ... ok
+test module::tests::load_module_rejects_parent_traversal_module_name ... ok
+test module::tests::load_module_dotted_name_resolution_prefers_legacy_flat_filename_before_nested_path ... ok
+test module::tests::load_module_detects_circular_imports ... ok
+test module::tests::load_module_rejects_symlink_escape_outside_search_root ... ok
+test network_policy::tests::outbound_policy_default_mode_allows_loopback_destinations ... ok
+test module::tests::load_module_resolves_dotted_from_import_name_to_nested_module_path ... ok
+test interpreter::native_functions::tests::test_release_hardening_system_operation_contracts ... ok
+test module::tests::load_module_reuses_cached_nested_dotted_module_without_duplicate_cache_entries ... ok
+test module::tests::load_module_reloads_when_module_source_changes ... ok
+test network_policy::tests::outbound_policy_deny_private_blocks_loopback_destinations ... ok
+test network_policy::tests::outbound_policy_http_url_evaluation_rejects_unsupported_scheme ... ok
+test network_policy::tests::outbound_policy_invalid_mode_returns_deterministic_error ... ok
+test network_policy::tests::outbound_policy_deny_private_allows_public_ip_destinations ... ok
+test network_policy::tests::outbound_policy_http_url_evaluation_blocks_loopback_when_strict ... ok
+test module::tests::load_module_prefers_importer_package_root_for_relative_imports ... ok
+test network_policy::tests::outbound_policy_override_allows_private_destinations_in_strict_mode ... ok
+test optimizer::tests::test_constant_folding_arithmetic ... ok
+test optimizer::tests::test_constant_folding_boolean ... ok
+test optimizer::tests::test_constant_folding_string_concat ... ok
+test optimizer::tests::test_dead_code_elimination ... ok
+test optimizer::tests::test_no_division_by_zero_folding ... ok
+test optimizer::tests::test_peephole_load_pop ... ok
+test package_workflow::tests::add_dependency_rejects_empty_values ... ok
+test package_workflow::tests::default_lockfile_path_follows_manifest_directory ... ok
+test package_workflow::tests::default_manifest_contains_package_section ... ok
+test lsp_server::tests::formatting_request_returns_text_edit_when_source_changes ... ok
+test package_workflow::tests::parse_manifest_allows_reserved_package_name_for_first_party ... ok
+test path_security::tests::reject_url_encoded_parent_traversal_allows_safe_encoded_paths ... ok
+test path_security::tests::reject_url_encoded_parent_traversal_rejects_encoded_parent_components ... ok
+test path_security::tests::sanitize_relative_path_accepts_valid_nested_path ... ok
+test path_security::tests::sanitize_relative_path_rejects_absolute_paths ... ok
+test path_security::tests::sanitize_relative_path_rejects_parent_traversal ... ok
+test path_security::tests::sanitize_relative_path_rejects_windows_drive_paths ... ok
+test repl::tests::banner_text_snapshot_is_deterministic_and_no_color ... ok
+test repl::tests::help_text_snapshot_is_deterministic_and_no_color ... ok
+test repl::tests::multiline_validator_accepts_complete_input ... ok
+test repl::tests::multiline_validator_detects_line_continuation ... ok
+test package_workflow::tests::parse_manifest_rejects_reserved_package_name_for_third_party ... ok
+test repl::tests::multiline_validator_detects_unclosed_delimiters ... ok
+test reserved_names::tests::config_loads_and_validates ... ok
+test package_workflow::tests::verify_lockfile_reports_manifest_drift ... ok
+test reserved_names::tests::first_party_pack_id_allowlist_is_explicit ... ok
+test package_workflow::tests::lockfile_round_trip_is_deterministic ... ok
+test reserved_names::tests::namespace_reservations_cover_core_and_namespaces ... ok
+test package_workflow::tests::add_dependency_updates_manifest ... ok
+test reserved_names::tests::package_name_reservations_cover_reserved_package_names ... ok
+test reserved_names::tests::reserved_profile_names_are_blocked ... ok
+test reserved_names::tests::top_level_command_reservations_cover_core_and_first_party ... ok
+test serve_http::tests::guess_content_type_blocks_inferred_active_content_for_unknown_extension ... ok
+test serve_http::tests::add_common_success_headers_sets_conservative_cache_when_no_max_age ... ok
+test serve_http::tests::add_common_success_headers_sets_nosniff_for_file_responses ... ok
+test serve_http::tests::guess_content_type_covers_v1_http_007_required_mappings ... ok
+test serve_http::tests::guess_content_type_is_case_insensitive_for_known_extensions ... ok
+test serve_http::tests::guess_content_type_uses_last_extension_for_double_extension_fallback ... ok
+test serve_http::tests::guess_content_type_uses_octet_stream_for_extensionless_files ... ok
+test serve_http::tests::guess_content_type_uses_octet_stream_for_unknown_extension ... ok
+test serve_http::tests::if_none_match_detects_exact_match ... ok
+test serve_http::tests::parse_single_range_rejects_invalid_ranges ... ok
+test serve_http::tests::parse_single_range_supports_standard_and_suffix_ranges ... ok
+test serve_http::tests::split_content_path_and_encoding_only_treats_multi_extension_files_as_precompressed ... ok
+test serve_http::tests::static_text_response_includes_extra_headers_and_default_security_headers ... ok
+test serve_http::tests::status_mapped_error_uses_500_contract_for_unexpected_io_errors ... ok
+test serve_http::tests::validate_request_target_accepts_query_strings_without_affecting_path_resolution ... ok
+test serve_http::tests::validate_request_target_decodes_once_so_double_encoded_parent_is_not_treated_as_parent ... ok
+test serve_http::tests::validate_request_target_keeps_non_private_paths_available ... ok
+test serve_http::tests::validate_request_target_rejects_decoded_null_bytes ... ok
+test serve_http::tests::validate_request_target_rejects_fragment_targets ... ok
+test serve_http::tests::validate_request_target_rejects_hidden_and_private_paths ... ok
+test serve_http::tests::validate_request_target_rejects_invalid_percent_encoding ... ok
+test serve_http::tests::validate_request_target_rejects_oversized_targets ... ok
+test serve_http::tests::validate_request_target_rejects_single_decoded_parent_traversal ... ok
+test serve_http::tests::validate_server_options_rejects_zero_timeout_and_connection_limits ... ok
+test type_checker::tests::test_array_literal_infers_element_type ... ok
+test type_checker::tests::test_float_plus_float_equals_float ... ok
+test type_checker::tests::test_dict_literal_infers_key_and_value_types ... ok
+test type_checker::tests::test_arithmetic_type_promotion_all_operators ... ok
+test type_checker::tests::test_array_literal_promotes_mixed_numeric_elements_to_float ... ok
+test type_checker::tests::test_float_plus_int_equals_float ... ok
+test type_checker::tests::test_float_literal_inference ... ok
+test type_checker::tests::test_float_to_int_no_promotion ... ok
+test type_checker::tests::test_index_access_returns_inferred_container_element_type ... ok
+test type_checker::tests::test_int_literal_inference ... ok
+test type_checker::tests::test_int_plus_float_equals_float ... ok
+test type_checker::tests::test_int_plus_int_equals_int ... ok
+test type_checker::tests::test_int_to_float_promotion_in_assignment ... ok
+test type_checker::tests::test_math_function_accepts_int_via_promotion ... ok
+test type_checker::tests::test_method_call_infers_known_string_method_return_types ... ok
+test type_checker::tests::test_method_call_unknown_method_falls_back_to_any ... ok
+test type_checker::tests::test_min_with_ints ... ok
+test type_checker::tests::test_min_with_mixed_types ... ok
+test type_checker::tests::test_simple_type_inference ... ok
+test type_checker::tests::test_selective_import_registers_callable_binding ... ok
+test type_checker::tests::test_type_mismatch ... ok
+test type_checker::tests::test_selective_import_resolves_function_signature_from_module_file ... ok
+test vm::tests::test_async_function_definition ... ok
+test vm::tests::test_async_nested_calls ... ok
+test vm::tests::test_async_await_basic ... ok
+test vm::tests::test_async_promise_reuse ... ok
+test vm::tests::test_async_multiple_await ... ok
+test vm::tests::test_async_with_computation ... ok
+test vm::tests::test_await_non_promise ... ok
+test vm::tests::test_cooperative_suspend_enabled_by_default ... ok
+test vm::tests::test_create_and_list_execution_context_ids ... ok
+test vm::tests::test_execute_until_suspend_completes_without_pending_await ... ok
+test vm::tests::test_execution_snapshot_isolated_from_mutations_after_save ... ok
+test vm::tests::test_execute_until_suspend_with_single_awaiting_context ... ok
+test vm::tests::test_jit_is_disabled_by_default ... ok
+test module::tests::load_module_deep_chain_completes_and_clears_loading_index ... ok
+test vm::tests::test_jit_supported_arithmetic_program_executes_when_enabled ... ok
+test vm::tests::test_cooperative_default_preserves_backward_compat_with_non_async_code ... ok
+test vm::tests::test_make_promise_opcode ... ok
+test vm::tests::test_remove_execution_context_rejects_active_context ... ok
+test vm::tests::test_non_async_code_completes_immediately_even_in_cooperative_mode ... ok
+test vm::tests::test_jit_supported_function_call_path_matches_interpreter_result ... ok
+test vm::tests::test_restore_execution_state_replaces_globals_reference ... ok
+test vm::tests::test_cooperative_multiple_concurrent_awaits ... ok
+test vm::tests::test_run_scheduler_round_for_completed_contexts ... ok
+test vm::tests::test_run_scheduler_round_reports_pending_for_unready_context ... ok
+test vm::tests::test_run_scheduler_until_complete_errors_when_round_budget_exhausted ... ok
+test vm::tests::test_run_scheduler_until_complete_rejects_zero_rounds ... ok
+test vm::tests::test_mixed_async_and_sync_operations_in_cooperative_mode ... ok
+test vm::tests::test_run_scheduler_until_complete_with_timeout_rejects_zero_timeout ... ok
+test vm::tests::test_run_scheduler_until_complete_with_timeout_errors_when_budget_exhausted ... ok
+test vm::tests::test_resume_execution_context_removes_completed_context ... ok
+test vm::tests::test_save_restore_execution_state_round_trip ... ok
+test vm::tests::test_simple_return ... ok
+test vm::tests::test_sum_int_map_until_local_in_place_missing_key_errors ... ok
+test vm::tests::test_cooperative_scheduler_resumes_and_completes_pending_await ... ok
+test vm::tests::test_switch_execution_context_missing_context_returns_error ... ok
+test vm::tests::test_execute_until_suspend_and_resume_for_pending_await ... ok
+test vm::tests::test_switch_execution_context_restores_target_and_saves_previous ... ok
+test vm::tests::test_validate_jit_supported_surfaces_reports_unsupported_opcode ... ok
+test vm::tests::test_vm_http_server_route_method_returns_updated_server ... ok
+test vm::tests::test_run_scheduler_until_complete_with_pending_async_contexts ... ok
+test vm::tests::test_vm_for_numeric_iteration_matches_interpreter_range_contract ... ok
+test vm::tests::test_vm_http_handler_wrapper_executes_lambda_response_correctly ... ok
+test workflow_pack::discovery::tests::discover_builtin_packs_always_returned ... ok
+test workflow_pack::discovery::tests::empty_builtin_list_works ... ok
+test vm::tests::test_run_scheduler_until_complete_with_timeout_with_pending_async_contexts ... ok
+test vm::tests::test_vm_recursion_boundary_succeeds ... ok
+test workflow_pack::manifest::tests::accept_doctor_profile_contribution ... ok
+test vm::tests::test_vm_to_json_array_does_not_duplicate_entries ... ok
+test vm::tests::test_vm_to_json_serializes_fixed_dict_literals ... ok
+test workflow_pack::manifest::tests::accept_namespace_with_hyphens ... ok
+test workflow_pack::manifest::tests::accept_nested_command_name ... ok
+test vm::tests::test_vm_string_len_and_indexing_use_character_counts ... ok
+test workflow_pack::manifest::tests::allow_reserved_namespace_for_first_party_pack ... ok
+test workflow_pack::manifest::tests::first_party_can_use_reserved_doctor_profile_name ... ok
+test workflow_pack::manifest::tests::parse_valid_manifest ... ok
+test workflow_pack::manifest::tests::reject_command_name_with_leading_space ... ok
+test workflow_pack::manifest::tests::reject_duplicate_command_names ... ok
+test workflow_pack::manifest::tests::reject_empty_command_name ... ok
+test workflow_pack::manifest::tests::reject_empty_id ... ok
+test workflow_pack::manifest::tests::reject_empty_namespace ... ok
+test workflow_pack::manifest::tests::reject_invalid_namespace ... ok
+test workflow_pack::manifest::tests::reject_missing_commands ... ok
+test workflow_pack::manifest::tests::reject_missing_entry ... ok
+test workflow_pack::manifest::tests::reject_namespace_starting_with_digit ... ok
+test workflow_pack::manifest::tests::reject_namespace_with_underscore ... ok
+test workflow_pack::manifest::tests::reject_core_and_first_party_namespaces_for_third_party_pack ... ok
+test workflow_pack::manifest::tests::reject_reserved_doctor_profile_name ... ok
+test workflow_pack::manifest::tests::reject_reserved_namespace_for_third_party_pack ... ok
+test workflow_pack::process_runner::tests::truncate_output_limits_lines ... ok
+test workflow_pack::process_runner::tests::truncate_output_preserves_short_output ... ok
+test workflow_pack::registry::tests::builtin_collision_rejected ... ok
+test workflow_pack::registry::tests::builtin_pack_can_register_reserved_doctor_profile ... ok
+test workflow_pack::registry::tests::execute_doctor_profile_errors_for_unknown_profile ... ok
+test workflow_pack::registry::tests::execute_doctor_profile_rejects_builtin_entry ... ok
+test workflow_pack::registry::tests::external_pack_cannot_spoof_first_party_pack_id ... ok
+test workflow_pack::registry::tests::external_pack_registers_doctor_profile_contribution ... ok
+test workflow_pack::registry::tests::external_pack_registers_without_handler ... ok
+test workflow_pack::registry::tests::external_pack_rejects_reserved_namespace ... ok
+test workflow_pack::registry::tests::register_and_resolve_builtin ... ok
+test workflow_pack::registry::tests::unknown_command_in_known_ns_errors ... ok
+test workflow_pack::registry::tests::unknown_namespace_errors ... ok
+test workflow_pack::renderer::tests::group_checks_by_prefix ... ok
+test workflow_pack::renderer::tests::render_human_text_is_deterministic ... ok
+test workflow_pack::renderer::tests::render_markdown_includes_summary_table_and_actions ... ok
+test vm::tests::test_vm_recursion_exceeding_limit_errors ... ok
+test workflow_pack::process_runner::tests::command_exists_returns_false_for_nonexistent ... ok
+test workflow_pack::process_runner::tests::run_command_handles_failure ... ok
+test workflow_pack::process_runner::tests::run_command_first_line_works ... ok
+test workflow_pack::process_runner::tests::command_exists_returns_true_for_known_command ... ok
+test workflow_pack::process_runner::tests::run_command_captures_output ... ok
+test vm::tests::test_sum_int_map_until_local_in_place_result ... ok
+test lsp_server::tests::timeout_returns_timeout_error_shape ... ok
+test interpreter::native_functions::crypto::tests::test_hash_password_and_verify_password_round_trip ... ok
+test docgen::adapters::tests::regex_caching_micro_benchmark_evidence ... ok
+test interpreter::native_functions::crypto::tests::test_rsa_generate_encrypt_decrypt_sign_and_verify ... ok
+
+test result: ok. 675 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 24.29s
+
+     Running unittests src/main.rs (target/debug/deps/kujo-43bb389db947444e)
+
+running 692 tests
+test benchmarks::cross_language::tests::test_parse_checksum_extracts_integer ... ok
+test benchmarks::cross_language::tests::test_parse_metric_value_trims_spaces ... ok
+test benchmarks::cross_language::tests::test_speedup_calculations ... ok
+test benchmarks::cross_language::tests::test_parse_metric_value_extracts_float ... ok
+test benchmarks::profiler::tests::test_jit_stats ... ok
+test benchmarks::cross_language::tests::test_parse_metric_value_missing_key_returns_error ... ok
+test benchmarks::cross_language::tests::test_parse_checksum_invalid_value_returns_error ... ok
+test benchmarks::profiler::tests::test_memory_profile_tracking ... ok
+test benchmarks::profiler::tests::generate_flamegraph_data_is_stable_for_known_profile ... ok
+test benchmarks::profiler::tests::test_cpu_profile_recording ... ok
+test benchmarks::reporter::tests::render_comparison_table_text_is_deterministic ... ok
+test benchmarks::reporter::tests::render_summary_text_includes_totals_and_speedups ... ok
+test benchmarks::profiler::tests::render_profile_report_text_is_deterministic_and_no_color ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_empty_fails ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_inconsistent_files_fails ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_inconsistent_python_presence_fails ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_with_python ... ok
+test benchmarks::ssg::tests::test_aggregate_ssg_results_without_python ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_handles_zero_first_value_percent_delta ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_rejects_inconsistent_python_presence ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_returns_none_for_single_run ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_with_python_and_speedup ... ok
+test benchmarks::ssg::tests::test_analyze_ssg_benchmark_trends_without_python ... ok
+test benchmarks::ssg::tests::test_collect_ssg_mean_median_drift_warnings_custom_threshold_can_trigger_warning ... ok
+test benchmarks::ssg::tests::test_collect_ssg_mean_median_drift_warnings_flags_high_drift_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_mean_median_drift_warnings_skips_stable_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_range_spread_warnings_flags_high_spread_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_range_spread_warnings_respects_threshold_override ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_custom_threshold_can_trigger_warning ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_flags_large_percent_deltas ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_requires_three_measured_runs ... ok
+test benchmarks::ssg::tests::test_collect_ssg_trend_warnings_skips_small_or_percentless_deltas ... ok
+test benchmarks::ssg::tests::test_collect_ssg_variability_warnings_custom_threshold_can_suppress_warning ... ok
+test benchmarks::ssg::tests::test_collect_ssg_variability_warnings_flags_high_variability_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_variability_warnings_skips_low_variability_metrics ... ok
+test benchmarks::ssg::tests::test_collect_ssg_warning_operator_hints_contains_all_override_flags ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_fails_when_median_exceeds_threshold ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_passes_when_median_within_threshold ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_rejects_invalid_observed_median ... ok
+test benchmarks::ssg::tests::test_evaluate_ssg_throughput_gate_rejects_invalid_threshold ... ok
+test benchmarks::ssg::tests::test_format_ssg_measurement_warning_header_includes_threshold_values ... ok
+test benchmarks::ssg::tests::test_format_ssg_throughput_gate_summary_reports_status_and_margin ... ok
+test benchmarks::ssg::tests::test_format_ssg_trend_warning_header_includes_threshold_value ... ok
+test benchmarks::ssg::tests::test_parse_checksum_extracts_integer ... ok
+test benchmarks::ssg::tests::test_parse_checksum_invalid_value_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_usize_extracts_integer ... ok
+test benchmarks::ssg::tests::test_parse_metric_usize_invalid_value_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_extracts_float ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_missing_key_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_optional_absent_returns_none ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_optional_invalid_returns_error ... ok
+test benchmarks::ssg::tests::test_parse_metric_value_optional_present ... ok
+test benchmarks::ssg::tests::test_resolve_tmp_dir_override_none_returns_none ... ok
+test benchmarks::ssg::tests::test_render_ssg_benchmark_report_snapshot ... ok
+test benchmarks::ssg::tests::test_resolve_tmp_dir_override_rejects_non_utf8_path ... ok
+test benchmarks::ssg::tests::test_resolve_tmp_dir_override_some_returns_string_path ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_rejects_missing_kujo_script_preflight ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_rejects_zero_measured_runs ... ok
+test benchmarks::profiler::tests::test_profiler_workflow ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_rejects_missing_python_script_preflight ... ok
+test benchmarks::ssg::tests::test_run_statistics_coefficient_of_variation_percent ... ok
+test benchmarks::ssg::tests::test_run_statistics_coefficient_of_variation_zero_mean_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_from_samples_even_count ... ok
+test benchmarks::ssg::tests::test_run_statistics_empty_samples_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_from_samples_odd_count ... ok
+test benchmarks::ssg::tests::test_run_statistics_high_mean_median_drift_requires_three_runs ... ok
+test benchmarks::ssg::tests::test_run_statistics_high_variability_requires_three_runs ... ok
+test benchmarks::ssg::tests::test_run_statistics_mean_median_drift_percent ... ok
+test benchmarks::runner::tests::test_simple_benchmark ... ok
+test benchmarks::ssg::tests::test_run_statistics_mean_median_drift_percent_zero_median_returns_none ... ok
+test benchmarks::ssg::tests::test_run_statistics_percentiles_are_monotonic_with_distribution_bounds ... ok
+test benchmarks::ssg::tests::test_run_statistics_percentiles_single_sample_equal_sample ... ok
+test benchmarks::ssg::tests::test_run_statistics_range_spread_percent ... ok
+test benchmarks::ssg::tests::test_run_statistics_range_spread_percent_zero_median_returns_none ... ok
+test benchmarks::ssg::tests::test_speedup_calculation ... ok
+test benchmarks::ssg::tests::test_speedup_calculation_handles_zero_kujo_duration ... ok
+test benchmarks::ssg::tests::test_speedup_calculation_without_python_result ... ok
+test benchmarks::ssg::tests::test_stage_profile_bottleneck_read ... ok
+test benchmarks::ssg::tests::test_stage_profile_bottleneck_render_write ... ok
+test benchmarks::ssg::tests::test_stage_profile_bottleneck_zero_total_returns_none ... ok
+test benchmarks::ssg::tests::test_stage_profile_total_profiled_ms ... ok
+test benchmarks::stats::tests::test_compare_speedup ... ok
+test benchmarks::stats::tests::test_format_duration ... ok
+test benchmarks::stats::tests::test_statistics ... ok
+test builtins::tests::test_format_date_rejects_non_finite_timestamp_without_panicking ... ok
+test builtins::tests::test_format_date_rejects_out_of_range_timestamp_without_panicking ... ok
+test builtins::tests::test_json_roundtrip_array_of_objects_preserves_cardinality ... ok
+test builtins::tests::test_math_functions ... ok
+test builtins::tests::test_safe_duration_since_unix_epoch_clamps_pre_epoch_values_to_zero ... ok
+test builtins::tests::test_safe_duration_since_unix_epoch_returns_positive_duration_for_post_epoch ... ok
+test builtins::tests::test_string_functions ... ok
+test builtins::tests::test_to_json_array_does_not_duplicate_entries ... ok
+test benchmarks::timer::tests::test_time_once ... ok
+test builtins::tests::test_to_json_fixed_dict_serializes_successfully ... ok
+test builtins::tests::test_to_json_pretty_includes_newlines_and_indentation ... ok
+test cli_output::tests::format_helpers_render_stable_shapes ... ok
+test cli_output::tests::optional_json_record_serializes_record_or_null ... ok
+test benchmarks::timer::tests::test_benchmark ... ok
+test cli_output::tests::to_json_array_maps_rows_and_surfaces_serialization_errors ... ok
+test benchmarks::timer::tests::test_timer ... ok
+test cli_output::tests::to_pretty_json_serializes_objects ... ok
+test cli_output::tests::to_pretty_json_surfaces_serialization_errors ... ok
+test docgen::adapters::common::tests::visibility_helpers_cover_modifier_name_and_container_rules ... ok
+test docgen::adapters::tests::adapter_lookup_handles_language_and_extension_normalization ... ok
+test benchmarks::runner::tests::test_benchmark_error_handling ... ok
+test docgen::adapters::tests::capability_index_and_language_ids_are_sorted_and_aligned ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_fails_when_required_kujo_metric_missing ... ok
+test docgen::adapters::tests::static_lookup_avoids_legacy_full_registry_construction_cost ... ok
+test doc_generator::tests::extract_doc_items_reads_comments_and_examples ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_reports_warmup_failures ... ok
+test docgen::discovery::tests::discover_emits_max_depth_diagnostic ... ok
+test docgen::discovery::tests::discover_emits_max_file_size_diagnostic ... ok
+test docgen::discovery::tests::discover_diagnostics_have_deterministic_sorted_order ... ok
+test docgen::discovery::tests::discover_emits_max_files_diagnostic_and_truncates ... ok
+test docgen::discovery::tests::discover_skip_counts_are_zero_without_skips ... ok
+test docgen::discovery::tests::discover_handles_mixed_utf8_and_non_utf8_sources ... ok
+test docgen::discovery::tests::discover_skips_non_utf8_source_with_deterministic_diagnostic ... ok
+test docgen::adapters::tests::c_style_adapter_conformance_preserves_typescript_and_javascript_contracts ... ok
+test docgen::gaps::tests::build_gaps_uses_indexed_call_sites_and_preserves_known_call_sites_output ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_reports_measured_failures ... ok
+test docgen::render::tests::source_link_template_rejects_unsafe_paths ... ok
+test docgen::render::tests::source_link_template_renders_expected_url ... ok
+test errors::tests::line_column_conversion_handles_multiline_utf8 ... ok
+test docgen::gaps::tests::gap_call_site_index_matches_legacy_order_and_limit_semantics ... ok
+test errors::tests::source_span_from_start_and_len_tracks_byte_bounds ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_fails_on_python_checksum_mismatch ... ok
+test docgen::gaps::tests::large_input_call_site_index_scans_each_source_line_once ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_fails_when_required_python_metric_missing ... ok
+test http_request_utils::tests::split_http_path_and_query_ignores_empty_keys_and_accepts_missing_values ... ok
+test http_request_utils::tests::split_http_path_and_query_parses_pairs_without_decoding ... ok
+test http_request_utils::tests::split_http_path_and_query_with_decoded_falls_back_to_raw_on_invalid_encoding ... ok
+test http_request_utils::tests::split_http_path_and_query_with_decoded_parses_percent_and_plus_components ... ok
+test http_request_utils::tests::split_http_path_and_query_without_query_returns_empty_metadata ... ok
+test interpreter::async_runtime::tests::test_block_on_simple ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_profile_toggle_controls_stage_profile_capture ... ok
+test interpreter::async_runtime::tests::test_runtime_initialization ... ok
+test formatter::tests::formatter_wraps_long_comma_separated_lines ... ok
+test interpreter::async_runtime::tests::test_spawn_task ... ok
+test docgen::adapters::tests::cached_regex_extractors_remain_stable_for_success_failure_and_edge_inputs ... ok
+test interpreter::async_runtime::tests::test_timeout_success ... ok
+test interpreter::native_functions::async_ops::tests::cache_promise_result_returns_error_when_lock_poisoned ... ok
+test interpreter::native_functions::async_ops::tests::read_cached_promise_result_returns_error_when_lock_poisoned ... ok
+test interpreter::native_functions::async_ops::tests::test_async_read_files_propagates_missing_file_error ... ok
+test interpreter::async_runtime::tests::test_timeout_expired ... ok
+test interpreter::native_functions::async_ops::tests::test_async_read_files_rejects_invalid_path_element ... ok
+test interpreter::native_functions::async_ops::tests::test_async_read_files_reads_multiple_files_in_order ... ok
+test interpreter::native_functions::async_ops::tests::test_async_write_files_validates_lengths_and_types ... ok
+test interpreter::native_functions::async_ops::tests::test_get_task_pool_size_rejects_arguments ... ok
+test interpreter::native_functions::async_ops::tests::test_async_write_files_writes_all_files_and_returns_bools ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_alias_error_shape_matches_parallel_map_for_validation ... ok
+test interpreter::async_runtime::tests::test_concurrent_tasks_under_timeout_budget ... ok
+test interpreter::async_runtime::tests::test_sleep ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_propagates_rejected_promise ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_rejects_non_array_input ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_rejects_non_callable_mapper ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_validates_concurrency_limit ... ok
+test interpreter::native_functions::async_ops::tests::test_par_each_resolves_to_null_on_success ... ok
+test interpreter::native_functions::async_ops::tests::test_par_map_alias_matches_parallel_map_behavior ... ok
+test benchmarks::ssg::tests::test_run_ssg_benchmark_series_warmups_are_excluded_from_measured_results ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_async_read_file_preserves_order_with_limit ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rayon_len_mixed_collection_inputs ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_propagates_rejected_promises ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rayon_validates_mapper_input_types ... ok
+test interpreter::native_functions::async_ops::tests::test_par_map_alias_with_bytecode_mapper ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_bytecode_mapper_uses_vm_jit_lane ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rayon_upper_and_lower_aliases ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_rejects_non_callable_mapper ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_validates_concurrency_limit ... ok
+test interpreter::native_functions::async_ops::tests::test_set_task_pool_size_round_trip ... ok
+test interpreter::native_functions::async_ops::tests::test_set_task_pool_size_validates_input ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_and_prefixes_for_batch_generates_parallel_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_and_prefixes_for_batch_handles_empty_input ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_and_prefixes_for_batch_reuses_cached_prefixes_for_same_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_output_paths_for_batch_generates_stable_indexed_paths ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_build_render_prefixes_for_batch_generates_stable_prefixes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_get_or_build_output_file_suffixes_reuses_cached_arc_for_same_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_get_or_create_rayon_pool_reuses_existing_pool_for_same_size ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_get_or_create_rayon_pool_distinguishes_thread_counts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_rayon_cpu_cap_returns_at_least_one ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_ahead_limit_expands_up_to_double_concurrency ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_ahead_limit_handles_zero_inputs_defensively ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_ahead_limit_is_capped_by_file_count ... ok
+test interpreter::native_functions::async_ops::tests::test_parallel_map_handles_non_promise_results ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_empty_input_returns_zero_summary ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_checksum_matches_written_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_extreme_concurrency_limit_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_propagates_read_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_propagates_write_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_single_worker_preserves_output_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_unicode_checksum_matches_written_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_validates_argument_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_writes_html_and_returns_stage_metrics ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_source_file_bytes_reuses_buffer_across_large_then_small_reads ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_checksum_matches_rendered_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_empty_input_returns_zero_summary ... ok
+test interpreter::async_runtime::tests::test_concurrent_tasks ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_high_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_single_worker_prefetch_preserves_index_mapping ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_propagates_write_failure ... ok
+test formatter::tests::formatter_sorts_leading_import_block ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_unicode_checksum_matches_written_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_validates_argument_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_writes_html_and_returns_summary ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_large_batch_single_worker_completes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_high_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_large_batch_low_concurrency_preserves_outputs ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_single_worker_preserves_output_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_allows_non_utf8_source_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_checksum_matches_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_can_skip_stage_timers ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_oversized_concurrency_limit_clamps_to_cpu_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_propagates_read_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_propagates_write_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_cpu_cap_equal_concurrency_limit_produces_correct_output ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_mixed_source_sizes_preserve_page_isolation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_rejects_shape_mismatch ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_reads_and_writes_correctly ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_cached_pool_repeated_calls_preserve_checksum_contract ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_unicode_checksum_matches_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_propagates_write_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_rejects_shape_mismatch ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_reads_and_writes_correctly ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_with_reused_output_path_buffer_preserves_checksum_and_stage_toggle ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_single_worker_preserves_index_mapping ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_cumulative_timing_grows_with_file_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_timing_fields_are_non_negative ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_prefetch_single_worker_read_requires_remaining_without_pending_write ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_false_when_write_lane_is_saturated ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_false_without_backlog ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_handles_zero_limit_defensively ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_should_refill_writes_first_with_pending_backlog_and_available_slot ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_small_concurrency_limit_respected_below_cpu_count ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_checksum_matches_prefix_plus_body_plus_suffix_length ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_output_matches_expected_html_structure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_unicode_content_checksum_is_byte_accurate ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_target_read_in_flight_allows_full_window_with_empty_write_backlog ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_target_read_in_flight_handles_zero_limits_defensively ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_target_read_in_flight_scales_down_as_write_backlog_grows ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_handles_empty_source_body ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_sync_vectored_write_failure_propagates_error ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_propagates_create_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_handles_large_source_body_without_truncation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_returns_total_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_returns_utf8_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_streams_exact_content_and_length ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_bytes_supports_non_utf8_source_body ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_handles_empty_source_body ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_propagates_create_failure ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_returns_utf8_written_bytes ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_handles_large_source_body_without_truncation ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_write_rendered_html_page_sync_streams_exact_content_and_length ... ok
+test interpreter::native_functions::collections::tests::test_array_and_higher_order_collection_strict_arity_contracts ... ok
+test interpreter::native_functions::collections::tests::test_array_collection_behavior_contracts ... ok
+test interpreter::native_functions::collections::tests::test_collection_helpers_reject_wrong_types_instead_of_silent_fallbacks ... ok
+test interpreter::native_functions::collections::tests::test_fixed_dict_invert_update_get_default_contracts ... ok
+test interpreter::native_functions::collections::tests::test_fixed_dict_merge_clear_remove_contracts ... ok
+test interpreter::native_functions::crypto::tests::test_aes_encrypt_and_decrypt_round_trip ... ok
+test interpreter::native_functions::crypto::tests::test_aes_encrypt_bytes_and_decrypt_bytes_round_trip ... ok
+test interpreter::native_functions::crypto::tests::test_crypto_argument_validation_contracts ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_single_pass_large_batch_preserves_checksum ... ok
+test interpreter::native_functions::crypto::tests::test_md5_file_hashes_file_contents ... ok
+test interpreter::native_functions::crypto::tests::test_sha256_and_md5_hashes_match_known_values ... ok
+test interpreter::native_functions::crypto::tests::test_sha256_file_hashes_binary_contents ... ok
+test interpreter::native_functions::database::tests::test_db_argument_shape_errors ... ok
+test interpreter::native_functions::database::tests::test_db_connect_execute_query_close_sqlite ... ok
+test interpreter::native_functions::database::tests::test_db_pool_accepts_fixed_dict_optional_config ... ok
+test interpreter::native_functions::database::tests::test_db_pool_acquire_release_stats_close_sqlite ... ok
+test interpreter::native_functions::database::tests::test_db_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_reports_error_when_any_partition_read_fails ... ok
+test interpreter::native_functions::database::tests::test_db_transaction_begin_commit_and_rollback_sqlite ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_read_render_and_write_pages_large_batch_low_concurrency_preserves_outputs ... ok
+test doc_generator::tests::generate_docs_writes_module_and_builtin_pages ... ok
+test interpreter::native_functions::http::tests::test_ai_helpers_surface_contract_failures_and_edge_validation ... ok
+test interpreter::native_functions::http::tests::test_http_argument_shape_contract_errors ... ok
+test formatter::tests::formatter_normalizes_spacing_and_indentation ... ok
+test interpreter::native_functions::http::tests::test_http_response_helpers_and_header_mutation ... ok
+test interpreter::native_functions::http::tests::test_redirect_and_server_helpers ... ok
+test interpreter::native_functions::io::tests::test_io_argument_shape_errors ... ok
+test interpreter::native_functions::io::tests::test_io_copy_range ... ok
+test interpreter::native_functions::io::tests::test_io_eprint_returns_null ... ok
+test interpreter::native_functions::io::tests::test_io_file_metadata_and_truncate ... ok
+test interpreter::native_functions::io::tests::test_io_read_at_write_at_and_seek_read ... ok
+test interpreter::native_functions::io::tests::test_io_read_write_append_bytes_round_trip ... ok
+test interpreter::native_functions::io::tests::test_io_strict_arity_rejects_trailing_arguments ... ok
+test interpreter::native_functions::json::tests::test_base64_encode_decode ... ok
+test interpreter::native_functions::json::tests::test_data_format_and_base64_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::json::tests::test_data_format_argument_validation_errors ... ok
+test interpreter::native_functions::json::tests::test_parse_csv_and_to_csv ... ok
+test interpreter::native_functions::json::tests::test_parse_json_and_to_json_round_trip ... ok
+test interpreter::native_functions::json::tests::test_parse_toml_and_to_toml ... ok
+test interpreter::native_functions::json::tests::test_parse_yaml_and_to_yaml ... ok
+test interpreter::native_functions::math::tests::test_bitwise_api_contracts ... ok
+test interpreter::native_functions::math::tests::test_math_api_domain_and_success_contracts ... ok
+test interpreter::native_functions::math::tests::test_math_api_rejects_missing_and_invalid_arguments ... ok
+test interpreter::native_functions::math::tests::test_math_api_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::strings::tests::test_contains_and_index_of_argument_shape_errors ... ok
+test interpreter::native_functions::strings::tests::test_contains_and_index_of_delegate_array_case_to_collections ... ok
+test interpreter::native_functions::strings::tests::test_contains_and_index_of_string_behavior ... ok
+test interpreter::native_functions::strings::tests::test_contains_supports_dictionary_keys ... ok
+test interpreter::native_functions::strings::tests::test_core_string_helpers_reject_wrong_types_instead_of_silent_fallbacks ... ok
+test interpreter::native_functions::strings::tests::test_regex_argument_validation_errors ... ok
+test interpreter::native_functions::strings::tests::test_regex_match_and_find_all ... ok
+test interpreter::native_functions::strings::tests::test_regex_replace_and_split ... ok
+test interpreter::native_functions::strings::tests::test_ssg_build_output_paths_success_custom_extension ... ok
+test interpreter::native_functions::strings::tests::test_ssg_build_output_paths_success_default_extension ... ok
+test interpreter::native_functions::strings::tests::test_ssg_build_output_paths_validates_argument_contracts ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_requires_array_argument ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_requires_string_elements ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_success_returns_pages_and_checksum ... ok
+test interpreter::native_functions::strings::tests::test_ssg_render_pages_validates_argument_count ... ok
+test interpreter::native_functions::strings::tests::test_substr_alias_matches_substring_behavior ... ok
+test interpreter::native_functions::system::tests::test_arg_parser_returns_struct_shape ... ok
+test interpreter::native_functions::system::tests::test_args_returns_array ... ok
+test interpreter::native_functions::system::tests::test_env_bool_invalid_value_returns_error_object ... ok
+test interpreter::native_functions::system::tests::test_env_int_missing_variable_returns_error_object ... ok
+test interpreter::native_functions::system::tests::test_env_set_and_env_round_trip ... ok
+test interpreter::native_functions::system::tests::test_execute_status_returns_process_result_struct ... ok
+test interpreter::native_functions::system::tests::test_kv_set_and_get_round_trip ... ok
+test interpreter::native_functions::system::tests::test_parse_date_invalid_input_returns_error_object ... ok
+test interpreter::native_functions::system::tests::test_pipe_commands_rejects_invalid_argument_shape ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_run_rayon_read_render_write_partitioned_large_batch_checksum_matches_written_bytes ... ok
+test interpreter::native_functions::system::tests::test_process_api_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::system::tests::test_random_time_env_and_args_api_strict_arity_rejects_extra_arguments ... ok
+test interpreter::native_functions::system::tests::test_spawn_process_rejects_invalid_argument_shape ... ok
+test interpreter::native_functions::async_ops::tests::test_ssg_render_and_write_pages_preserves_large_index_heading_contract ... ok
+test interpreter::native_functions::system::tests::test_uuid_random_id_and_time_helpers ... ok
+test interpreter::native_functions::tests::test_release_hardening_advanced_string_methods_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_array_and_higher_order_collection_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_alias_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_batch_file_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_file_wrapper_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_http_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_async_sleep_timeout_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_builtin_dispatch_coverage_for_declared_builtins ... ok
+test interpreter::native_functions::tests::test_release_hardening_builtin_dispatch_coverage_for_recent_apis ... ok
+test interpreter::native_functions::tests::test_release_hardening_channel_and_task_handle_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_collections_and_format_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_contains_index_of_argument_and_polymorphic_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_conversion_and_bytes_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_core_alias_behavior_parity_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_crypto_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_data_format_and_regex_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_database_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::system::tests::test_pipe_commands_returns_string_output_for_single_command_pipeline ... ok
+test interpreter::native_functions::tests::test_release_hardening_filesystem_core_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_gif_to_webp_dispatch_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_http_advanced_api_behavior_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_http_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_io_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_len_polymorphic_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_load_image_dispatch_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_load_image_round_trip_behavior ... ok
+test interpreter::native_functions::tests::test_release_hardening_math_behavior_and_error_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::http::tests::test_ai_chat_non_json_response_returns_deterministic_failure_result ... ok
+test interpreter::native_functions::http::tests::test_ai_embedding_extracts_numeric_vector_regression ... ok
+test interpreter::native_functions::tests::test_release_hardening_env_os_path_and_assert_contracts ... ok
+test interpreter::native_functions::http::tests::test_http_request_supports_single_request_dictionary_form ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_round_trip_behaviors ... ok
+test interpreter::native_functions::http::tests::test_ai_chat_success_path_returns_normalized_result_and_request_payload ... ok
+test interpreter::native_functions::tests::test_release_hardening_process_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_strict_arity_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_set_constructor_dispatch_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_set_queue_stack_method_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_shared_state_and_task_pool_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_string_utility_behavior_and_error_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_string_transform_and_tokenization_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_system_random_and_time_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_zip_module_dispatch_argument_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_network_module_size_limit_contracts ... ok
+test interpreter::native_functions::tests::test_release_hardening_type_and_is_introspection_contracts ... ok
+test interpreter::native_functions::tests::test_unknown_native_function_returns_explicit_error ... ok
+test interpreter::native_functions::type_ops::tests::test_assertion_api_strict_arity_contracts ... ok
+test interpreter::native_functions::tests::test_vm_for_iterable_normalization_contracts ... ok
+test interpreter::native_functions::type_ops::tests::test_conversion_and_introspection_api_strict_arity_contracts ... ok
+test interpreter::native_functions::type_ops::tests::test_debug_remains_variadic ... ok
+test docgen::gaps::tests::repeated_external_host_checks_reuse_single_http_client ... ok
+test interpreter::runtime_limit_tests::function_context_allows_boundary_minus_one ... ok
+test interpreter::value::tests::cloned_function_body_can_be_dropped_multiple_times ... ok
+test docgen::gaps::tests::repeated_local_anchor_checks_use_cached_file_index_per_path ... ok
+test interpreter::value::tests::cloned_handles_share_same_function_body_storage ... ok
+test interpreter::runtime_limit_tests::function_context_rejects_depth_at_limit ... ok
+test interpreter::runtime_limit_tests::function_context_rejects_call_stack_at_limit ... ok
+test interpreter::value::tests::function_body_retains_statements ... ok
+test interpreter::value::tests::value_compare_order_rejects_unsupported_types ... ok
+test interpreter::value::tests::value_equals_supports_function_and_native_identity ... ok
+test jit::tests::benchmark_cache_lookup_performance ... ignored
+test interpreter::value::tests::value_equals_supports_numeric_cross_type_and_nested_collections ... ok
+test jit::tests::benchmark_compilation_overhead ... ignored
+test jit::tests::benchmark_guard_generation_overhead ... ignored
+test interpreter::value::tests::value_truthiness_semantics_match_runtime_contract ... ok
+test interpreter::native_functions::tests::test_release_hardening_ssg_render_pages_dispatch_contracts ... ok
+test jit::tests::benchmark_specialization_decision_overhead ... ignored
+test jit::tests::benchmark_specialized_arithmetic_chain ... ignored
+test jit::tests::benchmark_specialized_vs_generic_addition ... ignored
+test jit::tests::benchmark_type_profiling_overhead ... ignored
+test interpreter::native_functions::tests::test_release_hardening_zip_module_round_trip_behaviors ... ok
+test jit::tests::invoke_compiled_fn_with_arg_wrapper_forwards_argument ... ok
+test jit::tests::invoke_compiled_fn_wrapper_calls_function_pointer ... ok
+test jit::tests::test_compilation_without_guards_when_no_specialization ... ok
+test jit::tests::test_compilation_without_specialization_fallback ... ok
+test jit::tests::test_compilation_with_specialization_context ... ok
+test jit::tests::test_compile_logical_ops ... ok
+test jit::tests::test_compile_comparisons ... ok
+test interpreter::native_functions::system::tests::test_spawn_process_returns_process_result_struct ... ok
+test jit::tests::test_compile_simple_arithmetic ... ok
+test jit::tests::test_all_arithmetic_ops_with_specialization ... ok
+test jit::tests::test_compile_stack_operations ... ok
+test jit::tests::test_float_specialization_profile ... ok
+test jit::tests::test_guard_failure_despecialization ... ok
+test jit::tests::test_compile_simple_loop ... ok
+test jit::tests::test_guard_success_tracking ... ok
+test jit::tests::test_hot_path_detection ... ok
+test jit::tests::test_execute_with_variables ... ok
+test jit::tests::test_execute_compiled_code ... ok
+test jit::tests::test_guard_generation_with_specialization ... ok
+test jit::tests::test_jit_compiler_creation ... ok
+test jit::tests::test_jit_enable_disable ... ok
+test jit::tests::test_int_specialized_addition ... ok
+test jit::tests::test_compile_with_variables ... ok
+test jit::tests::test_jit_stats ... ok
+test jit::tests::test_int_specialized_division ... ok
+test jit::tests::test_return_value_optimization ... ok
+test jit::tests::test_type_profiling_mixed_types ... ok
+test jit::tests::test_type_profiling ... ok
+test jit::tests::test_int_specialized_multiplication ... ok
+test lexer::tests::huge_integer_reports_overflow_diagnostic ... ok
+test jit::tests::test_int_specialized_subtraction ... ok
+test lexer::tests::huge_float_reports_overflow_diagnostic ... ok
+test lexer::tests::invalid_character_reports_diagnostic ... ok
+test jit::tests::test_specialized_arithmetic_chain ... ok
+test lexer::tests::invalid_escape_reports_diagnostic ... ok
+test jit::tests::validate_phase4_infrastructure_complete ... ok
+test lexer::tests::long_identifier_reports_limit_diagnostic ... ok
+test jit::tests::test_multiple_specialized_variables_guards ... ok
+test lexer::tests::mixed_line_endings_preserve_line_column ... ok
+test lexer::tests::null_byte_reports_diagnostic ... ok
+test lexer::tests::token_byte_offsets_are_monotonic ... ok
+test lexer::tests::tokenize_with_file_attaches_file_path ... ok
+test lexer::tests::tokenizes_compound_assignment_operators ... ok
+test lexer::tests::unterminated_block_comment_reports_diagnostic ... ok
+test lexer::tests::unterminated_string_reports_diagnostic ... ok
+test lexer::tests::valid_program_still_tokenizes ... ok
+test lsp_code_actions::tests::action_for_unclosed_bracket ... ok
+test lsp_code_actions::tests::action_for_unclosed_parenthesis ... ok
+test lsp_code_actions::tests::action_for_unmatched_closing_brace ... ok
+test lsp_code_actions::tests::no_actions_for_valid_source ... ok
+test lexer::tests::long_string_reports_limit_diagnostic ... ok
+test linter::tests::lint_reports_missing_error_handling_pattern ... ok
+test linter::tests::lint_reports_unreachable_code ... ok
+test linter::tests::lint_reports_obvious_type_mismatch ... ok
+test lsp_completion::tests::identifier_prefix_tracks_word_before_cursor ... ok
+test lsp_definition::tests::falls_back_to_future_definition_when_no_previous_match_exists ... ok
+test lsp_definition::tests::finds_function_definition_for_call_site ... ok
+test lsp_completion::tests::completion_prefers_user_defined_symbol_kind_on_name_collision ... ok
+test lsp_definition::tests::prefers_nearest_previous_definition_for_shadowed_variables ... ok
+test lsp_definition::tests::resolves_parameter_definition_from_function_body_usage ... ok
+test linter::tests::lint_reports_unused_variable_and_offers_fix ... ok
+test lsp_definition::tests::returns_none_when_cursor_is_not_on_identifier ... ok
+test lsp_diagnostics::tests::diagnostics_capture_parser_messages ... ok
+test lsp_diagnostics::tests::diagnostics_include_lexer_failures ... ok
+test lsp_diagnostics::tests::diagnostics_empty_for_valid_program ... ok
+test lsp_diagnostics::tests::diagnostics_report_unclosed_opening_parenthesis ... ok
+test lsp_diagnostics::tests::diagnostics_report_unmatched_closing_brace ... ok
+test lsp_hover::tests::hover_returns_builtin_details ... ok
+test lsp_hover::tests::hover_returns_function_details_for_user_function ... ok
+test lsp_hover::tests::hover_returns_none_when_cursor_not_on_identifier ... ok
+test lsp_hover::tests::hover_returns_parameter_details ... ok
+test lsp_completion::tests::completion_includes_builtin_function_and_variable_matches ... ok
+test lsp_references::tests::excludes_definition_when_requested ... ok
+test lsp_references::tests::finds_all_function_references_including_definition ... ok
+test lsp_references::tests::returns_empty_when_cursor_is_not_symbol_reference ... ok
+test lsp_rename::tests::rejects_invalid_identifier_name ... ok
+test lsp_references::tests::keeps_shadowed_variables_scoped_to_selected_definition ... ok
+test lsp_rename::tests::rejects_reserved_keyword_name ... ok
+test interpreter::value::tests::drops_deeply_nested_function_body_without_recursion_overflow ... ok
+test lsp_rename::tests::rename_stays_within_selected_shadow_scope ... ok
+test lsp_rename::tests::returns_error_when_cursor_not_on_identifier ... ok
+test lsp_rename::tests::renames_function_definition_and_call_sites ... ok
+test lsp_server::tests::cancelled_request_returns_cancelled_error ... ok
+test lsp_server::tests::advanced_methods_return_deterministic_shapes ... ok
+test lsp_server::tests::did_open_publishes_diagnostics_for_document ... ok
+test lsp_server::tests::document_symbol_returns_function_and_variable_entries ... ok
+test lsp_server::tests::initialize_advertises_advanced_lsp_capabilities ... ok
+test lsp_server::tests::lifecycle_exit_without_shutdown_returns_failure_exit ... ok
+test lsp_server::tests::lifecycle_initialize_shutdown_exit_returns_clean_exit ... ok
+test lsp_server::tests::non_object_json_message_does_not_panic_or_emit_response ... ok
+test lsp_server::tests::completion_request_uses_shared_analysis_logic ... ok
+test lsp_server::tests::workspace_symbol_filters_results_by_query ... ok
+test interpreter::native_functions::tests::test_release_hardening_system_operation_contracts ... ok
+test lsp_server::tests::random_invalid_payload_shapes_do_not_panic ... ok
+test module::tests::load_module_rejects_dotted_module_names_with_empty_segments ... ok
+test module::tests::get_symbol_reports_missing_symbol_deterministically ... ok
+test module::tests::load_module_collects_explicit_exports_only ... ok
+test module::tests::load_module_rejects_parent_traversal_module_name ... ok
+test module::tests::load_module_detects_circular_imports ... ok
+test module::tests::load_module_dotted_name_resolution_prefers_legacy_flat_filename_before_nested_path ... ok
+test network_policy::tests::outbound_policy_default_mode_allows_loopback_destinations ... ok
+test module::tests::load_module_rejects_symlink_escape_outside_search_root ... ok
+test network_policy::tests::outbound_policy_deny_private_allows_public_ip_destinations ... ok
+test network_policy::tests::outbound_policy_deny_private_blocks_loopback_destinations ... ok
+test network_policy::tests::outbound_policy_http_url_evaluation_blocks_loopback_when_strict ... ok
+test network_policy::tests::outbound_policy_http_url_evaluation_rejects_unsupported_scheme ... ok
+test network_policy::tests::outbound_policy_override_allows_private_destinations_in_strict_mode ... ok
+test network_policy::tests::outbound_policy_invalid_mode_returns_deterministic_error ... ok
+test optimizer::tests::test_constant_folding_arithmetic ... ok
+test optimizer::tests::test_constant_folding_boolean ... ok
+test optimizer::tests::test_constant_folding_string_concat ... ok
+test optimizer::tests::test_dead_code_elimination ... ok
+test optimizer::tests::test_no_division_by_zero_folding ... ok
+test optimizer::tests::test_peephole_load_pop ... ok
+test package_workflow::tests::add_dependency_rejects_empty_values ... ok
+test package_workflow::tests::default_lockfile_path_follows_manifest_directory ... ok
+test package_workflow::tests::default_manifest_contains_package_section ... ok
+test module::tests::load_module_resolves_dotted_from_import_name_to_nested_module_path ... ok
+test package_workflow::tests::parse_manifest_allows_reserved_package_name_for_first_party ... ok
+test package_workflow::tests::parse_manifest_rejects_reserved_package_name_for_third_party ... ok
+test module::tests::load_module_reloads_when_module_source_changes ... ok
+test package_workflow::tests::add_dependency_updates_manifest ... ok
+test module::tests::load_module_reuses_cached_nested_dotted_module_without_duplicate_cache_entries ... ok
+test path_security::tests::reject_url_encoded_parent_traversal_allows_safe_encoded_paths ... ok
+test package_workflow::tests::lockfile_round_trip_is_deterministic ... ok
+test path_security::tests::reject_url_encoded_parent_traversal_rejects_encoded_parent_components ... ok
+test path_security::tests::sanitize_relative_path_accepts_valid_nested_path ... ok
+test path_security::tests::sanitize_relative_path_rejects_absolute_paths ... ok
+test package_workflow::tests::verify_lockfile_reports_manifest_drift ... ok
+test path_security::tests::sanitize_relative_path_rejects_parent_traversal ... ok
+test path_security::tests::sanitize_relative_path_rejects_windows_drive_paths ... ok
+test repl::tests::banner_text_snapshot_is_deterministic_and_no_color ... ok
+test repl::tests::help_text_snapshot_is_deterministic_and_no_color ... ok
+test repl::tests::multiline_validator_accepts_complete_input ... ok
+test repl::tests::multiline_validator_detects_line_continuation ... ok
+test repl::tests::multiline_validator_detects_unclosed_delimiters ... ok
+test reserved_names::tests::config_loads_and_validates ... ok
+test reserved_names::tests::first_party_pack_id_allowlist_is_explicit ... ok
+test reserved_names::tests::namespace_reservations_cover_core_and_namespaces ... ok
+test reserved_names::tests::package_name_reservations_cover_reserved_package_names ... ok
+test reserved_names::tests::reserved_profile_names_are_blocked ... ok
+test reserved_names::tests::top_level_command_reservations_cover_core_and_first_party ... ok
+test serve_http::tests::add_common_success_headers_sets_conservative_cache_when_no_max_age ... ok
+test serve_http::tests::add_common_success_headers_sets_nosniff_for_file_responses ... ok
+test serve_http::tests::guess_content_type_blocks_inferred_active_content_for_unknown_extension ... ok
+test serve_http::tests::guess_content_type_covers_v1_http_007_required_mappings ... ok
+test serve_http::tests::guess_content_type_is_case_insensitive_for_known_extensions ... ok
+test serve_http::tests::guess_content_type_uses_last_extension_for_double_extension_fallback ... ok
+test serve_http::tests::guess_content_type_uses_octet_stream_for_extensionless_files ... ok
+test serve_http::tests::guess_content_type_uses_octet_stream_for_unknown_extension ... ok
+test serve_http::tests::if_none_match_detects_exact_match ... ok
+test serve_http::tests::parse_single_range_rejects_invalid_ranges ... ok
+test serve_http::tests::parse_single_range_supports_standard_and_suffix_ranges ... ok
+test serve_http::tests::split_content_path_and_encoding_only_treats_multi_extension_files_as_precompressed ... ok
+test serve_http::tests::static_text_response_includes_extra_headers_and_default_security_headers ... ok
+test serve_http::tests::status_mapped_error_uses_500_contract_for_unexpected_io_errors ... ok
+test serve_http::tests::validate_request_target_accepts_query_strings_without_affecting_path_resolution ... ok
+test serve_http::tests::validate_request_target_decodes_once_so_double_encoded_parent_is_not_treated_as_parent ... ok
+test serve_http::tests::validate_request_target_keeps_non_private_paths_available ... ok
+test serve_http::tests::validate_request_target_rejects_decoded_null_bytes ... ok
+test serve_http::tests::validate_request_target_rejects_fragment_targets ... ok
+test serve_http::tests::validate_request_target_rejects_hidden_and_private_paths ... ok
+test serve_http::tests::validate_request_target_rejects_invalid_percent_encoding ... ok
+test serve_http::tests::validate_request_target_rejects_oversized_targets ... ok
+test serve_http::tests::validate_request_target_rejects_single_decoded_parent_traversal ... ok
+test serve_http::tests::validate_server_options_rejects_zero_timeout_and_connection_limits ... ok
+test module::tests::load_module_prefers_importer_package_root_for_relative_imports ... ok
+test tests::cooperative_scheduler_timeout_falls_back_on_invalid_env ... ok
+test tests::cooperative_scheduler_timeout_prefers_cli_over_env ... ok
+test tests::cooperative_scheduler_timeout_rejects_cli_zero ... ok
+test tests::cooperative_scheduler_timeout_uses_default_when_unset ... ok
+test tests::cooperative_scheduler_timeout_uses_env_when_cli_missing ... ok
+test tests::known_cli_subcommand_list_includes_pack_and_run ... ok
+test tests::reserved_aliases_are_rejected_before_workflow_routing ... ok
+test tests::untrusted_network_defaults_do_not_override_explicit_policy ... ok
+test tests::untrusted_network_defaults_do_not_set_policy_for_trusted_mode ... ok
+test tests::untrusted_network_defaults_set_deny_private_when_unset ... ok
+test type_checker::tests::test_array_literal_infers_element_type ... ok
+test type_checker::tests::test_arithmetic_type_promotion_all_operators ... ok
+test type_checker::tests::test_array_literal_promotes_mixed_numeric_elements_to_float ... ok
+test type_checker::tests::test_dict_literal_infers_key_and_value_types ... ok
+test type_checker::tests::test_float_plus_float_equals_float ... ok
+test type_checker::tests::test_float_literal_inference ... ok
+test type_checker::tests::test_float_plus_int_equals_float ... ok
+test type_checker::tests::test_float_to_int_no_promotion ... ok
+test type_checker::tests::test_index_access_returns_inferred_container_element_type ... ok
+test type_checker::tests::test_int_literal_inference ... ok
+test type_checker::tests::test_int_plus_float_equals_float ... ok
+test type_checker::tests::test_int_plus_int_equals_int ... ok
+test type_checker::tests::test_int_to_float_promotion_in_assignment ... ok
+test type_checker::tests::test_math_function_accepts_int_via_promotion ... ok
+test type_checker::tests::test_method_call_infers_known_string_method_return_types ... ok
+test type_checker::tests::test_method_call_unknown_method_falls_back_to_any ... ok
+test type_checker::tests::test_min_with_mixed_types ... ok
+test type_checker::tests::test_min_with_ints ... ok
+test type_checker::tests::test_type_mismatch ... ok
+test type_checker::tests::test_selective_import_registers_callable_binding ... ok
+test type_checker::tests::test_simple_type_inference ... ok
+test vm::tests::test_async_await_basic ... ok
+test type_checker::tests::test_selective_import_resolves_function_signature_from_module_file ... ok
+test vm::tests::test_async_function_definition ... ok
+test vm::tests::test_async_promise_reuse ... ok
+test vm::tests::test_async_multiple_await ... ok
+test vm::tests::test_async_nested_calls ... ok
+test vm::tests::test_await_non_promise ... ok
+test vm::tests::test_async_with_computation ... ok
+test vm::tests::test_cooperative_suspend_enabled_by_default ... ok
+test vm::tests::test_create_and_list_execution_context_ids ... ok
+test vm::tests::test_execute_until_suspend_completes_without_pending_await ... ok
+test vm::tests::test_execute_until_suspend_with_single_awaiting_context ... ok
+test lsp_server::tests::formatting_request_returns_text_edit_when_source_changes ... ok
+test vm::tests::test_execution_snapshot_isolated_from_mutations_after_save ... ok
+test vm::tests::test_cooperative_default_preserves_backward_compat_with_non_async_code ... ok
+test vm::tests::test_jit_is_disabled_by_default ... ok
+test vm::tests::test_jit_supported_arithmetic_program_executes_when_enabled ... ok
+test vm::tests::test_make_promise_opcode ... ok
+test vm::tests::test_non_async_code_completes_immediately_even_in_cooperative_mode ... ok
+test vm::tests::test_remove_execution_context_rejects_active_context ... ok
+test vm::tests::test_jit_supported_function_call_path_matches_interpreter_result ... ok
+test vm::tests::test_restore_execution_state_replaces_globals_reference ... ok
+test vm::tests::test_cooperative_multiple_concurrent_awaits ... ok
+test vm::tests::test_run_scheduler_round_for_completed_contexts ... ok
+test vm::tests::test_run_scheduler_round_reports_pending_for_unready_context ... ok
+test vm::tests::test_run_scheduler_until_complete_rejects_zero_rounds ... ok
+test vm::tests::test_run_scheduler_until_complete_errors_when_round_budget_exhausted ... ok
+test vm::tests::test_mixed_async_and_sync_operations_in_cooperative_mode ... ok
+test vm::tests::test_resume_execution_context_removes_completed_context ... ok
+test vm::tests::test_run_scheduler_until_complete_with_timeout_rejects_zero_timeout ... ok
+test module::tests::load_module_deep_chain_completes_and_clears_loading_index ... ok
+test vm::tests::test_run_scheduler_until_complete_with_timeout_errors_when_budget_exhausted ... ok
+test vm::tests::test_save_restore_execution_state_round_trip ... ok
+test vm::tests::test_cooperative_scheduler_resumes_and_completes_pending_await ... ok
+test vm::tests::test_simple_return ... ok
+test vm::tests::test_switch_execution_context_missing_context_returns_error ... ok
+test vm::tests::test_sum_int_map_until_local_in_place_missing_key_errors ... ok
+test vm::tests::test_execute_until_suspend_and_resume_for_pending_await ... ok
+test vm::tests::test_switch_execution_context_restores_target_and_saves_previous ... ok
+test vm::tests::test_validate_jit_supported_surfaces_reports_unsupported_opcode ... ok
+test vm::tests::test_vm_http_server_route_method_returns_updated_server ... ok
+test vm::tests::test_run_scheduler_until_complete_with_pending_async_contexts ... ok
+test vm::tests::test_vm_for_numeric_iteration_matches_interpreter_range_contract ... ok
+test vm::tests::test_vm_string_len_and_indexing_use_character_counts ... ok
+test vm::tests::test_vm_recursion_boundary_succeeds ... ok
+test workflow_pack::discovery::tests::discover_builtin_packs_always_returned ... ok
+test workflow_pack::discovery::tests::empty_builtin_list_works ... ok
+test workflow_pack::manifest::tests::accept_doctor_profile_contribution ... ok
+test workflow_pack::manifest::tests::accept_namespace_with_hyphens ... ok
+test vm::tests::test_vm_http_handler_wrapper_executes_lambda_response_correctly ... ok
+test workflow_pack::manifest::tests::accept_nested_command_name ... ok
+test workflow_pack::manifest::tests::first_party_can_use_reserved_doctor_profile_name ... ok
+test vm::tests::test_vm_to_json_array_does_not_duplicate_entries ... ok
+test workflow_pack::manifest::tests::parse_valid_manifest ... ok
+test workflow_pack::manifest::tests::allow_reserved_namespace_for_first_party_pack ... ok
+test vm::tests::test_vm_to_json_serializes_fixed_dict_literals ... ok
+test workflow_pack::manifest::tests::reject_command_name_with_leading_space ... ok
+test vm::tests::test_run_scheduler_until_complete_with_timeout_with_pending_async_contexts ... ok
+test workflow_pack::manifest::tests::reject_duplicate_command_names ... ok
+test workflow_pack::manifest::tests::reject_empty_command_name ... ok
+test workflow_pack::manifest::tests::reject_empty_id ... ok
+test workflow_pack::manifest::tests::reject_empty_namespace ... ok
+test workflow_pack::manifest::tests::reject_missing_commands ... ok
+test workflow_pack::manifest::tests::reject_invalid_namespace ... ok
+test workflow_pack::manifest::tests::reject_missing_entry ... ok
+test workflow_pack::manifest::tests::reject_namespace_starting_with_digit ... ok
+test workflow_pack::manifest::tests::reject_namespace_with_underscore ... ok
+test workflow_pack::manifest::tests::reject_reserved_doctor_profile_name ... ok
+test workflow_pack::manifest::tests::reject_reserved_namespace_for_third_party_pack ... ok
+test workflow_pack::manifest::tests::reject_core_and_first_party_namespaces_for_third_party_pack ... ok
+test workflow_pack::process_runner::tests::truncate_output_limits_lines ... ok
+test workflow_pack::process_runner::tests::truncate_output_preserves_short_output ... ok
+test workflow_pack::registry::tests::builtin_collision_rejected ... ok
+test workflow_pack::registry::tests::builtin_pack_can_register_reserved_doctor_profile ... ok
+test workflow_pack::registry::tests::execute_doctor_profile_errors_for_unknown_profile ... ok
+test workflow_pack::registry::tests::execute_doctor_profile_rejects_builtin_entry ... ok
+test workflow_pack::registry::tests::external_pack_cannot_spoof_first_party_pack_id ... ok
+test workflow_pack::registry::tests::external_pack_registers_doctor_profile_contribution ... ok
+test workflow_pack::registry::tests::external_pack_registers_without_handler ... ok
+test workflow_pack::registry::tests::external_pack_rejects_reserved_namespace ... ok
+test workflow_pack::registry::tests::register_and_resolve_builtin ... ok
+test workflow_pack::registry::tests::unknown_command_in_known_ns_errors ... ok
+test workflow_pack::registry::tests::unknown_namespace_errors ... ok
+test workflow_pack::renderer::tests::group_checks_by_prefix ... ok
+test workflow_pack::renderer::tests::render_human_text_is_deterministic ... ok
+test vm::tests::test_vm_recursion_exceeding_limit_errors ... ok
+test workflow_pack::renderer::tests::render_markdown_includes_summary_table_and_actions ... ok
+test workflow_pack::process_runner::tests::command_exists_returns_false_for_nonexistent ... ok
+test workflow_pack::process_runner::tests::run_command_captures_output ... ok
+test workflow_pack::process_runner::tests::run_command_handles_failure ... ok
+test workflow_pack::process_runner::tests::run_command_first_line_works ... ok
+test workflow_pack::process_runner::tests::command_exists_returns_true_for_known_command ... ok
+test vm::tests::test_sum_int_map_until_local_in_place_result ... ok
+test lsp_server::tests::timeout_returns_timeout_error_shape ... ok
+test interpreter::native_functions::crypto::tests::test_hash_password_and_verify_password_round_trip ... ok
+test docgen::adapters::tests::regex_caching_micro_benchmark_evidence ... ok
+test interpreter::native_functions::crypto::tests::test_rsa_generate_encrypt_decrypt_sign_and_verify ... ok
+
+test result: ok. 685 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 19.90s
+
+     Running tests/architecture_docs_contract.rs (target/debug/deps/architecture_docs_contract-165ea58343efab53)
+
+running 1 test
+test architecture_doc_matches_current_runtime_posture ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/binary_size_baseline_contract.rs (target/debug/deps/binary_size_baseline_contract-8921d03b0a7eb645)
+
+running 3 tests
+test measure_binary_size_help_lists_flags ... ok
+test measure_binary_size_rejects_unknown_argument ... ok
+test measure_binary_size_dry_run_emits_build_and_size_commands ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+     Running tests/cli_contracts.rs (target/debug/deps/cli_contracts-5723a12c29fb5e61)
+
+running 27 tests
+test cli_help_exits_zero ... ok
+test cli_lsp_rename_invalid_identifier_uses_runtime_error_stderr ... ok
+test cli_lsp_rename_keyword_identifier_uses_runtime_error_stderr ... ok
+test cli_lsp_diagnostics_missing_file_uses_io_error_and_stderr ... ok
+test cli_lsp_diagnostics_json_is_valid_json ... ok
+test cli_doctor_rejects_unknown_profile ... ok
+test cli_doctor_lists_profiles ... ok
+test cli_check_json_success_is_valid_json ... ok
+test cli_check_does_not_execute_script_side_effects ... ok
+test cli_run_missing_file_exits_with_io_error_code ... ok
+test cli_check_verbose_and_quiet_output_are_deterministic ... ok
+test cli_lsp_complete_plain_and_json_modes_are_stable ... ok
+test cli_run_parse_error_exits_with_lex_parse_code ... ok
+test cli_pack_run_rejects_reserved_namespace ... ok
+test cli_reserved_alias_name_is_rejected_before_workflow_routing ... ok
+test cli_run_runtime_error_exits_with_runtime_code ... ok
+test cli_run_runtime_error_json_mode_emits_stdout_payload ... ok
+test cli_run_executes_program_output ... ok
+test cli_usage_errors_use_usage_exit_code ... ok
+test cli_version_exits_zero_and_prints_crate_version ... ok
+test cli_test_discovers_and_runs_expected_fixtures ... ok
+test cli_test_runtime_vm_mode_executes_vm_drift_fixture_without_snapshot_mismatch ... ok
+test cli_test_runtime_dual_mode_keeps_vm_primary_for_vm_drift_fixture ... ok
+test cli_test_reports_nonzero_fixture_exit_codes_as_failures ... ok
+test cli_pack_run_executes_pack_local_command_and_supports_json ... ok
+test cli_test_reports_fixture_failures_with_verification_exit_code ... ok
+test cli_doctor_json_contract_is_stable ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.98s
+
+     Running tests/cli_json_contracts.rs (target/debug/deps/cli_json_contracts-e77c2b27faa9bbc3)
+
+running 18 tests
+test docgen_json_discovery_limits_fail_on_invalid_env_values ... ok
+test docgen_json_contract_snapshot_is_stable ... ok
+test docgen_json_discovery_limits_fail_on_zero_cli_values ... ok
+test lsp_rename_json_failure_contract_is_stable ... ok
+test lint_json_contract_is_stable ... ok
+test run_runtime_json_diagnostic_contract_includes_missing_module_help ... ok
+test run_runtime_json_diagnostic_contract_is_stable ... ok
+test run_runtime_json_diagnostic_contract_reports_capability_hint ... ok
+test format_json_contract_is_stable ... ok
+test run_runtime_json_diagnostic_contract_reports_invalid_binary_help ... ok
+test run_runtime_json_diagnostic_contract_reports_non_callable_call_hint ... ok
+test cli_json_negative_paths_have_stable_failure_signals ... ok
+test docgen_json_warns_for_external_mode_without_allowlist ... ok
+test docgen_json_link_mode_failure_breakdown_is_stable ... ok
+test docgen_json_contract_is_stable ... ok
+test lsp_cli_json_contracts_are_stable ... ok
+test docgen_json_cache_mode_reports_hit_miss_counters ... ok
+test docgen_json_discovery_limits_support_cli_and_env_overrides ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s
+
+     Running tests/diagnostics_contract.rs (target/debug/deps/diagnostics_contract-f51ae4aff01e19b5)
+
+running 5 tests
+test diagnostic_human_render_includes_code_subsystem_and_location ... ok
+test runtime_error_display_keeps_location_when_available ... ok
+test lexer_diagnostic_converts_to_stable_code ... ok
+test diagnostic_json_shape_includes_required_fields ... ok
+test parser_diagnostic_converts_to_stable_code ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/diagnostics_golden.rs (target/debug/deps/diagnostics_golden-b2008d3b36fcd8ed)
+
+running 2 tests
+test diagnostics_golden_normalizes_line_endings ... ok
+test diagnostics_golden_lexer_parse_semantic_runtime_cli_and_server_contracts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/docgen_universal.rs (target/debug/deps/docgen_universal-a0b001c89f3b5765)
+
+running 55 tests
+test docgen_default_link_check_allows_existing_local_anchor_links_and_external_links ... ok
+test docgen_default_link_check_reports_missing_local_links ... ok
+test docgen_cli_exposes_external_link_validation_flags ... ok
+test docgen_does_not_follow_symlink_escape ... ok
+test docgen_captures_documented_and_undocumented_kujo_symbols ... ok
+test docgen_emits_discovery_diagnostics_for_oversized_files ... ok
+test docgen_adapter_health_counters_and_low_yield_warnings_are_emitted ... ok
+test docgen_diagnostics_order_is_deterministic_across_sources ... ok
+test docgen_cache_mode_tracks_hits_and_misses_for_changed_files ... ok
+test docgen_external_allowlist_warns_when_external_validation_is_disabled ... ok
+test docgen_external_validation_warns_when_allowlist_is_empty ... ok
+test docgen_html_escapes_untrusted_docs ... ok
+test docgen_extracts_async_kujo_functions_and_methods_with_visibility ... ok
+test docgen_html_renderer_source_link_toggle_preserves_current_output_shape ... ok
+test docgen_kujo_attaches_docs_across_decorator_lines_without_overreaching ... ok
+test docgen_kujo_extraction_edge_fixture_async_strict_gate_contract ... ok
+test docgen_kujo_extraction_edge_fixture_async_visibility_contract ... ok
+test docgen_kujo_parser_assisted_fixture_fallback_contract ... ok
+test docgen_kujo_handles_spacing_and_proximity_edge_cases ... ok
+test docgen_kujo_supports_additional_doc_comment_styles ... ok
+test docgen_kujo_parser_assisted_fixture_success_contract ... ok
+test docgen_adapter_conformance_smoke_extracts_symbols_for_all_languages ... ok
+test docgen_kujo_visibility_tracks_top_level_functions_and_struct_methods ... ok
+test docgen_link_validation_budget_max_link_checks_truncates_deterministically ... ok
+test docgen_link_validation_budget_total_time_truncates_deterministically ... ok
+test docgen_adapter_conformance_edge_fixtures_strict_public_gate_reports_undocumented_symbols ... ok
+test docgen_adapter_conformance_edge_fixtures_preserve_shape_and_visibility_contracts ... ok
+test docgen_cli_json_contract_preserves_legacy_fields ... ok
+test docgen_optional_local_anchor_validation_fails_for_missing_anchor ... ok
+test docgen_cli_optional_local_anchor_validation_flag_enforces_anchor_checks ... ok
+test docgen_optional_local_anchor_validation_passes_for_existing_anchor ... ok
+test docgen_public_only_excludes_methods_on_private_structs ... ok
+test docgen_public_only_visibility_matrix_keeps_internal_helpers_out_of_public_gate ... ok
+test docgen_public_only_excludes_variants_of_private_enums ... ok
+test docgen_skips_non_utf8_sources_with_deterministic_discovery_diagnostics ... ok
+test docgen_snapshot_stable_core_outputs ... ok
+test docgen_source_link_template_renders_configured_urls ... ok
+test docgen_strict_gates_fail_as_expected ... ok
+test docgen_strict_public_gate_handles_async_kujo_functions ... ok
+test docgen_strict_public_gate_ignores_private_undocumented_kujo_functions ... ok
+test docgen_strict_public_gate_still_fails_on_undocumented_explicit_public_kujo_function ... ok
+test docgen_never_executes_source_code ... ok
+test docgen_typescript_public_only_keeps_public_methods_even_under_private_classes ... ok
+test docgen_supports_mixed_language_projects_deterministically ... ok
+test docgen_typescript_visibility_matrix_preserves_modifier_and_export_semantics ... ok
+test docgen_summary_splits_project_and_builtin_counts ... ok
+test docgen_external_validation_blocks_direct_private_ip_by_default ... ok
+test docgen_optional_external_validation_skips_non_allowlisted_hosts ... ok
+test docgen_external_validation_blocks_dns_hosts_resolving_to_private_ranges_by_default ... ok
+test docgen_optional_external_validation_fails_allowlisted_unreachable_hosts ... ok
+test docgen_external_validation_allows_same_host_redirect_hops ... ok
+test docgen_link_validation_budget_max_external_checks_truncates_deterministically ... ok
+test docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts ... ok
+test docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlisted ... ok
+test docgen_large_repo_smoke_completes_with_deterministic_counts ... ok
+
+test result: ok. 55 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s
+
+     Running tests/docs_examples.rs (target/debug/deps/docs_examples-8b7235dfc0647cb2)
+
+running 5 tests
+test expected_fail_doc_blocks_remain_empty ... ok
+test run_and_expected_fail_example_sets_do_not_overlap ... ok
+test expected_fail_examples_have_reasons_and_exist ... ok
+test docs_kujo_snippets_parse_or_expected_fail ... ok
+test examples_smoke_parse_run_or_expected_fail ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.32s
+
+     Running tests/docs_policy_consistency_contract.rs (target/debug/deps/docs_policy_consistency_contract-312b39fef49dbeda)
+
+running 1 test
+test high_risk_docs_policies_remain_consistent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/editor_adapter_contracts.rs (target/debug/deps/editor_adapter_contracts-38d551397217af43)
+
+running 3 tests
+test jetbrains_descriptor_points_to_kujo_lsp ... ok
+test neovim_descriptor_points_to_kujo_lsp ... ok
+test vscode_cursor_descriptor_points_to_kujo_lsp ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/fuzz_repro_contract.rs (target/debug/deps/fuzz_repro_contract-97dd91713daf9f71)
+
+running 4 tests
+test fuzz_repro_help_lists_required_flags ... ok
+test fuzz_repro_requires_artifact_file ... ok
+test fuzz_repro_dry_run_succeeds_with_explicit_target ... ok
+test fuzz_repro_dry_run_infers_target_from_artifacts_path ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/generated_artifact_freshness_contract.rs (target/debug/deps/generated_artifact_freshness_contract-fc7a71544aecebba)
+
+running 3 tests
+test generated_unsafe_inventory_artifact_is_fresh_and_matches_generator_output ... ok
+test generated_todo_triage_artifact_is_fresh_and_matches_generator_output ... ok
+test generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_output has been running for over 60 seconds
+test generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_output ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 104.74s
+
+     Running tests/http_route_callback_closure.rs (target/debug/deps/http_route_callback_closure-789bc89891018588)
+
+running 2 tests
+test http_route_callback_resolves_module_local_helper ... ok
+test http_route_callback_resolves_module_helper_chaining_to_import ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/image_conversion_integration.rs (target/debug/deps/image_conversion_integration-96e23687e416ad94)
+
+running 2 tests
+test image_conversion_failure_paths_are_reported ... ok
+test image_conversion_roundtrip_works_in_interpreter_and_vm ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/interpreter_flag_dependency_map_contract.rs (target/debug/deps/interpreter_flag_dependency_map_contract-3b26d67366e3cfbe)
+
+running 2 tests
+test parser_test_harness_keeps_explicit_interpreter_fallback_path ... ok
+test interpreter_flag_dependency_map_generator_covers_required_surfaces_and_tags ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests/interpreter_tests.rs (target/debug/deps/interpreter_tests-b8da91337c971650)
+
+running 256 tests
+test test_accumulator_pattern ... ok
+test test_array_index_assignment ... ok
+test test_assert_failure_with_default_message ... ok
+test test_assert_failure_with_custom_message ... ok
+test test_all_empty_array ... ok
+test test_any_empty_array ... ok
+test test_assert_in_function ... ok
+test test_assert_success ... ok
+test test_assert_with_falsy_values ... ok
+test test_assert_with_truthy_values ... ok
+test test_assert_with_boolean_false ... ok
+test test_all_false ... ok
+test test_any_true ... ok
+test test_any_false ... ok
+test test_bool_array_elements ... ok
+test test_bool_equality ... ok
+test test_bool_comparisons ... ok
+test test_bool_comparison_results_in_if ... ok
+test test_all_true ... ok
+test test_bool_in_variables ... ok
+test test_bool_in_if_conditions ... ok
+test test_bool_literals ... ok
+test test_boolean_false_condition ... ok
+test test_bool_struct_fields ... ok
+test test_bool_from_file_operations ... ok
+test test_boolean_true_condition ... ok
+test test_builtin_names_include_release_hardening_contract_entries ... ok
+test test_builtin_names_do_not_contain_duplicates ... ok
+test test_break_in_while_loop ... ok
+test test_bool_print ... ok
+test test_break_in_for_loop ... ok
+test test_builtin_aliases_match_canonical_behavior ... ok
+test test_bytes_indexing_and_interpolated_invalid_expression_are_rejected ... ok
+test test_channel_empty ... ok
+test test_channel_multiple_values ... ok
+test test_channel_receive_and_send_preserve_fifo_order ... ok
+test test_channel_receive_arity_error_via_expression_method_call ... ok
+test test_channel_basic ... ok
+test test_combined_type_predicates ... ok
+test test_continue_in_while_loop ... ok
+test test_await_all_with_concurrency_limit_preserves_order ... ok
+test test_continue_in_for_loop ... ok
+test test_await_all_uses_configured_default_task_pool_size ... ok
+test test_current_timestamp ... ok
+test test_await_all_large_array_uses_configured_default_pool ... ok
+test test_copy_file_nonexistent ... ok
+test test_current_timestamp_progression ... ok
+test test_debug_simple_values ... ok
+test test_debug_complex_values ... ok
+test test_delete_file_nonexistent ... ok
+test test_copy_file ... ok
+test test_custom_error_struct ... ok
+test test_debug_returns_null ... ok
+test test_delete_file ... ok
+test test_dict_operations ... ok
+test test_create_dir_and_list ... ok
+test test_environment_set_across_scopes ... ok
+test test_environment_mutate_checked_respects_binding_mutability ... ok
+test test_environment_assign_checked_respects_binding_mutability ... ok
+test test_ends_with_basic ... ok
+test test_channel_receive_blocks_until_value_is_sent ... ok
+test test_array_utilities_chained ... ok
+test test_error_chaining ... ok
+test test_elapsed_function ... ok
+test test_error_properties_line ... ok
+test test_error_properties_message ... ok
+test test_error_in_function_with_stack_trace ... ok
+test test_error_properties_stack ... ok
+test test_dotted_from_import_missing_module_returns_runtime_error ... ok
+test test_error_recovery_continues_execution ... ok
+test test_error_without_catch_propagates ... ok
+test test_field_assignment_struct ... ok
+test test_field_assignment_in_array ... ok
+test test_file_exists ... ok
+test test_file_size ... ok
+test test_file_size_nonexistent ... ok
+test test_file_write_and_read ... ok
+test test_file_append ... ok
+test test_file_operations_integration ... ok
+test test_for_loop_with_array_and_break ... ok
+test test_for_in_loop ... ok
+test test_for_loop_variable_isolation ... ok
+test test_file_not_found_error ... ok
+test test_dotted_from_import_resolves_nested_module_file ... ok
+test test_for_loop_scoping ... ok
+test test_format_duration ... ok
+test test_function_modifies_outer_variable ... ok
+test test_function_local_scope ... ok
+test test_generator_with_parameters ... ok
+test test_collection_predicates_use_shared_truthiness_semantics ... ok
+test test_for_loop_with_array_and_continue ... ok
+test test_generator_break_early ... ok
+test test_generator_fibonacci ... ok
+test test_import_missing_module_returns_runtime_error ... ok
+test test_index_of_found ... ok
+test test_generator_iterator_next_skips_filtered_items_until_match ... ok
+test test_http_get_stream_returns_bytes ... ok
+test test_index_of_not_found ... ok
+test test_from_import_missing_symbol_returns_runtime_error ... ok
+test test_is_array_predicate ... ok
+test test_integer_zero_is_falsey_in_if_conditions ... ok
+test test_generator_iteration ... ok
+test test_is_float_predicate ... ok
+test test_is_dict_predicate ... ok
+test test_is_bool_predicate ... ok
+test test_is_function_predicate ... ok
+test test_is_int_predicate ... ok
+test test_generator_with_state ... ok
+test test_is_null_predicate ... ok
+test test_join_basic ... ok
+test test_imported_function_can_call_module_local_helper ... ok
+test test_join_with_spaces ... ok
+test test_join_numbers ... ok
+test test_is_string_predicate ... ok
+test test_multiple_assignments_in_for_loop ... ok
+test test_nested_block_scopes ... ok
+test test_nested_for_loops_scoping ... ok
+test test_jwt_encode_basic ... ok
+test test_nested_loops_with_break ... ok
+test test_iterator_map_chain_applies_transformers_in_order ... ok
+test test_jwt_decode_with_wrong_secret ... ok
+test test_jwt_empty_payload ... ok
+test test_nested_loops_with_continue ... ok
+test test_jwt_integration_with_api_auth ... ok
+test test_jwt_encode_decode_roundtrip ... ok
+test test_jwt_with_expiry_claim ... ok
+test test_null_equality_and_inequality_semantics ... ok
+test test_jwt_with_nested_data ... ok
+test test_nested_try_except ... ok
+test test_jwt_with_multiple_claims ... ok
+test test_oauth2_complete_flow_simulation ... ok
+test test_oauth2_auth_url_encoding ... ok
+test test_oauth2_auth_url_generation ... ok
+test test_iterator_filter_chain_preserves_both_predicates ... ok
+test test_parallel_http_empty_array ... ok
+test test_par_each_propagates_rejection ... ok
+test test_parallel_http_basic ... ok
+test test_parallel_map_handles_mixed_immediate_and_promise_results ... ok
+test test_parallel_map_immediate_only_mapper_fast_path ... ok
+test test_par_each_resolves_null_and_completes ... ok
+test test_par_map_alias_works_in_pipeline ... ok
+test test_parallel_map_reuses_cached_mapper_promises ... ok
+test test_parse_int_invalid ... ok
+test test_parse_float_invalid ... ok
+test test_parse_float_valid ... ok
+test test_parse_int_valid ... ok
+test test_parse_with_arithmetic ... ok
+test test_precision_ordering ... ok
+test test_performance_now ... ok
+test test_path_builtin_alias_and_core_operations ... ok
+test test_parallel_map_rayon_len_pipeline_with_mixed_collections ... ok
+test test_parallel_map_rayon_upper_pipeline ... ok
+test test_path_join_alias_argument_shape_contract ... ok
+test test_parallel_map_and_par_map_argument_shape_contract ... ok
+test test_promise_all_rejects_non_integer_concurrency_limit ... ok
+test test_performance_now_progression ... ok
+test test_promise_all_rejects_zero_concurrency_limit ... ok
+test test_queue_and_stack_size_contract ... ok
+test test_promise_all_reuses_cached_polled_promise_results ... ok
+test test_read_lines ... ok
+test test_promise_all_single_arg_still_works ... ok
+test test_promise_all_and_await_all_argument_shape_contract ... ok
+test test_rename_file ... ok
+test test_rename_file_nonexistent ... ok
+test test_repeat_basic ... ok
+test test_read_file_lossy_and_bytes_slice_helpers ... ok
+test test_repeat_zero ... ok
+test test_promise_all_large_array_with_bounded_concurrency ... ok
+test test_reverse ... ok
+test test_scope_chain_lookup ... ok
+test test_shared_add_int_rejects_missing_key ... ok
+test test_shared_add_int_rejects_non_int_target_value ... ok
+test test_shared_add_int_success_and_error_paths ... ok
+test test_shared_value_lifecycle_operations ... ok
+test test_queue_and_stack_size_argument_shape_contract ... ok
+test test_simple_generator ... ok
+test test_sort_integers ... ok
+test test_sort_mixed_numbers ... ok
+test test_sort_floats ... ok
+test test_sort_strings ... ok
+test test_spawn_basic ... ok
+test test_split_basic ... ok
+test test_split_multiple_chars ... ok
+test test_split_join_roundtrip ... ok
+test test_spawn_can_read_parent_scalar_bindings_snapshot ... ok
+test test_split_spaces ... ok
+test test_starts_with_basic ... ok
+test test_string_functions_in_condition ... ok
+test test_string_concatenation ... ok
+test test_string_interpolation_adjacent_expressions ... ok
+test test_streaming_with_binary_data ... ok
+test test_string_interpolation_basic ... ok
+test test_string_interpolation_booleans ... ok
+test test_string_interpolation_empty ... ok
+test test_string_interpolation_comparisons ... ok
+test test_string_interpolation_expressions ... ok
+test test_shared_value_argument_shape_contract ... ok
+test test_spawn_can_use_parent_defined_shared_key_variable ... ok
+test test_string_interpolation_numbers ... ok
+test test_string_interpolation_function_call ... ok
+test test_string_interpolation_nested_expressions ... ok
+test test_string_interpolation_multiple ... ok
+test test_string_interpolation_in_function ... ok
+test test_spawn_snapshot_mutations_do_not_write_back_to_parent_scope ... ok
+test test_string_interpolation_only_expression ... ok
+test test_string_interpolation_with_text_between ... ok
+test test_struct_field_access ... ok
+test test_sum_empty_array ... ok
+test test_string_interpolation_struct_field ... ok
+test test_string_interpolation_string_concat ... ok
+test test_sum_floats ... ok
+test test_spawn_can_update_shared_values_across_isolated_environments ... ok
+test test_sum_mixed ... ok
+test test_sum_integers ... ok
+test test_time_ns ... ok
+test test_task_pool_size_set_get_round_trip ... ok
+test test_time_us ... ok
+test test_to_bool_from_collections ... ok
+test test_to_bool_from_float ... ok
+test test_to_bool_from_int ... ok
+test test_to_float_from_int ... ok
+test test_to_bool_from_null ... ok
+test test_to_float_from_bool ... ok
+test test_timing_arithmetic ... ok
+test test_to_bool_from_string ... ok
+test test_task_pool_size_validation_errors ... ok
+test test_to_int_from_float ... ok
+test test_to_int_from_int ... ok
+test test_to_int_from_bool ... ok
+test test_to_float_from_string ... ok
+test test_to_int_from_string ... ok
+test test_task_pool_size_argument_shape_contract ... ok
+test test_to_string_from_bool ... ok
+test test_to_string_from_float ... ok
+test test_to_string_from_array ... ok
+test test_to_string_from_int ... ok
+test test_type_function_collections ... ok
+test test_type_conversion_chaining ... ok
+test test_type_function_edge_cases ... ok
+test test_try_except_scoping ... ok
+test test_type_function_basic_types ... ok
+test test_type_function_with_function ... ok
+test test_type_introspection_in_conditional ... ok
+test test_type_introspection_defensive_coding ... ok
+test test_unique ... ok
+test test_variable_assignment_updates ... ok
+test test_while_false_condition ... ok
+test test_unique_strings ... ok
+test test_variable_shadowing_in_block ... ok
+test test_while_loop_with_boolean ... ok
+test test_while_with_complex_condition ... ok
+test test_while_with_break_and_continue ... ok
+test test_while_loop_basic ... ok
+test test_parallel_map_scalability_10k ... ok
+test test_par_each_scalability ... ok
+test test_promise_all_scalability ... ok
+
+test result: ok. 256 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.68s
+
+     Running tests/jit_execution_contract.rs (target/debug/deps/jit_execution_contract-54eeeb403e193335)
+
+running 3 tests
+test cli_run_with_jit_opt_in_accepts_supported_surface_without_warning ... ok
+test cli_run_with_jit_opt_in_reports_unsupported_surface_and_falls_back ... ok
+test cli_run_without_jit_opt_in_executes_program_normally ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/jit_safety_contract_checker.rs (target/debug/deps/jit_safety_contract_checker-4e9d3f7499680268)
+
+running 8 tests
+test checker_rejects_unknown_argument ... ok
+test checker_help_lists_schema_and_modes ... ok
+test checker_ignores_unsafe_extern_type_aliases ... ok
+test checker_fails_on_wrong_heading_spelling ... ok
+test checker_fails_on_missing_contract ... ok
+test checker_fails_on_malformed_contract ... ok
+test checker_passes_on_valid_fixture ... ok
+test checker_allow_missing_reports_but_succeeds ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/language_spec_contracts.rs (target/debug/deps/language_spec_contracts-014f1cff190dd05f)
+
+running 7 tests
+test spec_mut_binding_allows_reassignment_and_in_place_mutation ... ok
+test spec_truthiness_and_logical_operator_contracts_are_boolean_and_short_circuiting ... ok
+test spec_function_fallthrough_and_bare_return_default_to_null ... ok
+test spec_callable_arity_contract_errors_include_expected_and_received_counts ... ok
+test spec_let_and_const_bindings_reject_reassignment_and_in_place_mutation ... ok
+test spec_indexing_and_invalid_operation_errors_are_deterministic ... ok
+test spec_scope_rules_cover_shadowing_duplicate_declarations_and_loop_binding_lifetime ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests/lsp_conformance_harness.rs (target/debug/deps/lsp_conformance_harness-cc2165cf1919ea5a)
+
+running 1 test
+test protocol_fixtures_match_expected_responses ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+     Running tests/lsp_external_clients_smoke.rs (target/debug/deps/lsp_external_clients_smoke-62126870ea602e6b)
+
+running 2 tests
+test node_external_client_can_launch_kujo_lsp ... ok
+test python_external_client_can_launch_kujo_lsp ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.42s
+
+     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-be25933e7a57d33d)
+
+running 1 test
+test latency_guardrails_for_completion_diagnostics_and_hover ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.15s
+
+     Running tests/lsp_reliability_track.rs (target/debug/deps/lsp_reliability_track-c28380d4de970c88)
+
+running 3 tests
+test malformed_sequences_and_lifecycle_churn_are_resilient ... ok
+test startup_and_first_response_latency_stay_within_guardrails ... ok
+test repeated_completion_and_diagnostics_requests_keep_document_state_bounded ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.59s
+
+     Running tests/native_api_security_boundaries.rs (target/debug/deps/native_api_security_boundaries-e19f66c33567d322)
+
+running 52 tests
+test filesystem_write_overwrite_requires_explicit_flag ... ok
+test filesystem_native_api_misuse_reports_deterministic_error ... ok
+test filesystem_write_file_rejects_payload_over_limit ... ok
+test native_capability_allow_fs_delete_enables_delete_file ... ok
+test native_capability_allows_only_requested_capability ... ok
+test crypto_native_api_misuse_reports_deterministic_error ... ok
+test filesystem_directory_delete_behavior_is_non_recursive ... ok
+test native_capability_allow_fs_write_enables_write_file ... ok
+test database_native_api_misuse_reports_deterministic_error ... ok
+test filesystem_write_overwrite_succeeds_with_explicit_flag ... ok
+test filesystem_read_file_rejects_payload_over_limit ... ok
+test filesystem_write_and_read_succeeds_at_size_limit_boundary ... ok
+test native_capability_untrusted_denies_clock ... ok
+test native_capability_untrusted_denies_env_read ... ok
+test native_capability_untrusted_denies_database ... ok
+test native_capability_untrusted_denies_env_write ... ok
+test native_capability_untrusted_denies_filesystem_delete ... ok
+test native_capability_untrusted_denies_filesystem_write ... ok
+test native_capability_untrusted_denies_network_client ... ok
+test native_capability_untrusted_denies_process_exec ... ok
+test native_capability_untrusted_denies_network_server ... ok
+test native_capability_untrusted_allows_shell_exec_when_enabled ... ok
+test native_capability_untrusted_denies_random ... ok
+test native_capability_untrusted_denies_shell_exec ... ok
+test network_destination_policy_deny_private_blocks_loopback_http_client ... ok
+test network_destination_policy_deny_private_blocks_loopback_tcp_client ... ok
+test network_http_client_rejects_unsupported_url_scheme_before_request_execution ... ok
+test network_http_client_rejects_invalid_port_before_request_execution ... ok
+test native_capability_spawned_interpreter_inherits_policy ... ok
+test network_destination_policy_override_allows_trusted_loopback_http_client ... ok
+test native_capability_vm_and_interpreter_both_enforce_denial ... ok
+test network_http_client_rejects_malformed_url_before_request_execution ... ok
+test process_execute_rejects_empty_shell_command ... ok
+test process_native_api_misuse_reports_deterministic_error ... ok
+test network_http_get_rejects_oversized_response_body ... ok
+test network_native_api_misuse_reports_deterministic_error ... ok
+test process_execute_status_rejects_newline_shell_command ... ok
+test unzip_rejects_absolute_entries ... ok
+test unzip_extracts_safe_nested_entries ... ok
+test process_direct_exec_does_not_expand_shell_tokens ... ok
+test process_env_deny_overrides_allow_for_inherited_values ... ok
+test unzip_rejects_null_byte_entries ... ok
+test process_timeout_kills_long_running_process ... ok
+test process_output_limit_sets_truncation_flags ... ok
+test process_env_allow_and_deny_policy_is_enforced ... ok
+test unzip_rejects_parent_traversal_entries ... ok
+test unzip_rejects_symlink_entries ... ok
+test unzip_rejects_windows_drive_prefixed_entries ... ok
+test network_http_request_timeout_is_reported_deterministically ... ok
+test unzip_rejects_archives_exceeding_entry_count_limit ... ok
+test unzip_rejects_archives_exceeding_single_entry_limit ... ok
+test unzip_rejects_archives_exceeding_total_size_limit ... ok
+
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.85s
+
+     Running tests/native_json.rs (target/debug/deps/native_json-7643cda612a2f717)
+
+running 7 tests
+test to_json_rejects_non_finite_numbers ... ok
+test to_json_rejects_unsupported_value_types ... ok
+test parse_json_rejects_excessive_nesting_depth ... ok
+test parse_json_invalid_input_reports_location ... ok
+test parse_json_supports_all_json_root_value_kinds ... ok
+test to_json_stringifies_primitive_and_nested_values ... ok
+test parse_json_rejects_excessive_input_size ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/optional_typing_v1_contract.rs (target/debug/deps/optional_typing_v1_contract-38545b26a43d8b2a)
+
+running 4 tests
+test v1_annotations_are_preserved_as_parser_metadata ... ok
+test v1_annotations_do_not_enforce_runtime_types_by_default ... ok
+test v1_selective_imports_do_not_trigger_false_undefined_function_warnings ... ok
+test v1_optional_typing_warnings_are_interpreter_only ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests/package_module_workflow_integration.rs (target/debug/deps/package_module_workflow_integration-cb8bd9e129ac423f)
+
+running 7 tests
+test package_module_workflow_supports_dotted_from_imports_for_nested_source_layout ... ok
+test package_module_cycle_error_reports_import_chain ... ok
+test package_module_run_refreshes_after_module_file_change ... ok
+test package_module_workflow_nested_layout_is_runtime_mode_consistent_and_keeps_flat_imports ... ok
+test package_module_workflow_vm_default_supports_nested_layout_and_frozen_lockfile ... ok
+test package_install_frozen_detects_lockfile_drift_and_verifies_after_regeneration ... ok
+test package_module_workflow_end_to_end_contract ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+     Running tests/parser_diagnostics_contract.rs (target/debug/deps/parser_diagnostics_contract-c05af0da1220a868)
+
+running 27 tests
+test parser_accepts_from_import_with_multi_level_dotted_module_path ... ok
+test parser_accepts_bare_return_at_eof ... ok
+test parser_accepts_collection_literal_at_limit_boundary ... ok
+test parser_accepts_bare_return_before_closing_brace ... ok
+test parser_accepts_valid_program_without_diagnostics ... ok
+test parser_diagnostic_span_matches_legacy_location_fields ... ok
+test parser_accepts_from_import_with_single_level_dotted_module_path ... ok
+test parser_accepts_expression_depth_at_limit_boundary ... ok
+test parser_keeps_existing_flat_import_forms_unchanged ... ok
+test parser_recovery_reports_multiple_independent_errors ... ok
+test parser_reports_collection_literal_limit_for_array ... ok
+test parser_reports_block_depth_limit_for_nested_if_blocks ... ok
+test parser_reports_collection_literal_limit_for_dictionary ... ok
+test parser_reports_diagnostic_for_invalid_from_import_token_order ... ok
+test parser_reports_diagnostic_for_malformed_dotted_from_import_path ... ok
+test parser_reports_diagnostic_for_trailing_dot_in_from_import_path ... ok
+test parser_reports_expression_depth_limit_for_nested_array_literals ... ok
+test parser_reports_invalid_assignment_target ... ok
+test parser_reports_expression_depth_limit_for_parenthesized_expressions ... ok
+test parser_reports_missing_closing_brace ... ok
+test parser_reports_missing_closing_bracket ... ok
+test parser_reports_missing_closing_parenthesis ... ok
+test parser_reports_unexpected_eof_in_function_body ... ok
+test cli_run_exits_non_zero_on_parse_diagnostics ... ok
+test cli_test_run_exits_non_zero_on_parse_diagnostics ... ok
+test cli_run_exits_non_zero_when_source_exceeds_max_size ... ok
+test cli_run_accepts_source_at_max_size_boundary ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests/parser_precedence.rs (target/debug/deps/parser_precedence-896a56dbc2e78f96)
+
+running 12 tests
+test parser_precedence_parentheses_override_default_order ... ok
+test parser_assignment_rhs_preserves_expression_precedence ... ok
+test parser_compound_assignment_lowers_to_binary_update ... ok
+test parser_precedence_arithmetic_before_multiplicative ... ok
+test parser_precedence_unary_before_multiplicative ... ok
+test parser_precedence_boolean_and_before_or ... ok
+test parser_precedence_equality_after_comparison ... ok
+test parser_precedence_comparison_after_arithmetic ... ok
+test parser_rejects_chained_assignment ... ok
+test parser_compound_assignment_supports_index_targets ... ok
+test runtime_precedence_mixed_comparison_equality_and_boolean ... ok
+test runtime_compound_assignment_updates_bound_value ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/parser_type_annotation_regressions.rs (target/debug/deps/parser_type_annotation_regressions-c0c3ce9c555703f6)
+
+running 4 tests
+test result_and_option_type_annotations_parse_as_identifier_tokens ... ok
+test malformed_result_type_annotation_missing_comma_does_not_panic ... ok
+test malformed_result_type_annotation_missing_closer_does_not_panic ... ok
+test malformed_option_type_annotation_missing_closer_does_not_panic ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/pre_v1_master_checklist_contract.rs (target/debug/deps/pre_v1_master_checklist_contract-50cb176e14864538)
+
+running 1 test
+test pre_v1_master_checklist_defines_closure_semantics_and_blocker_rules ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/pre_v1_unresolved_inventory_contract.rs (target/debug/deps/pre_v1_unresolved_inventory_contract-3da54c1c760ce6c4)
+
+running 3 tests
+test unresolved_inventory_generator_fails_on_duplicate_item_ids ... ok
+test unresolved_inventory_generator_fails_on_unmapped_item_id ... ok
+test unresolved_inventory_generator_produces_table_for_all_master_items ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.86s
+
+     Running tests/readme_contracts.rs (target/debug/deps/readme_contracts-98615228d759f632)
+
+running 1 test
+test readme_covers_v1_status_cli_security_and_core_reference_links ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/release_candidate_gate_contract.rs (target/debug/deps/release_candidate_gate_contract-06c7dda654571a7a)
+
+running 2 tests
+test release_candidate_gate_help_includes_modes ... ok
+test release_candidate_gate_roadmap_only_mode_succeeds ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/release_process_docs_contract.rs (target/debug/deps/release_process_docs_contract-301aa0009f8e38e4)
+
+running 2 tests
+test release_process_doc_covers_required_policy_sections ... ok
+test release_gate_script_help_documents_modes_and_env_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/repo_hygiene_contract.rs (target/debug/deps/repo_hygiene_contract-0c69fcb95deeddcf)
+
+running 4 tests
+test repo_hygiene_policy_lists_current_root_contract ... ok
+test tracked_root_surface_matches_hygiene_allowlist ... ok
+test repo_hygiene_audit_allows_practical_tmp_and_var_workflows ... ok
+test repo_hygiene_audit_rejects_disallowed_root_clutter_patterns ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+     Running tests/runtime_path_matrix_contract.rs (target/debug/deps/runtime_path_matrix_contract-e19f2f8131996654)
+
+running 1 test
+test vm_parity_doc_includes_command_level_runtime_path_matrix ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/runtime_security.rs (target/debug/deps/runtime_security-49e39a10be3fd752)
+
+running 11 tests
+test runtime_security_module_loader_rejects_parent_traversal_import_name_cross_platform ... ok
+test runtime_security_reports_module_cycle_import_chain ... ok
+test runtime_security_rejects_oversized_string_literals ... ok
+test runtime_security_rejects_invalid_escape_sequences ... ok
+test runtime_security_rejects_module_symlink_escape ... ok
+test runtime_security_enforces_interpreter_call_depth_limit ... ok
+test runtime_security_rejects_oversized_collection_literals ... ok
+test runtime_security_vm_resolves_sibling_module_for_relative_entry_script_path ... ok
+test runtime_security_break_and_continue_outside_loops_are_rejected ... ok
+test runtime_security_rejects_dotted_module_symlink_escape_in_vm_and_interpreter ... ok
+test runtime_security_entry_script_parent_search_path_works_cross_cwd_vm_and_interpreter ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+
+     Running tests/security_posture_docs_contract.rs (target/debug/deps/security_posture_docs_contract-bd67abbb38e69c5b)
+
+running 2 tests
+test native_security_posture_doc_covers_required_operator_sections_and_flags ... ok
+test cli_help_includes_documented_capability_flags ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/serve_command_integration.rs (target/debug/deps/serve_command_integration-86ce72c42a61ef71)
+
+running 31 tests
+test serve_if_none_match_returns_304_for_matching_etag ... ok
+test serve_get_returns_length_type_and_safe_default_headers ... ok
+test serve_blocks_dot_ds_store_with_403 ... ok
+test serve_head_returns_headers_without_body ... ok
+test serve_custom_timeout_flags_still_serve_normal_requests ... ok
+test serve_blocks_dotenv_file_with_403 ... ok
+test serve_dotfile_blocking_takes_priority_over_known_extension_mime_resolution ... ok
+test serve_blocks_dot_git_config_with_403 ... ok
+test serve_accept_encoding_prefers_gzip_sibling_asset ... ok
+test serve_invalid_range_returns_416_with_content_range_header ... ok
+test serve_double_encoded_parent_traversal_does_not_escape_root ... ok
+test serve_blocks_backup_and_swap_files_with_403 ... ok
+test serve_large_file_get_returns_expected_content_length_and_body ... ok
+test serve_large_file_head_returns_content_length_without_body ... ok
+test serve_method_not_allowed_returns_allow_header ... ok
+test serve_mime_policy_covers_known_unknown_and_extensionless_assets ... ok
+test serve_missing_file_returns_404_with_standard_error_headers ... ok
+test serve_non_standard_method_returns_501 ... ok
+test serve_oversized_headers_return_413 ... ok
+test serve_oversized_request_line_returns_414 ... ok
+test serve_oversized_request_target_returns_414 ... ok
+test serve_query_string_does_not_change_filesystem_resolution ... ok
+test serve_range_returns_partial_content_and_content_range_header ... ok
+test serve_rejects_fragment_in_request_target_with_400 ... ok
+test serve_rejects_invalid_percent_encoding_with_400 ... ok
+test serve_rejects_null_byte_in_request_target_with_400 ... ok
+test serve_rejects_symlink_escape_target ... ok
+test serve_rejects_url_encoded_parent_traversal ... ok
+test serve_request_body_over_limit_returns_413_before_method_dispatch ... ok
+test serve_still_serves_normal_public_files ... ok
+test serve_too_many_headers_return_413 ... ok
+
+test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.91s
+
+     Running tests/stdlib_reference_contract.rs (target/debug/deps/stdlib_reference_contract-06af2f896b330643)
+
+running 5 tests
+test stdlib_inventory_alias_rows_match_canonical_runtime_contracts ... ok
+test stdlib_inventory_rows_include_required_contract_fields ... ok
+test stdlib_inventory_arity_column_matches_centralized_arity_metadata ... ok
+test stdlib_inventory_capability_column_matches_runtime_policy ... ok
+test stdlib_inventory_documents_all_runtime_builtins_exactly_once ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/stdlib_reference_policy_contract.rs (target/debug/deps/stdlib_reference_policy_contract-a7c76306c47bc822)
+
+running 1 test
+test stdlib_reference_defines_v1_tier_guarantee_policy ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/tree_sitter_kujo_assets.rs (target/debug/deps/tree_sitter_kujo_assets-4708c4c372d745e3)
+
+running 1 test
+test tree_sitter_kujo_assets_exist_and_have_core_content ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/unsafe_inventory_contract.rs (target/debug/deps/unsafe_inventory_contract-8fe64c02bc74de43)
+
+running 3 tests
+test unsafe_inventory_script_generates_expected_artifacts ... ok
+test unsafe_inventory_enforces_current_executable_budget ... ok
+test unsafe_inventory_script_is_deterministic_for_repo_scan ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/unsafe_safety_gate_contract.rs (target/debug/deps/unsafe_safety_gate_contract-72a263e02d658de5)
+
+running 3 tests
+test unsafe_safety_gate_dry_run_emits_expected_commands ... ok
+test unsafe_safety_gate_rejects_unknown_argument ... ok
+test unsafe_safety_gate_help_lists_modes ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/v1_code_todo_triage_contract.rs (target/debug/deps/v1_code_todo_triage_contract-af5b4dafd6a5491c)
+
+running 3 tests
+test v1_code_todo_triage_script_fails_strict_mode_for_unclassified_paths ... ok
+test v1_code_todo_triage_script_generates_expected_repo_artifacts ... ok
+test v1_code_todo_triage_script_is_deterministic_for_repo_scan ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.46s
+
+     Running tests/v1_maturity_boundary_alignment_contract.rs (target/debug/deps/v1_maturity_boundary_alignment_contract-a7a434b06554dd04)
+
+running 1 test
+test readiness_boundary_wording_is_consistent_across_core_scope_docs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/v1_scope_docs_alignment.rs (target/debug/deps/v1_scope_docs_alignment-4137fadf2282e5a7)
+
+running 1 test
+test v1_scope_docs_keep_deferred_boundaries_aligned ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vm_external_project_smoke.rs (target/debug/deps/vm_external_project_smoke-0011ceca7267d3ad)
+
+running 2 tests
+test vm_external_project_smoke_from_import_symbol_call ... ok
+test vm_external_project_smoke_import_module_symbol_call ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests/vm_import_heavy_cache_lookup_contract.rs (target/debug/deps/vm_import_heavy_cache_lookup_contract-943067e6c4187390)
+
+running 1 test
+test import_heavy_cache_lookup_artifact_contains_required_markers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vm_import_heavy_perf_comparison_contract.rs (target/debug/deps/vm_import_heavy_perf_comparison_contract-b45db18292c8d792)
+
+running 1 test
+test import_heavy_perf_comparison_artifact_contains_required_markers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vm_interpreter_migration_playbook_contract.rs (target/debug/deps/vm_interpreter_migration_playbook_contract-f7596ba92cc288fc)
+
+running 1 test
+test vm_interpreter_migration_playbook_includes_runtime_recipes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/vm_interpreter_parity_surfaces.rs (target/debug/deps/vm_interpreter_parity_surfaces-d5ef0fc1609e17c6)
+
+running 102 tests
+test vm_and_interpreter_allow_inner_scope_shadowing_without_leaking ... ok
+test vm_and_interpreter_error_on_async_function_arity_too_many ... ok
+test vm_and_interpreter_error_on_async_function_arity_mismatch ... ok
+test vm_and_interpreter_allow_break_and_continue_inside_loop ... ok
+test vm_and_interpreter_allow_reusing_loop_local_names_in_sibling_while_scopes ... ok
+test vm_and_interpreter_closure_captures_nearest_lexical_binding ... ok
+test vm_and_interpreter_define_collection_and_callable_equality_contract ... ok
+test vm_and_interpreter_assignment_updates_outer_binding_when_present ... ok
+test vm_and_interpreter_allow_top_level_return_for_script_exit ... ok
+test vm_and_interpreter_define_cross_type_numeric_and_string_ordering_contract ... ok
+test vm_and_interpreter_allow_mutable_bindings_to_reassign_and_mutate ... ok
+test vm_and_interpreter_dotted_import_resolution_prefers_flat_module_before_nested_path ... ok
+test vm_and_interpreter_error_on_break_outside_loop ... ok
+test vm_and_interpreter_error_on_break_outside_loop_inside_function ... ok
+test vm_and_interpreter_error_on_continue_outside_loop ... ok
+test vm_and_interpreter_error_on_continue_outside_loop_inside_function ... ok
+test vm_and_interpreter_error_on_function_arity_too_few ... ok
+test vm_and_interpreter_error_on_closure_arity_mismatch ... ok
+test vm_and_interpreter_error_on_closure_arity_too_many ... ok
+test vm_and_interpreter_error_on_indexing_non_indexable_value ... ok
+test vm_and_interpreter_error_on_generator_arity_mismatch ... ok
+test vm_and_interpreter_error_on_generator_arity_too_many ... ok
+test vm_and_interpreter_error_on_invalid_map_key_type ... ok
+test vm_and_interpreter_error_on_function_arity_too_many ... ok
+test vm_and_interpreter_error_on_invalid_index_assignment_target ... ok
+test vm_and_interpreter_error_on_method_arity_mismatch ... ok
+test vm_and_interpreter_error_on_missing_string_map_key ... ok
+test vm_and_interpreter_error_on_method_arity_too_many ... ok
+test vm_and_interpreter_error_on_native_function_arity_mismatch ... ok
+test vm_and_interpreter_error_on_nested_missing_map_key ... ok
+test vm_and_interpreter_error_on_missing_integer_map_key ... ok
+test vm_and_interpreter_error_on_native_function_arity_too_few ... ok
+test vm_and_interpreter_error_on_out_of_bounds_array_index ... ok
+test vm_and_interpreter_error_on_undefined_identifier_in_condition ... ok
+test vm_and_interpreter_error_on_out_of_bounds_string_index ... ok
+test vm_and_interpreter_error_on_undefined_identifier_in_binary_expression ... ok
+test vm_and_interpreter_error_on_range_native_arity ... ok
+test vm_and_interpreter_error_on_unsupported_struct_generator_method ... ok
+test vm_and_interpreter_error_on_undefined_method_receiver ... ok
+test vm_and_interpreter_error_on_undefined_identifier_inside_closure ... ok
+test vm_and_interpreter_error_on_undefined_identifier_inside_function ... ok
+test vm_and_interpreter_error_on_unknown_method_member ... ok
+test vm_and_interpreter_keep_string_literals_explicit ... ok
+test vm_and_interpreter_error_on_undefined_top_level_identifier ... ok
+test vm_and_interpreter_error_on_unsupported_binary_operation ... ok
+test vm_and_interpreter_error_on_unsupported_unary_operation ... ok
+test vm_and_interpreter_function_fallthrough_and_bare_return_yield_null ... ok
+test vm_and_interpreter_match_enum_match_binding_surface ... ok
+test vm_and_interpreter_execute_exception_fixture_without_runtime_arity_drift ... ok
+test vm_and_interpreter_match_custom_enum_constructor_calls_without_recursion ... ok
+test vm_and_interpreter_match_dict_override_and_dict_method_surface ... ok
+test vm_and_interpreter_match_dotted_from_import_surface ... ok
+test vm_and_interpreter_match_dotted_imported_function_invocation_surface ... ok
+test vm_and_interpreter_match_import_export_surface ... ok
+test vm_and_interpreter_match_legacy_method_without_self_field_lookup ... ok
+test vm_and_interpreter_match_import_all_function_invocation_surface ... ok
+test vm_and_interpreter_match_async_named_nested_capture_mutation ... ok
+test vm_and_interpreter_match_null_equality_contract ... ok
+test vm_and_interpreter_match_generator_iteration_surface ... ok
+test vm_and_interpreter_match_named_nested_capture_mutation ... ok
+test vm_and_interpreter_match_imported_function_invocation_surface ... ok
+test vm_and_interpreter_match_imported_function_dict_index_surface ... ok
+test vm_and_interpreter_match_null_optional_and_pipe_operator_surface ... ok
+test vm_and_interpreter_match_spread_destructuring_surface ... ok
+test vm_and_interpreter_match_struct_method_behavior_contract ... ok
+test vm_and_interpreter_match_spawn_surface ... ok
+test vm_and_interpreter_match_struct_op_add_overload_surface ... ok
+test vm_and_interpreter_match_struct_method_named_chain_collision_surface ... ok
+test vm_and_interpreter_match_struct_unary_overload_surface ... ok
+test vm_and_interpreter_match_successful_local_map_update ... ok
+test vm_and_interpreter_match_successful_nested_map_update ... ok
+test vm_and_interpreter_match_valid_index_assignment_success_path ... ok
+test vm_and_interpreter_match_top_level_function_hoisting_surface ... ok
+test vm_and_interpreter_match_throw_call_stack_surface ... ok
+test vm_and_interpreter_nan_and_infinity_comparisons_match_policy ... ok
+test vm_and_interpreter_preserve_variadic_native_contracts ... ok
+test vm_and_interpreter_match_truthiness_semantics_across_conditionals ... ok
+test vm_and_interpreter_reject_block_variable_leakage ... ok
+test vm_and_interpreter_reject_boolean_ordering_comparisons ... ok
+test vm_and_interpreter_reject_cross_type_ordering_comparisons ... ok
+test vm_and_interpreter_reject_duplicate_let_declaration_in_same_scope ... ok
+test vm_and_interpreter_reject_duplicate_const_declaration_in_same_scope ... ok
+test vm_and_interpreter_reject_float_modulo_by_zero ... ok
+test vm_and_interpreter_reject_float_division_by_zero ... ok
+test vm_and_interpreter_reject_in_place_mutation_of_const_binding ... ok
+test vm_and_interpreter_match_callable_arity_success_paths ... ok
+test vm_and_interpreter_reject_integer_add_overflow ... ok
+test vm_and_interpreter_reject_in_place_mutation_of_immutable_binding ... ok
+test vm_and_interpreter_reject_integer_division_overflow ... ok
+test vm_and_interpreter_reject_integer_multiply_overflow ... ok
+test vm_and_interpreter_reject_integer_subtract_overflow ... ok
+test vm_and_interpreter_reject_local_reassignment_of_immutable_let_binding ... ok
+test vm_and_interpreter_reject_overflow_in_local_in_place_addition ... ok
+test vm_and_interpreter_reject_loop_variable_leakage ... ok
+test vm_and_interpreter_reject_reassignment_of_immutable_let_binding ... ok
+test vm_and_interpreter_reject_reassignment_of_const_binding ... ok
+test vm_and_interpreter_short_circuit_logical_operators_skip_rhs_when_possible ... ok
+test vm_and_interpreter_reject_reassignment_of_captured_immutable_let_binding ... ok
+test vm_and_interpreter_match_successful_captured_map_update ... ok
+test vm_and_interpreter_resolve_defined_identifiers ... ok
+test vm_and_interpreter_match_async_named_nested_capture_isolation ... ok
+test vm_and_interpreter_short_circuit_logical_operators_evaluate_rhs_when_required ... ok
+
+test result: ok. 102 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/vm_runtime_diff_harness_contract.rs (target/debug/deps/vm_runtime_diff_harness_contract-0e96cccae5333d3c)
+
+running 2 tests
+test runtime_diff_harness_normalization_self_check_succeeds ... ok
+test runtime_diff_harness_generates_expected_columns_and_summary ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+
+     Running tests/vm_runtime_mismatch_baseline_contract.rs (target/debug/deps/vm_runtime_mismatch_baseline_contract-736d4f65847ed9fe)
+
+running 4 tests
+test vm_runtime_mismatch_baseline_does_not_bucket_runtime_divergence_as_harness_debt ... ok
+test vm_runtime_mismatch_markdown_artifact_contains_required_markers ... ok
+test vm_runtime_mismatch_csv_artifact_classifies_every_mismatch_row ... ok
+test vm_runtime_mismatch_generator_strict_mode_succeeds_for_repo_scan ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+     Running tests/vm_runtime_mismatch_inventory_contract.rs (target/debug/deps/vm_runtime_mismatch_inventory_contract-07e51506b11e76bd)
+
+running 2 tests
+test vm_runtime_mismatch_inventory_script_generates_expected_outputs ... ok
+test vm_runtime_mismatch_inventory_script_is_deterministic_for_capped_scan ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.75s
+
+   Doc-tests kujo
+
+running 1 test
+test src/interpreter/environment.rs - interpreter::environment::Environment (line 48) ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+ended_at=2026-06-19T17:46:51-0400

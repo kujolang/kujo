@@ -3,6 +3,7 @@
 Last audit date: 2026-05-06
 > Current crate version: `1.0.0` in [Cargo.toml](Cargo.toml)
 Target release: 1.0.0
+Release state: pre-tag `1.0.0` release candidate metadata; the final `v1.0.0` tag, crate publication, and binary artifact publication are not complete until the release artifact checklist has dated evidence.
 Roadmap status: active production-readiness backlog
 
 This roadmap replaces the previous release-execution roadmap. The prior roadmap stated that Kujo had no known P0 language/runtime parity blockers. That is no longer accurate. The current audit found at least one failing test plus multiple security, correctness, diagnostics, runtime, HTTP, filesystem, and documentation gaps that must be closed before Kujo can credibly ship a production-ready 1.0 release.
@@ -112,7 +113,7 @@ If a command is not yet available, create the missing configuration as part of t
 
 | Area | Files/Paths | Responsibility | Current Maturity | Immediate Concerns |
 | ---- | ----------- | -------------- | ---------------- | ------------------ |
-| Crate config | `Cargo.toml`, `Cargo.lock` | Build metadata, dependencies, crate version | usable | Version is pre-1.0; security tooling and release gates need formalization. |
+| Crate config | `Cargo.toml`, `Cargo.lock` | Build metadata, dependencies, crate version | usable | Version metadata is staged at `1.0.0`; final tag/publish readiness still depends on release gates and artifact evidence. |
 | CLI entry point | `src/main.rs` | Command dispatch, serve command helpers, test-only server helpers | partial | Contains duplicate `#[cfg(test)]` MIME/server logic that differs from production server policy. CLI exit-code and diagnostics policy need tightening. |
 | Library facade | `src/lib.rs` | Public crate module exposure | usable | Needs stable 1.0 embedding/API surface decisions. |
 | Lexer | `src/lexer.rs` | Source tokenization | partial | Silent invalid-character handling, weak malformed literal handling, no structured diagnostics. |

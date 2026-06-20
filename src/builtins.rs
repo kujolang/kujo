@@ -2064,9 +2064,13 @@ pub fn format_debug_value(value: &Value) -> String {
             format!("HttpServer(host: {}, port: {})", host, port)
         }
         Value::HttpResponse { status, .. } => format!("HttpResponse(status: {})", status),
+        #[cfg(feature = "runtime-db")]
         Value::Database { db_type, .. } => format!("Database(type: {})", db_type),
+        #[cfg(feature = "runtime-db")]
         Value::DatabasePool { .. } => "DatabasePool".to_string(),
+        #[cfg(feature = "runtime-image")]
         Value::Image { format, .. } => format!("Image(format: {})", format),
+        #[cfg(feature = "runtime-archive")]
         Value::ZipArchive { path, .. } => format!("ZipArchive(path: {})", path),
         Value::TcpListener { addr, .. } => format!("TcpListener(addr: {})", addr),
         Value::TcpStream { peer_addr, .. } => format!("TcpStream(peer: {})", peer_addr),

@@ -1,0 +1,62 @@
+$ cargo test --test native_api_security_boundaries
+started_at=2026-06-19T17:47:17-0400
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.15s
+     Running tests/native_api_security_boundaries.rs (target/debug/deps/native_api_security_boundaries-e19f66c33567d322)
+
+running 52 tests
+test filesystem_native_api_misuse_reports_deterministic_error ... ok
+test filesystem_read_file_rejects_payload_over_limit ... ok
+test filesystem_write_overwrite_requires_explicit_flag ... ok
+test filesystem_directory_delete_behavior_is_non_recursive ... ok
+test database_native_api_misuse_reports_deterministic_error ... ok
+test native_capability_allows_only_requested_capability ... ok
+test crypto_native_api_misuse_reports_deterministic_error ... ok
+test native_capability_allow_fs_write_enables_write_file ... ok
+test filesystem_write_overwrite_succeeds_with_explicit_flag ... ok
+test native_capability_allow_fs_delete_enables_delete_file ... ok
+test filesystem_write_file_rejects_payload_over_limit ... ok
+test native_capability_untrusted_denies_env_read ... ok
+test filesystem_write_and_read_succeeds_at_size_limit_boundary ... ok
+test native_capability_untrusted_denies_network_client ... ok
+test native_capability_untrusted_denies_network_server ... ok
+test native_capability_untrusted_denies_filesystem_delete ... ok
+test native_capability_untrusted_denies_filesystem_write ... ok
+test native_capability_untrusted_denies_env_write ... ok
+test native_capability_untrusted_denies_database ... ok
+test native_capability_untrusted_denies_clock ... ok
+test native_capability_untrusted_denies_process_exec ... ok
+test native_capability_untrusted_allows_shell_exec_when_enabled ... ok
+test native_capability_untrusted_denies_shell_exec ... ok
+test native_capability_untrusted_denies_random ... ok
+test network_http_client_rejects_malformed_url_before_request_execution ... ok
+test network_http_client_rejects_invalid_port_before_request_execution ... ok
+test network_http_client_rejects_unsupported_url_scheme_before_request_execution ... ok
+test native_capability_spawned_interpreter_inherits_policy ... ok
+test network_http_get_rejects_oversized_response_body ... ok
+test network_destination_policy_deny_private_blocks_loopback_http_client ... ok
+test process_direct_exec_does_not_expand_shell_tokens ... ok
+test network_destination_policy_override_allows_trusted_loopback_http_client ... ok
+test process_execute_rejects_empty_shell_command ... ok
+test network_destination_policy_deny_private_blocks_loopback_tcp_client ... ok
+test native_capability_vm_and_interpreter_both_enforce_denial ... ok
+test process_execute_status_rejects_newline_shell_command ... ok
+test process_native_api_misuse_reports_deterministic_error ... ok
+test network_native_api_misuse_reports_deterministic_error ... ok
+test network_http_request_timeout_is_reported_deterministically ... ok
+test process_env_deny_overrides_allow_for_inherited_values ... ok
+test process_env_allow_and_deny_policy_is_enforced ... ok
+test unzip_rejects_absolute_entries ... ok
+test unzip_extracts_safe_nested_entries ... ok
+test unzip_rejects_null_byte_entries ... ok
+test unzip_rejects_parent_traversal_entries ... ok
+test process_output_limit_sets_truncation_flags ... ok
+test process_timeout_kills_long_running_process ... ok
+test unzip_rejects_symlink_entries ... ok
+test unzip_rejects_windows_drive_prefixed_entries ... ok
+test unzip_rejects_archives_exceeding_entry_count_limit ... ok
+test unzip_rejects_archives_exceeding_single_entry_limit ... ok
+test unzip_rejects_archives_exceeding_total_size_limit ... ok
+
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.39s
+
+ended_at=2026-06-19T17:47:21-0400

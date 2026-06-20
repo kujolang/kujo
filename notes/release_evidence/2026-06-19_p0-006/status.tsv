@@ -1,0 +1,8 @@
+cargo_fmt_check	0	notes/release_evidence/2026-06-19_p0-006/cargo_fmt_check.log
+cli_contracts	0	notes/release_evidence/2026-06-19_p0-006/cli_contracts.log
+docs_examples	0	notes/release_evidence/2026-06-19_p0-006/docs_examples.log
+kujo_test_vm	0	notes/release_evidence/2026-06-19_p0-006/kujo_test_vm.log
+kujo_test_dual	0	notes/release_evidence/2026-06-19_p0-006/kujo_test_dual.log
+generate_vm_runtime_mismatch_inventory	0	notes/release_evidence/2026-06-19_p0-006/generate_vm_runtime_mismatch_inventory.log
+vm_runtime_mismatch_inventory_contract	0	notes/release_evidence/2026-06-19_p0-006/vm_runtime_mismatch_inventory_contract.log
+generated_artifact_freshness_contract	0	notes/release_evidence/2026-06-19_p0-006/generated_artifact_freshness_contract.log

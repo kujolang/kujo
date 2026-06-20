@@ -35,8 +35,8 @@ Drive Kujo from "near release-ready" to "enterprise-grade and universally useful
   - 2026-05-25 blocker: verification matrix is still red because `cargo test --test unsafe_inventory_contract` fails on executable-unsafe budget (`expected <=55, got 59`); VM/dual fixture sweeps remain at `137/150` with known parser-fixture debt (`tests/test_module_syntax.kujo`, `tests/testing_framework.kujo`, `tests/generators_test.kujo`, `tests/destructuring.kujo`, etc.). Evidence note: `notes/2026-05-25_23-06_er-p0-001-verification-matrix-triage.md`.
   - 2026-05-25 blocker refresh: verification matrix remains red on latest `main`:
     - `cargo test --test unsafe_inventory_contract` still fails budget gate (`expected <=55, got 59`).
-    - `cargo run -- test --runtime vm` currently passes `137/150`.
-    - `cargo run -- test --runtime dual` currently passes `136/150` (includes `tests/stdlib_test.kujo` snapshot/runtime drift in addition to parser-debt fixtures).
+    - `cargo run -- test --runtime vm` passed `137/150` in that refresh.
+    - `cargo run -- test --runtime dual` passed `136/150` in that refresh (included `tests/stdlib_test.kujo` snapshot/runtime drift in addition to parser-debt fixtures).
     - Evidence note: `notes/2026-05-25_23-59_er-p0-001-verification-matrix-refresh.md`.
   - 2026-05-26 closure evidence:
     - `cargo test` passed end-to-end on latest `main` (all suites green).
@@ -50,6 +50,9 @@ Drive Kujo from "near release-ready" to "enterprise-grade and universally useful
     - Release-candidate roadmap gate passed:
       - `bash scripts/release_candidate_gate.sh --roadmap-only`
     - Evidence note: `notes/2026-05-26_00-58_er-p0-001-verification-matrix-closure.md`.
+  - 2026-06-19 refresh note:
+    - `V1RR-P0-006` reconciled the current `kujo test` fixture-count story: both `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual` now report `Passed 144/144 tests` plus `Fixture outcomes: passed=144, failed=0, skipped=6, expected_fail=0, runnable=144, discovered=150`.
+    - The older `137/150` and `136/150` rows above remain historical evidence, not current release-review state.
 
 - [x] **ER-P0-002**: Complete unsafe boundary tightening follow-through (JIT focus).
   - Scope: maintain machine-verifiable `SAFETY:` contracts and close remaining high-risk unsafe review gaps.
@@ -83,6 +86,9 @@ Drive Kujo from "near release-ready" to "enterprise-grade and universally useful
       - `cargo run -- test --runtime dual` (summary `136/150`, process exit `0`)
     - Focused parity regression suite passed:
       - `cargo test --test vm_interpreter_parity_surfaces` (100/100).
+  - 2026-06-19 refresh note:
+    - Regenerated `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
+    - The 2026-05-26 closure evidence remains historical; it is no longer the current generated inventory state for final release review.
 
 - [x] **ER-P0-004**: Harden network/process/file capability defaults and docs alignment.
   - Scope: revalidate `--untrusted` guardrails against SSRF-style destinations, process execution limits, and path boundaries.

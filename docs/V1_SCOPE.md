@@ -1,14 +1,14 @@
 # Kujo v1.0.0 Scope Definition
 
-Status: v0.14.0 scope gate baseline
+Status: pre-tag v1.0.0 release-candidate scope baseline
 
 This document defines what is in-scope for Kujo `v1.0.0`, what is explicitly out-of-scope, and what compatibility commitments apply.
 
-Canonical readiness boundary: Kujo remains pre-1.0 until `ROADMAP.md` and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` release gates are closed.
+Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 
 ## In-Scope For v1.0.0
 
-- Stable core language syntax already shipped in `v0.13.0`/`v0.14.0` baseline docs.
+- Stable core language syntax carried forward from the historical `v0.13.0`/`v0.14.0` stabilization baseline docs into the staged `1.0.0` crate metadata.
 - Stable runtime behavior for currently documented core execution paths:
   - CLI script execution (`kujo run` VM default + interpreter fallback)
   - core control flow, function, collection, and error-flow semantics covered by tests
@@ -74,13 +74,19 @@ The following items are explicitly tracked as post-1.0 backlog and are not block
 - FFI (foreign function interface)
 - WASM target
 - Macro system
+- Optional typing precision follow-ups:
+  - destructuring inference
+  - module existence checks
+  - struct field type lookup
+  - Promise unwrap typing
+  - permissive callable fallback policy tightening
 
 These candidates should be tracked as roadmap backlog slices after `v1.0.0` release stabilization.
 
-## v0.14.0 To v1.0.0 Handoff Checklist
+## Release-Candidate To v1.0.0 Handoff Checklist
 
 Before tagging `v1.0.0`, confirm:
 
-1. `v0.14.0` stabilization checklist is fully complete.
+1. Earlier stabilization checklist evidence remains linked from the active roadmap and release-readiness checklist.
 2. Contract docs/tests and release process docs are in sync.
-3. Release notes clearly distinguish `v1.0.0` guaranteed surfaces vs deferred backlog.
+3. `CHANGELOG.md` release notes clearly distinguish `v1.0.0` guaranteed surfaces vs deferred backlog.

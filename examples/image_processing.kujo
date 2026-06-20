@@ -1,5 +1,7 @@
 # Image Processing Example
 # Demonstrates image manipulation capabilities in Kujo
+# Host-effect demo: trusted local workflow. In untrusted mode, image loading
+# needs --allow-fs-read and saving/conversion needs --allow-fs-write.
 
 print("=== Kujo Image Processing Demo ===")
 print("")

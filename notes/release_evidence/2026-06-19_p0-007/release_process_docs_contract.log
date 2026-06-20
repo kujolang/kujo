@@ -1,0 +1,9 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.86s
+     Running tests/release_process_docs_contract.rs (target/debug/deps/release_process_docs_contract-301aa0009f8e38e4)
+
+running 2 tests
+test release_process_doc_covers_required_policy_sections ... ok
+test release_gate_script_help_documents_modes_and_env_controls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

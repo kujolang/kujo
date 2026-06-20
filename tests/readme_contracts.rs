@@ -24,9 +24,11 @@ fn readme_covers_v1_status_cli_security_and_core_reference_links() {
         "[docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)",
         "Dotted module import workflows are supported on the default VM path",
         "Package workflows are deterministic: `kujo init`, `kujo package-add`, `kujo package-install`, and `kujo package-install --frozen` work with nested source layouts and reproducible `kujo.lock` snapshots.",
+        "Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport.",
         "## Runtime Mode Recommendations",
         "Developers should not need `--interpreter` for ordinary modular project layouts.",
         "kujo package-install --frozen",
+        "`kujo package-publish`: preview package publish metadata only",
         "[docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md](docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md)",
     ];
 

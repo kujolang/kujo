@@ -1,0 +1,6 @@
+command	status	log
+cargo test --test editor_adapter_contracts	0	notes/release_evidence/2026-06-19_p1-006/cargo_test_editor_adapter_contracts.log
+cargo test --test tree_sitter_kujo_assets	0	notes/release_evidence/2026-06-19_p1-006/cargo_test_tree_sitter_kujo_assets.log
+cargo test --test lsp_reliability_track	0	notes/release_evidence/2026-06-19_p1-006/cargo_test_lsp_reliability_track.log
+cargo test --test v1_scope_docs_alignment	0	notes/release_evidence/2026-06-19_p1-006/cargo_test_v1_scope_docs_alignment.log
+cargo test --test docs_examples	0	notes/release_evidence/2026-06-19_p1-006/cargo_test_docs_examples.log

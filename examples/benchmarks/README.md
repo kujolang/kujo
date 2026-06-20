@@ -2,6 +2,9 @@
 
 This directory contains comprehensive benchmarks for the Kujo programming language, including micro-benchmarks, real-world scenarios, and cross-language comparisons.
 
+Status: local regression and exploration fixtures. These examples are not v1.0
+launch benchmark claims; see `../../docs/BENCHMARK_PUBLICATION_POLICY.md`.
+
 ## Directory Structure
 
 ```
@@ -94,16 +97,19 @@ Simulate real application scenarios.
 
 Test JIT compilation effectiveness.
 
-| Benchmark | Focus | Expected Speedup |
+| Benchmark | Focus | Local signal |
 |-----------|-------|------------------|
-| `jit/arithmetic_intensive.kujo` | Pure arithmetic | 500-1000x |
-| `jit/variable_heavy.kujo` | Variable operations | 50-100x |
-| `jit/loop_nested.kujo` | Loop optimization | 100-300x |
-| `jit/comparison_specialized.kujo` | Type specialization | 200-400x |
+| `jit/arithmetic_intensive.kujo` | Pure arithmetic | experimental JIT compatibility |
+| `jit/variable_heavy.kujo` | Variable operations | type-profile sensitivity |
+| `jit/loop_nested.kujo` | Loop optimization | hot-loop behavior |
+| `jit/comparison_specialized.kujo` | Type specialization | specialized versus generic paths |
 
 ## Benchmark Output
 
 ### Example Output
+
+The sample below is illustrative. Do not quote it as current v1.0 evidence
+without a fresh benchmark campaign and preserved raw artifacts.
 
 ```
 ========================================
@@ -154,7 +160,7 @@ Summary:
 
 ### Fibonacci (Recursive, N=30)
 
-Expected relative performance:
+Historical expectation template, not a v1.0 launch claim:
 
 ```
 Language         Time      Relative
@@ -168,7 +174,7 @@ Python           ~4.5s     0.01x
 
 ### Array Operations (100K elements)
 
-Expected performance for map/filter/reduce:
+Historical expectation template, not a v1.0 launch claim:
 
 ```
 Language         Total     Relative
@@ -231,24 +237,28 @@ cargo run --release -- profile examples/benchmarks/fibonacci.kujo --flamegraph f
 flamegraph.pl fib.txt > fib.svg
 ```
 
-## Performance Targets
+## Local Investigation Targets
+
+These are development targets for local profiling. Public claims require the
+policy in `../../docs/BENCHMARK_PUBLICATION_POLICY.md`.
 
 ### VM Mode
-- 10-50x faster than interpreter ✅
-- Instant compilation (<1ms) ✅
-- All tests pass ✅
+- Compare VM and interpreter on the same command, hardware, and commit.
+- Treat broad speedup ranges as local signals until backed by committed
+  artifacts.
+- Keep tests passing before comparing timings.
 
 ### JIT Mode
-- 100-500x faster than interpreter ✅
-- 2-5x slower than Go ✅
-- 2-10x faster than Python ✅
-- Competitive with Node.js ✅
+- Use `kujo run --jit` explicitly; JIT is experimental and opt-in.
+- Record fallback messages so unsupported surfaces are not misread as JIT runs.
+- Treat cross-language comparisons as exploratory until a publication campaign
+  captures raw logs, versions, and correctness checks.
 
 ## Known Limitations
 
 ### JIT Optimization Caveats
 
-1. **Cold Start**: First 100 iterations use VM
+1. **JIT Opt-In**: JIT must be requested explicitly with `kujo run --jit`
 2. **Type Mixing**: Guards fail if types change
 3. **Complex Control Flow**: May not optimize
 4. **I/O Bound**: No speedup for I/O operations
@@ -275,8 +285,8 @@ To add a new benchmark:
 
 ### Good Performance Indicators
 
-- VM: 10-20x faster than interpreter
-- JIT: 100-300x faster for arithmetic
+- VM and interpreter comparisons are run on the same command, hardware, and commit
+- JIT output confirms the workload stayed on a JIT-compatible path
 - Consistent results across runs
 - High guard success rate (>95%)
 
@@ -312,14 +322,16 @@ A: Check execution mode, iterations (JIT needs 100+), and type consistency.
 A: Use `compare_languages.sh` or write equivalent implementations.
 
 **Q: What's a realistic speedup expectation?**
-A: VM: 10-50x, JIT: 100-500x for CPU-bound code. I/O-bound sees minimal improvement.
+A: Measure the workload on the current commit. The project does not publish
+fixed broad VM/JIT multipliers for v1.0.
 
 **Q: Why does first run take longer?**
-A: JIT compilation happens on first detection of hot path (100 iterations).
+A: Compilation, cache warmup, filesystem state, and process startup can all
+affect first-run timing. Keep cold and warm runs separate.
 
 **Q: How do I profile my benchmark?**
 A: Use `kujo profile <file>` with optional `--flamegraph` output.
 
 ---
 
-*Last Updated: February 2026 (v0.10.0 release)*
+*Last Updated: June 20, 2026 for v1.0 benchmark publication policy.*
