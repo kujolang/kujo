@@ -222,6 +222,22 @@ bash .github/scripts/check-release-state.sh
 
 ## 8. Tagging And Publication Order
 
+### 8.0 Explicit Release Directive
+
+Tagging, crate publication, GitHub release publication, and tag-time artifact
+sign-off require an explicit `UNBLOCK_V1_RELEASE` directive in the current
+release-execution context.
+
+Without that directive, maintainers and automation may run dry-run gates,
+prepare release evidence, and record blockers, but must not:
+
+- create or push the final `v1.0.0` tag
+- run `cargo publish`
+- publish GitHub release assets
+- mark tag-time artifact sign-off rows complete
+
+This is standing release policy, not a session-specific preference.
+
 1. Create release commit.
 
 ```bash

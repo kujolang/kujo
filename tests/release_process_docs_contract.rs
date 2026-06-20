@@ -21,6 +21,9 @@ fn release_process_doc_covers_required_policy_sections() {
         "## 4. Release Candidate (RC) Process",
         "## 5. Changelog Format Policy",
         "## 8. Tagging And Publication Order",
+        "### 8.0 Explicit Release Directive",
+        "UNBLOCK_V1_RELEASE",
+        "must not",
         "cargo publish --dry-run",
         "cargo publish",
     ];

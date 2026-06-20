@@ -158,6 +158,10 @@ Each loop report must include exactly:
 
 - [ ] **V1U-OPEN-003**: Complete `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` tag-time sign-off items.
   - Scope: publish release, verify assets/checksums/smoke workflow, record evidence.
+  - Standing release directive policy (2026-06-19): tag-time publication and
+    sign-off require the explicit `UNBLOCK_V1_RELEASE` directive defined in
+    `docs/RELEASE_PROCESS.md`; historical loop blocker notes below are retained
+    as audit history, not as the source of release policy.
   - Acceptance criteria:
     - all tag-time checkboxes marked done with artifact URLs and checksum evidence note.
   - Blocker (2026-05-20): Requires the actual `v1.0.0` tag publication event and post-publish workflow evidence, which is not executable during pre-tag checklist loops.
@@ -447,6 +451,10 @@ Each loop report must include exactly:
 
 - [ ] **V1U-FINAL-003**: Complete tag-time artifact checklist.
   - Scope: execute final release publication and post-publish smoke verification.
+  - Standing release directive policy (2026-06-19): tag-time publication and
+    sign-off require the explicit `UNBLOCK_V1_RELEASE` directive defined in
+    `docs/RELEASE_PROCESS.md`; historical loop blocker notes below are retained
+    as audit history, not as the source of release policy.
   - Acceptance criteria:
     - all items in `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` checked with linked evidence.
   - Blocker (2026-05-21): This remains blocked until the actual `v1.0.0` publish event and post-publish artifact/smoke evidence exist.

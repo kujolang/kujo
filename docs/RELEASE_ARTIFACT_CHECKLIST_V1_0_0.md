@@ -33,6 +33,10 @@ For tag `<TAG>` (example: `v1.0.0`), release workflow publishes one archive/chec
 
 ## Tag-Time Sign-Off
 
+These rows must remain unchecked until a real release publication event occurs
+under the explicit `UNBLOCK_V1_RELEASE` directive defined in
+`docs/RELEASE_PROCESS.md`.
+
 - [ ] Publish the actual `v1.0.0` GitHub release.
 - [ ] Confirm Linux, macOS, and Windows artifact assets are attached to the release.
 - [ ] Confirm per-asset `.sha256` files and `checksums.txt` are attached to the release.

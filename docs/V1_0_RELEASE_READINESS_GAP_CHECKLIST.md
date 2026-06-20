@@ -351,11 +351,27 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-19_p1-006/status.tsv`.
 
-- [ ] **V1RR-P1-007: Normalize release-freeze/unblock language.**
+- [x] **V1RR-P1-007: Normalize release-freeze/unblock language.**
   - Problem: `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` repeatedly says tag-time work is blocked until `UNBLOCK_V1_RELEASE`. That may have been session-specific rather than standing release policy.
   - Acceptance:
     - Decide whether `UNBLOCK_V1_RELEASE` remains the required explicit release directive.
     - Move that rule into `docs/RELEASE_PROCESS.md` if it is standing policy, or retire stale session-specific blocker language from active checklists.
+  - Completed (2026-06-19):
+    - Kept `UNBLOCK_V1_RELEASE` as the standing explicit release directive and
+      moved the normative rule into `docs/RELEASE_PROCESS.md` section
+      `8.0 Explicit Release Directive`.
+    - Updated `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` so tag-time
+      sign-off rows explicitly remain unchecked until a real publication event
+      occurs under that directive.
+    - Annotated the historical `UNBLOCK_V1_RELEASE` blocker loops in
+      `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` as audit history rather
+      than the source of policy.
+    - Added a release-process docs contract marker for the directive section,
+      directive token, and `must not` guard language.
+    - Evidence note:
+      `notes/2026-06-19_v1_0_release_directive_normalization.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-007/status.tsv`.
 
 ## P2 - Post-Signoff Polish Or Explicit Deferral
 
