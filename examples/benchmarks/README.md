@@ -215,14 +215,14 @@ print(result)
 4. **Reproducibility**: Avoid random/time-dependent operations
 5. **Clarity**: Add comments explaining what's being tested
 
-### Benchmark Checklist
+### Benchmark Quality Criteria
 
-- [ ] Focuses on specific operation
-- [ ] Runs enough iterations (>100 for JIT)
-- [ ] Has descriptive filename
-- [ ] Includes comments
-- [ ] Produces verifiable output
-- [ ] Comparable to other languages (if applicable)
+- Focus on a specific operation.
+- Run enough iterations (>100 for JIT).
+- Use a descriptive filename.
+- Include comments for non-obvious benchmark intent.
+- Produce verifiable output.
+- Keep cross-language comparisons reproducible when applicable.
 
 ## Profiling Benchmarks
 
