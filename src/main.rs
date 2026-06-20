@@ -394,7 +394,7 @@ enum Commands {
         #[arg(long)]
         manifest: Option<PathBuf>,
 
-        /// Execute publish instead of dry-run preview
+        /// Reserved for future registry transport; currently rejected
         #[arg(long, default_value_t = false)]
         publish: bool,
     },
@@ -1888,15 +1888,18 @@ async fn async_main() {
             };
 
             if publish {
-                println!("published\t{}\t{}", parsed.package.name, parsed.package.version);
-            } else {
-                println!(
-                    "publish preview\t{}\t{}\tdependencies={}",
-                    parsed.package.name,
-                    parsed.package.version,
-                    parsed.dependencies.len()
+                eprintln!(
+                    "package publish transport is not available in Kujo v1.0; run without --publish for metadata preview"
                 );
+                std::process::exit(CliExitCode::UsageError.code());
             }
+
+            println!(
+                "publish preview\t{}\t{}\tdependencies={}",
+                parsed.package.name,
+                parsed.package.version,
+                parsed.dependencies.len()
+            );
         }
 
         Commands::Pack { command } => match command {

@@ -2,6 +2,20 @@
 
 Workflow packs are modular, project-specific command namespaces for the Kujo CLI. They let teams and third parties add custom CLI commands without modifying Kujo core.
 
+## v1.0 Launch Boundary
+
+Kujo v1.0 supports local workflow-pack execution only:
+
+- project-local packs under `./.kujo/packs/<pack-name>/kujo-pack.yaml`
+- user-local packs under `~/.kujo/packs/<pack-name>/kujo-pack.yaml`
+- explicit env-path packs through `KUJO_PACK_PATH`
+
+No public workflow-pack registry, Kennel package registry, remote pack install
+transport, registry authentication, or package upload flow is part of the v1.0
+launch boundary. Share packs by source repository, archive, or local copy, then
+run them with `kujo pack run <namespace> <command>` or the alias form for
+non-reserved namespaces.
+
 ## Quick Start
 
 ```bash
@@ -415,5 +429,7 @@ src/workflow_pack/
 - `kujo workflow list` — list all available namespaces and commands
 - Permission gating based on manifest `safe`/`writes_files`/`runs_processes`/`requires_network` metadata
 - Pack installation/management commands (`kujo pack init`, `kujo pack add`)
+- Public registry and remote install/publish transport, if adopted later,
+  through the Kennel namespace plan rather than v1.0 workflow-pack guarantees
 - More sophisticated check grouping and output formatting
 - A `--deep` flag convention for commands to opt into heavier validation

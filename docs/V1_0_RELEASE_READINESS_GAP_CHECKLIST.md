@@ -397,11 +397,31 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-20_p2-001/status.tsv`.
 
-- [ ] **V1RR-P2-002: Decide package registry/Kennel launch boundaries.**
+- [x] **V1RR-P2-002: Decide package registry/Kennel launch boundaries.**
   - Problem: ShipCheck warns about missing `kennel.toml`, and package workflow docs describe deterministic local package workflows. Registry/publish expectations should be explicit.
   - Acceptance:
     - Document whether v1 includes only local package workflows or any registry/publish story.
     - Align `docs/WORKFLOW_PACKS.md`, `docs/KENNEL_NAMESPACE_PLAN.md`, and release metadata docs.
+  - Completed (2026-06-20):
+    - Decision: Kujo v1.0 includes local package manifest/lockfile workflows
+      and local workflow-pack execution only. It does not include a public
+      Kennel registry, remote package resolution, registry authentication,
+      upload transport, or a first-party `kennel.toml` for this runtime repo.
+    - Updated `README.md`, `docs/RELEASE_PROCESS.md`,
+      `docs/WORKFLOW_PACKS.md`, `docs/KENNEL_NAMESPACE_PLAN.md`, and
+      `docs/SHIPCHECK_RELEASE_EXCEPTIONS.md` with the same launch boundary.
+    - Changed `kujo package-publish --publish` to fail deterministically with
+      the v1 boundary instead of printing a misleading `published` line;
+      dry-run metadata preview remains supported.
+    - Added docs and CLI contract coverage in
+      `tests/package_registry_boundary_docs_contract.rs`,
+      `tests/package_module_workflow_integration.rs`,
+      `tests/readme_contracts.rs`, and
+      `tests/release_process_docs_contract.rs`.
+    - Evidence note:
+      `notes/2026-06-20_v1_0_package_registry_kennel_boundary.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-20_p2-002/status.tsv`.
 
 - [ ] **V1RR-P2-003: Refresh benchmark publication strategy.**
   - Problem: SSG/cross-language benchmark docs contain many future measurement tasks and older host-specific notes.

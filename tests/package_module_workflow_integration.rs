@@ -403,6 +403,54 @@ fn package_install_frozen_detects_lockfile_drift_and_verifies_after_regeneration
 }
 
 #[test]
+fn package_publish_is_metadata_preview_and_rejects_registry_publish_transport() {
+    let project_root = unique_temp_dir("package_publish_boundary");
+    let manifest_path = project_root.join("kujo.toml");
+    fs::write(
+        &manifest_path,
+        r#"[package]
+name = "publish_demo"
+version = "0.1.0"
+
+[dependencies]
+example = "1.2.3"
+"#,
+    )
+    .expect("failed to write manifest");
+    let manifest_path_str = manifest_path.to_str().expect("manifest path should be utf-8");
+
+    let preview = run_kujo(&["package-publish", "--manifest", manifest_path_str], &project_root);
+    assert!(
+        preview.status.success(),
+        "package-publish preview should succeed: stdout={} stderr={}",
+        stdout_text(&preview),
+        stderr_text(&preview)
+    );
+    assert!(
+        stdout_text(&preview).contains("publish preview\tpublish_demo\t0.1.0\tdependencies=1"),
+        "preview should describe package metadata only, got stdout={}",
+        stdout_text(&preview)
+    );
+
+    let publish =
+        run_kujo(&["package-publish", "--manifest", manifest_path_str, "--publish"], &project_root);
+    assert!(
+        !publish.status.success(),
+        "package-publish --publish should fail until registry transport exists"
+    );
+    assert_eq!(
+        publish.status.code(),
+        Some(2),
+        "unsupported publish transport should be a usage error"
+    );
+    assert!(
+        stderr_text(&publish).contains("package publish transport is not available in Kujo v1.0"),
+        "publish failure should explain v1 boundary, got stderr={}",
+        stderr_text(&publish)
+    );
+}
+
+#[test]
 fn package_module_cycle_error_reports_import_chain() {
     let project_root = unique_temp_dir("package_module_cycle_error");
 

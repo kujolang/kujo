@@ -59,6 +59,22 @@ Exit code classes are contract-stable for automation:
 - `kujo package-install --frozen` is the verify mode and must fail when `kujo.lock` is missing or out of date relative to `kujo.toml`.
 - Release candidates should include a lockfile verification pass for package workflow fixtures and examples that use manifests.
 
+### 2.6 Package registry and Kennel boundary
+
+- Kujo v1.0 package scope is local manifest and lockfile determinism:
+  `kujo init`, `kujo package-add`, `kujo package-install`, and
+  `kujo package-install --frozen`.
+- Workflow packs are local extension points discovered from project-local,
+  user-local, and explicit environment paths.
+- Kujo v1.0 does not include a public Kennel registry, remote package
+  resolution, registry authentication, package upload transport, or a
+  first-party `kennel.toml` for the language/runtime repository.
+- `kujo package-publish` is metadata preview only; `--publish` is reserved for
+  future registry transport and must fail deterministically until that transport
+  exists.
+- Future registry semantics belong in `docs/KENNEL_NAMESPACE_PLAN.md` and must
+  not be described as a v1.0 release promise.
+
 ## 3. Required CI And Local Gates
 
 The release gate is enforced by `scripts/release_gate.sh` and CI workflows.

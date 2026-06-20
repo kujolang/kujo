@@ -12,6 +12,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - VM runtime parity for modular workflows has been significantly hardened.
 - Dotted module import workflows are supported on the default VM path.
 - Package workflows are deterministic: `kujo init`, `kujo package-add`, `kujo package-install`, and `kujo package-install --frozen` work with nested source layouts and reproducible `kujo.lock` snapshots.
+- Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport.
 - Native helper coverage has expanded for everyday scripting work: hashing (`sha256`, `sha256_file`, `md5`), file inspection (`read_file_lossy`, `path_is_symlink`), formatting (`pad_start`, `pad_end`), introspection (`type_of`, `is_truthy`), and stderr output (`eprint`) are all available without shelling out.
 - Native capability controls are available for trusted and untrusted execution modes.
 - Kujo is in pre-tag `1.0.0` release-candidate readiness: the crate metadata is staged at `1.0.0`, but final tag/publish evidence is still bounded by `ROADMAP.md`, the pre-v1 checklist, and the release artifact checklist.
@@ -191,6 +192,8 @@ kujo run /path/to/kennel/kennel.kujo --interpreter -- new my-tool
 - Use `--interpreter` only as an explicit compatibility/debug path when isolating runtime-path issues.
 - Use `--jit` only as an experimental opt-in for JIT-compatible bytecode surfaces; unsupported surfaces fall back to VM execution with deterministic messaging.
 - Use `kujo package-install --frozen` to verify manifests and lockfiles without rewriting them.
+- Treat `kujo package-publish` as metadata preview only; `--publish` is reserved
+  for future registry transport and is rejected in v1.0.
 - Migration guidance and diagnostics workflow: [docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md](docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md)
 
 ## CLI Overview
@@ -206,6 +209,7 @@ Common commands:
 - `kujo test`: run snapshot fixture corpus (`--runtime vm|dual|interpreter`, `--update`).
 - `kujo test-run <file>`: run Kujo `test "..." {}` declarations in a file.
 - `kujo init`, `kujo package-add`, `kujo package-install`, `kujo package-install --frozen`: create and verify reproducible package manifests and lockfiles.
+- `kujo package-publish`: preview package publish metadata only; no public registry publish occurs in v1.0.
 - `kujo serve [dir]`: static file server for local preview/testing.
 - `kujo lsp`: run Kujo’s LSP server.
 

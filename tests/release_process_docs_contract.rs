@@ -18,6 +18,8 @@ fn release_process_doc_covers_required_policy_sections() {
         "### 2.2 Standard library compatibility",
         "### 2.3 Diagnostics and machine-readable contract stability",
         "### 2.5 Dependency lockfile determinism",
+        "### 2.6 Package registry and Kennel boundary",
+        "`kujo package-publish` is metadata preview only",
         "## 4. Release Candidate (RC) Process",
         "## 5. Changelog Format Policy",
         "## 8. Tagging And Publication Order",

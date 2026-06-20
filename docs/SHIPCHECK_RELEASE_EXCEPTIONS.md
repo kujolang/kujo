@@ -39,7 +39,7 @@ ShipCheck warning: `No kennel.toml found`.
 
 Release decision: intentional exception.
 
-Reason: this repository publishes the Kujo language/runtime crate and binary through Cargo and GitHub release artifacts. It is not itself a Kennel package repository. Kennel registry/package launch boundaries remain tracked separately as release-readiness follow-up work.
+Reason: this repository publishes the Kujo language/runtime crate and binary through Cargo and GitHub release artifacts. It is not itself a Kennel package repository. Kujo v1.0 package scope is local manifest/lockfile determinism and local workflow-pack execution only; no public Kennel registry, remote package resolution, or package publish transport is part of the v1.0 launch boundary.
 
 ## Entry Point Warning
 
@@ -54,4 +54,3 @@ Canonical entry point:
 - Package metadata: `Cargo.toml`
 
 Reason: ShipCheck currently detects entry points from `kennel.toml` or root `.kujo` scripts. The Kujo runtime entry point is the Cargo binary, not a root Kujo script.
-
