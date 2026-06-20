@@ -1,0 +1,7 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.69s
+     Running tests/docs_policy_consistency_contract.rs (target/debug/deps/docs_policy_consistency_contract-312b39fef49dbeda)
+
+running 1 test
+test high_risk_docs_policies_remain_consistent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -34,5 +34,5 @@ result := nested_loops(100, 500)
 
 print("Result: ", result)
 print("")
-print("Expected: Inner loop JIT-compiled after first few outer iterations")
-print("Expected: Significant speedup vs pure interpreter")
+print("Local signal: inspect --jit output before treating this as JIT timing")
+print("Local signal: compare against interpreter output on the same commit and host")

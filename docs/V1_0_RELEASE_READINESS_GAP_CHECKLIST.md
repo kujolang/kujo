@@ -423,11 +423,29 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-20_p2-002/status.tsv`.
 
-- [ ] **V1RR-P2-003: Refresh benchmark publication strategy.**
+- [x] **V1RR-P2-003: Refresh benchmark publication strategy.**
   - Problem: SSG/cross-language benchmark docs contain many future measurement tasks and older host-specific notes.
   - Acceptance:
     - Decide which benchmark results are launch claims and which are internal regression signals.
     - Remove or mark old performance promises that are not backed by current reproducible runs.
+  - Completed (2026-06-20):
+    - Decision: v1.0 launch benchmark claims are limited to committed
+      import-heavy module-resolution artifacts:
+      `docs/PERF_HOT_PATH_AUDIT_2026-05-26.md`,
+      `docs/generated/VM_IMPORT_HEAVY_PERF_COMPARISON.md`, and
+      `docs/generated/VM_IMPORT_HEAVY_CACHE_LOOKUP.md`.
+    - Added `docs/BENCHMARK_PUBLICATION_POLICY.md` to distinguish launch-safe
+      claims from internal regression/exploratory signals.
+    - Marked SSG/cross-language/JIT example benchmark docs and Hetzner host
+      planning as future campaign or historical local evidence, not launch
+      claims.
+    - Replaced old fixed speedup promises in maintained benchmark examples and
+      helper output with local-signal wording.
+    - Added `tests/benchmark_publication_policy_contract.rs`.
+    - Evidence note:
+      `notes/2026-06-20_v1_0_benchmark_publication_strategy.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-20_p2-003/status.tsv`.
 
 - [ ] **V1RR-P2-004: Editor and LSP launch matrix pass.**
   - Problem: editor docs have older baseline versions and advanced LSP follow-ups in historical notes.

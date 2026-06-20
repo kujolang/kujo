@@ -38,7 +38,8 @@ that checks JIT-only feature wiring.
 ## Current Benchmark Evidence
 
 Current launch-safe benchmark evidence is committed as generated artifacts and
-audit notes:
+audit notes. The benchmark publication boundary is defined in
+`docs/BENCHMARK_PUBLICATION_POLICY.md`.
 
 - `docs/PERF_HOT_PATH_AUDIT_2026-05-26.md`
 - `docs/generated/VM_IMPORT_HEAVY_PERF_COMPARISON.md`
@@ -156,6 +157,8 @@ cargo check --no-default-features --features runtime-db,runtime-image,runtime-ar
   current JIT boundary statement.
 - `docs/RELEASE_PROCESS.md` for release-gate and optional benchmark smoke
   commands.
+- `docs/BENCHMARK_PUBLICATION_POLICY.md` for launch-safe claims versus internal
+  regression signals.
 - `docs/HETZNER_BENCHMARK_SETUP_AND_PRICING.md` and
   `docs/SSG_BENCHMARK_NEXT_STEPS.md` for future publishable benchmark campaign
   planning.
@@ -183,4 +186,4 @@ cargo test lsp_server::tests::timeout_returns_timeout_error_shape
 cargo test lsp_server::tests::non_object_json_message_does_not_panic_or_emit_response
 ```
 
-Last updated: 2026-06-19 for v1.0 release-readiness posture.
+Last updated: 2026-06-20 for v1.0 benchmark publication posture.

@@ -1,9 +1,13 @@
 # Hetzner Benchmark Setup and Pricing for Kujo SSG
 
+Status: future benchmark host planning; not v1.0 launch evidence.
+
 ## Purpose
 This document captures the recommended Hetzner-based environment for reproducible Kujo SSG benchmarking and fair cross-SSG comparisons.
 
-Use this when Kujo is close to launch and you want stable, publishable benchmark results.
+Use this for a future benchmark publication campaign after applying
+`docs/BENCHMARK_PUBLICATION_POLICY.md`. Revalidate host plans, prices, regions,
+and terms with Hetzner before publishing any public result.
 
 ## Key Decision
 Use one dedicated Hetzner instance for all benchmark runs in a campaign.
@@ -29,7 +33,11 @@ Higher-headroom option:
 - Specs: 16 vCPU, 64 GB RAM, 360 GB SSD
 - Price: 125.49 EUR per month max, 0.2011 EUR per hour
 
-## Current Hetzner Cloud Plan Pricing Snapshot (EUR, max/mo, excl. VAT)
+## Historical Hetzner Cloud Plan Pricing Snapshot (EUR, max/mo, excl. VAT)
+
+These values are a planning snapshot from the original note. They are not a
+v1.0 launch claim and must be checked against Hetzner's live pricing before a
+benchmark campaign is published.
 
 ### Cost-Optimized (shared resources)
 - CX23: 4.49
@@ -89,15 +97,16 @@ Higher-headroom option:
 - Same iteration count and reporting statistics
 
 ## Suggested Execution Timing
-Run this full benchmark campaign when Kujo is near launch:
-- Your implementation is stable enough that numbers represent release reality
+Run this full benchmark campaign when Kujo is ready to publish benchmark claims:
+- The implementation is stable enough that numbers represent release reality
 - You only need a short rented window to produce reproducible benchmark artifacts
 - You can publish one coherent benchmark report with method and data
 
 ## Practical Notes
 - Dedicated cloud is highly consistent, but still run multiple iterations and report distribution metrics.
 - If you need maximum isolation, evaluate Hetzner dedicated root servers for a second validation pass.
-- Keep this pricing section updated before publishing any public benchmark post.
+- Revalidate this pricing section before publishing any public benchmark post.
 
 ## Source Context
-This document was compiled from current Hetzner cloud plan pages and the project benchmark planning discussion.
+This document was compiled from Hetzner cloud plan pages available at the time
+of the original planning note and the project benchmark planning discussion.

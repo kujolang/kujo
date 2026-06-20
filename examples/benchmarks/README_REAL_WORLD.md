@@ -2,6 +2,9 @@
 
 This directory contains comprehensive real-world benchmarks for evaluating Kujo's performance across different workload types.
 
+Status: local regression and exploration fixtures. These examples are not v1.0
+launch benchmark claims; see `../../docs/BENCHMARK_PUBLICATION_POLICY.md`.
+
 ## Benchmark Suite
 
 ### 1. JSON Parsing & Serialization (`json_parsing.kujo`)
@@ -126,7 +129,11 @@ Example output:
 
 ## Performance Characteristics
 
-### Expected Performance:
+### Historical Local Expectations
+
+These ranges are historical local expectations, not v1.0 publication evidence.
+Refresh them with raw logs and environment metadata before citing them outside
+development notes.
 
 - **JSON**: ~100-500 records/sec for complex nested structures
 - **File I/O**: 
@@ -148,8 +155,10 @@ Example output:
 These benchmarks can be run with different execution modes:
 
 - `--interpreter`: Tree-walking interpreter (baseline)
-- Default (VM mode): 10-50x faster than interpreter
-- With JIT enabled: 100-500x faster for numeric-heavy workloads
+- Default VM mode: measure against the interpreter on the same commit and
+  machine before drawing conclusions.
+- `--jit`: experimental opt-in for compatible bytecode surfaces; record fallback
+  messaging when a program runs on the VM path instead.
 
 ## Adding New Benchmarks
 

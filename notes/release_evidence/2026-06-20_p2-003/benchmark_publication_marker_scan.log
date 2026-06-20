@@ -1,0 +1,34 @@
+notes/2026-06-20_v1_0_benchmark_publication_strategy.md:27:- Added `docs/BENCHMARK_PUBLICATION_POLICY.md` as the maintained benchmark
+notes/2026-06-20_v1_0_benchmark_publication_strategy.md:29:- Updated `docs/PERFORMANCE.md` to link the policy and keep launch-safe evidence
+docs/SSG_BENCHMARK_NEXT_STEPS.md:3:Status: future benchmark campaign plan; not v1.0 launch evidence.
+docs/SSG_BENCHMARK_NEXT_STEPS.md:6:- See `docs/BENCHMARK_PUBLICATION_POLICY.md` for the v1.0 distinction between
+docs/SSG_BENCHMARK_NEXT_STEPS.md:7:  launch-safe claims and internal regression signals.
+docs/SSG_BENCHMARK_NEXT_STEPS.md:141:Use this section only after satisfying `docs/BENCHMARK_PUBLICATION_POLICY.md`.
+docs/HETZNER_BENCHMARK_SETUP_AND_PRICING.md:3:Status: future benchmark host planning; not v1.0 launch evidence.
+docs/HETZNER_BENCHMARK_SETUP_AND_PRICING.md:9:`docs/BENCHMARK_PUBLICATION_POLICY.md`. Revalidate host plans, prices, regions,
+docs/HETZNER_BENCHMARK_SETUP_AND_PRICING.md:36:## Historical Hetzner Cloud Plan Pricing Snapshot (EUR, max/mo, excl. VAT)
+docs/V1_0_RELEASE_READINESS_GAP_CHECKLIST.md:437:    - Added `docs/BENCHMARK_PUBLICATION_POLICY.md` to distinguish launch-safe
+docs/PERFORMANCE.md:40:Current launch-safe benchmark evidence is committed as generated artifacts and
+docs/PERFORMANCE.md:42:`docs/BENCHMARK_PUBLICATION_POLICY.md`.
+docs/PERFORMANCE.md:160:- `docs/BENCHMARK_PUBLICATION_POLICY.md` for launch-safe claims versus internal
+docs/BENCHMARK_PUBLICATION_POLICY.md:15:Only the following benchmark evidence is launch-safe for v1.0:
+docs/BENCHMARK_PUBLICATION_POLICY.md:33:## Internal Regression Signals
+tests/benchmark_publication_policy_contract.rs:19:    let policy = read("docs/BENCHMARK_PUBLICATION_POLICY.md");
+tests/benchmark_publication_policy_contract.rs:23:        "Only the following benchmark evidence is launch-safe for v1.0",
+tests/benchmark_publication_policy_contract.rs:26:        "Internal Regression Signals",
+tests/benchmark_publication_policy_contract.rs:36:        performance.contains("docs/BENCHMARK_PUBLICATION_POLICY.md")
+tests/benchmark_publication_policy_contract.rs:37:            && performance.contains("launch-safe claims versus internal"),
+tests/benchmark_publication_policy_contract.rs:48:        ssg.contains("Status: future benchmark campaign plan; not v1.0 launch evidence.")
+tests/benchmark_publication_policy_contract.rs:49:            && ssg.contains("docs/BENCHMARK_PUBLICATION_POLICY.md")
+tests/benchmark_publication_policy_contract.rs:55:        hetzner.contains("Status: future benchmark host planning; not v1.0 launch evidence.")
+tests/benchmark_publication_policy_contract.rs:56:            && hetzner.contains("Historical Hetzner Cloud Plan Pricing Snapshot")
+tests/benchmark_publication_policy_contract.rs:75:            squashed(content).contains("not v1.0 launch benchmark claims"),
+tests/benchmark_publication_policy_contract.rs:98:        compare_languages.contains("local exploration, not v1.0 publication claims")
+tests/benchmark_publication_policy_contract.rs:99:            && compare_languages.contains("docs/BENCHMARK_PUBLICATION_POLICY.md"),
+examples/benchmarks/compare_languages.sh:83:echo "- This helper is for local exploration, not v1.0 publication claims."
+examples/benchmarks/compare_languages.sh:85:echo "- See docs/BENCHMARK_PUBLICATION_POLICY.md for publication requirements."
+examples/benchmarks/README_REAL_WORLD.md:6:launch benchmark claims; see `../../docs/BENCHMARK_PUBLICATION_POLICY.md`.
+examples/benchmarks/jit/README.md:6:Status: local JIT exploration fixtures. These files are not v1.0 launch
+examples/benchmarks/jit/README.md:7:benchmark claims; see `../../../docs/BENCHMARK_PUBLICATION_POLICY.md` and
+examples/benchmarks/README.md:6:launch benchmark claims; see `../../docs/BENCHMARK_PUBLICATION_POLICY.md`.
+examples/benchmarks/README.md:243:policy in `../../docs/BENCHMARK_PUBLICATION_POLICY.md`.
