@@ -6,12 +6,25 @@ use crate::interpreter::{DictMap, Value};
 use crate::runtime_limits;
 use crate::{builtins, network_policy};
 use reqwest::Method;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
 const MAX_AI_TOOL_LOOP_STEPS: i64 = 16;
+const AI_CASSETTE_VERSION: i64 = 1;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum AiCassetteMode {
+    Off,
+    Record { dir: PathBuf },
+    ReplayStrict { dir: PathBuf },
+    ReplayFallthrough { dir: PathBuf, record_dir: PathBuf },
+}
 
 struct AiRequestConfig {
     endpoint: String,
@@ -19,6 +32,30 @@ struct AiRequestConfig {
     api_key: Option<String>,
     timeout_seconds: f64,
     headers: Vec<(String, String)>,
+    cassette: AiCassetteMode,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct StoredAiCassette {
+    _cassette_version: i64,
+    request_meta: StoredAiCassetteRequest,
+    response: StoredAiCassetteResponse,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct StoredAiCassetteRequest {
+    hash: String,
+    surface: String,
+    endpoint: String,
+    model: String,
+    normalized: serde_json::Value,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct StoredAiCassetteResponse {
+    status: i64,
+    headers: HashMap<String, String>,
+    body: String,
 }
 
 fn ai_err_result(message: impl Into<String>) -> Value {
@@ -71,6 +108,127 @@ fn parse_ai_headers(options: &DictMap, surface: &str) -> Result<Vec<(String, Str
     Ok(headers)
 }
 
+fn path_from_non_empty_string(value: &Value, field: &str, surface: &str) -> Result<PathBuf, Value> {
+    match value {
+        Value::Str(path) if !path.trim().is_empty() => Ok(PathBuf::from(path.as_ref())),
+        Value::Str(_) => Err(Value::Error(format!(
+            "{}() requires options.cassette.{} to be a non-empty string",
+            surface, field
+        ))),
+        _ => Err(Value::Error(format!(
+            "{}() requires options.cassette.{} to be a string",
+            surface, field
+        ))),
+    }
+}
+
+fn parse_ai_cassette_mode(options: &DictMap, surface: &str) -> Result<AiCassetteMode, Value> {
+    if let Some(raw_cassette) = options.get("cassette") {
+        let cassette = dict_like_from_value(raw_cassette).ok_or_else(|| {
+            Value::Error(format!(
+                "{}() requires options.cassette to be a dictionary when provided",
+                surface
+            ))
+        })?;
+        let mode = match cassette.get("mode") {
+            Some(Value::Str(mode)) => mode.trim().to_ascii_lowercase(),
+            Some(_) => {
+                return Err(Value::Error(format!(
+                    "{}() requires options.cassette.mode to be a string",
+                    surface
+                )));
+            }
+            None => "replay".to_string(),
+        };
+        let dir = match cassette.get("dir") {
+            Some(value) => Some(path_from_non_empty_string(value, "dir", surface)?),
+            None => None,
+        };
+        let record_dir = match cassette.get("record_dir") {
+            Some(value) => Some(path_from_non_empty_string(value, "record_dir", surface)?),
+            None => None,
+        };
+
+        return match mode.as_str() {
+            "off" | "none" | "disabled" => Ok(AiCassetteMode::Off),
+            "record" => match dir.or_else(ai_record_dir_from_env) {
+                Some(dir) => Ok(AiCassetteMode::Record { dir }),
+                None => Err(Value::Error(format!(
+                    "{}() requires options.cassette.dir or KUJO_AI_RECORD for record mode",
+                    surface
+                ))),
+            },
+            "replay" | "strict" => match dir.or_else(ai_replay_dir_from_env) {
+                Some(dir) => Ok(AiCassetteMode::ReplayStrict { dir }),
+                None => Err(Value::Error(format!(
+                    "{}() requires options.cassette.dir or KUJO_AI_REPLAY for replay mode",
+                    surface
+                ))),
+            },
+            "fallthrough" => {
+                let Some(dir) = dir.or_else(ai_replay_dir_from_env).or_else(ai_record_dir_from_env)
+                else {
+                    return Err(Value::Error(format!(
+                        "{}() requires options.cassette.dir, KUJO_AI_REPLAY, or KUJO_AI_RECORD for fallthrough mode",
+                        surface
+                    )));
+                };
+                let record_dir = record_dir
+                    .or_else(ai_record_dir_from_env)
+                    .unwrap_or_else(|| dir.clone());
+                Ok(AiCassetteMode::ReplayFallthrough { dir, record_dir })
+            }
+            _ => Err(Value::Error(format!(
+                "{}() requires options.cassette.mode to be one of off, record, replay, strict, or fallthrough",
+                surface
+            ))),
+        };
+    }
+
+    Ok(ai_cassette_mode_from_env())
+}
+
+fn non_empty_env_path(name: &str) -> Option<PathBuf> {
+    env::var(name)
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+}
+
+fn ai_record_dir_from_env() -> Option<PathBuf> {
+    non_empty_env_path("KUJO_AI_RECORD")
+}
+
+fn ai_replay_dir_from_env() -> Option<PathBuf> {
+    non_empty_env_path("KUJO_AI_REPLAY")
+}
+
+fn ai_replay_mode_from_env() -> String {
+    env::var("KUJO_AI_REPLAY_MODE")
+        .unwrap_or_else(|_| "strict".to_string())
+        .trim()
+        .to_ascii_lowercase()
+}
+
+fn ai_cassette_mode_from_env() -> AiCassetteMode {
+    if let Some(replay_dir) = ai_replay_dir_from_env() {
+        return match ai_replay_mode_from_env().as_str() {
+            "fallthrough" => {
+                let record_dir = ai_record_dir_from_env().unwrap_or_else(|| replay_dir.clone());
+                AiCassetteMode::ReplayFallthrough { dir: replay_dir, record_dir }
+            }
+            _ => AiCassetteMode::ReplayStrict { dir: replay_dir },
+        };
+    }
+
+    if let Some(record_dir) = ai_record_dir_from_env() {
+        return AiCassetteMode::Record { dir: record_dir };
+    }
+
+    AiCassetteMode::Off
+}
+
 fn dict_like_from_value(value: &Value) -> Option<DictMap> {
     match value {
         Value::Dict(dict) => Some((**dict).clone()),
@@ -101,6 +259,21 @@ fn header_pairs_from_value(value: &Value) -> Option<Vec<(String, String)>> {
 }
 
 fn parse_ai_request_config(options: &DictMap, surface: &str) -> Result<AiRequestConfig, Value> {
+    parse_ai_request_config_inner(options, surface, true)
+}
+
+fn parse_ai_request_hash_config(
+    options: &DictMap,
+    surface: &str,
+) -> Result<AiRequestConfig, Value> {
+    parse_ai_request_config_inner(options, surface, false)
+}
+
+fn parse_ai_request_config_inner(
+    options: &DictMap,
+    surface: &str,
+    parse_cassette: bool,
+) -> Result<AiRequestConfig, Value> {
     let endpoint = match options.get("endpoint") {
         Some(Value::Str(endpoint)) if !endpoint.trim().is_empty() => endpoint.as_ref().clone(),
         Some(Value::Str(_)) => {
@@ -158,8 +331,13 @@ fn parse_ai_request_config(options: &DictMap, surface: &str) -> Result<AiRequest
     };
 
     let headers = parse_ai_headers(options, surface)?;
+    let cassette = if parse_cassette {
+        parse_ai_cassette_mode(options, surface)?
+    } else {
+        AiCassetteMode::Off
+    };
 
-    Ok(AiRequestConfig { endpoint, model, api_key, timeout_seconds, headers })
+    Ok(AiRequestConfig { endpoint, model, api_key, timeout_seconds, headers, cassette })
 }
 
 fn ai_message(role: &str, content: impl Into<String>) -> Value {
@@ -329,7 +507,7 @@ fn build_ai_request_hash_value(
     prompt_or_messages: &Value,
     options: &DictMap,
 ) -> Result<Value, Value> {
-    let config = parse_ai_request_config(options, "ai_request_hash")?;
+    let config = parse_ai_request_hash_config(options, "ai_request_hash")?;
     let messages = parse_ai_messages(prompt_or_messages, "ai_request_hash")?;
 
     let mut payload = DictMap::default();
@@ -337,14 +515,17 @@ fn build_ai_request_hash_value(
     payload.insert("messages".into(), Value::Array(Arc::new(messages)));
     merge_ai_extra_body(&mut payload, options, &["model", "messages"], "ai_request_hash")?;
 
+    Ok(build_ai_request_key_value(&config, &Value::Dict(Arc::new(payload))))
+}
+
+fn build_ai_request_key_value(config: &AiRequestConfig, payload: &Value) -> Value {
     let mut normalized = DictMap::default();
     normalized.insert("_hash_version".into(), Value::Int(1));
     normalized.insert("endpoint".into(), Value::Str(Arc::new(config.endpoint.trim().to_string())));
-    normalized.insert("model".into(), Value::Str(Arc::new(config.model)));
+    normalized.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
     normalized.insert("headers".into(), canonical_ai_hash_headers(&config.headers));
-    normalized.insert("body".into(), Value::Dict(Arc::new(payload)));
-
-    Ok(Value::Dict(Arc::new(normalized)))
+    normalized.insert("body".into(), payload.clone());
+    Value::Dict(Arc::new(normalized))
 }
 
 fn ai_request_hash_value(prompt_or_messages: &Value, options: &DictMap) -> Result<String, Value> {
@@ -355,11 +536,178 @@ fn ai_request_hash_value(prompt_or_messages: &Value, options: &DictMap) -> Resul
     Ok(sha256_hex(canonical_json.as_bytes()))
 }
 
+fn ai_request_key(config: &AiRequestConfig, payload: &Value) -> Result<(String, Value), String> {
+    let normalized = build_ai_request_key_value(config, payload);
+    let canonical_json = builtins::to_json(&normalized)
+        .map_err(|error| format!("AI cassette request serialization error: {}", error))?;
+    Ok((sha256_hex(canonical_json.as_bytes()), normalized))
+}
+
+fn cassette_path(dir: &Path, key: &str) -> PathBuf {
+    dir.join(format!("{}.json", key))
+}
+
+fn redact_ai_headers(headers: &DictMap) -> HashMap<String, String> {
+    let mut redacted = HashMap::new();
+    for (name, value) in headers.iter() {
+        let Value::Str(text) = value else {
+            continue;
+        };
+        let output = if is_ai_hash_excluded_header(name) {
+            "[redacted]".to_string()
+        } else {
+            text.as_ref().clone()
+        };
+        redacted.insert(name.to_string(), output);
+    }
+    redacted
+}
+
+fn cassette_headers_to_dict(headers: &HashMap<String, String>) -> DictMap {
+    let mut dict = DictMap::default();
+    for (name, value) in headers {
+        dict.insert(name.as_str().into(), Value::Str(Arc::new(value.clone())));
+    }
+    dict
+}
+
+fn replay_ai_cassette(
+    surface: &str,
+    dir: &Path,
+    key: &str,
+) -> Result<Option<(i64, DictMap, String, Value)>, String> {
+    let path = cassette_path(dir, key);
+    if !path.exists() {
+        return Ok(None);
+    }
+
+    let contents = fs::read_to_string(&path).map_err(|error| {
+        format!(
+            "{} failed: kind:\"replay_miss\" cassette '{}' could not be read: {}",
+            surface,
+            path.display(),
+            error
+        )
+    })?;
+    let cassette: StoredAiCassette = serde_json::from_str(&contents).map_err(|error| {
+        format!("{} failed: cassette '{}' was not valid JSON ({})", surface, path.display(), error)
+    })?;
+    if cassette._cassette_version != AI_CASSETTE_VERSION {
+        return Err(format!(
+            "{} failed: cassette '{}' has unsupported version {}",
+            surface,
+            path.display(),
+            cassette._cassette_version
+        ));
+    }
+    if cassette.request_meta.hash != key {
+        return Err(format!(
+            "{} failed: cassette '{}' hash mismatch (expected {}, found {})",
+            surface,
+            path.display(),
+            key,
+            cassette.request_meta.hash
+        ));
+    }
+
+    let parsed_body = builtins::parse_json(&cassette.response.body)
+        .map_err(|error| format!("{} failed: response was not valid JSON ({})", surface, error))?;
+    Ok(Some((
+        cassette.response.status,
+        cassette_headers_to_dict(&cassette.response.headers),
+        cassette.response.body,
+        parsed_body,
+    )))
+}
+
+fn store_ai_cassette(
+    surface: &str,
+    dir: &Path,
+    key: &str,
+    normalized_request: &Value,
+    config: &AiRequestConfig,
+    status: i64,
+    headers: &DictMap,
+    body: &str,
+) -> Result<(), String> {
+    fs::create_dir_all(dir).map_err(|error| {
+        format!(
+            "{} failed: could not create AI cassette directory '{}': {}",
+            surface,
+            dir.display(),
+            error
+        )
+    })?;
+    let normalized_json = builtins::to_json(normalized_request)
+        .and_then(|json| {
+            serde_json::from_str::<serde_json::Value>(&json).map_err(|e| e.to_string())
+        })
+        .map_err(|error| {
+            format!("{} failed: cassette request serialization error: {}", surface, error)
+        })?;
+    let cassette = StoredAiCassette {
+        _cassette_version: AI_CASSETTE_VERSION,
+        request_meta: StoredAiCassetteRequest {
+            hash: key.to_string(),
+            surface: surface.to_string(),
+            endpoint: config.endpoint.trim().to_string(),
+            model: config.model.clone(),
+            normalized: normalized_json,
+        },
+        response: StoredAiCassetteResponse {
+            status,
+            headers: redact_ai_headers(headers),
+            body: body.to_string(),
+        },
+    };
+    let serialized = serde_json::to_string_pretty(&cassette)
+        .map_err(|error| format!("{} failed: cassette serialization error: {}", surface, error))?;
+    let path = cassette_path(dir, key);
+    let temp_path = dir.join(format!(".{}.{}.tmp", key, std::process::id()));
+    fs::write(&temp_path, serialized).map_err(|error| {
+        format!(
+            "{} failed: could not write AI cassette '{}': {}",
+            surface,
+            temp_path.display(),
+            error
+        )
+    })?;
+    fs::rename(&temp_path, &path).map_err(|error| {
+        let _ = fs::remove_file(&temp_path);
+        format!(
+            "{} failed: could not finalize AI cassette '{}': {}",
+            surface,
+            path.display(),
+            error
+        )
+    })
+}
+
 fn run_ai_request(
     surface: &str,
     config: &AiRequestConfig,
     payload: Value,
 ) -> Result<(i64, DictMap, String, Value), String> {
+    let (cassette_key, normalized_request) = ai_request_key(config, &payload)?;
+    match &config.cassette {
+        AiCassetteMode::ReplayStrict { dir } => {
+            return match replay_ai_cassette(surface, dir, &cassette_key)? {
+                Some(response) => Ok(response),
+                None => Err(format!(
+                    "{} failed: kind:\"replay_miss\" cassette '{}' was not found; strict replay does not use the network",
+                    surface,
+                    cassette_path(dir, &cassette_key).display()
+                )),
+            };
+        }
+        AiCassetteMode::ReplayFallthrough { dir, .. } => {
+            if let Some(response) = replay_ai_cassette(surface, dir, &cassette_key)? {
+                return Ok(response);
+            }
+        }
+        AiCassetteMode::Off | AiCassetteMode::Record { .. } => {}
+    }
+
     network_policy::enforce_http_url_destination_policy(&config.endpoint, surface)?;
     let payload_json = builtins::to_json(&payload).map_err(|error| {
         format!("{} failed: request body serialization error: {}", surface, error)
@@ -405,6 +753,34 @@ fn run_ai_request(
                 Value::Str(Arc::new(value_str.to_string())),
             );
         }
+    }
+
+    match &config.cassette {
+        AiCassetteMode::Record { dir } => {
+            store_ai_cassette(
+                surface,
+                dir,
+                &cassette_key,
+                &normalized_request,
+                config,
+                status as i64,
+                &headers_dict,
+                &body_text,
+            )?;
+        }
+        AiCassetteMode::ReplayFallthrough { record_dir, .. } => {
+            store_ai_cassette(
+                surface,
+                record_dir,
+                &cassette_key,
+                &normalized_request,
+                config,
+                status as i64,
+                &headers_dict,
+                &body_text,
+            )?;
+        }
+        AiCassetteMode::Off | AiCassetteMode::ReplayStrict { .. } => {}
     }
 
     Ok((status as i64, headers_dict, body_text, parsed_body))
@@ -828,16 +1204,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 )));
             }
 
-            let options = match arg_values.get(1) {
-                Some(Value::Dict(options)) => options,
-                _ => {
+            let options = match arg_values.get(1).and_then(dict_like_from_value) {
+                Some(options) => options,
+                None => {
                     return Some(Value::Error(
                         "ai_chat() requires an options dictionary as second argument".to_string(),
                     ));
                 }
             };
 
-            let config = match parse_ai_request_config(options, "ai_chat") {
+            let config = match parse_ai_request_config(&options, "ai_chat") {
                 Ok(config) => config,
                 Err(error) => return Some(error),
             };
@@ -850,7 +1226,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             payload.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
             payload.insert("messages".into(), Value::Array(Arc::new(messages.clone())));
             if let Err(error) =
-                merge_ai_extra_body(&mut payload, options, &["model", "messages"], "ai_chat")
+                merge_ai_extra_body(&mut payload, &options, &["model", "messages"], "ai_chat")
             {
                 return Some(error);
             }
@@ -888,9 +1264,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 )));
             }
 
-            let options = match arg_values.get(1) {
-                Some(Value::Dict(options)) => options,
-                _ => {
+            let options = match arg_values.get(1).and_then(dict_like_from_value) {
+                Some(options) => options,
+                None => {
                     return Some(Value::Error(
                         "ai_stream_chat() requires an options dictionary as second argument"
                             .to_string(),
@@ -898,7 +1274,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 }
             };
 
-            let config = match parse_ai_request_config(options, "ai_stream_chat") {
+            let config = match parse_ai_request_config(&options, "ai_stream_chat") {
                 Ok(config) => config,
                 Err(error) => return Some(error),
             };
@@ -913,7 +1289,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             payload.insert("stream".into(), Value::Bool(true));
             if let Err(error) = merge_ai_extra_body(
                 &mut payload,
-                options,
+                &options,
                 &["model", "messages", "stream"],
                 "ai_stream_chat",
             ) {
@@ -957,9 +1333,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 )));
             }
 
-            let options = match arg_values.get(1) {
-                Some(Value::Dict(options)) => options,
-                _ => {
+            let options = match arg_values.get(1).and_then(dict_like_from_value) {
+                Some(options) => options,
+                None => {
                     return Some(Value::Error(
                         "ai_embedding() requires an options dictionary as second argument"
                             .to_string(),
@@ -967,7 +1343,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 }
             };
 
-            let config = match parse_ai_request_config(options, "ai_embedding") {
+            let config = match parse_ai_request_config(&options, "ai_embedding") {
                 Ok(config) => config,
                 Err(error) => return Some(error),
             };
@@ -980,7 +1356,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             payload.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
             payload.insert("input".into(), input);
             if let Err(error) =
-                merge_ai_extra_body(&mut payload, options, &["model", "input"], "ai_embedding")
+                merge_ai_extra_body(&mut payload, &options, &["model", "input"], "ai_embedding")
             {
                 return Some(error);
             }
@@ -1027,9 +1403,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 )));
             }
 
-            let options = match arg_values.get(1) {
-                Some(Value::Dict(options)) => options,
-                _ => {
+            let options = match arg_values.get(1).and_then(dict_like_from_value) {
+                Some(options) => options,
+                None => {
                     return Some(Value::Error(
                         "ai_tool_loop() requires an options dictionary as second argument"
                             .to_string(),
@@ -1037,7 +1413,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 }
             };
 
-            let config = match parse_ai_request_config(options, "ai_tool_loop") {
+            let config = match parse_ai_request_config(&options, "ai_tool_loop") {
                 Ok(config) => config,
                 Err(error) => return Some(error),
             };
@@ -1067,13 +1443,15 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             };
 
             let tool_results = match options.get("tool_results") {
-                Some(Value::Dict(results)) => Some(results.clone()),
-                Some(_) => {
-                    return Some(Value::Error(
-                        "ai_tool_loop() requires options.tool_results to be a dictionary when provided"
-                            .to_string(),
-                    ));
-                }
+                Some(results) => match dict_like_from_value(results) {
+                    Some(results) => Some(Arc::new(results)),
+                    None => {
+                        return Some(Value::Error(
+                            "ai_tool_loop() requires options.tool_results to be a dictionary when provided"
+                                .to_string(),
+                        ));
+                    }
+                },
                 None => None,
             };
 
@@ -1098,7 +1476,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 payload.insert("stream".into(), Value::Bool(false));
                 if let Err(error) = merge_ai_extra_body(
                     &mut payload,
-                    options,
+                    &options,
                     &["model", "messages", "tools", "stream"],
                     "ai_tool_loop",
                 ) {
@@ -1618,7 +1996,11 @@ mod tests {
     use super::*;
     use std::io::{Read, Write};
     use std::net::TcpListener;
-    use std::sync::mpsc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{mpsc, Mutex};
+
+    static AI_ENV_LOCK: Mutex<()> = Mutex::new(());
+    static TEMP_DIR_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
     fn str_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
@@ -1700,6 +2082,34 @@ mod tests {
         options.insert("endpoint".into(), str_value(endpoint));
         options.insert("model".into(), str_value(model));
         Value::Dict(Arc::new(options))
+    }
+
+    fn ai_replay_fixture_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ai_cassettes")
+    }
+
+    fn unique_temp_dir(prefix: &str) -> PathBuf {
+        let id = TEMP_DIR_COUNTER.fetch_add(1, Ordering::SeqCst);
+        env::temp_dir().join(format!("{}_{}_{}", prefix, std::process::id(), id))
+    }
+
+    fn ai_options_with_cassette(endpoint: &str, model: &str, mode: &str, dir: &Path) -> Value {
+        let mut cassette = DictMap::default();
+        cassette.insert("mode".into(), str_value(mode));
+        cassette.insert("dir".into(), str_value(&dir.to_string_lossy()));
+
+        let mut options = DictMap::default();
+        options.insert("endpoint".into(), str_value(endpoint));
+        options.insert("model".into(), str_value(model));
+        options.insert("cassette".into(), Value::Dict(Arc::new(cassette)));
+        Value::Dict(Arc::new(options))
+    }
+
+    fn clear_ai_cassette_env() {
+        std::env::remove_var("KUJO_AI_RECORD");
+        std::env::remove_var("KUJO_AI_REPLAY");
+        std::env::remove_var("KUJO_AI_REPLAY_MODE");
+        std::env::remove_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV);
     }
 
     fn ai_hash_options(
@@ -1793,6 +2203,153 @@ mod tests {
         assert!(
             matches!(missing_endpoint, Value::Error(message) if message.contains("requires options.endpoint"))
         );
+    }
+
+    #[test]
+    fn test_ai_cassette_strict_replay_runs_all_ai_helpers_without_network() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+        let fixture_dir = ai_replay_fixture_dir();
+        let chat_endpoint = "http://127.0.0.1:1/v1/chat/completions";
+        let embedding_endpoint = "http://127.0.0.1:1/v1/embeddings";
+
+        let chat = handle(
+            "ai_chat",
+            &[
+                str_value("Hello model"),
+                ai_options_with_cassette(chat_endpoint, "gpt-replay", "replay", &fixture_dir),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        assert!(matches!(chat, Value::Result { is_ok: true, value }
+                if matches!(value.as_ref(), Value::Dict(result)
+                    if matches!(result.get("message"), Some(Value::Str(message)) if message.as_ref() == "hello from cassette"))));
+
+        let stream = handle(
+            "ai_stream_chat",
+            &[
+                str_value("Stream please"),
+                ai_options_with_cassette(chat_endpoint, "gpt-replay", "replay", &fixture_dir),
+            ],
+        )
+        .expect("ai_stream_chat should return a value");
+        assert!(matches!(stream, Value::Result { is_ok: true, value }
+                if matches!(value.as_ref(), Value::Dict(result)
+                    if matches!(result.get("chunks"), Some(Value::Array(chunks)) if chunks.len() == 2))));
+
+        let embedding = handle(
+            "ai_embedding",
+            &[
+                str_value("seed text"),
+                ai_options_with_cassette(
+                    embedding_endpoint,
+                    "embed-replay",
+                    "replay",
+                    &fixture_dir,
+                ),
+            ],
+        )
+        .expect("ai_embedding should return a value");
+        assert!(matches!(embedding, Value::Result { is_ok: true, value }
+                if matches!(value.as_ref(), Value::Dict(result)
+                    if matches!(result.get("vector"), Some(Value::Array(vector)) if vector.len() == 3))));
+
+        let tool_loop = handle(
+            "ai_tool_loop",
+            &[
+                str_value("Plan this"),
+                ai_options_with_cassette(chat_endpoint, "gpt-replay", "replay", &fixture_dir),
+            ],
+        )
+        .expect("ai_tool_loop should return a value");
+        assert!(matches!(tool_loop, Value::Result { is_ok: true, value }
+                if matches!(value.as_ref(), Value::Dict(result)
+                    if matches!(result.get("message"), Some(Value::Str(message)) if message.as_ref() == "tool loop done"))));
+        clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_cassette_env_replay_miss_is_deterministic_and_hermetic() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let replay_dir = unique_temp_dir("kujo_ai_empty_replay");
+        fs::create_dir_all(&replay_dir).expect("temp replay dir should be created");
+        std::env::set_var("KUJO_AI_REPLAY", replay_dir.to_string_lossy().to_string());
+        std::env::set_var("KUJO_AI_REPLAY_MODE", "strict");
+        std::env::set_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+
+        let result = handle(
+            "ai_chat",
+            &[
+                str_value("missing cassette"),
+                ai_options("http://127.0.0.1:1/v1/chat/completions", "gpt-replay"),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        assert!(matches!(result, Value::Result { is_ok: false, value }
+                if matches!(value.as_ref(), Value::Str(message)
+                    if message.contains("kind:\"replay_miss\"")
+                        && message.contains("strict replay does not use the network"))));
+
+        clear_ai_cassette_env();
+        let _ = fs::remove_dir_all(replay_dir);
+    }
+
+    #[test]
+    fn test_ai_cassette_store_round_trips_and_redacts_sensitive_headers() {
+        let temp_dir = unique_temp_dir("kujo_ai_cassette_store");
+        let mut options = DictMap::default();
+        options.insert("endpoint".into(), str_value("https://api.example.test/v1/chat"));
+        options.insert("model".into(), str_value("gpt-redact"));
+        options.insert("api_key".into(), str_value("secret-token"));
+        let mut headers = DictMap::default();
+        headers.insert("Authorization".into(), str_value("Bearer secret-token"));
+        headers.insert("X-Trace".into(), str_value("trace-1"));
+        options.insert("headers".into(), Value::Dict(Arc::new(headers)));
+
+        let config =
+            parse_ai_request_config(&options, "ai_chat").expect("config should parse for test");
+        let payload = {
+            let mut payload = DictMap::default();
+            payload.insert("model".into(), str_value("gpt-redact"));
+            payload.insert(
+                "messages".into(),
+                Value::Array(Arc::new(vec![ai_message("user", "Hello")])),
+            );
+            Value::Dict(Arc::new(payload))
+        };
+        let (key, normalized) = ai_request_key(&config, &payload).expect("key should build");
+        let mut response_headers = DictMap::default();
+        response_headers.insert("Authorization".into(), str_value("Bearer response-secret"));
+        response_headers.insert("X-Usage".into(), str_value("1"));
+
+        store_ai_cassette(
+            "ai_chat",
+            &temp_dir,
+            &key,
+            &normalized,
+            &config,
+            200,
+            &response_headers,
+            "{\"ok\":true}",
+        )
+        .expect("cassette should store");
+        let cassette_text =
+            fs::read_to_string(cassette_path(&temp_dir, &key)).expect("cassette should exist");
+        assert!(!cassette_text.contains("secret-token"));
+        assert!(!cassette_text.contains("response-secret"));
+        assert!(!cassette_text.contains("Bearer"));
+        assert!(cassette_text.contains("[redacted]"));
+
+        let replayed = replay_ai_cassette("ai_chat", &temp_dir, &key)
+            .expect("replay lookup should parse")
+            .expect("cassette should be found");
+        assert_eq!(replayed.0, 200);
+        assert!(
+            matches!(replayed.3, Value::Dict(body) if matches!(body.get("ok"), Some(Value::Bool(true))))
+        );
+        let _ = fs::remove_dir_all(temp_dir);
     }
 
     #[test]
@@ -1963,67 +2520,49 @@ mod tests {
 
     #[test]
     fn test_ai_chat_success_path_returns_normalized_result_and_request_payload() {
-        let response_body = r#"{"choices":[{"message":{"content":"hello from model"}}]}"#;
-        let Some((endpoint, request_rx, server_handle)) = one_shot_json_server(200, response_body)
-        else {
-            eprintln!(
-                "skipping test_ai_chat_success_path_returns_normalized_result_and_request_payload: local TCP bind not permitted in this environment"
-            );
-            return;
-        };
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
 
-        let result =
-            handle("ai_chat", &[str_value("Hello model"), ai_options(&endpoint, "gpt-mock")])
-                .expect("ai_chat should return a value");
+        let result = handle(
+            "ai_chat",
+            &[
+                str_value("Hello model"),
+                ai_options_with_cassette(
+                    endpoint,
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
 
-        let request_body = request_rx
-            .recv_timeout(Duration::from_secs(2))
-            .expect("server should capture request body");
-        server_handle.join().expect("server thread should finish");
-
-        let parsed_request =
-            builtins::parse_json(&request_body).expect("ai_chat request body should be JSON");
-        match parsed_request {
-            Value::Dict(payload) => {
-                assert!(
-                    matches!(payload.get("model"), Some(Value::Str(model)) if model.as_ref() == "gpt-mock")
-                );
-                assert!(
-                    matches!(payload.get("messages"), Some(Value::Array(messages)) if messages.len() == 1)
-                );
-            }
-            other => panic!("expected request body dict, got {:?}", other),
-        }
-
-        match result {
-            Value::Result { is_ok: true, value } => match *value {
-                Value::Dict(result_dict) => {
-                    assert!(matches!(result_dict.get("status"), Some(Value::Int(200))));
-                    assert!(
-                        matches!(result_dict.get("message"), Some(Value::Str(message)) if message.as_ref() == "hello from model")
-                    );
-                }
-                other => panic!("expected ai_chat success dict, got {:?}", other),
-            },
-            other => panic!("expected ai_chat ok result, got {:?}", other),
-        }
+        assert!(matches!(result, Value::Result { is_ok: true, value }
+                if matches!(value.as_ref(), Value::Dict(result_dict)
+                    if matches!(result_dict.get("status"), Some(Value::Int(200)))
+                        && matches!(result_dict.get("message"), Some(Value::Str(message)) if message.as_ref() == "hello from cassette"))));
     }
 
     #[test]
     fn test_ai_embedding_extracts_numeric_vector_regression() {
-        let response_body = r#"{"data":[{"embedding":[0.5,1,2.25]}]}"#;
-        let Some((endpoint, _request_rx, server_handle)) = one_shot_json_server(200, response_body)
-        else {
-            eprintln!(
-                "skipping test_ai_embedding_extracts_numeric_vector_regression: local TCP bind not permitted in this environment"
-            );
-            return;
-        };
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let endpoint = "http://127.0.0.1:1/v1/embeddings";
 
-        let result =
-            handle("ai_embedding", &[str_value("seed text"), ai_options(&endpoint, "embed-mock")])
-                .expect("ai_embedding should return a value");
-        server_handle.join().expect("server thread should finish");
+        let result = handle(
+            "ai_embedding",
+            &[
+                str_value("seed text"),
+                ai_options_with_cassette(
+                    endpoint,
+                    "embed-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                ),
+            ],
+        )
+        .expect("ai_embedding should return a value");
 
         match result {
             Value::Result { is_ok: true, value } => match *value {
@@ -2073,16 +2612,17 @@ mod tests {
 
     #[test]
     fn test_ai_chat_non_json_response_returns_deterministic_failure_result() {
-        let Some((endpoint, _request_rx, server_handle)) = one_shot_json_server(200, "not-json")
-        else {
-            eprintln!(
-                "skipping test_ai_chat_non_json_response_returns_deterministic_failure_result: local TCP bind not permitted in this environment"
-            );
-            return;
-        };
-        let result = handle("ai_chat", &[str_value("Hello"), ai_options(&endpoint, "gpt-mock")])
-            .expect("ai_chat should return a result");
-        server_handle.join().expect("server thread should finish");
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+        let result = handle(
+            "ai_chat",
+            &[
+                str_value("Hello"),
+                ai_options_with_cassette(endpoint, "gpt-mock", "replay", &ai_replay_fixture_dir()),
+            ],
+        )
+        .expect("ai_chat should return a result");
 
         assert!(
             matches!(result, Value::Result { is_ok: false, value } if matches!(value.as_ref(), Value::Str(message) if message.contains("response was not valid JSON")))

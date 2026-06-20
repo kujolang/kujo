@@ -1,0 +1,31 @@
+{
+  "_cassette_version": 1,
+  "request_meta": {
+    "hash": "9f8bef4c64a8db97aab6d5a2bee15b0a596d76746b7bdce0914860ed3db8aa34",
+    "surface": "ai_chat",
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-mock",
+    "normalized": {
+      "_hash_version": 1,
+      "body": {
+        "messages": [
+          {
+            "content": "Hello",
+            "role": "user"
+          }
+        ],
+        "model": "gpt-mock"
+      },
+      "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+      "headers": [],
+      "model": "gpt-mock"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain"
+    },
+    "body": "not-json"
+  }
+}

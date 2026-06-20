@@ -1,0 +1,26 @@
+{
+  "_cassette_version": 1,
+  "request_meta": {
+    "hash": "844ee9ae4723d8733afd9acc905b3c5e72b7540d639bbf7bbbccda5b138564a2",
+    "surface": "ai_embedding",
+    "endpoint": "http://127.0.0.1:1/v1/embeddings",
+    "model": "embed-replay",
+    "normalized": {
+      "_hash_version": 1,
+      "body": {
+        "input": "seed text",
+        "model": "embed-replay"
+      },
+      "endpoint": "http://127.0.0.1:1/v1/embeddings",
+      "headers": [],
+      "model": "embed-replay"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": "{\"data\":[{\"embedding\":[0.5,1,2.25]}]}"
+  }
+}
