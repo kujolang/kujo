@@ -1,9 +1,31 @@
 # Critical Bug: Mutation Operator (`=`) is Completely Broken
 
-**Status:** 🔴 CRITICAL - Blocks Python-level performance  
+**Status:** HISTORICAL - Superseded before v1.0 release readiness
 **Impact:** 30-700% performance loss across benchmarks  
 **Root Cause:** Compiler bug causing infinite loops when using mutation operator  
 **Priority:** HIGH - Must fix before v1.0  
+
+## Current Status - Superseded 2026-06-19
+
+This note is a historical bug report and should not be treated as a current
+v1.0 blocker. Current Kujo supports `=` assignment and compound assignment
+as statement-level assignment operators, subject to binding mutability rules.
+`:=` also updates an existing mutable binding when one is present.
+
+Modern evidence:
+
+- `docs/LANGUAGE_SPEC.md` lists `:=`, `=`, `+=`, `-=`, `*=`, `/=`, and `%=`
+  as assignment statement operators and documents `let`/`mut`/`const`
+  reassignment and in-place mutation behavior.
+- `tests/language_spec_contracts.rs` verifies mutable rebinding and
+  in-place mutation, plus immutable/const rejection.
+- `tests/vm_interpreter_parity_surfaces.rs` verifies loop mutation, local map
+  updates, nested/captured map updates, and named nested capture mutation in
+  both interpreter and VM paths.
+- On 2026-06-19, the historical repro `mut i := 0; while i < 5 { i = i + 1 };
+  print(i)` printed `5` in both `kujo run` and `kujo run --interpreter`.
+
+Keep the remaining sections for historical debugging context only.
 
 ## Executive Summary
 

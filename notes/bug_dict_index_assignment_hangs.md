@@ -1,8 +1,28 @@
 # Critical Bug: Dict Index Assignment Causes Hang
 
 **Date**: 2026-01-30  
-**Status**: BLOCKING - Affects all dict mutation operations  
+**Status**: HISTORICAL - Superseded before v1.0 release readiness
 **Severity**: Critical
+
+## Current Status - Superseded 2026-06-19
+
+This note records a historical failure investigation and should not be used
+as current release status. Current Kujo supports dictionary index assignment
+in both interpreter and VM paths.
+
+Modern evidence:
+
+- `docs/LANGUAGE_SPEC.md` defines assignment statements with `:=`, `=`,
+  and compound assignment operators, with mutability controlled by
+  `let`/`mut`/`const` binding rules.
+- `tests/vm_interpreter_parity_surfaces.rs` covers successful local,
+  nested, and captured map updates, plus invalid index-assignment targets.
+- `tests/language_spec_contracts.rs` covers mutable binding reassignment and
+  in-place mutation policy.
+- On 2026-06-19, the historical repro `mut d := {"x": 0}; d["x"] = 5;
+  print(d["x"])` printed `5` in both `kujo run` and `kujo run --interpreter`.
+
+Use this file only as historical context for the January 2026 investigation.
 
 ## Summary
 

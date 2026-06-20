@@ -1,0 +1,11 @@
+== cargo test --test image_conversion_integration ==
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.94s
+     Running tests/image_conversion_integration.rs (target/debug/deps/image_conversion_integration-96e23687e416ad94)
+
+running 2 tests
+test image_conversion_failure_paths_are_reported ... ok
+test image_conversion_roundtrip_works_in_interpreter_and_vm ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+

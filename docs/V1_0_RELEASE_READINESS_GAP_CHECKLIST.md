@@ -182,7 +182,7 @@ ShipCheck scan source:
 
 ## P1 - Strongly Recommended Before Launch
 
-- [ ] **V1RR-P1-001: Close or archive stale critical bug and handoff docs.**
+- [x] **V1RR-P1-001: Close or archive stale critical bug and handoff docs.**
   - Problem: stale docs still describe fixed or superseded issues as current blockers. Examples include:
     - `docs/IMAGE_CONVERSION_AGENT_HANDOFF.md` says `img.save(...)`/`img.resize(...)` fail, but `tests/image_conversion_integration.rs` now covers PNG/JPEG/WebP round trips in interpreter and VM.
     - `notes/bug_dict_index_assignment_hangs.md` says dict mutation is completely broken, while later docs identify syntax confusion and current tests cover index assignment/update paths.
@@ -191,6 +191,23 @@ ShipCheck scan source:
     - Add current-status headers to stale notes or move their conclusions into an archive/stale-notes index.
     - Link each stale critical note to the modern test or doc that supersedes it.
     - For any still-real issue, create an active checklist item with current reproduction and tests.
+  - Evidence 2026-06-19:
+    - Added current-status headers to `docs/IMAGE_CONVERSION_AGENT_HANDOFF.md`,
+      `notes/bug_dict_index_assignment_hangs.md`, and
+      `notes/MUTATION_OPERATOR_BUG.md`.
+    - Linked the stale image handoff to `tests/image_conversion_integration.rs`
+      and `notes/2026-04-29_17-02_image-method-dispatch-parity.md`.
+    - Linked the stale dict and mutation notes to `docs/LANGUAGE_SPEC.md`,
+      `tests/language_spec_contracts.rs`, and
+      `tests/vm_interpreter_parity_surfaces.rs`.
+    - Live repros for `i = i + 1` loop mutation and `d["x"] = 5` dict index
+      assignment printed `5` in both VM and interpreter mode instead of
+      hanging.
+    - No still-real issue was found from the named stale notes, so no new
+      active checklist item was needed.
+    - Evidence note: `notes/2026-06-19_v1_0_stale_critical_notes_cleanup.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-001/status.tsv`.
 
 - [ ] **V1RR-P1-002: Finish or explicitly defer the remaining optional-typing cluster.**
   - Problem: the June 8 type-checker note leaves follow-ups for destructuring inference, module existence checks, struct field type lookup, Promise unwrap typing, and the permissive callable fallback decision.
