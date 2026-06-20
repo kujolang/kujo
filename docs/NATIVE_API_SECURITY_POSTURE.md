@@ -102,10 +102,13 @@ Built-in guardrails:
 - TCP/UDP read-write timeout: `30000 ms`
 - HTTP client timeout: `30000 ms`
 - Max network response/receive body: `8 MiB`
+- Max `parallel_http(...)` batch size: `128` URLs.
+- Synchronous and asynchronous HTTP helpers share the same destination policy, timeout, URL-scheme, and response-size limits.
 - HTTP native URL validation:
   - only `http` and `https` schemes are accepted.
   - malformed URLs and missing hosts fail early with deterministic diagnostics before request execution.
-- Outbound destination policy mode (env-controlled):
+- Outbound destination policy mode:
+  - `--deny-private-net`: CLI-level strict outbound policy for `kujo run` / `kujo test-run`, independent of environment variables and valid in trusted or untrusted mode.
   - `KUJO_NET_DESTINATION_POLICY=allow_all` (default): preserves backward-compatible permissive destination behavior.
   - `KUJO_NET_DESTINATION_POLICY=deny_private`: blocks outbound HTTP/TCP/UDP client destinations that resolve to loopback/private/link-local/multicast/unspecified IP ranges.
   - `KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1`: explicit trusted-local override when strict policy mode is enabled.
@@ -121,6 +124,10 @@ Operational guidance:
 ### 4.2.1 HTML Response Threat Model (`html_response`)
 
 `html_response(...)` is a raw response-construction helper. It does **not** sanitize or escape attacker-controlled content.
+
+`render_markdown(...)` and native SSG helper output escape source text before
+embedding it into HTML and reject unsafe Markdown link/image target schemes.
+Use `html_response(...)` only when raw HTML is intentional.
 
 Threat model boundary:
 

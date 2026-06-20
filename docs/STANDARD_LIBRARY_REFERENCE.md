@@ -65,6 +65,10 @@ Recently promoted helper surfaces worth calling out:
 | `to_snake_case` | preview | `v := to_snake_case("helloWorld")` |
 | `to_kebab_case` | preview | `v := to_kebab_case("helloWorld")` |
 
+`render_markdown(...)` escapes raw HTML text and replaces unsafe Markdown
+link/image target schemes with `#`; use `html_response(...)` only for
+intentionally raw HTML response bodies.
+
 Predicate semantics note:
 
 - `contains`, `starts_with`, `ends_with`, and `has_key` currently return `1`/`0`.

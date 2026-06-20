@@ -24,7 +24,9 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Practical native APIs (filesystem, process, network, async, crypto, database).
 - The native standard library keeps growing with practical helper surfaces for checksums, padding, truthiness, file inspection, and stderr-friendly output, which makes common automation scripts more self-contained.
 - Security policy controls for trusted and untrusted execution.
+- Strict outbound network policy can be forced from the CLI with `--deny-private-net`.
 - Bounded native helper behavior for generated arrays, ranges, random IDs, and string expansion.
+- Native Markdown/SSG helpers escape generated HTML by default.
 - Module workflows that support both flat and dotted imports.
 - Package bootstrap and lockfile workflows that stay deterministic across repeated installs.
 - Strong diagnostics, contract tests, and release-gate automation.
@@ -38,12 +40,14 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Kujo `1.0.0` must not be released until all P0/P1 roadmap items, the final release checklist, and tag-time artifact evidence are complete.
 - Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 - Deferred/non-goal boundaries are tracked in [docs/V1_SCOPE.md](docs/V1_SCOPE.md) and [docs/OPTIONAL_TYPING_DESIGN.md](docs/OPTIONAL_TYPING_DESIGN.md).
+- Final human-review blockers are summarized in [docs/V1_0_FINAL_REVIEW_BLOCKERS_2026-06-20.md](docs/V1_0_FINAL_REVIEW_BLOCKERS_2026-06-20.md).
 
 ## Safety Model Snapshot
 
 - Kujo is not a sandbox.
 - `kujo run` and `kujo test-run` default to trusted mode.
 - For untrusted code, start with `--untrusted` and add only required `--allow-*` flags.
+- Use `--deny-private-net` when outbound HTTP/TCP/UDP calls must reject local, private, link-local, multicast, and unspecified destinations even in trusted-mode automation.
 - When explicit `--allow-*` flags are present, execution is restricted to the listed capabilities.
 - Review [docs/NATIVE_API_SECURITY_POSTURE.md](docs/NATIVE_API_SECURITY_POSTURE.md) before running untrusted scripts in shared or sensitive environments.
 
