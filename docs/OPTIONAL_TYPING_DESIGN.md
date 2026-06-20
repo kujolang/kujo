@@ -131,6 +131,26 @@ Compatibility note:
 - Await/generator/struct-field inference remains conservative in v1 and may return `Any` or unknown where full static shape information is not yet modeled.
 - These boundaries are deliberate for additive, non-breaking typing behavior and are tracked in generated TODO triage artifacts under `docs/generated/V1_CODE_TODO_TRIAGE.*`.
 
+### Post-v1 Type-Checker Follow-Up Cluster (V1RR-P1-002)
+
+The following checker precision items are explicit post-v1 work and are not
+release blockers for `v1.0.0`:
+
+- Destructuring inference: destructuring patterns remain conservative in v1;
+  unsupported static shapes may resolve to `Any` instead of blocking execution.
+- Module existence checks: unresolved modules remain diagnostics/lookup
+  concerns, not a mandatory static gate before dynamic runtime loading.
+- Struct field type lookup: field reads remain conservative when full struct
+  shape information is unavailable.
+- Promise unwrap typing: `Promise<T>`/await result inference may return `Any`
+  until async value shapes are modeled end to end.
+- Permissive callable fallback: imported or dynamic callables that cannot be
+  analyzed safely continue to use permissive placeholders in v1 so optional
+  typing does not reject compatible dynamic code.
+
+Future closure of this cluster must update checker tests, docs, and generated
+TODO triage evidence together.
+
 ## Typed-JIT Optimization Boundaries (Deferred)
 
 ### Future Candidates

@@ -209,11 +209,24 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-19_p1-001/status.tsv`.
 
-- [ ] **V1RR-P1-002: Finish or explicitly defer the remaining optional-typing cluster.**
+- [x] **V1RR-P1-002: Finish or explicitly defer the remaining optional-typing cluster.**
   - Problem: the June 8 type-checker note leaves follow-ups for destructuring inference, module existence checks, struct field type lookup, Promise unwrap typing, and the permissive callable fallback decision.
   - Acceptance:
     - Either close the cluster with tests and docs, or document it as post-v1 in `docs/OPTIONAL_TYPING_DESIGN.md` and `docs/V1_SCOPE.md`.
     - Run `cargo test type_checker::tests::`, `cargo test --test optional_typing_v1_contract`, and `cargo test --test v1_code_todo_triage_contract`.
+  - Evidence 2026-06-19:
+    - Documented the remaining optional-typing precision cluster as explicit
+      post-v1 work in `docs/OPTIONAL_TYPING_DESIGN.md`, covering
+      destructuring inference, module existence checks, struct field type
+      lookup, Promise unwrap typing, and permissive callable fallback.
+    - Added the same post-v1 markers to `docs/V1_SCOPE.md` so the release
+      scope doc names the cluster as non-blocking for `v1.0.0`.
+    - Extended `tests/v1_scope_docs_alignment.rs` to require those markers in
+      both docs.
+    - Evidence note:
+      `notes/2026-06-19_v1_0_optional_typing_cluster_deferral.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-002/status.tsv`.
 
 - [x] **V1RR-P1-003: Align JIT and performance docs with release posture.**
   - Problem: `docs/VM_INTERPRETER_PARITY_MATRIX.md` says JIT is experimental/opt-in via `kujo run --jit`, while `docs/PERFORMANCE.md` says JIT activates automatically after 100 iterations and needs no flags.

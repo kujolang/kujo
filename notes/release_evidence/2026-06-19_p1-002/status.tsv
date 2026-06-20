@@ -1,0 +1,6 @@
+command	status	log
+cargo test type_checker::tests::	0	notes/release_evidence/2026-06-19_p1-002/cargo_test_type_checker_tests.log
+cargo test --test optional_typing_v1_contract	0	notes/release_evidence/2026-06-19_p1-002/cargo_test_optional_typing_v1_contract.log
+cargo test --test v1_code_todo_triage_contract	0	notes/release_evidence/2026-06-19_p1-002/cargo_test_v1_code_todo_triage_contract.log
+cargo test --test v1_scope_docs_alignment	0	notes/release_evidence/2026-06-19_p1-002/cargo_test_v1_scope_docs_alignment.log
+cargo test --test docs_examples	0	notes/release_evidence/2026-06-19_p1-002/cargo_test_docs_examples.log

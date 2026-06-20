@@ -46,4 +46,25 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
         optional_typing.contains("Any future runtime checks must remain opt-in"),
         "optional typing policy must keep opt-in enforcement boundary explicit"
     );
+
+    let optional_typing_lower = optional_typing.to_lowercase();
+    let v1_scope_lower = v1_scope.to_lowercase();
+    for marker in [
+        "destructuring inference",
+        "module existence checks",
+        "struct field type lookup",
+        "promise unwrap typing",
+        "permissive callable fallback",
+    ] {
+        assert!(
+            optional_typing_lower.contains(marker),
+            "optional typing policy missing post-v1 checker marker {:?}",
+            marker
+        );
+        assert!(
+            v1_scope_lower.contains(marker),
+            "V1 scope doc missing post-v1 checker marker {:?}",
+            marker
+        );
+    }
 }

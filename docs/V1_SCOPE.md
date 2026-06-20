@@ -74,6 +74,12 @@ The following items are explicitly tracked as post-1.0 backlog and are not block
 - FFI (foreign function interface)
 - WASM target
 - Macro system
+- Optional typing precision follow-ups:
+  - destructuring inference
+  - module existence checks
+  - struct field type lookup
+  - Promise unwrap typing
+  - permissive callable fallback policy tightening
 
 These candidates should be tracked as roadmap backlog slices after `v1.0.0` release stabilization.
 
