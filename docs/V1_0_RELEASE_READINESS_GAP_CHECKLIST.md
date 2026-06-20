@@ -447,11 +447,32 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-20_p2-003/status.tsv`.
 
-- [ ] **V1RR-P2-004: Editor and LSP launch matrix pass.**
+- [x] **V1RR-P2-004: Editor and LSP launch matrix pass.**
   - Problem: editor docs have older baseline versions and advanced LSP follow-ups in historical notes.
   - Acceptance:
     - Confirm VS Code/Cursor, Neovim, JetBrains, and generic LSP instructions are still accurate.
     - Run or document the current editor-adapter smoke path.
+  - Completed (2026-06-20):
+    - Added a v1.0 launch matrix in `docs/EDITOR_ADAPTER_BASELINES.md`
+      covering VS Code/Cursor/VS Code-compatible forks, Neovim, JetBrains via
+      generic external LSP plugins, and generic stdio LSP clients.
+    - Expanded `docs/INSTALLATION_LSP_EDITORS.md` with the current
+      clean-environment smoke sequence:
+      `cargo test --test editor_adapter_contracts`,
+      `cargo test --test editor_launch_matrix_contract`,
+      `cargo test --test lsp_external_clients_smoke`,
+      `cargo test --test lsp_conformance_harness`,
+      `cargo test --test lsp_reliability_track`,
+      `cargo test --test lsp_latency_guardrails`,
+      `cargo test --test tree_sitter_kujo_assets`, and
+      `npm run check` in `tools/vscode-kujo-extension`.
+    - Clarified JetBrains docs as a generic LSP configuration path rather than
+      a pinned host-plugin/version promise.
+    - Added `tests/editor_launch_matrix_contract.rs`.
+    - Evidence note:
+      `notes/2026-06-20_v1_0_editor_lsp_launch_matrix.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-20_p2-004/status.tsv`.
 
 ## Suggested Execution Order
 

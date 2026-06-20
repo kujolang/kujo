@@ -17,7 +17,8 @@ cargo build --release
 ./target/release/kujo lsp --help
 ```
 
-If the command prints LSP usage/help, the release artifact includes LSP functionality.
+If the command prints LSP usage/help, the release artifact includes LSP
+functionality.
 
 ## Upgrade Path
 
@@ -78,6 +79,12 @@ Minimal smoke sequence:
 ```bash
 ./target/release/kujo lsp --help
 cargo test --test editor_adapter_contracts
+cargo test --test editor_launch_matrix_contract
+cargo test --test lsp_external_clients_smoke
+cargo test --test lsp_conformance_harness
+cargo test --test lsp_reliability_track
+cargo test --test lsp_latency_guardrails
+cargo test --test tree_sitter_kujo_assets
 ```
 
 Extension smoke sequence:
@@ -88,4 +95,21 @@ npm install
 npm run check
 ```
 
-This validates shipped binary includes LSP entrypoint and adapter descriptors remain canonical.
+This validates that the shipped binary includes the LSP entrypoint, adapter
+descriptors remain canonical, generic Python/Node LSP clients can complete the
+initialize/shutdown lifecycle, protocol fixtures still match, reliability and
+latency guardrails hold, and editor grammar assets remain present.
+
+## v1.0 Editor Launch Matrix
+
+| Editor family | Install/configuration path | Current validation path |
+| --- | --- | --- |
+| VS Code | Install the first-party `.vsix`; leave `kujo.lsp.command` as `["kujo", "lsp"]` | `npm run check`; `cargo test --test editor_adapter_contracts` |
+| Cursor / VS Code-compatible forks | Install the same `.vsix` through the fork CLI or Extensions UI | `npm run check`; `cargo test --test editor_adapter_contracts` |
+| Neovim | Use `docs/editor-adapters/neovim-lspconfig.lua` with `nvim-lspconfig` | `cargo test --test editor_adapter_contracts` |
+| JetBrains | Configure a generic external LSP plugin profile with executable `kujo` and arg `lsp` | `cargo test --test editor_adapter_contracts` |
+| Generic LSP clients | Launch `kujo lsp` over stdio JSON-RPC | `cargo test --test lsp_external_clients_smoke`; `cargo test --test lsp_conformance_harness` |
+
+The matrix intentionally avoids claiming latest host-editor version support.
+The Kujo-owned contract is the server command, descriptor shape, extension
+baseline, protocol responses, and editor asset presence.
