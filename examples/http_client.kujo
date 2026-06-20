@@ -1,5 +1,7 @@
 # HTTP Client Example - Making Requests
 # Demonstrates using HTTP client functions to make requests
+# Host-effect demo: trusted local workflow. In untrusted mode, run with
+# --allow-net-client and review outbound destination policy.
 
 print("=== HTTP Client Examples ===")
 print("")

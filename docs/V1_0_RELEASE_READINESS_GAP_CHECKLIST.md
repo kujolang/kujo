@@ -291,12 +291,37 @@ ShipCheck scan source:
     - Command logs and exit status manifest:
       `notes/release_evidence/2026-06-19_p1-004/status.tsv`.
 
-- [ ] **V1RR-P1-005: Revalidate untrusted-mode and host-effect examples.**
+- [x] **V1RR-P1-005: Revalidate untrusted-mode and host-effect examples.**
   - Problem: safety docs are strong, but final launch quality depends on examples not accidentally teaching unsafe defaults.
   - Acceptance:
     - Review README examples, `docs/NATIVE_API_SECURITY_POSTURE.md`, `docs/STANDARD_LIBRARY_REFERENCE.md`, and host-effect examples for trusted/untrusted wording.
     - Add/refresh negative-path tests for filesystem, process, HTTP/network, archive, image, and database surfaces where launch examples exercise them.
     - Run `cargo test --test native_api_security_boundaries` and `cargo test --test runtime_security`.
+  - Evidence 2026-06-19:
+    - Reviewed README safety wording, `docs/NATIVE_API_SECURITY_POSTURE.md`,
+      `docs/STANDARD_LIBRARY_REFERENCE.md`, and launch host-effect examples
+      for filesystem, process, HTTP/network, archive, image, and database
+      surfaces.
+    - Added explicit trusted/untrusted capability notes to
+      `docs/STANDARD_LIBRARY_REFERENCE.md` host-effect sections.
+    - Added trusted-local workflow comments to representative host-effect
+      examples: `examples/file_logger.kujo`, `examples/stdlib_process.kujo`,
+      `examples/http_client.kujo`, `examples/database_unified.kujo`,
+      `examples/stdlib_compression.kujo`, and
+      `examples/image_processing.kujo`.
+    - Refreshed image negative-path coverage in
+      `tests/native_api_security_boundaries.rs` with untrusted denials for
+      `load_image` (`--allow-fs-read`) and `gif_to_webp`
+      (`--allow-fs-write`).
+    - Existing negative-path coverage already covers filesystem write/delete,
+      process/shell, HTTP/network client/server and destination policy,
+      archive extraction, and database denials in
+      `tests/native_api_security_boundaries.rs`, with module/path safety
+      coverage in `tests/runtime_security.rs`.
+    - Evidence note:
+      `notes/2026-06-19_v1_0_untrusted_host_effect_revalidation.md`.
+    - Command logs and exit status manifest:
+      `notes/release_evidence/2026-06-19_p1-005/status.tsv`.
 
 - [ ] **V1RR-P1-006: Final docs freshness pass for versioned baselines.**
   - Problem: several docs still carry older baseline labels (`v0.13.0`, `v0.14.0`) even when they may remain active guidance.

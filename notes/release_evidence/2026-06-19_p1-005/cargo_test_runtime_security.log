@@ -1,0 +1,20 @@
+$ cargo test --test runtime_security
+   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.80s
+     Running tests/runtime_security.rs (target/debug/deps/runtime_security-49e39a10be3fd752)
+
+running 11 tests
+test runtime_security_module_loader_rejects_parent_traversal_import_name_cross_platform ... ok
+test runtime_security_rejects_oversized_string_literals ... ok
+test runtime_security_rejects_invalid_escape_sequences ... ok
+test runtime_security_rejects_oversized_collection_literals ... ok
+test runtime_security_rejects_module_symlink_escape ... ok
+test runtime_security_reports_module_cycle_import_chain ... ok
+test runtime_security_enforces_interpreter_call_depth_limit ... ok
+test runtime_security_vm_resolves_sibling_module_for_relative_entry_script_path ... ok
+test runtime_security_break_and_continue_outside_loops_are_rejected ... ok
+test runtime_security_rejects_dotted_module_symlink_escape_in_vm_and_interpreter ... ok
+test runtime_security_entry_script_parent_search_path_works_cross_cwd_vm_and_interpreter ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+

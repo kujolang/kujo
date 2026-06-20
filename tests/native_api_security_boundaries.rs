@@ -814,6 +814,24 @@ fn native_capability_untrusted_denies_database() {
 }
 
 #[test]
+fn native_capability_untrusted_denies_image_file_read() {
+    assert_runtime_boundary_failure_with_args(
+        "load_image(\"photo.png\")\n",
+        "Capability denied: filesystem-read required for load_image",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
+fn native_capability_untrusted_denies_image_conversion_write() {
+    assert_runtime_boundary_failure_with_args(
+        "gif_to_webp(\"in.gif\", \"out.webp\")\n",
+        "Capability denied: filesystem-write required for gif_to_webp",
+        &["--interpreter", "--untrusted", "--allow-fs-read"],
+    );
+}
+
+#[test]
 fn native_capability_untrusted_denies_clock() {
     assert_runtime_boundary_failure_with_args(
         "now()\n",

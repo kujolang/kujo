@@ -1,5 +1,7 @@
 # Process Management Examples
 # Demonstrates process spawning and command piping
+# Host-effect demo: trusted local workflow. In untrusted mode, grant only the
+# required process capability, for example --allow-process-exec.
 
 print("=== Process Management Examples ===")
 print("")

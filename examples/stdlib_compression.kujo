@@ -1,5 +1,7 @@
 # Compression & Archive Examples
 # Demonstrates ZIP file creation, manipulation, and extraction
+# Host-effect demo: trusted local workflow. In untrusted mode, run with
+# --allow-fs-read and --allow-fs-write.
 
 print("=== Compression & Archive Examples ===")
 print("")
