@@ -18,7 +18,7 @@
 | Item 6 — `secret(...)` value type with runtime-enforced redaction | Completed | `038a325` |
 | Item 7 — AI egress capability + endpoint allowlist | Completed | `da2e505` |
 | Item 8 — Deterministic request hashing / cache key | Completed | `1e669be` |
-| Item 9 — True streaming with a Kujo callback (or chunk iterator) | Pending | TBD |
+| Item 9 — True streaming with a Kujo callback (or chunk iterator) | Completed | `f982539` |
 | Item 10 — Portable multimodal message builders | Pending | TBD |
 
 This document specifies a set of additions to core Kujo that make the language meaningfully
