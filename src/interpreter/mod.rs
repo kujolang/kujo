@@ -515,6 +515,8 @@ impl Interpreter {
             "vec_normalize",
             "vec_cosine",
             "vec_top_k",
+            "ai_count_tokens",
+            "ai_fit_context",
             // String functions
             "len",
             "__vm_for_iterable",
@@ -927,6 +929,14 @@ impl Interpreter {
         );
         self.env.define("vec_cosine".to_string(), Value::NativeFunction("vec_cosine".to_string()));
         self.env.define("vec_top_k".to_string(), Value::NativeFunction("vec_top_k".to_string()));
+        self.env.define(
+            "ai_count_tokens".to_string(),
+            Value::NativeFunction("ai_count_tokens".to_string()),
+        );
+        self.env.define(
+            "ai_fit_context".to_string(),
+            Value::NativeFunction("ai_fit_context".to_string()),
+        );
 
         // String functions
         self.env.define("len".to_string(), Value::NativeFunction("len".to_string()));
@@ -2771,6 +2781,18 @@ impl Interpreter {
             "vec_top_k" => CallableArity::exact(
                 "vec_top_k",
                 vec!["query".to_string(), "matrix".to_string(), "k".to_string()],
+            ),
+            "ai_count_tokens" => CallableArity::range(
+                "ai_count_tokens",
+                1,
+                2,
+                vec!["text_or_messages".to_string(), "options".to_string()],
+            ),
+            "ai_fit_context" => CallableArity::range(
+                "ai_fit_context",
+                2,
+                3,
+                vec!["messages".to_string(), "max_tokens".to_string(), "options".to_string()],
             ),
             "json_schema_validate" => CallableArity::exact(
                 "json_schema_validate",

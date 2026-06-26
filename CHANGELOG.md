@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added AI response envelope metadata (`usage`, `finish_reason`, `tool_calls`, `provider`) and opt-in `options.structured_errors` dictionaries while preserving default string errors.
 - Added `json_schema_validate(value, schema)` for pure, bounded validation of JSON-like Kujo values against a documented JSON Schema subset.
 - Added native vector math helpers `vec_dot`, `vec_norm`, `vec_normalize`, `vec_cosine`, and `vec_top_k` for finite numeric arrays.
+- Added deterministic token estimation and context fitting helpers `ai_count_tokens` and `ai_fit_context` for local AI prompt budgeting without provider tokenizers.
 
 ## [1.0.0] - 2026-06-19
 

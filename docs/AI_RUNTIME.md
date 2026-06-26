@@ -121,3 +121,34 @@ Available helpers are `vec_dot`, `vec_norm`, `vec_normalize`, `vec_cosine`, and 
 They operate on arrays of finite numbers, promote integers to floats, and have no capability gate.
 
 `vec_top_k` returns rows scored by cosine similarity as `{index, score}` dictionaries sorted by descending score. It is a numeric primitive only; vector storage, ANN indexes, persistence, and retrieval policy remain ecosystem concerns.
+
+## Token Estimation And Context Fitting
+
+`ai_count_tokens(text_or_messages, options?)` returns a deterministic estimate for budgeting. It is not exact provider tokenization and should not be presented as a billing-grade count.
+
+The estimator selects a small heuristic family from `options.model`:
+
+- `gpt*`
+- `text-embedding*`
+- default
+
+All current families estimate one token per four weighted characters, with non-ASCII characters counted as two weighted characters. Chat-message estimates also count role and content text plus family-specific message overhead. This intentionally favors stable local budgeting over provider-specific BPE behavior.
+
+`ai_fit_context(messages, max_tokens, options?)` applies the same estimator to chat messages and drops the oldest non-system messages until the estimate fits:
+
+```kujo
+fit := ai_fit_context(messages, 4096, {"model": "gpt-4o"})
+```
+
+The result is:
+
+```text
+{
+    "messages": [...],
+    "dropped": 2,
+    "est_tokens": 3821,
+    "fits": true
+}
+```
+
+`ai_fit_context` never drops `system` messages and preserves the last `user` message. If that minimum preserved context is still over budget, it returns it with `fits: false`. Exact tokenization, downloadable tokenizer models, retry policy, routing, RAG, and provider selection remain ecosystem concerns.

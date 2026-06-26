@@ -43,6 +43,14 @@ Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / 
 - Vectors are capped at `100,000` dimensions; matrices are capped at `100,000` rows and `5,000,000` cells. Non-finite inputs or non-finite results return `Value::Error`.
 - `vec_top_k` uses Rayon parallel iteration for large matrices; vector helpers have no capability gate and do not store or index vectors.
 
+Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
+
+- `ai_count_tokens(text_or_messages, options?)` returns a deterministic estimate, not exact provider tokenization.
+- `options.model` selects a small heuristic family by model prefix: `gpt*`, `text-embedding*`, or default. All current families estimate one token per four weighted characters; non-ASCII characters count as two weighted characters. Chat-message estimates also include documented role/content overhead.
+- Message arrays contain dictionaries with non-empty string `role` and string `content`; optional string `name` is counted when present.
+- `ai_fit_context(messages, max_tokens, options?)` drops the oldest non-system messages until the estimated count fits. It never drops system messages and preserves the last user message. If the minimum preserved context is still over budget, it returns it with `fits: false`.
+- Text inputs are capped at `2,000,000` characters and message arrays at `100,000` messages. These helpers have no capability gate and perform no I/O.
+
 | Function | Signature | Arity | Return Type | Errors | Capability | Example |
 | --- | --- | --- | --- | --- | --- | --- |
 | `print` | `print(...)` | variadic (0+) | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := print(...)` |
@@ -73,6 +81,8 @@ Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / 
 | `vec_normalize` | `vec_normalize(a)` | exact 1 | array | Value::Error on invalid args/types, non-finite inputs/results, or resource-limit violations; zero vector returns zero-filled vector. | `none` | `unit := vec_normalize([3, 4])` |
 | `vec_cosine` | `vec_cosine(a, b)` | exact 2 | float | Value::Error on invalid args/types, non-finite inputs/results, vector dimension mismatch, or resource-limit violations; zero vectors return `0.0`. | `none` | `score := vec_cosine([1, 0], [0, 1])` |
 | `vec_top_k` | `vec_top_k(query, matrix, k)` | exact 3 | array | Value::Error on invalid args/types, non-finite inputs/results, matrix row dimension mismatch, negative `k`, or resource-limit violations. | `none` | `matches := vec_top_k([1, 0], [[1, 0], [0, 1]], 1)` |
+| `ai_count_tokens` | `ai_count_tokens(text_or_messages, options?)` | 1..=2 | int | Value::Error on invalid args/types, invalid options, malformed messages, or resource-limit violations. | `none` | `tokens := ai_count_tokens("Hello Kujo", {"model":"gpt-4o"})` |
+| `ai_fit_context` | `ai_fit_context(messages, max_tokens, options?)` | 2..=3 | dict | Value::Error on invalid args/types, invalid options, malformed messages, negative `max_tokens`, or resource-limit violations. | `none` | `fit := ai_fit_context(messages, 2000, {"model":"gpt-4o"})` |
 | `len` | `len(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := len(...)` |
 | `substring` | `substring(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substring(...)` |
 | `substr` | `substr(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substr(...)` |

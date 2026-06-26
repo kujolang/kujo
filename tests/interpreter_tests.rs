@@ -52,6 +52,8 @@ fn test_builtin_names_include_release_hardening_contract_entries() {
         "vec_normalize",
         "vec_cosine",
         "vec_top_k",
+        "ai_count_tokens",
+        "ai_fit_context",
         "index_of",
         "repeat",
         "char_at",
