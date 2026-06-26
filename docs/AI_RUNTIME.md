@@ -63,6 +63,21 @@ Cassette files are JSON and use `_cassette_version: 1`. Each stores credential-f
 
 Replay lookup happens before destination-policy checks or HTTP client creation, so strict replay remains hermetic even when outbound network access is disabled.
 
+## Streaming
+
+`ai_stream_chat(prompt_or_messages, options)` keeps the original aggregate-and-return behavior. Pass a third argument to receive chunks as the runtime decodes them:
+
+```kujo
+func on_chunk(delta, raw_chunk) {
+    print(delta)
+    return true
+}
+
+result := ai_stream_chat("Hello", options, on_chunk)
+```
+
+The callback receives the text delta and a raw chunk dictionary shaped like a one-choice provider response. Returning `false` cancels delivery of later chunks; any other return value continues. The returned value is still the normal `Result.ok` dictionary with `chunks`, `text`, `json`, `headers`, and available `usage`, `finish_reason`, and `provider` metadata. Replay cassettes deliver chunks in their recorded order and never open a socket.
+
 ## Egress Controls
 
 The high-level AI helpers use the `network-ai` capability. In `--untrusted` mode, grant them with `--allow-ai`; `--allow-net-client` grants general HTTP/TCP/UDP client APIs but does not unlock AI helpers.

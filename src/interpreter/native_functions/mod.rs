@@ -172,7 +172,7 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
     if let Some(result) = filesystem::handle(interp, canonical_name, arg_values) {
         return result;
     }
-    if let Some(result) = http::handle(canonical_name, arg_values) {
+    if let Some(result) = http::handle_with_interpreter(interp, canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = json::handle(canonical_name, arg_values) {

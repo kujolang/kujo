@@ -2,7 +2,7 @@
 //
 // HTTP client native functions
 
-use crate::interpreter::{DictMap, Value};
+use crate::interpreter::{DictMap, Interpreter, Value};
 use crate::runtime_limits;
 use crate::{builtins, network_policy};
 use chrono::{DateTime, Utc};
@@ -795,6 +795,87 @@ fn cassette_headers_to_dict(headers: &HashMap<String, String>) -> DictMap {
     dict
 }
 
+fn response_is_event_stream(headers: &DictMap, body: &str) -> bool {
+    let content_type = headers
+        .get("content-type")
+        .or_else(|| headers.get("Content-Type"))
+        .and_then(|value| match value {
+            Value::Str(text) => Some(text.as_ref().to_ascii_lowercase()),
+            _ => None,
+        })
+        .unwrap_or_default();
+    content_type.contains("text/event-stream")
+        || body.starts_with("data:")
+        || body.contains("\ndata:")
+}
+
+fn parse_ai_event_stream_body(body: &str) -> Result<Value, String> {
+    let mut choices = Vec::new();
+    let mut usage = None;
+    let mut data_lines = Vec::new();
+
+    fn process_event(
+        data_lines: &mut Vec<String>,
+        choices: &mut Vec<Value>,
+        usage: &mut Option<Value>,
+    ) -> Result<bool, String> {
+        if data_lines.is_empty() {
+            return Ok(true);
+        }
+        let data = data_lines.join("\n");
+        data_lines.clear();
+        if data.trim() == "[DONE]" {
+            return Ok(false);
+        }
+        let event = builtins::parse_json(data.trim())
+            .map_err(|error| format!("event-stream JSON decode error: {}", error))?;
+        let Value::Dict(event_dict) = event else {
+            return Ok(true);
+        };
+        if let Some(Value::Array(event_choices)) = event_dict.get("choices") {
+            choices.extend(event_choices.iter().cloned());
+        }
+        if let Some(event_usage) = event_dict.get("usage") {
+            usage.replace(event_usage.clone());
+        }
+        Ok(true)
+    }
+
+    for line in body.lines() {
+        let line = line.trim_end_matches('\r');
+        if line.is_empty() {
+            if !process_event(&mut data_lines, &mut choices, &mut usage)? {
+                break;
+            }
+            continue;
+        }
+        if let Some(data) = line.strip_prefix("data:") {
+            data_lines.push(data.trim_start().to_string());
+        }
+    }
+    let _ = process_event(&mut data_lines, &mut choices, &mut usage)?;
+
+    let mut root = DictMap::default();
+    root.insert("choices".into(), Value::Array(Arc::new(choices)));
+    if let Some(usage) = usage {
+        root.insert("usage".into(), usage);
+    }
+    Ok(Value::Dict(Arc::new(root)))
+}
+
+fn parse_ai_response_body(body: &str, headers: &DictMap) -> (Option<Value>, Option<String>) {
+    match builtins::parse_json(body) {
+        Ok(json) => (Some(json), None),
+        Err(_) if response_is_event_stream(headers, body) => {
+            match parse_ai_event_stream_body(body) {
+                Ok(json) => (Some(json), None),
+                Err(stream_error) => (None, Some(stream_error)),
+            }
+        }
+        Err(error) => (None, Some(error)),
+    }
+}
+
 fn replay_ai_cassette(
     surface: &str,
     dir: &Path,
@@ -834,13 +915,11 @@ fn replay_ai_cassette(
         ));
     }
 
-    let (json, decode_error) = match builtins::parse_json(&cassette.response.body) {
-        Ok(json) => (Some(json), None),
-        Err(error) => (None, Some(error)),
-    };
+    let headers = cassette_headers_to_dict(&cassette.response.headers);
+    let (json, decode_error) = parse_ai_response_body(&cassette.response.body, &headers);
     Ok(Some(AiHttpResponse {
         status: cassette.response.status,
-        headers: cassette_headers_to_dict(&cassette.response.headers),
+        headers,
         text: cassette.response.body,
         json,
         decode_error,
@@ -950,7 +1029,11 @@ fn run_ai_request(
         let client = network_policy::build_http_client(Duration::from_secs_f64(timeout_seconds))?;
         let mut request = client.post(&endpoint);
         request = request.header("Content-Type", "application/json");
-        request = request.header("Accept", "application/json");
+        if surface_for_task == "ai_stream_chat" {
+            request = request.header("Accept", "text/event-stream, application/json");
+        } else {
+            request = request.header("Accept", "application/json");
+        }
 
         if let Some(api_key) = api_key {
             request = request.header("Authorization", format!("Bearer {}", api_key));
@@ -968,12 +1051,6 @@ fn run_ai_request(
     })?;
 
     let (status, response_headers, body_bytes) = request_result;
-    let body_text = String::from_utf8_lossy(&body_bytes).to_string();
-    let (parsed_body, decode_error) = match builtins::parse_json(&body_text) {
-        Ok(json) => (Some(json), None),
-        Err(error) => (None, Some(error)),
-    };
-
     let mut headers_dict = DictMap::default();
     for (name, value) in response_headers.iter() {
         if let Ok(value_str) = value.to_str() {
@@ -983,6 +1060,8 @@ fn run_ai_request(
             );
         }
     }
+    let body_text = String::from_utf8_lossy(&body_bytes).to_string();
+    let (parsed_body, decode_error) = parse_ai_response_body(&body_text, &headers_dict);
 
     match &config.cassette {
         AiCassetteMode::Record { dir } => {
@@ -1074,6 +1153,87 @@ fn extract_chat_chunks(response_json: &Value) -> Vec<Value> {
     }
 
     chunks
+}
+
+fn extract_chat_chunk_text(choice_dict: &DictMap) -> Option<String> {
+    if let Some(Value::Dict(delta)) = choice_dict.get("delta") {
+        if let Some(Value::Str(content)) = delta.get("content") {
+            return Some(content.as_ref().clone());
+        }
+    } else if let Some(Value::Dict(message)) = choice_dict.get("message") {
+        if let Some(Value::Str(content)) = message.get("content") {
+            return Some(content.as_ref().clone());
+        }
+    } else if let Some(Value::Str(text)) = choice_dict.get("text") {
+        return Some(text.as_ref().clone());
+    }
+    None
+}
+
+fn make_stream_callback_chunk(root: &DictMap, choice: &Value, is_last: bool) -> Value {
+    let mut raw = DictMap::default();
+    raw.insert("choices".into(), Value::Array(Arc::new(vec![choice.clone()])));
+    if is_last {
+        if let Some(usage) = root.get("usage") {
+            raw.insert("usage".into(), usage.clone());
+        }
+    }
+    Value::Dict(Arc::new(raw))
+}
+
+fn extract_stream_callback_chunks(response_json: &Value) -> Vec<(String, Value)> {
+    let mut chunks = Vec::new();
+    let Some(root) = (match response_json {
+        Value::Dict(root) => Some(root),
+        _ => None,
+    }) else {
+        return chunks;
+    };
+
+    let Some(Value::Array(choice_values)) = root.get("choices") else {
+        return chunks;
+    };
+    for (index, choice) in choice_values.iter().enumerate() {
+        if let Value::Dict(choice_dict) = choice {
+            if let Some(delta) = extract_chat_chunk_text(choice_dict) {
+                let raw =
+                    make_stream_callback_chunk(root, choice, index + 1 == choice_values.len());
+                chunks.push((delta, raw));
+            }
+        }
+    }
+
+    chunks
+}
+
+fn deliver_stream_callback_chunks<F>(
+    response_json: &Value,
+    response_text: &str,
+    mut invoke: F,
+) -> Result<Vec<Value>, Value>
+where
+    F: FnMut(&str, &Value) -> Result<bool, Value>,
+{
+    let callback_chunks = extract_stream_callback_chunks(response_json);
+    if callback_chunks.is_empty() && !response_text.is_empty() {
+        let raw = response_json.clone();
+        let should_continue = invoke(response_text, &raw)?;
+        let delivered = vec![Value::Str(Arc::new(response_text.to_string()))];
+        if !should_continue {
+            return Ok(delivered);
+        }
+        return Ok(delivered);
+    }
+
+    let mut delivered = Vec::new();
+    for (delta, raw) in callback_chunks {
+        let should_continue = invoke(&delta, &raw)?;
+        delivered.push(Value::Str(Arc::new(delta)));
+        if !should_continue {
+            break;
+        }
+    }
+    Ok(delivered)
 }
 
 fn extract_embedding_vector(response_json: &Value) -> Option<Vec<Value>> {
@@ -1168,14 +1328,25 @@ fn extract_usage(response_json: &Value) -> Option<Value> {
 }
 
 fn extract_finish_reason(response_json: &Value) -> Value {
-    let Some(choice) = first_ai_choice(response_json) else {
-        return Value::Null;
+    let root = match response_json {
+        Value::Dict(root) => root,
+        _ => return Value::Null,
     };
-    match choice.get("finish_reason") {
-        Some(Value::Str(reason)) => Value::Str(reason.clone()),
-        Some(Value::Null) => Value::Null,
-        _ => Value::Null,
+    let choices = match root.get("choices") {
+        Some(Value::Array(choices)) => choices,
+        _ => return Value::Null,
+    };
+    for choice in choices.iter().rev() {
+        let Value::Dict(choice) = choice else {
+            continue;
+        };
+        match choice.get("finish_reason") {
+            Some(Value::Str(reason)) => return Value::Str(reason.clone()),
+            Some(Value::Null) => continue,
+            _ => continue,
+        }
     }
+    Value::Null
 }
 
 fn first_ai_choice(response_json: &Value) -> Option<&DictMap> {
@@ -1256,7 +1427,149 @@ fn add_ai_envelope_fields(
     result.insert("provider".into(), Value::Str(Arc::new(config.provider.clone())));
 }
 
+fn build_ai_stream_chat_result(
+    config: &AiRequestConfig,
+    response: AiHttpResponse,
+    chunks_override: Option<Vec<Value>>,
+) -> Value {
+    if !(200..300).contains(&response.status) {
+        return ai_http_status_error(
+            "ai_stream_chat",
+            config,
+            response.status,
+            &response.headers,
+            &response.text,
+        );
+    }
+    let Some(json) = response.json else {
+        return ai_decode_error(
+            "ai_stream_chat",
+            config,
+            response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
+            &response.text,
+        );
+    };
+
+    let mut chunks = chunks_override.unwrap_or_else(|| extract_chat_chunks(&json));
+    if chunks.is_empty() && !response.text.is_empty() {
+        chunks.push(Value::Str(Arc::new(response.text.clone())));
+    }
+
+    let mut result = DictMap::default();
+    result.insert("status".into(), Value::Int(response.status));
+    result.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
+    result.insert("chunks".into(), Value::Array(Arc::new(chunks)));
+    result.insert("text".into(), Value::Str(Arc::new(response.text)));
+    result.insert("headers".into(), Value::Dict(Arc::new(response.headers)));
+    add_ai_envelope_fields(&mut result, &json, config, false);
+    result.insert("json".into(), json);
+    ai_ok_result(Value::Dict(Arc::new(result)))
+}
+
+fn invoke_interpreter_stream_callback(
+    interp: &mut Interpreter,
+    callback: &Value,
+    delta: &str,
+    raw: &Value,
+) -> Result<bool, Value> {
+    let result = interp
+        .call_user_function(callback, &[Value::Str(Arc::new(delta.to_string())), raw.clone()]);
+    match result {
+        Value::Error(_) | Value::ErrorObject { .. } => Err(result),
+        Value::Bool(false) => Ok(false),
+        _ => Ok(true),
+    }
+}
+
+pub(crate) fn handle_ai_stream_chat_with_callback_invoker<F>(
+    arg_values: &[Value],
+    mut invoke: F,
+) -> Option<Value>
+where
+    F: FnMut(&str, &Value) -> Result<bool, Value>,
+{
+    if arg_values.len() != 3 {
+        return Some(Value::Error(format!(
+            "ai_stream_chat() expects 2 or 3 arguments (prompt_or_messages, options, on_chunk), got {}",
+            arg_values.len()
+        )));
+    }
+
+    let options = match arg_values.get(1).and_then(dict_like_from_value) {
+        Some(options) => options,
+        None => {
+            return Some(Value::Error(
+                "ai_stream_chat() requires an options dictionary as second argument".to_string(),
+            ));
+        }
+    };
+
+    let config = match parse_ai_request_config(&options, "ai_stream_chat") {
+        Ok(config) => config,
+        Err(error) => return Some(error),
+    };
+    let messages = match parse_ai_messages(&arg_values[0], "ai_stream_chat") {
+        Ok(messages) => messages,
+        Err(error) => return Some(error),
+    };
+
+    let mut payload = DictMap::default();
+    payload.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
+    payload.insert("messages".into(), Value::Array(Arc::new(messages)));
+    payload.insert("stream".into(), Value::Bool(true));
+    if let Err(error) = merge_ai_extra_body(
+        &mut payload,
+        &options,
+        &["model", "messages", "stream"],
+        "ai_stream_chat",
+    ) {
+        return Some(error);
+    }
+
+    let request = run_ai_request("ai_stream_chat", &config, Value::Dict(Arc::new(payload)));
+    match request {
+        Ok(response) => {
+            if !(200..300).contains(&response.status) {
+                return Some(ai_http_status_error(
+                    "ai_stream_chat",
+                    &config,
+                    response.status,
+                    &response.headers,
+                    &response.text,
+                ));
+            }
+            let Some(json) = response.json.clone() else {
+                return Some(ai_decode_error(
+                    "ai_stream_chat",
+                    &config,
+                    response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
+                    &response.text,
+                ));
+            };
+            let chunks =
+                match deliver_stream_callback_chunks(&json, &response.text, |delta, raw| {
+                    invoke(delta, raw)
+                }) {
+                    Ok(chunks) => chunks,
+                    Err(error) => return Some(error),
+                };
+            Some(build_ai_stream_chat_result(&config, response, Some(chunks)))
+        }
+        Err(error) => Some(ai_transport_error("ai_stream_chat", &config, error)),
+    }
+}
+
+#[cfg(test)]
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
+    let mut interp = Interpreter::new();
+    handle_with_interpreter(&mut interp, name, arg_values)
+}
+
+pub fn handle_with_interpreter(
+    interp: &mut Interpreter,
+    name: &str,
+    arg_values: &[Value],
+) -> Option<Value> {
     let result = match name {
         "parallel_http" => {
             if arg_values.len() != 1 {
@@ -1626,12 +1939,30 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
         }
 
         "ai_stream_chat" => {
-            if arg_values.len() != 2 {
+            if !(2..=3).contains(&arg_values.len()) {
                 return Some(Value::Error(format!(
-                    "ai_stream_chat() expects 2 arguments (prompt_or_messages, options), got {}",
+                    "ai_stream_chat() expects 2 or 3 arguments (prompt_or_messages, options, on_chunk), got {}",
                     arg_values.len()
                 )));
             }
+            let callback = if arg_values.len() == 3 {
+                match &arg_values[2] {
+                    value @ Value::Function(_, _, _) => Some(value.clone()),
+                    Value::BytecodeFunction { .. } => {
+                        return Some(Value::Error(
+                            "ai_stream_chat() bytecode callbacks are only supported by the VM"
+                                .to_string(),
+                        ));
+                    }
+                    _ => {
+                        return Some(Value::Error(
+                            "ai_stream_chat() third argument must be a function".to_string(),
+                        ));
+                    }
+                }
+            } else {
+                None
+            };
 
             let options = match arg_values.get(1).and_then(dict_like_from_value) {
                 Some(options) => options,
@@ -1665,42 +1996,15 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 return Some(error);
             }
 
+            if let Some(callback) = callback {
+                return handle_ai_stream_chat_with_callback_invoker(arg_values, |delta, raw| {
+                    invoke_interpreter_stream_callback(interp, &callback, delta, raw)
+                });
+            }
+
             let request = run_ai_request("ai_stream_chat", &config, Value::Dict(Arc::new(payload)));
             match request {
-                Ok(response) => {
-                    if !(200..300).contains(&response.status) {
-                        return Some(ai_http_status_error(
-                            "ai_stream_chat",
-                            &config,
-                            response.status,
-                            &response.headers,
-                            &response.text,
-                        ));
-                    }
-                    let Some(json) = response.json else {
-                        return Some(ai_decode_error(
-                            "ai_stream_chat",
-                            &config,
-                            response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
-                            &response.text,
-                        ));
-                    };
-
-                    let mut chunks = extract_chat_chunks(&json);
-                    if chunks.is_empty() && !response.text.is_empty() {
-                        chunks.push(Value::Str(Arc::new(response.text.clone())));
-                    }
-
-                    let mut result = DictMap::default();
-                    result.insert("status".into(), Value::Int(response.status));
-                    result.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
-                    result.insert("chunks".into(), Value::Array(Arc::new(chunks)));
-                    result.insert("text".into(), Value::Str(Arc::new(response.text)));
-                    result.insert("headers".into(), Value::Dict(Arc::new(response.headers)));
-                    add_ai_envelope_fields(&mut result, &json, &config, false);
-                    result.insert("json".into(), json);
-                    ai_ok_result(Value::Dict(Arc::new(result)))
-                }
+                Ok(response) => build_ai_stream_chat_result(&config, response, None),
                 Err(error) => ai_transport_error("ai_stream_chat", &config, error),
             }
         }
@@ -2735,6 +3039,94 @@ mod tests {
                 if matches!(value.as_ref(), Value::Dict(result)
                     if matches!(result.get("message"), Some(Value::Str(message)) if message.as_ref() == "tool loop done"))));
         clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_stream_chat_callback_replay_invokes_chunks_in_order() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+        let fixture_dir = ai_replay_fixture_dir();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+        let mut seen = Vec::new();
+
+        let result = handle_ai_stream_chat_with_callback_invoker(
+            &[
+                str_value("Stream please"),
+                ai_options_with_cassette(endpoint, "gpt-replay", "replay", &fixture_dir),
+                str_value("test_callback_placeholder"),
+            ],
+            |delta, raw| {
+                if let Value::Dict(raw) = raw {
+                    assert!(matches!(raw.get("choices"), Some(Value::Array(choices)) if choices.len() == 1));
+                } else {
+                    panic!("raw stream chunk should be a dictionary");
+                }
+                seen.push(delta.to_string());
+                Ok(true)
+            },
+        )
+        .expect("ai_stream_chat should return a value");
+
+        assert_eq!(seen, vec!["chunk one".to_string(), "chunk two".to_string()]);
+        let result = result_ok_dict(result);
+        assert!(matches!(result.get("chunks"), Some(Value::Array(chunks)) if chunks.len() == 2));
+        assert!(
+            matches!(result.get("finish_reason"), Some(Value::Str(reason)) if reason.as_ref() == "stop")
+        );
+        assert!(matches!(result.get("usage"), Some(Value::Dict(usage))
+                if matches!(usage.get("total_tokens"), Some(Value::Int(6)))));
+        clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_stream_chat_callback_false_cancels_replay() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+        let fixture_dir = ai_replay_fixture_dir();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+        let mut seen = Vec::new();
+
+        let result = handle_ai_stream_chat_with_callback_invoker(
+            &[
+                str_value("Stream please"),
+                ai_options_with_cassette(endpoint, "gpt-replay", "replay", &fixture_dir),
+                str_value("test_callback_placeholder"),
+            ],
+            |delta, _raw| {
+                seen.push(delta.to_string());
+                Ok(false)
+            },
+        )
+        .expect("ai_stream_chat should return a value");
+
+        assert_eq!(seen, vec!["chunk one".to_string()]);
+        let result = result_ok_dict(result);
+        assert!(matches!(result.get("chunks"), Some(Value::Array(chunks))
+            if chunks.len() == 1
+                && matches!(chunks.first(), Some(Value::Str(chunk)) if chunk.as_ref() == "chunk one")));
+        clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_event_stream_body_parses_chunks_done_and_usage() {
+        let body = concat!(
+            "data: {\"choices\":[{\"delta\":{\"content\":\"hello \"}}]}\n\n",
+            "data: {\"choices\":[{\"delta\":{\"content\":\"world\"},\"finish_reason\":\"stop\"}],",
+            "\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":2,\"total_tokens\":3}}\n\n",
+            "data: [DONE]\n\n",
+        );
+        let parsed = parse_ai_event_stream_body(body).expect("event stream should parse");
+        let chunks = extract_chat_chunks(&parsed);
+
+        assert_eq!(chunks.len(), 2);
+        assert!(matches!(chunks.first(), Some(Value::Str(chunk)) if chunk.as_ref() == "hello "));
+        assert!(
+            matches!(extract_finish_reason(&parsed), Value::Str(reason) if reason.as_ref() == "stop")
+        );
+        assert!(matches!(extract_usage(&parsed), Some(Value::Dict(usage))
+            if matches!(usage.get("total_tokens"), Some(Value::Int(3)))));
     }
 
     #[test]

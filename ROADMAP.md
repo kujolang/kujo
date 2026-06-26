@@ -57,6 +57,7 @@ This VM test was not a release-execution detail. It proved the runtime could sil
 - Item 5 from the same proposal is implemented: `ai_count_tokens` and `ai_fit_context` provide deterministic estimate-based prompt budgeting and context trimming without provider tokenizers.
 - Item 6 from the same proposal is implemented: `secret`, `reveal`, and `is_secret` provide redacted runtime secret values, with AI `options.api_key` support and cassette/error redaction.
 - Item 7 from the same proposal is implemented: high-level AI helpers now use the separate `network-ai` / `--allow-ai` capability, and `KUJO_AI_ALLOWED_ENDPOINTS` can restrict approved provider endpoint prefixes.
+- Item 9 from the same proposal is implemented: `ai_stream_chat` now accepts an optional chunk callback with replay-backed ordered delivery and `false` cancellation while preserving aggregate return behavior when omitted.
 - Remaining core AI-native items are tracked in that proposal's Progress Tracker and should continue in phase order without adding retry policy, provider routing, RAG, agents, MCP, eval, observability, or registry behavior to core.
 
 ## 2. Priority And Severity Definitions

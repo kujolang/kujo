@@ -21,7 +21,7 @@ mod async_runtime;
 mod capabilities;
 mod control_flow;
 mod environment;
-mod native_functions;
+pub(crate) mod native_functions;
 mod test_runner;
 mod value;
 
@@ -2775,9 +2775,15 @@ impl Interpreter {
                 "ai_chat",
                 vec!["prompt_or_messages".to_string(), "options".to_string()],
             ),
-            "ai_stream_chat" => CallableArity::exact(
+            "ai_stream_chat" => CallableArity::range(
                 "ai_stream_chat",
-                vec!["prompt_or_messages".to_string(), "options".to_string()],
+                2,
+                3,
+                vec![
+                    "prompt_or_messages".to_string(),
+                    "options".to_string(),
+                    "on_chunk".to_string(),
+                ],
             ),
             "ai_embedding" => CallableArity::exact(
                 "ai_embedding",

@@ -27,6 +27,6 @@
     "headers": {
       "content-type": "application/json"
     },
-    "body": "{\"choices\":[{\"delta\":{\"content\":\"chunk one\"}},{\"delta\":{\"content\":\"chunk two\"}}]}"
+    "body": "{\"choices\":[{\"delta\":{\"content\":\"chunk one\"}},{\"delta\":{\"content\":\"chunk two\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":3,\"total_tokens\":6}}"
   }
 }
