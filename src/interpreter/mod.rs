@@ -510,6 +510,11 @@ impl Interpreter {
             "bit_not",
             "bit_shl",
             "bit_shr",
+            "vec_dot",
+            "vec_norm",
+            "vec_normalize",
+            "vec_cosine",
+            "vec_top_k",
             // String functions
             "len",
             "__vm_for_iterable",
@@ -914,6 +919,14 @@ impl Interpreter {
         self.env.define("bit_not".to_string(), Value::NativeFunction("bit_not".to_string()));
         self.env.define("bit_shl".to_string(), Value::NativeFunction("bit_shl".to_string()));
         self.env.define("bit_shr".to_string(), Value::NativeFunction("bit_shr".to_string()));
+        self.env.define("vec_dot".to_string(), Value::NativeFunction("vec_dot".to_string()));
+        self.env.define("vec_norm".to_string(), Value::NativeFunction("vec_norm".to_string()));
+        self.env.define(
+            "vec_normalize".to_string(),
+            Value::NativeFunction("vec_normalize".to_string()),
+        );
+        self.env.define("vec_cosine".to_string(), Value::NativeFunction("vec_cosine".to_string()));
+        self.env.define("vec_top_k".to_string(), Value::NativeFunction("vec_top_k".to_string()));
 
         // String functions
         self.env.define("len".to_string(), Value::NativeFunction("len".to_string()));
@@ -2750,6 +2763,14 @@ impl Interpreter {
             "ai_tool_loop" => CallableArity::exact(
                 "ai_tool_loop",
                 vec!["prompt_or_messages".to_string(), "options".to_string()],
+            ),
+            "vec_dot" | "vec_cosine" => {
+                CallableArity::exact(name, vec!["a".to_string(), "b".to_string()])
+            }
+            "vec_norm" | "vec_normalize" => CallableArity::exact(name, vec!["a".to_string()]),
+            "vec_top_k" => CallableArity::exact(
+                "vec_top_k",
+                vec!["query".to_string(), "matrix".to_string(), "k".to_string()],
             ),
             "json_schema_validate" => CallableArity::exact(
                 "json_schema_validate",

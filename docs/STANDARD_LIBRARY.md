@@ -33,6 +33,16 @@ JSON Schema subset contract (`json_schema_validate`):
 - Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
 - Annotation keywords `title`, `description`, `default`, and `examples` are accepted as no-op metadata.
 
+Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / `vec_top_k`):
+
+- Inputs are Kujo arrays of finite numbers; integers are promoted to floats.
+- `vec_dot(a, b)`, `vec_cosine(a, b)`, and `vec_top_k(query, matrix, k)` require equal dimensions.
+- `vec_cosine` returns `0.0` for zero vectors and clamps finite cosine scores to `[-1.0, 1.0]`.
+- `vec_normalize` returns a zero-filled vector for a zero vector.
+- `vec_top_k` scores rows by cosine similarity, returns dictionaries `{index, score}`, sorts by descending score with stable ascending-index tie-breaks, and returns all rows when `k` exceeds row count.
+- Vectors are capped at `100,000` dimensions; matrices are capped at `100,000` rows and `5,000,000` cells. Non-finite inputs or non-finite results return `Value::Error`.
+- `vec_top_k` uses Rayon parallel iteration for large matrices; vector helpers have no capability gate and do not store or index vectors.
+
 | Function | Signature | Arity | Return Type | Errors | Capability | Example |
 | --- | --- | --- | --- | --- | --- | --- |
 | `print` | `print(...)` | variadic (0+) | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := print(...)` |
@@ -58,6 +68,11 @@ JSON Schema subset contract (`json_schema_validate`):
 | `bit_not` | `bit_not(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bit_not(...)` |
 | `bit_shl` | `bit_shl(left, right)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bit_shl(...)` |
 | `bit_shr` | `bit_shr(left, right)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bit_shr(...)` |
+| `vec_dot` | `vec_dot(a, b)` | exact 2 | float | Value::Error on invalid args/types, non-finite inputs/results, vector dimension mismatch, or resource-limit violations. | `none` | `score := vec_dot([1, 2], [3, 4])` |
+| `vec_norm` | `vec_norm(a)` | exact 1 | float | Value::Error on invalid args/types, non-finite inputs/results, or resource-limit violations. | `none` | `length := vec_norm([3, 4])` |
+| `vec_normalize` | `vec_normalize(a)` | exact 1 | array | Value::Error on invalid args/types, non-finite inputs/results, or resource-limit violations; zero vector returns zero-filled vector. | `none` | `unit := vec_normalize([3, 4])` |
+| `vec_cosine` | `vec_cosine(a, b)` | exact 2 | float | Value::Error on invalid args/types, non-finite inputs/results, vector dimension mismatch, or resource-limit violations; zero vectors return `0.0`. | `none` | `score := vec_cosine([1, 0], [0, 1])` |
+| `vec_top_k` | `vec_top_k(query, matrix, k)` | exact 3 | array | Value::Error on invalid args/types, non-finite inputs/results, matrix row dimension mismatch, negative `k`, or resource-limit violations. | `none` | `matches := vec_top_k([1, 0], [[1, 0], [0, 1]], 1)` |
 | `len` | `len(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := len(...)` |
 | `substring` | `substring(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substring(...)` |
 | `substr` | `substr(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substr(...)` |

@@ -1,0 +1,16 @@
+func kv(label, value) {
+    print(label + ": " + to_string(value))
+}
+
+let query := [1.0, 0.0, 0.0]
+let documents := [
+    [1.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.8, 0.2, 0.0]
+]
+
+kv("dot", vec_dot(query, documents[2]))
+kv("norm", vec_norm([3, 4]))
+kv("normalized", vec_normalize([3, 4]))
+kv("cosine", vec_cosine(query, documents[2]))
+kv("top", vec_top_k(query, documents, 2))

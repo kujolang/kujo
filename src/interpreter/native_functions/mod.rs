@@ -36,6 +36,7 @@ pub mod schema;
 pub mod strings;
 pub mod system;
 pub mod type_ops;
+pub mod vector;
 
 use super::{Interpreter, Value};
 
@@ -150,6 +151,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = math::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = vector::handle(canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = strings::handle(canonical_name, arg_values) {

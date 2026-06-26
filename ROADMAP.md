@@ -53,6 +53,7 @@ This VM test was not a release-execution detail. It proved the runtime could sil
 - Item 2 from the same proposal is implemented: the four core `ai_*` helpers can now run against deterministic JSON cassettes in strict replay mode without opening a socket, with record and fallthrough mechanisms available for fixture refresh.
 - Item 1 from the same proposal is implemented: AI helper success values now expose normalized usage/finish/tool metadata, and typed error dictionaries are available behind opt-in `options.structured_errors`.
 - Item 3 from the same proposal is implemented: `json_schema_validate(value, schema)` provides pure, bounded validation against a documented JSON Schema subset with JSON-pointer-like error paths.
+- Item 4 from the same proposal is implemented: native vector math helpers now provide finite numeric dot, norm, normalize, cosine, and top-k cosine scoring primitives without vector storage or indexing policy.
 - Remaining core AI-native items are tracked in that proposal's Progress Tracker and should continue in phase order without adding retry policy, provider routing, RAG, agents, MCP, eval, observability, or registry behavior to core.
 
 ## 2. Priority And Severity Definitions

@@ -107,3 +107,17 @@ Validation returns:
 ```
 
 Each error has `path`, `message`, and `keyword`; paths are JSON-pointer-like instance paths such as `/items/0/name`.
+
+## Vector Math
+
+The core runtime includes generic vector helpers for embedding-style numeric arrays:
+
+```kujo
+score := vec_cosine([1.0, 0.0], [0.5, 0.0])
+matches := vec_top_k([1.0, 0.0], [[1.0, 0.0], [0.0, 1.0]], 1)
+```
+
+Available helpers are `vec_dot`, `vec_norm`, `vec_normalize`, `vec_cosine`, and `vec_top_k`.
+They operate on arrays of finite numbers, promote integers to floats, and have no capability gate.
+
+`vec_top_k` returns rows scored by cosine similarity as `{index, score}` dictionaries sorted by descending score. It is a numeric primitive only; vector storage, ANN indexes, persistence, and retrieval policy remain ecosystem concerns.
