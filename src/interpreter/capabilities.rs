@@ -8,6 +8,7 @@ pub enum NativeCapability {
     EnvRead,
     EnvWrite,
     NetworkClient,
+    NetworkAi,
     NetworkServer,
     Database,
     Clock,
@@ -25,6 +26,7 @@ impl NativeCapability {
             NativeCapability::EnvRead => "env-read",
             NativeCapability::EnvWrite => "env-write",
             NativeCapability::NetworkClient => "network-client",
+            NativeCapability::NetworkAi => "network-ai",
             NativeCapability::NetworkServer => "network-server",
             NativeCapability::Database => "database",
             NativeCapability::Clock => "clock",
@@ -42,6 +44,7 @@ impl NativeCapability {
             NativeCapability::EnvRead => "--allow-env-read",
             NativeCapability::EnvWrite => "--allow-env-write",
             NativeCapability::NetworkClient => "--allow-net-client",
+            NativeCapability::NetworkAi => "--allow-ai",
             NativeCapability::NetworkServer => "--allow-net-server",
             NativeCapability::Database => "--allow-database",
             NativeCapability::Clock => "--allow-clock",
@@ -60,6 +63,7 @@ pub struct RuntimeCapabilityPolicy {
     pub env_read: bool,
     pub env_write: bool,
     pub network_client: bool,
+    pub network_ai: bool,
     pub network_server: bool,
     pub database: bool,
     pub clock: bool,
@@ -77,6 +81,7 @@ impl RuntimeCapabilityPolicy {
             env_read: true,
             env_write: true,
             network_client: true,
+            network_ai: true,
             network_server: true,
             database: true,
             clock: true,
@@ -98,6 +103,7 @@ impl RuntimeCapabilityPolicy {
             NativeCapability::EnvRead => self.env_read,
             NativeCapability::EnvWrite => self.env_write,
             NativeCapability::NetworkClient => self.network_client,
+            NativeCapability::NetworkAi => self.network_ai,
             NativeCapability::NetworkServer => self.network_server,
             NativeCapability::Database => self.database,
             NativeCapability::Clock => self.clock,
@@ -162,9 +168,11 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         // Network client/server
         "parallel_http" | "http_get" | "http_post" | "http_request" | "http_put"
         | "http_delete" | "http_get_binary" | "http_get_stream" | "oauth2_get_token"
-        | "ai_chat" | "ai_stream_chat" | "ai_embedding" | "ai_tool_loop" | "tcp_connect"
-        | "tcp_send" | "tcp_receive" | "udp_send_to" | "udp_receive_from" | "async_http_get"
-        | "async_http_post" => Some(NativeCapability::NetworkClient),
+        | "tcp_connect" | "tcp_send" | "tcp_receive" | "udp_send_to" | "udp_receive_from"
+        | "async_http_get" | "async_http_post" => Some(NativeCapability::NetworkClient),
+        "ai_chat" | "ai_stream_chat" | "ai_embedding" | "ai_tool_loop" => {
+            Some(NativeCapability::NetworkAi)
+        }
         "tcp_listen" | "tcp_accept" | "udp_bind" | "http_listen" => {
             Some(NativeCapability::NetworkServer)
         }

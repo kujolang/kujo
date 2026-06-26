@@ -63,6 +63,19 @@ Cassette files are JSON and use `_cassette_version: 1`. Each stores credential-f
 
 Replay lookup happens before destination-policy checks or HTTP client creation, so strict replay remains hermetic even when outbound network access is disabled.
 
+## Egress Controls
+
+The high-level AI helpers use the `network-ai` capability. In `--untrusted` mode, grant them with `--allow-ai`; `--allow-net-client` grants general HTTP/TCP/UDP client APIs but does not unlock AI helpers.
+
+Set `KUJO_AI_ALLOWED_ENDPOINTS` to a comma-separated allowlist of approved AI endpoints. Entries match scheme, host, optional port, and optional path prefix:
+
+```bash
+export KUJO_AI_ALLOWED_ENDPOINTS=https://api.example.test/v1,http://localhost:11434/api
+kujo run --untrusted --allow-ai examples/ai_egress_allowlist.kujo
+```
+
+When the allowlist is unset, trusted-mode behavior remains backward compatible. When it is set, non-matching AI helper endpoints return `kind:"endpoint_denied"`; callers using `options.structured_errors: true` receive the standard structured AI error dictionary. Live AI requests still honor `KUJO_NET_DESTINATION_POLICY` and `--deny-private-net`.
+
 ## Secrets And Redaction
 
 `secret(value)` wraps a string in a redacted runtime value:

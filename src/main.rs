@@ -120,6 +120,10 @@ struct CapabilityArgs {
     #[arg(long, default_value_t = false)]
     allow_net: bool,
 
+    /// Allow high-level AI provider helper APIs (ai_*).
+    #[arg(long, default_value_t = false)]
+    allow_ai: bool,
+
     /// Allow database connection and query APIs.
     #[arg(long, default_value_t = false)]
     allow_database: bool,
@@ -848,6 +852,7 @@ fn build_runtime_capability_policy(args: &CapabilityArgs) -> RuntimeCapabilityPo
         || args.allow_net_client
         || args.allow_net_server
         || args.allow_net
+        || args.allow_ai
         || args.allow_database
         || args.allow_clock
         || args.allow_random;
@@ -865,6 +870,7 @@ fn build_runtime_capability_policy(args: &CapabilityArgs) -> RuntimeCapabilityPo
     policy.env_read = args.allow_env_read;
     policy.env_write = args.allow_env_write;
     policy.network_client = args.allow_net || args.allow_net_client;
+    policy.network_ai = args.allow_ai;
     policy.network_server = args.allow_net || args.allow_net_server;
     policy.database = args.allow_database;
     policy.clock = args.allow_clock;
@@ -882,7 +888,7 @@ fn apply_untrusted_network_destination_policy_defaults(args: &CapabilityArgs) {
         return;
     }
 
-    let network_client_enabled = args.allow_net || args.allow_net_client;
+    let network_client_enabled = args.allow_net || args.allow_net_client || args.allow_ai;
     if !network_client_enabled {
         return;
     }
@@ -2829,6 +2835,19 @@ mod tests {
             assert_eq!(
                 std::env::var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV).ok(),
                 Some("allow_all".to_string())
+            );
+        });
+    }
+
+    #[test]
+    fn untrusted_ai_defaults_set_deny_private_when_unset() {
+        with_outbound_policy_env(None, || {
+            let args =
+                CapabilityArgs { untrusted: true, allow_ai: true, ..CapabilityArgs::default() };
+            apply_untrusted_network_destination_policy_defaults(&args);
+            assert_eq!(
+                std::env::var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV).ok(),
+                Some("deny_private".to_string())
             );
         });
     }

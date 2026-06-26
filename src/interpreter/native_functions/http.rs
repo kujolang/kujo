@@ -123,6 +123,21 @@ fn parse_ai_headers(options: &DictMap, surface: &str) -> Result<Vec<(String, Str
     Ok(headers)
 }
 
+fn ai_endpoint_denied_config_error(message: String, structured_errors: bool) -> Value {
+    if !structured_errors {
+        return Value::Error(message);
+    }
+
+    let mut error = DictMap::default();
+    error.insert("kind".into(), Value::Str(Arc::new("endpoint_denied".to_string())));
+    error.insert("message".into(), Value::Str(Arc::new(message)));
+    error.insert("http_status".into(), Value::Null);
+    error.insert("retry_after_ms".into(), Value::Null);
+    error.insert("provider_code".into(), Value::Null);
+    error.insert("body_excerpt".into(), Value::Null);
+    ai_err_structured(error)
+}
+
 fn path_from_non_empty_string(value: &Value, field: &str, surface: &str) -> Result<PathBuf, Value> {
     match value {
         Value::Str(path) if !path.trim().is_empty() => Ok(PathBuf::from(path.as_ref())),
@@ -274,20 +289,21 @@ fn header_pairs_from_value(value: &Value) -> Option<Vec<(String, String)>> {
 }
 
 fn parse_ai_request_config(options: &DictMap, surface: &str) -> Result<AiRequestConfig, Value> {
-    parse_ai_request_config_inner(options, surface, true)
+    parse_ai_request_config_inner(options, surface, true, true)
 }
 
 fn parse_ai_request_hash_config(
     options: &DictMap,
     surface: &str,
 ) -> Result<AiRequestConfig, Value> {
-    parse_ai_request_config_inner(options, surface, false)
+    parse_ai_request_config_inner(options, surface, false, false)
 }
 
 fn parse_ai_request_config_inner(
     options: &DictMap,
     surface: &str,
     parse_cassette: bool,
+    enforce_endpoint_allowlist: bool,
 ) -> Result<AiRequestConfig, Value> {
     let endpoint = match options.get("endpoint") {
         Some(Value::Str(endpoint)) if !endpoint.trim().is_empty() => endpoint.as_ref().clone(),
@@ -358,6 +374,10 @@ fn parse_ai_request_config_inner(
         }
         None => false,
     };
+    if enforce_endpoint_allowlist {
+        network_policy::ai_endpoint_allowed(&endpoint, surface)
+            .map_err(|message| ai_endpoint_denied_config_error(message, structured_errors))?;
+    }
     let provider = match options.get("provider") {
         Some(Value::Str(provider)) => provider.as_ref().clone(),
         Some(_) => {
@@ -2540,6 +2560,7 @@ mod tests {
         std::env::remove_var("KUJO_AI_RECORD");
         std::env::remove_var("KUJO_AI_REPLAY");
         std::env::remove_var("KUJO_AI_REPLAY_MODE");
+        std::env::remove_var(network_policy::AI_ALLOWED_ENDPOINTS_ENV);
         std::env::remove_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV);
     }
 
@@ -2741,6 +2762,107 @@ mod tests {
 
         clear_ai_cassette_env();
         let _ = fs::remove_dir_all(replay_dir);
+    }
+
+    #[test]
+    fn test_ai_endpoint_allowlist_allows_matching_replay_endpoint() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::AI_ALLOWED_ENDPOINTS_ENV, "http://127.0.0.1:1/v1");
+
+        let result = handle(
+            "ai_chat",
+            &[
+                str_value("Hello model"),
+                ai_options_with_cassette(
+                    "http://127.0.0.1:1/v1/chat/completions",
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        let result = result_ok_dict(result);
+        assert!(
+            matches!(result.get("message"), Some(Value::Str(message)) if message.as_ref() == "hello from cassette")
+        );
+
+        clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_endpoint_allowlist_denies_structured_error() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::AI_ALLOWED_ENDPOINTS_ENV, "https://api.example.test/v1");
+
+        let result = handle(
+            "ai_chat",
+            &[
+                str_value("Hello model"),
+                ai_options_with_cassette_flags(
+                    "http://127.0.0.1:1/v1/chat/completions",
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                    true,
+                    "",
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        let error = result_err_dict(result);
+        assert!(
+            matches!(error.get("kind"), Some(Value::Str(kind)) if kind.as_ref() == "endpoint_denied")
+        );
+        assert!(matches!(error.get("message"), Some(Value::Str(message))
+                if message.contains(network_policy::AI_ALLOWED_ENDPOINTS_ENV)));
+
+        clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_request_hash_ignores_endpoint_allowlist() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::AI_ALLOWED_ENDPOINTS_ENV, "https://api.example.test/v1");
+
+        let result = handle(
+            "ai_request_hash",
+            &[
+                str_value("Hello model"),
+                ai_options("http://127.0.0.1:1/v1/chat/completions", "gpt-replay"),
+            ],
+        )
+        .expect("ai_request_hash should return a value");
+        assert!(matches!(result, Value::Str(hash) if hash.len() == 64));
+
+        clear_ai_cassette_env();
+    }
+
+    #[test]
+    fn test_ai_request_honors_private_destination_policy_when_networking() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+
+        let mut options = DictMap::default();
+        options.insert("endpoint".into(), str_value("http://127.0.0.1:1/v1/chat/completions"));
+        options.insert("model".into(), str_value("gpt-replay"));
+        let config =
+            parse_ai_request_config(&options, "ai_chat").expect("network config should parse");
+        let mut payload = DictMap::default();
+        payload.insert("model".into(), str_value("gpt-replay"));
+        payload.insert("messages".into(), Value::Array(Arc::new(Vec::new())));
+
+        let error = match run_ai_request("ai_chat", &config, Value::Dict(Arc::new(payload))) {
+            Ok(_) => panic!("private destination policy should block before opening a socket"),
+            Err(error) => error,
+        };
+        assert!(error.contains("blocked by outbound destination policy"));
+
+        clear_ai_cassette_env();
     }
 
     #[test]

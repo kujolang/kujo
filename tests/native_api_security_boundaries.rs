@@ -485,6 +485,108 @@ fn native_capability_untrusted_denies_network_client() {
     );
 }
 
+fn ai_replay_fixture_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ai_cassettes")
+}
+
+fn ai_replay_script(endpoint: &str, structured_errors: bool) -> String {
+    format!(
+        "let result := ai_chat(\"Hello model\", {{\"endpoint\": \"{}\", \"model\": \"gpt-replay\", \"structured_errors\": {}, \"cassette\": {{\"mode\": \"replay\", \"dir\": \"{}\"}}}})\nprint(to_string(result))\n",
+        escape_kujo_string(endpoint),
+        if structured_errors { "true" } else { "false" },
+        escape_kujo_string(ai_replay_fixture_dir().to_str().expect("fixture path should be utf-8")),
+    )
+}
+
+#[test]
+fn native_capability_untrusted_denies_ai_without_allow_ai() {
+    assert_runtime_boundary_failure_with_args(
+        &ai_replay_script("http://127.0.0.1:1/v1/chat/completions", false),
+        "Capability denied: network-ai required for ai_chat",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
+fn native_capability_untrusted_denies_ai_with_only_network_client() {
+    assert_runtime_boundary_failure_with_args(
+        &ai_replay_script("http://127.0.0.1:1/v1/chat/completions", false),
+        "Capability denied: network-ai required for ai_chat",
+        &["--interpreter", "--untrusted", "--allow-net-client"],
+    );
+}
+
+#[test]
+fn native_capability_untrusted_allows_ai_when_enabled() {
+    let project_root = unique_temp_dir("native_api_capability_allow_ai");
+    let script_path = project_root.join("allow_ai.kujo");
+    fs::write(&script_path, ai_replay_script("http://127.0.0.1:1/v1/chat/completions", false))
+        .expect("failed to write allow-ai script");
+
+    let output = run_kujo(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-ai",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+    );
+
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "expected ai_chat to succeed with --allow-ai and replay, got status={:?}, stdout={}, stderr={}",
+        output.status.code(),
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+    assert!(
+        stdout_text(&output).contains("hello from cassette"),
+        "expected replayed AI response in stdout, got stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+}
+
+#[test]
+fn native_capability_ai_endpoint_allowlist_denies_miss_with_structured_error() {
+    let project_root = unique_temp_dir("native_api_ai_allowlist_miss");
+    let script_path = project_root.join("ai_allowlist_miss.kujo");
+    fs::write(&script_path, ai_replay_script("http://127.0.0.1:1/v1/chat/completions", true))
+        .expect("failed to write AI allowlist script");
+
+    let output = run_kujo_with_env(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-ai",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+        &[("KUJO_AI_ALLOWED_ENDPOINTS", "https://api.example.test/v1")],
+    );
+
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "expected structured AI endpoint denial result, got status={:?}, stdout={}, stderr={}",
+        output.status.code(),
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+    let output_text = stdout_text(&output);
+    assert!(
+        output_text.contains("endpoint_denied")
+            && output_text.contains("KUJO_AI_ALLOWED_ENDPOINTS"),
+        "expected endpoint_denied structured error in stdout, got stdout={} stderr={}",
+        output_text,
+        stderr_text(&output)
+    );
+}
+
 #[test]
 fn native_capability_untrusted_denies_network_server() {
     assert_runtime_boundary_failure_with_args(

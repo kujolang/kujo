@@ -48,6 +48,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - `kujo run` and `kujo test-run` default to trusted mode.
 - For untrusted code, start with `--untrusted` and add only required `--allow-*` flags.
 - Use `--deny-private-net` when outbound HTTP/TCP/UDP calls must reject local, private, link-local, multicast, and unspecified destinations even in trusted-mode automation.
+- High-level AI helpers require the separate `--allow-ai` capability in untrusted mode; set `KUJO_AI_ALLOWED_ENDPOINTS` to restrict provider endpoints by scheme, host, optional port, and optional path prefix.
 - When explicit `--allow-*` flags are present, execution is restricted to the listed capabilities.
 - Review [docs/NATIVE_API_SECURITY_POSTURE.md](docs/NATIVE_API_SECURITY_POSTURE.md) before running untrusted scripts in shared or sensitive environments.
 
@@ -69,7 +70,14 @@ For untrusted scripts, use capability-minimal execution and explicit network int
 kujo run --untrusted --allow-fs-read --allow-net-client script.kujo
 ```
 
-When `--untrusted` and outbound network client access are enabled, Kujo now defaults the outbound destination policy to `deny_private` (unless `KUJO_NET_DESTINATION_POLICY` is already set). This helps reduce accidental private-network access in untrusted runs.
+When `--untrusted` and outbound network client or AI egress access are enabled, Kujo defaults the outbound destination policy to `deny_private` (unless `KUJO_NET_DESTINATION_POLICY` is already set). This helps reduce accidental private-network access in untrusted runs.
+
+For AI-only egress, grant `--allow-ai` instead of general network client access. To pin calls to approved provider surfaces:
+
+```bash
+export KUJO_AI_ALLOWED_ENDPOINTS=https://api.example.test/v1,https://llm.example.internal/chat
+kujo run --untrusted --allow-ai agent.kujo
+```
 
 To allow private/local destinations in trusted environments:
 

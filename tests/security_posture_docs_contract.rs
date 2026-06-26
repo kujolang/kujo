@@ -10,7 +10,7 @@ fn kujo_binary() -> String {
     env!("CARGO_BIN_EXE_kujo").to_string()
 }
 
-fn expected_capability_flags() -> [&'static str; 14] {
+fn expected_capability_flags() -> [&'static str; 15] {
     [
         "--allow-fs-read",
         "--allow-fs-write",
@@ -22,6 +22,7 @@ fn expected_capability_flags() -> [&'static str; 14] {
         "--allow-net-client",
         "--allow-net-server",
         "--allow-net",
+        "--allow-ai",
         "--allow-database",
         "--allow-clock",
         "--allow-random",
