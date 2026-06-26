@@ -136,12 +136,12 @@ mod tests {
     }
 }
 
-pub const DIAGNOSTIC_CODE_LEXER: &str = "RUFLEX001";
-pub const DIAGNOSTIC_CODE_PARSER: &str = "RUFPARSE001";
-pub const DIAGNOSTIC_CODE_RUNTIME: &str = "RUFRUN001";
-pub const DIAGNOSTIC_CODE_VM: &str = "RUFVM001";
-pub const DIAGNOSTIC_CODE_CLI: &str = "RUFCLI001";
-pub const DIAGNOSTIC_CODE_LSP: &str = "RUFLSP001";
+pub const DIAGNOSTIC_CODE_LEXER: &str = "KUJOLEX001";
+pub const DIAGNOSTIC_CODE_PARSER: &str = "KUJOPARSE001";
+pub const DIAGNOSTIC_CODE_RUNTIME: &str = "KUJORUN001";
+pub const DIAGNOSTIC_CODE_VM: &str = "KUJOVM001";
+pub const DIAGNOSTIC_CODE_CLI: &str = "KUJOCLI001";
+pub const DIAGNOSTIC_CODE_LSP: &str = "KUJOLSP001";
 pub const RUN_RUNTIME_DIAGNOSTIC_CONTRACT_VERSION: &str = "1.0.0-draft";
 
 pub fn unsupported_struct_generator_method_message(struct_name: &str, method_name: &str) -> String {

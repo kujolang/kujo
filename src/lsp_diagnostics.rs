@@ -241,7 +241,7 @@ mod tests {
         assert!(diagnostics.iter().any(|diagnostic| {
             DiagnosticSeverity::Error == diagnostic.severity
                 && diagnostic.message.contains("Invalid character")
-                && diagnostic.code.starts_with("RUFLEX")
+                && diagnostic.code.starts_with("KUJOLEX")
         }));
     }
 
@@ -251,7 +251,7 @@ mod tests {
         assert!(diagnostics.iter().any(|diagnostic| {
             DiagnosticSeverity::Error == diagnostic.severity
                 && diagnostic.message.contains("Expected ')'")
-                && diagnostic.code == "RUFPARSE001"
+                && diagnostic.code == "KUJOPARSE001"
         }));
     }
 }

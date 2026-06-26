@@ -632,7 +632,7 @@ fn run_runtime_json_diagnostic_contract_is_stable() {
     assert!(body["call_stack"].is_array());
 
     let diagnostic = &body["diagnostic"];
-    assert_eq!(diagnostic["code"], "RUFVM001");
+    assert_eq!(diagnostic["code"], "KUJOVM001");
     assert_eq!(diagnostic["subsystem"], "vm");
     assert_eq!(diagnostic["severity"], "error");
     assert!(diagnostic["message"].as_str().is_some());

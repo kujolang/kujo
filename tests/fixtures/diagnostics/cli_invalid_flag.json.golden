@@ -1,5 +1,5 @@
 {
-  "code": "RUFCLI001",
+  "code": "KUJOCLI001",
   "column": 1,
   "file": "cli_invalid_flag.kujo",
   "help": "Use `kujo --help` to list valid commands",

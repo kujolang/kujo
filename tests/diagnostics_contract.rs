@@ -17,7 +17,7 @@ fn diagnostic_human_render_includes_code_subsystem_and_location() {
     .with_help("Use `kujo run <file>`");
 
     let rendered = diagnostic.render_human();
-    assert!(rendered.contains("[RUFCLI001]"));
+    assert!(rendered.contains("[KUJOCLI001]"));
     assert!(rendered.contains("[cli]"));
     assert!(rendered.contains("script.kujo:2:8"));
     assert!(rendered.contains("help: Use `kujo run <file>`"));
@@ -35,7 +35,7 @@ fn diagnostic_json_shape_includes_required_fields() {
     .with_help("Use `kujo run <file>`");
 
     let json = diagnostic.to_json_value();
-    assert_eq!(json["code"], "RUFCLI001");
+    assert_eq!(json["code"], "KUJOCLI001");
     assert_eq!(json["severity"], "error");
     assert_eq!(json["subsystem"], "cli");
     assert_eq!(json["message"], "Invalid CLI invocation");
@@ -53,7 +53,7 @@ fn runtime_error_display_keeps_location_when_available() {
     );
 
     let rendered = runtime_error.to_string();
-    assert!(rendered.contains("[RUFRUN001]"));
+    assert!(rendered.contains("[KUJORUN001]"));
     assert!(rendered.contains("main.kujo:3:7"));
 }
 

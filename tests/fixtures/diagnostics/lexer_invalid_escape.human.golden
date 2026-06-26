@@ -1,3 +1,3 @@
-[RUFLEX005] [lexer] error: Invalid escape sequence: \\q
+[KUJOLEX005] [lexer] error: Invalid escape sequence: \\q
   --> lexer_invalid_escape.kujo:1:9
   = help: Fix the lexical error in source and run again.

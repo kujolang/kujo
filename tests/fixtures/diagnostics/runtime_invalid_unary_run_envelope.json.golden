@@ -3,7 +3,7 @@
   "command": "run",
   "contract_version": "1.0.0-draft",
   "diagnostic": {
-    "code": "RUFRUN001",
+    "code": "KUJORUN001",
     "column": 0,
     "file": null,
     "help": "Use a value type supported by this unary operator, or convert the value first.",

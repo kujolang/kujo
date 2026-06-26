@@ -82,7 +82,7 @@ fn cli_run_parse_error_exits_with_lex_parse_code() {
     assert!(output.stdout.is_empty(), "parse failure should not write stdout");
 
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
-    assert!(stderr.contains("[RUFPARSE001]"));
+    assert!(stderr.contains("[KUJOPARSE001]"));
 }
 
 #[test]

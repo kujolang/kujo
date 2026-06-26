@@ -1,5 +1,5 @@
 {
-  "code": "RUFRUN001",
+  "code": "KUJORUN001",
   "column": 1,
   "file": "runtime_undefined_identifier.kujo",
   "help": "Define this name before using it, check the spelling, or import the module that provides it.",

@@ -354,7 +354,7 @@ fn cli_run_exits_non_zero_on_parse_diagnostics() {
     assert_eq!(output.status.code(), Some(3));
 
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
-    assert!(stderr.contains("[RUFPARSE001]"));
+    assert!(stderr.contains("[KUJOPARSE001]"));
     assert!(stderr.contains("Expected ')'"));
 }
 
@@ -368,7 +368,7 @@ fn cli_test_run_exits_non_zero_on_parse_diagnostics() {
     assert_eq!(output.status.code(), Some(3));
 
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
-    assert!(stderr.contains("[RUFPARSE001]"));
+    assert!(stderr.contains("[KUJOPARSE001]"));
     assert!(stderr.contains("Expected ')'"));
 }
 
@@ -383,7 +383,7 @@ fn cli_run_exits_non_zero_when_source_exceeds_max_size() {
     assert_eq!(output.status.code(), Some(3));
 
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
-    assert!(stderr.contains("[RUFPARSE001]"));
+    assert!(stderr.contains("[KUJOPARSE001]"));
     assert!(stderr.contains("Source size"));
     assert!(stderr.contains("exceeds maximum"));
 }

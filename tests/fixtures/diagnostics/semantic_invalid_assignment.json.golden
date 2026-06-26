@@ -1,5 +1,5 @@
 {
-  "code": "RUFPARSE001",
+  "code": "KUJOPARSE001",
   "column": 9,
   "file": "semantic_invalid_assignment.kujo",
   "help": "Fix the parse error and rerun Kujo.",

@@ -172,7 +172,7 @@ Each command has a stable top-level payload kind (array/object/null as applicabl
 
 `kujo lsp-diagnostics --json` item fields:
 
-- `code` (string, stable diagnostic code such as `RUFLEX001` or `RUFPARSE001`)
+- `code` (string, stable diagnostic code such as `KUJOLEX001` or `KUJOPARSE001`)
 - `severity` (string, currently `"error"`)
 - `subsystem` (string, one of `lexer`, `parser`, `lsp`)
 - `message` (string)

@@ -1,5 +1,5 @@
 {
-  "code": "RUFCLI001",
+  "code": "KUJOCLI001",
   "column": 1,
   "file": "serve_invalid_header_limit.kujo",
   "help": "Pass a positive integer to --max-header-bytes",

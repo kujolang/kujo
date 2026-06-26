@@ -1,5 +1,5 @@
 {
-  "code": "RUFPARSE001",
+  "code": "KUJOPARSE001",
   "column": 1,
   "file": "parser_missing_paren.kujo",
   "help": "Fix the parse error and rerun Kujo.",

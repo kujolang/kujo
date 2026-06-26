@@ -1,5 +1,5 @@
 {
-  "code": "RUFLEX005",
+  "code": "KUJOLEX005",
   "column": 9,
   "file": "lexer_invalid_escape.kujo",
   "help": "Fix the lexical error in source and run again.",
