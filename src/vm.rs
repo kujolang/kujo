@@ -527,6 +527,7 @@ impl VM {
                 Value::ErrorObject { message, .. } => message,
                 Value::Error(message) => message,
                 Value::Str(value) => value.as_ref().clone(),
+                Value::Secret(_) => "***".to_string(),
                 other => format!("Uncaught exception: {:?}", other),
             };
             Err(error_msg)
@@ -900,6 +901,7 @@ impl VM {
                 | Value::Int(_)
                 | Value::Float(_)
                 | Value::Str(_)
+                | Value::Secret(_)
                 | Value::Bool(_)
                 | Value::Null
                 | Value::Bytes(_)
@@ -7630,6 +7632,7 @@ impl VM {
             Value::Int(n) => n.to_string(),
             Value::Float(f) => f.to_string(),
             Value::Str(s) => s.as_ref().clone(),
+            Value::Secret(_) => "***".to_string(),
             Value::Bool(b) => b.to_string(),
             Value::Null => "null".to_string(),
             Value::Array(arr) => {
@@ -7683,6 +7686,7 @@ impl VM {
             Value::Float(_) => "float",
             Value::Bool(_) => "bool",
             Value::Str(_) => "string",
+            Value::Secret(_) => "secret",
             Value::Array(_) => "array",
             Value::Dict(_) => "dict",
             Value::Struct { .. } => "struct",

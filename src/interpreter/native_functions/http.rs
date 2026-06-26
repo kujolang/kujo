@@ -317,10 +317,12 @@ fn parse_ai_request_config_inner(
 
     let api_key = match options.get("api_key") {
         Some(Value::Str(key)) if !key.is_empty() => Some(key.as_ref().clone()),
+        Some(Value::Secret(key)) if !key.is_empty() => Some(key.as_ref().clone()),
         Some(Value::Str(_)) | None => None,
+        Some(Value::Secret(_)) => None,
         Some(_) => {
             return Err(Value::Error(format!(
-                "{}() requires options.api_key to be a string when provided",
+                "{}() requires options.api_key to be a string or secret when provided",
                 surface
             )));
         }
@@ -862,7 +864,7 @@ fn store_ai_cassette(
         response: StoredAiCassetteResponse {
             status,
             headers: redact_ai_headers(headers),
-            body: body.to_string(),
+            body: redact_ai_error_text(body, config),
         },
     };
     let serialized = serde_json::to_string_pretty(&cassette)
@@ -2635,6 +2637,22 @@ mod tests {
     }
 
     #[test]
+    fn test_ai_options_api_key_accepts_secret_value() {
+        let mut options = DictMap::default();
+        options.insert("endpoint".into(), str_value("https://api.example.test/v1/chat"));
+        options.insert("model".into(), str_value("gpt-secret"));
+        options.insert(
+            "api_key".into(),
+            Value::Secret(Arc::new("sk-revealed-for-request".to_string())),
+        );
+
+        let config =
+            parse_ai_request_config(&options, "ai_chat").expect("secret api_key should parse");
+
+        assert_eq!(config.api_key.as_deref(), Some("sk-revealed-for-request"));
+    }
+
+    #[test]
     fn test_ai_cassette_strict_replay_runs_all_ai_helpers_without_network() {
         let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
         clear_ai_cassette_env();
@@ -2761,7 +2779,7 @@ mod tests {
             &config,
             200,
             &response_headers,
-            "{\"ok\":true}",
+            "{\"ok\":true,\"echo\":\"secret-token\"}",
         )
         .expect("cassette should store");
         let cassette_text =

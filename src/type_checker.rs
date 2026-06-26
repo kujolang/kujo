@@ -786,6 +786,22 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "secret".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "reveal".to_string(),
+            FunctionSignature {
+                param_types: vec![None],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
             "to_bool".to_string(),
             FunctionSignature {
                 param_types: vec![None], // Accepts any type
@@ -806,6 +822,7 @@ impl TypeChecker {
             "is_int",
             "is_float",
             "is_string",
+            "is_secret",
             "is_array",
             "is_dict",
             "is_bool",

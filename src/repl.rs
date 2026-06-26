@@ -473,6 +473,9 @@ impl Repl {
             Value::Str(s) => {
                 println!("{} {}", "=>".bright_blue(), format!("\"{}\"", s).bright_green());
             }
+            Value::Secret(_) => {
+                println!("{} {}", "=>".bright_blue(), "\"***\"".bright_green());
+            }
             Value::Bool(b) => {
                 println!("{} {}", "=>".bright_blue(), b.to_string().bright_magenta());
             }
@@ -548,6 +551,7 @@ impl Repl {
             Value::Int(n) => n.to_string(),
             Value::Float(n) => n.to_string(),
             Value::Str(s) => format!("\"{}\"", s),
+            Value::Secret(_) => "\"***\"".to_string(),
             Value::Bool(b) => b.to_string(),
             Value::Array(_) => "[...]".to_string(),
             Value::Dict(_) => "{...}".to_string(),

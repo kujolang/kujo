@@ -51,6 +51,12 @@ Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
 - `ai_fit_context(messages, max_tokens, options?)` drops the oldest non-system messages until the estimated count fits. It never drops system messages and preserves the last user message. If the minimum preserved context is still over budget, it returns it with `fits: false`.
 - Text inputs are capped at `2,000,000` characters and message arrays at `100,000` messages. These helpers have no capability gate and perform no I/O.
 
+Secret redaction contract (`secret` / `reveal` / `is_secret`):
+
+- `secret(value)` wraps a string in a redacted runtime value. Printing, debug formatting, JSON/TOML/YAML/CSV serialization, errors, and AI cassette request metadata render secrets as `***` or `Secret(***)`.
+- Secrets compare by their inner string value and clone like ordinary runtime values, but `reveal(secret_value)` is the only documented builtin that unwraps plaintext.
+- `options.api_key` for AI helpers accepts either a plain string or a secret; cassettes and error body excerpts redact configured keys and sensitive authorization headers.
+
 | Function | Signature | Arity | Return Type | Errors | Capability | Example |
 | --- | --- | --- | --- | --- | --- | --- |
 | `print` | `print(...)` | variadic (0+) | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := print(...)` |
@@ -170,6 +176,8 @@ Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
 | `to_float` | `to_float(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_float(...)` |
 | `to_string` | `to_string(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_string(...)` |
 | `str` | `str(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := str(...)` |
+| `secret` | `secret(value)` | exact 1 | secret | Value::Error when `value` is not a string. | `none` | `api_key := secret("sk-local")` |
+| `reveal` | `reveal(secret)` | exact 1 | string | Value::Error when the argument is not a secret. | `none` | `plain := reveal(api_key)` |
 | `to_bool` | `to_bool(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_bool(...)` |
 | `bytes` | `bytes(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bytes(...)` |
 | `dict` | `dict()` | exact 0 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := dict(...)` |
@@ -181,6 +189,7 @@ Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
 | `is_int` | `is_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_int(...)` |
 | `is_float` | `is_float(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_float(...)` |
 | `is_string` | `is_string(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_string(...)` |
+| `is_secret` | `is_secret(value)` | exact 1 | bool | Value::Error on invalid arity. | `none` | `is_key := is_secret(api_key)` |
 | `is_bool` | `is_bool(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_bool(...)` |
 | `is_array` | `is_array(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_array(...)` |
 | `is_dict` | `is_dict(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_dict(...)` |

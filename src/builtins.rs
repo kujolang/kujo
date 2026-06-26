@@ -679,6 +679,7 @@ fn kujo_value_to_json_with_depth(value: &Value, depth: usize) -> Result<serde_js
             Ok(serde_json::Value::Number(number))
         }
         Value::Str(s) => Ok(serde_json::Value::String(s.as_ref().clone())),
+        Value::Secret(_) => Ok(serde_json::Value::String("***".to_string())),
         Value::Bool(b) => Ok(serde_json::Value::Bool(*b)),
         Value::Array(arr) => {
             let mut json_arr = Vec::new();
@@ -802,6 +803,7 @@ fn kujo_value_to_toml(value: &Value) -> Result<toml::Value, String> {
         Value::Int(n) => Ok(toml::Value::Integer(*n)),
         Value::Float(n) => Ok(toml::Value::Float(*n)),
         Value::Str(s) => Ok(toml::Value::String(s.as_ref().clone())),
+        Value::Secret(_) => Ok(toml::Value::String("***".to_string())),
         Value::Bool(b) => Ok(toml::Value::Boolean(*b)),
         Value::Array(arr) => {
             let mut toml_arr = Vec::new();
@@ -913,6 +915,7 @@ fn kujo_value_to_yaml(value: &Value) -> Result<serde_yaml::Value, String> {
         Value::Int(n) => Ok(serde_yaml::Value::Number((*n).into())),
         Value::Float(n) => Ok(serde_yaml::Value::Number(serde_yaml::Number::from(*n))),
         Value::Str(s) => Ok(serde_yaml::Value::String(s.as_ref().clone())),
+        Value::Secret(_) => Ok(serde_yaml::Value::String("***".to_string())),
         Value::Bool(b) => Ok(serde_yaml::Value::Bool(*b)),
         Value::Array(arr) => {
             let mut yaml_arr = Vec::new();
@@ -1023,6 +1026,7 @@ pub fn to_csv(value: &Value) -> Result<String, String> {
                                 Some(Value::Int(n)) => n.to_string(),
                                 Some(Value::Float(n)) => n.to_string(),
                                 Some(Value::Str(s)) => s.as_ref().clone(),
+                                Some(Value::Secret(_)) => "***".to_string(),
                                 Some(Value::Bool(b)) => b.to_string(),
                                 Some(Value::Null) => String::new(),
                                 _ => String::new(),
@@ -1964,6 +1968,7 @@ pub fn format_debug_value(value: &Value) -> String {
         Value::Int(n) => format!("Int({})", n),
         Value::Float(n) => format!("Float({})", n),
         Value::Str(s) => format!("String(\"{}\")", s.as_ref()),
+        Value::Secret(_) => "Secret(***)".to_string(),
         Value::Bool(b) => format!("Bool({})", b),
         Value::Null => "Null".to_string(),
         Value::Array(arr) => {
@@ -2379,6 +2384,20 @@ mod tests {
 
         assert_eq!(decoded["title"], serde_json::Value::String("Kujo".to_string()));
         assert_eq!(decoded["count"], serde_json::Value::Number(2.into()));
+    }
+
+    #[test]
+    fn test_to_json_redacts_secret_values() {
+        let mut inner = DictMap::default();
+        inner.insert("api_key".into(), Value::Secret(Arc::new("sk-test-secret".to_string())));
+        let value = Value::Dict(Arc::new(inner));
+
+        let encoded = to_json(&value).expect("Secret values should serialize redacted");
+        let decoded: serde_json::Value =
+            serde_json::from_str(&encoded).expect("Serialized JSON should parse");
+
+        assert_eq!(decoded["api_key"], serde_json::Value::String("***".to_string()));
+        assert!(!encoded.contains("sk-test-secret"));
     }
 
     #[test]

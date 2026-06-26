@@ -63,6 +63,18 @@ Cassette files are JSON and use `_cassette_version: 1`. Each stores credential-f
 
 Replay lookup happens before destination-policy checks or HTTP client creation, so strict replay remains hermetic even when outbound network access is disabled.
 
+## Secrets And Redaction
+
+`secret(value)` wraps a string in a redacted runtime value:
+
+```kujo
+api_key := secret(env_required("OPENAI_API_KEY"))
+```
+
+Secrets print and serialize as `***` through the standard display and JSON/TOML/YAML/CSV conversion paths, including when nested inside arrays or dictionaries. Debug formatting renders them as `Secret(***)`. Secret values clone normally and compare by inner value, but `reveal(secret_value)` is the only documented builtin that unwraps plaintext. Use `is_secret(value)` to test the wrapper.
+
+AI helpers accept secrets in `options.api_key` as well as plain strings. The runtime unwraps the key only at the request boundary, and AI errors, response body excerpts, cassette request metadata, cassette response bodies, and sensitive response headers redact configured API keys and authorization material before returning or writing them.
+
 ## Response Envelope
 
 The four AI HTTP helpers keep their original success keys and add normalized metadata when providers return OpenAI-compatible fields.

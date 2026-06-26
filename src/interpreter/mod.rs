@@ -109,6 +109,7 @@ enum SpawnCapturedValue {
     Int(i64),
     Float(f64),
     Str(String),
+    Secret(String),
     Bool(bool),
     Null,
     Bytes(Vec<u8>),
@@ -190,6 +191,7 @@ impl SpawnCapturedValue {
             Value::Int(number) => Some(SpawnCapturedValue::Int(*number)),
             Value::Float(number) => Some(SpawnCapturedValue::Float(*number)),
             Value::Str(text) => Some(SpawnCapturedValue::Str(text.as_ref().clone())),
+            Value::Secret(text) => Some(SpawnCapturedValue::Secret(text.as_ref().clone())),
             Value::Bool(boolean) => Some(SpawnCapturedValue::Bool(*boolean)),
             Value::Null => Some(SpawnCapturedValue::Null),
             Value::Bytes(bytes) => Some(SpawnCapturedValue::Bytes(bytes.clone())),
@@ -271,6 +273,7 @@ impl SpawnCapturedValue {
             SpawnCapturedValue::Int(number) => Value::Int(number),
             SpawnCapturedValue::Float(number) => Value::Float(number),
             SpawnCapturedValue::Str(text) => Value::Str(Arc::new(text)),
+            SpawnCapturedValue::Secret(text) => Value::Secret(Arc::new(text)),
             SpawnCapturedValue::Bool(boolean) => Value::Bool(boolean),
             SpawnCapturedValue::Null => Value::Null,
             SpawnCapturedValue::Bytes(bytes) => Value::Bytes(bytes),
@@ -616,6 +619,8 @@ impl Interpreter {
             "to_float",
             "to_string",
             "str",
+            "secret",
+            "reveal",
             "to_bool",
             "bytes",
             "dict",
@@ -628,6 +633,7 @@ impl Interpreter {
             "is_int",
             "is_float",
             "is_string",
+            "is_secret",
             "is_bool",
             "is_array",
             "is_dict",
@@ -1090,6 +1096,8 @@ impl Interpreter {
         self.env.define("to_float".to_string(), Value::NativeFunction("to_float".to_string()));
         self.env.define("to_string".to_string(), Value::NativeFunction("to_string".to_string()));
         self.env.define("str".to_string(), Value::NativeFunction("to_string".to_string()));
+        self.env.define("secret".to_string(), Value::NativeFunction("secret".to_string()));
+        self.env.define("reveal".to_string(), Value::NativeFunction("reveal".to_string()));
         self.env.define("to_bool".to_string(), Value::NativeFunction("to_bool".to_string()));
         self.env.define("is_truthy".to_string(), Value::NativeFunction("is_truthy".to_string()));
         self.env.define("bytes".to_string(), Value::NativeFunction("bytes".to_string()));
@@ -1103,6 +1111,7 @@ impl Interpreter {
         self.env.define("is_int".to_string(), Value::NativeFunction("is_int".to_string()));
         self.env.define("is_float".to_string(), Value::NativeFunction("is_float".to_string()));
         self.env.define("is_string".to_string(), Value::NativeFunction("is_string".to_string()));
+        self.env.define("is_secret".to_string(), Value::NativeFunction("is_secret".to_string()));
         self.env.define("is_array".to_string(), Value::NativeFunction("is_array".to_string()));
         self.env.define("is_dict".to_string(), Value::NativeFunction("is_dict".to_string()));
         self.env.define("is_bool".to_string(), Value::NativeFunction("is_bool".to_string()));
@@ -2276,6 +2285,7 @@ impl Interpreter {
             Value::Float(_) => "float",
             Value::Bool(_) => "bool",
             Value::Str(_) => "string",
+            Value::Secret(_) => "secret",
             Value::Array(_) => "array",
             Value::Dict(_) => "dict",
             Value::Struct { .. } => "struct",
@@ -2676,6 +2686,9 @@ impl Interpreter {
             }
             "dict" => CallableArity::exact("dict", vec![]),
             "error" => CallableArity::exact("error", vec!["message".to_string()]),
+            "secret" => CallableArity::exact("secret", vec!["value".to_string()]),
+            "reveal" => CallableArity::exact("reveal", vec!["secret".to_string()]),
+            "is_secret" => CallableArity::exact("is_secret", vec!["value".to_string()]),
             "collect" => CallableArity::exact("collect", vec!["iterable".to_string()]),
             "len" => CallableArity::exact("len", vec!["value".to_string()]),
             "bit_not" => CallableArity::exact("bit_not", vec!["value".to_string()]),
@@ -6198,6 +6211,7 @@ impl Interpreter {
     fn stringify_value(value: &Value) -> String {
         match value {
             Value::Str(s) => s.as_ref().clone(),
+            Value::Secret(_) => "***".to_string(),
             Value::Int(n) => n.to_string(),
             Value::Float(n) => n.to_string(),
             Value::Bool(b) => b.to_string(),

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `json_schema_validate(value, schema)` for pure, bounded validation of JSON-like Kujo values against a documented JSON Schema subset.
 - Added native vector math helpers `vec_dot`, `vec_norm`, `vec_normalize`, `vec_cosine`, and `vec_top_k` for finite numeric arrays.
 - Added deterministic token estimation and context fitting helpers `ai_count_tokens` and `ai_fit_context` for local AI prompt budgeting without provider tokenizers.
+- Added `secret`, `reveal`, and `is_secret` for redacted runtime secret values, including AI `options.api_key` support and cassette/error redaction.
 
 ## [1.0.0] - 2026-06-19
 

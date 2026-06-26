@@ -14,6 +14,7 @@ use kujo::lexer::tokenize;
 use kujo::parser::Parser;
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 
 fn unique_shared_key(prefix: &str) -> String {
     static SHARED_KEY_COUNTER: AtomicU64 = AtomicU64::new(1);
@@ -32,6 +33,19 @@ fn run_code(code: &str) -> Interpreter {
     let mut interp = Interpreter::new();
     interp.eval_stmts(&program);
     interp
+}
+
+fn run_code_with_output(code: &str) -> (Interpreter, String) {
+    let tokens = tokenize(code).expect("test source should tokenize");
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse();
+    let output = Arc::new(Mutex::new(Vec::new()));
+    let mut interp = Interpreter::new();
+    interp.set_output(output.clone());
+    interp.eval_stmts(&program);
+    let bytes = output.lock().expect("test output lock should not be poisoned").clone();
+    let text = String::from_utf8(bytes).expect("print output should be utf-8");
+    (interp, text)
 }
 
 #[test]
@@ -54,6 +68,9 @@ fn test_builtin_names_include_release_hardening_contract_entries() {
         "vec_top_k",
         "ai_count_tokens",
         "ai_fit_context",
+        "secret",
+        "reveal",
+        "is_secret",
         "index_of",
         "repeat",
         "char_at",
@@ -4038,6 +4055,37 @@ fn test_is_string_predicate() {
     assert!(matches!(interp.env.get("r1"), Some(Value::Bool(true))));
     assert!(matches!(interp.env.get("r2"), Some(Value::Bool(false))));
     assert!(matches!(interp.env.get("r3"), Some(Value::Bool(false))));
+}
+
+#[test]
+fn test_secret_values_redact_and_reveal_explicitly() {
+    let code = r#"
+        key := secret("sk-runtime-secret")
+        cloned := key
+        same := cloned == secret("sk-runtime-secret")
+        shown := to_string(key)
+        encoded := to_json({"key": key})
+        kind := type(key)
+        is_key_secret := is_secret(key)
+        plain := reveal(key)
+        print(key)
+        print({"nested": key})
+    "#;
+
+    let (interp, output) = run_code_with_output(code);
+
+    assert!(matches!(interp.env.get("same"), Some(Value::Bool(true))));
+    assert!(matches!(interp.env.get("shown"), Some(Value::Str(text)) if text.as_ref() == "***"));
+    assert!(
+        matches!(interp.env.get("encoded"), Some(Value::Str(text)) if text.as_ref().contains("\"key\":\"***\""))
+    );
+    assert!(matches!(interp.env.get("kind"), Some(Value::Str(text)) if text.as_ref() == "secret"));
+    assert!(matches!(interp.env.get("is_key_secret"), Some(Value::Bool(true))));
+    assert!(
+        matches!(interp.env.get("plain"), Some(Value::Str(text)) if text.as_ref() == "sk-runtime-secret")
+    );
+    assert!(output.contains("***"));
+    assert!(!output.contains("sk-runtime-secret"));
 }
 
 #[test]
