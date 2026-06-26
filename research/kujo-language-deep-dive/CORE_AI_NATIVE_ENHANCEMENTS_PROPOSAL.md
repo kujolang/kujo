@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | Item 1 — Structured response envelope | Completed | `556bb93` |
 | Item 2 — Native AI record/replay | Completed | `a7652ff` |
-| Item 3 — JSON Schema validation builtin | Pending | TBD |
+| Item 3 — JSON Schema validation builtin | Completed | `0fbab11` |
 | Item 4 — Native vector math for embeddings | Pending | TBD |
 | Item 5 — Token estimation & context fitting | Pending | TBD |
 | Item 6 — `secret(...)` value type with runtime-enforced redaction | Pending | TBD |
