@@ -24,6 +24,15 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
 - Dictionary-like values are serialized with deterministic key ordering (lexicographic for string keys, ascending for integer keys).
 
+JSON Schema subset contract (`json_schema_validate`):
+
+- `json_schema_validate(value, schema)` returns `{"valid": bool, "errors": [...]}` and never performs network, filesystem, clock, random, or process I/O.
+- Supported validation keywords are `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`, `anyOf`, `oneOf`, `allOf`, and local `$ref`.
+- `$ref` supports local JSON pointers such as `#`, `#/$defs/name`, and `#/definitions/name`; remote references are rejected.
+- Error entries are dictionaries with `path`, `message`, and `keyword`. Paths are JSON-pointer-like instance paths such as `/items/0/name`; the root path is an empty string.
+- Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
+- Annotation keywords `title`, `description`, `default`, and `examples` are accepted as no-op metadata.
+
 | Function | Signature | Arity | Return Type | Errors | Capability | Example |
 | --- | --- | --- | --- | --- | --- | --- |
 | `print` | `print(...)` | variadic (0+) | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := print(...)` |
@@ -180,6 +189,7 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>1,048,576 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
 | `to_json` | `to_json(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json({"ok": true})` |
 | `to_json_pretty` | `to_json_pretty(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json_pretty({"ok": true})` |
+| `json_schema_validate` | `json_schema_validate(value, schema)` | exact 2 | dict | Value::Error on invalid args/types, malformed or unsupported schema keywords, invalid regex patterns, unsupported `$ref`, or resource-limit violations. Otherwise returns `{valid, errors}` with JSON-pointer-like paths. | `none` | `result := json_schema_validate({"name":"Kujo"}, {"type":"object","required":["name"]})` |
 | `parse_toml` | `parse_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_toml(...)` |
 | `to_toml` | `to_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_toml(...)` |
 | `parse_yaml` | `parse_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_yaml(...)` |

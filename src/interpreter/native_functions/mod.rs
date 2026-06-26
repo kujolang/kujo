@@ -32,6 +32,7 @@ pub mod io;
 pub mod json;
 pub mod math;
 pub mod network;
+pub mod schema;
 pub mod strings;
 pub mod system;
 pub mod type_ops;
@@ -167,6 +168,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = json::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = schema::handle(canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = crypto::handle(canonical_name, arg_values) {

@@ -659,6 +659,7 @@ impl Interpreter {
             "parse_json",
             "to_json",
             "to_json_pretty",
+            "json_schema_validate",
             // TOML functions
             "parse_toml",
             "to_toml",
@@ -1156,6 +1157,10 @@ impl Interpreter {
         self.env.define(
             "to_json_pretty".to_string(),
             Value::NativeFunction("to_json_pretty".to_string()),
+        );
+        self.env.define(
+            "json_schema_validate".to_string(),
+            Value::NativeFunction("json_schema_validate".to_string()),
         );
 
         // TOML functions
@@ -2745,6 +2750,10 @@ impl Interpreter {
             "ai_tool_loop" => CallableArity::exact(
                 "ai_tool_loop",
                 vec!["prompt_or_messages".to_string(), "options".to_string()],
+            ),
+            "json_schema_validate" => CallableArity::exact(
+                "json_schema_validate",
+                vec!["value".to_string(), "schema".to_string()],
             ),
             "print" | "eprint" | "debug" | "array" => CallableArity::variadic(name, 0, vec![]),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),

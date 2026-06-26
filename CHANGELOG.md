@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ai_request_hash(prompt_or_messages, options)` for deterministic, credential-independent AI request cache/cassette keys without network I/O.
 - Added native AI record/replay cassettes for `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` via `KUJO_AI_RECORD`, `KUJO_AI_REPLAY`, `KUJO_AI_REPLAY_MODE`, and per-call `options.cassette`.
 - Added AI response envelope metadata (`usage`, `finish_reason`, `tool_calls`, `provider`) and opt-in `options.structured_errors` dictionaries while preserving default string errors.
+- Added `json_schema_validate(value, schema)` for pure, bounded validation of JSON-like Kujo values against a documented JSON Schema subset.
 
 ## [1.0.0] - 2026-06-19
 

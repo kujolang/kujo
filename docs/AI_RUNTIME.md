@@ -90,3 +90,20 @@ Structured error dictionaries contain `kind`, `message`, `http_status`, `retry_a
 HTTP status `429` maps to `rate_limited`; other 4xx/5xx statuses map to `http_error`. `Retry-After` seconds or HTTP-date values are exposed as `retry_after_ms` when present. Non-JSON successful responses produce `decode_error`; successful JSON that lacks required helper-specific fields can produce `invalid_response`.
 
 Migration note: `structured_errors` is opt-in for this release so existing string error handling keeps working. A future major release may make structured errors the default.
+
+## Structured Output Validation
+
+`json_schema_validate(value, schema)` is the core runtime primitive for validating structured model output, tool arguments, and ordinary JSON-like config. It is intentionally generic rather than `ai_`-prefixed and has no capability gate.
+
+The supported JSON Schema subset is documented in `docs/STANDARD_LIBRARY.md`. It covers practical local validation keywords including `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, numeric/string/array bounds, `pattern`, combinators, and local `$ref`. It rejects unsupported keywords and remote references instead of silently passing them.
+
+Validation returns:
+
+```kujo
+{
+    "valid": true,
+    "errors": []
+}
+```
+
+Each error has `path`, `message`, and `keyword`; paths are JSON-pointer-like instance paths such as `/items/0/name`.
