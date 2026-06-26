@@ -15,7 +15,7 @@
 | Item 3 — JSON Schema validation builtin | Completed | `0fbab11` |
 | Item 4 — Native vector math for embeddings | Completed | `6a9e40c` |
 | Item 5 — Token estimation & context fitting | Completed | `54a2c96` |
-| Item 6 — `secret(...)` value type with runtime-enforced redaction | Pending | TBD |
+| Item 6 — `secret(...)` value type with runtime-enforced redaction | Completed | `038a325` |
 | Item 7 — AI egress capability + endpoint allowlist | Pending | TBD |
 | Item 8 — Deterministic request hashing / cache key | Completed | `1e669be` |
 | Item 9 — True streaming with a Kujo callback (or chunk iterator) | Pending | TBD |
