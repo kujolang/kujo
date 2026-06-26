@@ -6,7 +6,7 @@
 operation over a **moderately nested `Value`** (e.g. a dict nested ~300 levels
 in a debug build, ~1500 in release). This is a *native* Rust stack overflow on
 the tokio worker thread — **distinct from, and bypassing, the existing graceful
-256-deep call guard**. It should degrade to a catchable `RUFVM001` runtime
+256-deep call guard**. It should degrade to a catchable `KUJOVM001` runtime
 error, not `SIGABRT`. In practice it also bites real programs at much shallower
 data depth when nested values are passed/cloned through deep call chains.
 
@@ -23,9 +23,9 @@ data depth when nested values are passed/cloned through deep call chains.
 1. **Graceful guard (works as intended):** `DEFAULT_MAX_VM_CALL_DEPTH = 256` and
    `DEFAULT_MAX_EXPRESSION_DEPTH = 256` in `src/runtime_limits.rs`; enforced in
    `src/interpreter/mod.rs` (~lines 136/153/439, "Maximum call stack depth of {}
-   exceeded"). Deep *simple* recursion hits this and returns a clean `RUFVM001`.
+   exceeded"). Deep *simple* recursion hits this and returns a clean `KUJOVM001`.
 2. **Native abort (the bug):** recursive operations over nested `Value`
-   structures overflow the real thread stack and `abort()` with no `RUFVM001`,
+   structures overflow the real thread stack and `abort()` with no `KUJOVM001`,
    no stack trace, and no catchability via `try/except`.
 
 ## Reproductions (all pure Kujo, no external deps)
@@ -34,7 +34,7 @@ data depth when nested values are passed/cloned through deep call chains.
 ```
 func rec(n) { if n <= 0 { return 0 } return rec(n-1) + 1 }
 print(to_string(rec(300)))
-# → [RUFVM001] Maximum VM call stack depth of 256 exceeded while calling rec   (GOOD: catchable)
+# → [KUJOVM001] Maximum VM call stack depth of 256 exceeded while calling rec   (GOOD: catchable)
 ```
 
 **B — the native abort (the bug):**
@@ -107,7 +107,7 @@ with this root cause.
    never overflow.
 
 3. **Add depth guards to recursive `Value` operations** (clone-on-pass,
-   `to_json` / `to_string`, equality) that return `RUFVM001` ("maximum data
+   `to_json` / `to_string`, equality) that return `KUJOVM001` ("maximum data
    nesting depth N exceeded") instead of recursing unbounded — mirroring the
    existing 256 call-depth guard. Reuse `runtime_limits.rs`.
 
@@ -118,7 +118,7 @@ with this root cause.
 
 ## Acceptance criteria
 - Repro B (`build(600)` … `build(5000)`) prints `ok` or returns a catchable
-  `RUFVM001`, but **never** `fatal runtime error: stack overflow, aborting`.
+  `KUJOVM001`, but **never** `fatal runtime error: stack overflow, aborting`.
 - `try { x := build(100000) } except e { print("caught") }` prints `caught`
   (graceful, not abort).
 - Repro A still returns the existing graceful 256 message (don't regress it).
@@ -133,7 +133,7 @@ printf 'func build(n){mut d:={"v":1} mut i:=0 while i<n {d={"c":d} i=i+1} return
 ./target/release/kujo run /tmp/b.kujo      # → ok (raise to build(5000) to abort)
 # A (graceful guard, control):
 printf 'func rec(n){if n<=0{return 0} return rec(n-1)+1}\nprint(to_string(rec(300)))\n' > /tmp/a.kujo
-./target/debug/kujo run /tmp/a.kujo        # → RUFVM001 (catchable)
+./target/debug/kujo run /tmp/a.kujo        # → KUJOVM001 (catchable)
 ```
 
 ---

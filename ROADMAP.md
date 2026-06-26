@@ -439,7 +439,7 @@ If a command is not yet available, create the missing configuration as part of t
     Problem: Error reporting is inconsistent across subsystems. Production Kujo errors should answer what failed, where, why, and what to do next.
     Recommendation: Introduce one diagnostic model with severity, code, message, optional help, file path, span, line, column, and subsystem.
     Implementation steps:
-        1. Define stable diagnostic codes such as `RUFLEX001`, `RUFPARSE001`, `RUFRUN001`, `RUFVM001`, `RUFCLI001`.
+        1. Define stable diagnostic codes such as `KUJOLEX001`, `KUJOPARSE001`, `KUJORUN001`, `KUJOVM001`, `KUJOCLI001`.
         2. Add text rendering for humans.
         3. Add JSON rendering for machine-readable CLI mode.
         4. Add LSP conversion.
@@ -452,7 +452,7 @@ If a command is not yet available, create the missing configuration as part of t
         - CLI exit-code tests.
         - Runtime error includes file/line/column when available.
     Acceptance criteria: Each user-visible failure has a stable code, precise location when possible, and consistent rendering.
-    Notes: Completed on 2026-05-07. Added a shared diagnostic model in `src/errors.rs` with stable codes, severity/subsystem metadata, human rendering, and machine-readable JSON rendering. Routed lexer (`LexerDiagnostic::to_diagnostic`), parser (`ParseDiagnostic::to_diagnostic`), LSP diagnostics (`src/lsp_diagnostics.rs`), and CLI reporting (`src/main.rs`) through the unified model, including VM/runtime/CLI code tags (`RUFVM001`, `RUFRUN001`, `RUFCLI001`) in user-visible failures. Expanded regression coverage with `tests/diagnostics_contract.rs` plus JSON and parse-contract updates in `tests/cli_json_contracts.rs` and `tests/parser_diagnostics_contract.rs`, and documented the new `lsp-diagnostics --json` schema in `docs/CLI_MACHINE_READABLE_CONTRACTS.md`. Verification: `cargo test --test diagnostics_contract`, `cargo test --test parser_diagnostics_contract`, `cargo test --test cli_json_contracts`, `cargo test lsp_diagnostics::tests --lib`, and `cargo test` passed.
+    Notes: Completed on 2026-05-07. Added a shared diagnostic model in `src/errors.rs` with stable codes, severity/subsystem metadata, human rendering, and machine-readable JSON rendering. Routed lexer (`LexerDiagnostic::to_diagnostic`), parser (`ParseDiagnostic::to_diagnostic`), LSP diagnostics (`src/lsp_diagnostics.rs`), and CLI reporting (`src/main.rs`) through the unified model, including VM/runtime/CLI code tags (`KUJOVM001`, `KUJORUN001`, `KUJOCLI001`) in user-visible failures. Expanded regression coverage with `tests/diagnostics_contract.rs` plus JSON and parse-contract updates in `tests/cli_json_contracts.rs` and `tests/parser_diagnostics_contract.rs`, and documented the new `lsp-diagnostics --json` schema in `docs/CLI_MACHINE_READABLE_CONTRACTS.md`. Verification: `cargo test --test diagnostics_contract`, `cargo test --test parser_diagnostics_contract`, `cargo test --test cli_json_contracts`, `cargo test lsp_diagnostics::tests --lib`, and `cargo test` passed.
 ```
 
 ```text
@@ -477,7 +477,7 @@ If a command is not yet available, create the missing configuration as part of t
         - Large source file over limit fails before parsing.
         - Boundary-at-limit input succeeds.
     Acceptance criteria: Malicious deep or huge source cannot crash the process through parser recursion or unbounded allocation.
-    Notes: Completed on 2026-05-07. Added explicit parser safety constants and limit enforcement (`DEFAULT_MAX_SOURCE_BYTES=1,048,576`, `DEFAULT_MAX_EXPRESSION_DEPTH=256`, `DEFAULT_MAX_BLOCK_DEPTH=128`) plus centralized parser helpers for expression/block depth checks with structured parser diagnostics when limits are exceeded. Added CLI pre-parse source-size validation for parse entrypoints (`run`, `test-run`, `profile`, and `lsp-*` helper commands) so oversized source fails deterministically with `RUFPARSE001` before tokenization/parsing. Added regression coverage in `tests/parser_diagnostics_contract.rs` for deep parenthesized expressions, deep nested array literals, deep nested `if` blocks, source-size over-limit failure, and source-size boundary success. Verification: `cargo test --test parser_diagnostics_contract`, `cargo test`.
+    Notes: Completed on 2026-05-07. Added explicit parser safety constants and limit enforcement (`DEFAULT_MAX_SOURCE_BYTES=1,048,576`, `DEFAULT_MAX_EXPRESSION_DEPTH=256`, `DEFAULT_MAX_BLOCK_DEPTH=128`) plus centralized parser helpers for expression/block depth checks with structured parser diagnostics when limits are exceeded. Added CLI pre-parse source-size validation for parse entrypoints (`run`, `test-run`, `profile`, and `lsp-*` helper commands) so oversized source fails deterministically with `KUJOPARSE001` before tokenization/parsing. Added regression coverage in `tests/parser_diagnostics_contract.rs` for deep parenthesized expressions, deep nested array literals, deep nested `if` blocks, source-size over-limit failure, and source-size boundary success. Verification: `cargo test --test parser_diagnostics_contract`, `cargo test`.
 ```
 
 ```text

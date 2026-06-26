@@ -46,7 +46,7 @@ Observed summary:
 
 Observed divergence classes:
 
-1. Diagnostic-shape drift: VM vs interpreter runtime error identifiers and subsystem markers (`[RUFVM001]` vs `[RUFRUN001]`).
+1. Diagnostic-shape drift: VM vs interpreter runtime error identifiers and subsystem markers (`[KUJOVM001]` vs `[KUJORUN001]`).
 2. VM-specific optimization banners/noise appearing in output streams for some fixtures.
 3. Legacy fixture behavior depending on runtime-path-specific builtin availability/behavior.
 

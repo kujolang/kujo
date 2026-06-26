@@ -12,7 +12,7 @@
   - `Diagnostic`
   - `DiagnosticSeverity`
   - `DiagnosticSubsystem`
-  - stable diagnostic code constants (`RUFLEX001`, `RUFPARSE001`, `RUFRUN001`, `RUFVM001`, `RUFCLI001`, `RUFLSP001`)
+  - stable diagnostic code constants (`KUJOLEX001`, `KUJOPARSE001`, `KUJORUN001`, `KUJOVM001`, `KUJOCLI001`, `KUJOLSP001`)
 - Added shared human renderer (`render_human`) and JSON renderer (`to_json_value`) for diagnostics.
 - Updated `KujoError` to carry diagnostic code/subsystem metadata and expose code-prefixed runtime rendering.
 - Added lexer conversion path `LexerDiagnostic::to_diagnostic()` and parser conversion path `ParseDiagnostic::to_diagnostic(...)`.
@@ -37,7 +37,7 @@
 
 ## Things I Learned
 - A unified diagnostic model can be introduced incrementally without rewriting every runtime path at once by adding conversion helpers at subsystem boundaries.
-- Stable diagnostic code prefixes (`RUFLEX*`, `RUFPARSE*`, etc.) are easiest to preserve when code generation lives close to the originating subsystem (lexer/parser), then is normalized by shared renderers.
+- Stable diagnostic code prefixes (`KUJOLEX*`, `KUJOPARSE*`, etc.) are easiest to preserve when code generation lives close to the originating subsystem (lexer/parser), then is normalized by shared renderers.
 - For Kujo’s current tooling, preserving simple numeric location fields is safer than optional location fields because downstream helpers treat location as required.
 
 ## Debug Notes (Only if applicable)
@@ -49,7 +49,7 @@
 
 ## Follow-ups / TODO (For Future Agents)
 - [ ] Expand shared diagnostic wrapping to remaining ad-hoc CLI `eprintln!` failure paths that still emit plain strings.
-- [ ] Decide whether to introduce stricter per-kind runtime/VM diagnostic code families (for example `RUFRUN00x`) once diagnostics catalog docs are added.
+- [ ] Decide whether to introduce stricter per-kind runtime/VM diagnostic code families (for example `KUJORUN00x`) once diagnostics catalog docs are added.
 
 ## Links / References
 - Files touched:

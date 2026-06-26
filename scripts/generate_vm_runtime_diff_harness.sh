@@ -77,8 +77,8 @@ done
 normalize_output() {
   local input_path="$1"
   sed -E \
-    -e 's/^\[RUF[A-Z0-9]+\] \[[^]]+\] Runtime Error: /Runtime Error: /' \
-    -e 's/^\[RUF[A-Z0-9]+\] \[[^]]+\] /[RUF] /' \
+    -e 's/^\[KUJO[A-Z0-9]+\] \[[^]]+\] Runtime Error: /Runtime Error: /' \
+    -e 's/^\[KUJO[A-Z0-9]+\] \[[^]]+\] /[KUJO] /' \
     -e 's/[[:space:]]+$//' \
     "$input_path" \
   | sed -e '${/^$/d;}'
@@ -90,12 +90,12 @@ normalization_self_check() {
   trap 'rm -rf "$tmp_dir"' RETURN
 
   cat > "$tmp_dir/vm.txt" <<'VM'
-[RUFVM001] [vm] Runtime Error: Cannot call non-function
+[KUJOVM001] [vm] Runtime Error: Cannot call non-function
   --> 0:0
 VM
 
   cat > "$tmp_dir/interpreter.txt" <<'INTERP'
-[RUFRUN001] [runtime] Runtime Error: Cannot call non-function
+[KUJORUN001] [runtime] Runtime Error: Cannot call non-function
   --> 0:0
 INTERP
 
