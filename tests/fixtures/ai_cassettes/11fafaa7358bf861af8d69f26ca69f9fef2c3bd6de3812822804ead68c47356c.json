@@ -1,8 +1,8 @@
 {
   "_cassette_version": 1,
   "request_meta": {
-    "hash": "48499f3a82984bdc28b5adb997f76c33529c1f4592a0e60bdae5fd6136f8111e",
-    "surface": "ai_tool_loop",
+    "hash": "11fafaa7358bf861af8d69f26ca69f9fef2c3bd6de3812822804ead68c47356c",
+    "surface": "ai_chat",
     "endpoint": "http://127.0.0.1:1/v1/chat/completions",
     "model": "gpt-replay",
     "normalized": {
@@ -10,12 +10,11 @@
       "body": {
         "messages": [
           {
-            "content": "Plan this",
+            "content": "Rate limit",
             "role": "user"
           }
         ],
-        "model": "gpt-replay",
-        "stream": false
+        "model": "gpt-replay"
       },
       "endpoint": "http://127.0.0.1:1/v1/chat/completions",
       "headers": [],
@@ -23,10 +22,11 @@
     }
   },
   "response": {
-    "status": 200,
+    "status": 429,
     "headers": {
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "retry-after": "3"
     },
-    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"content\":\"tool loop done\"}}],\"usage\":{\"prompt_tokens\":9,\"completion_tokens\":4,\"total_tokens\":13}}"
+    "body": "{\"error\":{\"code\":\"rate_limit_exceeded\",\"message\":\"slow down\"}}"
   }
 }

@@ -1,0 +1,29 @@
+func kv(label, value) {
+    print(label + ": " + value)
+}
+
+let replay_options := {
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "provider": "mock-provider",
+    "cassette": {
+        "mode": "replay",
+        "dir": "tests/fixtures/ai_cassettes"
+    }
+}
+
+let ok_result := ai_chat("Hello model", replay_options)
+kv("ok_result", to_string(ok_result))
+
+let structured_error_options := {
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "structured_errors": true,
+    "cassette": {
+        "mode": "replay",
+        "dir": "tests/fixtures/ai_cassettes"
+    }
+}
+
+let error_result := ai_chat("Rate limit", structured_error_options)
+kv("structured_error", to_string(error_result))

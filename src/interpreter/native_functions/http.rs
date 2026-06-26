@@ -5,6 +5,7 @@
 use crate::interpreter::{DictMap, Value};
 use crate::runtime_limits;
 use crate::{builtins, network_policy};
+use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -33,6 +34,16 @@ struct AiRequestConfig {
     timeout_seconds: f64,
     headers: Vec<(String, String)>,
     cassette: AiCassetteMode,
+    structured_errors: bool,
+    provider: String,
+}
+
+struct AiHttpResponse {
+    status: i64,
+    headers: DictMap,
+    text: String,
+    json: Option<Value>,
+    decode_error: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -60,6 +71,10 @@ struct StoredAiCassetteResponse {
 
 fn ai_err_result(message: impl Into<String>) -> Value {
     Value::Result { is_ok: false, value: Box::new(Value::Str(Arc::new(message.into()))) }
+}
+
+fn ai_err_structured(error: DictMap) -> Value {
+    Value::Result { is_ok: false, value: Box::new(Value::Dict(Arc::new(error))) }
 }
 
 fn ai_ok_result(value: Value) -> Value {
@@ -331,13 +346,42 @@ fn parse_ai_request_config_inner(
     };
 
     let headers = parse_ai_headers(options, surface)?;
+    let structured_errors = match options.get("structured_errors") {
+        Some(Value::Bool(value)) => *value,
+        Some(_) => {
+            return Err(Value::Error(format!(
+                "{}() requires options.structured_errors to be a boolean when provided",
+                surface
+            )));
+        }
+        None => false,
+    };
+    let provider = match options.get("provider") {
+        Some(Value::Str(provider)) => provider.as_ref().clone(),
+        Some(_) => {
+            return Err(Value::Error(format!(
+                "{}() requires options.provider to be a string when provided",
+                surface
+            )));
+        }
+        None => String::new(),
+    };
     let cassette = if parse_cassette {
         parse_ai_cassette_mode(options, surface)?
     } else {
         AiCassetteMode::Off
     };
 
-    Ok(AiRequestConfig { endpoint, model, api_key, timeout_seconds, headers, cassette })
+    Ok(AiRequestConfig {
+        endpoint,
+        model,
+        api_key,
+        timeout_seconds,
+        headers,
+        cassette,
+        structured_errors,
+        provider,
+    })
 }
 
 fn ai_message(role: &str, content: impl Into<String>) -> Value {
@@ -454,6 +498,164 @@ fn truncate_for_error(text: &str, max_chars: usize) -> String {
         out.push(ch);
     }
     out
+}
+
+fn redact_ai_error_text(text: &str, config: &AiRequestConfig) -> String {
+    let mut redacted = text.to_string();
+    if let Some(api_key) = &config.api_key {
+        if !api_key.is_empty() {
+            redacted = redacted.replace(api_key, "[redacted]");
+            redacted = redacted.replace(&format!("Bearer {}", api_key), "Bearer [redacted]");
+        }
+    }
+    for (name, value) in &config.headers {
+        if !value.is_empty() && is_ai_hash_excluded_header(name) {
+            redacted = redacted.replace(value, "[redacted]");
+        }
+    }
+    redacted
+}
+
+fn ai_error_string(config: &AiRequestConfig, message: String) -> Value {
+    ai_err_result(redact_ai_error_text(&message, config))
+}
+
+fn ai_structured_error(
+    kind: &str,
+    message: String,
+    http_status: Option<i64>,
+    retry_after_ms: Option<i64>,
+    provider_code: Option<String>,
+    body_excerpt: Option<String>,
+    config: &AiRequestConfig,
+) -> Value {
+    let mut error = DictMap::default();
+    error.insert("kind".into(), Value::Str(Arc::new(kind.to_string())));
+    error.insert("message".into(), Value::Str(Arc::new(redact_ai_error_text(&message, config))));
+    error.insert("http_status".into(), http_status.map(Value::Int).unwrap_or(Value::Null));
+    error.insert("retry_after_ms".into(), retry_after_ms.map(Value::Int).unwrap_or(Value::Null));
+    error.insert(
+        "provider_code".into(),
+        provider_code
+            .map(|code| Value::Str(Arc::new(redact_ai_error_text(&code, config))))
+            .unwrap_or(Value::Null),
+    );
+    error.insert(
+        "body_excerpt".into(),
+        body_excerpt
+            .map(|excerpt| Value::Str(Arc::new(redact_ai_error_text(&excerpt, config))))
+            .unwrap_or(Value::Null),
+    );
+    ai_err_structured(error)
+}
+
+fn retry_after_header(headers: &DictMap) -> Option<String> {
+    headers.iter().find_map(|(name, value)| {
+        if name.eq_ignore_ascii_case("retry-after") {
+            if let Value::Str(text) = value {
+                return Some(text.as_ref().clone());
+            }
+        }
+        None
+    })
+}
+
+fn parse_retry_after(headers: &DictMap) -> Option<i64> {
+    let raw = retry_after_header(headers)?;
+    let trimmed = raw.trim();
+    if let Ok(seconds) = trimmed.parse::<i64>() {
+        return Some(seconds.max(0) * 1000);
+    }
+    let parsed = DateTime::parse_from_rfc2822(trimmed).ok()?;
+    Some((parsed.with_timezone(&Utc) - Utc::now()).num_milliseconds().max(0))
+}
+
+fn provider_code_from_body(text: &str) -> Option<String> {
+    let json = builtins::parse_json(text).ok()?;
+    let root = match json {
+        Value::Dict(root) => root,
+        _ => return None,
+    };
+    if let Some(Value::Dict(error)) = root.get("error") {
+        if let Some(Value::Str(code)) = error.get("code") {
+            return Some(code.as_ref().clone());
+        }
+        if let Some(Value::Str(code)) = error.get("type") {
+            return Some(code.as_ref().clone());
+        }
+    }
+    if let Some(Value::Str(code)) = root.get("code") {
+        return Some(code.as_ref().clone());
+    }
+    None
+}
+
+fn classify_transport_error(message: &str) -> &'static str {
+    let lower = message.to_ascii_lowercase();
+    if lower.contains("timeout") || lower.contains("timed out") {
+        "timeout"
+    } else {
+        "network"
+    }
+}
+
+fn ai_transport_error(_surface: &str, config: &AiRequestConfig, error: String) -> Value {
+    if config.structured_errors {
+        let kind = classify_transport_error(&error);
+        ai_structured_error(kind, error, None, None, None, None, config)
+    } else {
+        ai_error_string(config, error)
+    }
+}
+
+fn ai_http_status_error(
+    surface: &str,
+    config: &AiRequestConfig,
+    status: i64,
+    headers: &DictMap,
+    text: &str,
+) -> Value {
+    let excerpt = truncate_for_error(text, 240);
+    let message = format!("{} failed with HTTP status {}: {}", surface, status, excerpt);
+    if config.structured_errors {
+        let kind = if status == 429 { "rate_limited" } else { "http_error" };
+        ai_structured_error(
+            kind,
+            message,
+            Some(status),
+            parse_retry_after(headers),
+            provider_code_from_body(text),
+            Some(excerpt),
+            config,
+        )
+    } else {
+        ai_error_string(config, message)
+    }
+}
+
+fn ai_decode_error(surface: &str, config: &AiRequestConfig, error: String, text: &str) -> Value {
+    let message = format!("{} failed: response was not valid JSON ({})", surface, error);
+    if config.structured_errors {
+        ai_structured_error(
+            "decode_error",
+            message,
+            None,
+            None,
+            None,
+            Some(truncate_for_error(text, 240)),
+            config,
+        )
+    } else {
+        ai_error_string(config, message)
+    }
+}
+
+fn ai_invalid_response_error(_surface: &str, config: &AiRequestConfig, message: String) -> Value {
+    if config.structured_errors {
+        ai_structured_error("invalid_response", message, None, None, None, None, config)
+    } else {
+        ai_error_string(config, message)
+    }
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
@@ -575,7 +777,7 @@ fn replay_ai_cassette(
     surface: &str,
     dir: &Path,
     key: &str,
-) -> Result<Option<(i64, DictMap, String, Value)>, String> {
+) -> Result<Option<AiHttpResponse>, String> {
     let path = cassette_path(dir, key);
     if !path.exists() {
         return Ok(None);
@@ -610,14 +812,17 @@ fn replay_ai_cassette(
         ));
     }
 
-    let parsed_body = builtins::parse_json(&cassette.response.body)
-        .map_err(|error| format!("{} failed: response was not valid JSON ({})", surface, error))?;
-    Ok(Some((
-        cassette.response.status,
-        cassette_headers_to_dict(&cassette.response.headers),
-        cassette.response.body,
-        parsed_body,
-    )))
+    let (json, decode_error) = match builtins::parse_json(&cassette.response.body) {
+        Ok(json) => (Some(json), None),
+        Err(error) => (None, Some(error)),
+    };
+    Ok(Some(AiHttpResponse {
+        status: cassette.response.status,
+        headers: cassette_headers_to_dict(&cassette.response.headers),
+        text: cassette.response.body,
+        json,
+        decode_error,
+    }))
 }
 
 fn store_ai_cassette(
@@ -687,7 +892,7 @@ fn run_ai_request(
     surface: &str,
     config: &AiRequestConfig,
     payload: Value,
-) -> Result<(i64, DictMap, String, Value), String> {
+) -> Result<AiHttpResponse, String> {
     let (cassette_key, normalized_request) = ai_request_key(config, &payload)?;
     match &config.cassette {
         AiCassetteMode::ReplayStrict { dir } => {
@@ -742,8 +947,10 @@ fn run_ai_request(
 
     let (status, response_headers, body_bytes) = request_result;
     let body_text = String::from_utf8_lossy(&body_bytes).to_string();
-    let parsed_body = builtins::parse_json(&body_text)
-        .map_err(|error| format!("{} failed: response was not valid JSON ({})", surface, error))?;
+    let (parsed_body, decode_error) = match builtins::parse_json(&body_text) {
+        Ok(json) => (Some(json), None),
+        Err(error) => (None, Some(error)),
+    };
 
     let mut headers_dict = DictMap::default();
     for (name, value) in response_headers.iter() {
@@ -783,7 +990,13 @@ fn run_ai_request(
         AiCassetteMode::Off | AiCassetteMode::ReplayStrict { .. } => {}
     }
 
-    Ok((status as i64, headers_dict, body_text, parsed_body))
+    Ok(AiHttpResponse {
+        status: status as i64,
+        headers: headers_dict,
+        text: body_text,
+        json: parsed_body,
+        decode_error,
+    })
 }
 
 fn extract_chat_content(response_json: &Value) -> Option<String> {
@@ -826,7 +1039,7 @@ fn extract_chat_chunks(response_json: &Value) -> Vec<Value> {
                 if let Some(Value::Dict(delta)) = choice_dict.get("delta") {
                     if let Some(Value::Str(content)) = delta.get("content") {
                         chunks.push(Value::Str(content.clone()));
-                    }
+                    };
                 } else if let Some(Value::Dict(message)) = choice_dict.get("message") {
                     if let Some(Value::Str(content)) = message.get("content") {
                         chunks.push(Value::Str(content.clone()));
@@ -907,6 +1120,118 @@ fn extract_tool_call_names(response_json: &Value) -> Vec<String> {
     }
 
     names
+}
+
+fn extract_usage(response_json: &Value) -> Option<Value> {
+    let root = match response_json {
+        Value::Dict(root) => root,
+        _ => return None,
+    };
+    let usage = match root.get("usage") {
+        Some(Value::Dict(usage)) => usage,
+        _ => return None,
+    };
+
+    let mut normalized = DictMap::default();
+    for key in ["prompt_tokens", "completion_tokens", "total_tokens"] {
+        if let Some(value) = usage.get(key).and_then(value_to_i64) {
+            normalized.insert(key.into(), Value::Int(value));
+        }
+    }
+    if normalized.is_empty() {
+        None
+    } else {
+        Some(Value::Dict(Arc::new(normalized)))
+    }
+}
+
+fn extract_finish_reason(response_json: &Value) -> Value {
+    let Some(choice) = first_ai_choice(response_json) else {
+        return Value::Null;
+    };
+    match choice.get("finish_reason") {
+        Some(Value::Str(reason)) => Value::Str(reason.clone()),
+        Some(Value::Null) => Value::Null,
+        _ => Value::Null,
+    }
+}
+
+fn first_ai_choice(response_json: &Value) -> Option<&DictMap> {
+    let root = match response_json {
+        Value::Dict(root) => root,
+        _ => return None,
+    };
+    let choices = match root.get("choices") {
+        Some(Value::Array(choices)) => choices,
+        _ => return None,
+    };
+    match choices.first() {
+        Some(Value::Dict(choice)) => Some(choice),
+        _ => None,
+    }
+}
+
+fn extract_tool_calls(response_json: &Value) -> Value {
+    let Some(choice) = first_ai_choice(response_json) else {
+        return Value::Array(Arc::new(Vec::new()));
+    };
+    let message = match choice.get("message") {
+        Some(Value::Dict(message)) => message,
+        _ => return Value::Array(Arc::new(Vec::new())),
+    };
+    let tool_calls = match message.get("tool_calls") {
+        Some(Value::Array(tool_calls)) => tool_calls,
+        _ => return Value::Array(Arc::new(Vec::new())),
+    };
+
+    let mut calls = Vec::new();
+    for tool_call in tool_calls.iter() {
+        let Value::Dict(call_dict) = tool_call else {
+            continue;
+        };
+        let function_dict = match call_dict.get("function") {
+            Some(Value::Dict(function)) => function,
+            _ => continue,
+        };
+
+        let id = match call_dict.get("id") {
+            Some(Value::Str(id)) => id.as_ref().clone(),
+            _ => String::new(),
+        };
+        let name = match function_dict.get("name") {
+            Some(Value::Str(name)) => name.as_ref().clone(),
+            _ => String::new(),
+        };
+        let arguments_json = match function_dict.get("arguments") {
+            Some(Value::Str(arguments)) => arguments.as_ref().clone(),
+            Some(arguments) => builtins::to_json(arguments).unwrap_or_default(),
+            None => String::new(),
+        };
+
+        let mut normalized = DictMap::default();
+        normalized.insert("id".into(), Value::Str(Arc::new(id)));
+        normalized.insert("name".into(), Value::Str(Arc::new(name)));
+        normalized.insert("arguments_json".into(), Value::Str(Arc::new(arguments_json)));
+        calls.push(Value::Dict(Arc::new(normalized)));
+    }
+
+    Value::Array(Arc::new(calls))
+}
+
+fn add_ai_envelope_fields(
+    result: &mut DictMap,
+    response_json: &Value,
+    config: &AiRequestConfig,
+    include_tool_calls: bool,
+) {
+    if let Some(usage) = extract_usage(response_json) {
+        result.insert("usage".into(), usage);
+    }
+    result.insert("finish_reason".into(), extract_finish_reason(response_json));
+    if include_tool_calls {
+        result.insert("tool_calls".into(), extract_tool_calls(response_json));
+    }
+    result.insert("provider".into(), Value::Str(Arc::new(config.provider.clone())));
 }
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
@@ -1233,26 +1558,48 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             let request = run_ai_request("ai_chat", &config, Value::Dict(Arc::new(payload)));
             match request {
-                Ok((status, headers, text, json)) => {
-                    if !(200..300).contains(&status) {
-                        return Some(ai_err_result(format!(
-                            "ai_chat failed with HTTP status {}: {}",
-                            status,
-                            truncate_for_error(&text, 240)
-                        )));
+                Ok(response) => {
+                    if !(200..300).contains(&response.status) {
+                        return Some(ai_http_status_error(
+                            "ai_chat",
+                            &config,
+                            response.status,
+                            &response.headers,
+                            &response.text,
+                        ));
                     }
+                    let Some(json) = response.json else {
+                        return Some(ai_decode_error(
+                            "ai_chat",
+                            &config,
+                            response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
+                            &response.text,
+                        ));
+                    };
 
-                    let message = extract_chat_content(&json).unwrap_or_default();
+                    let message = match extract_chat_content(&json) {
+                        Some(message) => message,
+                        None if config.structured_errors => {
+                            return Some(ai_invalid_response_error(
+                                "ai_chat",
+                                &config,
+                                "ai_chat failed: response JSON missing assistant content"
+                                    .to_string(),
+                            ));
+                        }
+                        None => String::new(),
+                    };
                     let mut result = DictMap::default();
-                    result.insert("status".into(), Value::Int(status));
-                    result.insert("model".into(), Value::Str(Arc::new(config.model)));
+                    result.insert("status".into(), Value::Int(response.status));
+                    result.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
                     result.insert("message".into(), Value::Str(Arc::new(message)));
-                    result.insert("text".into(), Value::Str(Arc::new(text)));
+                    result.insert("text".into(), Value::Str(Arc::new(response.text)));
+                    result.insert("headers".into(), Value::Dict(Arc::new(response.headers)));
+                    add_ai_envelope_fields(&mut result, &json, &config, true);
                     result.insert("json".into(), json);
-                    result.insert("headers".into(), Value::Dict(Arc::new(headers)));
                     ai_ok_result(Value::Dict(Arc::new(result)))
                 }
-                Err(error) => ai_err_result(error),
+                Err(error) => ai_transport_error("ai_chat", &config, error),
             }
         }
 
@@ -1298,30 +1645,41 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             let request = run_ai_request("ai_stream_chat", &config, Value::Dict(Arc::new(payload)));
             match request {
-                Ok((status, headers, text, json)) => {
-                    if !(200..300).contains(&status) {
-                        return Some(ai_err_result(format!(
-                            "ai_stream_chat failed with HTTP status {}: {}",
-                            status,
-                            truncate_for_error(&text, 240)
-                        )));
+                Ok(response) => {
+                    if !(200..300).contains(&response.status) {
+                        return Some(ai_http_status_error(
+                            "ai_stream_chat",
+                            &config,
+                            response.status,
+                            &response.headers,
+                            &response.text,
+                        ));
                     }
+                    let Some(json) = response.json else {
+                        return Some(ai_decode_error(
+                            "ai_stream_chat",
+                            &config,
+                            response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
+                            &response.text,
+                        ));
+                    };
 
                     let mut chunks = extract_chat_chunks(&json);
-                    if chunks.is_empty() && !text.is_empty() {
-                        chunks.push(Value::Str(Arc::new(text.clone())));
+                    if chunks.is_empty() && !response.text.is_empty() {
+                        chunks.push(Value::Str(Arc::new(response.text.clone())));
                     }
 
                     let mut result = DictMap::default();
-                    result.insert("status".into(), Value::Int(status));
-                    result.insert("model".into(), Value::Str(Arc::new(config.model)));
+                    result.insert("status".into(), Value::Int(response.status));
+                    result.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
                     result.insert("chunks".into(), Value::Array(Arc::new(chunks)));
-                    result.insert("text".into(), Value::Str(Arc::new(text)));
+                    result.insert("text".into(), Value::Str(Arc::new(response.text)));
+                    result.insert("headers".into(), Value::Dict(Arc::new(response.headers)));
+                    add_ai_envelope_fields(&mut result, &json, &config, false);
                     result.insert("json".into(), json);
-                    result.insert("headers".into(), Value::Dict(Arc::new(headers)));
                     ai_ok_result(Value::Dict(Arc::new(result)))
                 }
-                Err(error) => ai_err_result(error),
+                Err(error) => ai_transport_error("ai_stream_chat", &config, error),
             }
         }
 
@@ -1363,19 +1721,31 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             let request = run_ai_request("ai_embedding", &config, Value::Dict(Arc::new(payload)));
             match request {
-                Ok((status, headers, text, json)) => {
-                    if !(200..300).contains(&status) {
-                        return Some(ai_err_result(format!(
-                            "ai_embedding failed with HTTP status {}: {}",
-                            status,
-                            truncate_for_error(&text, 240)
-                        )));
+                Ok(response) => {
+                    if !(200..300).contains(&response.status) {
+                        return Some(ai_http_status_error(
+                            "ai_embedding",
+                            &config,
+                            response.status,
+                            &response.headers,
+                            &response.text,
+                        ));
                     }
+                    let Some(json) = response.json else {
+                        return Some(ai_decode_error(
+                            "ai_embedding",
+                            &config,
+                            response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
+                            &response.text,
+                        ));
+                    };
 
                     let vector = match extract_embedding_vector(&json) {
                         Some(vector) => vector,
                         None => {
-                            return Some(ai_err_result(
+                            return Some(ai_invalid_response_error(
+                                "ai_embedding",
+                                &config,
                                 "ai_embedding failed: response JSON missing data[0].embedding numeric array"
                                     .to_string(),
                             ));
@@ -1383,15 +1753,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     };
 
                     let mut result = DictMap::default();
-                    result.insert("status".into(), Value::Int(status));
-                    result.insert("model".into(), Value::Str(Arc::new(config.model)));
+                    result.insert("status".into(), Value::Int(response.status));
+                    result.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
                     result.insert("vector".into(), Value::Array(Arc::new(vector)));
-                    result.insert("text".into(), Value::Str(Arc::new(text)));
+                    result.insert("text".into(), Value::Str(Arc::new(response.text)));
+                    result.insert("headers".into(), Value::Dict(Arc::new(response.headers)));
+                    add_ai_envelope_fields(&mut result, &json, &config, false);
                     result.insert("json".into(), json);
-                    result.insert("headers".into(), Value::Dict(Arc::new(headers)));
                     ai_ok_result(Value::Dict(Arc::new(result)))
                 }
-                Err(error) => ai_err_result(error),
+                Err(error) => ai_transport_error("ai_embedding", &config, error),
             }
         }
 
@@ -1463,6 +1834,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             let mut final_status = 0_i64;
             let mut final_text = String::new();
             let mut final_json = Value::Null;
+            let mut final_headers = DictMap::default();
             let mut last_message = String::new();
             let mut steps_taken = 0_i64;
 
@@ -1485,21 +1857,32 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
                 let request_result =
                     run_ai_request("ai_tool_loop", &config, Value::Dict(Arc::new(payload)));
-                let (status, _headers, text, response_json) = match request_result {
-                    Ok(result) => result,
-                    Err(error) => return Some(ai_err_result(error)),
+                let response = match request_result {
+                    Ok(response) => response,
+                    Err(error) => return Some(ai_transport_error("ai_tool_loop", &config, error)),
                 };
-                if !(200..300).contains(&status) {
-                    return Some(ai_err_result(format!(
-                        "ai_tool_loop failed with HTTP status {}: {}",
-                        status,
-                        truncate_for_error(&text, 240)
-                    )));
+                if !(200..300).contains(&response.status) {
+                    return Some(ai_http_status_error(
+                        "ai_tool_loop",
+                        &config,
+                        response.status,
+                        &response.headers,
+                        &response.text,
+                    ));
                 }
+                let Some(response_json) = response.json else {
+                    return Some(ai_decode_error(
+                        "ai_tool_loop",
+                        &config,
+                        response.decode_error.unwrap_or_else(|| "unknown error".to_string()),
+                        &response.text,
+                    ));
+                };
 
                 steps_taken += 1;
-                final_status = status;
-                final_text = text;
+                final_status = response.status;
+                final_text = response.text;
+                final_headers = response.headers;
                 final_json = response_json.clone();
                 last_message = extract_chat_content(&response_json).unwrap_or_default();
                 messages.push(ai_message("assistant", last_message.clone()));
@@ -1510,7 +1893,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 }
 
                 let Some(tool_results) = &tool_results else {
-                    return Some(ai_err_result(
+                    return Some(ai_invalid_response_error(
+                        "ai_tool_loop",
+                        &config,
                         "ai_tool_loop requires options.tool_results to resolve tool_calls in model responses"
                             .to_string(),
                     ));
@@ -1520,16 +1905,21 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     let tool_output = match tool_results.get(tool_name.as_str()) {
                         Some(Value::Str(output)) => output.as_ref().clone(),
                         Some(_) => {
-                            return Some(ai_err_result(format!(
-                                "ai_tool_loop requires options.tool_results['{}'] to be a string",
-                                tool_name
-                            )));
+                            return Some(ai_invalid_response_error(
+                                "ai_tool_loop",
+                                &config,
+                                format!(
+                                    "ai_tool_loop requires options.tool_results['{}'] to be a string",
+                                    tool_name
+                                ),
+                            ));
                         }
                         None => {
-                            return Some(ai_err_result(format!(
-                                "ai_tool_loop missing tool result for '{}'",
-                                tool_name
-                            )));
+                            return Some(ai_invalid_response_error(
+                                "ai_tool_loop",
+                                &config,
+                                format!("ai_tool_loop missing tool result for '{}'", tool_name),
+                            ));
                         }
                     };
 
@@ -1543,10 +1933,12 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             let mut result = DictMap::default();
             result.insert("status".into(), Value::Int(final_status));
-            result.insert("model".into(), Value::Str(Arc::new(config.model)));
+            result.insert("model".into(), Value::Str(Arc::new(config.model.clone())));
             result.insert("steps".into(), Value::Int(steps_taken));
             result.insert("message".into(), Value::Str(Arc::new(last_message)));
             result.insert("text".into(), Value::Str(Arc::new(final_text)));
+            result.insert("headers".into(), Value::Dict(Arc::new(final_headers)));
+            add_ai_envelope_fields(&mut result, &final_json, &config, true);
             result.insert("json".into(), final_json);
             result.insert("messages".into(), Value::Array(Arc::new(messages)));
             ai_ok_result(Value::Dict(Arc::new(result)))
@@ -2105,6 +2497,43 @@ mod tests {
         Value::Dict(Arc::new(options))
     }
 
+    fn ai_options_with_cassette_flags(
+        endpoint: &str,
+        model: &str,
+        mode: &str,
+        dir: &Path,
+        structured_errors: bool,
+        provider: &str,
+    ) -> Value {
+        let mut options = match ai_options_with_cassette(endpoint, model, mode, dir) {
+            Value::Dict(options) => (*options).clone(),
+            _ => unreachable!("helper returns dict"),
+        };
+        options.insert("structured_errors".into(), Value::Bool(structured_errors));
+        options.insert("provider".into(), str_value(provider));
+        Value::Dict(Arc::new(options))
+    }
+
+    fn result_ok_dict(value: Value) -> DictMap {
+        match value {
+            Value::Result { is_ok: true, value } => match *value {
+                Value::Dict(dict) => (*dict).clone(),
+                other => panic!("expected ok dict, got {:?}", other),
+            },
+            other => panic!("expected ok result, got {:?}", other),
+        }
+    }
+
+    fn result_err_dict(value: Value) -> DictMap {
+        match value {
+            Value::Result { is_ok: false, value } => match *value {
+                Value::Dict(dict) => (*dict).clone(),
+                other => panic!("expected err dict, got {:?}", other),
+            },
+            other => panic!("expected err result, got {:?}", other),
+        }
+    }
+
     fn clear_ai_cassette_env() {
         std::env::remove_var("KUJO_AI_RECORD");
         std::env::remove_var("KUJO_AI_REPLAY");
@@ -2345,11 +2774,194 @@ mod tests {
         let replayed = replay_ai_cassette("ai_chat", &temp_dir, &key)
             .expect("replay lookup should parse")
             .expect("cassette should be found");
-        assert_eq!(replayed.0, 200);
+        assert_eq!(replayed.status, 200);
         assert!(
-            matches!(replayed.3, Value::Dict(body) if matches!(body.get("ok"), Some(Value::Bool(true))))
+            matches!(replayed.json, Some(Value::Dict(body)) if matches!(body.get("ok"), Some(Value::Bool(true))))
         );
         let _ = fs::remove_dir_all(temp_dir);
+    }
+
+    #[test]
+    fn test_ai_success_envelope_extracts_usage_finish_reason_tool_calls_and_provider() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+        let result = handle(
+            "ai_chat",
+            &[
+                str_value("Hello model"),
+                ai_options_with_cassette_flags(
+                    endpoint,
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                    false,
+                    "mock-provider",
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        let result = result_ok_dict(result);
+
+        assert!(
+            matches!(result.get("message"), Some(Value::Str(message)) if message.as_ref() == "hello from cassette")
+        );
+        assert!(
+            matches!(result.get("provider"), Some(Value::Str(provider)) if provider.as_ref() == "mock-provider")
+        );
+        assert!(
+            matches!(result.get("finish_reason"), Some(Value::Str(reason)) if reason.as_ref() == "tool_calls")
+        );
+        assert!(matches!(result.get("usage"), Some(Value::Dict(usage))
+                if matches!(usage.get("prompt_tokens"), Some(Value::Int(7)))
+                    && matches!(usage.get("completion_tokens"), Some(Value::Int(5)))
+                    && matches!(usage.get("total_tokens"), Some(Value::Int(12)))));
+        assert!(matches!(result.get("tool_calls"), Some(Value::Array(calls))
+                if calls.len() == 1
+                    && matches!(&calls[0], Value::Dict(call)
+                        if matches!(call.get("id"), Some(Value::Str(id)) if id.as_ref() == "call_1")
+                            && matches!(call.get("name"), Some(Value::Str(name)) if name.as_ref() == "lookup")
+                            && matches!(call.get("arguments_json"), Some(Value::Str(args)) if args.contains("\"query\":\"kujo\"")))));
+    }
+
+    #[test]
+    fn test_ai_structured_http_error_rate_limit_and_backward_compat_string_error() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+        let plain = handle(
+            "ai_chat",
+            &[
+                str_value("Rate limit"),
+                ai_options_with_cassette(
+                    endpoint,
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        assert!(matches!(plain, Value::Result { is_ok: false, value }
+                if matches!(value.as_ref(), Value::Str(message)
+                    if message.contains("ai_chat failed with HTTP status 429"))));
+
+        let structured = handle(
+            "ai_chat",
+            &[
+                str_value("Rate limit"),
+                ai_options_with_cassette_flags(
+                    endpoint,
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                    true,
+                    "mock-provider",
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        let error = result_err_dict(structured);
+        assert!(
+            matches!(error.get("kind"), Some(Value::Str(kind)) if kind.as_ref() == "rate_limited")
+        );
+        assert!(matches!(error.get("http_status"), Some(Value::Int(429))));
+        assert!(matches!(error.get("retry_after_ms"), Some(Value::Int(3000))));
+        assert!(
+            matches!(error.get("provider_code"), Some(Value::Str(code)) if code.as_ref() == "rate_limit_exceeded")
+        );
+        assert!(
+            matches!(error.get("body_excerpt"), Some(Value::Str(excerpt)) if excerpt.contains("slow down"))
+        );
+    }
+
+    #[test]
+    fn test_ai_success_envelope_omits_usage_when_provider_omits_usage() {
+        let json = builtins::parse_json(r#"{"choices":[{"message":{"content":"ok"}}]}"#)
+            .expect("test JSON should parse");
+        assert!(extract_usage(&json).is_none());
+        assert!(matches!(extract_finish_reason(&json), Value::Null));
+    }
+
+    #[test]
+    fn test_ai_structured_decode_and_invalid_response_errors() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+
+        let decode = handle(
+            "ai_chat",
+            &[
+                str_value("Hello"),
+                ai_options_with_cassette_flags(
+                    endpoint,
+                    "gpt-mock",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                    true,
+                    "",
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        let decode = result_err_dict(decode);
+        assert!(
+            matches!(decode.get("kind"), Some(Value::Str(kind)) if kind.as_ref() == "decode_error")
+        );
+
+        let invalid = handle(
+            "ai_chat",
+            &[
+                str_value("Missing content"),
+                ai_options_with_cassette_flags(
+                    endpoint,
+                    "gpt-replay",
+                    "replay",
+                    &ai_replay_fixture_dir(),
+                    true,
+                    "",
+                ),
+            ],
+        )
+        .expect("ai_chat should return a value");
+        let invalid = result_err_dict(invalid);
+        assert!(
+            matches!(invalid.get("kind"), Some(Value::Str(kind)) if kind.as_ref() == "invalid_response")
+        );
+    }
+
+    #[test]
+    fn test_ai_structured_errors_redact_key_material() {
+        let config = AiRequestConfig {
+            endpoint: "https://api.example.test/v1/chat".to_string(),
+            model: "gpt-redact".to_string(),
+            api_key: Some("secret-token".to_string()),
+            timeout_seconds: 1.0,
+            headers: vec![("Authorization".to_string(), "Bearer secret-token".to_string())],
+            cassette: AiCassetteMode::Off,
+            structured_errors: true,
+            provider: String::new(),
+        };
+        let headers = DictMap::default();
+        let result = ai_http_status_error(
+            "ai_chat",
+            &config,
+            500,
+            &headers,
+            "{\"error\":{\"message\":\"secret-token leaked\",\"code\":\"secret-token\"}}",
+        );
+        let error = result_err_dict(result);
+        assert!(
+            matches!(error.get("kind"), Some(Value::Str(kind)) if kind.as_ref() == "http_error")
+        );
+        assert!(matches!(error.get("http_status"), Some(Value::Int(500))));
+        for key in ["message", "provider_code", "body_excerpt"] {
+            match error.get(key) {
+                Some(Value::Str(text)) => assert!(!text.contains("secret-token")),
+                Some(Value::Null) => {}
+                other => panic!("expected string/null for {}, got {:?}", key, other),
+            }
+        }
     }
 
     #[test]

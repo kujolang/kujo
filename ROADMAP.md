@@ -51,6 +51,7 @@ This VM test was not a release-execution detail. It proved the runtime could sil
 
 - Item 8 from `research/kujo-language-deep-dive/CORE_AI_NATIVE_ENHANCEMENTS_PROPOSAL.md` is implemented: `ai_request_hash(prompt_or_messages, options)` now provides deterministic, credential-independent request keys for future cassette replay and userland caching.
 - Item 2 from the same proposal is implemented: the four core `ai_*` helpers can now run against deterministic JSON cassettes in strict replay mode without opening a socket, with record and fallthrough mechanisms available for fixture refresh.
+- Item 1 from the same proposal is implemented: AI helper success values now expose normalized usage/finish/tool metadata, and typed error dictionaries are available behind opt-in `options.structured_errors`.
 - Remaining core AI-native items are tracked in that proposal's Progress Tracker and should continue in phase order without adding retry policy, provider routing, RAG, agents, MCP, eval, observability, or registry behavior to core.
 
 ## 2. Priority And Severity Definitions

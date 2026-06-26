@@ -438,8 +438,9 @@ The following compatibility classes apply to language and tooling behavior:
 - Existing builtin names and documented argument contracts are stable within a minor line unless a security fix requires immediate breakage.
 - High-level AI HTTP helpers (`ai_chat`, `ai_stream_chat`, `ai_embedding`, `ai_tool_loop`) follow deterministic contracts:
   - invalid argument/options shapes return `Value::Error` contract messages;
-  - transport/provider failures return `Result(Err("<message>"))`;
-  - successful responses return `Result(Ok(<dictionary payload>))`.
+  - transport/provider failures return `Result(Err("<message>"))` by default;
+  - `options.structured_errors: true` returns typed `Result(Err(<dictionary payload>))` failures;
+  - successful responses return `Result(Ok(<dictionary payload>))` with additive AI metadata such as `usage`, `finish_reason`, `tool_calls`, and `provider` when available.
 
 ```kujo
 opts := {"endpoint": "http://127.0.0.1:8080/v1/chat/completions", "model": "gpt-mock"}

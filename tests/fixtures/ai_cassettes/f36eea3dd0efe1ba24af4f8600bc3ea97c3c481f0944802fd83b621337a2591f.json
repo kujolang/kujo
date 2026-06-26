@@ -1,8 +1,8 @@
 {
   "_cassette_version": 1,
   "request_meta": {
-    "hash": "48499f3a82984bdc28b5adb997f76c33529c1f4592a0e60bdae5fd6136f8111e",
-    "surface": "ai_tool_loop",
+    "hash": "f36eea3dd0efe1ba24af4f8600bc3ea97c3c481f0944802fd83b621337a2591f",
+    "surface": "ai_chat",
     "endpoint": "http://127.0.0.1:1/v1/chat/completions",
     "model": "gpt-replay",
     "normalized": {
@@ -10,12 +10,11 @@
       "body": {
         "messages": [
           {
-            "content": "Plan this",
+            "content": "Missing content",
             "role": "user"
           }
         ],
-        "model": "gpt-replay",
-        "stream": false
+        "model": "gpt-replay"
       },
       "endpoint": "http://127.0.0.1:1/v1/chat/completions",
       "headers": [],
@@ -27,6 +26,6 @@
     "headers": {
       "content-type": "application/json"
     },
-    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"content\":\"tool loop done\"}}],\"usage\":{\"prompt_tokens\":9,\"completion_tokens\":4,\"total_tokens\":13}}"
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{}}]}"
   }
 }
