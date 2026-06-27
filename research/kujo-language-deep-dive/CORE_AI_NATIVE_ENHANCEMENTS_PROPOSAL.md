@@ -19,7 +19,7 @@
 | Item 7 — AI egress capability + endpoint allowlist | Completed | `da2e505` |
 | Item 8 — Deterministic request hashing / cache key | Completed | `1e669be` |
 | Item 9 — True streaming with a Kujo callback (or chunk iterator) | Completed | `f982539` |
-| Item 10 — Portable multimodal message builders | Pending | TBD |
+| Item 10 — Portable multimodal message builders | Completed | `57186d8` |
 
 This document specifies a set of additions to core Kujo that make the language meaningfully
 **more AI-native** by strengthening the runtime *mechanisms* every AI library needs — **without

@@ -59,7 +59,7 @@ This VM test was not a release-execution detail. It proved the runtime could sil
 - Item 7 from the same proposal is implemented: high-level AI helpers now use the separate `network-ai` / `--allow-ai` capability, and `KUJO_AI_ALLOWED_ENDPOINTS` can restrict approved provider endpoint prefixes.
 - Item 9 from the same proposal is implemented: `ai_stream_chat` now accepts an optional chunk callback with replay-backed ordered delivery and `false` cancellation while preserving aggregate return behavior when omitted.
 - Item 10 from the same proposal is implemented: `ai_text`, `ai_image_url`, and `ai_message` now build portable text/image chat messages accepted by the AI helpers without adding provider policy.
-- Remaining core AI-native items are tracked in that proposal's Progress Tracker and should continue in phase order without adding retry policy, provider routing, RAG, agents, MCP, eval, observability, or registry behavior to core.
+- Items 1-10 in that proposal are now implemented on the core AI-native enhancement branch; future work should keep the same non-goals unless a new approved proposal changes scope.
 
 ## 2. Priority And Severity Definitions
 
