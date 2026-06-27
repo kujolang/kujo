@@ -81,6 +81,7 @@ else
   run_cmd cargo test --test readme_contracts
   run_cmd cargo test --test docs_policy_consistency_contract
   run_cmd cargo test --test enterprise_verify_contract
+  run_cmd cargo test --test ai_replay_hermeticity_contract
   run_cmd cargo test --test docs_examples
 fi
 

@@ -34,6 +34,7 @@ The full wrapper covers:
 - `bash scripts/release_gate.sh --full`
 - `cargo run -- check examples/ai_enterprise_replay_showcase.kujo`
 - strict replay execution of `examples/ai_enterprise_replay_showcase.kujo`
+- `cargo test --test ai_replay_hermeticity_contract`
 - final `bash scripts/repo_hygiene_audit.sh`
 
 For quick iteration on docs, security posture, replay showcase, and README contracts:
@@ -59,6 +60,8 @@ cargo run -- run examples/ai_enterprise_replay_showcase.kujo
 ```
 
 Strict replay resolves cassettes before destination-policy checks or HTTP client creation. Replay misses return deterministic `kind:"replay_miss"` failures instead of falling through to the network.
+
+The regression suite `cargo test --test ai_replay_hermeticity_contract` verifies this by pointing a missing cassette at a loopback endpoint and asserting the result is a replay miss rather than a socket failure.
 
 Do not set `KUJO_AI_REPLAY_MODE=fallthrough` in CI for deterministic AI tests. Fallthrough is only for intentionally recording or refreshing fixtures.
 

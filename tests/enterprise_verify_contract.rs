@@ -43,6 +43,7 @@ fn enterprise_verify_minimal_dry_run_emits_expected_commands() {
         "[dry-run] cargo test --test readme_contracts",
         "[dry-run] cargo test --test docs_policy_consistency_contract",
         "[dry-run] cargo test --test enterprise_verify_contract",
+        "[dry-run] cargo test --test ai_replay_hermeticity_contract",
         "[dry-run] cargo test --test docs_examples",
         "[dry-run] cargo run -- check examples/ai_enterprise_replay_showcase.kujo",
         "[dry-run] KUJO_AI_REPLAY=tests/fixtures/ai_cassettes KUJO_AI_REPLAY_MODE=strict cargo run -- run examples/ai_enterprise_replay_showcase.kujo",

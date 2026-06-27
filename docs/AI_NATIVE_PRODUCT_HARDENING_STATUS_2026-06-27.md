@@ -10,6 +10,7 @@ Last updated: 2026-06-27
 - Added `docs/SECURE_AI_SCRIPTING.md` for operator-facing secure AI usage.
 - Added `docs/SECURITY_RESPONSE.md` for vulnerability response expectations.
 - Added `examples/ai_enterprise_replay_showcase.kujo`, a replay-only showcase for secrets, request hashes, schema validation, token budgeting, streaming callbacks, and multimodal message construction.
+- Added `tests/ai_replay_hermeticity_contract.rs` to prove strict replay misses do not fall through to a live socket and committed cassettes do not contain common credential markers.
 - Added contract coverage for the enterprise verification wrapper and README/readiness links.
 
 ## Current Product Answer
