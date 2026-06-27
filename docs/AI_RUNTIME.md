@@ -78,6 +78,24 @@ result := ai_stream_chat("Hello", options, on_chunk)
 
 The callback receives the text delta and a raw chunk dictionary shaped like a one-choice provider response. Returning `false` cancels delivery of later chunks; any other return value continues. The returned value is still the normal `Result.ok` dictionary with `chunks`, `text`, `json`, `headers`, and available `usage`, `finish_reason`, and `provider` metadata. Replay cassettes deliver chunks in their recorded order and never open a socket.
 
+## Building Messages
+
+Use the pure message builders to construct portable OpenAI-compatible text and image inputs without hand-writing nested dictionaries:
+
+```kujo
+blocks := [
+    ai_text("Describe this image."),
+    ai_image_url("https://example.test/screenshot.png", "low")
+]
+
+messages := [
+    ai_message("system", "Answer in one sentence."),
+    ai_message("user", blocks)
+]
+```
+
+`ai_text(content)` returns `{type:"text", text:content}`. `ai_image_url(url, detail?)` returns `{type:"image_url", image_url:{url, detail?}}`. `ai_message(role, content_or_blocks)` returns `{role, content}` where content is either a string or an array of content blocks. The AI helpers accept these messages unchanged; the builders perform no I/O and have no capability gate.
+
 ## Egress Controls
 
 The high-level AI helpers use the `network-ai` capability. In `--untrusted` mode, grant them with `--allow-ai`; `--allow-net-client` grants general HTTP/TCP/UDP client APIs but does not unlock AI helpers.

@@ -520,6 +520,9 @@ impl Interpreter {
             "vec_top_k",
             "ai_count_tokens",
             "ai_fit_context",
+            "ai_text",
+            "ai_image_url",
+            "ai_message",
             // String functions
             "len",
             "__vm_for_iterable",
@@ -943,6 +946,10 @@ impl Interpreter {
             "ai_fit_context".to_string(),
             Value::NativeFunction("ai_fit_context".to_string()),
         );
+        self.env.define("ai_text".to_string(), Value::NativeFunction("ai_text".to_string()));
+        self.env
+            .define("ai_image_url".to_string(), Value::NativeFunction("ai_image_url".to_string()));
+        self.env.define("ai_message".to_string(), Value::NativeFunction("ai_message".to_string()));
 
         // String functions
         self.env.define("len".to_string(), Value::NativeFunction("len".to_string()));
@@ -2812,6 +2819,17 @@ impl Interpreter {
                 2,
                 3,
                 vec!["messages".to_string(), "max_tokens".to_string(), "options".to_string()],
+            ),
+            "ai_text" => CallableArity::exact("ai_text", vec!["content".to_string()]),
+            "ai_image_url" => CallableArity::range(
+                "ai_image_url",
+                1,
+                2,
+                vec!["url".to_string(), "detail".to_string()],
+            ),
+            "ai_message" => CallableArity::exact(
+                "ai_message",
+                vec!["role".to_string(), "content_or_blocks".to_string()],
             ),
             "json_schema_validate" => CallableArity::exact(
                 "json_schema_validate",

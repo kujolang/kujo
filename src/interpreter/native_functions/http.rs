@@ -406,16 +406,127 @@ fn parse_ai_request_config_inner(
     })
 }
 
-fn ai_message(role: &str, content: impl Into<String>) -> Value {
+fn ai_message_value(role: &str, content: Value) -> Value {
     let mut message = DictMap::default();
     message.insert("role".into(), Value::Str(Arc::new(role.to_string())));
-    message.insert("content".into(), Value::Str(Arc::new(content.into())));
+    message.insert("content".into(), content);
     Value::Dict(Arc::new(message))
+}
+
+fn ai_text_message_value(role: &str, content: impl Into<String>) -> Value {
+    ai_message_value(role, Value::Str(Arc::new(content.into())))
+}
+
+fn ai_text_block(content: impl Into<String>) -> Value {
+    let mut block = DictMap::default();
+    block.insert("type".into(), Value::Str(Arc::new("text".to_string())));
+    block.insert("text".into(), Value::Str(Arc::new(content.into())));
+    Value::Dict(Arc::new(block))
+}
+
+fn ai_image_url_block(url: impl Into<String>, detail: Option<String>) -> Value {
+    let mut image_url = DictMap::default();
+    image_url.insert("url".into(), Value::Str(Arc::new(url.into())));
+    if let Some(detail) = detail {
+        image_url.insert("detail".into(), Value::Str(Arc::new(detail)));
+    }
+
+    let mut block = DictMap::default();
+    block.insert("type".into(), Value::Str(Arc::new("image_url".to_string())));
+    block.insert("image_url".into(), Value::Dict(Arc::new(image_url)));
+    Value::Dict(Arc::new(block))
+}
+
+fn validate_ai_content_block(block: &Value, surface: &str, path: &str) -> Result<Value, Value> {
+    let dict = match block {
+        Value::Dict(dict) => dict,
+        _ => {
+            return Err(Value::Error(format!(
+                "{}() requires {} to be a content block dictionary",
+                surface, path
+            )));
+        }
+    };
+    let block_type = match dict.get("type") {
+        Some(Value::Str(block_type)) if !block_type.is_empty() => block_type.as_ref().clone(),
+        _ => {
+            return Err(Value::Error(format!(
+                "{}() requires {}.type to be a non-empty string",
+                surface, path
+            )));
+        }
+    };
+
+    match block_type.as_str() {
+        "text" => match dict.get("text") {
+            Some(Value::Str(_)) => Ok(block.clone()),
+            _ => Err(Value::Error(format!(
+                "{}() requires {}.text to be a string for text content blocks",
+                surface, path
+            ))),
+        },
+        "image_url" => {
+            let image_url = match dict.get("image_url") {
+                Some(Value::Dict(image_url)) => image_url,
+                _ => {
+                    return Err(Value::Error(format!(
+                        "{}() requires {}.image_url to be a dictionary",
+                        surface, path
+                    )));
+                }
+            };
+            match image_url.get("url") {
+                Some(Value::Str(url)) if !url.is_empty() => {}
+                _ => {
+                    return Err(Value::Error(format!(
+                        "{}() requires {}.image_url.url to be a non-empty string",
+                        surface, path
+                    )));
+                }
+            }
+            if !matches!(image_url.get("detail"), None | Some(Value::Str(_))) {
+                return Err(Value::Error(format!(
+                    "{}() requires {}.image_url.detail to be a string when provided",
+                    surface, path
+                )));
+            }
+            Ok(block.clone())
+        }
+        _ => Err(Value::Error(format!(
+            "{}() does not support {} content block type '{}'",
+            surface, path, block_type
+        ))),
+    }
+}
+
+fn normalize_ai_message_content(
+    content: &Value,
+    surface: &str,
+    path: &str,
+) -> Result<Value, Value> {
+    match content {
+        Value::Str(_) => Ok(content.clone()),
+        Value::Array(blocks) => {
+            let mut normalized = Vec::with_capacity(blocks.len());
+            for (index, block) in blocks.iter().enumerate() {
+                normalized.push(validate_ai_content_block(
+                    block,
+                    surface,
+                    &format!("{}[{}]", path, index),
+                )?);
+            }
+            Ok(Value::Array(Arc::new(normalized)))
+        }
+        _ => Err(Value::Error(format!(
+            "{}() requires {} to be a string or array of content blocks",
+            surface, path
+        ))),
+    }
 }
 
 fn parse_ai_messages(input: &Value, surface: &str) -> Result<Vec<Value>, Value> {
     match input {
-        Value::Str(prompt) => Ok(vec![ai_message("user", prompt.as_ref().clone())]),
+        Value::Str(prompt) => Ok(vec![ai_text_message_value("user", prompt.as_ref().clone())]),
         Value::Array(messages) => {
             let mut normalized = Vec::new();
             for (index, message) in messages.iter().enumerate() {
@@ -440,16 +551,20 @@ fn parse_ai_messages(input: &Value, surface: &str) -> Result<Vec<Value>, Value> 
                 };
 
                 let content = match dict.get("content") {
-                    Some(Value::Str(content)) => content.as_ref().clone(),
-                    _ => {
+                    Some(content) => normalize_ai_message_content(
+                        content,
+                        surface,
+                        &format!("messages[{}].content", index),
+                    )?,
+                    None => {
                         return Err(Value::Error(format!(
-                            "{}() requires messages[{}].content to be a string",
+                            "{}() requires messages[{}].content to be a string or content block array",
                             surface, index
                         )));
                     }
                 };
 
-                normalized.push(ai_message(&role, content));
+                normalized.push(ai_message_value(&role, content));
             }
             Ok(normalized)
         }
@@ -1856,6 +1971,72 @@ pub fn handle_with_interpreter(
             }
         }
 
+        "ai_text" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error(format!(
+                    "ai_text() expects 1 argument (content), got {}",
+                    arg_values.len()
+                )));
+            }
+            match &arg_values[0] {
+                Value::Str(content) => ai_text_block(content.as_ref().clone()),
+                _ => Value::Error("ai_text() requires content to be a string".to_string()),
+            }
+        }
+
+        "ai_image_url" => {
+            if !(1..=2).contains(&arg_values.len()) {
+                return Some(Value::Error(format!(
+                    "ai_image_url() expects 1 or 2 arguments (url, detail?), got {}",
+                    arg_values.len()
+                )));
+            }
+            let url = match &arg_values[0] {
+                Value::Str(url) if !url.is_empty() => url.as_ref().clone(),
+                _ => {
+                    return Some(Value::Error(
+                        "ai_image_url() requires url to be a non-empty string".to_string(),
+                    ));
+                }
+            };
+            let detail = match arg_values.get(1) {
+                Some(Value::Str(detail)) => Some(detail.as_ref().clone()),
+                Some(_) => {
+                    return Some(Value::Error(
+                        "ai_image_url() requires detail to be a string when provided".to_string(),
+                    ));
+                }
+                None => None,
+            };
+            ai_image_url_block(url, detail)
+        }
+
+        "ai_message" => {
+            if arg_values.len() != 2 {
+                return Some(Value::Error(format!(
+                    "ai_message() expects 2 arguments (role, content_or_blocks), got {}",
+                    arg_values.len()
+                )));
+            }
+            let role = match &arg_values[0] {
+                Value::Str(role) if !role.is_empty() => role.as_ref().clone(),
+                _ => {
+                    return Some(Value::Error(
+                        "ai_message() requires role to be a non-empty string".to_string(),
+                    ));
+                }
+            };
+            let content = match normalize_ai_message_content(
+                &arg_values[1],
+                "ai_message",
+                "content_or_blocks",
+            ) {
+                Ok(content) => content,
+                Err(error) => return Some(error),
+            };
+            ai_message_value(&role, content)
+        }
+
         "ai_chat" => {
             if arg_values.len() != 2 {
                 return Some(Value::Error(format!(
@@ -2211,7 +2392,7 @@ pub fn handle_with_interpreter(
                 final_headers = response.headers;
                 final_json = response_json.clone();
                 last_message = extract_chat_content(&response_json).unwrap_or_default();
-                messages.push(ai_message("assistant", last_message.clone()));
+                messages.push(ai_text_message_value("assistant", last_message.clone()));
 
                 let tool_call_names = extract_tool_call_names(&response_json);
                 if tool_call_names.is_empty() {
@@ -2860,6 +3041,16 @@ mod tests {
         }
     }
 
+    fn result_err_string(value: Value) -> String {
+        match value {
+            Value::Result { is_ok: false, value } => match *value {
+                Value::Str(message) => message.as_ref().clone(),
+                other => panic!("expected err string, got {:?}", other),
+            },
+            other => panic!("expected err result, got {:?}", other),
+        }
+    }
+
     fn clear_ai_cassette_env() {
         std::env::remove_var("KUJO_AI_RECORD");
         std::env::remove_var("KUJO_AI_REPLAY");
@@ -2975,6 +3166,95 @@ mod tests {
             parse_ai_request_config(&options, "ai_chat").expect("secret api_key should parse");
 
         assert_eq!(config.api_key.as_deref(), Some("sk-revealed-for-request"));
+    }
+
+    #[test]
+    fn test_ai_message_builders_create_multimodal_shape() {
+        let text = handle("ai_text", &[str_value("Describe this")])
+            .expect("ai_text should return a value");
+        let image =
+            handle("ai_image_url", &[str_value("https://example.test/cat.png"), str_value("low")])
+                .expect("ai_image_url should return a value");
+        let message = handle(
+            "ai_message",
+            &[str_value("user"), Value::Array(Arc::new(vec![text.clone(), image.clone()]))],
+        )
+        .expect("ai_message should return a value");
+
+        let Value::Dict(message) = message else {
+            panic!("ai_message should return a dictionary");
+        };
+        assert!(matches!(message.get("role"), Some(Value::Str(role)) if role.as_ref() == "user"));
+        let Some(Value::Array(blocks)) = message.get("content") else {
+            panic!("ai_message content should be an array");
+        };
+        assert_eq!(blocks.len(), 2);
+        assert!(matches!(&blocks[0], Value::Dict(block)
+            if matches!(block.get("type"), Some(Value::Str(kind)) if kind.as_ref() == "text")
+                && matches!(block.get("text"), Some(Value::Str(content)) if content.as_ref() == "Describe this")));
+        assert!(matches!(&blocks[1], Value::Dict(block)
+            if matches!(block.get("type"), Some(Value::Str(kind)) if kind.as_ref() == "image_url")
+                && matches!(block.get("image_url"), Some(Value::Dict(image_url))
+                    if matches!(image_url.get("url"), Some(Value::Str(url)) if url.as_ref() == "https://example.test/cat.png")
+                        && matches!(image_url.get("detail"), Some(Value::Str(detail)) if detail.as_ref() == "low"))));
+    }
+
+    #[test]
+    fn test_parse_ai_messages_accepts_multimodal_blocks_unchanged() {
+        let text = ai_text_block("Summarize the image");
+        let image = ai_image_url_block("https://example.test/image.png", Some("high".to_string()));
+        let message =
+            ai_message_value("user", Value::Array(Arc::new(vec![text.clone(), image.clone()])));
+
+        let messages = parse_ai_messages(&Value::Array(Arc::new(vec![message])), "ai_chat")
+            .expect("multimodal message should parse");
+
+        assert_eq!(messages.len(), 1);
+        let Value::Dict(parsed) = &messages[0] else {
+            panic!("parsed message should be a dictionary");
+        };
+        assert!(matches!(parsed.get("role"), Some(Value::Str(role)) if role.as_ref() == "user"));
+        let Some(Value::Array(blocks)) = parsed.get("content") else {
+            panic!("parsed content should be an array");
+        };
+        assert_eq!(blocks.len(), 2);
+        assert!(matches!(&blocks[0], Value::Dict(block)
+            if matches!(block.get("type"), Some(Value::Str(kind)) if kind.as_ref() == "text")
+                && matches!(block.get("text"), Some(Value::Str(content)) if content.as_ref() == "Summarize the image")));
+        assert!(matches!(&blocks[1], Value::Dict(block)
+            if matches!(block.get("type"), Some(Value::Str(kind)) if kind.as_ref() == "image_url")
+                && matches!(block.get("image_url"), Some(Value::Dict(image_url))
+                    if matches!(image_url.get("url"), Some(Value::Str(url)) if url.as_ref() == "https://example.test/image.png")
+                        && matches!(image_url.get("detail"), Some(Value::Str(detail)) if detail.as_ref() == "high"))));
+    }
+
+    #[test]
+    fn test_ai_message_builders_are_accepted_by_ai_helpers_before_replay() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+        std::env::set_var(network_policy::OUTBOUND_DESTINATION_POLICY_ENV, "deny_private");
+        let replay_dir = unique_temp_dir("kujo_ai_multimodal_replay");
+        fs::create_dir_all(&replay_dir).expect("temp replay dir should be created");
+        let endpoint = "http://127.0.0.1:1/v1/chat/completions";
+
+        let message = ai_message_value(
+            "user",
+            Value::Array(Arc::new(vec![
+                ai_text_block("Describe this"),
+                ai_image_url_block("https://example.test/cat.png", None),
+            ])),
+        );
+        let options = ai_options_with_cassette(endpoint, "gpt-replay", "replay", &replay_dir);
+
+        let chat =
+            handle("ai_chat", &[Value::Array(Arc::new(vec![message.clone()])), options.clone()])
+                .expect("ai_chat should return a value");
+        assert!(result_err_string(chat).contains("kind:\"replay_miss\""));
+
+        let tool_loop = handle("ai_tool_loop", &[Value::Array(Arc::new(vec![message])), options])
+            .expect("ai_tool_loop should return a value");
+        assert!(result_err_string(tool_loop).contains("kind:\"replay_miss\""));
+        clear_ai_cassette_env();
     }
 
     #[test]
@@ -3276,7 +3556,7 @@ mod tests {
             payload.insert("model".into(), str_value("gpt-redact"));
             payload.insert(
                 "messages".into(),
-                Value::Array(Arc::new(vec![ai_message("user", "Hello")])),
+                Value::Array(Arc::new(vec![ai_text_message_value("user", "Hello")])),
             );
             Value::Dict(Arc::new(payload))
         };

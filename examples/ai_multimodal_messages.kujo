@@ -1,0 +1,25 @@
+func kv(label, value) {
+    print(label + ": " + to_string(value))
+}
+
+let blocks := [
+    ai_text("Describe this image for release notes."),
+    ai_image_url("https://example.test/assets/screenshot.png", "low")
+]
+
+let messages := [
+    ai_message("system", "Answer with one concise sentence."),
+    ai_message("user", blocks)
+]
+
+let options := {
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "cassette": {
+        "mode": "replay",
+        "dir": "tests/fixtures/ai_cassettes"
+    }
+}
+
+kv("messages", messages)
+kv("request_hash", ai_request_hash(messages, options))

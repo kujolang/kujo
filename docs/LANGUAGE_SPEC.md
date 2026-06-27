@@ -442,6 +442,7 @@ The following compatibility classes apply to language and tooling behavior:
   - `options.structured_errors: true` returns typed `Result(Err(<dictionary payload>))` failures;
   - successful responses return `Result(Ok(<dictionary payload>))` with additive AI metadata such as `usage`, `finish_reason`, `tool_calls`, and `provider` when available.
   - `ai_stream_chat` may receive an optional callback `(delta, raw_chunk)`; returning `false` cancels later chunk delivery while preserving the aggregate return shape.
+  - `ai_text`, `ai_image_url`, and `ai_message` build pure, capability-free message dictionaries accepted by AI helpers.
 
 ```kujo
 opts := {"endpoint": "http://127.0.0.1:8080/v1/chat/completions", "model": "gpt-mock"}

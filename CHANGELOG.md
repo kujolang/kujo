@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `secret`, `reveal`, and `is_secret` for redacted runtime secret values, including AI `options.api_key` support and cassette/error redaction.
 - Added a dedicated `network-ai` / `--allow-ai` capability for high-level AI helpers plus `KUJO_AI_ALLOWED_ENDPOINTS` endpoint allowlist enforcement.
 - Added optional `ai_stream_chat(prompt_or_messages, options, on_chunk)` chunk callbacks with replay-backed ordered delivery and `false` cancellation.
+- Added pure multimodal AI message builders `ai_text`, `ai_image_url`, and `ai_message`.
 
 ## [1.0.0] - 2026-06-19
 

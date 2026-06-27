@@ -51,6 +51,12 @@ Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
 - `ai_fit_context(messages, max_tokens, options?)` drops the oldest non-system messages until the estimated count fits. It never drops system messages and preserves the last user message. If the minimum preserved context is still over budget, it returns it with `fits: false`.
 - Text inputs are capped at `2,000,000` characters and message arrays at `100,000` messages. These helpers have no capability gate and perform no I/O.
 
+AI message builder contract (`ai_text` / `ai_image_url` / `ai_message`):
+
+- `ai_text(content)` builds a text content block.
+- `ai_image_url(url, detail?)` builds an image URL content block with optional provider detail.
+- `ai_message(role, content_or_blocks)` builds a chat message from a string or content block array. These helpers are pure, capability-free, and produce shapes accepted by the AI HTTP helpers.
+
 Secret redaction contract (`secret` / `reveal` / `is_secret`):
 
 - `secret(value)` wraps a string in a redacted runtime value. Printing, debug formatting, JSON/TOML/YAML/CSV serialization, errors, and AI cassette request metadata render secrets as `***` or `Secret(***)`.
@@ -89,6 +95,9 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `vec_top_k` | `vec_top_k(query, matrix, k)` | exact 3 | array | Value::Error on invalid args/types, non-finite inputs/results, matrix row dimension mismatch, negative `k`, or resource-limit violations. | `none` | `matches := vec_top_k([1, 0], [[1, 0], [0, 1]], 1)` |
 | `ai_count_tokens` | `ai_count_tokens(text_or_messages, options?)` | 1..=2 | int | Value::Error on invalid args/types, invalid options, malformed messages, or resource-limit violations. | `none` | `tokens := ai_count_tokens("Hello Kujo", {"model":"gpt-4o"})` |
 | `ai_fit_context` | `ai_fit_context(messages, max_tokens, options?)` | 2..=3 | dict | Value::Error on invalid args/types, invalid options, malformed messages, negative `max_tokens`, or resource-limit violations. | `none` | `fit := ai_fit_context(messages, 2000, {"model":"gpt-4o"})` |
+| `ai_text` | `ai_text(content)` | exact 1 | dict | Value::Error on invalid args/types. | `none` | `block := ai_text("Describe this image")` |
+| `ai_image_url` | `ai_image_url(url, detail?)` | 1..=2 | dict | Value::Error on invalid args/types or empty URL. | `none` | `block := ai_image_url("https://example.test/image.png", "low")` |
+| `ai_message` | `ai_message(role, content_or_blocks)` | exact 2 | dict | Value::Error on invalid role, content type, or malformed content block arrays. | `none` | `message := ai_message("user", [ai_text("Hi")])` |
 | `len` | `len(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := len(...)` |
 | `substring` | `substring(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substring(...)` |
 | `substr` | `substr(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substr(...)` |
