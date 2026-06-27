@@ -103,6 +103,106 @@ fn build_runtime_workload_source() -> String {
     source
 }
 
+fn build_ai_request_hash_workload_source() -> String {
+    let mut source = String::new();
+    source.push_str("messages := [\n");
+    for i in 0..96 {
+        source.push_str(&format!(
+            "  ai_message(\"user\", \"release note item {} with deterministic replay metadata\"),\n",
+            i
+        ));
+    }
+    source.push_str("]\n");
+    source.push_str(
+        "options := {\"endpoint\": \"https://api.example.test/v1/chat/completions\", \"model\": \"gpt-bench\", \"headers\": {\"X-Trace\": \"bench\"}}\n\
+         latest := \"\"\n\
+         for i in range(24) {\n\
+             latest := ai_request_hash(messages, options)\n\
+         }\n\
+         final_value := latest\n",
+    );
+    source
+}
+
+fn build_json_schema_workload_source() -> String {
+    let mut source = String::new();
+    source.push_str("items := [\n");
+    for i in 0..64 {
+        source.push_str(&format!(
+            "  {{\"id\": {}, \"name\": \"item-{}\", \"active\": true, \"scores\": [{}, {}, {}]}},\n",
+            i,
+            i,
+            i,
+            i + 1,
+            i + 2
+        ));
+    }
+    source.push_str("]\n");
+    source.push_str(
+        "payload := {\"items\": items, \"meta\": {\"version\": 1, \"source\": \"bench\"}}\n\
+         schema := {\n\
+             \"type\": \"object\",\n\
+             \"required\": [\"items\", \"meta\"],\n\
+             \"properties\": {\n\
+                 \"items\": {\"type\": \"array\", \"minItems\": 32, \"items\": {\"type\": \"object\", \"required\": [\"id\", \"name\", \"scores\"], \"properties\": {\"id\": {\"type\": \"number\"}, \"name\": {\"type\": \"string\", \"pattern\": \"^item-\"}, \"active\": {\"type\": \"boolean\"}, \"scores\": {\"type\": \"array\", \"items\": {\"type\": \"number\"}}}}},\n\
+                 \"meta\": {\"type\": \"object\", \"required\": [\"version\"], \"properties\": {\"version\": {\"const\": 1}, \"source\": {\"enum\": [\"bench\", \"fixture\"]}}}\n\
+             }\n\
+         }\n\
+         result := {}\n\
+         for i in range(16) {\n\
+             result := json_schema_validate(payload, schema)\n\
+         }\n\
+         final_value := result[\"valid\"]\n",
+    );
+    source
+}
+
+fn build_vec_top_k_workload_source() -> String {
+    let mut source = String::new();
+    source.push_str("query := [1.0, 0.5, 0.25, 0.75, 0.125, 0.625, 0.875, 0.375]\n");
+    source.push_str("vectors := [\n");
+    for row in 0..128 {
+        source.push_str("  [");
+        for col in 0..8 {
+            if col > 0 {
+                source.push_str(", ");
+            }
+            let value = ((row + 1) * (col + 3)) as f64 / 97.0;
+            source.push_str(&format!("{value:.6}"));
+        }
+        source.push_str("],\n");
+    }
+    source.push_str("]\n");
+    source.push_str(
+        "matches := []\n\
+         for i in range(32) {\n\
+             matches := vec_top_k(query, vectors, 8)\n\
+         }\n\
+         final_value := len(matches)\n",
+    );
+    source
+}
+
+fn build_ai_fit_context_workload_source() -> String {
+    let mut source = String::new();
+    source.push_str("messages := [ai_message(\"system\", \"Keep release evidence concise.\"),\n");
+    for i in 0..96 {
+        source.push_str(&format!(
+            "  ai_message(\"user\", \"Context item {} covering security, replay, schema validation, and product posture.\"),\n",
+            i
+        ));
+    }
+    source.push_str("]\n");
+    source.push_str(
+        "fit := {}\n\
+         for i in range(32) {\n\
+             fit := ai_fit_context(messages, 512, {\"model\": \"gpt-bench\"})\n\
+         }\n\
+         final_value := fit[\"est_tokens\"]\n",
+    );
+    source
+}
+
 fn bench_lexer(c: &mut Criterion) {
     let large_source = build_large_lexer_source(6_000);
     let many_tokens_source = build_many_tokens_source(3_500);
@@ -557,12 +657,52 @@ fn bench_static_server(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_ai_native_helpers(c: &mut Criterion) {
+    let workloads = [
+        ("ai_request_hash_large_messages", build_ai_request_hash_workload_source()),
+        ("json_schema_validate_nested_objects", build_json_schema_workload_source()),
+        ("vec_top_k_embedding_batch", build_vec_top_k_workload_source()),
+        ("ai_fit_context_large_prompt_corpus", build_ai_fit_context_workload_source()),
+    ];
+
+    let compiled: Vec<_> = workloads
+        .into_iter()
+        .map(|(name, source)| {
+            let stmts = parse_program(&source);
+            let mut compiler = Compiler::new();
+            let chunk =
+                compiler.compile(&stmts).expect("AI-native benchmark workload should compile");
+            (name, chunk)
+        })
+        .collect();
+
+    let mut group = c.benchmark_group("ai_native_helpers");
+    for (name, chunk) in compiled {
+        group.bench_function(name, |b| {
+            b.iter_batched(
+                VM::new,
+                |mut vm| {
+                    vm.set_jit_enabled(false);
+                    configure_vm_globals(&mut vm);
+                    let value = vm
+                        .execute(chunk.clone())
+                        .expect("AI-native benchmark workload should execute");
+                    black_box(value);
+                },
+                BatchSize::SmallInput,
+            );
+        });
+    }
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_lexer,
     bench_parser,
     bench_interpreter,
     bench_vm,
+    bench_ai_native_helpers,
     bench_module_resolution,
     bench_static_server
 );

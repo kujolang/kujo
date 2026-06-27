@@ -76,6 +76,16 @@ Current generated evidence lives under `docs/generated/`:
 
 Regenerate these through their scripts when the underlying source or checklist state changes, then rerun the relevant contract tests.
 
+## Performance Evidence
+
+AI-native pure-helper benchmarks are available as internal regression signals:
+
+```bash
+cargo bench --bench v1_perf_benchmarks -- ai_native_helpers --noplot --sample-size 10 --warm-up-time 0.5 --measurement-time 1
+```
+
+The group covers deterministic request hashing, schema validation, vector top-k scoring, and context fitting. Do not publish broad performance claims from this filtered run without preserving raw artifacts and environment details under the benchmark publication policy.
+
 ## Artifact Readiness
 
 Release artifact readiness still depends on:
