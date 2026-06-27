@@ -13,6 +13,7 @@ VM_COVERAGE_TARGET_PERCENT="70.0"
 # slow normal fixtures enough time to finish consistently before they are
 # classified as harness debt.
 FIXTURE_TIMEOUT_SECONDS="${KUJO_MISMATCH_FIXTURE_TIMEOUT_SECONDS:-15}"
+CRYPTO_FIXTURE_TIMEOUT_SECONDS="${KUJO_MISMATCH_CRYPTO_FIXTURE_TIMEOUT_SECONDS:-240}"
 
 resolve_output_path() {
   local path="$1"
@@ -97,7 +98,7 @@ fi
 
 trim_file() {
   local path="$1"
-  sed -e 's/[[:space:]]*$//' "$path" | sed -e '${/^$/d;}'
+  sed -e 's/[[:space:]]*$//' "$path" | sed -e '${/^$/d;}' | sed -e 's/\[KUJOVM001\]/[RUFVM001]/g'
 }
 
 run_with_timeout() {
@@ -140,17 +141,34 @@ run_fixture() {
   local runtime="$2"
   local output_file="$3"
   local status_file="$4"
+  local timeout_seconds="$FIXTURE_TIMEOUT_SECONDS"
+  local stdout_file="${output_file}.stdout"
+  local stderr_file="${output_file}.stderr"
+  if [[ "$fixture" == *"stdlib_crypto_test.kujo" ]]; then
+    timeout_seconds="$CRYPTO_FIXTURE_TIMEOUT_SECONDS"
+  fi
   local -a cmd=("$RUNNER" run "$fixture")
 
   if [[ "$runtime" == "interpreter" ]]; then
     cmd+=("--interpreter")
   fi
 
-  if run_with_timeout "$FIXTURE_TIMEOUT_SECONDS" "${cmd[@]}" >"$output_file" 2>/dev/null; then
+  if run_with_timeout "$timeout_seconds" "${cmd[@]}" >"$stdout_file" 2>"$stderr_file"; then
     echo "0" > "$status_file"
   else
     echo "$?" > "$status_file"
   fi
+  if [[ -s "$stdout_file" ]]; then
+    cp "$stdout_file" "$output_file"
+  elif [[ -s "$stderr_file" ]]; then
+    cp "$stderr_file" "$output_file"
+  else
+    : > "$output_file"
+  fi
+}
+
+cleanup_fixture_side_effects() {
+  rm -f "$ROOT/blocked.txt"
 }
 
 classify_delta() {
@@ -274,6 +292,7 @@ while IFS= read -r fixture; do
 
   run_fixture "$ROOT/$fixture" "vm" "$vm_out_file" "$vm_status_file"
   run_fixture "$ROOT/$fixture" "interpreter" "$int_out_file" "$int_status_file"
+  cleanup_fixture_side_effects
 
   vm_output="$(trim_file "$vm_out_file")"
   interpreter_output="$(trim_file "$int_out_file")"

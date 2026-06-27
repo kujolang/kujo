@@ -32,9 +32,12 @@ pub mod io;
 pub mod json;
 pub mod math;
 pub mod network;
+pub mod schema;
 pub mod strings;
 pub mod system;
+pub mod token;
 pub mod type_ops;
+pub mod vector;
 
 use super::{Interpreter, Value};
 
@@ -151,6 +154,12 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
     if let Some(result) = math::handle(canonical_name, arg_values) {
         return result;
     }
+    if let Some(result) = vector::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = token::handle(canonical_name, arg_values) {
+        return result;
+    }
     if let Some(result) = strings::handle(canonical_name, arg_values) {
         return result;
     }
@@ -163,10 +172,13 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
     if let Some(result) = filesystem::handle(interp, canonical_name, arg_values) {
         return result;
     }
-    if let Some(result) = http::handle(canonical_name, arg_values) {
+    if let Some(result) = http::handle_with_interpreter(interp, canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = json::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = schema::handle(canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = crypto::handle(canonical_name, arg_values) {
@@ -289,6 +301,9 @@ mod tests {
             "to_int",
             "to_float",
             "to_string",
+            "secret",
+            "reveal",
+            "is_secret",
             "to_bool",
             "bytes",
             "Set",
@@ -5586,19 +5601,27 @@ mod tests {
 
         client_thread.join().expect("tcp client thread should complete");
 
-        let Some(udp_port) = available_udp_port() else {
+        if available_udp_port().is_none() {
             eprintln!("Skipping UDP round-trip assertions: sandbox denied UDP bind permissions");
             return;
-        };
+        }
         let mut udp_interpreter = Interpreter::new();
 
         let receiver_socket = call_native_function(
             &mut udp_interpreter,
             "udp_bind",
-            &[Value::Str(Arc::new("127.0.0.1".to_string())), Value::Int(udp_port)],
+            &[Value::Str(Arc::new("127.0.0.1".to_string())), Value::Int(0)],
         );
-        let receiver_value = match receiver_socket {
-            Value::UdpSocket { .. } => receiver_socket,
+        let (receiver_value, udp_port) = match receiver_socket {
+            Value::UdpSocket { ref socket, .. } => {
+                let port = socket
+                    .lock()
+                    .expect("udp socket lock should not be poisoned")
+                    .local_addr()
+                    .expect("udp socket should expose local addr")
+                    .port() as i64;
+                (receiver_socket, port)
+            }
             other => panic!("Expected UdpSocket for receiver, got {:?}", other),
         };
 

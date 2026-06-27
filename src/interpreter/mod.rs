@@ -21,7 +21,7 @@ mod async_runtime;
 mod capabilities;
 mod control_flow;
 mod environment;
-mod native_functions;
+pub(crate) mod native_functions;
 mod test_runner;
 mod value;
 
@@ -109,6 +109,7 @@ enum SpawnCapturedValue {
     Int(i64),
     Float(f64),
     Str(String),
+    Secret(String),
     Bool(bool),
     Null,
     Bytes(Vec<u8>),
@@ -190,6 +191,7 @@ impl SpawnCapturedValue {
             Value::Int(number) => Some(SpawnCapturedValue::Int(*number)),
             Value::Float(number) => Some(SpawnCapturedValue::Float(*number)),
             Value::Str(text) => Some(SpawnCapturedValue::Str(text.as_ref().clone())),
+            Value::Secret(text) => Some(SpawnCapturedValue::Secret(text.as_ref().clone())),
             Value::Bool(boolean) => Some(SpawnCapturedValue::Bool(*boolean)),
             Value::Null => Some(SpawnCapturedValue::Null),
             Value::Bytes(bytes) => Some(SpawnCapturedValue::Bytes(bytes.clone())),
@@ -271,6 +273,7 @@ impl SpawnCapturedValue {
             SpawnCapturedValue::Int(number) => Value::Int(number),
             SpawnCapturedValue::Float(number) => Value::Float(number),
             SpawnCapturedValue::Str(text) => Value::Str(Arc::new(text)),
+            SpawnCapturedValue::Secret(text) => Value::Secret(Arc::new(text)),
             SpawnCapturedValue::Bool(boolean) => Value::Bool(boolean),
             SpawnCapturedValue::Null => Value::Null,
             SpawnCapturedValue::Bytes(bytes) => Value::Bytes(bytes),
@@ -510,6 +513,16 @@ impl Interpreter {
             "bit_not",
             "bit_shl",
             "bit_shr",
+            "vec_dot",
+            "vec_norm",
+            "vec_normalize",
+            "vec_cosine",
+            "vec_top_k",
+            "ai_count_tokens",
+            "ai_fit_context",
+            "ai_text",
+            "ai_image_url",
+            "ai_message",
             // String functions
             "len",
             "__vm_for_iterable",
@@ -609,6 +622,8 @@ impl Interpreter {
             "to_float",
             "to_string",
             "str",
+            "secret",
+            "reveal",
             "to_bool",
             "bytes",
             "dict",
@@ -621,6 +636,7 @@ impl Interpreter {
             "is_int",
             "is_float",
             "is_string",
+            "is_secret",
             "is_bool",
             "is_array",
             "is_dict",
@@ -659,6 +675,7 @@ impl Interpreter {
             "parse_json",
             "to_json",
             "to_json_pretty",
+            "json_schema_validate",
             // TOML functions
             "parse_toml",
             "to_toml",
@@ -738,6 +755,7 @@ impl Interpreter {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "ai_request_hash",
             "ai_chat",
             "ai_stream_chat",
             "ai_embedding",
@@ -912,6 +930,26 @@ impl Interpreter {
         self.env.define("bit_not".to_string(), Value::NativeFunction("bit_not".to_string()));
         self.env.define("bit_shl".to_string(), Value::NativeFunction("bit_shl".to_string()));
         self.env.define("bit_shr".to_string(), Value::NativeFunction("bit_shr".to_string()));
+        self.env.define("vec_dot".to_string(), Value::NativeFunction("vec_dot".to_string()));
+        self.env.define("vec_norm".to_string(), Value::NativeFunction("vec_norm".to_string()));
+        self.env.define(
+            "vec_normalize".to_string(),
+            Value::NativeFunction("vec_normalize".to_string()),
+        );
+        self.env.define("vec_cosine".to_string(), Value::NativeFunction("vec_cosine".to_string()));
+        self.env.define("vec_top_k".to_string(), Value::NativeFunction("vec_top_k".to_string()));
+        self.env.define(
+            "ai_count_tokens".to_string(),
+            Value::NativeFunction("ai_count_tokens".to_string()),
+        );
+        self.env.define(
+            "ai_fit_context".to_string(),
+            Value::NativeFunction("ai_fit_context".to_string()),
+        );
+        self.env.define("ai_text".to_string(), Value::NativeFunction("ai_text".to_string()));
+        self.env
+            .define("ai_image_url".to_string(), Value::NativeFunction("ai_image_url".to_string()));
+        self.env.define("ai_message".to_string(), Value::NativeFunction("ai_message".to_string()));
 
         // String functions
         self.env.define("len".to_string(), Value::NativeFunction("len".to_string()));
@@ -1065,6 +1103,8 @@ impl Interpreter {
         self.env.define("to_float".to_string(), Value::NativeFunction("to_float".to_string()));
         self.env.define("to_string".to_string(), Value::NativeFunction("to_string".to_string()));
         self.env.define("str".to_string(), Value::NativeFunction("to_string".to_string()));
+        self.env.define("secret".to_string(), Value::NativeFunction("secret".to_string()));
+        self.env.define("reveal".to_string(), Value::NativeFunction("reveal".to_string()));
         self.env.define("to_bool".to_string(), Value::NativeFunction("to_bool".to_string()));
         self.env.define("is_truthy".to_string(), Value::NativeFunction("is_truthy".to_string()));
         self.env.define("bytes".to_string(), Value::NativeFunction("bytes".to_string()));
@@ -1078,6 +1118,7 @@ impl Interpreter {
         self.env.define("is_int".to_string(), Value::NativeFunction("is_int".to_string()));
         self.env.define("is_float".to_string(), Value::NativeFunction("is_float".to_string()));
         self.env.define("is_string".to_string(), Value::NativeFunction("is_string".to_string()));
+        self.env.define("is_secret".to_string(), Value::NativeFunction("is_secret".to_string()));
         self.env.define("is_array".to_string(), Value::NativeFunction("is_array".to_string()));
         self.env.define("is_dict".to_string(), Value::NativeFunction("is_dict".to_string()));
         self.env.define("is_bool".to_string(), Value::NativeFunction("is_bool".to_string()));
@@ -1155,6 +1196,10 @@ impl Interpreter {
         self.env.define(
             "to_json_pretty".to_string(),
             Value::NativeFunction("to_json_pretty".to_string()),
+        );
+        self.env.define(
+            "json_schema_validate".to_string(),
+            Value::NativeFunction("json_schema_validate".to_string()),
         );
 
         // TOML functions
@@ -1300,6 +1345,10 @@ impl Interpreter {
         self.env.define(
             "http_get_binary".to_string(),
             Value::NativeFunction("http_get_binary".to_string()),
+        );
+        self.env.define(
+            "ai_request_hash".to_string(),
+            Value::NativeFunction("ai_request_hash".to_string()),
         );
         self.env.define("ai_chat".to_string(), Value::NativeFunction("ai_chat".to_string()));
         self.env.define(
@@ -2243,6 +2292,7 @@ impl Interpreter {
             Value::Float(_) => "float",
             Value::Bool(_) => "bool",
             Value::Str(_) => "string",
+            Value::Secret(_) => "secret",
             Value::Array(_) => "array",
             Value::Dict(_) => "dict",
             Value::Struct { .. } => "struct",
@@ -2643,6 +2693,9 @@ impl Interpreter {
             }
             "dict" => CallableArity::exact("dict", vec![]),
             "error" => CallableArity::exact("error", vec!["message".to_string()]),
+            "secret" => CallableArity::exact("secret", vec!["value".to_string()]),
+            "reveal" => CallableArity::exact("reveal", vec!["secret".to_string()]),
+            "is_secret" => CallableArity::exact("is_secret", vec!["value".to_string()]),
             "collect" => CallableArity::exact("collect", vec!["iterable".to_string()]),
             "len" => CallableArity::exact("len", vec!["value".to_string()]),
             "bit_not" => CallableArity::exact("bit_not", vec!["value".to_string()]),
@@ -2721,13 +2774,23 @@ impl Interpreter {
                 3,
                 vec!["items".to_string(), "mapper".to_string(), "concurrency".to_string()],
             ),
+            "ai_request_hash" => CallableArity::exact(
+                "ai_request_hash",
+                vec!["prompt_or_messages".to_string(), "options".to_string()],
+            ),
             "ai_chat" => CallableArity::exact(
                 "ai_chat",
                 vec!["prompt_or_messages".to_string(), "options".to_string()],
             ),
-            "ai_stream_chat" => CallableArity::exact(
+            "ai_stream_chat" => CallableArity::range(
                 "ai_stream_chat",
-                vec!["prompt_or_messages".to_string(), "options".to_string()],
+                2,
+                3,
+                vec![
+                    "prompt_or_messages".to_string(),
+                    "options".to_string(),
+                    "on_chunk".to_string(),
+                ],
             ),
             "ai_embedding" => CallableArity::exact(
                 "ai_embedding",
@@ -2736,6 +2799,41 @@ impl Interpreter {
             "ai_tool_loop" => CallableArity::exact(
                 "ai_tool_loop",
                 vec!["prompt_or_messages".to_string(), "options".to_string()],
+            ),
+            "vec_dot" | "vec_cosine" => {
+                CallableArity::exact(name, vec!["a".to_string(), "b".to_string()])
+            }
+            "vec_norm" | "vec_normalize" => CallableArity::exact(name, vec!["a".to_string()]),
+            "vec_top_k" => CallableArity::exact(
+                "vec_top_k",
+                vec!["query".to_string(), "matrix".to_string(), "k".to_string()],
+            ),
+            "ai_count_tokens" => CallableArity::range(
+                "ai_count_tokens",
+                1,
+                2,
+                vec!["text_or_messages".to_string(), "options".to_string()],
+            ),
+            "ai_fit_context" => CallableArity::range(
+                "ai_fit_context",
+                2,
+                3,
+                vec!["messages".to_string(), "max_tokens".to_string(), "options".to_string()],
+            ),
+            "ai_text" => CallableArity::exact("ai_text", vec!["content".to_string()]),
+            "ai_image_url" => CallableArity::range(
+                "ai_image_url",
+                1,
+                2,
+                vec!["url".to_string(), "detail".to_string()],
+            ),
+            "ai_message" => CallableArity::exact(
+                "ai_message",
+                vec!["role".to_string(), "content_or_blocks".to_string()],
+            ),
+            "json_schema_validate" => CallableArity::exact(
+                "json_schema_validate",
+                vec!["value".to_string(), "schema".to_string()],
             ),
             "print" | "eprint" | "debug" | "array" => CallableArity::variadic(name, 0, vec![]),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),
@@ -6137,6 +6235,7 @@ impl Interpreter {
     fn stringify_value(value: &Value) -> String {
         match value {
             Value::Str(s) => s.as_ref().clone(),
+            Value::Secret(_) => "***".to_string(),
             Value::Int(n) => n.to_string(),
             Value::Float(n) => n.to_string(),
             Value::Bool(b) => b.to_string(),

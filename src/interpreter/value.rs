@@ -548,6 +548,8 @@ pub enum Value {
     Float(f64),
     /// String value (reference-counted for cheap cloning)
     Str(Arc<String>),
+    /// Redacted string value for secrets that should not be printed or serialized
+    Secret(Arc<String>),
     /// Boolean value
     Bool(bool),
     /// Null value for optional chaining and null coalescing
@@ -781,6 +783,7 @@ impl std::fmt::Debug for Value {
             Value::Int(n) => write!(f, "Int({})", n),
             Value::Float(n) => write!(f, "Float({})", n),
             Value::Str(s) => write!(f, "Str({:?})", s.as_ref()),
+            Value::Secret(_) => write!(f, "Secret(***)"),
             Value::Bool(b) => write!(f, "Bool({})", b),
             Value::Null => write!(f, "Null"),
             Value::Bytes(bytes) => write!(f, "Bytes({} bytes)", bytes.len()),
@@ -933,6 +936,12 @@ impl Value {
         Value::Str(Arc::new(s.to_string()))
     }
 
+    /// Helper to create a Secret value from a String
+    #[allow(dead_code)]
+    pub fn secret(s: String) -> Self {
+        Value::Secret(Arc::new(s))
+    }
+
     /// Helper to create an Array value from a Vec<Value>
     #[allow(dead_code)]
     pub fn array(vec: Vec<Value>) -> Self {
@@ -953,6 +962,7 @@ impl Value {
             Value::Int(value) => *value != 0,
             Value::Float(value) => *value != 0.0,
             Value::Str(value) => !value.is_empty(),
+            Value::Secret(value) => !value.is_empty(),
             Value::Array(values) => !values.is_empty(),
             Value::Dict(values) => !values.is_empty(),
             _ => true,
@@ -964,6 +974,7 @@ impl Value {
             (Value::Null, Value::Null) => true,
             (Value::Bool(a), Value::Bool(b)) => a == b,
             (Value::Str(a), Value::Str(b)) => a == b,
+            (Value::Secret(a), Value::Secret(b)) => a == b,
             (Value::Bytes(a), Value::Bytes(b)) => a == b,
             (Value::Int(a), Value::Int(b)) => a == b,
             (Value::Float(a), Value::Float(b)) => Self::float_equals(*a, *b),
@@ -1248,6 +1259,7 @@ impl Value {
             Value::Float(_) => "float",
             Value::Bool(_) => "bool",
             Value::Str(_) => "string",
+            Value::Secret(_) => "secret",
             Value::Array(_) => "array",
             Value::Dict(_)
             | Value::FixedDict { .. }

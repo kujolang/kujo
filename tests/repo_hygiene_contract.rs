@@ -77,7 +77,6 @@ fn seed_hygiene_policy_repo(root: &Path) {
 
     for entry in [
         ".editorconfig",
-        ".gitignore",
         "AGENTS.md",
         "CHANGELOG.md",
         "CONTRIBUTING.md",
@@ -92,6 +91,12 @@ fn seed_hygiene_policy_repo(root: &Path) {
         fs::write(root.join(entry), format!("seeded {}\n", entry))
             .expect("failed to write allowlisted root file");
     }
+    fs::write(
+        root.join(".gitignore"),
+        fs::read_to_string(repo_root().join(".gitignore"))
+            .expect("failed to read canonical .gitignore"),
+    )
+    .expect("failed to write allowlisted .gitignore");
 
     let output = Command::new("git")
         .current_dir(root)
@@ -179,6 +184,37 @@ fn repo_hygiene_audit_rejects_disallowed_root_clutter_patterns() {
     assert!(
         combined_output.contains("disallowed local root clutter"),
         "repo hygiene audit should explain clutter rejection, got stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+}
+
+#[test]
+fn repo_hygiene_audit_rejects_ignored_root_clutter_patterns() {
+    let root = std::env::temp_dir()
+        .join(format!("kujo_repo_hygiene_rejects_ignored_clutter_{}", std::process::id()));
+    fs::create_dir_all(&root).expect("failed to create temp repo");
+    let _ = Command::new("git")
+        .current_dir(&root)
+        .arg("init")
+        .output()
+        .expect("failed to init temp repo");
+    seed_hygiene_policy_repo(&root);
+
+    fs::write(root.join("blocked.txt"), "local denied write")
+        .expect("failed to write ignored clutter file");
+
+    let output = run_hygiene_audit(&root);
+    assert!(
+        !output.status.success(),
+        "repo hygiene audit should reject ignored root clutter: stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+    let combined_output = format!("{}\n{}", stdout_text(&output), stderr_text(&output));
+    assert!(
+        combined_output.contains("blocked.txt"),
+        "repo hygiene audit should name ignored root clutter, got stdout={} stderr={}",
         stdout_text(&output),
         stderr_text(&output)
     );

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `scripts/enterprise_verify.sh`, `docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md`, and `examples/ai_enterprise_replay_showcase.kujo` to make AI-native release-candidate evidence, strict replay demos, and product-hardening checks repeatable.
+- Added `docs/SECURE_AI_SCRIPTING.md`, `docs/SECURITY_RESPONSE.md`, and `docs/AI_NATIVE_PRODUCT_HARDENING_STATUS_2026-06-27.md` to clarify secure AI operation, vulnerability-response expectations, and the current product-hardening boundary.
+- Added `tests/ai_replay_hermeticity_contract.rs` to guard strict AI replay against live-socket fallthrough and scan committed cassettes for common credential markers.
+- Added `ai_native_helpers` Criterion workloads for AI request hashing, schema validation, vector top-k scoring, and context fitting regression checks.
+- Added `docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md` to capture the next enterprise/readiness polish backlog after the core AI-native enhancement track.
+- Added `ai_request_hash(prompt_or_messages, options)` for deterministic, credential-independent AI request cache/cassette keys without network I/O.
+- Added native AI record/replay cassettes for `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` via `KUJO_AI_RECORD`, `KUJO_AI_REPLAY`, `KUJO_AI_REPLAY_MODE`, and per-call `options.cassette`.
+- Added AI response envelope metadata (`usage`, `finish_reason`, `tool_calls`, `provider`) and opt-in `options.structured_errors` dictionaries while preserving default string errors.
+- Added `json_schema_validate(value, schema)` for pure, bounded validation of JSON-like Kujo values against a documented JSON Schema subset.
+- Added native vector math helpers `vec_dot`, `vec_norm`, `vec_normalize`, `vec_cosine`, and `vec_top_k` for finite numeric arrays.
+- Added deterministic token estimation and context fitting helpers `ai_count_tokens` and `ai_fit_context` for local AI prompt budgeting without provider tokenizers.
+- Added `secret`, `reveal`, and `is_secret` for redacted runtime secret values, including AI `options.api_key` support and cassette/error redaction.
+- Added a dedicated `network-ai` / `--allow-ai` capability for high-level AI helpers plus `KUJO_AI_ALLOWED_ENDPOINTS` endpoint allowlist enforcement.
+- Added optional `ai_stream_chat(prompt_or_messages, options, on_chunk)` chunk callbacks with replay-backed ordered delivery and `false` cancellation.
+- Added pure multimodal AI message builders `ai_text`, `ai_image_url`, and `ai_message`.
+
+### Changed
+
+- Updated README positioning to document the completed core AI-native mechanism set while preserving the pre-tag release-candidate enterprise-readiness boundary.
+
+### Fixed
+
+- Hardened flaky test contracts for AI environment isolation, UDP loopback binding, benchmark timer assertions, VM fixture snapshot normalization, and generated VM inventory side effects, and refreshed the LSP completion contract for the completed AI builtin surface.
+
 ## [1.0.0] - 2026-06-19
 
 Release-candidate note: the crate metadata is staged at `1.0.0`, but the final `v1.0.0` tag, crate publication, and binary artifact sign-off remain incomplete until the release artifact checklist has dated evidence.

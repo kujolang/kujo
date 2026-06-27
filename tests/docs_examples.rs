@@ -107,6 +107,10 @@ fn relative_from_repo(path: &Path) -> String {
 fn run_examples() -> HashSet<&'static str> {
     HashSet::from([
         "examples/00-hello.kujo",
+        "examples/ai_egress_allowlist.kujo",
+        "examples/ai_enterprise_replay_showcase.kujo",
+        "examples/ai_multimodal_messages.kujo",
+        "examples/ai_stream_callback.kujo",
         "examples/hello.kujo",
         "examples/arrays.kujo",
         "examples/dictionaries.kujo",

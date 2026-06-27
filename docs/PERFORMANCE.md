@@ -71,6 +71,18 @@ materially affect these paths:
 cargo bench --bench v1_perf_benchmarks -- import_heavy_nested_dotted_ --noplot --sample-size 10 --warm-up-time 0.5 --measurement-time 1
 ```
 
+For AI-native pure helper regression checks, run the filtered helper group:
+
+```bash
+cargo bench --bench v1_perf_benchmarks -- ai_native_helpers --noplot --sample-size 10 --warm-up-time 0.5 --measurement-time 1
+```
+
+This group covers `ai_request_hash` with large message arrays,
+`json_schema_validate` with nested objects, `vec_top_k` over embedding-like
+arrays, and `ai_fit_context` with a large prompt corpus. Treat these as internal
+regression signals until raw artifacts and environment details are preserved for
+publication.
+
 Refresh generated artifacts only after inspecting the new benchmark output and
 confirming the method and environment are comparable.
 

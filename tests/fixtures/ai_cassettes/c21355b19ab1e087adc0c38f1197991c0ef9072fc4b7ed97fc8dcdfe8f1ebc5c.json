@@ -1,0 +1,32 @@
+{
+  "_cassette_version": 1,
+  "request_meta": {
+    "hash": "c21355b19ab1e087adc0c38f1197991c0ef9072fc4b7ed97fc8dcdfe8f1ebc5c",
+    "surface": "ai_stream_chat",
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "normalized": {
+      "_hash_version": 1,
+      "body": {
+        "messages": [
+          {
+            "content": "Stream please",
+            "role": "user"
+          }
+        ],
+        "model": "gpt-replay",
+        "stream": true
+      },
+      "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+      "headers": [],
+      "model": "gpt-replay"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": "{\"choices\":[{\"delta\":{\"content\":\"chunk one\"}},{\"delta\":{\"content\":\"chunk two\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":3,\"total_tokens\":6}}"
+  }
+}

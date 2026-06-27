@@ -527,6 +527,7 @@ impl VM {
                 Value::ErrorObject { message, .. } => message,
                 Value::Error(message) => message,
                 Value::Str(value) => value.as_ref().clone(),
+                Value::Secret(_) => "***".to_string(),
                 other => format!("Uncaught exception: {:?}", other),
             };
             Err(error_msg)
@@ -900,6 +901,7 @@ impl VM {
                 | Value::Int(_)
                 | Value::Float(_)
                 | Value::Str(_)
+                | Value::Secret(_)
                 | Value::Bool(_)
                 | Value::Null
                 | Value::Bytes(_)
@@ -5420,8 +5422,33 @@ impl VM {
                         "__vm_import_all" => self.vm_import_all(&args).map_err(Value::Error),
                         "__vm_import_symbol" => self.vm_import_symbol(&args).map_err(Value::Error),
                         _ => {
-                            let native_result =
-                                self.interpreter.call_native_function_impl(&name, &args);
+                            let native_result = if name == "ai_stream_chat"
+                                && args.len() == 3
+                                && matches!(args[2], Value::BytecodeFunction { .. })
+                            {
+                                let callback = args[2].clone();
+                                crate::interpreter::native_functions::http::handle_ai_stream_chat_with_callback_invoker(
+                                    &args,
+                                    |delta, raw| {
+                                        let value = self
+                                            .call_function_from_jit(
+                                                callback.clone(),
+                                                vec![Value::Str(Arc::new(delta.to_string())), raw.clone()],
+                                            )
+                                            .map_err(Value::Error)?;
+                                        match value {
+                                            Value::Error(_) | Value::ErrorObject { .. } => Err(value),
+                                            Value::Bool(false) => Ok(false),
+                                            _ => Ok(true),
+                                        }
+                                    },
+                                )
+                                .unwrap_or_else(|| {
+                                    Value::Error("ai_stream_chat() callback dispatch failed".to_string())
+                                })
+                            } else {
+                                self.interpreter.call_native_function_impl(&name, &args)
+                            };
                             match native_result {
                                 Value::Error(msg) => Err(Value::Error(msg)),
                                 Value::ErrorObject { .. } => Err(native_result),
@@ -6181,6 +6208,38 @@ impl VM {
         mut args: Vec<Value>,
     ) -> Result<Value, String> {
         if let Value::NativeFunction(name) = function {
+            if name == "ai_stream_chat"
+                && args.len() == 3
+                && matches!(args[2], Value::BytecodeFunction { .. })
+            {
+                let callback = args[2].clone();
+                let result =
+                    crate::interpreter::native_functions::http::handle_ai_stream_chat_with_callback_invoker(
+                        &args,
+                        |delta, raw| {
+                            let value = self
+                                .call_function_from_jit(
+                                    callback.clone(),
+                                    vec![Value::Str(Arc::new(delta.to_string())), raw.clone()],
+                                )
+                                .map_err(Value::Error)?;
+                            match value {
+                                Value::Error(_) | Value::ErrorObject { .. } => Err(value),
+                                Value::Bool(false) => Ok(false),
+                                _ => Ok(true),
+                            }
+                        },
+                    )
+                    .unwrap_or_else(|| {
+                        Value::Error("ai_stream_chat() callback dispatch failed".to_string())
+                    });
+                return match result {
+                    Value::Error(message) => Err(message),
+                    Value::ErrorObject { message, .. } => Err(message),
+                    other => Ok(other),
+                };
+            }
+
             if name == "__vm_for_iterable" {
                 if args.len() != 1 {
                     return Err(format!(
@@ -7461,8 +7520,41 @@ impl VM {
                                 "__vm_import_all" => self.vm_import_all(&args),
                                 "__vm_import_symbol" => self.vm_import_symbol(&args),
                                 _ => {
-                                    let native_result =
-                                        self.interpreter.call_native_function_impl(&name, &args);
+                                    let native_result = if name == "ai_stream_chat"
+                                        && args.len() == 3
+                                        && matches!(args[2], Value::BytecodeFunction { .. })
+                                    {
+                                        let callback = args[2].clone();
+                                        crate::interpreter::native_functions::http::handle_ai_stream_chat_with_callback_invoker(
+                                            &args,
+                                            |delta, raw| {
+                                                let value = self
+                                                    .call_function_from_jit(
+                                                        callback.clone(),
+                                                        vec![
+                                                            Value::Str(Arc::new(delta.to_string())),
+                                                            raw.clone(),
+                                                        ],
+                                                    )
+                                                    .map_err(Value::Error)?;
+                                                match value {
+                                                    Value::Error(_) | Value::ErrorObject { .. } => {
+                                                        Err(value)
+                                                    }
+                                                    Value::Bool(false) => Ok(false),
+                                                    _ => Ok(true),
+                                                }
+                                            },
+                                        )
+                                        .unwrap_or_else(|| {
+                                            Value::Error(
+                                                "ai_stream_chat() callback dispatch failed"
+                                                    .to_string(),
+                                            )
+                                        })
+                                    } else {
+                                        self.interpreter.call_native_function_impl(&name, &args)
+                                    };
                                     match native_result {
                                         Value::Error(msg) => Err(msg),
                                         Value::ErrorObject { message, .. } => Err(message),
@@ -7630,6 +7722,7 @@ impl VM {
             Value::Int(n) => n.to_string(),
             Value::Float(f) => f.to_string(),
             Value::Str(s) => s.as_ref().clone(),
+            Value::Secret(_) => "***".to_string(),
             Value::Bool(b) => b.to_string(),
             Value::Null => "null".to_string(),
             Value::Array(arr) => {
@@ -7683,6 +7776,7 @@ impl VM {
             Value::Float(_) => "float",
             Value::Bool(_) => "bool",
             Value::Str(_) => "string",
+            Value::Secret(_) => "secret",
             Value::Array(_) => "array",
             Value::Dict(_) => "dict",
             Value::Struct { .. } => "struct",

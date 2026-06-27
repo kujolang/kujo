@@ -1,0 +1,31 @@
+{
+  "_cassette_version": 1,
+  "request_meta": {
+    "hash": "f36eea3dd0efe1ba24af4f8600bc3ea97c3c481f0944802fd83b621337a2591f",
+    "surface": "ai_chat",
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "normalized": {
+      "_hash_version": 1,
+      "body": {
+        "messages": [
+          {
+            "content": "Missing content",
+            "role": "user"
+          }
+        ],
+        "model": "gpt-replay"
+      },
+      "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+      "headers": [],
+      "model": "gpt-replay"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{}}]}"
+  }
+}

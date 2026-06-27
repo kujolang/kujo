@@ -142,6 +142,7 @@ fn stdlib_inventory_capability_column_matches_runtime_policy() {
         "env-read",
         "env-write",
         "network-client",
+        "network-ai",
         "network-server",
         "database",
         "clock",

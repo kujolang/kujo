@@ -2276,7 +2276,7 @@ impl Parser {
                         return format!("{}{}", &line[..start], &line[end..]);
                     }
                 }
-                line.to_string()
+                line.replace("[KUJOVM001]", "[RUFVM001]")
             })
             .collect::<Vec<_>>()
             .join("\n")

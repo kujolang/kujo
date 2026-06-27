@@ -59,6 +59,7 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 | `--allow-env-read` | Environment read | `env`, `env_list`, related env readers | Secret leakage |
 | `--allow-env-write` | Environment write | `env_set` and env mutation | Process/session tampering |
 | `--allow-net-client` | Outbound network | `http_get/post/request`, TCP/UDP client operations | Data exfiltration/SSRF-style pivots |
+| `--allow-ai` | AI provider egress | `ai_chat`, `ai_stream_chat`, `ai_embedding`, `ai_tool_loop` | Prompt/data exfiltration to model endpoints |
 | `--allow-net-server` | Listener/network server | `http_server.listen`, server-side sockets | Local service exposure |
 | `--allow-net` | Net client + server | Union of network-client/network-server surfaces | Combined network risk |
 | `--allow-database` | Database access | `db_connect`, query/transaction helpers | Unauthorized data access |
@@ -153,7 +154,25 @@ func escape_html(input) {
 }
 ```
 
-### 4.3 Filesystem and Archive APIs
+### 4.3 AI Provider APIs
+
+Relevant APIs: `ai_chat`, `ai_stream_chat`, `ai_embedding`, `ai_tool_loop`.
+
+Policy boundaries:
+
+- AI helpers require `--allow-ai` in `--untrusted` mode.
+- `--allow-net-client` does not unlock AI helpers.
+- `KUJO_AI_ALLOWED_ENDPOINTS` optionally restricts AI helper endpoints by scheme, host, optional port, and optional path prefix. When unset, trusted-mode behavior remains backward compatible.
+- Endpoint allowlist misses return deterministic `kind:"endpoint_denied"` failures; with `options.structured_errors: true`, the error is a structured AI error dictionary.
+- AI helpers still honor the outbound destination policy for live requests. Strict replay cassettes remain hermetic and do not open sockets.
+
+Operational guidance:
+
+- Prefer `--allow-ai` over broad `--allow-net-client` when untrusted code only needs LLM calls.
+- Set `KUJO_AI_ALLOWED_ENDPOINTS` for shared automation and agent runs that must call only approved provider endpoints.
+- Review committed cassettes because they can contain model output even when credentials are redacted.
+
+### 4.4 Filesystem and Archive APIs
 
 Relevant APIs: read/write/delete/path/directory/archive helpers.
 
@@ -182,7 +201,7 @@ Operational guidance:
 - Constrain writable roots for Kujo processes.
 - Avoid running untrusted archive workflows in privileged directories.
 
-### 4.4 Database APIs
+### 4.5 Database APIs
 
 Relevant APIs: connection/query/pool/transaction helpers.
 
@@ -196,7 +215,7 @@ Operational guidance:
 - Restrict DB network reachability to required endpoints.
 - Parameterize query data wherever possible.
 
-### 4.5 Crypto APIs
+### 4.6 Crypto APIs
 
 Relevant APIs: hash/password/AES/RSA helpers.
 

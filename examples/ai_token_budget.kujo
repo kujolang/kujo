@@ -1,0 +1,37 @@
+func kv(label, value) {
+    print(label + ": " + to_string(value))
+}
+
+let messages := [
+    {
+        "role": "system",
+        "content": "Answer briefly and cite constraints."
+    },
+    {
+        "role": "user",
+        "content": "Summarize the previous research notes and all implementation details."
+    },
+    {
+        "role": "assistant",
+        "content": "The previous answer was intentionally long and should be dropped first."
+    },
+    {
+        "role": "user",
+        "content": "Give me the short version."
+    }
+]
+
+let options := {
+    "model": "gpt-4o"
+}
+
+let text_tokens := ai_count_tokens("Kujo estimates tokens deterministically.", options)
+let message_tokens := ai_count_tokens(messages, options)
+let fitted := ai_fit_context(messages, 28, options)
+
+kv("text_tokens", text_tokens)
+kv("message_tokens", message_tokens)
+kv("dropped", fitted["dropped"])
+kv("est_tokens", fitted["est_tokens"])
+kv("fits", fitted["fits"])
+kv("messages", fitted["messages"])

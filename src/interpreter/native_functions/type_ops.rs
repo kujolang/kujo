@@ -109,6 +109,29 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "secret" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error("secret() requires a string argument".to_string()));
+            }
+
+            match arg_values.first() {
+                Some(Value::Str(text)) => Value::Secret(text.clone()),
+                Some(Value::Secret(text)) => Value::Secret(text.clone()),
+                _ => Value::Error("secret() requires a string argument".to_string()),
+            }
+        }
+
+        "reveal" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error("reveal() requires a secret argument".to_string()));
+            }
+
+            match arg_values.first() {
+                Some(Value::Secret(text)) => Value::Str(text.clone()),
+                _ => Value::Error("reveal() requires a secret argument".to_string()),
+            }
+        }
+
         "to_bool" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("to_bool() requires one argument".to_string()));
@@ -123,6 +146,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         let s_lower = s.as_ref().to_lowercase();
                         Value::Bool(!s.is_empty() && s_lower != "false" && s_lower != "0")
                     }
+                    Value::Secret(s) => Value::Bool(!s.is_empty()),
                     Value::Null => Value::Bool(false),
                     Value::Array(arr) => Value::Bool(!arr.is_empty()),
                     Value::Dict(dict) => Value::Bool(!dict.is_empty()),
@@ -192,6 +216,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::Int(_) => "int",
                     Value::Float(_) => "float",
                     Value::Str(_) => "string",
+                    Value::Secret(_) => "secret",
                     Value::Bool(_) => "bool",
                     Value::Null => "null",
                     Value::Array(_) => "array",
@@ -276,6 +301,18 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             if let Some(val) = arg_values.first() {
                 Value::Bool(matches!(val, Value::Str(_)))
+            } else {
+                Value::Bool(false)
+            }
+        }
+
+        "is_secret" => {
+            if arg_values.len() > 1 {
+                return Some(Value::Error("is_secret() expects 1 argument".to_string()));
+            }
+
+            if let Some(val) = arg_values.first() {
+                Value::Bool(matches!(val, Value::Secret(_)))
             } else {
                 Value::Bool(false)
             }
@@ -640,6 +677,25 @@ mod tests {
             .expect("to_string should return a result");
         assert!(
             matches!(to_string_extra, Value::Error(message) if message.contains("to_string() requires one argument"))
+        );
+
+        let secret_value = handle("secret", &[Value::Str(Arc::new("k".to_string()))])
+            .expect("secret should return a result");
+        assert!(matches!(secret_value, Value::Secret(text) if text.as_ref() == "k"));
+
+        let reveal_value = handle("reveal", &[Value::Secret(Arc::new("k".to_string()))])
+            .expect("reveal should return a result");
+        assert!(matches!(reveal_value, Value::Str(text) if text.as_ref() == "k"));
+
+        let is_secret_true = handle("is_secret", &[Value::Secret(Arc::new("k".to_string()))])
+            .expect("is_secret should return a result");
+        assert!(matches!(is_secret_true, Value::Bool(true)));
+
+        let is_secret_extra =
+            handle("is_secret", &[Value::Secret(Arc::new("k".to_string())), Value::Int(2)])
+                .expect("is_secret should return a result");
+        assert!(
+            matches!(is_secret_extra, Value::Error(message) if message.contains("is_secret() expects 1 argument"))
         );
 
         let to_bool_extra = handle("to_bool", &[Value::Bool(true), Value::Int(2)])

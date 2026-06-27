@@ -24,6 +24,45 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
 - Dictionary-like values are serialized with deterministic key ordering (lexicographic for string keys, ascending for integer keys).
 
+JSON Schema subset contract (`json_schema_validate`):
+
+- `json_schema_validate(value, schema)` returns `{"valid": bool, "errors": [...]}` and never performs network, filesystem, clock, random, or process I/O.
+- Supported validation keywords are `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`, `anyOf`, `oneOf`, `allOf`, and local `$ref`.
+- `$ref` supports local JSON pointers such as `#`, `#/$defs/name`, and `#/definitions/name`; remote references are rejected.
+- Error entries are dictionaries with `path`, `message`, and `keyword`. Paths are JSON-pointer-like instance paths such as `/items/0/name`; the root path is an empty string.
+- Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
+- Annotation keywords `title`, `description`, `default`, and `examples` are accepted as no-op metadata.
+
+Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / `vec_top_k`):
+
+- Inputs are Kujo arrays of finite numbers; integers are promoted to floats.
+- `vec_dot(a, b)`, `vec_cosine(a, b)`, and `vec_top_k(query, matrix, k)` require equal dimensions.
+- `vec_cosine` returns `0.0` for zero vectors and clamps finite cosine scores to `[-1.0, 1.0]`.
+- `vec_normalize` returns a zero-filled vector for a zero vector.
+- `vec_top_k` scores rows by cosine similarity, returns dictionaries `{index, score}`, sorts by descending score with stable ascending-index tie-breaks, and returns all rows when `k` exceeds row count.
+- Vectors are capped at `100,000` dimensions; matrices are capped at `100,000` rows and `5,000,000` cells. Non-finite inputs or non-finite results return `Value::Error`.
+- `vec_top_k` uses Rayon parallel iteration for large matrices; vector helpers have no capability gate and do not store or index vectors.
+
+Token estimation contract (`ai_count_tokens` / `ai_fit_context`):
+
+- `ai_count_tokens(text_or_messages, options?)` returns a deterministic estimate, not exact provider tokenization.
+- `options.model` selects a small heuristic family by model prefix: `gpt*`, `text-embedding*`, or default. All current families estimate one token per four weighted characters; non-ASCII characters count as two weighted characters. Chat-message estimates also include documented role/content overhead.
+- Message arrays contain dictionaries with non-empty string `role` and string `content`; optional string `name` is counted when present.
+- `ai_fit_context(messages, max_tokens, options?)` drops the oldest non-system messages until the estimated count fits. It never drops system messages and preserves the last user message. If the minimum preserved context is still over budget, it returns it with `fits: false`.
+- Text inputs are capped at `2,000,000` characters and message arrays at `100,000` messages. These helpers have no capability gate and perform no I/O.
+
+AI message builder contract (`ai_text` / `ai_image_url` / `ai_message`):
+
+- `ai_text(content)` builds a text content block.
+- `ai_image_url(url, detail?)` builds an image URL content block with optional provider detail.
+- `ai_message(role, content_or_blocks)` builds a chat message from a string or content block array. These helpers are pure, capability-free, and produce shapes accepted by the AI HTTP helpers.
+
+Secret redaction contract (`secret` / `reveal` / `is_secret`):
+
+- `secret(value)` wraps a string in a redacted runtime value. Printing, debug formatting, JSON/TOML/YAML/CSV serialization, errors, and AI cassette request metadata render secrets as `***` or `Secret(***)`.
+- Secrets compare by their inner string value and clone like ordinary runtime values, but `reveal(secret_value)` is the only documented builtin that unwraps plaintext.
+- `options.api_key` for AI helpers accepts either a plain string or a secret; cassettes and error body excerpts redact configured keys and sensitive authorization headers.
+
 | Function | Signature | Arity | Return Type | Errors | Capability | Example |
 | --- | --- | --- | --- | --- | --- | --- |
 | `print` | `print(...)` | variadic (0+) | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := print(...)` |
@@ -49,6 +88,16 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `bit_not` | `bit_not(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bit_not(...)` |
 | `bit_shl` | `bit_shl(left, right)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bit_shl(...)` |
 | `bit_shr` | `bit_shr(left, right)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bit_shr(...)` |
+| `vec_dot` | `vec_dot(a, b)` | exact 2 | float | Value::Error on invalid args/types, non-finite inputs/results, vector dimension mismatch, or resource-limit violations. | `none` | `score := vec_dot([1, 2], [3, 4])` |
+| `vec_norm` | `vec_norm(a)` | exact 1 | float | Value::Error on invalid args/types, non-finite inputs/results, or resource-limit violations. | `none` | `length := vec_norm([3, 4])` |
+| `vec_normalize` | `vec_normalize(a)` | exact 1 | array | Value::Error on invalid args/types, non-finite inputs/results, or resource-limit violations; zero vector returns zero-filled vector. | `none` | `unit := vec_normalize([3, 4])` |
+| `vec_cosine` | `vec_cosine(a, b)` | exact 2 | float | Value::Error on invalid args/types, non-finite inputs/results, vector dimension mismatch, or resource-limit violations; zero vectors return `0.0`. | `none` | `score := vec_cosine([1, 0], [0, 1])` |
+| `vec_top_k` | `vec_top_k(query, matrix, k)` | exact 3 | array | Value::Error on invalid args/types, non-finite inputs/results, matrix row dimension mismatch, negative `k`, or resource-limit violations. | `none` | `matches := vec_top_k([1, 0], [[1, 0], [0, 1]], 1)` |
+| `ai_count_tokens` | `ai_count_tokens(text_or_messages, options?)` | 1..=2 | int | Value::Error on invalid args/types, invalid options, malformed messages, or resource-limit violations. | `none` | `tokens := ai_count_tokens("Hello Kujo", {"model":"gpt-4o"})` |
+| `ai_fit_context` | `ai_fit_context(messages, max_tokens, options?)` | 2..=3 | dict | Value::Error on invalid args/types, invalid options, malformed messages, negative `max_tokens`, or resource-limit violations. | `none` | `fit := ai_fit_context(messages, 2000, {"model":"gpt-4o"})` |
+| `ai_text` | `ai_text(content)` | exact 1 | dict | Value::Error on invalid args/types. | `none` | `block := ai_text("Describe this image")` |
+| `ai_image_url` | `ai_image_url(url, detail?)` | 1..=2 | dict | Value::Error on invalid args/types or empty URL. | `none` | `block := ai_image_url("https://example.test/image.png", "low")` |
+| `ai_message` | `ai_message(role, content_or_blocks)` | exact 2 | dict | Value::Error on invalid role, content type, or malformed content block arrays. | `none` | `message := ai_message("user", [ai_text("Hi")])` |
 | `len` | `len(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := len(...)` |
 | `substring` | `substring(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substring(...)` |
 | `substr` | `substr(value, start, end)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := substr(...)` |
@@ -136,6 +185,8 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `to_float` | `to_float(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_float(...)` |
 | `to_string` | `to_string(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_string(...)` |
 | `str` | `str(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := str(...)` |
+| `secret` | `secret(value)` | exact 1 | secret | Value::Error when `value` is not a string. | `none` | `api_key := secret("sk-local")` |
+| `reveal` | `reveal(secret)` | exact 1 | string | Value::Error when the argument is not a secret. | `none` | `plain := reveal(api_key)` |
 | `to_bool` | `to_bool(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_bool(...)` |
 | `bytes` | `bytes(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bytes(...)` |
 | `dict` | `dict()` | exact 0 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := dict(...)` |
@@ -147,6 +198,7 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `is_int` | `is_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_int(...)` |
 | `is_float` | `is_float(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_float(...)` |
 | `is_string` | `is_string(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_string(...)` |
+| `is_secret` | `is_secret(value)` | exact 1 | bool | Value::Error on invalid arity. | `none` | `is_key := is_secret(api_key)` |
 | `is_bool` | `is_bool(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_bool(...)` |
 | `is_array` | `is_array(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_array(...)` |
 | `is_dict` | `is_dict(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_dict(...)` |
@@ -180,6 +232,7 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>1,048,576 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
 | `to_json` | `to_json(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json({"ok": true})` |
 | `to_json_pretty` | `to_json_pretty(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json_pretty({"ok": true})` |
+| `json_schema_validate` | `json_schema_validate(value, schema)` | exact 2 | dict | Value::Error on invalid args/types, malformed or unsupported schema keywords, invalid regex patterns, unsupported `$ref`, or resource-limit violations. Otherwise returns `{valid, errors}` with JSON-pointer-like paths. | `none` | `result := json_schema_validate({"name":"Kujo"}, {"type":"object","required":["name"]})` |
 | `parse_toml` | `parse_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_toml(...)` |
 | `to_toml` | `to_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_toml(...)` |
 | `parse_yaml` | `parse_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_yaml(...)` |
@@ -248,10 +301,11 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 | `http_put` | `http_put(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := http_put(...)` |
 | `http_delete` | `http_delete(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := http_delete(...)` |
 | `http_get_binary` | `http_get_binary(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := http_get_binary(...)` |
-| `ai_chat` | `ai_chat(prompt_or_messages, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` with deterministic transport/API response failures. | `network-client` | `result := ai_chat("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"})` |
-| `ai_stream_chat` | `ai_stream_chat(prompt_or_messages, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` with deterministic transport/API response failures. | `network-client` | `result := ai_stream_chat("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"})` |
-| `ai_embedding` | `ai_embedding(input, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` if embedding response contract is missing `data[0].embedding`. | `network-client` | `result := ai_embedding("query", {"endpoint":"https://example.ai/embed","model":"text-embed"})` |
-| `ai_tool_loop` | `ai_tool_loop(prompt_or_messages, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` for missing tool results or deterministic transport/API failures. | `network-client` | `result := ai_tool_loop("Plan this", {"endpoint":"https://example.ai/chat","model":"gpt","tool_results":{"lookup":"ok"}})` |
+| `ai_request_hash` | `ai_request_hash(prompt_or_messages, options)` | exact 2 | string | Value::Error on invalid args/options contracts; hashes normalized endpoint/model/messages/body/relevant headers without network I/O. | `none` | `hash := ai_request_hash("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"})` |
+| `ai_chat` | `ai_chat(prompt_or_messages, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` with deterministic transport/API/replay failures; success adds `usage`, `finish_reason`, `tool_calls`, and `provider` when available; `options.structured_errors` opts into typed error dictionaries. | `network-ai` | `result := ai_chat("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"})` |
+| `ai_stream_chat` | `ai_stream_chat(prompt_or_messages, options, on_chunk?)` | 2..=3 | dynamic (Value) | Value::Error on invalid args/options/callback contracts; `Result(Err)` with deterministic transport/API/replay failures; success adds `usage`, `finish_reason`, and `provider` when available; optional callbacks receive `(delta, raw_chunk)` and can return `false` to cancel later chunks; supports replay cassettes and structured errors. | `network-ai` | `result := ai_stream_chat("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"}, on_chunk)` |
+| `ai_embedding` | `ai_embedding(input, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` if embedding response contract is missing `data[0].embedding`; success adds `usage`, `finish_reason`, and `provider` when available; supports replay cassettes and structured errors. | `network-ai` | `result := ai_embedding("query", {"endpoint":"https://example.ai/embed","model":"text-embed"})` |
+| `ai_tool_loop` | `ai_tool_loop(prompt_or_messages, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` for missing tool results or deterministic transport/API/replay failures; success adds `usage`, `finish_reason`, `tool_calls`, and `provider` when available; supports replay cassettes and structured errors. | `network-ai` | `result := ai_tool_loop("Plan this", {"endpoint":"https://example.ai/chat","model":"gpt","tool_results":{"lookup":"ok"}})` |
 | `parallel_http` | `parallel_http(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := parallel_http(...)` |
 | `jwt_encode` | `jwt_encode(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := jwt_encode(...)` |
 | `jwt_decode` | `jwt_decode(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := jwt_decode(...)` |

@@ -47,6 +47,21 @@ Observed summary:
 
 This VM test was not a release-execution detail. It proved the runtime could silently convert a missing map key in an in-place operation into `Int(0)` instead of reporting a runtime error. `V1-TEST-001` has restored the base test suite by making missing map keys runtime errors across VM/interpreter map indexing paths.
 
+### Core AI-Native Enhancement Track
+
+- Item 8 from `research/kujo-language-deep-dive/CORE_AI_NATIVE_ENHANCEMENTS_PROPOSAL.md` is implemented: `ai_request_hash(prompt_or_messages, options)` now provides deterministic, credential-independent request keys for future cassette replay and userland caching.
+- Item 2 from the same proposal is implemented: the four core `ai_*` helpers can now run against deterministic JSON cassettes in strict replay mode without opening a socket, with record and fallthrough mechanisms available for fixture refresh.
+- Item 1 from the same proposal is implemented: AI helper success values now expose normalized usage/finish/tool metadata, and typed error dictionaries are available behind opt-in `options.structured_errors`.
+- Item 3 from the same proposal is implemented: `json_schema_validate(value, schema)` provides pure, bounded validation against a documented JSON Schema subset with JSON-pointer-like error paths.
+- Item 4 from the same proposal is implemented: native vector math helpers now provide finite numeric dot, norm, normalize, cosine, and top-k cosine scoring primitives without vector storage or indexing policy.
+- Item 5 from the same proposal is implemented: `ai_count_tokens` and `ai_fit_context` provide deterministic estimate-based prompt budgeting and context trimming without provider tokenizers.
+- Item 6 from the same proposal is implemented: `secret`, `reveal`, and `is_secret` provide redacted runtime secret values, with AI `options.api_key` support and cassette/error redaction.
+- Item 7 from the same proposal is implemented: high-level AI helpers now use the separate `network-ai` / `--allow-ai` capability, and `KUJO_AI_ALLOWED_ENDPOINTS` can restrict approved provider endpoint prefixes.
+- Item 9 from the same proposal is implemented: `ai_stream_chat` now accepts an optional chunk callback with replay-backed ordered delivery and `false` cancellation while preserving aggregate return behavior when omitted.
+- Item 10 from the same proposal is implemented: `ai_text`, `ai_image_url`, and `ai_message` now build portable text/image chat messages accepted by the AI helpers without adding provider policy.
+- Items 1-10 in that proposal are now implemented on the core AI-native enhancement branch; future work should keep the same non-goals unless a new approved proposal changes scope.
+- Product hardening and presentation now include a strict replay AI showcase (`examples/ai_enterprise_replay_showcase.kujo`), an enterprise verification wrapper (`scripts/enterprise_verify.sh`), an AI-native evidence index, secure AI scripting guidance, and a security-response policy draft. Final universal enterprise-readiness claims still require tag-time artifacts and the remaining roadmap evidence.
+
 ## 2. Priority And Severity Definitions
 
 Priority:

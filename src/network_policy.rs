@@ -11,6 +11,7 @@ pub const DEFAULT_HTTP_TIMEOUT_MS: u64 = 30_000;
 pub const MAX_NETWORK_BODY_BYTES: usize = runtime_limits::MAX_NETWORK_BODY_BYTES;
 pub const OUTBOUND_DESTINATION_POLICY_ENV: &str = "KUJO_NET_DESTINATION_POLICY";
 pub const ALLOW_PRIVATE_DESTINATIONS_ENV: &str = "KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS";
+pub const AI_ALLOWED_ENDPOINTS_ENV: &str = "KUJO_AI_ALLOWED_ENDPOINTS";
 const ALLOWED_HTTP_URL_SCHEMES: [&str; 2] = ["http", "https"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -138,6 +139,91 @@ pub fn enforce_http_url_destination_policy(url: &str, surface: &str) -> Result<(
     })? as i64;
 
     enforce_host_port_destination_policy(host, port, surface)
+}
+
+fn http_url_for_policy(url: &str, surface: &str) -> Result<reqwest::Url, String> {
+    let parsed = reqwest::Url::parse(url)
+        .map_err(|error| format!("{} failed: invalid URL '{}': {}", surface, url, error))?;
+
+    let scheme = parsed.scheme().to_ascii_lowercase();
+    if !ALLOWED_HTTP_URL_SCHEMES.iter().any(|allowed| *allowed == scheme) {
+        return Err(format!(
+            "{} failed: unsupported URL scheme '{}'; expected http or https",
+            surface, scheme
+        ));
+    }
+    if parsed.host_str().is_none() {
+        return Err(format!(
+            "{} failed: URL '{}' is missing a host for AI endpoint allowlist evaluation",
+            surface, url
+        ));
+    }
+    if parsed.port_or_known_default().is_none() {
+        return Err(format!(
+            "{} failed: URL '{}' has unsupported scheme/port for AI endpoint allowlist evaluation",
+            surface, url
+        ));
+    }
+
+    Ok(parsed)
+}
+
+fn endpoint_path_matches_prefix(endpoint_path: &str, allowed_path: &str) -> bool {
+    let prefix = allowed_path.trim_end_matches('/');
+    if prefix.is_empty() {
+        return true;
+    }
+    endpoint_path == prefix || endpoint_path.starts_with(&format!("{}/", prefix))
+}
+
+fn ai_endpoint_allowlist_entry_matches(endpoint: &reqwest::Url, allowed: &reqwest::Url) -> bool {
+    if endpoint.scheme() != allowed.scheme() {
+        return false;
+    }
+
+    let Some(endpoint_host) = endpoint.host_str() else {
+        return false;
+    };
+    let Some(allowed_host) = allowed.host_str() else {
+        return false;
+    };
+    if !endpoint_host.eq_ignore_ascii_case(allowed_host) {
+        return false;
+    }
+    if endpoint.port_or_known_default() != allowed.port_or_known_default() {
+        return false;
+    }
+
+    endpoint_path_matches_prefix(endpoint.path(), allowed.path())
+}
+
+pub fn ai_endpoint_allowed(endpoint: &str, surface: &str) -> Result<(), String> {
+    let allowlist = match std::env::var(AI_ALLOWED_ENDPOINTS_ENV) {
+        Ok(raw) if !raw.trim().is_empty() => raw,
+        _ => return Ok(()),
+    };
+
+    let endpoint_url = http_url_for_policy(endpoint, surface)?;
+    for raw_entry in allowlist.split(',') {
+        let entry = raw_entry.trim();
+        if entry.is_empty() {
+            continue;
+        }
+        let allowed_url = http_url_for_policy(entry, surface).map_err(|error| {
+            format!(
+                "{} failed: invalid {} entry '{}': {}",
+                surface, AI_ALLOWED_ENDPOINTS_ENV, entry, error
+            )
+        })?;
+        if ai_endpoint_allowlist_entry_matches(&endpoint_url, &allowed_url) {
+            return Ok(());
+        }
+    }
+
+    Err(format!(
+        "{} failed: kind:\"endpoint_denied\" endpoint '{}' is not allowed by {}",
+        surface, endpoint, AI_ALLOWED_ENDPOINTS_ENV
+    ))
 }
 
 pub fn run_blocking_http_task<T, F>(surface: &str, task: F) -> Result<T, String>
@@ -357,6 +443,28 @@ mod tests {
         result
     }
 
+    fn with_ai_allowlist_env<F, T>(allowlist: Option<&str>, run: F) -> T
+    where
+        F: FnOnce() -> T,
+    {
+        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+        let previous = std::env::var(AI_ALLOWED_ENDPOINTS_ENV).ok();
+
+        match allowlist {
+            Some(value) => std::env::set_var(AI_ALLOWED_ENDPOINTS_ENV, value),
+            None => std::env::remove_var(AI_ALLOWED_ENDPOINTS_ENV),
+        }
+
+        let result = run();
+
+        match previous {
+            Some(value) => std::env::set_var(AI_ALLOWED_ENDPOINTS_ENV, value),
+            None => std::env::remove_var(AI_ALLOWED_ENDPOINTS_ENV),
+        }
+
+        result
+    }
+
     #[test]
     fn outbound_policy_default_mode_allows_loopback_destinations() {
         with_policy_env(None, None, || {
@@ -419,6 +527,59 @@ mod tests {
                 .expect_err("unsupported URL schemes should be rejected deterministically");
             assert!(error.contains("unsupported URL scheme 'ftp'"));
             assert!(error.contains("expected http or https"));
+        });
+    }
+
+    #[test]
+    fn ai_endpoint_allowlist_unset_allows_endpoint() {
+        with_ai_allowlist_env(None, || {
+            ai_endpoint_allowed("https://api.example.test/v1/chat/completions", "ai_chat")
+                .expect("unset AI allowlist should preserve trusted default behavior");
+        });
+    }
+
+    #[test]
+    fn ai_endpoint_allowlist_matches_scheme_host_port_and_path_prefix() {
+        with_ai_allowlist_env(
+            Some("https://api.example.test/v1, http://localhost:11434/api"),
+            || {
+                ai_endpoint_allowed("https://api.example.test/v1/chat/completions", "ai_chat")
+                    .expect("matching scheme, host, port, and path prefix should be allowed");
+                ai_endpoint_allowed("http://localhost:11434/api/chat", "ai_chat")
+                    .expect("explicit port and path prefix should be allowed");
+            },
+        );
+    }
+
+    #[test]
+    fn ai_endpoint_allowlist_rejects_non_matching_host() {
+        with_ai_allowlist_env(Some("https://api.example.test/v1"), || {
+            let error =
+                ai_endpoint_allowed("https://other.example.test/v1/chat/completions", "ai_chat")
+                    .expect_err("non-listed endpoint should be denied");
+            assert!(error.contains("kind:\"endpoint_denied\""));
+            assert!(error.contains(AI_ALLOWED_ENDPOINTS_ENV));
+        });
+    }
+
+    #[test]
+    fn ai_endpoint_allowlist_rejects_non_matching_path_prefix() {
+        with_ai_allowlist_env(Some("https://api.example.test/v1"), || {
+            let error =
+                ai_endpoint_allowed("https://api.example.test/v2/chat/completions", "ai_chat")
+                    .expect_err("non-listed path prefix should be denied");
+            assert!(error.contains("kind:\"endpoint_denied\""));
+        });
+    }
+
+    #[test]
+    fn ai_endpoint_allowlist_rejects_invalid_allowlist_entries() {
+        with_ai_allowlist_env(Some("not a url"), || {
+            let error =
+                ai_endpoint_allowed("https://api.example.test/v1/chat/completions", "ai_chat")
+                    .expect_err("invalid allowlist entries should be deterministic errors");
+            assert!(error.contains("invalid KUJO_AI_ALLOWED_ENDPOINTS entry"));
+            assert!(error.contains("not a url"));
         });
     }
 }

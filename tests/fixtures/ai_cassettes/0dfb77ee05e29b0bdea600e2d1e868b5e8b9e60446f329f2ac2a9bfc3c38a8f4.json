@@ -1,0 +1,31 @@
+{
+  "_cassette_version": 1,
+  "request_meta": {
+    "hash": "0dfb77ee05e29b0bdea600e2d1e868b5e8b9e60446f329f2ac2a9bfc3c38a8f4",
+    "surface": "ai_chat",
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "normalized": {
+      "_hash_version": 1,
+      "body": {
+        "messages": [
+          {
+            "content": "Hello model",
+            "role": "user"
+          }
+        ],
+        "model": "gpt-replay"
+      },
+      "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+      "headers": [],
+      "model": "gpt-replay"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"message\":{\"content\":\"hello from cassette\",\"tool_calls\":[{\"id\":\"call_1\",\"function\":{\"name\":\"lookup\",\"arguments\":\"{\\\"query\\\":\\\"kujo\\\"}\"}}]}}],\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":5,\"total_tokens\":12}}"
+  }
+}

@@ -1,0 +1,22 @@
+func kv(label, value) {
+    print(label + ": " + to_string(value))
+}
+
+func on_chunk(delta, raw_chunk) {
+    kv("delta", delta)
+    kv("raw", raw_chunk)
+    return true
+}
+
+let replay_options := {
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "provider": "mock-provider",
+    "cassette": {
+        "mode": "replay",
+        "dir": "tests/fixtures/ai_cassettes"
+    }
+}
+
+let result := ai_stream_chat("Stream please", replay_options, on_chunk)
+kv("stream_result", result)

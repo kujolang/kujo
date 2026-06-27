@@ -1,0 +1,17 @@
+func kv(label, value) {
+    print(label + ": " + value)
+}
+
+let options := {
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "structured_errors": true,
+    "cassette": {
+        "mode": "replay",
+        "dir": "tests/fixtures/ai_cassettes"
+    }
+}
+
+let result := ai_chat("Hello model", options)
+
+kv("allowlisted_replay", to_string(result))

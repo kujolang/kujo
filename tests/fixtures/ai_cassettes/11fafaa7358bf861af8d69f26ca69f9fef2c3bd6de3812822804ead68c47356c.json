@@ -1,0 +1,32 @@
+{
+  "_cassette_version": 1,
+  "request_meta": {
+    "hash": "11fafaa7358bf861af8d69f26ca69f9fef2c3bd6de3812822804ead68c47356c",
+    "surface": "ai_chat",
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "normalized": {
+      "_hash_version": 1,
+      "body": {
+        "messages": [
+          {
+            "content": "Rate limit",
+            "role": "user"
+          }
+        ],
+        "model": "gpt-replay"
+      },
+      "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+      "headers": [],
+      "model": "gpt-replay"
+    }
+  },
+  "response": {
+    "status": 429,
+    "headers": {
+      "content-type": "application/json",
+      "retry-after": "3"
+    },
+    "body": "{\"error\":{\"code\":\"rate_limit_exceeded\",\"message\":\"slow down\"}}"
+  }
+}
