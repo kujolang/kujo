@@ -4007,6 +4007,9 @@ mod tests {
 
     #[test]
     fn test_ai_helpers_surface_contract_failures_and_edge_validation() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
+        clear_ai_cassette_env();
+
         let missing_options = handle("ai_chat", &[str_value("hello"), Value::Int(1)]).unwrap();
         assert!(
             matches!(missing_options, Value::Error(message) if message.contains("requires an options dictionary"))

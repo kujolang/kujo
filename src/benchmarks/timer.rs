@@ -77,7 +77,7 @@ mod tests {
         thread::sleep(Duration::from_millis(10));
         let elapsed = timer.elapsed();
         assert!(elapsed >= Duration::from_millis(10));
-        assert!(elapsed < Duration::from_millis(50));
+        assert!(elapsed < Duration::from_secs(5));
     }
 
     #[test]

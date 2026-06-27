@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated README positioning to document the completed core AI-native mechanism set while preserving the pre-tag release-candidate enterprise-readiness boundary.
 
+### Fixed
+
+- Hardened flaky test contracts for AI environment isolation, UDP loopback binding, benchmark timer assertions, VM fixture snapshot normalization, and generated VM inventory side effects, and refreshed the LSP completion contract for the completed AI builtin surface.
+
 ## [1.0.0] - 2026-06-19
 
 Release-candidate note: the crate metadata is staged at `1.0.0`, but the final `v1.0.0` tag, crate publication, and binary artifact sign-off remain incomplete until the release artifact checklist has dated evidence.
