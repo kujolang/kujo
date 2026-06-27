@@ -60,6 +60,7 @@ This VM test was not a release-execution detail. It proved the runtime could sil
 - Item 9 from the same proposal is implemented: `ai_stream_chat` now accepts an optional chunk callback with replay-backed ordered delivery and `false` cancellation while preserving aggregate return behavior when omitted.
 - Item 10 from the same proposal is implemented: `ai_text`, `ai_image_url`, and `ai_message` now build portable text/image chat messages accepted by the AI helpers without adding provider policy.
 - Items 1-10 in that proposal are now implemented on the core AI-native enhancement branch; future work should keep the same non-goals unless a new approved proposal changes scope.
+- Product hardening and presentation now include a strict replay AI showcase (`examples/ai_enterprise_replay_showcase.kujo`), an enterprise verification wrapper (`scripts/enterprise_verify.sh`), an AI-native evidence index, secure AI scripting guidance, and a security-response policy draft. Final universal enterprise-readiness claims still require tag-time artifacts and the remaining roadmap evidence.
 
 ## 2. Priority And Severity Definitions
 

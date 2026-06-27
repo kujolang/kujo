@@ -1,0 +1,79 @@
+func kv(label, value) {
+    print(label + ": " + to_string(value))
+}
+
+func on_chunk(delta, raw_chunk) {
+    kv("stream_delta", delta)
+    return true
+}
+
+let cassette := {
+    "mode": "replay",
+    "dir": "tests/fixtures/ai_cassettes"
+}
+
+let base_options := {
+    "endpoint": "http://127.0.0.1:1/v1/chat/completions",
+    "model": "gpt-replay",
+    "provider": "fixture-provider",
+    "api_key": secret("sk-local-fixture"),
+    "structured_errors": true,
+    "cassette": cassette
+}
+
+let multimodal_messages := [
+    ai_message("system", "Return concise JSON-friendly release evidence."),
+    ai_message("user", [
+        ai_text("Summarize the Kujo release-candidate posture."),
+        ai_image_url("https://example.test/assets/release-screenshot.png", "low")
+    ])
+]
+
+let budget_messages := [
+    ai_message("system", "Return concise JSON-friendly release evidence."),
+    ai_message("user", "Summarize the Kujo release-candidate posture.")
+]
+
+let fit := ai_fit_context(budget_messages, 256, {"model": "gpt-replay"})
+kv("secret_redacted", base_options["api_key"])
+kv("multimodal_blocks", len(multimodal_messages[1]["content"]))
+kv("fit_tokens", fit["est_tokens"])
+kv("request_hash", ai_request_hash("Hello model", base_options))
+
+let chat := ai_chat("Hello model", base_options)
+match chat {
+    case Ok(payload): {
+        let schema := {
+            "type": "object",
+            "required": ["message", "usage"],
+            "properties": {
+                "message": {"type": "string"},
+                "usage": {
+                    "type": "object",
+                    "required": ["total_tokens"],
+                    "properties": {
+                        "total_tokens": {"type": "number"}
+                    }
+                }
+            }
+        }
+        let validation := json_schema_validate(payload, schema)
+        kv("chat_message", payload["message"])
+        kv("schema_valid", validation["valid"])
+        kv("usage_total", payload["usage"]["total_tokens"])
+    }
+    case Err(error): {
+        kv("chat_error", error)
+    }
+}
+
+let stream := ai_stream_chat("Stream please", base_options, on_chunk)
+match stream {
+    case Ok(payload): {
+        kv("stream_text", payload["text"])
+        kv("stream_chunks", len(payload["chunks"]))
+    }
+    case Err(error): {
+        kv("stream_error", error)
+    }
+}

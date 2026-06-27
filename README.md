@@ -109,9 +109,12 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [docs/LANGUAGE_SPEC.md](docs/LANGUAGE_SPEC.md)
 - [docs/STANDARD_LIBRARY.md](docs/STANDARD_LIBRARY.md)
 - [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md)
+- [docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md](docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md)
 - [docs/DOCGEN.md](docs/DOCGEN.md)
 - [docs/CLI_MACHINE_READABLE_CONTRACTS.md](docs/CLI_MACHINE_READABLE_CONTRACTS.md)
 - [AGENTS.md](AGENTS.md)
+- [docs/SECURE_AI_SCRIPTING.md](docs/SECURE_AI_SCRIPTING.md)
+- [docs/SECURITY_RESPONSE.md](docs/SECURITY_RESPONSE.md)
 - [docs/INSTALL_MATRIX.md](docs/INSTALL_MATRIX.md)
 - [docs/RELEASE_BINARIES.md](docs/RELEASE_BINARIES.md)
 - [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md)
@@ -149,6 +152,9 @@ kujo --version
 
 ## Quick Start
 
+This first-ten-minutes path gives you a normal script, a replay-only AI example,
+and the secure execution posture without requiring live provider credentials.
+
 Create `hello.kujo`:
 
 ```kujo
@@ -175,6 +181,35 @@ The same minimal program is tracked as `examples/hello.kujo`:
 
 ```bash
 cargo run -- run examples/hello.kujo
+```
+
+Run the replay-only AI showcase. It uses committed cassettes, so it should not
+open a live provider socket:
+
+```bash
+KUJO_AI_REPLAY=tests/fixtures/ai_cassettes \
+KUJO_AI_REPLAY_MODE=strict \
+cargo run -- run examples/ai_enterprise_replay_showcase.kujo
+```
+
+Check the same example without execution:
+
+```bash
+cargo run -- check examples/ai_enterprise_replay_showcase.kujo
+```
+
+For untrusted AI scripts, prefer AI-specific egress and an endpoint allowlist:
+
+```bash
+export KUJO_AI_ALLOWED_ENDPOINTS=https://api.example.test/v1
+kujo run --untrusted --allow-ai script.kujo
+```
+
+Run the compact enterprise verification wrapper when reviewing product
+readiness:
+
+```bash
+bash scripts/enterprise_verify.sh --minimal
 ```
 
 ### Next Program
@@ -299,4 +334,11 @@ Release-gate scripts:
 ```bash
 bash scripts/release_gate.sh
 bash scripts/release_candidate_gate.sh --full
+bash scripts/enterprise_verify.sh --minimal
+```
+
+For the current AI-native release-candidate evidence matrix:
+
+```bash
+bash scripts/enterprise_verify.sh --full
 ```
