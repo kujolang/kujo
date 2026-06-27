@@ -32,9 +32,9 @@ Generated, local, and transient artifacts must not be tracked at root and should
 
 - Build/test outputs: `target/`, `tmp/`, `test_dir/`, `var/`
 - Generated docs/artifacts: `docs/generated/`
-- Local databases/backups/scratch files: untracked and ignored via `.gitignore`
+- Local databases/backups/scratch files: untracked and ignored via `.gitignore`, and kept under `tmp/` or `var/` rather than the repository root
 - Runtime/source implementation: `src/`, `tests/`, `examples/`, `scripts/`, `docs/`, `notes/`
-- Disallowed root clutter patterns: root-level `*.db`, `*.sqlite*`, `*.zip`, `*.tar*`, `*.bak`, `*.backup`, `*.orig`, and extracted scratch directory names such as `scratch*`, `backup*`, `extract*`, and `unzipped*`
+- Disallowed root clutter patterns: root-level `blocked.txt`, `.DS_Store`, `*.db`, `*.sqlite*`, `*.zip`, `*.tar*`, `*.bak`, `*.backup`, `*.orig`, and extracted scratch directory names such as `scratch*`, `backup*`, `extract*`, and `unzipped*`, even when ignored
 
 ## Retention And Cleanup
 

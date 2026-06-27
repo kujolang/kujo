@@ -80,10 +80,19 @@ clutter_candidates="$(
     | sort -u
 )"
 
+ignored_root_candidates="$(
+  git -C "${repo_root}" ls-files -o -i --exclude-standard \
+    | awk -F/ 'NF == 1 { print $1 }' \
+    | sort -u
+)"
+
 disallowed_clutter=""
 while IFS= read -r entry; do
   [[ -z "$entry" ]] && continue
   case "$entry" in
+    .DS_Store|blocked.txt)
+      disallowed_clutter="${disallowed_clutter}${entry}"$'\n'
+      ;;
     *.db|*.sqlite|*.sqlite3|*.zip|*.tar|*.tgz|*.tar.gz|*.bak|*.backup|*.orig|*.tmp|*.dmp)
       disallowed_clutter="${disallowed_clutter}${entry}"$'\n'
       ;;
@@ -92,6 +101,21 @@ while IFS= read -r entry; do
       ;;
   esac
 done <<< "${clutter_candidates}"
+
+while IFS= read -r entry; do
+  [[ -z "$entry" ]] && continue
+  case "$entry" in
+    .DS_Store|blocked.txt)
+      disallowed_clutter="${disallowed_clutter}${entry}"$'\n'
+      ;;
+    *.db|*.sqlite|*.sqlite3|*.zip|*.tar|*.tgz|*.tar.gz|*.bak|*.backup|*.orig|*.tmp|*.dmp)
+      disallowed_clutter="${disallowed_clutter}${entry}"$'\n'
+      ;;
+    tmp-*|temp-*|scratch*|backup*|extract*|unzipped*|*_tmp|*_temp|*_backup|*_backup_*|*_extract*)
+      disallowed_clutter="${disallowed_clutter}${entry}"$'\n'
+      ;;
+  esac
+done <<< "${ignored_root_candidates}"
 
 if [[ -n "${disallowed_clutter}" ]]; then
   echo "Repo hygiene audit: disallowed local root clutter detected."
