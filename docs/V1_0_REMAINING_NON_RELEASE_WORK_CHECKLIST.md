@@ -7,6 +7,8 @@ Owner: runtime/compiler/docs maintainers
 
 This checklist is the **post-hardening, non-release-flight** remainder for v1.0 readiness.
 
+Current operational checklist: `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
+
 Explicitly excluded from this document:
 - `V1U-OPEN-003` (release artifact tag-time sign-off)
 - `V1U-FINAL-003` (final tag-time artifact completion)
@@ -22,10 +24,10 @@ Those two release-flight items remain governed by `docs/PRE_V1_MASTER_UNFINISHED
 
 Non-release unchecked total: **0** primary blocker items.
 
-## Current Generated Artifact Refresh (2026-06-19)
+## Current Generated Artifact Refresh (2026-06-27)
 
-- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 6`, `P1 stale-snapshot-expectation: 5`, and `P2 harness-debt: 0`.
-- This supersedes the 2026-05-24 and 2026-05-25 zero-mismatch closure snapshots for current release-review purposes. Treat the completed rows below as historical closure evidence; the refreshed P0 rows are tracked by `V1RR-P0-004` and should be resolved or explicitly deferred by the active release-readiness checklist.
+- `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` now reports `P0 runtime-parity-bug: 0`, `P1 stale-snapshot-expectation: 0`, `P2 harness-debt: 0`, `P2 intentional-divergence: 39`, and `vm_matches_snapshot: 144/144`.
+- The residual `P2 intentional-divergence` rows are legacy interpreter-only drift. The default VM output matches every release fixture snapshot, and `cargo run -- test --runtime vm` plus `cargo run -- test --runtime dual` remain the release gates.
 
 ## A) Remaining Blockers / Stoppers
 

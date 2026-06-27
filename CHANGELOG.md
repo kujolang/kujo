@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md` as the single operational checklist before official `v1.0.0` publication.
 - Added `scripts/enterprise_verify.sh`, `docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md`, and `examples/ai_enterprise_replay_showcase.kujo` to make AI-native release-candidate evidence, strict replay demos, and product-hardening checks repeatable.
 - Added `docs/SECURE_AI_SCRIPTING.md`, `docs/SECURITY_RESPONSE.md`, and `docs/AI_NATIVE_PRODUCT_HARDENING_STATUS_2026-06-27.md` to clarify secure AI operation, vulnerability-response expectations, and the current product-hardening boundary.
 - Added `tests/ai_replay_hermeticity_contract.rs` to guard strict AI replay against live-socket fallthrough and scan committed cassettes for common credential markers.
 - Added `ai_native_helpers` Criterion workloads for AI request hashing, schema validation, vector top-k scoring, and context fitting regression checks.
-- Added `docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md` to capture the next enterprise/readiness polish backlog after the core AI-native enhancement track.
+- Added `docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md` as historical enterprise/readiness polish evidence after the core AI-native enhancement track.
 - Added `ai_request_hash(prompt_or_messages, options)` for deterministic, credential-independent AI request cache/cassette keys without network I/O.
 - Added native AI record/replay cassettes for `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` via `KUJO_AI_RECORD`, `KUJO_AI_REPLAY`, `KUJO_AI_REPLAY_MODE`, and per-call `options.cassette`.
 - Added AI response envelope metadata (`usage`, `finish_reason`, `tool_calls`, `provider`) and opt-in `options.structured_errors` dictionaries while preserving default string errors.
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refreshed VM mismatch evidence so the generator mirrors `kujo test` runnable fixture policy, combines stdout/stderr like the test harness, and reports default VM snapshot coverage separately from legacy interpreter-only drift.
 - Updated README positioning to document the completed core AI-native mechanism set while preserving the pre-tag release-candidate enterprise-readiness boundary.
 
 ### Fixed

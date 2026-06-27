@@ -22,6 +22,7 @@ fn high_risk_docs_policies_remain_consistent() {
     let stdlib_ref = read("docs/STANDARD_LIBRARY_REFERENCE.md");
     let architecture = read("docs/ARCHITECTURE.md");
     let ai_evidence = read("docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md");
+    let official_release = read("docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md");
     let secure_ai = read("docs/SECURE_AI_SCRIPTING.md");
     let security_response = read("docs/SECURITY_RESPONSE.md");
     let hardening_status = read("docs/AI_NATIVE_PRODUCT_HARDENING_STATUS_2026-06-27.md");
@@ -31,6 +32,7 @@ fn high_risk_docs_policies_remain_consistent() {
         ("docs/V1_SCOPE.md", &v1_scope),
         ("docs/LANGUAGE_SPEC.md", &lang_spec),
         ("docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md", &ai_evidence),
+        ("docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md", &official_release),
     ] {
         assert!(content.contains(canonical), "missing canonical readiness boundary in {}", name);
     }
@@ -92,8 +94,13 @@ fn high_risk_docs_policies_remain_consistent() {
     );
     assert!(
         hardening_status.contains("The core AI-native implementation track is complete")
-            && hardening_status
-                .contains("universal enterprise readiness still requires final tag-time artifacts"),
+            && hardening_status.contains("docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md"),
         "hardening status should keep the completed-track and remaining-readiness boundary"
+    );
+    assert!(
+        official_release.contains("P0 runtime-parity-bug: 0")
+            && official_release.contains("UNBLOCK_V1_RELEASE")
+            && official_release.contains("bash scripts/release_gate.sh --full"),
+        "official release checklist should keep current release blocker and verification commands"
     );
 }

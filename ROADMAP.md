@@ -3,7 +3,7 @@
 Last audit date: 2026-05-06
 > Current crate version: `1.0.0` in [Cargo.toml](Cargo.toml)
 Target release: 1.0.0
-Release state: pre-tag `1.0.0` release candidate metadata; the final `v1.0.0` tag, crate publication, and binary artifact publication are not complete until the release artifact checklist has dated evidence.
+Release state: pre-tag `1.0.0` release candidate metadata; the final `v1.0.0` tag, crate publication, and binary artifact publication are not complete until `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md` and the release artifact checklist have dated evidence.
 Roadmap status: active production-readiness backlog
 
 This roadmap replaces the previous release-execution roadmap. The prior roadmap stated that Kujo had no known P0 language/runtime parity blockers. That is no longer accurate. The current audit found at least one failing test plus multiple security, correctness, diagnostics, runtime, HTTP, filesystem, and documentation gaps that must be closed before Kujo can credibly ship a production-ready 1.0 release.

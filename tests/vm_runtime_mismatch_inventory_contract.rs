@@ -63,6 +63,14 @@ fn vm_runtime_mismatch_inventory_script_generates_expected_outputs() {
 
     let csv = fs::read_to_string(&output_csv).expect("inventory csv should exist");
     assert!(csv.contains("fixture,vm_exit,interpreter_exit,vm_matches_snapshot,interpreter_matches_snapshot,delta_type,mismatch_bucket,bucket_owner,priority,rationale"));
+    assert!(
+        !csv.contains("tests/fixtures/"),
+        "inventory should mirror kujo test and exclude nested support fixtures"
+    );
+    assert!(
+        !csv.contains("jit_direct_recursion.kujo"),
+        "inventory should mirror kujo test and exclude test-run-only fixtures"
+    );
 
     let mut mismatch_rows = 0usize;
     let mut has_classified_mismatch = false;

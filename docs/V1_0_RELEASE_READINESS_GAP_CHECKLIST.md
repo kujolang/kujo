@@ -1,12 +1,12 @@
 # Kujo v1.0 Release Readiness Gap Checklist
 
 Audit date: 2026-06-19
-Status: active release-readiness gap checklist
+Status: superseded by `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`
 Owner: Kujo core/release maintainers
 
 ## Purpose
 
-This document consolidates the remaining work that should be closed before starting a final release-readiness review for Kujo `1.0.0`.
+This document is retained as historical release-readiness evidence. The active operational release checklist is `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
 
 It is based on a documentation sweep across top-level docs, `docs/`, `notes/`, `examples/`, `tools/`, and benchmark docs. Generated docs were used only where an active checklist referenced them as source-of-truth evidence.
 

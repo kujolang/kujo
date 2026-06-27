@@ -1,4 +1,8 @@
-# Kujo Enterprise AI-Native Polish - Next Session Backlog (2026-06-27)
+# Kujo Enterprise AI-Native Polish - Historical Backlog (2026-06-27)
+
+Status: superseded by `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
+
+This document is retained as historical planning evidence. The current release path is the canonical checklist in `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
 
 ## Goal
 

@@ -2,6 +2,8 @@
 
 Status: active final-phase handoff before human v1.0 readiness review
 
+Superseded operational checklist: `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
+
 ## Current Boundary
 
 Kujo is closer to final review after the 2026-06-20 security and dependency

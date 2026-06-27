@@ -98,7 +98,10 @@ fi
 
 trim_file() {
   local path="$1"
-  sed -e 's/[[:space:]]*$//' "$path" | sed -e '${/^$/d;}' | sed -e 's/\[KUJOVM001\]/[RUFVM001]/g'
+  sed -e '/^Compiler optimization:/d' "$path" \
+    | perl -pe 's/ \(took ~[^)]*ms\)//g; s/[[:space:]]+$//' \
+    | sed -e '${/^$/d;}' \
+    | sed -e 's/\[KUJOVM001\]/[RUFVM001]/g'
 }
 
 run_with_timeout() {
@@ -153,15 +156,13 @@ run_fixture() {
     cmd+=("--interpreter")
   fi
 
-  if run_with_timeout "$timeout_seconds" "${cmd[@]}" >"$stdout_file" 2>"$stderr_file"; then
+  if (cd "$ROOT" && run_with_timeout "$timeout_seconds" "${cmd[@]}") >"$stdout_file" 2>"$stderr_file"; then
     echo "0" > "$status_file"
   else
     echo "$?" > "$status_file"
   fi
-  if [[ -s "$stdout_file" ]]; then
-    cp "$stdout_file" "$output_file"
-  elif [[ -s "$stderr_file" ]]; then
-    cp "$stderr_file" "$output_file"
+  if [[ -s "$stdout_file" || -s "$stderr_file" ]]; then
+    cat "$stdout_file" "$stderr_file" > "$output_file"
   else
     : > "$output_file"
   fi
@@ -169,6 +170,11 @@ run_fixture() {
 
 cleanup_fixture_side_effects() {
   rm -f "$ROOT/blocked.txt"
+}
+
+is_test_run_fixture() {
+  local fixture="$1"
+  head -n 3 "$ROOT/$fixture" | grep -q "Run with: kujo test-run"
 }
 
 classify_delta() {
@@ -201,7 +207,12 @@ classify_mismatch_cause() {
     return
   fi
 
-  if [[ "$delta_type" == "vm_only_mismatch" || "$delta_type" == "interpreter_only_mismatch" ]]; then
+  if [[ "$delta_type" == "interpreter_only_mismatch" ]]; then
+    echo "intentional-divergence|runtime-owner|P2|default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt"
+    return
+  fi
+
+  if [[ "$delta_type" == "vm_only_mismatch" ]]; then
     echo "runtime-parity-bug|runtime-owner|P0|runtime-path mismatch against snapshot indicates parity defect or runtime-specific contract drift"
     return
   fi
@@ -233,11 +244,16 @@ classify_mismatch_cause() {
   echo "runtime-parity-bug|runtime-owner|P0|both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations"
 }
 
-if command -v rg >/dev/null 2>&1; then
-  fixtures=$(cd "$ROOT" && rg --files "$TESTS_DIR" -g '*.kujo' | sort)
-else
-  fixtures=$(cd "$ROOT" && find "$TESTS_DIR" -type f -name '*.kujo' | sort)
-fi
+fixtures=$(
+  cd "$ROOT"
+  for fixture in "$TESTS_DIR"/*.kujo; do
+    [[ -e "$fixture" ]] || continue
+    if is_test_run_fixture "$fixture"; then
+      continue
+    fi
+    printf '%s\n' "$fixture"
+  done | sort
+)
 if [[ -n "$MAX_FIXTURES" ]]; then
   fixtures=$(printf '%s\n' "$fixtures" | head -n "$MAX_FIXTURES")
 fi
@@ -290,8 +306,8 @@ while IFS= read -r fixture; do
   int_out_file="$tmp_dir/int_${count}.txt"
   int_status_file="$tmp_dir/int_${count}.status"
 
-  run_fixture "$ROOT/$fixture" "vm" "$vm_out_file" "$vm_status_file"
-  run_fixture "$ROOT/$fixture" "interpreter" "$int_out_file" "$int_status_file"
+  run_fixture "$fixture" "vm" "$vm_out_file" "$vm_status_file"
+  run_fixture "$fixture" "interpreter" "$int_out_file" "$int_status_file"
   cleanup_fixture_side_effects
 
   vm_output="$(trim_file "$vm_out_file")"

@@ -2,7 +2,9 @@
 
 Last updated: 2026-05-25
 Owner: Kujo core/runtime
-Status: Active (post-parity hardening pass)
+Status: superseded by `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`; retained as historical enterprise-readiness evidence
+
+Current operational checklist: `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
 
 ## Goal
 

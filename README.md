@@ -52,11 +52,12 @@ See [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md) and [docs/STANDARD_LIBRARY.md](docs
 - The project is currently at `1.0.0` in `Cargo.toml` for release-candidate validation.
 - Kujo has not yet published the final `v1.0.0` tag or release artifacts.
 - Kujo is not yet a final-tagged, universally enterprise-ready release; it is a strong release-candidate language/runtime with explicit remaining release evidence tracked in the roadmap and readiness docs.
-- [ROADMAP.md](ROADMAP.md) is the single source of truth for release readiness and blocker tracking.
+- [docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md](docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md) is the single operational checklist to run before official release.
+- [ROADMAP.md](ROADMAP.md) remains the source of truth for historical release-readiness implementation tracking.
 - Kujo `1.0.0` must not be released until all P0/P1 roadmap items, the final release checklist, and tag-time artifact evidence are complete.
 - Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
 - Deferred/non-goal boundaries are tracked in [docs/V1_SCOPE.md](docs/V1_SCOPE.md) and [docs/OPTIONAL_TYPING_DESIGN.md](docs/OPTIONAL_TYPING_DESIGN.md).
-- Final human-review blockers are summarized in [docs/V1_0_FINAL_REVIEW_BLOCKERS_2026-06-20.md](docs/V1_0_FINAL_REVIEW_BLOCKERS_2026-06-20.md).
+- The final release-flight blocker is tag-time artifact publication/sign-off in [docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md](docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md).
 
 ## Safety Model Snapshot
 
@@ -110,6 +111,7 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [docs/STANDARD_LIBRARY.md](docs/STANDARD_LIBRARY.md)
 - [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md)
 - [docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md](docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md)
+- [docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md](docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md)
 - [docs/DOCGEN.md](docs/DOCGEN.md)
 - [docs/CLI_MACHINE_READABLE_CONTRACTS.md](docs/CLI_MACHINE_READABLE_CONTRACTS.md)
 - [AGENTS.md](AGENTS.md)
@@ -120,8 +122,6 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md)
 - [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)
 - [docs/VM_INTERPRETER_PARITY_MATRIX.md](docs/VM_INTERPRETER_PARITY_MATRIX.md)
-- [docs/ENTERPRISE_READINESS_NEXT_SESSION_2026-06-20.md](docs/ENTERPRISE_READINESS_NEXT_SESSION_2026-06-20.md)
-- [docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md](docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md)
 
 For script ergonomics, see the output/report style guidance in [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md) and [docs/STANDARD_LIBRARY_REFERENCE.md](docs/STANDARD_LIBRARY_REFERENCE.md).
 

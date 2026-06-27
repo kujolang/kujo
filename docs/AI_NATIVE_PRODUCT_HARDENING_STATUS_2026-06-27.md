@@ -3,6 +3,8 @@
 Status: active current-facing status
 Last updated: 2026-06-27
 
+Canonical current checklist: `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
+
 ## Completed In This Pass
 
 - Added `scripts/enterprise_verify.sh` as the compact enterprise verification wrapper.
@@ -16,12 +18,11 @@ Last updated: 2026-06-27
 
 ## Current Product Answer
 
-The core AI-native implementation track is complete. Product hardening and presentation are materially improved, but universal enterprise readiness still requires final tag-time artifacts, release evidence, and the remaining roadmap blockers.
+The core AI-native implementation track is complete. Product hardening and presentation are materially improved, but universal enterprise readiness still requires final tag-time artifacts and release evidence. The active pre-release path is consolidated in `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`.
 
 ## Next Remaining Work
 
-1. Preserve benchmark raw artifacts and environment details before using AI-native helper timings as public evidence.
-2. Add screenshots or terminal transcript artifacts for the highest-value examples.
-3. Continue reducing old checklist-only docs from the first-time user path.
+1. Run `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md` on current `main`.
+2. Preserve benchmark raw artifacts and environment details before using AI-native helper timings as public evidence.
+3. Add screenshots or terminal transcript artifacts for the highest-value examples.
 4. Decide whether a root `SECURITY.md` should be allowed by the root hygiene policy, or keep security response under `docs/`.
-5. Run `bash scripts/enterprise_verify.sh --full` in the intended release environment immediately before PR/tag review.
