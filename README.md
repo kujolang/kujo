@@ -13,6 +13,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Dotted module import workflows are supported on the default VM path.
 - Package workflows are deterministic: `kujo init`, `kujo package-add`, `kujo package-install`, and `kujo package-install --frozen` work with nested source layouts and reproducible `kujo.lock` snapshots.
 - Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport.
+- Core AI-native runtime mechanisms are implemented for deterministic request hashing, offline record/replay cassettes, structured response metadata, JSON Schema validation, vector math, token budgeting, runtime secret redaction, dedicated AI egress capability controls, streaming callbacks, and multimodal message builders.
 - Native helper coverage has expanded for everyday scripting work: hashing (`sha256`, `sha256_file`, `md5`), file inspection (`read_file_lossy`, `path_is_symlink`), formatting (`pad_start`, `pad_end`), introspection (`type_of`, `is_truthy`), and stderr output (`eprint`) are all available without shelling out.
 - Runtime-generated sequence and string helpers now reject unsafe edge cases such as non-finite range bounds, reversed random bounds, negative string widths/counts, and oversized generated outputs instead of panicking or attempting unbounded allocation.
 - Native capability controls are available for trusted and untrusted execution modes.
@@ -32,10 +33,25 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Strong diagnostics, contract tests, and release-gate automation.
 - Core surfaces for `doctor`, `docgen`, and machine-readable CLI contracts keep the language agent-readable.
 
+## AI-Native Runtime Snapshot
+
+Kujo's core AI features are mechanism-first primitives for scripts and libraries:
+
+- `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` share deterministic request parsing, replay cassettes, response envelopes, and redacted error handling.
+- `ai_request_hash` gives credential-independent cache and cassette keys without network I/O.
+- `ai_stream_chat(..., on_chunk)` supports replay-backed chunk callbacks and cancellation by returning `false`.
+- `ai_text`, `ai_image_url`, and `ai_message` build portable multimodal message dictionaries accepted by the AI helpers.
+- `ai_count_tokens` and `ai_fit_context` provide deterministic prompt-budget estimates without provider tokenizers.
+- `secret`, `reveal`, and `is_secret` keep API keys and other runtime secrets redacted unless code explicitly reveals them.
+- `json_schema_validate` plus `vec_*` helpers give local validation and embedding math building blocks without adding provider routing, RAG, agents, MCP, eval, observability, or registry policy to core.
+
+See [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md) and [docs/STANDARD_LIBRARY.md](docs/STANDARD_LIBRARY.md) for contracts and examples.
+
 ## 1.0 Readiness Status
 
 - The project is currently at `1.0.0` in `Cargo.toml` for release-candidate validation.
 - Kujo has not yet published the final `v1.0.0` tag or release artifacts.
+- Kujo is not yet a final-tagged, universally enterprise-ready release; it is a strong release-candidate language/runtime with explicit remaining release evidence tracked in the roadmap and readiness docs.
 - [ROADMAP.md](ROADMAP.md) is the single source of truth for release readiness and blocker tracking.
 - Kujo `1.0.0` must not be released until all P0/P1 roadmap items, the final release checklist, and tag-time artifact evidence are complete.
 - Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
@@ -92,6 +108,7 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [ROADMAP.md](ROADMAP.md)
 - [docs/LANGUAGE_SPEC.md](docs/LANGUAGE_SPEC.md)
 - [docs/STANDARD_LIBRARY.md](docs/STANDARD_LIBRARY.md)
+- [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md)
 - [docs/DOCGEN.md](docs/DOCGEN.md)
 - [docs/CLI_MACHINE_READABLE_CONTRACTS.md](docs/CLI_MACHINE_READABLE_CONTRACTS.md)
 - [AGENTS.md](AGENTS.md)
@@ -101,6 +118,7 @@ export KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1
 - [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md)
 - [docs/VM_INTERPRETER_PARITY_MATRIX.md](docs/VM_INTERPRETER_PARITY_MATRIX.md)
 - [docs/ENTERPRISE_READINESS_NEXT_SESSION_2026-06-20.md](docs/ENTERPRISE_READINESS_NEXT_SESSION_2026-06-20.md)
+- [docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md](docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md)
 
 For script ergonomics, see the output/report style guidance in [docs/FIRST_TOOL_COOKBOOK.md](docs/FIRST_TOOL_COOKBOOK.md) and [docs/STANDARD_LIBRARY_REFERENCE.md](docs/STANDARD_LIBRARY_REFERENCE.md).
 

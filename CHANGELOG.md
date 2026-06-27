@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `docs/ENTERPRISE_AI_NATIVE_POLISH_NEXT_SESSION_2026-06-27.md` to capture the next enterprise/readiness polish backlog after the core AI-native enhancement track.
 - Added `ai_request_hash(prompt_or_messages, options)` for deterministic, credential-independent AI request cache/cassette keys without network I/O.
 - Added native AI record/replay cassettes for `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` via `KUJO_AI_RECORD`, `KUJO_AI_REPLAY`, `KUJO_AI_REPLAY_MODE`, and per-call `options.cassette`.
 - Added AI response envelope metadata (`usage`, `finish_reason`, `tool_calls`, `provider`) and opt-in `options.structured_errors` dictionaries while preserving default string errors.
@@ -19,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a dedicated `network-ai` / `--allow-ai` capability for high-level AI helpers plus `KUJO_AI_ALLOWED_ENDPOINTS` endpoint allowlist enforcement.
 - Added optional `ai_stream_chat(prompt_or_messages, options, on_chunk)` chunk callbacks with replay-backed ordered delivery and `false` cancellation.
 - Added pure multimodal AI message builders `ai_text`, `ai_image_url`, and `ai_message`.
+
+### Changed
+
+- Updated README positioning to document the completed core AI-native mechanism set while preserving the pre-tag release-candidate enterprise-readiness boundary.
 
 ## [1.0.0] - 2026-06-19
 
