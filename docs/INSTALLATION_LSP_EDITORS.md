@@ -43,6 +43,9 @@ Then keep editor adapter command stable:
 
 ## VS Code / Cursor / Codex Extension Path
 
+For full VS Code extension packaging, Marketplace publishing, and end-user
+install instructions, see `docs/VSCODE_EXTENSION.md`.
+
 Build/install the first-party Kujo extension baseline:
 
 ```bash

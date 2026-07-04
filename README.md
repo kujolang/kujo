@@ -282,6 +282,7 @@ Common commands:
 - `kujo lsp`: run Kujo’s LSP server.
 
 Machine-readable contracts and diagnostics behavior are documented in [docs/CLI_MACHINE_READABLE_CONTRACTS.md](docs/CLI_MACHINE_READABLE_CONTRACTS.md).
+VS Code extension installation and Marketplace publishing are documented in [docs/VSCODE_EXTENSION.md](docs/VSCODE_EXTENSION.md).
 
 ## Repository Layout
 

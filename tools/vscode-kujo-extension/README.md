@@ -47,6 +47,9 @@ vsce package
 
 Then install the generated `.vsix` in VS Code/Cursor/Codex-compatible editors.
 
+For full installation, Marketplace publishing, and end-user setup instructions,
+see `../../docs/VSCODE_EXTENSION.md`.
+
 ## Extension Settings
 
 - `kujo.lsp.enabled`
