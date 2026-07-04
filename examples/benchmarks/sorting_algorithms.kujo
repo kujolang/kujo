@@ -197,16 +197,19 @@ for size in sizes {
     random_arr := create_random_array(size, 1000)
     
     qs_result := benchmark_quicksort(random_arr, "random")
-    print("    QuickSort:", qs_result["time_ms"], "ms,", 
-          int(qs_result["items_per_sec"]), "items/s")
+    qs_items_per_sec := to_int(qs_result["items_per_sec"])
+    qs_line := "    QuickSort: " + str(qs_result["time_ms"]) + " ms, " + str(qs_items_per_sec) + " items/s"
+    print(qs_line)
     
     ms_result := benchmark_mergesort(random_arr, "random")
-    print("    MergeSort:", ms_result["time_ms"], "ms,", 
-          int(ms_result["items_per_sec"]), "items/s")
+    ms_items_per_sec := to_int(ms_result["items_per_sec"])
+    ms_line := "    MergeSort: " + str(ms_result["time_ms"]) + " ms, " + str(ms_items_per_sec) + " items/s"
+    print(ms_line)
     
     builtin_result := benchmark_builtin_sort(random_arr, "random")
-    print("    Built-in:", builtin_result["time_ms"], "ms,", 
-          int(builtin_result["items_per_sec"]), "items/s")
+    builtin_items_per_sec := to_int(builtin_result["items_per_sec"])
+    builtin_line := "    Built-in: " + str(builtin_result["time_ms"]) + " ms, " + str(builtin_items_per_sec) + " items/s"
+    print(builtin_line)
     print("")
     
     # Already sorted data (worst case for QuickSort with bad pivot)

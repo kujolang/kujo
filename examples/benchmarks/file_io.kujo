@@ -175,8 +175,10 @@ sizes := [10, 50, 100, 500]
 for size in sizes {
     filename := test_dir + "/write_test_" + str(size) + "kb.txt"
     result := benchmark_sequential_write(filename, size)
-    print("  Write", size, "KB ->", result["time_ms"], "ms,", 
-          int(result["throughput_kbps"]), "KB/s")
+    throughput_kbps := to_int(result["throughput_kbps"])
+    line := "  Write " + str(size) + " KB -> " + str(result["time_ms"])
+    line = line + " ms, " + str(throughput_kbps) + " KB/s"
+    print(line)
 }
 print("")
 
@@ -184,8 +186,11 @@ print("2. Sequential Read Benchmark")
 for size in sizes {
     filename := test_dir + "/write_test_" + str(size) + "kb.txt"
     result := benchmark_sequential_read(filename)
-    print("  Read", int(result["size_kb"]), "KB ->", result["time_ms"], "ms,", 
-          int(result["throughput_kbps"]), "KB/s")
+    size_kb := to_int(result["size_kb"])
+    throughput_kbps := to_int(result["throughput_kbps"])
+    line := "  Read " + str(size_kb) + " KB -> " + str(result["time_ms"])
+    line = line + " ms, " + str(throughput_kbps) + " KB/s"
+    print(line)
 }
 print("")
 
@@ -194,8 +199,10 @@ append_counts := [10, 50, 100]
 for count in append_counts {
     filename := test_dir + "/append_test.txt"
     result := benchmark_append_operations(filename, count)
-    print("  Append", count, "times ->", result["time_ms"], "ms,", 
-          int(result["ops_per_sec"]), "ops/s")
+    ops_per_sec := to_int(result["ops_per_sec"])
+    line := "  Append " + str(count) + " times -> " + str(result["time_ms"])
+    line = line + " ms, " + str(ops_per_sec) + " ops/s"
+    print(line)
     delete_file(filename)
 }
 print("")
@@ -203,8 +210,8 @@ print("")
 print("4. Line-by-Line Processing Benchmark")
 test_file := test_dir + "/write_test_100kb.txt"
 result := benchmark_line_by_line_processing(test_file)
-print("  Lines:", result["lines"], "| Words:", result["words"], 
-      "| Chars:", result["chars"])
+line := "  Lines: " + str(result["lines"]) + " | Words: " + str(result["words"]) + " | Chars: " + str(result["chars"])
+print(line)
 print("  Time:", result["time_ms"], "ms")
 print("")
 
@@ -212,8 +219,11 @@ print("5. File Copy Benchmark")
 source := test_dir + "/write_test_100kb.txt"
 dest := test_dir + "/copy_test.txt"
 result := benchmark_file_copy(source, dest)
-print("  Copy", int(result["size_kb"]), "KB ->", result["time_ms"], "ms,", 
-      int(result["throughput_kbps"]), "KB/s")
+size_kb := to_int(result["size_kb"])
+throughput_kbps := to_int(result["throughput_kbps"])
+line := "  Copy " + str(size_kb) + " KB -> " + str(result["time_ms"])
+line = line + " ms, " + str(throughput_kbps) + " KB/s"
+print(line)
 delete_file(dest)
 print("")
 
@@ -221,9 +231,12 @@ print("6. Multiple Small Files Benchmark")
 file_counts := [10, 25, 50]
 for count in file_counts {
     result := benchmark_multiple_small_files(test_dir, count)
-    print("  Files:", count, "->", 
-          "Write:", result["write_ms"], "ms (", int(result["write_ops_per_sec"]), "ops/s),",
-          "Read:", result["read_ms"], "ms (", int(result["read_ops_per_sec"]), "ops/s)")
+    write_ops := to_int(result["write_ops_per_sec"])
+    read_ops := to_int(result["read_ops_per_sec"])
+    line := "  Files: " + str(count) + " -> Write: " + str(result["write_ms"])
+    line = line + " ms (" + str(write_ops) + " ops/s), Read: " + str(result["read_ms"])
+    line = line + " ms (" + str(read_ops) + " ops/s)"
+    print(line)
 }
 print("")
 

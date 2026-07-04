@@ -312,9 +312,8 @@ pattern_result := benchmark_string_pattern_matching(100)
 print("  Entries processed:", pattern_result["entries_processed"])
 print("  Time:", pattern_result["time_ms"], "ms")
 print("  Throughput:", int(pattern_result["entries_per_sec"]), "entries/s")
-print("  Found: INFO:", pattern_result["info"], 
-      "| ERROR:", pattern_result["errors"],
-      "| WARN:", pattern_result["warnings"])
+line := "  Found: INFO: " + str(pattern_result["info"]) + " | ERROR: " + str(pattern_result["errors"]) + " | WARN: " + str(pattern_result["warnings"])
+print(line)
 print("")
 
 print("6. String Validation Benchmark (Email)")

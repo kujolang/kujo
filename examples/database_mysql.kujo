@@ -58,9 +58,8 @@ users := db_query(db, "SELECT id, name, email, age, active FROM users", [])
 
 print("Found ", len(users), " users:\n")
 for user in users {
-    print("  ID: ", user["id"], " | Name: ", user["name"], 
-          " | Email: ", user["email"], " | Age: ", user["age"],
-          " | Active: ", user["active"], "\n")
+    line := "  ID: " + str(user["id"]) + " | Name: " + str(user["name"]) + " | Email: " + str(user["email"]) + " | Age: " + str(user["age"]) + " | Active: " + str(user["active"]) + "\n"
+    print(line)
 }
 
 // === PARAMETERIZED QUERY ===
