@@ -2,7 +2,7 @@
 name = "kujo"
 version = "1.0.0"
 edition = "2021"
-authors = ["Robert DeVore <me@robertdevore.com>"]
+authors = ["Kujolang <contact@kujolang.ai>"]
 description = "Kujo — A lean, expressive programming language"
 license = "MIT"
 readme = "README.md"
