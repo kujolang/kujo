@@ -55,6 +55,9 @@ See [docs/EXTENDING_DOCTOR.md](docs/EXTENDING_DOCTOR.md).
 - Doctor does not require network access.
 - Doctor uses controlled process probes through Kujo's workflow process runner.
 
+Release-style binary smoke commands and cross-platform handoff requirements are
+in [docs/RELEASE_ARTIFACT_SMOKE.md](docs/RELEASE_ARTIFACT_SMOKE.md).
+
 ## Generic vs framework-specific doctor checks
 
 Kujo Doctor's default profile focuses on generic, reusable readiness checks.
