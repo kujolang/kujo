@@ -6,17 +6,9 @@ let right := pad_end(slug, 24, ".")
 let iso := now_utc()
 let day := format_date(now_unix(), "YYYY-MM-DD")
 
-if slug != "release-candidate-1" {
-    throw "slugify contract drift"
-}
-if len(left) != 24 || len(right) != 24 {
-    throw "padding contract drift"
-}
-if len(iso) != 20 || ends_with(iso, "Z") != 1 {
-    throw "UTC timestamp contract drift"
-}
-if len(day) != 10 {
-    throw "Unix-seconds date formatting contract drift"
-}
+assert(slug == "release-candidate-1", "slugify contract drift")
+assert(len(left) == 24 && len(right) == 24, "padding contract drift")
+assert(len(iso) == 20 && substring(iso, 19, 20) == "Z", "UTC timestamp contract drift")
+assert(len(day) == 10, "Unix-seconds date formatting contract drift")
 
 print("ok: HLP-007 canonical text/time helpers")

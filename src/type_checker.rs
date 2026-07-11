@@ -296,29 +296,19 @@ impl TypeChecker {
         );
 
         // Advanced string methods
-        self.functions.insert(
-            "pad_left".to_string(),
-            FunctionSignature {
-                param_types: vec![
-                    Some(TypeAnnotation::String),
-                    Some(TypeAnnotation::Int),
-                    Some(TypeAnnotation::String),
-                ],
-                return_type: Some(TypeAnnotation::String),
-            },
-        );
-
-        self.functions.insert(
-            "pad_right".to_string(),
-            FunctionSignature {
-                param_types: vec![
-                    Some(TypeAnnotation::String),
-                    Some(TypeAnnotation::Int),
-                    Some(TypeAnnotation::String),
-                ],
-                return_type: Some(TypeAnnotation::String),
-            },
-        );
+        for name in ["pad_left", "pad_start", "pad_right", "pad_end"] {
+            self.functions.insert(
+                name.to_string(),
+                FunctionSignature {
+                    param_types: vec![
+                        Some(TypeAnnotation::String),
+                        Some(TypeAnnotation::Int),
+                        Some(TypeAnnotation::String),
+                    ],
+                    return_type: Some(TypeAnnotation::String),
+                },
+            );
+        }
 
         self.functions.insert(
             "lines".to_string(),
