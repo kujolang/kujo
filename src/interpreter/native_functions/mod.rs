@@ -3413,7 +3413,7 @@ mod tests {
 
         let atomic_missing = call_native_function(&mut interpreter, "write_file_atomic", &[]);
         assert!(
-            matches!(atomic_missing, Value::Error(message) if message.contains("write_file_atomic requires 2 or 3 arguments"))
+            matches!(atomic_missing, Value::Error(message) if message.contains("write_file_atomic expects 2 to 3 arguments"))
         );
 
         let append_missing = call_native_function(&mut interpreter, "append_file", &[]);
