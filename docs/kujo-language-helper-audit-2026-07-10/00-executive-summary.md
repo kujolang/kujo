@@ -81,9 +81,16 @@ utility” surface. The report therefore treats identical code in Agents SDK as
 one intra-repository centralization signal, not as 19 independent ecosystem
 votes.
 
-## Recommended next action
+## Completion record
 
-Prototype HLP-001 and HLP-002 in Kujo runtime tests, and in parallel create a
-small package-only spike for HLP-004 and HLP-005. Use one representative
-migration each (CaseFile for filesystem safety; Dispatch or Muzzle for CLI
-parsing) before adding any more core surface.
+HLP-001 is implemented as the bounded core write_file_atomic API with
+VM/interpreter contract coverage. HLP-004 is implemented as the first-party
+modules/cli.kujo parser spike with VM/interpreter coverage. HLP-007, HLP-011,
+HLP-013, and HLP-015 are documented in HELPER_DISCOVERY_COOKBOOK.md.
+
+The remaining candidates were re-reviewed against the original evidence:
+HLP-002, HLP-003, HLP-005, HLP-006, HLP-008, HLP-009, HLP-010, HLP-012,
+HLP-014, HLP-016, and HLP-017 remain prototypes, package-boundary work, or
+design work; HLP-018 is deferred; HLP-019 through HLP-022 are rejected or
+rejected for core. No additional candidate met the evidence threshold for
+implementation in this pass.

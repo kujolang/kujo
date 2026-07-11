@@ -2,15 +2,16 @@
 
 ## Horizon 1 — high-confidence, low-risk
 
-1. Add `write_file_atomic` for text and bytes with explicit overwrite, size
-   limit, parent-directory, and cleanup semantics. Add VM/interpreter parity
-   tests and migrate Tribunal or CaseFile first.
+1. Completed `write_file_atomic` for text and bytes with explicit overwrite,
+   size limit, same-directory temporary files, sync, cleanup, capability
+   classification, and VM/interpreter contract tests.
 2. Publish a standard-library cookbook section mapping common wrappers to
    existing `slugify`, `pad_right`, `now_utc`, `env_bool`, `get_default`,
    `to_json_pretty`, and `ProcessResult` APIs.
-3. Create a first-party CLI package spike using the common token scanner from
-   PatchBrief/Muzzle/Lens/ShipCheck, with strict missing-value errors. Migrate
-   one small CLI before stabilizing.
+3. Completed the first-party `modules/cli.kujo` package spike using the
+   common token scanner shape from PatchBrief/Muzzle/Lens/ShipCheck, with
+   structured missing-value and unknown-option errors. Migration remains a
+   follow-up after a compatibility matrix is expanded.
 4. Document process argv arrays and output-limit options as the canonical
    agent-safe path; keep shell execution visibly exceptional.
 

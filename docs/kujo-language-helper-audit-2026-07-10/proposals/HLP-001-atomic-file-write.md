@@ -15,36 +15,24 @@ This is a runtime filesystem semantic, not a language syntax problem. Own it in
 the core runtime/standard library because correct replacement requires OS-level
 rename and cleanup behavior that Kujo code should not reimplement.
 
-## Proposed API
+## Implemented API
 
-Proposed syntax, not current Kujo syntax:
+`write_file_atomic(path, content_or_bytes, overwrite?) -> bool` is registered
+in the core runtime. The optional overwrite flag defaults to false. Text and
+bytes payloads share the same bounded implementation; successful writes return
+`true`, while validation and filesystem failures return the existing
+`Value::Error` runtime shape. The operation is capability-gated as
+filesystem-write.
 
-```kujo
-result := write_file_atomic(path, content, {
-    overwrite: true,
-    create_parents: true,
-    max_bytes: 10485760
-})
-```
-
-Recommended signature: `write_file_atomic(path: string, payload: string|bytes,
-options?: dict) -> Result<bool, FileError>`. A bytes-specific sibling may be
-needed if union payloads are not stable. Return `Ok(true)` after the rename;
-return `Err` with `code`, `path`, `stage`, and `message` fields. Do not silently
-delete the destination. Default `overwrite` should be false to match current
-`write_file` safety. The operation is effectful, capability-gated as
-filesystem-write, non-mutating on failure where the OS permits, and deterministic
-with respect to payload/path/options.
-
-Implementation should create a uniquely named sibling temp file, write and
-flush it, apply the intended permissions policy, rename it over the destination
-only when allowed, and remove the temp file on failure. Document that rename
-atomicity is filesystem-dependent and that directory durability is not promised
-unless an explicit future option exists.
+The implementation creates a uniquely named sibling temp file, writes and
+flushes/syncs it, then renames it over the destination when overwrite is true.
+The no-overwrite path hard-links the completed inode into place so a destination
+appearing during finalization is not clobbered. Temporary files are removed on
+failure. Directory durability is not promised beyond the file sync.
 
 ## Edge cases and security
 
-Reject empty paths, directories, oversized payloads, invalid option types, and
+Reject empty paths, directories, oversized payloads, invalid payload types, and
 existing destinations when overwrite is false. Do not follow a destination
 symlink without a documented policy. Do not expose temp names in error messages
 unless useful for debugging. Test permissions, disk-full/partial-write paths,
@@ -77,7 +65,7 @@ failure, symlink destination, concurrent writers, size limits, and VM/interprete
 parity. Benchmark small and 10 MB payloads against direct `write_file`; the
 extra temp write is expected and acceptable for correctness-sensitive artifacts.
 
-## Recommendation
+## Status
 
-Implement after a focused runtime prototype. Confidence is high; the API should
-remain narrow and should not absorb path confinement or redaction policy.
+Implemented and pushed in the Kujo core. The API remains narrow and does not
+absorb path confinement or redaction policy.

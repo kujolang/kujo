@@ -64,7 +64,10 @@ The package gives agents one obvious parser and makes ambiguous tokens fail
 early. It must not generate help text or silently coerce values; those behaviors
 would hide application policy and make review harder.
 
-## Recommendation
+## Status
 
-Implement as an official package spike with a compatibility matrix. Confidence
-is high for package ownership and medium for the final schema.
+Implemented as the first-party modules/cli.kujo package spike. The initial
+compatibility fixture covers long and short flags, equals and separated
+values, repeated occurrences, defaults, required options, negative values,
+unknown/missing errors, and the -- terminator on both runtime paths. Consumer
+migration and a broader compatibility matrix remain follow-up work.

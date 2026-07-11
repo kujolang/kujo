@@ -2,10 +2,10 @@
 
 | ID | Evidence minimum | Proposed owner | Decision |
 |---|---|---|---|
-| HLP-001 | 4+ independent write patterns; atomicity tests | Kujo runtime/stdlib | ☐ approve ☐ prototype ☐ revise ☐ defer |
+| HLP-001 | 4+ independent write patterns; atomicity tests | Kujo runtime/stdlib | ☑ implemented |
 | HLP-002 | CaseFile/MCP/Dispatch/SSG/RAG path cases; symlink matrix | Kujo runtime/stdlib | ☐ approve ☐ prototype ☐ revise ☐ defer |
 | HLP-003 | Agents SDK copy cluster plus one external consumer; schema spike | language + data package | ☐ approve design ☐ prototype ☐ docs only ☐ defer |
-| HLP-004 | 5 CLI implementations; strict parser compatibility tests | first-party CLI package | ☐ approve ☐ prototype ☐ package instead ☐ defer |
+| HLP-004 | 5 CLI implementations; strict parser compatibility tests | first-party CLI package | ☑ implemented spike |
 | HLP-005 | redaction package contract + Lens/CaseFile/Watchdog migrations | `redact` package | ☐ approve ☐ prototype ☐ package instead ☐ reject |
 | HLP-006 | nested/platform directory tests | filesystem package | ☐ approve ☐ prototype ☐ docs only ☐ defer |
 | HLP-007 | current builtin examples | Kujo docs | ☐ docs only |
@@ -21,4 +21,8 @@
 | HLP-017 | typed error/result design note | language/package design | ☐ design ☐ defer |
 | HLP-018–022 | stronger independent evidence and stable semantics | package/local/none | ☐ defer ☐ reject |
 
-**Suggested first approval:** HLP-001 prototype + HLP-002 design spike.
+**Completed in this pass:** HLP-001 implementation, HLP-004 package spike, and
+documentation closures for HLP-007, HLP-011, HLP-013, and HLP-015.
+
+**Next review boundary:** HLP-002 path semantics and HLP-003 structured-data
+semantics require new cross-platform/design evidence before implementation.
