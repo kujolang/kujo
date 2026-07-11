@@ -45,9 +45,21 @@ env_float, or env_bool when a value must have a specific type.
     enabled := env_bool("KUJO_ENABLED")
     token := env_required("KUJO_TOKEN")
 
-Missing required values and invalid typed values are errors. Keep the
-environment read in one configuration function, then pass the resulting
-values into the rest of the program; do not repeat parsing in each command.
+`env_int` returns an integer, `env_float` returns a float, and `env_bool`
+accepts only `true`, `1`, `yes`, `on`, `false`, `0`, `no`, or `off`,
+case-insensitively. The typed functions and `env_required` return a runtime
+error object when the variable is missing or cannot be parsed. `env_or` only
+uses its string default when the variable is absent; `env` itself returns an
+empty string for an absent variable, so use `env_required` when absence must be
+distinguished from an empty value. `env_required` considers an explicitly set
+empty value present.
+
+All reads require the `env-read` capability in restricted execution:
+`kujo run --untrusted --allow-env-read app.kujo`. `env_set` and `env-write` are
+separate; do not use a write just to make a configuration example pass in
+production. Keep environment reads in one configuration function, then pass
+the resulting values into the rest of the program; do not repeat parsing in
+each command.
 
 ## HLP-013: process-result accessors
 

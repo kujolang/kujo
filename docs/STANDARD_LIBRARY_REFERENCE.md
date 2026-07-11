@@ -229,6 +229,10 @@ over shell strings when handling user input.
 | --- | --- | --- |
 | `env` | stable | `home := env("HOME")` |
 | `env_or` | stable | `mode := env_or("MODE", "dev")` |
+| `env_int` | stable | `port := env_int("PORT")` |
+| `env_float` | stable | `timeout := env_float("TIMEOUT")` |
+| `env_bool` | stable | `enabled := env_bool("ENABLED")` |
+| `env_required` | stable | `token := env_required("TOKEN")` |
 | `args` | stable | `argv := args()  # user args only; script name excluded` |
 | `sleep` | stable | `sleep(100)` |
 | `execute` | preview | `out := execute("echo hi", {"timeout_ms": 1000})` |
@@ -242,6 +246,15 @@ over shell strings when handling user input.
 | `parallel_map` | preview | `out := parallel_map([1,2], func (x) { return x + 1 })` |
 | `set_task_pool_size` | preview | `set_task_pool_size(8)` |
 | `get_task_pool_size` | preview | `n := get_task_pool_size()` |
+
+Environment reads require `env-read` in restricted mode. Typed accessors fail
+when a variable is absent or malformed; `env_bool` accepts only the documented
+case-insensitive true/false spellings. `env` returns an empty string when a
+variable is absent, while `env_required` distinguishes absence with an error.
+Load and validate configuration once, then pass the resulting dictionary to
+the rest of the program.
+
+Runnable contract example: [`examples/helper_hlp_011_env_config.kujo`](../examples/helper_hlp_011_env_config.kujo).
 
 Process result contracts:
 
