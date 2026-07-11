@@ -1,6 +1,6 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-06-27
+Generated: 2026-07-11
 Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
 Fixture root: `tests`
 
@@ -9,6 +9,7 @@ Fixture root: `tests`
 | `tests/arg_parser.kujo` | 0 | 4 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/array_methods_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/bytecode_vm.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/cli_module.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/destructuring.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/dict_methods_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/enhanced_errors.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -151,8 +152,8 @@ Fixture root: `tests`
 | `tests/vm_closure_simple.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 
-Summary: `144` fixtures scanned
-- both match snapshot: `105`
+Summary: `145` fixtures scanned
+- both match snapshot: `106`
 - VM-only mismatch: `0`
 - interpreter-only mismatch: `39`
 - both mismatch: `0`
@@ -166,6 +167,6 @@ Mismatch classification totals (priority order):
 
 VM coverage gate:
 - metric: `vm_matches_snapshot / fixtures_scanned`
-- vm_matches_snapshot: `144/144` (`100.0%`)
+- vm_matches_snapshot: `145/145` (`100.0%`)
 - target threshold: `70.0%`
 - gate status: `PASS`

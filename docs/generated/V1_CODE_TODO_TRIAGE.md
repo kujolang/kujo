@@ -1,6 +1,6 @@
 # V1 Code TODO/FIXME/HACK Triage
 
-Generated: 2026-06-27
+Generated: 2026-07-11
 Source root: `src`
 
 | ID | File | Line | Marker | Summary | Severity | Owner | Target Release Bucket | Scope | Rationale |
@@ -29,10 +29,10 @@ Source root: `src`
 | V1TODO-022 | `src/jit.rs` | 8107 | TODO |     /// TODO: Call from JIT-compiled code guard checks | low | jit-owner | post-v1 | production | experimental JIT backlog outside default release-critical runtime path |
 | V1TODO-023 | `src/jit.rs` | 8116 | TODO |     /// TODO: Call from JIT-compiled code when guard checks fail | low | jit-owner | post-v1 | production | experimental JIT backlog outside default release-critical runtime path |
 | V1TODO-024 | `src/jit.rs` | 8134 | TODO |     /// TODO: Use for adaptive recompilation decisions | low | jit-owner | post-v1 | production | experimental JIT backlog outside default release-critical runtime path |
-| V1TODO-025 | `src/type_checker.rs` | 2456 | TODO |                 // TODO: Implement proper type checking for destructuring patterns | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
-| V1TODO-026 | `src/type_checker.rs` | 2932 | TODO |                 None // TODO: Return struct type when struct types are implemented | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
-| V1TODO-027 | `src/type_checker.rs` | 2938 | TODO |                 None // TODO: Look up field type from struct definition | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
-| V1TODO-028 | `src/type_checker.rs` | 3175 | TODO |                 // TODO: If we know it's a Promise<T>, return T | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
-| V1TODO-029 | `src/type_checker.rs` | 3250 | TODO |     /// TODO: This will be used when adding "Did you mean?" suggestions to interpreter | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-025 | `src/type_checker.rs` | 2464 | TODO |                 // TODO: Implement proper type checking for destructuring patterns | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-026 | `src/type_checker.rs` | 2940 | TODO |                 None // TODO: Return struct type when struct types are implemented | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-027 | `src/type_checker.rs` | 2946 | TODO |                 None // TODO: Look up field type from struct definition | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-028 | `src/type_checker.rs` | 3183 | TODO |                 // TODO: If we know it's a Promise<T>, return T | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-029 | `src/type_checker.rs` | 3258 | TODO |     /// TODO: This will be used when adding "Did you mean?" suggestions to interpreter | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
 
 Summary: `29` markers triaged, `0` unclassified.
