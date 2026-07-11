@@ -49,3 +49,18 @@ Check truncation and timeout before treating stdout as complete. Use
 execute_status when the compatibility surface requires one command string;
 execute is exception-style shell execution and should remain an explicit
 boundary.
+
+## HLP-015: deterministic JSON output
+
+Use to_json for compact machine-readable output and to_json_pretty for
+human-readable artifacts. Both reject non-finite floats and serialize
+dictionary keys deterministically; parse_json enforces the documented input
+size and nesting limits.
+
+    payload := {"status": "ok", "items": ["a", "b"]}
+    machine_line := to_json(payload)
+    report_text := to_json_pretty(payload)
+    round_trip := parse_json(machine_line)
+
+Emit machine_line directly when stdout is a protocol. Do not add a local
+print_json helper that changes ordering, float handling, or error behavior.
