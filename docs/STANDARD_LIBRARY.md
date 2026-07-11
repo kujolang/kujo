@@ -22,7 +22,9 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - `parse_json` enforces a maximum input size of `1,048,576` bytes and a maximum nesting depth of `64`.
 - Invalid JSON returns a `Value::Error` message including parse-location details from `serde_json`.
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
+- `to_json` and `to_json_pretty` accept JSON-compatible scalar/container values, including `secret` values which serialize as `"***"`; runtime structs, functions, bytes, and other unsupported values return `Value::Error`.
 - Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
+- `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `1,048,576` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
 
 JSON Schema subset contract (`json_schema_validate`):
 

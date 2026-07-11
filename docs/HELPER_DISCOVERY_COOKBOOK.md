@@ -97,12 +97,27 @@ and is not directly accepted by `to_json`.
 Use to_json for compact machine-readable output and to_json_pretty for
 human-readable artifacts. Both reject non-finite floats and serialize
 dictionary keys deterministically; parse_json enforces the documented input
-size and nesting limits.
+size and nesting limits. This is the canonical serialization path; no new
+`canonical_json` alias is needed.
 
     payload := {"status": "ok", "items": ["a", "b"]}
     machine_line := to_json(payload)
     report_text := to_json_pretty(payload)
     round_trip := parse_json(machine_line)
 
-Emit machine_line directly when stdout is a protocol. Do not add a local
-print_json helper that changes ordering, float handling, or error behavior.
+For ordinary dictionaries, keys are sorted lexicographically before encoding;
+integer-key dictionaries sort numerically, while fixed dictionaries preserve
+their declared field order and dense integer dictionaries preserve index order.
+Nested dictionaries use the same rule. `to_json_pretty` changes whitespace,
+not ordering. Supported JSON values include null, booleans, integers, finite
+floats, strings, arrays, dictionaries, and redacted `secret` values. Runtime
+structs such as `ProcessResult`, functions, bytes, and other unsupported values
+must be copied into a dictionary or are returned as a runtime error.
+
+`parse_json` accepts any JSON root value, caps input at 1 MiB and nesting at
+64 levels, and returns a runtime error with parser location details for
+invalid input. `to_json` and `to_json_pretty` return a runtime error for
+non-finite floats and unsupported values. These helpers are pure and require
+no capability. Emit the resulting string directly when stdout is a protocol.
+Do not add a local `print_json` helper that changes ordering, float handling,
+secret redaction, or error behavior.

@@ -157,6 +157,16 @@ Access semantics:
 - Dictionary/map-like values use bracket access (`obj["key"]`).
 - Runtime structs (for example `ProcessResult`) use dot fields (`result.exitcode`).
 
+JSON serialization is deterministic for map-like values: string-key dictionaries
+sort lexicographically, integer-key dictionaries sort numerically, and fixed or
+dense dictionaries preserve declaration/index order. `to_json_pretty` shares
+the exact conversion and ordering rules and only changes whitespace. Both
+reject non-finite floats; `secret("value")` serializes as `"***"`. Runtime
+structs, functions, bytes, and other unsupported values are errors. `parse_json`
+accepts any JSON root value but caps input at 1 MiB and nesting at 64 levels.
+
+Runnable contract example: [`examples/helper_hlp_015_canonical_json.kujo`](../examples/helper_hlp_015_canonical_json.kujo).
+
 ## Math, Time, and Random
 
 | Function | Tier | Example |
