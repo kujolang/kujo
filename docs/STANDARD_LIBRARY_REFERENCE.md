@@ -33,6 +33,8 @@ Recently promoted helper surfaces worth calling out:
 - `pad_start(...)` and `pad_end(...)` for aligned CLI output and human-readable reports.
 - `read_file_lossy(...)`, `path_is_symlink(...)`, and `sha256_file(...)` for practical filesystem workflows that need tolerant reads, symlink checks, and integrity validation.
 
+For wrapper-to-native mappings, see [HELPER_DISCOVERY_COOKBOOK.md](HELPER_DISCOVERY_COOKBOOK.md).
+
 ## Core IO and Formatting
 
 | Function | Tier | Example |

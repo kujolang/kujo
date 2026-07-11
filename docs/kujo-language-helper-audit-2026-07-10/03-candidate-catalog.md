@@ -11,7 +11,7 @@ total is directional; status and evidence quality control the recommendation.
 | HLP-004 | declarative CLI token parser | CLI | first-party package | 4 | 4 | 3 | 4 | 4 | 37/50 | high | implemented spike |
 | HLP-005 | redaction profiles and contract | security | official package | 4 | 4 | 5 | 3 | 5 | 38/50 | medium | centralize outside core |
 | HLP-006 | recursive ensure-directory | filesystem | package/docs | 4 | 4 | 3 | 4 | 4 | 35/50 | medium | prototype |
-| HLP-007 | canonical ISO/slug/padding examples | text/time | documentation | 4 | 3 | 2 | 5 | 3 | 34/50 | high | document existing API |
+| HLP-007 | canonical ISO/slug/padding examples | text/time | documentation | 4 | 3 | 2 | 5 | 3 | 34/50 | high | documented |
 | HLP-008 | bounded file read | filesystem/agent safety | runtime/stdlib | 3 | 3 | 5 | 4 | 5 | 36/50 | medium | prototype |
 | HLP-009 | bounded recursive file walk | filesystem | package/runtime | 4 | 3 | 4 | 3 | 4 | 34/50 | medium | prototype |
 | HLP-010 | JSON file read/write envelope | structured data | first-party package | 3 | 4 | 3 | 3 | 4 | 33/50 | medium | centralize outside core |
