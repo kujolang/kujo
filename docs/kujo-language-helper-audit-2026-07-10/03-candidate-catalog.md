@@ -15,7 +15,7 @@ total is directional; status and evidence quality control the recommendation.
 | HLP-008 | bounded file read | filesystem/agent safety | runtime/stdlib | 3 | 3 | 5 | 4 | 5 | 36/50 | medium | prototype |
 | HLP-009 | bounded recursive file walk | filesystem | package/runtime | 4 | 3 | 4 | 3 | 4 | 34/50 | medium | prototype |
 | HLP-010 | JSON file read/write envelope | structured data | first-party package | 3 | 4 | 3 | 3 | 4 | 33/50 | medium | centralize outside core |
-| HLP-011 | typed environment schema | config | package/docs | 3 | 3 | 3 | 4 | 4 | 32/50 | high | document existing API |
+| HLP-011 | typed environment schema | config | package/docs | 3 | 3 | 3 | 4 | 4 | 32/50 | high | documented |
 | HLP-012 | project-root/config discovery | workspace | internal tooling package | 3 | 3 | 3 | 3 | 4 | 30/50 | medium | centralize outside core |
 | HLP-013 | process-result accessors | process | documentation | 3 | 3 | 3 | 4 | 4 | 32/50 | high | document existing API |
 | HLP-014 | retry/backoff policy object | networking/AI | official package | 3 | 3 | 3 | 3 | 4 | 30/50 | medium | prototype |
