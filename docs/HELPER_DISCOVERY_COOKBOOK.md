@@ -33,3 +33,19 @@ env_float, or env_bool when a value must have a specific type.
 Missing required values and invalid typed values are errors. Keep the
 environment read in one configuration function, then pass the resulting
 values into the rest of the program; do not repeat parsing in each command.
+
+## HLP-013: process-result accessors
+
+Use spawn_process with an argv array when a tool needs a structured result.
+ProcessResult exposes exitcode, stdout, stderr, success, timed_out,
+stdout_truncated, and stderr_truncated as dot fields.
+
+    result := spawn_process(["git", "status", "--short"], {"max_output_bytes": 65536})
+    if result.success && !result.timed_out && !result.stdout_truncated {
+        print(result.stdout)
+    }
+
+Check truncation and timeout before treating stdout as complete. Use
+execute_status when the compatibility surface requires one command string;
+execute is exception-style shell execution and should remain an explicit
+boundary.

@@ -17,7 +17,7 @@ total is directional; status and evidence quality control the recommendation.
 | HLP-010 | JSON file read/write envelope | structured data | first-party package | 3 | 4 | 3 | 3 | 4 | 33/50 | medium | centralize outside core |
 | HLP-011 | typed environment schema | config | package/docs | 3 | 3 | 3 | 4 | 4 | 32/50 | high | documented |
 | HLP-012 | project-root/config discovery | workspace | internal tooling package | 3 | 3 | 3 | 3 | 4 | 30/50 | medium | centralize outside core |
-| HLP-013 | process-result accessors | process | documentation | 3 | 3 | 3 | 4 | 4 | 32/50 | high | document existing API |
+| HLP-013 | process-result accessors | process | documentation | 3 | 3 | 3 | 4 | 4 | 32/50 | high | documented |
 | HLP-014 | retry/backoff policy object | networking/AI | official package | 3 | 3 | 3 | 3 | 4 | 30/50 | medium | prototype |
 | HLP-015 | stable canonical JSON helper | serialization | documentation/runtime | 3 | 2 | 3 | 5 | 4 | 32/50 | high | document existing API |
 | HLP-016 | shared test workspace helpers | testing | test-support package | 3 | 3 | 2 | 3 | 3 | 26/50 | low | centralize outside core |
