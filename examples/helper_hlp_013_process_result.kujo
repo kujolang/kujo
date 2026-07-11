@@ -1,0 +1,12 @@
+# HLP-013: inspect structured process results without shell parsing.
+
+let result := spawn_process(["rustc", "--version"], {"max_output_bytes": 4096})
+
+assert(result.success == true, "rustc should exit successfully")
+assert(result.exitcode == 0, "successful process should have exitcode 0")
+assert(result.timed_out == false, "version command should not time out")
+assert(result.stdout_truncated == false, "version output should fit the limit")
+assert(result.stderr_truncated == false, "version stderr should fit the limit")
+assert(len(trim(result.stdout)) > 0, "structured stdout should be available")
+
+print("ok: HLP-013 ProcessResult accessors")

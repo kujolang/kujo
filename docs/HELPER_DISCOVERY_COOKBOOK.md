@@ -72,10 +72,25 @@ stdout_truncated, and stderr_truncated as dot fields.
         print(result.stdout)
     }
 
-Check truncation and timeout before treating stdout as complete. Use
-execute_status when the compatibility surface requires one command string;
-execute is exception-style shell execution and should remain an explicit
-boundary.
+`spawn_process` does not invoke a shell and requires a non-empty array of
+string arguments. Its optional dictionary accepts `timeout_ms` (default
+30,000), `max_output_bytes` (default 1 MiB per stream, maximum 16 MiB),
+`inherit_env`, `env_allow`, `env_deny`, and `env`. `stdout` and `stderr` are
+lossy UTF-8 strings; `exitcode` is the runtime's exact field spelling. A
+timeout makes `timed_out` and `success` false. Check both truncation flags and
+the timeout before treating captured output as complete.
+
+Use `execute_status` when a compatibility surface truly requires one shell
+command string; it returns the same `ProcessResult` shape but requires the
+`shell-exec` capability and rejects empty commands, NUL bytes, and newlines.
+`execute` is exception-style shell execution: it returns stdout only on a
+successful, non-truncated exit and otherwise returns a runtime error. Prefer
+`spawn_process` when arguments contain user or external data. These APIs
+require `process-exec` or `shell-exec` respectively in restricted runs.
+
+Do not add local `proc_*` getters. If a JSON receipt is needed, copy the
+required fields into a dictionary first; `ProcessResult` is a runtime struct
+and is not directly accepted by `to_json`.
 
 ## HLP-015: deterministic JSON output
 

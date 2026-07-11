@@ -33,6 +33,24 @@ JSON Schema subset contract (`json_schema_validate`):
 - Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
 - Annotation keywords `title`, `description`, `default`, and `examples` are accepted as no-op metadata.
 
+Process result contract (`spawn_process` / `execute_status`):
+
+- Both return a `ProcessResult` runtime struct accessed with dot fields:
+  `exitcode`, `stdout`, `stderr`, `success`, `timed_out`,
+  `stdout_truncated`, and `stderr_truncated`.
+- `spawn_process` uses an explicit argv array and does not invoke a shell. Its
+  options are `timeout_ms`, `max_output_bytes`, `inherit_env`, `env_allow`,
+  `env_deny`, and `env`. The timeout defaults to 30,000 ms; output is capped
+  at 1 MiB per stream by default and 16 MiB maximum per stream.
+- `execute_status` uses a shell command string and is separately gated as
+  `shell-exec`; `spawn_process` is gated as `process-exec`. `execute` returns
+  only stdout on a successful, non-truncated exit and otherwise returns a
+  runtime error.
+- Captured output is decoded lossily as UTF-8. A timeout forces `success` to
+  `false`; truncation flags must be checked before treating output as complete.
+- `ProcessResult` is a runtime struct, not a JSON value. To serialize a receipt,
+  copy selected fields into a dictionary and pass that dictionary to `to_json`.
+
 Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / `vec_top_k`):
 
 - Inputs are Kujo arrays of finite numbers; integers are promoted to floats.
@@ -276,8 +294,8 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `arg_parser` | `arg_parser(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := arg_parser(...)` |
 | `exit` | `exit(code?)` | 0..=1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := exit(...)` |
 | `sleep` | `sleep(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := sleep(...)` |
-| `execute` | `execute(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `shell-exec` | `result := execute(...)` |
-| `execute_status` | `execute_status(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `shell-exec` | `result := execute_status(...)` |
+| `execute` | `execute(command: string, options?: dict) -> string` | handler-defined | string | Runtime error on non-zero exit, timeout, output truncation, invalid command/options, or wrong types; rejects empty/newline/NUL shell text. | `shell-exec` | `result := execute("echo hi", {"timeout_ms": 1000})` |
+| `execute_status` | `execute_status(command: string, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on invalid command/options or spawn/wait/read failure; rejects empty/newline/NUL shell text. | `shell-exec` | `result := execute_status("echo hi")` |
 | `os_getcwd` | `os_getcwd(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := os_getcwd(...)` |
 | `os_chdir` | `os_chdir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := os_chdir(...)` |
 | `os_rmdir` | `os_rmdir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-delete` | `result := os_rmdir(...)` |
@@ -408,7 +426,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `rsa_decrypt` | `rsa_decrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_decrypt(...)` |
 | `rsa_sign` | `rsa_sign(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_sign(...)` |
 | `rsa_verify` | `rsa_verify(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_verify(...)` |
-| `spawn_process` | `spawn_process(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := spawn_process(...)` |
+| `spawn_process` | `spawn_process(argv: array<string>, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on empty/non-string argv, invalid options, or spawn/wait/read failure. Options are bounded by 30s default timeout, 1 MiB default per-stream output, and 16 MiB maximum per stream. | `process-exec` | `result := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
 | `pipe_commands` | `pipe_commands(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := pipe_commands(...)` |
 | `tcp_listen` | `tcp_listen(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_listen(...)` |
 | `tcp_accept` | `tcp_accept(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_accept(...)` |

@@ -258,14 +258,27 @@ Runnable contract example: [`examples/helper_hlp_011_env_config.kujo`](../exampl
 
 Process result contracts:
 
-- `execute_status` and `spawn_process` return `ProcessResult` fields: `exitcode`, `stdout`, `stderr`, `success`, `timed_out`, `stdout_truncated`, `stderr_truncated`
-- `execute` returns a stdout string on success and raises a deterministic error object on timeout, output-limit overflow, or non-zero exit
+- `execute_status` and `spawn_process` return a `ProcessResult` runtime struct
+  with dot fields `exitcode`, `stdout`, `stderr`, `success`, `timed_out`,
+  `stdout_truncated`, and `stderr_truncated`.
+- `spawn_process` takes explicit argv and is gated by `process-exec`; use it
+  for user-controlled arguments. `execute_status` and `execute` take shell
+  command strings and are gated by `shell-exec`.
+- Process options include `timeout_ms`, `max_output_bytes`, `inherit_env`,
+  `env_allow`, `env_deny`, and `env`. Defaults are 30 seconds and 1 MiB per
+  output stream; 16 MiB per stream is the maximum.
+- `execute` returns a stdout string on successful, non-truncated exit and
+  returns a runtime error on timeout, output-limit overflow, or non-zero exit.
+- A `ProcessResult` cannot be passed directly to `to_json`; copy selected dot
+  fields into a dictionary first.
 
 CLI/Process semantics notes:
 
 - `args()` returns only user-provided arguments after the script path. Example: `kujo run tool.kujo -- summarize --format json` becomes `args() == ["summarize", "--format", "json"]`.
 - `execute(...)` accepts a single shell command string (not an argv array).
 - Use `execute_status(...)` when you need exit code and stderr without exception-style control flow.
+
+Runnable contract example: [`examples/helper_hlp_013_process_result.kujo`](../examples/helper_hlp_013_process_result.kujo).
 
 Type taxonomy quick reference:
 
