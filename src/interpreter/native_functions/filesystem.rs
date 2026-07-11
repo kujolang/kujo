@@ -17,6 +17,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
+use uuid::Uuid;
 #[cfg(feature = "runtime-archive")]
 use zip::{write::SimpleFileOptions, ZipArchive, ZipWriter};
 
@@ -102,6 +103,65 @@ fn enforce_overwrite_policy(path: &str, overwrite: bool) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+fn write_file_atomically(path: &str, payload: &[u8], overwrite: bool) -> Result<(), String> {
+    let target = Path::new(path);
+    let parent = target.parent().unwrap_or_else(|| Path::new("."));
+    let file_name = target
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| format!("Cannot write file '{}': path must name a file", path))?;
+    let temporary_path = parent.join(format!(".{}.kujo-atomic-{}.tmp", file_name, Uuid::new_v4()));
+
+    let result = (|| {
+        let mut temporary_file =
+            OpenOptions::new().write(true).create_new(true).open(&temporary_path).map_err(
+                |error| {
+                    format!(
+                        "Cannot write file '{}': unable to create temporary file '{}': {}",
+                        path,
+                        temporary_path.display(),
+                        error
+                    )
+                },
+            )?;
+        temporary_file.write_all(payload).map_err(|error| {
+            format!("Cannot write file '{}': failed writing temporary file: {}", path, error)
+        })?;
+        temporary_file.flush().map_err(|error| {
+            format!("Cannot write file '{}': failed flushing temporary file: {}", path, error)
+        })?;
+        temporary_file.sync_all().map_err(|error| {
+            format!("Cannot write file '{}': failed syncing temporary file: {}", path, error)
+        })?;
+        drop(temporary_file);
+
+        if overwrite {
+            fs::rename(&temporary_path, target)
+                .map_err(|error| format!("Cannot atomically replace file '{}': {}", path, error))?;
+        } else {
+            // Linking the completed temporary inode into place makes the
+            // no-overwrite case atomic and fails if the destination appears
+            // between validation and finalization.
+            fs::hard_link(&temporary_path, target).map_err(|error| {
+                format!(
+                    "Cannot atomically create file '{}': {} (pass overwrite=true to replace it)",
+                    path, error
+                )
+            })?;
+            fs::remove_file(&temporary_path).map_err(|error| {
+                format!("Cannot clean up temporary file for '{}': {}", path, error)
+            })?;
+        }
+
+        Ok(())
+    })();
+
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary_path);
+    }
+    result
 }
 
 #[cfg(feature = "runtime-archive")]
@@ -465,6 +525,44 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 }
             } else {
                 Value::Error("write_file requires string arguments".to_string())
+            }
+        }
+
+        "write_file_atomic" => {
+            let overwrite = match parse_overwrite_flag("write_file_atomic", arg_values) {
+                Ok(flag) => flag,
+                Err(error) => return Some(error),
+            };
+            let (Some(Value::Str(path)), Some(payload)) = (arg_values.first(), arg_values.get(1))
+            else {
+                return Some(Value::Error(
+                    "write_file_atomic requires path (string) and content/bytes arguments"
+                        .to_string(),
+                ));
+            };
+            let bytes = match payload {
+                Value::Str(content) => content.as_bytes().to_vec(),
+                Value::Bytes(bytes) => bytes.clone(),
+                _ => {
+                    return Some(Value::Error(
+                        "write_file_atomic requires path (string) and content/bytes arguments"
+                            .to_string(),
+                    ));
+                }
+            };
+            if let Err(error) = validate_write_size_limit(path.as_ref(), bytes.len()) {
+                return Some(Value::Error(error));
+            }
+            if !overwrite && Path::new(path.as_ref()).exists() {
+                return Some(Value::Error(format!(
+                    "Cannot write file '{}': file already exists (pass overwrite=true to replace it)",
+                    path.as_ref()
+                )));
+            }
+
+            match write_file_atomically(path.as_ref(), &bytes, overwrite) {
+                Ok(()) => Value::Bool(true),
+                Err(error) => Value::Error(error),
             }
         }
 

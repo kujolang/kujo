@@ -1087,6 +1087,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "write_file_atomic".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), None, None],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
             "append_file".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],

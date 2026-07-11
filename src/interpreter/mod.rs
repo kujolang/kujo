@@ -649,6 +649,7 @@ impl Interpreter {
             "read_file",
             "read_file_lossy",
             "write_file",
+            "write_file_atomic",
             "append_file",
             "file_exists",
             "read_lines",
@@ -1137,6 +1138,10 @@ impl Interpreter {
             Value::NativeFunction("read_file_lossy".to_string()),
         );
         self.env.define("write_file".to_string(), Value::NativeFunction("write_file".to_string()));
+        self.env.define(
+            "write_file_atomic".to_string(),
+            Value::NativeFunction("write_file_atomic".to_string()),
+        );
         self.env
             .define("append_file".to_string(), Value::NativeFunction("append_file".to_string()));
         self.env
@@ -2750,6 +2755,12 @@ impl Interpreter {
             "type" | "type_of" => CallableArity::exact("type", vec!["value".to_string()]),
             "is_truthy" => CallableArity::exact("is_truthy", vec!["value".to_string()]),
             "read_file_lossy" => CallableArity::exact("read_file_lossy", vec!["path".to_string()]),
+            "write_file_atomic" => CallableArity::range(
+                "write_file_atomic",
+                2,
+                3,
+                vec!["path".to_string(), "content_or_bytes".to_string(), "overwrite".to_string()],
+            ),
             "Promise.all" => CallableArity::range(
                 "Promise.all",
                 1,

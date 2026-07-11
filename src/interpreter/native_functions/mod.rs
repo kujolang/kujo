@@ -564,6 +564,7 @@ mod tests {
             "assert_contains",
             "read_file",
             "write_file",
+            "write_file_atomic",
             "append_file",
             "file_exists",
             "read_lines",
@@ -3410,6 +3411,11 @@ mod tests {
             matches!(write_extra, Value::Error(message) if message.contains("write_file optional overwrite flag must be a bool"))
         );
 
+        let atomic_missing = call_native_function(&mut interpreter, "write_file_atomic", &[]);
+        assert!(
+            matches!(atomic_missing, Value::Error(message) if message.contains("write_file_atomic requires 2 or 3 arguments"))
+        );
+
         let append_missing = call_native_function(&mut interpreter, "append_file", &[]);
         assert!(
             matches!(append_missing, Value::Error(message) if message.contains("append_file requires two arguments"))
@@ -3603,6 +3609,61 @@ mod tests {
         let copied_file = format!("{}/sample.copy.txt", base_dir);
         let nested_dir = format!("{}/nested", base_dir);
         let binary_file = format!("{}/payload.bin", base_dir);
+        let atomic_text_file = format!("{}/atomic.txt", base_dir);
+        let atomic_binary_file = format!("{}/atomic.bin", base_dir);
+
+        let atomic_text_ok = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[
+                Value::Str(Arc::new(atomic_text_file.clone())),
+                Value::Str(Arc::new("atomic-text".to_string())),
+            ],
+        );
+        assert!(matches!(atomic_text_ok, Value::Bool(true)));
+        assert_eq!(
+            std::fs::read_to_string(&atomic_text_file).expect("atomic text should be readable"),
+            "atomic-text"
+        );
+
+        let atomic_existing = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[
+                Value::Str(Arc::new(atomic_text_file.clone())),
+                Value::Str(Arc::new("rejected".to_string())),
+            ],
+        );
+        assert!(
+            matches!(atomic_existing, Value::Error(message) if message.contains("file already exists"))
+        );
+
+        let atomic_replace = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[
+                Value::Str(Arc::new(atomic_text_file.clone())),
+                Value::Str(Arc::new("replaced".to_string())),
+                Value::Bool(true),
+            ],
+        );
+        assert!(matches!(atomic_replace, Value::Bool(true)));
+        assert_eq!(
+            std::fs::read_to_string(&atomic_text_file)
+                .expect("replaced atomic text should be readable"),
+            "replaced"
+        );
+
+        let atomic_binary_ok = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[Value::Str(Arc::new(atomic_binary_file.clone())), Value::Bytes(vec![0, 1, 2, 255])],
+        );
+        assert!(matches!(atomic_binary_ok, Value::Bool(true)));
+        assert_eq!(
+            std::fs::read(&atomic_binary_file).expect("atomic bytes should be readable"),
+            vec![0, 1, 2, 255]
+        );
 
         let write_ok = call_native_function(
             &mut interpreter,

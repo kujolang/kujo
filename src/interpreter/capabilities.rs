@@ -125,6 +125,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 
         // Filesystem write
         "write_file"
+        | "write_file_atomic"
         | "write_file_sync"
         | "write_file_async"
         | "append_file"
