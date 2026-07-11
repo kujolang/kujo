@@ -112,7 +112,6 @@ The files below are intentionally non-canonical right now. They are tracked in `
 | File | Reason |
 |---|---|
 | `examples/benchmark_async.kujo` | Legacy control-flow syntax drift. |
-| `examples/benchmarks/file_io.kujo` | Benchmark fixture contains parser-incompatible syntax. |
 | `examples/benchmarks/sorting_algorithms.kujo` | Benchmark fixture kept as negative-coverage debt. |
 | `examples/benchmarks/string_processing.kujo` | Benchmark fixture kept as negative-coverage debt. |
 | `examples/csv_demo.kujo` | Legacy stdlib/example syntax drift. |

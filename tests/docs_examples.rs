@@ -124,10 +124,6 @@ fn expected_fail_examples_with_reason() -> &'static [(&'static str, &'static str
     &[
         ("examples/benchmark_async.kujo", "legacy control-flow syntax drift"),
         (
-            "examples/benchmarks/file_io.kujo",
-            "benchmark fixture contains parser-incompatible syntax",
-        ),
-        (
             "examples/benchmarks/sorting_algorithms.kujo",
             "benchmark fixture kept as negative-coverage debt",
         ),
