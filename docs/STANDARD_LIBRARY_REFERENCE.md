@@ -62,10 +62,21 @@ For wrapper-to-native mappings, see [HELPER_DISCOVERY_COOKBOOK.md](HELPER_DISCOV
 | `join` | stable | `text := join(["a", "b"], ",")` |
 | `starts_with` | stable | `ok := starts_with("abc", "a")` |
 | `ends_with` | stable | `ok := ends_with("abc", "c")` |
+| `pad_left` | stable | `v := pad_left("kujo", 6, "0")` |
+| `pad_right` | stable | `v := pad_right("kujo", 6, ".")` |
+| `pad_start` | stable alias | `v := pad_start("kujo", 6, "0")` |
+| `pad_end` | stable alias | `v := pad_end("kujo", 6, ".")` |
 | `slugify` | preview | `slug := slugify("Hello World")` |
 | `to_camel_case` | preview | `v := to_camel_case("hello_world")` |
 | `to_snake_case` | preview | `v := to_snake_case("helloWorld")` |
 | `to_kebab_case` | preview | `v := to_kebab_case("helloWorld")` |
+
+Padding reaches a target width in Unicode characters and returns the original
+string when it is already wide enough. Negative or non-finite widths are
+errors; an empty pad string uses a space and a multi-character pad string uses
+its first character. `slugify` lowercases text, retains Unicode alphanumerics,
+maps whitespace/underscores to hyphens, removes other punctuation, and trims
+edge hyphens.
 
 `render_markdown(...)` escapes raw HTML text and replaces unsafe Markdown
 link/image target schemes with `#`; use `html_response(...)` only for
@@ -159,9 +170,23 @@ Access semantics:
 | `random_int` | preview | `v := random_int(1, 10)` |
 | `set_random_seed` | preview | `set_random_seed(42)` |
 | `now` | stable | `t := now()` |
+| `now_utc` | stable | `iso := now_utc()` |
+| `now_unix` | stable | `seconds := now_unix()` |
+| `now_utc_seconds` | stable alias | `seconds := now_utc_seconds()` |
 | `current_timestamp` | stable | `ts := current_timestamp()` |
+| `format_date` | stable | `day := format_date(now_unix(), "YYYY-MM-DD")` |
+| `parse_date` | stable | `seconds := parse_date("1970-01-01", "YYYY-MM-DD")` |
 | `performance_now` | preview | `ms := performance_now()` |
-| `elapsed` | preview | `dt := elapsed(now())` |
+| `elapsed` | preview | `dt := elapsed(start_ms, end_ms)` |
+
+Time units are explicit: `now` and `now_unix` return Unix seconds,
+`current_timestamp` returns Unix milliseconds, and `now_utc` returns a UTC
+string in `YYYY-MM-DDTHH:mm:ssZ` form. `format_date` consumes Unix seconds;
+use `now_unix()` rather than `current_timestamp()`. Its supported replacement
+tokens are `YYYY`, `MM`, `DD`, `HH`, `mm`, and `ss`. `parse_date` currently
+accepts only `YYYY-MM-DD` and returns Unix seconds.
+
+Runnable contract example: [`examples/helper_hlp_007_text_time.kujo`](../examples/helper_hlp_007_text_time.kujo).
 
 ## File System and Paths
 

@@ -114,6 +114,7 @@ fn run_examples() -> HashSet<&'static str> {
         "examples/hello.kujo",
         "examples/arrays.kujo",
         "examples/dictionaries.kujo",
+        "examples/helper_hlp_007_text_time.kujo",
         "examples/math_module.kujo",
         "examples/string_interpolation.kujo",
         "examples/scoping_simple.kujo",

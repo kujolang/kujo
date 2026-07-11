@@ -6,18 +6,33 @@ semantics.
 
 ## HLP-007: canonical text and time helpers
 
-Use slugify for stable URL-safe labels, pad_right for aligned output, now_utc
-for an ISO-8601 UTC timestamp, and format_date for formatting a numeric Unix
-timestamp.
+Use `slugify` for a stable URL-friendly label, `pad_left`/`pad_right` for
+character-width alignment, `now_utc` for an ISO-8601 UTC string, and
+`format_date` for formatting Unix seconds. `pad_start` and `pad_end` are the
+existing spelling aliases for `pad_left` and `pad_right`.
 
     slug := slugify("Release Candidate 1")
     label := pad_right(slug, 24, " ")
     timestamp := now_utc()
-    day := format_date(current_timestamp(), "YYYY-MM-DD")
+    day := format_date(now_unix(), "YYYY-MM-DD")
 
-These helpers have fixed behavior and are already part of the standard
-library contract. Do not add local slug, padding, or timestamp wrappers unless
-the caller intentionally needs a different domain policy.
+The timestamp units matter: `now`/`now_unix` return Unix seconds,
+`current_timestamp` returns Unix milliseconds, and `now_utc` returns a UTC
+string such as `2026-07-11T12:34:56Z`. Pass `now_unix()` (not
+`current_timestamp()`) to `format_date`.
+
+`slugify` lowercases text, keeps Unicode alphanumeric characters, maps spaces
+and underscores to hyphens, removes other punctuation, and trims leading or
+trailing hyphens. Padding counts Unicode characters; a negative width is an
+error, an empty pad string uses a space, and only the first character of a
+multi-character pad string is used. `format_date` supports the replacement
+tokens `YYYY`, `MM`, `DD`, `HH`, `mm`, and `ss`; an invalid timestamp is
+returned as an error string. `parse_date` currently accepts only
+`YYYY-MM-DD` and returns Unix seconds or a runtime error.
+
+These helpers are already part of the standard-library contract. Do not add
+local slug, padding, or timestamp wrappers unless the caller intentionally
+needs a different domain policy.
 
 ## HLP-011: typed environment configuration
 

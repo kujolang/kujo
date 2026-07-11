@@ -22,7 +22,7 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - `parse_json` enforces a maximum input size of `1,048,576` bytes and a maximum nesting depth of `64`.
 - Invalid JSON returns a `Value::Error` message including parse-location details from `serde_json`.
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
-- Dictionary-like values are serialized with deterministic key ordering (lexicographic for string keys, ascending for integer keys).
+- Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
 
 JSON Schema subset contract (`json_schema_validate`):
 
@@ -124,14 +124,14 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `ssg_read_render_and_write_pages` | `ssg_read_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := ssg_read_render_and_write_pages(...)` |
 | `starts_with` | `starts_with(value, prefix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := starts_with(...)` |
 | `ends_with` | `ends_with(value, suffix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := ends_with(...)` |
-| `pad_left` | `pad_left(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_left(...)` |
-| `pad_right` | `pad_right(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_right(...)` |
-| `pad_start` | `pad_start(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_start(...)` |
-| `pad_end` | `pad_end(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_end(...)` |
+| `pad_left` | `pad_left(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Value::Error on non-string arguments, negative/non-finite width, or generated-output limit. Empty `pad_char` uses a space; only its first character is used. | `none` | `result := pad_left("kujo", 6, "0")` |
+| `pad_right` | `pad_right(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Same contract as `pad_left`; padding counts Unicode characters. | `none` | `result := pad_right("kujo", 6, ".")` |
+| `pad_start` | `pad_start(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Alias of `pad_left`; same errors and Unicode-character width. | `none` | `result := pad_start("kujo", 6, "0")` |
+| `pad_end` | `pad_end(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Alias of `pad_right`; same errors and Unicode-character width. | `none` | `result := pad_end("kujo", 6, ".")` |
 | `lines` | `lines(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := lines(...)` |
 | `words` | `words(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := words(...)` |
 | `str_reverse` | `str_reverse(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := str_reverse(...)` |
-| `slugify` | `slugify(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := slugify(...)` |
+| `slugify` | `slugify(value: string) -> string` | handler-defined | string | Value::Error when the argument is not a string. Lowercases, keeps Unicode alphanumerics, maps spaces/underscores to hyphens, removes other punctuation, and trims edge hyphens. | `none` | `result := slugify("Release Candidate 1")` |
 | `truncate` | `truncate(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := truncate(...)` |
 | `to_camel_case` | `to_camel_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_camel_case(...)` |
 | `to_snake_case` | `to_snake_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_snake_case(...)` |
@@ -249,19 +249,19 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `random_id` | `random_id(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random_id(...)` |
 | `set_random_seed` | `set_random_seed(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := set_random_seed(...)` |
 | `clear_random_seed` | `clear_random_seed(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := clear_random_seed(...)` |
-| `now` | `now(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now(...)` |
-| `now_utc` | `now_utc(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now_utc(...)` |
-| `now_unix` | `now_unix(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now_unix(...)` |
-| `now_utc_seconds` | `now_utc_seconds(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now_utc_seconds(...)` |
-| `current_timestamp` | `current_timestamp(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := current_timestamp(...)` |
+| `now` | `now() -> float` | handler-defined | float | Capability-denied when clock access is restricted. Unix seconds, fractional. | `clock` | `result := now()` |
+| `now_utc` | `now_utc() -> string` | handler-defined | string | Capability-denied when clock access is restricted. ISO-8601 UTC in `YYYY-MM-DDTHH:mm:ssZ` form. | `clock` | `result := now_utc()` |
+| `now_unix` | `now_unix() -> int` | handler-defined | int | Capability-denied when clock access is restricted. Unix seconds. | `clock` | `result := now_unix()` |
+| `now_utc_seconds` | `now_utc_seconds() -> int` | handler-defined | int | Alias of `now_unix`; same capability and units. | `clock` | `result := now_utc_seconds()` |
+| `current_timestamp` | `current_timestamp() -> int` | handler-defined | int | Capability-denied when clock access is restricted. Unix milliseconds. | `clock` | `result := current_timestamp()` |
 | `time` | `time(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := time(...)` |
 | `performance_now` | `performance_now(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := performance_now(...)` |
 | `time_us` | `time_us(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := time_us(...)` |
 | `time_ns` | `time_ns(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := time_ns(...)` |
 | `format_duration` | `format_duration(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := format_duration(...)` |
 | `elapsed` | `elapsed(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := elapsed(...)` |
-| `format_date` | `format_date(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := format_date(...)` |
-| `parse_date` | `parse_date(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := parse_date(...)` |
+| `format_date` | `format_date(timestamp: number, format: string) -> string` | handler-defined | string | Value::Error on wrong arity/types; invalid or out-of-range timestamps return an error string. Input is Unix seconds and fractional seconds are truncated. | `clock` | `result := format_date(now_unix(), "YYYY-MM-DD")` |
+| `parse_date` | `parse_date(date: string, format: string) -> float` | handler-defined | float | Value::ErrorObject for invalid dates or unsupported formats; only `YYYY-MM-DD` is supported. Returns Unix seconds. | `clock` | `result := parse_date("1970-01-01", "YYYY-MM-DD")` |
 | `env` | `env(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env(...)` |
 | `env_or` | `env_or(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_or(...)` |
 | `env_int` | `env_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_int(...)` |

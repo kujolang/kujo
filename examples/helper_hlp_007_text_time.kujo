@@ -1,0 +1,22 @@
+# HLP-007: canonical slug, padding, and UTC/time helpers.
+
+let slug := slugify("Release Candidate 1")
+let left := pad_start(slug, 24, "0")
+let right := pad_end(slug, 24, ".")
+let iso := now_utc()
+let day := format_date(now_unix(), "YYYY-MM-DD")
+
+if slug != "release-candidate-1" {
+    throw "slugify contract drift"
+}
+if len(left) != 24 || len(right) != 24 {
+    throw "padding contract drift"
+}
+if len(iso) != 20 || ends_with(iso, "Z") != 1 {
+    throw "UTC timestamp contract drift"
+}
+if len(day) != 10 {
+    throw "Unix-seconds date formatting contract drift"
+}
+
+print("ok: HLP-007 canonical text/time helpers")
