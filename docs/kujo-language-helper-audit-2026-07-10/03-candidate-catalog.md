@@ -5,10 +5,10 @@ total is directional; status and evidence quality control the recommendation.
 
 | ID | Candidate | Category | Layer | Spread | Duplication | Safety | Stability | Agent | Total | Confidence | Status |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---|---|
-| HLP-001 | atomic bounded file write | filesystem | runtime/stdlib | 5 | 5 | 5 | 4 | 5 | 42/50 | high | implement |
+| HLP-001 | atomic bounded file write | filesystem | runtime/stdlib | 5 | 5 | 5 | 4 | 5 | 42/50 | high | implemented |
 | HLP-002 | symlink-aware path boundary | filesystem/security | runtime/stdlib | 4 | 4 | 5 | 3 | 5 | 39/50 | medium | prototype |
 | HLP-003 | typed structured-data access | JSON/types | language/stdlib design | 5 | 5 | 4 | 3 | 5 | 39/50 | medium | design further |
-| HLP-004 | declarative CLI token parser | CLI | first-party package | 4 | 4 | 3 | 4 | 4 | 37/50 | high | implement |
+| HLP-004 | declarative CLI token parser | CLI | first-party package | 4 | 4 | 3 | 4 | 4 | 37/50 | high | implemented spike |
 | HLP-005 | redaction profiles and contract | security | official package | 4 | 4 | 5 | 3 | 5 | 38/50 | medium | centralize outside core |
 | HLP-006 | recursive ensure-directory | filesystem | package/docs | 4 | 4 | 3 | 4 | 4 | 35/50 | medium | prototype |
 | HLP-007 | canonical ISO/slug/padding examples | text/time | documentation | 4 | 3 | 2 | 5 | 3 | 34/50 | high | document existing API |

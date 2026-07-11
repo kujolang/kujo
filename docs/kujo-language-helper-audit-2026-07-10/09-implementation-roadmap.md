@@ -49,4 +49,6 @@ For each approved item: (1) write contract tests, (2) implement the canonical
 API, (3) migrate one mature consumer, (4) compare edge-case behavior, (5) add
 docs/examples, (6) migrate remaining independent consumers, (7) deprecate only
 after a release boundary, and (8) add a lint/search check to prevent unsafe
-reintroduction. No production code was changed by this audit.
+reintroduction. HLP-001 and HLP-004 are implemented. The remaining
+candidates retain their dispositions until their contracts and ownership are
+ready.

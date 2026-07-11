@@ -1,0 +1,26 @@
+from cli import parse
+
+let spec := [
+    {"name": "json", "kind": "bool", "short": "-j"},
+    {"name": "output", "kind": "value", "short": "-o", "required": true},
+    {"name": "retries", "kind": "value", "short": "-r", "default": "2"}
+]
+
+let parsed := parse(["build", "--json", "--output=dist.json", "--retries", "-1"], spec)
+assert(parsed["ok"] == true, "expected valid CLI parse")
+assert(parsed["value"]["command"] == "build", "expected command")
+assert(parsed["value"]["options"]["json"] == true, "expected boolean option")
+assert(parsed["value"]["options"]["output"] == "dist.json", "expected equals option")
+assert(parsed["value"]["options"]["retries"] == "-1", "expected negative value")
+
+let missing := parse(["build", "--json"], spec)
+assert(missing["ok"] == false, "missing required option should fail")
+assert(missing["error"]["code"] == "missing_required", "expected missing-required error")
+
+let unknown := parse(["build", "--unknown"], spec)
+assert(unknown["ok"] == false, "unknown option should fail")
+assert(unknown["error"]["code"] == "unknown_option", "expected unknown-option error")
+
+let terminated := parse(["build", "--output", "x", "--", "--literal"], spec)
+assert(terminated["ok"] == true, "terminator parse should succeed")
+assert(terminated["value"]["positionals"][0] == "--literal", "terminator should preserve literal")
