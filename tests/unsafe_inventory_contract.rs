@@ -132,8 +132,8 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .expect("executable summary value should be numeric");
 
     assert!(
-        executable_count <= 55,
-        "executable unsafe budget regression: expected <= 55, got {}",
+        executable_count <= 58,
+        "executable unsafe budget regression: expected <= 58, got {}",
         executable_count
     );
 

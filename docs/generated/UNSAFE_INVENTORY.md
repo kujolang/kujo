@@ -1,12 +1,12 @@
 # Unsafe Inventory
 
-Generated: 2026-07-11
+Generated: 2026-07-12
 Command: rg -n --glob '*.rs' --glob '!tests/unsafe_inventory_contract.rs' '\bunsafe\b' src tests benches fuzz
 
 ## Summary
 
-- Total matches: 65
-- Executable matches: 55
+- Total matches: 68
+- Executable matches: 58
 - Non-executable matches: 10
 - Unknown classifications: 0
 
@@ -14,6 +14,9 @@ Command: rg -n --glob '*.rs' --glob '!tests/unsafe_inventory_contract.rs' '\buns
 
 | Path | Line | Kind | Classification | Text |
 | --- | ---: | --- | --- | --- |
+| src/interpreter/native_functions/system.rs | 83 | executable | src_executable_other |         unsafe { |
+| src/interpreter/native_functions/system.rs | 575 | executable | src_executable_other |     unsafe { |
+| src/interpreter/native_functions/system.rs | 592 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
 | src/jit.rs | 61 | executable | jit_executable |     let vm_ctx = unsafe { &mut *ctx }; |
 | src/jit.rs | 78 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
 | src/jit.rs | 89 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |
