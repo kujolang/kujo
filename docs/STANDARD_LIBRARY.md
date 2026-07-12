@@ -43,11 +43,13 @@ Process result contract (`spawn_process` / `execute_status`):
 - `spawn_process` uses an explicit argv array and does not invoke a shell. Its
   options are `timeout_ms`, `max_output_bytes`, `inherit_env`, `env_allow`,
   `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
-  `stream_stderr_path`, `redact_values`, and `cancel_file`. The timeout
+  `stream_stderr_path`, `redact_values`, `cancel_file`, and optional `cwd`.
+  The timeout
   defaults to 30,000 ms; output is capped at 1 MiB per stream by default and
   16 MiB maximum per stream. Stream sinks are bounded and redact exact byte
   sequences incrementally across chunks; a full stream channel applies
-  backpressure. `cancel_file` is a portable cancellation hook, while SIGINT
+  backpressure. `cancel_file` is a portable cancellation hook, while `cwd`
+  selects the child process working directory. SIGINT
   and SIGTERM cancel the current process execution and set `cancelled`.
   On Unix, each spawned command runs in its own process group so timeout and
   cancellation terminate descendant processes that inherited its output pipes.

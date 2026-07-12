@@ -24,6 +24,7 @@ const PROCESS_POLL_INTERVAL_MS: u64 = 10;
 
 #[derive(Clone, Debug)]
 struct ProcessExecOptions {
+    cwd: Option<String>,
     timeout_ms: u64,
     max_output_bytes: usize,
     inherit_env: bool,
@@ -40,6 +41,7 @@ struct ProcessExecOptions {
 impl Default for ProcessExecOptions {
     fn default() -> Self {
         Self {
+            cwd: None,
             timeout_ms: DEFAULT_PROCESS_TIMEOUT_MS,
             max_output_bytes: DEFAULT_PROCESS_MAX_OUTPUT_BYTES,
             inherit_env: true,
@@ -215,6 +217,15 @@ fn parse_process_options(options: Option<&Value>) -> Result<ProcessExecOptions, 
 
     for (key, value) in entries {
         match key.as_str() {
+            "cwd" => {
+                let Value::Str(path) = value else {
+                    return Err(Value::Error("cwd must be a string".to_string()));
+                };
+                if path.is_empty() {
+                    return Err(Value::Error("cwd must not be empty".to_string()));
+                }
+                options.cwd = Some(path.as_ref().clone());
+            }
             "timeout_ms" => {
                 options.timeout_ms = parse_positive_u64(&value, "timeout_ms")?;
             }
@@ -272,7 +283,7 @@ fn parse_process_options(options: Option<&Value>) -> Result<ProcessExecOptions, 
             }
             _ => {
                 return Err(Value::Error(format!(
-                    "unsupported process option '{}'; supported options are timeout_ms, max_output_bytes, inherit_env, env_allow, env, stream_channel, stream_stdout_path, stream_stderr_path, redact_values, cancel_file",
+                    "unsupported process option '{}'; supported options are cwd, timeout_ms, max_output_bytes, inherit_env, env_allow, env, stream_channel, stream_stdout_path, stream_stderr_path, redact_values, cancel_file",
                     key
                 )));
             }
@@ -593,6 +604,9 @@ fn run_command_with_options(
 ) -> Result<ProcessExecutionResult, Value> {
     install_process_signal_handler();
     apply_env_policy(&mut command, options);
+    if let Some(cwd) = &options.cwd {
+        command.current_dir(cwd);
+    }
     start_process_group(&mut command);
 
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -1962,6 +1976,31 @@ mod tests {
         }
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn test_spawn_process_supports_working_directory() {
+        let cwd = std::env::temp_dir();
+        let expected_cwd = std::fs::canonicalize(&cwd).expect("temp directory should resolve");
+        let args = vec![string_value("pwd")];
+        let mut options = DictMap::default();
+        options.insert(Arc::from("cwd"), string_value(cwd.to_string_lossy().as_ref()));
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .unwrap();
+        match result {
+            Value::Struct { fields, .. } => {
+                assert!(matches!(fields.get("success"), Some(Value::Bool(true))));
+                let Value::Str(stdout) = fields.get("stdout").expect("stdout field") else {
+                    panic!("stdout should be a string")
+                };
+                assert_eq!(stdout.trim(), expected_cwd.to_string_lossy().as_ref());
+            }
+            other => panic!("expected ProcessResult, got {:?}", other),
+        }
+    }
+
     #[test]
     fn test_streaming_redactor_preserves_utf8_and_redacts_chunk_boundary() {
         let mut redactor = StreamingRedactor::new(&["秘密".to_string()]);
@@ -1998,7 +2037,9 @@ mod tests {
         };
         let mut events = Vec::new();
         let mut eof_streams = 0;
-        let deadline = Instant::now() + Duration::from_secs(2);
+        // Keep the assertion bounded, but allow process/thread scheduling noise
+        // when the full suite is running alongside other compile-heavy tests.
+        let deadline = Instant::now() + Duration::from_secs(10);
         while eof_streams < 2 {
             let event = loop {
                 let received = receiver_channel.lock().unwrap().1.try_recv();

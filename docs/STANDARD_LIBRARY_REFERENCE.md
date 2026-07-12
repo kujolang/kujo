@@ -276,7 +276,8 @@ Process result contracts:
   command strings and are gated by `shell-exec`.
 - Process options include `timeout_ms`, `max_output_bytes`, `inherit_env`,
   `env_allow`, `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
-  `stream_stderr_path`, `redact_values`, and `cancel_file`. Defaults are 30
+  `stream_stderr_path`, `redact_values`, `cancel_file`, and optional `cwd`.
+  Defaults are 30
   seconds and 1 MiB per output stream; 16 MiB per stream is the maximum.
 - `execute` returns a stdout string on successful, non-truncated exit and
   returns a runtime error on timeout, output-limit overflow, or non-zero exit.
