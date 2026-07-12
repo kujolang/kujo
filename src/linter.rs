@@ -165,9 +165,48 @@ fn check_unused_variables(source: &str) -> Vec<LintIssue> {
 }
 
 fn check_unreachable_code(source: &str) -> Vec<LintIssue> {
+    #[derive(Clone, Default)]
+    struct LineFacts {
+        brace_opens: usize,
+        brace_closes: usize,
+        terminator: bool,
+        multiline_expression_end: Option<usize>,
+        saw_token: bool,
+    }
+
+    let tokens = match lexer::tokenize(source) {
+        Ok(tokens) => tokens,
+        Err(_) => return Vec::new(),
+    };
+    let mut facts_by_line: HashMap<usize, LineFacts> = HashMap::new();
+    for (index, token) in tokens.iter().enumerate() {
+        let facts = facts_by_line.entry(token.line).or_default();
+        let is_first_token = !facts.saw_token;
+        facts.saw_token = true;
+        match &token.kind {
+            TokenKind::Punctuation('{') => facts.brace_opens += 1,
+            TokenKind::Punctuation('}') => facts.brace_closes += 1,
+            TokenKind::Keyword(keyword)
+                if is_first_token
+                    && (keyword == "return" || keyword == "break" || keyword == "continue") =>
+            {
+                facts.terminator = true;
+                if let Some(end_line) = multiline_delimited_expression_end(&tokens, index) {
+                    facts.multiline_expression_end = Some(
+                        facts
+                            .multiline_expression_end
+                            .map_or(end_line, |current| current.max(end_line)),
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+
     let mut issues = Vec::new();
-    let mut in_unreachable_region = false;
-    let mut brace_balance: i64 = 0;
+    let mut nesting_depth: i64 = 0;
+    let mut unreachable_at_depth: Option<i64> = None;
+    let mut pending_expression: Option<(i64, usize)> = None;
 
     for (index, line) in source.lines().enumerate() {
         let line_number = index + 1;
@@ -176,10 +215,16 @@ fn check_unreachable_code(source: &str) -> Vec<LintIssue> {
             continue;
         }
 
-        let opening = trimmed.chars().filter(|ch| *ch == '{').count() as i64;
-        let closing = trimmed.chars().filter(|ch| *ch == '}').count() as i64;
+        let facts = facts_by_line.get(&line_number).cloned().unwrap_or_default();
+        let old_depth = nesting_depth;
+        let new_depth = old_depth + facts.brace_opens as i64 - facts.brace_closes as i64;
 
-        if in_unreachable_region && !trimmed.starts_with('}') {
+        let closes_unreachable_block =
+            unreachable_at_depth.is_some_and(|base| facts.brace_closes > 0 && new_depth <= base);
+        let inside_pending_expression =
+            pending_expression.is_some_and(|(_, end_line)| line_number <= end_line);
+        if unreachable_at_depth.is_some() && !closes_unreachable_block && !inside_pending_expression
+        {
             issues.push(LintIssue {
                 rule_id: "unreachable-code".to_string(),
                 line: line_number,
@@ -190,25 +235,60 @@ fn check_unreachable_code(source: &str) -> Vec<LintIssue> {
             });
         }
 
-        if trimmed.starts_with("return")
-            || trimmed.starts_with("break")
-            || trimmed.starts_with("continue")
-        {
-            in_unreachable_region = true;
-            brace_balance = opening - closing;
-            continue;
+        if let Some((base_depth, end_line)) = pending_expression {
+            if line_number >= end_line {
+                pending_expression = None;
+                unreachable_at_depth = Some(base_depth);
+            }
+        } else if facts.terminator {
+            if let Some(end_line) = facts.multiline_expression_end {
+                if end_line > line_number {
+                    pending_expression = Some((old_depth, end_line));
+                } else {
+                    unreachable_at_depth = Some(old_depth);
+                }
+            } else {
+                unreachable_at_depth = Some(old_depth);
+            }
         }
 
-        if in_unreachable_region {
-            brace_balance += opening - closing;
-            if brace_balance <= 0 && trimmed.contains('}') {
-                in_unreachable_region = false;
-                brace_balance = 0;
-            }
+        nesting_depth = new_depth.max(0);
+        if closes_unreachable_block {
+            unreachable_at_depth = None;
+        }
+        if nesting_depth < 0 {
+            nesting_depth = 0;
         }
     }
 
     issues
+}
+
+fn multiline_delimited_expression_end(tokens: &[lexer::Token], index: usize) -> Option<usize> {
+    let opening = match tokens.get(index + 1).map(|token| &token.kind) {
+        Some(TokenKind::Punctuation(opening @ ('{' | '[' | '('))) => *opening,
+        _ => return None,
+    };
+    let closing = match opening {
+        '{' => '}',
+        '[' => ']',
+        '(' => ')',
+        _ => return None,
+    };
+    let mut depth = 0usize;
+    for token in tokens.iter().skip(index + 1) {
+        match token.kind {
+            TokenKind::Punctuation(character) if character == opening => depth += 1,
+            TokenKind::Punctuation(character) if character == closing => {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return (token.line > tokens[index].line).then_some(token.line);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 fn check_obvious_type_mismatches(source: &str) -> Vec<LintIssue> {
@@ -323,6 +403,21 @@ mod tests {
         let source = ["func test() {", "    return 1", "    print(2)", "}"].join("\n");
         let issues = lint_source(&source);
         assert!(issues.iter().any(|issue| issue.rule_id == "unreachable-code"));
+    }
+
+    #[test]
+    fn lint_does_not_report_returned_multiline_dictionary_as_unreachable() {
+        let source = [
+            "func make() {",
+            "    return {",
+            "        \"ok\": true,",
+            "        \"value\": 1",
+            "    }",
+            "}",
+        ]
+        .join("\n");
+        let issues = lint_source(&source);
+        assert!(!issues.iter().any(|issue| issue.rule_id == "unreachable-code"));
     }
 
     #[test]
