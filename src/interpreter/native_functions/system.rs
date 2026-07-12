@@ -1635,7 +1635,7 @@ mod tests {
     use crate::interpreter::{DictMap, Value};
     use crate::runtime_limits;
     use std::sync::{mpsc, Arc, Mutex};
-    use std::time::Duration;
+    use std::time::{Duration, Instant};
 
     fn string_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
@@ -1963,21 +1963,27 @@ mod tests {
                 .expect("spawn_process should return a result")
         });
 
-        // Let the native call clone its sender before taking the receiver lock.
-        std::thread::sleep(Duration::from_millis(25));
         let receiver_channel = match &channel {
             Value::Channel(channel) => channel.clone(),
             _ => unreachable!(),
         };
         let mut events = Vec::new();
         let mut eof_streams = 0;
+        let deadline = Instant::now() + Duration::from_secs(2);
         while eof_streams < 2 {
-            let event = receiver_channel
-                .lock()
-                .unwrap()
-                .1
-                .recv_timeout(Duration::from_secs(2))
-                .expect("stream event should arrive");
+            let event = loop {
+                let received = receiver_channel.lock().unwrap().1.try_recv();
+                match received {
+                    Ok(event) => break event,
+                    Err(mpsc::TryRecvError::Empty) if Instant::now() < deadline => {
+                        std::thread::sleep(Duration::from_millis(1));
+                    }
+                    Err(mpsc::TryRecvError::Empty) => panic!("stream event should arrive"),
+                    Err(mpsc::TryRecvError::Disconnected) => {
+                        panic!("stream channel should remain connected")
+                    }
+                }
+            };
             if matches!(
                 &event,
                 Value::Struct { fields, .. }
