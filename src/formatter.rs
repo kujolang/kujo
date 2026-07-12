@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::sync::OnceLock;
 
 #[derive(Debug, Clone)]
 pub struct FormatterOptions {
@@ -97,71 +98,153 @@ fn normalize_spacing(line: &str) -> String {
         return line.to_string();
     }
 
-    let mut result = line.to_string();
+    let (mut result, protected_fragments) = protect_non_code(line);
 
-    let comma_regex = Regex::new(r",\s*").expect("comma regex must compile");
-    result = comma_regex.replace_all(&result, ", ").to_string();
+    static COMMA_REGEX: OnceLock<Regex> = OnceLock::new();
+    static SPACED_OPERATOR_REGEX: OnceLock<Regex> = OnceLock::new();
+    static COMPACT_OPERATOR_REGEX: OnceLock<Regex> = OnceLock::new();
+    static SINGLE_OPERATOR_REGEX: OnceLock<Regex> = OnceLock::new();
+    static WHITESPACE_REGEX: OnceLock<Regex> = OnceLock::new();
 
-    let assignment_regex = Regex::new(r"\s*:=\s*").expect("assignment regex must compile");
-    result = assignment_regex.replace_all(&result, " := ").to_string();
+    result = COMMA_REGEX
+        .get_or_init(|| Regex::new(r",\s*").expect("comma regex must compile"))
+        .replace_all(&result, ", ")
+        .to_string();
 
-    let operators = ["==", "!=", ">=", "<=", "->", "+", "-", "*", "/", ">", "<"];
-    for operator in operators.iter() {
-        let escaped = regex::escape(operator);
-        let pattern = format!(r"\s*{}\s*", escaped);
-        let regex = Regex::new(&pattern).expect("operator regex must compile");
-        result = regex.replace_all(&result, format!(" {} ", operator).as_str()).to_string();
-    }
+    // Protect multi-character operators before normalizing single-character
+    // operators. The previous implementation rewrote `->` as `- >` and
+    // changed operators inside string literals and inline comments.
+    let spaced_operators = [":=", "==", "!=", ">=", "<=", "->", "+=", "-=", "*=", "/=", "%=", "=>"];
+    let compact_operators = ["...", "??", "?.", "::", "&&", "||", "|>"];
+    let single_operators = ["+", "-", "*", "/", ">", "<", "%", "=", "!", "?", "&", "|"];
+    let mut operator_fragments: Vec<(String, String)> = Vec::new();
+    protect_operator_group(
+        &mut result,
+        &spaced_operators,
+        true,
+        SPACED_OPERATOR_REGEX.get_or_init(|| {
+            Regex::new(r"\s*(?::=|==|!=|>=|<=|->|\+=|-=|\*=|/=|%=|=>)\s*")
+                .expect("spaced operator regex must compile")
+        }),
+        &mut operator_fragments,
+    );
+    protect_operator_group(
+        &mut result,
+        &compact_operators,
+        false,
+        COMPACT_OPERATOR_REGEX.get_or_init(|| {
+            Regex::new(r"\s*(?:\.\.\.|\?\?|\?\.|::|&&|\|\||\|>)\s*")
+                .expect("compact operator regex must compile")
+        }),
+        &mut operator_fragments,
+    );
+    protect_operator_group(
+        &mut result,
+        &single_operators,
+        true,
+        SINGLE_OPERATOR_REGEX.get_or_init(|| {
+            Regex::new(r"\s*(?:\+|-|\*|/|>|<|%|=|!|\?|&|\|)\s*")
+                .expect("single operator regex must compile")
+        }),
+        &mut operator_fragments,
+    );
 
     result = result.replace("( ", "(").replace(" )", ")");
     result = result.replace("[ ", "[").replace(" ]", "]");
     result = result.replace("{ ", "{").replace(" }", "}");
 
-    let whitespace_regex = Regex::new(r"\s+").expect("whitespace regex must compile");
-    whitespace_regex.replace_all(result.trim(), " ").to_string()
+    result = WHITESPACE_REGEX
+        .get_or_init(|| Regex::new(r"\s+").expect("whitespace regex must compile"))
+        .replace_all(result.trim(), " ")
+        .to_string();
+
+    for (placeholder, replacement) in operator_fragments.into_iter() {
+        result = result.replace(&placeholder, &replacement);
+    }
+    restore_non_code(&result, &protected_fragments)
 }
 
-fn wrap_if_needed(line: &str, indent_level: usize, options: &FormatterOptions) -> Vec<String> {
-    let estimated_width = (indent_level * options.indent_width) + line.chars().count();
-    if estimated_width <= options.line_length || !line.contains(", ") {
-        return vec![line.to_string()];
-    }
+fn protect_non_code(line: &str) -> (String, Vec<(String, String)>) {
+    let chars: Vec<char> = line.chars().collect();
+    let mut output = String::new();
+    let mut fragments: Vec<(String, String)> = Vec::new();
+    let mut index = 0usize;
 
-    let parts: Vec<&str> = line.split(", ").collect();
-    if parts.len() <= 1 {
-        return vec![line.to_string()];
-    }
-
-    let mut wrapped = Vec::new();
-    let mut current = String::new();
-
-    for (index, part) in parts.iter().enumerate() {
-        let candidate =
-            if current.is_empty() { part.to_string() } else { format!("{}, {}", current, part) };
-
-        let candidate_width = (indent_level * options.indent_width) + candidate.chars().count();
-        if candidate_width > options.line_length && !current.is_empty() {
-            wrapped.push(current);
-            current = part.to_string();
+    while index < chars.len() {
+        let is_comment = chars[index] == '#'
+            || (chars[index] == '/' && chars.get(index + 1).copied() == Some('/'));
+        if chars[index] == '"' || is_comment {
+            let start = index;
+            if is_comment {
+                index = chars.len();
+            } else {
+                index += 1;
+                while index < chars.len() {
+                    if chars[index] == '\\' {
+                        index = (index + 2).min(chars.len());
+                        continue;
+                    }
+                    index += 1;
+                    if chars.get(index - 1).copied() == Some('"') {
+                        break;
+                    }
+                }
+            }
+            let fragment: String = chars[start..index].iter().collect();
+            let placeholder = format!("\u{e000}{}\u{e001}", fragments.len());
+            output.push_str(&placeholder);
+            fragments.push((placeholder, fragment));
         } else {
-            current = candidate;
-        }
-
-        if index == parts.len() - 1 && !current.is_empty() {
-            wrapped.push(current.clone());
+            output.push(chars[index]);
+            index += 1;
         }
     }
 
-    if wrapped.is_empty() {
-        vec![line.to_string()]
-    } else {
-        wrapped
+    (output, fragments)
+}
+
+fn restore_non_code(line: &str, fragments: &[(String, String)]) -> String {
+    let mut output = line.to_string();
+    for (placeholder, fragment) in fragments {
+        output = output.replace(placeholder, fragment);
     }
+    output
+}
+
+fn protect_operator_group(
+    line: &mut String,
+    operators: &[&str],
+    spaced: bool,
+    operator_regex: &Regex,
+    fragments: &mut Vec<(String, String)>,
+) {
+    *line = operator_regex
+        .replace_all(line, |captures: &regex::Captures<'_>| {
+            let matched = captures.get(0).map_or("", |capture| capture.as_str());
+            let operator = operators
+                .iter()
+                .copied()
+                .find(|operator| matched.contains(operator))
+                .expect("operator regex must contain an operator");
+            let placeholder = format!("\u{e100}{}\u{e101}", fragments.len());
+            let replacement = if spaced { format!(" {} ", operator) } else { operator.to_string() };
+            fragments.push((placeholder.clone(), replacement));
+            placeholder
+        })
+        .to_string();
+}
+
+fn wrap_if_needed(line: &str, _indent_level: usize, _options: &FormatterOptions) -> Vec<String> {
+    // Wrapping requires syntax awareness: line-oriented splitting can move a
+    // comma out of a multiline call, array, or dictionary. Keep the formatter
+    // lossless until an AST-aware wrapping pass is available.
+    vec![line.to_string()]
 }
 
 #[cfg(test)]
 mod tests {
     use super::{format_source, FormatterOptions};
+    use crate::lexer::{self, TokenKind};
 
     #[test]
     fn formatter_normalizes_spacing_and_indentation() {
@@ -200,14 +283,55 @@ mod tests {
     }
 
     #[test]
-    fn formatter_wraps_long_comma_separated_lines() {
+    fn formatter_keeps_long_nested_comma_expressions_intact() {
         let source = "print(a, b, c, d, e, f, g, h)\n";
         let formatted = format_source(
             source,
             &FormatterOptions { indent_width: 2, line_length: 20, sort_imports: false },
         );
 
-        assert!(formatted.lines().count() > 1);
+        assert_eq!(formatted.lines().count(), 1);
         assert!(formatted.contains("a, b, c"));
+    }
+
+    #[test]
+    fn formatter_preserves_strings_comments_and_operator_tokens() {
+        let source = r#"func run(value){
+let command:=["sh","-lc","printf 'a/b --flag >= x\n'"] # path / flag >= text
+if(value>=2){
+print(command)
+}
+}
+"#;
+        let formatted = format_source(source, &FormatterOptions::default());
+        let original_tokens = lexer::tokenize(source).expect("source should lex");
+        let formatted_tokens = lexer::tokenize(&formatted).expect("formatted source should lex");
+        let original_kinds: Vec<TokenKind> =
+            original_tokens.into_iter().map(|token| token.kind).collect();
+        let formatted_kinds: Vec<TokenKind> =
+            formatted_tokens.into_iter().map(|token| token.kind).collect();
+
+        assert_eq!(original_kinds, formatted_kinds);
+        assert!(formatted.contains("a/b --flag >= x\\n"));
+        assert!(formatted.contains("# path / flag >= text"));
+        assert!(formatted.contains("value >= 2"));
+    }
+
+    #[test]
+    fn formatter_does_not_split_nested_comma_expressions() {
+        let source = "let value := contains(lower, \"/.aws\") == 1\n";
+        let formatted = format_source(
+            source,
+            &FormatterOptions { indent_width: 4, line_length: 20, sort_imports: true },
+        );
+        let original_tokens = lexer::tokenize(source).expect("source should lex");
+        let formatted_tokens = lexer::tokenize(&formatted).expect("formatted source should lex");
+        let original_kinds: Vec<TokenKind> =
+            original_tokens.into_iter().map(|token| token.kind).collect();
+        let formatted_kinds: Vec<TokenKind> =
+            formatted_tokens.into_iter().map(|token| token.kind).collect();
+
+        assert_eq!(original_kinds, formatted_kinds);
+        assert_eq!(formatted.lines().count(), 1);
     }
 }
