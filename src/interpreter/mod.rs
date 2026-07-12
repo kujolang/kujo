@@ -5610,7 +5610,7 @@ impl Interpreter {
 
     fn channel_send(
         &self,
-        chan: &Arc<Mutex<(std::sync::mpsc::Sender<Value>, std::sync::mpsc::Receiver<Value>)>>,
+        chan: &Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>,
         value: Value,
     ) -> Value {
         let chan_lock = match lock_or_runtime_error(chan.as_ref(), "channel.send") {
@@ -5626,7 +5626,7 @@ impl Interpreter {
 
     fn channel_receive_blocking(
         &self,
-        chan: &Arc<Mutex<(std::sync::mpsc::Sender<Value>, std::sync::mpsc::Receiver<Value>)>>,
+        chan: &Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>,
     ) -> Value {
         loop {
             let receive_result = {

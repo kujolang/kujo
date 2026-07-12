@@ -270,13 +270,14 @@ Process result contracts:
 
 - `execute_status` and `spawn_process` return a `ProcessResult` runtime struct
   with dot fields `exitcode`, `stdout`, `stderr`, `success`, `timed_out`,
-  `stdout_truncated`, and `stderr_truncated`.
+  `cancelled`, `stdout_truncated`, and `stderr_truncated`.
 - `spawn_process` takes explicit argv and is gated by `process-exec`; use it
   for user-controlled arguments. `execute_status` and `execute` take shell
   command strings and are gated by `shell-exec`.
 - Process options include `timeout_ms`, `max_output_bytes`, `inherit_env`,
-  `env_allow`, `env_deny`, and `env`. Defaults are 30 seconds and 1 MiB per
-  output stream; 16 MiB per stream is the maximum.
+  `env_allow`, `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
+  `stream_stderr_path`, `redact_values`, and `cancel_file`. Defaults are 30
+  seconds and 1 MiB per output stream; 16 MiB per stream is the maximum.
 - `execute` returns a stdout string on successful, non-truncated exit and
   returns a runtime error on timeout, output-limit overflow, or non-zero exit.
 - A `ProcessResult` cannot be passed directly to `to_json`; copy selected dot

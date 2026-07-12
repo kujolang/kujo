@@ -38,18 +38,24 @@ JSON Schema subset contract (`json_schema_validate`):
 Process result contract (`spawn_process` / `execute_status`):
 
 - Both return a `ProcessResult` runtime struct accessed with dot fields:
-  `exitcode`, `stdout`, `stderr`, `success`, `timed_out`,
+  `exitcode`, `stdout`, `stderr`, `success`, `timed_out`, `cancelled`,
   `stdout_truncated`, and `stderr_truncated`.
 - `spawn_process` uses an explicit argv array and does not invoke a shell. Its
   options are `timeout_ms`, `max_output_bytes`, `inherit_env`, `env_allow`,
-  `env_deny`, and `env`. The timeout defaults to 30,000 ms; output is capped
-  at 1 MiB per stream by default and 16 MiB maximum per stream.
+  `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
+  `stream_stderr_path`, `redact_values`, and `cancel_file`. The timeout
+  defaults to 30,000 ms; output is capped at 1 MiB per stream by default and
+  16 MiB maximum per stream. Stream sinks are bounded and redact exact byte
+  sequences incrementally across chunks; a full stream channel applies
+  backpressure. `cancel_file` is a portable cancellation hook, while SIGINT
+  and SIGTERM cancel the current process execution and set `cancelled`.
 - `execute_status` uses a shell command string and is separately gated as
   `shell-exec`; `spawn_process` is gated as `process-exec`. `execute` returns
   only stdout on a successful, non-truncated exit and otherwise returns a
   runtime error.
-- Captured output is decoded lossily as UTF-8. A timeout forces `success` to
-  `false`; truncation flags must be checked before treating output as complete.
+- Captured output is decoded lossily as UTF-8. A timeout or cancellation forces
+  `success` to `false`; truncation flags must be checked before treating output
+  as complete.
 - `ProcessResult` is a runtime struct, not a JSON value. To serialize a receipt,
   copy selected fields into a dictionary and pass that dictionary to `to_json`.
 
@@ -428,7 +434,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `rsa_decrypt` | `rsa_decrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_decrypt(...)` |
 | `rsa_sign` | `rsa_sign(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_sign(...)` |
 | `rsa_verify` | `rsa_verify(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_verify(...)` |
-| `spawn_process` | `spawn_process(argv: array<string>, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on empty/non-string argv, invalid options, or spawn/wait/read failure. Options are bounded by 30s default timeout, 1 MiB default per-stream output, and 16 MiB maximum per stream. | `process-exec` | `result := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
+| `spawn_process` | `spawn_process(argv: array<string>, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on empty/non-string argv, invalid options, or spawn/wait/read failure. Options include bounded output, stream channel/file sinks, redaction, and cancellation; defaults are 30s timeout, 1 MiB per-stream output, and 16 MiB maximum per stream. | `process-exec` | `result := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
 | `pipe_commands` | `pipe_commands(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := pipe_commands(...)` |
 | `tcp_listen` | `tcp_listen(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_listen(...)` |
 | `tcp_accept` | `tcp_accept(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_accept(...)` |

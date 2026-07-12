@@ -6,9 +6,12 @@ use crate::builtins;
 use crate::interpreter::{DictMap, Value};
 use crate::runtime_limits;
 use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{SyncSender, TrySendError};
+use std::sync::{Arc, Once};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -25,6 +28,11 @@ struct ProcessExecOptions {
     env_allow: Option<Vec<String>>,
     env_deny: Vec<String>,
     env: HashMap<String, String>,
+    stream_channel: Option<SyncSender<Value>>,
+    stream_stdout_path: Option<String>,
+    stream_stderr_path: Option<String>,
+    redact_values: Vec<String>,
+    cancel_file: Option<String>,
 }
 
 impl Default for ProcessExecOptions {
@@ -36,6 +44,11 @@ impl Default for ProcessExecOptions {
             env_allow: None,
             env_deny: Vec::new(),
             env: HashMap::new(),
+            stream_channel: None,
+            stream_stdout_path: None,
+            stream_stderr_path: None,
+            redact_values: Vec::new(),
+            cancel_file: None,
         }
     }
 }
@@ -49,6 +62,25 @@ struct ProcessExecutionResult {
     stderr: Vec<u8>,
     stdout_truncated: bool,
     stderr_truncated: bool,
+    cancelled: bool,
+}
+
+static PROCESS_CANCEL_REQUESTED: AtomicBool = AtomicBool::new(false);
+static PROCESS_SIGNAL_HANDLER: Once = Once::new();
+
+#[cfg(unix)]
+extern "C" fn process_signal_handler(_signal: libc::c_int) {
+    PROCESS_CANCEL_REQUESTED.store(true, Ordering::SeqCst);
+}
+
+fn install_process_signal_handler() {
+    PROCESS_SIGNAL_HANDLER.call_once(|| {
+        #[cfg(unix)]
+        unsafe {
+            libc::signal(libc::SIGINT, process_signal_handler as *const () as libc::sighandler_t);
+            libc::signal(libc::SIGTERM, process_signal_handler as *const () as libc::sighandler_t);
+        }
+    });
 }
 
 fn error_object(message: impl Into<String>) -> Value {
@@ -129,6 +161,15 @@ fn parse_string_dict(value: &Value, field_name: &str) -> Result<HashMap<String, 
     Ok(parsed)
 }
 
+fn parse_stream_channel(value: &Value) -> Result<SyncSender<Value>, Value> {
+    let Value::Channel(channel) = value else {
+        return Err(Value::Error("stream_channel must be a channel".to_string()));
+    };
+    channel.lock().map(|guard| guard.0.clone()).map_err(|_| {
+        Value::Error("stream_channel is unavailable because its channel is poisoned".to_string())
+    })
+}
+
 fn parse_positive_u64(value: &Value, field_name: &str) -> Result<u64, Value> {
     match value {
         Value::Int(number) if *number > 0 => Ok(*number as u64),
@@ -200,9 +241,36 @@ fn parse_process_options(options: Option<&Value>) -> Result<ProcessExecOptions, 
             "env" => {
                 options.env = parse_string_dict(&value, "env")?;
             }
+            "stream_channel" => {
+                options.stream_channel = Some(parse_stream_channel(&value)?);
+            }
+            "stream_stdout_path" | "stream_stderr_path" | "cancel_file" => {
+                let Value::Str(path) = value else {
+                    return Err(Value::Error(format!("{} must be a string", key)));
+                };
+                if path.is_empty() {
+                    return Err(Value::Error(format!("{} must not be empty", key)));
+                }
+                match key.as_str() {
+                    "stream_stdout_path" => {
+                        options.stream_stdout_path = Some(path.as_ref().clone())
+                    }
+                    "stream_stderr_path" => {
+                        options.stream_stderr_path = Some(path.as_ref().clone())
+                    }
+                    "cancel_file" => options.cancel_file = Some(path.as_ref().clone()),
+                    _ => unreachable!(),
+                }
+            }
+            "redact_values" => {
+                options.redact_values = parse_string_list(&value, "redact_values")?
+                    .into_iter()
+                    .filter(|value| !value.is_empty())
+                    .collect();
+            }
             _ => {
                 return Err(Value::Error(format!(
-                    "unsupported process option '{}'; supported options are timeout_ms, max_output_bytes, inherit_env, env_allow, env_deny, env",
+                    "unsupported process option '{}'; supported options are timeout_ms, max_output_bytes, inherit_env, env_allow, env, stream_channel, stream_stdout_path, stream_stderr_path, redact_values, cancel_file",
                     key
                 )));
             }
@@ -237,12 +305,201 @@ fn apply_env_policy(command: &mut Command, options: &ProcessExecOptions) {
     }
 }
 
+struct StreamingRedactor {
+    secrets: Vec<Vec<u8>>,
+    pending: Vec<u8>,
+    hold_bytes: usize,
+}
+
+impl StreamingRedactor {
+    fn new(values: &[String]) -> Self {
+        let mut secrets: Vec<Vec<u8>> = values
+            .iter()
+            .filter(|value| !value.is_empty())
+            .map(|value| value.as_bytes().to_vec())
+            .collect();
+        secrets.sort_by_key(|value| std::cmp::Reverse(value.len()));
+        // Retain enough context on both sides of a chunk boundary to avoid
+        // flushing the prefix of a secret before the remaining suffix arrives.
+        let hold_bytes = secrets.first().map_or(0, |value| value.len().saturating_mul(2));
+        Self { secrets, pending: Vec::new(), hold_bytes }
+    }
+
+    fn redact(&self, bytes: &[u8]) -> Vec<u8> {
+        self.secrets.iter().fold(bytes.to_vec(), |output, secret| {
+            let mut redacted = Vec::with_capacity(output.len());
+            let mut cursor = 0;
+            while cursor < output.len() {
+                if output[cursor..].starts_with(secret) {
+                    redacted.extend_from_slice(b"[REDACTED]");
+                    cursor += secret.len();
+                } else {
+                    redacted.push(output[cursor]);
+                    cursor += 1;
+                }
+            }
+            redacted
+        })
+    }
+
+    fn push(&mut self, bytes: &[u8]) -> Vec<u8> {
+        if self.secrets.is_empty() {
+            return bytes.to_vec();
+        }
+        self.pending.extend_from_slice(bytes);
+        if self.pending.len() <= self.hold_bytes {
+            return Vec::new();
+        }
+        let split_at = self.pending.len() - self.hold_bytes;
+        let prefix = self.pending[..split_at].to_vec();
+        self.pending = self.pending[split_at..].to_vec();
+        self.redact(&prefix)
+    }
+
+    fn finish(&mut self) -> Vec<u8> {
+        if self.pending.is_empty() {
+            return Vec::new();
+        }
+        let pending = std::mem::take(&mut self.pending);
+        self.redact(&pending)
+    }
+}
+
+struct StreamSink {
+    sender: Option<SyncSender<Value>>,
+    file: Option<File>,
+    stream_name: &'static str,
+    max_output_bytes: usize,
+    emitted_bytes: usize,
+    sequence: u64,
+    truncated: bool,
+    cancel_flag: Arc<AtomicBool>,
+}
+
+impl StreamSink {
+    fn new(
+        sender: Option<SyncSender<Value>>,
+        file_path: Option<String>,
+        stream_name: &'static str,
+        max_output_bytes: usize,
+        cancel_flag: Arc<AtomicBool>,
+    ) -> Result<Option<Self>, String> {
+        if sender.is_none() && file_path.is_none() {
+            return Ok(None);
+        }
+        let file = file_path
+            .map(|path| {
+                OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .map_err(|error| error.to_string())
+            })
+            .transpose()?;
+        Ok(Some(Self {
+            sender,
+            file,
+            stream_name,
+            max_output_bytes,
+            emitted_bytes: 0,
+            sequence: 0,
+            truncated: false,
+            cancel_flag,
+        }))
+    }
+
+    fn send_event(&mut self, event: Value) {
+        let Some(sender) = self.sender.take() else {
+            return;
+        };
+        let mut event = event;
+        loop {
+            match sender.try_send(event) {
+                Ok(()) => {
+                    self.sender = Some(sender);
+                    return;
+                }
+                Err(TrySendError::Disconnected(_)) => return,
+                Err(TrySendError::Full(next)) => {
+                    if self.cancel_flag.load(Ordering::SeqCst) {
+                        return;
+                    }
+                    event = next;
+                    thread::sleep(Duration::from_millis(PROCESS_POLL_INTERVAL_MS));
+                }
+            }
+        }
+    }
+
+    fn emit(&mut self, bytes: &[u8]) -> Result<(), String> {
+        if bytes.is_empty() {
+            return Ok(());
+        }
+        if self.emitted_bytes >= self.max_output_bytes {
+            self.truncated = true;
+            return Ok(());
+        }
+        let remaining = self.max_output_bytes - self.emitted_bytes;
+        let length = remaining.min(bytes.len());
+        if length < bytes.len() {
+            self.truncated = true;
+        }
+        let payload = &bytes[..length];
+        self.emitted_bytes += length;
+        if let Some(file) = &mut self.file {
+            file.write_all(payload).map_err(|error| error.to_string())?;
+            file.flush().map_err(|error| error.to_string())?;
+        }
+        if self.sender.is_some() {
+            let mut fields = HashMap::new();
+            fields.insert("stream".to_string(), Value::Str(Arc::new(self.stream_name.to_string())));
+            fields.insert(
+                "data".to_string(),
+                Value::Str(Arc::new(String::from_utf8_lossy(payload).to_string())),
+            );
+            fields.insert("sequence".to_string(), Value::Int(self.sequence as i64));
+            fields.insert("eof".to_string(), Value::Bool(false));
+            self.sequence += 1;
+            self.send_event(Value::Struct { name: "ProcessStreamEvent".to_string(), fields });
+        }
+        Ok(())
+    }
+
+    fn finish(&mut self) -> Result<(), String> {
+        if let Some(file) = &mut self.file {
+            file.flush().map_err(|error| error.to_string())?;
+        }
+        if self.sender.is_some() {
+            let mut fields = HashMap::new();
+            fields.insert("stream".to_string(), Value::Str(Arc::new(self.stream_name.to_string())));
+            fields.insert("data".to_string(), Value::Str(Arc::new(String::new())));
+            fields.insert("sequence".to_string(), Value::Int(self.sequence as i64));
+            fields.insert("eof".to_string(), Value::Bool(true));
+            self.send_event(Value::Struct { name: "ProcessStreamEvent".to_string(), fields });
+        }
+        Ok(())
+    }
+}
+
 fn collect_stream_with_limit<R: Read>(
     mut reader: R,
     max_output_bytes: usize,
+    stream_name: &'static str,
+    stream_channel: Option<SyncSender<Value>>,
+    stream_file_path: Option<String>,
+    redact_values: Vec<String>,
+    cancel_flag: Arc<AtomicBool>,
 ) -> Result<(Vec<u8>, bool), String> {
     let mut collected = Vec::new();
     let mut truncated = false;
+    let mut redactor = StreamingRedactor::new(&redact_values);
+    let mut sink = StreamSink::new(
+        stream_channel,
+        stream_file_path,
+        stream_name,
+        max_output_bytes,
+        cancel_flag,
+    )?;
     let mut chunk = [0_u8; 8192];
 
     loop {
@@ -250,17 +507,43 @@ fn collect_stream_with_limit<R: Read>(
         if 0 == read_count {
             break;
         }
+        let output = redactor.push(&chunk[..read_count]);
+        if !output.is_empty() {
+            if let Some(sink) = &mut sink {
+                sink.emit(&output)?;
+            }
+            if collected.len() < max_output_bytes {
+                let remaining = max_output_bytes - collected.len();
+                let to_copy = remaining.min(output.len());
+                collected.extend_from_slice(&output[..to_copy]);
+                if to_copy < output.len() {
+                    truncated = true;
+                }
+            } else {
+                truncated = true;
+            }
+        }
+    }
 
+    let output = redactor.finish();
+    if !output.is_empty() {
+        if let Some(sink) = &mut sink {
+            sink.emit(&output)?;
+        }
         if collected.len() < max_output_bytes {
             let remaining = max_output_bytes - collected.len();
-            let to_copy = remaining.min(read_count);
-            collected.extend_from_slice(&chunk[..to_copy]);
-            if to_copy < read_count {
+            let to_copy = remaining.min(output.len());
+            collected.extend_from_slice(&output[..to_copy]);
+            if to_copy < output.len() {
                 truncated = true;
             }
         } else {
             truncated = true;
         }
+    }
+    if let Some(sink) = &mut sink {
+        sink.finish()?;
+        truncated |= sink.truncated;
     }
 
     Ok((collected, truncated))
@@ -280,6 +563,7 @@ fn run_command_with_options(
     stdin_input: Option<Vec<u8>>,
     command_label: &str,
 ) -> Result<ProcessExecutionResult, Value> {
+    install_process_signal_handler();
     apply_env_policy(&mut command, options);
 
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
@@ -322,21 +606,72 @@ fn run_command_with_options(
     };
 
     let max_output_bytes = options.max_output_bytes;
-    let stdout_handle =
-        thread::spawn(move || collect_stream_with_limit(stdout_reader, max_output_bytes));
-    let stderr_handle =
-        thread::spawn(move || collect_stream_with_limit(stderr_reader, max_output_bytes));
+    let cancel_flag = Arc::new(AtomicBool::new(false));
+    let stdout_handle = {
+        let cancel_flag = cancel_flag.clone();
+        let stream_channel = options.stream_channel.clone();
+        let stream_file_path = options.stream_stdout_path.clone();
+        let redact_values = options.redact_values.clone();
+        thread::spawn(move || {
+            collect_stream_with_limit(
+                stdout_reader,
+                max_output_bytes,
+                "stdout",
+                stream_channel,
+                stream_file_path,
+                redact_values,
+                cancel_flag,
+            )
+        })
+    };
+    let stderr_handle = {
+        let cancel_flag = cancel_flag.clone();
+        let stream_channel = options.stream_channel.clone();
+        let stream_file_path = options.stream_stderr_path.clone();
+        let redact_values = options.redact_values.clone();
+        thread::spawn(move || {
+            collect_stream_with_limit(
+                stderr_reader,
+                max_output_bytes,
+                "stderr",
+                stream_channel,
+                stream_file_path,
+                redact_values,
+                cancel_flag,
+            )
+        })
+    };
 
     let timeout = Duration::from_millis(options.timeout_ms);
     let start = Instant::now();
     let mut timed_out = false;
+    let mut cancelled = false;
 
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
             Ok(None) => {
+                let cancel_file_requested = options
+                    .cancel_file
+                    .as_ref()
+                    .is_some_and(|path| std::path::Path::new(path).exists());
+                if PROCESS_CANCEL_REQUESTED.load(Ordering::SeqCst) || cancel_file_requested {
+                    cancelled = true;
+                    cancel_flag.store(true, Ordering::SeqCst);
+                    let _ = child.kill();
+                    match child.wait() {
+                        Ok(status) => break status,
+                        Err(error) => {
+                            return Err(error_object(format!(
+                                "Failed to terminate cancelled process '{}': {}",
+                                command_label, error
+                            )));
+                        }
+                    }
+                }
                 if start.elapsed() >= timeout {
                     timed_out = true;
+                    cancel_flag.store(true, Ordering::SeqCst);
                     let _ = child.kill();
                     match child.wait() {
                         Ok(status) => break status,
@@ -400,6 +735,7 @@ fn run_command_with_options(
         stderr,
         stdout_truncated,
         stderr_truncated,
+        cancelled,
     })
 }
 
@@ -416,6 +752,7 @@ fn process_result_to_value(result: ProcessExecutionResult) -> Value {
     );
     fields.insert("success".to_string(), Value::Bool(result.success));
     fields.insert("timed_out".to_string(), Value::Bool(result.timed_out));
+    fields.insert("cancelled".to_string(), Value::Bool(result.cancelled));
     fields.insert("stdout_truncated".to_string(), Value::Bool(result.stdout_truncated));
     fields.insert("stderr_truncated".to_string(), Value::Bool(result.stderr_truncated));
 
@@ -1294,10 +1631,11 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::handle;
+    use super::{handle, StreamingRedactor};
     use crate::interpreter::{DictMap, Value};
     use crate::runtime_limits;
-    use std::sync::Arc;
+    use std::sync::{mpsc, Arc, Mutex};
+    use std::time::Duration;
 
     fn string_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
@@ -1587,10 +1925,120 @@ mod tests {
                 assert!(matches!(fields.get("stderr"), Some(Value::Str(_))));
                 assert!(matches!(fields.get("success"), Some(Value::Bool(true))));
                 assert!(matches!(fields.get("timed_out"), Some(Value::Bool(false))));
+                assert!(matches!(fields.get("cancelled"), Some(Value::Bool(false))));
                 assert!(matches!(fields.get("stdout_truncated"), Some(Value::Bool(false))));
                 assert!(matches!(fields.get("stderr_truncated"), Some(Value::Bool(false))));
             }
             other => panic!("Expected ProcessResult struct from spawn_process, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_streaming_redactor_preserves_utf8_and_redacts_chunk_boundary() {
+        let mut redactor = StreamingRedactor::new(&["秘密".to_string()]);
+        let mut output = redactor.push("prefix-秘".as_bytes());
+        output.extend(redactor.push("密-suffix-😀".as_bytes()));
+        output.extend(redactor.finish());
+        assert_eq!(String::from_utf8(output).unwrap(), "prefix-[REDACTED]-suffix-😀");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_spawn_process_streams_redacted_events_with_backpressure() {
+        let (sender, receiver) = mpsc::sync_channel(2);
+        let channel = Value::Channel(Arc::new(Mutex::new((sender, receiver))));
+        let mut options = DictMap::default();
+        options.insert(Arc::from("stream_channel"), channel.clone());
+        options.insert(
+            Arc::from("redact_values"),
+            Value::Array(Arc::new(vec![string_value("secret")])),
+        );
+        let args = vec![
+            string_value("sh"),
+            string_value("-c"),
+            string_value("printf 'token-secret\\n'; printf 'err-secret\\n' >&2"),
+        ];
+        let worker = std::thread::spawn(move || {
+            handle("spawn_process", &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))])
+                .expect("spawn_process should return a result")
+        });
+
+        // Let the native call clone its sender before taking the receiver lock.
+        std::thread::sleep(Duration::from_millis(25));
+        let receiver_channel = match &channel {
+            Value::Channel(channel) => channel.clone(),
+            _ => unreachable!(),
+        };
+        let mut events = Vec::new();
+        let mut eof_streams = 0;
+        while eof_streams < 2 {
+            let event = receiver_channel
+                .lock()
+                .unwrap()
+                .1
+                .recv_timeout(Duration::from_secs(2))
+                .expect("stream event should arrive");
+            if matches!(
+                &event,
+                Value::Struct { fields, .. }
+                    if matches!(fields.get("eof"), Some(Value::Bool(true)))
+            ) {
+                eof_streams += 1;
+            }
+            events.push(event);
+        }
+        let result = worker.join().expect("process worker should join");
+        if let Value::Struct { fields, .. } = result {
+            assert!(matches!(fields.get("success"), Some(Value::Bool(true))));
+            assert!(matches!(
+                fields.get("stdout"),
+                Some(Value::Str(value)) if value.as_ref() == "token-[REDACTED]\n"
+            ));
+            assert!(matches!(
+                fields.get("stderr"),
+                Some(Value::Str(value)) if value.as_ref() == "err-[REDACTED]\n"
+            ));
+        } else {
+            panic!("expected ProcessResult");
+        }
+        assert!(events.iter().any(|event| match event {
+            Value::Struct { fields, .. } => fields.get("data").is_some_and(|data| {
+                matches!(data, Value::Str(value) if value.contains("[REDACTED]"))
+            }),
+            _ => false,
+        }));
+        assert!(events.iter().any(|event| matches!(
+            event,
+            Value::Struct { fields, .. }
+                if matches!(fields.get("eof"), Some(Value::Bool(true)))
+        )));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_spawn_process_cancel_file_terminates_child_and_reports_cancellation() {
+        let cancel_path =
+            std::env::temp_dir().join(format!("kujo-process-cancel-{}", std::process::id()));
+        let _ = std::fs::remove_file(&cancel_path);
+        let mut options = DictMap::default();
+        options
+            .insert(Arc::from("cancel_file"), string_value(cancel_path.to_string_lossy().as_ref()));
+        let args = vec![string_value("sh"), string_value("-c"), string_value("sleep 5")];
+        let worker = std::thread::spawn(move || {
+            handle("spawn_process", &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))])
+                .expect("spawn_process should return a result")
+        });
+        std::thread::sleep(Duration::from_millis(50));
+        std::fs::write(&cancel_path, "cancel").expect("cancel marker should be writable");
+        let result = worker.join().expect("cancelled process worker should join");
+        let _ = std::fs::remove_file(cancel_path);
+        match result {
+            Value::Struct { fields, .. } => {
+                assert!(matches!(fields.get("cancelled"), Some(Value::Bool(true))));
+                assert!(matches!(fields.get("timed_out"), Some(Value::Bool(false))));
+                assert!(matches!(fields.get("success"), Some(Value::Bool(false))));
+            }
+            other => panic!("expected ProcessResult, got {:?}", other),
         }
     }
 
@@ -1605,6 +2053,7 @@ mod tests {
                 assert!(matches!(fields.get("stderr"), Some(Value::Str(_))));
                 assert!(matches!(fields.get("success"), Some(Value::Bool(_))));
                 assert!(matches!(fields.get("timed_out"), Some(Value::Bool(_))));
+                assert!(matches!(fields.get("cancelled"), Some(Value::Bool(false))));
                 assert!(matches!(fields.get("stdout_truncated"), Some(Value::Bool(_))));
                 assert!(matches!(fields.get("stderr_truncated"), Some(Value::Bool(_))));
             }
