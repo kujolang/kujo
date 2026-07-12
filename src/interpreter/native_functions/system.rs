@@ -8,7 +8,9 @@ use crate::runtime_limits;
 use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
-use std::process::{Command, Stdio};
+#[cfg(unix)]
+use std::os::unix::process::CommandExt;
+use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{SyncSender, TrySendError};
 use std::sync::{Arc, Once};
@@ -557,6 +559,32 @@ fn render_command_for_error(program: &str, args: &[String]) -> String {
     }
 }
 
+#[cfg(unix)]
+fn start_process_group(command: &mut Command) {
+    unsafe {
+        command.pre_exec(|| {
+            if libc::setsid() == -1 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+}
+
+#[cfg(not(unix))]
+fn start_process_group(_command: &mut Command) {}
+
+fn terminate_process_tree(child: &mut Child) {
+    #[cfg(unix)]
+    {
+        let process_group = -(child.id() as libc::pid_t);
+        if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 {
+            return;
+        }
+    }
+    let _ = child.kill();
+}
+
 fn run_command_with_options(
     mut command: Command,
     options: &ProcessExecOptions,
@@ -565,6 +593,7 @@ fn run_command_with_options(
 ) -> Result<ProcessExecutionResult, Value> {
     install_process_signal_handler();
     apply_env_policy(&mut command, options);
+    start_process_group(&mut command);
 
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     if stdin_input.is_some() {
@@ -658,7 +687,7 @@ fn run_command_with_options(
                 if PROCESS_CANCEL_REQUESTED.load(Ordering::SeqCst) || cancel_file_requested {
                     cancelled = true;
                     cancel_flag.store(true, Ordering::SeqCst);
-                    let _ = child.kill();
+                    terminate_process_tree(&mut child);
                     match child.wait() {
                         Ok(status) => break status,
                         Err(error) => {
@@ -672,7 +701,7 @@ fn run_command_with_options(
                 if start.elapsed() >= timeout {
                     timed_out = true;
                     cancel_flag.store(true, Ordering::SeqCst);
-                    let _ = child.kill();
+                    terminate_process_tree(&mut child);
                     match child.wait() {
                         Ok(status) => break status,
                         Err(error) => {
@@ -2030,6 +2059,7 @@ mod tests {
         options
             .insert(Arc::from("cancel_file"), string_value(cancel_path.to_string_lossy().as_ref()));
         let args = vec![string_value("sh"), string_value("-c"), string_value("sleep 5")];
+        let started = std::time::Instant::now();
         let worker = std::thread::spawn(move || {
             handle("spawn_process", &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))])
                 .expect("spawn_process should return a result")
@@ -2037,6 +2067,10 @@ mod tests {
         std::thread::sleep(Duration::from_millis(50));
         std::fs::write(&cancel_path, "cancel").expect("cancel marker should be writable");
         let result = worker.join().expect("cancelled process worker should join");
+        assert!(
+            started.elapsed() < Duration::from_secs(2),
+            "descendant process kept cancellation pipes open"
+        );
         let _ = std::fs::remove_file(cancel_path);
         match result {
             Value::Struct { fields, .. } => {

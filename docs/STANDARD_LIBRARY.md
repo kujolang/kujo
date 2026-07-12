@@ -49,6 +49,8 @@ Process result contract (`spawn_process` / `execute_status`):
   sequences incrementally across chunks; a full stream channel applies
   backpressure. `cancel_file` is a portable cancellation hook, while SIGINT
   and SIGTERM cancel the current process execution and set `cancelled`.
+  On Unix, each spawned command runs in its own process group so timeout and
+  cancellation terminate descendant processes that inherited its output pipes.
 - `execute_status` uses a shell command string and is separately gated as
   `shell-exec`; `spawn_process` is gated as `process-exec`. `execute` returns
   only stdout on a successful, non-truncated exit and otherwise returns a
