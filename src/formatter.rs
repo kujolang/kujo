@@ -238,6 +238,7 @@ fn wrap_if_needed(line: &str, _indent_level: usize, _options: &FormatterOptions)
     // Wrapping requires syntax awareness: line-oriented splitting can move a
     // comma out of a multiline call, array, or dictionary. Keep the formatter
     // lossless until an AST-aware wrapping pass is available.
+    let _ = _options.line_length;
     vec![line.to_string()]
 }
 
