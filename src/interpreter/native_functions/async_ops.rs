@@ -2292,6 +2292,7 @@ pub fn handle(
                     .unwrap_or(_interp.get_async_task_pool_size() as i64)
                     .max(1) as usize;
                 let mapper = mapper.clone();
+                let base_env = _interp.env.clone();
                 let capability_policy = _interp.capability_policy().clone();
                 let (tx, rx) = tokio::sync::oneshot::channel();
                 AsyncRuntime::spawn_task(async move {
@@ -2300,12 +2301,13 @@ pub fn handle(
                     let mut in_flight = FuturesUnordered::new();
                     let spawn = |idx: usize, element: Value| {
                         let mapper = mapper.clone();
+                        let base_env = base_env.clone();
                         let policy = capability_policy.clone();
                         tokio::task::spawn_blocking(move || {
                             (
                                 idx,
                                 crate::interpreter::Interpreter::execute_async_mapper_isolated(
-                                    &mapper, element, policy,
+                                    &mapper, element, base_env, policy,
                                 ),
                             )
                         })

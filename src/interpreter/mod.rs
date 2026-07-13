@@ -1885,6 +1885,7 @@ impl Interpreter {
     pub(crate) fn execute_async_mapper_isolated(
         func: &Value,
         arg: Value,
+        base_env: Environment,
         capability_policy: RuntimeCapabilityPolicy,
     ) -> Value {
         let Value::AsyncFunction(params, body, captured_env) = func else {
@@ -1897,6 +1898,7 @@ impl Interpreter {
             ));
         }
         let mut interpreter = Interpreter::with_capability_policy(capability_policy);
+        interpreter.env = base_env;
         if let Some(env_ref) = captured_env {
             let captured = env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
             for scope in captured.scopes {
