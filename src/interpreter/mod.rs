@@ -670,6 +670,7 @@ impl Interpreter {
             "io_write_at",
             "io_seek_read",
             "io_file_metadata",
+            "io_set_permissions",
             "io_truncate",
             "io_copy_range",
             // JSON functions
@@ -756,6 +757,8 @@ impl Interpreter {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "http_download_file",
+            "http_upload_file",
             "ai_request_hash",
             "ai_chat",
             "ai_stream_chat",
@@ -874,6 +877,8 @@ impl Interpreter {
             "aes_decrypt",
             "aes_encrypt_bytes",
             "aes_decrypt_bytes",
+            "aes_encrypt_file_stream",
+            "aes_decrypt_file_stream",
             "rsa_generate_keypair",
             "rsa_encrypt",
             "rsa_decrypt",
@@ -1188,6 +1193,10 @@ impl Interpreter {
             "io_file_metadata".to_string(),
             Value::NativeFunction("io_file_metadata".to_string()),
         );
+        self.env.define(
+            "io_set_permissions".to_string(),
+            Value::NativeFunction("io_set_permissions".to_string()),
+        );
         self.env
             .define("io_truncate".to_string(), Value::NativeFunction("io_truncate".to_string()));
         self.env.define(
@@ -1350,6 +1359,14 @@ impl Interpreter {
         self.env.define(
             "http_get_binary".to_string(),
             Value::NativeFunction("http_get_binary".to_string()),
+        );
+        self.env.define(
+            "http_download_file".to_string(),
+            Value::NativeFunction("http_download_file".to_string()),
+        );
+        self.env.define(
+            "http_upload_file".to_string(),
+            Value::NativeFunction("http_upload_file".to_string()),
         );
         self.env.define(
             "ai_request_hash".to_string(),
@@ -1622,6 +1639,14 @@ impl Interpreter {
         self.env.define(
             "aes_decrypt_bytes".to_string(),
             Value::NativeFunction("aes_decrypt_bytes".to_string()),
+        );
+        self.env.define(
+            "aes_encrypt_file_stream".to_string(),
+            Value::NativeFunction("aes_encrypt_file_stream".to_string()),
+        );
+        self.env.define(
+            "aes_decrypt_file_stream".to_string(),
+            Value::NativeFunction("aes_decrypt_file_stream".to_string()),
         );
         self.env.define(
             "rsa_generate_keypair".to_string(),

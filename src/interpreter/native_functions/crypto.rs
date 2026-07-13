@@ -2,7 +2,7 @@
 //
 // Cryptography native functions
 
-use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::{Aes256Gcm, Nonce};
 use base64::Engine;
 use md5::Md5;
@@ -13,7 +13,14 @@ use rsa::{Oaep, RsaPrivateKey, RsaPublicKey};
 use sha2::{Digest, Sha256};
 
 use crate::interpreter::{DictMap, Value};
+use std::fs::{self, File, OpenOptions};
+use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+const STREAM_AEAD_MAGIC: &[u8; 9] = b"KUJOAEAD1";
+const STREAM_AEAD_MIN_CHUNK: usize = 4096;
+const STREAM_AEAD_MAX_CHUNK: usize = 16 * 1024 * 1024;
 
 fn error_object(message: String) -> Value {
     Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
@@ -29,6 +36,285 @@ fn md5_hex(bytes: &[u8]) -> String {
     let mut hasher = Md5::new();
     hasher.update(bytes);
     format!("{:x}", hasher.finalize())
+}
+
+fn stream_temp_path(output: &Path) -> PathBuf {
+    let name = output.file_name().and_then(|value| value.to_str()).unwrap_or("output");
+    output.with_file_name(format!(".{}.kujo-stream-{}", name, uuid::Uuid::new_v4()))
+}
+
+fn stream_nonce(prefix: &[u8; 8], counter: u32) -> [u8; 12] {
+    let mut nonce = [0u8; 12];
+    nonce[..8].copy_from_slice(prefix);
+    nonce[8..].copy_from_slice(&counter.to_be_bytes());
+    nonce
+}
+
+fn stream_aad(header: &[u8], kind: u8, counter: u32, plain_len: u32) -> Vec<u8> {
+    let mut aad = Vec::with_capacity(header.len() + 9);
+    aad.extend_from_slice(header);
+    aad.push(kind);
+    aad.extend_from_slice(&counter.to_be_bytes());
+    aad.extend_from_slice(&plain_len.to_be_bytes());
+    aad
+}
+
+fn write_stream_frame<W: Write>(
+    writer: &mut W,
+    cipher: &Aes256Gcm,
+    header: &[u8],
+    prefix: &[u8; 8],
+    kind: u8,
+    counter: u32,
+    plaintext: &[u8],
+) -> Result<usize, String> {
+    let plain_len = u32::try_from(plaintext.len())
+        .map_err(|_| "stream AEAD frame exceeds u32 length".to_string())?;
+    let nonce_bytes = stream_nonce(prefix, counter);
+    let aad = stream_aad(header, kind, counter, plain_len);
+    let ciphertext = cipher
+        .encrypt(Nonce::from_slice(&nonce_bytes), Payload { msg: plaintext, aad: &aad })
+        .map_err(|error| format!("stream AEAD encryption failed: {}", error))?;
+    writer.write_all(&[kind]).map_err(|error| error.to_string())?;
+    writer.write_all(&counter.to_be_bytes()).map_err(|error| error.to_string())?;
+    writer.write_all(&plain_len.to_be_bytes()).map_err(|error| error.to_string())?;
+    writer.write_all(&ciphertext).map_err(|error| error.to_string())?;
+    Ok(9 + ciphertext.len())
+}
+
+fn encrypt_file_stream(
+    input_path: &str,
+    output_path: &str,
+    key: &str,
+    chunk_size: usize,
+) -> Result<Value, String> {
+    if !(STREAM_AEAD_MIN_CHUNK..=STREAM_AEAD_MAX_CHUNK).contains(&chunk_size) {
+        return Err(format!(
+            "aes_encrypt_file_stream chunk size must be between {} and {} bytes",
+            STREAM_AEAD_MIN_CHUNK, STREAM_AEAD_MAX_CHUNK
+        ));
+    }
+    if Path::new(output_path).exists() {
+        return Err(format!("stream AEAD output already exists: {}", output_path));
+    }
+
+    let input = File::open(input_path)
+        .map_err(|error| format!("Cannot open stream AEAD input '{}': {}", input_path, error))?;
+    let output = Path::new(output_path);
+    let temp = stream_temp_path(output);
+    let temp_file =
+        OpenOptions::new().create_new(true).write(true).open(&temp).map_err(|error| {
+            format!("Cannot create stream AEAD output '{}': {}", temp.display(), error)
+        })?;
+
+    let result = (|| -> Result<Value, String> {
+        let mut key_hasher = Sha256::new();
+        key_hasher.update(key.as_bytes());
+        let key_bytes = key_hasher.finalize();
+        let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+            .map_err(|error| format!("Failed to create stream AEAD cipher: {}", error))?;
+        let prefix: [u8; 8] = rand::random();
+        let mut header = Vec::with_capacity(21);
+        header.extend_from_slice(STREAM_AEAD_MAGIC);
+        header.extend_from_slice(&prefix);
+        header.extend_from_slice(&(chunk_size as u32).to_be_bytes());
+
+        let mut reader = BufReader::with_capacity(chunk_size, input);
+        let mut writer = BufWriter::with_capacity(chunk_size + 64, temp_file);
+        writer.write_all(&header).map_err(|error| error.to_string())?;
+        let mut digest = Sha256::new();
+        let mut buffer = vec![0u8; chunk_size];
+        let mut chunks: u32 = 0;
+        let mut bytes_in: u64 = 0;
+        let mut bytes_out: u64 = header.len() as u64;
+
+        loop {
+            let read = reader.read(&mut buffer).map_err(|error| error.to_string())?;
+            if read == 0 {
+                break;
+            }
+            if chunks == u32::MAX {
+                return Err("stream AEAD input has too many chunks".to_string());
+            }
+            digest.update(&buffer[..read]);
+            bytes_in += read as u64;
+            bytes_out += write_stream_frame(
+                &mut writer,
+                &cipher,
+                &header,
+                &prefix,
+                1,
+                chunks,
+                &buffer[..read],
+            )? as u64;
+            chunks += 1;
+        }
+
+        bytes_out +=
+            write_stream_frame(&mut writer, &cipher, &header, &prefix, 0, chunks, &[])? as u64;
+        writer.flush().map_err(|error| error.to_string())?;
+        writer.get_ref().sync_all().map_err(|error| error.to_string())?;
+        drop(writer);
+        fs::rename(&temp, output).map_err(|error| {
+            format!(
+                "Cannot publish stream AEAD output '{}' from '{}': {}",
+                output.display(),
+                temp.display(),
+                error
+            )
+        })?;
+
+        let mut report = DictMap::default();
+        report.insert("ok".into(), Value::Bool(true));
+        report.insert("format".into(), Value::Str(Arc::new("KUJOAEAD1".to_string())));
+        report.insert("chunk_size".into(), Value::Int(chunk_size as i64));
+        report.insert("chunks".into(), Value::Int(chunks as i64));
+        report.insert("bytes_in".into(), Value::Int(bytes_in as i64));
+        report.insert("bytes_out".into(), Value::Int(bytes_out as i64));
+        report.insert(
+            "plaintext_sha256".into(),
+            Value::Str(Arc::new(format!("{:x}", digest.finalize()))),
+        );
+        Ok(Value::Dict(Arc::new(report)))
+    })();
+
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
+    }
+    result
+}
+
+fn decrypt_file_stream(input_path: &str, output_path: &str, key: &str) -> Result<Value, String> {
+    if Path::new(output_path).exists() {
+        return Err(format!("stream AEAD output already exists: {}", output_path));
+    }
+    let input = File::open(input_path)
+        .map_err(|error| format!("Cannot open stream AEAD input '{}': {}", input_path, error))?;
+    let output = Path::new(output_path);
+    let temp = stream_temp_path(output);
+    let temp_file =
+        OpenOptions::new().create_new(true).write(true).open(&temp).map_err(|error| {
+            format!("Cannot create stream AEAD output '{}': {}", temp.display(), error)
+        })?;
+
+    let result = (|| -> Result<Value, String> {
+        let mut reader = BufReader::new(input);
+        let mut header = vec![0u8; 21];
+        reader
+            .read_exact(&mut header)
+            .map_err(|error| format!("Invalid or truncated stream AEAD header: {}", error))?;
+        if &header[..9] != STREAM_AEAD_MAGIC {
+            return Err("Invalid stream AEAD magic".to_string());
+        }
+        let mut prefix = [0u8; 8];
+        prefix.copy_from_slice(&header[9..17]);
+        let chunk_size = u32::from_be_bytes(
+            header[17..21].try_into().map_err(|_| "Invalid stream AEAD header".to_string())?,
+        ) as usize;
+        if !(STREAM_AEAD_MIN_CHUNK..=STREAM_AEAD_MAX_CHUNK).contains(&chunk_size) {
+            return Err("Invalid stream AEAD chunk size".to_string());
+        }
+
+        let mut key_hasher = Sha256::new();
+        key_hasher.update(key.as_bytes());
+        let key_bytes = key_hasher.finalize();
+        let cipher = Aes256Gcm::new_from_slice(&key_bytes)
+            .map_err(|error| format!("Failed to create stream AEAD cipher: {}", error))?;
+        let mut writer = BufWriter::with_capacity(chunk_size, temp_file);
+        let mut digest = Sha256::new();
+        let mut expected_counter: u32 = 0;
+        let mut bytes_out: u64 = 0;
+
+        loop {
+            let mut frame_header = [0u8; 9];
+            reader.read_exact(&mut frame_header).map_err(|error| {
+                if error.kind() == ErrorKind::UnexpectedEof {
+                    "Truncated stream AEAD input before authenticated final frame".to_string()
+                } else {
+                    error.to_string()
+                }
+            })?;
+            let kind = frame_header[0];
+            let counter = u32::from_be_bytes(frame_header[1..5].try_into().unwrap());
+            let plain_len = u32::from_be_bytes(frame_header[5..9].try_into().unwrap());
+            if counter != expected_counter {
+                return Err(format!(
+                    "Invalid stream AEAD frame order: expected {}, got {}",
+                    expected_counter, counter
+                ));
+            }
+            if kind == 1 && plain_len as usize > chunk_size {
+                return Err("Stream AEAD frame exceeds declared chunk size".to_string());
+            }
+            if kind == 0 && plain_len != 0 {
+                return Err("Invalid stream AEAD final frame length".to_string());
+            }
+            if kind != 0 && kind != 1 {
+                return Err("Invalid stream AEAD frame type".to_string());
+            }
+
+            let cipher_len = plain_len as usize + 16;
+            let mut ciphertext = vec![0u8; cipher_len];
+            reader
+                .read_exact(&mut ciphertext)
+                .map_err(|_| "Truncated stream AEAD frame ciphertext".to_string())?;
+            let nonce_bytes = stream_nonce(&prefix, counter);
+            let aad = stream_aad(&header, kind, counter, plain_len);
+            let plaintext = cipher
+                .decrypt(Nonce::from_slice(&nonce_bytes), Payload { msg: &ciphertext, aad: &aad })
+                .map_err(|_| format!("Stream AEAD authentication failed at frame {}", counter))?;
+
+            if kind == 0 {
+                if !plaintext.is_empty() {
+                    return Err("Invalid stream AEAD final frame payload".to_string());
+                }
+                let mut trailing = [0u8; 1];
+                if reader.read(&mut trailing).map_err(|error| error.to_string())? != 0 {
+                    return Err("Trailing bytes after stream AEAD final frame".to_string());
+                }
+                break;
+            }
+
+            if plaintext.len() != plain_len as usize {
+                return Err("Invalid stream AEAD plaintext length".to_string());
+            }
+            writer.write_all(&plaintext).map_err(|error| error.to_string())?;
+            digest.update(&plaintext);
+            bytes_out += plaintext.len() as u64;
+            expected_counter = expected_counter
+                .checked_add(1)
+                .ok_or_else(|| "stream AEAD frame counter overflow".to_string())?;
+        }
+
+        writer.flush().map_err(|error| error.to_string())?;
+        writer.get_ref().sync_all().map_err(|error| error.to_string())?;
+        drop(writer);
+        fs::rename(&temp, output).map_err(|error| {
+            format!(
+                "Cannot publish stream AEAD output '{}' from '{}': {}",
+                output.display(),
+                temp.display(),
+                error
+            )
+        })?;
+
+        let mut report = DictMap::default();
+        report.insert("ok".into(), Value::Bool(true));
+        report.insert("format".into(), Value::Str(Arc::new("KUJOAEAD1".to_string())));
+        report.insert("chunk_size".into(), Value::Int(chunk_size as i64));
+        report.insert("chunks".into(), Value::Int(expected_counter as i64));
+        report.insert("bytes_out".into(), Value::Int(bytes_out as i64));
+        report.insert(
+            "plaintext_sha256".into(),
+            Value::Str(Arc::new(format!("{:x}", digest.finalize()))),
+        );
+        Ok(Value::Dict(Arc::new(report)))
+    })();
+
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
+    }
+    result
 }
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
@@ -301,6 +587,56 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 }
                 _ => Value::Error(
                     "aes_decrypt_bytes requires (ciphertext_string, key_string) arguments"
+                        .to_string(),
+                ),
+            }
+        }
+
+        "aes_encrypt_file_stream" => {
+            if arg_values.len() != 4 {
+                return Some(Value::Error(
+                    "aes_encrypt_file_stream requires (input_path, output_path, key, chunk_size) arguments"
+                        .to_string(),
+                ));
+            }
+            match (arg_values.first(), arg_values.get(1), arg_values.get(2), arg_values.get(3)) {
+                (
+                    Some(Value::Str(input)),
+                    Some(Value::Str(output)),
+                    Some(Value::Str(key)),
+                    Some(Value::Int(chunk_size)),
+                ) if *chunk_size >= 0 => match encrypt_file_stream(
+                    input.as_ref(),
+                    output.as_ref(),
+                    key.as_ref(),
+                    *chunk_size as usize,
+                ) {
+                    Ok(value) => value,
+                    Err(error) => error_object(error),
+                },
+                _ => Value::Error(
+                    "aes_encrypt_file_stream requires string paths/key and integer chunk_size"
+                        .to_string(),
+                ),
+            }
+        }
+
+        "aes_decrypt_file_stream" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(
+                    "aes_decrypt_file_stream requires (input_path, output_path, key) arguments"
+                        .to_string(),
+                ));
+            }
+            match (arg_values.first(), arg_values.get(1), arg_values.get(2)) {
+                (Some(Value::Str(input)), Some(Value::Str(output)), Some(Value::Str(key))) => {
+                    match decrypt_file_stream(input.as_ref(), output.as_ref(), key.as_ref()) {
+                        Ok(value) => value,
+                        Err(error) => error_object(error),
+                    }
+                }
+                _ => Value::Error(
+                    "aes_decrypt_file_stream requires string input_path, output_path, and key"
                         .to_string(),
                 ),
             }
@@ -636,6 +972,63 @@ mod tests {
         let decrypted =
             handle("aes_decrypt_bytes", &[Value::Str(ciphertext), string_value(key)]).unwrap();
         assert!(matches!(decrypted, Value::Str(value) if value.as_ref() == payload));
+    }
+
+    #[test]
+    fn test_stream_aead_file_round_trip_and_tamper_rejection() {
+        let input = unique_temp_file("kujo_stream_aead_input");
+        let encrypted = unique_temp_file("kujo_stream_aead_encrypted");
+        let decrypted = unique_temp_file("kujo_stream_aead_decrypted");
+        let rejected = unique_temp_file("kujo_stream_aead_rejected");
+        let _ = fs::remove_file(&encrypted);
+        let _ = fs::remove_file(&decrypted);
+        let _ = fs::remove_file(&rejected);
+        let mut payload = Vec::with_capacity(12_500);
+        for index in 0..12_500 {
+            payload.push((index % 251) as u8);
+        }
+        fs::write(&input, &payload).expect("stream input should be written");
+
+        let encrypted_result = handle(
+            "aes_encrypt_file_stream",
+            &[
+                string_value(&input),
+                string_value(&encrypted),
+                string_value("stream-key"),
+                Value::Int(4096),
+            ],
+        )
+        .expect("stream encrypt should be handled");
+        assert!(matches!(encrypted_result, Value::Dict(ref fields)
+            if matches!(fields.get("ok"), Some(Value::Bool(true)))
+                && matches!(fields.get("chunks"), Some(Value::Int(4)))));
+
+        let decrypted_result = handle(
+            "aes_decrypt_file_stream",
+            &[string_value(&encrypted), string_value(&decrypted), string_value("stream-key")],
+        )
+        .expect("stream decrypt should be handled");
+        assert!(matches!(decrypted_result, Value::Dict(ref fields)
+            if matches!(fields.get("ok"), Some(Value::Bool(true)))
+                && matches!(fields.get("chunks"), Some(Value::Int(4)))));
+        assert_eq!(fs::read(&decrypted).expect("decrypted output should exist"), payload);
+
+        let mut tampered = fs::read(&encrypted).expect("encrypted file should be readable");
+        let tamper_index = tampered.len() / 2;
+        tampered[tamper_index] ^= 0x80;
+        fs::write(&encrypted, tampered).expect("tampered file should be written");
+        let rejected_result = handle(
+            "aes_decrypt_file_stream",
+            &[string_value(&encrypted), string_value(&rejected), string_value("stream-key")],
+        )
+        .expect("stream decrypt should be handled");
+        assert!(matches!(rejected_result, Value::ErrorObject { message, .. }
+            if message.contains("authentication failed")));
+        assert!(!std::path::Path::new(&rejected).exists());
+
+        let _ = fs::remove_file(input);
+        let _ = fs::remove_file(encrypted);
+        let _ = fs::remove_file(decrypted);
     }
 
     #[test]

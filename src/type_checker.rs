@@ -1089,6 +1089,31 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "aes_encrypt_file_stream".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "aes_decrypt_file_stream".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "append_file".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
@@ -1375,6 +1400,22 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // URL
                 return_type: None,                               // Returns bytes array
+            },
+        );
+
+        self.functions.insert(
+            "http_download_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String), None],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "http_upload_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String), None],
+                return_type: None,
             },
         );
 
@@ -1982,6 +2023,14 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // path
                 return_type: None,                               // dict with metadata
+            },
+        );
+
+        self.functions.insert(
+            "io_set_permissions".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::Int)],
+                return_type: None, // verified permission result dict
             },
         );
 

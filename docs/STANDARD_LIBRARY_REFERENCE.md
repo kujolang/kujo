@@ -312,6 +312,8 @@ destinations remain subject to the outbound destination policy described in
 | `http_get` | preview | `res := http_get("https://example.com")` |
 | `http_post` | preview | `res := http_post("https://example.com", {"x":1})` |
 | `http_get_binary` | preview | `blob := http_get_binary("https://example.com/a.bin")` |
+| `http_download_file` | preview | `receipt := http_download_file(url, "artifact.bin", {"max_bytes": 1073741824})` |
+| `http_upload_file` | preview | `receipt := http_upload_file(url, "artifact.bin", {"method": "PUT", "headers": {"Content-Type": "application/octet-stream"}})` |
 | `parallel_http` | preview | `all := parallel_http(["https://a", "https://b"])` |
 | `http_server` | experimental | `srv := http_server(8080)` |
 | `http_response` | preview | `res := http_response(200, "ok")` |
@@ -342,6 +344,8 @@ filesystem read permission.
 | `hash_password` | preview | `h := hash_password("secret")` |
 | `verify_password` | preview | `ok := verify_password("secret", h)` |
 | `aes_encrypt` | experimental | `c := aes_encrypt("msg", key)` |
+| `aes_encrypt_file_stream` | preview | `receipt := aes_encrypt_file_stream("in.bin", "out.aead", key, 1048576)` |
+| `aes_decrypt_file_stream` | preview | `receipt := aes_decrypt_file_stream("out.aead", "restored.bin", key)` |
 | `aes_decrypt` | experimental | `p := aes_decrypt(c, key)` |
 | `rsa_generate_keypair` | experimental | `kp := rsa_generate_keypair()` |
 | `rsa_sign` | experimental | `sig := rsa_sign(data, key)` |
