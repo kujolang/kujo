@@ -13,7 +13,7 @@
 
 use once_cell::sync::Lazy;
 use std::time::Duration;
-use tokio::runtime::Runtime;
+use tokio::runtime::{Runtime, RuntimeFlavor};
 use tokio::task::JoinHandle;
 
 use crate::interpreter::Value;
@@ -61,9 +61,31 @@ impl AsyncRuntime {
     /// The result of the future
     pub fn block_on<F>(future: F) -> F::Output
     where
-        F: std::future::Future,
+        F: std::future::Future + Send,
+        F::Output: Send,
     {
-        Self::runtime().block_on(future)
+        match tokio::runtime::Handle::try_current() {
+            Ok(handle) if handle.runtime_flavor() == RuntimeFlavor::MultiThread => {
+                // Kujo's CLI itself runs inside a Tokio multi-thread runtime. Calling
+                // Runtime::block_on directly from that context panics with "Cannot
+                // start a runtime from within a runtime". Move the synchronous
+                // interpreter wait into Tokio's supported blocking lane while the
+                // dedicated Kujo async runtime continues to drive the future.
+                tokio::task::block_in_place(|| Self::runtime().block_on(future))
+            }
+            Ok(_) => {
+                // block_in_place is unavailable on a current-thread runtime. A
+                // scoped OS thread keeps the future borrowed only for this call and
+                // avoids nesting either runtime on the caller thread.
+                std::thread::scope(|scope| {
+                    scope
+                        .spawn(|| Self::runtime().block_on(future))
+                        .join()
+                        .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
+                })
+            }
+            Err(_) => Self::runtime().block_on(future),
+        }
     }
 
     /// Create a future that completes after a duration
@@ -116,6 +138,29 @@ mod tests {
     fn test_block_on_simple() {
         // block_on should execute future synchronously
         let result = AsyncRuntime::block_on(async { 42 });
+        assert_eq!(result, 42);
+    }
+
+    #[test]
+    fn test_block_on_inside_multithread_runtime_does_not_nest_runtime() {
+        let outer = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(2)
+            .enable_all()
+            .build()
+            .expect("outer runtime should initialize");
+
+        let result = outer.block_on(async { AsyncRuntime::block_on(async { 42 }) });
+        assert_eq!(result, 42);
+    }
+
+    #[test]
+    fn test_block_on_inside_current_thread_runtime_uses_scoped_thread() {
+        let outer = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("outer runtime should initialize");
+
+        let result = outer.block_on(async { AsyncRuntime::block_on(async { 42 }) });
         assert_eq!(result, 42);
     }
 
