@@ -2257,6 +2257,7 @@ pub fn handle(
             let mapper = match &args[1] {
                 func @ Value::NativeFunction(_)
                 | func @ Value::Function(_, _, _)
+                | func @ Value::AsyncFunction(_, _, _)
                 | func @ Value::BytecodeFunction { .. }
                 | func @ Value::GeneratorDef(_, _) => func.clone(),
                 _ => {
@@ -2285,6 +2286,77 @@ pub fn handle(
             } else {
                 Some(_interp.get_async_task_pool_size() as i64)
             };
+
+            if matches!(mapper, Value::AsyncFunction(_, _, _)) {
+                let limit = concurrency_limit
+                    .unwrap_or(_interp.get_async_task_pool_size() as i64)
+                    .max(1) as usize;
+                let mapper = mapper.clone();
+                let capability_policy = _interp.capability_policy().clone();
+                let (tx, rx) = tokio::sync::oneshot::channel();
+                AsyncRuntime::spawn_task(async move {
+                    let mut results = vec![Value::Null; array.len()];
+                    let mut pending = array.iter().cloned().enumerate();
+                    let mut in_flight = FuturesUnordered::new();
+                    let spawn = |idx: usize, element: Value| {
+                        let mapper = mapper.clone();
+                        let policy = capability_policy.clone();
+                        tokio::task::spawn_blocking(move || {
+                            (
+                                idx,
+                                crate::interpreter::Interpreter::execute_async_mapper_isolated(
+                                    &mapper, element, policy,
+                                ),
+                            )
+                        })
+                    };
+                    for _ in 0..limit.min(results.len()) {
+                        if let Some((idx, element)) = pending.next() {
+                            in_flight.push(spawn(idx, element));
+                        }
+                    }
+                    while let Some(joined) = in_flight.next().await {
+                        let (idx, value) = match joined {
+                            Ok(value) => value,
+                            Err(error) => {
+                                let _ = tx.send(Err(format!(
+                                    "parallel_map async worker failed: {}",
+                                    error
+                                )));
+                                return Value::Null;
+                            }
+                        };
+                        match value {
+                            Value::Error(message) => {
+                                let _ = tx.send(Err(format!(
+                                    "parallel_map mapper {} failed: {}",
+                                    idx, message
+                                )));
+                                return Value::Null;
+                            }
+                            Value::ErrorObject { message, .. } => {
+                                let _ = tx.send(Err(format!(
+                                    "parallel_map mapper {} failed: {}",
+                                    idx, message
+                                )));
+                                return Value::Null;
+                            }
+                            value => results[idx] = value,
+                        }
+                        if let Some((next_idx, element)) = pending.next() {
+                            in_flight.push(spawn(next_idx, element));
+                        }
+                    }
+                    let _ = tx.send(Ok(Value::Array(Arc::new(results))));
+                    Value::Null
+                });
+                return Some(Value::Promise {
+                    receiver: Arc::new(Mutex::new(rx)),
+                    is_polled: Arc::new(Mutex::new(false)),
+                    cached_result: Arc::new(Mutex::new(None)),
+                    task_handle: None,
+                });
+            }
 
             if let Value::NativeFunction(mapper_name) = &mapper {
                 let rayon_limit = concurrency_limit

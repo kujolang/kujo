@@ -1874,6 +1874,47 @@ impl Interpreter {
         }
     }
 
+    /// Execute one async-function mapper invocation in an isolated interpreter.
+    /// `parallel_map` uses this on bounded worker tasks so mapper state cannot
+    /// race through a shared interpreter environment.
+    pub(crate) fn execute_async_mapper_isolated(
+        func: &Value,
+        arg: Value,
+        capability_policy: RuntimeCapabilityPolicy,
+    ) -> Value {
+        let Value::AsyncFunction(params, body, captured_env) = func else {
+            return Value::Error("parallel_map async mapper is not an async function".to_string());
+        };
+        if params.len() != 1 {
+            return Value::Error(format!(
+                "parallel_map async mapper expects 1 parameter, got {}",
+                params.len()
+            ));
+        }
+        let mut interpreter = Interpreter::with_capability_policy(capability_policy);
+        if let Some(env_ref) = captured_env {
+            let captured = env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+            for scope in captured.scopes {
+                interpreter.env.push_scope();
+                for (name, value) in scope {
+                    interpreter.env.define(name, value);
+                }
+            }
+        }
+        interpreter.env.push_scope();
+        interpreter.env.define(params[0].clone(), arg);
+        if let Err(error) = interpreter.with_function_context("<parallel async mapper>", |interp| {
+            interp.eval_stmts(&body.get())
+        }) {
+            return error;
+        }
+        match interpreter.return_value.take() {
+            Some(Value::Return(value)) => *value,
+            Some(value @ Value::Error(_)) | Some(value @ Value::ErrorObject { .. }) => value,
+            _ => Value::Null,
+        }
+    }
+
     /// Attempts to call an operator method on a struct value
     /// Returns Some(result) if the struct has the operator method, None otherwise
     fn try_call_operator_method(
