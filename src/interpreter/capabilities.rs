@@ -144,6 +144,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "io_append_bytes"
         | "io_write_at"
         | "io_set_permissions"
+        | "io_write_private_file"
         | "io_truncate"
         | "io_copy_range"
         | "async_write_file"

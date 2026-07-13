@@ -1089,6 +1089,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "io_write_private_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), None, Some(TypeAnnotation::Int)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "aes_encrypt_file_stream".to_string(),
             FunctionSignature {
                 param_types: vec![

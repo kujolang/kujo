@@ -671,6 +671,7 @@ impl Interpreter {
             "io_seek_read",
             "io_file_metadata",
             "io_set_permissions",
+            "io_write_private_file",
             "io_truncate",
             "io_copy_range",
             // JSON functions
@@ -1196,6 +1197,10 @@ impl Interpreter {
         self.env.define(
             "io_set_permissions".to_string(),
             Value::NativeFunction("io_set_permissions".to_string()),
+        );
+        self.env.define(
+            "io_write_private_file".to_string(),
+            Value::NativeFunction("io_write_private_file".to_string()),
         );
         self.env
             .define("io_truncate".to_string(), Value::NativeFunction("io_truncate".to_string()));

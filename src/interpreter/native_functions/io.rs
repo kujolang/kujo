@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::time::UNIX_EPOCH;
 
 #[cfg(unix)]
-use std::os::unix::fs::{MetadataExt, PermissionsExt};
+use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
 
 fn parse_non_negative_u64(value: &Value, error_message: &str) -> Result<u64, Value> {
     match value {
@@ -423,6 +423,107 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
+        "io_write_private_file" => {
+            if 3 != arg_values.len() {
+                Value::Error(
+                    "io_write_private_file requires path, content, and POSIX mode".to_string(),
+                )
+            } else if let (Some(Value::Str(path)), Some(content), Some(Value::Int(mode))) =
+                (arg_values.first(), arg_values.get(1), arg_values.get(2))
+            {
+                let bytes = match content {
+                    Value::Str(value) => Some(value.as_bytes().to_vec()),
+                    Value::Bytes(value) => Some(value.clone()),
+                    _ => None,
+                };
+                if bytes.is_none() {
+                    Value::Error(
+                        "io_write_private_file content must be a string or bytes".to_string(),
+                    )
+                } else if *mode < 0 || *mode > 0o700 {
+                    Value::Error(
+                        "io_write_private_file mode must be between 0 and 448 (0o700)".to_string(),
+                    )
+                } else {
+                    #[cfg(unix)]
+                    {
+                        let destination = std::path::Path::new(path.as_ref());
+                        if destination.exists() {
+                            Value::Error(format!(
+                                "Refusing to overwrite private file '{}'",
+                                destination.display()
+                            ))
+                        } else {
+                            let parent =
+                                destination.parent().unwrap_or_else(|| std::path::Path::new("."));
+                            let temp =
+                                parent.join(format!(".kujo-private-{}.tmp", uuid::Uuid::new_v4()));
+                            let requested = *mode as u32;
+                            let operation = (|| -> Result<Value, String> {
+                                let mut file = OpenOptions::new()
+                                    .write(true)
+                                    .create_new(true)
+                                    .mode(requested)
+                                    .open(&temp)
+                                    .map_err(|error| error.to_string())?;
+                                file.set_permissions(fs::Permissions::from_mode(requested))
+                                    .map_err(|error| error.to_string())?;
+                                let actual = file
+                                    .metadata()
+                                    .map_err(|error| error.to_string())?
+                                    .permissions()
+                                    .mode()
+                                    & 0o777;
+                                if actual != requested {
+                                    return Err(format!(
+                                        "private file mode verification failed: requested {:o}, actual {:o}",
+                                        requested, actual
+                                    ));
+                                }
+                                file.write_all(&bytes.unwrap())
+                                    .map_err(|error| error.to_string())?;
+                                file.sync_all().map_err(|error| error.to_string())?;
+                                drop(file);
+                                fs::rename(&temp, destination)
+                                    .map_err(|error| error.to_string())?;
+                                let mut receipt = DictMap::default();
+                                receipt.insert("mode".into(), Value::Int(actual as i64));
+                                receipt.insert("verified".into(), Value::Bool(true));
+                                receipt.insert(
+                                    "path".into(),
+                                    Value::Str(Arc::new(destination.to_string_lossy().to_string())),
+                                );
+                                Ok(Value::Dict(Arc::new(receipt)))
+                            })();
+                            if operation.is_err() {
+                                let _ = fs::remove_file(&temp);
+                            }
+                            match operation {
+                                Ok(value) => value,
+                                Err(error) => Value::Error(format!(
+                                    "Cannot atomically write private file '{}': {}",
+                                    destination.display(),
+                                    error
+                                )),
+                            }
+                        }
+                    }
+                    #[cfg(not(unix))]
+                    {
+                        Value::Error(
+                            "io_write_private_file is unavailable on this platform; use a managed key provider"
+                                .to_string(),
+                        )
+                    }
+                }
+            } else {
+                Value::Error(
+                    "io_write_private_file requires path (string), content (string or bytes), and mode (int)"
+                        .to_string(),
+                )
+            }
+        }
+
         "io_truncate" => {
             if 2 != arg_values.len() {
                 Value::Error("io_truncate requires two arguments: path and size".to_string())
@@ -630,6 +731,43 @@ mod tests {
         assert!(matches!(rejected, Value::Error(message) if message.contains("between 0 and 511")));
 
         let _ = std::fs::remove_file(path);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_io_write_private_file_is_atomic_restrictive_and_no_overwrite() {
+        let path = tmp_test_path("io_private_atomic.pem");
+        let _ = fs::remove_file(&path);
+        let written = handle(
+            &mut Interpreter::new(),
+            "io_write_private_file",
+            &[
+                Value::Str(Arc::new(path.clone())),
+                Value::Str(Arc::new("private-material".to_string())),
+                Value::Int(0o600),
+            ],
+        )
+        .expect("private write should be handled");
+        assert!(
+            matches!(written, Value::Dict(ref fields) if matches!(fields.get("verified"), Some(Value::Bool(true))))
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), "private-material");
+        assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
+        let overwrite = handle(
+            &mut Interpreter::new(),
+            "io_write_private_file",
+            &[
+                Value::Str(Arc::new(path.clone())),
+                Value::Str(Arc::new("replacement".to_string())),
+                Value::Int(0o600),
+            ],
+        )
+        .unwrap();
+        assert!(
+            matches!(overwrite, Value::Error(message) if message.contains("Refusing to overwrite"))
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), "private-material");
+        fs::remove_file(path).unwrap();
     }
 
     #[test]
