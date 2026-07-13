@@ -239,9 +239,9 @@ over shell strings when handling user input.
 | --- | --- | --- |
 | `env` | stable | `home := env("HOME")` |
 | `env_or` | stable | `mode := env_or("MODE", "dev")` |
-| `env_int` | stable | `port := env_int("PORT")` |
-| `env_float` | stable | `timeout := env_float("TIMEOUT")` |
-| `env_bool` | stable | `enabled := env_bool("ENABLED")` |
+| `env_int` | stable | `port := env_int("PORT", 8080)` |
+| `env_float` | stable | `timeout := env_float("TIMEOUT", 1.5)` |
+| `env_bool` | stable | `enabled := env_bool("ENABLED", false)` |
 | `env_required` | stable | `token := env_required("TOKEN")` |
 | `args` | stable | `argv := args()  # user args only; script name excluded` |
 | `sleep` | stable | `sleep(100)` |

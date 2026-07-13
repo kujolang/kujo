@@ -1,7 +1,10 @@
 # First-party CLI parser package
 
-The local modules/cli.kujo module is the HLP-004 package spike from the
-language-helper audit. Import it with from cli import parse.
+The first-party `modules/cli.kujo` module is the HLP-004 parser package. A
+checkout uses it automatically from its project `modules/` directory. An
+installed Kujo executable can expose the same package to another repository by
+setting `KUJO_MODULE_PATH` to a directory containing `cli.kujo`, then importing
+it with `from cli import parse`.
 
 parse(argv, spec) is pure and returns an envelope:
 

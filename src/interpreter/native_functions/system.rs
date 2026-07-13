@@ -1199,9 +1199,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
         }
 
         "env_int" => {
-            if arg_values.len() != 1 {
+            if !(1..=2).contains(&arg_values.len()) {
                 return Some(Value::Error(format!(
-                    "env_int() expects 1 argument (variable name), got {}",
+                    "env_int() expects 1-2 arguments (variable name, optional default), got {}",
                     arg_values.len()
                 )));
             }
@@ -1209,9 +1209,18 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Str(var_name)) = arg_values.first() {
                 match builtins::env_int(var_name.as_ref()) {
                     Ok(value) => Value::Int(value),
-                    Err(message) => {
-                        Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
-                    }
+                    Err(message) => match arg_values.get(1) {
+                        Some(Value::Int(default_value)) => Value::Int(*default_value),
+                        Some(_) => {
+                            Value::Error("env_int optional default must be an integer".to_string())
+                        }
+                        None => Value::ErrorObject {
+                            message,
+                            stack: Vec::new(),
+                            line: None,
+                            cause: None,
+                        },
+                    },
                 }
             } else {
                 Value::Error("env_int requires a string argument (variable name)".to_string())
@@ -1219,9 +1228,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
         }
 
         "env_float" => {
-            if arg_values.len() != 1 {
+            if !(1..=2).contains(&arg_values.len()) {
                 return Some(Value::Error(format!(
-                    "env_float() expects 1 argument (variable name), got {}",
+                    "env_float() expects 1-2 arguments (variable name, optional default), got {}",
                     arg_values.len()
                 )));
             }
@@ -1229,9 +1238,19 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Str(var_name)) = arg_values.first() {
                 match builtins::env_float(var_name.as_ref()) {
                     Ok(value) => Value::Float(value),
-                    Err(message) => {
-                        Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
-                    }
+                    Err(message) => match arg_values.get(1) {
+                        Some(Value::Float(default_value)) => Value::Float(*default_value),
+                        Some(Value::Int(default_value)) => Value::Float(*default_value as f64),
+                        Some(_) => {
+                            Value::Error("env_float optional default must be a number".to_string())
+                        }
+                        None => Value::ErrorObject {
+                            message,
+                            stack: Vec::new(),
+                            line: None,
+                            cause: None,
+                        },
+                    },
                 }
             } else {
                 Value::Error("env_float requires a string argument (variable name)".to_string())
@@ -1239,9 +1258,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
         }
 
         "env_bool" => {
-            if arg_values.len() != 1 {
+            if !(1..=2).contains(&arg_values.len()) {
                 return Some(Value::Error(format!(
-                    "env_bool() expects 1 argument (variable name), got {}",
+                    "env_bool() expects 1-2 arguments (variable name, optional default), got {}",
                     arg_values.len()
                 )));
             }
@@ -1249,9 +1268,18 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Str(var_name)) = arg_values.first() {
                 match builtins::env_bool(var_name.as_ref()) {
                     Ok(value) => Value::Bool(value),
-                    Err(message) => {
-                        Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
-                    }
+                    Err(message) => match arg_values.get(1) {
+                        Some(Value::Bool(default_value)) => Value::Bool(*default_value),
+                        Some(_) => {
+                            Value::Error("env_bool optional default must be a boolean".to_string())
+                        }
+                        None => Value::ErrorObject {
+                            message,
+                            stack: Vec::new(),
+                            line: None,
+                            cause: None,
+                        },
+                    },
                 }
             } else {
                 Value::Error("env_bool requires a string argument (variable name)".to_string())
@@ -1711,6 +1739,29 @@ mod tests {
             }
             other => panic!("Expected Value::ErrorObject from env_int(), got {:?}", other),
         }
+    }
+
+    #[test]
+    fn test_typed_env_functions_accept_type_checked_defaults() {
+        let int_key = "KUJO_NATIVE_SYSTEM_DEFAULT_INT_TEST";
+        let float_key = "KUJO_NATIVE_SYSTEM_DEFAULT_FLOAT_TEST";
+        let bool_key = "KUJO_NATIVE_SYSTEM_DEFAULT_BOOL_TEST";
+        std::env::set_var(int_key, "not-an-int");
+        std::env::remove_var(float_key);
+        std::env::set_var(bool_key, "not-a-bool");
+
+        let int_result = handle("env_int", &[string_value(int_key), Value::Int(17)]).unwrap();
+        let float_result =
+            handle("env_float", &[string_value(float_key), Value::Float(2.5)]).unwrap();
+        let bool_result = handle("env_bool", &[string_value(bool_key), Value::Bool(true)]).unwrap();
+
+        assert!(matches!(int_result, Value::Int(17)));
+        assert!(matches!(float_result, Value::Float(value) if (value - 2.5).abs() < 1e-12));
+        assert!(matches!(bool_result, Value::Bool(true)));
+
+        std::env::remove_var(int_key);
+        std::env::remove_var(float_key);
+        std::env::remove_var(bool_key);
     }
 
     #[test]

@@ -62,7 +62,11 @@ impl TypeChecker {
             current_function_return: None,
             errors: Vec::new(),
             recursion_depth: 0,
-            module_search_paths: vec![PathBuf::from("."), PathBuf::from("./modules")],
+            module_search_paths: {
+                let mut paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
+                paths.extend(crate::module::configured_module_search_paths());
+                paths
+            },
             module_export_signatures: HashMap::new(),
         };
 
