@@ -1,7 +1,0 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.64s
-     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-be25933e7a57d33d)
-
-running 1 test
-test latency_guardrails_for_completion_diagnostics_and_hover ... ok
-
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.75s

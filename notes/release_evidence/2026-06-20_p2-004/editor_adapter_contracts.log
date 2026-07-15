@@ -1,9 +1,0 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.49s
-     Running tests/editor_adapter_contracts.rs (target/debug/deps/editor_adapter_contracts-38d551397217af43)
-
-running 3 tests
-test vscode_cursor_descriptor_points_to_kujo_lsp ... ok
-test neovim_descriptor_points_to_kujo_lsp ... ok
-test jetbrains_descriptor_points_to_kujo_lsp ... ok
-
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

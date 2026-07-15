@@ -1,4 +1,0 @@
-$ bash scripts/generate_v1_code_todo_triage.sh
-started_at=2026-06-19T17:16:22-0400
-Generated docs/generated/V1_CODE_TODO_TRIAGE.md and docs/generated/V1_CODE_TODO_TRIAGE.csv
-ended_at=2026-06-19T17:16:23-0400

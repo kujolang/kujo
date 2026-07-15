@@ -1,9 +1,0 @@
-   Compiling kujo v1.0.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.86s
-     Running tests/editor_launch_matrix_contract.rs (target/debug/deps/editor_launch_matrix_contract-f6096ab2ee7aacf7)
-
-running 2 tests
-test adapter_descriptors_and_extension_keep_canonical_lsp_command ... ok
-test editor_launch_matrix_names_all_v1_editor_families ... ok
-
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
