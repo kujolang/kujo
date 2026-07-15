@@ -1034,7 +1034,7 @@ impl TypeChecker {
         self.functions.insert(
             "join_path".to_string(),
             FunctionSignature {
-                param_types: vec![None], // Variadic string arguments
+                param_types: vec![], // Variadic string arguments
                 return_type: Some(TypeAnnotation::String),
             },
         );
@@ -1085,6 +1085,39 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String), None, None],
                 return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
+            "io_write_private_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), None, Some(TypeAnnotation::Int)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "aes_encrypt_file_stream".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "aes_decrypt_file_stream".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: None,
             },
         );
 
@@ -1375,6 +1408,22 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // URL
                 return_type: None,                               // Returns bytes array
+            },
+        );
+
+        self.functions.insert(
+            "http_download_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String), None],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "http_upload_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String), None],
+                return_type: None,
             },
         );
 
@@ -1781,6 +1830,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "sha256_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)], // file path
+                return_type: Some(TypeAnnotation::String),       // hash
+            },
+        );
+
+        self.functions.insert(
             "hash_password".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // password
@@ -1869,6 +1926,14 @@ impl TypeChecker {
 
         self.functions.insert(
             "path_is_file".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)], // path
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
+            "path_is_symlink".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // path
                 return_type: Some(TypeAnnotation::Bool),
@@ -1982,6 +2047,14 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // path
                 return_type: None,                               // dict with metadata
+            },
+        );
+
+        self.functions.insert(
+            "io_set_permissions".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::Int)],
+                return_type: None, // verified permission result dict
             },
         );
 
@@ -2827,6 +2900,9 @@ impl TypeChecker {
                             {
                                 Some(TypeAnnotation::String)
                             }
+                            // Gradual typing: Any is intentionally compatible with a
+                            // known operand and cannot justify a static mismatch.
+                            (Some(TypeAnnotation::Any), _) | (_, Some(TypeAnnotation::Any)) => None,
                             // Incompatible types
                             (Some(l), Some(r)) if l != r => {
                                 self.errors.push(KujoError::new(
@@ -3265,6 +3341,22 @@ impl TypeChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn release_filesystem_builtins_and_gradual_any_are_warning_free() {
+        let source = r#"
+            path := join_path("root", "nested", "artifact.bin")
+            digest := sha256_file(path)
+            symlink := path_is_symlink(path)
+            unknown := {}["value"]
+            label := "artifact-" + unknown
+        "#;
+        let tokens = crate::lexer::tokenize(source).expect("source should tokenize");
+        let mut parser = crate::parser::Parser::new(tokens);
+        let statements = parser.parse();
+        let mut checker = TypeChecker::new();
+        assert!(checker.check(&statements).is_ok(), "unexpected errors: {:?}", checker.errors);
+    }
 
     #[test]
     fn test_simple_type_inference() {

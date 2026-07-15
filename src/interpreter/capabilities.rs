@@ -143,6 +143,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "io_write_bytes"
         | "io_append_bytes"
         | "io_write_at"
+        | "io_set_permissions"
+        | "io_write_private_file"
         | "io_truncate"
         | "io_copy_range"
         | "async_write_file"
@@ -168,9 +170,11 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 
         // Network client/server
         "parallel_http" | "http_get" | "http_post" | "http_request" | "http_put"
-        | "http_delete" | "http_get_binary" | "http_get_stream" | "oauth2_get_token"
-        | "tcp_connect" | "tcp_send" | "tcp_receive" | "udp_send_to" | "udp_receive_from"
-        | "async_http_get" | "async_http_post" => Some(NativeCapability::NetworkClient),
+        | "http_delete" | "http_get_binary" | "http_get_stream" | "http_download_file"
+        | "http_upload_file" | "oauth2_get_token" | "tcp_connect" | "tcp_send" | "tcp_receive"
+        | "udp_send_to" | "udp_receive_from" | "async_http_get" | "async_http_post" => {
+            Some(NativeCapability::NetworkClient)
+        }
         "ai_chat" | "ai_stream_chat" | "ai_embedding" | "ai_tool_loop" => {
             Some(NativeCapability::NetworkAi)
         }
@@ -193,5 +197,19 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "clear_random_seed" => Some(NativeCapability::Random),
 
         _ => None,
+    }
+}
+
+/// Capabilities required in addition to the native function's primary
+/// capability. Compound I/O surfaces must never gain filesystem authority
+/// merely because network access (or the reverse) was granted.
+pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
+    match name {
+        "http_download_file" => &[NativeCapability::FilesystemWrite],
+        "http_upload_file" => &[NativeCapability::FilesystemRead],
+        "aes_encrypt_file_stream" | "aes_decrypt_file_stream" => {
+            &[NativeCapability::FilesystemRead, NativeCapability::FilesystemWrite]
+        }
+        _ => &[],
     }
 }

@@ -49,6 +49,43 @@ fn run_code_with_output(code: &str) -> (Interpreter, String) {
 }
 
 #[test]
+fn test_parallel_map_async_mapper_isolated_ordered_and_fail_closed() {
+    let ordered = run_code(
+        r#"
+        async func worker(value) {
+            await async_sleep((4 - value) * 10)
+            return value * 10
+        }
+        ordered := await parallel_map([1, 2, 3], worker, 2)
+        "#,
+    );
+    match ordered.env.get("ordered") {
+        Some(Value::Array(values)) => {
+            assert_eq!(values.len(), 3);
+            assert!(matches!(values[0], Value::Int(10)));
+            assert!(matches!(values[1], Value::Int(20)));
+            assert!(matches!(values[2], Value::Int(30)));
+        }
+        other => panic!("expected ordered async mapper results, got {:?}", other),
+    }
+
+    let failed = run_code(
+        r#"
+        async func worker(value) {
+            if value == 2 { return error("worker-denied") }
+            await async_sleep(20)
+            return value
+        }
+        result := await parallel_map([1, 2, 3, 4], worker, 2)
+        "#,
+    );
+    assert!(matches!(
+        failed.env.get("result"),
+        Some(Value::Error(message)) if message.contains("worker-denied")
+    ));
+}
+
+#[test]
 fn test_builtin_names_include_release_hardening_contract_entries() {
     let builtins: HashSet<&str> = Interpreter::get_builtin_names().into_iter().collect();
 

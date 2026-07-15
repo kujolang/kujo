@@ -670,6 +670,8 @@ impl Interpreter {
             "io_write_at",
             "io_seek_read",
             "io_file_metadata",
+            "io_set_permissions",
+            "io_write_private_file",
             "io_truncate",
             "io_copy_range",
             // JSON functions
@@ -756,6 +758,8 @@ impl Interpreter {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "http_download_file",
+            "http_upload_file",
             "ai_request_hash",
             "ai_chat",
             "ai_stream_chat",
@@ -864,6 +868,7 @@ impl Interpreter {
             "unzip",
             // Hashing & Cryptography functions
             "sha256",
+            "hmac_sha256",
             "sha256_file",
             "md5",
             "md5_file",
@@ -874,6 +879,8 @@ impl Interpreter {
             "aes_decrypt",
             "aes_encrypt_bytes",
             "aes_decrypt_bytes",
+            "aes_encrypt_file_stream",
+            "aes_decrypt_file_stream",
             "rsa_generate_keypair",
             "rsa_encrypt",
             "rsa_decrypt",
@@ -1188,6 +1195,14 @@ impl Interpreter {
             "io_file_metadata".to_string(),
             Value::NativeFunction("io_file_metadata".to_string()),
         );
+        self.env.define(
+            "io_set_permissions".to_string(),
+            Value::NativeFunction("io_set_permissions".to_string()),
+        );
+        self.env.define(
+            "io_write_private_file".to_string(),
+            Value::NativeFunction("io_write_private_file".to_string()),
+        );
         self.env
             .define("io_truncate".to_string(), Value::NativeFunction("io_truncate".to_string()));
         self.env.define(
@@ -1350,6 +1365,14 @@ impl Interpreter {
         self.env.define(
             "http_get_binary".to_string(),
             Value::NativeFunction("http_get_binary".to_string()),
+        );
+        self.env.define(
+            "http_download_file".to_string(),
+            Value::NativeFunction("http_download_file".to_string()),
+        );
+        self.env.define(
+            "http_upload_file".to_string(),
+            Value::NativeFunction("http_upload_file".to_string()),
         );
         self.env.define(
             "ai_request_hash".to_string(),
@@ -1598,6 +1621,8 @@ impl Interpreter {
         // Hashing & Crypto functions
         self.env.define("sha256".to_string(), Value::NativeFunction("sha256".to_string()));
         self.env
+            .define("hmac_sha256".to_string(), Value::NativeFunction("hmac_sha256".to_string()));
+        self.env
             .define("sha256_file".to_string(), Value::NativeFunction("sha256_file".to_string()));
         self.env.define("md5".to_string(), Value::NativeFunction("md5".to_string()));
         self.env.define("md5_file".to_string(), Value::NativeFunction("md5_file".to_string()));
@@ -1622,6 +1647,14 @@ impl Interpreter {
         self.env.define(
             "aes_decrypt_bytes".to_string(),
             Value::NativeFunction("aes_decrypt_bytes".to_string()),
+        );
+        self.env.define(
+            "aes_encrypt_file_stream".to_string(),
+            Value::NativeFunction("aes_encrypt_file_stream".to_string()),
+        );
+        self.env.define(
+            "aes_decrypt_file_stream".to_string(),
+            Value::NativeFunction("aes_decrypt_file_stream".to_string()),
         );
         self.env.define(
             "rsa_generate_keypair".to_string(),
@@ -1846,6 +1879,49 @@ impl Interpreter {
                 }
             }
             _ => Value::Int(0),
+        }
+    }
+
+    /// Execute one async-function mapper invocation in an isolated interpreter.
+    /// `parallel_map` uses this on bounded worker tasks so mapper state cannot
+    /// race through a shared interpreter environment.
+    pub(crate) fn execute_async_mapper_isolated(
+        func: &Value,
+        arg: Value,
+        base_env: Environment,
+        capability_policy: RuntimeCapabilityPolicy,
+    ) -> Value {
+        let Value::AsyncFunction(params, body, captured_env) = func else {
+            return Value::Error("parallel_map async mapper is not an async function".to_string());
+        };
+        if params.len() != 1 {
+            return Value::Error(format!(
+                "parallel_map async mapper expects 1 parameter, got {}",
+                params.len()
+            ));
+        }
+        let mut interpreter = Interpreter::with_capability_policy(capability_policy);
+        interpreter.env = base_env;
+        if let Some(env_ref) = captured_env {
+            let captured = env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+            for scope in captured.scopes {
+                interpreter.env.push_scope();
+                for (name, value) in scope {
+                    interpreter.env.define(name, value);
+                }
+            }
+        }
+        interpreter.env.push_scope();
+        interpreter.env.define(params[0].clone(), arg);
+        if let Err(error) = interpreter.with_function_context("<parallel async mapper>", |interp| {
+            interp.eval_stmts(&body.get())
+        }) {
+            return error;
+        }
+        match interpreter.return_value.take() {
+            Some(Value::Return(value)) => *value,
+            Some(value @ Value::Error(_)) | Some(value @ Value::ErrorObject { .. }) => value,
+            _ => Value::Null,
         }
     }
 
@@ -2847,6 +2923,10 @@ impl Interpreter {
                 vec!["value".to_string(), "schema".to_string()],
             ),
             "print" | "eprint" | "debug" | "array" => CallableArity::variadic(name, 0, vec![]),
+            "hmac_sha256" => CallableArity::exact(
+                "hmac_sha256",
+                vec!["secret".to_string(), "message".to_string()],
+            ),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),
             "path_is_symlink" => CallableArity::exact("path_is_symlink", vec!["path".to_string()]),
             _ => return None,

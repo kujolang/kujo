@@ -172,3 +172,129 @@ export func parse(argv, spec) {
         }
     }
 }
+
+# Compatibility adapters for repositories that have historically consumed a
+# command-first parsed envelope. They keep command/help/exit policy in the
+# caller while sharing the token scan with this first-party package.
+export func parse_cli(argv) {
+    if !is_array(argv) {
+        return {"command": "help", "positionals": [], "flags": {}}
+    }
+    if len(argv) == 0 {
+        return {"command": "help", "positionals": [], "flags": {}}
+    }
+
+    command := argv[0]
+    mut positionals := []
+    mut flags := {}
+    mut index := 1
+    while index < len(argv) {
+        token := argv[index]
+        if starts_with(token, "--") {
+            equals_at := index_of(token, "=")
+            if equals_at >= 0 {
+                flag_name := substring(token, 0, equals_at)
+                flags[flag_name] = substring(token, equals_at + 1, len(token))
+                index = index + 1
+                continue
+            }
+            if index + 1 < len(argv) && starts_with(argv[index + 1], "--") == false {
+                flags[token] = argv[index + 1]
+                index = index + 2
+                continue
+            }
+            flags[token] = true
+            index = index + 1
+            continue
+        }
+        positionals = push(positionals, token)
+        index = index + 1
+    }
+    return {"command": command, "positionals": positionals, "flags": flags}
+}
+
+export func parse_args(tokens, bool_flags) {
+    if !is_array(tokens) || !is_array(bool_flags) {
+        return {"positionals": [], "flags": {}}
+    }
+    mut positionals := []
+    mut flags := {}
+    mut index := 0
+    while index < len(tokens) {
+        token := tokens[index]
+        if starts_with(token, "--") {
+            key := substring(token, 2, len(token))
+            if compat_includes(bool_flags, key) {
+                flags[key] = true
+            } else if index + 1 < len(tokens) && starts_with(tokens[index + 1], "--") == false {
+                flags[key] = tokens[index + 1]
+                index = index + 1
+            } else {
+                flags[key] = ""
+            }
+        } else {
+            positionals = push(positionals, token)
+        }
+        index = index + 1
+    }
+    return {"positionals": positionals, "flags": flags}
+}
+
+func compat_includes(values, needle) {
+    for value in values {
+        if value == needle {
+            return true
+        }
+    }
+    return false
+}
+
+func compat_parsed(value) {
+    if type(value) == "dict" {
+        return value
+    }
+    return parse_cli(value)
+}
+
+export func has_flag(value, flag_name) {
+    parsed := compat_parsed(value)
+    return has_key(parsed["flags"], flag_name)
+}
+
+export func flag_value(value, flag_name, fallback) {
+    parsed := compat_parsed(value)
+    if has_key(parsed["flags"], flag_name) {
+        return parsed["flags"][flag_name]
+    }
+    return fallback
+}
+
+export func positional(value, index, fallback) {
+    parsed := compat_parsed(value)
+    values := parsed["positionals"]
+    if index >= 0 && index < len(values) {
+        return values[index]
+    }
+    return fallback
+}
+
+export func parse_subcommand(argv) {
+    if !is_array(argv) || len(argv) == 0 {
+        return ""
+    }
+    if starts_with(argv[0], "-") {
+        return ""
+    }
+    return argv[0]
+}
+
+export func positional_args(argv) {
+    parsed := compat_parsed(argv)
+    return parsed["positionals"]
+}
+
+export func print_lines(lines) {
+    for line in lines {
+        print(to_string(line))
+    }
+}

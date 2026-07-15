@@ -1981,6 +1981,41 @@ fn vm_and_interpreter_match_spawn_surface() {
 }
 
 #[test]
+fn vm_and_interpreter_parallel_map_preserve_global_dependencies_and_order() {
+    let script = r#"
+        func dependency(value) {
+            return {"ok": true, "value": value * 2}
+        }
+
+        async func worker(job) {
+            await async_sleep(job["delay"])
+            return dependency(job["value"])
+        }
+
+        mapped := await parallel_map([
+            {"value": 1, "delay": 40},
+            {"value": 2, "delay": 20},
+            {"value": 3, "delay": 1}
+        ], worker, 2)
+
+        async func rejecting_worker(value) {
+            if value == 2 { return error("provider-denied") }
+            return value
+        }
+        caught_rejection := false
+        try {
+            await parallel_map([1, 2, 3], rejecting_worker, 2)
+        } except err {
+            caught_rejection = contains(err.message, "provider-denied") == 1
+        }
+
+        parallel_ok := len(mapped) == 3 && mapped[0]["ok"] == true && mapped[0]["value"] == 2 && mapped[1]["value"] == 4 && mapped[2]["value"] == 6 && caught_rejection
+    "#;
+
+    assert_interpreter_and_vm_bool(script, "parallel_ok");
+}
+
+#[test]
 fn vm_and_interpreter_match_throw_call_stack_surface() {
     let script = r#"
         func safe_divide(a, b) {

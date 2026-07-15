@@ -2507,6 +2507,151 @@ pub fn handle_with_interpreter(
             }
         }
 
+        "http_download_file" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(format!(
+                    "http_download_file() expects 3 arguments (url, output_path, options), got {}",
+                    arg_values.len()
+                )));
+            }
+            let (Value::Str(url), Value::Str(output_path), Some(options)) =
+                (&arg_values[0], &arg_values[1], dict_like_from_value(&arg_values[2]))
+            else {
+                return Some(Value::Error(
+                    "http_download_file requires URL and output path strings plus an options dictionary"
+                        .to_string(),
+                ));
+            };
+            let max_bytes = match options.get("max_bytes") {
+                Some(Value::Int(value)) if *value > 0 => *value as u64,
+                Some(_) => {
+                    return Some(Value::Error(
+                        "http_download_file options.max_bytes must be a positive integer"
+                            .to_string(),
+                    ));
+                }
+                None => runtime_limits::MAX_NETWORK_BODY_BYTES as u64,
+            };
+            let overwrite = match options.get("overwrite") {
+                Some(Value::Bool(value)) => *value,
+                Some(_) => {
+                    return Some(Value::Error(
+                        "http_download_file options.overwrite must be a boolean".to_string(),
+                    ));
+                }
+                None => false,
+            };
+            let headers = match options.get("headers") {
+                Some(value) => match dict_like_from_value(value) {
+                    Some(headers) => {
+                        let mut pairs = Vec::with_capacity(headers.len());
+                        for (name, value) in headers.iter() {
+                            let Value::Str(value) = value else {
+                                return Some(Value::Error(format!(
+                                    "http_download_file options.headers['{}'] must be a string",
+                                    name
+                                )));
+                            };
+                            pairs.push((name.to_string(), value.to_string()));
+                        }
+                        pairs
+                    }
+                    None => {
+                        return Some(Value::Error(
+                            "http_download_file options.headers must be a dictionary".to_string(),
+                        ));
+                    }
+                },
+                None => Vec::new(),
+            };
+            match builtins::http_download_file(
+                url.as_ref(),
+                output_path.as_ref(),
+                headers,
+                max_bytes,
+                overwrite,
+            ) {
+                Ok(result) => Value::Dict(Arc::new(result)),
+                Err(error) => Value::Error(error),
+            }
+        }
+
+        "http_upload_file" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(format!(
+                    "http_upload_file() expects 3 arguments (url, input_path, options), got {}",
+                    arg_values.len()
+                )));
+            }
+            let (Value::Str(url), Value::Str(input_path), Some(options)) =
+                (&arg_values[0], &arg_values[1], dict_like_from_value(&arg_values[2]))
+            else {
+                return Some(Value::Error(
+                    "http_upload_file requires URL and input path strings plus an options dictionary"
+                        .to_string(),
+                ));
+            };
+            let method = match options.get("method") {
+                Some(Value::Str(value)) => value.to_string(),
+                Some(_) => {
+                    return Some(Value::Error(
+                        "http_upload_file options.method must be a string".to_string(),
+                    ));
+                }
+                None => "PUT".to_string(),
+            };
+            let max_response_bytes = match options.get("max_response_bytes") {
+                Some(Value::Int(value)) if *value > 0 => match usize::try_from(*value) {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return Some(Value::Error(
+                            "http_upload_file options.max_response_bytes is too large".to_string(),
+                        ));
+                    }
+                },
+                Some(_) => {
+                    return Some(Value::Error(
+                        "http_upload_file options.max_response_bytes must be a positive integer"
+                            .to_string(),
+                    ));
+                }
+                None => runtime_limits::MAX_NETWORK_BODY_BYTES,
+            };
+            let headers = match options.get("headers") {
+                Some(value) => match dict_like_from_value(value) {
+                    Some(headers) => {
+                        let mut pairs = Vec::with_capacity(headers.len());
+                        for (name, value) in headers.iter() {
+                            let Value::Str(value) = value else {
+                                return Some(Value::Error(format!(
+                                    "http_upload_file options.headers['{}'] must be a string",
+                                    name
+                                )));
+                            };
+                            pairs.push((name.to_string(), value.to_string()));
+                        }
+                        pairs
+                    }
+                    None => {
+                        return Some(Value::Error(
+                            "http_upload_file options.headers must be a dictionary".to_string(),
+                        ));
+                    }
+                },
+                None => Vec::new(),
+            };
+            match builtins::http_upload_file(
+                url.as_ref(),
+                input_path.as_ref(),
+                &method,
+                headers,
+                max_response_bytes,
+            ) {
+                Ok(result) => Value::Dict(Arc::new(result)),
+                Err(error) => Value::Error(error),
+            }
+        }
+
         "http_get_stream" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error(format!(

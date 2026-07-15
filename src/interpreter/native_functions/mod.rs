@@ -136,6 +136,13 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
             return error;
         }
     }
+    for capability in
+        super::capabilities::additional_capabilities_for_native_function(canonical_name)
+    {
+        if let Err(error) = interp.require_capability(*capability, canonical_name) {
+            return error;
+        }
+    }
 
     if let Some(arity) = Interpreter::native_function_arity(canonical_name) {
         if let Err(message) = arity.validate(arg_values.len()) {
@@ -393,6 +400,8 @@ mod tests {
             "io_write_at",
             "io_seek_read",
             "io_file_metadata",
+            "io_set_permissions",
+            "io_write_private_file",
             "io_truncate",
             "io_copy_range",
             "http_get",
@@ -401,6 +410,8 @@ mod tests {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "http_download_file",
+            "http_upload_file",
             "parallel_http",
             "jwt_encode",
             "jwt_decode",
@@ -485,6 +496,7 @@ mod tests {
             "udp_receive_from",
             "udp_close",
             "sha256",
+            "hmac_sha256",
             "md5",
             "md5_file",
             "hash_password",
@@ -493,6 +505,8 @@ mod tests {
             "aes_decrypt",
             "aes_encrypt_bytes",
             "aes_decrypt_bytes",
+            "aes_encrypt_file_stream",
+            "aes_decrypt_file_stream",
             "rsa_generate_keypair",
             "rsa_encrypt",
             "rsa_decrypt",
