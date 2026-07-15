@@ -1,0 +1,144 @@
+# Kujo ecosystem local artifact ignore block.
+# Keep this block repo-local by default. Promote intentionally reviewed examples
+# with negated rules in the consuming repository.
+
+# Loop Engineering
+/.loop-engineering/
+
+# RunLedger
+/.runledger/
+/RUNLEDGER_REPORT.md
+/runledger-report.md
+/runledger-entry.json
+
+# CaseFile
+/.casefile/
+
+# ChangeBucket and Cinch wrapper artifacts
+/CHANGE_BUCKET.md
+/.cinch/artifacts/
+/.cinch/pack/
+
+# Scent
+/.scent/
+/out/
+/context.md
+/context.json
+/files.json
+/manifest.json
+/metadata.json
+/redactions.json
+
+# PatchBrief and dogfood review artifacts
+/patchbrief.md
+/PATCHBRIEF.md
+/.dogfood/
+/.kujo-mcp/
+
+# MCP generator/cache artifacts
+/.mcp/
+/.kujo_cache/
+/mcp-calls.log
+/server.log
+/test_output.log
+
+# Scout
+/results/
+/scout-baseline.json
+
+# Eval and ShipCheck evaluation output
+/eval_results/
+/snapshots/
+/artifact-manifest.json
+/cli-summary.json
+/eval-report.md
+/eval-report.md.cache.json
+/history.json
+/last_failures.json
+/last_run.json
+/summary.json
+/badge.json
+/benchmarks.json
+/benchmark_trend.csv
+/shipcheck-report.json
+/shipcheck-report.md
+
+# Dispatch
+/outputs/
+/.dispatch-run-index.json
+/run-*/
+/bundles/
+
+# Lens
+/.lens/runs/
+/.lens/baselines/
+/lens-report.json
+/proof/
+
+# Muzzle
+/.muzzle/logs/
+/.muzzle/reports/
+
+# PackWrite / Fence generated agent packs and reports
+/agent/
+/FENCE_REPORT.md
+/fence.sarif
+/architecture.mmd
+/architecture.dot
+
+# Relay
+/.relay/
+
+# WorkCell
+/.workcell/
+
+# Tribunal
+/tribunal-runs/
+/.strata-tmp/
+
+# Kennel
+/.kennel_tmp/
+/kennel_packages/
+/.kennel_installer_trash/
+/.kennel_tokens.json
+/hosted-registry/
+/tokens.json
+
+# RAG, Watchdog, AI Chat, CMS, CRUD API local state
+/data/rag_index*.json
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
+/data/*.log
+/data/backups/
+/tmp/
+/.tmp/
+/*.db
+/*.db-shm
+/*.db-wal
+/*.sqlite
+/*.sqlite3
+
+# SSG / Howl / generated static output
+/output/
+/dist/
+/logs/
+/.kujo-post-manifest.txt
+
+# AI SDK local release/security artifacts
+/artifacts/security/
+
+# Local test outputs commonly emitted by Kujo tool repos
+/tests/tmp/
+/tests/*.out
+*.tmp-*
+*.bak
+*.log
+
+# Optional local config files created by init commands. Uncomment in repos where
+# these are developer-local rather than shared project configuration.
+# /casefile.toml
+# /fence.toml
+# /.lens.toml
+# /packwrite.toml
+
