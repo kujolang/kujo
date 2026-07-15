@@ -428,6 +428,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `zip_close` | `zip_close(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := zip_close(...)` |
 | `unzip` | `unzip(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := unzip(...)` |
 | `sha256` | `sha256(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := sha256(...)` |
+| `hmac_sha256` | `hmac_sha256(secret, message)` | exact 2 | string | Returns lowercase hexadecimal HMAC-SHA256 for string or bytes secret/message; Value::Error on invalid args/types. | `none` | `signature := hmac_sha256(secret, payload)` |
 | `sha256_file` | `sha256_file(path)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := sha256_file(...)` |
 | `md5` | `md5(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := md5(...)` |
 | `md5_file` | `md5_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := md5_file(...)` |

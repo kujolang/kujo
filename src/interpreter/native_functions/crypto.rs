@@ -5,6 +5,7 @@
 use aes_gcm::aead::{Aead, KeyInit, Payload};
 use aes_gcm::{Aes256Gcm, Nonce};
 use base64::Engine;
+use hmac::{Hmac, Mac};
 use md5::Md5;
 use rsa::pkcs8::{
     DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey, LineEnding,
@@ -18,6 +19,8 @@ use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+type HmacSha256 = Hmac<Sha256>;
+
 const STREAM_AEAD_MAGIC: &[u8; 9] = b"KUJOAEAD1";
 const STREAM_AEAD_MIN_CHUNK: usize = 4096;
 const STREAM_AEAD_MAX_CHUNK: usize = 16 * 1024 * 1024;
@@ -30,6 +33,21 @@ fn sha256_hex(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     format!("{:x}", hasher.finalize())
+}
+
+fn hmac_sha256_hex(secret: &[u8], message: &[u8]) -> String {
+    let mut mac = <HmacSha256 as Mac>::new_from_slice(secret)
+        .expect("HMAC-SHA256 accepts keys of every length");
+    mac.update(message);
+    format!("{:x}", mac.finalize().into_bytes())
+}
+
+fn string_or_bytes(value: &Value) -> Option<&[u8]> {
+    match value {
+        Value::Str(value) => Some(value.as_bytes()),
+        Value::Bytes(value) => Some(value.as_slice()),
+        _ => None,
+    }
 }
 
 fn md5_hex(bytes: &[u8]) -> String {
@@ -330,6 +348,26 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Some(Value::Str(data)) => Value::Str(Arc::new(sha256_hex(data.as_bytes()))),
                 Some(Value::Bytes(bytes)) => Value::Str(Arc::new(sha256_hex(bytes))),
                 _ => Value::Error("sha256 requires a string or bytes argument".to_string()),
+            }
+        }
+
+        "hmac_sha256" => {
+            if arg_values.len() != 2 {
+                return Some(Value::Error(
+                    "hmac_sha256 requires (secret, message) string or bytes arguments".to_string(),
+                ));
+            }
+
+            match (
+                arg_values.first().and_then(string_or_bytes),
+                arg_values.get(1).and_then(string_or_bytes),
+            ) {
+                (Some(secret), Some(message)) => {
+                    Value::Str(Arc::new(hmac_sha256_hex(secret, message)))
+                }
+                _ => Value::Error(
+                    "hmac_sha256 requires (secret, message) string or bytes arguments".to_string(),
+                ),
             }
         }
 
@@ -892,6 +930,27 @@ mod tests {
     }
 
     #[test]
+    fn test_hmac_sha256_matches_known_vectors_for_strings_and_bytes() {
+        let string_result = handle(
+            "hmac_sha256",
+            &[string_value("key"), string_value("The quick brown fox jumps over the lazy dog")],
+        )
+        .unwrap();
+        assert!(
+            matches!(string_result, Value::Str(value) if value.as_ref() == "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8")
+        );
+
+        let bytes_result = handle(
+            "hmac_sha256",
+            &[Value::Bytes(vec![0x0b; 20]), Value::Bytes(b"Hi There".to_vec())],
+        )
+        .unwrap();
+        assert!(
+            matches!(bytes_result, Value::Str(value) if value.as_ref() == "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")
+        );
+    }
+
+    #[test]
     fn test_md5_file_hashes_file_contents() {
         let path = unique_temp_file("kujo_crypto_md5_file");
         fs::write(&path, "kujo-file-hash").unwrap();
@@ -1101,6 +1160,17 @@ mod tests {
         let sha_extra = handle("sha256", &[string_value("data"), string_value("extra")]).unwrap();
         assert!(
             matches!(sha_extra, Value::Error(message) if message.contains("sha256 requires a string or bytes argument"))
+        );
+
+        let hmac_missing = handle("hmac_sha256", &[string_value("secret")]).unwrap();
+        assert!(
+            matches!(hmac_missing, Value::Error(message) if message.contains("hmac_sha256 requires"))
+        );
+
+        let hmac_bad_type =
+            handle("hmac_sha256", &[Value::Int(1), string_value("message")]).unwrap();
+        assert!(
+            matches!(hmac_bad_type, Value::Error(message) if message.contains("hmac_sha256 requires"))
         );
 
         let sha_file_missing = handle("sha256_file", &[]).unwrap();

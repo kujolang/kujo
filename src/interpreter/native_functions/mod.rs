@@ -496,6 +496,7 @@ mod tests {
             "udp_receive_from",
             "udp_close",
             "sha256",
+            "hmac_sha256",
             "md5",
             "md5_file",
             "hash_password",

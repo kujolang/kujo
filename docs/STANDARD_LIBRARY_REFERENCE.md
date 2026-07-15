@@ -340,6 +340,7 @@ filesystem read permission.
 | `zip_add_file` | preview | `zip_add_file(z, "a.txt")` |
 | `unzip` | preview | `unzip("in.zip", "out")` |
 | `sha256` | stable | `h := sha256("hello")` |
+| `hmac_sha256` | stable | `signature := hmac_sha256(secret, payload)` |
 | `md5` | stable | `h := md5("hello")` |
 | `hash_password` | preview | `h := hash_password("secret")` |
 | `verify_password` | preview | `ok := verify_password("secret", h)` |
