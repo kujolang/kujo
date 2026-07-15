@@ -353,6 +353,23 @@ filesystem read permission.
 | `load_image` | preview | `img := load_image("photo.png")` |
 | `gif_to_webp` | preview | `out := gif_to_webp("in.gif", "out.webp")` |
 
+Image values expose bounded, constant-allocation pixel access through methods:
+
+| Method | Returns | Notes |
+| --- | --- | --- |
+| `img.width()` | integer | Pixel width. |
+| `img.height()` | integer | Pixel height. |
+| `img.format()` | string | Lowercase source filename extension. |
+| `img.get_pixel(x, y)` | `[r, g, b, a]` | Coordinates are zero-based integers; channels are `0..255`. |
+| `img.set_pixel(x, y, r, g, b)` | boolean | Mutates one pixel and preserves its current alpha channel. |
+| `img.set_pixel(x, y, r, g, b, a)` | boolean | Mutates one RGBA pixel; all channels must be integers in `0..255`. |
+| `img.save(path)` | boolean | Saves using the output filename extension. |
+
+Pixel methods return runtime errors for invalid types, channels, or coordinates.
+They intentionally operate on one pixel at a time and do not allocate a full-image
+pixel array. Loading requires filesystem read permission; saving requires filesystem
+write permission.
+
 ## Dispatch and Coverage Guarantees
 
 This reference is validated by tests to stay aligned with runtime dispatch:
