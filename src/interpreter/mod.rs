@@ -5502,7 +5502,136 @@ impl Interpreter {
             }
         };
 
+        let coordinate = |method: &str, name: &str, value: &Value| -> Result<u32, Value> {
+            match value {
+                Value::Int(n) if *n >= 0 && *n <= u32::MAX as i64 => Ok(*n as u32),
+                _ => Err(Value::Error(format!(
+                    "{} requires {} to be a non-negative integer",
+                    method, name
+                ))),
+            }
+        };
+        let channel = |value: &Value| -> Option<u8> {
+            match value {
+                Value::Int(n) if (0..=255).contains(n) => Some(*n as u8),
+                _ => None,
+            }
+        };
+
         let result = match method {
+            "width" => {
+                if !args.is_empty() {
+                    Value::Error("width expects no arguments".to_string())
+                } else {
+                    let img = match lock_or_runtime_error(data.as_ref(), "image.width") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    Value::Int(img.width() as i64)
+                }
+            }
+            "height" => {
+                if !args.is_empty() {
+                    Value::Error("height expects no arguments".to_string())
+                } else {
+                    let img = match lock_or_runtime_error(data.as_ref(), "image.height") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    Value::Int(img.height() as i64)
+                }
+            }
+            "format" => {
+                if !args.is_empty() {
+                    Value::Error("format expects no arguments".to_string())
+                } else {
+                    Value::Str(Arc::new(format.clone()))
+                }
+            }
+            "get_pixel" => {
+                if args.len() != 2 {
+                    Value::Error("get_pixel requires x and y arguments".to_string())
+                } else {
+                    let x = match coordinate("get_pixel", "x", &args[0]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let y = match coordinate("get_pixel", "y", &args[1]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let img = match lock_or_runtime_error(data.as_ref(), "image.get_pixel") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    if x >= img.width() || y >= img.height() {
+                        Value::Error(format!(
+                            "get_pixel coordinates ({}, {}) are outside image bounds {}x{}",
+                            x,
+                            y,
+                            img.width(),
+                            img.height()
+                        ))
+                    } else {
+                        let pixel = image::GenericImageView::get_pixel(&*img, x, y);
+                        Value::Array(Arc::new(
+                            pixel.0.into_iter().map(|value| Value::Int(value as i64)).collect(),
+                        ))
+                    }
+                }
+            }
+            "set_pixel" => {
+                if args.len() != 5 && args.len() != 6 {
+                    Value::Error(
+                        "set_pixel requires x, y, r, g, b, and optional a arguments".to_string(),
+                    )
+                } else {
+                    let x = match coordinate("set_pixel", "x", &args[0]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let y = match coordinate("set_pixel", "y", &args[1]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let channels: Option<Vec<u8>> = args[2..].iter().map(channel).collect();
+                    let channels = match channels {
+                        Some(values) => values,
+                        None => {
+                            return Some(Value::Error(
+                                "set_pixel color channels must be integers from 0 to 255"
+                                    .to_string(),
+                            ))
+                        }
+                    };
+                    let mut img = match lock_or_runtime_error(data.as_ref(), "image.set_pixel") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    if x >= img.width() || y >= img.height() {
+                        Value::Error(format!(
+                            "set_pixel coordinates ({}, {}) are outside image bounds {}x{}",
+                            x,
+                            y,
+                            img.width(),
+                            img.height()
+                        ))
+                    } else {
+                        let alpha = if channels.len() == 4 {
+                            channels[3]
+                        } else {
+                            image::GenericImageView::get_pixel(&*img, x, y).0[3]
+                        };
+                        image::GenericImage::put_pixel(
+                            &mut *img,
+                            x,
+                            y,
+                            image::Rgba([channels[0], channels[1], channels[2], alpha]),
+                        );
+                        Value::Bool(true)
+                    }
+                }
+            }
             "resize" => {
                 if args.len() < 2 {
                     Value::Error("resize requires at least width and height arguments".to_string())

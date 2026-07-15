@@ -1,4 +1,4 @@
-use image::{DynamicImage, ImageBuffer, ImageFormat, Rgb};
+use image::{DynamicImage, ImageBuffer, ImageFormat, Rgb, Rgba};
 use kujo::compiler::Compiler;
 use kujo::interpreter::{Environment, Interpreter, Value};
 use kujo::lexer::tokenize;
@@ -47,6 +47,13 @@ fn escape_kujo_string(path: &Path) -> String {
 fn write_fixture(path: &Path, format: ImageFormat) {
     let image = DynamicImage::ImageRgb8(ImageBuffer::from_pixel(16, 16, Rgb([30, 120, 220])));
     image.save_with_format(path, format).expect("failed to write fixture image");
+}
+
+fn write_rgba_fixture(path: &Path) {
+    let image = DynamicImage::ImageRgba8(ImageBuffer::from_fn(3, 2, |x, y| {
+        Rgba([10 + x as u8, 20 + y as u8, 30, 40 + (x + y) as u8])
+    }));
+    image.save_with_format(path, ImageFormat::Png).expect("failed to write RGBA fixture");
 }
 
 fn unique_test_dir(prefix: &str) -> std::path::PathBuf {
@@ -177,6 +184,109 @@ fn image_conversion_failure_paths_are_reported() {
     assert!(
         matches!(vm_invalid_args, Err(msg) if msg.contains("resize requires numeric width and height"))
     );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn image_pixel_api_roundtrips_rgba_in_interpreter_and_vm() {
+    let root = unique_test_dir("kujo_image_pixels");
+    let input = root.join("source.png");
+    write_rgba_fixture(&input);
+
+    for (runtime, output) in [("interpreter", root.join("interp.png")), ("vm", root.join("vm.png"))]
+    {
+        let script = format!(
+            concat!(
+                "img := load_image(\"{}\")\n",
+                "w := img.width()\n",
+                "h := img.height()\n",
+                "fmt := img.format()\n",
+                "before := img.get_pixel(1, 1)\n",
+                "rgb_ok := img.set_pixel(1, 1, 101, 102, 103)\n",
+                "rgba_ok := img.set_pixel(2, 0, 201, 202, 203, 204)\n",
+                "after_rgb := img.get_pixel(1, 1)\n",
+                "after_rgba := img.get_pixel(2, 0)\n",
+                "saved := img.save(\"{}\")\n"
+            ),
+            escape_kujo_string(&input),
+            escape_kujo_string(&output)
+        );
+
+        let env = if runtime == "interpreter" {
+            let interp = run_interpreter(&script);
+            interp.env
+        } else {
+            let env = vm_env_with_builtins();
+            let result = run_vm(&script, env.clone());
+            assert!(result.is_ok(), "VM pixel script failed: {:?}", result.err());
+            Arc::try_unwrap(env).ok().expect("VM env still shared").into_inner().unwrap()
+        };
+
+        assert!(matches!(env.get("w"), Some(Value::Int(3))));
+        assert!(matches!(env.get("h"), Some(Value::Int(2))));
+        assert!(matches!(env.get("fmt"), Some(Value::Str(value)) if value.as_str() == "png"));
+        assert_pixel(env.get("before"), [11, 21, 30, 42]);
+        assert_pixel(env.get("after_rgb"), [101, 102, 103, 42]);
+        assert_pixel(env.get("after_rgba"), [201, 202, 203, 204]);
+        assert!(matches!(env.get("rgb_ok"), Some(Value::Bool(true))));
+        assert!(matches!(env.get("rgba_ok"), Some(Value::Bool(true))));
+        assert!(matches!(env.get("saved"), Some(Value::Bool(true))));
+
+        let reloaded = image::open(&output).expect("saved PNG should reload").to_rgba8();
+        assert_eq!(reloaded.get_pixel(1, 1).0, [101, 102, 103, 42]);
+        assert_eq!(reloaded.get_pixel(2, 0).0, [201, 202, 203, 204]);
+    }
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+fn assert_pixel(value: Option<Value>, expected: [i64; 4]) {
+    let Value::Array(channels) = value.expect("pixel result should exist") else {
+        panic!("pixel result should be an array")
+    };
+    let actual: Vec<i64> = channels
+        .iter()
+        .map(|value| match value {
+            Value::Int(channel) => *channel,
+            _ => panic!("pixel channels should be integers"),
+        })
+        .collect();
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn image_pixel_api_rejects_invalid_coordinates_and_channels() {
+    let root = unique_test_dir("kujo_image_pixel_errors");
+    let input = root.join("source.png");
+    write_rgba_fixture(&input);
+
+    let cases = [
+        ("img.get_pixel(3, 0)", "outside image bounds"),
+        ("img.get_pixel(\"0\", 0)", "x to be a non-negative integer"),
+        ("img.set_pixel(0, 2, 1, 2, 3)", "outside image bounds"),
+        ("img.set_pixel(0, 0, 256, 2, 3)", "integers from 0 to 255"),
+        ("img.set_pixel(0, 0, 1, 2, \"3\")", "integers from 0 to 255"),
+    ];
+
+    for (expression, expected) in cases {
+        let script = format!(
+            "img := load_image(\"{}\")\nresult := {}\n",
+            escape_kujo_string(&input),
+            expression
+        );
+        let interp = run_interpreter(&script);
+        assert!(
+            matches!(interp.return_value, Some(Value::Error(ref message)) if message.contains(expected)),
+            "interpreter did not report {expected:?} for {expression}"
+        );
+
+        let vm = run_vm(&script, vm_env_with_builtins());
+        assert!(
+            matches!(vm, Err(ref message) if message.contains(expected)),
+            "VM did not report {expected:?} for {expression}: {vm:?}"
+        );
+    }
 
     let _ = std::fs::remove_dir_all(&root);
 }
