@@ -14,6 +14,15 @@
 # CaseFile
 /.casefile/
 
+# Intake
+/.intake/
+
+# Redact
+/.redact/
+*.redacted
+*.redacted.md
+*.redacted.txt
+
 # ChangeBucket and Cinch wrapper artifacts
 /CHANGE_BUCKET.md
 /.cinch/artifacts/
@@ -69,6 +78,9 @@
 /run-*/
 /bundles/
 
+# Kujo workflow runners
+/.runs/
+
 # Lens
 /.lens/runs/
 /.lens/baselines/
@@ -88,6 +100,7 @@
 
 # Relay
 /.relay/
+/relay-contract-*/
 
 # WorkCell
 /.workcell/
@@ -110,7 +123,10 @@
 /data/*.db-shm
 /data/*.db-wal
 /data/*.log
+/data/benchmark-runs/
 /data/backups/
+/data/tool-artifacts/
+/backups/
 /tmp/
 /.tmp/
 /*.db
@@ -118,12 +134,18 @@
 /*.db-wal
 /*.sqlite
 /*.sqlite3
+/watchdog_proxy_config.json
+/.watchdog-backup-result-*.json
 
-# SSG / Howl / generated static output
+# SSG / Howl / SiteKit / generated static output
 /output/
 /dist/
 /logs/
 /.kujo-post-manifest.txt
+
+# Capsule and Zelus
+/capsule-output/
+/.zelus/
 
 # AI SDK local release/security artifacts
 /artifacts/security/
