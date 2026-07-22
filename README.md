@@ -150,6 +150,13 @@ cargo install --path .
 kujo --version
 ```
 
+Build a standalone local artifact for your current machine, with optional user-path install:
+
+```bash
+bash scripts/build_local_binary_artifact.sh --install
+kujo --version
+```
+
 ## Quick Start
 
 This first-ten-minutes path gives you a normal script, a replay-only AI example,

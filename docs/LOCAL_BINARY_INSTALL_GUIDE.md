@@ -131,6 +131,20 @@ Kujo Kujo!
 
 ## Build Notes
 
+If you are building the artifact yourself on the target machine, use the helper script:
+
+```bash
+bash scripts/build_local_binary_artifact.sh
+```
+
+It writes the archive and checksum into `target/local-artifacts/` using the documented
+`kujo-v<version>-<date>-<commit>-<platform>` naming pattern. To install the built
+binary into your user path in the same step:
+
+```bash
+bash scripts/build_local_binary_artifact.sh --install
+```
+
 For official release assets, prefer the GitHub Actions release matrix when it is available. It builds on native runners for:
 
 - Linux x64
@@ -139,4 +153,3 @@ For official release assets, prefer the GitHub Actions release matrix when it is
 - Windows x64
 
 Local cross-builds can be blocked by platform-native dependencies such as OpenSSL. If cross-building fails, build on the target platform or use the GitHub Actions matrix.
-
