@@ -157,6 +157,22 @@ bash scripts/build_local_binary_artifact.sh --install
 kujo --version
 ```
 
+Windows PowerShell:
+
+```powershell
+pwsh -File scripts/build_local_binary_artifact.ps1 -Install
+kujo --version
+```
+
+This local installer path currently supports:
+
+- macOS Intel
+- macOS Apple Silicon
+- Linux x64
+- Windows x64 via PowerShell
+
+It builds a native binary on the current machine, then warns if the install directory is not on `PATH`.
+
 ## Quick Start
 
 This first-ten-minutes path gives you a normal script, a replay-only AI example,

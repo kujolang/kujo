@@ -131,19 +131,36 @@ Kujo Kujo!
 
 ## Build Notes
 
-If you are building the artifact yourself on the target machine, use the helper script:
+If you are building the artifact yourself on the target machine, use the helper script.
+
+macOS or Linux:
 
 ```bash
 bash scripts/build_local_binary_artifact.sh
 ```
 
-It writes the archive and checksum into `target/local-artifacts/` using the documented
-`kujo-v<version>-<date>-<commit>-<platform>` naming pattern. To install the built
-binary into your user path in the same step:
+Windows PowerShell:
+
+```powershell
+pwsh -File scripts/build_local_binary_artifact.ps1
+```
+
+These scripts write the archive and checksum into `target/local-artifacts/` using the documented
+`kujo-v<version>-<date>-<commit>-<platform>` naming pattern.
+
+To install the built binary into your user path in the same step:
 
 ```bash
 bash scripts/build_local_binary_artifact.sh --install
 ```
+
+Windows PowerShell:
+
+```powershell
+pwsh -File scripts/build_local_binary_artifact.ps1 -Install
+```
+
+The installers also check whether the chosen install directory is already on `PATH` and print a follow-up warning when it is not.
 
 For official release assets, prefer the GitHub Actions release matrix when it is available. It builds on native runners for:
 

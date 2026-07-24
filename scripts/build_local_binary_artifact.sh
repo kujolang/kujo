@@ -19,6 +19,18 @@ Options:
 EOF
 }
 
+path_contains_dir() {
+	local target_dir="$1"
+	local path_entry
+	IFS=':' read -r -a path_entries <<< "${PATH:-}"
+	for path_entry in "${path_entries[@]}"; do
+		if [[ "$path_entry" == "$target_dir" ]]; then
+			return 0
+		fi
+	done
+	return 1
+}
+
 install_binary=0
 install_dir="${HOME}/.local/bin"
 artifact_version=""
@@ -133,6 +145,15 @@ if [[ "$install_binary" -eq 1 ]]; then
 	chmod +x "${install_dir}/kujo"
 	echo "[local-artifact] installed ${install_dir}/kujo"
 	"${install_dir}/kujo" --version
+
+	if path_contains_dir "$install_dir"; then
+		echo "[local-artifact] PATH already includes ${install_dir}; you can run: kujo --version"
+	else
+		echo "[local-artifact] WARNING: ${install_dir} is not on PATH in this shell."
+		echo "[local-artifact] Add it to your shell profile, for example:"
+		echo "[local-artifact]   export PATH=\"${install_dir}:\$PATH\""
+		echo "[local-artifact] Then open a new shell or run: source ~/.zshrc"
+	fi
 fi
 
 echo "[local-artifact] artifact: ${archive_path}"
