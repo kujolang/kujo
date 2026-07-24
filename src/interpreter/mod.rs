@@ -363,6 +363,19 @@ impl Interpreter {
         capabilities::capability_for_native_function(Self::canonical_native_function_name(name))
     }
 
+    #[allow(dead_code)]
+    pub fn native_function_capabilities(name: &str) -> Vec<NativeCapability> {
+        let canonical_name = Self::canonical_native_function_name(name);
+        let mut capabilities = Vec::new();
+        if let Some(primary) = capabilities::capability_for_native_function(canonical_name) {
+            capabilities.push(primary);
+        }
+        capabilities.extend_from_slice(capabilities::additional_capabilities_for_native_function(
+            canonical_name,
+        ));
+        capabilities
+    }
+
     pub fn native_function_arity(name: &str) -> Option<CallableArity> {
         Self::native_callable_arity(Self::canonical_native_function_name(name))
     }
@@ -2929,6 +2942,35 @@ impl Interpreter {
             ),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),
             "path_is_symlink" => CallableArity::exact("path_is_symlink", vec!["path".to_string()]),
+            "io_set_permissions" => CallableArity::exact(
+                "io_set_permissions",
+                vec!["path".to_string(), "mode".to_string()],
+            ),
+            "io_write_private_file" => CallableArity::exact(
+                "io_write_private_file",
+                vec!["path".to_string(), "content".to_string(), "mode".to_string()],
+            ),
+            "http_download_file" => CallableArity::exact(
+                "http_download_file",
+                vec!["url".to_string(), "output_path".to_string(), "options".to_string()],
+            ),
+            "http_upload_file" => CallableArity::exact(
+                "http_upload_file",
+                vec!["url".to_string(), "input_path".to_string(), "options".to_string()],
+            ),
+            "aes_encrypt_file_stream" => CallableArity::exact(
+                "aes_encrypt_file_stream",
+                vec![
+                    "input_path".to_string(),
+                    "output_path".to_string(),
+                    "key".to_string(),
+                    "chunk_size".to_string(),
+                ],
+            ),
+            "aes_decrypt_file_stream" => CallableArity::exact(
+                "aes_decrypt_file_stream",
+                vec!["input_path".to_string(), "output_path".to_string(), "key".to_string()],
+            ),
             _ => return None,
         };
 

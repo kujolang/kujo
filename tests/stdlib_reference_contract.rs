@@ -150,18 +150,35 @@ fn stdlib_inventory_capability_column_matches_runtime_policy() {
     ]);
 
     for row in &rows {
-        assert!(
-            allowed_capability_values.contains(row.capability.as_str()),
-            "unknown capability '{}' documented for '{}'",
-            row.capability,
-            row.function
-        );
+        let documented: Vec<String> = row
+            .capability
+            .split(',')
+            .map(|capability| capability.trim().trim_matches('`'))
+            .filter(|capability| !capability.is_empty())
+            .map(|capability| capability.to_string())
+            .collect();
+        assert!(!documented.is_empty(), "missing capability for '{}'", row.function);
 
-        let expected = Interpreter::native_function_capability(&row.function)
-            .map(|capability| capability.as_str().to_string())
-            .unwrap_or_else(|| "none".to_string());
+        for capability in &documented {
+            assert!(
+                allowed_capability_values.contains(capability.as_str()),
+                "unknown capability '{}' documented for '{}'",
+                capability,
+                row.function
+            );
+        }
 
-        assert_eq!(row.capability, expected, "capability mismatch for builtin '{}'", row.function);
+        let runtime_capabilities = Interpreter::native_function_capabilities(&row.function);
+        let expected = if runtime_capabilities.is_empty() {
+            vec!["none".to_string()]
+        } else {
+            runtime_capabilities
+                .into_iter()
+                .map(|capability| capability.as_str().to_string())
+                .collect()
+        };
+
+        assert_eq!(documented, expected, "capability mismatch for builtin '{}'", row.function);
     }
 }
 

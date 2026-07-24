@@ -1,6 +1,6 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-07-11
+Generated: 2026-07-24
 Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
 Fixture root: `tests`
 
@@ -110,7 +110,7 @@ Fixture root: `tests`
 | `tests/test_simple_random.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_standalone_dunder.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_stdlib_datetime.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/test_stdlib_paths.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
+| `tests/test_stdlib_paths.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_stdlib_random.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_stdlib_system.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_struct_def_only.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -153,9 +153,9 @@ Fixture root: `tests`
 | `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 
 Summary: `145` fixtures scanned
-- both match snapshot: `106`
+- both match snapshot: `107`
 - VM-only mismatch: `0`
-- interpreter-only mismatch: `39`
+- interpreter-only mismatch: `38`
 - both mismatch: `0`
 
 Mismatch classification totals (priority order):
@@ -163,7 +163,7 @@ Mismatch classification totals (priority order):
 - P1 stale-snapshot-expectation (`docs-owner`): `0`
 - P1 parser-invalid-fixture (`language-owner`): `0`
 - P2 harness-debt (`harness-owner`): `0`
-- P2 intentional-divergence (`runtime-owner`): `39`
+- P2 intentional-divergence (`runtime-owner`): `38`
 
 VM coverage gate:
 - metric: `vm_matches_snapshot / fixtures_scanned`
