@@ -32,10 +32,11 @@ Default command:
 "kujo.lsp.command": ["kujo", "lsp"]
 ```
 
-If Kujo is not on PATH, point to an explicit binary path:
+If Kujo is not on PATH, install it or set this command to the installed binary
+name/path used on that machine:
 
 ```json
-"kujo.lsp.command": ["/absolute/path/to/kujo", "lsp"]
+"kujo.lsp.command": ["kujo", "lsp"]
 ```
 
 ## Package As VSIX

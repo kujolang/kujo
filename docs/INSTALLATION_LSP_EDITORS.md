@@ -8,13 +8,14 @@ Status: v1.0.0 release-candidate editor/LSP install baseline; supersedes the ori
 git clone https://github.com/kujolang/kujo.git
 cd kujo
 cargo build --release
-./target/release/kujo --version
+cargo install --path .
+kujo --version
 ```
 
 ## Verify LSP Entrypoint
 
 ```bash
-./target/release/kujo lsp --help
+kujo lsp --help
 ```
 
 If the command prints LSP usage/help, the release artifact includes LSP
@@ -27,7 +28,8 @@ Repeat build from latest source revision:
 ```bash
 git pull --ff-only
 cargo build --release
-./target/release/kujo --version
+cargo install --path .
+kujo --version
 ```
 
 Then keep editor adapter command stable:
@@ -80,7 +82,7 @@ Optional workspace settings baseline:
 Minimal smoke sequence:
 
 ```bash
-./target/release/kujo lsp --help
+kujo lsp --help
 cargo test --test editor_adapter_contracts
 cargo test --test editor_launch_matrix_contract
 cargo test --test lsp_external_clients_smoke

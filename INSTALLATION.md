@@ -147,8 +147,8 @@ cargo build --release
 # Development build
 cargo run -- run examples/hello.kujo
 
-# Release build
-./target/release/kujo run examples/hello.kujo
+# Installed command
+kujo run examples/hello.kujo
 ```
 
 ### 4. Install System-Wide (Optional)
@@ -277,7 +277,7 @@ sudo pacman -S base-devel
 
 **"command not found: kujo"**
 - Verify the binary is in your PATH
-- Try running with full path: `/usr/local/bin/kujo` or `./target/release/kujo`
+- Reinstall with `cargo install --path .` or add your install directory to `PATH`
 
 **Slow compilation**
 - Use `cargo build` for development (faster compile, slower runtime)
@@ -348,7 +348,7 @@ echo 'print("Hello, Kujo!")' > test.kujo
 kujo run test.kujo
 
 # Run test suite
-cd /path/to/kujo/repo
+cd kujo
 kujo test
 ```
 

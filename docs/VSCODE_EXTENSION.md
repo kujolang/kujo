@@ -95,7 +95,7 @@ If Kujo is not on `PATH`, set an explicit command in VS Code settings:
 
 ```json
 {
-  "kujo.lsp.command": ["/absolute/path/to/kujo", "lsp"]
+  "kujo.lsp.command": ["kujo", "lsp"]
 }
 ```
 
@@ -257,7 +257,7 @@ If highlighting works but language intelligence does not:
 
    ```json
    {
-     "kujo.lsp.command": ["/absolute/path/to/kujo", "lsp"]
+     "kujo.lsp.command": ["kujo", "lsp"]
    }
    ```
 

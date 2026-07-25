@@ -133,7 +133,8 @@ This repository builds the Kujo language/runtime. If another `kujo` command is a
 git clone https://github.com/kujolang/kujo.git
 cd kujo
 cargo build --release
-./target/release/kujo --version
+cargo install --path .
+kujo --version
 ```
 
 Development usage:
