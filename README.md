@@ -1,5 +1,9 @@
 # Kujo
 
+[![Version](https://img.shields.io/badge/version-1.0.0-black)](https://github.com/kujolang/kujo)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![built with Rust](https://img.shields.io/badge/built%20with-Rust-white.svg)](https://www.rust-lang.org/)
+
 Kujo is the programming language for AI-native software, built in Rust.
 
 It is designed for local-first automation, agentic workflows, and application scripting where deterministic behavior, strong native capabilities, and practical ergonomics matter.
