@@ -1,8 +1,26 @@
 use std::fs;
 use std::path::PathBuf;
 
+use kujo::interpreter::Interpreter;
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+}
+
+#[test]
+fn stdlib_reference_mentions_every_runtime_builtin() {
+    let path = repo_root().join("docs").join("STANDARD_LIBRARY_REFERENCE.md");
+    let content =
+        fs::read_to_string(path).expect("failed to read docs/STANDARD_LIBRARY_REFERENCE.md");
+
+    for builtin in Interpreter::get_builtin_names() {
+        let marker = format!("`{}`", builtin);
+        assert!(
+            content.contains(&marker),
+            "standard library reference should mention runtime builtin '{}'",
+            builtin
+        );
+    }
 }
 
 #[test]
