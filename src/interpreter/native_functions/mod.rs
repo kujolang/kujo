@@ -212,7 +212,12 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
 mod tests {
     use super::call_native_function;
     use crate::interpreter::{AsyncRuntime, Interpreter, LeakyFunctionBody, Value};
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex, OnceLock};
+
+    fn cwd_test_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
 
     fn available_tcp_port() -> Option<i64> {
         match std::net::TcpListener::bind("127.0.0.1:0") {
@@ -2933,6 +2938,7 @@ mod tests {
 
     #[test]
     fn test_release_hardening_env_os_path_and_assert_contracts() {
+        let _cwd_guard = cwd_test_lock().lock().expect("cwd test lock should not be poisoned");
         let mut interpreter = Interpreter::new();
 
         let assert_true = call_native_function(&mut interpreter, "assert", &[Value::Bool(true)]);
