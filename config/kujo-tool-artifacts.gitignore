@@ -13,6 +13,7 @@
 
 # CaseFile
 /.casefile/
+/.casefile-agency-loop/
 
 # Intake
 /.intake/
@@ -57,6 +58,7 @@
 
 # Eval and ShipCheck evaluation output
 /eval_results/
+/.eval_*
 /snapshots/
 /artifact-manifest.json
 /cli-summary.json
@@ -80,6 +82,7 @@
 
 # Kujo workflow runners
 /.runs/
+/.work/
 
 # Lens
 /.lens/runs/
@@ -140,6 +143,7 @@
 # SSG / Howl / SiteKit / generated static output
 /output/
 /dist/
+/dist-build/
 /logs/
 /.kujo-post-manifest.txt
 

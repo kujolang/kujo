@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-07-19
+Last updated: 2026-07-26
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -17,7 +17,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | --- | --- | --- |
 | Loop Engineering | `.loop-engineering/`, `SUMMARY.md`, `blockers.md`, `ledger.tsv`, `loop.yml`, `checklist.tsv`, `evidence/`, `iterations/<n>/` | Repo-local loop state and verification evidence. |
 | RunLedger | `.runledger/`, `.runledger/runs/`, `RUNLEDGER_REPORT.md`, `runledger-entry.json` | `--ledger` can redirect the ledger; report path is caller-selected. |
-| CaseFile | `.casefile/<case-id>/case.{md,json}`, `command.txt`, `environment.json`, `git-*.txt`, `stdout.log`, `stderr.log`, `combined.log`, `reproduction.md`, `handoff.md` | `casefile.toml` is created by `init`; keep it tracked only when it is shared config. |
+| CaseFile | `.casefile/<case-id>/case.{md,json}`, `.casefile-agency-loop/<case-id>/case.md`, `command.txt`, `environment.json`, `git-*.txt`, `stdout.log`, `stderr.log`, `combined.log`, `reproduction.md`, `handoff.md` | `casefile.toml` is created by `init`; keep it tracked only when it is shared config. `kujo-workflows/agency-verified-fix-loop/scripts/run-loop.sh` directs pre-fix Lens captures into `.casefile-agency-loop/` inside disposable fixture repositories. |
 | Intake | `.intake/` including `config/`, `secrets/`, `raw/`, `items/`, `actions/`, `learnings/`, `index/`, `logs/*.jsonl`, `strata/daily/`, `totalrecall/exports/`, `evals/`, `docs/`, `specs/`, and `backups/`; backup files from `intake backup create` are caller-selected and default under the store | `.intake/.env` and `.intake/secrets/` are intentionally local; copy shared source definitions into reviewed config/docs rather than tracking the live store. |
 | Redact | `.redact/runs/<timestamp>/` with `run.json`, manifests, detections/decisions/transformations/warnings JSONL, verifier reports, policy snapshots, hashes; default sanitize outputs beside inputs as `*.redacted`, `*.redacted.md`, or `*.redacted.txt` | `--audit-dir` and `--out` are caller-selected; sample redacted fixtures may be intentionally tracked when reviewed. |
 | PatchBrief | stdout by default; common redirected files are `patchbrief.md` and `PATCHBRIEF.md`; dogfood artifacts under `.dogfood/`; generated MCP artifacts under `.kujo-mcp/` | Current CLI does not write a default file unless output is redirected by caller/wrapper. |
@@ -28,7 +28,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | MCP generator | `.mcp/generated-server/`, `.mcp/artifacts/`, `repo-profile.json`, generated server scaffold, review artifacts, `.kujo_cache/`, `mcp-calls.log`, `server.log`, `test_output.log` | Defaults live inside the target repository. |
 | Spec | Caller-selected outputs from `spec init`, `render`, `export`, and `convert`, commonly `specs/*.spec.yml`, `docs/specs/*.md`, `artifacts/*.json`, `eval_suite.json`, or `work-unit.json`; release script emits `dist/kujo-spec-vX.Y.Z.*` | Specs, generated command inventories, and reviewed release artifacts are often source-worthy; do not add a blanket `/artifacts/` ignore. |
 | Fence | `fence-baseline.json`, caller-selected reports such as `FENCE_REPORT.md`, `fence.sarif`, `architecture.mmd`, `architecture.dot`; PackWrite-style `agent/` packs in some repos | Baseline/config files may be intentionally tracked during rollout. |
-| Eval | `eval_results/`, `snapshots/`, `artifact-manifest.json`, `cli-summary.json`, `eval-report.md`, `eval-report.md.cache.json`, `history.json`, `last_failures.json`, `last_run.json`, `summary.json`, `badge.json`, `benchmarks.json`, `benchmark_trend.csv` | `.gitkeep` files may be tracked intentionally. |
+| Eval | `eval_results/`, local docs/test output roots such as `.eval_quickstart`, `.eval_readme_parity`, `.eval_enterprise_*`, `.eval_smoke_out`, and interrupted scratch files such as `.eval_*_suite.json` or `.eval_*_payload.txt`; `snapshots/`, `artifact-manifest.json`, `cli-summary.json`, `eval-report.md`, `eval-report.md.cache.json`, `history.json`, `last_failures.json`, `last_run.json`, `summary.json`, `badge.json`, `benchmarks.json`, `benchmark_trend.csv` | `.gitkeep` files may be tracked intentionally. If a repository intentionally shares a hidden `.eval_*` config, add a repo-specific negation after the block. |
 | Lens | `.lens/runs/<timestamp>/`, `.lens/baselines/`, `lens-report.json`, `proof/` | `.lens.toml` is config; track only when shared. |
 | Muzzle | `.muzzle/logs/`, `.muzzle/reports/`, `.muzzle/manifests/`, `.muzzle/workflows/`, `.dogfood/` | `manifests/` and `workflows/` can be tracked examples; ignore logs/reports by default. |
 | Dispatch | `outputs/`, `outputs/.dispatch-run-index.json`, `outputs/run-*/state.json`, `trace.json`, `trace.md`, `report.json`, `report.md`, exported bundles | `--output-root` can redirect all run artifacts. |
@@ -50,6 +50,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Zelus | `.zelus/engagement-manifest.json`, `.zelus/campaign.json`, `.zelus/reference-run/`, plus caller-selected `--out` manifests, hypotheses, and reference/eval run directories | Current examples usually write to `/tmp`; ignore `.zelus/` when run inside a repo. |
 | Agents SDK | file-backed artifact/trace stores write under caller-provided roots, often `/tmp`; no repo-local default artifact root found | Ignore chosen local roots where configured. |
 | AI SDK | `artifacts/security/integrity-manifest.sha256` and other local release/security artifacts | CI may upload these; local source control should ignore unless intentionally reviewed. |
+| Benchmarks System | `results/<run-id>/`, `results/<run-id>/source_evidence/`, generated static dashboard `dist/`, and zipped dashboard bundles under `dist-build/` | `BENCHMARK_EXECUTION_KIT/` and `BENCHMARK_REVIEW_KIT/` are source-worthy operator prompts. The benchmark runner output directory is caller-selected; the local dashboard exporter defaults to `results/` and writes `dist/`. |
 
 ## Reusable Ignore Block
 
@@ -67,9 +68,11 @@ serve multiple rows in the inventory:
 
 - `/runledger-report.md` mirrors `RUNLEDGER_REPORT.md` for lower-case redirected RunLedger reports.
 - `/.cinch/pack/` covers generated Cinch wrapper packs beside `/.cinch/artifacts/`.
-- `/.runs/` covers timestamped Kujo workflow-runner packets.
+- `/.runs/` covers timestamped Kujo workflow-runner packets; `/.work/` covers disposable workflow workspaces such as `agency-verified-fix-loop/.work/<timestamp>/`.
 - `/data/*.db`, `/data/*.db-shm`, `/data/*.db-wal`, `/data/*.log`, `/*.db-shm`, `/*.db-wal`, `/*.sqlite`, and `/*.sqlite3` cover SQLite/log sidecars emitted by Watchdog, AI Chat, CMS, CRUD API, RAG, and related local state.
 - `/tests/tmp/`, `/tests/*.out`, `*.tmp-*`, and `*.bak` cover local test harness output and atomic-write leftovers.
+- `/.eval_*` covers Eval quickstart, parity, smoke, benchmark, and interrupted test scratch outputs named that way in docs and tests.
+- `/dist-build/` covers generated dashboard/package archives beside `/dist/` static output.
 
 ## Verification
 
