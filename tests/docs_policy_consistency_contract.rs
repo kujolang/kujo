@@ -34,7 +34,7 @@ fn high_risk_docs_policies_remain_consistent() {
         ("docs/AI_NATIVE_ENTERPRISE_RELEASE_EVIDENCE.md", &ai_evidence),
         ("docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md", &official_release),
     ] {
-        assert!(content.contains(canonical), "missing canonical readiness boundary in {}", name);
+        assert!(content.contains(canonical), "missing canonical readiness boundary in {name}");
     }
 
     assert!(
