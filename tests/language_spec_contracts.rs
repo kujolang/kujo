@@ -61,18 +61,14 @@ fn assert_interpreter_and_vm_error_contains(script: &str, expected: &str) {
         interpreter_error(script).expect("expected interpreter execution to report an error");
     assert!(
         interp_error.contains(expected),
-        "expected interpreter error containing {:?}, got {:?}",
-        expected,
-        interp_error
+        "expected interpreter error containing {expected:?}, got {interp_error:?}"
     );
 
     let vm_env = vm_env_with_builtins();
     let vm_error = run_vm(script, vm_env).expect_err("expected VM execution to report an error");
     assert!(
         vm_error.contains(expected),
-        "expected VM error containing {:?}, got {:?}",
-        expected,
-        vm_error
+        "expected VM error containing {expected:?}, got {vm_error:?}"
     );
 }
 
@@ -92,7 +88,7 @@ fn assert_interpreter_and_vm_env_bool(script: &str, binding_name: &str) {
 
     let vm_env = vm_env_with_builtins();
     let vm_result = run_vm(script, vm_env.clone());
-    assert!(vm_result.is_ok(), "unexpected vm runtime result: {:?}", vm_result);
+    assert!(vm_result.is_ok(), "unexpected vm runtime result: {vm_result:?}");
 
     let vm_globals = vm_env.lock().expect("failed to lock vm globals");
     assert!(
