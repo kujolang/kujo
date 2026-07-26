@@ -220,7 +220,7 @@ fn image_pixel_api_roundtrips_rgba_in_interpreter_and_vm() {
             let env = vm_env_with_builtins();
             let result = run_vm(&script, env.clone());
             assert!(result.is_ok(), "VM pixel script failed: {:?}", result.err());
-            Arc::try_unwrap(env).ok().expect("VM env still shared").into_inner().unwrap()
+            Arc::try_unwrap(env).expect("VM env still shared").into_inner().unwrap()
         };
 
         assert!(matches!(env.get("w"), Some(Value::Int(3))));

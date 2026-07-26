@@ -322,7 +322,7 @@ fn docs_kujo_snippets_parse_or_expected_fail() {
         let rel = relative_from_repo(&markdown_path);
         let blocks = extract_kujo_blocks(&markdown_path);
         for (index, snippet) in blocks {
-            let block_id = format!("{}#{}", rel, index);
+            let block_id = format!("{rel}#{index}");
             let mode = classify_doc_block(&block_id);
             let snippet_file =
                 temp_dir.join(format!("{}_{}.kujo", rel.replace(['/', '.'], "_"), index));
@@ -348,8 +348,7 @@ fn docs_kujo_snippets_parse_or_expected_fail() {
                 SmokeMode::ExpectedFail => {
                     if output.status.success() {
                         failures.push(format!(
-                            "DOC expected-fail {} now passes; reclassify this snippet",
-                            block_id
+                            "DOC expected-fail {block_id} now passes; reclassify this snippet"
                         ));
                     }
                 }

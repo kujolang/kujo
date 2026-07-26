@@ -9,7 +9,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -456,15 +456,15 @@ fn package_module_cycle_error_reports_import_chain() {
 
     let module_a = "cycle_a";
     let module_b = "cycle_b";
-    let module_a_path = project_root.join(format!("{}.kujo", module_a));
-    let module_b_path = project_root.join(format!("{}.kujo", module_b));
+    let module_a_path = project_root.join(format!("{module_a}.kujo"));
+    let module_b_path = project_root.join(format!("{module_b}.kujo"));
     let workflow_path = project_root.join("cycle_workflow.kujo");
 
-    fs::write(&module_a_path, format!("import {}\nexport a := 1\n", module_b))
+    fs::write(&module_a_path, format!("import {module_b}\nexport a := 1\n"))
         .expect("failed to write module A");
-    fs::write(&module_b_path, format!("import {}\nexport b := 2\n", module_a))
+    fs::write(&module_b_path, format!("import {module_a}\nexport b := 2\n"))
         .expect("failed to write module B");
-    fs::write(&workflow_path, format!("import {}\nprint(\"unreachable\")\n", module_a))
+    fs::write(&workflow_path, format!("import {module_a}\nprint(\"unreachable\")\n"))
         .expect("failed to write cycle workflow script");
 
     let run_output = run_kujo(
@@ -482,8 +482,7 @@ fn package_module_cycle_error_reports_import_chain() {
     let stderr = stderr_text(&run_output);
     assert!(
         stderr.contains("Circular import detected: cycle_a -> cycle_b -> cycle_a"),
-        "expected circular import chain in stderr, got: {}",
-        stderr
+        "expected circular import chain in stderr, got: {stderr}"
     );
 }
 
