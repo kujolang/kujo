@@ -62,18 +62,14 @@ fn assert_interpreter_and_vm_error_contains(script: &str, expected: &str) {
         interpreter_error(script).expect("expected interpreter execution to report an error");
     assert!(
         interp_error.contains(expected),
-        "expected interpreter error containing {:?}, got {:?}",
-        expected,
-        interp_error
+        "expected interpreter error containing {expected:?}, got {interp_error:?}"
     );
 
     let vm_env = vm_env_with_builtins();
     let vm_error = run_vm(script, vm_env).expect_err("expected VM execution to report an error");
     assert!(
         vm_error.contains(expected),
-        "expected VM error containing {:?}, got {:?}",
-        expected,
-        vm_error
+        "expected VM error containing {expected:?}, got {vm_error:?}"
     );
 }
 
@@ -128,7 +124,7 @@ fn vm_and_interpreter_match_struct_method_behavior_contract() {
 
     let vm_env = vm_env_with_builtins();
     let vm_result = run_vm(script, vm_env.clone());
-    assert!(vm_result.is_ok(), "unexpected vm struct-method behavior: {:?}", vm_result);
+    assert!(vm_result.is_ok(), "unexpected vm struct-method behavior: {vm_result:?}");
     let vm_globals = vm_env.lock().expect("failed to lock vm globals");
     assert!(matches!(vm_globals.get("struct_ok"), Some(Value::Bool(true))));
 }
@@ -652,8 +648,7 @@ fn vm_and_interpreter_allow_top_level_return_for_script_exit() {
     let vm_result = run_vm(script, vm_env);
     assert!(
         vm_result.is_ok(),
-        "expected VM to keep top-level return script behavior, got {:?}",
-        vm_result
+        "expected VM to keep top-level return script behavior, got {vm_result:?}"
     );
 }
 
@@ -958,8 +953,7 @@ fn vm_and_interpreter_match_generator_iteration_surface() {
     let vm_result = run_vm(script, vm_env);
     assert!(
         vm_result.is_ok(),
-        "vm should support top-level generator iteration surface, got {:?}",
-        vm_result
+        "vm should support top-level generator iteration surface, got {vm_result:?}"
     );
 
     let vm_env = vm_env_with_builtins();
@@ -1239,16 +1233,15 @@ fn vm_and_interpreter_match_async_named_nested_capture_isolation() {
 #[test]
 fn vm_and_interpreter_match_import_export_surface() {
     let module_name = unique_module_name();
-    let module_filename = format!("{}.kujo", module_name);
+    let module_filename = format!("{module_name}.kujo");
     let module_source = "export answer := 42\n";
     fs::write(&module_filename, module_source).expect("failed to write parity module");
 
     let script = format!(
         r#"
-        from {} import answer
+        from {module_name} import answer
         import_ok := answer == 42
-    "#,
-        module_name
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "import_ok");
@@ -1258,7 +1251,7 @@ fn vm_and_interpreter_match_import_export_surface() {
 #[test]
 fn vm_and_interpreter_match_imported_function_invocation_surface() {
     let module_name = unique_module_name();
-    let module_filename = format!("{}.kujo", module_name);
+    let module_filename = format!("{module_name}.kujo");
     let module_source = r#"
 export func add_one(x) {
     return x + 1
@@ -1268,10 +1261,9 @@ export func add_one(x) {
 
     let script = format!(
         r#"
-        from {} import add_one
+        from {module_name} import add_one
         import_function_ok := add_one(41) == 42
-    "#,
-        module_name
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "import_function_ok");
@@ -1281,7 +1273,7 @@ export func add_one(x) {
 #[test]
 fn vm_and_interpreter_match_import_all_function_invocation_surface() {
     let module_name = unique_module_name();
-    let module_filename = format!("{}.kujo", module_name);
+    let module_filename = format!("{module_name}.kujo");
     let module_source = r#"
 export func add_one(x) {
     return x + 1
@@ -1291,10 +1283,9 @@ export func add_one(x) {
 
     let script = format!(
         r#"
-        import {}
+        import {module_name}
         import_all_function_ok := add_one(41) == 42
-    "#,
-        module_name
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "import_all_function_ok");
@@ -1304,7 +1295,7 @@ export func add_one(x) {
 #[test]
 fn vm_and_interpreter_match_imported_function_dict_index_surface() {
     let module_name = unique_module_name();
-    let module_filename = format!("{}.kujo", module_name);
+    let module_filename = format!("{module_name}.kujo");
     let module_source = r#"
 export func read_opts(opts) {
     return opts["quiet"] == true && opts["parallel_workers"] == 2
@@ -1314,11 +1305,10 @@ export func read_opts(opts) {
 
     let script = format!(
         r#"
-        from {} import read_opts
+        from {module_name} import read_opts
         options := {{"quiet": true, "parallel_workers": 2}}
         import_function_dict_ok := read_opts(options)
-    "#,
-        module_name
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "import_function_dict_ok");
@@ -1328,30 +1318,29 @@ export func read_opts(opts) {
 #[test]
 fn vm_and_interpreter_match_dotted_from_import_surface() {
     let root_module = unique_module_name();
-    let nested_dir = format!("modules/{}/core", root_module);
+    let nested_dir = format!("modules/{root_module}/core");
     fs::create_dir_all(&nested_dir).expect("failed to create nested parity module dir");
-    let module_filename = format!("{}/math.kujo", nested_dir);
+    let module_filename = format!("{nested_dir}/math.kujo");
     let module_source = "export answer := 42\n";
     fs::write(&module_filename, module_source).expect("failed to write nested parity module");
 
     let script = format!(
         r#"
-        from {}.core.math import answer
+        from {root_module}.core.math import answer
         dotted_import_ok := answer == 42
-    "#,
-        root_module
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "dotted_import_ok");
-    let _ = fs::remove_dir_all(format!("modules/{}", root_module));
+    let _ = fs::remove_dir_all(format!("modules/{root_module}"));
 }
 
 #[test]
 fn vm_and_interpreter_match_dotted_imported_function_invocation_surface() {
     let root_module = unique_module_name();
-    let nested_dir = format!("modules/{}/core", root_module);
+    let nested_dir = format!("modules/{root_module}/core");
     fs::create_dir_all(&nested_dir).expect("failed to create nested parity module dir");
-    let module_filename = format!("{}/math.kujo", nested_dir);
+    let module_filename = format!("{nested_dir}/math.kujo");
     let module_source = r#"
 export func add_one(x) {
     return x + 1
@@ -1361,40 +1350,38 @@ export func add_one(x) {
 
     let script = format!(
         r#"
-        from {}.core.math import add_one
+        from {root_module}.core.math import add_one
         dotted_import_function_ok := add_one(41) == 42
-    "#,
-        root_module
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "dotted_import_function_ok");
-    let _ = fs::remove_dir_all(format!("modules/{}", root_module));
+    let _ = fs::remove_dir_all(format!("modules/{root_module}"));
 }
 
 #[test]
 fn vm_and_interpreter_dotted_import_resolution_prefers_flat_module_before_nested_path() {
     let root_module = unique_module_name();
-    let nested_dir = format!("modules/{}/core", root_module);
+    let nested_dir = format!("modules/{root_module}/core");
     fs::create_dir_all(&nested_dir).expect("failed to create nested parity module dir");
 
-    let dotted_name = format!("{}.core.math", root_module);
-    let flat_module_path = format!("modules/{}.kujo", dotted_name);
+    let dotted_name = format!("{root_module}.core.math");
+    let flat_module_path = format!("modules/{dotted_name}.kujo");
     fs::write(&flat_module_path, "export source := \"flat\"\n")
         .expect("failed to write flat dotted module file");
-    fs::write(format!("{}/math.kujo", nested_dir), "export source := \"nested\"\n")
+    fs::write(format!("{nested_dir}/math.kujo"), "export source := \"nested\"\n")
         .expect("failed to write nested dotted module file");
 
     let script = format!(
         r#"
-        from {} import source
+        from {dotted_name} import source
         dotted_precedence_ok := source == "flat"
-    "#,
-        dotted_name
+    "#
     );
 
     assert_interpreter_and_vm_bool(&script, "dotted_precedence_ok");
     let _ = fs::remove_file(flat_module_path);
-    let _ = fs::remove_dir_all(format!("modules/{}", root_module));
+    let _ = fs::remove_dir_all(format!("modules/{root_module}"));
 }
 
 #[test]
@@ -1953,15 +1940,14 @@ fn vm_and_interpreter_match_spawn_surface() {
     let spawn_key = unique_spawn_key();
     let script = format!(
         r#"
-        shared_set("{}", 0)
+        shared_set("{spawn_key}", 0)
         spawn {{
-            shared_add_int("{}", 1)
+            shared_add_int("{spawn_key}", 1)
         }}
-        spawn_final := shared_get("{}")
+        spawn_final := shared_get("{spawn_key}")
         spawn_ok := spawn_final >= 0
-        shared_delete("{}")
-    "#,
-        spawn_key, spawn_key, spawn_key, spawn_key
+        shared_delete("{spawn_key}")
+    "#
     );
 
     let interp = run_interpreter(&script);
@@ -2056,7 +2042,6 @@ fn vm_and_interpreter_execute_exception_fixture_without_runtime_arity_drift() {
     let vm_result = run_vm(&script, vm_env);
     assert!(
         vm_result.is_ok(),
-        "vm should complete exception fixture without arity drift/runtime failure: {:?}",
-        vm_result
+        "vm should complete exception fixture without arity drift/runtime failure: {vm_result:?}"
     );
 }

@@ -16,7 +16,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -301,8 +301,7 @@ fn examples_smoke_parse_run_or_expected_fail() {
                 );
                 if output.status.success() {
                     failures.push(format!(
-                        "EXPECTED_FAIL {} now passes; reclassify as parse/run example",
-                        rel
+                        "EXPECTED_FAIL {rel} now passes; reclassify as parse/run example"
                     ));
                 }
             }

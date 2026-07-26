@@ -62,9 +62,9 @@ fn build_many_tokens_source(statement_count: usize) -> String {
 fn build_deep_expression_source(depth: usize) -> String {
     let mut expr = "1".to_string();
     for _ in 0..depth {
-        expr = format!("({} + 1)", expr);
+        expr = format!("({expr} + 1)");
     }
-    format!("value := {}\n", expr)
+    format!("value := {expr}\n")
 }
 
 fn build_runtime_workload_source() -> String {
@@ -108,8 +108,7 @@ fn build_ai_request_hash_workload_source() -> String {
     source.push_str("messages := [\n");
     for i in 0..96 {
         source.push_str(&format!(
-            "  ai_message(\"user\", \"release note item {} with deterministic replay metadata\"),\n",
-            i
+            "  ai_message(\"user\", \"release note item {i} with deterministic replay metadata\"),\n"
         ));
     }
     source.push_str("]\n");
@@ -188,8 +187,7 @@ fn build_ai_fit_context_workload_source() -> String {
     source.push_str("messages := [ai_message(\"system\", \"Keep release evidence concise.\"),\n");
     for i in 0..96 {
         source.push_str(&format!(
-            "  ai_message(\"user\", \"Context item {} covering security, replay, schema validation, and product posture.\"),\n",
-            i
+            "  ai_message(\"user\", \"Context item {i} covering security, replay, schema validation, and product posture.\"),\n"
         ));
     }
     source.push_str("]\n");
@@ -336,10 +334,10 @@ fn module_benchmark_fixture() -> &'static ModuleBenchmarkFixture {
 
         let module_count = 120usize;
         for index in 0..module_count {
-            let module_name = format!("mod_{:03}", index);
-            let module_path = root_dir.join(format!("{}.kujo", module_name));
+            let module_name = format!("mod_{index:03}");
+            let module_path = root_dir.join(format!("{module_name}.kujo"));
             let body = if index == 0 {
-                format!("export value := {}\n", index)
+                format!("export value := {index}\n")
             } else {
                 format!("import mod_{:03}\nexport value := {}\n", index - 1, index)
             };
@@ -349,10 +347,10 @@ fn module_benchmark_fixture() -> &'static ModuleBenchmarkFixture {
         let entry_module = "entry_module".to_string();
         let mut entry_source = String::new();
         for index in 0..module_count {
-            entry_source.push_str(&format!("import mod_{:03}\n", index));
+            entry_source.push_str(&format!("import mod_{index:03}\n"));
         }
         entry_source.push_str("export done := 1\n");
-        fs::write(root_dir.join(format!("{}.kujo", entry_module)), entry_source)
+        fs::write(root_dir.join(format!("{entry_module}.kujo")), entry_source)
             .expect("module benchmark entry file should be written");
 
         ModuleBenchmarkFixture { root_dir, entry_module }
@@ -451,7 +449,7 @@ fn import_heavy_nested_startup_benchmark_fixture(
         entry_source.push_str("export ready := 1\n");
 
         let entry_module = "entry_nested_import_startup".to_string();
-        fs::write(root_dir.join(format!("{}.kujo", entry_module)), entry_source)
+        fs::write(root_dir.join(format!("{entry_module}.kujo")), entry_source)
             .expect("import-heavy nested startup benchmark entry file should be written");
 
         ImportHeavyNestedStartupBenchmarkFixture { root_dir, entry_module }
@@ -600,13 +598,13 @@ fn serve_benchmark_fixture() -> &'static ServeBenchmarkFixture {
             let _ = run_static_server(server_dir, "127.0.0.1".to_string(), port, options);
         });
 
-        let base_url = format!("http://127.0.0.1:{}", port);
+        let base_url = format!("http://127.0.0.1:{port}");
         let client = Client::builder()
             .timeout(Duration::from_secs(2))
             .build()
             .expect("benchmark client should build");
 
-        let health_url = format!("{}/{}", base_url, small_path);
+        let health_url = format!("{base_url}/{small_path}");
         let mut ready = false;
         for _ in 0..100 {
             if let Ok(response) = client.get(&health_url).send() {

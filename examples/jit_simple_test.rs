@@ -30,7 +30,7 @@ fn main() {
     let mut vm = VM::new();
     vm.set_jit_enabled(false);
     let result1 = vm.execute(chunk.clone()).expect("VM execution failed");
-    println!("  Result: {:?}", result1);
+    println!("  Result: {result1:?}");
 
     // Benchmark bytecode VM
     let start = Instant::now();
@@ -40,7 +40,7 @@ fn main() {
         let _ = vm.execute(chunk.clone());
     }
     let bytecode_time = start.elapsed();
-    println!("  10000 runs: {:?}", bytecode_time);
+    println!("  10000 runs: {bytecode_time:?}");
 
     // Test JIT compilation
     println!("\nTest 2: JIT Compilation");
@@ -58,7 +58,7 @@ fn main() {
                 std::ptr::null_mut(),
             );
             let result = unsafe { compiled_fn(&mut ctx as *mut kujo::jit::VMContext) };
-            println!("  Return code: {}", result);
+            println!("  Return code: {result}");
 
             // Benchmark compiled code
             let start = Instant::now();
@@ -73,17 +73,17 @@ fn main() {
                 }
             }
             let jit_time = start.elapsed();
-            println!("  10000 runs: {:?}", jit_time);
+            println!("  10000 runs: {jit_time:?}");
 
             // Calculate speedup
             println!("\n=== Results ===");
-            println!("  Bytecode VM: {:?}", bytecode_time);
-            println!("  JIT:         {:?}", jit_time);
+            println!("  Bytecode VM: {bytecode_time:?}");
+            println!("  JIT:         {jit_time:?}");
             let speedup = bytecode_time.as_nanos() as f64 / jit_time.as_nanos() as f64;
-            println!("  Speedup:     {:.2}x", speedup);
+            println!("  Speedup:     {speedup:.2}x");
         }
         Err(e) => {
-            println!("  ✗ Compilation failed: {}", e);
+            println!("  ✗ Compilation failed: {e}");
         }
     }
 }

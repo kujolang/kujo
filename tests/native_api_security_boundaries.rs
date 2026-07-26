@@ -78,7 +78,7 @@ fn spawn_one_shot_http_server(
     let listener = match TcpListener::bind("127.0.0.1:0") {
         Ok(listener) => listener,
         Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => return None,
-        Err(error) => panic!("failed to bind local HTTP test listener: {}", error),
+        Err(error) => panic!("failed to bind local HTTP test listener: {error}"),
     };
     let port = listener.local_addr().expect("local addr should resolve").port();
 
@@ -609,7 +609,7 @@ fn network_http_get_rejects_oversized_response_body() {
 
     let project_root = unique_temp_dir("network_http_get_oversized_body");
     let script_path = project_root.join("oversized_http_body.kujo");
-    let script_source = format!("http_get(\"http://127.0.0.1:{}/payload\")\n", port);
+    let script_source = format!("http_get(\"http://127.0.0.1:{port}/payload\")\n");
     fs::write(&script_path, script_source).expect("failed to write oversized http script");
 
     let output = run_kujo_with_env(
@@ -652,8 +652,7 @@ fn network_http_request_timeout_is_reported_deterministically() {
     let project_root = unique_temp_dir("network_http_request_timeout");
     let script_path = project_root.join("http_timeout_boundary.kujo");
     let script_source = format!(
-        "let result := http_request(\"http://127.0.0.1:{}/timeout\", {{\"timeout\": 0.05}})\nprint(result)\n",
-        port
+        "let result := http_request(\"http://127.0.0.1:{port}/timeout\", {{\"timeout\": 0.05}})\nprint(result)\n"
     );
     fs::write(&script_path, script_source).expect("failed to write timeout script");
 
@@ -878,7 +877,7 @@ fn network_destination_policy_override_allows_trusted_loopback_http_client() {
 
     let project_root = unique_temp_dir("network_destination_policy_override_allows_loopback_http");
     let script_path = project_root.join("destination_policy_http_override.kujo");
-    let script_source = format!("http_get(\"http://127.0.0.1:{}/ok\")\n", port);
+    let script_source = format!("http_get(\"http://127.0.0.1:{port}/ok\")\n");
     fs::write(&script_path, script_source).expect("failed to write destination policy script");
 
     let output = run_kujo_with_env(
@@ -1597,7 +1596,7 @@ fn unzip_rejects_archives_exceeding_total_size_limit() {
             create_zip_archive(zip_path, |writer| {
                 let payload = vec![b'y'; 14 * 1024 * 1024];
                 for index in 0..5 {
-                    write_zip_file_entry(writer, &format!("bulk-{}.bin", index), &payload, None);
+                    write_zip_file_entry(writer, &format!("bulk-{index}.bin"), &payload, None);
                 }
             });
         });
@@ -1611,7 +1610,7 @@ fn unzip_rejects_archives_exceeding_entry_count_limit() {
         run_unzip_script_with_archive("native_api_unzip_entry_count_limit", |zip_path| {
             create_zip_archive(zip_path, |writer| {
                 for index in 0..1025 {
-                    write_zip_file_entry(writer, &format!("entry-{}.txt", index), b"ok", None);
+                    write_zip_file_entry(writer, &format!("entry-{index}.txt"), b"ok", None);
                 }
             });
         });

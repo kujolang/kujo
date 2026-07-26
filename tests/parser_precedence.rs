@@ -23,7 +23,7 @@ fn parse_single_statement(source: &str) -> Stmt {
 fn parse_single_expr_shape(source: &str) -> String {
     match parse_single_statement(source) {
         Stmt::ExprStmt(expr) => expr_shape(&expr),
-        other => panic!("expected expression statement, got {:?}", other),
+        other => panic!("expected expression statement, got {other:?}"),
     }
 }
 
@@ -32,7 +32,7 @@ fn expr_shape(expr: &Expr) -> String {
         Expr::Identifier(name) => name.clone(),
         Expr::Int(value) => value.to_string(),
         Expr::Float(value) => value.to_string(),
-        Expr::String(value) => format!("\"{}\"", value),
+        Expr::String(value) => format!("\"{value}\""),
         Expr::Bool(value) => value.to_string(),
         Expr::UnaryOp { op, operand } => format!("({} {})", op, expr_shape(operand)),
         Expr::BinaryOp { left, op, right } => {
@@ -48,7 +48,7 @@ fn expr_shape(expr: &Expr) -> String {
             let rendered_args = args.iter().map(expr_shape).collect::<Vec<_>>().join(" ");
             format!("(call {} {})", expr_shape(function), rendered_args)
         }
-        _ => format!("{:?}", expr),
+        _ => format!("{expr:?}"),
     }
 }
 
@@ -103,7 +103,7 @@ fn parser_assignment_rhs_preserves_expression_precedence() {
             assert_eq!(expr_shape(&target), "total");
             assert_eq!(expr_shape(&value), "(+ 1 (* 2 3))");
         }
-        other => panic!("expected assignment statement, got {:?}", other),
+        other => panic!("expected assignment statement, got {other:?}"),
     }
 }
 
@@ -114,7 +114,7 @@ fn parser_compound_assignment_lowers_to_binary_update() {
             assert_eq!(expr_shape(&target), "total");
             assert_eq!(expr_shape(&value), "(+ total (* 1 2))");
         }
-        other => panic!("expected assignment statement, got {:?}", other),
+        other => panic!("expected assignment statement, got {other:?}"),
     }
 }
 
@@ -125,7 +125,7 @@ fn parser_compound_assignment_supports_index_targets() {
             assert_eq!(expr_shape(&target), "(index scores 0)");
             assert_eq!(expr_shape(&value), "(+ (index scores 0) 3)");
         }
-        other => panic!("expected assignment statement, got {:?}", other),
+        other => panic!("expected assignment statement, got {other:?}"),
     }
 }
 

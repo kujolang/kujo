@@ -94,7 +94,7 @@ fn image_conversion_roundtrip_works_in_interpreter_and_vm() {
             matches!(interp.env.get("ok"), Some(Value::Bool(true))),
             "interpreter save() did not return true"
         );
-        assert!(out_interp.exists(), "interpreter output file missing: {:?}", out_interp);
+        assert!(out_interp.exists(), "interpreter output file missing: {out_interp:?}");
         let interp_size =
             std::fs::metadata(&out_interp).expect("failed to stat interpreter output").len();
         assert!(interp_size > 0, "interpreter output file is empty");
@@ -110,7 +110,7 @@ fn image_conversion_roundtrip_works_in_interpreter_and_vm() {
         assert!(vm_result.is_ok(), "vm script failed: {:?}", vm_result.err());
         let saved_flag = env.lock().unwrap().get("ok");
         assert!(matches!(saved_flag, Some(Value::Bool(true))), "vm save() did not return true");
-        assert!(out_vm.exists(), "vm output file missing: {:?}", out_vm);
+        assert!(out_vm.exists(), "vm output file missing: {out_vm:?}");
         let vm_size = std::fs::metadata(&out_vm).expect("failed to stat vm output").len();
         assert!(vm_size > 0, "vm output file is empty");
         image::open(&out_vm).expect("vm output is not loadable image");

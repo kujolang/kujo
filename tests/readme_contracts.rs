@@ -47,6 +47,6 @@ fn readme_covers_v1_status_cli_security_and_core_reference_links() {
     ];
 
     for marker in required_markers {
-        assert!(content.contains(marker), "expected README to include marker {:?}", marker);
+        assert!(content.contains(marker), "expected README to include marker {marker:?}");
     }
 }

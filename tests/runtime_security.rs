@@ -13,7 +13,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -71,7 +71,7 @@ fn runtime_security_rejects_invalid_escape_sequences() {
 fn runtime_security_rejects_oversized_string_literals() {
     let project_root = unique_temp_dir("runtime_security_string_limit");
     let oversized = "a".repeat(runtime_limits::DEFAULT_MAX_STRING_LITERAL_LENGTH + 1);
-    let script_source = format!("print(\"{}\")\n", oversized);
+    let script_source = format!("print(\"{oversized}\")\n");
     let script_path = write_script(&project_root, "oversized_string.kujo", &script_source);
 
     let output =
@@ -166,8 +166,7 @@ fn runtime_security_enforces_interpreter_call_depth_limit() {
     let project_root = unique_temp_dir("runtime_security_call_depth");
     let depth = runtime_limits::DEFAULT_MAX_INTERPRETER_CALL_DEPTH + 8;
     let script_source = format!(
-        "func dive(n) {{\n    if n <= 0 {{ return 0 }}\n    return dive(n - 1)\n}}\nprint(dive({}))\n",
-        depth
+        "func dive(n) {{\n    if n <= 0 {{ return 0 }}\n    return dive(n - 1)\n}}\nprint(dive({depth}))\n"
     );
     let script_path = write_script(&project_root, "call_depth_limit.kujo", &script_source);
 
@@ -332,16 +331,16 @@ fn runtime_security_rejects_module_symlink_escape() {
     let project_root = unique_temp_dir("runtime_security_module_symlink_root");
     let outside_root = unique_temp_dir("runtime_security_module_symlink_outside");
     let module_name = "escaped_module";
-    let outside_module_path = outside_root.join(format!("{}.kujo", module_name));
+    let outside_module_path = outside_root.join(format!("{module_name}.kujo"));
     fs::write(&outside_module_path, "export escaped := 99\n")
         .expect("failed to write outside module file");
 
-    let symlink_path = project_root.join(format!("{}.kujo", module_name));
+    let symlink_path = project_root.join(format!("{module_name}.kujo"));
     unix_fs::symlink(&outside_module_path, &symlink_path)
         .expect("failed to create module symlink escape");
 
     let workflow = project_root.join("escape_main.kujo");
-    fs::write(&workflow, format!("import {}\nprint(\"unreachable\")\n", module_name))
+    fs::write(&workflow, format!("import {module_name}\nprint(\"unreachable\")\n"))
         .expect("failed to write workflow");
 
     let output = run_kujo(

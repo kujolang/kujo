@@ -58,7 +58,7 @@ fn interpreter_flag_dependency_map_generator_covers_required_surfaces_and_tags()
         "VM-first practical recommendations:",
         "Use `kujo run <file>` as the default VM-first path for ordinary modular projects.",
     ] {
-        assert!(map.contains(marker), "dependency map should contain required marker {:?}", marker);
+        assert!(map.contains(marker), "dependency map should contain required marker {marker:?}");
     }
 
     for required_row in [
@@ -70,8 +70,7 @@ fn interpreter_flag_dependency_map_generator_covers_required_surfaces_and_tags()
     ] {
         assert!(
             map.contains(required_row),
-            "dependency map should contain required row fragment {:?}",
-            required_row
+            "dependency map should contain required row fragment {required_row:?}"
         );
     }
 }

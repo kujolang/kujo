@@ -14,11 +14,10 @@ fn stdlib_reference_mentions_every_runtime_builtin() {
         fs::read_to_string(path).expect("failed to read docs/STANDARD_LIBRARY_REFERENCE.md");
 
     for builtin in Interpreter::get_builtin_names() {
-        let marker = format!("`{}`", builtin);
+        let marker = format!("`{builtin}`");
         assert!(
             content.contains(&marker),
-            "standard library reference should mention runtime builtin '{}'",
-            builtin
+            "standard library reference should mention runtime builtin '{builtin}'"
         );
     }
 }
@@ -39,8 +38,7 @@ fn stdlib_reference_defines_v1_tier_guarantee_policy() {
     ] {
         assert!(
             content.contains(marker),
-            "standard library reference should contain marker {:?}",
-            marker
+            "standard library reference should contain marker {marker:?}"
         );
     }
 }

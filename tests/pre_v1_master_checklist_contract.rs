@@ -25,10 +25,6 @@ fn pre_v1_master_checklist_defines_closure_semantics_and_blocker_rules() {
     ];
 
     for marker in required_markers {
-        assert!(
-            content.contains(marker),
-            "expected master checklist governance marker {:?}",
-            marker
-        );
+        assert!(content.contains(marker), "expected master checklist governance marker {marker:?}");
     }
 }

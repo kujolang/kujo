@@ -190,12 +190,10 @@ fn startup_and_first_response_latency_stay_within_guardrails() {
 
     assert!(
         startup_avg.as_millis() < 20,
-        "startup average latency exceeded guardrail: {:?}",
-        startup_avg
+        "startup average latency exceeded guardrail: {startup_avg:?}"
     );
     assert!(
         first_completion_avg.as_millis() < 80,
-        "first-response average latency exceeded guardrail: {:?}",
-        first_completion_avg
+        "first-response average latency exceeded guardrail: {first_completion_avg:?}"
     );
 }

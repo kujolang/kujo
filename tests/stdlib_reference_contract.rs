@@ -91,21 +91,19 @@ fn stdlib_inventory_documents_all_runtime_builtins_exactly_once() {
         .iter()
         .filter_map(|(name, count)| if *count > 1 { Some(name.clone()) } else { None })
         .collect();
-    assert!(duplicates.is_empty(), "duplicate documented builtins found: {:?}", duplicates);
+    assert!(duplicates.is_empty(), "duplicate documented builtins found: {duplicates:?}");
 
     for function_name in &runtime {
         assert!(
             documented_counts.contains_key(function_name),
-            "runtime builtin '{}' is missing from docs/STANDARD_LIBRARY.md",
-            function_name
+            "runtime builtin '{function_name}' is missing from docs/STANDARD_LIBRARY.md"
         );
     }
 
     for documented_name in documented_counts.keys() {
         assert!(
             runtime_set.contains(documented_name),
-            "documented builtin '{}' is not registered by runtime",
-            documented_name
+            "documented builtin '{documented_name}' is not registered by runtime"
         );
     }
 }
@@ -205,7 +203,7 @@ fn stdlib_inventory_alias_rows_match_canonical_runtime_contracts() {
     for alias_name in ["println", "str", "time"] {
         let row = by_name
             .get(alias_name)
-            .unwrap_or_else(|| panic!("missing alias row '{}' from inventory", alias_name));
+            .unwrap_or_else(|| panic!("missing alias row '{alias_name}' from inventory"));
         assert_eq!(row.arity, expected_arity_label(alias_name));
 
         let expected_capability = Interpreter::native_function_capability(alias_name)

@@ -10,7 +10,7 @@ fn parse_without_panic(source: &str) {
         parser.parse()
     }));
 
-    assert!(parse_result.is_ok(), "parser panicked for malformed user input: {}", source);
+    assert!(parse_result.is_ok(), "parser panicked for malformed user input: {source}");
 }
 
 #[test]

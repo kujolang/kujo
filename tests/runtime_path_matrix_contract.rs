@@ -28,8 +28,7 @@ fn vm_parity_doc_includes_command_level_runtime_path_matrix() {
     ] {
         assert!(
             content.contains(marker),
-            "runtime-path matrix should contain marker {:?}",
-            marker
+            "runtime-path matrix should contain marker {marker:?}"
         );
     }
 }

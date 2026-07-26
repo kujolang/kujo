@@ -48,16 +48,14 @@ fn native_security_posture_doc_covers_required_operator_sections_and_flags() {
     for section in required_sections {
         assert!(
             content.contains(section),
-            "expected security posture doc to include section marker {:?}",
-            section
+            "expected security posture doc to include section marker {section:?}"
         );
     }
 
     for flag in expected_capability_flags() {
         assert!(
             content.contains(flag),
-            "expected security posture doc to include capability flag {:?}",
-            flag
+            "expected security posture doc to include capability flag {flag:?}"
         );
     }
 
@@ -84,8 +82,7 @@ fn cli_help_includes_documented_capability_flags() {
     for flag in expected_capability_flags() {
         assert!(
             stdout.contains(flag),
-            "expected run --help output to include capability flag {:?}",
-            flag
+            "expected run --help output to include capability flag {flag:?}"
         );
     }
     assert!(stdout.contains("--untrusted"), "expected run --help output to include --untrusted");

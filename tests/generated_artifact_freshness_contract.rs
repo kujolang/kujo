@@ -38,7 +38,7 @@ fn run_script(script: &str, args: &[&str], output_md: &Path, output_csv: &Path) 
         .args(args)
         .current_dir(repo_root())
         .output()
-        .unwrap_or_else(|error| panic!("failed to execute {}: {}", script, error));
+        .unwrap_or_else(|error| panic!("failed to execute {script}: {error}"));
 
     assert!(
         output.status.success(),
@@ -48,8 +48,8 @@ fn run_script(script: &str, args: &[&str], output_md: &Path, output_csv: &Path) 
         String::from_utf8_lossy(&output.stderr)
     );
 
-    assert!(output_md.exists(), "{} should write markdown output", script);
-    assert!(output_csv.exists(), "{} should write csv output", script);
+    assert!(output_md.exists(), "{script} should write markdown output");
+    assert!(output_csv.exists(), "{script} should write csv output");
 }
 
 fn assert_fresh_date(path: &Path, prefix: &str) {

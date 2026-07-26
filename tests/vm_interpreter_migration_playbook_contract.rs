@@ -24,6 +24,6 @@ fn vm_interpreter_migration_playbook_includes_runtime_recipes() {
         "cargo test --test vm_interpreter_parity_surfaces",
         "cargo test --test package_module_workflow_integration",
     ] {
-        assert!(content.contains(marker), "migration playbook should contain marker {:?}", marker);
+        assert!(content.contains(marker), "migration playbook should contain marker {marker:?}");
     }
 }

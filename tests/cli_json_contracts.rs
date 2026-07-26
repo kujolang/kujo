@@ -9,7 +9,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -316,8 +316,7 @@ fn docgen_json_discovery_limits_fail_on_invalid_env_values() {
         stderr.contains(
             "KUJO_DOCGEN_MAX_DEPTH environment value 'not-a-number' is not a valid integer"
         ),
-        "stderr did not include invalid env limit diagnostic: {}",
-        stderr
+        "stderr did not include invalid env limit diagnostic: {stderr}"
     );
 }
 
@@ -341,8 +340,7 @@ fn docgen_json_discovery_limits_fail_on_zero_cli_values() {
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
     assert!(
         stderr.contains("max discovery files must be greater than 0"),
-        "stderr did not include zero-limit diagnostic: {}",
-        stderr
+        "stderr did not include zero-limit diagnostic: {stderr}"
     );
 }
 
@@ -660,8 +658,7 @@ fn run_runtime_json_diagnostic_contract_includes_missing_module_help() {
     assert!(message.contains("Module not found: missing_module"));
     assert!(
         message.contains("flat <module>.kujo file") && message.contains("src/..."),
-        "expected module resolution help text, got: {}",
-        message
+        "expected module resolution help text, got: {message}"
     );
     assert!(help.contains("<module>.kujo") && help.contains("src/..."));
 }
@@ -689,8 +686,7 @@ fn run_runtime_json_diagnostic_contract_reports_capability_hint() {
     assert!(message.contains("Capability denied: filesystem-write required for write_file"));
     assert!(
         message.contains("--allow-fs-write"),
-        "expected capability hint in runtime diagnostic message, got: {}",
-        message
+        "expected capability hint in runtime diagnostic message, got: {message}"
     );
     assert!(help.contains("--allow-*"));
 }
@@ -717,8 +713,7 @@ fn run_runtime_json_diagnostic_contract_reports_non_callable_call_hint() {
     assert!(message.contains("Cannot call non-function"));
     assert!(
         message.contains("callable value"),
-        "expected callable remediation hint, got: {}",
-        message
+        "expected callable remediation hint, got: {message}"
     );
     assert!(help.contains("functions") && help.contains("callable values"));
 }

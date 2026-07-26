@@ -12,8 +12,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be valid")
         .as_nanos();
-    let path =
-        std::env::temp_dir().join(format!("kujo_optional_typing_contract_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_optional_typing_contract_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }

@@ -41,7 +41,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -54,7 +54,7 @@ fn find_free_port() -> Option<u16> {
     let listener = match TcpListener::bind((TEST_HOST, 0)) {
         Ok(listener) => listener,
         Err(error) if error.kind() == ErrorKind::PermissionDenied => return None,
-        Err(error) => panic!("failed to allocate test port: {}", error),
+        Err(error) => panic!("failed to allocate test port: {error}"),
     };
     Some(listener.local_addr().expect("listener should have local addr").port())
 }
@@ -111,7 +111,7 @@ fn spawn_serve_process_with_extra_args(root: &Path, extra_args: &[&str]) -> Opti
 
         if reached {
             if let Some(status) = child.try_wait().expect("failed to poll child process") {
-                panic!("kujo serve exited before readiness check completed: {}", status);
+                panic!("kujo serve exited before readiness check completed: {status}");
             }
             return Some(ServeProcess { child, port });
         }
@@ -163,17 +163,17 @@ fn send_http_request(port: u16, request: &str) -> HttpResponse {
 
 fn send_http_request_once(port: u16, request: &str) -> Result<HttpResponse, String> {
     let mut stream = TcpStream::connect((TEST_HOST, port))
-        .map_err(|error| format!("failed to connect to serve process: {}", error))?;
+        .map_err(|error| format!("failed to connect to serve process: {error}"))?;
     stream
         .set_read_timeout(Some(Duration::from_secs(2)))
-        .map_err(|error| format!("failed to set read timeout: {}", error))?;
+        .map_err(|error| format!("failed to set read timeout: {error}"))?;
     stream
         .set_write_timeout(Some(Duration::from_secs(2)))
-        .map_err(|error| format!("failed to set write timeout: {}", error))?;
+        .map_err(|error| format!("failed to set write timeout: {error}"))?;
 
     stream
         .write_all(request.as_bytes())
-        .map_err(|error| format!("failed to write HTTP request: {}", error))?;
+        .map_err(|error| format!("failed to write HTTP request: {error}"))?;
     let _ = stream.shutdown(Shutdown::Write);
 
     let mut response_bytes = Vec::new();
@@ -183,10 +183,10 @@ fn send_http_request_once(port: u16, request: &str) -> Result<HttpResponse, Stri
             if response_bytes.windows(4).any(|window| window == b"\r\n\r\n") {
                 Ok(parse_http_response(&response_bytes))
             } else {
-                Err(format!("connection reset before full response: {}", error))
+                Err(format!("connection reset before full response: {error}"))
             }
         }
-        Err(error) => Err(format!("failed to read HTTP response: {}", error)),
+        Err(error) => Err(format!("failed to read HTTP response: {error}")),
     }
 }
 
@@ -457,8 +457,7 @@ fn serve_if_none_match_returns_304_for_matching_etag() {
     let second = send_http_request(
         server.port,
         &format!(
-			"GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nIf-None-Match: {}\r\nConnection: close\r\n\r\n",
-			etag
+			"GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nIf-None-Match: {etag}\r\nConnection: close\r\n\r\n"
 		),
     );
 
@@ -553,22 +552,22 @@ fn serve_mime_policy_covers_known_unknown_and_extensionless_assets() {
 
     for (path, expected_content_type) in cases {
         let request =
-            format!("GET {} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n", path);
+            format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
         let response = send_http_request(server.port, &request);
-        assert_eq!(200, response.status_code, "unexpected status for {}", path);
+        assert_eq!(200, response.status_code, "unexpected status for {path}");
         assert_eq!(
             expected_content_type,
             response
                 .headers
                 .get("content-type")
-                .unwrap_or_else(|| panic!("expected Content-Type for {}", path))
+                .unwrap_or_else(|| panic!("expected Content-Type for {path}"))
         );
         assert_eq!(
             "nosniff",
             response
                 .headers
                 .get("x-content-type-options")
-                .unwrap_or_else(|| panic!("expected nosniff header for {}", path))
+                .unwrap_or_else(|| panic!("expected nosniff header for {path}"))
         );
     }
 
@@ -717,7 +716,7 @@ fn serve_oversized_request_target_returns_414() {
 
     let oversized_path = format!("/{}", "a".repeat(10_000));
     let request =
-        format!("GET {} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n", oversized_path);
+        format!("GET {oversized_path} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n");
 
     let server = spawn_server_or_skip!(spawn_serve_process(&root));
     let response = send_http_request(server.port, &request);
@@ -735,8 +734,7 @@ fn serve_oversized_request_line_returns_414() {
 
     let oversized_method = "M".repeat(9_000);
     let request = format!(
-        "{} /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n",
-        oversized_method
+        "{oversized_method} /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n"
     );
 
     let server = spawn_server_or_skip!(spawn_serve_process(&root));
@@ -759,8 +757,7 @@ fn serve_oversized_headers_return_413() {
     ));
     let huge_header_value = "x".repeat(1024);
     let request = format!(
-        "GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nX-Big: {}\r\nConnection: close\r\n\r\n",
-        huge_header_value
+        "GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nX-Big: {huge_header_value}\r\nConnection: close\r\n\r\n"
     );
     let response = send_http_request(server.port, &request);
 
@@ -782,7 +779,7 @@ fn serve_too_many_headers_return_413() {
 
     let mut request = String::from("GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\n");
     for index in 0..6 {
-        request.push_str(&format!("X-Header-{}: value\r\n", index));
+        request.push_str(&format!("X-Header-{index}: value\r\n"));
     }
     request.push_str("Connection: close\r\n\r\n");
 

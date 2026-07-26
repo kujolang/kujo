@@ -8,7 +8,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be valid")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_unsafe_inventory_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_unsafe_inventory_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -133,8 +133,7 @@ fn unsafe_inventory_enforces_current_executable_budget() {
 
     assert!(
         executable_count <= 58,
-        "executable unsafe budget regression: expected <= 58, got {}",
-        executable_count
+        "executable unsafe budget regression: expected <= 58, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -146,7 +145,6 @@ fn unsafe_inventory_enforces_current_executable_budget() {
 
     assert!(
         jit_executable_count <= 45,
-        "jit executable unsafe budget regression: expected <= 45, got {}",
-        jit_executable_count
+        "jit executable unsafe budget regression: expected <= 45, got {jit_executable_count}"
     );
 }

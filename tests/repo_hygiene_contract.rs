@@ -88,7 +88,7 @@ fn seed_hygiene_policy_repo(root: &Path) {
         "ROADMAP.md",
         "rustfmt.toml",
     ] {
-        fs::write(root.join(entry), format!("seeded {}\n", entry))
+        fs::write(root.join(entry), format!("seeded {entry}\n"))
             .expect("failed to write allowlisted root file");
     }
     fs::write(
@@ -152,7 +152,7 @@ fn repo_hygiene_policy_lists_current_root_contract() {
         "var/",
         "root clutter",
     ] {
-        assert!(content.contains(marker), "missing policy marker: {}", marker);
+        assert!(content.contains(marker), "missing policy marker: {marker}");
     }
 }
 

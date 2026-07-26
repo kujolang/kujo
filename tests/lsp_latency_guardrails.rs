@@ -15,7 +15,7 @@ fn representative_source() -> String {
     ];
 
     for index in 0..1200 {
-        lines.push(format!("let value_{} := {}", index, index));
+        lines.push(format!("let value_{index} := {index}"));
     }
 
     lines.push("let result := compute_total([1, 2, 3, 4])".to_string());
@@ -57,17 +57,11 @@ fn latency_guardrails_for_completion_diagnostics_and_hover() {
     // Conservative guardrails to catch severe regressions while staying stable on loaded CI hosts.
     assert!(
         completion_avg.as_millis() < 120,
-        "completion average latency exceeded guardrail: {:?}",
-        completion_avg
+        "completion average latency exceeded guardrail: {completion_avg:?}"
     );
     assert!(
         diagnostics_avg.as_millis() < 120,
-        "diagnostics average latency exceeded guardrail: {:?}",
-        diagnostics_avg
+        "diagnostics average latency exceeded guardrail: {diagnostics_avg:?}"
     );
-    assert!(
-        hover_avg.as_millis() < 120,
-        "hover average latency exceeded guardrail: {:?}",
-        hover_avg
-    );
+    assert!(hover_avg.as_millis() < 120, "hover average latency exceeded guardrail: {hover_avg:?}");
 }

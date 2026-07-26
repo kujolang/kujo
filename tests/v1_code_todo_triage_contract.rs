@@ -8,7 +8,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be valid")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_v1_code_todo_triage_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_v1_code_todo_triage_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }

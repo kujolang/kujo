@@ -22,7 +22,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -95,7 +95,7 @@ fn parser_accepts_from_import_with_single_level_dotted_module_path() {
             let expected = vec!["value".to_string()];
             assert_eq!(symbols.as_ref(), Some(&expected));
         }
-        other => panic!("expected import statement, got {:?}", other),
+        other => panic!("expected import statement, got {other:?}"),
     }
 }
 
@@ -114,7 +114,7 @@ fn parser_accepts_from_import_with_multi_level_dotted_module_path() {
             let expected = vec!["add".to_string(), "sub".to_string()];
             assert_eq!(symbols.as_ref(), Some(&expected));
         }
-        other => panic!("expected import statement, got {:?}", other),
+        other => panic!("expected import statement, got {other:?}"),
     }
 }
 
@@ -156,7 +156,7 @@ fn parser_keeps_existing_flat_import_forms_unchanged() {
             assert_eq!(module, "math_helper");
             assert!(symbols.is_none());
         }
-        other => panic!("expected import statement, got {:?}", other),
+        other => panic!("expected import statement, got {other:?}"),
     }
     match &output.stmts[1] {
         kujo::ast::Stmt::Import { module, symbols } => {
@@ -164,7 +164,7 @@ fn parser_keeps_existing_flat_import_forms_unchanged() {
             let expected = vec!["helper".to_string(), "formatter".to_string()];
             assert_eq!(symbols.as_ref(), Some(&expected));
         }
-        other => panic!("expected import statement, got {:?}", other),
+        other => panic!("expected import statement, got {other:?}"),
     }
 }
 
@@ -183,7 +183,7 @@ fn parser_accepts_bare_return_before_closing_brace() {
             assert_eq!(body.len(), 1);
             assert!(matches!(body[0], kujo::ast::Stmt::Return(None)));
         }
-        other => panic!("expected function statement, got {:?}", other),
+        other => panic!("expected function statement, got {other:?}"),
     }
 }
 

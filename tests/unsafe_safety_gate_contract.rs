@@ -16,7 +16,7 @@ fn unsafe_safety_gate_help_lists_modes() {
     assert!(output.status.success(), "help should succeed");
     let stdout = String::from_utf8(output.stdout).expect("help stdout should be utf-8");
     for expected in ["--dry-run", "--with-miri", "Failure modes"] {
-        assert!(stdout.contains(expected), "expected help output to include {:?}", expected);
+        assert!(stdout.contains(expected), "expected help output to include {expected:?}");
     }
 }
 
@@ -43,7 +43,7 @@ fn unsafe_safety_gate_dry_run_emits_expected_commands() {
         "[dry-run] cargo test --test vm_interpreter_parity_surfaces",
         "[dry-run] cargo +nightly miri test --test vm_interpreter_parity_surfaces vm_and_interpreter_resolve_defined_identifiers",
     ] {
-        assert!(stdout.contains(expected), "expected dry-run output to include {:?}", expected);
+        assert!(stdout.contains(expected), "expected dry-run output to include {expected:?}");
     }
 }
 

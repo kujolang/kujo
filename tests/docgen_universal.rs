@@ -22,9 +22,9 @@ fn symbol_visibility<'a>(symbols: &'a [Value], qualified_name: &str) -> &'a str 
     symbols
         .iter()
         .find(|symbol| symbol["qualified_name"] == qualified_name)
-        .unwrap_or_else(|| panic!("missing symbol '{}'", qualified_name))["visibility"]
+        .unwrap_or_else(|| panic!("missing symbol '{qualified_name}'"))["visibility"]
         .as_str()
-        .unwrap_or_else(|| panic!("symbol '{}' visibility should be string", qualified_name))
+        .unwrap_or_else(|| panic!("symbol '{qualified_name}' visibility should be string"))
 }
 
 fn has_symbol(symbols: &[Value], qualified_name: &str) -> bool {
@@ -36,7 +36,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be valid")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_docgen_universal_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_docgen_universal_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -126,8 +126,7 @@ fn http_200_response() -> String {
 
 fn http_302_response(location: &str) -> String {
     format!(
-        "HTTP/1.1 302 Found\r\nLocation: {}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-        location
+        "HTTP/1.1 302 Found\r\nLocation: {location}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
     )
 }
 
@@ -1092,13 +1091,12 @@ fn docgen_kujo_extraction_edge_fixture_async_visibility_contract() {
 
     for (qualified_name, visibility) in expected_map {
         let expected_visibility = visibility.as_str().unwrap_or_else(|| {
-            panic!("visibility fixture for '{}' should be string", qualified_name)
+            panic!("visibility fixture for '{qualified_name}' should be string")
         });
         assert_eq!(
             symbol_visibility(symbols, qualified_name),
             expected_visibility,
-            "unexpected visibility for fixture symbol '{}'",
-            qualified_name
+            "unexpected visibility for fixture symbol '{qualified_name}'"
         );
     }
 }
@@ -1151,8 +1149,7 @@ fn docgen_kujo_extraction_edge_fixture_async_strict_gate_contract() {
     assert_eq!(summary.undocumented_count, expected_undocumented);
     assert!(
         summary.gate_failures.iter().any(|failure| failure.contains(expected_gate_failure)),
-        "strict gate failures should contain '{}'",
-        expected_gate_failure
+        "strict gate failures should contain '{expected_gate_failure}'"
     );
 }
 
@@ -1209,13 +1206,12 @@ fn docgen_kujo_parser_assisted_fixture_success_contract() {
 
     for (qualified_name, visibility) in expected_map {
         let expected_visibility = visibility.as_str().unwrap_or_else(|| {
-            panic!("parser-assisted fixture visibility for '{}' should be string", qualified_name)
+            panic!("parser-assisted fixture visibility for '{qualified_name}' should be string")
         });
         assert_eq!(
             symbol_visibility(symbols, qualified_name),
             expected_visibility,
-            "unexpected visibility for parser-assisted fixture symbol '{}'",
-            qualified_name
+            "unexpected visibility for parser-assisted fixture symbol '{qualified_name}'"
         );
     }
 }
@@ -1242,13 +1238,13 @@ fn docgen_kujo_parser_assisted_fixture_fallback_contract() {
 
     for (qualified_name, visibility) in expected_map {
         let expected_visibility = visibility.as_str().unwrap_or_else(|| {
-            panic!("fallback fixture visibility for '{}' should be string", qualified_name)
+            panic!("fallback fixture visibility for '{qualified_name}' should be string")
         });
         let actual = extraction
             .symbols
             .iter()
             .find(|symbol| symbol.qualified_name == qualified_name.as_str())
-            .unwrap_or_else(|| panic!("missing fallback symbol '{}'", qualified_name));
+            .unwrap_or_else(|| panic!("missing fallback symbol '{qualified_name}'"));
         assert_eq!(
             format!("{:?}", actual.visibility),
             expected_visibility,
@@ -1465,7 +1461,7 @@ fn docgen_supports_mixed_language_projects_deterministically() {
     for expected in
         ["kujo", "php", "python", "typescript", "javascript", "ruby", "go", "haskell", "zig"]
     {
-        assert!(langs.contains(expected), "missing language {}", expected);
+        assert!(langs.contains(expected), "missing language {expected}");
     }
 }
 
@@ -1621,8 +1617,7 @@ fn docgen_adapter_conformance_smoke_extracts_symbols_for_all_languages() {
     {
         assert!(
             present.contains(language),
-            "expected at least one extracted symbol for language {}",
-            language
+            "expected at least one extracted symbol for language {language}"
         );
     }
 }
@@ -2821,8 +2816,8 @@ fn docgen_large_repo_smoke_completes_with_deterministic_counts() {
 
     for idx in 0..250usize {
         write_file(
-            &dir.join(format!("pkg/mod_{}.py", idx)),
-            &format!("def fn_{}(x):\n    return x\n", idx),
+            &dir.join(format!("pkg/mod_{idx}.py")),
+            &format!("def fn_{idx}(x):\n    return x\n"),
         );
     }
 

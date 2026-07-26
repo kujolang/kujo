@@ -34,15 +34,13 @@ fn import_heavy_cache_lookup_artifact_contains_required_markers() {
     ] {
         assert!(
             content.contains(marker),
-            "cache lookup artifact should contain marker {:?}",
-            marker
+            "cache lookup artifact should contain marker {marker:?}"
         );
     }
 
     let ratio = parse_cache_ratio(&content);
     assert!(
         ratio >= 100,
-        "cache lookup ratio should show a strong warm-path benefit, got {}x",
-        ratio
+        "cache lookup ratio should show a strong warm-path benefit, got {ratio}x"
     );
 }
