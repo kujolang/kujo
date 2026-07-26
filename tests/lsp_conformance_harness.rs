@@ -35,9 +35,8 @@ fn assert_json_contains(actual: &Value, expected_subset: &Value, context: &str) 
     match (actual, expected_subset) {
         (Value::Object(actual_obj), Value::Object(expected_obj)) => {
             for (key, expected_value) in expected_obj.iter() {
-                let actual_value = actual_obj
-                    .get(key)
-                    .unwrap_or_else(|| panic!("{context}: missing key '{key}'"));
+                let actual_value =
+                    actual_obj.get(key).unwrap_or_else(|| panic!("{context}: missing key '{key}'"));
                 assert_json_contains(actual_value, expected_value, context);
             }
         }
