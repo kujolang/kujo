@@ -37,7 +37,7 @@ fn assert_json_contains(actual: &Value, expected_subset: &Value, context: &str) 
             for (key, expected_value) in expected_obj.iter() {
                 let actual_value = actual_obj
                     .get(key)
-                    .unwrap_or_else(|| panic!("{}: missing key '{}'", context, key));
+                    .unwrap_or_else(|| panic!("{context}: missing key '{key}'"));
                 assert_json_contains(actual_value, expected_value, context);
             }
         }
@@ -53,15 +53,14 @@ fn assert_json_contains(actual: &Value, expected_subset: &Value, context: &str) 
             for (index, expected_item) in expected_items.iter().enumerate() {
                 let actual_item = actual_items
                     .get(index)
-                    .unwrap_or_else(|| panic!("{}: missing array index {}", context, index));
+                    .unwrap_or_else(|| panic!("{context}: missing array index {index}"));
                 assert_json_contains(actual_item, expected_item, context);
             }
         }
         _ => {
             assert_eq!(
                 actual, expected_subset,
-                "{}: scalar mismatch (actual={}, expected={})",
-                context, actual, expected_subset
+                "{context}: scalar mismatch (actual={actual}, expected={expected_subset})"
             );
         }
     }
