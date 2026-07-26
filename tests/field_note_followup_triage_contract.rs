@@ -1,9 +1,28 @@
 use std::fs;
-use std::path::PathBuf;
-use std::process::Command;
+use std::path::{Path, PathBuf};
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+}
+
+fn collect_markdown_files_with_unchecked_boxes(dir: &Path, files: &mut Vec<PathBuf>) {
+    for entry in fs::read_dir(dir).expect("failed to read notes directory") {
+        let entry = entry.expect("failed to read notes entry");
+        let path = entry.path();
+        if path.is_dir() {
+            collect_markdown_files_with_unchecked_boxes(&path, files);
+            continue;
+        }
+
+        if path.extension().and_then(|value| value.to_str()) != Some("md") {
+            continue;
+        }
+
+        let content = fs::read_to_string(&path).expect("failed to read notes markdown file");
+        if content.lines().any(|line| line.starts_with("- [ ]")) {
+            files.push(path);
+        }
+    }
 }
 
 #[test]
@@ -47,23 +66,11 @@ fn field_note_followup_triage_index_routes_old_checkboxes() {
         "triage index should record the audited unchecked-note inventory count and command"
     );
 
-    let output = Command::new("rg")
-        .current_dir(&root)
-        .args(["-l", "^- \\[ \\]", "notes", "-g", "*.md"])
-        .output()
-        .expect("failed to run rg inventory command");
-    assert!(
-        output.status.success(),
-        "unchecked field-note inventory command should succeed, status={:?}, stderr={}",
-        output.status.code(),
-        String::from_utf8_lossy(&output.stderr)
-    );
-    let count = String::from_utf8_lossy(&output.stdout)
-        .lines()
-        .filter(|line| !line.trim().is_empty())
-        .count();
+    let mut files = Vec::new();
+    collect_markdown_files_with_unchecked_boxes(&root.join("notes"), &mut files);
     assert_eq!(
-        count, 194,
+        files.len(),
+        194,
         "triage index inventory count should stay in sync with notes unchecked checkbox files"
     );
 }
