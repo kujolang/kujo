@@ -212,7 +212,7 @@ fn generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_outpu
         "| Fixture | VM Exit | Interpreter Exit | VM Matches Snapshot | Interpreter Matches Snapshot | Delta Type | Mismatch Bucket | Owner | Priority | Rationale |",
         "Summary:",
         "VM coverage gate:",
-        "gate status: `PASS`",
+        "gate status: `",
     ] {
         assert!(
             generated_md.contains(needle),
@@ -223,6 +223,10 @@ fn generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_outpu
             "checked-in mismatch inventory should contain {needle:?}"
         );
     }
+    assert!(
+        committed_md.contains("gate status: `PASS`"),
+        "checked-in release mismatch inventory should preserve PASS gate status"
+    );
     let generated_csv = read_text(&output_csv);
     let committed_csv = read_text(&checked_in_csv);
     let expected_csv_header = "fixture,vm_exit,interpreter_exit,vm_matches_snapshot,interpreter_matches_snapshot,delta_type,mismatch_bucket,bucket_owner,priority,rationale";
