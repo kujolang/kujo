@@ -33,12 +33,7 @@ fn read_text(path: &Path) -> String {
 }
 
 fn run_script(script: &str, args: &[&str], output_md: &Path, output_csv: &Path) {
-    let output = Command::new("bash")
-        .arg(repo_root().join("scripts").join(script))
-        .args(args)
-        .current_dir(repo_root())
-        .output()
-        .unwrap_or_else(|error| panic!("failed to execute {script}: {error}"));
+    let output = run_script_with_env(script, args, &[], output_md, output_csv);
 
     assert!(
         output.status.success(),
@@ -50,6 +45,36 @@ fn run_script(script: &str, args: &[&str], output_md: &Path, output_csv: &Path) 
 
     assert!(output_md.exists(), "{script} should write markdown output");
     assert!(output_csv.exists(), "{script} should write csv output");
+}
+
+fn run_script_with_env(
+    script: &str,
+    args: &[&str],
+    envs: &[(&str, &str)],
+    output_md: &Path,
+    output_csv: &Path,
+) -> std::process::Output {
+    let mut command = Command::new("bash");
+    command.arg(repo_root().join("scripts").join(script)).args(args).current_dir(repo_root());
+    for (name, value) in envs {
+        command.env(name, value);
+    }
+
+    let output =
+        command.output().unwrap_or_else(|error| panic!("failed to execute {script}: {error}"));
+
+    assert!(
+        output.status.success(),
+        "{} should succeed: stdout={} stderr={}",
+        script,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    assert!(output_md.exists(), "{script} should write markdown output");
+    assert!(output_csv.exists(), "{script} should write csv output");
+
+    output
 }
 
 fn assert_fresh_date(path: &Path, prefix: &str) {
@@ -156,7 +181,7 @@ fn generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_outpu
     let output_csv = temp_dir.join("vm_mismatch.csv");
     let runner = repo_root().join("target").join("debug").join("kujo");
 
-    run_script(
+    run_script_with_env(
         "generate_vm_runtime_mismatch_inventory.sh",
         &[
             "--strict",
@@ -166,6 +191,10 @@ fn generated_vm_mismatch_inventory_artifact_is_fresh_and_matches_generator_outpu
             output_md.to_str().expect("utf-8"),
             "--output-csv",
             output_csv.to_str().expect("utf-8"),
+        ],
+        &[
+            ("KUJO_MISMATCH_FIXTURE_TIMEOUT_SECONDS", "60"),
+            ("KUJO_MISMATCH_CRYPTO_FIXTURE_TIMEOUT_SECONDS", "300"),
         ],
         &output_md,
         &output_csv,
