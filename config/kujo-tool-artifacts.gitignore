@@ -20,6 +20,9 @@
 
 # Redact
 /.redact/
+/redact-audit/
+/redact-transcript-audit/
+/transcript.report.json
 *.redacted
 *.redacted.md
 *.redacted.txt
@@ -145,6 +148,8 @@
 /dist/
 /dist-build/
 /logs/
+/tmp_test_*/
+/--interpreter/tmp_test_*/
 /.kujo-post-manifest.txt
 
 # Capsule and Zelus

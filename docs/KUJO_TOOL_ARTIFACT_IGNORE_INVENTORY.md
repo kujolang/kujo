@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-07-26
+Last updated: 2026-08-02
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -19,7 +19,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | RunLedger | `.runledger/`, `.runledger/runs/`, `RUNLEDGER_REPORT.md`, `runledger-entry.json` | `--ledger` can redirect the ledger; report path is caller-selected. |
 | CaseFile | `.casefile/<case-id>/case.{md,json}`, `.casefile-agency-loop/<case-id>/case.md`, `command.txt`, `environment.json`, `git-*.txt`, `stdout.log`, `stderr.log`, `combined.log`, `reproduction.md`, `handoff.md` | `casefile.toml` is created by `init`; keep it tracked only when it is shared config. `kujo-workflows/agency-verified-fix-loop/scripts/run-loop.sh` directs pre-fix Lens captures into `.casefile-agency-loop/` inside disposable fixture repositories. |
 | Intake | `.intake/` including `config/`, `secrets/`, `raw/`, `items/`, `actions/`, `learnings/`, `index/`, `logs/*.jsonl`, `strata/daily/`, `totalrecall/exports/`, `evals/`, `docs/`, `specs/`, and `backups/`; backup files from `intake backup create` are caller-selected and default under the store | `.intake/.env` and `.intake/secrets/` are intentionally local; copy shared source definitions into reviewed config/docs rather than tracking the live store. |
-| Redact | `.redact/runs/<timestamp>/` with `run.json`, manifests, detections/decisions/transformations/warnings JSONL, verifier reports, policy snapshots, hashes; default sanitize outputs beside inputs as `*.redacted`, `*.redacted.md`, or `*.redacted.txt` | `--audit-dir` and `--out` are caller-selected; sample redacted fixtures may be intentionally tracked when reviewed. |
+| Redact | `.redact/runs/<timestamp>/` with `run.json`, manifests, detections/decisions/transformations/warnings JSONL, verifier reports, policy snapshots, hashes; default sanitize outputs beside inputs as `*.redacted`, `*.redacted.md`, or `*.redacted.txt`; local transcript-audit wrappers may write `redact-audit/`, `redact-transcript-audit/`, and `transcript.report.json` | `--audit-dir` and `--out` are caller-selected; sample redacted fixtures may be intentionally tracked when reviewed. Transcript policies such as `transcript.policy.yaml` are caller-authored and should be tracked only when they are intentional shared policy. |
 | PatchBrief | stdout by default; common redirected files are `patchbrief.md` and `PATCHBRIEF.md`; dogfood artifacts under `.dogfood/`; generated MCP artifacts under `.kujo-mcp/` | Current CLI does not write a default file unless output is redirected by caller/wrapper. |
 | ChangeBucket | caller-selected `--output`, commonly `CHANGE_BUCKET.md` or `.cinch/artifacts/changebucket.md` | No default file output without `--output`. |
 | Scent | `.scent/packs/<stamp>/`, `out/`, `context.md`, `context.json`, `files.json`, `manifest.json`, `metadata.json`, `redactions.json` | Default pack path is `.scent/packs/<timestamp>` when `--out` is omitted. |
@@ -45,7 +45,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | CMS | `results/*.db*`, `results/*.log` | Test/integration state. |
 | CRUD API | `.tmp/*.db*`, `.tmp/*.log`, `.tmp/*.body`, `.tmp/*.out`, frontend build output | Local smoke-test state. |
 | SSG | `output/`, `logs/`, `tmp/`, `.kujo-post-manifest.txt` | Generated static site and build logs. |
-| Howl | `dist/howl/*.html`, `dist/howl/*.md`, `dist/howl/*.svg`, transient `--interpreter/tmp_*` | Rendered cards/gallery. |
+| Howl | `dist/howl/*.html`, `dist/howl/*.md`, `dist/howl/*.svg`, `tmp_test_*/` from the shell/unit harness, and transient `--interpreter/tmp_test_*/` scratch dirs | Rendered cards/gallery and local test harness output. |
 | SiteKit | `dist/` bundle (`sitekit.css`, `sitekit.js`, `fonts/`, distribution README) and `tests/visual/component-snapshot.json` from `npm run snapshot` | Consumers may intentionally vendor `dist/`; keep that as a repo-specific decision rather than tracking local rebuild output by default. |
 | Zelus | `.zelus/engagement-manifest.json`, `.zelus/campaign.json`, `.zelus/reference-run/`, plus caller-selected `--out` manifests, hypotheses, and reference/eval run directories | Current examples usually write to `/tmp`; ignore `.zelus/` when run inside a repo. |
 | Agents SDK | file-backed artifact/trace stores write under caller-provided roots, often `/tmp`; no repo-local default artifact root found | Ignore chosen local roots where configured. |
@@ -73,6 +73,8 @@ serve multiple rows in the inventory:
 - `/tests/tmp/`, `/tests/*.out`, `*.tmp-*`, and `*.bak` cover local test harness output and atomic-write leftovers.
 - `/.eval_*` covers Eval quickstart, parity, smoke, benchmark, and interrupted test scratch outputs named that way in docs and tests.
 - `/dist-build/` covers generated dashboard/package archives beside `/dist/` static output.
+- `/tmp_test_*/` and `/--interpreter/tmp_test_*/` cover Howl harness scratch output created at the repository root and under the Kujo interpreter-flag working directory seen in local ignored files.
+- `/redact-audit/`, `/redact-transcript-audit/`, and `/transcript.report.json` cover local Redact transcript audit runs while leaving caller-authored transcript policies to repo-specific decisions.
 
 ## Verification
 
