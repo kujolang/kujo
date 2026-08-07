@@ -133,6 +133,8 @@ For script ergonomics, see the output/report style guidance in [docs/FIRST_TOOL_
 
 This repository builds the Kujo language/runtime. If another `kujo` command is already installed on your system, prefer the full path to this repo's binary while testing so you do not confuse it with unrelated tools.
 
+For the language plus the local-first tooling ecosystem, use the [ecosystem installer](docs/ECOSYSTEM_INSTALL.md). It defaults to the runtime, package, context, proof, and agent-operating tools; `--all` adds AI, quality, and showcase profiles.
+
 ```bash
 git clone https://github.com/kujolang/kujo.git
 cd kujo
