@@ -111,7 +111,15 @@ fn run_examples() -> HashSet<&'static str> {
         "examples/ai_enterprise_replay_showcase.kujo",
         "examples/ai_multimodal_messages.kujo",
         "examples/ai_stream_callback.kujo",
+        "examples/benchmark_async.kujo",
+        "examples/benchmarks/sorting_algorithms.kujo",
+        "examples/benchmarks/string_processing.kujo",
+        "examples/csv_demo.kujo",
+        "examples/database_mysql.kujo",
+        "examples/destructuring_demo.kujo",
         "examples/hello.kujo",
+        "examples/http_streaming.kujo",
+        "examples/io_module_demo.kujo",
         "examples/arrays.kujo",
         "examples/dictionaries.kujo",
         "examples/helper_hlp_007_text_time.kujo",
@@ -119,63 +127,26 @@ fn run_examples() -> HashSet<&'static str> {
         "examples/helper_hlp_013_process_result.kujo",
         "examples/helper_hlp_015_canonical_json.kujo",
         "examples/math_module.kujo",
+        "examples/project_api_tester.kujo",
+        "examples/project_data_pipeline.kujo",
+        "examples/project_log_analyzer.kujo",
+        "examples/project_task_manager.kujo",
+        "examples/project_web_scraper.kujo",
+        "examples/projects/contact_manager.kujo",
+        "examples/projects/streaming_downloader.kujo",
+        "examples/spread_operator_demo.kujo",
+        "examples/string_functions.kujo",
         "examples/string_interpolation.kujo",
         "examples/scoping_simple.kujo",
+        "examples/struct_self_methods.kujo",
+        "examples/toml_demo.kujo",
+        "examples/unary_operators.kujo",
+        "examples/yaml_demo.kujo",
     ])
 }
 
 fn expected_fail_examples_with_reason() -> &'static [(&'static str, &'static str)] {
-    &[
-        ("examples/benchmark_async.kujo", "legacy control-flow syntax drift"),
-        (
-            "examples/benchmarks/sorting_algorithms.kujo",
-            "benchmark fixture kept as negative-coverage debt",
-        ),
-        (
-            "examples/benchmarks/string_processing.kujo",
-            "benchmark fixture kept as negative-coverage debt",
-        ),
-        ("examples/csv_demo.kujo", "legacy stdlib/example syntax drift"),
-        ("examples/database_mysql.kujo", "requires unsupported or drifted database demo syntax"),
-        (
-            "examples/destructuring_demo.kujo",
-            "destructuring surface still has parse drift in docs example",
-        ),
-        ("examples/http_streaming.kujo", "legacy loop syntax drift"),
-        ("examples/io_module_demo.kujo", "legacy IO module example drift"),
-        (
-            "examples/project_api_tester.kujo",
-            "named-argument style not supported by current parser",
-        ),
-        (
-            "examples/project_data_pipeline.kujo",
-            "pipeline project example has unresolved syntax debt",
-        ),
-        (
-            "examples/project_log_analyzer.kujo",
-            "named-argument style not supported by current parser",
-        ),
-        (
-            "examples/project_task_manager.kujo",
-            "named-argument style not supported by current parser",
-        ),
-        (
-            "examples/project_web_scraper.kujo",
-            "named-argument style not supported by current parser",
-        ),
-        (
-            "examples/projects/contact_manager.kujo",
-            "project example has unresolved parse/runtime debt",
-        ),
-        ("examples/projects/streaming_downloader.kujo", "legacy loop syntax drift"),
-        ("examples/spread_operator_demo.kujo", "spread/index syntax drift in legacy example"),
-        ("examples/string_functions.kujo", "legacy single-quote argument syntax drift"),
-        ("examples/struct_self_methods.kujo", "struct method example has unresolved syntax debt"),
-        ("examples/testing_demo.kujo", "legacy test helper syntax drift"),
-        ("examples/toml_demo.kujo", "intentional malformed string fixture"),
-        ("examples/unary_operators.kujo", "legacy unary syntax drift"),
-        ("examples/yaml_demo.kujo", "intentional malformed string fixture"),
-    ]
+    &[]
 }
 
 fn expected_fail_examples() -> HashSet<&'static str> {
@@ -359,17 +330,11 @@ fn docs_kujo_snippets_parse_or_expected_fail() {
 }
 
 #[test]
-fn expected_fail_examples_have_reasons_and_exist() {
-    let root = repo_root();
-    let expected_fails = expected_fail_examples_with_reason();
-    assert!(!expected_fails.is_empty(), "expected-fail examples list should not be empty");
-
-    let mut seen = HashSet::new();
-    for (path, reason) in expected_fails {
-        assert!(!reason.trim().is_empty(), "missing reason for {path}");
-        assert!(seen.insert(path), "duplicate expected-fail entry: {path}");
-        assert!(root.join(path).exists(), "expected-fail example does not exist on disk: {path}");
-    }
+fn expected_fail_examples_remain_empty() {
+    assert!(
+        expected_fail_examples_with_reason().is_empty(),
+        "all tracked examples should parse or run successfully"
+    );
 }
 
 #[test]
@@ -389,5 +354,18 @@ fn expected_fail_doc_blocks_remain_empty() {
     assert!(
         expected_fail_doc_blocks().is_empty(),
         "doc snippet expected-fail set should stay empty; add explicit rationale before introducing new debt"
+    );
+}
+
+#[test]
+fn testing_demo_passes_with_test_runner() {
+    let root = repo_root();
+    let output = run_kujo(&["test-run", "examples/testing_demo.kujo"], &root);
+    assert!(
+        output.status.success(),
+        "testing demo failed: status={:?} stdout={} stderr={}",
+        output.status.code(),
+        stdout_text(&output),
+        stderr_text(&output)
     );
 }

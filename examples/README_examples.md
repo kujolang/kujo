@@ -105,34 +105,11 @@ These are larger examples for exploring practical scripts after the learning pat
 - `async_await_demo.kujo`: async/await basics.
 - `concurrency_spawn.kujo`: spawn/concurrency demo.
 
-## Legacy or Expected-Fail Examples
+## Verification Status
 
-The files below are intentionally non-canonical right now. They are tracked in `tests/docs_examples.rs` as expected-fail examples with reasons, so they should not be copied as current syntax until repaired and removed from that list.
+Every tracked `.kujo` file under `examples/` is covered by `tests/docs_examples.rs`. Safe, deterministic programs are executed; effectful, interactive, long-running, and intentionally diagnostic examples are syntax-checked. `testing_demo.kujo` is executed through `kujo test-run`.
 
-| File | Reason |
-|---|---|
-| `examples/benchmark_async.kujo` | Legacy control-flow syntax drift. |
-| `examples/benchmarks/sorting_algorithms.kujo` | Benchmark fixture kept as negative-coverage debt. |
-| `examples/benchmarks/string_processing.kujo` | Benchmark fixture kept as negative-coverage debt. |
-| `examples/csv_demo.kujo` | Legacy stdlib/example syntax drift. |
-| `examples/database_mysql.kujo` | Requires unsupported or drifted database demo syntax. |
-| `examples/destructuring_demo.kujo` | Destructuring surface still has parse drift in docs example. |
-| `examples/http_streaming.kujo` | Legacy loop syntax drift. |
-| `examples/io_module_demo.kujo` | Legacy IO module example drift. |
-| `examples/project_api_tester.kujo` | Named-argument style not supported by current parser. |
-| `examples/project_data_pipeline.kujo` | Pipeline project example has unresolved syntax debt. |
-| `examples/project_log_analyzer.kujo` | Named-argument style not supported by current parser. |
-| `examples/project_task_manager.kujo` | Named-argument style not supported by current parser. |
-| `examples/project_web_scraper.kujo` | Named-argument style not supported by current parser. |
-| `examples/projects/contact_manager.kujo` | Project example has unresolved parse/runtime debt. |
-| `examples/projects/streaming_downloader.kujo` | Legacy loop syntax drift. |
-| `examples/spread_operator_demo.kujo` | Spread/index syntax drift in legacy example. |
-| `examples/string_functions.kujo` | Legacy single-quote argument syntax drift. |
-| `examples/struct_self_methods.kujo` | Struct method example has unresolved syntax debt. |
-| `examples/testing_demo.kujo` | Legacy test helper syntax drift. |
-| `examples/toml_demo.kujo` | Intentional malformed string fixture. |
-| `examples/unary_operators.kujo` | Legacy unary syntax drift. |
-| `examples/yaml_demo.kujo` | Intentional malformed string fixture. |
+See `VERIFICATION.md` for the exhaustive per-file status table.
 
 ## Feature Coverage
 

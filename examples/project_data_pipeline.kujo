@@ -1,295 +1,32 @@
-#!/usr/bin/env kujo
-# Data Pipeline - CSV to JSON Transformer with Validation
-# Showcases: CSV parsing, data transformation, validation, error handling, Result types
+# Data pipeline project
+# Extracts CSV, transforms rows, and loads a summary in memory.
 
-parser := arg_parser()
-parser.add_argument("--input", "-i", type="string", required=true, help="Input CSV file")
-parser.add_argument("--output", "-o", type="string", required=true, help="Output JSON file")
-parser.add_argument("--validate", "-v", type="bool", help="Validate data before transformation")
-parser.add_argument("--filter", "-f", type="string", help="Filter rows (format: 'column=value')")
-parser.add_argument("--columns", "-c", type="string", help="Select specific columns (comma-separated)")
-parser.add_argument("--pretty", "-p", type="bool", help="Pretty-print JSON output")
-
-args := parser.parse()
-
-# Statistics
-stats := {
-    "total_rows": 0,
-    "valid_rows": 0,
-    "invalid_rows": 0,
-    "filtered_rows": 0,
-    "errors": []
-}
-
-# Validate row data
-func validate_row(row, headers) {
-    errors := []
-    
-    # Check for required fields
-    required_fields := ["id", "name", "email"]
-    for field in required_fields {
-        if !has_key(row, field) {
-            push(errors, "Missing required field: " + field)
-        } else if row[field] == null or length(to_string(row[field])) == 0 {
-            push(errors, "Empty required field: " + field)
-        }
-    }
-    
-    # Validate email format if present
-    if has_key(row, "email") and row._email != null {
-        email := row._email
-        if !regex_match(email, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") {
-            push(errors, "Invalid email format: " + email)
-        }
-    }
-    
-    # Validate age if present (should be positive number)
-    if has_key(row, "age") and row._age != null {
-        age_str := to_string(row._age)
-        age := to_int(age_str)
-        if age < 0 or age > 150 {
-            push(errors, "Invalid age: " + age_str)
-        }
-    }
-    
-    if length(errors) > 0 {
-        return Err(errors)
-    }
-    return Ok(row)
-}
-
-# Transform row data
-func transform_row(row, selected_columns) {
-    transformed := {}
-    
-    if selected_columns == null {
-        # Include all columns
-        for key in keys(row) {
-            transformed[key] = row[key]
-        }
-    } else {
-        # Include only selected columns
-        for col in selected_columns {
-            if has_key(row, col) {
-                transformed[col] = row[col]
-            }
-        }
-    }
-    
-    # Add computed fields
-    if has_key(row, "first_name") and has_key(row, "last_name") {
-        transformed._full_name = row._first_name + " " + row._last_name
-    }
-    
-    # Normalize email to lowercase
-    if has_key(transformed, "email") and transformed._email != null {
-        transformed._email = lower(transformed._email)
-    }
-    
-    return transformed
-}
-
-# Apply filter to row
-func apply_filter(row, filter_expr) {
-    if filter_expr == null {
-        return true
-    }
-    
-    parts := split(filter_expr, "=")
-    if length(parts) != 2 {
-        print("⚠️  Warning: Invalid filter expression: " + filter_expr)
-        return true
-    }
-    
-    column := trim(parts[0])
-    value := trim(parts[1])
-    
-    if has_key(row, column) {
-        return to_string(row[column]) == value
-    }
-    
-    return false
-}
-
-# Process CSV file
-func process_csv(input_file, validate, filter_expr, selected_columns) {
-    print("📂 Reading input file: " + input_file)
-    
-    # Read file
-    file_result := read_file(input_file)
-    
-    match file_result {
-        case Err(error): {
-            print("❌ Error reading file: " + error)
-            return Err(error)
-        }
-        case Ok(content): {
-            lines := split(content, "\n")
-            
-            if length(lines) < 2 {
-                return Err("CSV file must have at least header and one data row")
-            }
-            
-            # Parse header
-            header_line := lines[0]
-            headers := split(header_line, ",")
-            for i in range(0, length(headers)) {
-                headers[i] = trim(headers[i])
-            }
-            
-            print("📋 Found " + to_string(length(headers)) + " columns: " + join(headers, ", "))
-            
-            # Parse selected columns if provided
-            cols_to_select := null
-            if selected_columns != null {
-                cols_to_select = split(selected_columns, ",")
-                for i in range(0, length(cols_to_select)) {
-                    cols_to_select[i] = trim(cols_to_select[i])
-                }
-            }
-            
-            # Process data rows
-            results := []
-            
-            for i in range(1, length(lines)) {
-                line := trim(lines[i])
-                if length(line) == 0 {
-                    continue
-                }
-                
-                stats._total_rows = stats._total_rows + 1
-                
-                # Parse row
-                values := split(line, ",")
-                row := {}
-                
-                for j in range(0, length(headers)) {
-                    if j < length(values) {
-                        row[headers[j]] = trim(values[j])
-                    } else {
-                        row[headers[j]] = null
-                    }
-                }
-                
-                # Apply filter
-                if !apply_filter(row, filter_expr) {
-                    stats._filtered_rows = stats._filtered_rows + 1
-                    continue
-                }
-                
-                # Validate if requested
-                if validate {
-                    validation := validate_row(row, headers)
-                    match validation {
-                        case Err(errors): {
-                            stats._invalid_rows = stats._invalid_rows + 1
-                            error_msg := "Row " + to_string(i) + ": " + join(errors, ", ")
-                            push(stats._errors, error_msg)
-                            continue
-                        }
-                        case Ok(_): {
-                            # Row is valid, continue processing
-                        }
-                    }
-                }
-                
-                # Transform row
-                transformed := transform_row(row, cols_to_select)
-                push(results, transformed)
-                stats._valid_rows = stats._valid_rows + 1
-            }
-            
-            return Ok(results)
-        }
+func normalize_sale(row) {
+    return {
+        "product": to_lower(row["product"]),
+        "quantity": row["quantity"],
+        "revenue": row["quantity"] * row["price"]
     }
 }
 
-# Write JSON output
-func write_json_output(data, output_file, pretty) {
-    print("💾 Writing output file: " + output_file)
-    
-    json_str := to_json(data)
-    
-    # Note: Pretty printing would require custom formatting
-    # For now, we'll use standard JSON serialization
-    
-    result := write_file(output_file, json_str)
-    match result {
-        case Ok(_): {
-            return Ok(true)
-        }
-        case Err(error): {
-            return Err("Failed to write output file: " + error)
-        }
-    }
+let source := "product,quantity,price\nWidget,3,12\nGadget,2,25\nWidget,1,12"
+let extracted := parse_csv(source)
+mut transformed := []
+mut total_revenue := 0
+mut sale := {}
+
+for row in extracted {
+    sale = normalize_sale(row)
+    transformed := push(transformed, sale)
+    total_revenue += sale["revenue"]
 }
 
-# Display statistics
-func display_stats() {
-    print("")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("📊 Processing Statistics")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("")
-    print("Total rows processed:    " + to_string(stats._total_rows))
-    print("Valid rows:              " + to_string(stats._valid_rows))
-    
-    if stats._invalid_rows > 0 {
-        print("Invalid rows (skipped):  " + to_string(stats._invalid_rows))
-    }
-    
-    if stats._filtered_rows > 0 {
-        print("Filtered rows (skipped): " + to_string(stats._filtered_rows))
-    }
-    
-    if length(stats._errors) > 0 {
-        print("")
-        print("⚠️  Validation Errors (showing first 10):")
-        limit := min(10, length(stats._errors))
-        for i in range(0, limit) {
-            print("  " + stats._errors[i])
-        }
-        if length(stats._errors) > 10 {
-            print("  ... and " + to_string(length(stats._errors) - 10) + " more")
-        }
-    }
-    
-    print("")
+let loaded := {
+    "row_count": len(transformed),
+    "total_revenue": total_revenue,
+    "rows": transformed
 }
 
-# Main execution
-print("")
-print("🔄 Data Pipeline - CSV to JSON Transformer")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("")
-
-# Process CSV
-result := process_csv(args._input, args._validate, args._filter, args._columns)
-
-match result {
-    case Ok(data): {
-        print("✅ Processed " + to_string(length(data)) + " records")
-        
-        # Write output
-        write_result := write_json_output(data, args._output, args._pretty)
-        
-        match write_result {
-            case Ok(_): {
-                print("✅ Output written successfully")
-                display_stats()
-                print("🎉 Pipeline completed successfully!")
-                exit(0)
-            }
-            case Err(error): {
-                print("❌ " + error)
-                display_stats()
-                exit(1)
-            }
-        }
-    }
-    case Err(error): {
-        print("❌ Pipeline failed: " + error)
-        display_stats()
-        exit(1)
-    }
-}
+assert_equal(loaded["row_count"], 3)
+assert_equal(loaded["total_revenue"], 98)
+print("pipeline result:", loaded)

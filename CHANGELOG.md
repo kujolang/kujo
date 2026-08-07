@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - User-local ecosystem installer with core, AI, quality, showcase, and operating profiles.
 
+### Fixed
+
+- Repaired all remaining syntax-drifted examples, removed the expected-fail example list, and added exhaustive per-file verification coverage.
+
 ## [1.0.0] - 2026-07-04
 
 ### Added

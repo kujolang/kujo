@@ -1,124 +1,16 @@
-// CSV Data Processing Demo
-// Demonstrates parsing and generating CSV files
+# CSV parsing and generation
 
-print("=== CSV Data Processing Demo ===\n")
+let csv_text := "name,age,active\nAlice,28,true\nBob,35,false"
+let rows := parse_csv(csv_text)
 
-// Example 1: Parse CSV data
-csv_str := "name,age,email,active
-Alice,28,alice@example.com,true
-Bob,35,bob@example.com,true
-Charlie,42,charlie@example.com,false
-Diana,31,diana@example.com,true"
+assert_equal(len(rows), 2)
+assert_equal(rows[0]["name"], "Alice")
+assert_equal(rows[1]["age"], 35)
 
-print("1. Parsing CSV data:")
-print(csv_str)
-print("")
+let generated := to_csv(rows)
+let round_trip := parse_csv(generated)
 
-users := parse_csv(csv_str)
-print("Parsed users:", users)
-print("")
-
-// Access rows
-print("2. Processing CSV rows:")
-for user in users {
-    print("Name: " + user["name"] + ", Age: " + to_string(user["age"]) + ", Email: " + user["email"])
-}
-print("")
-
-// Example 2: Filter and transform
-print("3. Filtering active users:")
-active_users := filter(users, func(user) {
-    return user["active"] == "true"
-})
-print("Active users count:", len(active_users))
-for user in active_users {
-    print("  - " + user["name"])
-}
-print("")
-
-// Example 3: Create and serialize to CSV
-print("Skipping to_csv generation sections in VM auto-run mode")
-print("\n=== CSV Demo Complete ===")
-exit(0)
-
-print("4. Creating CSV from data:")
-products := [
-    {"id": 1, "name": "Laptop", "price": 999.99, "stock": 15},
-    {"id": 2, "name": "Mouse", "price": 29.99, "stock": 50},
-    {"id": 3, "name": "Keyboard", "price": 79.99, "stock": 30},
-    {"id": 4, "name": "Monitor", "price": 299.99, "stock": 20}
-]
-
-csv_output := to_csv(products)
-print("Generated CSV:")
-print(csv_output)
-print("")
-
-// Example 4: Round-trip conversion
-print("5. Round-trip test:")
-original := [
-    {"name": "Project A", "status": "active", "budget": 50000, "team_size": 5},
-    {"name": "Project B", "status": "completed", "budget": 75000, "team_size": 8},
-    {"name": "Project C", "status": "planning", "budget": 100000, "team_size": 10}
-]
-
-csv_text := to_csv(original)
-print("Original -> CSV:")
-print(csv_text)
-
-parsed_back := parse_csv(csv_text)
-print("Parsed back:", parsed_back)
-print("")
-
-// Example 6: Data analysis
-print("6. CSV Data Analysis:")
-sales_csv := "product,region,q1,q2,q3,q4
-Widgets,North,1000,1200,1100,1300
-Widgets,South,800,900,950,1050
-Gadgets,North,1500,1600,1550,1700
-Gadgets,South,1200,1250,1300,1400"
-
-sales_data := parse_csv(sales_csv)
-print("Sales data loaded:", len(sales_data), "rows")
-print("")
-
-// Calculate total sales per product
-print("Total sales by product:")
-for row in sales_data {
-    product := row["product"]
-    region := row["region"]
-    total := row["q1"] + row["q2"] + row["q3"] + row["q4"]
-    print("  " + product + " (" + region + "): " + to_string(total))
-}
-print("")
-
-// Example 7: Generate report
-print("7. Generating CSV report:")
-report := [
-    {"date": "2026-01-01", "revenue": 5000, "expenses": 3000, "profit": 2000},
-    {"date": "2026-01-02", "revenue": 5500, "expenses": 3200, "profit": 2300},
-    {"date": "2026-01-03", "revenue": 6000, "expenses": 3500, "profit": 2500}
-]
-
-report_csv := to_csv(report)
-print("Financial Report:")
-print(report_csv)
-
-// Save to file (in real usage)
-// write_file("sales_data.csv", sales_csv)
-// write_file("report.csv", report_csv)
-// data := parse_csv(read_file("sales_data.csv"))
-
-// Example 8: Export user data
-print("8. Exporting user data:")
-user_export := [
-    {"user_id": 101, "username": "alice", "email": "alice@example.com", "signup_date": "2025-01-15"},
-    {"user_id": 102, "username": "bob", "email": "bob@example.com", "signup_date": "2025-02-20"},
-    {"user_id": 103, "username": "carol", "email": "carol@example.com", "signup_date": "2025-03-10"}
-]
-
-export_csv := to_csv(user_export)
-print("User Export CSV:")
-print(export_csv)
-
-print("\n=== CSV Demo Complete ===")
+assert_equal(len(round_trip), 2)
+assert_equal(round_trip[0]["name"], "Alice")
+print("parsed rows:", rows)
+print("generated CSV:\n" + generated)

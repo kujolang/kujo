@@ -106,7 +106,7 @@ print("=== Function Call Spreading (future feature) ===")
 print("")
 print("=== Combining Techniques ===")
 
-# Use both destructuring and spreading together
+# Use indexing and spreading together
 original_user := {
     "id": 123,
     "name": "Alice",
@@ -114,13 +114,13 @@ original_user := {
     "role": "admin"
 }
 
-# Extract id, spread the rest, add new field
-{id, ...rest} := original_user
-updated_user := {...rest, "id": id, "verified": true, "lastLogin": "2026-01-25"}
+# Read a field explicitly, then spread and override fields.
+id := original_user["id"]
+updated_user := {...original_user, "id": id, "verified": true, "lastLogin": "2026-01-25"}
 print("Updated user: " + to_string(updated_user))
 
 # Array example
 numbers := [1, 2, 3, 4, 5, 6]
-[first, ...middle] := numbers
-result := [0, first, ...middle, 100]
+first := numbers[0]
+result := [0, first, ...numbers, 100]
 print("Transformed: " + to_string(result))
