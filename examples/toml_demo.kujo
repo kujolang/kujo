@@ -1,132 +1,14 @@
-// TOML Serialization Demo
-// Demonstrates parsing and generating TOML configuration files
+# TOML parsing and generation
 
-print("=== TOML Configuration Demo ===\n")
+let toml_text := "title = \"Kujo\"\nversion = \"1.0.0\"\n[server]\nhost = \"127.0.0.1\"\nport = 8080"
+let config := parse_toml(toml_text)
 
-// Example 1: Parse a TOML config file
-toml_str := "[server]
-host = \"localhost\"
-port = 8080
-debug = true
+assert_equal(config["title"], "Kujo")
+assert_equal(config["server"]["port"], 8080)
 
-[database]
-host = \"db.example.com\"
-port = 5432
-name = \"myapp\"
-max_connections = 100
+let generated := to_toml(config)
+let round_trip := parse_toml(generated)
 
-[[users]]
-name = \"Alice\"
-role = \"admin\"
-
-[[users]]
-name = \"Bob\"
-role = \"user\""
-
-print("1. Parsing TOML configuration:")
-print(toml_str)
-print("")
-
-config := parse_toml(toml_str)
-print("Parsed config:", config)
-print("")
-
-// Access nested values
-print("2. Accessing configuration values:")
-print("Server host:", config["server"]["host"])
-print("Server port:", config["server"]["port"])
-print("Database name:", config["database"]["name"])
-print("Debug mode:", config["server"]["debug"])
-print("")
-
-// Access array
-print("3. Users list:")
-users := config["users"]
-for user in users {
-    print("  - " + user["name"] + " (" + user["role"] + ")")
-}
-print("")
-
-// Example 2: Create and serialize to TOML
-print("4. Creating new configuration:")
-new_config := {
-    "app": {
-        "name": "My Application",
-        "version": "1.0.0",
-        "author": "John Doe"
-    },
-    "settings": {
-        "theme": "dark",
-        "language": "en",
-        "auto_save": true,
-        "save_interval": 300
-    },
-    "plugins": ["security", "analytics", "backup"]
-}
-
-toml_output := to_toml(new_config)
-print("Generated TOML:")
-print(toml_output)
-print("")
-
-// Example 3: Round-trip conversion
-print("5. Round-trip test:")
-original := {
-    "title": "TOML Example",
-    "owner": {
-        "name": "Tom Preston-Werner",
-        "organization": "GitHub"
-    },
-    "database": {
-        "enabled": true,
-        "ports": [8000, 8001, 8002],
-        "data": ["delta", "phi"],
-        "temp_targets": {
-            "cpu": 79.5,
-            "case": 72.0
-        }
-    }
-}
-
-toml_text := to_toml(original)
-print("Original -> TOML:")
-print(toml_text)
-
-parsed_back := parse_toml(toml_text)
-print("Parsed back:", parsed_back)
-print("")
-
-// Example 4: Application config file
-print("6. Real-world application config:")
-app_config := {
-    "application": {
-        "name": "Kujo App",
-        "version": "0.6.0",
-        "environment": "production"
-    },
-    "server": {
-        "host": "0.0.0.0",
-        "port": 3000,
-        "workers": 4
-    },
-    "logging": {
-        "level": "info",
-        "format": "json",
-        "file": "/var/log/app.log"
-    },
-    "features": {
-        "auth": true,
-        "api": true,
-        "websockets": false
-    }
-}
-
-app_toml := to_toml(app_config)
-print("Application TOML config:")
-print(app_toml)
-
-// Save to file (in real usage)
-// write_file("config.toml", app_toml)
-// config := parse_toml(read_file("config.toml"))
-
-print("\n=== TOML Demo Complete ===")
+assert_equal(round_trip["server"]["host"], "127.0.0.1")
+print("parsed TOML:", config)
+print("generated TOML:\n" + generated)

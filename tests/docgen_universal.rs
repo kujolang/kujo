@@ -10,8 +10,7 @@ use kujo::docgen::gaps::LinkValidationOptions;
 use serde_json::Value;
 use std::collections::BTreeSet;
 use std::fs;
-use std::io::{Read, Write};
-use std::net::{SocketAddr, TcpListener};
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -22,9 +21,9 @@ fn symbol_visibility<'a>(symbols: &'a [Value], qualified_name: &str) -> &'a str 
     symbols
         .iter()
         .find(|symbol| symbol["qualified_name"] == qualified_name)
-        .unwrap_or_else(|| panic!("missing symbol '{}'", qualified_name))["visibility"]
+        .unwrap_or_else(|| panic!("missing symbol '{qualified_name}'"))["visibility"]
         .as_str()
-        .unwrap_or_else(|| panic!("symbol '{}' visibility should be string", qualified_name))
+        .unwrap_or_else(|| panic!("symbol '{qualified_name}' visibility should be string"))
 }
 
 fn has_symbol(symbols: &[Value], qualified_name: &str) -> bool {
@@ -36,7 +35,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be valid")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_docgen_universal_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_docgen_universal_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -70,6 +69,7 @@ struct TestHttpServer {
 
 impl TestHttpServer {
     fn url_with_host(&self, host: &str, path: &str) -> String {
+        let host = if host.contains(':') { format!("[{host}]") } else { host.to_string() };
         format!("http://{}:{}{}", host, self.addr.port(), path)
     }
 }
@@ -78,43 +78,47 @@ fn spawn_http_server<F>(expected_requests: usize, responder: F) -> Option<TestHt
 where
     F: Fn(&str) -> String + Send + 'static,
 {
-    let listener = match TcpListener::bind("127.0.0.1:0") {
-        Ok(listener) => listener,
-        Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => {
+    spawn_http_server_on("127.0.0.1:0", expected_requests, responder)
+}
+
+fn spawn_http_server_on<F>(
+    bind_address: &str,
+    expected_requests: usize,
+    responder: F,
+) -> Option<TestHttpServer>
+where
+    F: Fn(&str) -> String + Send + 'static,
+{
+    let server = match tiny_http::Server::http(bind_address) {
+        Ok(server) => server,
+        Err(err) => {
             eprintln!(
                 "skipping network-bound docgen test: unable to bind local test server ({err})"
             );
             return None;
         }
-        Err(err) => panic!("bind test http server: {err}"),
     };
-    listener.set_nonblocking(true).expect("set nonblocking listener");
-    let addr = listener.local_addr().expect("local addr for test server");
+    let addr = server.server_addr().to_ip().expect("HTTP test server should use an IP socket");
     thread::spawn(move || {
-        let mut served = 0usize;
-        let mut idle_ticks = 0usize;
-        while served < expected_requests && idle_ticks < 800 {
-            match listener.accept() {
-                Ok((mut stream, _)) => {
-                    let mut buf = [0u8; 4096];
-                    let read = stream.read(&mut buf).unwrap_or(0);
-                    let request = String::from_utf8_lossy(&buf[..read]);
-                    let path = request
-                        .lines()
-                        .next()
-                        .and_then(|line| line.split_whitespace().nth(1))
-                        .unwrap_or("/");
-                    let response = responder(path);
-                    stream.write_all(response.as_bytes()).expect("write test response");
-                    served += 1;
-                    idle_ticks = 0;
-                }
-                Err(err) if err.kind() == std::io::ErrorKind::WouldBlock => {
-                    idle_ticks += 1;
-                    thread::sleep(Duration::from_millis(5));
-                }
-                Err(_) => break,
-            }
+        for _ in 0..expected_requests {
+            let Ok(Some(request)) = server.recv_timeout(Duration::from_secs(4)) else {
+                break;
+            };
+            let raw_response = responder(request.url());
+            let response_result = if raw_response.starts_with("HTTP/1.1 302") {
+                let location = raw_response
+                    .lines()
+                    .find_map(|line| line.strip_prefix("Location: "))
+                    .expect("redirect response should contain Location");
+                let header = tiny_http::Header::from_bytes("Location", location)
+                    .expect("redirect Location header should be valid");
+                request.respond(
+                    tiny_http::Response::empty(tiny_http::StatusCode(302)).with_header(header),
+                )
+            } else {
+                request.respond(tiny_http::Response::from_string("ok"))
+            };
+            response_result.expect("write test response");
         }
     });
     Some(TestHttpServer { addr })
@@ -126,8 +130,7 @@ fn http_200_response() -> String {
 
 fn http_302_response(location: &str) -> String {
     format!(
-        "HTTP/1.1 302 Found\r\nLocation: {}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-        location
+        "HTTP/1.1 302 Found\r\nLocation: {location}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
     )
 }
 
@@ -1092,13 +1095,12 @@ fn docgen_kujo_extraction_edge_fixture_async_visibility_contract() {
 
     for (qualified_name, visibility) in expected_map {
         let expected_visibility = visibility.as_str().unwrap_or_else(|| {
-            panic!("visibility fixture for '{}' should be string", qualified_name)
+            panic!("visibility fixture for '{qualified_name}' should be string")
         });
         assert_eq!(
             symbol_visibility(symbols, qualified_name),
             expected_visibility,
-            "unexpected visibility for fixture symbol '{}'",
-            qualified_name
+            "unexpected visibility for fixture symbol '{qualified_name}'"
         );
     }
 }
@@ -1151,8 +1153,7 @@ fn docgen_kujo_extraction_edge_fixture_async_strict_gate_contract() {
     assert_eq!(summary.undocumented_count, expected_undocumented);
     assert!(
         summary.gate_failures.iter().any(|failure| failure.contains(expected_gate_failure)),
-        "strict gate failures should contain '{}'",
-        expected_gate_failure
+        "strict gate failures should contain '{expected_gate_failure}'"
     );
 }
 
@@ -1209,13 +1210,12 @@ fn docgen_kujo_parser_assisted_fixture_success_contract() {
 
     for (qualified_name, visibility) in expected_map {
         let expected_visibility = visibility.as_str().unwrap_or_else(|| {
-            panic!("parser-assisted fixture visibility for '{}' should be string", qualified_name)
+            panic!("parser-assisted fixture visibility for '{qualified_name}' should be string")
         });
         assert_eq!(
             symbol_visibility(symbols, qualified_name),
             expected_visibility,
-            "unexpected visibility for parser-assisted fixture symbol '{}'",
-            qualified_name
+            "unexpected visibility for parser-assisted fixture symbol '{qualified_name}'"
         );
     }
 }
@@ -1242,13 +1242,13 @@ fn docgen_kujo_parser_assisted_fixture_fallback_contract() {
 
     for (qualified_name, visibility) in expected_map {
         let expected_visibility = visibility.as_str().unwrap_or_else(|| {
-            panic!("fallback fixture visibility for '{}' should be string", qualified_name)
+            panic!("fallback fixture visibility for '{qualified_name}' should be string")
         });
         let actual = extraction
             .symbols
             .iter()
             .find(|symbol| symbol.qualified_name == qualified_name.as_str())
-            .unwrap_or_else(|| panic!("missing fallback symbol '{}'", qualified_name));
+            .unwrap_or_else(|| panic!("missing fallback symbol '{qualified_name}'"));
         assert_eq!(
             format!("{:?}", actual.visibility),
             expected_visibility,
@@ -1465,7 +1465,7 @@ fn docgen_supports_mixed_language_projects_deterministically() {
     for expected in
         ["kujo", "php", "python", "typescript", "javascript", "ruby", "go", "haskell", "zig"]
     {
-        assert!(langs.contains(expected), "missing language {}", expected);
+        assert!(langs.contains(expected), "missing language {expected}");
     }
 }
 
@@ -1621,8 +1621,7 @@ fn docgen_adapter_conformance_smoke_extracts_symbols_for_all_languages() {
     {
         assert!(
             present.contains(language),
-            "expected at least one extracted symbol for language {}",
-            language
+            "expected at least one extracted symbol for language {language}"
         );
     }
 }
@@ -2352,7 +2351,7 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
         &input,
         &format!(
             "/// Redirect link: [Docs]({})\npub func linked_api() {{ return 1 }}\n",
-            redirect_server.url_with_host("localhost", "/start")
+            redirect_server.url_with_host("127.0.0.1", "/start")
         ),
     );
 
@@ -2382,7 +2381,7 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
             validate_local_anchors: false,
             validate_external_links: true,
             external_link_timeout_ms: 500,
-            external_link_allowlist: BTreeSet::from(["localhost".to_string()]),
+            external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
         },
@@ -2399,7 +2398,7 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
     let Some(destination_server) = spawn_http_server(16, |_path| http_200_response()) else {
         return;
     };
-    let destination_url = destination_server.url_with_host("127.0.0.1", "/final");
+    let destination_url = destination_server.url_with_host("localhost", "/final");
     let Some(redirect_server) =
         spawn_http_server(16, move |_path| http_302_response(&destination_url))
     else {
@@ -2413,7 +2412,7 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
         &input,
         &format!(
             "/// Redirect link: [Docs]({})\npub func linked_api() {{ return 1 }}\n",
-            redirect_server.url_with_host("localhost", "/start")
+            redirect_server.url_with_host("127.0.0.1", "/start")
         ),
     );
 
@@ -2444,8 +2443,8 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
             validate_external_links: true,
             external_link_timeout_ms: 2_000,
             external_link_allowlist: BTreeSet::from([
-                "localhost".to_string(),
                 "127.0.0.1".to_string(),
+                "localhost".to_string(),
             ]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
@@ -2459,10 +2458,11 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
 
 #[test]
 fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
-    let Some(destination_server) = spawn_http_server(4, |_path| http_200_response()) else {
+    let Some(destination_server) = spawn_http_server_on("[::1]:0", 4, |_path| http_200_response())
+    else {
         return;
     };
-    let blocked_target = destination_server.url_with_host("127.0.0.1", "/blocked");
+    let blocked_target = destination_server.url_with_host("::1", "/blocked");
     let Some(redirect_server) =
         spawn_http_server(4, move |_path| http_302_response(&blocked_target))
     else {
@@ -2476,7 +2476,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
         &input,
         &format!(
             "/// Redirect link: [Docs]({})\npub func linked_api() {{ return 1 }}\n",
-            redirect_server.url_with_host("localhost", "/start")
+            redirect_server.url_with_host("127.0.0.1", "/start")
         ),
     );
 
@@ -2506,7 +2506,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
             validate_local_anchors: false,
             validate_external_links: true,
             external_link_timeout_ms: 500,
-            external_link_allowlist: BTreeSet::from(["localhost".to_string()]),
+            external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
         },
@@ -2518,7 +2518,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
     assert!(
         project.diagnostics.iter().any(|diag| {
             diag.code == "DOCGEN_LINK_BROKEN_EXTERNAL_REDIRECT_ALLOWLIST"
-                && ["127.0.0.1", "localhost", "::1"].iter().any(|host| diag.message.contains(host))
+                && diag.message.contains("::1")
                 && diag.message.contains("non-allowlisted host")
                 && diag.message.contains("linked_api")
         }),
@@ -2710,8 +2710,8 @@ fn docgen_link_validation_budget_max_external_checks_truncates_deterministically
         &input,
         &format!(
             "/// External A: [A]({})\n/// External B: [B]({})\npub func linked_api() {{ return 1 }}\n",
-            server.url_with_host("localhost", "/one"),
-            server.url_with_host("localhost", "/two")
+            server.url_with_host("127.0.0.1", "/one"),
+            server.url_with_host("127.0.0.1", "/two")
         ),
     );
 
@@ -2739,7 +2739,7 @@ fn docgen_link_validation_budget_max_external_checks_truncates_deterministically
         },
         LinkValidationOptions {
             validate_external_links: true,
-            external_link_allowlist: BTreeSet::from(["localhost".to_string()]),
+            external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             max_external_link_checks: Some(1),
             ..LinkValidationOptions::default()
@@ -2821,8 +2821,8 @@ fn docgen_large_repo_smoke_completes_with_deterministic_counts() {
 
     for idx in 0..250usize {
         write_file(
-            &dir.join(format!("pkg/mod_{}.py", idx)),
-            &format!("def fn_{}(x):\n    return x\n", idx),
+            &dir.join(format!("pkg/mod_{idx}.py")),
+            &format!("def fn_{idx}(x):\n    return x\n"),
         );
     }
 

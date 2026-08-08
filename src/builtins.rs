@@ -14,9 +14,11 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::env;
-use std::fs;
+use std::fs::{self, File, OpenOptions};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -1951,6 +1953,188 @@ pub fn http_get_stream(url: &str) -> Result<Vec<u8>, String> {
     })
 }
 
+fn apply_http_headers(
+    mut request: reqwest::blocking::RequestBuilder,
+    headers: &[(String, String)],
+    surface: &str,
+) -> Result<reqwest::blocking::RequestBuilder, String> {
+    for (name, value) in headers {
+        let header_name = reqwest::header::HeaderName::from_bytes(name.as_bytes())
+            .map_err(|error| format!("{} failed: invalid header name: {}", surface, error))?;
+        let header_value = reqwest::header::HeaderValue::from_str(value)
+            .map_err(|error| format!("{} failed: invalid header value: {}", surface, error))?;
+        request = request.header(header_name, header_value);
+    }
+    Ok(request)
+}
+
+/// Stream an HTTP response body directly to a file with a strict byte limit.
+/// The destination is published by same-directory atomic rename only after the
+/// response is complete and durable, so failures never expose partial output.
+pub fn http_download_file(
+    url: &str,
+    output_path: &str,
+    headers: Vec<(String, String)>,
+    max_bytes: u64,
+    overwrite: bool,
+) -> Result<DictMap, String> {
+    const SURFACE: &str = "HTTP file download";
+    if max_bytes == 0 {
+        return Err(format!("{} failed: max_bytes must be positive", SURFACE));
+    }
+    network_policy::enforce_http_url_destination_policy(url, SURFACE)?;
+
+    let url = url.to_string();
+    let output_path = PathBuf::from(output_path);
+    network_policy::run_blocking_http_task(SURFACE, move || {
+        if output_path.exists() && !overwrite {
+            return Err(format!(
+                "{} failed: destination '{}' already exists",
+                SURFACE,
+                output_path.display()
+            ));
+        }
+        let parent = output_path.parent().unwrap_or_else(|| Path::new("."));
+        fs::create_dir_all(parent).map_err(|error| {
+            format!("{} failed to create destination directory: {}", SURFACE, error)
+        })?;
+        let temp_path = parent.join(format!(".kujo-download-{}.tmp", Uuid::new_v4()));
+        let operation = (|| -> Result<DictMap, String> {
+            let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+            let request = apply_http_headers(client.get(&url), &headers, SURFACE)?;
+            let mut response =
+                request.send().map_err(|error| format!("{} request failed: {}", SURFACE, error))?;
+            let status = response.status().as_u16();
+            if !response.status().is_success() {
+                return Err(format!("{} failed with status {}", SURFACE, status));
+            }
+            if let Some(length) = response.content_length() {
+                if length > max_bytes {
+                    return Err(format!(
+                        "{} failed: content length {} exceeds max_bytes {}",
+                        SURFACE, length, max_bytes
+                    ));
+                }
+            }
+
+            let mut output =
+                OpenOptions::new().write(true).create_new(true).open(&temp_path).map_err(
+                    |error| format!("{} failed to create temporary file: {}", SURFACE, error),
+                )?;
+            let mut hasher = Sha256::new();
+            let mut total = 0_u64;
+            let mut buffer = vec![0_u8; 64 * 1024];
+            loop {
+                let count = response.read(&mut buffer).map_err(|error| {
+                    format!("{} failed while reading response: {}", SURFACE, error)
+                })?;
+                if count == 0 {
+                    break;
+                }
+                total = total
+                    .checked_add(count as u64)
+                    .ok_or_else(|| format!("{} failed: response byte count overflow", SURFACE))?;
+                if total > max_bytes {
+                    return Err(format!(
+                        "{} failed: response exceeds max_bytes {}",
+                        SURFACE, max_bytes
+                    ));
+                }
+                output.write_all(&buffer[..count]).map_err(|error| {
+                    format!("{} failed while writing output: {}", SURFACE, error)
+                })?;
+                hasher.update(&buffer[..count]);
+            }
+            output
+                .sync_all()
+                .map_err(|error| format!("{} failed to sync output: {}", SURFACE, error))?;
+            drop(output);
+            fs::rename(&temp_path, &output_path)
+                .map_err(|error| format!("{} failed to publish output: {}", SURFACE, error))?;
+
+            let mut result = DictMap::default();
+            result.insert("status".into(), Value::Int(status as i64));
+            result.insert("bytes".into(), Value::Int(total as i64));
+            result
+                .insert("sha256".into(), Value::Str(Arc::new(format!("{:x}", hasher.finalize()))));
+            result.insert(
+                "path".into(),
+                Value::Str(Arc::new(output_path.to_string_lossy().to_string())),
+            );
+            Ok(result)
+        })();
+        if operation.is_err() {
+            let _ = fs::remove_file(&temp_path);
+        }
+        operation
+    })
+}
+
+/// Stream a file as an HTTP request body without materializing or base64
+/// encoding it. The response is bounded independently from the upload size.
+pub fn http_upload_file(
+    url: &str,
+    input_path: &str,
+    method: &str,
+    headers: Vec<(String, String)>,
+    max_response_bytes: usize,
+) -> Result<DictMap, String> {
+    const SURFACE: &str = "HTTP file upload";
+    if max_response_bytes == 0 || max_response_bytes > network_policy::MAX_NETWORK_BODY_BYTES {
+        return Err(format!(
+            "{} failed: max_response_bytes must be between 1 and {}",
+            SURFACE,
+            network_policy::MAX_NETWORK_BODY_BYTES
+        ));
+    }
+    network_policy::enforce_http_url_destination_policy(url, SURFACE)?;
+    let method = reqwest::Method::from_bytes(method.as_bytes())
+        .map_err(|error| format!("{} failed: invalid HTTP method: {}", SURFACE, error))?;
+    if method != reqwest::Method::POST && method != reqwest::Method::PUT {
+        return Err(format!("{} failed: method must be POST or PUT", SURFACE));
+    }
+
+    let url = url.to_string();
+    let input_path = PathBuf::from(input_path);
+    network_policy::run_blocking_http_task(SURFACE, move || {
+        let input = File::open(&input_path)
+            .map_err(|error| format!("{} failed to open input file: {}", SURFACE, error))?;
+        let input_bytes = input
+            .metadata()
+            .map_err(|error| format!("{} failed to inspect input file: {}", SURFACE, error))?
+            .len();
+        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let request = client
+            .request(method, &url)
+            .header(reqwest::header::CONTENT_LENGTH, input_bytes)
+            .body(reqwest::blocking::Body::new(input));
+        let request = apply_http_headers(request, &headers, SURFACE)?;
+        let response =
+            request.send().map_err(|error| format!("{} request failed: {}", SURFACE, error))?;
+        let status = response.status().as_u16();
+        let mut limited = response.take((max_response_bytes as u64).saturating_add(1));
+        let mut body = Vec::new();
+        limited
+            .read_to_end(&mut body)
+            .map_err(|error| format!("{} failed while reading response: {}", SURFACE, error))?;
+        if body.len() > max_response_bytes {
+            return Err(format!(
+                "{} failed: response exceeds max_response_bytes {}",
+                SURFACE, max_response_bytes
+            ));
+        }
+
+        let mut result = DictMap::default();
+        result.insert("status".into(), Value::Int(status as i64));
+        result.insert("uploaded_bytes".into(), Value::Int(input_bytes as i64));
+        result.insert(
+            "body".into(),
+            Value::Str(Arc::new(String::from_utf8_lossy(&body).to_string())),
+        );
+        Ok(result)
+    })
+}
+
 /// Assert & Debug Functions
 /// Assert that a condition is true, throw error if false
 /// assert(condition, message) - Throws error with message if condition is false
@@ -2309,7 +2493,120 @@ pub fn generate_help(arg_defs: &[ArgumentDef], app_name: &str, description: &str
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
     use std::sync::Arc;
+
+    fn test_http_server(response: Vec<u8>) -> (String, thread::JoinHandle<Vec<u8>>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("test listener should bind");
+        let address = listener.local_addr().expect("test listener should have an address");
+        let handle = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("test request should connect");
+            let mut received = Vec::new();
+            let mut header_end = None;
+            let mut content_length = 0_usize;
+            loop {
+                let mut buffer = [0_u8; 8192];
+                let count = stream.read(&mut buffer).expect("test request should read");
+                if count == 0 {
+                    break;
+                }
+                received.extend_from_slice(&buffer[..count]);
+                if header_end.is_none() {
+                    if let Some(position) =
+                        received.windows(4).position(|window| window == b"\r\n\r\n")
+                    {
+                        header_end = Some(position + 4);
+                        let headers = String::from_utf8_lossy(&received[..position + 4]);
+                        for line in headers.lines() {
+                            if let Some(value) =
+                                line.to_ascii_lowercase().strip_prefix("content-length:")
+                            {
+                                content_length =
+                                    value.trim().parse().expect("content length should parse");
+                            }
+                        }
+                    }
+                }
+                if let Some(end) = header_end {
+                    if received.len() >= end + content_length {
+                        break;
+                    }
+                }
+            }
+            stream.write_all(&response).expect("test response should write");
+            received
+        });
+        (format!("http://{}", address), handle)
+    }
+
+    #[test]
+    fn test_http_download_file_streams_and_rejects_oversize_response() {
+        let payload = vec![0x5a; 150_000];
+        let response = [
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                payload.len()
+            )
+            .into_bytes(),
+            payload.clone(),
+        ]
+        .concat();
+        let (url, server) = test_http_server(response);
+        let path = env::temp_dir().join(format!("kujo-http-download-{}.bin", Uuid::new_v4()));
+        let result = http_download_file(&url, &path.to_string_lossy(), Vec::new(), 200_000, false)
+            .expect("download should succeed");
+        assert!(
+            matches!(result.get("bytes"), Some(Value::Int(value)) if *value == payload.len() as i64)
+        );
+        assert_eq!(fs::read(&path).expect("download should exist"), payload);
+        server.join().expect("test server should finish");
+        fs::remove_file(path).expect("download should clean up");
+
+        let payload = vec![0x42; 32];
+        let response = [
+            b"HTTP/1.1 200 OK\r\nContent-Length: 32\r\nConnection: close\r\n\r\n".as_slice(),
+            payload.as_slice(),
+        ]
+        .concat();
+        let (url, server) = test_http_server(response);
+        let path = env::temp_dir().join(format!("kujo-http-download-{}.bin", Uuid::new_v4()));
+        let error = http_download_file(&url, &path.to_string_lossy(), Vec::new(), 16, false)
+            .expect_err("oversize download should fail");
+        assert!(error.contains("exceeds max_bytes"));
+        assert!(!path.exists());
+        server.join().expect("test server should finish");
+    }
+
+    #[test]
+    fn test_http_upload_file_streams_exact_binary_body() {
+        let input = env::temp_dir().join(format!("kujo-http-upload-{}.bin", Uuid::new_v4()));
+        let payload = (0..180_000).map(|index| (index % 251) as u8).collect::<Vec<_>>();
+        fs::write(&input, &payload).expect("upload fixture should write");
+        let response =
+            b"HTTP/1.1 201 Created\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK".to_vec();
+        let (url, server) = test_http_server(response);
+        let result = http_upload_file(
+            &url,
+            &input.to_string_lossy(),
+            "PUT",
+            vec![("Content-Type".to_string(), "application/octet-stream".to_string())],
+            1024,
+        )
+        .expect("upload should succeed");
+        assert!(matches!(result.get("status"), Some(Value::Int(201))));
+        assert!(
+            matches!(result.get("uploaded_bytes"), Some(Value::Int(value)) if *value == payload.len() as i64)
+        );
+        let request = server.join().expect("test server should finish");
+        let body_start = request
+            .windows(4)
+            .position(|window| window == b"\r\n\r\n")
+            .expect("request should have headers")
+            + 4;
+        assert_eq!(&request[body_start..], payload.as_slice());
+        fs::remove_file(input).expect("upload fixture should clean up");
+    }
 
     #[test]
     fn test_math_functions() {

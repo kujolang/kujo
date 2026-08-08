@@ -1,5 +1,0 @@
-
-> kujo-language-tools@0.1.0 check
-> node ./scripts/check.js
-
-Extension static checks passed.

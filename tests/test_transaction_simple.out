@@ -1,0 +1,13 @@
+Testing basic transaction...
+Testing db_begin...
+Begin result type: bool
+Begin result: true
+✓ Begin succeeded
+
+Testing double begin...
+Caught expected double-begin error
+
+Committing...
+Commit result: true
+
+Done!

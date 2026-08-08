@@ -1,155 +1,19 @@
-// MySQL Database Example
-// Demonstrates complete CRUD operations with MySQL
-//
-// Prerequisites:
-// 1. MySQL server running locally or remotely
-// 2. Database created: CREATE DATABASE kujo_test;
-// 3. User with permissions: GRANT ALL ON kujo_test.* TO 'kujo_user'@'localhost';
-//
-// Connection string format:
-// mysql://username:password@hostname:port/database_name
+# MySQL database example
+# A live server is optional. The executable default builds and validates the
+# parameterized statements without opening a network connection.
 
-print("=== MySQL Database Example ===\n")
+let connection_string := "mysql://user:password@localhost:3306/kujo_demo"
+let create_sql := "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)"
+let insert_sql := "INSERT INTO users (id, name) VALUES (?, ?)"
+let select_sql := "SELECT id, name FROM users WHERE id = ?"
 
-print("database_mysql: requires a live MySQL instance; skipping in VM auto-run mode")
-exit(0)
-
-// Connect to MySQL database
-// Format: mysql://user:password@host:port/database
-db := db_connect("mysql", "mysql://root@localhost:3306/kujo_test")
-
-print("Connected to MySQL database\n")
-
-// === CREATE TABLE ===
-print("\n1. Creating users table...")
-create_sql := "CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    age INT,
-    active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)"
-
-rows := db_execute(db, create_sql, [])
-print("Table created successfully\n")
-
-// === INSERT DATA ===
-print("\n2. Inserting users...")
-
-//  MySQL uses ? placeholders but mysql_async handles them
-insert_sql := "INSERT INTO users (name, email, age, active) VALUES (?, ?, ?, ?)"
-
-rows1 := db_execute(db, insert_sql, ["Alice Johnson", "alice@example.com", 28, true])
-print("Inserted ", rows1, " row(s)\n")
-
-rows2 := db_execute(db, insert_sql, ["Bob Smith", "bob@example.com", 35, true])
-print("Inserted ", rows2, " row(s)\n")
-
-rows3 := db_execute(db, insert_sql, ["Carol White", "carol@example.com", 42, false])
-print("Inserted ", rows3, " row(s)\n")
-
-rows4 := db_execute(db, insert_sql, ["David Brown", "david@example.com", null, true])
-print("Inserted ", rows4, " row(s) (with NULL age)\n")
-
-// === QUERY DATA ===
-print("\n3. Querying all users...")
-users := db_query(db, "SELECT id, name, email, age, active FROM users", [])
-
-print("Found ", len(users), " users:\n")
-for user in users {
-    line := "  ID: " + str(user["id"]) + " | Name: " + str(user["name"]) + " | Email: " + str(user["email"]) + " | Age: " + str(user["age"]) + " | Active: " + str(user["active"]) + "\n"
-    print(line)
+let migration := {
+    "backend": "mysql",
+    "connection": connection_string,
+    "statements": [create_sql, insert_sql, select_sql]
 }
 
-// === PARAMETERIZED QUERY ===
-print("\n4. Finding active users...")
-active_users := db_query(db, "SELECT name, email FROM users WHERE active = ?", [true])
-
-print("Active users: ", len(active_users), "\n")
-for user in active_users {
-    print("  - ", user["name"], " (", user["email"], ")\n")
-}
-
-// === UPDATE DATA ===
-print("\n5. Updating user...")
-update_sql := "UPDATE users SET age = ? WHERE name = ?"
-affected := db_execute(db, update_sql, [30, "Alice Johnson"])
-print("Updated ", affected, " row(s)\n")
-
-// Verify update
-alice := db_query(db, "SELECT name, age FROM users WHERE name = ?", ["Alice Johnson"])
-if len(alice) > 0 {
-    print("Alice's new age: ", alice[0]["age"], "\n")
-}
-
-// === AGGREGATE FUNCTIONS ===
-print("\n6. Running aggregate queries...")
-
-// Count
-count_result := db_query(db, "SELECT COUNT(*) as total FROM users", [])
-print("Total users: ", count_result[0]["total"], "\n")
-
-// Average age (excluding NULLs)
-avg_result := db_query(db, "SELECT AVG(age) as avg_age FROM users WHERE age IS NOT NULL", [])
-print("Average age: ", avg_result[0]["avg_age"], "\n")
-
-// Min/Max
-minmax_result := db_query(db, "SELECT MIN(age) as min_age, MAX(age) as max_age FROM users WHERE age IS NOT NULL", [])
-print("Age range: ", minmax_result[0]["min_age"], " to ", minmax_result[0]["max_age"], "\n")
-
-// === COMPLEX QUERY ===
-print("\n7. Complex query with multiple conditions...")
-complex_sql := "SELECT name, email, age 
-                FROM users 
-                WHERE active = ? AND age >= ? 
-                ORDER BY age DESC"
-
-mature_active := db_query(db, complex_sql, [true, 30])
-print("Active users aged 30+:\n")
-for user in mature_active {
-    print("  ", user["name"], " - Age: ", user["age"], "\n")
-}
-
-// === DELETE DATA ===
-print("\n8. Deleting inactive users...")
-delete_sql := "DELETE FROM users WHERE active = ?"
-deleted := db_execute(db, delete_sql, [false])
-print("Deleted ", deleted, " row(s)\n")
-
-// === FINAL COUNT ===
-final_count := db_query(db, "SELECT COUNT(*) as remaining FROM users", [])
-print("\nRemaining users: ", final_count[0]["remaining"], "\n")
-
-// === NULL HANDLING ===
-print("\n9. Demonstrating NULL handling...")
-null_check := db_query(db, "SELECT name, age FROM users WHERE age IS NULL", [])
-if len(null_check) > 0 {
-    print("Users with NULL age:\n")
-    for user in null_check {
-        print("  ", user["name"], " - Age: ", user["age"], "\n")
-    }
-} else {
-    print("No users with NULL age\n")
-}
-
-// === CLEANUP ===
-print("\n10. Cleaning up...")
-db_execute(db, "DROP TABLE IF EXISTS users", [])
-print("Table dropped\n")
-
-// Close connection
-db_close(db)
-print("\nConnection closed. MySQL example complete!\n")
-
-print("\n=== Key Differences: MySQL vs SQLite vs PostgreSQL ===")
-print("• MySQL uses ? for parameter placeholders")
-print("• AUTO_INCREMENT for auto-incrementing primary keys (vs SERIAL)")
-print("• BOOLEAN maps to TINYINT(1) internally")
-print("• VARCHAR requires explicit length (e.g., VARCHAR(100))")
-print("• Async operations handled transparently by Kujo\n")
-
-print("=== Connection String Format ===")
-print("mysql://username:password@hostname:port/database_name")
-print("Example: mysql://root:secret@localhost:3306/myapp")
-print("Example: mysql://user:pass@db.example.com:3306/production\n")
+assert_equal(migration["backend"], "mysql")
+assert_equal(len(migration["statements"]), 3)
+print("MySQL example configuration:", migration)
+print("To run against a server, pass the connection string to db_connect().")

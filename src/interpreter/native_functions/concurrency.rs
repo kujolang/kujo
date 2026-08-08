@@ -7,6 +7,8 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+pub const DEFAULT_CHANNEL_CAPACITY: usize = 256;
+
 fn shared_value_store() -> &'static Mutex<HashMap<String, Arc<Mutex<Value>>>> {
     static SHARED_VALUE_STORE: OnceLock<Mutex<HashMap<String, Arc<Mutex<Value>>>>> =
         OnceLock::new();
@@ -33,7 +35,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, _arg_values: &[Value]) -> O
             }
 
             use std::sync::mpsc;
-            let (sender, receiver) = mpsc::channel();
+            let (sender, receiver) = mpsc::sync_channel(DEFAULT_CHANNEL_CAPACITY);
             #[allow(clippy::arc_with_non_send_sync)]
             let channel = Arc::new(Mutex::new((sender, receiver)));
             Value::Channel(channel)

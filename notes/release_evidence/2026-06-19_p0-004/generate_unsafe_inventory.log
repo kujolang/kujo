@@ -1,4 +1,0 @@
-$ bash scripts/generate_unsafe_inventory.sh
-started_at=2026-06-19T17:16:23-0400
-Generated docs/generated/UNSAFE_INVENTORY.md and docs/generated/UNSAFE_INVENTORY.csv
-ended_at=2026-06-19T17:16:24-0400

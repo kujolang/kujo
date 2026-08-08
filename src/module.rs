@@ -193,11 +193,13 @@ impl ModuleLoader {
 
     /// Creates a new module loader with default search paths.
     pub fn new() -> Self {
+        let mut search_paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
+        search_paths.extend(configured_module_search_paths());
         ModuleLoader {
             loaded_modules: HashMap::new(),
             loading_stack: Vec::new(),
             loading_stack_index: HashMap::new(),
-            search_paths: vec![PathBuf::from("."), PathBuf::from("./modules")],
+            search_paths,
         }
     }
 
@@ -497,6 +499,17 @@ impl ModuleLoader {
     }
 }
 
+/// Returns additional module roots configured for the current process.
+///
+/// The path-list environment variable lets an installed Kujo executable use
+/// first-party source modules without requiring every consumer repository to
+/// vendor a copy. Local project roots remain ahead of these shared roots.
+pub fn configured_module_search_paths() -> Vec<PathBuf> {
+    std::env::var_os("KUJO_MODULE_PATH")
+        .map(|paths| std::env::split_paths(&paths).collect())
+        .unwrap_or_default()
+}
+
 impl Default for ModuleLoader {
     fn default() -> Self {
         Self::new()
@@ -541,6 +554,24 @@ mod tests {
 
         fs::remove_file(&module_path).expect("failed to clean up module file");
         fs::remove_dir_all(&temp_root).expect("failed to clean up temp module dir");
+    }
+
+    #[test]
+    fn load_module_uses_configured_environment_search_path() {
+        let temp_root = std::env::temp_dir().join(unique_name("kujo_module_env_path"));
+        fs::create_dir_all(&temp_root).expect("failed to create module root");
+        let module_name = unique_name("shared_cli");
+        fs::write(temp_root.join(format!("{}.kujo", module_name)), "export answer := 42\n")
+            .expect("failed to write shared module");
+
+        std::env::set_var("KUJO_MODULE_PATH", &temp_root);
+        let result = ModuleLoader::new()
+            .get_symbol(&module_name, "answer")
+            .expect("module should resolve from KUJO_MODULE_PATH");
+        std::env::remove_var("KUJO_MODULE_PATH");
+
+        assert!(matches!(result, Value::Int(42)));
+        fs::remove_dir_all(&temp_root).expect("failed to clean up module root");
     }
 
     #[test]

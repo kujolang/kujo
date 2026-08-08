@@ -1,0 +1,8 @@
+Test: Access self.field
+Creating...
+Calling...
+In get_field
+Got value:
+123
+Final result:
+123

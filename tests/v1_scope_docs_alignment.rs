@@ -33,7 +33,7 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
         "V1 scope doc must keep explicit deferred post-1.0 section"
     );
     for marker in ["Generics", "FFI (foreign function interface)", "WASM target", "Macro system"] {
-        assert!(v1_scope.contains(marker), "V1 scope doc missing deferred marker {:?}", marker);
+        assert!(v1_scope.contains(marker), "V1 scope doc missing deferred marker {marker:?}");
     }
 
     assert!(
@@ -58,13 +58,11 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
     ] {
         assert!(
             optional_typing_lower.contains(marker),
-            "optional typing policy missing post-v1 checker marker {:?}",
-            marker
+            "optional typing policy missing post-v1 checker marker {marker:?}"
         );
         assert!(
             v1_scope_lower.contains(marker),
-            "V1 scope doc missing post-v1 checker marker {:?}",
-            marker
+            "V1 scope doc missing post-v1 checker marker {marker:?}"
         );
     }
 }

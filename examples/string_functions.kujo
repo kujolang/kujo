@@ -160,7 +160,7 @@ print("=== Practical Example: Pattern Generation ===")
 func draw_box(width) {
     border := repeat("*", width)
     print(border)
-    middle := "*${repeat(' ', width - 2)}*"
+    middle := "*${repeat(" ", width - 2)}*"
     print(middle)
     print(middle)
     print(border)

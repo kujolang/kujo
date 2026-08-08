@@ -3,9 +3,10 @@
 // Asynchronous operations native functions for Kujo.
 // Provides async functions for sleep, timeouts, Promise.all, Promise.race, etc.
 
-use crate::interpreter::{AsyncRuntime, DictMap, Value};
+use crate::bytecode::{BytecodeChunk, OpCode};
+use crate::interpreter::{AsyncRuntime, DictMap, Environment, Value};
 use crate::network_policy;
-use crate::vm::VM;
+use crate::vm::{VmExecutionResult, VM};
 use futures::stream::{FuturesUnordered, StreamExt};
 use rayon::prelude::*;
 use rayon::ThreadPoolBuilder;
@@ -716,33 +717,112 @@ fn try_parallel_map_with_jit_bytecode(
     interp: &mut crate::interpreter::Interpreter,
     mapper: &Value,
     array: &Arc<Vec<Value>>,
+    concurrency_limit: Option<i64>,
 ) -> Option<Value> {
-    let is_bytecode_mapper = matches!(mapper, Value::BytecodeFunction { .. });
-    if !is_bytecode_mapper {
+    if !matches!(mapper, Value::BytecodeFunction { .. }) {
         return None;
     }
 
-    let mut vm = VM::new();
-    vm.set_jit_enabled(true);
-    vm.set_globals(Arc::new(Mutex::new(interp.env.clone())));
+    let limit =
+        concurrency_limit.unwrap_or(interp.get_async_task_pool_size() as i64).max(1) as usize;
+    let mapper = mapper.clone();
+    let base_env = interp.env.clone();
+    let elements = array.as_ref().clone();
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    AsyncRuntime::spawn_task(async move {
+        let mut results = vec![Value::Null; elements.len()];
+        let mut pending = elements.into_iter().enumerate();
+        let mut in_flight = FuturesUnordered::new();
+        let spawn = |idx: usize, element: Value| {
+            let mapper = mapper.clone();
+            let worker_env = base_env.clone();
+            tokio::task::spawn_blocking(move || {
+                (idx, execute_bytecode_mapper(mapper, element, worker_env))
+            })
+        };
 
-    if let Err(err) = vm.jit_compile_bytecode_function(mapper) {
-        if std::env::var("DEBUG_JIT").is_ok() {
-            eprintln!("parallel_map: eager JIT compile for bytecode mapper failed: {}", err);
-        }
-    }
-
-    let mut mapped_values = Vec::with_capacity(array.len());
-    for element in array.iter() {
-        match vm.call_function_from_jit(mapper.clone(), vec![element.clone()]) {
-            Ok(value) => mapped_values.push(value),
-            Err(err) => {
-                return Some(Value::Error(format!("parallel_map() mapper call failed: {}", err)))
+        for _ in 0..limit.min(results.len()) {
+            if let Some((idx, element)) = pending.next() {
+                in_flight.push(spawn(idx, element));
             }
         }
+        while let Some(joined) = in_flight.next().await {
+            let (idx, value) = match joined {
+                Ok(value) => value,
+                Err(error) => {
+                    let _ = tx.send(Err(format!("parallel_map bytecode worker failed: {}", error)));
+                    return Value::Null;
+                }
+            };
+            match value {
+                Ok(Value::Error(message)) | Err(message) => {
+                    let _ =
+                        tx.send(Err(format!("parallel_map mapper {} failed: {}", idx, message)));
+                    return Value::Null;
+                }
+                Ok(Value::ErrorObject { message, .. }) => {
+                    let _ =
+                        tx.send(Err(format!("parallel_map mapper {} failed: {}", idx, message)));
+                    return Value::Null;
+                }
+                Ok(value) => results[idx] = value,
+            }
+            if let Some((next_idx, element)) = pending.next() {
+                in_flight.push(spawn(next_idx, element));
+            }
+        }
+        let _ = tx.send(Ok(Value::Array(Arc::new(results))));
+        Value::Null
+    });
+
+    Some(Value::Promise {
+        receiver: Arc::new(Mutex::new(rx)),
+        is_polled: Arc::new(Mutex::new(false)),
+        cached_result: Arc::new(Mutex::new(None)),
+        task_handle: None,
+    })
+}
+
+fn execute_bytecode_mapper(
+    mapper: Value,
+    element: Value,
+    mut environment: Environment,
+) -> Result<Value, String> {
+    const MAPPER: &str = "__kujo_parallel_mapper";
+    const ARGUMENT: &str = "__kujo_parallel_argument";
+    const RESULT: &str = "__kujo_parallel_result";
+
+    environment.push_scope();
+    environment.define(MAPPER.to_string(), mapper);
+    environment.define(ARGUMENT.to_string(), element);
+    environment.define(RESULT.to_string(), Value::Null);
+    let shared_environment = Arc::new(Mutex::new(environment));
+
+    let mut wrapper = BytecodeChunk::new();
+    wrapper.instructions = vec![
+        OpCode::LoadGlobal(ARGUMENT.to_string()),
+        OpCode::LoadGlobal(MAPPER.to_string()),
+        OpCode::Call(1),
+        OpCode::Await,
+        OpCode::StoreGlobal(RESULT.to_string()),
+        OpCode::ReturnNone,
+    ];
+
+    let mut vm = VM::new();
+    vm.set_globals(Arc::clone(&shared_environment));
+    match vm.execute_until_suspend(wrapper)? {
+        VmExecutionResult::Completed => {}
+        VmExecutionResult::Suspended { .. } => {
+            vm.run_scheduler_until_complete_with_timeout(Duration::from_secs(600))?;
+        }
     }
 
-    Some(resolved_promise(Ok(Value::Array(Arc::new(mapped_values)))))
+    let result = shared_environment
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .get(RESULT)
+        .ok_or_else(|| "parallel_map bytecode mapper did not publish a result".to_string());
+    result
 }
 
 /// Handle async operations native functions
@@ -2257,6 +2337,7 @@ pub fn handle(
             let mapper = match &args[1] {
                 func @ Value::NativeFunction(_)
                 | func @ Value::Function(_, _, _)
+                | func @ Value::AsyncFunction(_, _, _)
                 | func @ Value::BytecodeFunction { .. }
                 | func @ Value::GeneratorDef(_, _) => func.clone(),
                 _ => {
@@ -2286,6 +2367,79 @@ pub fn handle(
                 Some(_interp.get_async_task_pool_size() as i64)
             };
 
+            if matches!(mapper, Value::AsyncFunction(_, _, _)) {
+                let limit = concurrency_limit
+                    .unwrap_or(_interp.get_async_task_pool_size() as i64)
+                    .max(1) as usize;
+                let mapper = mapper.clone();
+                let base_env = _interp.env.clone();
+                let capability_policy = _interp.capability_policy().clone();
+                let (tx, rx) = tokio::sync::oneshot::channel();
+                AsyncRuntime::spawn_task(async move {
+                    let mut results = vec![Value::Null; array.len()];
+                    let mut pending = array.iter().cloned().enumerate();
+                    let mut in_flight = FuturesUnordered::new();
+                    let spawn = |idx: usize, element: Value| {
+                        let mapper = mapper.clone();
+                        let base_env = base_env.clone();
+                        let policy = capability_policy.clone();
+                        tokio::task::spawn_blocking(move || {
+                            (
+                                idx,
+                                crate::interpreter::Interpreter::execute_async_mapper_isolated(
+                                    &mapper, element, base_env, policy,
+                                ),
+                            )
+                        })
+                    };
+                    for _ in 0..limit.min(results.len()) {
+                        if let Some((idx, element)) = pending.next() {
+                            in_flight.push(spawn(idx, element));
+                        }
+                    }
+                    while let Some(joined) = in_flight.next().await {
+                        let (idx, value) = match joined {
+                            Ok(value) => value,
+                            Err(error) => {
+                                let _ = tx.send(Err(format!(
+                                    "parallel_map async worker failed: {}",
+                                    error
+                                )));
+                                return Value::Null;
+                            }
+                        };
+                        match value {
+                            Value::Error(message) => {
+                                let _ = tx.send(Err(format!(
+                                    "parallel_map mapper {} failed: {}",
+                                    idx, message
+                                )));
+                                return Value::Null;
+                            }
+                            Value::ErrorObject { message, .. } => {
+                                let _ = tx.send(Err(format!(
+                                    "parallel_map mapper {} failed: {}",
+                                    idx, message
+                                )));
+                                return Value::Null;
+                            }
+                            value => results[idx] = value,
+                        }
+                        if let Some((next_idx, element)) = pending.next() {
+                            in_flight.push(spawn(next_idx, element));
+                        }
+                    }
+                    let _ = tx.send(Ok(Value::Array(Arc::new(results))));
+                    Value::Null
+                });
+                return Some(Value::Promise {
+                    receiver: Arc::new(Mutex::new(rx)),
+                    is_polled: Arc::new(Mutex::new(false)),
+                    cached_result: Arc::new(Mutex::new(None)),
+                    task_handle: None,
+                });
+            }
+
             if let Value::NativeFunction(mapper_name) = &mapper {
                 let rayon_limit = concurrency_limit
                     .unwrap_or(_interp.get_async_task_pool_size() as i64)
@@ -2298,7 +2452,7 @@ pub fn handle(
             }
 
             if let Some(jit_bytecode_result) =
-                try_parallel_map_with_jit_bytecode(_interp, &mapper, &array)
+                try_parallel_map_with_jit_bytecode(_interp, &mapper, &array, concurrency_limit)
             {
                 return Some(jit_bytecode_result);
             }

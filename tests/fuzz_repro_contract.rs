@@ -16,7 +16,7 @@ fn fuzz_repro_help_lists_required_flags() {
     assert!(output.status.success());
     let stdout = String::from_utf8(output.stdout).expect("stdout should be utf-8");
     for expected in ["--artifact", "--target", "--dry-run", "--check-prereqs"] {
-        assert!(stdout.contains(expected), "expected help output to include {:?}", expected);
+        assert!(stdout.contains(expected), "expected help output to include {expected:?}");
     }
 }
 

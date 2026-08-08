@@ -1,0 +1,35 @@
+Test 1 - Basic array spread:
+[1, 2, 3, 4, 5, 6]
+Test 2 - Mixed array spread:
+[0, 1, 2, 3, 99, 4, 5, 6, 100]
+Test 3 - Array copy:
+[10, 20, 30]
+Test 4 - Dict merge:
+{"a": 1, "b": 2, "c": 3, "d": 4}
+Test 5 - Dict override:
+{"debug": true, "retry": 3, "timeout": 60}
+Test 6 - Later values win:
+{"x": 1, "y": 99, "z": 100}
+Test 7 - Empty array spread:
+[1, 2]
+Test 8 - Empty dict spread:
+{"a": 1, "b": 2}
+Test 9 - Multiple array spreads:
+[1, 2, 3, 4, 5, 6]
+Test 10 - Multiple dict spreads:
+{"a": 1, "b": 2, "c": 3}
+Test 11 - Nested array spread:
+[0, 1, 2, 3, 4, 5]
+Test 12 - Dict spread with new fields:
+{"age": 30, "email": alice@example.com, "name": Alice, "verified": true}
+Test 13a - Spread at start:
+[5, 6, 7, 8, 9]
+Test 13b - Spread at end:
+[3, 4, 5, 6, 7]
+Test 14 - Spread preserves values:
+Original:
+[1, 2, 3]
+Copy:
+[1, 2, 3]
+Test 15 - Dict spread with strings:
+{"key1": value1, "key2": value2, "key3": value3}

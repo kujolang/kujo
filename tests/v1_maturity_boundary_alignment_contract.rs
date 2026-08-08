@@ -20,8 +20,7 @@ fn readiness_boundary_wording_is_consistent_across_core_scope_docs() {
         let content = read(doc);
         assert!(
             content.contains(canonical),
-            "expected canonical readiness-boundary wording in {}",
-            doc
+            "expected canonical readiness-boundary wording in {doc}"
         );
     }
 }

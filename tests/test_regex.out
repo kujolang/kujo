@@ -1,0 +1,57 @@
+Testing regex functions...
+
+1. regex_match() - Pattern Matching:
+  Email: user@example.com -> true
+  Email: invalid.email -> false
+  ✓ regex_match correctly validates emails
+  Phone: 555-1234 -> true
+  Phone: not-a-phone -> false
+  ✓ regex_match validates phone numbers
+
+2. regex_find_all() - Finding Matches:
+  Text: Call me at 555-1234 or 555-5678
+  Found 2 phone numbers
+    555-1234
+    555-5678
+  ✓ regex_find_all found all phone numbers
+  Found 5 words in: The quick brown fox jumps
+  ✓ regex_find_all extracted all words
+  Numbers found: 2
+    5
+    10
+  ✓ regex_find_all extracted numbers
+
+3. regex_replace() - Pattern Replacement:
+  Original: Call me at 555-1234 or 555-5678
+  Redacted: Call me at XXX-XXXX or XXX-XXXX
+  ✓ regex_replace redacted phone numbers
+  Original: 'Too    many     spaces'
+  Normalized: 'Too many spaces'
+  ✓ regex_replace normalized whitespace
+  Original: abc123def456
+  No digits: abcdef
+  ✓ regex_replace removed all digits
+
+4. regex_split() - String Splitting:
+  Text: one123two456three
+  Split by digits: 3 parts
+    'one'
+    'two'
+    'three'
+  ✓ regex_split by digits works
+  Split by whitespace: 4 words
+  ✓ regex_split by whitespace works
+  CSV: apple,banana,cherry
+  Parts: 3
+  ✓ regex_split CSV parsing works
+
+5. Advanced Pattern Matching:
+  URL: https://example.com -> true
+  URL: not-a-url -> false
+  ✓ URL pattern matching works
+  Found 2 hashtags:
+    #kujo
+    #programming
+  ✓ Hashtag extraction works
+
+Regex function tests completed!

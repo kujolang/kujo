@@ -1,0 +1,28 @@
+# HLP-011: read and type-check configuration once at the boundary.
+# env_set is used only to make this self-contained; production values should
+# be supplied by the parent process.
+
+env_set("KUJO_HLP_PORT", "8080")
+env_set("KUJO_HLP_TIMEOUT", "2.5")
+env_set("KUJO_HLP_ENABLED", "yes")
+env_set("KUJO_HLP_TOKEN", "example-token")
+
+func load_config() {
+    return {
+        "port": env_int("KUJO_HLP_PORT"),
+        "timeout": env_float("KUJO_HLP_TIMEOUT"),
+        "enabled": env_bool("KUJO_HLP_ENABLED"),
+        "token": env_required("KUJO_HLP_TOKEN"),
+        "mode": env_or("KUJO_HLP_MODE", "development")
+    }
+}
+
+let config := load_config()
+if config["port"] != 8080 || config["timeout"] != 2.5 || !config["enabled"] {
+    throw "typed environment contract drift"
+}
+if config["mode"] != "development" || config["token"] != "example-token" {
+    throw "environment default/required contract drift"
+}
+
+print("ok: HLP-011 typed environment configuration")

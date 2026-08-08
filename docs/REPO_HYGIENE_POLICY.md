@@ -7,6 +7,8 @@ Last updated: 2026-06-09
 
 Keep the repository root production-facing and predictable by ensuring only intentional project assets are tracked at top level.
 
+For cross-repository Kujo tooling artifacts, use the inventory in `docs/KUJO_TOOL_ARTIFACT_IGNORE_INVENTORY.md` and the reusable ignore block in `config/kujo-tool-artifacts.gitignore`.
+
 ## Root Surface Contract
 
 Tracked files at repository root must be limited to canonical project metadata and operator entry docs.
@@ -14,6 +16,7 @@ Tracked files at repository root must be limited to canonical project metadata a
 Current allowed tracked root files:
 
 - `.editorconfig`
+- `.gitattributes`
 - `.gitignore`
 - `AGENTS.md`
 - `CHANGELOG.md`
@@ -24,6 +27,7 @@ Current allowed tracked root files:
 - `LICENSE`
 - `README.md`
 - `ROADMAP.md`
+- `install.sh`
 - `rustfmt.toml`
 
 ## Non-root Placement Rules

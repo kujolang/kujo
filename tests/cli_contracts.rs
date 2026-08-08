@@ -15,7 +15,7 @@ fn unique_temp_dir(prefix: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    let path = std::env::temp_dir().join(format!("kujo_{}_{}", prefix, nanos));
+    let path = std::env::temp_dir().join(format!("kujo_{prefix}_{nanos}"));
     fs::create_dir_all(&path).expect("failed to create temp directory");
     path
 }
@@ -172,8 +172,10 @@ fn cli_lsp_complete_plain_and_json_modes_are_stable() {
             "abs\tbuiltin",
             "aes_decrypt\tbuiltin",
             "aes_decrypt_bytes\tbuiltin",
+            "aes_decrypt_file_stream\tbuiltin",
             "aes_encrypt\tbuiltin",
             "aes_encrypt_bytes\tbuiltin",
+            "aes_encrypt_file_stream\tbuiltin",
             "ai_chat\tbuiltin",
             "ai_count_tokens\tbuiltin",
             "ai_embedding\tbuiltin",
@@ -578,7 +580,7 @@ fn cli_reserved_alias_name_is_rejected_before_workflow_routing() {
     assert_eq!(output.status.code(), Some(EXIT_USAGE_ERROR));
     assert!(output.stdout.is_empty(), "reserved alias rejection should not write stdout");
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
-    assert!(stderr.contains("reserved"), "expected reserved-name rejection, got: {}", stderr);
+    assert!(stderr.contains("reserved"), "expected reserved-name rejection, got: {stderr}");
 }
 
 #[test]

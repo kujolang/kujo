@@ -1,0 +1,17 @@
+Testing regex_match...
+regex_match('hello', '^h') = true
+regex_match('test@example.com', '@') = true
+
+Testing regex_find_all...
+Found 2 matches
+  123
+  456
+
+Testing regex_replace...
+regex_replace('hello world', 'world', 'kujo') = hello kujo
+
+Testing regex_split...
+Split into 3 parts
+  one
+  two
+  three

@@ -1,0 +1,8 @@
+Test 1 - Simple local: 50
+Test 2 - Multiple locals: 60
+Test 3 - Arithmetic locals: 17
+Test 4 - Reassignment: 5
+Test 5 - Fibonacci(10): 55
+Test 6 - Fibonacci(25): 75025
+
+All JIT register-based locals tests passed!

@@ -33,8 +33,7 @@ fn release_process_doc_covers_required_policy_sections() {
     for marker in required_markers {
         assert!(
             content.contains(marker),
-            "expected release process doc to contain marker {:?}",
-            marker
+            "expected release process doc to contain marker {marker:?}"
         );
     }
 }
@@ -63,8 +62,7 @@ fn release_gate_script_help_documents_modes_and_env_controls() {
     ] {
         assert!(
             stdout.contains(expected),
-            "expected release gate help output to include {:?}",
-            expected
+            "expected release gate help output to include {expected:?}"
         );
     }
 }

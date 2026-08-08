@@ -1,0 +1,28 @@
+=== JIT Direct Recursion Tests ===
+
+Test 1: Recursive Fibonacci (correctness)
+Test 1 PASSED: All small fib values correct
+
+Test 2: Fibonacci with JIT warm-up
+Test 2 PASSED: Larger fib values correct after JIT warm-up
+
+Test 3: Recursive Factorial
+Test 3 PASSED: Factorial values correct
+
+Test 4: Recursive Sum
+Test 4 PASSED: Sum values correct
+
+Test 5: Non-recursive function (control)
+Test 5 PASSED: Non-recursive function works correctly
+
+Test 6: Multi-arg recursive function
+Test 6 PASSED: Multi-arg recursive function works correctly
+
+Test 7: Edge cases
+Test 7 PASSED: Edge cases handled correctly
+
+Test 8: Performance benchmark (fib(25))
+fib(25) = 75025
+Test 8 PASSED: Benchmark complete
+
+=== All JIT Direct Recursion Tests PASSED ===

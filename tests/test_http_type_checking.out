@@ -1,0 +1,5 @@
+Testing HTTP function type checking...
+http_server: OK
+http_response: OK
+json_response: OK
+All HTTP function type checks passed!

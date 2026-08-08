@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "publisher": "kujolang",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.91.0"
   },
   "categories": [
     "Programming Languages"
@@ -71,7 +71,7 @@
     "check": "node ./scripts/check.js"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.12"

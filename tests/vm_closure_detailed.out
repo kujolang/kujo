@@ -1,0 +1,23 @@
+Initial count in make_counter:
+0
+=== First call ===
+  count before increment:
+0
+  count after increment:
+1
+Returned:
+1
+=== Second call ===
+  count before increment:
+1
+  count after increment:
+2
+Returned:
+2
+=== Third call ===
+  count before increment:
+2
+  count after increment:
+3
+Returned:
+3

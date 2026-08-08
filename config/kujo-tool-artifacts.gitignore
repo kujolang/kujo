@@ -13,6 +13,19 @@
 
 # CaseFile
 /.casefile/
+/.casefile-agency-loop/
+
+# Intake
+/.intake/
+
+# Redact
+/.redact/
+/redact-audit/
+/redact-transcript-audit/
+/transcript.report.json
+*.redacted
+*.redacted.md
+*.redacted.txt
 
 # ChangeBucket and Cinch wrapper artifacts
 /CHANGE_BUCKET.md
@@ -48,6 +61,7 @@
 
 # Eval and ShipCheck evaluation output
 /eval_results/
+/.eval_*
 /snapshots/
 /artifact-manifest.json
 /cli-summary.json
@@ -69,6 +83,10 @@
 /run-*/
 /bundles/
 
+# Kujo workflow runners
+/.runs/
+/.work/
+
 # Lens
 /.lens/runs/
 /.lens/baselines/
@@ -88,6 +106,7 @@
 
 # Relay
 /.relay/
+/relay-contract-*/
 
 # WorkCell
 /.workcell/
@@ -110,7 +129,10 @@
 /data/*.db-shm
 /data/*.db-wal
 /data/*.log
+/data/benchmark-runs/
 /data/backups/
+/data/tool-artifacts/
+/backups/
 /tmp/
 /.tmp/
 /*.db
@@ -118,12 +140,21 @@
 /*.db-wal
 /*.sqlite
 /*.sqlite3
+/watchdog_proxy_config.json
+/.watchdog-backup-result-*.json
 
-# SSG / Howl / generated static output
+# SSG / Howl / SiteKit / generated static output
 /output/
 /dist/
+/dist-build/
 /logs/
+/tmp_test_*/
+/--interpreter/tmp_test_*/
 /.kujo-post-manifest.txt
+
+# Capsule and Zelus
+/capsule-output/
+/.zelus/
 
 # AI SDK local release/security artifacts
 /artifacts/security/
@@ -141,4 +172,3 @@
 # /fence.toml
 # /.lens.toml
 # /packwrite.toml
-

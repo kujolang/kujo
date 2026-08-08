@@ -91,21 +91,19 @@ fn stdlib_inventory_documents_all_runtime_builtins_exactly_once() {
         .iter()
         .filter_map(|(name, count)| if *count > 1 { Some(name.clone()) } else { None })
         .collect();
-    assert!(duplicates.is_empty(), "duplicate documented builtins found: {:?}", duplicates);
+    assert!(duplicates.is_empty(), "duplicate documented builtins found: {duplicates:?}");
 
     for function_name in &runtime {
         assert!(
             documented_counts.contains_key(function_name),
-            "runtime builtin '{}' is missing from docs/STANDARD_LIBRARY.md",
-            function_name
+            "runtime builtin '{function_name}' is missing from docs/STANDARD_LIBRARY.md"
         );
     }
 
     for documented_name in documented_counts.keys() {
         assert!(
             runtime_set.contains(documented_name),
-            "documented builtin '{}' is not registered by runtime",
-            documented_name
+            "documented builtin '{documented_name}' is not registered by runtime"
         );
     }
 }
@@ -150,18 +148,35 @@ fn stdlib_inventory_capability_column_matches_runtime_policy() {
     ]);
 
     for row in &rows {
-        assert!(
-            allowed_capability_values.contains(row.capability.as_str()),
-            "unknown capability '{}' documented for '{}'",
-            row.capability,
-            row.function
-        );
+        let documented: Vec<String> = row
+            .capability
+            .split(',')
+            .map(|capability| capability.trim().trim_matches('`'))
+            .filter(|capability| !capability.is_empty())
+            .map(|capability| capability.to_string())
+            .collect();
+        assert!(!documented.is_empty(), "missing capability for '{}'", row.function);
 
-        let expected = Interpreter::native_function_capability(&row.function)
-            .map(|capability| capability.as_str().to_string())
-            .unwrap_or_else(|| "none".to_string());
+        for capability in &documented {
+            assert!(
+                allowed_capability_values.contains(capability.as_str()),
+                "unknown capability '{}' documented for '{}'",
+                capability,
+                row.function
+            );
+        }
 
-        assert_eq!(row.capability, expected, "capability mismatch for builtin '{}'", row.function);
+        let runtime_capabilities = Interpreter::native_function_capabilities(&row.function);
+        let expected = if runtime_capabilities.is_empty() {
+            vec!["none".to_string()]
+        } else {
+            runtime_capabilities
+                .into_iter()
+                .map(|capability| capability.as_str().to_string())
+                .collect()
+        };
+
+        assert_eq!(documented, expected, "capability mismatch for builtin '{}'", row.function);
     }
 }
 
@@ -188,7 +203,7 @@ fn stdlib_inventory_alias_rows_match_canonical_runtime_contracts() {
     for alias_name in ["println", "str", "time"] {
         let row = by_name
             .get(alias_name)
-            .unwrap_or_else(|| panic!("missing alias row '{}' from inventory", alias_name));
+            .unwrap_or_else(|| panic!("missing alias row '{alias_name}' from inventory"));
         assert_eq!(row.arity, expected_arity_label(alias_name));
 
         let expected_capability = Interpreter::native_function_capability(alias_name)

@@ -42,7 +42,7 @@ fn reserve_local_port() -> Option<u16> {
     match TcpListener::bind("127.0.0.1:0") {
         Ok(listener) => listener.local_addr().ok().map(|addr| addr.port()),
         Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => None,
-        Err(error) => panic!("failed to reserve local port: {}", error),
+        Err(error) => panic!("failed to reserve local port: {error}"),
     }
 }
 
@@ -70,7 +70,7 @@ fn terminate_child(mut child: Child) -> Output {
 
 fn send_http_get(port: u16, path: &str) -> std::io::Result<(u16, String)> {
     let mut stream = TcpStream::connect_timeout(
-        &format!("127.0.0.1:{}", port).parse().expect("socket addr should parse"),
+        &format!("127.0.0.1:{port}").parse().expect("socket addr should parse"),
         Duration::from_millis(80),
     )?;
 
@@ -78,7 +78,7 @@ fn send_http_get(port: u16, path: &str) -> std::io::Result<(u16, String)> {
     stream.set_write_timeout(Some(Duration::from_millis(250)))?;
 
     let request =
-        format!("GET {} HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nConnection: close\r\n\r\n", path, port);
+        format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n");
     stream.write_all(request.as_bytes())?;
 
     let mut response = Vec::new();
@@ -157,7 +157,7 @@ fn parse_http_response(raw: &[u8]) -> std::io::Result<(u16, String)> {
 fn wait_for_response(child: &mut Child, port: u16, path: &str) -> Result<(u16, String), String> {
     for _ in 0..300 {
         if let Some(status) = child.try_wait().expect("child status check should succeed") {
-            return Err(format!("interpreter exited before serving request: {}", status));
+            return Err(format!("interpreter exited before serving request: {status}"));
         }
 
         match send_http_get(port, path) {
@@ -175,7 +175,7 @@ fn wait_for_response(child: &mut Child, port: u16, path: &str) -> Result<(u16, S
             {
                 thread::sleep(Duration::from_millis(40));
             }
-            Err(error) => return Err(format!("request failed: {}", error)),
+            Err(error) => return Err(format!("request failed: {error}")),
         }
     }
 
@@ -192,8 +192,7 @@ fn http_route_callback_resolves_module_local_helper() {
     let project_root = unique_temp_dir("http_route_callback_module_helper");
     let script_path = project_root.join("main.kujo");
     let script_source = format!(
-        "func build_payload() {{\n    return \"closure-helper-ok\"\n}}\n\nserver := http_server({})\nserver = server.route(\"GET\", \"/health\", func(req) {{\n    return http_response(200, build_payload())\n}})\nserver.listen()\n",
-        port
+        "func build_payload() {{\n    return \"closure-helper-ok\"\n}}\n\nserver := http_server({port})\nserver = server.route(\"GET\", \"/health\", func(req) {{\n    return http_response(200, build_payload())\n}})\nserver.listen()\n"
     );
     fs::write(&script_path, script_source).expect("failed to write test script");
 
@@ -241,8 +240,7 @@ fn http_route_callback_resolves_module_helper_chaining_to_import() {
     fs::write(&helper_path, helper_source).expect("failed to write helper module");
 
     let script_source = format!(
-        "import tenant_utils\n\nfunc ensure_global_tenant_access(name) {{\n    return format_tenant_name(name)\n}}\n\nserver := http_server({})\nserver = server.route(\"GET\", \"/tenant\", func(req) {{\n    return http_response(200, ensure_global_tenant_access(\"alpha\"))\n}})\nserver.listen()\n",
-        port
+        "import tenant_utils\n\nfunc ensure_global_tenant_access(name) {{\n    return format_tenant_name(name)\n}}\n\nserver := http_server({port})\nserver = server.route(\"GET\", \"/tenant\", func(req) {{\n    return http_response(200, ensure_global_tenant_access(\"alpha\"))\n}})\nserver.listen()\n"
     );
     fs::write(&script_path, script_source).expect("failed to write test script");
 

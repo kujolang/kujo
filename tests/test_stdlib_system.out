@@ -1,0 +1,16 @@
+Testing system operation functions...
+env('HOME') = /Users/robertdevore
+✓ env('HOME') returns value
+✓ env() returns empty string for non-existent var
+✓ args() returns array
+Testing sleep(1)...
+✓ sleep() completed
+execute('echo Hello from Kujo'):
+Hello from Kujo
+
+✓ execute() runs commands successfully
+path_exists('tests/test_stdlib_system.kujo') = true
+
+Note: exit() not tested as it would terminate the program
+To test exit(), run: kujo -e 'exit(42)' and check exit code
+System operation tests completed!

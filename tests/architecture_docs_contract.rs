@@ -23,7 +23,7 @@ fn architecture_doc_matches_current_runtime_posture() {
         "docs/VM_INTERPRETER_PARITY_MATRIX.md",
         "docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md",
     ] {
-        assert!(content.contains(marker), "architecture doc should contain marker {:?}", marker);
+        assert!(content.contains(marker), "architecture doc should contain marker {marker:?}");
     }
 
     for stale in [
@@ -34,8 +34,7 @@ fn architecture_doc_matches_current_runtime_posture() {
     ] {
         assert!(
             !content.contains(stale),
-            "architecture doc should not contain stale marker {:?}",
-            stale
+            "architecture doc should not contain stale marker {stale:?}"
         );
     }
 }

@@ -1,0 +1,7 @@
+Ok(42)
+Err(error)
+Some(100)
+None
+Testing pattern match on Ok...
+Matched OK
+Done!

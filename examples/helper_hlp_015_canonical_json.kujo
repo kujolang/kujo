@@ -1,0 +1,17 @@
+# HLP-015: deterministic JSON for machine-readable output.
+
+let first := {"z": 1, "a": {"b": 2, "a": 1}}
+let second := {"a": {"a": 1, "b": 2}, "z": 1}
+let machine_line := to_json(first)
+let same_line := to_json(second)
+let report_text := to_json_pretty(first)
+let round_trip := parse_json(machine_line)
+let redacted := to_json({"token": secret("not-for-output")})
+
+assert(machine_line == "{\"a\":{\"a\":1,\"b\":2},\"z\":1}", "dictionary keys must be sorted")
+assert(machine_line == same_line, "canonical JSON must not depend on insertion order")
+assert(contains(report_text, "\n") == 1, "pretty JSON should contain line breaks")
+assert(round_trip["a"]["b"] == 2, "JSON should round-trip")
+assert(redacted == "{\"token\":\"***\"}", "secrets must stay redacted")
+
+print("ok: HLP-015 deterministic canonical JSON")

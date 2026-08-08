@@ -1,0 +1,28 @@
+range(5): [0, 1, 2, 3, 4]
+range(0): []
+range(-5): []
+range(2, 7): [2, 3, 4, 5, 6]
+range(5, 5): []
+range(10, 5): []
+range(-3, 3): [-3, -2, -1, 0, 1, 2]
+range(0, 10, 2): [0, 2, 4, 6, 8]
+range(0, 10, 3): [0, 3, 6, 9]
+range(10, 0, -1): [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+range(10, 0, -2): [10, 8, 6, 4, 2]
+range(1, 20, 5): [1, 6, 11, 16]
+Hello Alice!
+Welcome Bob and Charlie
+Count: 42
+We have 5 apples and 3 oranges
+Pi is approximately 3.14159
+Coordinates: (1.5, 2.7)
+John is 25 years old and 5.8 feet tall
+100% complete
+Success rate: 95%
+log(E): 1
+log(10): 2.302585092994046
+exp(0): 1
+exp(1): 2.718281828459045
+exp(2): 7.38905609893065
+
+All tests passed!

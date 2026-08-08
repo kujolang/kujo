@@ -363,6 +363,19 @@ impl Interpreter {
         capabilities::capability_for_native_function(Self::canonical_native_function_name(name))
     }
 
+    #[allow(dead_code)]
+    pub fn native_function_capabilities(name: &str) -> Vec<NativeCapability> {
+        let canonical_name = Self::canonical_native_function_name(name);
+        let mut capabilities = Vec::new();
+        if let Some(primary) = capabilities::capability_for_native_function(canonical_name) {
+            capabilities.push(primary);
+        }
+        capabilities.extend_from_slice(capabilities::additional_capabilities_for_native_function(
+            canonical_name,
+        ));
+        capabilities
+    }
+
     pub fn native_function_arity(name: &str) -> Option<CallableArity> {
         Self::native_callable_arity(Self::canonical_native_function_name(name))
     }
@@ -649,6 +662,7 @@ impl Interpreter {
             "read_file",
             "read_file_lossy",
             "write_file",
+            "write_file_atomic",
             "append_file",
             "file_exists",
             "read_lines",
@@ -669,6 +683,8 @@ impl Interpreter {
             "io_write_at",
             "io_seek_read",
             "io_file_metadata",
+            "io_set_permissions",
+            "io_write_private_file",
             "io_truncate",
             "io_copy_range",
             // JSON functions
@@ -755,6 +771,8 @@ impl Interpreter {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "http_download_file",
+            "http_upload_file",
             "ai_request_hash",
             "ai_chat",
             "ai_stream_chat",
@@ -863,6 +881,7 @@ impl Interpreter {
             "unzip",
             // Hashing & Cryptography functions
             "sha256",
+            "hmac_sha256",
             "sha256_file",
             "md5",
             "md5_file",
@@ -873,6 +892,8 @@ impl Interpreter {
             "aes_decrypt",
             "aes_encrypt_bytes",
             "aes_decrypt_bytes",
+            "aes_encrypt_file_stream",
+            "aes_decrypt_file_stream",
             "rsa_generate_keypair",
             "rsa_encrypt",
             "rsa_decrypt",
@@ -1137,6 +1158,10 @@ impl Interpreter {
             Value::NativeFunction("read_file_lossy".to_string()),
         );
         self.env.define("write_file".to_string(), Value::NativeFunction("write_file".to_string()));
+        self.env.define(
+            "write_file_atomic".to_string(),
+            Value::NativeFunction("write_file_atomic".to_string()),
+        );
         self.env
             .define("append_file".to_string(), Value::NativeFunction("append_file".to_string()));
         self.env
@@ -1182,6 +1207,14 @@ impl Interpreter {
         self.env.define(
             "io_file_metadata".to_string(),
             Value::NativeFunction("io_file_metadata".to_string()),
+        );
+        self.env.define(
+            "io_set_permissions".to_string(),
+            Value::NativeFunction("io_set_permissions".to_string()),
+        );
+        self.env.define(
+            "io_write_private_file".to_string(),
+            Value::NativeFunction("io_write_private_file".to_string()),
         );
         self.env
             .define("io_truncate".to_string(), Value::NativeFunction("io_truncate".to_string()));
@@ -1345,6 +1378,14 @@ impl Interpreter {
         self.env.define(
             "http_get_binary".to_string(),
             Value::NativeFunction("http_get_binary".to_string()),
+        );
+        self.env.define(
+            "http_download_file".to_string(),
+            Value::NativeFunction("http_download_file".to_string()),
+        );
+        self.env.define(
+            "http_upload_file".to_string(),
+            Value::NativeFunction("http_upload_file".to_string()),
         );
         self.env.define(
             "ai_request_hash".to_string(),
@@ -1593,6 +1634,8 @@ impl Interpreter {
         // Hashing & Crypto functions
         self.env.define("sha256".to_string(), Value::NativeFunction("sha256".to_string()));
         self.env
+            .define("hmac_sha256".to_string(), Value::NativeFunction("hmac_sha256".to_string()));
+        self.env
             .define("sha256_file".to_string(), Value::NativeFunction("sha256_file".to_string()));
         self.env.define("md5".to_string(), Value::NativeFunction("md5".to_string()));
         self.env.define("md5_file".to_string(), Value::NativeFunction("md5_file".to_string()));
@@ -1617,6 +1660,14 @@ impl Interpreter {
         self.env.define(
             "aes_decrypt_bytes".to_string(),
             Value::NativeFunction("aes_decrypt_bytes".to_string()),
+        );
+        self.env.define(
+            "aes_encrypt_file_stream".to_string(),
+            Value::NativeFunction("aes_encrypt_file_stream".to_string()),
+        );
+        self.env.define(
+            "aes_decrypt_file_stream".to_string(),
+            Value::NativeFunction("aes_decrypt_file_stream".to_string()),
         );
         self.env.define(
             "rsa_generate_keypair".to_string(),
@@ -1841,6 +1892,49 @@ impl Interpreter {
                 }
             }
             _ => Value::Int(0),
+        }
+    }
+
+    /// Execute one async-function mapper invocation in an isolated interpreter.
+    /// `parallel_map` uses this on bounded worker tasks so mapper state cannot
+    /// race through a shared interpreter environment.
+    pub(crate) fn execute_async_mapper_isolated(
+        func: &Value,
+        arg: Value,
+        base_env: Environment,
+        capability_policy: RuntimeCapabilityPolicy,
+    ) -> Value {
+        let Value::AsyncFunction(params, body, captured_env) = func else {
+            return Value::Error("parallel_map async mapper is not an async function".to_string());
+        };
+        if params.len() != 1 {
+            return Value::Error(format!(
+                "parallel_map async mapper expects 1 parameter, got {}",
+                params.len()
+            ));
+        }
+        let mut interpreter = Interpreter::with_capability_policy(capability_policy);
+        interpreter.env = base_env;
+        if let Some(env_ref) = captured_env {
+            let captured = env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+            for scope in captured.scopes {
+                interpreter.env.push_scope();
+                for (name, value) in scope {
+                    interpreter.env.define(name, value);
+                }
+            }
+        }
+        interpreter.env.push_scope();
+        interpreter.env.define(params[0].clone(), arg);
+        if let Err(error) = interpreter.with_function_context("<parallel async mapper>", |interp| {
+            interp.eval_stmts(&body.get())
+        }) {
+            return error;
+        }
+        match interpreter.return_value.take() {
+            Some(Value::Return(value)) => *value,
+            Some(value @ Value::Error(_)) | Some(value @ Value::ErrorObject { .. }) => value,
+            _ => Value::Null,
         }
     }
 
@@ -2750,6 +2844,12 @@ impl Interpreter {
             "type" | "type_of" => CallableArity::exact("type", vec!["value".to_string()]),
             "is_truthy" => CallableArity::exact("is_truthy", vec!["value".to_string()]),
             "read_file_lossy" => CallableArity::exact("read_file_lossy", vec!["path".to_string()]),
+            "write_file_atomic" => CallableArity::range(
+                "write_file_atomic",
+                2,
+                3,
+                vec!["path".to_string(), "content_or_bytes".to_string(), "overwrite".to_string()],
+            ),
             "Promise.all" => CallableArity::range(
                 "Promise.all",
                 1,
@@ -2836,8 +2936,41 @@ impl Interpreter {
                 vec!["value".to_string(), "schema".to_string()],
             ),
             "print" | "eprint" | "debug" | "array" => CallableArity::variadic(name, 0, vec![]),
+            "hmac_sha256" => CallableArity::exact(
+                "hmac_sha256",
+                vec!["secret".to_string(), "message".to_string()],
+            ),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),
             "path_is_symlink" => CallableArity::exact("path_is_symlink", vec!["path".to_string()]),
+            "io_set_permissions" => CallableArity::exact(
+                "io_set_permissions",
+                vec!["path".to_string(), "mode".to_string()],
+            ),
+            "io_write_private_file" => CallableArity::exact(
+                "io_write_private_file",
+                vec!["path".to_string(), "content".to_string(), "mode".to_string()],
+            ),
+            "http_download_file" => CallableArity::exact(
+                "http_download_file",
+                vec!["url".to_string(), "output_path".to_string(), "options".to_string()],
+            ),
+            "http_upload_file" => CallableArity::exact(
+                "http_upload_file",
+                vec!["url".to_string(), "input_path".to_string(), "options".to_string()],
+            ),
+            "aes_encrypt_file_stream" => CallableArity::exact(
+                "aes_encrypt_file_stream",
+                vec![
+                    "input_path".to_string(),
+                    "output_path".to_string(),
+                    "key".to_string(),
+                    "chunk_size".to_string(),
+                ],
+            ),
+            "aes_decrypt_file_stream" => CallableArity::exact(
+                "aes_decrypt_file_stream",
+                vec!["input_path".to_string(), "output_path".to_string(), "key".to_string()],
+            ),
             _ => return None,
         };
 
@@ -5411,7 +5544,136 @@ impl Interpreter {
             }
         };
 
+        let coordinate = |method: &str, name: &str, value: &Value| -> Result<u32, Value> {
+            match value {
+                Value::Int(n) if *n >= 0 && *n <= u32::MAX as i64 => Ok(*n as u32),
+                _ => Err(Value::Error(format!(
+                    "{} requires {} to be a non-negative integer",
+                    method, name
+                ))),
+            }
+        };
+        let channel = |value: &Value| -> Option<u8> {
+            match value {
+                Value::Int(n) if (0..=255).contains(n) => Some(*n as u8),
+                _ => None,
+            }
+        };
+
         let result = match method {
+            "width" => {
+                if !args.is_empty() {
+                    Value::Error("width expects no arguments".to_string())
+                } else {
+                    let img = match lock_or_runtime_error(data.as_ref(), "image.width") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    Value::Int(img.width() as i64)
+                }
+            }
+            "height" => {
+                if !args.is_empty() {
+                    Value::Error("height expects no arguments".to_string())
+                } else {
+                    let img = match lock_or_runtime_error(data.as_ref(), "image.height") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    Value::Int(img.height() as i64)
+                }
+            }
+            "format" => {
+                if !args.is_empty() {
+                    Value::Error("format expects no arguments".to_string())
+                } else {
+                    Value::Str(Arc::new(format.clone()))
+                }
+            }
+            "get_pixel" => {
+                if args.len() != 2 {
+                    Value::Error("get_pixel requires x and y arguments".to_string())
+                } else {
+                    let x = match coordinate("get_pixel", "x", &args[0]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let y = match coordinate("get_pixel", "y", &args[1]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let img = match lock_or_runtime_error(data.as_ref(), "image.get_pixel") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    if x >= img.width() || y >= img.height() {
+                        Value::Error(format!(
+                            "get_pixel coordinates ({}, {}) are outside image bounds {}x{}",
+                            x,
+                            y,
+                            img.width(),
+                            img.height()
+                        ))
+                    } else {
+                        let pixel = image::GenericImageView::get_pixel(&*img, x, y);
+                        Value::Array(Arc::new(
+                            pixel.0.into_iter().map(|value| Value::Int(value as i64)).collect(),
+                        ))
+                    }
+                }
+            }
+            "set_pixel" => {
+                if args.len() != 5 && args.len() != 6 {
+                    Value::Error(
+                        "set_pixel requires x, y, r, g, b, and optional a arguments".to_string(),
+                    )
+                } else {
+                    let x = match coordinate("set_pixel", "x", &args[0]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let y = match coordinate("set_pixel", "y", &args[1]) {
+                        Ok(value) => value,
+                        Err(error) => return Some(error),
+                    };
+                    let channels: Option<Vec<u8>> = args[2..].iter().map(channel).collect();
+                    let channels = match channels {
+                        Some(values) => values,
+                        None => {
+                            return Some(Value::Error(
+                                "set_pixel color channels must be integers from 0 to 255"
+                                    .to_string(),
+                            ))
+                        }
+                    };
+                    let mut img = match lock_or_runtime_error(data.as_ref(), "image.set_pixel") {
+                        Ok(guard) => guard,
+                        Err(error) => return Some(error),
+                    };
+                    if x >= img.width() || y >= img.height() {
+                        Value::Error(format!(
+                            "set_pixel coordinates ({}, {}) are outside image bounds {}x{}",
+                            x,
+                            y,
+                            img.width(),
+                            img.height()
+                        ))
+                    } else {
+                        let alpha = if channels.len() == 4 {
+                            channels[3]
+                        } else {
+                            image::GenericImageView::get_pixel(&*img, x, y).0[3]
+                        };
+                        image::GenericImage::put_pixel(
+                            &mut *img,
+                            x,
+                            y,
+                            image::Rgba([channels[0], channels[1], channels[2], alpha]),
+                        );
+                        Value::Bool(true)
+                    }
+                }
+            }
             "resize" => {
                 if args.len() < 2 {
                     Value::Error("resize requires at least width and height arguments".to_string())
@@ -5599,7 +5861,7 @@ impl Interpreter {
 
     fn channel_send(
         &self,
-        chan: &Arc<Mutex<(std::sync::mpsc::Sender<Value>, std::sync::mpsc::Receiver<Value>)>>,
+        chan: &Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>,
         value: Value,
     ) -> Value {
         let chan_lock = match lock_or_runtime_error(chan.as_ref(), "channel.send") {
@@ -5615,7 +5877,7 @@ impl Interpreter {
 
     fn channel_receive_blocking(
         &self,
-        chan: &Arc<Mutex<(std::sync::mpsc::Sender<Value>, std::sync::mpsc::Receiver<Value>)>>,
+        chan: &Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>,
     ) -> Value {
         loop {
             let receive_result = {

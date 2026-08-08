@@ -25,6 +25,7 @@ The file is loaded and validated by:
 - `reserved_package_names`: package names external packages cannot claim
 - `reserved_profile_names`: profile names reserved for core/official behavior
 - `blocked_aliases`: generic alias-like names blocked from top-level namespace routing
+- `first_party_pack_ids`: exact pack IDs accepted only by trusted builtin registration
 
 ## What is enforced now
 
@@ -46,12 +47,13 @@ There is no `official: true` escape hatch in external manifests.
 
 1. Edit `config/reserved_names.toml`.
 2. Keep entries lowercase and unique within each category.
-3. Add/adjust tests where behavior changes.
-4. Update this doc if categories or semantics change.
+3. Keep every repository in `install.sh`'s ecosystem profile catalog represented
+   in `first_party_tools`, even when it is a library or showcase without a CLI.
+4. Add/adjust tests where behavior changes.
+5. Update this doc if categories or semantics change.
 
 ## Guidance for external package authors
 
 - Use a non-reserved namespace and run commands via:
   - `kujo pack run <namespace> <command>`
 - Use contribution points (for example `contributes.doctor_profiles`) instead of claiming reserved core families directly.
-

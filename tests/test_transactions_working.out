@@ -1,0 +1,31 @@
+Testing Database Transactions...
+
+=== Test 1: Basic Transaction Commit ===
+✓ Basic transaction commit works - 1 rows
+
+=== Test 2: Transaction Rollback ===
+Users in transaction: 3
+Users after rollback: 1
+✓ Transaction rollback works
+
+=== Test 3: Last Insert ID ===
+First order ID: 1
+Second order ID: 2
+Total orders: 2
+✓ Last insert ID works in transactions
+
+=== Test 4: Atomic Multi-Statement Updates ===
+Alice balance: 900
+Bob balance: 600
+✓ Atomic multi-statement updates work
+
+=== Test 5: Complex E-Commerce Transaction ===
+Order status: confirmed
+Order items: 2
+Widget inventory: 98
+Gadget inventory: 49
+✓ Complex e-commerce transaction works
+
+==================================================
+✅ ALL TRANSACTION TESTS PASSED!
+==================================================

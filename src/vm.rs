@@ -5161,12 +5161,17 @@ impl VM {
                                             continue;
                                         }
                                         Some(Err(err)) => {
-                                            return Err(format!("Promise rejected: {}", err));
+                                            self.throw_runtime_value(Value::Error(format!(
+                                                "Promise rejected: {}",
+                                                err
+                                            )))?;
+                                            continue;
                                         }
                                         None => {
-                                            return Err(
-                                                "Promise polled but no result cached".to_string()
-                                            );
+                                            self.throw_runtime_value(Value::Error(
+                                                "Promise polled but no result cached".to_string(),
+                                            ))?;
+                                            continue;
                                         }
                                     }
                                 }
@@ -5191,7 +5196,10 @@ impl VM {
                                         let mut cached = cached_result.lock().unwrap();
                                         *cached = Some(Err(error.clone()));
                                         *polled = true;
-                                        return Err(format!("Promise rejected: {}", error));
+                                        self.throw_runtime_value(Value::Error(format!(
+                                            "Promise rejected: {}",
+                                            error
+                                        )))?;
                                     }
                                     Err(tokio::sync::oneshot::error::TryRecvError::Empty) => {
                                         let pending_promise = Value::Promise {
@@ -5224,9 +5232,9 @@ impl VM {
                                         let mut cached = cached_result.lock().unwrap();
                                         *cached = Some(Err("Promise never resolved".to_string()));
                                         *polled = true;
-                                        return Err(
-                                            "Promise never resolved (channel closed)".to_string()
-                                        );
+                                        self.throw_runtime_value(Value::Error(
+                                            "Promise never resolved (channel closed)".to_string(),
+                                        ))?;
                                     }
                                 }
 
@@ -5279,14 +5287,17 @@ impl VM {
                                 Ok(Err(error)) => {
                                     *cached = Some(Err(error.clone()));
                                     *polled = true;
-                                    return Err(format!("Promise rejected: {}", error));
+                                    self.throw_runtime_value(Value::Error(format!(
+                                        "Promise rejected: {}",
+                                        error
+                                    )))?;
                                 }
                                 Err(_) => {
                                     *cached = Some(Err("Promise never resolved".to_string()));
                                     *polled = true;
-                                    return Err(
-                                        "Promise never resolved (channel closed)".to_string()
-                                    );
+                                    self.throw_runtime_value(Value::Error(
+                                        "Promise never resolved (channel closed)".to_string(),
+                                    ))?;
                                 }
                             }
                         }
@@ -6654,6 +6665,11 @@ impl VM {
 
             // Use the interpreter's native function implementation
             // This gives us access to ALL 100+ built-in functions automatically
+            // while preserving globals declared or imported after VM startup.
+            // Higher-order native functions execute bytecode callbacks in fresh
+            // VMs, so a stale interpreter snapshot would silently hide those
+            // dependencies from the callback.
+            self.interpreter.set_env(Arc::clone(&self.globals));
             let result = self.interpreter.call_native_function_impl(&name, &args);
 
             // Check if the result is an error

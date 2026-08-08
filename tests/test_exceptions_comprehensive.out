@@ -1,0 +1,37 @@
+=== Test 1: Simple throw/catch ===
+Caught: simple error
+
+=== Test 2: Throw from function ===
+Caught: error from function
+
+=== Test 3: Nested try blocks ===
+Outer try
+Inner try
+Inner catch: inner error
+Back in outer try
+
+=== Test 4: Exception in nested functions ===
+Caught from nested: error at level 3
+
+=== Test 5: Multiple sequential try blocks ===
+First catch: error 1
+Second catch: error 2
+
+=== Test 6: No exception (normal path) ===
+No error, x = 30
+
+=== Test 7: Exception after some execution ===
+Before error
+x = 5
+Caught: delayed error
+
+=== Test 8: Throw in catch block ===
+Inner caught: first error
+Outer caught: error from catch block
+
+=== Test 9: Access error properties ===
+Message: detailed error
+Line: 0
+Has stack: false
+
+=== All tests completed ===

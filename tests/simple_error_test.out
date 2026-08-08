@@ -1,0 +1,3 @@
+[KUJOVM001] [vm] Runtime Error: Undefined variable: calculat_sum
+  --> 0:0
+   = help: Define this name before using it, check the spelling, or import the module that provides it.

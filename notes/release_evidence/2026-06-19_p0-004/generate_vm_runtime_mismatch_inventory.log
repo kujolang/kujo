@@ -1,5 +1,0 @@
-$ bash scripts/generate_vm_runtime_mismatch_inventory.sh
-started_at=2026-06-19T17:16:24-0400
-generated inventory: docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md
-generated inventory csv: docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.csv
-ended_at=2026-06-19T17:18:17-0400

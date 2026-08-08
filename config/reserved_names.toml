@@ -53,6 +53,14 @@ workflow_families = [
   "env",
   "inspect",
   "audit",
+  "package",
+  "registry",
+  "plugin",
+  "extension",
+  "workflow",
+  "marketplace",
+  "security",
+  "telemetry",
 ]
 
 first_party_tools = [
@@ -68,6 +76,33 @@ first_party_tools = [
   "ai",
   "sdk",
   "chat",
+  "scent",
+  "packwrite",
+  "runledger",
+  "casefile",
+  "patchbrief",
+  "changebucket",
+  "watchdog",
+  "relay",
+  "concord",
+  "shipcheck",
+  "fence",
+  "redact",
+  "lens",
+  "tribunal",
+  "workcell",
+  "howl",
+  "ssg",
+  "cms",
+  "crud-api",
+  "ai-chat",
+  "intake",
+  "site-kit",
+  "ai-sdk",
+  "agents-sdk",
+  "kujo-skills",
+  "kujo-agents",
+  "kujo-workflows",
 ]
 
 reserved_namespaces = [
@@ -75,6 +110,9 @@ reserved_namespaces = [
   "std",
   "core",
   "official",
+  "kujolang",
+  "kujo-lang",
+  "kujo-language",
   "kennel",
   "doctor",
   "spec",
@@ -86,6 +124,11 @@ reserved_namespaces = [
 
 reserved_package_names = [
   "kujo",
+  "kujolang",
+  "kujo-lang",
+  "kujo-language",
+  "kujo-runtime",
+  "kujo-cli",
   "kujo-core",
   "kujo-std",
   "kujo-doctor",
@@ -102,6 +145,10 @@ reserved_profile_names = [
   "system",
   "official",
   "core",
+  "builtin",
+  "enterprise",
+  "release",
+  "ci",
 ]
 
 blocked_aliases = [
@@ -116,6 +163,23 @@ blocked_aliases = [
   "local",
   "project",
   "workspace",
+  "account",
+  "accounts",
+  "auth",
+  "cloud",
+  "enterprise",
+  "marketplace",
+  "org",
+  "organization",
+  "package",
+  "packages",
+  "plugin",
+  "plugins",
+  "registry",
+  "user",
+  "users",
+  "workflow",
+  "workflows",
 ]
 
 first_party_pack_ids = [
@@ -127,4 +191,3 @@ first_party_pack_ids = [
   "kennel",
   "kujo-muzzle",
 ]
-

@@ -2,6 +2,7 @@ fixture,vm_exit,interpreter_exit,vm_matches_snapshot,interpreter_matches_snapsho
 tests/arg_parser.kujo,0,4,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
 tests/array_methods_test.kujo,0,0,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
 tests/bytecode_vm.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
+tests/cli_module.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/destructuring.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/dict_methods_test.kujo,0,0,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
 tests/enhanced_errors.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
@@ -102,7 +103,7 @@ tests/test_self_simple.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot
 tests/test_simple_random.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_standalone_dunder.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_stdlib_datetime.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
-tests/test_stdlib_paths.kujo,0,0,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
+tests/test_stdlib_paths.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_stdlib_random.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_stdlib_system.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_struct_def_only.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes

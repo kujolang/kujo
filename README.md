@@ -1,5 +1,9 @@
 # Kujo
 
+[![Version](https://img.shields.io/badge/version-1.0.0-black)](https://github.com/kujolang/kujo)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![built with Rust](https://img.shields.io/badge/built%20with-Rust-white.svg)](https://www.rust-lang.org/)
+
 Kujo is the programming language for AI-native software, built in Rust.
 
 It is designed for local-first automation, agentic workflows, and application scripting where deterministic behavior, strong native capabilities, and practical ergonomics matter.
@@ -129,11 +133,14 @@ For script ergonomics, see the output/report style guidance in [docs/FIRST_TOOL_
 
 This repository builds the Kujo language/runtime. If another `kujo` command is already installed on your system, prefer the full path to this repo's binary while testing so you do not confuse it with unrelated tools.
 
+For the language plus the local-first tooling ecosystem, use the [ecosystem installer](docs/ECOSYSTEM_INSTALL.md). It defaults to the runtime, package, context, proof, and agent-operating tools; `--all` adds AI, quality, and showcase profiles.
+
 ```bash
 git clone https://github.com/kujolang/kujo.git
 cd kujo
 cargo build --release
-./target/release/kujo --version
+cargo install --path .
+kujo --version
 ```
 
 Development usage:
@@ -149,6 +156,29 @@ Install locally through Cargo:
 cargo install --path .
 kujo --version
 ```
+
+Build a standalone local artifact for your current machine, with optional user-path install:
+
+```bash
+bash scripts/build_local_binary_artifact.sh --install
+kujo --version
+```
+
+Windows PowerShell:
+
+```powershell
+pwsh -File scripts/build_local_binary_artifact.ps1 -Install
+kujo --version
+```
+
+This local installer path currently supports:
+
+- macOS Intel
+- macOS Apple Silicon
+- Linux x64
+- Windows x64 via PowerShell
+
+It builds a native binary on the current machine, then warns if the install directory is not on `PATH`.
 
 ## Quick Start
 

@@ -1,9 +1,0 @@
-$ cargo test --test runtime_path_matrix_contract
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.80s
-     Running tests/runtime_path_matrix_contract.rs (target/debug/deps/runtime_path_matrix_contract-e19f2f8131996654)
-
-running 1 test
-test vm_parity_doc_includes_command_level_runtime_path_matrix ... ok
-
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-

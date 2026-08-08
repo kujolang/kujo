@@ -1,0 +1,30 @@
+Testing -5: 
+-5
+
+
+Testing -3.14: 
+-3.14
+
+
+Testing -(10 + 5): 
+-15
+
+
+Testing !true: 
+false
+
+
+Testing !false: 
+true
+
+
+Testing !(5 > 3): 
+false
+
+
+Testing --5: 
+5
+
+
+Testing !!true: 
+true

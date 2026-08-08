@@ -22,7 +22,9 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - `parse_json` enforces a maximum input size of `1,048,576` bytes and a maximum nesting depth of `64`.
 - Invalid JSON returns a `Value::Error` message including parse-location details from `serde_json`.
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
-- Dictionary-like values are serialized with deterministic key ordering (lexicographic for string keys, ascending for integer keys).
+- `to_json` and `to_json_pretty` accept JSON-compatible scalar/container values, including `secret` values which serialize as `"***"`; runtime structs, functions, bytes, and other unsupported values return `Value::Error`.
+- Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
+- `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `1,048,576` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
 
 JSON Schema subset contract (`json_schema_validate`):
 
@@ -32,6 +34,34 @@ JSON Schema subset contract (`json_schema_validate`):
 - Error entries are dictionaries with `path`, `message`, and `keyword`. Paths are JSON-pointer-like instance paths such as `/items/0/name`; the root path is an empty string.
 - Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
 - Annotation keywords `title`, `description`, `default`, and `examples` are accepted as no-op metadata.
+
+Process result contract (`spawn_process` / `execute_status`):
+
+- Both return a `ProcessResult` runtime struct accessed with dot fields:
+  `exitcode`, `stdout`, `stderr`, `success`, `timed_out`, `cancelled`,
+  `stdout_truncated`, and `stderr_truncated`.
+- `spawn_process` uses an explicit argv array and does not invoke a shell. Its
+  options are `timeout_ms`, `max_output_bytes`, `inherit_env`, `env_allow`,
+  `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
+  `stream_stderr_path`, `redact_values`, `cancel_file`, and optional `cwd`.
+  The timeout
+  defaults to 30,000 ms; output is capped at 1 MiB per stream by default and
+  16 MiB maximum per stream. Stream sinks are bounded and redact exact byte
+  sequences incrementally across chunks; a full stream channel applies
+  backpressure. `cancel_file` is a portable cancellation hook, while `cwd`
+  selects the child process working directory. SIGINT
+  and SIGTERM cancel the current process execution and set `cancelled`.
+  On Unix, each spawned command runs in its own process group so timeout and
+  cancellation terminate descendant processes that inherited its output pipes.
+- `execute_status` uses a shell command string and is separately gated as
+  `shell-exec`; `spawn_process` is gated as `process-exec`. `execute` returns
+  only stdout on a successful, non-truncated exit and otherwise returns a
+  runtime error.
+- Captured output is decoded lossily as UTF-8. A timeout or cancellation forces
+  `success` to `false`; truncation flags must be checked before treating output
+  as complete.
+- `ProcessResult` is a runtime struct, not a JSON value. To serialize a receipt,
+  copy selected fields into a dictionary and pass that dictionary to `to_json`.
 
 Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / `vec_top_k`):
 
@@ -124,14 +154,14 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `ssg_read_render_and_write_pages` | `ssg_read_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := ssg_read_render_and_write_pages(...)` |
 | `starts_with` | `starts_with(value, prefix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := starts_with(...)` |
 | `ends_with` | `ends_with(value, suffix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := ends_with(...)` |
-| `pad_left` | `pad_left(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_left(...)` |
-| `pad_right` | `pad_right(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_right(...)` |
-| `pad_start` | `pad_start(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_start(...)` |
-| `pad_end` | `pad_end(value, width, pad_char)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := pad_end(...)` |
+| `pad_left` | `pad_left(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Value::Error on non-string arguments, negative/non-finite width, or generated-output limit. Empty `pad_char` uses a space; only its first character is used. | `none` | `result := pad_left("kujo", 6, "0")` |
+| `pad_right` | `pad_right(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Same contract as `pad_left`; padding counts Unicode characters. | `none` | `result := pad_right("kujo", 6, ".")` |
+| `pad_start` | `pad_start(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Alias of `pad_left`; same errors and Unicode-character width. | `none` | `result := pad_start("kujo", 6, "0")` |
+| `pad_end` | `pad_end(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Alias of `pad_right`; same errors and Unicode-character width. | `none` | `result := pad_end("kujo", 6, ".")` |
 | `lines` | `lines(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := lines(...)` |
 | `words` | `words(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := words(...)` |
 | `str_reverse` | `str_reverse(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := str_reverse(...)` |
-| `slugify` | `slugify(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := slugify(...)` |
+| `slugify` | `slugify(value: string) -> string` | handler-defined | string | Value::Error when the argument is not a string. Lowercases, keeps Unicode alphanumerics, maps spaces/underscores to hyphens, removes other punctuation, and trims edge hyphens. | `none` | `result := slugify("Release Candidate 1")` |
 | `truncate` | `truncate(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := truncate(...)` |
 | `to_camel_case` | `to_camel_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_camel_case(...)` |
 | `to_snake_case` | `to_snake_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_snake_case(...)` |
@@ -209,6 +239,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `read_file` | `read_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_file(...)` |
 | `read_file_lossy` | `read_file_lossy(path)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_file_lossy(...)` |
 | `write_file` | `write_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := write_file(...)` |
+| `write_file_atomic` | `write_file_atomic(path, content_or_bytes, overwrite?)` | 2..=3 | bool | Value::Error on invalid args/types/operation, size-limit violations, or atomic finalization failures; defaults to no-overwrite. | `filesystem-write` | `ok := write_file_atomic("state.json", payload, true)` |
 | `append_file` | `append_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := append_file(...)` |
 | `file_exists` | `file_exists(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := file_exists(...)` |
 | `read_lines` | `read_lines(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_lines(...)` |
@@ -227,6 +258,8 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `io_write_at` | `io_write_at(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_write_at(...)` |
 | `io_seek_read` | `io_seek_read(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := io_seek_read(...)` |
 | `io_file_metadata` | `io_file_metadata(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := io_file_metadata(...)` |
+| `io_set_permissions` | `io_set_permissions(path, mode)` | exact 2 | dictionary | Fails closed off Unix; rejects special bits; returns the requested and handle-verified actual POSIX mode. | `filesystem-write` | `receipt := io_set_permissions("private.pem", 384)` |
+| `io_write_private_file` | `io_write_private_file(path, content, mode)` | exact 3 | dictionary | Creates a same-directory temporary file with the restrictive mode at creation, verifies the same handle, syncs, and atomically publishes without overwrite. | `filesystem-write` | `receipt := io_write_private_file("private.pem", pem, 384)` |
 | `io_truncate` | `io_truncate(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_truncate(...)` |
 | `io_copy_range` | `io_copy_range(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_copy_range(...)` |
 | `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>1,048,576 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
@@ -248,25 +281,25 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `random_id` | `random_id(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random_id(...)` |
 | `set_random_seed` | `set_random_seed(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := set_random_seed(...)` |
 | `clear_random_seed` | `clear_random_seed(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := clear_random_seed(...)` |
-| `now` | `now(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now(...)` |
-| `now_utc` | `now_utc(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now_utc(...)` |
-| `now_unix` | `now_unix(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now_unix(...)` |
-| `now_utc_seconds` | `now_utc_seconds(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := now_utc_seconds(...)` |
-| `current_timestamp` | `current_timestamp(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := current_timestamp(...)` |
+| `now` | `now() -> float` | handler-defined | float | Capability-denied when clock access is restricted. Unix seconds, fractional. | `clock` | `result := now()` |
+| `now_utc` | `now_utc() -> string` | handler-defined | string | Capability-denied when clock access is restricted. ISO-8601 UTC in `YYYY-MM-DDTHH:mm:ssZ` form. | `clock` | `result := now_utc()` |
+| `now_unix` | `now_unix() -> int` | handler-defined | int | Capability-denied when clock access is restricted. Unix seconds. | `clock` | `result := now_unix()` |
+| `now_utc_seconds` | `now_utc_seconds() -> int` | handler-defined | int | Alias of `now_unix`; same capability and units. | `clock` | `result := now_utc_seconds()` |
+| `current_timestamp` | `current_timestamp() -> int` | handler-defined | int | Capability-denied when clock access is restricted. Unix milliseconds. | `clock` | `result := current_timestamp()` |
 | `time` | `time(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := time(...)` |
 | `performance_now` | `performance_now(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := performance_now(...)` |
 | `time_us` | `time_us(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := time_us(...)` |
 | `time_ns` | `time_ns(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := time_ns(...)` |
 | `format_duration` | `format_duration(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := format_duration(...)` |
 | `elapsed` | `elapsed(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := elapsed(...)` |
-| `format_date` | `format_date(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := format_date(...)` |
-| `parse_date` | `parse_date(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := parse_date(...)` |
-| `env` | `env(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env(...)` |
-| `env_or` | `env_or(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_or(...)` |
-| `env_int` | `env_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_int(...)` |
-| `env_float` | `env_float(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_float(...)` |
-| `env_bool` | `env_bool(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_bool(...)` |
-| `env_required` | `env_required(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := env_required(...)` |
+| `format_date` | `format_date(timestamp: number, format: string) -> string` | handler-defined | string | Value::Error on wrong arity/types; invalid or out-of-range timestamps return an error string. Input is Unix seconds and fractional seconds are truncated. | `clock` | `result := format_date(now_unix(), "YYYY-MM-DD")` |
+| `parse_date` | `parse_date(date: string, format: string) -> float` | handler-defined | float | Value::ErrorObject for invalid dates or unsupported formats; only `YYYY-MM-DD` is supported. Returns Unix seconds. | `clock` | `result := parse_date("1970-01-01", "YYYY-MM-DD")` |
+| `env` | `env(name: string) -> string` | handler-defined | string | Missing variables return `""`; wrong argument shape returns `Value::Error`; restricted runs require `env-read`. | `env-read` | `result := env("HOME")` |
+| `env_or` | `env_or(name: string, default: string) -> string` | handler-defined | string | Uses the default only when the variable is absent; both arguments must be strings; restricted runs require `env-read`. | `env-read` | `result := env_or("MODE", "dev")` |
+| `env_int` | `env_int(name: string, default?: int) -> int` | handler-defined | int | Without a default, returns `Value::ErrorObject` when missing or not a valid integer; with a default, returns it for missing or invalid values. Restricted runs require `env-read`. | `env-read` | `result := env_int("PORT", 8080)` |
+| `env_float` | `env_float(name: string, default?: number) -> float` | handler-defined | float | Without a default, returns `Value::ErrorObject` when missing or not a valid float; with a default, returns it for missing or invalid values. Restricted runs require `env-read`. | `env-read` | `result := env_float("TIMEOUT", 1.5)` |
+| `env_bool` | `env_bool(name: string, default?: bool) -> bool` | handler-defined | bool | Without a default, returns `Value::ErrorObject` when missing or invalid; with a default, returns it for missing or invalid values. Boolean text accepts `true/1/yes/on` or `false/0/no/off` case-insensitively. Restricted runs require `env-read`. | `env-read` | `result := env_bool("ENABLED", false)` |
+| `env_required` | `env_required(name: string) -> string` | handler-defined | string | `Value::ErrorObject` when absent; an explicitly set empty value is returned; restricted runs require `env-read`. | `env-read` | `result := env_required("TOKEN")` |
 | `kv_set` | `kv_set(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := kv_set(...)` |
 | `kv_get` | `kv_get(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := kv_get(...)` |
 | `env_set` | `env_set(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-write` | `result := env_set(...)` |
@@ -275,8 +308,8 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `arg_parser` | `arg_parser(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := arg_parser(...)` |
 | `exit` | `exit(code?)` | 0..=1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := exit(...)` |
 | `sleep` | `sleep(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `clock` | `result := sleep(...)` |
-| `execute` | `execute(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `shell-exec` | `result := execute(...)` |
-| `execute_status` | `execute_status(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `shell-exec` | `result := execute_status(...)` |
+| `execute` | `execute(command: string, options?: dict) -> string` | handler-defined | string | Runtime error on non-zero exit, timeout, output truncation, invalid command/options, or wrong types; rejects empty/newline/NUL shell text. | `shell-exec` | `result := execute("echo hi", {"timeout_ms": 1000})` |
+| `execute_status` | `execute_status(command: string, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on invalid command/options or spawn/wait/read failure; rejects empty/newline/NUL shell text. | `shell-exec` | `result := execute_status("echo hi")` |
 | `os_getcwd` | `os_getcwd(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := os_getcwd(...)` |
 | `os_chdir` | `os_chdir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := os_chdir(...)` |
 | `os_rmdir` | `os_rmdir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-delete` | `result := os_rmdir(...)` |
@@ -301,6 +334,8 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `http_put` | `http_put(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := http_put(...)` |
 | `http_delete` | `http_delete(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := http_delete(...)` |
 | `http_get_binary` | `http_get_binary(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := http_get_binary(...)` |
+| `http_download_file` | `http_download_file(url, output_path, options)` | exact 3 | dictionary | Streams to a same-directory temporary file, enforces `max_bytes`, verifies a SHA-256 digest, and atomically publishes only complete responses. | `network-client`, `filesystem-write` | `receipt := http_download_file(url, "artifact.bin", {"max_bytes": 1073741824})` |
+| `http_upload_file` | `http_upload_file(url, input_path, options)` | exact 3 | dictionary | Streams a file as a POST/PUT body without base64 expansion and bounds the response with `max_response_bytes`. | `network-client`, `filesystem-read` | `receipt := http_upload_file(url, "artifact.bin", {"method":"PUT"})` |
 | `ai_request_hash` | `ai_request_hash(prompt_or_messages, options)` | exact 2 | string | Value::Error on invalid args/options contracts; hashes normalized endpoint/model/messages/body/relevant headers without network I/O. | `none` | `hash := ai_request_hash("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"})` |
 | `ai_chat` | `ai_chat(prompt_or_messages, options)` | exact 2 | dynamic (Value) | Value::Error on invalid args/options contracts; `Result(Err)` with deterministic transport/API/replay failures; success adds `usage`, `finish_reason`, `tool_calls`, and `provider` when available; `options.structured_errors` opts into typed error dictionaries. | `network-ai` | `result := ai_chat("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"})` |
 | `ai_stream_chat` | `ai_stream_chat(prompt_or_messages, options, on_chunk?)` | 2..=3 | dynamic (Value) | Value::Error on invalid args/options/callback contracts; `Result(Err)` with deterministic transport/API/replay failures; success adds `usage`, `finish_reason`, and `provider` when available; optional callbacks receive `(delta, raw_chunk)` and can return `false` to cancel later chunks; supports replay cassettes and structured errors. | `network-ai` | `result := ai_stream_chat("Hi", {"endpoint":"https://example.ai/chat","model":"gpt"}, on_chunk)` |
@@ -393,6 +428,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `zip_close` | `zip_close(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := zip_close(...)` |
 | `unzip` | `unzip(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := unzip(...)` |
 | `sha256` | `sha256(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := sha256(...)` |
+| `hmac_sha256` | `hmac_sha256(secret, message)` | exact 2 | string | Returns lowercase hexadecimal HMAC-SHA256 for string or bytes secret/message; Value::Error on invalid args/types. | `none` | `signature := hmac_sha256(secret, payload)` |
 | `sha256_file` | `sha256_file(path)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := sha256_file(...)` |
 | `md5` | `md5(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := md5(...)` |
 | `md5_file` | `md5_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := md5_file(...)` |
@@ -401,13 +437,15 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `aes_encrypt` | `aes_encrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := aes_encrypt(...)` |
 | `aes_decrypt` | `aes_decrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := aes_decrypt(...)` |
 | `aes_encrypt_bytes` | `aes_encrypt_bytes(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := aes_encrypt_bytes(...)` |
+| `aes_encrypt_file_stream` | `aes_encrypt_file_stream(input_path, output_path, key, chunk_size)` | exact 4 | dictionary | Constant-memory framed AES-256-GCM with authenticated order, lengths, final frame, SHA-256 receipt, and atomic output publication. | `filesystem-read`, `filesystem-write` | `receipt := aes_encrypt_file_stream("in.bin", "out.aead", key, 1048576)` |
+| `aes_decrypt_file_stream` | `aes_decrypt_file_stream(input_path, output_path, key)` | exact 3 | dictionary | Authenticates every frame before writing and removes temporary output on truncation, tampering, reordering, or format failure. | `filesystem-read`, `filesystem-write` | `receipt := aes_decrypt_file_stream("out.aead", "restored.bin", key)` |
 | `aes_decrypt_bytes` | `aes_decrypt_bytes(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := aes_decrypt_bytes(...)` |
 | `rsa_generate_keypair` | `rsa_generate_keypair(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_generate_keypair(...)` |
 | `rsa_encrypt` | `rsa_encrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_encrypt(...)` |
 | `rsa_decrypt` | `rsa_decrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_decrypt(...)` |
 | `rsa_sign` | `rsa_sign(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_sign(...)` |
 | `rsa_verify` | `rsa_verify(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_verify(...)` |
-| `spawn_process` | `spawn_process(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := spawn_process(...)` |
+| `spawn_process` | `spawn_process(argv: array<string>, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on empty/non-string argv, invalid options, or spawn/wait/read failure. Options include bounded output, stream channel/file sinks, redaction, and cancellation; defaults are 30s timeout, 1 MiB per-stream output, and 16 MiB maximum per stream. | `process-exec` | `result := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
 | `pipe_commands` | `pipe_commands(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := pipe_commands(...)` |
 | `tcp_listen` | `tcp_listen(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_listen(...)` |
 | `tcp_accept` | `tcp_accept(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_accept(...)` |

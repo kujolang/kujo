@@ -1,7 +1,0 @@
-command	status	log
-cargo build --release	0	/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/notes/release_evidence/2026-06-19_p1-004/cargo_build_release.log
-cargo check --no-default-features	0	/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/notes/release_evidence/2026-06-19_p1-004/cargo_check_no_default.log
-cargo check --no-default-features --features runtime-jit	0	/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/notes/release_evidence/2026-06-19_p1-004/cargo_check_no_default_runtime_jit.log
-cargo check --no-default-features --features runtime-db,runtime-image,runtime-archive	0	/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/notes/release_evidence/2026-06-19_p1-004/cargo_check_no_default_host_effects.log
-bash scripts/measure_binary_size.sh	0	/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/notes/release_evidence/2026-06-19_p1-004/measure_binary_size.log
-cargo test --test runtime_path_matrix_contract	0	notes/release_evidence/2026-06-19_p1-004/cargo_test_runtime_path_matrix_contract.log

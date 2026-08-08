@@ -2083,6 +2083,7 @@ dependencies = [
  "criterion",
  "csv",
  "futures",
+ "hmac 0.12.1",
  "image",
  "infer",
  "jsonwebtoken",

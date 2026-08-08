@@ -44,29 +44,29 @@ fn parse_json_supports_all_json_root_value_kinds() {
             ));
             assert!(matches!(map.get("ok"), Some(Value::Bool(true))));
         }
-        other => panic!("expected parsed object to produce Value::Dict, got {:?}", other),
+        other => panic!("expected parsed object to produce Value::Dict, got {other:?}"),
     }
 }
 
 #[test]
 fn parse_json_invalid_input_reports_location() {
     let error = builtins::parse_json("{\"name\": }").expect_err("invalid json should fail");
-    assert!(error.contains("line"), "expected line information, got: {}", error);
-    assert!(error.contains("column"), "expected column information, got: {}", error);
+    assert!(error.contains("line"), "expected line information, got: {error}");
+    assert!(error.contains("column"), "expected column information, got: {error}");
 }
 
 #[test]
 fn parse_json_rejects_excessive_input_size() {
     let oversized = format!("\"{}\"", "x".repeat(2 * 1024 * 1024));
     let error = builtins::parse_json(&oversized).expect_err("oversized json should fail");
-    assert!(error.contains("maximum input size"), "expected size-limit error, got: {}", error);
+    assert!(error.contains("maximum input size"), "expected size-limit error, got: {error}");
 }
 
 #[test]
 fn parse_json_rejects_excessive_nesting_depth() {
     let too_deep = nested_json_array(80);
     let error = builtins::parse_json(&too_deep).expect_err("deep json should fail");
-    assert!(error.contains("maximum nesting depth"), "expected depth-limit error, got: {}", error);
+    assert!(error.contains("maximum nesting depth"), "expected depth-limit error, got: {error}");
 }
 
 #[test]
@@ -89,24 +89,16 @@ fn to_json_stringifies_primitive_and_nested_values() {
 #[test]
 fn to_json_rejects_non_finite_numbers() {
     let nan_error = builtins::to_json(&Value::Float(f64::NAN)).expect_err("NaN should fail");
-    assert!(
-        nan_error.contains("non-finite"),
-        "expected non-finite float error, got: {}",
-        nan_error
-    );
+    assert!(nan_error.contains("non-finite"), "expected non-finite float error, got: {nan_error}");
 
     let inf_error =
         builtins::to_json(&Value::Float(f64::INFINITY)).expect_err("infinity should fail");
-    assert!(
-        inf_error.contains("non-finite"),
-        "expected non-finite float error, got: {}",
-        inf_error
-    );
+    assert!(inf_error.contains("non-finite"), "expected non-finite float error, got: {inf_error}");
 }
 
 #[test]
 fn to_json_rejects_unsupported_value_types() {
     let error = builtins::to_json(&Value::NativeFunction("print".to_string()))
         .expect_err("native function should not serialize to json");
-    assert!(error.contains("Cannot convert"), "expected unsupported-type error, got: {}", error);
+    assert!(error.contains("Cannot convert"), "expected unsupported-type error, got: {error}");
 }

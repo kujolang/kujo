@@ -1,0 +1,6 @@
+Testing HTTP functions...
+✓ http_server(8081) created server
+✓ server.route() registered route
+✓ http_response(200, 'Hello') created response
+✓ json_response(200, {...}) created JSON response
+All HTTP function tests passed!

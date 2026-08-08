@@ -1,7 +1,0 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.73s
-     Running tests/tree_sitter_kujo_assets.rs (target/debug/deps/tree_sitter_kujo_assets-4708c4c372d745e3)
-
-running 1 test
-test tree_sitter_kujo_assets_exist_and_have_core_content ... ok
-
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -1,0 +1,12 @@
+=== JSON Edge Cases Tests ===
+Empty array: []
+Nested empty: {"inner": {}, "outer": {}}
+Deep value: value
+Unicode: Hello ABC
+Pi: 3.14159
+E: 2.71828
+Large number: 999999999
+Empty string: 
+First ID: 1
+Second ID: 2
+=== All edge case tests passed ===

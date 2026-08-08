@@ -1,0 +1,38 @@
+from cli import parse, parse_cli, parse_args, flag_value, has_flag, positional, parse_subcommand, positional_args
+
+let spec := [
+    {"name": "json", "kind": "bool", "short": "-j"},
+    {"name": "output", "kind": "value", "short": "-o", "required": true},
+    {"name": "retries", "kind": "value", "short": "-r", "default": "2"}
+]
+
+let parsed := parse(["build", "--json", "--output=dist.json", "--retries", "-1"], spec)
+assert(parsed["ok"] == true, "expected valid CLI parse")
+assert(parsed["value"]["command"] == "build", "expected command")
+assert(parsed["value"]["options"]["json"] == true, "expected boolean option")
+assert(parsed["value"]["options"]["output"] == "dist.json", "expected equals option")
+assert(parsed["value"]["options"]["retries"] == "-1", "expected negative value")
+
+let missing := parse(["build", "--json"], spec)
+assert(missing["ok"] == false, "missing required option should fail")
+assert(missing["error"]["code"] == "missing_required", "expected missing-required error")
+
+let unknown := parse(["build", "--unknown"], spec)
+assert(unknown["ok"] == false, "unknown option should fail")
+assert(unknown["error"]["code"] == "unknown_option", "expected unknown-option error")
+
+let terminated := parse(["build", "--output", "x", "--", "--literal"], spec)
+assert(terminated["ok"] == true, "terminator parse should succeed")
+assert(terminated["value"]["positionals"][0] == "--literal", "terminator should preserve literal")
+
+let legacy := parse_cli(["run", "--limit", "10", "input.txt", "--json"])
+assert(legacy["command"] == "run", "legacy adapter should preserve command")
+assert(flag_value(legacy, "--limit", "") == "10", "legacy adapter should parse values")
+assert(has_flag(legacy, "--json") == 1, "legacy adapter should parse booleans")
+assert(positional(legacy, 0, "") == "input.txt", "legacy adapter should preserve positionals")
+assert(parse_subcommand(["--json", "inspect"]) == "", "subcommand adapter should reject leading flags")
+assert(len(positional_args(["run", "input.txt", "--json"])) == 1, "positional adapter should filter flags")
+legacy_args := parse_args(["--json", "input.txt", "--output", "report.json"], ["json"])
+assert(legacy_args["flags"]["json"] == true, "legacy parse_args should preserve boolean flags")
+assert(legacy_args["flags"]["output"] == "report.json", "legacy parse_args should parse value flags")
+assert(legacy_args["positionals"][0] == "input.txt", "legacy parse_args should preserve positionals")

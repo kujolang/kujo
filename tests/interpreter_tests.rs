@@ -49,6 +49,43 @@ fn run_code_with_output(code: &str) -> (Interpreter, String) {
 }
 
 #[test]
+fn test_parallel_map_async_mapper_isolated_ordered_and_fail_closed() {
+    let ordered = run_code(
+        r#"
+        async func worker(value) {
+            await async_sleep((4 - value) * 10)
+            return value * 10
+        }
+        ordered := await parallel_map([1, 2, 3], worker, 2)
+        "#,
+    );
+    match ordered.env.get("ordered") {
+        Some(Value::Array(values)) => {
+            assert_eq!(values.len(), 3);
+            assert!(matches!(values[0], Value::Int(10)));
+            assert!(matches!(values[1], Value::Int(20)));
+            assert!(matches!(values[2], Value::Int(30)));
+        }
+        other => panic!("expected ordered async mapper results, got {other:?}"),
+    }
+
+    let failed = run_code(
+        r#"
+        async func worker(value) {
+            if value == 2 { return error("worker-denied") }
+            await async_sleep(20)
+            return value
+        }
+        result := await parallel_map([1, 2, 3, 4], worker, 2)
+        "#,
+    );
+    assert!(matches!(
+        failed.env.get("result"),
+        Some(Value::Error(message)) if message.contains("worker-denied")
+    ));
+}
+
+#[test]
 fn test_builtin_names_include_release_hardening_contract_entries() {
     let builtins: HashSet<&str> = Interpreter::get_builtin_names().into_iter().collect();
 
@@ -135,7 +172,7 @@ fn test_builtin_names_include_release_hardening_contract_entries() {
     ];
 
     for name in required {
-        assert!(builtins.contains(name), "Missing builtin from API contract: {}", name);
+        assert!(builtins.contains(name), "Missing builtin from API contract: {name}");
     }
 }
 
@@ -223,7 +260,7 @@ fn test_builtin_aliases_match_canonical_behavior() {
 #[test]
 fn test_path_builtin_alias_and_core_operations() {
     let unique = unique_shared_key("path_hardening");
-    let temp_dir = std::env::temp_dir().join(format!("kujo_{}", unique));
+    let temp_dir = std::env::temp_dir().join(format!("kujo_{unique}"));
     std::fs::create_dir_all(&temp_dir).expect("failed to create temp dir for path tests");
     let temp_file = temp_dir.join("sample.txt");
     let symlink_file = temp_dir.join("sample-link.txt");
@@ -234,19 +271,17 @@ fn test_path_builtin_alias_and_core_operations() {
 
     let code = format!(
         r#"
-        joined_a := join_path("{dir}", "sample.txt")
-        joined_b := path_join("{dir}", "sample.txt")
-        exists_flag := path_exists("{file}")
-        is_file_flag := path_is_file("{file}")
-        is_symlink_flag := path_is_symlink("{file}")
-        is_dir_flag := path_is_dir("{dir}")
-        ext := path_extension("{file}")
-        base := basename("{file}")
-        parent := dirname("{file}")
-        abs_path := path_absolute("{file}")
+        joined_a := join_path("{dir_str}", "sample.txt")
+        joined_b := path_join("{dir_str}", "sample.txt")
+        exists_flag := path_exists("{file_str}")
+        is_file_flag := path_is_file("{file_str}")
+        is_symlink_flag := path_is_symlink("{file_str}")
+        is_dir_flag := path_is_dir("{dir_str}")
+        ext := path_extension("{file_str}")
+        base := basename("{file_str}")
+        parent := dirname("{file_str}")
+        abs_path := path_absolute("{file_str}")
     "#,
-        dir = dir_str,
-        file = file_str,
     );
 
     let interp = run_code(&code);
@@ -322,7 +357,7 @@ fn test_path_builtin_alias_and_core_operations() {
 #[test]
 fn test_read_file_lossy_and_bytes_slice_helpers() {
     let unique = unique_shared_key("lossy_and_bytes");
-    let temp_dir = std::env::temp_dir().join(format!("kujo_{}", unique));
+    let temp_dir = std::env::temp_dir().join(format!("kujo_{unique}"));
     std::fs::create_dir_all(&temp_dir).expect("failed to create temp dir for lossy tests");
 
     let lossy_path = temp_dir.join("lossy.txt");
@@ -331,11 +366,10 @@ fn test_read_file_lossy_and_bytes_slice_helpers() {
     let path_str = lossy_path.to_string_lossy().to_string();
     let code = format!(
         r#"
-        text := read_file_lossy("{path}")
+        text := read_file_lossy("{path_str}")
         data := bytes([0, 1, 2, 3, 4])
         data_slice := slice(data, 1, 4)
-    "#,
-        path = path_str
+    "#
     );
 
     let interp = run_code(&code);
@@ -1260,7 +1294,7 @@ fn test_parse_int_invalid() {
 
     // Should have caught an error
     if let Some(Value::Str(err)) = interp.env.get("caught") {
-        assert!(err.contains("Cannot parse") || err.as_str() == "no error", "Got: {}", err);
+        assert!(err.contains("Cannot parse") || err.as_str() == "no error", "Got: {err}");
         if err.as_str() != "no error" {
             assert!(err.contains("not a number"));
         }
@@ -1320,7 +1354,7 @@ fn test_parse_float_invalid() {
 
     // Should have caught an error or no error was thrown
     if let Some(Value::Str(err)) = interp.env.get("caught") {
-        assert!(err.contains("Cannot parse") || err.as_str() == "no error", "Got: {}", err);
+        assert!(err.contains("Cannot parse") || err.as_str() == "no error", "Got: {err}");
         if err.as_str() != "no error" {
             assert!(err.contains("invalid"));
         }
@@ -1367,10 +1401,9 @@ fn test_file_write_and_read() {
 
     let code = format!(
         r#"
-        result := write_file("{}", "Hello, Kujo!")
-        content := read_file("{}")
-    "#,
-        test_file, test_file
+        result := write_file("{test_file}", "Hello, Kujo!")
+        content := read_file("{test_file}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -1403,12 +1436,11 @@ fn test_file_append() {
 
     let code = format!(
         r#"
-        r1 := write_file("{}", "Line 1\n")
-        r2 := append_file("{}", "Line 2\n")
-        r3 := append_file("{}", "Line 3\n")
-        content := read_file("{}")
-    "#,
-        test_file, test_file, test_file, test_file
+        r1 := write_file("{test_file}", "Line 1\n")
+        r2 := append_file("{test_file}", "Line 2\n")
+        r3 := append_file("{test_file}", "Line 3\n")
+        content := read_file("{test_file}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -1433,10 +1465,9 @@ fn test_file_exists() {
 
     let code = format!(
         r#"
-        exists1 := file_exists("{}")
+        exists1 := file_exists("{test_file}")
         exists2 := file_exists("/tmp/file_that_does_not_exist_kujo.txt")
-    "#,
-        test_file
+    "#
     );
 
     let interp = run_code(&code);
@@ -1467,12 +1498,11 @@ fn test_read_lines() {
 
     let code = format!(
         r#"
-        lines := read_lines("{}")
+        lines := read_lines("{test_file}")
         count := len(lines)
         first := lines[0]
         last := lines[2]
-    "#,
-        test_file
+    "#
     );
 
     let interp = run_code(&code);
@@ -1503,21 +1533,20 @@ fn test_read_lines() {
 fn test_create_dir_and_list() {
     use std::fs;
     let test_dir = "/tmp/kujo_test_dir";
-    let test_file1 = format!("{}/file1.txt", test_dir);
-    let test_file2 = format!("{}/file2.txt", test_dir);
+    let test_file1 = format!("{test_dir}/file1.txt");
+    let test_file2 = format!("{test_dir}/file2.txt");
 
     // Clean up before test
     let _ = fs::remove_dir_all(test_dir);
 
     let code = format!(
         r#"
-        result := create_dir("{}")
-        w1 := write_file("{}", "content1")
-        w2 := write_file("{}", "content2")
-        files := list_dir("{}")
+        result := create_dir("{test_dir}")
+        w1 := write_file("{test_file1}", "content1")
+        w2 := write_file("{test_file2}", "content2")
+        files := list_dir("{test_dir}")
         count := len(files)
-    "#,
-        test_dir, test_file1, test_file2, test_dir
+    "#
     );
 
     let interp = run_code(&code);
@@ -1735,10 +1764,9 @@ fn test_bool_from_file_operations() {
 
     let code = format!(
         r#"
-        exists := file_exists("{}")
+        exists := file_exists("{test_file}")
         not_exists := file_exists("/tmp/file_that_does_not_exist.txt")
-    "#,
-        test_file
+    "#
     );
 
     let interp = run_code(&code);
@@ -2980,7 +3008,7 @@ fn test_spawn_can_use_parent_defined_shared_key_variable() {
 
     let code = format!(
         r#"
-        counter_key := "{}"
+        counter_key := "{counter_key}"
         shared_set(counter_key, 0)
 
         for i in range(0, 12) {{
@@ -3001,8 +3029,7 @@ fn test_spawn_can_use_parent_defined_shared_key_variable() {
 
         final_counter := shared_get(counter_key)
         cleanup_counter := shared_delete(counter_key)
-    "#,
-        counter_key
+    "#
     );
 
     let interp = run_code(&code);
@@ -3149,7 +3176,7 @@ fn test_shared_value_lifecycle_operations() {
 
     let code = format!(
         r#"
-        key := "{}"
+        key := "{shared_key}"
 
         created := shared_set(key, 41)
         exists_before := shared_has(key)
@@ -3160,8 +3187,7 @@ fn test_shared_value_lifecycle_operations() {
 
         deleted := shared_delete(key)
         exists_after := shared_has(key)
-    "#,
-        shared_key
+    "#
     );
 
     let interp = run_code(&code);
@@ -3181,7 +3207,7 @@ fn test_shared_add_int_success_and_error_paths() {
 
     let code = format!(
         r#"
-        key := "{}"
+        key := "{base_key}"
 
         shared_set(key, 0)
         plus_five := shared_add_int(key, 5)
@@ -3191,8 +3217,7 @@ fn test_shared_add_int_success_and_error_paths() {
         bad_delta := shared_add_int(key, "1")
 
         shared_delete(key)
-    "#,
-        base_key
+    "#
     );
 
     let interp = run_code(&code);
@@ -3211,12 +3236,11 @@ fn test_shared_add_int_rejects_non_int_target_value() {
 
     let code = format!(
         r#"
-        key := "{}"
+        key := "{base_key}"
         shared_set(key, "not an int")
         result := shared_add_int(key, 1)
         shared_delete(key)
-    "#,
-        base_key
+    "#
     );
 
     let interp = run_code(&code);
@@ -3233,10 +3257,9 @@ fn test_shared_add_int_rejects_missing_key() {
 
     let code = format!(
         r#"
-        missing_key := "{}"
+        missing_key := "{base_key}"
         result := shared_add_int(missing_key, 1)
-    "#,
-        base_key
+    "#
     );
 
     let interp = run_code(&code);
@@ -3253,18 +3276,18 @@ fn test_spawn_can_update_shared_values_across_isolated_environments() {
 
     let code = format!(
         r#"
-        shared_set("{}", 0)
+        shared_set("{counter_key}", 0)
 
         for i in range(0, 20) {{
             spawn {{
-                shared_add_int("{}", 1)
+                shared_add_int("{counter_key}", 1)
             }}
         }}
 
         attempts := 0
 
         while attempts < 2000 {{
-            current := shared_get("{}")
+            current := shared_get("{counter_key}")
             if current == 20 {{
                 break
             }}
@@ -3272,12 +3295,11 @@ fn test_spawn_can_update_shared_values_across_isolated_environments() {
             attempts := attempts + 1
         }}
 
-        final_counter := shared_get("{}")
+        final_counter := shared_get("{counter_key}")
         completed := final_counter == 20
 
-        cleanup_counter := shared_delete("{}")
-    "#,
-        counter_key, counter_key, counter_key, counter_key, counter_key
+        cleanup_counter := shared_delete("{counter_key}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -3316,9 +3338,9 @@ fn test_await_all_with_concurrency_limit_preserves_order() {
 
     let code = format!(
         r#"
-        p1 := async_read_file("{}")
-        p2 := async_read_file("{}")
-        p3 := async_read_file("{}")
+        p1 := async_read_file("{file1}")
+        p2 := async_read_file("{file2}")
+        p3 := async_read_file("{file3}")
 
         results := await await_all([p1, p2, p3], 2)
 
@@ -3327,8 +3349,7 @@ fn test_await_all_with_concurrency_limit_preserves_order() {
         third := results[2]
 
         order_ok := first == "alpha" && second == "beta" && third == "gamma"
-    "#,
-        file1, file2, file3
+    "#
     );
 
     let interp = run_code(&code);
@@ -3457,12 +3478,11 @@ fn test_promise_all_large_array_with_bounded_concurrency() {
 
     let code = format!(
         r#"
-        promises := [{}]
+        promises := [{promises}]
         results := await promise_all(promises, 32)
         result_type := type(results)
         count := len(results)
-    "#,
-        promises
+    "#
     );
 
     let interp = run_code(&code);
@@ -3485,12 +3505,11 @@ fn test_await_all_large_array_uses_configured_default_pool() {
     let code = format!(
         r#"
         previous := set_task_pool_size(24)
-        promises := [{}]
+        promises := [{promises}]
         results := await await_all(promises)
         count := len(results)
         set_task_pool_size(previous)
-    "#,
-        promises
+    "#
     );
 
     let interp = run_code(&code);
@@ -3566,11 +3585,11 @@ fn test_parallel_map_rayon_len_pipeline_with_mixed_collections() {
 #[test]
 fn test_import_missing_module_returns_runtime_error() {
     let module_name = unique_module_name("module_does_not_exist");
-    let interp = run_code(&format!("import {}", module_name));
+    let interp = run_code(&format!("import {module_name}"));
 
     assert!(matches!(
         interp.return_value,
-        Some(Value::Error(message)) if message.contains(&format!("Module not found: {}", module_name))
+        Some(Value::Error(message)) if message.contains(&format!("Module not found: {module_name}"))
     ));
 }
 
@@ -3580,16 +3599,16 @@ fn test_from_import_missing_symbol_returns_runtime_error() {
     std::fs::create_dir_all(&modules_dir).expect("failed to create modules directory for test");
 
     let module_name = unique_module_name("module_present");
-    let module_path = modules_dir.join(format!("{}.kujo", module_name));
+    let module_path = modules_dir.join(format!("{module_name}.kujo"));
     std::fs::write(&module_path, "export present := 1\n")
         .expect("failed to write temporary module");
 
-    let interp = run_code(&format!("from {} import absent", module_name));
+    let interp = run_code(&format!("from {module_name} import absent"));
 
     assert!(matches!(
         interp.return_value,
         Some(Value::Error(message))
-            if message.contains(&format!("Symbol 'absent' not found in module '{}'", module_name))
+            if message.contains(&format!("Symbol 'absent' not found in module '{module_name}'"))
     ));
 
     std::fs::remove_file(&module_path).expect("failed to remove temporary module file");
@@ -3601,14 +3620,14 @@ fn test_imported_function_can_call_module_local_helper() {
     std::fs::create_dir_all(&modules_dir).expect("failed to create modules directory for test");
 
     let module_name = unique_module_name("module_function_helper");
-    let module_path = modules_dir.join(format!("{}.kujo", module_name));
+    let module_path = modules_dir.join(format!("{module_name}.kujo"));
     std::fs::write(
         &module_path,
         "func helper(x) {\n\treturn x + 1\n}\n\nfunc add_one_impl(x) {\n\treturn helper(x)\n}\n\nexport add_one := add_one_impl\n",
     )
     .expect("failed to write temporary module");
 
-    let code = format!("from {} import add_one\nresult := add_one(41)\n", module_name);
+    let code = format!("from {module_name} import add_one\nresult := add_one(41)\n");
     let interp = run_code(&code);
 
     assert!(matches!(interp.env.get("result"), Some(Value::Int(42))));
@@ -3632,7 +3651,7 @@ fn test_dotted_from_import_resolves_nested_module_file() {
     )
     .expect("failed to write nested module");
 
-    let code = format!("from {}.core.math import add\nresult := add(40, 2)\n", root_module);
+    let code = format!("from {root_module}.core.math import add\nresult := add(40, 2)\n");
     let interp = run_code(&code);
 
     assert!(matches!(interp.env.get("result"), Some(Value::Int(42))));
@@ -3644,12 +3663,12 @@ fn test_dotted_from_import_resolves_nested_module_file() {
 #[test]
 fn test_dotted_from_import_missing_module_returns_runtime_error() {
     let root_module = unique_module_name("missing_dotted_module");
-    let dotted_module_name = format!("{}.core.math", root_module);
-    let interp = run_code(&format!("from {} import answer", dotted_module_name));
+    let dotted_module_name = format!("{root_module}.core.math");
+    let interp = run_code(&format!("from {dotted_module_name} import answer"));
 
     assert!(matches!(
         interp.return_value,
-        Some(Value::Error(message)) if message.contains(&format!("Module not found: {}", dotted_module_name))
+        Some(Value::Error(message)) if message.contains(&format!("Module not found: {dotted_module_name}"))
     ));
 }
 
@@ -3926,23 +3945,23 @@ fn test_format_duration() {
 
     // Check seconds formatting
     if let Some(Value::Str(s)) = interp.env.get("d1") {
-        assert!(s.contains("s"), "Should format as seconds: {}", s);
-        assert!(s.contains("5.00"), "Should show 5.00s: {}", s);
+        assert!(s.contains("s"), "Should format as seconds: {s}");
+        assert!(s.contains("5.00"), "Should show 5.00s: {s}");
     }
 
     // Check milliseconds formatting
     if let Some(Value::Str(s)) = interp.env.get("d2") {
-        assert!(s.contains("ms"), "Should format as milliseconds: {}", s);
+        assert!(s.contains("ms"), "Should format as milliseconds: {s}");
     }
 
     // Check microseconds formatting
     if let Some(Value::Str(s)) = interp.env.get("d3") {
-        assert!(s.contains("μs") || s.contains("us"), "Should format as microseconds: {}", s);
+        assert!(s.contains("μs") || s.contains("us"), "Should format as microseconds: {s}");
     }
 
     // Check nanoseconds formatting
     if let Some(Value::Str(s)) = interp.env.get("d4") {
-        assert!(s.contains("ns"), "Should format as nanoseconds: {}", s);
+        assert!(s.contains("ns"), "Should format as nanoseconds: {s}");
     }
 }
 
@@ -4502,9 +4521,8 @@ fn test_file_size() {
 
     let code = format!(
         r#"
-        size := file_size("{}")
-    "#,
-        test_file
+        size := file_size("{test_file}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -4545,9 +4563,8 @@ fn test_delete_file() {
 
     let code = format!(
         r#"
-        result := delete_file("{}")
-    "#,
-        test_file
+        result := delete_file("{test_file}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -4591,9 +4608,8 @@ fn test_rename_file() {
 
     let code = format!(
         r#"
-        result := rename_file("{}", "{}")
-    "#,
-        old_name, new_name
+        result := rename_file("{old_name}", "{new_name}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -4645,9 +4661,8 @@ fn test_copy_file() {
 
     let code = format!(
         r#"
-        result := copy_file("{}", "{}")
-    "#,
-        source, dest
+        result := copy_file("{source}", "{dest}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -4705,27 +4720,26 @@ fn test_file_operations_integration() {
     let code = format!(
         r#"
         # Get original file size
-        size1 := file_size("{}")
+        size1 := file_size("{original}")
         
         # Rename the file
-        rename_result := rename_file("{}", "{}")
+        rename_result := rename_file("{original}", "{renamed}")
         
         # Get size after rename
-        size2 := file_size("{}")
+        size2 := file_size("{renamed}")
         
         # Copy the renamed file
-        copy_result := copy_file("{}", "{}")
+        copy_result := copy_file("{renamed}", "{copied}")
         
         # Get size of copied file
-        size3 := file_size("{}")
+        size3 := file_size("{copied}")
         
         # Delete the original (renamed) file
-        delete1 := delete_file("{}")
+        delete1 := delete_file("{renamed}")
         
         # Delete the copied file
-        delete2 := delete_file("{}")
-    "#,
-        original, original, renamed, renamed, renamed, copied, copied, renamed, copied
+        delete2 := delete_file("{copied}")
+    "#
     );
 
     let interp = run_code(&code);
@@ -4779,7 +4793,7 @@ fn test_sort_integers() {
             if let Value::Int(n) = val {
                 assert_eq!(*n, expected[i]);
             } else {
-                panic!("Expected integer at index {}", i);
+                panic!("Expected integer at index {i}");
             }
         }
     } else {
@@ -4804,7 +4818,7 @@ fn test_sort_floats() {
             if let Value::Float(n) = val {
                 assert!((n - expected[i]).abs() < 0.001);
             } else {
-                panic!("Expected float at index {}", i);
+                panic!("Expected float at index {i}");
             }
         }
     } else {
@@ -4857,7 +4871,7 @@ fn test_sort_strings() {
             if let Value::Str(s) = val {
                 assert_eq!(s.as_str(), expected[i]);
             } else {
-                panic!("Expected string at index {}", i);
+                panic!("Expected string at index {i}");
             }
         }
     } else {
@@ -4880,7 +4894,7 @@ fn test_reverse() {
             if let Value::Int(n) = val {
                 assert_eq!(*n, expected[i]);
             } else {
-                panic!("Expected integer at index {}", i);
+                panic!("Expected integer at index {i}");
             }
         }
     } else {
@@ -4905,7 +4919,7 @@ fn test_unique() {
             if let Value::Int(n) = val {
                 assert_eq!(*n, expected[i]);
             } else {
-                panic!("Expected integer at index {}", i);
+                panic!("Expected integer at index {i}");
             }
         }
     } else {
@@ -4929,7 +4943,7 @@ fn test_unique_strings() {
             if let Value::Str(s) = val {
                 assert_eq!(s.as_str(), expected[i]);
             } else {
-                panic!("Expected string at index {}", i);
+                panic!("Expected string at index {i}");
             }
         }
     } else {

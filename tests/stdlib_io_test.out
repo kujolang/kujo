@@ -1,0 +1,84 @@
+=== IO Module Test Suite ===
+
+Test 1: io_read_bytes - read specific number of bytes
+✓ io_read_bytes correctly read first 5 bytes
+✓ io_read_bytes correctly read first 13 bytes
+
+Test 2: io_write_bytes - write binary data
+✓ io_write_bytes successfully wrote binary data
+
+Test 3: io_append_bytes - append binary data
+✓ io_append_bytes successfully appended data
+
+Test 4: io_read_at - read bytes at specific offset
+✓ io_read_at correctly read from offset
+✓ io_read_at correctly read 10 bytes from offset 20
+
+Test 5: io_write_at - write bytes at specific offset
+✓ io_write_at correctly wrote at offset
+
+Test 6: io_seek_read - read from offset to end
+✓ io_seek_read correctly read from offset to end
+✓ io_seek_read correctly read from offset 15
+
+Test 7: io_file_metadata - get comprehensive file metadata
+✓ io_file_metadata correctly reports file size
+✓ io_file_metadata correctly identifies as file
+✓ io_file_metadata correctly identifies not a directory
+✓ io_file_metadata correctly reports readonly status
+✓ io_file_metadata includes modified timestamp
+
+Test 8: io_file_metadata - directory metadata
+✓ io_file_metadata correctly identifies directory
+✓ io_file_metadata correctly identifies not a file
+
+Test 9: io_truncate - truncate file to smaller size
+✓ io_truncate correctly truncated to 10 bytes
+✓ io_truncate preserved correct data
+
+Test 10: io_truncate - extend file to larger size
+✓ io_truncate correctly extended to 10 bytes
+
+Test 11: io_copy_range - copy specific byte range
+✓ io_copy_range correctly copied byte range
+✓ io_copy_range copied correct number of bytes
+
+Test 12: io_copy_range - copy from beginning
+✓ io_copy_range correctly copied from beginning
+
+Test 13: io_read_bytes - read more bytes than available
+✓ io_read_bytes correctly handles reading more than available
+
+Test 14: io_read_at - read at end of file
+✓ io_read_at correctly handles reading at end of file
+
+Test 15: io_append_bytes - create file if doesn't exist
+✓ io_append_bytes creates file if doesn't exist
+
+Test 16: Multiple io_append_bytes calls
+✓ Multiple io_append_bytes calls work correctly
+
+Test 17: io_seek_read - read from beginning
+✓ io_seek_read works from offset 0
+
+Test 18: io_write_at - write at beginning (offset 0)
+✓ io_write_at works at offset 0
+
+Test 19: Operations on empty file
+✓ io_file_metadata correctly reports size 0 for empty file
+✓ io_read_bytes correctly handles empty file
+
+Test 20: io_copy_range - copy entire small file
+✓ io_copy_range can copy entire file
+
+=== IO Module Test Suite Complete ===
+
+Summary:
+- Tested io_read_bytes with various sizes
+- Tested io_write_bytes and io_append_bytes
+- Tested offset-based reading/writing (io_read_at, io_write_at)
+- Tested io_seek_read for reading from offset to end
+- Tested io_file_metadata for files and directories
+- Tested io_truncate for both shrinking and extending files
+- Tested io_copy_range for copying byte ranges
+- Tested edge cases: empty files, reading past EOF, etc.

@@ -54,7 +54,7 @@ fn main() {
         total_bytecode += start.elapsed();
     }
     let avg_bytecode = total_bytecode / 100;
-    println!("  Average time: {:?}", avg_bytecode);
+    println!("  Average time: {avg_bytecode:?}");
 
     // Benchmark 2: Compile to native code
     println!("\nBenchmark 2: JIT Compilation");
@@ -67,12 +67,12 @@ fn main() {
             f
         }
         Err(e) => {
-            println!("  ✗ Compilation failed: {}", e);
+            println!("  ✗ Compilation failed: {e}");
             return;
         }
     };
     let compile_time = compile_start.elapsed();
-    println!("  Compilation time: {:?}", compile_time);
+    println!("  Compilation time: {compile_time:?}");
 
     // Benchmark 3: Execute compiled code
     println!("\nBenchmark 3: Execute Compiled Native Code (100 runs)");
@@ -85,20 +85,20 @@ fn main() {
         total_jit += start.elapsed();
     }
     let avg_jit = total_jit / 100;
-    println!("  Average time: {:?}", avg_jit);
+    println!("  Average time: {avg_jit:?}");
 
     // Results
     println!("\n=== Results ===");
-    println!("  Bytecode VM:     {:?}", avg_bytecode);
-    println!("  Compiled code:   {:?}", avg_jit);
+    println!("  Bytecode VM:     {avg_bytecode:?}");
+    println!("  Compiled code:   {avg_jit:?}");
 
     let speedup = avg_bytecode.as_nanos() as f64 / avg_jit.as_nanos() as f64;
-    println!("  Speedup:         {:.2}x", speedup);
+    println!("  Speedup:         {speedup:.2}x");
 
     if speedup > 1.0 {
-        println!("\n  ✓ JIT is {:.2}x faster than bytecode!", speedup);
+        println!("\n  ✓ JIT is {speedup:.2}x faster than bytecode!");
     } else {
-        println!("\n  Note: Compilation overhead: {:?}", compile_time);
+        println!("\n  Note: Compilation overhead: {compile_time:?}");
         println!("  JIT worth it after {} runs", compile_time.as_nanos() / avg_jit.as_nanos());
     }
 }

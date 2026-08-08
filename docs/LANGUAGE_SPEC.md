@@ -400,6 +400,7 @@ from src.core.math import add
 - `kujo package-install` regenerates the deterministic `kujo.lock` snapshot derived from `kujo.toml`.
 - `kujo package-install --frozen` verifies that the manifest and lockfile remain in sync without rewriting either file.
 - Package workflow imports use the same package-root-aware module resolution rules as ordinary runtime imports, so nested layouts under `src/` remain available on the default VM path.
+- Installations may add shared first-party source-module roots with the platform path-list environment variable `KUJO_MODULE_PATH`; local entry-file and project `modules/` roots take precedence.
 
 ### 5.12 Diagnostics and CLI exit codes
 

@@ -17,7 +17,7 @@ fn normalize_snapshot_text(text: &str) -> String {
 }
 
 fn snapshot_path(base_name: &str, kind: &str) -> PathBuf {
-    fixtures_dir().join(format!("{}.{}.golden", base_name, kind))
+    fixtures_dir().join(format!("{base_name}.{kind}.golden"))
 }
 
 fn should_update_goldens() -> bool {
@@ -41,11 +41,7 @@ fn assert_or_update_golden(base_name: &str, kind: &str, actual: &str) {
         )
     });
     let expected_normalized = normalize_snapshot_text(&expected);
-    assert_eq!(
-        expected_normalized, actual_normalized,
-        "snapshot mismatch for {}.{}",
-        base_name, kind
-    );
+    assert_eq!(expected_normalized, actual_normalized, "snapshot mismatch for {base_name}.{kind}");
 }
 
 fn read_fixture_source(name: &str) -> String {
@@ -65,7 +61,7 @@ fn run_runtime_json_diagnostic_fixture(fixture_file: &str, extra_args: &[&str]) 
         .output()
         .expect("failed to run kujo runtime diagnostic fixture");
 
-    assert!(!output.status.success(), "runtime diagnostic fixture should fail: {}", fixture_file);
+    assert!(!output.status.success(), "runtime diagnostic fixture should fail: {fixture_file}");
 
     String::from_utf8(output.stdout).expect("runtime diagnostic stdout should be utf-8")
 }

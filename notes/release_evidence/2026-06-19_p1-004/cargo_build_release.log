@@ -1,2 +1,0 @@
-$ cargo build --release
-    Finished `release` profile [optimized] target(s) in 1.66s

@@ -1,0 +1,22 @@
+upper(): HELLO WORLD
+lower(): hello world
+capitalize(): Hello world
+capitalize(): Hello world
+trim(): hello
+trim_start(): hello  
+trim_end():   hello
+char_at(0): h
+char_at(4): o
+char_at(10): 
+is_empty(''): true
+is_empty('hello'): false
+count_chars('hello'): 5
+count_chars('hello world'): 11
+contains(): 1
+starts_with(): true
+ends_with(): true
+index_of(): 2
+replace(): heLLo
+split(): [a, b, c]
+
+All string method tests passed!

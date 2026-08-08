@@ -35,15 +35,13 @@ fn import_heavy_perf_comparison_artifact_contains_required_markers() {
     ] {
         assert!(
             content.contains(marker),
-            "perf comparison artifact should contain marker {:?}",
-            marker
+            "perf comparison artifact should contain marker {marker:?}"
         );
     }
 
     let delta = parse_percent_delta(&content);
     assert!(
         delta <= 20.0,
-        "perf comparison should remain under the regression threshold, got {}%",
-        delta
+        "perf comparison should remain under the regression threshold, got {delta}%"
     );
 }

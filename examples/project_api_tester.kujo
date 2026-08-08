@@ -1,318 +1,41 @@
-#!/usr/bin/env kujo
-# API Testing Tool - HTTP Endpoint Testing Suite
-# Showcases: HTTP client, arg_parser, JSON, assertions, error handling, benchmarking
+# API tester project
+# Builds deterministic request cases and evaluates captured responses.
 
-parser := arg_parser()
-parser.add_argument("--url", "-u", type="string", required=true, help="API endpoint URL")
-parser.add_argument("--method", "-m", type="string", default="GET", help="HTTP method (GET, POST, PUT, DELETE)")
-parser.add_argument("--data", "-d", type="string", help="Request body (JSON string)")
-parser.add_argument("--header", "-H", type="string", help="Custom header (format: 'Key: Value')")
-parser.add_argument("--expect-status", type="int", help="Expected HTTP status code")
-parser.add_argument("--expect-field", type="string", help="Expected JSON field (format: 'field.path=value')")
-parser.add_argument("--timeout", "-t", type="float", default=30.0, help="Request timeout in seconds")
-parser.add_argument("--repeat", "-r", type="int", default=1, help="Number of times to repeat request")
-parser.add_argument("--benchmark", "-b", type="bool", help="Show performance metrics")
-parser.add_argument("--verbose", "-v", type="bool", help="Show detailed request/response")
-
-args := parser.parse()
-
-# Test result structure
-test_result := {
-    "passed": 0,
-    "failed": 0,
-    "errors": [],
-    "timings": [],
-    "responses": []
-}
-
-# Make HTTP request
-func make_request(url, method, data, headers, timeout) {
-    start_time := timestamp()
-    
-    # Build request options
-    options := {
+func request_case(name, method, path, expected_status) {
+    return {
+        "name": name,
         "method": method,
-        "timeout": timeout
+        "path": path,
+        "expected_status": expected_status
     }
-    
-    if headers != null {
-        options._headers = headers
-    }
-    
-    if data != null and (method == "POST" or method == "PUT") {
-        options._body = data
-    }
-    
-    # Make request
-    result := http_request(url, options)
-    
-    end_time := timestamp()
-    elapsed := end_time - start_time
-    
+}
+
+func evaluate(case_data, response) {
     return {
-        "result": result,
-        "elapsed": elapsed
+        "name": case_data["name"],
+        "passed": response["status"] == case_data["expected_status"],
+        "status": response["status"]
     }
 }
 
-# Validate response
-func validate_response(response, expect_status, expect_field, test_num) {
-    assertions := []
-    all_passed := true
-    
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("🧪 Test #" + to_string(test_num))
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    
-    # Check status code
-    if expect_status != null {
-        passed := response._status == expect_status
-        status_icon := "✅"
-        if !passed {
-            status_icon = "❌"
-            all_passed = false
-        }
-        print(status_icon + " Status Code: " + to_string(response._status) + " (expected: " + to_string(expect_status) + ")")
-        push(assertions, {"type": "status", "passed": passed})
-    } else {
-        print("ℹ️  Status Code: " + to_string(response._status))
+let cases := [
+    request_case("list users", "GET", "/users", 200),
+    request_case("create user", "POST", "/users", 201),
+    request_case("missing user", "GET", "/users/404", 404)
+]
+let captured := [{"status": 200}, {"status": 201}, {"status": 404}]
+
+mut index := 0
+mut passed := 0
+mut result := {}
+while index < len(cases) {
+    result = evaluate(cases[index], captured[index])
+    if result["passed"] {
+        passed += 1
     }
-    
-    # Check expected field
-    if expect_field != null {
-        parts := split(expect_field, "=")
-        if length(parts) == 2 {
-            field_path := parts[0]
-            expected_value := parts[1]
-            
-            # Parse response body as JSON
-            body_result := from_json(response._body)
-            match body_result {
-                case Ok(body): {
-                    actual_value := get_nested_value(body, field_path)
-                    passed := to_string(actual_value) == expected_value
-                    field_icon := "✅"
-                    if !passed {
-                        field_icon = "❌"
-                        all_passed = false
-                    }
-                    print(field_icon + " Field '" + field_path + "': " + to_string(actual_value) + " (expected: " + expected_value + ")")
-                    push(assertions, {"type": "field", "passed": passed})
-                }
-                case Err(error): {
-                    print("❌ Failed to parse response as JSON: " + error)
-                    all_passed = false
-                }
-            }
-        }
-    }
-    
-    print("")
-    
-    return {
-        "passed": all_passed,
-        "assertions": assertions
-    }
+    print(result)
+    index += 1
 }
 
-# Display detailed response
-func display_response(response, verbose) {
-    if !verbose {
-        return null
-    }
-    
-    print("📡 Response Details:")
-    print("  Status: " + to_string(response._status))
-    print("  Headers:")
-    if has_key(response, "headers") {
-        for key in keys(response._headers) {
-            print("    " + key + ": " + response._headers[key])
-        }
-    }
-    print("")
-    print("  Body:")
-    
-    # Try to pretty-print JSON
-    body_result := from_json(response._body)
-    match body_result {
-        case Ok(body): {
-            print("    " + to_json(body))
-        }
-        case Err(_): {
-            # Not JSON, print raw
-            body_preview := response._body
-            if length(body_preview) > 500 {
-                body_preview = slice(body_preview, 0, 500) + "... (truncated)"
-            }
-            print("    " + body_preview)
-        }
-    }
-    print("")
-}
-
-# Display benchmark results
-func display_benchmark(timings, responses) {
-    if length(timings) == 0 {
-        return null
-    }
-    
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("⚡ Performance Metrics")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print("")
-    
-    total_time := 0.0
-    min_time := timings[0]
-    max_time := timings[0]
-    
-    for time in timings {
-        total_time = total_time + time
-        if time < min_time {
-            min_time = time
-        }
-        if time > max_time {
-            max_time = time
-        }
-    }
-    
-    avg_time := total_time / to_float(length(timings))
-    
-    print("Requests:       " + to_string(length(timings)))
-    print("Total Time:     " + format_duration(total_time))
-    print("Average Time:   " + format_duration(avg_time))
-    print("Min Time:       " + format_duration(min_time))
-    print("Max Time:       " + format_duration(max_time))
-    
-    if length(timings) > 1 {
-        rps := to_float(length(timings)) / total_time
-        print("Requests/sec:   " + to_string(round(rps, 2)))
-    }
-    
-    print("")
-    
-    # Status code distribution
-    status_counts := {}
-    for response in responses {
-        code := to_string(response._status)
-        if has_key(status_counts, code) {
-            status_counts[code] = status_counts[code] + 1
-        } else {
-            status_counts[code] = 1
-        }
-    }
-    
-    print("Status Code Distribution:")
-    for code in keys(status_counts) {
-        count := status_counts[code]
-        percentage := round(to_float(count) / to_float(length(responses)) * 100.0, 1)
-        print("  " + code + ": " + to_string(count) + " (" + to_string(percentage) + "%)")
-    }
-    print("")
-}
-
-# Helper functions
-func get_nested_value(obj, path) {
-    parts := split(path, ".")
-    current := obj
-    
-    for part in parts {
-        if has_key(current, part) {
-            current = current[part]
-        } else {
-            return null
-        }
-    }
-    
-    return current
-}
-
-func format_duration(seconds) {
-    if seconds < 0.001 {
-        return to_string(round(seconds * 1000000.0, 2)) + " µs"
-    }
-    if seconds < 1.0 {
-        return to_string(round(seconds * 1000.0, 2)) + " ms"
-    }
-    return to_string(round(seconds, 2)) + " s"
-}
-
-# Main execution
-print("")
-print("🚀 API Testing Tool")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("")
-print("Target:  " + args._url)
-print("Method:  " + args._method)
-print("Repeats: " + to_string(args._repeat))
-print("")
-
-# Parse headers if provided
-headers := null
-if args._header != null {
-    headers = {}
-    parts := split(args._header, ":")
-    if length(parts) == 2 {
-        key := trim(parts[0])
-        value := trim(parts[1])
-        headers[key] = value
-    }
-}
-
-# Run tests
-for i in range(1, args._repeat + 1) {
-    req_result := make_request(args._url, args._method, args._data, headers, args._timeout)
-    
-    match req_result._result {
-        case Ok(response): {
-            push(test_result._timings, req_result._elapsed)
-            push(test_result._responses, response)
-            
-            if args._repeat == 1 or args._verbose {
-                validation := validate_response(response, args._expect_status, args._expect_field, i)
-                if validation._passed {
-                    test_result._passed = test_result._passed + 1
-                } else {
-                    test_result._failed = test_result._failed + 1
-                }
-                
-                display_response(response, args._verbose)
-            }
-        }
-        case Err(error): {
-            print("❌ Request failed: " + error)
-            push(test_result._errors, error)
-            test_result._failed = test_result._failed + 1
-        }
-    }
-}
-
-# Display benchmark if requested or multiple requests
-if args._benchmark or args._repeat > 1 {
-    display_benchmark(test_result._timings, test_result._responses)
-}
-
-# Final summary
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("📊 Test Summary")
-print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-print("")
-
-if test_result._passed > 0 {
-    print("✅ Passed: " + to_string(test_result._passed))
-}
-if test_result._failed > 0 {
-    print("❌ Failed: " + to_string(test_result._failed))
-}
-if length(test_result._errors) > 0 {
-    print("⚠️  Errors: " + to_string(length(test_result._errors)))
-}
-
-print("")
-
-if test_result._failed == 0 and length(test_result._errors) == 0 {
-    print("🎉 All tests passed!")
-    exit(0)
-} else {
-    print("❌ Some tests failed")
-    exit(1)
-}
+assert_equal(passed, len(cases))
+print("API cases passed:", passed)

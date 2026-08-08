@@ -1,0 +1,12 @@
+Testing random functions...
+random() = 0.3059322923730783
+✓ random() returns value in [0.0, 1.0]
+random_int(1, 10) = 6
+✓ random_int(1, 10) returns value in [1, 10]
+random_int(-5, 5) = -2
+✓ random_int(-5, 5) returns value in [-5, 5]
+random_choice(fruits) = orange
+✓ random_choice returned valid array element
+random_choice(numbers) = 50
+✓ random() produces varying results
+Random function tests completed!

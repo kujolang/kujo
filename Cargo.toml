@@ -67,6 +67,7 @@ image = { version = "0.25", default-features = false, features = [
 ], optional = true }
 zip = { version = "7.0.0", optional = true }
 sha2 = "0.10"
+hmac = "0.12"
 md-5 = "0.10"
 bcrypt = "0.15"
 aes-gcm = "0.10"

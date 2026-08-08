@@ -614,8 +614,8 @@ pub enum Value {
     Queue(std::collections::VecDeque<Value>),
     /// LIFO stack
     Stack(Vec<Value>),
-    /// Thread-safe channel for message passing
-    Channel(Arc<Mutex<(std::sync::mpsc::Sender<Value>, std::sync::mpsc::Receiver<Value>)>>),
+    /// Bounded thread-safe channel for message passing and backpressure.
+    Channel(Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>),
     /// HTTP server with routes
     HttpServer {
         host: String,

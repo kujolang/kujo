@@ -1,0 +1,46 @@
+Testing Connection Pooling...
+
+=== Test 1: Create Pool ===
+Pool created: <unknown>
+Initial stats:
+  Available: 0
+  In use: 0
+  Total: 0
+  Max: 5
+✓ Pool creation works
+
+=== Test 2: Acquire and Release ===
+Acquired connection: <unknown>
+After acquire:
+  In use: 1
+  Total: 1
+Query result: 1 rows
+Released connection
+After release:
+  Available: 1
+  In use: 0
+✓ Acquire and release works
+
+=== Test 3: Multiple Connections ===
+After acquiring 3 connections:
+  In use: 3
+  Total: 3
+After releasing all:
+  Available: 3
+  In use: 0
+✓ Multiple connections work
+
+=== Test 4: Pool with Transactions ===
+Records in database: 2
+✓ Pooling works with transactions
+
+=== Test 5: Pool Cleanup ===
+Before close:
+  Total connections: 3
+After close:
+  Total connections: 0
+✓ Pool cleanup works
+
+==================================================
+✅ ALL POOLING TESTS PASSED!
+==================================================

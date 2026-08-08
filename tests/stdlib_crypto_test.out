@@ -1,0 +1,49 @@
+Running Crypto Module Tests...
+============================================================
+
+--- AES Encryption Tests ---
+✓ Test 1: AES encrypt/decrypt roundtrip
+✓ Test 2: Different keys produce different ciphertext
+✓ Test 3: Wrong key produces error
+✓ Test 4: AES handles empty string
+✓ Test 5: AES handles special characters
+✓ Test 6: AES handles unicode
+✓ Test 7: AES handles multiline
+✓ Test 8: AES produces non-empty ciphertext
+✓ Test 9: Invalid base64 produces error
+✓ Test 10: AES bytes encrypt/decrypt
+
+--- RSA Encryption Tests ---
+Generating 2048-bit RSA keypair...
+✓ Test 11: RSA keypair generated
+✓ Test 12: Has public key
+✓ Test 13: Has private key
+✓ Test 14: Public key PEM format
+✓ Test 15: Private key PEM format
+✓ Test 16: RSA encrypt/decrypt roundtrip
+✓ Test 17: RSA encryption is non-deterministic
+✓ Test 18: Different ciphertexts decrypt correctly
+✓ Test 19: RSA handles special characters
+✓ Test 20: Wrong key produces error
+
+--- RSA Signature Tests ---
+✓ Test 21: RSA sign/verify roundtrip
+✓ Test 22: Signature is not empty
+✓ Test 23: Modified message fails verification
+✓ Test 24: Wrong key signature fails
+✓ Test 25: RSA signs empty messages
+
+--- RSA Key Size Tests ---
+Generating 4096-bit RSA keypair (this may take a moment)...
+✓ Test 26: 4096-bit keypair generated
+✓ Test 27: 4096-bit key works
+✓ Test 28: Invalid key size produces error
+
+--- Integration Tests ---
+✓ Test 29: Hybrid encryption (RSA + AES)
+✓ Test 30: Can sign encrypted data
+
+============================================================
+Test Results: 30/30 passed
+✓ All crypto tests passed!
+============================================================

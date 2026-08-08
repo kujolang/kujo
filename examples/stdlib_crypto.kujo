@@ -4,10 +4,12 @@
 let message := "Hello, Kujo!"
 let sha_hash := sha256(message)
 let md5_hash := md5(message)
+let hmac_signature := hmac_sha256("example-secret", message)
 
 print("message: " + message)
 print("sha256 length: " + to_string(len(sha_hash)))
 print("md5 length: " + to_string(len(md5_hash)))
+print("hmac-sha256 length: " + to_string(len(hmac_signature)))
 
 let password := "my_secure_password"
 let hashed := hash_password(password)

@@ -136,6 +136,13 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
             return error;
         }
     }
+    for capability in
+        super::capabilities::additional_capabilities_for_native_function(canonical_name)
+    {
+        if let Err(error) = interp.require_capability(*capability, canonical_name) {
+            return error;
+        }
+    }
 
     if let Some(arity) = Interpreter::native_function_arity(canonical_name) {
         if let Err(message) = arity.validate(arg_values.len()) {
@@ -205,7 +212,12 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
 mod tests {
     use super::call_native_function;
     use crate::interpreter::{AsyncRuntime, Interpreter, LeakyFunctionBody, Value};
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex, OnceLock};
+
+    fn cwd_test_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
 
     fn available_tcp_port() -> Option<i64> {
         match std::net::TcpListener::bind("127.0.0.1:0") {
@@ -393,6 +405,8 @@ mod tests {
             "io_write_at",
             "io_seek_read",
             "io_file_metadata",
+            "io_set_permissions",
+            "io_write_private_file",
             "io_truncate",
             "io_copy_range",
             "http_get",
@@ -401,6 +415,8 @@ mod tests {
             "http_put",
             "http_delete",
             "http_get_binary",
+            "http_download_file",
+            "http_upload_file",
             "parallel_http",
             "jwt_encode",
             "jwt_decode",
@@ -485,6 +501,7 @@ mod tests {
             "udp_receive_from",
             "udp_close",
             "sha256",
+            "hmac_sha256",
             "md5",
             "md5_file",
             "hash_password",
@@ -493,6 +510,8 @@ mod tests {
             "aes_decrypt",
             "aes_encrypt_bytes",
             "aes_decrypt_bytes",
+            "aes_encrypt_file_stream",
+            "aes_decrypt_file_stream",
             "rsa_generate_keypair",
             "rsa_encrypt",
             "rsa_decrypt",
@@ -564,6 +583,7 @@ mod tests {
             "assert_contains",
             "read_file",
             "write_file",
+            "write_file_atomic",
             "append_file",
             "file_exists",
             "read_lines",
@@ -2918,6 +2938,7 @@ mod tests {
 
     #[test]
     fn test_release_hardening_env_os_path_and_assert_contracts() {
+        let _cwd_guard = cwd_test_lock().lock().expect("cwd test lock should not be poisoned");
         let mut interpreter = Interpreter::new();
 
         let assert_true = call_native_function(&mut interpreter, "assert", &[Value::Bool(true)]);
@@ -3331,12 +3352,16 @@ mod tests {
         );
 
         std::fs::remove_file(&file_path).expect("sample file should remove");
+        let rmdir_target = temp_dir.join("rmdir-target");
+        std::fs::create_dir(&rmdir_target).expect("rmdir target should be created");
         let os_rmdir_result = call_native_function(
             &mut interpreter,
             "os_rmdir",
-            &[Value::Str(Arc::new(temp_dir_string.clone()))],
+            &[Value::Str(Arc::new(rmdir_target.to_string_lossy().to_string()))],
         );
         assert!(matches!(os_rmdir_result, Value::Bool(true)));
+
+        std::fs::remove_dir_all(&temp_dir).expect("temp hardening dir should remove");
 
         let os_environ_result = call_native_function(&mut interpreter, "os_environ", &[]);
         assert!(matches!(os_environ_result, Value::Dict(map) if map.contains_key(env_key)));
@@ -3408,6 +3433,11 @@ mod tests {
         );
         assert!(
             matches!(write_extra, Value::Error(message) if message.contains("write_file optional overwrite flag must be a bool"))
+        );
+
+        let atomic_missing = call_native_function(&mut interpreter, "write_file_atomic", &[]);
+        assert!(
+            matches!(atomic_missing, Value::Error(message) if message.contains("write_file_atomic expects 2 to 3 arguments"))
         );
 
         let append_missing = call_native_function(&mut interpreter, "append_file", &[]);
@@ -3603,6 +3633,61 @@ mod tests {
         let copied_file = format!("{}/sample.copy.txt", base_dir);
         let nested_dir = format!("{}/nested", base_dir);
         let binary_file = format!("{}/payload.bin", base_dir);
+        let atomic_text_file = format!("{}/atomic.txt", base_dir);
+        let atomic_binary_file = format!("{}/atomic.bin", base_dir);
+
+        let atomic_text_ok = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[
+                Value::Str(Arc::new(atomic_text_file.clone())),
+                Value::Str(Arc::new("atomic-text".to_string())),
+            ],
+        );
+        assert!(matches!(atomic_text_ok, Value::Bool(true)));
+        assert_eq!(
+            std::fs::read_to_string(&atomic_text_file).expect("atomic text should be readable"),
+            "atomic-text"
+        );
+
+        let atomic_existing = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[
+                Value::Str(Arc::new(atomic_text_file.clone())),
+                Value::Str(Arc::new("rejected".to_string())),
+            ],
+        );
+        assert!(
+            matches!(atomic_existing, Value::Error(message) if message.contains("file already exists"))
+        );
+
+        let atomic_replace = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[
+                Value::Str(Arc::new(atomic_text_file.clone())),
+                Value::Str(Arc::new("replaced".to_string())),
+                Value::Bool(true),
+            ],
+        );
+        assert!(matches!(atomic_replace, Value::Bool(true)));
+        assert_eq!(
+            std::fs::read_to_string(&atomic_text_file)
+                .expect("replaced atomic text should be readable"),
+            "replaced"
+        );
+
+        let atomic_binary_ok = call_native_function(
+            &mut interpreter,
+            "write_file_atomic",
+            &[Value::Str(Arc::new(atomic_binary_file.clone())), Value::Bytes(vec![0, 1, 2, 255])],
+        );
+        assert!(matches!(atomic_binary_ok, Value::Bool(true)));
+        assert_eq!(
+            std::fs::read(&atomic_binary_file).expect("atomic bytes should be readable"),
+            vec![0, 1, 2, 255]
+        );
 
         let write_ok = call_native_function(
             &mut interpreter,

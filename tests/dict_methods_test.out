@@ -1,0 +1,13 @@
+keys: [a, b, c]
+values: [1, 2, 3]
+items: [[a, 1], [b, 2], [c, 3]]
+has_key 'a': 1
+has_key 'z': 0
+get 'a': 1
+get 'z' with default: 99
+merge: {"a": 1, "b": 2, "c": 3, "d": 4, "e": 5}
+clear array: []
+clear dict: {}
+remove 'b' from dict: [{"a": 1, "c": 3}, 2]
+
+All dict method tests passed!
