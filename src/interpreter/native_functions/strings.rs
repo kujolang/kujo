@@ -78,13 +78,58 @@ fn inline_markdown_native(text: &str) -> String {
     out
 }
 
+fn markdown_table_cells(line: &str) -> Vec<&str> {
+    line.trim().trim_matches('|').split('|').map(str::trim).collect()
+}
+
+fn is_markdown_table_separator(line: &str) -> bool {
+    let cells = markdown_table_cells(line);
+    !cells.is_empty()
+        && cells.iter().all(|cell| {
+            let delimiter = cell.trim().trim_start_matches(':').trim_end_matches(':');
+            delimiter.len() >= 3 && delimiter.chars().all(|character| character == '-')
+        })
+}
+
 // Native port of markdown_to_html: paragraphs, ATX headings (#/##/###),
-// unordered lists (- / *), and blockquotes (>), with the inline pass above.
+// unordered lists (- / *), blockquotes (>), and pipe tables, with the inline pass above.
 fn render_markdown_native(markdown: &str) -> String {
     let mut html_lines: Vec<String> = Vec::new();
     let mut in_list = false;
-    for raw_line in markdown.split('\n') {
+    let lines: Vec<&str> = markdown.split('\n').collect();
+    let mut index = 0;
+    while index < lines.len() {
+        let raw_line = lines[index];
         let line = raw_line.trim();
+        if index + 1 < lines.len()
+            && line.contains('|')
+            && is_markdown_table_separator(lines[index + 1].trim())
+        {
+            if in_list {
+                html_lines.push("</ul>".to_string());
+                in_list = false;
+            }
+            html_lines.push("<table><thead><tr>".to_string());
+            for cell in markdown_table_cells(line) {
+                html_lines.push(format!("<th>{}</th>", inline_markdown_native(cell)));
+            }
+            html_lines.push("</tr></thead><tbody>".to_string());
+            index += 2;
+            while index < lines.len() {
+                let row = lines[index].trim();
+                if row.is_empty() || !row.contains('|') {
+                    break;
+                }
+                html_lines.push("<tr>".to_string());
+                for cell in markdown_table_cells(row) {
+                    html_lines.push(format!("<td>{}</td>", inline_markdown_native(cell)));
+                }
+                html_lines.push("</tr>".to_string());
+                index += 1;
+            }
+            html_lines.push("</tbody></table>".to_string());
+            continue;
+        }
         if line.starts_with("- ") || line.starts_with("* ") {
             let item_text = inline_markdown_native(line[2..].trim());
             if !in_list {
@@ -92,6 +137,7 @@ fn render_markdown_native(markdown: &str) -> String {
                 html_lines.push("<ul>".to_string());
             }
             html_lines.push(format!("<li>{}</li>", item_text));
+            index += 1;
             continue;
         }
         if in_list {
@@ -99,18 +145,22 @@ fn render_markdown_native(markdown: &str) -> String {
             in_list = false;
         }
         if line.is_empty() {
+            index += 1;
             continue;
         }
         if let Some(rest) = line.strip_prefix("### ") {
             html_lines.push(format!("<h3>{}</h3>", inline_markdown_native(rest.trim())));
+            index += 1;
             continue;
         }
         if let Some(rest) = line.strip_prefix("## ") {
             html_lines.push(format!("<h2>{}</h2>", inline_markdown_native(rest.trim())));
+            index += 1;
             continue;
         }
         if let Some(rest) = line.strip_prefix("# ") {
             html_lines.push(format!("<h1>{}</h1>", inline_markdown_native(rest.trim())));
+            index += 1;
             continue;
         }
         if let Some(rest) = line.strip_prefix("> ") {
@@ -118,9 +168,11 @@ fn render_markdown_native(markdown: &str) -> String {
                 "<blockquote><p>{}</p></blockquote>",
                 inline_markdown_native(rest.trim())
             ));
+            index += 1;
             continue;
         }
         html_lines.push(format!("<p>{}</p>", inline_markdown_native(line)));
+        index += 1;
     }
     if in_list {
         html_lines.push("</ul>".to_string());
@@ -1538,6 +1590,28 @@ mod tests {
                 assert!(!html.contains("&amp;amp;"));
             }
             other => panic!("Expected rendered markdown string, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_render_markdown_renders_pipe_tables() {
+        let rendered = handle(
+            "render_markdown",
+            &[str_value(
+                "| Path | Start with |\n| --- | :---: |\n| Learn | [Kujo](/learn/) |\n| Build | `kujo run` |",
+            )],
+        )
+        .unwrap();
+
+        match rendered {
+            Value::Str(html) => {
+                assert!(html.contains("<table><thead><tr>"));
+                assert!(html.contains("<th>Path</th>"));
+                assert!(html.contains("<td><a href=\"/learn/\">Kujo</a></td>"));
+                assert!(html.contains("<td><code>kujo run</code></td>"));
+                assert!(html.ends_with("</tbody></table>"));
+            }
+            other => panic!("Expected rendered markdown table string, got {:?}", other),
         }
     }
 
