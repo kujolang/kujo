@@ -133,6 +133,19 @@ benchmark_output.txt
 
 # CaseFile
 /.casefile/
+/.casefile-agency-loop/
+
+# Intake
+/.intake/
+
+# Redact
+/.redact/
+/redact-audit/
+/redact-transcript-audit/
+/transcript.report.json
+*.redacted
+*.redacted.md
+*.redacted.txt
 
 # ChangeBucket and Cinch wrapper artifacts
 /CHANGE_BUCKET.md
@@ -168,6 +181,7 @@ benchmark_output.txt
 
 # Eval and ShipCheck evaluation output
 /eval_results/
+/.eval_*
 /snapshots/
 /artifact-manifest.json
 /cli-summary.json
@@ -189,6 +203,10 @@ benchmark_output.txt
 /run-*/
 /bundles/
 
+# Kujo workflow runners
+/.runs/
+/.work/
+
 # Lens
 /.lens/runs/
 /.lens/baselines/
@@ -208,6 +226,7 @@ benchmark_output.txt
 
 # Relay
 /.relay/
+/relay-contract-*/
 
 # WorkCell
 /.workcell/
@@ -230,7 +249,10 @@ benchmark_output.txt
 /data/*.db-shm
 /data/*.db-wal
 /data/*.log
+/data/benchmark-runs/
 /data/backups/
+/data/tool-artifacts/
+/backups/
 /tmp/
 /.tmp/
 /*.db
@@ -238,18 +260,28 @@ benchmark_output.txt
 /*.db-wal
 /*.sqlite
 /*.sqlite3
+/watchdog_proxy_config.json
+/.watchdog-backup-result-*.json
 
-# SSG / Howl / generated static output
+# SSG / Howl / SiteKit / generated static output
 /output/
 /dist/
+/dist-build/
 /logs/
+/tmp_test_*/
+/--interpreter/tmp_test_*/
 /.kujo-post-manifest.txt
+
+# Capsule and Zelus
+/capsule-output/
+/.zelus/
 
 # AI SDK local release/security artifacts
 /artifacts/security/
 
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
+/tests/*.out
 *.tmp-*
 *.bak
 *.log
@@ -260,3 +292,6 @@ benchmark_output.txt
 # /fence.toml
 # /.lens.toml
 # /packwrite.toml
+
+# Kujo's reviewed compiler-output fixtures are source artifacts.
+!/tests/*.out

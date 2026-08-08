@@ -63,6 +63,11 @@ Use `config/kujo-tool-artifacts.gitignore` as the canonical starting block. Repo
 !casefile.toml
 ```
 
+The guard evaluates the repository's effective ignore rules, so reviewed source
+fixtures may also use a repo-specific negation. Kujo keeps `tests/*.out` as
+compiler-output fixtures with `!/tests/*.out`. Deleting an ignored artifact is
+allowed; adding or modifying one remains blocked.
+
 The block also carries a few exact or broad support patterns that intentionally
 serve multiple rows in the inventory:
 

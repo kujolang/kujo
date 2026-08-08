@@ -1,5 +1,4 @@
 Testing system operation functions...
-env('HOME') = /Users/robertdevore
 ✓ env('HOME') returns value
 ✓ env() returns empty string for non-existent var
 ✓ args() returns array
