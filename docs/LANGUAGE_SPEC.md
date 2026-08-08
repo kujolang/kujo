@@ -1,6 +1,6 @@
 # Kujo Language Specification
 
-Status: stable v1.0.0 specification
+Status: stable v1.0.0 contract
 Spec version: 1.0.0
 Last updated: 2026-08-08
 

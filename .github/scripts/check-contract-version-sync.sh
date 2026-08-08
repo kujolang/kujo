@@ -4,8 +4,8 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
 
-expected_status="Status: v1.0.0 baseline draft (active)"
-expected_contract_version="1.0.0-draft"
+expected_status="Status: stable v1.0.0 contract"
+expected_contract_version="1.0.0"
 
 require_line() {
 	local file_path="$1"
