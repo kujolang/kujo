@@ -158,7 +158,7 @@ Each loop report must include exactly:
 
 - [x] **V1U-OPEN-003**: Complete `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` tag-time sign-off items.
   - Scope: publish release, verify assets/checksums/smoke workflow, record evidence.
-  - Evidence (2026-08-08): Published `v1.0.0`, verified all nine release assets and four archive checksums, passed the four-platform published-artifact smoke workflow, and recorded URLs, checksums, and workflow results in `notes/2026-08-08_v1_0_0_launch-evidence.md`.
+  - Evidence (2026-08-08): Published `v1.0.0`, verified all nine release assets and four archive checksums, passed the four-platform published-artifact smoke workflow, and recorded URLs, checksums, and workflow results in `notes/2026-08-08_09-25_v1-0-0-launch-evidence.md`.
   - Standing release directive policy (2026-06-19): tag-time publication and
     sign-off require the explicit `UNBLOCK_V1_RELEASE` directive defined in
     `docs/RELEASE_PROCESS.md`; historical loop blocker notes below are retained
@@ -458,7 +458,7 @@ Each loop report must include exactly:
     as audit history, not as the source of release policy.
   - Acceptance criteria:
     - all items in `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` checked with linked evidence.
-  - Evidence (2026-08-08): Release owners provided `UNBLOCK_V1_RELEASE`; the `v1.0.0` GitHub release, supported-platform archives, checksum files, consolidated checksum manifest, and four-platform artifact-only smoke evidence are linked from `notes/2026-08-08_v1_0_0_launch-evidence.md`.
+  - Evidence (2026-08-08): Release owners provided `UNBLOCK_V1_RELEASE`; the `v1.0.0` GitHub release, supported-platform archives, checksum files, consolidated checksum manifest, and four-platform artifact-only smoke evidence are linked from `notes/2026-08-08_09-25_v1-0-0-launch-evidence.md`.
   - Blocker (2026-05-21): This remains blocked until the actual `v1.0.0` publish event and post-publish artifact/smoke evidence exist.
     Evidence: `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` `Tag-Time Sign-Off` rows are still unchecked and require real release URLs + checksum/sign-off workflow outcomes.
   - Blocker (2026-05-21): Revalidated in subsequent loop; no tag-time publication/sign-off evidence exists yet.
