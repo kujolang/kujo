@@ -48,13 +48,6 @@ classification_for_item() {
     local classification=""
     local rationale=""
 
-    if [[ "$item_status" == "checked" ]]; then
-        classification="archive"
-        rationale="Already completed in the master checklist; retained for audit traceability."
-        echo "${classification}|${rationale}"
-        return 0
-    fi
-
     case "$item_id" in
         V1U-RES-002|V1U-RES-003|V1U-GATE-001|V1U-GATE-002|V1U-GATE-003|V1U-GATE-004|V1U-RUN-001|V1U-RUN-002|V1U-RUN-003|V1U-RUN-004|V1U-RUN-005|V1U-RUN-006|V1U-CODE-002|V1U-FINAL-001|V1U-FINAL-002|V1U-FINAL-003)
             classification="v1-blocker"
@@ -69,9 +62,18 @@ classification_for_item() {
             rationale="Tag-time release-publication tasks that cannot be fully closed until the final v1 release event."
             ;;
         *)
+            if [[ "$item_status" == "checked" ]]; then
+                echo "archive|Already completed in the master checklist; retained for audit traceability."
+                return 0
+            fi
             return 1
             ;;
     esac
+
+    if [[ "$item_status" == "checked" ]]; then
+        classification="archive"
+        rationale="Already completed in the master checklist; retained for audit traceability. Historical rationale: ${rationale}"
+    fi
 
     echo "${classification}|${rationale}"
 }
