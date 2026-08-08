@@ -159,4 +159,8 @@ jobs:
       - name: Dispatch published artifact smoke
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run release-published-artifact-smoke.yml --ref main --raw-field tag_name="${GITHUB_REF_NAME}"
+        run: >-
+          gh workflow run release-published-artifact-smoke.yml
+          --repo "${GITHUB_REPOSITORY}"
+          --ref main
+          --raw-field tag_name="${GITHUB_REF_NAME}"
