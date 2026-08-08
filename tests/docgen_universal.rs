@@ -2336,7 +2336,8 @@ fn docgen_external_validation_blocks_dns_hosts_resolving_to_private_ranges_by_de
 
 #[test]
 fn docgen_external_validation_allows_same_host_redirect_hops() {
-    let Some(redirect_server) = spawn_http_server(2, |path| {
+    // Keep enough request capacity and timeout headroom for loaded release-gate hosts.
+    let Some(redirect_server) = spawn_http_server(16, |path| {
         if path == "/start" {
             return http_302_response("/final");
         }
@@ -2380,7 +2381,7 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
         LinkValidationOptions {
             validate_local_anchors: false,
             validate_external_links: true,
-            external_link_timeout_ms: 500,
+            external_link_timeout_ms: 2_000,
             external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
@@ -2463,8 +2464,9 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
         return;
     };
     let blocked_target = destination_server.url_with_host("::1", "/blocked");
+    // Keep enough request capacity and timeout headroom for loaded release-gate hosts.
     let Some(redirect_server) =
-        spawn_http_server(4, move |_path| http_302_response(&blocked_target))
+        spawn_http_server(16, move |_path| http_302_response(&blocked_target))
     else {
         return;
     };
@@ -2505,7 +2507,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
         LinkValidationOptions {
             validate_local_anchors: false,
             validate_external_links: true,
-            external_link_timeout_ms: 500,
+            external_link_timeout_ms: 2_000,
             external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
