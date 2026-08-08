@@ -1,9 +1,0 @@
-command	status	log
-cargo run --quiet -- run <temp repro_mutation_vm>	0	notes/release_evidence/2026-06-19_p1-001/repro_mutation_vm.log
-cargo run --quiet -- run --interpreter <temp repro_mutation_interpreter>	0	notes/release_evidence/2026-06-19_p1-001/repro_mutation_interpreter.log
-cargo run --quiet -- run <temp repro_dict_vm>	0	notes/release_evidence/2026-06-19_p1-001/repro_dict_vm.log
-cargo run --quiet -- run --interpreter <temp repro_dict_interpreter>	0	notes/release_evidence/2026-06-19_p1-001/repro_dict_interpreter.log
-cargo test --test image_conversion_integration	0	notes/release_evidence/2026-06-19_p1-001/cargo_test_image_conversion.log
-cargo test --test language_spec_contracts	0	notes/release_evidence/2026-06-19_p1-001/cargo_test_language_spec.log
-cargo test --test vm_interpreter_parity_surfaces	0	notes/release_evidence/2026-06-19_p1-001/cargo_test_vm_interpreter_parity_surfaces.log
-cargo test --test docs_examples	0	notes/release_evidence/2026-06-19_p1-001/cargo_test_docs_examples.log

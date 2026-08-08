@@ -47,6 +47,19 @@ for v1.0, not launch claims:
 Those surfaces can guide optimization and regression work, but they must not be
 quoted as v1.0 public performance promises without a fresh publication campaign.
 
+## Curated Cross-Language Inputs
+
+The built-in `bench-cross` and `bench-ssg` commands retain four reviewed source
+inputs under `benchmarks/cross-language/`; their README defines the supported
+commands and prerequisites. The former ad hoc runners, unrelated workloads, and
+hand-recorded result files were removed before v1.0 because they did not meet
+the publication requirements below. Do not restore or cite those artifacts.
+
+A future cross-language campaign should start from
+`docs/SSG_BENCHMARK_NEXT_STEPS.md`, use correctness-equivalent workloads, and
+commit only reviewed methodology plus reproducible source inputs. Raw run output
+belongs in ignored local results or immutable release attachments.
+
 ## Publication Requirements
 
 Before publishing SSG, cross-language, JIT, or broad runtime performance claims,

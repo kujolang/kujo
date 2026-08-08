@@ -1,7 +1,0 @@
-command	status
-cargo_fmt_check	0
-benchmark_publication_policy_contract	0
-docs_policy_consistency_contract	0
-docs_examples	0
-benchmark_publication_marker_scan	0
-git_diff_check	0
