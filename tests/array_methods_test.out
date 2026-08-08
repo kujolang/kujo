@@ -1,0 +1,12 @@
+push: [1, 2, 3, 4]
+append: [1, 2, 3]
+insert: [1, 2, 3, 4]
+remove: [1, 3, 2, 4]
+contains 3: true
+contains 5: false
+index_of 3: 2
+index_of 5: -1
+clear: []
+concat: [1, 2, 3, 4]
+
+All array method tests passed!

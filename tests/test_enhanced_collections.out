@@ -1,0 +1,87 @@
+=== Enhanced Collections Tests ===
+
+--- Array: chunk() ---
+[[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
+[[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]
+
+--- Array: flatten() ---
+[1, 2, 3, 4, 5, 6]
+[1, 2, 3, 4, 5, 6]
+
+--- Array: zip() ---
+[[1, a], [2, b], [3, c]]
+[[1, a], [2, b]]
+
+--- Array: enumerate() ---
+[[0, apple], [1, banana], [2, cherry]]
+
+--- Array: take() ---
+[10, 20, 30]
+[10, 20, 30, 40, 50]
+[]
+
+--- Array: skip() ---
+[3, 4, 5]
+[]
+
+--- Array: windows() ---
+[[1, 2], [2, 3], [3, 4], [4, 5]]
+[[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+[]
+
+--- String: pad_left() ---
+005
+[   Jo]
+
+--- String: pad_right() ---
+[Name:     ]
+
+--- String: lines() ---
+[line1, line2, line3]
+
+--- String: words() ---
+[hello, world, from, kujo]
+[one, two, three]
+
+--- String: str_reverse() ---
+olleh
+racecar
+
+--- String: slugify() ---
+hello-world
+my-blog-post-part-1
+
+--- String: truncate() ---
+Hello...
+Hi
+
+--- String: to_camel_case() ---
+helloWorld
+myVarName
+userNameField
+
+--- String: to_snake_case() ---
+hello_world
+my_class_name
+
+--- String: to_kebab_case() ---
+user-name
+my-function-name
+
+--- Dict: invert() ---
+{"1": a, "2": b, "3": c}
+
+--- Dict: update() ---
+{"age": 31, "city": NYC, "name": Alice}
+
+--- Dict: get_default() ---
+30
+false
+
+--- Chaining Array Methods ---
+[1, 2, 3, 4, 5, 6]
+
+--- Chaining String Methods ---
+myblogpost
+
+=== All Enhanced Collections Tests Complete ===

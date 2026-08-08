@@ -1,0 +1,12 @@
+=== JSON Serialization Tests ===
+Number to JSON: 42
+String to JSON: "Hello, World!"
+Boolean to JSON: 1
+Array to JSON: [1,2,3,4,5]
+Dict to JSON: {"age":25,"name":"Bob"}
+Nested to JSON: {"user":{"name":"Charlie","settings":{"theme":"dark"}}}
+Original: {"number": 123, "test": value}
+JSON string: {"number":123,"test":"value"}
+Parsed back: {"number": 123, "test": value}
+Value matches: value
+=== All serialization tests passed ===

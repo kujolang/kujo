@@ -1,0 +1,13 @@
+Testing single parameter:
+15
+
+Testing multiple parameters:
+22
+
+Testing method chaining:
+30
+
+Testing struct return:
+150
+
+✅ All method parameter features work!

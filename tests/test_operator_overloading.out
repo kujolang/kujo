@@ -1,0 +1,18 @@
+v1: Vector(3, 4)
+v2: Vector(1, 2)
+v1 + v2 = Vector(4, 6)
+v1 - v2 = Vector(2, 2)
+v1 * 2.0 = Vector(6, 8)
+v1 / 2.0 = Vector(1.5, 2)
+v7 == v9: true
+v7 != v8: true
+m1: $100
+m2: $50
+m1 + m2 = $150
+m1 - m2 = $50
+m1 * 2.0 = $200
+m1 / 2.0 = $50
+m7 == m9: true
+[KUJOVM001] [vm] Runtime Error: Invalid binary operation: struct > struct
+  --> 0:0
+   = help: Use operands whose types support this operator, or convert values before applying it.

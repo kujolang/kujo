@@ -1,0 +1,28 @@
+Testing path operation functions...
+join_path('/home', 'user', 'documents', 'file.txt'):
+  /home/user/documents/file.txt
+✓ join_path combines path components
+join_path('src', 'interpreter.rs') = src/interpreter.rs
+dirname('/home/user/documents/file.txt') = /home/user/documents
+✓ dirname extracts directory correctly
+dirname('src/interpreter.rs') = src
+✓ dirname works with relative paths
+dirname('/home/user/documents') = /home/user
+basename('/home/user/documents/file.txt') = file.txt
+✓ basename extracts filename correctly
+basename('example.kujo') = example.kujo
+✓ basename works with just filename
+basename('/home/user/documents/') = documents
+path_exists('Cargo.toml') = true
+✓ path_exists finds existing file
+path_exists('nonexistent_file_12345.txt') = false
+✓ path_exists returns false for non-existent file
+path_exists('src') = true
+✓ path_exists works with directories
+
+Integration test:
+  full_path = home/user/test.kujo
+  dirname = home/user
+  basename = test.kujo
+✓ Path integration test passed
+Path operation tests completed!

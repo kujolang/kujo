@@ -1,0 +1,34 @@
+=== Testing Null Coalescing Operator (??) ===
+default
+actual
+fallback
+first
+42
+10
+
+=== Testing Optional Chaining Operator (?.) ===
+null
+null
+Profile { bio: Software developer, email: alice@example.com }
+Bob
+null
+null
+Anonymous
+Bob
+
+=== Testing Pipe Operator (|>) ===
+10
+256
+hello! hello!
+hello
+test
+21
+
+=== Testing Combined Operators ===
+Alice
+Unknown User
+bob@test.com
+null
+default@example.com
+
+=== All Tests Complete ===

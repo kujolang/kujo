@@ -1,0 +1,35 @@
+Testing Database Transactions...
+
+=== Test 1: Basic Transaction Commit ===
+✓ Basic transaction commit works
+
+=== Test 2: Transaction Rollback ===
+✓ Transaction rollback works
+
+=== Test 3: Last Insert ID ===
+✓ Last insert ID works in transactions
+
+=== Test 4: Error Handling ===
+Caught expected double-begin error
+✓ Double begin prevented
+
+=== Test 5: Commit/Rollback without Begin ===
+Caught expected commit-without-begin error
+Caught expected rollback-without-begin error
+✓ Commit/rollback without begin prevented
+
+=== Test 6: Atomic Multi-Statement Updates ===
+✓ Atomic multi-statement updates work
+
+=== Test 7: Transaction with Error Handling ===
+✓ Error detected, transaction rolled back
+
+=== Test 8: Complex E-Commerce Transaction ===
+✓ Complex e-commerce transaction works
+
+=== Test 9: Transaction Isolation ===
+✓ Transaction isolation works
+
+==================================================
+✅ ALL TRANSACTION TESTS PASSED!
+==================================================

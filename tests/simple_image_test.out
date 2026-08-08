@@ -1,0 +1,3 @@
+Testing load_image with error handling...
+Caught error: Cannot load image 'nonexistent.jpg': No such file or directory (os error 2)
+Test completed!

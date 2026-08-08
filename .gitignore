@@ -8,9 +8,8 @@
 **/*.old
 **/*.log
 
-# Rust toolchain and test snapshots
+# Rust toolchain
 rust-toolchain.toml
-/tests/*.out
 
 # Cargo specific
 /.cargo/
@@ -19,7 +18,6 @@ rust-toolchain.toml
 # === TEST SNAPSHOTS ===
 *.snap
 /tests/__snapshots__/
-/tests/*.out
 
 # === BUILD SYSTEMS ===
 /build/
@@ -104,6 +102,11 @@ test_roadmap_spec.kujo
 benchmark_output.txt
 /benchmarks/cross-language/benchmark_output.txt
 /benchmarks/cross-language/results/
+/checkpoints/
+
+# Local command logs and status tables are reproducible evidence, not source.
+# Final release evidence belongs in reviewed dated Markdown notes and release assets.
+/notes/release_evidence/
 
 # === PRIVATE SHOWCASES ===
 /showcases/
@@ -247,7 +250,6 @@ benchmark_output.txt
 
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
-/tests/*.out
 *.tmp-*
 *.bak
 *.log

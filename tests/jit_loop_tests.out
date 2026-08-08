@@ -1,0 +1,9 @@
+Test 1: Simple counter loop
+PASS: sum = 45
+
+Test 2: Loop with function call
+PASS: total = 20
+
+Test 3: Nested loops
+[KUJOVM001] [vm] Runtime Error: Duplicate declaration in the same scope: b
+  --> 0:0

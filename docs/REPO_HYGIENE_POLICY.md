@@ -16,6 +16,7 @@ Tracked files at repository root must be limited to canonical project metadata a
 Current allowed tracked root files:
 
 - `.editorconfig`
+- `.gitattributes`
 - `.gitignore`
 - `AGENTS.md`
 - `CHANGELOG.md`
@@ -26,6 +27,7 @@ Current allowed tracked root files:
 - `LICENSE`
 - `README.md`
 - `ROADMAP.md`
+- `install.sh`
 - `rustfmt.toml`
 
 ## Non-root Placement Rules

@@ -54,8 +54,8 @@ Updated evidence snapshot: 2026-06-27
 - Decision: keep default `kujo test` runtime at `dual` for now.
 - Evidence:
   - `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual` passed locally on current `main`.
-  - Both modes report `Passed 144/144 tests` plus `Fixture outcomes: passed=144, failed=0, skipped=6, expected_fail=0, runnable=144, discovered=150`.
-  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` currently reports `P0 runtime-parity-bug: 0`, `P1 stale-snapshot-expectation: 0`, `P2 harness-debt: 0`, `P2 intentional-divergence: 39`, and `vm_matches_snapshot: 144/144`.
+  - Both modes report `Passed 145/145 tests` plus `Fixture outcomes: passed=145, failed=0, skipped=6, expected_fail=0, runnable=145, discovered=151`.
+  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` currently reports `P0 runtime-parity-bug: 0`, `P1 stale-snapshot-expectation: 0`, `P2 harness-debt: 0`, `P2 intentional-divergence: 38`, and `vm_matches_snapshot: 145/145`.
 - Risk analysis:
   - The generated inventory supports release review: default VM output matches every runnable fixture snapshot. Residual rows are legacy interpreter-only drift and are explicitly classified as post-v1 compatibility debt.
   - Keeping `dual` continues deterministic compatibility signaling while the release-readiness checklist continues mismatch ownership burn-down.

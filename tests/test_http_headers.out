@@ -1,0 +1,38 @@
+Test 1: Basic HTTP response
+httpresponse
+
+Test 2: set_header adds single header
+Added custom header
+
+Test 3: set_headers adds multiple headers
+Added multiple headers
+
+Test 4: json_response sets Content-Type automatically
+JSON response created with auto Content-Type
+
+Test 5: Chain multiple set_header calls
+Chained three headers successfully
+
+Test 6: redirect_response with custom headers
+Redirect with custom headers created
+
+Test 7: Error handling
+Correctly caught error for invalid response
+Correctly caught error for non-string key
+
+Test 8: Headers work with all response types
+Plain response with Content-Type
+JSON response with auto Content-Type
+Redirect with auto Location header
+
+Test 9: Overwriting existing headers
+Set X-Version to 1.0
+Updated X-Version to 2.0 (overwrite)
+
+Test 10: Empty headers dictionary
+Set empty headers (no-op)
+
+Test 11: Header name variations
+Set same header with different cases (last one wins)
+
+All header tests completed!

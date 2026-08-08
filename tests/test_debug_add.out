@@ -1,0 +1,6 @@
+Calling op_add via method:
+In op_add!
+4
+Calling op_add via operator:
+In op_add!
+4

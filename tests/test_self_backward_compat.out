@@ -1,0 +1,7 @@
+Test 1: Without self parameter
+42
+
+Test 2: With self parameter
+99
+
+✅ Tests passed!

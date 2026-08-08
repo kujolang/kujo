@@ -1,0 +1,36 @@
+Ok(42)
+Err(something went wrong)
+Some(100)
+None
+Got OK with value: 5
+Got error: failed
+Got Some with value: 42
+Got None
+Division result: 5
+Division error: Division by zero
+Found user: Alice
+User not found
+Try OK result: 84
+Try Err error: failed
+Chained result: 25
+Nested OK value: 42
+Ok(success)
+Ok(123)
+Ok(3.14)
+Ok(true)
+Some(text)
+Some(456)
+Some(2.71)
+Some(false)
+Results array:
+  OK: 1
+  ERR: error
+  OK: 2
+  OK: 3
+Options array:
+  Some: 10
+  None
+  Some: 20
+  Some: 30
+  None
+All Result and Option tests completed!

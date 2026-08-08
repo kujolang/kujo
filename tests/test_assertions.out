@@ -1,0 +1,10 @@
+Testing assertion functions...
+assert_equal(5, 5): true
+assert_equal(5, 10) failed as expected: Assertion failed: expected Int(10), got Int(5)
+assert_true(true): true
+assert_true(false) failed as expected: Assertion failed: expected true, got false
+assert_false(false): true
+assert_false(true) failed as expected: Assertion failed: expected false, got true
+assert_contains([1,2,3,4,5], 3): true
+assert_contains([1,2,3,4,5], 10) failed as expected: Assertion failed: Array[5] does not contain Int(10)
+All assertion tests complete!

@@ -96,9 +96,35 @@ where
         while served < expected_requests && idle_ticks < 800 {
             match listener.accept() {
                 Ok((mut stream, _)) => {
-                    let mut buf = [0u8; 4096];
-                    let read = stream.read(&mut buf).unwrap_or(0);
-                    let request = String::from_utf8_lossy(&buf[..read]);
+                    stream.set_nonblocking(false).expect("set accepted stream blocking");
+                    stream
+                        .set_read_timeout(Some(Duration::from_secs(1)))
+                        .expect("set accepted stream read timeout");
+                    let mut request_bytes = Vec::new();
+                    let mut buf = [0u8; 1024];
+                    loop {
+                        match stream.read(&mut buf) {
+                            Ok(0) => break,
+                            Ok(read) => {
+                                request_bytes.extend_from_slice(&buf[..read]);
+                                if request_bytes.windows(4).any(|window| window == b"\r\n\r\n")
+                                    || request_bytes.len() >= 64 * 1024
+                                {
+                                    break;
+                                }
+                            }
+                            Err(err)
+                                if matches!(
+                                    err.kind(),
+                                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                                ) =>
+                            {
+                                break;
+                            }
+                            Err(_) => break,
+                        }
+                    }
+                    let request = String::from_utf8_lossy(&request_bytes);
                     let path = request
                         .lines()
                         .next()

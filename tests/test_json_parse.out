@@ -1,0 +1,24 @@
+=== JSON Parsing Tests ===
+Empty object: {}
+User object: {"active": true, "age": 30, "name": Alice}
+Name: Alice
+Age: 30
+Active: true
+Numbers array: [1, 2, 3, 4, 5]
+First: 1
+Last: 5
+Config: {"database": {"host": localhost, "port": 5432}, "debug": true}
+Database: {"host": localhost, "port": 5432}
+Host: localhost
+Port: 5432
+Null value: null
+Mixed array: [1, hello, true, null, 3.14]
+Number: 1
+String: hello
+Boolean: true
+Null: null
+Float: 3.14
+Matrix: [[1, 2], [3, 4], [5, 6]]
+First row: [1, 2]
+Element [1][1]: 4
+=== All parsing tests passed ===

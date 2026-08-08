@@ -50,7 +50,7 @@ function classify(path,    category, tags) {
         tags = "docs-contract"
     } else if (path ~ /^examples\//) {
         category = "example-doc"
-        tags = "benchmark-baseline"
+        tags = "example-runtime-choice"
     } else if (path ~ /^notes\//) {
         category = "notes-history"
         tags = "archive-note"
@@ -101,7 +101,7 @@ mkdir -p "$(dirname "$OUTPUT_PATH")"
     echo "- \`docs-smoke\`: Docs/example smoke harness runs interpreter as canonical execution path."
     echo "- \`package-workflow\`: Package/module workflow integration still validated via interpreter runs."
     echo "- \`docs-contract\`: User-facing docs explicitly describe interpreter mode behavior."
-    echo "- \`benchmark-baseline\`: Example/benchmark docs keep interpreter as baseline comparator."
+    echo "- \`example-runtime-choice\`: Example documentation intentionally selects the interpreter path."
     echo "- \`archive-note\`: Historical field notes mentioning interpreter usage."
     echo
     echo "| File | Category | Reason Tags | Usage Count | Line References |"

@@ -1,0 +1,14 @@
+Creating v1...
+Calling double()...
+In double method
+  self.x:
+1
+  self.y:
+2
+Creating new Vec2...
+Created new Vec2
+Returned from double()
+v2.x:
+2
+v2.y:
+4
