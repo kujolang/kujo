@@ -1,7 +1,7 @@
 # Interpreter Flag Dependency Map
 
-- Generated: 2026-08-07 19:50:35 EDT
-- Command: `rg -n -- "--interpreter" src tests docs README.md ROADMAP.md examples notes .github`
+- Generated: 2026-08-07 20:14:35 EDT
+- Command: `rg -n -- "--interpreter" src tests docs README.md ROADMAP.md examples .github`
 
 Reason tags:
 - `harness-legacy`: Existing harness behavior still forces interpreter mode.
@@ -12,7 +12,6 @@ Reason tags:
 - `package-workflow`: Package/module workflow integration still validated via interpreter runs.
 - `docs-contract`: User-facing docs explicitly describe interpreter mode behavior.
 - `example-runtime-choice`: Example documentation intentionally selects the interpreter path.
-- `archive-note`: Historical field notes mentioning interpreter usage.
 
 | File | Category | Reason Tags | Usage Count | Line References |
 | --- | --- | --- | --- | --- |
@@ -27,10 +26,11 @@ Reason tags:
 | `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` | documentation | `docs-contract` | 2 | 269,275 |
 | `docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md` | documentation | `docs-contract` | 4 | 1,17,21,22 |
 | `docs/VM_INTERPRETER_PARITY_MATRIX.md` | documentation | `docs-contract` | 6 | 37,38,44,45,46,70 |
+| `examples/VERIFICATION.md` | example-doc | `example-runtime-choice` | 36 | 9,16,17,18,22,27,36,69,71,91,92,100,101,113,114,115,116,117,123,128,138,148,149,150,152,153,156,162,170,175,182,183,187,216,224,238 |
 | `src/main.rs` | other | `manual-review` | 1 | 146 |
 | `src/parser.rs` | cli-harness | `harness-legacy,parity-gap` | 1 | 2241 |
 | `tests/diagnostics_golden.rs` | integration-test | `diagnostics-diff,harness-legacy` | 2 | 132,139 |
-| `tests/docs_examples.rs` | integration-test | `docs-smoke,harness-legacy` | 1 | 269 |
+| `tests/docs_examples.rs` | integration-test | `docs-smoke,harness-legacy` | 1 | 240 |
 | `tests/docs_policy_consistency_contract.rs` | integration-test | `harness-legacy` | 1 | 41 |
 | `tests/http_route_callback_closure.rs` | integration-test | `harness-legacy` | 1 | 55 |
 | `tests/interpreter_flag_dependency_map_contract.rs` | integration-test | `harness-legacy` | 2 | 57,88 |

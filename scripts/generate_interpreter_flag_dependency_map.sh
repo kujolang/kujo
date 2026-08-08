@@ -11,12 +11,12 @@ cd "$ROOT"
 
 SEARCH_COMMAND=""
 if command -v rg >/dev/null 2>&1; then
-    SEARCH_COMMAND='rg -n -- "--interpreter" src tests docs README.md ROADMAP.md examples notes .github'
-    rg -n -- "--interpreter" src tests docs README.md ROADMAP.md examples notes .github \
+    SEARCH_COMMAND='rg -n -- "--interpreter" src tests docs README.md ROADMAP.md examples .github'
+    rg -n -- "--interpreter" src tests docs README.md ROADMAP.md examples .github \
         | rg -v '^docs/INTERPRETER_FLAG_DEPENDENCY_MAP.md:' >"$TMP_MATCHES"
 else
-    SEARCH_COMMAND='grep -RIn -- "--interpreter" src tests docs README.md ROADMAP.md examples notes .github'
-    grep -RIn -- "--interpreter" src tests docs README.md ROADMAP.md examples notes .github 2>/dev/null \
+    SEARCH_COMMAND='grep -RIn -- "--interpreter" src tests docs README.md ROADMAP.md examples .github'
+    grep -RIn -- "--interpreter" src tests docs README.md ROADMAP.md examples .github 2>/dev/null \
         | grep -v '^docs/INTERPRETER_FLAG_DEPENDENCY_MAP.md:' >"$TMP_MATCHES"
 fi
 
@@ -51,9 +51,6 @@ function classify(path,    category, tags) {
     } else if (path ~ /^examples\//) {
         category = "example-doc"
         tags = "example-runtime-choice"
-    } else if (path ~ /^notes\//) {
-        category = "notes-history"
-        tags = "archive-note"
     } else {
         category = "other"
         tags = "manual-review"
@@ -102,7 +99,6 @@ mkdir -p "$(dirname "$OUTPUT_PATH")"
     echo "- \`package-workflow\`: Package/module workflow integration still validated via interpreter runs."
     echo "- \`docs-contract\`: User-facing docs explicitly describe interpreter mode behavior."
     echo "- \`example-runtime-choice\`: Example documentation intentionally selects the interpreter path."
-    echo "- \`archive-note\`: Historical field notes mentioning interpreter usage."
     echo
     echo "| File | Category | Reason Tags | Usage Count | Line References |"
     echo "| --- | --- | --- | --- | --- |"
