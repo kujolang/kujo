@@ -76,7 +76,8 @@ jobs:
           mkdir -p "${extract_root}"
 
           if [[ "${{ matrix.archive_kind }}" == "zip" ]]; then
-            pwsh -NoLogo -NoProfile -Command "Expand-Archive -Path '${archive_name}' -DestinationPath '${extract_root}' -Force"
+            native_extract_root="$(cygpath -w "${extract_root}")"
+            pwsh -NoLogo -NoProfile -Command "Expand-Archive -Path '${archive_name}' -DestinationPath '${native_extract_root}' -Force"
           else
             tar -xzf "${archive_name}" -C "${extract_root}"
           fi
