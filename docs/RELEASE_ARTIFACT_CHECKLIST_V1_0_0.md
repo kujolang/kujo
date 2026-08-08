@@ -45,4 +45,4 @@ explicit `UNBLOCK_V1_RELEASE` directive defined in `docs/RELEASE_PROCESS.md`.
 ## Notes
 
 - Artifact publication and post-publish smoke validation are automated for release tags.
-- Final release evidence (artifact URLs + checksums + command logs) is recorded in `notes/2026-08-08_09-25_v1-0-0-launch-evidence.md`.
+- Final release evidence (artifact URLs + checksums + command logs) is recorded in `notes/2026-08-08_05-25_v1-0-0-launch-evidence.md`.
