@@ -308,7 +308,7 @@ Common commands:
 - `kujo test-run <file>`: run Kujo `test "..." {}` declarations in a file.
 - `kujo init`, `kujo package-add`, `kujo package-install`, `kujo package-install --frozen`: create and verify reproducible package manifests and lockfiles.
 - `kujo package-publish`: preview package publish metadata only; no public registry publish occurs in v1.0.
-- `kujo serve [dir]`: static file server for local preview/testing.
+- `kujo serve [dir]`: static file server for local preview/testing, including a root `404.html` fallback for missing routes.
 - `kujo lsp`: run Kujo’s LSP server.
 
 Machine-readable contracts and diagnostics behavior are documented in [docs/CLI_MACHINE_READABLE_CONTRACTS.md](docs/CLI_MACHINE_READABLE_CONTRACTS.md).

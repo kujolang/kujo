@@ -293,7 +293,12 @@ fn build_response(
     let canonical_target = match fs::canonicalize(&target_path) {
         Ok(path) => path,
         Err(error) => {
-            return headify(status_mapped_error(&error, options, request.secure()), is_head);
+            let response = if error.kind() == std::io::ErrorKind::NotFound {
+                custom_not_found_response(root_dir, options, request.secure())
+            } else {
+                status_mapped_error(&error, options, request.secure())
+            };
+            return headify(response, is_head);
         }
     };
 
@@ -311,7 +316,12 @@ fn build_response(
     let (mut file, file_len) = match open_file_nofollow(&selected_target) {
         Ok(file_info) => file_info,
         Err(error) => {
-            return headify(status_mapped_error(&error, options, request.secure()), is_head);
+            let response = if error.kind() == std::io::ErrorKind::NotFound {
+                custom_not_found_response(root_dir, options, request.secure())
+            } else {
+                status_mapped_error(&error, options, request.secure())
+            };
+            return headify(response, is_head);
         }
     };
 
@@ -503,6 +513,36 @@ fn status_mapped_error(
     } else {
         static_text_response(404, "Not Found", options, secure, &[])
     }
+}
+
+fn custom_not_found_response(
+    root_dir: &Path,
+    options: &ServeServerOptions,
+    secure: bool,
+) -> PlannedResponse {
+    let not_found_path = root_dir.join("404.html");
+    let canonical_path = match fs::canonicalize(&not_found_path) {
+        Ok(path) => path,
+        Err(_) => return static_text_response(404, "Not Found", options, secure, &[]),
+    };
+    if path_security::ensure_path_within_root(&canonical_path, root_dir, "404 page").is_err() {
+        return static_text_response(404, "Not Found", options, secure, &[]);
+    }
+
+    let (file, file_len) = match open_file_nofollow(&canonical_path) {
+        Ok(file_info) => file_info,
+        Err(_) => return static_text_response(404, "Not Found", options, secure, &[]),
+    };
+    let mut response = PlannedResponse {
+        status_code: 404,
+        body: Box::new(file),
+        headers: Vec::new(),
+        content_length: Some(file_len),
+    };
+    add_common_success_headers(&mut response.headers, &canonical_path, &[], None, options, secure);
+    response.headers.retain(|(name, _)| !name.eq_ignore_ascii_case("cache-control"));
+    add_header(&mut response.headers, "Cache-Control", "no-store");
+    response
 }
 
 fn static_text_response(
@@ -1191,6 +1231,31 @@ mod tests {
         assert_eq!(cache_control, Some("no-store"));
         assert_eq!(nosniff, Some("nosniff"));
         assert_eq!(referrer_policy, Some("no-referrer"));
+    }
+
+    #[test]
+    fn custom_not_found_response_serves_root_404_html_with_404_status() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time should be available")
+            .as_nanos();
+        let test_root = std::env::temp_dir().join(format!("kujo-serve-404-{}", unique));
+        fs::create_dir_all(&test_root).expect("test root should be created");
+        fs::write(test_root.join("404.html"), b"<h1>Custom missing page</h1>")
+            .expect("custom 404 should be written");
+        let canonical_root = fs::canonicalize(&test_root).expect("test root should resolve");
+
+        let mut response = custom_not_found_response(&canonical_root, &test_options(), false);
+        assert_eq!(404, response.status_code);
+        assert_eq!(b"<h1>Custom missing page</h1>", planned_body_bytes(&mut response).as_slice());
+        assert!(response.headers.iter().any(|(name, value)| {
+            name.eq_ignore_ascii_case("content-type") && value == "text/html; charset=utf-8"
+        }));
+        assert!(response.headers.iter().any(|(name, value)| {
+            name.eq_ignore_ascii_case("cache-control") && value == "no-store"
+        }));
+
+        fs::remove_dir_all(&test_root).expect("test root should be removed");
     }
 
     #[test]
