@@ -4,7 +4,6 @@ print("Testing system operation functions...")
 
 // Test env() - get environment variable
 home := env("HOME")
-print("env('HOME') = " + home)
 
 if len(home) > 0 {
     print("✓ env('HOME') returns value")
