@@ -10,8 +10,7 @@ use kujo::docgen::gaps::LinkValidationOptions;
 use serde_json::Value;
 use std::collections::BTreeSet;
 use std::fs;
-use std::io::{Read, Write};
-use std::net::{SocketAddr, TcpListener};
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -70,6 +69,7 @@ struct TestHttpServer {
 
 impl TestHttpServer {
     fn url_with_host(&self, host: &str, path: &str) -> String {
+        let host = if host.contains(':') { format!("[{host}]") } else { host.to_string() };
         format!("http://{}:{}{}", host, self.addr.port(), path)
     }
 }
@@ -78,69 +78,47 @@ fn spawn_http_server<F>(expected_requests: usize, responder: F) -> Option<TestHt
 where
     F: Fn(&str) -> String + Send + 'static,
 {
-    let listener = match TcpListener::bind("127.0.0.1:0") {
-        Ok(listener) => listener,
-        Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => {
+    spawn_http_server_on("127.0.0.1:0", expected_requests, responder)
+}
+
+fn spawn_http_server_on<F>(
+    bind_address: &str,
+    expected_requests: usize,
+    responder: F,
+) -> Option<TestHttpServer>
+where
+    F: Fn(&str) -> String + Send + 'static,
+{
+    let server = match tiny_http::Server::http(bind_address) {
+        Ok(server) => server,
+        Err(err) => {
             eprintln!(
                 "skipping network-bound docgen test: unable to bind local test server ({err})"
             );
             return None;
         }
-        Err(err) => panic!("bind test http server: {err}"),
     };
-    listener.set_nonblocking(true).expect("set nonblocking listener");
-    let addr = listener.local_addr().expect("local addr for test server");
+    let addr = server.server_addr().to_ip().expect("HTTP test server should use an IP socket");
     thread::spawn(move || {
-        let mut served = 0usize;
-        let mut idle_ticks = 0usize;
-        while served < expected_requests && idle_ticks < 800 {
-            match listener.accept() {
-                Ok((mut stream, _)) => {
-                    stream.set_nonblocking(false).expect("set accepted stream blocking");
-                    stream
-                        .set_read_timeout(Some(Duration::from_secs(1)))
-                        .expect("set accepted stream read timeout");
-                    let mut request_bytes = Vec::new();
-                    let mut buf = [0u8; 1024];
-                    loop {
-                        match stream.read(&mut buf) {
-                            Ok(0) => break,
-                            Ok(read) => {
-                                request_bytes.extend_from_slice(&buf[..read]);
-                                if request_bytes.windows(4).any(|window| window == b"\r\n\r\n")
-                                    || request_bytes.len() >= 64 * 1024
-                                {
-                                    break;
-                                }
-                            }
-                            Err(err)
-                                if matches!(
-                                    err.kind(),
-                                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
-                                ) =>
-                            {
-                                break;
-                            }
-                            Err(_) => break,
-                        }
-                    }
-                    let request = String::from_utf8_lossy(&request_bytes);
-                    let path = request
-                        .lines()
-                        .next()
-                        .and_then(|line| line.split_whitespace().nth(1))
-                        .unwrap_or("/");
-                    let response = responder(path);
-                    stream.write_all(response.as_bytes()).expect("write test response");
-                    served += 1;
-                    idle_ticks = 0;
-                }
-                Err(err) if err.kind() == std::io::ErrorKind::WouldBlock => {
-                    idle_ticks += 1;
-                    thread::sleep(Duration::from_millis(5));
-                }
-                Err(_) => break,
-            }
+        for _ in 0..expected_requests {
+            let Ok(Some(request)) = server.recv_timeout(Duration::from_secs(4)) else {
+                break;
+            };
+            let raw_response = responder(request.url());
+            let response_result = if raw_response.starts_with("HTTP/1.1 302") {
+                let location = raw_response
+                    .lines()
+                    .find_map(|line| line.strip_prefix("Location: "))
+                    .expect("redirect response should contain Location");
+                let header = tiny_http::Header::from_bytes("Location", location)
+                    .expect("redirect Location header should be valid");
+                request.respond(
+                    tiny_http::Response::empty(tiny_http::StatusCode(302)).with_header(header),
+                )
+            } else {
+                request.respond(tiny_http::Response::from_string("ok"))
+            };
+            response_result.expect("write test response");
         }
     });
     Some(TestHttpServer { addr })
@@ -2373,7 +2351,7 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
         &input,
         &format!(
             "/// Redirect link: [Docs]({})\npub func linked_api() {{ return 1 }}\n",
-            redirect_server.url_with_host("localhost", "/start")
+            redirect_server.url_with_host("127.0.0.1", "/start")
         ),
     );
 
@@ -2403,7 +2381,7 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
             validate_local_anchors: false,
             validate_external_links: true,
             external_link_timeout_ms: 500,
-            external_link_allowlist: BTreeSet::from(["localhost".to_string()]),
+            external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
         },
@@ -2420,7 +2398,7 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
     let Some(destination_server) = spawn_http_server(16, |_path| http_200_response()) else {
         return;
     };
-    let destination_url = destination_server.url_with_host("127.0.0.1", "/final");
+    let destination_url = destination_server.url_with_host("localhost", "/final");
     let Some(redirect_server) =
         spawn_http_server(16, move |_path| http_302_response(&destination_url))
     else {
@@ -2434,7 +2412,7 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
         &input,
         &format!(
             "/// Redirect link: [Docs]({})\npub func linked_api() {{ return 1 }}\n",
-            redirect_server.url_with_host("localhost", "/start")
+            redirect_server.url_with_host("127.0.0.1", "/start")
         ),
     );
 
@@ -2465,8 +2443,8 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
             validate_external_links: true,
             external_link_timeout_ms: 2_000,
             external_link_allowlist: BTreeSet::from([
-                "localhost".to_string(),
                 "127.0.0.1".to_string(),
+                "localhost".to_string(),
             ]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
@@ -2480,10 +2458,11 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
 
 #[test]
 fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
-    let Some(destination_server) = spawn_http_server(4, |_path| http_200_response()) else {
+    let Some(destination_server) = spawn_http_server_on("[::1]:0", 4, |_path| http_200_response())
+    else {
         return;
     };
-    let blocked_target = destination_server.url_with_host("127.0.0.1", "/blocked");
+    let blocked_target = destination_server.url_with_host("::1", "/blocked");
     let Some(redirect_server) =
         spawn_http_server(4, move |_path| http_302_response(&blocked_target))
     else {
@@ -2497,7 +2476,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
         &input,
         &format!(
             "/// Redirect link: [Docs]({})\npub func linked_api() {{ return 1 }}\n",
-            redirect_server.url_with_host("localhost", "/start")
+            redirect_server.url_with_host("127.0.0.1", "/start")
         ),
     );
 
@@ -2527,7 +2506,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
             validate_local_anchors: false,
             validate_external_links: true,
             external_link_timeout_ms: 500,
-            external_link_allowlist: BTreeSet::from(["localhost".to_string()]),
+            external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             ..LinkValidationOptions::default()
         },
@@ -2539,7 +2518,7 @@ fn docgen_external_validation_blocks_redirects_to_non_allowlisted_hosts() {
     assert!(
         project.diagnostics.iter().any(|diag| {
             diag.code == "DOCGEN_LINK_BROKEN_EXTERNAL_REDIRECT_ALLOWLIST"
-                && ["127.0.0.1", "localhost", "::1"].iter().any(|host| diag.message.contains(host))
+                && diag.message.contains("::1")
                 && diag.message.contains("non-allowlisted host")
                 && diag.message.contains("linked_api")
         }),
@@ -2731,8 +2710,8 @@ fn docgen_link_validation_budget_max_external_checks_truncates_deterministically
         &input,
         &format!(
             "/// External A: [A]({})\n/// External B: [B]({})\npub func linked_api() {{ return 1 }}\n",
-            server.url_with_host("localhost", "/one"),
-            server.url_with_host("localhost", "/two")
+            server.url_with_host("127.0.0.1", "/one"),
+            server.url_with_host("127.0.0.1", "/two")
         ),
     );
 
@@ -2760,7 +2739,7 @@ fn docgen_link_validation_budget_max_external_checks_truncates_deterministically
         },
         LinkValidationOptions {
             validate_external_links: true,
-            external_link_allowlist: BTreeSet::from(["localhost".to_string()]),
+            external_link_allowlist: BTreeSet::from(["127.0.0.1".to_string()]),
             allow_private_network_links: true,
             max_external_link_checks: Some(1),
             ..LinkValidationOptions::default()
