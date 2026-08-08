@@ -55,20 +55,21 @@ git -C "$matcher_dir" init -q
 
 violations=()
 while IFS= read -r -d '' changed_path; do
-  if match="$(git -C "$matcher_dir" check-ignore --no-index -v -- "$changed_path" 2>/dev/null)"; then
-    violations+=("$changed_path ($match)")
-  fi
+  git -C "$matcher_dir" check-ignore --no-index -q -- "$changed_path" || continue
+  git check-ignore --no-index -q -- "$changed_path" || continue
+  match="$(git -C "$matcher_dir" check-ignore --no-index -v -- "$changed_path" 2>/dev/null)"
+  violations+=("$changed_path ($match)")
 done < <(
   git log --format='%H' "$base_sha..$head_sha" |
     while IFS= read -r commit; do
-      git diff-tree --root --no-commit-id --name-only -r -m -z "$commit"
+      git diff-tree --root --no-commit-id --name-only --diff-filter=ACMRTUXB -r -m -z "$commit"
     done
 )
 
 if (( ${#violations[@]} > 0 )); then
-  echo "[tool-artifacts] ERROR: pushed commits contain ignored Kujo tool artifacts"
+  echo "[tool-artifacts] ERROR: pushed commits add or modify ignored Kujo tool artifacts"
   printf '[tool-artifacts] Artifact path: %s\n' "${violations[@]}"
   exit 1
 fi
 
-echo "[tool-artifacts] OK: all source rules are present and no pushed commit contains a listed artifact"
+echo "[tool-artifacts] OK: all source rules are present and no pushed commit adds or modifies an effectively ignored artifact"
