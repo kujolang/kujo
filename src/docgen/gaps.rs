@@ -1,4 +1,6 @@
 use crate::docgen::model::{DocGap, DocGapKind, DocProject, DocSymbol, DocVisibility};
+#[cfg(test)]
+use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::net::{IpAddr, ToSocketAddrs};
 use std::path::{Path, PathBuf};
@@ -68,7 +70,9 @@ static LOCAL_ANCHOR_FILE_READ_COUNT: AtomicUsize = AtomicUsize::new(0);
 #[cfg(test)]
 static EXTERNAL_HTTP_CLIENT_BUILD_COUNT: AtomicUsize = AtomicUsize::new(0);
 #[cfg(test)]
-static CALL_SITE_INDEX_LINE_SCAN_COUNT: AtomicUsize = AtomicUsize::new(0);
+thread_local! {
+    static CALL_SITE_INDEX_LINE_SCAN_COUNT: Cell<usize> = const { Cell::new(0) };
+}
 
 #[cfg(test)]
 fn increment_local_anchor_file_read_count() {
@@ -88,7 +92,7 @@ fn increment_external_http_client_build_count() {}
 
 #[cfg(test)]
 fn increment_call_site_index_line_scan_count() {
-    CALL_SITE_INDEX_LINE_SCAN_COUNT.fetch_add(1, Ordering::Relaxed);
+    CALL_SITE_INDEX_LINE_SCAN_COUNT.with(|count| count.set(count.get() + 1));
 }
 
 #[cfg(not(test))]
@@ -110,12 +114,12 @@ fn link_validation_test_counters() -> (usize, usize) {
 
 #[cfg(test)]
 fn reset_call_site_index_test_counter() {
-    CALL_SITE_INDEX_LINE_SCAN_COUNT.store(0, Ordering::Relaxed);
+    CALL_SITE_INDEX_LINE_SCAN_COUNT.with(|count| count.set(0));
 }
 
 #[cfg(test)]
 fn call_site_index_test_counter() -> usize {
-    CALL_SITE_INDEX_LINE_SCAN_COUNT.load(Ordering::Relaxed)
+    CALL_SITE_INDEX_LINE_SCAN_COUNT.with(Cell::get)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
