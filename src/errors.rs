@@ -142,7 +142,7 @@ pub const DIAGNOSTIC_CODE_RUNTIME: &str = "KUJORUN001";
 pub const DIAGNOSTIC_CODE_VM: &str = "KUJOVM001";
 pub const DIAGNOSTIC_CODE_CLI: &str = "KUJOCLI001";
 pub const DIAGNOSTIC_CODE_LSP: &str = "KUJOLSP001";
-pub const RUN_RUNTIME_DIAGNOSTIC_CONTRACT_VERSION: &str = "1.0.0-draft";
+pub const RUN_RUNTIME_DIAGNOSTIC_CONTRACT_VERSION: &str = "1.0.0";
 
 pub fn unsupported_struct_generator_method_message(struct_name: &str, method_name: &str) -> String {
     format!("Generator methods are not supported for structs: {}.{}", struct_name, method_name)

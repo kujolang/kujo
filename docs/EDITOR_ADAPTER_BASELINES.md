@@ -1,6 +1,6 @@
 # Editor Adapter Baselines
 
-Status: v1.0.0 release-candidate adapter baseline; originally introduced during the v0.13.0 editor-adapter track.
+Status: stable v1.0.0 adapter baseline; originally introduced during the v0.13.0 editor-adapter track.
 
 This document defines canonical thin-adapter setup paths for Kujo editor integrations.
 

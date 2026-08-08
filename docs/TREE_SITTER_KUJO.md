@@ -1,6 +1,6 @@
 # Tree-sitter Kujo Grammar
 
-Status: v1.0.0 release-candidate editor asset baseline; originally scaffolded during the v0.13.0 editor-adapter track
+Status: stable v1.0.0 editor asset baseline; originally scaffolded during the v0.13.0 editor-adapter track
 
 Kujo now includes a dedicated Tree-sitter grammar package at:
 

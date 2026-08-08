@@ -1,7 +1,7 @@
 # Kujo Architecture
 
-Last updated: 2026-05-20  
-Current crate version: `1.0.0` (pre-tag release-candidate metadata)
+Last updated: 2026-08-08
+Current stable release: `v1.0.0`
 
 This document describes the current Kujo architecture as implemented in this repository.
 It is intentionally execution-path and release-readiness oriented.
@@ -112,11 +112,11 @@ Current explicit divergence examples include:
 
 ## 7. Release Posture
 
-Kujo is in pre-tag `1.0.0` release-candidate readiness.
+Kujo `v1.0.0` is the current stable release.
 
-- `ROADMAP.md` is the release-readiness source of truth.
-- `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` tracks unresolved pre-tag `v1.0.0` closure work.
-- `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` tracks tag-time artifact evidence that must not be marked complete before real publication.
+- `ROADMAP.md` tracks historical v1 work and post-1.0 planning.
+- `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` preserves historical pre-launch closure evidence.
+- `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` records published artifact verification.
 
 ## 8. Related Docs
 

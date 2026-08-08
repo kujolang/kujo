@@ -127,6 +127,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
 
     steps:
@@ -142,10 +143,20 @@ jobs:
           find release-artifacts -name '*.sha256' -type f -print0 | sort -z | xargs -0 cat > release-artifacts/checksums.txt
 
       - name: Publish release assets
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65
+        id: publish
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
         with:
+          name: Kujo ${{ github.ref_name }}
+          generate_release_notes: true
+          make_latest: true
+          fail_on_unmatched_files: true
           files: |
             release-artifacts/**/*.tar.gz
             release-artifacts/**/*.zip
             release-artifacts/**/*.sha256
             release-artifacts/checksums.txt
+
+      - name: Dispatch published artifact smoke
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run release-published-artifact-smoke.yml --ref main --raw-field tag_name="${GITHUB_REF_NAME}"

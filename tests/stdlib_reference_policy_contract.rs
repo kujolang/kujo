@@ -31,9 +31,9 @@ fn stdlib_reference_defines_v1_tier_guarantee_policy() {
     for marker in [
         "v1 contract policy for tiers:",
         "`stable`: in-scope for v1 compatibility guarantees.",
-        "`preview`: in-scope for v1 usage, but not frozen; behavior may tighten during pre-v1 hardening and must be treated as non-guaranteed until promoted.",
+        "`preview`: in-scope for v1 usage, but not frozen; behavior may tighten during v1 hardening and must be treated as non-guaranteed until promoted.",
         "`experimental`: explicitly non-guaranteed for v1 compatibility commitments; available for advanced workflows only and may change or be restricted without stability guarantees.",
-        "Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.",
+        "Release boundary: Kujo `v1.0.0` is stable, while `preview` and `experimental` tiers retain the narrower guarantees defined above.",
         "Deferred/non-goal policy source: `docs/V1_SCOPE.md`.",
     ] {
         assert!(

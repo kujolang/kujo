@@ -45,7 +45,8 @@ For a tag release, the workflow:
    - `kujo lsp --help`
 4. packages each platform archive
 5. writes per-archive SHA-256 files
-6. publishes release assets when the ref is a tag
+6. publishes the GitHub release, generated release notes, and release assets when the ref is a tag
+7. dispatches the published-artifact smoke workflow for that tag
 
 Manual runs upload artifacts to the workflow run, but they do not publish GitHub
 release assets unless the run is for a `v*` tag.

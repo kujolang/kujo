@@ -1,6 +1,6 @@
 # Standard Library Inventory
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 inventory
 Last updated: 2026-06-09
 
 This inventory is the canonical support table for runtime-native functions registered by `Interpreter::get_builtin_names()` in `src/interpreter/mod.rs`.

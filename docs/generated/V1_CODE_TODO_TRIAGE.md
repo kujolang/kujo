@@ -1,6 +1,6 @@
 # V1 Code TODO/FIXME/HACK Triage
 
-Generated: 2026-08-07
+Generated: 2026-08-08
 Source root: `src`
 
 | ID | File | Line | Marker | Summary | Severity | Owner | Target Release Bucket | Scope | Rationale |

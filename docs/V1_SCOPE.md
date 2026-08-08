@@ -1,10 +1,10 @@
 # Kujo v1.0.0 Scope Definition
 
-Status: pre-tag v1.0.0 release-candidate scope baseline
+Status: stable v1.0.0 scope baseline
 
 This document defines what is in-scope for Kujo `v1.0.0`, what is explicitly out-of-scope, and what compatibility commitments apply.
 
-Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
+Release boundary: Kujo `v1.0.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 ## In-Scope For v1.0.0
 
@@ -83,10 +83,10 @@ The following items are explicitly tracked as post-1.0 backlog and are not block
 
 These candidates should be tracked as roadmap backlog slices after `v1.0.0` release stabilization.
 
-## Release-Candidate To v1.0.0 Handoff Checklist
+## v1.0.0 Launch Record
 
-Before tagging `v1.0.0`, confirm:
+The `v1.0.0` launch confirmed:
 
-1. Earlier stabilization checklist evidence remains linked from the active roadmap and release-readiness checklist.
+1. Earlier stabilization checklist evidence remains linked from the roadmap and completed release checklist.
 2. Contract docs/tests and release process docs are in sync.
-3. `CHANGELOG.md` release notes clearly distinguish `v1.0.0` guaranteed surfaces vs deferred backlog.
+3. `CHANGELOG.md` distinguishes guaranteed `v1.0.0` surfaces from deferred backlog.

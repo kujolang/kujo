@@ -9,7 +9,7 @@ usage() {
 Usage: bash scripts/enterprise_verify.sh [--minimal|--full] [--dry-run]
 
 Runs the enterprise-readiness verification wrapper for Kujo's current
-AI-native release-candidate branch. The wrapper delegates core release checks
+AI-native v1 branch. The wrapper delegates core release checks
 to existing gates, then adds AI replay, security docs, README, and showcase
 checks that make the product-readiness story easy to repeat.
 

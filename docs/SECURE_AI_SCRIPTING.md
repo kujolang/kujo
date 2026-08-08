@@ -85,7 +85,7 @@ The default error shape remains string-based for backward compatibility. Structu
 bash scripts/enterprise_verify.sh --minimal
 ```
 
-For release-candidate evidence:
+For release verification evidence:
 
 ```bash
 bash scripts/enterprise_verify.sh --full

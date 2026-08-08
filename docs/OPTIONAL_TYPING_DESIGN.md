@@ -4,7 +4,7 @@ This document defines Kujo's explicit v1 optional-typing policy.
 
 ## v1 Policy Summary
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 design contract
 
 For v1.0.0, Kujo typing is intentionally split into two categories:
 

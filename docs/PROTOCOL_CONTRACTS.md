@@ -1,12 +1,12 @@
 # Kujo Protocol Contracts
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 contract
 
 This document defines machine-consumable protocol contracts used by Kujo CLI/LSP surfaces.
 
 ## Versioning
 
-Contract version: `1.0.0-draft`
+Contract version: `1.0.0`
 
 Rules:
 

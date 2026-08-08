@@ -1,7 +1,7 @@
 # CLI Machine-Readable Contracts
 
-Status: v1.0.0 baseline draft (active)
-Contract version: `1.0.0-draft`
+Status: stable v1.0.0 contract
+Contract version: `1.0.0`
 Last updated: 2026-05-31
 
 This document defines automation-facing contracts for Kujo CLI JSON outputs and exit behavior.
@@ -26,7 +26,7 @@ Notes:
 
 ## Error Shape Policy
 
-Current v1.0.0 baseline draft for CLI `--json` mode:
+Current stable v1.0.0 baseline for CLI `--json` mode:
 
 - `stdout` is reserved for machine-readable JSON payloads on successful command execution.
 - `stderr` carries human-readable error text for failures.
@@ -148,7 +148,7 @@ Top-level object fields:
 - `command` (string, constant `"run"`)
 - `status` (string, constant `"error"`)
 - `kind` (string, constant `"runtime_diagnostic"`)
-- `contract_version` (string, currently `"1.0.0-draft"`)
+- `contract_version` (string, currently `"1.0.0"`)
 - `exit_code` (number, usually `4` for runtime/VM execution failures)
 - `diagnostic` (object)
   - shape matches the shared diagnostic JSON contract fields:
@@ -186,7 +186,7 @@ Each command has a stable top-level payload kind (array/object/null as applicabl
 - `command` (string, constant `"lsp-rename"`)
 - `status` (string, constant `"error"`)
 - `kind` (string, currently `"runtime_error"`)
-- `contract_version` (string, currently `"1.0.0-draft"`)
+- `contract_version` (string, currently `"1.0.0"`)
 - `exit_code` (number, currently `4` for runtime rename failures)
 - `message` (string)
 

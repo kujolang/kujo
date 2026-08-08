@@ -122,4 +122,4 @@ For a pinned release, verify the downloaded Kujo archive checksum. For a source 
 
 ## Release boundary
 
-The launch audit found that Kujo's final public release artifacts are the ecosystem critical path. Until the final tag, checksum files, and clean-machine artifact smokes are published, describe the source-build path as release-candidate onboarding and do not present `main` as a reproducible release.
+Kujo's tagged binaries, checksum files, and published-artifact smokes are the canonical ecosystem onboarding path. Treat `main` as development state; use the immutable `v1.0.0` tag or a later supported patch tag for reproducible release installs.

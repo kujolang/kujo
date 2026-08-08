@@ -18,10 +18,9 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
 
     assert!(
         readme.contains(
-            "The project is currently at `1.0.0` in `Cargo.toml` for release-candidate validation."
-        ) && readme
-            .contains("Kujo has not yet published the final `v1.0.0` tag or release artifacts."),
-        "README must keep explicit pre-tag release-candidate wording"
+            "The project is currently at `1.0.0` in `Cargo.toml` and the stable release tag is `v1.0.0`."
+        ) && readme.contains("Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries"),
+        "README must keep explicit stable-release and artifact wording"
     );
     assert!(
         readme.contains("docs/V1_SCOPE.md") && readme.contains("docs/OPTIONAL_TYPING_DESIGN.md"),

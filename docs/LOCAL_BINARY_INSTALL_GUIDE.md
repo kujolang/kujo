@@ -1,6 +1,6 @@
 # Kujo Local Binary Install Guide
 
-This guide is for unsigned local/test Kujo binaries shared inside the team. These artifacts are useful for smoke testing before the official GitHub release pipeline is available.
+This guide is for unsigned local/test Kujo binaries shared inside the team. These artifacts are useful for development smoke testing without downloading an official GitHub release asset.
 
 ## Artifact Files
 

@@ -12,7 +12,7 @@ fn read(path: &str) -> String {
 #[test]
 fn readiness_boundary_wording_is_consistent_across_core_scope_docs() {
     let canonical =
-        "Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.";
+        "Release boundary: Kujo `v1.0.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.";
 
     let docs = ["README.md", "docs/V1_SCOPE.md", "docs/LANGUAGE_SPEC.md"];
 
@@ -20,7 +20,7 @@ fn readiness_boundary_wording_is_consistent_across_core_scope_docs() {
         let content = read(doc);
         assert!(
             content.contains(canonical),
-            "expected canonical readiness-boundary wording in {doc}"
+            "expected canonical stable-release boundary wording in {doc}"
         );
     }
 }

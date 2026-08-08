@@ -352,7 +352,7 @@ When proposing a new feature:
 
 Current focus areas (in order):
 
-1. **Release Candidate Evidence** - Close the [official v1.0 checklist](docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md), release artifacts, and tag-time validation evidence
+1. **Release Evidence** - Keep the [official v1.0 checklist](docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md), release artifacts, and tag-time validation evidence current
 2. **Runtime Parity and VM Readiness** - Keep VM/interpreter behavior intentional and documented in the [parity matrix](docs/VM_INTERPRETER_PARITY_MATRIX.md)
 3. **Security and Host-Effect Boundaries** - Keep capability gates, AI egress, filesystem/process/network behavior, and untrusted-mode docs current
 4. **CLI, LSP, DocGen, and Agent Contracts** - Preserve machine-readable output contracts for tools and editor integrations

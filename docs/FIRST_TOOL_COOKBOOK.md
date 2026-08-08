@@ -1,6 +1,6 @@
 # Kujo First Tool Cookbook
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 guide
 Last updated: 2026-05-25
 
 This guide is a concise, production-oriented path to build your first practical Kujo tool.

@@ -1,6 +1,6 @@
 # Native API Security Posture
 
-Status: v1.0.0 baseline draft (active, not a release-ready claim)
+Status: stable v1.0.0 security baseline
 Last updated: 2026-05-16
 
 This document is an operator-focused security guide for Kujo's host-effect runtime APIs.

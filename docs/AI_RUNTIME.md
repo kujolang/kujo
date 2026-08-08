@@ -1,6 +1,6 @@
 # AI Runtime
 
-Status: active draft
+Status: stable v1.0.0 runtime contract
 Last updated: 2026-06-20
 
 This document tracks core Kujo AI runtime mechanisms. Core owns deterministic, security-sensitive primitives; provider policy, retry strategy, routing, RAG, agents, eval, observability, and registries stay in ecosystem packages.

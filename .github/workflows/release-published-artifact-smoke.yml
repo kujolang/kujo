@@ -3,6 +3,15 @@ name: release-published-artifact-smoke
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Published release tag to validate"
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   validate-published-artifact-install:
@@ -35,9 +44,15 @@ jobs:
     steps:
       - name: Download and verify published artifact
         shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag_name }}
         run: |
           set -euo pipefail
-          tag_name="${{ github.event.release.tag_name }}"
+          tag_name="${RELEASE_TAG}"
+          if [[ -z "${tag_name}" ]]; then
+            echo "release tag is required" >&2
+            exit 2
+          fi
           repo="${{ github.repository }}"
           archive_name="kujo-${tag_name}-${{ matrix.platform }}.${{ matrix.archive_ext }}"
           checksum_name="${archive_name}.sha256"

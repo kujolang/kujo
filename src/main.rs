@@ -963,7 +963,7 @@ fn report_json_command_error_and_exit(
         "command": command,
         "status": "error",
         "kind": kind,
-        "contract_version": "1.0.0-draft",
+        "contract_version": "1.0.0",
         "exit_code": code.code(),
         "message": message.into(),
     });

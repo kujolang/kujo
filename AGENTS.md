@@ -28,7 +28,7 @@ Core principles:
 8. `examples/README_examples.md`: current examples, showcases, and legacy/expected-fail examples.
 9. `tests/docs_examples.rs`: executable policy for which examples should run, parse, skip, or fail.
 
-For release state, read `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo is staged as `1.0.0` release-candidate metadata, not a final-tagged release, until those gates and tag-time artifact evidence are complete.
+For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.0.0` is the current stable release; `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
 
 ## Repository Map
 
@@ -250,7 +250,7 @@ For docs-only changes, at minimum run `cargo fmt --check` and any affected docs/
 
 ## Release And Claims
 
-Do not claim Kujo is final `v1.0.0` or enterprise-ready until the roadmap, pre-v1 checklist, release checklist, and tag-time artifact evidence say so. Current metadata may say `1.0.0`; the canonical status is pre-tag release candidate.
+Keep release claims bounded by the shipped artifacts, documented v1 scope, verification evidence, and explicit compatibility policy. Do not broaden the stable-release claim into unsupported enterprise, performance, package-registry, or sandbox guarantees.
 
 Keep release-impacting changes tied to:
 

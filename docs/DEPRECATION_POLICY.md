@@ -1,6 +1,6 @@
 # Kujo Deprecation Policy
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 policy
 Last updated: 2026-05-01
 
 This policy defines how Kujo deprecates CLI, LSP, and runtime/native-function surfaces.

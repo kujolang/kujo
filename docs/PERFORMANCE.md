@@ -1,6 +1,6 @@
 # Kujo Performance Guide
 
-This guide describes Kujo's release-candidate performance posture. It avoids
+This guide describes Kujo's v1 performance posture. It avoids
 public speed claims unless they are backed by committed benchmark artifacts or
 repeatable commands in this repository.
 

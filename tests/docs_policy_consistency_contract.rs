@@ -12,7 +12,7 @@ fn read(path: &str) -> String {
 #[test]
 fn high_risk_docs_policies_remain_consistent() {
     let canonical =
-        "Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.";
+        "Release boundary: Kujo `v1.0.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.";
 
     let readme = read("README.md");
     let v1_scope = read("docs/V1_SCOPE.md");
@@ -95,6 +95,6 @@ fn high_risk_docs_policies_remain_consistent() {
         official_release.contains("P0 runtime-parity-bug: 0")
             && official_release.contains("UNBLOCK_V1_RELEASE")
             && official_release.contains("bash scripts/release_gate.sh --full"),
-        "official release checklist should keep current release blocker and verification commands"
+            "official release checklist should keep the release directive record and verification commands"
     );
 }

@@ -597,7 +597,7 @@ fn lsp_rename_json_failure_contract_is_stable() {
     assert_eq!(body["command"], "lsp-rename");
     assert_eq!(body["status"], "error");
     assert_eq!(body["kind"], "runtime_error");
-    assert_eq!(body["contract_version"], "1.0.0-draft");
+    assert_eq!(body["contract_version"], "1.0.0");
     assert_eq!(body["exit_code"], 4);
     let message = body["message"].as_str().expect("message should be a string");
     assert!(message.contains("No identifier found at cursor location"));
@@ -625,7 +625,7 @@ fn run_runtime_json_diagnostic_contract_is_stable() {
     assert_eq!(body["command"], "run");
     assert_eq!(body["status"], "error");
     assert_eq!(body["kind"], "runtime_diagnostic");
-    assert_eq!(body["contract_version"], "1.0.0-draft");
+    assert_eq!(body["contract_version"], "1.0.0");
     assert_eq!(body["exit_code"], 4);
     assert!(body["call_stack"].is_array());
 

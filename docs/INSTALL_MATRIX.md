@@ -1,6 +1,6 @@
 # Kujo Install & Distribution Matrix
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 install matrix
 Last updated: 2026-05-25
 
 This document defines supported installation paths and known platform caveats for Kujo operators.
@@ -45,10 +45,10 @@ The tagged release workflow publishes:
 Each archive has a matching `.sha256` file and is included in the consolidated
 `checksums.txt`.
 
-## Distribution Guidance (Pre-Tag v1.0.0)
+## Distribution Guidance (v1.0.0)
 
-- Kujo has staged `1.0.0` crate metadata but remains pre-tag until release-artifact evidence is complete; do not claim final release availability beyond documented contract surfaces.
-- Prefer commit-pinned installs for production automation until v1 release gates are closed.
+- Prefer the signed-by-checksum GitHub release archives for supported binary platforms.
+- Use commit-pinned source installs when an environment requires rebuilding or auditing the exact source revision.
 - Validate with:
   - `cargo test --test cli_contracts`
   - `cargo test --test cli_json_contracts`

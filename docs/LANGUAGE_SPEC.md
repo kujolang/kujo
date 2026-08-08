@@ -1,15 +1,16 @@
 # Kujo Language Specification
 
-Status: v1.0.0 baseline draft (active)
-Spec version: 1.0.0-draft
-Last updated: 2026-05-16
+Status: stable v1.0.0 specification
+Spec version: 1.0.0
+Last updated: 2026-08-08
 
 ## 1. Scope
 
-This document defines the Kujo language and tooling compatibility contract for the active v1.0.0 baseline draft.
+This document defines the stable Kujo language and tooling compatibility contract for v1.0.0.
 
-This draft status does not imply that Kujo is final-release ready; see `ROADMAP.md` for the active 1.0 readiness gate and remaining blockers.
-Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
+This specification describes the stable Kujo `v1.0.0` language contract. Explicit deferrals and non-goals remain documented in `docs/V1_SCOPE.md` and `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
+
+Release boundary: Kujo `v1.0.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 It is normative for:
 
@@ -474,13 +475,13 @@ Emergency exception rule:
 ## 8. Versioning Rules For Language/Tooling Contracts
 
 - Patch (`x.y.Z`): backward-compatible fixes, performance work, diagnostics improvements, additive optional output fields.
-- Minor (`x.Y.z`): additive features and planned contract updates; may include documented breaking changes while pre-1.0 if explicitly noted.
-- Major (`X.y.z`): post-1.0 contract-reset level change requiring migration treatment.
+- Minor (`x.Y.z`): additive, backward-compatible features and planned contract updates.
+- Major (`X.y.z`): contract-reset level changes requiring migration treatment.
 
-While Kujo remains pre-1.0, this project still follows strict contract discipline:
+For the stable 1.x line, Kujo follows strict contract discipline:
 
-- breaking changes are discouraged
-- any intentional break must be documented in changelog and roadmap/release evidence
+- breaking changes require a major version except for the documented emergency exception above
+- any intentional break must be documented in the changelog and release evidence
 - machine-readable outputs should preserve stability expectations used by automation and IDE integrations
 
 ## 9. Specification Governance

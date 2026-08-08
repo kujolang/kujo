@@ -1,19 +1,19 @@
 # AI-Native Enterprise Release Evidence
 
-Status: active release-candidate evidence index
-Last updated: 2026-06-27
+Status: active v1 release evidence index
+Last updated: 2026-08-08
 
-This index is the current operator-facing evidence map for Kujo's AI-native release-candidate branch. It does not replace `ROADMAP.md` or the final tag checklist; it gives reviewers one place to find the commands, artifacts, and readiness boundaries that support the current product posture.
+This index is the operator-facing evidence map for Kujo's stable v1 branch. It gives reviewers one place to find the commands, artifacts, and boundaries that support the current product posture.
 
 ## Readiness Boundary
 
-Kujo has the core AI-native mechanisms described in `docs/AI_RUNTIME.md`, but it is not yet a final-tagged, universally enterprise-ready release. The canonical release boundary remains:
+Kujo `v1.0.0` ships the core AI-native mechanisms described in `docs/AI_RUNTIME.md`. The stable-release claim does not imply provider certification, a hosted control plane, or a universal enterprise-readiness warranty.
 
-> Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
+Release boundary: Kujo `v1.0.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 ## Latest Local Verification Matrix
 
-Run the full enterprise verification matrix before claiming a release-candidate build is ready for PR or tag review:
+Run the full enterprise verification matrix before release or patch-tag review:
 
 ```bash
 bash scripts/enterprise_verify.sh --full
@@ -88,11 +88,11 @@ The group covers deterministic request hashing, schema validation, vector top-k 
 
 ## Artifact Readiness
 
-Release artifact readiness still depends on:
+Release artifact verification is recorded through:
 
 - `docs/RELEASE_PROCESS.md`
 - `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`
 - `docs/RELEASE_BINARIES.md`
 - `scripts/release_candidate_gate.sh --full`
 
-Final release claims require tag-time artifact evidence. Local passing gates are necessary, but not sufficient, for a universal enterprise-readiness claim.
+Stable release claims remain bounded by published artifacts and tag-time evidence. Local passing gates are necessary, but not sufficient, for a universal enterprise-readiness claim.

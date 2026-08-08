@@ -1,10 +1,10 @@
 # Standard Library Reference (v1.0.0)
 
-Status: v1.0.0 baseline draft (active)
+Status: stable v1.0.0 reference
 Last updated: 2026-07-25
 
 This is the canonical native standard library reference for the builtins that
-are registered and ready in the current v1 release-candidate tree. The exhaustive
+are registered in the stable v1 release. The exhaustive
 machine-checkable inventory remains [STANDARD_LIBRARY.md](STANDARD_LIBRARY.md);
 this reference groups the same runtime surface by user-facing workflow and calls
 out readiness boundaries, capability gates, aliases, and sharp edges.
@@ -18,10 +18,10 @@ Tier definitions:
 v1 contract policy for tiers:
 
 - `stable`: in-scope for v1 compatibility guarantees.
-- `preview`: in-scope for v1 usage, but not frozen; behavior may tighten during pre-v1 hardening and must be treated as non-guaranteed until promoted.
+- `preview`: in-scope for v1 usage, but not frozen; behavior may tighten during v1 hardening and must be treated as non-guaranteed until promoted.
 - `experimental`: explicitly non-guaranteed for v1 compatibility commitments; available for advanced workflows only and may change or be restricted without stability guarantees.
 
-Canonical readiness boundary: Kujo remains a pre-tag `1.0.0` release candidate until `ROADMAP.md`, `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md`, and tag-time artifact evidence are closed.
+Release boundary: Kujo `v1.0.0` is stable, while `preview` and `experimental` tiers retain the narrower guarantees defined above.
 Deferred/non-goal policy source: `docs/V1_SCOPE.md`.
 
 Source of truth:

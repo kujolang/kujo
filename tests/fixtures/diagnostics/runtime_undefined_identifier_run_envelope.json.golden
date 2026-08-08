@@ -1,6 +1,6 @@
 {
   "command": "run",
-  "contract_version": "1.0.0-draft",
+  "contract_version": "1.0.0",
   "diagnostic": {
     "code": "KUJORUN001",
     "column": 1,

@@ -1,6 +1,6 @@
 # Security Response
 
-Status: active policy draft
+Status: stable v1.0.0 policy
 Last updated: 2026-06-27
 
 This page describes how Kujo maintainers should handle security reports for the language/runtime repository. It is a project policy document, not a warranty or a claim that Kujo is a sandbox.
@@ -34,11 +34,11 @@ Out of scope:
 
 Maintainers should acknowledge new private reports promptly, reproduce the issue in a private branch or local fixture, and avoid public details until a fix and release plan are ready.
 
-When the report affects a supported release, prepare a patch release and advisory. When the report affects only a release-candidate branch, document the fix in `CHANGELOG.md` and the relevant readiness evidence docs before tag review.
+When the report affects a supported release, prepare a patch release and advisory. For unreleased development branches, document the fix in `CHANGELOG.md` and the relevant verification evidence before tag review.
 
 ## Supported Versions
 
-Until Kujo has a final tagged release, security fixes target the active release-candidate branch and `main` according to the repository's release process. After a final release, supported versions must be listed here with patch expectations before claiming long-term support.
+The supported release line is `1.0.x`. Security fixes target `main` and the latest supported patch release. This policy does not promise long-term support beyond the current v1 line.
 
 ## Disclosure Checklist
 

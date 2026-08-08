@@ -1,7 +1,7 @@
 {
   "call_stack": [],
   "command": "run",
-  "contract_version": "1.0.0-draft",
+  "contract_version": "1.0.0",
   "diagnostic": {
     "code": "KUJOVM001",
     "column": 0,
