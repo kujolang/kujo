@@ -1,0 +1,38 @@
+=== JIT Inline Cache Tests ===
+
+Test 1: Simple function called 200 times (cache warm-up + usage)
+Sum after 200 calls: 20100
+Test 1 PASSED
+
+Test 2: Recursive Fibonacci with inline cache
+Fib sequence: [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]
+Test 2 PASSED
+
+Test 3: Nested function calls with multiple call sites
+Nested sum: 45000
+Test 3 PASSED
+
+Test 4: Different functions (guard validation)
+Double result: 14280
+Triple result: 21420
+Test 4 PASSED
+
+Test 5: Function with local variables and inline cache
+Compute sum: 67500
+Test 5 PASSED
+
+Test 6: Higher-order function pattern (pre-JIT)
+Higher-order result: 1325
+Test 6 PASSED
+
+Test 7: Deep call chain
+Deep call sum: 23250
+Test 7 PASSED
+
+Test 8: Zero-parameter function
+Zero-param sum: 6300
+Test 8 PASSED
+
+=================================
+All 8 Inline Cache Tests PASSED!
+=================================

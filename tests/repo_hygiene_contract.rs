@@ -77,6 +77,7 @@ fn seed_hygiene_policy_repo(root: &Path) {
 
     for entry in [
         ".editorconfig",
+        ".gitattributes",
         "AGENTS.md",
         "CHANGELOG.md",
         "CONTRIBUTING.md",
@@ -86,6 +87,7 @@ fn seed_hygiene_policy_repo(root: &Path) {
         "LICENSE",
         "README.md",
         "ROADMAP.md",
+        "install.sh",
         "rustfmt.toml",
     ] {
         fs::write(root.join(entry), format!("seeded {entry}\n"))
@@ -117,6 +119,7 @@ fn tracked_root_surface_matches_hygiene_allowlist() {
     let tracked = tracked_root_files(&root);
     let expected = vec![
         ".editorconfig".to_string(),
+        ".gitattributes".to_string(),
         ".gitignore".to_string(),
         "AGENTS.md".to_string(),
         "CHANGELOG.md".to_string(),
@@ -127,6 +130,7 @@ fn tracked_root_surface_matches_hygiene_allowlist() {
         "LICENSE".to_string(),
         "README.md".to_string(),
         "ROADMAP.md".to_string(),
+        "install.sh".to_string(),
         "rustfmt.toml".to_string(),
     ];
 

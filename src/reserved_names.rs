@@ -185,6 +185,14 @@ pub fn validate_reserved_names(config: &ReservedNamesConfig) -> Result<(), Strin
     ensure_no_duplicate_entries("reserved_profile_names", &config.reserved_profile_names)?;
     ensure_no_duplicate_entries("blocked_aliases", &config.blocked_aliases)?;
     ensure_no_duplicate_entries("first_party_pack_ids", &config.first_party_pack_ids)?;
+    ensure_valid_name_entries("core_commands", &config.core_commands)?;
+    ensure_valid_name_entries("workflow_families", &config.workflow_families)?;
+    ensure_valid_name_entries("first_party_tools", &config.first_party_tools)?;
+    ensure_valid_name_entries("reserved_namespaces", &config.reserved_namespaces)?;
+    ensure_valid_name_entries("reserved_package_names", &config.reserved_package_names)?;
+    ensure_valid_name_entries("reserved_profile_names", &config.reserved_profile_names)?;
+    ensure_valid_name_entries("blocked_aliases", &config.blocked_aliases)?;
+    ensure_valid_name_entries("first_party_pack_ids", &config.first_party_pack_ids)?;
     Ok(())
 }
 
@@ -210,6 +218,22 @@ fn ensure_no_duplicate_entries(field: &str, entries: &[String]) -> Result<(), St
         if !seen.insert(normalized.to_string()) {
             return Err(format!(
                 "reserved names field '{}' contains duplicate entry '{}'",
+                field, entry
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn ensure_valid_name_entries(field: &str, entries: &[String]) -> Result<(), String> {
+    for entry in entries {
+        let valid = entry.chars().enumerate().all(|(index, ch)| {
+            ch.is_ascii_lowercase() || ch.is_ascii_digit() || (index > 0 && ch == '-')
+        }) && !entry.ends_with('-')
+            && !entry.contains("--");
+        if !valid {
+            return Err(format!(
+                "reserved names field '{}' contains invalid lowercase slug '{}'",
                 field, entry
             ));
         }
@@ -284,6 +308,38 @@ mod tests {
     fn first_party_pack_id_allowlist_is_explicit() {
         assert!(is_trusted_first_party_pack_id("kujo-doctor"));
         assert!(!is_trusted_first_party_pack_id("official"));
+    }
+
+    #[test]
+    fn ecosystem_installer_catalog_names_are_reserved_everywhere_external_names_route() {
+        let installer = include_str!("../install.sh");
+        let catalog = installer
+            .split_once("done <<'EOF'\n")
+            .and_then(|(_, tail)| tail.split_once("\nEOF"))
+            .map(|(catalog, _)| catalog)
+            .expect("install.sh should keep a parseable ecosystem catalog heredoc");
+
+        for name in catalog.lines().filter_map(|line| line.split('|').nth(1)) {
+            if name == "kujo" {
+                continue;
+            }
+            assert!(
+                config().first_party_tools.iter().any(|entry| entry == name),
+                "install.sh ecosystem name {name:?} must remain first-party reserved"
+            );
+            assert!(reservation_for_top_level_command(name).is_some());
+            assert!(reservation_for_namespace(name).is_some());
+            assert!(reservation_for_package_name(name).is_some());
+        }
+    }
+
+    #[test]
+    fn config_rejects_noncanonical_name_slugs() {
+        let mut cfg = config().clone();
+        cfg.blocked_aliases.push("Bad_Name".to_string());
+        assert!(validate_reserved_names(&cfg)
+            .expect_err("uppercase and underscore names must be rejected")
+            .contains("invalid lowercase slug"));
     }
 
     #[test]

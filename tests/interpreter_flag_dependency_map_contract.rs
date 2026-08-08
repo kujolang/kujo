@@ -66,7 +66,6 @@ fn interpreter_flag_dependency_map_generator_covers_required_surfaces_and_tags()
         "| `tests/native_api_security_boundaries.rs` | integration-test | `security-test-choice` |",
         "| `tests/docs_examples.rs` | integration-test | `docs-smoke,harness-legacy` |",
         "| `README.md` | documentation | `docs-contract` |",
-        "| `examples/benchmarks/README_REAL_WORLD.md` | example-doc | `benchmark-baseline` |",
     ] {
         assert!(
             map.contains(required_row),

@@ -1,0 +1,15 @@
+# Copy this into ~/.config/helix/languages.toml or merge it into a project-local
+# .helix/languages.toml. The Kujo executable must be available on PATH.
+
+[language-server.kujo-lsp]
+command = "kujo"
+args = ["lsp"]
+
+[[language]]
+name = "kujo"
+language-id = "kujo"
+scope = "source.kujo"
+file-types = ["kujo"]
+comment-tokens = "#"
+indent = { tab-width = 4, unit = "    " }
+language-servers = ["kujo-lsp"]

@@ -1,0 +1,23 @@
+=== Environment Variable Tests ===
+hello
+world
+default_value
+8080
+int
+Caught expected error for invalid int
+30.5
+float
+true
+bool
+true
+false
+false
+secret123
+Caught expected error for missing required var
+dict
+1
+1
+=== Command-Line Arguments Tests ===
+array
+Args is array
+=== All Tests Complete ===

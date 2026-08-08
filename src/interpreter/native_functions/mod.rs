@@ -3352,12 +3352,16 @@ mod tests {
         );
 
         std::fs::remove_file(&file_path).expect("sample file should remove");
+        let rmdir_target = temp_dir.join("rmdir-target");
+        std::fs::create_dir(&rmdir_target).expect("rmdir target should be created");
         let os_rmdir_result = call_native_function(
             &mut interpreter,
             "os_rmdir",
-            &[Value::Str(Arc::new(temp_dir_string.clone()))],
+            &[Value::Str(Arc::new(rmdir_target.to_string_lossy().to_string()))],
         );
         assert!(matches!(os_rmdir_result, Value::Bool(true)));
+
+        std::fs::remove_dir_all(&temp_dir).expect("temp hardening dir should remove");
 
         let os_environ_result = call_native_function(&mut interpreter, "os_environ", &[]);
         assert!(matches!(os_environ_result, Value::Dict(map) if map.contains_key(env_key)));

@@ -20,6 +20,8 @@ fn editor_launch_matrix_names_all_v1_editor_families() {
         "VS Code / Cursor / VS Code-compatible forks",
         "Neovim",
         "JetBrains",
+        "Helix",
+        "Emacs / Eglot",
         "Generic LSP clients",
         "kujo lsp",
         "tools/lsp_smoke_clients/python_client.py",
@@ -38,6 +40,8 @@ fn editor_launch_matrix_names_all_v1_editor_families() {
         "Cursor / VS Code-compatible forks",
         "Neovim",
         "JetBrains",
+        "Helix",
+        "Emacs / Eglot",
         "Generic LSP clients",
         "cargo test --test lsp_external_clients_smoke",
         "cargo test --test lsp_conformance_harness",
@@ -57,6 +61,8 @@ fn adapter_descriptors_and_extension_keep_canonical_lsp_command() {
     let vscode_settings = read("docs/editor-adapters/vscode-cursor-settings.json");
     let neovim = read("docs/editor-adapters/neovim-lspconfig.lua");
     let jetbrains = read("docs/editor-adapters/jetbrains-lsp.md");
+    let helix = read("docs/editor-adapters/helix-languages.toml");
+    let emacs = read("docs/editor-adapters/emacs-eglot.el");
     let extension_manifest = read("tools/vscode-kujo-extension/package.json");
 
     assert!(
@@ -72,6 +78,18 @@ fn adapter_descriptors_and_extension_keep_canonical_lsp_command() {
             && jetbrains.contains("args: `lsp`")
             && jetbrains.contains("generic LSP configuration path"),
         "JetBrains doc should use the generic kujo lsp adapter path"
+    );
+    assert!(
+        helix.contains("command = \"kujo\"")
+            && helix.contains("args = [\"lsp\"]")
+            && helix.contains("language-id = \"kujo\""),
+        "Helix descriptor should launch kujo lsp for Kujo files"
+    );
+    assert!(
+        emacs.contains("define-derived-mode kujo-mode")
+            && emacs.contains(":language-id \"kujo\"")
+            && emacs.contains("(\"kujo\" \"lsp\")"),
+        "Emacs Eglot descriptor should launch kujo lsp for Kujo files"
     );
     assert!(
         extension_manifest.contains("\"kujo.lsp.command\"")

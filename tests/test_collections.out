@@ -1,0 +1,61 @@
+=== Set Tests ===
+Set from [1,2,3,2,1,4,3]:
+[1, 2, 3, 4]
+After adding 4 and 2 (duplicate) to [1,2,3]:
+[1, 2, 3, 4]
+Set has 20: true
+Set has 40: false
+After removing 3 from [1,2,3,4,5]:
+[1, 2, 4, 5]
+Union of [1,2,3] and [3,4,5]:
+[1, 2, 3, 4, 5]
+Intersection of [1,2,3,4] and [3,4,5,6]:
+[3, 4]
+Difference [1,2,3,4] - [3,4,5]:
+[1, 2]
+String set from duplicates:
+[apple, banana, cherry]
+After adding 'date':
+[apple, banana, cherry, date]
+Empty set length: 0
+After adding to empty set:
+[first]
+Set length: 5
+
+=== Queue Tests ===
+Empty queue is empty: true
+Queue after enqueuing 3 items:
+[first, second, third]
+Dequeued item: a
+Queue after dequeue:
+[b, c]
+Front of queue: 10
+Queue still has: 3 items
+Dequeue from empty returns: null
+Peek empty queue: null
+Queue with 1 item is empty: false
+Queue after removing only item is empty: true
+Queue created from array:
+[100, 200, 300, 400]
+Queue length: 6
+FIFO: First out: A , Second out: B
+
+=== Stack Tests ===
+Empty stack is empty: true
+Stack after pushing 3 items:
+[bottom, middle, top]
+Popped item: c
+Stack after pop:
+[a, b]
+Top of stack: 30
+Stack still has: 3 items
+Pop from empty returns: null
+Peek empty stack: null
+Stack with 1 item is empty: false
+Stack after removing only item is empty: true
+Stack created from array:
+[100, 200, 300, 400]
+Stack length: 7
+LIFO: First pop: C , Second pop: B
+
+=== All Collection Tests Complete ===

@@ -1,0 +1,17 @@
+=== Testing Function Cleanup Bug Fix ===
+
+Test 1: Simple loop in function
+  Result: 3 (expected 3)
+Test 2: Nested loops in function
+  Result: 6 (expected 6)
+Test 3: Loop with conditional in function
+  Result: 5 (expected 5)
+Test 4: Multiple functions with loops
+  Results: 10 24 (expected 10 24)
+Test 5: Higher-order function with loops
+  Results: 1 2 (expected 1 2)
+Test 6: Complex function with multiple control structures
+  Result length: 6 (expected 6)
+
+=== All Tests Completed Successfully! ===
+Program exiting cleanly without hanging...

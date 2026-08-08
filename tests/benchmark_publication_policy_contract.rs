@@ -10,20 +10,19 @@ fn read(path: &str) -> String {
         .unwrap_or_else(|err| panic!("failed to read {path}: {err}"))
 }
 
-fn squashed(content: &str) -> String {
-    content.split_whitespace().collect::<Vec<_>>().join(" ")
-}
-
 #[test]
 fn benchmark_publication_policy_defines_launch_claim_boundary() {
     let policy = read("docs/BENCHMARK_PUBLICATION_POLICY.md");
     let performance = read("docs/PERFORMANCE.md");
+    let criterion_readme = read("benches/README.md");
 
     for marker in [
         "Only the following benchmark evidence is launch-safe for v1.0",
         "docs/generated/VM_IMPORT_HEAVY_PERF_COMPARISON.md",
         "docs/generated/VM_IMPORT_HEAVY_CACHE_LOOKUP.md",
         "Internal Regression Signals",
+        "Curated Cross-Language Inputs",
+        "former ad hoc runners, unrelated workloads",
         "Publication Requirements",
         "Forbidden Without Fresh Evidence",
         "fixed VM/JIT speedup ranges for arbitrary programs",
@@ -37,6 +36,50 @@ fn benchmark_publication_policy_defines_launch_claim_boundary() {
             && performance.contains("launch-safe claims versus internal"),
         "performance guide should link the benchmark publication policy"
     );
+
+    assert!(
+        criterion_readme.contains("cargo bench --bench v1_perf_benchmarks --no-run")
+            && criterion_readme.contains("internal regression signals"),
+        "Criterion bench directory should explain its purpose and publication boundary"
+    );
+}
+
+#[test]
+fn retired_ad_hoc_benchmark_and_checkpoint_artifacts_stay_removed() {
+    for path in [
+        "benchmarks/cross-language/run_benchmarks.sh",
+        "benchmarks/cross-language/quick_bench.sh",
+        "benchmarks/cross-language/current_results.txt",
+        "benchmarks/cross-language/benchmark_results_new.txt",
+        "checkpoints/bench_ssg_small.kujo",
+    ] {
+        assert!(
+            !repo_root().join(path).exists(),
+            "retired launch-unsafe artifact should stay removed: {path}"
+        );
+    }
+}
+
+#[test]
+fn built_in_cross_language_benchmark_inputs_are_documented_and_present() {
+    let readme = read("benchmarks/cross-language/README.md");
+    for marker in [
+        "cargo run --release -- bench-cross",
+        "cargo run --release -- bench-ssg",
+        "Python 3",
+        "docs/BENCHMARK_PUBLICATION_POLICY.md",
+    ] {
+        assert!(readme.contains(marker), "cross-language README should contain {marker:?}");
+    }
+
+    for path in [
+        "benchmarks/cross-language/bench_parallel_map.kujo",
+        "benchmarks/cross-language/bench_process_pool.py",
+        "benchmarks/cross-language/bench_ssg.kujo",
+        "benchmarks/cross-language/bench_ssg.py",
+    ] {
+        assert!(repo_root().join(path).is_file(), "built-in benchmark input is missing: {path}");
+    }
 }
 
 #[test]
@@ -61,21 +104,7 @@ fn future_ssg_and_host_benchmark_docs_are_not_launch_evidence() {
 
 #[test]
 fn example_benchmark_docs_are_local_signals_not_public_claims() {
-    let benchmark_readme = read("examples/benchmarks/README.md");
-    let real_world = read("examples/benchmarks/README_REAL_WORLD.md");
-    let jit_readme = read("examples/benchmarks/jit/README.md");
     let compare_languages = read("examples/benchmarks/compare_languages.sh");
-
-    for (name, content) in [
-        ("examples/benchmarks/README.md", &benchmark_readme),
-        ("examples/benchmarks/README_REAL_WORLD.md", &real_world),
-        ("examples/benchmarks/jit/README.md", &jit_readme),
-    ] {
-        assert!(
-            squashed(content).contains("not v1.0 launch benchmark claims"),
-            "{name} should mark examples as non-launch evidence"
-        );
-    }
 
     for forbidden in [
         "Expected Speedup",
@@ -86,11 +115,8 @@ fn example_benchmark_docs_are_local_signals_not_public_claims() {
         "Kujo with JIT should be",
     ] {
         assert!(
-            !benchmark_readme.contains(forbidden)
-                && !real_world.contains(forbidden)
-                && !jit_readme.contains(forbidden)
-                && !compare_languages.contains(forbidden),
-            "example benchmark docs/scripts should not contain stale public claim {forbidden:?}"
+            !compare_languages.contains(forbidden),
+            "example benchmark helper should not contain stale public claim {forbidden:?}"
         );
     }
 

@@ -1,0 +1,7 @@
+=== Testing Assertions ===
+✓ assert_equal(5, 5) returned: bool
+✓ assert_true(true) returned: bool
+✓ assert_false(false) returned: bool
+✓ assert_contains([1,2,3], 2) returned: bool
+
+All assertions work!

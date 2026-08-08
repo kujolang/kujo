@@ -1,0 +1,29 @@
+=== Test 1: Simple Generator ===
+Generator created, type:
+generator
+
+=== Test 2: Generator Iteration ===
+Value:
+1
+Value:
+2
+Value:
+3
+
+=== Test 3: Generator with State ===
+Sequence value:
+5
+Sequence value:
+10
+Sequence value:
+20
+
+=== Test 4: Generator with Parameters ===
+Message:
+hello
+
+=== Test 5: Fibonacci Generator ===
+Fib:
+0
+
+=== All Generator Tests Passed ===

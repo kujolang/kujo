@@ -1,5 +1,0 @@
-command	status	log
-cargo test --test native_api_security_boundaries	0	notes/release_evidence/2026-06-19_p1-005/cargo_test_native_api_security_boundaries.log
-cargo test --test runtime_security	0	notes/release_evidence/2026-06-19_p1-005/cargo_test_runtime_security.log
-cargo test --test stdlib_reference_contract	0	notes/release_evidence/2026-06-19_p1-005/cargo_test_stdlib_reference_contract.log
-cargo test --test docs_examples	0	notes/release_evidence/2026-06-19_p1-005/cargo_test_docs_examples.log

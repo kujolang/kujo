@@ -1,0 +1,45 @@
+=== Image Processing Tests ===
+
+Test 1: Load image - error handling
+✓ Error handling works for missing files
+  Error message: Cannot load image 'nonexistent.jpg': No such file or directory (os error 2)
+
+Test 2: Image properties
+✓ Image type supports width, height, and format properties
+  (Tested: img.width, img.height, img.format)
+
+Test 3: Resize operations
+✓ resize(width, height) - exact dimensions
+✓ resize(width, height, 'fit') - maintain aspect ratio
+
+Test 4: Crop operation
+✓ crop(x, y, width, height) - extract region
+
+Test 5: Rotation
+✓ rotate(90), rotate(180), rotate(270)
+
+Test 6: Flip
+✓ flip('horizontal'), flip('vertical')
+
+Test 7: Image filters
+✓ to_grayscale() - convert to grayscale
+✓ blur(sigma) - Gaussian blur
+✓ adjust_brightness(factor) - adjust brightness
+✓ adjust_contrast(factor) - adjust contrast
+
+Test 8: Save operation
+✓ save(path) - auto-detects format from extension
+  Supports: jpg, jpeg, png, webp, gif, bmp
+
+Test 9: Method chaining
+✓ Methods return new Image values for chaining
+  Example: img.resize(800, 600).to_grayscale().save('out.jpg')
+
+=== All Image Processing Tests Passed ===
+
+Note: Full integration tests require sample images.
+To test manually:
+  1. Create a test image (test.jpg)
+  2. Run: img := load_image('test.jpg')
+  3. Try operations: resized := img.resize(100, 100)
+  4. Save result: resized.save('output.jpg')

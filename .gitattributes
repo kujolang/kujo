@@ -1,0 +1,2 @@
+# Runtime snapshots preserve exact program output, including meaningful spaces.
+tests/*.out whitespace=-blank-at-eol,-blank-at-eof

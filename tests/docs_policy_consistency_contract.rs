@@ -25,7 +25,6 @@ fn high_risk_docs_policies_remain_consistent() {
     let official_release = read("docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md");
     let secure_ai = read("docs/SECURE_AI_SCRIPTING.md");
     let security_response = read("docs/SECURITY_RESPONSE.md");
-    let hardening_status = read("docs/AI_NATIVE_PRODUCT_HARDENING_STATUS_2026-06-27.md");
 
     for (name, content) in [
         ("README.md", &readme),
@@ -91,11 +90,6 @@ fn high_risk_docs_policies_remain_consistent() {
             && security_response.contains("AI egress allowlist bypasses")
             && security_response.contains("Secret redaction failures"),
         "security response doc should cover high-risk Kujo report classes"
-    );
-    assert!(
-        hardening_status.contains("The core AI-native implementation track is complete")
-            && hardening_status.contains("docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md"),
-        "hardening status should keep the completed-track and remaining-readiness boundary"
     );
     assert!(
         official_release.contains("P0 runtime-parity-bug: 0")

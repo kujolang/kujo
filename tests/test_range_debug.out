@@ -1,0 +1,5 @@
+Testing range with different inputs:
+range(5): [0, 1, 2, 3, 4]
+range(0, 5): [0, 1, 2, 3, 4]
+range(-3, 3): [-3, -2, -1, 0, 1, 2]
+range(-5, -1): [-5, -4, -3, -2]

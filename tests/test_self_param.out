@@ -1,0 +1,13 @@
+Test 1: Basic self.field access
+15
+
+Test 2: self.method() call
+30
+
+Test 3: Method returning struct
+150
+
+Test 4: Builder pattern
+30
+
+✅ All self parameter tests passed!

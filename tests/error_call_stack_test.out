@@ -1,0 +1,8 @@
+[KUJOVM001] [vm] Runtime Error: Undefined variable: undefined_var
+  --> 0:0
+   = help: Define this name before using it, check the spelling, or import the module that provides it.
+
+Call stack:
+  0 at level3
+  1 at level2
+  2 at level1

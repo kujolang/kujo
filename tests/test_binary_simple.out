@@ -1,0 +1,8 @@
+Testing binary file operations...
+Test 1: Write and read binary file
+Created binary data
+✓ Successfully wrote binary file
+✓ Read binary file back
+✓ File has data (size > 0)
+
+Test complete

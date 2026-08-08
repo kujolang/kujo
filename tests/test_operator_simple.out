@@ -1,0 +1,14 @@
+Starting test...
+Defined Vector struct
+Created v1
+Created v2
+About to add vectors...
+Inside __add__ method
+self.x = 1
+self.y = 2
+other.x = 3
+other.y = 4
+Added vectors
+v3.x = 4
+v3.y = 6
+Test complete!

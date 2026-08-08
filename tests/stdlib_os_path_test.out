@@ -1,0 +1,101 @@
+=== OS and Path Module Tests ===
+
+--- OS Module Tests ---
+
+1. Test os_getcwd()
+✓ os_getcwd returns a string
+✓ os_getcwd returns non-empty path
+  Current directory captured
+
+2. Test os_chdir()
+✓ Test directory created
+✓ os_chdir to test directory succeeds
+✓ Current directory changed to test_os_temp
+✓ Changed back to original directory
+
+3. Test os_rmdir()
+✓ os_rmdir removes empty directory
+✓ Directory no longer exists after removal
+
+4. Test os_environ()
+✓ os_environ returns a dictionary
+✓ os_environ returns non-empty dictionary
+  Environment variables loaded
+✓ os_environ contains common environment variables
+✓ Environment variable PATH is a string
+✓ Environment variable PATH is non-empty
+  PATH: [redacted]
+
+--- Path Module Tests ---
+
+5. Test path_join()
+✓ path_join returns a string
+✓ path_join includes first component
+✓ path_join includes second component
+✓ path_join includes third component
+  Joined path: home/user/documents
+✓ path_join works with two components
+✓ path_join includes filename
+✓ path_join with single component returns it unchanged
+
+6. Test path_absolute()
+✓ path_absolute returns a string
+✓ Absolute path is longer than relative
+✓ Absolute path contains filename
+  Absolute path resolved
+
+7. Test path_is_dir()
+✓ path_is_dir returns true for directory
+✓ path_is_dir returns false for file
+✓ path_is_dir returns false for non-existent path
+
+8. Test path_is_file()
+✓ path_is_file returns true for file
+✓ path_is_file returns false for directory
+✓ path_is_file returns false for non-existent path
+
+9. Test path_extension()
+✓ path_extension returns 'txt'
+✓ path_extension returns last extension
+✓ path_extension returns 'py'
+✓ path_extension returns 'jpeg'
+✓ path_extension returns empty string for no extension
+✓ path_extension handles multiple dots
+✓ path_extension works with full paths
+✓ path_extension works with relative paths
+
+--- Integration Tests ---
+
+10. Integration: Directory Navigation
+✓ Can list files in current directory
+  Files found in working directory
+✓ file1.txt is recognized as a file
+✓ subdir is recognized as a directory
+✓ Extension correctly identified in working directory
+
+11. Integration: Environment and Paths
+✓ Set environment variable has correct value
+✓ path_join works with string values
+✓ path_join includes all components
+
+--- Edge Cases ---
+
+12. Edge Cases: Empty and Invalid Paths
+✓ path_join with empty string returns empty
+✓ path_is_dir returns false for empty string
+✓ path_is_file returns false for empty string
+✓ path_extension returns empty for empty string
+
+13. Edge Cases: Special Characters
+✓ Handles dashes in directory names
+✓ Handles underscores in directory names
+✓ Handles long filenames
+✓ Gets extension from long filename
+
+==================================================
+Test Summary:
+  Total tests: 52
+  Passed: 52
+  Failed: 0
+  Status: ✓ ALL TESTS PASSED
+==================================================

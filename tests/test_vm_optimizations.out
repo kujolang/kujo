@@ -1,0 +1,56 @@
+=== VM Optimization Tests ===
+
+1. Constant Folding - Arithmetic
+2 + 3 * 4 = 14
+100 - 50 / 2 = 75
+10 * 10 + 5 = 105
+
+2. Constant Folding - Boolean
+true && false = false
+true || false = true
+!false = true
+
+3. Constant Folding - String Concatenation
+Concatenated: Hello World
+
+4. Constant Folding - Comparisons
+5 > 3 = true
+10 == 10 = true
+5 < 3 = false
+
+5. Mixed Constant Folding
+(10 + 5) * 2 - 3 = 27
+
+6. Constant Folding - Negation
+-(5 + 3) = -8
+
+7. Constant Folding - Floats
+3.14 * 2.0 = 6.28
+10.0 / 2.0 = 5
+
+8. Runtime Expressions (Not Folded)
+Runtime: 10 + 20 = 30
+
+9. Partial Constant Folding
+5 * 2 + runtime_x = 20
+
+10. Dead Code Elimination
+Function with dead code returned: 42
+
+11. Dead Code in Conditionals
+This executes
+
+12. Complex Expression (Should Work Correctly)
+Complex expression result: 0
+
+13. Division by Zero Not Folded
+Division by zero would error at runtime (optimizer doesn't fold it)
+
+14. Optimizations in Functions
+Optimized function result: 90
+
+15. Optimizations in Loops
+Loop with constant folding: sum = 30
+Expected: 30, Got: 30
+
+=== All VM Optimization Tests Passed! ===

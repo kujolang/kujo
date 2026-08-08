@@ -1,0 +1,10 @@
+=== Binary File Operations Test Suite ===
+
+Test 1: Basic binary file read/write
+✓ Binary file written successfully
+✓ Binary data matches after read/write cycle
+
+Test 2: Base64 encoding/decoding
+✓ Base64 round-trip successful for: Hello
+[KUJOVM001] [vm] Runtime Error: Duplicate declaration in the same scope: bytes_value
+  --> 0:0

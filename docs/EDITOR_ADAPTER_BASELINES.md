@@ -73,6 +73,30 @@ Implementation expectations:
 - map `.kujo` files to Kujo language id/server profile
 - leave semantic behavior to server responses
 
+## Helix
+
+Canonical path:
+
+- command: `kujo lsp`
+- sample language-server descriptor: `docs/editor-adapters/helix-languages.toml`
+
+Implementation expectations:
+
+- map `.kujo` files to language id `kujo`
+- use the editor's native external-LSP support
+
+## Emacs (Eglot)
+
+Canonical path:
+
+- command: `kujo lsp`
+- sample major-mode and Eglot adapter: `docs/editor-adapters/emacs-eglot.el`
+
+Implementation expectations:
+
+- keep the bundled mode intentionally minimal
+- delegate diagnostics, navigation, completion, rename, and code actions to Eglot and Kujo LSP
+
 ## Generic LSP Clients
 
 Canonical path:
@@ -97,6 +121,8 @@ fast-moving editor host versions as Kujo release facts.
 | VS Code / Cursor / VS Code-compatible forks | First-party extension baseline plus `kujo lsp` | Supported as a thin extension/configuration layer | `tools/vscode-kujo-extension/package.json`, `docs/editor-adapters/vscode-cursor-settings.json`, `npm run check`, `cargo test --test editor_adapter_contracts` |
 | Neovim | `nvim-lspconfig` descriptor launching `kujo lsp` | Supported as a documented setup snippet | `docs/editor-adapters/neovim-lspconfig.lua`, `cargo test --test editor_adapter_contracts` |
 | JetBrains | Generic external LSP plugin profile launching `kujo lsp` | Supported as documented generic LSP configuration | `docs/editor-adapters/jetbrains-lsp.md`, `cargo test --test editor_adapter_contracts` |
+| Helix | Native `languages.toml` descriptor launching `kujo lsp` | Supported as a documented setup snippet | `docs/editor-adapters/helix-languages.toml`, `cargo test --test editor_adapter_contracts` |
+| Emacs / Eglot | Minimal major mode plus Eglot server association launching `kujo lsp` | Supported as a documented setup snippet | `docs/editor-adapters/emacs-eglot.el`, `cargo test --test editor_adapter_contracts` |
 | Generic LSP clients | stdio JSON-RPC launching `kujo lsp` | Supported protocol path | `tools/lsp_smoke_clients/python_client.py`, `tools/lsp_smoke_clients/node_client.mjs`, `cargo test --test lsp_external_clients_smoke`, `cargo test --test lsp_conformance_harness` |
 
 Host-specific installation UIs, marketplace publication, and editor-specific
