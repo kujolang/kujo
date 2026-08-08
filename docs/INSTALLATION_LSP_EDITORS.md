@@ -39,7 +39,7 @@ Then keep editor adapter command stable:
 
 ## Editor Integration References
 
-- VS Code/Cursor, Neovim, JetBrains baseline docs:
+- VS Code/Cursor, Neovim, JetBrains, Helix, and Emacs baseline docs:
   - `docs/EDITOR_ADAPTER_BASELINES.md`
   - `docs/editor-adapters/`
 
@@ -113,6 +113,8 @@ latency guardrails hold, and editor grammar assets remain present.
 | Cursor / VS Code-compatible forks | Install the same `.vsix` through the fork CLI or Extensions UI | `npm run check`; `cargo test --test editor_adapter_contracts` |
 | Neovim | Use `docs/editor-adapters/neovim-lspconfig.lua` with `nvim-lspconfig` | `cargo test --test editor_adapter_contracts` |
 | JetBrains | Configure a generic external LSP plugin profile with executable `kujo` and arg `lsp` | `cargo test --test editor_adapter_contracts` |
+| Helix | Merge `docs/editor-adapters/helix-languages.toml` into user or project language configuration | `cargo test --test editor_adapter_contracts` |
+| Emacs / Eglot | Load `docs/editor-adapters/emacs-eglot.el`; ensure `kujo` is on Emacs `exec-path` | `cargo test --test editor_adapter_contracts` |
 | Generic LSP clients | Launch `kujo lsp` over stdio JSON-RPC | `cargo test --test lsp_external_clients_smoke`; `cargo test --test lsp_conformance_harness` |
 
 The matrix intentionally avoids claiming latest host-editor version support.
