@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-08-02
+Last updated: 2026-08-09
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -32,6 +32,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Lens | `.lens/runs/<timestamp>/`, `.lens/baselines/`, `lens-report.json`, `proof/` | `.lens.toml` is config; track only when shared. |
 | Muzzle | `.muzzle/logs/`, `.muzzle/reports/`, `.muzzle/manifests/`, `.muzzle/workflows/`, `.dogfood/` | `manifests/` and `workflows/` can be tracked examples; ignore logs/reports by default. |
 | Dispatch | `outputs/`, `outputs/.dispatch-run-index.json`, `outputs/run-*/state.json`, `trace.json`, `trace.md`, `report.json`, `report.md`, exported bundles | `--output-root` can redirect all run artifacts. |
+| Kujo workflow runners | `.runs/<timestamp>/`, `.work/<timestamp>/`, `.kujo/runs/<run-id>/`, `.kujo/feature-cards/<card-id>/`, `.kujo/agency/auth/<site>/<role>.storage-state.json`, `.health.json`, `.login.log` | Workflow kits use these roots for local proof packets, disposable workspaces, resumable run state, handoffs, browser/login evidence, and logs. `.kujo/agency/sites/*.yml` profiles are caller-authored config and should be tracked or ignored per repository policy rather than covered by the shared block. |
 | PackWrite | `agent/`, `DEEPSEEK_START.md`, `CODEX_REVIEW_PROMPT.md`, `MASTER.md`, `HANDOFF.md`, `REVIEW_CHECKLIST.md`, `TODO.md`, `DECISIONS.md`, `phases/*.md` | Default output directory is `agent`; config can change it. |
 | Kennel | `.kennel_tmp/`, `kennel_packages/`, `.kennel_installer_trash/`, `.kennel_tokens.json`, `hosted-registry/`, local `tokens.json`, benchmark/review logs | `kennel.lock` is normally source-worthy. |
 | ShipCheck | `shipcheck-report.json`, `shipcheck-report.md`, `eval_results/`, `.dogfood/shipcheck/` | CLI primarily writes to stdout unless redirected. |
@@ -44,9 +45,9 @@ This inventory captures local files and directories created by Kujo and adjacent
 | AI Chat | `.env`, `data/ai_chat.db`, `data/audit.log`, `data/backups/*.db*`, `data/benchmark-runs/`, `data/tool-artifacts/`, `node_modules/` | Secrets stay untracked; browser screenshots and benchmark telemetry are local evidence unless intentionally published. |
 | CMS | `results/*.db*`, `results/*.log` | Test/integration state. |
 | CRUD API | `.tmp/*.db*`, `.tmp/*.log`, `.tmp/*.body`, `.tmp/*.out`, frontend build output | Local smoke-test state. |
-| SSG | `output/`, `logs/`, `tmp/`, `.kujo-post-manifest.txt` | Generated static site and build logs. |
+| SSG and Kujo Docs | `output/`, `.output-*`, `logs/`, `tmp/`, `.kujo-post-manifest.txt` | Generated static site and build logs. Kujo Docs writes its canonical site to `output/`; interrupted or partial local builds have been observed under `.output-partial-*` and `.output-incomplete-*`, matching the repo-local `.output-*` ignore. |
 | Howl | `dist/howl/*.html`, `dist/howl/*.md`, `dist/howl/*.svg`, `tmp_test_*/` from the shell/unit harness, and transient `--interpreter/tmp_test_*/` scratch dirs | Rendered cards/gallery and local test harness output. |
-| SiteKit | `dist/` bundle (`sitekit.css`, `sitekit.js`, `fonts/`, distribution README) and `tests/visual/component-snapshot.json` from `npm run snapshot` | Consumers may intentionally vendor `dist/`; keep that as a repo-specific decision rather than tracking local rebuild output by default. |
+| SiteKit | `dist/` bundle (`sitekit.css`, `sitekit.js`, `fonts/`, distribution README), `css/generated/*.css`, `tests/visual/component-snapshot.json`, `artifacts/release/sitekit-v*.tar.gz`, `artifacts/release/*.sha256`, and `artifacts/browser/` Playwright reports | SiteKit intentionally tracks `dist/`, `css/generated/`, and the component snapshot as source-vendored v1 artifacts in its own repo. Release archives and browser reports are local verification output and should stay ignored. Consumers may intentionally vendor `dist/`; keep that as a repo-specific decision. |
 | Zelus | `.zelus/engagement-manifest.json`, `.zelus/campaign.json`, `.zelus/reference-run/`, plus caller-selected `--out` manifests, hypotheses, and reference/eval run directories | Current examples usually write to `/tmp`; ignore `.zelus/` when run inside a repo. |
 | Agents SDK | file-backed artifact/trace stores write under caller-provided roots, often `/tmp`; no repo-local default artifact root found | Ignore chosen local roots where configured. |
 | AI SDK | `artifacts/security/integrity-manifest.sha256` and other local release/security artifacts | CI may upload these; local source control should ignore unless intentionally reviewed. |
@@ -74,10 +75,13 @@ serve multiple rows in the inventory:
 - `/runledger-report.md` mirrors `RUNLEDGER_REPORT.md` for lower-case redirected RunLedger reports.
 - `/.cinch/pack/` covers generated Cinch wrapper packs beside `/.cinch/artifacts/`.
 - `/.runs/` covers timestamped Kujo workflow-runner packets; `/.work/` covers disposable workflow workspaces such as `agency-verified-fix-loop/.work/<timestamp>/`.
+- `/.kujo/runs/` covers Agency Runner proof packets; `/.kujo/feature-cards/` covers Feature Card workflow task, spec, context, proof, brief, ledger, handoff, and log packets; `/.kujo/agency/auth/` covers saved browser-session state and login evidence while leaving caller-authored `.kujo/agency/sites/*.yml` profiles to repo policy.
 - `/data/*.db`, `/data/*.db-shm`, `/data/*.db-wal`, `/data/*.log`, `/*.db-shm`, `/*.db-wal`, `/*.sqlite`, and `/*.sqlite3` cover SQLite/log sidecars emitted by Watchdog, AI Chat, CMS, CRUD API, RAG, and related local state.
 - `/tests/tmp/`, `/tests/*.out`, `*.tmp-*`, and `*.bak` cover local test harness output and atomic-write leftovers.
 - `/.eval_*` covers Eval quickstart, parity, smoke, benchmark, and interrupted test scratch outputs named that way in docs and tests.
+- `/.output-*/` covers interrupted or partial Kujo Docs/SSG static-site builds beside the canonical `/output/` root.
 - `/dist-build/` covers generated dashboard/package archives beside `/dist/` static output.
+- `/artifacts/release/` and `/artifacts/browser/` cover SiteKit release archives/checksums and Playwright reports while avoiding a blanket `/artifacts/` rule.
 - `/tmp_test_*/` and `/--interpreter/tmp_test_*/` cover Howl harness scratch output created at the repository root and under the Kujo interpreter-flag working directory seen in local ignored files.
 - `/redact-audit/`, `/redact-transcript-audit/`, and `/transcript.report.json` cover local Redact transcript audit runs while leaving caller-authored transcript policies to repo-specific decisions.
 

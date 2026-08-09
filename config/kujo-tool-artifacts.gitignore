@@ -86,6 +86,9 @@
 # Kujo workflow runners
 /.runs/
 /.work/
+/.kujo/runs/
+/.kujo/feature-cards/
+/.kujo/agency/auth/
 
 # Lens
 /.lens/runs/
@@ -145,6 +148,7 @@
 
 # SSG / Howl / SiteKit / generated static output
 /output/
+/.output-*/
 /dist/
 /dist-build/
 /logs/
@@ -156,8 +160,10 @@
 /capsule-output/
 /.zelus/
 
-# AI SDK local release/security artifacts
+# AI SDK / SiteKit local release/security/browser artifacts
 /artifacts/security/
+/artifacts/release/
+/artifacts/browser/
 
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
