@@ -32,11 +32,10 @@ pub fn format_source(source: &str, options: &FormatterOptions) -> String {
             continue;
         }
 
-        if trimmed.starts_with('}') {
-            indent_level = indent_level.saturating_sub(1);
-        }
-
         let normalized = normalize_spacing(trimmed);
+        let (structural_source, _) = protect_non_code(&normalized);
+        let leading_closes = structural_source.chars().take_while(|ch| *ch == '}').count();
+        indent_level = indent_level.saturating_sub(leading_closes);
         let wrapped = wrap_if_needed(&normalized, indent_level, options);
 
         for (index, wrapped_line) in wrapped.into_iter().enumerate() {
@@ -45,12 +44,16 @@ pub fn format_source(source: &str, options: &FormatterOptions) -> String {
             formatted_lines.push(format!("{}{}", indent, wrapped_line.trim()));
         }
 
-        let opens = normalized.chars().filter(|ch| *ch == '{').count();
-        let closes = normalized.chars().filter(|ch| *ch == '}').count();
-        if opens > closes {
-            indent_level += opens - closes;
-        } else if closes > opens {
-            indent_level = indent_level.saturating_sub(closes - opens);
+        let opens = structural_source.chars().filter(|ch| *ch == '{').count();
+        let remaining_closes = structural_source
+            .chars()
+            .filter(|ch| *ch == '}')
+            .count()
+            .saturating_sub(leading_closes);
+        if opens > remaining_closes {
+            indent_level += opens - remaining_closes;
+        } else if remaining_closes > opens {
+            indent_level = indent_level.saturating_sub(remaining_closes - opens);
         }
     }
 
@@ -334,5 +337,31 @@ print(command)
 
         assert_eq!(original_kinds, formatted_kinds);
         assert_eq!(formatted.lines().count(), 1);
+    }
+
+    #[test]
+    fn formatter_keeps_outer_indent_after_closing_nested_block() {
+        let source = ["func run(){", "if(true){", "print(1)", "}", "print(2)", "}", ""].join("\n");
+
+        let formatted = format_source(
+            &source,
+            &FormatterOptions { indent_width: 2, line_length: 100, sort_imports: false },
+        );
+
+        assert!(formatted.contains("\n  print(2)\n}"));
+    }
+
+    #[test]
+    fn formatter_ignores_braces_inside_strings_and_comments_for_indentation() {
+        let source =
+            ["func run(){", "print(\"{\") # }", "print(1)", "}", "print(2)", ""].join("\n");
+
+        let formatted = format_source(
+            &source,
+            &FormatterOptions { indent_width: 2, line_length: 100, sort_imports: false },
+        );
+
+        assert!(formatted.contains("\n  print(1)\n}"));
+        assert!(formatted.contains("\nprint(2)\n"));
     }
 }
