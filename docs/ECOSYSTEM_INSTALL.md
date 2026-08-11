@@ -7,7 +7,7 @@ The supported onboarding path is the repository's [`install.sh`](../install.sh).
 After the public Kujo release is tagged:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash -s -- --ref v1.0.0
+curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash -s -- --ref v1.0.1
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```
@@ -122,4 +122,4 @@ For a pinned release, verify the downloaded Kujo archive checksum. For a source 
 
 ## Release boundary
 
-Kujo's tagged binaries, checksum files, and published-artifact smokes are the canonical ecosystem onboarding path. Treat `main` as development state; use the immutable `v1.0.0` tag or a later supported patch tag for reproducible release installs.
+Kujo's tagged binaries, checksum files, and published-artifact smokes are the canonical ecosystem onboarding path. Treat `main` as development state; use the immutable `v1.0.1` tag or a later supported patch tag for reproducible release installs.

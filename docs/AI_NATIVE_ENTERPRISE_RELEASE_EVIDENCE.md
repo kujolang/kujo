@@ -9,7 +9,7 @@ This index is the operator-facing evidence map for Kujo's stable v1 branch. It g
 
 Kujo `v1.0.0` ships the core AI-native mechanisms described in `docs/AI_RUNTIME.md`. The stable-release claim does not imply provider certification, a hosted control plane, or a universal enterprise-readiness warranty.
 
-Release boundary: Kujo `v1.0.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.0.1` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 ## Latest Local Verification Matrix
 

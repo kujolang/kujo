@@ -36,7 +36,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          # Build the public Linux binary on the oldest supported Pages image.
+          # This keeps its glibc floor compatible with Ubuntu 22.04 consumers.
+          - os: ubuntu-22.04
             platform: linux-x64
             binary_name: kujo
             archive_ext: tar.gz

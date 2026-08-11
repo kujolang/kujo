@@ -46,7 +46,7 @@ Examples:
   curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash
   curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash -s -- --all
   bash install.sh --group ai --group quality
-  bash install.sh --ref v1.0.0 --with-deps
+  bash install.sh --ref v1.0.1 --with-deps
 
 Environment overrides:
   KUJO_ECOSYSTEM_REF, KUJO_INSTALL_ROOT, KUJO_BIN_DIR, KUJO_GITHUB_OWNER,

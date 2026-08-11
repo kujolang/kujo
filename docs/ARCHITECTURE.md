@@ -1,7 +1,7 @@
 # Kujo Architecture
 
 Last updated: 2026-08-08
-Current stable release: `v1.0.0`
+Current stable release: `v1.0.1`
 
 This document describes the current Kujo architecture as implemented in this repository.
 It is intentionally execution-path and release-readiness oriented.
@@ -112,7 +112,7 @@ Current explicit divergence examples include:
 
 ## 7. Release Posture
 
-Kujo `v1.0.0` is the current stable release.
+Kujo `v1.0.1` is the current stable release.
 
 - `ROADMAP.md` tracks historical v1 work and post-1.0 planning.
 - `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` preserves historical pre-launch closure evidence.

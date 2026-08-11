@@ -1,7 +1,7 @@
 # Kujo Release Process
 
 Current active line: `1.0.x`
-Current release state: `v1.0.0` is the stable public release; binary artifact and checksum evidence is recorded in the v1.0.0 artifact checklist and launch note.
+Current release state: `v1.0.1` is the stable public release; the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.
