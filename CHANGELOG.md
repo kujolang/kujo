@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve outer-block indentation after formatting a nested closing brace.
+- Ignore braces inside strings and comments when computing formatter indentation.
+- Stop definition, reference, hover, and rename lookups from selecting an identifier when the cursor is immediately after it.
+- Emit LSP reference ranges that span the complete identifier.
+- Emit zero-width LSP edits for missing-delimiter insertion actions.
+- Limit range-formatting edits to the client-requested range.
+- Limit inlay hints to the client-requested range.
+- Include trailing newline positions in full-document formatting edits.
+- Consume cancelled request IDs so later requests may safely reuse them.
+- Accept the case-insensitive `Content-Length` header names required by the LSP transport protocol.
+
 ## [1.0.1] - 2026-08-11
 
 ### Fixed

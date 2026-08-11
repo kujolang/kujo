@@ -66,8 +66,7 @@ fn identifier_at_cursor(source: &str, line: usize, column: usize) -> Option<Stri
         if 0 == start {
             continue;
         }
-        let end = token.column.saturating_sub(1);
-        if (start..=token.column).contains(&column) || (start..=end).contains(&column) {
+        if start <= column && column < token.column {
             return Some(name.clone());
         }
     }
@@ -231,6 +230,9 @@ mod tests {
     #[test]
     fn returns_error_when_cursor_not_on_identifier() {
         let source = "let value := 1\nprint(value)\n";
+        let error =
+            rename_symbol(source, 1, 10, "renamed").expect_err("expected missing symbol error");
+        assert!(error.contains("No identifier found"));
         let error =
             rename_symbol(source, 1, 11, "renamed").expect_err("expected missing symbol error");
         assert!(error.contains("No identifier found"));

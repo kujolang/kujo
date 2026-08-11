@@ -4,6 +4,7 @@ use crate::lexer::{self, Token, TokenKind};
 pub struct ReferenceLocation {
     pub line: usize,
     pub column: usize,
+    pub length: usize,
     pub is_definition: bool,
 }
 
@@ -85,6 +86,7 @@ pub fn find_references(
         references.push(ReferenceLocation {
             line: token.line,
             column: token_start_column,
+            length: identifier_name.chars().count(),
             is_definition,
         });
     }
@@ -109,8 +111,7 @@ fn identifier_token_index_at_cursor(tokens: &[Token], line: usize, column: usize
             continue;
         }
 
-        let end = token.column.saturating_sub(1);
-        if (start..=token.column).contains(&column) || (start..=end).contains(&column) {
+        if start <= column && column < token.column {
             return Some(index);
         }
     }
@@ -472,6 +473,7 @@ mod tests {
     #[test]
     fn returns_empty_when_cursor_is_not_symbol_reference() {
         let source = "let value := 1\nprint(value)\n";
+        assert!(find_references(source, 1, 10, true).is_empty());
         assert!(find_references(source, 2, 1, true).is_empty());
     }
 }

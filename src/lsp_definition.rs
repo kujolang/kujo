@@ -93,15 +93,11 @@ fn identifier_at_cursor(tokens: &[Token], line: usize, column: usize) -> Option<
 
         let token_end_exclusive = token.column;
         let token_start = token_end_exclusive.saturating_sub(name.chars().count());
-        let token_end_inclusive = token_end_exclusive.saturating_sub(1);
-
         if token_start == 0 {
             continue;
         }
 
-        if (token_start..=token_end_exclusive).contains(&column)
-            || (token_start..=token_end_inclusive).contains(&column)
-        {
+        if token_start <= column && column < token_end_exclusive {
             return Some(name.clone());
         }
     }
@@ -319,6 +315,7 @@ mod tests {
     #[test]
     fn returns_none_when_cursor_is_not_on_identifier() {
         let source = "let value := 1\nprint(value)\n";
+        assert!(find_definition(source, 1, 10).is_none());
         assert!(find_definition(source, 2, 1).is_none());
     }
 }

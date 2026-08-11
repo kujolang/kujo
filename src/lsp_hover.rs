@@ -89,10 +89,7 @@ fn identifier_token_at_cursor<'a>(
             continue;
         }
 
-        let end_column = token.column.saturating_sub(1);
-        if (start_column..=token.column).contains(&column)
-            || (start_column..=end_column).contains(&column)
-        {
+        if start_column <= column && column < token.column {
             return Some(token);
         }
     }
@@ -144,6 +141,7 @@ mod tests {
     #[test]
     fn hover_returns_none_when_cursor_not_on_identifier() {
         let source = "let value := 1\n";
+        assert!(hover(source, 1, 10).is_none());
         assert!(hover(source, 1, 11).is_none());
     }
 }

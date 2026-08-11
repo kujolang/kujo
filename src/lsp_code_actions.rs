@@ -6,6 +6,7 @@ pub struct CodeAction {
     pub kind: String,
     pub line: usize,
     pub column: usize,
+    pub replaced_characters: usize,
     pub replacement: String,
     pub description: String,
 }
@@ -23,6 +24,7 @@ pub fn code_actions(source: &str) -> Vec<CodeAction> {
                 kind: "quickfix.syntax.remove_unmatched_brace".to_string(),
                 line: diagnostic.line,
                 column: diagnostic.column,
+                replaced_characters: 1,
                 replacement: "".to_string(),
                 description: "Delete the unmatched closing brace token.".to_string(),
             });
@@ -33,6 +35,7 @@ pub fn code_actions(source: &str) -> Vec<CodeAction> {
                 kind: "quickfix.syntax.insert_closing_brace".to_string(),
                 line: diagnostic.line,
                 column: insertion_column,
+                replaced_characters: 0,
                 replacement: "}".to_string(),
                 description: "Insert a closing brace to balance the opening brace.".to_string(),
             });
@@ -43,6 +46,7 @@ pub fn code_actions(source: &str) -> Vec<CodeAction> {
                 kind: "quickfix.syntax.insert_closing_parenthesis".to_string(),
                 line: diagnostic.line,
                 column: insertion_column,
+                replaced_characters: 0,
                 replacement: ")".to_string(),
                 description: "Insert a closing parenthesis to balance the opening parenthesis."
                     .to_string(),
@@ -54,6 +58,7 @@ pub fn code_actions(source: &str) -> Vec<CodeAction> {
                 kind: "quickfix.syntax.insert_closing_bracket".to_string(),
                 line: diagnostic.line,
                 column: insertion_column,
+                replaced_characters: 0,
                 replacement: "]".to_string(),
                 description: "Insert a closing bracket to balance the opening bracket.".to_string(),
             });
@@ -93,9 +98,11 @@ mod tests {
     #[test]
     fn action_for_unclosed_parenthesis() {
         let actions = code_actions("print((1 + 2)\n");
-        assert!(actions
+        let action = actions
             .iter()
-            .any(|action| action.kind == "quickfix.syntax.insert_closing_parenthesis"));
+            .find(|action| action.kind == "quickfix.syntax.insert_closing_parenthesis")
+            .expect("expected closing parenthesis action");
+        assert_eq!(action.replaced_characters, 0);
     }
 
     #[test]
@@ -104,5 +111,15 @@ mod tests {
         assert!(actions
             .iter()
             .any(|action| action.kind == "quickfix.syntax.insert_closing_bracket"));
+    }
+
+    #[test]
+    fn removal_action_replaces_the_unmatched_character() {
+        let actions = code_actions("}\n");
+        let action = actions
+            .iter()
+            .find(|action| action.kind == "quickfix.syntax.remove_unmatched_brace")
+            .expect("expected unmatched brace removal action");
+        assert_eq!(action.replaced_characters, 1);
     }
 }

@@ -58,7 +58,7 @@ impl LspServer {
             if message.get("id").is_some() {
                 let id = message.get("id").cloned().unwrap_or(Value::Null);
                 let params = message.get("params");
-                if self.is_cancelled_request(&id) {
+                if self.cancelled_requests.remove(&request_id_key(&id)) {
                     outbound.push(request_cancelled_response(id));
                 } else {
                     let start = Instant::now();
@@ -341,7 +341,9 @@ impl LspServer {
                                     },
                                     "end": {
                                         "line": zero_based(reference.line),
-                                        "character": zero_based(reference.column + 1),
+                                        "character": zero_based(
+                                            reference.column + reference.length
+                                        ),
                                     }
                                 }
                             })
@@ -451,7 +453,9 @@ impl LspServer {
                                             },
                                             "end": {
                                                 "line": zero_based(action.line),
-                                                "character": zero_based(action.column + 1),
+                                                "character": zero_based(
+                                                    action.column + action.replaced_characters
+                                                ),
                                             }
                                         },
                                         "newText": action.replacement,
@@ -507,7 +511,21 @@ impl LspServer {
                     }
                 };
 
-                let hints = collect_inlay_hints(&source);
+                let range = match request_range(params) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid range");
+                    }
+                };
+                let hints = collect_inlay_hints(&source)
+                    .into_iter()
+                    .filter(|hint| {
+                        let line = hint["position"]["line"].as_u64().unwrap_or(0) as usize;
+                        let character =
+                            hint["position"]["character"].as_u64().unwrap_or(0) as usize;
+                        position_in_range((line, character), range)
+                    })
+                    .collect::<Vec<Value>>();
                 json!({
                     "jsonrpc": "2.0",
                     "id": id,
@@ -581,12 +599,36 @@ impl LspServer {
                     }
                 };
 
+                let range = match request_range(params) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid range");
+                    }
+                };
+                let selected = match source_text_in_range(&source, range) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Range is outside the document");
+                    }
+                };
                 let options = formatter_options_from_lsp_params(params);
-                let formatted = formatter::format_source(&source, &options);
-                let edits = if formatted == source {
+                let formatted = formatter::format_source(&selected, &options);
+                let edits = if formatted == selected {
                     Vec::new()
                 } else {
-                    vec![full_document_text_edit(&source, formatted)]
+                    vec![json!({
+                        "range": {
+                            "start": {
+                                "line": range.0.0,
+                                "character": range.0.1,
+                            },
+                            "end": {
+                                "line": range.1.0,
+                                "character": range.1.1,
+                            }
+                        },
+                        "newText": formatted,
+                    })]
                 };
 
                 json!({
@@ -776,10 +818,6 @@ impl LspServer {
         }
     }
 
-    fn is_cancelled_request(&self, id: &Value) -> bool {
-        self.cancelled_requests.contains(&request_id_key(id))
-    }
-
     fn publish_diagnostics_notification(&self, uri: &str) -> Value {
         let source = self.documents.get(uri).cloned().unwrap_or_else(String::new);
         let diagnostics = lsp_diagnostics::diagnose(&source)
@@ -904,8 +942,12 @@ fn read_lsp_message<R: BufRead>(reader: &mut R) -> io::Result<Option<String>> {
         }
 
         let trimmed = line.trim();
-        if let Some(value) = trimmed.strip_prefix("Content-Length:") {
-            content_length = value.trim().parse::<usize>().ok();
+        if let Some((name, value)) = trimmed.split_once(':') {
+            if name.eq_ignore_ascii_case("Content-Length") {
+                content_length = Some(value.trim().parse::<usize>().map_err(|_| {
+                    io::Error::new(io::ErrorKind::InvalidData, "Invalid Content-Length header")
+                })?);
+            }
         }
     }
 
@@ -954,6 +996,54 @@ fn request_position(params: Option<&Value>) -> Option<(usize, usize)> {
         .and_then(Value::as_u64)? as usize;
 
     Some((line + 1, column + 1))
+}
+
+type LspRange = ((usize, usize), (usize, usize));
+
+fn request_range(params: Option<&Value>) -> Option<LspRange> {
+    let range = params?.get("range")?;
+    let start = range.get("start")?;
+    let end = range.get("end")?;
+    let start_position = (
+        usize::try_from(start.get("line")?.as_u64()?).ok()?,
+        usize::try_from(start.get("character")?.as_u64()?).ok()?,
+    );
+    let end_position = (
+        usize::try_from(end.get("line")?.as_u64()?).ok()?,
+        usize::try_from(end.get("character")?.as_u64()?).ok()?,
+    );
+    (start_position <= end_position).then_some((start_position, end_position))
+}
+
+fn position_in_range(position: (usize, usize), range: LspRange) -> bool {
+    range.0 <= position && position < range.1
+}
+
+fn source_text_in_range(source: &str, range: LspRange) -> Option<String> {
+    let start = source_byte_offset(source, range.0)?;
+    let end = source_byte_offset(source, range.1)?;
+    source.get(start..end).map(ToString::to_string)
+}
+
+fn source_byte_offset(source: &str, position: (usize, usize)) -> Option<usize> {
+    let (target_line, target_character) = position;
+    let mut line_start = 0usize;
+
+    for (line_number, segment) in source.split('\n').enumerate() {
+        if line_number == target_line {
+            let content = segment.strip_suffix('\r').unwrap_or(segment);
+            if target_character == content.chars().count() {
+                return Some(line_start + content.len());
+            }
+            return content
+                .char_indices()
+                .nth(target_character)
+                .map(|(byte_index, _)| line_start + byte_index);
+        }
+        line_start = line_start.saturating_add(segment.len()).saturating_add(1);
+    }
+
+    None
 }
 
 fn file_uri_to_path(uri: &str) -> Option<PathBuf> {
@@ -1030,13 +1120,9 @@ fn source_end_position(source: &str) -> (usize, usize) {
         return (0, 0);
     }
 
-    let lines: Vec<&str> = source.lines().collect();
-    if lines.is_empty() {
-        return (0, 0);
-    }
-
-    let end_line = lines.len().saturating_sub(1);
-    let end_character = lines[end_line].chars().count();
+    let end_line = source.bytes().filter(|byte| *byte == b'\n').count();
+    let final_line = source.rsplit_once('\n').map_or(source, |(_, tail)| tail);
+    let end_character = final_line.chars().count();
     (end_line, end_character)
 }
 
@@ -1356,9 +1442,10 @@ fn request_id_key(id: &Value) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{LspServer, LspServerConfig};
+    use super::{read_lsp_message, source_end_position, LspServer, LspServerConfig};
     use rand::Rng;
     use serde_json::{json, Value};
+    use std::io::Cursor;
 
     #[test]
     fn lifecycle_initialize_shutdown_exit_returns_clean_exit() {
@@ -1524,6 +1611,141 @@ mod tests {
             .and_then(Value::as_str)
             .map(|text| text.contains("let value := 1"))
             .unwrap_or(false));
+    }
+
+    #[test]
+    fn formatting_edit_range_includes_a_trailing_newline() {
+        assert_eq!(source_end_position("let value:=1\n"), (1, 0));
+        assert_eq!(source_end_position("let value:=1"), (0, 12));
+    }
+
+    #[test]
+    fn range_formatting_only_edits_the_requested_range() {
+        let mut server = LspServer::new(LspServerConfig::default());
+        let uri = "file:///tmp/range_format.kujo";
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": uri,
+                    "text": "let first:=1\nlet second:=2\n"
+                }
+            }
+        }));
+
+        let response = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "id": 41,
+            "method": "textDocument/rangeFormatting",
+            "params": {
+                "textDocument": { "uri": uri },
+                "range": {
+                    "start": { "line": 1, "character": 0 },
+                    "end": { "line": 1, "character": 13 }
+                },
+                "options": { "tabSize": 4, "insertSpaces": true }
+            }
+        }));
+
+        let edits = response[0]["result"].as_array().expect("expected range formatting edits");
+        assert_eq!(edits.len(), 1);
+        assert_eq!(edits[0]["range"]["start"], json!({"line": 1, "character": 0}));
+        assert_eq!(edits[0]["range"]["end"], json!({"line": 1, "character": 13}));
+        assert_eq!(edits[0]["newText"], "let second := 2");
+    }
+
+    #[test]
+    fn reference_ranges_span_the_complete_identifier() {
+        let mut server = LspServer::new(LspServerConfig::default());
+        let uri = "file:///tmp/reference_width.kujo";
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": uri,
+                    "text": "let value := 1\nprint(value)\n"
+                }
+            }
+        }));
+
+        let response = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "id": 42,
+            "method": "textDocument/references",
+            "params": {
+                "textDocument": { "uri": uri },
+                "position": { "line": 1, "character": 7 },
+                "context": { "includeDeclaration": true }
+            }
+        }));
+
+        let references = response[0]["result"].as_array().expect("expected references");
+        assert_eq!(references.len(), 2);
+        for reference in references {
+            let start = reference["range"]["start"]["character"].as_u64().unwrap();
+            let end = reference["range"]["end"]["character"].as_u64().unwrap();
+            assert_eq!(end - start, 5);
+        }
+    }
+
+    #[test]
+    fn insertion_code_actions_use_zero_width_ranges() {
+        let mut server = LspServer::new(LspServerConfig::default());
+        let uri = "file:///tmp/code_action_insert.kujo";
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": { "uri": uri, "text": "print((1 + 2)\n" }
+            }
+        }));
+
+        let response = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "id": 43,
+            "method": "textDocument/codeAction",
+            "params": { "textDocument": { "uri": uri } }
+        }));
+
+        let actions = response[0]["result"].as_array().expect("expected code actions");
+        let insertion = actions
+            .iter()
+            .find(|action| action["title"] == "Insert missing closing parenthesis")
+            .expect("expected insertion action");
+        let edit = &insertion["edit"]["changes"][uri][0];
+        assert_eq!(edit["range"]["start"], edit["range"]["end"]);
+    }
+
+    #[test]
+    fn inlay_hints_are_limited_to_the_requested_range() {
+        let mut server = LspServer::new(LspServerConfig::default());
+        let uri = "file:///tmp/inlay_range.kujo";
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": { "uri": uri, "text": "let first := 1\nlet second := 2\n" }
+            }
+        }));
+
+        let response = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "id": 44,
+            "method": "textDocument/inlayHint",
+            "params": {
+                "textDocument": { "uri": uri },
+                "range": {
+                    "start": { "line": 1, "character": 0 },
+                    "end": { "line": 2, "character": 0 }
+                }
+            }
+        }));
+
+        let hints = response[0]["result"].as_array().expect("expected inlay hints");
+        assert_eq!(hints.len(), 1);
+        assert_eq!(hints[0]["position"]["line"], 1);
     }
 
     #[test]
@@ -1701,6 +1923,26 @@ mod tests {
         assert_eq!(responses.len(), 1);
         assert_eq!(responses[0]["error"]["code"], -32800);
         assert_eq!(responses[0]["error"]["message"], "Request cancelled");
+
+        let reused_id_response = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "id": 99,
+            "method": "initialize",
+            "params": {}
+        }));
+        assert!(reused_id_response[0].get("result").is_some());
+    }
+
+    #[test]
+    fn transport_accepts_case_insensitive_content_length_header() {
+        let payload = r#"{"jsonrpc":"2.0"}"#;
+        let framed = format!("content-length: {}\r\n\r\n{}", payload.len(), payload);
+        let mut reader = Cursor::new(framed.into_bytes());
+
+        let decoded = read_lsp_message(&mut reader)
+            .expect("lowercase header should be accepted")
+            .expect("message should be present");
+        assert_eq!(decoded, payload);
     }
 
     #[test]
