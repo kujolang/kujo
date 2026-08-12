@@ -1782,6 +1782,23 @@ pub fn encode_base64(bytes: &[u8]) -> String {
     general_purpose::STANDARD.encode(bytes)
 }
 
+/// Percent-encode one UTF-8 URI component using the RFC 3986 unreserved set.
+#[allow(dead_code)]
+pub fn encode_uri_component(value: &str) -> String {
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let mut encoded = String::with_capacity(value.len());
+    for byte in value.as_bytes() {
+        if byte.is_ascii_alphanumeric() || matches!(*byte, b'-' | b'.' | b'_' | b'~') {
+            encoded.push(*byte as char);
+        } else {
+            encoded.push('%');
+            encoded.push(HEX[(byte >> 4) as usize] as char);
+            encoded.push(HEX[(byte & 0x0f) as usize] as char);
+        }
+    }
+    encoded
+}
+
 /// Decode base64 string to bytes
 /// Infrastructure for base64.decode() builtin
 #[allow(dead_code)]

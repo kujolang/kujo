@@ -1,0 +1,4 @@
+# RFC 3986 query-component encoding preserves unreserved characters and
+# percent-encodes every other UTF-8 byte.
+print(encode_uri_component("café & tea"))
+print(encode_uri_component("東京/検索"))

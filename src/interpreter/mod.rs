@@ -704,6 +704,7 @@ impl Interpreter {
             // Base64 encoding/decoding functions
             "encode_base64",
             "decode_base64",
+            "encode_uri_component",
             // Random functions
             "random",
             "random_int",
@@ -1255,6 +1256,10 @@ impl Interpreter {
         self.env.define(
             "decode_base64".to_string(),
             Value::NativeFunction("decode_base64".to_string()),
+        );
+        self.env.define(
+            "encode_uri_component".to_string(),
+            Value::NativeFunction("encode_uri_component".to_string()),
         );
 
         // Random functions

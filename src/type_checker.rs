@@ -1966,6 +1966,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "encode_uri_component".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
             "read_binary_file".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // file path

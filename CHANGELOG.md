@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add stable `encode_uri_component(text)` RFC 3986 UTF-8 percent encoding for provider and web integrations.
+
 ### Fixed
 
 - Preserve outer-block indentation after formatting a nested closing brace.

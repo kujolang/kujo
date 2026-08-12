@@ -274,6 +274,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `to_csv` | `to_csv(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_csv(...)` |
 | `encode_base64` | `encode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := encode_base64(...)` |
 | `decode_base64` | `decode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := decode_base64(...)` |
+| `encode_uri_component` | `encode_uri_component(...)` | handler-defined | string | Value::Error on invalid args/types. | `none` | `part := encode_uri_component("café & tea")` |
 | `random` | `random(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random(...)` |
 | `random_int` | `random_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random_int(...)` |
 | `random_choice` | `random_choice(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random_choice(...)` |

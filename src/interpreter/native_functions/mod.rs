@@ -571,6 +571,7 @@ mod tests {
             "to_csv",
             "encode_base64",
             "decode_base64",
+            "encode_uri_component",
             "regex_match",
             "regex_find_all",
             "regex_replace",

@@ -159,6 +159,19 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "encode_uri_component" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error(
+                    "encode_uri_component requires one string argument".to_string(),
+                ));
+            }
+            if let Some(Value::Str(value)) = arg_values.first() {
+                Value::Str(Arc::new(builtins::encode_uri_component(value.as_ref())))
+            } else {
+                Value::Error("encode_uri_component requires one string argument".to_string())
+            }
+        }
+
         "decode_base64" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("decode_base64 requires a string argument".to_string()));
@@ -295,6 +308,22 @@ mod tests {
                 }
             }
             other => panic!("Expected Value::Str from encode_base64, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_encode_uri_component_rfc3986_and_utf8() {
+        let cases = [
+            ("AZaz09-._~", "AZaz09-._~"),
+            ("a b+c&d=e?f#:/", "a%20b%2Bc%26d%3De%3Ff%23%3A%2F"),
+            ("café", "caf%C3%A9"),
+            ("東京", "%E6%9D%B1%E4%BA%AC"),
+            ("💡", "%F0%9F%92%A1"),
+            ("%2F", "%252F"),
+        ];
+        for (input, expected) in cases {
+            let result = handle("encode_uri_component", &[string_value(input)]).unwrap();
+            assert!(matches!(result, Value::Str(value) if value.as_ref() == expected));
         }
     }
 

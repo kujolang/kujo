@@ -205,6 +205,7 @@ Guideline:
 | `to_csv` | preview | `txt := to_csv([["name"], ["kujo"]])` |
 | `encode_base64` | stable | `txt := encode_base64(bytes)` |
 | `decode_base64` | stable | `bytes := decode_base64(txt)` |
+| `encode_uri_component` | stable | `part := encode_uri_component("café & tea")` |
 
 Access semantics:
 
