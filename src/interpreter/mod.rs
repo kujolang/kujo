@@ -2852,6 +2852,9 @@ impl Interpreter {
             "type" | "type_of" => CallableArity::exact("type", vec!["value".to_string()]),
             "is_truthy" => CallableArity::exact("is_truthy", vec!["value".to_string()]),
             "read_file_lossy" => CallableArity::exact("read_file_lossy", vec!["path".to_string()]),
+            "jsonl_query" => {
+                CallableArity::exact("jsonl_query", vec!["path".to_string(), "options".to_string()])
+            }
             "write_file_atomic" => CallableArity::range(
                 "write_file_atomic",
                 2,
