@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Recognize fallible calls inside multiline `try` blocks in `kujo lint` instead of reporting false missing-error-handling warnings.
 - Preserve outer-block indentation after formatting a nested closing brace.
 - Ignore braces inside strings and comments when computing formatter indentation.
 - Stop definition, reference, hover, and rename lookups from selecting an identifier when the cursor is immediately after it.

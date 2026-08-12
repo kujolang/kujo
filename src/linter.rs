@@ -342,43 +342,45 @@ fn check_obvious_type_mismatches(source: &str) -> Vec<LintIssue> {
 
 fn check_missing_error_handling_patterns(source: &str) -> Vec<LintIssue> {
     let mut issues = Vec::new();
+    let mut brace_depth = 0_i32;
+    let mut try_depths: Vec<i32> = Vec::new();
 
     for (index, line) in source.lines().enumerate() {
         let trimmed = line.trim();
         let line_number = index + 1;
 
+        if trimmed.starts_with("try") && trimmed.contains('{') {
+            try_depths.push(brace_depth + 1);
+        }
+
         let has_error_prone_call = trimmed.contains("read_file(")
             || trimmed.contains("http_get(")
             || trimmed.contains("parse_json(");
-        if !has_error_prone_call {
-            continue;
+        if has_error_prone_call {
+            let handled_inline =
+                trimmed.starts_with("try") || trimmed.contains("?") || trimmed.contains("except");
+            let handled_by_block = try_depths.iter().any(|depth| brace_depth >= *depth);
+            let previous_line = if line_number > 1 {
+                source.lines().nth(line_number - 2).unwrap_or("").trim()
+            } else {
+                ""
+            };
+            if !handled_inline && !handled_by_block && !previous_line.starts_with("try") {
+                issues.push(LintIssue {
+                    rule_id: "missing-error-handling-pattern".to_string(),
+                    line: line_number,
+                    column: 1,
+                    severity: LintSeverity::Warning,
+                    message: "Potentially fallible call without explicit error-handling pattern"
+                        .to_string(),
+                    fix: None,
+                });
+            }
         }
 
-        let handled_inline =
-            trimmed.starts_with("try") || trimmed.contains("?") || trimmed.contains("except");
-        if handled_inline {
-            continue;
-        }
-
-        let previous_line = if line_number > 1 {
-            source.lines().nth(line_number - 2).unwrap_or("").trim()
-        } else {
-            ""
-        };
-        let handled_by_previous = previous_line.starts_with("try");
-        if handled_by_previous {
-            continue;
-        }
-
-        issues.push(LintIssue {
-            rule_id: "missing-error-handling-pattern".to_string(),
-            line: line_number,
-            column: 1,
-            severity: LintSeverity::Warning,
-            message: "Potentially fallible call without explicit error-handling pattern"
-                .to_string(),
-            fix: None,
-        });
+        brace_depth += line.chars().filter(|character| *character == '{').count() as i32;
+        brace_depth -= line.chars().filter(|character| *character == '}').count() as i32;
+        try_depths.retain(|depth| brace_depth >= *depth);
     }
 
     issues
@@ -396,6 +398,13 @@ mod tests {
         assert!(issues.iter().any(|issue| issue.rule_id == "unused-variable"));
         let fixed = apply_safe_fixes(source, &issues);
         assert!(fixed.contains("let _value := 1"));
+    }
+
+    #[test]
+    fn lint_recognizes_fallible_calls_inside_multiline_try_blocks() {
+        let source = "try {\n    let value := parse_json(read_file(\"data.json\"))\n    print(value)\n} except err {\n    print(err)\n}\n";
+        let issues = lint_source(source);
+        assert!(!issues.iter().any(|issue| issue.rule_id == "missing-error-handling-pattern"));
     }
 
     #[test]
