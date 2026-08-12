@@ -29,11 +29,11 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 JSON Schema subset contract (`json_schema_validate`):
 
 - `json_schema_validate(value, schema)` returns `{"valid": bool, "errors": [...]}` and never performs network, filesystem, clock, random, or process I/O.
-- Supported validation keywords are `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`, `anyOf`, `oneOf`, `allOf`, and local `$ref`.
+- Supported validation keywords are `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`, `anyOf`, `oneOf`, `allOf`, and local `$ref`.
 - `$ref` supports local JSON pointers such as `#`, `#/$defs/name`, and `#/definitions/name`; remote references are rejected.
 - Error entries are dictionaries with `path`, `message`, and `keyword`. Paths are JSON-pointer-like instance paths such as `/items/0/name`; the root path is an empty string.
 - Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
-- Annotation keywords `title`, `description`, `default`, and `examples` are accepted as no-op metadata.
+- Draft 2020-12 identification and annotation keywords `$schema`, `$id`, `$comment`, `title`, `description`, `default`, `examples`, `format`, `deprecated`, `readOnly`, and `writeOnly` are accepted as no-op metadata. `format` follows the draft's annotation-default behavior; it is not an assertion vocabulary.
 
 Process result contract (`spawn_process` / `execute_status`):
 

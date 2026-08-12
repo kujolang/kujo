@@ -12,8 +12,11 @@ const MAX_PATTERN_BYTES: usize = 1024;
 const MAX_INSTANCE_ARRAY_ITEMS: usize = 100_000;
 
 const ALLOWED_SCHEMA_KEYS: &[&str] = &[
+    "$comment",
     "$defs",
+    "$id",
     "$ref",
+    "$schema",
     "additionalProperties",
     "allOf",
     "anyOf",
@@ -21,8 +24,12 @@ const ALLOWED_SCHEMA_KEYS: &[&str] = &[
     "default",
     "definitions",
     "description",
+    "deprecated",
     "enum",
     "examples",
+    "exclusiveMaximum",
+    "exclusiveMinimum",
+    "format",
     "items",
     "maximum",
     "maxItems",
@@ -34,8 +41,10 @@ const ALLOWED_SCHEMA_KEYS: &[&str] = &[
     "pattern",
     "properties",
     "required",
+    "readOnly",
     "title",
     "type",
+    "writeOnly",
 ];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -259,6 +268,30 @@ fn validate_number_keywords(
                 instance_path,
                 "maximum",
                 &format!("number is greater than {maximum}"),
+            );
+        }
+    }
+
+    if let Some(minimum) = get_key(schema, "exclusiveMinimum") {
+        let minimum = numeric_schema_value(minimum, "exclusiveMinimum")?;
+        if number <= minimum {
+            push_error(
+                errors,
+                instance_path,
+                "exclusiveMinimum",
+                &format!("number is not greater than {minimum}"),
+            );
+        }
+    }
+
+    if let Some(maximum) = get_key(schema, "exclusiveMaximum") {
+        let maximum = numeric_schema_value(maximum, "exclusiveMaximum")?;
+        if number >= maximum {
+            push_error(
+                errors,
+                instance_path,
+                "exclusiveMaximum",
+                &format!("number is not less than {maximum}"),
             );
         }
     }
@@ -836,11 +869,34 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_keywords_malformed_schemas_and_ref_cycles() {
-        let unknown = json_schema_validate(&Value::Int(1), &d(vec![("format", s("email"))]))
-            .expect_err("unsupported keyword should reject schema");
-        assert!(unknown.contains("unsupported schema keyword 'format'"));
+    fn accepts_standard_annotation_keywords_and_rejects_unknown_keywords() {
+        let annotations = d(vec![
+            ("$schema", s("https://json-schema.org/draft/2020-12/schema")),
+            ("$id", s("https://example.com/schema.json")),
+            ("$comment", s("fixture")),
+            ("title", s("Fixture")),
+            ("description", s("Annotation coverage")),
+            ("default", Value::Int(0)),
+            ("examples", a(vec![Value::Int(1)])),
+            ("format", s("uri")),
+            ("deprecated", Value::Bool(false)),
+            ("readOnly", Value::Bool(true)),
+            ("writeOnly", Value::Bool(false)),
+            ("type", s("integer")),
+            ("exclusiveMinimum", Value::Int(0)),
+            ("exclusiveMaximum", Value::Int(2)),
+        ]);
+        assert!(json_schema_validate(&Value::Int(1), &annotations).is_ok());
+        assert_invalid(Value::Int(0), annotations.clone(), "", "exclusiveMinimum");
+        assert_invalid(Value::Int(2), annotations, "", "exclusiveMaximum");
 
+        let unknown = json_schema_validate(&Value::Int(1), &d(vec![("unknownKeyword", s("x"))]))
+            .expect_err("unsupported keyword should reject schema");
+        assert!(unknown.contains("unsupported schema keyword 'unknownKeyword'"));
+    }
+
+    #[test]
+    fn rejects_malformed_schemas_and_ref_cycles() {
         let bad_pattern = json_schema_validate(&s("x"), &d(vec![("pattern", s("["))])).unwrap_err();
         assert!(bad_pattern.contains("invalid pattern"));
 
