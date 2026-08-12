@@ -18,7 +18,7 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
 
     assert!(
         readme.contains(
-            "The project is currently at `1.0.1` in `Cargo.toml` and the stable release tag is `v1.0.1`."
+            "The project is currently at `1.0.2` in `Cargo.toml` and the stable release tag is `v1.0.2`."
         ) && readme.contains("Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries"),
         "README must keep explicit stable-release and artifact wording"
     );
