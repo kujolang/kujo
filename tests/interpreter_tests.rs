@@ -86,6 +86,34 @@ fn test_parallel_map_async_mapper_isolated_ordered_and_fail_closed() {
 }
 
 #[test]
+fn test_jsonl_query_streams_filters_and_joins_with_bounds() {
+    let directory =
+        std::env::temp_dir().join(format!("kujo-jsonl-query-{}", unique_shared_key("fixture")));
+    std::fs::create_dir_all(&directory).expect("temp directory should be created");
+    let left = directory.join("left.jsonl");
+    let right = directory.join("right.jsonl");
+    std::fs::write(
+        &left,
+        "{\"provider\":\"gsc\",\"row\":{\"id\":1}}\n{\"provider\":\"ga4\",\"row\":{\"id\":2}}\n{\"provider\":\"gsc\",\"row\":{\"id\":3}}\n",
+    )
+    .expect("left fixture should be written");
+    std::fs::write(&right, "{\"id\":1,\"name\":\"one\"}\n{\"id\":3,\"name\":\"three\"}\n")
+        .expect("right fixture should be written");
+    let source = format!(
+        r#"
+        filtered := jsonl_query({0:?}, {{"filter_field": "provider", "filter_equals": "gsc", "max_rows": 1}})
+        joined := jsonl_query({0:?}, {{"filter_field": "provider", "filter_equals": "gsc", "join_path": {1:?}, "left_field": "row.id", "right_field": "id", "max_rows": 10}})
+        query_ok := len(filtered) == 1 && filtered[0]["row"]["id"] == 1 && len(joined) == 2 && joined[1]["right"]["name"] == "three"
+        "#,
+        left.to_string_lossy(),
+        right.to_string_lossy()
+    );
+    let interpreter = run_code(&source);
+    assert!(matches!(interpreter.env.get("query_ok"), Some(Value::Bool(true))));
+    std::fs::remove_dir_all(directory).expect("temp directory should be removed");
+}
+
+#[test]
 fn test_builtin_names_include_release_hardening_contract_entries() {
     let builtins: HashSet<&str> = Interpreter::get_builtin_names().into_iter().collect();
 

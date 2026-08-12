@@ -588,6 +588,7 @@ mod tests {
             "append_file",
             "file_exists",
             "read_lines",
+            "jsonl_query",
             "list_dir",
             "create_dir",
             "file_size",

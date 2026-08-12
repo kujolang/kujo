@@ -1146,6 +1146,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "jsonl_query".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), None],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "list_dir".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)],

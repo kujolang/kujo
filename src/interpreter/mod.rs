@@ -666,6 +666,7 @@ impl Interpreter {
             "append_file",
             "file_exists",
             "read_lines",
+            "jsonl_query",
             "list_dir",
             "create_dir",
             "file_size",
@@ -1168,6 +1169,8 @@ impl Interpreter {
         self.env
             .define("file_exists".to_string(), Value::NativeFunction("file_exists".to_string()));
         self.env.define("read_lines".to_string(), Value::NativeFunction("read_lines".to_string()));
+        self.env
+            .define("jsonl_query".to_string(), Value::NativeFunction("jsonl_query".to_string()));
         self.env.define("list_dir".to_string(), Value::NativeFunction("list_dir".to_string()));
         self.env.define("create_dir".to_string(), Value::NativeFunction("create_dir".to_string()));
         self.env.define("file_size".to_string(), Value::NativeFunction("file_size".to_string()));

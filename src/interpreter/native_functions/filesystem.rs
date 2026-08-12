@@ -11,7 +11,7 @@ use std::fs;
 #[cfg(feature = "runtime-archive")]
 use std::fs::File;
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 #[cfg(feature = "runtime-archive")]
 use std::path::PathBuf;
@@ -75,6 +75,137 @@ fn validate_append_size_limit(path: &str, payload_size: usize) -> Result<(), Str
     }
 
     Ok(())
+}
+
+const MAX_JSONL_LINE_BYTES: usize = 1_048_576;
+const MAX_JSONL_QUERY_ROWS: usize = 100_000;
+
+fn option_value<'a>(options: &'a DictMap, name: &str) -> Option<&'a Value> {
+    options.get(name)
+}
+
+fn option_string(options: &DictMap, name: &str, fallback: &str) -> Result<String, String> {
+    match option_value(options, name) {
+        None => Ok(fallback.to_string()),
+        Some(Value::Str(value)) => Ok(value.to_string()),
+        Some(_) => Err(format!("jsonl_query option '{}' must be a string", name)),
+    }
+}
+
+fn option_usize(options: &DictMap, name: &str, fallback: usize) -> Result<usize, String> {
+    match option_value(options, name) {
+        None => Ok(fallback),
+        Some(Value::Int(value)) if *value > 0 => usize::try_from(*value)
+            .map_err(|_| format!("jsonl_query option '{}' is too large", name)),
+        Some(_) => Err(format!("jsonl_query option '{}' must be a positive integer", name)),
+    }
+}
+
+fn dotted_value<'a>(value: &'a Value, path: &str) -> Option<&'a Value> {
+    if path.is_empty() {
+        return Some(value);
+    }
+    let mut current = value;
+    for component in path.split('.') {
+        match current {
+            Value::Dict(record) => current = record.get(component)?,
+            _ => return None,
+        }
+    }
+    Some(current)
+}
+
+fn values_equal(left: &Value, right: &Value) -> bool {
+    match (builtins::to_json(left), builtins::to_json(right)) {
+        (Ok(left_json), Ok(right_json)) => left_json == right_json,
+        _ => false,
+    }
+}
+
+fn read_jsonl_values(
+    path: &str,
+    mut visit: impl FnMut(Value) -> Result<bool, String>,
+) -> Result<(), String> {
+    let file = fs::File::open(path)
+        .map_err(|error| format!("Cannot read JSONL file '{}': {}", path, error))?;
+    let mut reader = BufReader::new(file);
+    let mut line = String::new();
+    let mut line_number = 0usize;
+    loop {
+        line.clear();
+        let bytes = reader
+            .read_line(&mut line)
+            .map_err(|error| format!("Cannot read JSONL file '{}': {}", path, error))?;
+        if bytes == 0 {
+            break;
+        }
+        line_number += 1;
+        if bytes > MAX_JSONL_LINE_BYTES {
+            return Err(format!(
+                "JSONL line {} exceeds {} bytes",
+                line_number, MAX_JSONL_LINE_BYTES
+            ));
+        }
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let value = builtins::parse_json(trimmed)
+            .map_err(|error| format!("JSONL line {} is invalid: {}", line_number, error))?;
+        if !visit(value)? {
+            break;
+        }
+    }
+    Ok(())
+}
+
+fn jsonl_query(path: &str, options: &DictMap) -> Result<Value, String> {
+    let filter_field = option_string(options, "filter_field", "")?;
+    let filter_value = option_value(options, "filter_equals");
+    let max_rows = option_usize(options, "max_rows", 1_000)?;
+    if max_rows > MAX_JSONL_QUERY_ROWS {
+        return Err(format!("jsonl_query max_rows cannot exceed {}", MAX_JSONL_QUERY_ROWS));
+    }
+    let join_path = option_string(options, "join_path", "")?;
+    let left_field = option_string(options, "left_field", "")?;
+    let right_field = option_string(options, "right_field", "")?;
+    if join_path.is_empty() != (left_field.is_empty() && right_field.is_empty()) {
+        return Err(
+            "jsonl_query joins require join_path, left_field, and right_field together".to_string()
+        );
+    }
+
+    let mut output = Vec::new();
+    read_jsonl_values(path, |left| {
+        if !filter_field.is_empty()
+            && !filter_value.is_some_and(|wanted| {
+                dotted_value(&left, &filter_field)
+                    .is_some_and(|actual| values_equal(actual, wanted))
+            })
+        {
+            return Ok(true);
+        }
+        if join_path.is_empty() {
+            output.push(left);
+            return Ok(output.len() < max_rows);
+        }
+        let Some(left_key) = dotted_value(&left, &left_field).cloned() else {
+            return Ok(true);
+        };
+        read_jsonl_values(&join_path, |right| {
+            if dotted_value(&right, &right_field)
+                .is_some_and(|right_key| values_equal(&left_key, right_key))
+            {
+                let mut joined = DictMap::default();
+                joined.insert(Arc::from("left"), left.clone());
+                joined.insert(Arc::from("right"), right);
+                output.push(Value::Dict(Arc::new(joined)));
+            }
+            Ok(output.len() < max_rows)
+        })?;
+        Ok(output.len() < max_rows)
+    })?;
+    Ok(Value::Array(Arc::new(output)))
 }
 
 fn parse_overwrite_flag(function_name: &str, arg_values: &[Value]) -> Result<bool, Value> {
@@ -1141,6 +1272,25 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 }
             } else {
                 Value::Error("read_lines requires a string path argument".to_string())
+            }
+        }
+
+        "jsonl_query" => {
+            if arg_values.len() != 2 {
+                return Some(Value::Error(
+                    "jsonl_query requires (path, options) arguments".to_string(),
+                ));
+            }
+            match (arg_values.first(), arg_values.get(1)) {
+                (Some(Value::Str(path)), Some(Value::Dict(options))) => {
+                    match jsonl_query(path.as_ref(), options.as_ref()) {
+                        Ok(value) => value,
+                        Err(error) => Value::Error(error),
+                    }
+                }
+                _ => Value::Error(
+                    "jsonl_query requires a string path and options dictionary".to_string(),
+                ),
             }
         }
 
