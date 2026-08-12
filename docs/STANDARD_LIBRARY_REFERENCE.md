@@ -375,6 +375,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `append_file` | stable | `append_file("notes.txt", "more")` |
 | `file_exists` | stable | `ok := file_exists("notes.txt")` |
 | `read_lines` | stable | `rows := read_lines("notes.txt")` |
+| `jsonl_query` | stable | `rows := jsonl_query("evidence.jsonl", {"filter_field": "provider", "filter_equals": "gsc", "max_rows": 100})` |
 | `list_dir` | stable | `entries := list_dir(".")` |
 | `create_dir` | stable | `create_dir("tmp")` |
 | `file_size` | stable | `bytes := file_size("notes.txt")` |
