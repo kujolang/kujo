@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preserve CRLF source text during LSP rename edits and accept lexer-supported Unicode identifier continuations.
 - Use the LSP-required UTF-16 code-unit coordinate system for incoming positions and outgoing ranges, including semantic tokens.
 - Reject LSP messages larger than 8 MiB before allocating their payload buffer.
+- Update transitive database and error-handling dependencies to patched releases for `RUSTSEC-2026-0190` and `RUSTSEC-2026-0253`.
 
 ## [1.0.2] - 2026-08-12
 

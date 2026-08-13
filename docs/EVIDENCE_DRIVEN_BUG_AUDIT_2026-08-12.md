@@ -4,7 +4,7 @@
 
 - Baseline: `3bc5b4f1634d9883a789a0c2a0e6a266f72b77b2` (`main`, clean worktree).
 - Scope: runtime native functions, LSP protocol and analysis paths, input validation, resource bounds, security-sensitive streaming, CLI/release contracts, and representative persistence/integration boundaries.
-- Confirmed and fixed: 11 defects. Severity: 4 High, 6 Medium, 1 Low.
+- Confirmed and fixed: 13 defects. Severity: 6 High, 6 Medium, 1 Low.
 - Each admitted defect had a focused regression that failed before its production fix and passed afterward. The original baseline also passed `cargo fmt --check`, `cargo check`, and `cargo test` in an isolated detached worktree.
 - No confirmed defect remains unresolved. One externally visible behavior needs specification before implementation.
 
@@ -12,6 +12,7 @@ Implementation revisions:
 
 - `da26160`: native validation, allocation bounds, exact schema numerics, streaming redaction, regressions, and generated inventory refresh.
 - `cdd7a31`: LSP declaration/scope handling, rename preservation, UTF-16/source ranges, transport bounds, and regressions.
+- Final dependency commit: patched releases for the two actionable advisories found by the release audit.
 
 ## Repository Orientation
 
@@ -173,6 +174,28 @@ No unrelated baseline failure was present. The audit tests below were then intro
 - GREEN/backtest: focused schema regression passes fixed and fails baseline.
 - Residual risk: floating-point schema values retain IEEE-754 semantics, as represented by Kujo `float`.
 
+### 12. `anyhow` dependency included a published unsoundness advisory
+
+- Severity: **High** (dependency safety).
+- Contract: the release gate's advisory scan must not leave a patched, actionable unsoundness advisory in the shipped lockfile.
+- Minimal repro: run `cargo audit --ignore RUSTSEC-2023-0071`; baseline lockfile reports `RUSTSEC-2026-0190` for `anyhow 1.0.102`.
+- RED: advisory scan identifies unsound `Error::downcast_mut()` behavior and names patched `>=1.0.103`.
+- Root cause: `Cargo.lock` predated the patched point release.
+- Fix: update `anyhow` to `1.0.103`.
+- GREEN/backtest: the final JSON advisory scan contains no vulnerability entry or warning for `RUSTSEC-2026-0190`; baseline lockfile reports it.
+- Residual risk: dependency advisories are time-sensitive and must continue to run in CI/release workflows.
+
+### 13. MySQL's transitive LRU dependency included a use-after-free advisory
+
+- Severity: **High** (dependency safety).
+- Contract: optional runtime database features must not compile against a dependency version with a patched use-after-free advisory.
+- Minimal repro: run the advisory scan against baseline `mysql_async 0.36.2`, which selects `lru 0.16.4`.
+- RED: `cargo audit` reports `RUSTSEC-2026-0253` and names patched `lru >=0.18.2`.
+- Root cause: the `mysql_async 0.36` dependency line constrained LRU to the affected `0.16` family.
+- Fix: update `mysql_async` to `0.37`, selecting `mysql_common 0.37.3` and `lru 0.18.2`; compile all features.
+- GREEN/backtest: `cargo check --all-features` passes and the final JSON advisory scan contains no `RUSTSEC-2026-0253`; baseline reports it.
+- Residual risk: live MySQL interoperability was not exercised because no test database or credentials were provided.
+
 ## Rejected Hypotheses
 
 1. **Strict AI replay could fall through to live network.** Rejected: replay lookup precedes transport policy, and `ai_replay_hermeticity_contract` proves strict missing/matching cassette behavior without sockets.
@@ -202,6 +225,7 @@ No unrelated baseline failure was present. The audit tests below were then intro
 - Extended fuzzing beyond repository-defined smoke/contract gates.
 - Performance benchmark claims; correctness resource guardrails were exercised, but benchmark suites marked ignored were not promoted into release claims.
 - Native behavior on Linux and Windows; this run was on macOS, with cross-platform confidence delegated to repository CI.
+- Live MySQL protocol interoperability after the compatible client-library update; compile-time and repository contract coverage passed without external credentials.
 - Generated documentation and `examples/ssg/content/**`, except where referenced by contract tests.
 - End-to-end behavior inside every supported GUI editor; the JSON-RPC server and adapter contracts were tested directly.
 
