@@ -1,4 +1,5 @@
 use crate::lexer::{self, Token, TokenKind};
+use crate::lsp_references;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DefinitionKind {
@@ -33,51 +34,15 @@ pub fn find_definition(source: &str, line: usize, column: usize) -> Option<Defin
     let tokens = lexer::tokenize(source).ok()?;
     let identifier = identifier_at_cursor(&tokens, line, column)?;
     let definitions = collect_definitions(&tokens);
+    let resolved = lsp_references::find_references(source, line, column, true)
+        .into_iter()
+        .find(|reference| reference.is_definition)?;
 
-    let mut best_before_cursor: Option<DefinitionLocation> = None;
-    let mut best_any: Option<DefinitionLocation> = None;
-
-    for definition in definitions.into_iter().filter(|entry| entry.name == identifier) {
-        match &best_any {
-            Some(current) => {
-                if is_earlier(&definition, current) {
-                    best_any = Some(definition.clone());
-                }
-            }
-            None => {
-                best_any = Some(definition.clone());
-            }
-        }
-
-        if is_before_or_equal(&definition, line, column) {
-            match &best_before_cursor {
-                Some(current) => {
-                    if is_later(&definition, current) {
-                        best_before_cursor = Some(definition);
-                    }
-                }
-                None => {
-                    best_before_cursor = Some(definition);
-                }
-            }
-        }
-    }
-
-    best_before_cursor.or(best_any)
-}
-
-fn is_before_or_equal(location: &DefinitionLocation, line: usize, column: usize) -> bool {
-    location.line < line || (location.line == line && location.column <= column)
-}
-
-fn is_earlier(candidate: &DefinitionLocation, reference: &DefinitionLocation) -> bool {
-    candidate.line < reference.line
-        || (candidate.line == reference.line && candidate.column < reference.column)
-}
-
-fn is_later(candidate: &DefinitionLocation, reference: &DefinitionLocation) -> bool {
-    candidate.line > reference.line
-        || (candidate.line == reference.line && candidate.column > reference.column)
+    definitions.into_iter().find(|definition| {
+        definition.name == identifier
+            && definition.line == resolved.line
+            && definition.column == resolved.column
+    })
 }
 
 fn identifier_at_cursor(tokens: &[Token], line: usize, column: usize) -> Option<String> {
@@ -117,6 +82,8 @@ fn collect_definitions(tokens: &[Token]) -> Vec<DefinitionLocation> {
             collect_function_definition(tokens, index, &mut definitions);
         } else if is_keyword(tokens, index, "let") {
             collect_let_definition(tokens, index, &mut definitions);
+        } else if is_keyword(tokens, index, "mut") {
+            collect_mut_definition(tokens, index, &mut definitions);
         } else if is_keyword(tokens, index, "const") {
             collect_const_definition(tokens, index, &mut definitions);
         } else if is_keyword(tokens, index, "for") {
@@ -193,6 +160,18 @@ fn collect_let_definition(
     }
 
     if let Some(location) = identifier_definition(tokens, next_index, DefinitionKind::Variable) {
+        definitions.push(location);
+    }
+}
+
+fn collect_mut_definition(
+    tokens: &[Token],
+    mut_keyword_index: usize,
+    definitions: &mut Vec<DefinitionLocation>,
+) {
+    if let Some(location) =
+        identifier_definition(tokens, mut_keyword_index + 1, DefinitionKind::Variable)
+    {
         definitions.push(location);
     }
 }
@@ -290,6 +269,24 @@ mod tests {
     }
 
     #[test]
+    fn ignores_inner_scope_definition_after_scope_closes() {
+        let source = [
+            "let value := 1",
+            "func show() {",
+            "    let value := 2",
+            "    print(value)",
+            "}",
+            "print(value)",
+        ]
+        .join("\n");
+
+        let definition =
+            find_definition(&source, 6, 8).expect("expected outer variable definition");
+        assert_eq!(definition.line, 1);
+        assert_eq!(definition.column, 5);
+    }
+
+    #[test]
     fn resolves_parameter_definition_from_function_body_usage() {
         let source = ["func square(value) {", "    return value * value", "}"].join("\n");
 
@@ -299,6 +296,18 @@ mod tests {
         assert_eq!(definition.line, 1);
         assert_eq!(definition.column, 13);
         assert_eq!(definition.kind, DefinitionKind::Parameter);
+    }
+
+    #[test]
+    fn resolves_mutable_binding_definition() {
+        let source = ["mut counter := 0", "counter += 1", "print(counter)"].join("\n");
+
+        let definition =
+            find_definition(&source, 3, 8).expect("expected mutable binding definition");
+        assert_eq!(definition.name, "counter");
+        assert_eq!(definition.line, 1);
+        assert_eq!(definition.column, 5);
+        assert_eq!(definition.kind, DefinitionKind::Variable);
     }
 
     #[test]

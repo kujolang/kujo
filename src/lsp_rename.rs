@@ -85,11 +85,11 @@ fn validate_identifier(name: &str) -> Result<(), String> {
 
     let mut chars = name.chars();
     let first_char = chars.next().unwrap();
-    if !(first_char.is_ascii_alphabetic() || first_char == '_') {
+    if !(first_char.is_alphabetic() || first_char == '_') {
         return Err("New symbol name must start with a letter or underscore".to_string());
     }
 
-    if chars.any(|ch| !(ch.is_ascii_alphanumeric() || ch == '_')) {
+    if chars.any(|ch| !(ch.is_alphanumeric() || ch == '_')) {
         return Err(
             "New symbol name must contain only letters, numbers, or underscores".to_string()
         );
@@ -109,8 +109,24 @@ fn validate_identifier(name: &str) -> Result<(), String> {
 }
 
 fn apply_rename_edits(source: &str, edits: &[RenameEdit]) -> Result<String, String> {
-    let mut lines: Vec<Vec<char>> = source.lines().map(|line| line.chars().collect()).collect();
-    let line_had_trailing_newline = source.ends_with('\n');
+    let mut lines = Vec::new();
+    let mut line_endings = Vec::new();
+    for segment in source.split_inclusive('\n') {
+        if let Some(content) = segment.strip_suffix("\r\n") {
+            lines.push(content.chars().collect::<Vec<char>>());
+            line_endings.push("\r\n");
+        } else if let Some(content) = segment.strip_suffix('\n') {
+            lines.push(content.chars().collect::<Vec<char>>());
+            line_endings.push("\n");
+        } else {
+            lines.push(segment.chars().collect::<Vec<char>>());
+            line_endings.push("");
+        }
+    }
+    if source.is_empty() {
+        lines.push(Vec::new());
+        line_endings.push("");
+    }
 
     let mut grouped: Vec<(usize, Vec<&RenameEdit>)> = Vec::new();
     for edit in edits.iter() {
@@ -154,14 +170,10 @@ fn apply_rename_edits(source: &str, edits: &[RenameEdit]) -> Result<String, Stri
         }
     }
 
-    let mut result = lines
-        .into_iter()
-        .map(|chars| chars.into_iter().collect::<String>())
-        .collect::<Vec<String>>()
-        .join("\n");
-
-    if line_had_trailing_newline {
-        result.push('\n');
+    let mut result = String::with_capacity(source.len());
+    for (chars, ending) in lines.into_iter().zip(line_endings) {
+        result.extend(chars);
+        result.push_str(ending);
     }
 
     Ok(result)
@@ -214,6 +226,19 @@ mod tests {
     }
 
     #[test]
+    fn renames_mutable_binding_and_uses() {
+        let source = ["mut counter := 0", "counter += 1", "print(counter)", ""].join("\n");
+
+        let result =
+            rename_symbol(&source, 3, 8, "total").expect("expected mutable rename to succeed");
+
+        assert_eq!(result.edits.len(), 3);
+        assert!(result.updated_source.contains("mut total := 0"));
+        assert!(result.updated_source.contains("total += 1"));
+        assert!(result.updated_source.contains("print(total)"));
+    }
+
+    #[test]
     fn rejects_invalid_identifier_name() {
         let source = "let value := 1\nprint(value)\n";
         let error = rename_symbol(source, 1, 5, "123name").expect_err("expected invalid rename");
@@ -225,6 +250,24 @@ mod tests {
         let source = "let value := 1\nprint(value)\n";
         let error = rename_symbol(source, 1, 5, "if").expect_err("expected keyword rename error");
         assert!(error.contains("must not be a reserved keyword"));
+    }
+
+    #[test]
+    fn accepts_unicode_identifier_name_supported_by_lexer() {
+        let source = "let value := 1\nprint(value)\n";
+        let result =
+            rename_symbol(source, 2, 8, "café").expect("expected Unicode rename to succeed");
+
+        assert!(result.updated_source.contains("let café := 1"));
+        assert!(result.updated_source.contains("print(café)"));
+    }
+
+    #[test]
+    fn rename_preserves_crlf_line_endings() {
+        let source = "let value := 1\r\nprint(value)\r\n";
+        let result = rename_symbol(source, 2, 8, "total").expect("expected CRLF rename to succeed");
+
+        assert_eq!(result.updated_source, "let total := 1\r\nprint(total)\r\n");
     }
 
     #[test]

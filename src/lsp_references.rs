@@ -180,6 +180,13 @@ fn collect_symbol_declarations(
             );
         } else if is_keyword(tokens, token_index, "let") {
             collect_let_declaration(tokens, token_index, scope_before_token, &mut declarations);
+        } else if is_keyword(tokens, token_index, "mut") {
+            collect_single_identifier_declaration(
+                tokens,
+                token_index + 1,
+                scope_before_token,
+                &mut declarations,
+            );
         } else if is_keyword(tokens, token_index, "const") {
             collect_single_identifier_declaration(
                 tokens,
@@ -346,6 +353,10 @@ fn resolve_declaration_for_token(
     let mut best_visible_fallback: Option<SymbolDeclaration> = None;
 
     for declaration in declarations.iter().filter(|entry| entry.name == *symbol_name) {
+        if declaration.token_index == token_index {
+            return Some(declaration.clone());
+        }
+
         if !is_scope_visible(&declaration.scope_path, usage_scope) {
             continue;
         }
@@ -468,6 +479,19 @@ mod tests {
             .map(|location| (location.line, location.column, location.is_definition))
             .collect();
         assert_eq!(outer_positions, vec![(1, 5, true), (6, 7, false)]);
+    }
+
+    #[test]
+    fn parameter_references_include_the_signature_definition() {
+        let source = ["func greet(name) {", "    return name", "}"].join("\n");
+
+        let references = find_references(&source, 2, 12, true);
+        let positions: Vec<(usize, usize, bool)> = references
+            .iter()
+            .map(|location| (location.line, location.column, location.is_definition))
+            .collect();
+
+        assert_eq!(positions, vec![(1, 12, true), (2, 12, false)]);
     }
 
     #[test]

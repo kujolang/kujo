@@ -1,5 +1,5 @@
 use crate::formatter::{self, FormatterOptions};
-use crate::lexer::{self, TokenKind};
+use crate::lexer::{self, Token, TokenKind};
 use crate::lsp_code_actions;
 use crate::lsp_completion::{self, CompletionItemKind};
 use crate::lsp_definition;
@@ -13,6 +13,8 @@ use std::fs;
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::time::Instant;
+
+const MAX_LSP_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LspServerConfig {
@@ -177,17 +179,16 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let (line, column) = match request_position(params) {
-                    Some(value) => value,
-                    None => {
-                        return invalid_params_response(id, "Missing position");
-                    }
-                };
-
                 let source = match self.resolve_document_source(&uri) {
                     Ok(content) => content,
                     Err(message) => {
                         return invalid_params_response(id, &message);
+                    }
+                };
+                let (line, column) = match request_position(params, &source) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid position");
                     }
                 };
 
@@ -217,21 +218,24 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let (line, column) = match request_position(params) {
-                    Some(value) => value,
-                    None => {
-                        return invalid_params_response(id, "Missing position");
-                    }
-                };
-
                 let source = match self.resolve_document_source(&uri) {
                     Ok(content) => content,
                     Err(message) => {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let (line, column) = match request_position(params, &source) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid position");
+                    }
+                };
+                let line_index = Utf16LineIndex::new(&source);
 
                 let result = lsp_hover::hover(&source, line, column).map(|info| {
+                    let start_character = line_index.column(info.line, info.column);
+                    let end_character =
+                        line_index.column(info.line, info.column + info.symbol.chars().count());
                     json!({
                         "contents": {
                             "kind": "markdown",
@@ -240,11 +244,11 @@ impl LspServer {
                         "range": {
                             "start": {
                                 "line": zero_based(info.line),
-                                "character": zero_based(info.column),
+                                "character": start_character,
                             },
                             "end": {
                                 "line": zero_based(info.line),
-                                "character": zero_based(info.column + info.symbol.chars().count()),
+                                "character": end_character,
                             }
                         }
                     })
@@ -263,32 +267,35 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let (line, column) = match request_position(params) {
-                    Some(value) => value,
-                    None => {
-                        return invalid_params_response(id, "Missing position");
-                    }
-                };
-
                 let source = match self.resolve_document_source(&uri) {
                     Ok(content) => content,
                     Err(message) => {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let (line, column) = match request_position(params, &source) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid position");
+                    }
+                };
+                let line_index = Utf16LineIndex::new(&source);
 
                 let result = lsp_definition::find_definition(&source, line, column)
                     .map(|location| {
+                        let start_character = line_index.column(location.line, location.column);
+                        let end_character = line_index
+                            .column(location.line, location.column + location.name.chars().count());
                         json!({
                             "uri": uri,
                             "range": {
                                 "start": {
                                     "line": zero_based(location.line),
-                                    "character": zero_based(location.column),
+                                    "character": start_character,
                                 },
                                 "end": {
                                     "line": zero_based(location.line),
-                                    "character": zero_based(location.column + location.name.chars().count()),
+                                    "character": end_character,
                                 }
                             }
                         })
@@ -308,13 +315,6 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let (line, column) = match request_position(params) {
-                    Some(value) => value,
-                    None => {
-                        return invalid_params_response(id, "Missing position");
-                    }
-                };
-
                 let include_definition = params
                     .and_then(|value| value.get("context"))
                     .and_then(|value| value.get("includeDeclaration"))
@@ -327,23 +327,32 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let (line, column) = match request_position(params, &source) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid position");
+                    }
+                };
+                let line_index = Utf16LineIndex::new(&source);
 
                 let references =
                     lsp_references::find_references(&source, line, column, include_definition)
                         .into_iter()
                         .map(|reference| {
+                            let start_character =
+                                line_index.column(reference.line, reference.column);
+                            let end_character = line_index
+                                .column(reference.line, reference.column + reference.length);
                             json!({
                                 "uri": uri,
                                 "range": {
                                     "start": {
                                         "line": zero_based(reference.line),
-                                        "character": zero_based(reference.column),
+                                        "character": start_character,
                                     },
                                     "end": {
                                         "line": zero_based(reference.line),
-                                        "character": zero_based(
-                                            reference.column + reference.length
-                                        ),
+                                        "character": end_character,
                                     }
                                 }
                             })
@@ -363,12 +372,6 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let (line, column) = match request_position(params) {
-                    Some(value) => value,
-                    None => {
-                        return invalid_params_response(id, "Missing position");
-                    }
-                };
                 let new_name =
                     match params.and_then(|value| value.get("newName")).and_then(Value::as_str) {
                         Some(value) => value,
@@ -383,6 +386,12 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let (line, column) = match request_position(params, &source) {
+                    Some(value) => value,
+                    None => {
+                        return invalid_params_response(id, "Missing or invalid position");
+                    }
+                };
 
                 let rename_result = match lsp_rename::rename_symbol(&source, line, column, new_name)
                 {
@@ -391,20 +400,24 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let line_index = Utf16LineIndex::new(&source);
 
                 let edits = rename_result
                     .edits
                     .into_iter()
                     .map(|edit| {
+                        let start_character = line_index.column(edit.line, edit.column);
+                        let end_character = line_index
+                            .column(edit.line, edit.column + edit.old_name.chars().count());
                         json!({
                             "range": {
                                 "start": {
                                     "line": zero_based(edit.line),
-                                    "character": zero_based(edit.column),
+                                    "character": start_character,
                                 },
                                 "end": {
                                     "line": zero_based(edit.line),
-                                    "character": zero_based(edit.column + edit.old_name.chars().count()),
+                                    "character": end_character,
                                 }
                             },
                             "newText": edit.new_name,
@@ -435,11 +448,15 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let line_index = Utf16LineIndex::new(&source);
 
                 let actions = lsp_code_actions::code_actions(&source)
                     .into_iter()
                     .map(|action| {
                         let action_uri = uri.clone();
+                        let start_character = line_index.column(action.line, action.column);
+                        let end_character = line_index
+                            .column(action.line, action.column + action.replaced_characters);
                         json!({
                             "title": action.title,
                             "kind": "quickfix",
@@ -449,13 +466,11 @@ impl LspServer {
                                         "range": {
                                             "start": {
                                                 "line": zero_based(action.line),
-                                                "character": zero_based(action.column),
+                                                "character": start_character,
                                             },
                                             "end": {
                                                 "line": zero_based(action.line),
-                                                "character": zero_based(
-                                                    action.column + action.replaced_characters
-                                                ),
+                                                "character": end_character,
                                             }
                                         },
                                         "newText": action.replacement,
@@ -651,31 +666,35 @@ impl LspServer {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let line_index = Utf16LineIndex::new(&source);
 
                 let symbols = collect_document_symbols(&source)
                     .into_iter()
                     .map(|symbol| {
+                        let start_character = line_index.column(symbol.line, symbol.column);
+                        let end_character =
+                            line_index.column(symbol.line, symbol.column + symbol.length);
                         json!({
                             "name": symbol.name,
                             "kind": symbol.kind,
                             "range": {
                                 "start": {
                                     "line": zero_based(symbol.line),
-                                    "character": zero_based(symbol.column),
+                                    "character": start_character,
                                 },
                                 "end": {
                                     "line": zero_based(symbol.line),
-                                    "character": zero_based(symbol.column + symbol.length),
+                                    "character": end_character,
                                 }
                             },
                             "selectionRange": {
                                 "start": {
                                     "line": zero_based(symbol.line),
-                                    "character": zero_based(symbol.column),
+                                    "character": start_character,
                                 },
                                 "end": {
                                     "line": zero_based(symbol.line),
-                                    "character": zero_based(symbol.column + symbol.length),
+                                    "character": end_character,
                                 }
                             }
                         })
@@ -704,12 +723,16 @@ impl LspServer {
                         Some(content) => content,
                         None => continue,
                     };
+                    let line_index = Utf16LineIndex::new(source);
 
                     for symbol in collect_document_symbols(source).into_iter() {
                         if !query.is_empty() && !symbol.name.to_lowercase().contains(&query) {
                             continue;
                         }
 
+                        let start_character = line_index.column(symbol.line, symbol.column);
+                        let end_character =
+                            line_index.column(symbol.line, symbol.column + symbol.length);
                         symbols.push(json!({
                             "name": symbol.name,
                             "kind": symbol.kind,
@@ -718,11 +741,11 @@ impl LspServer {
                                 "range": {
                                     "start": {
                                         "line": zero_based(symbol.line),
-                                        "character": zero_based(symbol.column),
+                                        "character": start_character,
                                     },
                                     "end": {
                                         "line": zero_based(symbol.line),
-                                        "character": zero_based(symbol.column + symbol.length),
+                                        "character": end_character,
                                     }
                                 }
                             }
@@ -820,18 +843,21 @@ impl LspServer {
 
     fn publish_diagnostics_notification(&self, uri: &str) -> Value {
         let source = self.documents.get(uri).cloned().unwrap_or_else(String::new);
+        let line_index = Utf16LineIndex::new(&source);
         let diagnostics = lsp_diagnostics::diagnose(&source)
             .into_iter()
             .map(|diagnostic| {
+                let start_character = line_index.column(diagnostic.line, diagnostic.column);
+                let end_character = line_index.column(diagnostic.line, diagnostic.column + 1);
                 json!({
                     "range": {
                         "start": {
                             "line": zero_based(diagnostic.line),
-                            "character": zero_based(diagnostic.column),
+                            "character": start_character,
                         },
                         "end": {
                             "line": zero_based(diagnostic.line),
-                            "character": zero_based(diagnostic.column + 1),
+                            "character": end_character,
                         }
                     },
                     "severity": 1,
@@ -960,6 +986,15 @@ fn read_lsp_message<R: BufRead>(reader: &mut R) -> io::Result<Option<String>> {
             ));
         }
     };
+    if size > MAX_LSP_MESSAGE_BYTES {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!(
+                "LSP payload exceeds maximum message size ({} bytes > {} bytes)",
+                size, MAX_LSP_MESSAGE_BYTES
+            ),
+        ));
+    }
 
     let mut buffer = vec![0u8; size];
     reader.read_exact(&mut buffer)?;
@@ -985,17 +1020,51 @@ fn request_uri(params: Option<&Value>) -> Option<String> {
         .map(|value| value.to_string())
 }
 
-fn request_position(params: Option<&Value>) -> Option<(usize, usize)> {
+fn request_position(params: Option<&Value>, source: &str) -> Option<(usize, usize)> {
     let line = params
         .and_then(|value| value.get("position"))
         .and_then(|value| value.get("line"))
         .and_then(Value::as_u64)? as usize;
-    let column = params
+    let utf16_column = params
         .and_then(|value| value.get("position"))
         .and_then(|value| value.get("character"))
         .and_then(Value::as_u64)? as usize;
 
+    let column = utf16_column_to_char_column(source, line, utf16_column)?;
     Some((line + 1, column + 1))
+}
+
+fn utf16_column_to_char_column(source: &str, line: usize, utf16_column: usize) -> Option<usize> {
+    let raw_content = source.split('\n').nth(line)?;
+    let content = raw_content.strip_suffix('\r').unwrap_or(raw_content);
+    let mut utf16_offset = 0usize;
+    let mut char_column = 0usize;
+    for character in content.chars() {
+        if utf16_offset == utf16_column {
+            return Some(char_column);
+        }
+        utf16_offset = utf16_offset.saturating_add(character.len_utf16());
+        if utf16_offset > utf16_column {
+            return None;
+        }
+        char_column += 1;
+    }
+    (utf16_offset == utf16_column).then_some(char_column)
+}
+
+struct Utf16LineIndex<'a> {
+    lines: Vec<&'a str>,
+}
+
+impl<'a> Utf16LineIndex<'a> {
+    fn new(source: &'a str) -> Self {
+        Self { lines: source.split('\n').collect() }
+    }
+
+    fn column(&self, line: usize, column: usize) -> usize {
+        let content = self.lines.get(line.saturating_sub(1)).copied().unwrap_or("");
+        content.chars().take(column.saturating_sub(1)).map(char::len_utf16).sum()
+    }
 }
 
 type LspRange = ((usize, usize), (usize, usize));
@@ -1032,13 +1101,17 @@ fn source_byte_offset(source: &str, position: (usize, usize)) -> Option<usize> {
     for (line_number, segment) in source.split('\n').enumerate() {
         if line_number == target_line {
             let content = segment.strip_suffix('\r').unwrap_or(segment);
-            if target_character == content.chars().count() {
-                return Some(line_start + content.len());
+            let mut utf16_offset = 0usize;
+            for (byte_index, character) in content.char_indices() {
+                if utf16_offset == target_character {
+                    return Some(line_start + byte_index);
+                }
+                utf16_offset = utf16_offset.saturating_add(character.len_utf16());
+                if utf16_offset > target_character {
+                    return None;
+                }
             }
-            return content
-                .char_indices()
-                .nth(target_character)
-                .map(|(byte_index, _)| line_start + byte_index);
+            return (utf16_offset == target_character).then_some(line_start + content.len());
         }
         line_start = line_start.saturating_add(segment.len()).saturating_add(1);
     }
@@ -1122,7 +1195,7 @@ fn source_end_position(source: &str) -> (usize, usize) {
 
     let end_line = source.bytes().filter(|byte| *byte == b'\n').count();
     let final_line = source.rsplit_once('\n').map_or(source, |(_, tail)| tail);
-    let end_character = final_line.chars().count();
+    let end_character = final_line.encode_utf16().count();
     (end_line, end_character)
 }
 
@@ -1153,7 +1226,9 @@ fn collect_document_symbols(source: &str) -> Vec<SymbolEntry> {
                     }
                 }
             }
-            TokenKind::Keyword(keyword) if keyword == "let" || keyword == "const" => {
+            TokenKind::Keyword(keyword)
+                if keyword == "let" || keyword == "mut" || keyword == "const" =>
+            {
                 let mut name_index = index + 1;
                 if keyword == "let" {
                     if let Some(next_token) = tokens.get(name_index) {
@@ -1201,36 +1276,54 @@ fn token_type_index(kind: &TokenKind) -> Option<u32> {
     }
 }
 
-fn token_length(kind: &TokenKind) -> usize {
-    match kind {
+fn token_source_span(source: &str, token: &Token) -> Option<(usize, usize)> {
+    let tail = source.get(token.byte_offset..)?;
+    let raw = match &token.kind {
         TokenKind::Identifier(name) | TokenKind::Keyword(name) | TokenKind::Operator(name) => {
-            name.chars().count()
+            tail.get(..name.len())?
         }
-        TokenKind::String(text) => text.chars().count().saturating_add(2),
-        TokenKind::InterpolatedString(parts) => {
-            let content_len: usize = parts
-                .iter()
-                .map(|part| match part {
-                    lexer::InterpolatedPart::Text(text) => text.chars().count(),
-                    lexer::InterpolatedPart::Expression(expr) => {
-                        expr.chars().count().saturating_add(3)
-                    }
-                })
-                .sum();
-            content_len.saturating_add(2)
-        }
-        TokenKind::Int(value) => value.to_string().chars().count(),
-        TokenKind::Float(value) => value.to_string().chars().count(),
-        TokenKind::Bool(value) => {
-            if *value {
-                4
-            } else {
-                5
+        TokenKind::String(_) | TokenKind::InterpolatedString(_) => {
+            let mut escaped = false;
+            let mut end = None;
+            for (index, character) in tail.char_indices().skip(1) {
+                if escaped {
+                    escaped = false;
+                    continue;
+                }
+                if character == '\\' {
+                    escaped = true;
+                    continue;
+                }
+                if character == '"' {
+                    end = Some(index + character.len_utf8());
+                    break;
+                }
             }
+            tail.get(..end?)?
         }
-        TokenKind::Punctuation(_) => 1,
-        TokenKind::Eof => 0,
-    }
+        TokenKind::Int(_) | TokenKind::Float(_) => {
+            let bytes = tail.as_bytes();
+            let mut byte_len = bytes.iter().take_while(|byte| byte.is_ascii_digit()).count();
+            if bytes.get(byte_len) == Some(&b'.')
+                && bytes.get(byte_len + 1).is_some_and(u8::is_ascii_digit)
+            {
+                byte_len += 1;
+                byte_len +=
+                    bytes[byte_len..].iter().take_while(|byte| byte.is_ascii_digit()).count();
+            }
+            tail.get(..byte_len)?
+        }
+        TokenKind::Bool(value) => {
+            let text = if *value { "true" } else { "false" };
+            tail.get(..text.len())?
+        }
+        TokenKind::Punctuation(character) => tail.get(..character.len_utf8())?,
+        TokenKind::Eof => return None,
+    };
+
+    let line_start = source[..token.byte_offset].rfind('\n').map_or(0, |index| index + 1);
+    let start = source[line_start..token.byte_offset].encode_utf16().count();
+    Some((start, raw.encode_utf16().count()))
 }
 
 fn collect_semantic_token_data(source: &str) -> Vec<u32> {
@@ -1248,14 +1341,14 @@ fn collect_semantic_token_data(source: &str) -> Vec<u32> {
         let Some(token_type) = token_type_index(&token.kind) else {
             continue;
         };
-        let length = token_length(&token.kind);
+        let Some((start_zero, length)) = token_source_span(source, token) else {
+            continue;
+        };
         if length == 0 {
             continue;
         }
 
-        let start_one_based = token.column.saturating_sub(length).max(1);
         let line_zero = zero_based(token.line);
-        let start_zero = zero_based(start_one_based);
 
         let (delta_line, delta_start) = if !emitted_any {
             (line_zero, start_zero)
@@ -1297,13 +1390,18 @@ fn collect_inlay_hints(source: &str) -> Vec<Value> {
         Ok(tokens) => tokens,
         Err(_) => return Vec::new(),
     };
+    let line_index = Utf16LineIndex::new(source);
 
     let mut hints = Vec::new();
     let mut index = 0usize;
     while index < tokens.len() {
         let token = &tokens[index];
         let keyword = match &token.kind {
-            TokenKind::Keyword(keyword) if keyword == "let" || keyword == "const" => keyword,
+            TokenKind::Keyword(keyword)
+                if keyword == "let" || keyword == "mut" || keyword == "const" =>
+            {
+                keyword
+            }
             _ => {
                 index += 1;
                 continue;
@@ -1354,7 +1452,7 @@ fn collect_inlay_hints(source: &str) -> Vec<Value> {
         hints.push(json!({
             "position": {
                 "line": zero_based(name_token.line),
-                "character": zero_based(name_token.column),
+                "character": line_index.column(name_token.line, name_token.column),
             },
             "label": format!(": {}", type_label),
             "kind": 1
@@ -1367,19 +1465,22 @@ fn collect_inlay_hints(source: &str) -> Vec<Value> {
 }
 
 fn collect_code_lenses(source: &str) -> Vec<Value> {
+    let line_index = Utf16LineIndex::new(source);
     collect_document_symbols(source)
         .into_iter()
         .filter(|symbol| symbol.kind == 12)
         .map(|symbol| {
+            let start_character = line_index.column(symbol.line, symbol.column);
+            let end_character = line_index.column(symbol.line, symbol.column + symbol.length);
             json!({
                 "range": {
                     "start": {
                         "line": zero_based(symbol.line),
-                        "character": zero_based(symbol.column),
+                        "character": start_character,
                     },
                     "end": {
                         "line": zero_based(symbol.line),
-                        "character": zero_based(symbol.column + symbol.length),
+                        "character": end_character,
                     }
                 },
                 "command": {
@@ -1442,7 +1543,10 @@ fn request_id_key(id: &Value) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{read_lsp_message, source_end_position, LspServer, LspServerConfig};
+    use super::{
+        collect_document_symbols, collect_inlay_hints, read_lsp_message, source_end_position,
+        LspServer, LspServerConfig,
+    };
     use rand::Rng;
     use serde_json::{json, Value};
     use std::io::Cursor;
@@ -1691,6 +1795,40 @@ mod tests {
     }
 
     #[test]
+    fn reference_positions_use_lsp_utf16_code_units() {
+        let mut server = LspServer::new(LspServerConfig::default());
+        let uri = "file:///tmp/reference_utf16.kujo";
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "method": "textDocument/didOpen",
+            "params": {
+                "textDocument": {
+                    "uri": uri,
+                    "text": "let x := 1\nprint(\"😀\", x)\n"
+                }
+            }
+        }));
+
+        let response = server.process_message(&json!({
+            "jsonrpc": "2.0",
+            "id": 421,
+            "method": "textDocument/references",
+            "params": {
+                "textDocument": { "uri": uri },
+                "position": { "line": 1, "character": 12 },
+                "context": { "includeDeclaration": true }
+            }
+        }));
+
+        let references = response[0]["result"].as_array().expect("expected references");
+        assert_eq!(references.len(), 2);
+        assert!(references.iter().any(|reference| {
+            reference["range"]["start"] == json!({"line": 1, "character": 12})
+                && reference["range"]["end"] == json!({"line": 1, "character": 13})
+        }));
+    }
+
+    #[test]
     fn insertion_code_actions_use_zero_width_ranges() {
         let mut server = LspServer::new(LspServerConfig::default());
         let uri = "file:///tmp/code_action_insert.kujo";
@@ -1783,6 +1921,35 @@ mod tests {
         assert!(symbols
             .iter()
             .any(|symbol| { symbol.get("name").and_then(Value::as_str) == Some("value") }));
+    }
+
+    #[test]
+    fn mutable_bindings_have_document_symbols_and_inlay_hints() {
+        let source = "mut counter := 0\n";
+
+        let symbols = collect_document_symbols(source);
+        assert!(symbols.iter().any(|symbol| symbol.name == "counter"));
+
+        let hints = collect_inlay_hints(source);
+        assert_eq!(hints.len(), 1);
+        assert_eq!(hints[0]["label"], json!(": int"));
+    }
+
+    #[test]
+    fn semantic_tokens_preserve_non_identifier_source_ranges() {
+        let encoded = super::collect_semantic_token_data("let message := \"hi\"\n");
+        let mut line = 0u32;
+        let mut start = 0u32;
+        let mut string_range = None;
+        for token in encoded.chunks_exact(5) {
+            line += token[0];
+            start = if token[0] == 0 { start + token[1] } else { token[1] };
+            if token[3] == 18 {
+                string_range = Some((line, start, token[2]));
+            }
+        }
+
+        assert_eq!(string_range, Some((0, 15, 4)));
     }
 
     #[test]
@@ -1943,6 +2110,16 @@ mod tests {
             .expect("lowercase header should be accepted")
             .expect("message should be present");
         assert_eq!(decoded, payload);
+    }
+
+    #[test]
+    fn transport_rejects_oversized_content_length_without_allocating() {
+        let framed = format!("Content-Length: {}\r\n\r\n", usize::MAX);
+        let mut reader = Cursor::new(framed.into_bytes());
+
+        let error = read_lsp_message(&mut reader).expect_err("oversized payload should fail");
+        assert_eq!(error.kind(), std::io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("maximum"));
     }
 
     #[test]
