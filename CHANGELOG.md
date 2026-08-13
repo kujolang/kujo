@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add stable `encode_uri_component(text)` RFC 3986 UTF-8 percent encoding for provider and web integrations.
+- Add bounded, streaming `jsonl_query(path, options)` filtering and constant-memory join support for Kujo-native evidence workflows.
+- Accept standard JSON Schema Draft 2020-12 identification and annotation keywords in `json_schema_validate`, including `$schema`, `$id`, `$comment`, `format`, `deprecated`, `readOnly`, and `writeOnly`.
+
 ### Fixed
 
 - Preserve exact integer comparisons in `json_schema_validate` beyond the IEEE-754 safe-integer range.
@@ -18,17 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use the LSP-required UTF-16 code-unit coordinate system for incoming positions and outgoing ranges, including semantic tokens.
 - Reject LSP messages larger than 8 MiB before allocating their payload buffer.
 - Update transitive database and error-handling dependencies to patched releases for `RUSTSEC-2026-0190` and `RUSTSEC-2026-0253`.
-
-## [1.0.2] - 2026-08-12
-
-### Added
-
-- Add stable `encode_uri_component(text)` RFC 3986 UTF-8 percent encoding for provider and web integrations.
-- Add bounded, streaming `jsonl_query(path, options)` filtering and constant-memory join support for Kujo-native evidence workflows.
-- Accept standard JSON Schema Draft 2020-12 identification and annotation keywords in `json_schema_validate`, including `$schema`, `$id`, `$comment`, `format`, `deprecated`, `readOnly`, and `writeOnly`.
-
-### Fixed
-
 - Recognize fallible calls inside multiline `try` blocks in `kujo lint` instead of reporting false missing-error-handling warnings.
 - Preserve outer-block indentation after formatting a nested closing brace.
 - Ignore braces inside strings and comments when computing formatter indentation.

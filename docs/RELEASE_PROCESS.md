@@ -1,7 +1,7 @@
 # Kujo Release Process
 
 Current active line: `1.0.x`
-Current release state: `v1.0.2` is the stable public release; the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
+Current release state: `v1.0.1` is the stable public release; the source tree is preparing `1.0.2`, and the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.
@@ -226,9 +226,7 @@ cd ../..
 
 1. Set `[package].version` in `Cargo.toml`.
 2. Create/complete the target release section in `CHANGELOG.md`.
-3. Update release-status strings in:
-   - `README.md`
-   - `ROADMAP.md`
+3. Keep public stable-release strings in `README.md`, `ROADMAP.md`, and core policy docs pinned to the latest published GitHub release. A Cargo version bump prepares the next release; it does not publish it.
 4. Re-run release-state guard:
 
 ```bash
@@ -278,6 +276,8 @@ cargo publish
 4. Publish GitHub release artifacts (Linux/macOS/Windows binaries + checksums) via release workflows.
 
 5. Run published-artifact smoke validation and record outcomes.
+
+6. After publication and artifact smoke validation succeed, update public stable-release strings to the new tag and re-run `bash .github/scripts/check-release-state.sh`.
 
 ## 9. Dry-Run Workflow (No Tag / No Publish)
 

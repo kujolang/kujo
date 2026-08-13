@@ -10,7 +10,7 @@ This document defines the stable Kujo language and tooling compatibility contrac
 
 This specification describes the stable Kujo `v1.0.0` language contract. Explicit deferrals and non-goals remain documented in `docs/V1_SCOPE.md` and `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
-Release boundary: Kujo `v1.0.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.0.1` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 It is normative for:
 
