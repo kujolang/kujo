@@ -1,7 +1,7 @@
 # Standard Library Inventory
 
 Status: stable v1.0.0 inventory
-Last updated: 2026-06-09
+Last updated: 2026-08-12
 
 This inventory is the canonical support table for runtime-native functions registered by `Interpreter::get_builtin_names()` in `src/interpreter/mod.rs`.
 
@@ -149,7 +149,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `split` | `split(value, delimiter)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := split(...)` |
 | `join` | `join(values, separator)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := join(...)` |
 | `ssg_render_pages` | `ssg_render_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := ssg_render_pages(...)` |
-| `ssg_build_output_paths` | `ssg_build_output_paths(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := ssg_build_output_paths(...)` |
+| `ssg_build_output_paths` | `ssg_build_output_paths(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation or when the requested count exceeds the generated-sequence limit; capability-denied when gated. | `none` | `result := ssg_build_output_paths(...)` |
 | `ssg_render_and_write_pages` | `ssg_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := ssg_render_and_write_pages(...)` |
 | `ssg_read_render_and_write_pages` | `ssg_read_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := ssg_read_render_and_write_pages(...)` |
 | `starts_with` | `starts_with(value, prefix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := starts_with(...)` |
@@ -243,7 +243,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `append_file` | `append_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := append_file(...)` |
 | `file_exists` | `file_exists(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := file_exists(...)` |
 | `read_lines` | `read_lines(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_lines(...)` |
-| `jsonl_query` | `jsonl_query(path, options)` | exact 2 | array | Streams JSONL with bounded `max_rows`, optional dotted-field equality filtering, and optional constant-memory nested joins. Lines are capped at 1 MiB and invalid records fail closed. | `filesystem-read` | `rows := jsonl_query("evidence.jsonl", {"filter_field": "provider", "filter_equals": "crux", "max_rows": 100})` |
+| `jsonl_query` | `jsonl_query(path, options)` | exact 2 | array | Streams JSONL with bounded `max_rows`, optional dotted-field equality filtering, and optional constant-memory nested joins. Join options `join_path`, `left_field`, and `right_field` must be supplied together. Lines are capped at 1 MiB and invalid records fail closed. | `filesystem-read` | `rows := jsonl_query("evidence.jsonl", {"filter_field": "provider", "filter_equals": "crux", "max_rows": 100})` |
 | `list_dir` | `list_dir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := list_dir(...)` |
 | `create_dir` | `create_dir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := create_dir(...)` |
 | `file_size` | `file_size(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := file_size(...)` |
@@ -266,7 +266,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>1,048,576 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
 | `to_json` | `to_json(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json({"ok": true})` |
 | `to_json_pretty` | `to_json_pretty(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json_pretty({"ok": true})` |
-| `json_schema_validate` | `json_schema_validate(value, schema)` | exact 2 | dict | Value::Error on invalid args/types, malformed or unsupported schema keywords, invalid regex patterns, unsupported `$ref`, or resource-limit violations. Otherwise returns `{valid, errors}` with JSON-pointer-like paths. | `none` | `result := json_schema_validate({"name":"Kujo"}, {"type":"object","required":["name"]})` |
+| `json_schema_validate` | `json_schema_validate(value, schema)` | exact 2 | dict | Value::Error on invalid args/types, malformed or unsupported schema keywords, invalid regex patterns, unsupported `$ref`, or resource-limit violations. Integer bounds are compared without converting them through floating point. Otherwise returns `{valid, errors}` with JSON-pointer-like paths. | `none` | `result := json_schema_validate({"name":"Kujo"}, {"type":"object","required":["name"]})` |
 | `parse_toml` | `parse_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_toml(...)` |
 | `to_toml` | `to_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_toml(...)` |
 | `parse_yaml` | `parse_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_yaml(...)` |
@@ -447,7 +447,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `rsa_decrypt` | `rsa_decrypt(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_decrypt(...)` |
 | `rsa_sign` | `rsa_sign(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_sign(...)` |
 | `rsa_verify` | `rsa_verify(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := rsa_verify(...)` |
-| `spawn_process` | `spawn_process(argv: array<string>, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on empty/non-string argv, invalid options, or spawn/wait/read failure. Options include bounded output, stream channel/file sinks, redaction, and cancellation; defaults are 30s timeout, 1 MiB per-stream output, and 16 MiB maximum per stream. | `process-exec` | `result := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
+| `spawn_process` | `spawn_process(argv: array<string>, options?: dict) -> ProcessResult` | handler-defined | `ProcessResult` | Runtime error on empty/non-string argv, invalid options, or spawn/wait/read failure. Options include bounded output, stream channel/file sinks, cross-chunk secret redaction, and cancellation; defaults are 30s timeout, 1 MiB per-stream output, and 16 MiB maximum per stream. | `process-exec` | `result := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
 | `pipe_commands` | `pipe_commands(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := pipe_commands(...)` |
 | `tcp_listen` | `tcp_listen(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_listen(...)` |
 | `tcp_accept` | `tcp_accept(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_accept(...)` |

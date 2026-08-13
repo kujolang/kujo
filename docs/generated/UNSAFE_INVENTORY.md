@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-08-07
+Generated: 2026-08-12
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
@@ -15,8 +15,8 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | Path | Line | Kind | Classification | Text |
 | --- | ---: | --- | --- | --- |
 | src/interpreter/native_functions/system.rs | 83 | executable | src_executable_other |         unsafe { |
-| src/interpreter/native_functions/system.rs | 575 | executable | src_executable_other |     unsafe { |
-| src/interpreter/native_functions/system.rs | 592 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
+| src/interpreter/native_functions/system.rs | 578 | executable | src_executable_other |     unsafe { |
+| src/interpreter/native_functions/system.rs | 595 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
 | src/jit.rs | 61 | executable | jit_executable |     let vm_ctx = unsafe { &mut *ctx }; |
 | src/jit.rs | 78 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
 | src/jit.rs | 89 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |

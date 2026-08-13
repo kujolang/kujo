@@ -1175,7 +1175,17 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
                 };
 
                 let file_count = match args.get(1) {
-                    Some(Value::Int(n)) if *n >= 0 => *n as usize,
+                    Some(Value::Int(n)) if *n >= 0 => {
+                        let count = usize::try_from(*n).unwrap_or(usize::MAX);
+                        if count > runtime_limits::MAX_GENERATED_SEQUENCE_ITEMS {
+                            return Some(Value::Error(format!(
+                                "ssg_build_output_paths() would generate {} items, exceeding maximum generated sequence length {}",
+                                n,
+                                runtime_limits::MAX_GENERATED_SEQUENCE_ITEMS
+                            )));
+                        }
+                        count
+                    }
                     Some(Value::Int(n)) => {
                         return Some(Value::Error(format!(
                             "ssg_build_output_paths() file_count must be >= 0, got {}",
@@ -1506,6 +1516,13 @@ mod tests {
             handle("ssg_build_output_paths", &[str_value("tmp/out"), str_value("2")]).unwrap();
         assert!(
             matches!(bad_count_type, Value::Error(message) if message.contains("file_count must be an integer"))
+        );
+
+        let oversized_count =
+            handle("ssg_build_output_paths", &[str_value("tmp/out"), Value::Int(i64::MAX)])
+                .unwrap();
+        assert!(
+            matches!(oversized_count, Value::Error(message) if message.contains("maximum generated sequence length"))
         );
 
         let bad_extension =

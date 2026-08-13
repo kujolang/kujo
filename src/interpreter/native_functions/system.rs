@@ -321,7 +321,6 @@ fn apply_env_policy(command: &mut Command, options: &ProcessExecOptions) {
 struct StreamingRedactor {
     secrets: Vec<Vec<u8>>,
     pending: Vec<u8>,
-    hold_bytes: usize,
 }
 
 impl StreamingRedactor {
@@ -332,27 +331,7 @@ impl StreamingRedactor {
             .map(|value| value.as_bytes().to_vec())
             .collect();
         secrets.sort_by_key(|value| std::cmp::Reverse(value.len()));
-        // Retain enough context on both sides of a chunk boundary to avoid
-        // flushing the prefix of a secret before the remaining suffix arrives.
-        let hold_bytes = secrets.first().map_or(0, |value| value.len().saturating_mul(2));
-        Self { secrets, pending: Vec::new(), hold_bytes }
-    }
-
-    fn redact(&self, bytes: &[u8]) -> Vec<u8> {
-        self.secrets.iter().fold(bytes.to_vec(), |output, secret| {
-            let mut redacted = Vec::with_capacity(output.len());
-            let mut cursor = 0;
-            while cursor < output.len() {
-                if output[cursor..].starts_with(secret) {
-                    redacted.extend_from_slice(b"[REDACTED]");
-                    cursor += secret.len();
-                } else {
-                    redacted.push(output[cursor]);
-                    cursor += 1;
-                }
-            }
-            redacted
-        })
+        Self { secrets, pending: Vec::new() }
     }
 
     fn push(&mut self, bytes: &[u8]) -> Vec<u8> {
@@ -360,21 +339,45 @@ impl StreamingRedactor {
             return bytes.to_vec();
         }
         self.pending.extend_from_slice(bytes);
-        if self.pending.len() <= self.hold_bytes {
-            return Vec::new();
+        self.drain_ready(false)
+    }
+
+    fn drain_ready(&mut self, finishing: bool) -> Vec<u8> {
+        let mut output = Vec::new();
+        let mut cursor = 0usize;
+        while cursor < self.pending.len() {
+            let remaining = &self.pending[cursor..];
+            let has_incomplete_match = !finishing
+                && self
+                    .secrets
+                    .iter()
+                    .any(|secret| remaining.len() < secret.len() && secret.starts_with(remaining));
+            if has_incomplete_match {
+                break;
+            }
+            if let Some(secret) = self.secrets.iter().find(|secret| remaining.starts_with(secret)) {
+                output.extend_from_slice(b"[REDACTED]");
+                cursor += secret.len();
+            } else {
+                output.push(remaining[0]);
+                cursor += 1;
+            }
         }
-        let split_at = self.pending.len() - self.hold_bytes;
-        let prefix = self.pending[..split_at].to_vec();
-        self.pending = self.pending[split_at..].to_vec();
-        self.redact(&prefix)
+        self.pending.drain(..cursor);
+
+        if !finishing {
+            if let Err(error) = std::str::from_utf8(&output) {
+                if error.error_len().is_none() {
+                    let incomplete = output.split_off(error.valid_up_to());
+                    self.pending.splice(0..0, incomplete);
+                }
+            }
+        }
+        output
     }
 
     fn finish(&mut self) -> Vec<u8> {
-        if self.pending.is_empty() {
-            return Vec::new();
-        }
-        let pending = std::mem::take(&mut self.pending);
-        self.redact(&pending)
+        self.drain_ready(true)
     }
 }
 
@@ -2059,6 +2062,18 @@ mod tests {
         output.extend(redactor.push("密-suffix-😀".as_bytes()));
         output.extend(redactor.finish());
         assert_eq!(String::from_utf8(output).unwrap(), "prefix-[REDACTED]-suffix-😀");
+    }
+
+    #[test]
+    fn test_streaming_redactor_does_not_flush_partial_secret_prefix() {
+        let mut redactor = StreamingRedactor::new(&["secret".to_string()]);
+        let mut output =
+            redactor.push(format!("{}secret{}", "A".repeat(16), "B".repeat(8)).as_bytes());
+        output.extend(redactor.finish());
+
+        let rendered = String::from_utf8(output).expect("redacted output should remain UTF-8");
+        assert!(!rendered.contains("secret"));
+        assert_eq!(rendered, format!("{}[REDACTED]{}", "A".repeat(16), "B".repeat(8)));
     }
 
     #[cfg(unix)]

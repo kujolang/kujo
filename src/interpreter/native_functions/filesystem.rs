@@ -169,7 +169,11 @@ fn jsonl_query(path: &str, options: &DictMap) -> Result<Value, String> {
     let join_path = option_string(options, "join_path", "")?;
     let left_field = option_string(options, "left_field", "")?;
     let right_field = option_string(options, "right_field", "")?;
-    if join_path.is_empty() != (left_field.is_empty() && right_field.is_empty()) {
+    let join_parts_present =
+        [!join_path.is_empty(), !left_field.is_empty(), !right_field.is_empty()];
+    if join_parts_present.iter().any(|present| *present)
+        && !join_parts_present.iter().all(|present| *present)
+    {
         return Err(
             "jsonl_query joins require join_path, left_field, and right_field together".to_string()
         );

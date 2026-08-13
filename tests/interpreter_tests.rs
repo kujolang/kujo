@@ -114,6 +114,37 @@ fn test_jsonl_query_streams_filters_and_joins_with_bounds() {
 }
 
 #[test]
+fn test_jsonl_query_rejects_partial_join_configuration() {
+    let directory = std::env::temp_dir()
+        .join(format!("kujo-jsonl-query-partial-join-{}", unique_shared_key("fixture")));
+    std::fs::create_dir_all(&directory).expect("temp directory should be created");
+    let left = directory.join("left.jsonl");
+    let right = directory.join("right.jsonl");
+    std::fs::write(&left, "{\"id\":1}\n").expect("left fixture should be written");
+    std::fs::write(&right, "{\"id\":1}\n").expect("right fixture should be written");
+    for (name, options) in
+        [("missing_left", r#""right_field": "id""#), ("missing_right", r#""left_field": "id""#)]
+    {
+        let source = format!(
+            r#"{name} := jsonl_query({0:?}, {{"join_path": {1:?}, {options}}})"#,
+            left.to_string_lossy(),
+            right.to_string_lossy()
+        );
+        let interpreter = run_code(&source);
+        assert!(
+            matches!(
+                interpreter.env.get(name),
+                Some(Value::Error(message))
+                    if message.contains("join_path, left_field, and right_field together")
+            ),
+            "{name} should reject a partial join configuration, got {:?}",
+            interpreter.env.get(name)
+        );
+    }
+    std::fs::remove_dir_all(directory).expect("temp directory should be removed");
+}
+
+#[test]
 fn test_builtin_names_include_release_hardening_contract_entries() {
     let builtins: HashSet<&str> = Interpreter::get_builtin_names().into_iter().collect();
 

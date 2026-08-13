@@ -4,6 +4,7 @@
 
 use crate::interpreter::{DictMap, Value};
 use regex::Regex;
+use std::cmp::Ordering;
 use std::sync::Arc;
 
 const MAX_SCHEMA_DEPTH: usize = 64;
@@ -52,6 +53,21 @@ struct ValidationError {
     path: String,
     message: String,
     keyword: String,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum NumericValue {
+    Int(i64),
+    Float(f64),
+}
+
+impl std::fmt::Display for NumericValue {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Int(value) => value.fmt(formatter),
+            Self::Float(value) => value.fmt(formatter),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -255,14 +271,14 @@ fn validate_number_keywords(
 
     if let Some(minimum) = get_key(schema, "minimum") {
         let minimum = numeric_schema_value(minimum, "minimum")?;
-        if number < minimum {
+        if compare_numeric(number, minimum) == Ordering::Less {
             push_error(errors, instance_path, "minimum", &format!("number is less than {minimum}"));
         }
     }
 
     if let Some(maximum) = get_key(schema, "maximum") {
         let maximum = numeric_schema_value(maximum, "maximum")?;
-        if number > maximum {
+        if compare_numeric(number, maximum) == Ordering::Greater {
             push_error(
                 errors,
                 instance_path,
@@ -274,7 +290,7 @@ fn validate_number_keywords(
 
     if let Some(minimum) = get_key(schema, "exclusiveMinimum") {
         let minimum = numeric_schema_value(minimum, "exclusiveMinimum")?;
-        if number <= minimum {
+        if compare_numeric(number, minimum) != Ordering::Greater {
             push_error(
                 errors,
                 instance_path,
@@ -286,7 +302,7 @@ fn validate_number_keywords(
 
     if let Some(maximum) = get_key(schema, "exclusiveMaximum") {
         let maximum = numeric_schema_value(maximum, "exclusiveMaximum")?;
-        if number >= maximum {
+        if compare_numeric(number, maximum) != Ordering::Less {
             push_error(
                 errors,
                 instance_path,
@@ -682,15 +698,46 @@ fn is_supported_type_name(name: &str) -> bool {
     matches!(name, "null" | "boolean" | "object" | "array" | "number" | "integer" | "string")
 }
 
-fn numeric_value(value: &Value) -> Option<f64> {
+fn numeric_value(value: &Value) -> Option<NumericValue> {
     match value {
-        Value::Int(n) => Some(*n as f64),
-        Value::Float(n) if n.is_finite() => Some(*n),
+        Value::Int(n) => Some(NumericValue::Int(*n)),
+        Value::Float(n) if n.is_finite() => Some(NumericValue::Float(*n)),
         _ => None,
     }
 }
 
-fn numeric_schema_value(value: &Value, keyword: &str) -> Result<f64, String> {
+fn compare_int_float(integer: i64, float: f64) -> Ordering {
+    const I64_UPPER_EXCLUSIVE_AS_F64: f64 = 9_223_372_036_854_775_808.0;
+    const I64_MIN_AS_F64: f64 = -9_223_372_036_854_775_808.0;
+    if float >= I64_UPPER_EXCLUSIVE_AS_F64 {
+        return Ordering::Less;
+    }
+    if float < I64_MIN_AS_F64 {
+        return Ordering::Greater;
+    }
+
+    let truncated = float.trunc() as i64;
+    match integer.cmp(&truncated) {
+        Ordering::Equal if float.fract() > 0.0 => Ordering::Less,
+        Ordering::Equal if float.fract() < 0.0 => Ordering::Greater,
+        ordering => ordering,
+    }
+}
+
+fn compare_numeric(left: NumericValue, right: NumericValue) -> Ordering {
+    match (left, right) {
+        (NumericValue::Int(left), NumericValue::Int(right)) => left.cmp(&right),
+        (NumericValue::Float(left), NumericValue::Float(right)) => {
+            left.partial_cmp(&right).expect("numeric values are finite")
+        }
+        (NumericValue::Int(left), NumericValue::Float(right)) => compare_int_float(left, right),
+        (NumericValue::Float(left), NumericValue::Int(right)) => {
+            compare_int_float(right, left).reverse()
+        }
+    }
+}
+
+fn numeric_schema_value(value: &Value, keyword: &str) -> Result<NumericValue, String> {
     match numeric_value(value) {
         Some(number) => Ok(number),
         None => Err(format!("requires '{keyword}' to be a finite number")),
@@ -699,10 +746,11 @@ fn numeric_schema_value(value: &Value, keyword: &str) -> Result<f64, String> {
 
 fn non_negative_i64_schema_value(value: &Value, keyword: &str) -> Result<i64, String> {
     let number = numeric_schema_value(value, keyword)?;
-    if number < 0.0 || number.fract() != 0.0 {
-        return Err(format!("requires '{keyword}' to be a non-negative integer"));
+    match number {
+        NumericValue::Int(number) if number >= 0 => Ok(number),
+        NumericValue::Float(number) if number >= 0.0 && number.fract() == 0.0 => Ok(number as i64),
+        _ => Err(format!("requires '{keyword}' to be a non-negative integer")),
     }
-    Ok(number as i64)
 }
 
 fn string_schema_value<'a>(value: &'a Value, keyword: &str) -> Result<&'a str, String> {
@@ -825,6 +873,12 @@ mod tests {
         ]);
         assert_valid(Value::Int(2), number_schema.clone());
         assert_invalid(Value::Int(3), number_schema, "", "maximum");
+        assert_invalid(
+            Value::Int(9_007_199_254_740_993),
+            d(vec![("maximum", Value::Int(9_007_199_254_740_992))]),
+            "",
+            "maximum",
+        );
         assert_valid(Value::Float(2.0), d(vec![("type", s("integer"))]));
 
         let const_schema = d(vec![("const", d(vec![("ok", Value::Bool(true))]))]);
