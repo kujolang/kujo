@@ -259,10 +259,11 @@ git commit -m ":rocket: RELEASE: vX.Y.Z"
 git push origin main
 ```
 
-2. Create and push annotated tag.
+2. Create and push a signed annotated tag. The signing key must be registered with GitHub so the tag is shown as verified.
 
 ```bash
-git tag -a vX.Y.Z -m "Kujo vX.Y.Z"
+git tag -s vX.Y.Z -m "Kujo vX.Y.Z"
+git tag -v vX.Y.Z
 git push origin vX.Y.Z
 ```
 
