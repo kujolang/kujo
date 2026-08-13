@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve exact integer comparisons in `json_schema_validate` beyond the IEEE-754 safe-integer range.
+- Reject incomplete `jsonl_query` join configurations instead of silently returning an empty join.
+- Bound `ssg_build_output_paths` before allocating generated path arrays.
+- Prevent `spawn_process` stream redaction from exposing secrets split across incremental flush boundaries.
+- Make LSP definition, reference, hover, rename, document-symbol, and inlay-hint handling recognize standalone `mut` bindings and lexical scope correctly.
+- Preserve CRLF source text during LSP rename edits and accept lexer-supported Unicode identifier continuations.
+- Use the LSP-required UTF-16 code-unit coordinate system for incoming positions and outgoing ranges, including semantic tokens.
+- Reject LSP messages larger than 8 MiB before allocating their payload buffer.
+
 ## [1.0.2] - 2026-08-12
 
 ### Added
