@@ -10,7 +10,7 @@ if [[ -z "$cargo_version" ]]; then
 	exit 1
 fi
 
-expected_readme="$(printf 'The project is currently at `%s` in `Cargo.toml`' "$cargo_version")"
+expected_readme="$(printf 'The source tree is currently at `%s` in `Cargo.toml`' "$cargo_version")"
 if ! grep -Fq "$expected_readme" README.md; then
 	echo "[release-state] ERROR: README.md does not reflect Cargo.toml version $cargo_version"
 	echo "[release-state] Expected to find: $expected_readme"
@@ -18,6 +18,21 @@ if ! grep -Fq "$expected_readme" README.md; then
 fi
 
 echo "[release-state] README.md matches Cargo.toml version: $cargo_version"
+
+latest_stable_tag="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)"
+if [[ -z "$latest_stable_tag" ]]; then
+	echo "[release-state] ERROR: Could not resolve the latest stable version tag"
+	exit 1
+fi
+
+expected_stable_release="$(printf 'latest published stable release tag is `%s`' "$latest_stable_tag")"
+if ! grep -Fq "$expected_stable_release" README.md; then
+	echo "[release-state] ERROR: README.md does not identify latest stable tag $latest_stable_tag"
+	echo "[release-state] Expected to find: $expected_stable_release"
+	exit 1
+fi
+
+echo "[release-state] README.md matches latest stable tag: $latest_stable_tag"
 
 expected_roadmap_line="$(printf '> Current crate version: `%s` in [Cargo.toml](Cargo.toml)' "$cargo_version")"
 if ! grep -Fq "$expected_roadmap_line" ROADMAP.md; then
@@ -28,4 +43,4 @@ fi
 
 echo "[release-state] ROADMAP.md current crate version matches Cargo.toml version: $cargo_version"
 
-echo "[release-state] OK: release status files are consistent with Cargo.toml"
+echo "[release-state] OK: development and stable release states are consistent"
