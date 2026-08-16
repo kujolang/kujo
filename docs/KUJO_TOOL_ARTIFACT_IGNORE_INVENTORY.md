@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-08-09
+Last updated: 2026-08-16
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -46,11 +46,19 @@ This inventory captures local files and directories created by Kujo and adjacent
 | CMS | `results/*.db*`, `results/*.log` | Test/integration state. |
 | CRUD API | `.tmp/*.db*`, `.tmp/*.log`, `.tmp/*.body`, `.tmp/*.out`, frontend build output | Local smoke-test state. |
 | SSG and Kujo Docs | `output/`, `.output-*`, `logs/`, `tmp/`, `.kujo-post-manifest.txt` | Generated static site and build logs. Kujo Docs writes its canonical site to `output/`; interrupted or partial local builds have been observed under `.output-partial-*` and `.output-incomplete-*`, matching the repo-local `.output-*` ignore. |
-| Howl | `dist/howl/*.html`, `dist/howl/*.md`, `dist/howl/*.svg`, `tmp_test_*/` from the shell/unit harness, and transient `--interpreter/tmp_test_*/` scratch dirs | Rendered cards/gallery and local test harness output. |
+| Howl | `dist/howl/*.html`, `dist/howl/*.md`, `dist/howl/*.svg`, `.howl-social/*.svg`, `tmp_test_*/` from the shell/unit harness, and transient `--interpreter/tmp_test_*/` scratch dirs | Rendered cards/gallery, social-card exports, and local test harness output. |
+| SiteProbe | Caller-selected crawl roots, commonly `.siteprobe/<run>/`, with `run.json`, `pages.jsonl`, `links.jsonl`, `robots.json`, `sitemaps.jsonl`, `manifest.json`, and `report.md`; doc generation scratch root `.siteprobe-docgen-tmp/` | `--out` is caller-selected. Generated API docs copied into `docs/generated/` can be source-worthy when reviewed; keep those tracked by repo policy. |
 | SiteKit | `dist/` bundle (`sitekit.css`, `sitekit.js`, `fonts/`, distribution README), `css/generated/*.css`, `tests/visual/component-snapshot.json`, `artifacts/release/sitekit-v*.tar.gz`, `artifacts/release/*.sha256`, and `artifacts/browser/` Playwright reports | SiteKit intentionally tracks `dist/`, `css/generated/`, and the component snapshot as source-vendored v1 artifacts in its own repo. Release archives and browser reports are local verification output and should stay ignored. Consumers may intentionally vendor `dist/`; keep that as a repo-specific decision. |
 | Zelus | `.zelus/engagement-manifest.json`, `.zelus/campaign.json`, `.zelus/reference-run/`, plus caller-selected `--out` manifests, hypotheses, and reference/eval run directories | Current examples usually write to `/tmp`; ignore `.zelus/` when run inside a repo. |
+| Kujo Commerce | `.kujo-commerce/` prepared content/assets workspace, generated site output such as `output/`, `_kujo/commerce/catalog.json` inside the output tree, `.kujo-bin/` downloaded Kujo binaries/checksums from clean-clone scripts, and `.wrangler/` Cloudflare local state | `kujo-commerce.yml`, `kujo-ssg.yml`, and `wrangler.toml` are source-worthy config. The shared block covers local generated/deployment state while leaving reviewed vendored assets such as `assets/sitekit/` to repo policy. |
+| WebOps dashboard/toolchain | `.webops/` including dashboard SQLite files, site profiles, runs, findings, history, baselines, reports, and actions | Some profile definitions may become shared config; add repo-specific negations when a profile is intentionally source-controlled. |
+| Codebase Cleanup workflow | `.cleanup-runs/<timestamp>/` or named output roots containing `REPORT.md`, `report.json`, `cleanup-plan.json`, and integration logs | `--output` can redirect the run root. Cleanup reports are local review evidence unless deliberately published. |
+| AI SDK muzzle benchmark workflow | `.suites/<timestamp>/` with `summary.json`, `review.html`, `run-dirs.txt`, and per-trial logs beside the normal `.runs/<timestamp>-trial-XX/` folders | Suite output is local benchmark evidence. |
+| TruthLens | `.model-build/` converted model files, examples, and local virtualenvs; `.model-candidates/` downloaded candidate models; `.benchmark-cache/` image cache; `.eval-results/` Eval output; `dist/` unpacked browser extension; `truthlens-extension.zip` release archive | `eval.json` and extension source are source-worthy. The generated extension package and local model/cache/eval roots should stay untracked unless a release artifact is deliberately published. |
+| Leash | `audit.log` and `daemon/audit.log` from local daemon audit sinks; daemon build output under `daemon/target/` | Shared daemon config examples are source-worthy. Audit logs are local operational evidence. |
 | Agents SDK | file-backed artifact/trace stores write under caller-provided roots, often `/tmp`; no repo-local default artifact root found | Ignore chosen local roots where configured. |
 | AI SDK | `artifacts/security/integrity-manifest.sha256` and other local release/security artifacts | CI may upload these; local source control should ignore unless intentionally reviewed. |
+| TotalRecall | Caller-selected reports such as `artifacts/run-report.json`, coverage checks under `artifacts/coverage/`, and optional Markdown/HTML/local-index destination directories configured via `TOTALRECALL_*_OUTPUT_DIR` | Destination roots are caller-selected and can be source-worthy exports; only the known local coverage artifact root is in the shared block. |
 | Benchmarks System | `results/<run-id>/`, `results/<run-id>/source_evidence/`, generated static dashboard `dist/`, and zipped dashboard bundles under `dist-build/` | `BENCHMARK_EXECUTION_KIT/` and `BENCHMARK_REVIEW_KIT/` are source-worthy operator prompts. The benchmark runner output directory is caller-selected; the local dashboard exporter defaults to `results/` and writes `dist/`. |
 
 ## Reusable Ignore Block
@@ -83,6 +91,13 @@ serve multiple rows in the inventory:
 - `/dist-build/` covers generated dashboard/package archives beside `/dist/` static output.
 - `/artifacts/release/` and `/artifacts/browser/` cover SiteKit release archives/checksums and Playwright reports while avoiding a blanket `/artifacts/` rule.
 - `/tmp_test_*/` and `/--interpreter/tmp_test_*/` cover Howl harness scratch output created at the repository root and under the Kujo interpreter-flag working directory seen in local ignored files.
+- `/.howl-social/` covers generated Howl social-card SVG exports.
+- `/.siteprobe/` covers caller-selected SiteProbe crawl roots used by docs and examples; `/.siteprobe-docgen-tmp/` covers the temporary Kujo docgen root used before copying reviewed API docs into `docs/generated/`.
+- `/.kujo-commerce/` covers Kujo Commerce's prepared content/assets workspace; `/.kujo-bin/` covers downloaded Kujo release binaries used by clean-clone scripts; `/.wrangler/` covers Cloudflare Pages local deploy state.
+- `/.webops/`, `/.cleanup-runs/`, and `/.suites/` cover WebOps dashboard state, Codebase Cleanup reports/plans, and aggregate benchmark-suite evidence beside existing workflow runner roots.
+- `/.benchmark-cache/`, `/.eval-results/`, `/.model-build/`, `/.model-candidates/`, and `/truthlens-extension.zip` cover TruthLens local model conversion, benchmark cache, Eval output, and extension packaging artifacts.
+- `/artifacts/coverage/` covers TotalRecall's local coverage-report artifact without adding a blanket `/artifacts/` ignore.
+- `*.log` covers Leash local audit sinks such as `audit.log` and `daemon/audit.log` while leaving config examples tracked.
 - `/redact-audit/`, `/redact-transcript-audit/`, and `/transcript.report.json` cover local Redact transcript audit runs while leaving caller-authored transcript policies to repo-specific decisions.
 
 ## Verification

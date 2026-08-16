@@ -86,6 +86,9 @@
 # Kujo workflow runners
 /.runs/
 /.work/
+/.suites/
+/.cleanup-runs/
+/.webops/
 /.kujo/runs/
 /.kujo/feature-cards/
 /.kujo/agency/auth/
@@ -152,18 +155,36 @@
 /dist/
 /dist-build/
 /logs/
+/.howl-social/
 /tmp_test_*/
 /--interpreter/tmp_test_*/
 /.kujo-post-manifest.txt
+
+# SiteProbe
+/.siteprobe/
+/.siteprobe-docgen-tmp/
+
+# Kujo Commerce and deploy tooling
+/.kujo-commerce/
+/.kujo-bin/
+/.wrangler/
 
 # Capsule and Zelus
 /capsule-output/
 /.zelus/
 
+# TruthLens local model, benchmark, evaluation, and extension artifacts
+/.benchmark-cache/
+/.eval-results/
+/.model-build/
+/.model-candidates/
+/truthlens-extension.zip
+
 # AI SDK / SiteKit local release/security/browser artifacts
 /artifacts/security/
 /artifacts/release/
 /artifacts/browser/
+/artifacts/coverage/
 
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
