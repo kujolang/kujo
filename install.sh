@@ -224,7 +224,10 @@ install_kujo_from_release() {
 	verify_sha256 "$archive" "$checksum_file"
 	tar -xzf "$archive" -C "$temp_dir"
 	extracted="$temp_dir/kujo"
-	[[ -x "$extracted" ]] || die "Kujo release artifact did not contain an executable named kujo"
+	# The archive is only staged here. Do not require execution permission on the
+	# temporary directory: hardened sandbox runners commonly mount /tmp with
+	# noexec, even though the final user bin directory is executable.
+	[[ -f "$extracted" ]] || die "Kujo release artifact did not contain a file named kujo"
 	mkdir -p "$BIN_DIR"
 	cp "$extracted" "$BIN_DIR/kujo"
 	chmod 755 "$BIN_DIR/kujo"
