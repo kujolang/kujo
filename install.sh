@@ -43,8 +43,8 @@ Install options:
   -h, --help             Show this help
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash
-  curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash -s -- --all
+  curl -fsSL https://kujolang.ai/install.sh | bash
+  curl -fsSL https://kujolang.ai/install.sh | bash -s -- --all
   bash install.sh --group ai --group quality
   bash install.sh --ref v1.0.1 --with-deps
 
