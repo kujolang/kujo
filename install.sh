@@ -234,6 +234,10 @@ install_kujo_from_release() {
 	chmod 755 "$BIN_DIR/kujo"
 	rm -rf "$temp_dir"
 	trap - RETURN
+	# Several ecosystem tools import modules/cli.kujo. A release artifact only
+	# contains the runtime binary, so retain the selected Kujo source tree for
+	# those shared modules while keeping the executable checksum-verified.
+	fetch_repo kujo
 	log "installed Kujo $version ($target) to $BIN_DIR/kujo"
 }
 
