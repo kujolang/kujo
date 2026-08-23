@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-08-16
+Last updated: 2026-08-23
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -40,6 +40,17 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Relay | `.relay/`, `.relay/runs/<mission>/`, `agent/`, `ledger/`, `workspace/`, `packet-manifest.json`, `tool-results.json`, `state.json`, `report.json`, `relay-contract-*/` contract-test roots when `RELAY_TEST_TMP_ROOT` points at the repo | Existing local repo has user changes outside this inventory. |
 | WorkCell | `.workcell/runs/`, `.runledger/`, `.casefile/`, `.loop-engineering/`, generated `src/artifacts/` and `src/output/` during some flows | Keep source `src/artifacts` only if intentionally authored. |
 | Tribunal | `tribunal-runs/`, `.strata-tmp/`, per-run `artifact-manifest.json`, `checkpoint.json`, `context.md`, `docket.md`, `decision-packet.md`, `events.jsonl`, `receipt.json`, `record.json`, `ruling.md`, `prompts/`, `testimony/` | Run archives are local evidence unless deliberately published. |
+| AssetWorks | `.assetworks/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected export files such as `assetworks-export.json` | Default state is `.assetworks/`; `--state` and `--output` are caller-selected, so reviewed exported records should be tracked only when intentionally published. |
+| BluePencil | `.bluepencil/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected export files | Default state is `.bluepencil/`; calibration fixtures under `fixtures/calibration/` are source-worthy and should remain tracked. |
+| Dossier | `.dossier/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected packet/export files | Default state is `.dossier/`; evidence fixtures and citation examples are source-worthy when reviewed. |
+| GalleyPack | `.galleypack/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected export/build artifacts | Default state is `.galleypack/`; source manuscripts and reviewed package fixtures are not blanket-ignored. |
+| PressWire | `.presswire/` with local approval/publication records and history; caller-selected exports such as `presswire-export.json` | Default state is `.presswire/`; `--act --yes` effect commands still require exact approval, and release/publication artifacts should be tracked only when intentionally published. |
+| ReaderSignal | `.readersignal/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected exports such as `readersignal-export.json` | Default state is `.readersignal/`; measurement inputs and reviewed fixtures remain repo policy decisions. |
+| StoryDesk | `.storydesk/`, optional `.storydesk-sqlite/`, JSON state `records/`, `history/`, `locks/`, optional `storydesk.sqlite`, caller-selected packet checkpoints such as `packet.checkpoint.json`, and caller-selected packet/export files | Default JSON state is `.storydesk/`; the SQLite adapter is opt-in. Packet checkpoints and exports are caller-selected, so track only deliberate handoffs. |
+| VersionSeal | `.versionseal/` with `metadata.json`, immutable approval records, append-only history, and per-record locks; caller-selected exports such as `versionseal-export.json` | Default state is `.versionseal/`; public key fixtures and release-policy examples are source-worthy. |
+| ContentGraph | `.contentgraph/<run>/`, `.contentgraph/deterministic/`, `graph.json`, `nodes.jsonl`, `edges.jsonl`, `clusters.json`, `overlaps.json`, `orphan-candidates.json`, `link-opportunities.json`, `analysis.json`, `metadata.json`, `report.md`, `vector-cache.jsonl`, `adapter-cache.jsonl`, `manifest.json`, optional `telemetry.json`, and caller-selected exports such as GraphML/SARIF | `--out` is caller-selected; default non-deterministic runs go under `.contentgraph/<timestamp>` and deterministic runs under `.contentgraph/deterministic`. Golden runs under `fixtures/golden/` are intentional source fixtures. |
+| Source | `.source/` JSON/SQLite local data store, content-addressed `artifacts/<prefix>/<hash>`, audit log/store files, and local backup staging roots such as `.source-backup-*` under a caller-selected backup output; observed local `audit-results/` | `SOURCE_DATA` can redirect the store. Backup/export directories are caller-selected; reviewed Source docs and fixtures remain tracked. |
+| Ward | `data/ward.db`, JSON fallback state such as `data/alerts.json`, dated `data/artifacts/<YYYY-MM-DD>/` reports including `report.md` and `alerts.json`, generated `dashboard/index.html`, and `logs/` | Config examples under `config/*.example.yaml` are source-worthy; live `config/repos.yaml`, token-bearing env, generated dashboard, local alert DB, and report artifacts are local operator state. |
 | RAG | `data/rag_index*.json`, `results/`, `results/**/*.json`, `results/**/*.log`, `results/**/*.db*`, `results/privacy/`, `release-manifest.json` | Some release/docs artifacts may be intentional; default local index is generated. |
 | Watchdog | `data/watchdog.db`, `data/backups/watchdog-backup-*.db*`, `backups/*.db*`, `.watchdog-backup-result-*.json`, `watchdog_proxy_config.json`, `tmp/*.db*`, `tmp/*.log`, `tmp/*.json`, copied browser/vendor assets in `tmp/` | Dashboard source remains tracked elsewhere; local proxy config can contain operational endpoint/auth settings. |
 | AI Chat | `.env`, `data/ai_chat.db`, `data/audit.log`, `data/backups/*.db*`, `data/benchmark-runs/`, `data/tool-artifacts/`, `node_modules/` | Secrets stay untracked; browser screenshots and benchmark telemetry are local evidence unless intentionally published. |
@@ -58,7 +69,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Leash | `audit.log` and `daemon/audit.log` from local daemon audit sinks; daemon build output under `daemon/target/` | Shared daemon config examples are source-worthy. Audit logs are local operational evidence. |
 | Agents SDK | file-backed artifact/trace stores write under caller-provided roots, often `/tmp`; no repo-local default artifact root found | Ignore chosen local roots where configured. |
 | AI SDK | `artifacts/security/integrity-manifest.sha256` and other local release/security artifacts | CI may upload these; local source control should ignore unless intentionally reviewed. |
-| TotalRecall | Caller-selected reports such as `artifacts/run-report.json`, coverage checks under `artifacts/coverage/`, and optional Markdown/HTML/local-index destination directories configured via `TOTALRECALL_*_OUTPUT_DIR` | Destination roots are caller-selected and can be source-worthy exports; only the known local coverage artifact root is in the shared block. |
+| TotalRecall | Caller-selected reports such as `artifacts/run-report.json`, coverage checks under `artifacts/coverage/` and `.coverage`, and optional Markdown/HTML/local-index destination directories configured via `TOTALRECALL_*_OUTPUT_DIR` | Destination roots are caller-selected and can be source-worthy exports; only the known local coverage artifact roots are in the shared block. |
 | Benchmarks System | `results/<run-id>/`, `results/<run-id>/source_evidence/`, generated static dashboard `dist/`, and zipped dashboard bundles under `dist-build/` | `BENCHMARK_EXECUTION_KIT/` and `BENCHMARK_REVIEW_KIT/` are source-worthy operator prompts. The benchmark runner output directory is caller-selected; the local dashboard exporter defaults to `results/` and writes `dist/`. |
 
 ## Reusable Ignore Block
@@ -99,6 +110,11 @@ serve multiple rows in the inventory:
 - `/artifacts/coverage/` covers TotalRecall's local coverage-report artifact without adding a blanket `/artifacts/` ignore.
 - `*.log` covers Leash local audit sinks such as `audit.log` and `daemon/audit.log` while leaving config examples tracked.
 - `/redact-audit/`, `/redact-transcript-audit/`, and `/transcript.report.json` cover local Redact transcript audit runs while leaving caller-authored transcript policies to repo-specific decisions.
+- `/.assetworks/`, `/.bluepencil/`, `/.dossier/`, `/.galleypack/`, `/.presswire/`, `/.readersignal/`, `/.storydesk/`, `/.storydesk-sqlite/`, and `/.versionseal/` cover default local state roots for the newer local-first Kujo record tools while leaving caller-selected exports and reviewed fixtures to repo policy.
+- `/.contentgraph/` covers default ContentGraph run/cache output; committed `fixtures/golden/run/` output remains a source fixture.
+- `/.source/` and `/audit-results/` cover Source's local data/evidence roots while leaving explicit backup/export destinations to caller policy.
+- `/data/artifacts/`, `/data/alerts.json`, `/data/ward.db`, and `/dashboard/` cover Ward's local alert state, dated reports, SQLite store, and generated dashboard without ignoring its source-worthy `config/*.example.yaml` files.
+- `/.coverage` covers TotalRecall's local Python harness coverage marker beside the existing `/artifacts/coverage/` report root.
 
 ## Verification
 

@@ -121,6 +121,28 @@
 /tribunal-runs/
 /.strata-tmp/
 
+# Local-first Kujo record tool state
+/.assetworks/
+/.bluepencil/
+/.dossier/
+/.galleypack/
+/.presswire/
+/.readersignal/
+/.storydesk/
+/.storydesk-sqlite/
+/.versionseal/
+
+# ContentGraph
+/.contentgraph/
+
+# Source and Ward local state
+/.source/
+/audit-results/
+/data/artifacts/
+/data/alerts.json
+/data/ward.db
+/dashboard/
+
 # Kennel
 /.kennel_tmp/
 /kennel_packages/
@@ -185,6 +207,7 @@
 /artifacts/release/
 /artifacts/browser/
 /artifacts/coverage/
+/.coverage
 
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
