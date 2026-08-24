@@ -13,6 +13,7 @@ mod cli_output;
 mod compiler;
 mod doc_generator;
 mod docgen;
+mod ecosystem_golden_path;
 mod errors;
 mod formatter;
 mod http_request_utils;
@@ -435,6 +436,12 @@ enum Commands {
         profile_name: Option<String>,
     },
 
+    /// Run fixture-first evidence workflows across the Kujo ecosystem
+    Ecosystem {
+        #[command(subcommand)]
+        command: EcosystemCommands,
+    },
+
     /// Generate universal documentation from source code
     Docgen {
         /// Path to a file or directory to document
@@ -799,6 +806,32 @@ enum PackCommands {
     },
 }
 
+#[derive(Subcommand)]
+enum EcosystemCommands {
+    /// Execute the isolated Kujo ecosystem golden path
+    GoldenPath {
+        /// Repository collection root containing ai-sdk, agents-sdk, dispatch, and sibling tools
+        #[arg(long, default_value = ".")]
+        repo_root: PathBuf,
+
+        /// New or empty directory receiving stage results and hashed artifacts
+        #[arg(long)]
+        output_root: Option<PathBuf>,
+
+        /// Maximum wall-clock time per stage
+        #[arg(long, default_value_t = 15)]
+        timeout_seconds: u64,
+
+        /// Allow explicit blocked stages while still failing on execution errors
+        #[arg(long, default_value_t = false)]
+        allow_blocked: bool,
+
+        /// Emit the complete machine-readable report to stdout
+        #[arg(long, default_value_t = false)]
+        json: bool,
+    },
+}
+
 const DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS: u64 = 120_000;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1091,6 +1124,7 @@ fn is_known_cli_subcommand(name: &str) -> bool {
             | "package-install"
             | "package-publish"
             | "pack"
+            | "ecosystem"
             | "doctor"
             | "docgen"
             | "bench-cross"
@@ -2064,6 +2098,33 @@ async fn async_main() {
             }
         }
 
+        Commands::Ecosystem { command } => match command {
+            EcosystemCommands::GoldenPath {
+                repo_root,
+                output_root,
+                timeout_seconds,
+                allow_blocked,
+                json,
+            } => {
+                if timeout_seconds == 0 {
+                    report_cli_error_and_exit(
+                        "golden-path timeout must be greater than zero seconds".to_string(),
+                        CliExitCode::UsageError,
+                    );
+                }
+                let exit_code = ecosystem_golden_path::run(
+                    &repo_root,
+                    output_root.as_deref(),
+                    Duration::from_secs(timeout_seconds),
+                    allow_blocked,
+                    json,
+                );
+                if exit_code != 0 {
+                    std::process::exit(exit_code);
+                }
+            }
+        },
+
         Commands::Docgen {
             path,
             out_dir,
@@ -2881,6 +2942,7 @@ mod tests {
     fn known_cli_subcommand_list_includes_pack_and_run() {
         assert!(is_known_cli_subcommand("run"));
         assert!(is_known_cli_subcommand("pack"));
+        assert!(is_known_cli_subcommand("ecosystem"));
         assert!(is_known_cli_subcommand("doctor"));
     }
 
