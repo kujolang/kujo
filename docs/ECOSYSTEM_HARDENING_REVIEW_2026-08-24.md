@@ -22,7 +22,7 @@ implementation work, external prerequisites, and stale planning entries.
 | P0 | Source | Documented credential audit findings | `source/EXTERNAL-BLOCKERS.md`, `source/src/scan.js` | Requires external verification; not reproduced locally | Run an independent security scan and triage its exported report | Scanner host | M | Medium |
 | P0 | TotalRecall | Path confinement and output redaction backlog | `totalrecall/docs/NEXT_SESSION_ENTERPRISE_BACKLOG.md`, `src/core/common.kujo`, `src/core/redaction.kujo`, filesystem tests | Mostly already fixed; coverage remains | Add one end-to-end redaction regression spanning stdout, report, audit, and JSON errors | Kujo runtime + harness | M | High |
 | P0 | SearchBridge/Intake/Relay | Live/provider/release proof | respective next-session backlogs | External | Obtain approved credentials, provider accounts, release authorization, and hosted CI | Human/operator action | M-L | High |
-| P1 | Ecosystem | Missing single golden path | `kujo/docs/ECOSYSTEM_GOLDEN_PATH.md`, existing examples | Locally designable; partially implemented | Compose existing fixture examples and evidence contracts under one isolated output root | Tool CLI compatibility | M | High |
+| P1 | Ecosystem | Golden-path orchestration | `kujo/src/ecosystem_golden_path.rs`, `kujo ecosystem golden-path`, existing examples | Implemented locally; stage health still varies | Use the runner to produce one isolated evidence bundle; investigate blocked/failed stages before claiming a clean run | Dispatch/host availability | M | High |
 | P1 | Roadmaps | Status drift and stale backlog entries | `kujo/ROADMAP.md`, `ssg/ROADMAP.md`, `totalrecall/docs/NEXT_SESSION_ENTERPRISE_BACKLOG.md` | Stale/superseded entries mixed with active work | Reconcile status against code, tests, and recent commits | Maintainer review | M | Medium |
 | P2 | Fence/Kennel/SSG | Post-release enhancement queues | respective roadmap/backlog files | Post-release | Keep queued; do not displace release/security gates | v1 release evidence | M-L | High |
 
@@ -57,11 +57,12 @@ Existing evidence is strong but distributed:
 - Concord and Fence provide drift and architecture-boundary checks; Tribunal
   provides sealed decision evidence when human review is needed.
 
-The missing integration is one isolated output root and one machine-readable
-summary that records every stage and labels evidence as fixture, local-real,
-platform-CI, or external-live. The procedure is documented in
-`kujo/docs/ECOSYSTEM_GOLDEN_PATH.md` using existing examples rather than a new
-standalone demo.
+The integration is now implemented as `kujo ecosystem golden-path`. It uses
+existing entrypoints, writes one isolated output root, emits per-stage JSON
+results plus stdout/stderr artifacts, hashes the evidence bundle, and labels
+fixture versus local-real evidence. Missing infrastructure is represented as
+`blocked`; the command fails closed unless `--allow-blocked` is explicitly
+provided. It does not manufacture platform-CI or external-live evidence.
 
 ## Flagship recommendation
 
@@ -99,13 +100,16 @@ CMS still lists branch protection as an open launch gate.
 1. Land and verify the Kujo builtin-checker fix.
 2. Regenerate TotalRecall's intentionally ignored local snapshots with the
    pinned Kujo binary, then re-run the VM/dual fixture gates.
-3. Execute the fixture-first golden path through AI SDK, Agents SDK, Dispatch,
-   Eval, and ShipCheck; preserve timeout/failure output as evidence.
+3. Run `kujo ecosystem golden-path --allow-blocked --json`; preserve the
+   isolated bundle and investigate Dispatch/host blockers rather than masking
+   them.
 4. Add the missing TotalRecall end-to-end redaction harness.
 
 ### 31–60 days
 
-1. Add the smallest orchestration wrapper around existing entrypoints.
+1. Add a dedicated CaseFile adapter that preserves its repository-scoped
+   output contract while writing under the isolated evidence root; RunLedger
+   integration is now implemented.
 2. Persist RunLedger/CaseFile references and Workcell receipts under the
    isolated evidence root.
 3. Add Concord/Fence checks to the release evidence summary.
@@ -129,6 +133,15 @@ CMS still lists branch protection as an open launch gate.
 - Agents SDK smoke runner passed with all seven example statuses reported.
 - Eval release-gate suite passed 3/3 checks with artifact checksums.
 - ShipCheck gate passed 16/16 checks with zero warnings/errors.
+- `kujo ecosystem golden-path --allow-blocked --json` produced an isolated
+  bundle with per-stage results, stdout/stderr artifacts, SHA-256 manifest, and
+  evidence handoff; AI SDK, Agents SDK, Eval, and ShipCheck passed while
+  Dispatch, Workcell, and Watchdog were explicitly blocked in this host.
+- The same command without `--allow-blocked` returned non-zero, proving the
+   fail-closed policy for blocked/failed stages.
+- RunLedger start/finish was recorded under the isolated bundle with a
+  partial status reflecting blocked stages; CaseFile currently has an explicit
+  local path/hash reference and is not falsely presented as an external case.
 - TotalRecall snapshots are generated and intentionally ignored by that
   repository's `.gitignore`; after regeneration, `kujo test --runtime vm`
   passed 13/13 with `vm_primary=13`.

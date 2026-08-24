@@ -32,6 +32,26 @@ export PATH="$(dirname "$KUJO_BIN"):$PATH"
 export GOLDEN_ROOT="$(mktemp -d /tmp/kujo-golden-path.XXXXXX)"
 ```
 
+The procedure is executable through Kujo's first-party runner:
+
+```bash
+kujo ecosystem golden-path \
+  --repo-root "$PWD" \
+  --output-root "$GOLDEN_ROOT" \
+  --allow-blocked \
+  --json
+```
+
+The command creates one result directory containing `golden-path.json`,
+`artifacts.json`, `evidence-handoff.json`, and one `stages/<name>/` directory
+per stage. Every stage has a machine-readable `result.json`; command stages
+also retain bounded stdout and stderr files. `artifacts.json` records byte
+counts and SHA-256 hashes for the evidence files. `--allow-blocked` is an
+explicit local-development opt-in: it permits unavailable infrastructure or
+host-permission stages to be recorded as `blocked`, but never turns a failed
+stage into a pass. Without it, any blocked or failed stage returns a non-zero
+exit status.
+
 1. AI SDK fixture (`fixture`): run `ai-sdk/examples/main.kujo` without a
    provider key and retain its normalized response envelope.
 2. Agents SDK fixture (`fixture`): run the existing
@@ -78,13 +98,14 @@ The path is complete only when the evidence bundle contains:
 
 ## Current gaps
 
-- No existing single command currently composes all stages.
+- The runner composes the stages and evidence contracts, but it does not make
+  blocked infrastructure available or repair a failing product stage.
 - Workcell Docker/Podman proof depends on the target engine and host.
 - Watchdog live-provider proof depends on credentials and operator approval.
 - Hosted CI and release provenance remain platform-owned evidence.
-- RunLedger and CaseFile have local contracts, but their handoff is not yet a
-  first-class adapter in the Dispatch/Workcell path.
-
-The smallest next implementation is a repository-local orchestration wrapper
-that calls these existing entrypoints, writes only under an isolated output
-root, and fails closed when any stage is missing or mislabeled.
+- Dispatch currently needs a bounded offline diagnostic because the fixture
+  workflow can exceed the runner timeout.
+- RunLedger is invoked with an isolated ledger directory. CaseFile currently
+  receives a local path/hash reference rather than being invoked, because its
+  repository-scoped output contract rejects an arbitrary external root; a
+  dedicated adapter should be added only when it can preserve that contract.
