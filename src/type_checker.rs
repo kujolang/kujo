@@ -842,6 +842,38 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "assert_equal".to_string(),
+            FunctionSignature {
+                param_types: vec![None, None],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
+            "assert_true".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::Bool)],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
+            "assert_false".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::Bool)],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
+            "assert_contains".to_string(),
+            FunctionSignature {
+                param_types: vec![None, None],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
             "debug".to_string(),
             FunctionSignature {
                 param_types: vec![], // Variadic - accepts any number of any type (empty vec = no validation)
@@ -921,6 +953,11 @@ impl TypeChecker {
 
         self.functions.insert(
             "current_timestamp".to_string(),
+            FunctionSignature { param_types: vec![], return_type: Some(TypeAnnotation::Float) },
+        );
+
+        self.functions.insert(
+            "time".to_string(),
             FunctionSignature { param_types: vec![], return_type: Some(TypeAnnotation::Float) },
         );
 
@@ -3366,6 +3403,23 @@ mod tests {
             symlink := path_is_symlink(path)
             unknown := {}["value"]
             label := "artifact-" + unknown
+        "#;
+        let tokens = crate::lexer::tokenize(source).expect("source should tokenize");
+        let mut parser = crate::parser::Parser::new(tokens);
+        let statements = parser.parse();
+        let mut checker = TypeChecker::new();
+        assert!(checker.check(&statements).is_ok(), "unexpected errors: {:?}", checker.errors);
+    }
+
+    #[test]
+    fn runtime_test_builtins_are_warning_free() {
+        let source = r#"
+            assert_equal("fixture", "fixture")
+            assert_true(true)
+            assert_false(false)
+            assert_contains(["fixture"], "fixture")
+            elapsed_ms := time()
+            print(elapsed_ms)
         "#;
         let tokens = crate::lexer::tokenize(source).expect("source should tokenize");
         let mut parser = crate::parser::Parser::new(tokens);

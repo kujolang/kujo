@@ -47,6 +47,13 @@ This matrix tracks parity for roadmap item `V1-COMP-001`.
 | `kujo lsp-diagnostics <file>` | Parse/diagnostic pipeline (runtime-agnostic) | n/a | Uses lexer/parser diagnostics without executing VM/interpreter runtime. | `tests/cli_contracts.rs` (`cli_lsp_diagnostics_json_is_valid_json`) |
 | `kujo check <file>` | Parse/compile validation (runtime-agnostic) | n/a | Validates source without runtime execution side effects. | `tests/cli_contracts.rs` (`cli_check_does_not_execute_script_side_effects`) |
 
+The VM fixture runner and interpreter fixture runner share the runtime builtin
+contract for `assert_equal`, `assert_true`, `assert_false`,
+`assert_contains`, and the `time()` compatibility alias. These names are
+registered in the static checker as well as the runtime so fixture execution
+does not produce false undefined-function warnings. Coverage: the
+`runtime_test_builtins_are_warning_free` unit test in `src/type_checker.rs`.
+
 ### `kujo test` Default Runtime Decision (2026-05-21)
 
 Updated evidence snapshot: 2026-06-27
