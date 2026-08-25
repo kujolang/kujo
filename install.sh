@@ -301,6 +301,11 @@ make_kujo_shim() {
 	mkdir -p "$BIN_DIR"
 	{
 		printf '%s\n' '#!/usr/bin/env bash' 'set -Eeuo pipefail'
+		if [[ "$repo" == "dispatch" ]]; then
+			printf 'export DISPATCH_ROOT=%s\n' "$source_literal"
+			printf 'export AI_SDK_PATH="${AI_SDK_PATH:-%s}"\n' "$(printf '%q' "$(repo_dir ai-sdk)")"
+			printf 'export DISPATCH_SDK_BRIDGE_SCRIPT="${DISPATCH_SDK_BRIDGE_SCRIPT:-%s/bridge_chat.kujo}"\n' "$source_literal"
+		fi
 		printf 'exec %s run %s' "$kujo_bin_literal" "$source_literal/$entrypoint_literal"
 		if [[ "$mode" == "interpreter" ]]; then
 			printf '%s' ' --interpreter'
