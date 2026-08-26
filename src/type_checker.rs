@@ -2170,6 +2170,19 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "promise_wait".to_string(),
+            FunctionSignature { param_types: vec![None], return_type: None },
+        );
+
+        self.functions.insert(
+            "parallel_map".to_string(),
+            FunctionSignature {
+                param_types: vec![None, None, Some(TypeAnnotation::Int)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "par_map".to_string(),
             FunctionSignature {
                 param_types: vec![None, None, Some(TypeAnnotation::Int)], // array, mapper, optional limit

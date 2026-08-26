@@ -862,6 +862,7 @@ impl Interpreter {
             "Promise.all",
             "promise_all",
             "await_all",
+            "promise_wait",
             "parallel_map",
             "par_map",
             "par_each",
@@ -1601,6 +1602,8 @@ impl Interpreter {
         self.env
             .define("promise_all".to_string(), Value::NativeFunction("promise_all".to_string())); // Alias
         self.env.define("await_all".to_string(), Value::NativeFunction("await_all".to_string())); // Alias
+        self.env
+            .define("promise_wait".to_string(), Value::NativeFunction("promise_wait".to_string()));
         self.env
             .define("parallel_map".to_string(), Value::NativeFunction("parallel_map".to_string()));
         self.env.define("par_map".to_string(), Value::NativeFunction("par_map".to_string()));
@@ -2878,6 +2881,7 @@ impl Interpreter {
                 2,
                 vec!["promises".to_string(), "concurrency".to_string()],
             ),
+            "promise_wait" => CallableArity::exact("promise_wait", vec!["promise".to_string()]),
             "parallel_map" | "par_map" => CallableArity::range(
                 name,
                 2,

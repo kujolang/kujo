@@ -383,6 +383,7 @@ mod tests {
             "join",
             "Promise.all",
             "parallel_map",
+            "promise_wait",
             "par_map",
             "channel",
             "async_sleep",

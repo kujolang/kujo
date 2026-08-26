@@ -464,6 +464,7 @@ over shell strings when handling user input.
 | `promise_all` | preview alias | `values := promise_all(tasks)` |
 | `await_all` | preview alias | `values := await_all(tasks)` |
 | `parallel_map` | preview | `out := parallel_map([1,2], func (x) { return x + 1 })` |
+| `promise_wait` | preview | `out := promise_wait(parallel_map(items, mapper, 4))` |
 | `par_map` | preview alias | `out := par_map(items, func (x) { return x })` |
 | `par_each` | preview | `par_each(items, func (x) { print(x) })` |
 | `set_task_pool_size` | preview | `set_task_pool_size(8)` |

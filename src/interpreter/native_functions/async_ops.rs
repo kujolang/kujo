@@ -832,6 +832,52 @@ pub fn handle(
     args: &[Value],
 ) -> Option<Value> {
     match name {
+        "promise_wait" => {
+            if args.len() != 1 {
+                return Some(Value::Error(format!(
+                    "promise_wait() expects 1 argument (promise), got {}",
+                    args.len()
+                )));
+            }
+            match &args[0] {
+                Value::Promise { receiver, is_polled, cached_result, .. } => {
+                    if let Some(cached) = read_cached_promise_result(is_polled, cached_result) {
+                        return Some(match cached {
+                            Ok(value) => value,
+                            Err(error) => Value::Error(error),
+                        });
+                    }
+                    let actual_rx = {
+                        let mut guard = match lock_or_async_error(
+                            receiver.as_ref(),
+                            "promise_wait.promise.receiver",
+                        ) {
+                            Ok(guard) => guard,
+                            Err(error) => return Some(Value::Error(error)),
+                        };
+                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
+                        drop(dummy_tx);
+                        std::mem::replace(&mut *guard, dummy_rx)
+                    };
+                    let result = AsyncRuntime::block_on(async {
+                        match actual_rx.await {
+                            Ok(result) => result,
+                            Err(_) => Err("Promise channel closed before resolution".to_string()),
+                        }
+                    });
+                    if let Err(error) =
+                        cache_promise_result(is_polled, cached_result, result.clone())
+                    {
+                        return Some(Value::Error(error));
+                    }
+                    Some(match result {
+                        Ok(value) => value,
+                        Err(error) => Value::Error(error),
+                    })
+                }
+                _ => Some(Value::Error("promise_wait() requires a Promise argument".to_string())),
+            }
+        }
         "async_sleep" => {
             // async_sleep(milliseconds: Int) -> Promise<Null>
             if args.len() != 1 {
@@ -2763,6 +2809,25 @@ mod tests {
             }),
             _ => panic!("Expected Promise value"),
         }
+    }
+
+    #[test]
+    fn promise_wait_resolves_and_reuses_cached_result() {
+        let mut interpreter = Interpreter::new();
+        let promise = resolved_promise(Ok(Value::Int(7)));
+        let first = handle(&mut interpreter, "promise_wait", std::slice::from_ref(&promise));
+        assert!(matches!(first, Some(Value::Int(7))));
+        let second = handle(&mut interpreter, "promise_wait", &[promise]);
+        assert!(matches!(second, Some(Value::Int(7))));
+    }
+
+    #[test]
+    fn promise_wait_rejects_non_promises() {
+        let mut interpreter = Interpreter::new();
+        let result = handle(&mut interpreter, "promise_wait", &[Value::Int(1)]);
+        assert!(
+            matches!(result, Some(Value::Error(message)) if message.contains("requires a Promise"))
+        );
     }
 
     fn poison_mutex<T: Send + 'static>(mutex: Arc<Mutex<T>>) {

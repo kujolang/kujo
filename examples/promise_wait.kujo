@@ -1,0 +1,8 @@
+func double(value) {
+	return value * 2
+}
+
+pending := parallel_map([1, 2, 3], double, 2)
+result := promise_wait(pending)
+assert_equal(result, [2, 4, 6])
+print(to_json(result))
