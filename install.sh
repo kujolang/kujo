@@ -12,6 +12,10 @@ readonly DEFAULT_BIN_DIR="${KUJO_BIN_DIR:-${HOME}/.local/bin}"
 REF="$DEFAULT_REF"
 PREFIX="$DEFAULT_PREFIX"
 BIN_DIR="$DEFAULT_BIN_DIR"
+REPO_REF_OVERRIDES=""
+RELEASE_MANIFEST=""
+INSTALL_PACKAGE=""
+GROUP_EXPLICIT=0
 DRY_RUN=0
 WITH_DEPS=0
 INSTALL_SOURCE=0
@@ -31,11 +35,15 @@ agent context/proof tools, and the Kujo skills, agents, and workflow packs.
 Profiles:
   --core                 Foundation and everyday agent-development tools (default)
   --group <name>         Add one profile: ai, quality, showcases, or operating
+  --package <name>       Install one dependency closure (currently: dispatch)
   --all                  Install every profile (the kitchen sink)
   --list                 Show the profile catalog and exit
 
 Install options:
   --ref <ref>            Git ref for source repos (default: main)
+  --repo-ref <repo=ref>  Override one repository ref (repeatable)
+  --release-manifest <path-or-url>
+                         Load immutable repo=ref pins before installing
   --prefix <dir>         Install root (default: ~/.kujo)
   --bin-dir <dir>        User command directory (default: ~/.local/bin)
   --source               Build Kujo from source instead of a release artifact
@@ -48,6 +56,7 @@ Examples:
   curl -fsSL https://kujolang.ai/install.sh | bash -s -- --all
   bash install.sh --group ai --group quality
   bash install.sh --ref v1.0.1 --with-deps
+  bash install.sh --package dispatch --release-manifest ./dispatch-v1.1.0.refs
 
 Environment overrides:
   KUJO_ECOSYSTEM_REF, KUJO_RELEASE_VERSION, KUJO_INSTALL_ROOT, KUJO_BIN_DIR, KUJO_GITHUB_OWNER,
@@ -96,6 +105,16 @@ log() {
 	echo "[kujo-install] $*"
 }
 
+json_escape() {
+	local value="$1"
+	value="${value//\\/\\\\}"
+	value="${value//\"/\\\"}"
+	value="${value//$'\n'/\\n}"
+	value="${value//$'\r'/\\r}"
+	value="${value//$'\t'/\\t}"
+	printf '%s' "$value"
+}
+
 require_command() {
 	command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"
 }
@@ -123,8 +142,84 @@ repo_dir() {
 	echo "$PREFIX/sources/$1"
 }
 
+known_repo() {
+	case "$1" in
+		kujo|kennel|spec|eval|scout|scent|packwrite|runledger|casefile|patchbrief|changebucket|muzzle|kujo-skills|kujo-agents|kujo-workflows|ai-sdk|agents-sdk|dispatch|watchdog|mcp|rag|relay|concord|shipcheck|fence|redact|lens|tribunal|workcell|howl|ssg|cms|crud-api|ai-chat|intake|site-kit) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+validate_ref() {
+	local value="$1"
+	[[ -n "$value" && "$value" != -* ]] || return 1
+	[[ "$value" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || return 1
+	[[ "$value" != *".."* ]] || return 1
+}
+
+set_repo_ref() {
+	local assignment="$1"
+	local repo="${assignment%%=*}"
+	local ref="${assignment#*=}"
+	[[ "$assignment" == *=* && -n "$repo" && -n "$ref" ]] || die "repository ref must use repo=ref: $assignment"
+	known_repo "$repo" || die "unknown repository in ref override: $repo"
+	validate_ref "$ref" || die "invalid ref for $repo: $ref"
+	if printf '%s\n' "$REPO_REF_OVERRIDES" | awk -F= -v repo="$repo" '$1 == repo { found=1 } END { exit !found }'; then
+		die "duplicate repository ref override: $repo"
+	fi
+	REPO_REF_OVERRIDES="${REPO_REF_OVERRIDES}${repo}=${ref}
+"
+}
+
+repo_ref() {
+	local repo="$1"
+	local selected
+	selected="$(printf '%s\n' "$REPO_REF_OVERRIDES" | awk -F= -v repo="$repo" '$1 == repo { sub(/^[^=]*=/, ""); print; exit }')"
+	if [[ -n "$selected" ]]; then
+		printf '%s\n' "$selected"
+	else
+		printf '%s\n' "$REF"
+	fi
+}
+
+load_release_manifest() {
+	local source="$1"
+	local temp_file=""
+	local manifest_file="$source"
+	local line
+	local line_number=0
+	if [[ "$source" == https://* ]]; then
+		temp_file="$(mktemp "${TMPDIR:-/tmp}/kujo-release-manifest.XXXXXX")"
+		trap '[[ -z "$temp_file" ]] || rm -f "$temp_file"' RETURN
+		github_curl "$source" -o "$temp_file"
+		manifest_file="$temp_file"
+	elif [[ "$source" == http://* ]]; then
+		die "release manifests must use HTTPS or a local file"
+	fi
+	[[ -f "$manifest_file" ]] || die "release manifest not found: $source"
+	while IFS= read -r line || [[ -n "$line" ]]; do
+		line_number=$((line_number + 1))
+		line="${line%%#*}"
+		line="$(printf '%s' "$line" | awk '{$1=$1; print}')"
+		[[ -n "$line" ]] || continue
+		[[ "$line" == *=* ]] || die "invalid release manifest entry at line $line_number"
+		set_repo_ref "$line"
+	done < "$manifest_file"
+	[[ -z "$temp_file" ]] || rm -f "$temp_file"
+	trap - RETURN
+}
+
+require_package_pins() {
+	local repo
+	[[ "$INSTALL_PACKAGE" == "dispatch" && -n "$RELEASE_MANIFEST" ]] || return 0
+	for repo in kujo ai-sdk agents-sdk dispatch; do
+		printf '%s\n' "$REPO_REF_OVERRIDES" | awk -F= -v repo="$repo" '$1 == repo { found=1 } END { exit !found }' \
+			|| die "Dispatch release manifest is missing required repository pin: $repo"
+	done
+}
+
 fetch_repo() {
 	local repo="$1"
+	local selected_ref
 	local destination
 	local temp_dir
 	local archive
@@ -132,15 +227,16 @@ fetch_repo() {
 	local marker
 	local archive_url
 
+	selected_ref="$(repo_ref "$repo")"
 	destination="$(repo_dir "$repo")"
 	marker="$destination/.kujo-install-ref"
-	if [[ -f "$marker" ]] && [[ "$(<"$marker")" == "$REF" ]]; then
-		log "$repo already installed at ref $REF"
+	if [[ -f "$marker" ]] && [[ "$(<"$marker")" == "$selected_ref" ]]; then
+		log "$repo already installed at ref $selected_ref"
 		return 0
 	fi
 
 	if [[ "$DRY_RUN" -eq 1 ]]; then
-		log "would download $GITHUB_OWNER/$repo at $REF"
+		log "would download $GITHUB_OWNER/$repo at $selected_ref"
 		return 0
 	fi
 
@@ -148,12 +244,12 @@ fetch_repo() {
 	trap 'rm -rf "$temp_dir"' RETURN
 	archive="$temp_dir/source.tar.gz"
 
-	log "downloading $GITHUB_OWNER/$repo at $REF"
-	case "$REF" in
-		refs/*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/$REF" ;;
-		v[0-9]*|[0-9]*.[0-9]*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/refs/tags/$REF" ;;
-		[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/$REF" ;;
-		*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/refs/heads/$REF" ;;
+	log "downloading $GITHUB_OWNER/$repo at $selected_ref"
+	case "$selected_ref" in
+		refs/*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/$selected_ref" ;;
+		v[0-9]*|[0-9]*.[0-9]*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/refs/tags/$selected_ref" ;;
+		[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/$selected_ref" ;;
+		*) archive_url="https://codeload.github.com/$GITHUB_OWNER/$repo/tar.gz/refs/heads/$selected_ref" ;;
 	esac
 	github_curl "$archive_url" -o "$archive"
 	tar -xzf "$archive" -C "$temp_dir"
@@ -165,7 +261,7 @@ fetch_repo() {
 		mv "$destination" "${destination}.previous.$(date +%Y%m%d%H%M%S)"
 	fi
 	mv "$extracted" "$destination"
-	printf '%s\n' "$REF" > "$marker"
+	printf '%s\n' "$selected_ref" > "$marker"
 	rm -rf "$temp_dir"
 	trap - RETURN
 }
@@ -243,10 +339,12 @@ install_kujo_from_release() {
 
 install_kujo_from_source() {
 	local source_dir
+	local selected_ref
 	source_dir="$(repo_dir kujo)"
+	selected_ref="$(repo_ref kujo)"
 	fetch_repo kujo
 	require_command cargo
-	log "building Kujo from source at ref $REF"
+	log "building Kujo from source at ref $selected_ref"
 	if [[ "$DRY_RUN" -eq 1 ]]; then
 		return 0
 	fi
@@ -261,22 +359,24 @@ install_kujo_from_source() {
 }
 
 install_kujo() {
+	local selected_ref
+	selected_ref="$(repo_ref kujo)"
 	if [[ "$DRY_RUN" -eq 1 ]]; then
 		if [[ "$INSTALL_SOURCE" -eq 1 ]]; then
-			log "would build Kujo from source at ref $REF"
-		elif [[ "$REF" == "main" ]]; then
+			log "would build Kujo from source at ref $selected_ref"
+		elif [[ "$selected_ref" == "main" ]]; then
 			log "would download and verify Kujo release $DEFAULT_RELEASE_VERSION"
 		else
-			log "would download and verify Kujo release $REF"
+			log "would download and verify Kujo release $selected_ref"
 		fi
 		return 0
 	fi
 	if [[ "$INSTALL_SOURCE" -eq 1 ]]; then
 		install_kujo_from_source
-	elif [[ "$REF" == "main" ]]; then
+	elif [[ "$selected_ref" == "main" ]]; then
 		install_kujo_from_release "$DEFAULT_RELEASE_VERSION"
-	elif ! install_kujo_from_release "$REF"; then
-		log "release artifact unavailable for $REF; falling back to a source build"
+	elif ! install_kujo_from_release "$selected_ref"; then
+		log "release artifact unavailable for $selected_ref; falling back to a source build"
 		install_kujo_from_source
 	fi
 }
@@ -345,7 +445,14 @@ install_entry() {
 	local command_name="$5"
 	local mode="$6"
 
-	has_group "$group" || return 0
+	if [[ -n "$INSTALL_PACKAGE" ]]; then
+		case "$INSTALL_PACKAGE:$repo" in
+			dispatch:ai-sdk|dispatch:agents-sdk|dispatch:dispatch) ;;
+			*) return 0 ;;
+		esac
+	else
+		has_group "$group" || return 0
+	fi
 	if [[ "$repo" == "kujo" ]]; then
 		return 0
 	fi
@@ -395,12 +502,17 @@ write_install_record() {
 	{
 		printf '{\n'
 		printf '  "installer_version": "%s",\n' "$KUJO_INSTALL_VERSION"
-		printf '  "ref": "%s",\n' "$REF"
-		printf '  "prefix": "%s",\n' "$PREFIX"
-		printf '  "bin_dir": "%s",\n' "$BIN_DIR"
+		printf '  "ref": "%s",\n' "$(json_escape "$REF")"
+		printf '  "prefix": "%s",\n' "$(json_escape "$PREFIX")"
+		printf '  "bin_dir": "%s",\n' "$(json_escape "$BIN_DIR")"
 		printf '  "groups": ['
 		printf '%s' "$SELECTED_GROUPS" | awk '{for (i = 1; i <= NF; i++) { if (i > 1) printf ", "; printf "\"%s\"", $i }}'
 		printf '],\n'
+		printf '  "package": "%s",\n' "$(json_escape "$INSTALL_PACKAGE")"
+		printf '  "release_manifest": "%s",\n' "$(json_escape "$RELEASE_MANIFEST")"
+		printf '  "repo_refs": {'
+		printf '%s\n' "$REPO_REF_OVERRIDES" | awk -F= 'NF == 2 { if (count > 0) printf ", "; printf "\"%s\": \"%s\"", $1, $2; count++ }'
+		printf '},\n'
 		printf '  "with_deps": %s\n' "$([[ "$WITH_DEPS" -eq 1 ]] && echo true || echo false)"
 		printf '}\n'
 	} > "$record"
@@ -409,20 +521,47 @@ write_install_record() {
 parse_args() {
 	while [[ "$#" -gt 0 ]]; do
 		case "$1" in
-			--core) SELECTED_GROUPS="core operating" ;;
+			--core)
+				[[ -z "$INSTALL_PACKAGE" ]] || die "--core cannot be combined with --package"
+				SELECTED_GROUPS="core operating"; GROUP_EXPLICIT=1
+				;;
 			--group)
 				[[ "$#" -ge 2 ]] || die "--group requires a value"
+				[[ -z "$INSTALL_PACKAGE" ]] || die "--group cannot be combined with --package"
 				case "$2" in
 					core|ai|quality|showcases|operating) ;;
 					*) die "unknown group: $2" ;;
 				 esac
 				[[ " $SELECTED_GROUPS " == *" $2 "* ]] || SELECTED_GROUPS="$SELECTED_GROUPS $2"
+				GROUP_EXPLICIT=1
 				shift
 				;;
-			--all|--kitchen-sink) select_all ;;
+			--all|--kitchen-sink)
+				[[ -z "$INSTALL_PACKAGE" ]] || die "--all cannot be combined with --package"
+				select_all; GROUP_EXPLICIT=1
+				;;
+			--package)
+				[[ "$#" -ge 2 ]] || die "--package requires a value"
+				[[ "$GROUP_EXPLICIT" -eq 0 ]] || die "--package cannot be combined with profile selection"
+				case "$2" in
+					dispatch) INSTALL_PACKAGE="$2"; SELECTED_GROUPS="" ;;
+					*) die "unknown package: $2" ;;
+				esac
+				shift
+				;;
 			--ref)
 				[[ "$#" -ge 2 ]] || die "--ref requires a value"
 				REF="$2"
+				shift
+				;;
+			--repo-ref)
+				[[ "$#" -ge 2 ]] || die "--repo-ref requires repo=ref"
+				set_repo_ref "$2"
+				shift
+				;;
+			--release-manifest)
+				[[ "$#" -ge 2 ]] || die "--release-manifest requires a path or URL"
+				RELEASE_MANIFEST="$2"
 				shift
 				;;
 			--prefix)
@@ -462,12 +601,16 @@ main() {
 	require_command curl
 	require_command tar
 	require_command awk
+	if [[ -n "$RELEASE_MANIFEST" ]]; then
+		load_release_manifest "$RELEASE_MANIFEST"
+	fi
+	require_package_pins
 	install_kujo
 
 	while IFS='|' read -r group repo kind entrypoint command_name mode; do
 		[[ -n "$group" ]] || continue
 		install_entry "$group" "$repo" "$kind" "$entrypoint" "$command_name" "$mode"
-		if has_group "$group"; then
+		if has_group "$group" || [[ -n "$INSTALL_PACKAGE" ]]; then
 			install_optional_dependencies "$repo"
 		fi
 	done <<'EOF'
@@ -516,6 +659,7 @@ Kujo ecosystem installation complete.
   Root:     $PREFIX
   Commands: $BIN_DIR
   Profiles: $SELECTED_GROUPS
+  Package:  ${INSTALL_PACKAGE:-none}
   Ref:      $REF
 
 If $BIN_DIR is not already on PATH, run:

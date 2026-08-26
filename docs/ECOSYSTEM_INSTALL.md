@@ -28,6 +28,17 @@ The installer uses user-owned directories by default and does not require `sudo`
 
 Use `--prefix` and `--bin-dir` to change these locations. Use a release tag or commit ref for reproducible onboarding; `main` is the development default.
 
+### Reproducible product installs
+
+Products that span repositories publish a release manifest containing strict `repo=ref` pins. Install the tested dependency closure with `--package` and `--release-manifest`:
+
+```bash
+bash install.sh --package dispatch \
+  --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.1.0/release/dispatch-v1.1.0.refs
+```
+
+Remote manifests must use HTTPS. Unknown repositories, invalid refs, duplicate pins, and missing required dependency pins fail before downloads begin. The install receipt records the manifest source and resolved per-repository refs. `--repo-ref repo=ref` is available for controlled development overrides; release automation should use a reviewed manifest.
+
 If the GitHub repositories are still private during a pre-launch test, provide a short-lived GitHub token through the environment rather than putting it in a URL:
 
 ```bash
