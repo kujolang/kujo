@@ -607,6 +607,7 @@ filesystem read permission.
 | `unzip` | preview | `unzip("in.zip", "out")` |
 | `sha256` | stable | `h := sha256("hello")` |
 | `hmac_sha256` | stable | `signature := hmac_sha256(secret, payload)` |
+| `hmac_sha256_verify` | stable | `valid := hmac_sha256_verify(secret, payload, signature)` |
 | `sha256_file` | stable | `h := sha256_file("artifact.bin")` |
 | `md5` | stable | `h := md5("hello")` |
 | `md5_file` | stable | `h := md5_file("artifact.bin")` |

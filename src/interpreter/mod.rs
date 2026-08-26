@@ -884,6 +884,7 @@ impl Interpreter {
             // Hashing & Cryptography functions
             "sha256",
             "hmac_sha256",
+            "hmac_sha256_verify",
             "sha256_file",
             "md5",
             "md5_file",
@@ -1643,6 +1644,10 @@ impl Interpreter {
         self.env.define("sha256".to_string(), Value::NativeFunction("sha256".to_string()));
         self.env
             .define("hmac_sha256".to_string(), Value::NativeFunction("hmac_sha256".to_string()));
+        self.env.define(
+            "hmac_sha256_verify".to_string(),
+            Value::NativeFunction("hmac_sha256_verify".to_string()),
+        );
         self.env
             .define("sha256_file".to_string(), Value::NativeFunction("sha256_file".to_string()));
         self.env.define("md5".to_string(), Value::NativeFunction("md5".to_string()));
@@ -2950,6 +2955,10 @@ impl Interpreter {
             "hmac_sha256" => CallableArity::exact(
                 "hmac_sha256",
                 vec!["secret".to_string(), "message".to_string()],
+            ),
+            "hmac_sha256_verify" => CallableArity::exact(
+                "hmac_sha256_verify",
+                vec!["secret".to_string(), "message".to_string(), "expected_hex".to_string()],
             ),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),
             "path_is_symlink" => CallableArity::exact("path_is_symlink", vec!["path".to_string()]),

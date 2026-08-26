@@ -42,6 +42,29 @@ fn hmac_sha256_hex(secret: &[u8], message: &[u8]) -> String {
     format!("{:x}", mac.finalize().into_bytes())
 }
 
+fn decode_sha256_hex(value: &[u8]) -> Option<[u8; 32]> {
+    if value.len() != 64 {
+        return None;
+    }
+    let mut decoded = [0_u8; 32];
+    for (index, pair) in value.chunks_exact(2).enumerate() {
+        let high = (pair[0] as char).to_digit(16)? as u8;
+        let low = (pair[1] as char).to_digit(16)? as u8;
+        decoded[index] = (high << 4) | low;
+    }
+    Some(decoded)
+}
+
+fn hmac_sha256_verify(secret: &[u8], message: &[u8], expected_hex: &[u8]) -> bool {
+    let Some(expected) = decode_sha256_hex(expected_hex) else {
+        return false;
+    };
+    let mut mac = <HmacSha256 as Mac>::new_from_slice(secret)
+        .expect("HMAC-SHA256 accepts keys of every length");
+    mac.update(message);
+    mac.verify_slice(&expected).is_ok()
+}
+
 fn string_or_bytes(value: &Value) -> Option<&[u8]> {
     match value {
         Value::Str(value) => Some(value.as_bytes()),
@@ -367,6 +390,29 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 }
                 _ => Value::Error(
                     "hmac_sha256 requires (secret, message) string or bytes arguments".to_string(),
+                ),
+            }
+        }
+
+        "hmac_sha256_verify" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(
+                    "hmac_sha256_verify requires (secret, message, expected_hex) string or bytes arguments"
+                        .to_string(),
+                ));
+            }
+
+            match (
+                arg_values.first().and_then(string_or_bytes),
+                arg_values.get(1).and_then(string_or_bytes),
+                arg_values.get(2).and_then(string_or_bytes),
+            ) {
+                (Some(secret), Some(message), Some(expected_hex)) => {
+                    Value::Bool(hmac_sha256_verify(secret, message, expected_hex))
+                }
+                _ => Value::Error(
+                    "hmac_sha256_verify requires (secret, message, expected_hex) string or bytes arguments"
+                        .to_string(),
                 ),
             }
         }
@@ -948,6 +994,35 @@ mod tests {
         assert!(
             matches!(bytes_result, Value::Str(value) if value.as_ref() == "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")
         );
+
+        let verified = handle(
+            "hmac_sha256_verify",
+            &[
+                string_value("key"),
+                string_value("The quick brown fox jumps over the lazy dog"),
+                string_value("f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8"),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(verified, Value::Bool(true)));
+
+        let tampered = handle(
+            "hmac_sha256_verify",
+            &[
+                string_value("key"),
+                string_value("The quick brown fox jumps over the lazy dog"),
+                string_value("07bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8"),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(tampered, Value::Bool(false)));
+
+        let malformed = handle(
+            "hmac_sha256_verify",
+            &[string_value("key"), string_value("message"), string_value("not-hex")],
+        )
+        .unwrap();
+        assert!(matches!(malformed, Value::Bool(false)));
     }
 
     #[test]

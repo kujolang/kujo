@@ -1859,6 +1859,26 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "hmac_sha256".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
+            "hmac_sha256_verify".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
             "md5".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // data

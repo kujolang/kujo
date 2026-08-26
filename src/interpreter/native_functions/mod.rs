@@ -502,6 +502,7 @@ mod tests {
             "udp_close",
             "sha256",
             "hmac_sha256",
+            "hmac_sha256_verify",
             "md5",
             "md5_file",
             "hash_password",
