@@ -301,3 +301,37 @@ benchmark_output.txt
 
 # Kujo's reviewed compiler-output fixtures are source artifacts.
 !/tests/*.out
+
+# Additional ecosystem-local artifact paths required by the shared artifact audit.
+/.suites/
+/.cleanup-runs/
+/.webops/
+/.assetworks/
+/.bluepencil/
+/.dossier/
+/.galleypack/
+/.presswire/
+/.readersignal/
+/.storydesk/
+/.storydesk-sqlite/
+/.versionseal/
+/.contentgraph/
+/.source/
+/audit-results/
+/data/artifacts/
+/data/alerts.json
+/data/ward.db
+/dashboard/
+/.howl-social/
+/.siteprobe/
+/.siteprobe-docgen-tmp/
+/.kujo-commerce/
+/.kujo-bin/
+/.wrangler/
+/.benchmark-cache/
+/.eval-results/
+/.model-build/
+/.model-candidates/
+/truthlens-extension.zip
+/artifacts/coverage/
+/.coverage
