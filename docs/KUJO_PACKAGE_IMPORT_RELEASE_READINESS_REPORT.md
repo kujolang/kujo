@@ -10,9 +10,9 @@ generated inventories were regenerated through their canonical scripts, a stale
 stdlib reference was corrected, and the newly reported `h2` advisory was fixed
 by updating the lockfile to `h2 0.4.16`. The full release-candidate gate passes.
 
-Final tagging and publication remain intentionally pending because the canonical
-release policy requires the literal `UNBLOCK_V1_RELEASE` directive in the active
-release-execution context; that directive has not been supplied in this run.
+Final tagging and publication remain pending because the signed-tag operation
+requires the configured GPG key's passphrase, which is not available to the
+non-interactive release environment.
 
 ## 2. Starting State
 
@@ -99,8 +99,9 @@ Prepared version: `1.0.2`. It is not yet a published release.
 ## 11. Tag / Remote Verification
 
 The commit is pushed to `origin/main` and remote `main` resolves to the same
-SHA. No `v1.0.2` tag was created because the release policy requires the exact
-`UNBLOCK_V1_RELEASE` directive before final tagging and publication.
+SHA. The user supplied `UNBLOCK_V1_RELEASE`, but creating the policy-required
+signed `v1.0.2` tag failed because GPG could not access the signing-key
+passphrase in the non-interactive environment. No tag was pushed.
 
 ## 12. Released Runtime Validation
 
@@ -161,7 +162,8 @@ preserved, not deleted, rewritten, committed, or used as release evidence.
 
 ## 21. Remaining Limitations
 
-- Final tag/publication is blocked by the required `UNBLOCK_V1_RELEASE` directive.
+- Final tag/publication is blocked until the configured GPG signing key is
+  unlocked for the release operation.
 - Released-binary validation and provider clean-room reruns against the immutable
   Kujo tag cannot be completed before tagging.
 - Live Ollama validation remains environment-dependent and was previously skipped.
@@ -186,8 +188,7 @@ NO
 
 Blocking items:
 
-1. The required `UNBLOCK_V1_RELEASE` directive has not been supplied, so the
-   immutable Kujo tag and release publication cannot be performed under the
-   repository's release policy.
+1. The policy-required signed `v1.0.2` tag cannot be created until the GPG key
+   passphrase is available to the release environment.
 2. Ollama and Anthropic must be rerun against that released Kujo artifact before
    the provider-builder baseline can be certified.
