@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-08-12
+Generated: 2026-08-26
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
@@ -64,7 +64,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/jit.rs | 8176 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn(_ctx: *mut VMContext) -> i64 { |
 | src/jit.rs | 8186 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn_with_arg(_ctx: *mut VMContext, arg: i64) -> i64 { |
 | src/jit.rs | 9250 | executable | jit_executable |         unsafe { |
-| src/module.rs | 698 | non_executable | src_comment_or_string |             ""expected unsafe traversal error, got: {}"", |
+| src/module.rs | 830 | non_executable | src_comment_or_string |             ""expected unsafe traversal error, got: {}"", |
 | tests/benchmark_publication_policy_contract.rs | 58 | non_executable | test_comment_or_string |             ""retired launch-unsafe artifact should stay removed: {path}"" |
 | tests/fixtures/unsafe_safety_contracts/malformed_contract.rs | 1 | executable | test_executable | pub unsafe extern ""C"" fn jit_ffi(ptr: *mut i64) -> i64 { |
 | tests/fixtures/unsafe_safety_contracts/malformed_contract.rs | 4 | executable | test_executable |     unsafe { *ptr } |

@@ -414,7 +414,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `promise_all` | `promise_all(promises, concurrency?)` | 1..=2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := promise_all(...)` |
 | `await_all` | `await_all(promises, concurrency?)` | 1..=2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := await_all(...)` |
 | `parallel_map` | `parallel_map(items, mapper, concurrency?)` | 2..=3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parallel_map(...)` |
-| `promise_wait` | `promise_wait(promise)` | 1 | dynamic (Value) | Resolves to the promise value or Value::Error; capability-denied when gated. | `none` | `result := promise_wait(parallel_map(...))` |
+| `promise_wait` | `promise_wait(promise)` | exact 1 | dynamic (Value) | Resolves to the promise value or Value::Error; capability-denied when gated. | `none` | `result := promise_wait(parallel_map(...))` |
 | `par_map` | `par_map(items, mapper, concurrency?)` | 2..=3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := par_map(...)` |
 | `par_each` | `par_each(items, mapper, concurrency?)` | 2..=3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := par_each(...)` |
 | `set_task_pool_size` | `set_task_pool_size(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := set_task_pool_size(...)` |

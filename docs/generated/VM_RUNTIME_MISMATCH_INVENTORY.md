@@ -1,7 +1,7 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-08-08
-Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
+Generated: 2026-08-26
+Runner: `/tmp/kujo-release-readiness.ZocPZJ/target/debug/kujo`
 Fixture root: `tests`
 
 | Fixture | VM Exit | Interpreter Exit | VM Matches Snapshot | Interpreter Matches Snapshot | Delta Type | Mismatch Bucket | Owner | Priority | Rationale |
@@ -38,7 +38,7 @@ Fixture root: `tests`
 | `tests/test_arithmetic.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_array_contains.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/test_array_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/test_assert_simple.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
+| `tests/test_assert_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_assertions.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/test_basic_print.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_binary_files.kujo` | 4 | 4 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
@@ -153,9 +153,9 @@ Fixture root: `tests`
 | `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 
 Summary: `145` fixtures scanned
-- both match snapshot: `107`
+- both match snapshot: `108`
 - VM-only mismatch: `0`
-- interpreter-only mismatch: `38`
+- interpreter-only mismatch: `37`
 - both mismatch: `0`
 
 Mismatch classification totals (priority order):
@@ -163,7 +163,7 @@ Mismatch classification totals (priority order):
 - P1 stale-snapshot-expectation (`docs-owner`): `0`
 - P1 parser-invalid-fixture (`language-owner`): `0`
 - P2 harness-debt (`harness-owner`): `0`
-- P2 intentional-divergence (`runtime-owner`): `38`
+- P2 intentional-divergence (`runtime-owner`): `37`
 
 VM coverage gate:
 - metric: `vm_matches_snapshot / fixtures_scanned`

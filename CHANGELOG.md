@@ -36,6 +36,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consume cancelled request IDs so later requests may safely reuse them.
 - Accept the case-insensitive `Content-Length` header names required by the LSP transport protocol.
 
+## [1.0.2] - 2026-08-26
+
+### Added
+
+- Automatically discover locked Kennel-installed dependency roots from the nearest project `kennel.lock`, so normal package consumers no longer need manual `KUJO_MODULE_PATH` wiring.
+
+### Changed
+
+- Preserve `KUJO_MODULE_PATH` as an explicit override/extension point while keeping project-scoped, deterministic package resolution and path-containment protections.
+
+### Security
+
+- Update the locked `h2` dependency to `0.4.16` to address `RUSTSEC-2026-0258`.
+
 ## [1.0.1] - 2026-08-11
 
 ### Fixed

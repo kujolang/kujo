@@ -31,7 +31,7 @@ tests/string_methods_test.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snaps
 tests/test_arithmetic.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_array_contains.kujo,0,0,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
 tests/test_array_simple.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
-tests/test_assert_simple.kujo,0,0,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
+tests/test_assert_simple.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_assertions.kujo,0,0,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
 tests/test_basic_print.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_binary_files.kujo,4,4,yes,no,interpreter_only_mismatch,intentional-divergence,runtime-owner,P2,default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt
