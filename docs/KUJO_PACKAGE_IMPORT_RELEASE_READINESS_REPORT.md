@@ -104,8 +104,9 @@ SHA. No `v1.0.2` tag was created because the release policy requires the exact
 
 ## 12. Released Runtime Validation
 
-Not applicable yet. A release-mode binary build was started from the prepared
-commit, but the immutable tag and distributable release artifact do not exist.
+Not applicable yet. A release-mode binary build was attempted from the prepared
+commit but was not completed; the immutable tag and distributable release
+artifact do not exist.
 
 ## 13. KUJO_MODULE_PATH Compatibility
 
