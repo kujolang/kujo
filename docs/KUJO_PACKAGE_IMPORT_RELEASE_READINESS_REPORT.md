@@ -106,9 +106,9 @@ the configured release key.
 
 ## 12. Released Runtime Validation
 
-PASS. The release-mode binary reports `kujo 1.0.2`. GitHub's
-`release-binaries` workflow is running for `v1.0.2`; its artifact publication
-result is recorded separately once complete.
+PASS. The release-mode binary reports `kujo 1.0.2`. GitHub Release
+`https://github.com/kujolang/kujo/releases/tag/v1.0.2` is published with Linux,
+macOS x64/arm64, Windows, and checksum assets.
 
 ## 13. KUJO_MODULE_PATH Compatibility
 
@@ -165,8 +165,8 @@ preserved, not deleted, rewritten, committed, or used as release evidence.
 - Live Ollama validation remains environment-dependent and was previously skipped.
 - Live provider tests are not part of the deterministic release gate.
 - `cargo deny` was not run because the tool is unavailable.
-- The GitHub `release-binaries` workflow was still in progress when this report
-  was updated; final hosted asset URLs require that workflow to complete.
+- GitHub's post-release artifact smoke and the latest main-branch CI workflows
+  may continue running independently after publication.
 
 ## 22. Stable Provider Builder Baseline
 
