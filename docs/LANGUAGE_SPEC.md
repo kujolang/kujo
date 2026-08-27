@@ -371,7 +371,14 @@ items[0] := 9
 - Dotted `from` paths must use identifier segments separated by `.`; malformed paths (for example `from src..util import value`) are parse errors.
 - Import resolution searches for module files in deterministic order:
   - the importing module's package root (for nested imports),
-  - then the loader's configured module search paths.
+  - the current project root and its `modules/` directory,
+  - explicit `KUJO_MODULE_PATH` entries,
+  - then the installed roots named by the nearest project's `kennel.lock`.
+- When a Kennel project is present, only installed package directories named by
+  its lockfile are discovered automatically. Kujo does not scan arbitrary
+  `kennel_packages/` contents, walk unrelated parent projects, or fetch packages
+  during import. Missing or stale installs therefore remain an installation
+  problem rather than becoming an implicit search path.
 - For each search root Kujo checks candidates in this exact precedence order:
   - `<module_name>.kujo` (legacy flat behavior),
   - for dotted module names only, `<seg1>/<seg2>/.../<segN>.kujo` (directory-backed dotted resolution).
@@ -401,7 +408,7 @@ from src.core.math import add
 - `kujo package-install` regenerates the deterministic `kujo.lock` snapshot derived from `kujo.toml`.
 - `kujo package-install --frozen` verifies that the manifest and lockfile remain in sync without rewriting either file.
 - Package workflow imports use the same package-root-aware module resolution rules as ordinary runtime imports, so nested layouts under `src/` remain available on the default VM path.
-- Installations may add shared first-party source-module roots with the platform path-list environment variable `KUJO_MODULE_PATH`; local entry-file and project `modules/` roots take precedence.
+- Installations may add shared first-party source-module roots with the platform path-list environment variable `KUJO_MODULE_PATH`; local project roots and explicit paths retain precedence over locked Kennel package roots. `KUJO_MODULE_PATH` remains available for custom modules and non-Kennel workflows.
 
 ### 5.12 Diagnostics and CLI exit codes
 

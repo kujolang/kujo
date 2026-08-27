@@ -62,6 +62,12 @@ Notes:
 - `kujo package-install` regenerates `kujo.lock` deterministically from the manifest.
 - `kujo package-install --frozen` verifies that `kujo.lock` is current without rewriting it.
 - Nested source layouts under the project root resolve the same way on VM and interpreter paths, so ordinary package projects do not need `--interpreter` just to import `src/...` modules.
+- When execution starts inside a Kennel project, the module loader reads the
+  nearest `kennel.lock` and adds only its existing, canonical package install
+  roots. This makes locked dependencies importable without environment setup
+  while keeping unrelated or stale package directories out of resolution.
+- `KUJO_MODULE_PATH` remains an explicit extension point and is resolved before
+  lockfile-discovered package roots.
 
 ## 4. Core Components
 

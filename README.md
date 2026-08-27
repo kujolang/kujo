@@ -339,6 +339,9 @@ Implemented and actively used surfaces include:
 - variables/bindings (`let`, `mut`, `const`), functions (`func`, `async func`), conditionals, loops, structs, enums, `match`, `try/except`, and `throw`.
 - arrays/dictionaries, interpolation, string/collection helpers, and a broad native standard library.
 - module imports with both flat and dotted paths (for example `from src.util import value`).
+- Kennel-installed dependencies are automatically importable from a project
+  with a valid `kennel.lock`; `KUJO_MODULE_PATH` remains available for custom
+  or advanced module roots.
 
 Detailed semantics and contracts are in [docs/LANGUAGE_SPEC.md](docs/LANGUAGE_SPEC.md).
 
