@@ -65,6 +65,9 @@ impl TypeChecker {
             module_search_paths: {
                 let mut paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
                 paths.extend(crate::module::configured_module_search_paths());
+                paths.extend(crate::module::automatic_kennel_package_search_paths(
+                    &std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+                ));
                 paths
             },
             module_export_signatures: HashMap::new(),
@@ -78,7 +81,10 @@ impl TypeChecker {
 
     /// Adds a module search path used to resolve imported Kujo files during static analysis.
     pub fn add_search_path<P: AsRef<Path>>(&mut self, path: P) {
-        self.module_search_paths.push(path.as_ref().to_path_buf());
+        let path = path.as_ref().to_path_buf();
+        self.module_search_paths.push(path.clone());
+        self.module_search_paths
+            .extend(crate::module::automatic_kennel_package_search_paths(&path));
     }
 
     /// Registers all built-in function signatures

@@ -75,6 +75,9 @@ pub struct ModuleLoader {
     loading_stack_index: HashMap<ModuleCacheKey, usize>,
     /// Search paths for module resolution.
     search_paths: Vec<PathBuf>,
+    /// Lockfile-derived package roots discovered when the loader is created or
+    /// when the CLI adds an entry-file search path.
+    automatic_search_paths: Vec<PathBuf>,
 }
 
 impl ModuleLoader {
@@ -195,18 +198,23 @@ impl ModuleLoader {
     pub fn new() -> Self {
         let mut search_paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
         search_paths.extend(configured_module_search_paths());
+        let automatic_search_paths =
+            automatic_kennel_package_search_paths(&current_working_directory());
         ModuleLoader {
             loaded_modules: HashMap::new(),
             loading_stack: Vec::new(),
             loading_stack_index: HashMap::new(),
             search_paths,
+            automatic_search_paths,
         }
     }
 
     /// Adds a search path for module resolution.
     #[allow(dead_code)]
     pub fn add_search_path<P: AsRef<Path>>(&mut self, path: P) {
-        self.search_paths.push(path.as_ref().to_path_buf());
+        let path = path.as_ref().to_path_buf();
+        self.search_paths.push(path.clone());
+        self.automatic_search_paths.extend(automatic_kennel_package_search_paths(&path));
     }
 
     fn module_search_roots(&self) -> Vec<PathBuf> {
@@ -217,6 +225,7 @@ impl ModuleLoader {
         }
 
         roots.extend(self.search_paths.iter().cloned());
+        roots.extend(self.automatic_search_paths.iter().cloned());
         roots
     }
 
@@ -510,6 +519,93 @@ pub fn configured_module_search_paths() -> Vec<PathBuf> {
         .unwrap_or_default()
 }
 
+fn current_working_directory() -> PathBuf {
+    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+}
+
+/// Returns the installed package roots belonging to the nearest Kennel project.
+///
+/// Kennel's lockfile is the authority here: directories that merely happen to
+/// exist below `kennel_packages` are not added to the runtime search path. This
+/// keeps package discovery project-scoped and prevents stale or unlocked source
+/// trees from shadowing a resolved dependency.
+pub fn automatic_kennel_package_search_paths(start: &Path) -> Vec<PathBuf> {
+    let Some(project_root) = nearest_kennel_project_root(start) else {
+        return Vec::new();
+    };
+    let lockfile_path = project_root.join("kennel.lock");
+    let Ok(lockfile_source) = fs::read_to_string(&lockfile_path) else {
+        return Vec::new();
+    };
+    let Ok(lockfile) = lockfile_source.parse::<toml::Value>() else {
+        return Vec::new();
+    };
+    let Some(packages) = lockfile.get("package").and_then(toml::Value::as_array) else {
+        return Vec::new();
+    };
+    let packages_root = project_root.join("kennel_packages");
+    let Ok(canonical_packages_root) =
+        path_security::canonicalize_root(&packages_root, "Kennel package root")
+    else {
+        return Vec::new();
+    };
+
+    let mut entries: Vec<(String, PathBuf)> = packages
+        .iter()
+        .filter_map(|entry| {
+            let name = entry.get("name").and_then(toml::Value::as_str)?.to_string();
+            let install_path =
+                entry.get("install_path").and_then(toml::Value::as_str).unwrap_or("");
+            let relative = install_path.strip_prefix("kennel_packages/")?;
+            if relative.is_empty()
+                || relative.contains('/')
+                || relative.contains('\\')
+                || relative == "."
+                || relative == ".."
+            {
+                return None;
+            }
+            let candidate = packages_root.join(relative);
+            if !candidate.is_dir() {
+                return None;
+            }
+            let canonical = fs::canonicalize(&candidate).ok()?;
+            if path_security::ensure_path_within_root(
+                &canonical,
+                &canonical_packages_root,
+                "Kennel package path",
+            )
+            .is_err()
+            {
+                return None;
+            }
+            Some((name, canonical))
+        })
+        .collect();
+
+    entries.sort_by(|left, right| left.0.cmp(&right.0));
+    entries.dedup_by(|left, right| left.0 == right.0);
+    entries.into_iter().map(|(_, path)| path).collect()
+}
+
+fn nearest_kennel_project_root(start: &Path) -> Option<PathBuf> {
+    let start = if start.is_file() { start.parent()? } else { start };
+    let absolute = if start.is_absolute() {
+        start.to_path_buf()
+    } else {
+        current_working_directory().join(start)
+    };
+    let mut current = fs::canonicalize(absolute).ok()?;
+    loop {
+        if current.join("kennel.toml").is_file() || current.join("kennel.lock").is_file() {
+            return Some(current);
+        }
+        if !current.pop() {
+            return None;
+        }
+    }
+}
+
 impl Default for ModuleLoader {
     fn default() -> Self {
         Self::new()
@@ -572,6 +668,42 @@ mod tests {
 
         assert!(matches!(result, Value::Int(42)));
         fs::remove_dir_all(&temp_root).expect("failed to clean up module root");
+    }
+
+    #[test]
+    fn automatic_kennel_roots_follow_locked_installs_only() {
+        let project_root = std::env::temp_dir().join(unique_name("kujo_kennel_roots"));
+        let packages_root = project_root.join("kennel_packages");
+        let locked_root = packages_root.join("locked-package");
+        let stale_root = packages_root.join("stale-package");
+        fs::create_dir_all(&locked_root).expect("failed to create locked package");
+        fs::create_dir_all(&stale_root).expect("failed to create stale package");
+        fs::write(
+            project_root.join("kennel.lock"),
+            "version = 1\n\n[[package]]\nname = \"locked-package\"\ninstall_path = \"kennel_packages/locked-package\"\n",
+        )
+        .expect("failed to write lockfile");
+
+        let roots = automatic_kennel_package_search_paths(&project_root);
+        assert_eq!(roots, vec![fs::canonicalize(locked_root).expect("locked root should resolve")]);
+        assert!(!roots.iter().any(|root| root.ends_with("stale-package")));
+
+        fs::remove_dir_all(&project_root).expect("failed to clean up project root");
+    }
+
+    #[test]
+    fn automatic_kennel_roots_reject_package_path_escape() {
+        let project_root = std::env::temp_dir().join(unique_name("kujo_kennel_escape"));
+        let packages_root = project_root.join("kennel_packages");
+        fs::create_dir_all(&packages_root).expect("failed to create packages root");
+        fs::write(
+            project_root.join("kennel.lock"),
+            "version = 1\n\n[[package]]\nname = \"escape\"\ninstall_path = \"kennel_packages/../outside\"\n",
+        )
+        .expect("failed to write lockfile");
+
+        assert!(automatic_kennel_package_search_paths(&project_root).is_empty());
+        fs::remove_dir_all(&project_root).expect("failed to clean up project root");
     }
 
     #[test]

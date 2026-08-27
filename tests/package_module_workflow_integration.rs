@@ -190,6 +190,44 @@ fn package_module_workflow_end_to_end_contract() {
 }
 
 #[test]
+fn locked_kennel_package_roots_are_importable_without_environment_setup() {
+    let project_root = unique_temp_dir("locked_kennel_package_import");
+    let package_root = project_root.join("kennel_packages").join("demo_provider");
+    let stale_root = project_root.join("kennel_packages").join("stale_provider");
+    fs::create_dir_all(&package_root).expect("failed to create locked package root");
+    fs::create_dir_all(&stale_root).expect("failed to create stale package root");
+    fs::write(package_root.join("demo_provider.kujo"), "export answer := 42\n")
+        .expect("failed to write locked package shim");
+    fs::write(stale_root.join("stale_provider.kujo"), "export answer := 99\n")
+        .expect("failed to write stale package shim");
+    fs::write(project_root.join("kennel.toml"), "[package]\nname = \"import-demo\"\n")
+        .expect("failed to write Kennel manifest");
+    fs::write(
+        project_root.join("kennel.lock"),
+        "version = 1\n\n[[package]]\nname = \"demo_provider\"\ninstall_path = \"kennel_packages/demo_provider\"\n",
+    )
+    .expect("failed to write Kennel lockfile");
+    let workflow = project_root.join("workflow.kujo");
+    fs::write(&workflow, "from demo_provider import answer\nprint(answer)\n")
+        .expect("failed to write package import workflow");
+
+    let output = Command::new(kujo_binary())
+        .current_dir(&project_root)
+        .env_remove("KUJO_MODULE_PATH")
+        .arg("run")
+        .arg(&workflow)
+        .output()
+        .expect("failed to run locked package import workflow");
+    assert!(
+        output.status.success(),
+        "locked package import failed: stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+    assert_eq!(stdout_text(&output).trim(), "42");
+}
+
+#[test]
 fn package_module_workflow_vm_default_supports_nested_layout_and_frozen_lockfile() {
     let project_root = unique_temp_dir("package_module_vm_default_nested_layout");
     let project_root_str = project_root.to_str().expect("path should be utf-8");
