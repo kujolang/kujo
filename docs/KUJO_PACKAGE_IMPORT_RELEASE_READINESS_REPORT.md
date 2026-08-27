@@ -97,10 +97,9 @@ Prepared version: `1.0.2`. It is not yet a published release.
 
 ## 11. Tag / Remote Verification
 
-Remote `main` resolves to `b06fa0a` (the post-tag documentation-contract
-follow-up). The signed tag `v1.0.2` resolves to release commit
-`03bc3c501125cc2c5ccbe16ab39ed80e1839fb64`; tag object
-`581cc297c4699fe6d9c7382e209366896e9b45e7` verifies as a good signature from
+Remote `main` and the signed tag `v1.0.2` resolve to release commit
+`e9586c1159ceb9d468266df6b794a856bdb8ae88`; tag object
+`54f30b5e948fb0d035b5011d0c3919ea86435860` verifies as a good signature from
 the configured release key.
 
 ## 12. Released Runtime Validation
