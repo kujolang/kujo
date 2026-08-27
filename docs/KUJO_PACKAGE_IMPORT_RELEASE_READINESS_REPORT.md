@@ -10,9 +10,8 @@ generated inventories were regenerated through their canonical scripts, a stale
 stdlib reference was corrected, and the newly reported `h2` advisory was fixed
 by updating the lockfile to `h2 0.4.16`. The full release-candidate gate passes.
 
-Final tagging and publication remain pending because the signed-tag operation
-requires the configured GPG key's passphrase, which is not available to the
-non-interactive release environment.
+The policy-authorized signed release tag has now been created and pushed. The
+provider clean-room scripts pass against a release-mode `kujo 1.0.2` binary.
 
 ## 2. Starting State
 
@@ -98,16 +97,17 @@ Prepared version: `1.0.2`. It is not yet a published release.
 
 ## 11. Tag / Remote Verification
 
-The commit is pushed to `origin/main` and remote `main` resolves to the same
-SHA. The user supplied `UNBLOCK_V1_RELEASE`, but creating the policy-required
-signed `v1.0.2` tag failed because GPG could not access the signing-key
-passphrase in the non-interactive environment. No tag was pushed.
+Remote `main` resolves to `b06fa0a` (the post-tag documentation-contract
+follow-up). The signed tag `v1.0.2` resolves to release commit
+`03bc3c501125cc2c5ccbe16ab39ed80e1839fb64`; tag object
+`581cc297c4699fe6d9c7382e209366896e9b45e7` verifies as a good signature from
+the configured release key.
 
 ## 12. Released Runtime Validation
 
-Not applicable yet. A release-mode binary build was attempted from the prepared
-commit but was not completed; the immutable tag and distributable release
-artifact do not exist.
+PASS. The release-mode binary reports `kujo 1.0.2`. GitHub's
+`release-binaries` workflow is running for `v1.0.2`; its artifact publication
+result is recorded separately once complete.
 
 ## 13. KUJO_MODULE_PATH Compatibility
 
@@ -124,21 +124,20 @@ resolution.
 
 ## 15. Ollama Clean-Room Against Released Kujo
 
-The previously validated Ollama `v0.1.8` clean-room install passed with
-`KUJO_MODULE_PATH` unset against the rebuilt development runtime. A rerun
-against a released Kujo tag is pending the required immutable tag.
+PASS. Ollama `v0.1.8` installed from GitHub, resolved AI SDK transitively, and
+passed its installed consumer smoke with `KUJO_MODULE_PATH` unset using the
+release-mode `kujo 1.0.2` binary.
 
 ## 16. Anthropic Clean-Room Against Released Kujo
 
-The previously validated Anthropic `v0.1.1` clean-room install passed with
-`KUJO_MODULE_PATH` unset against the rebuilt development runtime. A rerun
-against a released Kujo tag is pending the required immutable tag.
+PASS. Anthropic `v0.1.1` installed from GitHub, resolved AI SDK transitively,
+and passed its installed consumer smoke with `KUJO_MODULE_PATH` unset using the
+release-mode `kujo 1.0.2` binary.
 
 ## 17. AI SDK Transitive Import Result
 
-The prior clean-room provider validations established transitive AI SDK
-resolution through Kennel without manual module-path wiring. Revalidation against
-the released Kujo artifact remains pending publication.
+PASS. Both provider lockfiles resolved their immutable provider refs and
+transitive `ai-sdk` dependency without manual module-path wiring.
 
 ## 18. Contract / Documentation Impact
 
@@ -162,19 +161,17 @@ preserved, not deleted, rewritten, committed, or used as release evidence.
 
 ## 21. Remaining Limitations
 
-- Final tag/publication is blocked until the configured GPG signing key is
-  unlocked for the release operation.
-- Released-binary validation and provider clean-room reruns against the immutable
-  Kujo tag cannot be completed before tagging.
 - Live Ollama validation remains environment-dependent and was previously skipped.
 - Live provider tests are not part of the deterministic release gate.
 - `cargo deny` was not run because the tool is unavailable.
+- The GitHub `release-binaries` workflow was still in progress when this report
+  was updated; final hosted asset URLs require that workflow to complete.
 
 ## 22. Stable Provider Builder Baseline
 
 Prepared baseline:
 
-- Kujo runtime: `1.0.2` (prepared, not tagged)
+- Kujo runtime: `1.0.2` (`v1.0.2`, release commit `03bc3c5`)
 - Kennel: current compatible repository release/ref
 - AI SDK: `v1.1.0`
 - Provider Driver Contract: `1.0.0`
@@ -184,11 +181,4 @@ Prepared baseline:
 
 ## Ready for Universal Provider Builder?
 
-NO
-
-Blocking items:
-
-1. The policy-required signed `v1.0.2` tag cannot be created until the GPG key
-   passphrase is available to the release environment.
-2. Ollama and Anthropic must be rerun against that released Kujo artifact before
-   the provider-builder baseline can be certified.
+YES
