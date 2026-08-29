@@ -142,7 +142,7 @@ fn rejects_unsafe_and_conflicting_scaffolds() {
     assert_eq!(error["contract"], "kujo-agent-error/v1");
     assert_eq!(error["status"], "error");
     assert_eq!(
-        run(&["agent", "new", "unsafe-root", "--dir", "/", "--no-git"], &root).status.code(),
+        run(&["agent", "new", "root-target", "--dir", "/", "--no-git"], &root).status.code(),
         Some(2)
     );
 }
