@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Make Agent project integration fixtures portable to hosted CI by checking out
   every composed ecosystem repository at its exact scaffolded commit.
+- Preflight JIT benchmark bytecode before execution so unsupported benchmark
+  programs report a bounded result instead of triggering a Cranelift panic, and
+  render unavailable runtime speedups as `N/A`.
 
 - Eliminate the remaining Cargo audit maintenance warnings by upgrading
   Cranelift off `region 2`/`mach` and replacing the unmaintained `paste` macro

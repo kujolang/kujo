@@ -151,11 +151,19 @@ impl Reporter {
         out.push_str(&format!("Total Time (JIT): {}\n", Statistics::format_duration(total_jit)));
 
         if total_interp.as_nanos() > 0 {
-            let vm_speedup = total_interp.as_nanos() as f64 / total_vm.as_nanos() as f64;
-            let jit_speedup = total_interp.as_nanos() as f64 / total_jit.as_nanos() as f64;
             out.push('\n');
-            out.push_str(&format!("Average VM Speedup: {:.2}x\n", vm_speedup));
-            out.push_str(&format!("Average JIT Speedup: {:.2}x\n", jit_speedup));
+            if total_vm.as_nanos() > 0 {
+                let vm_speedup = total_interp.as_nanos() as f64 / total_vm.as_nanos() as f64;
+                out.push_str(&format!("Average VM Speedup: {:.2}x\n", vm_speedup));
+            } else {
+                out.push_str("Average VM Speedup: N/A\n");
+            }
+            if total_jit.as_nanos() > 0 {
+                let jit_speedup = total_interp.as_nanos() as f64 / total_jit.as_nanos() as f64;
+                out.push_str(&format!("Average JIT Speedup: {:.2}x\n", jit_speedup));
+            } else {
+                out.push_str("Average JIT Speedup: N/A\n");
+            }
         }
 
         Some(out)
@@ -217,5 +225,18 @@ mod tests {
         assert!(output.contains("Total Time (JIT): 2.00 ms"));
         assert!(output.contains("Average VM Speedup: 2.00x"));
         assert!(output.contains("Average JIT Speedup: 5.00x"));
+    }
+
+    #[test]
+    fn render_summary_text_uses_na_when_a_runtime_has_no_successful_samples() {
+        let rows = vec![(
+            "unsupported-jit".to_string(),
+            vec![result_with_mean("unsupported-jit", ExecutionMode::Interpreter, 10)],
+        )];
+
+        let output = Reporter::render_summary_text(&rows).expect("expected summary output");
+        assert!(output.contains("Average VM Speedup: N/A"));
+        assert!(output.contains("Average JIT Speedup: N/A"));
+        assert!(!output.contains("inf"));
     }
 }

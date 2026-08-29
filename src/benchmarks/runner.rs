@@ -183,6 +183,8 @@ impl BenchmarkRunner {
         let mut vm = VM::new();
         self.configure_vm_globals(&mut vm);
         vm.set_jit_enabled(true);
+        vm.validate_jit_supported_surfaces(&chunk)
+            .map_err(|reason| format!("JIT unsupported: {reason}"))?;
 
         vm.execute(chunk).map_err(|e| format!("JIT error: {:?}", e))?;
 
@@ -271,5 +273,19 @@ mod tests {
         let result = runner.run_interpreter("simple_test", code);
         assert!(result.success);
         assert!(result.samples.len() > 0);
+    }
+
+    #[test]
+    fn jit_benchmark_preflights_unsupported_bytecode_without_panicking() {
+        let runner = BenchmarkRunner::new().with_iterations(1).with_warmup(0);
+        let result = runner.run_jit(
+            "sorting_algorithms",
+            include_str!("../../examples/benchmarks/sorting_algorithms.kujo"),
+        );
+
+        assert!(!result.success);
+        assert!(result.error.as_deref().is_some_and(|error| {
+            error.contains("JIT unsupported") && error.contains("MakeClosure")
+        }));
     }
 }
