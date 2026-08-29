@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Remove the `RUSTSEC-2023-0071` RSA timing advisory by moving public RSA
+  operations to a current vendored OpenSSL implementation and using AWS-LC for
+  the HS256-only JWT backend; the release gate no longer suppresses the advisory.
 - Preserve exact integer comparisons in `json_schema_validate` beyond the IEEE-754 safe-integer range.
 - Reject incomplete `jsonl_query` join configurations instead of silently returning an empty join.
 - Bound `ssg_build_output_paths` before allocating generated path arrays.

@@ -7,10 +7,12 @@ use aes_gcm::{Aes256Gcm, Nonce};
 use base64::Engine;
 use hmac::{Hmac, Mac};
 use md5::Md5;
-use rsa::pkcs8::{
-    DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey, LineEnding,
-};
-use rsa::{Oaep, RsaPrivateKey, RsaPublicKey};
+use openssl::encrypt::{Decrypter, Encrypter};
+use openssl::error::ErrorStack;
+use openssl::hash::MessageDigest;
+use openssl::pkey::{PKey, Private, Public};
+use openssl::rsa::{Padding, Rsa};
+use openssl::sign::{Signer, Verifier};
 use sha2::{Digest, Sha256};
 
 use crate::interpreter::{DictMap, Value};
@@ -63,6 +65,44 @@ fn hmac_sha256_verify(secret: &[u8], message: &[u8], expected_hex: &[u8]) -> boo
         .expect("HMAC-SHA256 accepts keys of every length");
     mac.update(message);
     mac.verify_slice(&expected).is_ok()
+}
+
+fn rsa_encrypt_oaep_sha256(key: &PKey<Public>, plaintext: &[u8]) -> Result<Vec<u8>, ErrorStack> {
+    let mut encrypter = Encrypter::new(key)?;
+    encrypter.set_rsa_padding(Padding::PKCS1_OAEP)?;
+    encrypter.set_rsa_oaep_md(MessageDigest::sha256())?;
+    encrypter.set_rsa_mgf1_md(MessageDigest::sha256())?;
+    let mut ciphertext = vec![0; encrypter.encrypt_len(plaintext)?];
+    let written = encrypter.encrypt(plaintext, &mut ciphertext)?;
+    ciphertext.truncate(written);
+    Ok(ciphertext)
+}
+
+fn rsa_decrypt_oaep_sha256(key: &PKey<Private>, ciphertext: &[u8]) -> Result<Vec<u8>, ErrorStack> {
+    let mut decrypter = Decrypter::new(key)?;
+    decrypter.set_rsa_padding(Padding::PKCS1_OAEP)?;
+    decrypter.set_rsa_oaep_md(MessageDigest::sha256())?;
+    decrypter.set_rsa_mgf1_md(MessageDigest::sha256())?;
+    let mut plaintext = vec![0; decrypter.decrypt_len(ciphertext)?];
+    let written = decrypter.decrypt(ciphertext, &mut plaintext)?;
+    plaintext.truncate(written);
+    Ok(plaintext)
+}
+
+fn rsa_sign_sha256(key: &PKey<Private>, message: &[u8]) -> Result<Vec<u8>, ErrorStack> {
+    let mut signer = Signer::new(MessageDigest::sha256(), key)?;
+    signer.update(message)?;
+    signer.sign_to_vec()
+}
+
+fn rsa_verify_sha256(
+    key: &PKey<Public>,
+    message: &[u8],
+    signature: &[u8],
+) -> Result<bool, ErrorStack> {
+    let mut verifier = Verifier::new(MessageDigest::sha256(), key)?;
+    verifier.update(message)?;
+    verifier.verify(signature)
 }
 
 fn string_or_bytes(value: &Value) -> Option<&[u8]> {
@@ -741,13 +781,13 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     ));
                 }
 
-                let mut rng = rand::thread_rng();
-                match RsaPrivateKey::new(&mut rng, bits_usize) {
-                    Ok(private_key) => {
-                        let public_key = RsaPublicKey::from(&private_key);
-
-                        let private_pem = match private_key.to_pkcs8_pem(LineEnding::LF) {
-                            Ok(pem) => pem.to_string(),
+                match Rsa::generate(bits_usize as u32)
+                    .and_then(PKey::from_rsa)
+                    .and_then(|key| Ok((key.private_key_to_pem_pkcs8()?, key.public_key_to_pem()?)))
+                {
+                    Ok((private_pem, public_pem)) => {
+                        let private_pem = match String::from_utf8(private_pem) {
+                            Ok(pem) => pem,
                             Err(e) => {
                                 return Some(error_object(format!(
                                     "Failed to encode private key: {}",
@@ -755,8 +795,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                                 )))
                             }
                         };
-
-                        let public_pem = match public_key.to_public_key_pem(LineEnding::LF) {
+                        let public_pem = match String::from_utf8(public_pem) {
                             Ok(pem) => pem,
                             Err(e) => {
                                 return Some(error_object(format!(
@@ -789,12 +828,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             match (arg_values.first(), arg_values.get(1)) {
                 (Some(Value::Str(plaintext)), Some(Value::Str(public_key_pem))) => {
-                    match RsaPublicKey::from_public_key_pem(public_key_pem.as_ref()) {
+                    match PKey::public_key_from_pem(public_key_pem.as_bytes()) {
                         Ok(public_key) => {
-                            let mut rng = rand::thread_rng();
-                            let padding = Oaep::new::<Sha256>();
-
-                            match public_key.encrypt(&mut rng, padding, plaintext.as_bytes()) {
+                            match rsa_encrypt_oaep_sha256(&public_key, plaintext.as_bytes()) {
                                 Ok(ciphertext) => Value::Str(Arc::new(
                                     base64::engine::general_purpose::STANDARD.encode(ciphertext),
                                 )),
@@ -820,14 +856,13 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             match (arg_values.first(), arg_values.get(1)) {
                 (Some(Value::Str(ciphertext_b64)), Some(Value::Str(private_key_pem))) => {
-                    match RsaPrivateKey::from_pkcs8_pem(private_key_pem.as_ref()) {
+                    match PKey::private_key_from_pem(private_key_pem.as_bytes()) {
                         Ok(private_key) => {
                             match base64::engine::general_purpose::STANDARD
                                 .decode(ciphertext_b64.as_ref())
                             {
                                 Ok(ciphertext) => {
-                                    let padding = Oaep::new::<Sha256>();
-                                    match private_key.decrypt(padding, &ciphertext) {
+                                    match rsa_decrypt_oaep_sha256(&private_key, &ciphertext) {
                                         Ok(plaintext) => match String::from_utf8(plaintext) {
                                             Ok(s) => Value::Str(Arc::new(s)),
                                             Err(e) => error_object(format!(
@@ -862,17 +897,14 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             match (arg_values.first(), arg_values.get(1)) {
                 (Some(Value::Str(message)), Some(Value::Str(private_key_pem))) => {
-                    match RsaPrivateKey::from_pkcs8_pem(private_key_pem.as_ref()) {
+                    match PKey::private_key_from_pem(private_key_pem.as_bytes()) {
                         Ok(private_key) => {
-                            use rsa::pkcs1v15::SigningKey;
-                            use rsa::signature::{SignatureEncoding, Signer};
-
-                            let signing_key = SigningKey::<Sha256>::new(private_key);
-                            let signature = signing_key.sign(message.as_bytes());
-                            Value::Str(Arc::new(
-                                base64::engine::general_purpose::STANDARD
-                                    .encode(signature.to_bytes()),
-                            ))
+                            match rsa_sign_sha256(&private_key, message.as_bytes()) {
+                                Ok(signature) => Value::Str(Arc::new(
+                                    base64::engine::general_purpose::STANDARD.encode(signature),
+                                )),
+                                Err(e) => error_object(format!("RSA signing failed: {}", e)),
+                            }
                         }
                         Err(e) => error_object(format!("Invalid RSA private key: {}", e)),
                     }
@@ -896,24 +928,29 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Some(Value::Str(message)),
                     Some(Value::Str(signature_b64)),
                     Some(Value::Str(public_key_pem)),
-                ) => match RsaPublicKey::from_public_key_pem(public_key_pem.as_ref()) {
+                ) => match PKey::public_key_from_pem(public_key_pem.as_bytes()) {
                     Ok(public_key) => match base64::engine::general_purpose::STANDARD
                         .decode(signature_b64.as_ref())
                     {
                         Ok(signature_bytes) => {
-                            use rsa::pkcs1v15::{Signature, VerifyingKey};
-                            use rsa::signature::Verifier;
-
-                            let verifying_key = VerifyingKey::<Sha256>::new(public_key);
-
-                            match Signature::try_from(signature_bytes.as_slice()) {
-                                Ok(signature) => {
-                                    match verifying_key.verify(message.as_bytes(), &signature) {
-                                        Ok(_) => Value::Bool(true),
-                                        Err(_) => Value::Bool(false),
+                            let expected_len = (public_key.bits() as usize).div_ceil(8);
+                            if signature_bytes.len() != expected_len {
+                                error_object(format!(
+                                    "Invalid signature format: expected {} bytes, got {}",
+                                    expected_len,
+                                    signature_bytes.len()
+                                ))
+                            } else {
+                                match rsa_verify_sha256(
+                                    &public_key,
+                                    message.as_bytes(),
+                                    &signature_bytes,
+                                ) {
+                                    Ok(valid) => Value::Bool(valid),
+                                    Err(e) => {
+                                        error_object(format!("RSA verification failed: {}", e))
                                     }
                                 }
-                                Err(e) => error_object(format!("Invalid signature format: {}", e)),
                             }
                         }
                         Err(e) => error_object(format!("Invalid base64 signature: {}", e)),
@@ -1183,6 +1220,8 @@ mod tests {
             }
             other => panic!("Expected keypair dict, got {:?}", other),
         };
+        assert!(private_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
+        assert!(public_pem.starts_with("-----BEGIN PUBLIC KEY-----"));
 
         let message = "kujo-rsa-contract";
 
@@ -1219,10 +1258,52 @@ mod tests {
 
         let tampered = handle(
             "rsa_verify",
-            &[string_value("tampered"), Value::Str(signature_b64), Value::Str(public_pem)],
+            &[string_value("tampered"), Value::Str(signature_b64), Value::Str(public_pem.clone())],
         )
         .unwrap();
         assert!(matches!(tampered, Value::Bool(false)));
+
+        let malformed_signature = handle(
+            "rsa_verify",
+            &[string_value(message), string_value("AA=="), Value::Str(public_pem)],
+        )
+        .unwrap();
+        assert!(matches!(malformed_signature, Value::ErrorObject { message, .. }
+            if message.contains("Invalid signature format")));
+    }
+
+    #[test]
+    fn test_rsa_rustcrypto_0_9_fixture_remains_compatible() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../tests/fixtures/crypto/rustcrypto_rsa_0_9.json"
+        ))
+        .expect("legacy RSA fixture should be valid JSON");
+        let value = |name: &str| {
+            fixture[name]
+                .as_str()
+                .unwrap_or_else(|| panic!("legacy RSA fixture should contain {name}"))
+        };
+
+        let decrypted = handle(
+            "rsa_decrypt",
+            &[
+                string_value(value("oaep_sha256_ciphertext_base64")),
+                string_value(value("private_key_pkcs8_pem")),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(decrypted, Value::Str(message) if message.as_ref() == value("message")));
+
+        let verified = handle(
+            "rsa_verify",
+            &[
+                string_value(value("message")),
+                string_value(value("pkcs1v15_sha256_signature_base64")),
+                string_value(value("public_key_spki_pem")),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(verified, Value::Bool(true)));
     }
 
     #[test]

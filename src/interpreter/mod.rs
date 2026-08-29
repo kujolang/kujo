@@ -66,16 +66,9 @@ use mysql_async::{prelude::*, Conn as MysqlConn, Opts as MysqlOpts};
 #[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
 use postgres::{Client as PostgresClient, NoTls};
-#[allow(unused_imports)]
-use rsa::{
-    pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey, LineEnding},
-    Oaep, RsaPrivateKey, RsaPublicKey,
-};
 #[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
 use rusqlite::Connection as SqliteConnection;
-#[allow(unused_imports)]
-use sha2::Sha256 as RsaSha256;
 #[allow(unused_imports)]
 use sha2::{Digest as Sha2Digest, Sha256};
 #[allow(unused_imports)]

@@ -1814,9 +1814,17 @@ struct Claims {
     data: HashMap<String, serde_json::Value>,
 }
 
+fn ensure_jwt_crypto_provider() {
+    // Install Kujo's selected provider explicitly so downstream Cargo feature
+    // unification cannot leave jsonwebtoken with its panic-only fallback.
+    // If the process already selected a provider, preserve that choice.
+    let _ = jsonwebtoken::crypto::aws_lc::DEFAULT_PROVIDER.install_default();
+}
+
 /// Encode a JWT token from a dictionary payload and secret key
 /// jwt_encode(payload_dict, secret_key) -> token string
 pub fn jwt_encode(payload: &DictMap, secret: &str) -> Result<String, String> {
+    ensure_jwt_crypto_provider();
     // Convert Kujo dictionary to JSON claims
     let mut claims_data = HashMap::new();
     for (key, value) in payload {
@@ -1835,6 +1843,7 @@ pub fn jwt_encode(payload: &DictMap, secret: &str) -> Result<String, String> {
 /// Decode a JWT token and return the payload as a dictionary
 /// jwt_decode(token, secret_key) -> payload dictionary
 pub fn jwt_decode(token: &str, secret: &str) -> Result<DictMap, String> {
+    ensure_jwt_crypto_provider();
     // Create validation without requiring expiry
     let mut validation = Validation::new(Algorithm::HS256);
     validation.required_spec_claims.clear(); // Don't require any specific claims
@@ -1856,6 +1865,7 @@ pub fn jwt_decode(token: &str, secret: &str) -> Result<DictMap, String> {
 
 /// Verify a JWT token signature and basic validity checks.
 pub fn jwt_verify(token: &str, secret: &str) -> bool {
+    ensure_jwt_crypto_provider();
     let mut validation = Validation::new(Algorithm::HS256);
     validation.required_spec_claims.clear();
     validation.validate_exp = true;

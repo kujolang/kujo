@@ -88,9 +88,7 @@ if [[ "${mode}" == "full" ]]; then
     echo "- Skipping benchmark smoke (set KUJO_RELEASE_GATE_RUN_BENCH=1 to enable)"
   fi
 
-  # RUSTSEC-2023-0071 currently has no fixed rsa upgrade. Keep the
-  # exception explicit so new vulnerability advisories still fail the gate.
-  run_optional_cmd cargo-audit cargo audit --ignore RUSTSEC-2023-0071
+  run_optional_cmd cargo-audit cargo audit
   run_optional_cmd cargo-deny cargo deny check
 else
   run_cmd bash scripts/repo_hygiene_audit.sh
