@@ -53,6 +53,9 @@ pub struct RunArgs {
     pub file: Option<PathBuf>,
     #[arg(long)]
     pub json: bool,
+    /// Execute through the project's Workcell boundary
+    #[arg(long)]
+    pub workcell: bool,
 }
 
 #[derive(Args, Debug)]
@@ -87,6 +90,16 @@ struct ProjectManifest {
     integrations: BTreeMap<String, bool>,
     #[serde(default)]
     integration_configs: BTreeMap<String, String>,
+    #[serde(default)]
+    external_tools: BTreeMap<String, ExternalTool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ExternalTool {
+    command: String,
+    source: String,
+    commit: String,
+    required_for: Vec<String>,
 }
 
 fn default_project_schema() -> String {
@@ -147,6 +160,9 @@ fn scaffold(a: NewArgs) -> Result<(), AgentError> {
     let base = a.dir.clone().unwrap_or(std::env::current_dir().map_err(|e| ioerr(e.to_string()))?);
     if base.components().any(|c| matches!(c, Component::ParentDir)) {
         return Err(usage("Agent destination may not contain '..'."));
+    }
+    if base.parent().is_none() {
+        return Err(usage("Agent destination may not be a filesystem root."));
     }
     let target = if base.file_name().and_then(|v| v.to_str()) == Some(a.name.as_str()) {
         base
@@ -239,6 +255,7 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
     }
     let mut integrations = BTreeMap::new();
     let mut integration_configs = BTreeMap::new();
+    let mut external_tools = BTreeMap::new();
     for key in ["mcp", "retrieval", "dispatch", "relay", "workcell", "watchdog", "runledger"] {
         integrations.insert(key.into(), false);
     }
@@ -262,6 +279,24 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         integrations.insert("watchdog".into(), true);
         integrations.insert("runledger".into(), true);
         integration_configs.insert("observability".into(), "config/observability.json".into());
+        external_tools.insert(
+            "watchdog".into(),
+            ExternalTool {
+                command: "watchdog".into(),
+                source: "github:kujolang/watchdog".into(),
+                commit: "1af292b3e03217760649dcb4f903e443f48c563c".into(),
+                required_for: vec!["live provider telemetry".into()],
+            },
+        );
+        external_tools.insert(
+            "runledger".into(),
+            ExternalTool {
+                command: "runledger".into(),
+                source: "github:kujolang/runledger".into(),
+                commit: "12bbf2b3723325913eb75ececaba0ce3fdc68b87".into(),
+                required_for: vec!["run evidence".into()],
+            },
+        );
     }
     if a.profile == "full" {
         integrations.insert("relay".into(), true);
@@ -296,6 +331,7 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         },
         integrations,
         integration_configs,
+        external_tools,
     };
     write(
         root,
@@ -331,7 +367,28 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         ),
     )?;
     write(root, "src/main.kujo", "from src.agents.testing.no_network import create_no_network_harness\nfrom src.agents.runner import create_agent_runner, run_agent\nfrom src.agents.core_types import create_agent, create_agent_run_request\n\nlet argv := args()\nmut prompt := \"Hello\"\nif len(argv) > 0 { prompt = argv[0] }\nlet harness := create_no_network_harness({\"model\": {\"output_text\": \"Owned agent fixture: \" + prompt}})\nif harness[\"ok\"] == false {\n    print(to_json(harness))\n} else {\n    let runner := create_agent_runner({\"ai_adapter\": harness[\"model_adapter\"]})\n    let agent := create_agent({\"id\": \"owned-agent\", \"name\": \"Owned Agent\", \"instructions\": \"Follow agent/instructions.md and the repository policy.\"})\n    let request := create_agent_run_request(prompt, {\"run_id\": \"run-owned-fixture\", \"session_id\": \"session-owned-fixture\"})\n    let result := run_agent(runner, agent, request, {\"tool_registry\": harness[\"tool_registry\"]})\n    print(result[\"output\"][\"text\"])\n}\n")?;
-    write(root, "evals/eval.json", "{\n  \"name\": \"owned-agent-fixture\",\n  \"description\": \"Deterministic Agents SDK fixture evaluation\",\n  \"version\": \"1.0.0\",\n  \"output_dir\": \".eval-results\",\n  \"stop_on_failure\": true,\n  \"tests\": [\n    {\n      \"name\": \"fixture response\",\n      \"check\": \"output_contains\",\n      \"params\": {\n        \"command\": \"kujo agent run fixture-check\",\n        \"expected\": \"Owned agent fixture: fixture-check\"\n      }\n    }\n  ]\n}\n")?;
+    write(
+        root,
+        "evals/eval.json",
+        r#"{
+  "name": "owned-agent-fixture",
+  "description": "Deterministic Agents SDK fixture evaluation",
+  "version": "1.0.0",
+  "output_dir": ".eval-results",
+  "stop_on_failure": true,
+  "tests": [
+    {
+      "name": "fixture run succeeds",
+      "check": "command_succeeds",
+      "params": {
+        "command": "kujo agent run fixture-check",
+        "timeout_ms": 120000
+      }
+    }
+  ]
+}
+"#,
+    )?;
     write(root, "kujo.toml", &format!("[package]\nname = \"{}\"\nversion = \"0.1.0\"\nentrypoint = \"src/main.kujo\"\n\n[dependencies]\n", a.name))?;
     write(root, "kujo.lock", "version = 1\npackages = []\n")?;
     write(root, "kennel.toml", &kennel_manifest(&a.profile))?;
@@ -347,7 +404,7 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
     write(
         root,
         ".gitignore",
-        ".env\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n",
+        ".env\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n.workcell/\n.relay/\n.dispatch-runs/\n.kujo-agent/\ndata/\nworkcell-image/agents-sdk/\n",
     )?;
     write(root, "AGENTS.md", "# Agent Project Guide\n\nTreat `agent.project.json` as the root contract. Never commit credentials. Run `kujo doctor agent`, `kujo agent inspect`, `kujo agent run`, and `kujo agent eval`.\n")?;
     write(root, "README.md", &format!("# {}\n\nThis Git repository owns the agent definition, instructions, model preference, skills, tools, knowledge, policies, workflows, evals, and execution boundaries.\n\n```bash\nkennel install\nkujo doctor agent\nkujo agent inspect\nkujo agent run \"Hello\"\nkujo agent eval\n```\n\nFixture mode uses the Agents SDK no-network harness and requires no provider credentials. Change `config/model.json` for a live AI SDK provider and provide credentials through the environment only. Kujo capabilities authorize effects; they are not a sandbox. Hardened projects use Workcell for container-backed isolation.\n", a.name))?;
@@ -355,6 +412,8 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         write(root, "agent/tools/read-project.json", "{\"name\":\"read_project_docs\",\"description\":\"Read allowlisted project documentation\",\"risk\":\"read_only\",\"approval\":\"never\"}\n")?;
         write(root, "config/mcp.json", "{\n  \"contract\": \"kujo-mcp/project/v1\",\n  \"servers\": [\n    {\n      \"id\": \"project-docs\",\n      \"transport\": \"local\",\n      \"package\": \"mcp\",\n      \"tool\": \"read_project_docs\",\n      \"config\": \"mcp-server.json\"\n    }\n  ]\n}\n")?;
         write(root, "mcp-server.json", "{\n  \"server\": {\"name\": \"owned-agent-tools\", \"version\": \"1.0.0\", \"description\": \"Read-only project tools\"},\n  \"permissions\": {\n    \"allowed_directories\": [\".\"],\n    \"max_file_size\": 1048576,\n    \"read_only_patterns\": [\"*.md\", \"*.txt\", \"*.json\"]\n  },\n  \"tools\": {\"enabled\": true, \"default_timeout_ms\": 30000},\n  \"resources\": {\"enabled\": true},\n  \"logging\": {\"max_entries\": 100, \"log_file\": \".kujo-agent/mcp-calls.log\"},\n  \"auth\": {\"enabled\": false, \"type\": \"bearer\", \"token\": \"\"}\n}\n")?;
+        write(root, "src/integrations/mcp_read.kujo", "from src.core.framework import safe_read\n\nlet result := safe_read(\"README.md\", \".\", [\"*.md\"])\nprint(to_json(result))\n")?;
+        write(root, "src/integrations/mcp_adapter.kujo", "from src.agents.integrations.adapters import map_mcp_2026_tool_to_registry_entry\n\nlet mapped := map_mcp_2026_tool_to_registry_entry({\n  \"name\": \"read_project_docs\",\n  \"description\": \"Read allowlisted project documentation\",\n  \"inputSchema\": {\"type\": \"object\", \"properties\": {\"file_name\": {\"type\": \"string\"}}, \"required\": [\"file_name\"]},\n  \"permissions\": [\"fs-read:project\"],\n  \"risk_level\": \"low\",\n  \"timeout_ms\": 30000,\n  \"approval_required\": false\n}, {\"provider_name\": \"mcp\"})\nprint(to_json(mapped))\n")?;
     }
     if has("knowledge") {
         write(
@@ -363,19 +422,22 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
             "# Owned knowledge\n\nKujo Agent Projects keep intelligence configuration in Git.\n",
         )?;
         write(root, "config/retrieval.json", "{\"provider\":\"kujo-rag\",\"embedding\":\"offline-hash\",\"namespace\":\"owned-agent\"}\n")?;
+        write(root, "src/integrations/retrieval_adapter.kujo", "from src.agents.retrieval.provider import create_retrieval_result\n\nlet argv := args()\nlet raw := parse_json(argv[0])\nmut documents := []\nmut citations := []\nmut index := 0\nfor citation in raw[\"citations\"] {\n  let document_id := citation[\"doc_id\"]\n  documents = push(documents, {\n    \"document_id\": document_id,\n    \"title\": citation[\"path\"],\n    \"content\": citation[\"snippet\"],\n    \"score\": citation[\"score\"],\n    \"source\": citation[\"path\"]\n  })\n  citations = push(citations, {\n    \"citation_id\": \"rag-\" + to_string(index + 1),\n    \"document_id\": document_id,\n    \"span\": citation[\"path\"] + \":\" + to_string(citation[\"line_start\"]) + \"-\" + to_string(citation[\"line_end\"]),\n    \"score\": citation[\"score\"]\n  })\n  index = index + 1\n}\nlet result := create_retrieval_result({\n  \"ok\": true,\n  \"query\": {\"query_text\": raw[\"query\"], \"top_k\": 5},\n  \"context\": {\n    \"context_id\": \"rag-owned-agent\",\n    \"documents\": documents,\n    \"summary\": raw[\"answer\"],\n    \"citations\": citations,\n    \"metadata\": {\"provider\": \"kujo-rag\", \"namespace\": raw[\"namespace\"]}\n  },\n  \"count\": len(documents),\n  \"metadata\": {\"adapter\": \"rag-agents-sdk\"}\n})\nprint(to_json(result))\n")?;
     }
     if has("workflow") {
         write(
             root,
             "workflows/default.json",
-            "{\"engine\":\"dispatch\",\"steps\":[\"plan\",\"act\",\"verify\"],\"receipts\":true}\n",
+            "{\n  \"id\": \"owned-agent-workflow\",\n  \"name\": \"Owned Agent Workflow\",\n  \"description\": \"Deterministic project-owned Dispatch workflow.\",\n  \"input_schema\": {\"type\": \"dict\", \"required\": [\"topic\"]},\n  \"agents\": {\n    \"planner\": {\n      \"id\": \"planner\",\n      \"name\": \"Planner\",\n      \"role\": \"planner\",\n      \"purpose\": \"Plan the requested work.\",\n      \"instructions\": \"Create a concise plan.\",\n      \"handler_id\": \"planner\",\n      \"execution_contract\": {\"id\": \"owned-agent-planner\", \"version\": \"1\"},\n      \"capabilities\": {\"plan_research\": true},\n      \"model\": {\"provider\": \"fixture\", \"model\": \"dispatch-starter\"},\n      \"model_candidates\": [],\n      \"tools\": [],\n      \"handoff_targets\": [],\n      \"output_schema\": {\"type\": \"dict\"},\n      \"guardrails\": [],\n      \"uses_model\": true\n    }\n  },\n  \"tools\": [],\n  \"steps\": [\n    {\"id\": \"plan\", \"name\": \"Plan\", \"type\": \"agent\", \"agent_id\": \"planner\", \"input_from\": [\"input\"], \"output_key\": \"plan\"},\n    {\"id\": \"finalize\", \"name\": \"Finalize\", \"type\": \"report\", \"input_from\": [\"plan\"], \"output_key\": \"final_output\"}\n  ],\n  \"memory_config\": {},\n  \"default_retry_policy\": {\"max_attempts\": 1, \"base_delay_ms\": 0, \"max_delay_ms\": 0, \"strategy\": \"none\", \"retry_on_codes\": []},\n  \"approval_config\": {\"auto_approve\": true},\n  \"output_schema\": {\"type\": \"dict\"}\n}\n",
         )?;
     }
     if has("hardened") {
-        write(root, "workcell.json", "{\n  \"version\": 1,\n  \"name\": \"owned-agent-hardened\",\n  \"runtime\": {\n    \"backend\": \"docker\",\n    \"image\": \"kujolang/workcell-base:local\",\n    \"build_context\": \"\"\n  },\n  \"workspace\": {\n    \"strategy\": \"git-worktree\",\n    \"mount_path\": \"/workspace\",\n    \"run_as\": \"host\"\n  },\n  \"command\": [\"kujo\", \"agent\", \"run\", \"workcell-fixture\"],\n  \"environment\": {\"allow\": [], \"set\": {}},\n  \"secrets\": [],\n  \"resources\": {\n    \"cpus\": 1,\n    \"memory\": \"512m\",\n    \"pids\": 64,\n    \"timeout_ms\": 60000,\n    \"max_output_bytes\": 1000000\n  },\n  \"network\": {\n    \"mode\": \"none\",\n    \"egress\": {\n      \"policy\": \"deny-by-default\",\n      \"dns\": \"blocked\",\n      \"proxy\": \"none\",\n      \"enforcement_profile\": \"none\"\n    }\n  },\n  \"filesystem\": {\"read_only_root\": true, \"tmpfs\": [\"/tmp\"]},\n  \"artifacts\": {\"export\": []},\n  \"cleanup\": {\"keep_failed\": false},\n  \"trust_profile\": \"contained-standard\",\n  \"receipt\": {\"path\": \".workcell/runs\"}\n}\n")?;
+        write(root, "workcell.json", "{\n  \"version\": 1,\n  \"name\": \"owned-agent-hardened\",\n  \"runtime\": {\n    \"backend\": \"docker\",\n    \"image\": \"kujo-owned-agent-workcell:local\",\n    \"build_context\": \"workcell-image\"\n  },\n  \"workspace\": {\n    \"strategy\": \"git-worktree\",\n    \"mount_path\": \"/workspace\",\n    \"run_as\": \"host\"\n  },\n  \"command\": [\"/usr/bin/env\", \"KUJO_MODULE_PATH=/opt/agents-sdk\", \"kujo\", \"run\", \"--untrusted\", \"--allow-fs-read\", \"--allow-clock\", \"src/main.kujo\", \"--\", \"workcell-fixture\"],\n  \"environment\": {\"allow\": [], \"set\": {}},\n  \"secrets\": [],\n  \"resources\": {\n    \"cpus\": 1,\n    \"memory\": \"512m\",\n    \"pids\": 64,\n    \"timeout_ms\": 60000,\n    \"max_output_bytes\": 1000000\n  },\n  \"network\": {\n    \"mode\": \"none\",\n    \"egress\": {\n      \"policy\": \"deny-by-default\",\n      \"dns\": \"blocked\",\n      \"proxy\": \"none\",\n      \"enforcement_profile\": \"none\"\n    }\n  },\n  \"filesystem\": {\"read_only_root\": true, \"tmpfs\": [\"/tmp\"]},\n  \"artifacts\": {\"export\": []},\n  \"cleanup\": {\"keep_failed\": false},\n  \"trust_profile\": \"contained-standard\",\n  \"receipt\": {\"path\": \".workcell/runs\"}\n}\n")?;
+        write(root, "workcell-image/Dockerfile", "FROM kujolang/workcell-kujo:local\nUSER root\nCOPY agents-sdk /opt/agents-sdk\nRUN chown -R 65532:65532 /opt/agents-sdk\nWORKDIR /workspace\nUSER 65532:65532\nCMD [\"kujo\", \"--version\"]\n")?;
     }
     if has("observable") {
-        write(root, "config/observability.json", "{\"watchdog\":{\"enabled\":false},\"runledger\":{\"enabled\":true,\"path\":\".runledger\"}}\n")?;
+        write(root, "config/observability.json", "{\n  \"watchdog\": {\n    \"enabled\": true,\n    \"endpoint\": \"http://127.0.0.1:8789\",\n    \"required_for_fixture\": false,\n    \"route_live_provider_calls\": true\n  },\n  \"runledger\": {\n    \"enabled\": true,\n    \"path\": \".runledger\"\n  }\n}\n")?;
+        write(root, "src/integrations/watchdog_trace.kujo", "from src.agents.integrations.adapters import create_watchdog_trace_adapter, watchdog_transform_trace_event\n\nlet adapter := create_watchdog_trace_adapter({\"metadata\": {\"target\": \"watchdog\"}})\nlet result := watchdog_transform_trace_event(adapter, {\n  \"trace_id\": \"trace-owned-agent\",\n  \"run_id\": \"run-owned-agent\",\n  \"agent_id\": \"owned-agent\",\n  \"event_kind\": \"fixture_run_prepared\",\n  \"timestamp\": \"\",\n  \"sequence\": 1,\n  \"payload\": {\"fixture\": true}\n}, {})\nprint(to_json(result))\n")?;
     }
     if a.profile == "full" {
         write(root, "config/relay.json", "{\"enabled\":true,\"adapter\":\"agent-project\"}\n")?;
@@ -418,18 +480,7 @@ fn kennel_manifest(profile: &str) -> String {
             "7bcdb7f29ddf74843aec6b70eafbf33cc7944c6f",
         ));
     }
-    if has("observable") {
-        dependencies.push((
-            "watchdog",
-            "github:kujolang/watchdog",
-            "1af292b3e03217760649dcb4f903e443f48c563c",
-        ));
-        dependencies.push((
-            "runledger",
-            "github:kujolang/runledger",
-            "12bbf2b3723325913eb75ececaba0ce3fdc68b87",
-        ));
-    }
+    if has("observable") {}
     if profile == "full" {
         dependencies.push((
             "relay",
@@ -631,11 +682,29 @@ fn inspection(root: &Path, m: &ProjectManifest) -> Value {
     let skills = list_names(&root.join(&m.agent.skills));
     let tools = list_names(&root.join(&m.agent.tools));
     let dependencies = declared_dependencies(root);
-    let unresolved: Vec<String> = dependencies
+    let mut unresolved: Vec<String> = dependencies
         .keys()
         .filter(|name| !root.join("kennel_packages").join(name).is_dir())
         .map(|name| format!("{name}: run `kennel install`"))
         .collect();
+    let mut external_tools = BTreeMap::new();
+    for (name, tool) in &m.external_tools {
+        let available = external_tool_available(root, name, &tool.command);
+        if !available {
+            unresolved.push(format!("{name}: install with `bash install.sh --group agent`"));
+        }
+        external_tools.insert(
+            name.clone(),
+            json!({
+                "command":tool.command,
+                "source":tool.source,
+                "commit":tool.commit,
+                "required_for":tool.required_for,
+                "available":available
+            }),
+        );
+    }
+    unresolved.sort();
     let credentials = credential_names(root);
     let mcp_servers = m
         .integration_configs
@@ -683,7 +752,7 @@ fn inspection(root: &Path, m: &ProjectManifest) -> Value {
             "observability":observability
         },
         "workcell":{"configured":m.runtime.workcell.is_some(),"definition":m.runtime.workcell},
-        "dependencies":{"declared":dependencies,"unresolved":unresolved},
+        "dependencies":{"declared":dependencies,"external_tools":external_tools,"unresolved":unresolved},
         "external_state":{
             "credential_names":credentials,
             "container_runtime":if m.runtime.workcell.is_some(){"Docker or Podman required for isolated runs"}else{"not required"},
@@ -691,6 +760,37 @@ fn inspection(root: &Path, m: &ProjectManifest) -> Value {
             "mcp_endpoints":mcp_servers
         }
     })
+}
+
+fn external_tool_available(root: &Path, name: &str, command: &str) -> bool {
+    let local_entry = match name {
+        "runledger" => Some(root.join("kennel_packages/runledger/runledger.kujo")),
+        "watchdog" => Some(root.join("kennel_packages/watchdog/watchdog.kujo")),
+        _ => None,
+    };
+    if local_entry.as_ref().is_some_and(|path| path.is_file()) {
+        return true;
+    }
+    let candidate = Path::new(command);
+    if candidate.components().count() > 1 {
+        return candidate.is_file();
+    }
+    std::env::var_os("PATH")
+        .into_iter()
+        .flat_map(|path| std::env::split_paths(&path).collect::<Vec<_>>())
+        .any(|directory| {
+            let path = directory.join(command);
+            if path.is_file() {
+                return true;
+            }
+            #[cfg(windows)]
+            {
+                return directory.join(format!("{command}.exe")).is_file()
+                    || directory.join(format!("{command}.cmd")).is_file();
+            }
+            #[cfg(not(windows))]
+            false
+        })
 }
 
 fn declared_dependencies(root: &Path) -> BTreeMap<String, Value> {
@@ -821,39 +921,520 @@ fn prompt_from(a: &RunArgs, root: &Path) -> Result<String, AgentError> {
         (None, None) => Ok("Hello".into()),
     }
 }
+
+struct PreparedRun {
+    prompt: String,
+    evidence: BTreeMap<String, Value>,
+}
+
+fn prepare_integrations(
+    root: &Path,
+    project: &ProjectManifest,
+    prompt: &str,
+) -> Result<PreparedRun, AgentError> {
+    let mut context = Vec::new();
+    let mut evidence = BTreeMap::new();
+    if project.integrations.get("mcp").copied().unwrap_or(false) {
+        let mcp_root = installed_package(root, "mcp")?;
+        run_kujo_script(
+            root,
+            &root.join("src/integrations/mcp_adapter.kujo"),
+            &root.join("kennel_packages/agents-sdk"),
+            &[],
+            &[],
+            true,
+        )?;
+        let output = run_kujo_script(
+            root,
+            &root.join("src/integrations/mcp_read.kujo"),
+            &mcp_root,
+            &[],
+            &[],
+            true,
+        )?;
+        let result = parse_last_json(&output, "MCP tool result")?;
+        if result.get("ok").and_then(Value::as_bool) != Some(true) {
+            return Err(fail("The project-local MCP read tool failed."));
+        }
+        let content = result.get("content").and_then(Value::as_str).unwrap_or("");
+        context.push(format!("MCP read_project_docs result: {}", truncate_text(content, 1200)));
+        evidence.insert(
+            "mcp".into(),
+            json!({"status":"pass","provider":"mcp","tool":"read_project_docs","transport":"local"}),
+        );
+    }
+    if project.integrations.get("retrieval").copied().unwrap_or(false) {
+        let rag_root = installed_package(root, "rag")?;
+        let rag_entrypoint = rag_root.join("main.kujo");
+        run_kujo_script(
+            root,
+            &rag_entrypoint,
+            &rag_root,
+            &[
+                "ingest",
+                "--path",
+                "./agent/knowledge",
+                "--recursive",
+                "true",
+                "--namespace",
+                "owned-agent",
+            ],
+            &[],
+            false,
+        )?;
+        let query_output = run_kujo_script(
+            root,
+            &rag_entrypoint,
+            &rag_root,
+            &["query", "--question", prompt, "--namespace", "owned-agent"],
+            &[],
+            false,
+        )?;
+        let rag_result = parse_last_json(&query_output, "RAG query result")?;
+        if rag_result.get("answer").and_then(Value::as_str).is_none() {
+            return Err(fail("RAG returned no answer."));
+        }
+        let adapter_output = run_kujo_script(
+            root,
+            &root.join("src/integrations/retrieval_adapter.kujo"),
+            &root.join("kennel_packages/agents-sdk"),
+            &[&query_output],
+            &[],
+            true,
+        )?;
+        let retrieval = parse_last_json(&adapter_output, "Agents SDK retrieval result")?;
+        if retrieval.get("ok").and_then(Value::as_bool) != Some(true) {
+            return Err(fail("Agents SDK rejected the RAG retrieval result."));
+        }
+        let answer = retrieval.pointer("/context/summary").and_then(Value::as_str).unwrap_or("");
+        let citations = retrieval
+            .pointer("/context/citations")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        context.push(format!(
+            "RAG retrieval context: {}\nCitations: {}",
+            truncate_text(answer, 1800),
+            serde_json::to_string(&citations).unwrap_or_else(|_| "[]".into())
+        ));
+        evidence.insert(
+            "retrieval".into(),
+            json!({"status":"pass","provider":"kujo-rag","adapter":"agents-sdk","citations":citations}),
+        );
+    }
+    if project.integrations.get("dispatch").copied().unwrap_or(false) {
+        let dispatch_root = installed_package(root, "dispatch")?;
+        let ai_sdk_root = installed_package(root, "ai-sdk")?;
+        let kujo_bin = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+        let dispatch_root_value = dispatch_root.to_string_lossy().into_owned();
+        let ai_sdk_value = ai_sdk_root.to_string_lossy().into_owned();
+        let kujo_value = kujo_bin.to_string_lossy().into_owned();
+        run_kujo_script(
+            root,
+            &dispatch_root.join("dispatch.kujo"),
+            &dispatch_root,
+            &[
+                "demo",
+                prompt,
+                "--workflow-file",
+                "workflows/default.json",
+                "--yes",
+                "--non-interactive",
+                "--output-root",
+                ".dispatch-runs",
+            ],
+            &[
+                ("DISPATCH_OFFLINE_FIXTURE", "true"),
+                ("DISPATCH_ROOT", &dispatch_root_value),
+                ("AI_SDK_PATH", &ai_sdk_value),
+                ("KUJO_BIN", &kujo_value),
+            ],
+            false,
+        )?;
+        context.push("Dispatch completed the repository-owned workflow and wrote resumable evidence under .dispatch-runs.".into());
+        evidence.insert(
+            "dispatch".into(),
+            json!({"status":"pass","engine":"dispatch","artifacts":".dispatch-runs"}),
+        );
+    }
+    if project.integrations.get("watchdog").copied().unwrap_or(false) {
+        let output = run_kujo_script(
+            root,
+            &root.join("src/integrations/watchdog_trace.kujo"),
+            &root.join("kennel_packages/agents-sdk"),
+            &[],
+            &[],
+            true,
+        )?;
+        let trace = parse_last_json(&output, "Watchdog trace adapter result")?;
+        if trace.get("ok").and_then(Value::as_bool) != Some(true) {
+            return Err(fail("Agents SDK could not create the Watchdog trace record."));
+        }
+        evidence.insert(
+            "watchdog".into(),
+            json!({
+                "status":"prepared",
+                "adapter":"agents-sdk/watchdog",
+                "fixture_delivery":"local-only",
+                "record":trace.get("record")
+            }),
+        );
+    }
+    let effective = if context.is_empty() {
+        prompt.to_string()
+    } else {
+        format!("{prompt}\n\nRepository integration context:\n{}", context.join("\n\n"))
+    };
+    Ok(PreparedRun { prompt: truncate_text(&effective, 6000), evidence })
+}
+
+fn installed_package(root: &Path, package: &str) -> Result<PathBuf, AgentError> {
+    let path = root.join("kennel_packages").join(package);
+    if path.is_dir() {
+        Ok(path)
+    } else {
+        Err(fail(format!(
+            "{package} is not installed. Run `kennel install` from the Agent Project root."
+        )))
+    }
+}
+
+fn run_kujo_script(
+    cwd: &Path,
+    script: &Path,
+    module_path: &Path,
+    args: &[&str],
+    environment: &[(&str, &str)],
+    untrusted_read_only: bool,
+) -> Result<String, AgentError> {
+    if !script.is_file() {
+        return Err(fail(format!("Integration entrypoint is missing: {}", script.display())));
+    }
+    let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+    let mut command = Command::new(exe);
+    command.arg("run").arg("--interpreter");
+    if untrusted_read_only {
+        command.arg("--untrusted").arg("--allow-fs-read").arg("--allow-clock");
+    }
+    command.arg(script);
+    for arg in args {
+        command.arg(arg);
+    }
+    command.env("KUJO_MODULE_PATH", module_path).current_dir(cwd);
+    for (name, value) in environment {
+        command.env(name, value);
+    }
+    let output = command.output().map_err(|e| ioerr(e.to_string()))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        return Err(fail(if !stderr.is_empty() { stderr } else { stdout }));
+    }
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+fn parse_last_json(source: &str, label: &str) -> Result<Value, AgentError> {
+    if let Ok(value) = serde_json::from_str(source.trim()) {
+        return Ok(value);
+    }
+    for line in source.lines().rev() {
+        if let Ok(value) = serde_json::from_str(line.trim()) {
+            return Ok(value);
+        }
+    }
+    Err(fail(format!("{label} was not valid JSON.")))
+}
+
+fn truncate_text(source: &str, max_chars: usize) -> String {
+    if source.chars().count() <= max_chars {
+        return source.to_string();
+    }
+    source.chars().take(max_chars).collect::<String>() + "…"
+}
+
 fn run(a: RunArgs) -> Result<(), AgentError> {
     let cwd = std::env::current_dir().map_err(|e| ioerr(e.to_string()))?;
     let root = discover(&cwd)?;
     let m = load(&root)?;
     let prompt = prompt_from(&a, &root)?;
+    if a.workcell {
+        return run_in_workcell(&root, &m, &prompt, a.json);
+    }
     let agents_sdk = root.join("kennel_packages/agents-sdk");
     if !agents_sdk.join("src/agents/runner.kujo").is_file() {
         return Err(fail(
             "Agents SDK is not installed. Run `kennel install` from the Agent Project root.",
         ));
     }
-    let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
-    let mut command = Command::new(exe);
-    command.env("KUJO_MODULE_PATH", &agents_sdk);
-    command.arg("run").arg("--untrusted");
-    apply_runtime_capabilities(&mut command, &m.runtime.capabilities)?;
-    let out = command
-        .arg(&m.runtime.entrypoint)
-        .arg("--")
-        .arg(&prompt)
-        .current_dir(&root)
-        .output()
-        .map_err(|e| ioerr(e.to_string()))?;
-    if !out.status.success() {
-        return Err(fail(String::from_utf8_lossy(&out.stderr).trim().to_string()));
+    let ledger = if m.integrations.get("runledger").copied().unwrap_or(false) {
+        Some(start_runledger(&root, &m)?)
+    } else {
+        None
+    };
+    let outcome = (|| {
+        let prepared = prepare_integrations(&root, &m, &prompt)?;
+        let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+        let mut command = Command::new(exe);
+        command.env("KUJO_MODULE_PATH", &agents_sdk);
+        command.arg("run").arg("--untrusted");
+        apply_runtime_capabilities(&mut command, &m.runtime.capabilities)?;
+        let out = command
+            .arg(&m.runtime.entrypoint)
+            .arg("--")
+            .arg(&prepared.prompt)
+            .current_dir(&root)
+            .output()
+            .map_err(|e| ioerr(e.to_string()))?;
+        if !out.status.success() {
+            return Err(fail(String::from_utf8_lossy(&out.stderr).trim().to_string()));
+        }
+        Ok((String::from_utf8_lossy(&out.stdout).trim().to_string(), prepared.evidence))
+    })();
+    if let Some(run_id) = ledger.as_deref() {
+        let success = outcome.is_ok();
+        finish_runledger(&root, run_id, success)?;
     }
-    let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    let (text, integration_evidence) = outcome?;
     if a.json {
-        println!("{}",serde_json::to_string_pretty(&json!({"contract":RUN_CONTRACT,"status":"ok","project":m.name,"provider_mode":if m.runtime.fixture{"fixture"}else{"live"},"output":text})).unwrap());
+        println!("{}",serde_json::to_string_pretty(&json!({"contract":RUN_CONTRACT,"status":"ok","project":m.name,"provider_mode":if m.runtime.fixture{"fixture"}else{"live"},"output":text,"integrations":integration_evidence,"runledger_id":ledger})).unwrap());
     } else {
         println!("{text}");
     }
     Ok(())
+}
+
+fn run_in_workcell(
+    root: &Path,
+    project: &ProjectManifest,
+    prompt: &str,
+    json_output: bool,
+) -> Result<(), AgentError> {
+    let definition = project
+        .runtime
+        .workcell
+        .as_ref()
+        .ok_or_else(|| usage("This Agent Project profile does not configure Workcell."))?;
+    let agents_sdk = installed_package(root, "agents-sdk")?;
+    let head = Command::new("git")
+        .args(["rev-parse", "--verify", "HEAD"])
+        .current_dir(root)
+        .output()
+        .map_err(|e| ioerr(format!("Cannot inspect Agent Project Git state: {e}")))?;
+    if !head.status.success() {
+        return Err(usage(
+            "Workcell requires an immutable Git commit. Commit the generated project before using --workcell.",
+        ));
+    }
+    let dirty = Command::new("git")
+        .args(["status", "--porcelain", "--untracked-files=normal"])
+        .current_dir(root)
+        .output()
+        .map_err(|e| ioerr(format!("Cannot inspect Agent Project Git state: {e}")))?;
+    if !dirty.status.success() || !dirty.stdout.is_empty() {
+        return Err(usage(
+            "Workcell runs the committed project state. Commit or remove repository changes before using --workcell.",
+        ));
+    }
+    prepare_workcell_agents_sdk(root, &agents_sdk)?;
+    let mut value = parse_json_file(&root.join(definition), "Workcell definition")?;
+    let command = value
+        .get_mut("command")
+        .and_then(Value::as_array_mut)
+        .ok_or_else(|| usage("Workcell definition command must be an array."))?;
+    let last =
+        command.last_mut().ok_or_else(|| usage("Workcell definition command may not be empty."))?;
+    *last = Value::String(prompt.to_string());
+    let runtime_dir = root.join(".kujo-agent");
+    fs::create_dir_all(&runtime_dir).map_err(|e| ioerr(e.to_string()))?;
+    let runtime_definition = runtime_dir.join("workcell-run.json");
+    fs::write(&runtime_definition, format!("{}\n", serde_json::to_string_pretty(&value).unwrap()))
+        .map_err(|e| ioerr(e.to_string()))?;
+
+    let local = root.join("kennel_packages/workcell/bin/workcell");
+    let mut command = if local.is_file() { Command::new(local) } else { Command::new("workcell") };
+    let kujo = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+    let workcell_temp = root.join(".workcell/tmp");
+    fs::create_dir_all(&workcell_temp).map_err(|e| ioerr(e.to_string()))?;
+    let output = command
+        .args(["run", "--file"])
+        .arg(&runtime_definition)
+        .arg("--repo")
+        .arg(root)
+        .arg("--no-pull")
+        .env("KUJO_BIN", kujo)
+        .env("TMPDIR", &workcell_temp)
+        .current_dir(root)
+        .output()
+        .map_err(|e| {
+            fail(format!(
+                "Workcell is required for isolated execution but is unavailable: {e}. Install it with `bash install.sh --group agent`."
+            ))
+        })?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        return Err(fail(if !stderr.is_empty() { stderr } else { stdout }));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let receipt = latest_child(&root.join(".workcell/runs"))
+        .and_then(|path| path.strip_prefix(root).ok().map(Path::to_path_buf));
+    if json_output {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&json!({
+                "contract":RUN_CONTRACT,
+                "status":"ok",
+                "project":project.name,
+                "isolation":"workcell",
+                "output":stdout,
+                "receipt":receipt
+            }))
+            .unwrap()
+        );
+    } else {
+        println!("{stdout}");
+        if let Some(receipt) = receipt {
+            println!("Workcell receipt: {}", receipt.display());
+        }
+    }
+    Ok(())
+}
+
+fn prepare_workcell_agents_sdk(root: &Path, source: &Path) -> Result<(), AgentError> {
+    let image_root = root.join("workcell-image");
+    let target = image_root.join("agents-sdk");
+    let stage = image_root.join(format!(".agents-sdk-stage-{}", std::process::id()));
+    if stage.exists() {
+        return Err(ioerr("Workcell Agents SDK staging path already exists."));
+    }
+    copy_tree_bounded(source, &stage, 0)?;
+    fs::write(stage.join(".kujo-agent-managed"), "agents-sdk\n")
+        .map_err(|e| ioerr(e.to_string()))?;
+    if target.exists() {
+        if !target.join(".kujo-agent-managed").is_file() {
+            let _ = fs::remove_dir_all(&stage);
+            return Err(usage("Refusing to replace unmanaged workcell-image/agents-sdk content."));
+        }
+        fs::remove_dir_all(&target).map_err(|e| ioerr(e.to_string()))?;
+    }
+    fs::rename(&stage, &target).map_err(|e| ioerr(e.to_string()))
+}
+
+fn copy_tree_bounded(source: &Path, target: &Path, depth: usize) -> Result<(), AgentError> {
+    if depth > 24 {
+        return Err(usage("Dependency tree exceeds the Workcell copy depth limit."));
+    }
+    fs::create_dir_all(target).map_err(|e| ioerr(e.to_string()))?;
+    for entry in fs::read_dir(source).map_err(|e| ioerr(e.to_string()))? {
+        let entry = entry.map_err(|e| ioerr(e.to_string()))?;
+        let name = entry.file_name();
+        if matches!(name.to_str(), Some(".git" | "target" | ".kennel_tmp")) {
+            continue;
+        }
+        let kind = entry.file_type().map_err(|e| ioerr(e.to_string()))?;
+        let destination = target.join(&name);
+        if kind.is_symlink() {
+            return Err(usage(format!(
+                "Workcell dependency contains a symlink and cannot be copied safely: {}",
+                entry.path().display()
+            )));
+        }
+        if kind.is_dir() {
+            copy_tree_bounded(&entry.path(), &destination, depth + 1)?;
+        } else if kind.is_file() {
+            let size = entry.metadata().map_err(|e| ioerr(e.to_string()))?.len();
+            if size > 16 * 1024 * 1024 {
+                return Err(usage(format!(
+                    "Workcell dependency file exceeds 16 MiB: {}",
+                    entry.path().display()
+                )));
+            }
+            fs::copy(entry.path(), destination).map_err(|e| ioerr(e.to_string()))?;
+        }
+    }
+    Ok(())
+}
+
+fn latest_child(path: &Path) -> Option<PathBuf> {
+    let mut entries: Vec<_> = fs::read_dir(path).ok()?.flatten().collect();
+    entries.sort_by_key(|entry| entry.metadata().and_then(|meta| meta.modified()).ok());
+    entries.last().map(|entry| entry.path())
+}
+
+fn start_runledger(root: &Path, project: &ProjectManifest) -> Result<String, AgentError> {
+    let model =
+        parse_json_file(&root.join(&project.runtime.provider_config), "provider configuration")?;
+    let provider = required_string(&model, "provider", "Provider configuration")?;
+    let model_name = required_string(&model, "model", "Provider configuration")?;
+    let task = format!("agent-{}", project.name);
+    let repo_path = root.to_string_lossy().into_owned();
+    let ledger_path = root.join(".runledger").to_string_lossy().into_owned();
+    let output = invoke_runledger(
+        root,
+        &[
+            "start",
+            "--provider",
+            provider,
+            "--model",
+            model_name,
+            "--task",
+            &task,
+            "--repo",
+            &repo_path,
+            "--ledger",
+            &ledger_path,
+        ],
+    )?;
+    output
+        .lines()
+        .find_map(|line| line.trim().strip_prefix("Started run: "))
+        .map(str::to_string)
+        .ok_or_else(|| fail("RunLedger did not return a run ID."))
+}
+
+fn finish_runledger(root: &Path, run_id: &str, success: bool) -> Result<(), AgentError> {
+    let repo_path = root.to_string_lossy().into_owned();
+    let ledger_path = root.join(".runledger").to_string_lossy().into_owned();
+    invoke_runledger(
+        root,
+        &[
+            "finish",
+            run_id,
+            "--status",
+            if success { "pass" } else { "fail" },
+            "--verdict",
+            if success { "Agent Project run completed" } else { "Agent Project run failed" },
+            "--repo",
+            &repo_path,
+            "--ledger",
+            &ledger_path,
+        ],
+    )?;
+    Ok(())
+}
+
+fn invoke_runledger(root: &Path, args: &[&str]) -> Result<String, AgentError> {
+    let local_root = root.join("kennel_packages/runledger");
+    let local_entry = local_root.join("runledger.kujo");
+    let output = if local_entry.is_file() {
+        run_kujo_script(&local_root, &local_entry, &local_root, args, &[], false)?
+    } else {
+        let mut command = Command::new("runledger");
+        let output = command
+            .args(args)
+            .current_dir(root)
+            .output()
+            .map_err(|e| {
+                fail(format!(
+                    "RunLedger is required by this profile but is unavailable: {e}. Install it with `bash install.sh --group agent`."
+                ))
+            })?;
+        if !output.status.success() {
+            return Err(fail(String::from_utf8_lossy(&output.stderr).trim().to_string()));
+        }
+        String::from_utf8_lossy(&output.stdout).trim().to_string()
+    };
+    Ok(output)
 }
 
 fn apply_runtime_capabilities(
@@ -993,6 +1574,24 @@ pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
                         None
                     } else {
                         Some("Run `kennel install` from the Agent Project root.".into())
+                    },
+                ));
+            }
+            for (name, tool) in &m.external_tools {
+                let available = external_tool_available(&root, name, &tool.command);
+                checks.push(check(
+                    &format!("agent.external.{name}"),
+                    &format!("{name} command available"),
+                    if available { CheckStatus::Pass } else { CheckStatus::Fail },
+                    if available { CheckSeverity::Info } else { CheckSeverity::High },
+                    Some(if available { tool.command.clone() } else { "missing".into() }),
+                    if available {
+                        None
+                    } else {
+                        Some(
+                            "Install the focused ecosystem with `bash install.sh --group agent`."
+                                .into(),
+                        )
                     },
                 ));
             }

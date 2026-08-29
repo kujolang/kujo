@@ -12,7 +12,8 @@
     "agent",
     "runtime",
     "integrations",
-    "integration_configs"
+    "integration_configs",
+    "external_tools"
   ],
   "properties": {
     "contract": {"const": "kujo-agent-project/v1"},
@@ -79,6 +80,24 @@
     "integration_configs": {
       "type": "object",
       "additionalProperties": {"$ref": "#/$defs/projectPath"}
+    },
+    "external_tools": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "source", "commit", "required_for"],
+        "properties": {
+          "command": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "commit": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"},
+          "required_for": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "minItems": 1
+          }
+        }
+      }
     }
   },
   "$defs": {

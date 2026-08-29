@@ -68,7 +68,7 @@ profile_catalog() {
 	cat <<'EOF'
 core       kujo kennel spec eval scout scent packwrite runledger casefile patchbrief changebucket muzzle kujo-skills kujo-agents kujo-workflows
 ai         ai-sdk agents-sdk dispatch watchdog mcp rag relay
-agent      ai-sdk agents-sdk dispatch watchdog mcp rag workcell
+agent      eval runledger kujo-skills kujo-agents kujo-workflows ai-sdk agents-sdk dispatch watchdog mcp rag relay workcell
 quality    concord shipcheck fence redact lens tribunal workcell howl
 showcases  ssg cms crud-api ai-chat intake site-kit
 operating  kujo-skills kujo-agents kujo-workflows
@@ -641,10 +641,16 @@ ai|rag|kujo|main.kujo|rag|
 ai|relay|shell|bin/relay|relay|
 agent|ai-sdk|none|||
 agent|agents-sdk|none|||
+agent|eval|kujo|main.kujo|eval|
+agent|runledger|shell|bin/runledger|runledger|
+agent|kujo-skills|none|||
+agent|kujo-agents|none|||
+agent|kujo-workflows|none|||
 agent|dispatch|kujo|dispatch.kujo|dispatch|
 agent|watchdog|kujo|watchdog.kujo|watchdog|
 agent|mcp|kujo|mcp.kujo|mcp|
 agent|rag|kujo|main.kujo|rag|
+agent|relay|shell|bin/relay|relay|
 agent|workcell|shell|bin/workcell|workcell|
 quality|concord|kujo|concord.kujo|concord|
 quality|shipcheck|kujo|shipcheck.kujo|shipcheck|
