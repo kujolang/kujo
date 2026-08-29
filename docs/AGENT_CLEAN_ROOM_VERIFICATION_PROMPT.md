@@ -49,11 +49,12 @@ export PATH="$HOME/.local/bin:$PATH"
 
 If the repositories are private, provide `KUJO_GITHUB_TOKEN` only through a
 BuildKit secret or a runtime-mounted secret file. Do not print it. Record the
-exact resolved Kujo commit and confirm it contains maintenance-warning cleanup
-commit `32e4ceb`:
+exact resolved Kujo commit and confirm it contains the maintenance-warning
+cleanup and compatibility commits `32e4ceb` and `4b49d52`:
 
 ```bash
 git -C "$HOME/.local/share/kujo/source/kujo" merge-base --is-ancestor 32e4ceb HEAD
+git -C "$HOME/.local/share/kujo/source/kujo" merge-base --is-ancestor 4b49d52 HEAD
 ```
 
 If the installer uses a different source location, locate its recorded checkout
