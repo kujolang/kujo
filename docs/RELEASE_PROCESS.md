@@ -1,6 +1,6 @@
 # Kujo Release Process
 
-Current active line: `1.0.x`
+Current active line: `1.1.x`
 Current release state: `v1.0.2` is the stable public release, and the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
 
 This document is the canonical release and compatibility policy for Kujo.

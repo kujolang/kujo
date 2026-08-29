@@ -485,7 +485,7 @@ fn kennel_manifest(profile: &str) -> String {
             "0480733735a69f3b01d5452e6c86b4df3343c9d6",
         ));
     }
-    let mut out = String::from("[package]\nname = \"owned-agent-project\"\nversion = \"0.1.0\"\n\n[kujo]\nminimum_version = \"1.0.2\"\nentry = \"src/main.kujo\"\nsources = [\".\"]\nexcludes = [\".git\", \"kennel_packages\", \".kennel_tmp\"]\n\n[dependencies]\n");
+    let mut out = String::from("[package]\nname = \"owned-agent-project\"\nversion = \"0.1.0\"\n\n[kujo]\nminimum_version = \"1.1.0\"\nentry = \"src/main.kujo\"\nsources = [\".\"]\nexcludes = [\".git\", \"kennel_packages\", \".kennel_tmp\"]\n\n[dependencies]\n");
     for (name, source, commit) in dependencies {
         out.push_str(&format!("{name} = {{ source = \"{source}\", commit = \"{commit}\" }}\n"));
     }

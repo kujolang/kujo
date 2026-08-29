@@ -55,7 +55,7 @@ See [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md) and [docs/STANDARD_LIBRARY.md](docs
 
 Release boundary: Kujo `v1.0.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
-- The source tree is currently at `1.0.2` in `Cargo.toml`; the latest published stable release tag is `v1.0.2`.
+- The source tree is currently at `1.1.0` in `Cargo.toml`; the latest published stable release tag is `v1.0.2`.
 - Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries are distributed with per-asset SHA-256 files and a consolidated `checksums.txt`.
 - [docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md](docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md) preserves the completed launch verification record.
 - [ROADMAP.md](ROADMAP.md) remains the source of truth for historical v1 implementation tracking and post-1.0 planning.

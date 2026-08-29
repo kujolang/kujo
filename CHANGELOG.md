@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-29
+
 ### Added
 
 - Add the repository-owned `kujo agent` project lifecycle with deterministic
@@ -20,8 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add stable `encode_uri_component(text)` RFC 3986 UTF-8 percent encoding for provider and web integrations.
 - Add bounded, streaming `jsonl_query(path, options)` filtering and constant-memory join support for Kujo-native evidence workflows.
 - Accept standard JSON Schema Draft 2020-12 identification and annotation keywords in `json_schema_validate`, including `$schema`, `$id`, `$comment`, `format`, `deprecated`, `readOnly`, and `writeOnly`.
+- Add a deterministic Kujo-native repository policy gate example with stable
+  JSON reports and passing/failing contract fixtures.
 
 ### Fixed
+
+- Make Agent project integration fixtures portable to hosted CI by checking out
+  every composed ecosystem repository at its exact scaffolded commit.
 
 - Eliminate the remaining Cargo audit maintenance warnings by upgrading
   Cranelift off `region 2`/`mach` and replacing the unmaintained `paste` macro

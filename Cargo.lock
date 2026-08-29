@@ -2204,7 +2204,7 @@ dependencies = [
 
 [[package]]
 name = "kujo"
-version = "1.0.2"
+version = "1.1.0"
 dependencies = [
  "aes-gcm",
  "ahash",

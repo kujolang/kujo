@@ -1,6 +1,6 @@
 [package]
 name = "kujo"
-version = "1.0.2"
+version = "1.1.0"
 edition = "2021"
 authors = ["Kujolang <contact@kujolang.ai>"]
 description = "Kujo — A lean, expressive programming language"
