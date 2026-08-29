@@ -1,0 +1,38 @@
+from src.agents.retrieval.provider import create_retrieval_result
+
+let argv := args()
+let raw := parse_json(argv[0])
+mut documents := []
+mut citations := []
+mut index := 0
+for citation in raw["citations"] {
+  let document_id := citation["doc_id"]
+  documents = push(documents, {
+    "document_id": document_id,
+    "title": citation["path"],
+    "content": citation["snippet"],
+    "score": citation["score"],
+    "source": citation["path"]
+  })
+  citations = push(citations, {
+    "citation_id": "rag-" + to_string(index + 1),
+    "document_id": document_id,
+    "span": citation["path"] + ":" + to_string(citation["line_start"]) + "-" + to_string(citation["line_end"]),
+    "score": citation["score"]
+  })
+  index = index + 1
+}
+let result := create_retrieval_result({
+  "ok": true,
+  "query": {"query_text": raw["query"], "top_k": 5},
+  "context": {
+    "context_id": "rag-owned-agent",
+    "documents": documents,
+    "summary": raw["answer"],
+    "citations": citations,
+    "metadata": {"provider": "kujo-rag", "namespace": raw["namespace"]}
+  },
+  "count": len(documents),
+  "metadata": {"adapter": "rag-agents-sdk"}
+})
+print(to_json(result))

@@ -1,0 +1,9 @@
+{
+  "allow_insecure_localhost": false,
+  "api_key_env": "",
+  "base_url": "",
+  "contract": "kujo-ai-sdk/model-preference/v1",
+  "mode": "fixture",
+  "model": "fixture-owned-agent-v1",
+  "provider": "fixture"
+}

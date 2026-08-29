@@ -1,0 +1,6 @@
+[package]
+name = "owned-agent-project"
+version = "0.1.0"
+entrypoint = "src/main.kujo"
+
+[dependencies]

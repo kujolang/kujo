@@ -1,0 +1,7 @@
+{
+  "capabilities": [
+    "fs-read:project",
+    "clock",
+    "ai:configured-endpoints"
+  ]
+}

@@ -1,0 +1,15 @@
+[package]
+name = "owned-agent-project"
+version = "0.1.0"
+
+[kujo]
+minimum_version = "1.0.2"
+entry = "src/main.kujo"
+sources = ["."]
+excludes = [".git", "kennel_packages", ".kennel_tmp"]
+
+[dependencies]
+ai-sdk = { source = "github:kujolang/ai-sdk", commit = "be9617a32344728919b1394b80f72f46559d69a7" }
+agents-sdk = { source = "github:kujolang/agents-sdk", commit = "d3904d348754b492bda298b6c30f49c1eb24b7ea" }
+eval = { source = "github:kujolang/eval", commit = "955713f487c094b20b7b8c44414ae17395194cc9" }
+rag = { source = "github:kujolang/rag", commit = "28690e3aa1b7a5947616843574cacf03b32905c9" }

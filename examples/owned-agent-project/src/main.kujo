@@ -1,0 +1,33 @@
+from src.agents.testing.no_network import create_no_network_harness
+from src.agents.runner import create_agent_runner, run_agent
+from src.agents.core_types import create_agent, create_agent_run_request
+
+let argv := args()
+mut prompt := "Hello"
+if len(argv) > 0 { prompt = argv[0] }
+
+mut harness := create_no_network_harness({"model": {"output_text": "Owned agent fixture: " + prompt}})
+if len(argv) > 1 {
+    let normalized_response := parse_json(argv[1])
+    harness = create_no_network_harness({"model": {
+        "provider": normalized_response["provider"],
+        "model": normalized_response["model"],
+        "output_text": normalized_response["output_text"]
+    }})
+}
+if harness["ok"] == false {
+    print(to_json(harness))
+} else {
+    let runner := create_agent_runner({"ai_adapter": harness["model_adapter"]})
+    let agent := create_agent({
+        "id": "owned-agent",
+        "name": "Owned Agent",
+        "instructions": "Follow agent/instructions.md and the repository policy."
+    })
+    let request := create_agent_run_request(prompt, {
+        "run_id": "run-owned-agent",
+        "session_id": "session-owned-agent"
+    })
+    let result := run_agent(runner, agent, request, {"tool_registry": harness["tool_registry"]})
+    print(result["output"]["text"])
+}

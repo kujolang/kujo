@@ -1,0 +1,40 @@
+{
+  "contract": "kujo-agent-project/v1",
+  "schema": "schemas/agent-project.schema.json",
+  "name": "owned-agent-project",
+  "profile": "knowledge",
+  "agent": {
+    "definition": "agent/AGENT.md",
+    "manifest": "agent/manifest.json",
+    "instructions": "agent/instructions.md",
+    "skills": "agent/skills",
+    "tools": "agent/tools",
+    "knowledge": "agent/knowledge",
+    "policies": "agent/policies",
+    "evals": "evals/eval.json",
+    "workflows": "workflows"
+  },
+  "runtime": {
+    "entrypoint": "src/main.kujo",
+    "provider_config": "config/model.json",
+    "capabilities": [
+      "fs-read:project",
+      "clock",
+      "ai:configured-endpoints"
+    ],
+    "workcell": null
+  },
+  "integrations": {
+    "dispatch": false,
+    "mcp": false,
+    "relay": false,
+    "retrieval": true,
+    "runledger": false,
+    "watchdog": false,
+    "workcell": false
+  },
+  "integration_configs": {
+    "retrieval": "config/retrieval.json"
+  },
+  "external_tools": {}
+}

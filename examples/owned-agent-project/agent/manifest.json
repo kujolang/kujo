@@ -1,0 +1,7 @@
+{
+  "schema_version": "kujo-agent-package/v1",
+  "name": "owned-agent-project",
+  "instructions": "instructions.md",
+  "input_schema": "input.schema.json",
+  "output_schema": "output.schema.json"
+}

@@ -1,0 +1,11 @@
+.env
+.kennel_tmp/
+kennel_packages/
+.eval-results/
+.runledger/
+.workcell/
+.relay/
+.dispatch-runs/
+.kujo-agent/
+data/
+workcell-image/agents-sdk/

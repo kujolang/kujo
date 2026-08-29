@@ -1,0 +1,17 @@
+{
+  "name": "owned-agent-fixture",
+  "description": "Deterministic Agents SDK fixture evaluation",
+  "version": "1.0.0",
+  "output_dir": ".eval-results",
+  "stop_on_failure": true,
+  "tests": [
+    {
+      "name": "fixture run succeeds",
+      "check": "command_succeeds",
+      "params": {
+        "command": "kujo agent run fixture-check",
+        "timeout_ms": 120000
+      }
+    }
+  ]
+}

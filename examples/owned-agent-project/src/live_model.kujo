@@ -1,0 +1,41 @@
+from src.providers import openai_provider, openrouter_provider, deepseek_provider, custom_openai_compatible_provider_with_options
+from src.ai_sdk import create_client, create_message, chat_completion
+
+let argv := args()
+let config := parse_json(argv[0])
+let prompt := argv[1]
+let provider_id := config["provider"]
+mut provider := openai_provider()
+if provider_id == "openrouter" {
+    provider = openrouter_provider()
+}
+if provider_id == "deepseek" {
+    provider = deepseek_provider()
+}
+if provider_id == "custom" {
+    provider = custom_openai_compatible_provider_with_options(
+        config["base_url"],
+        config["api_key_env"],
+        config["model"],
+        config["allow_insecure_localhost"]
+    )
+}
+provider["default_model"] := config["model"]
+provider["supported_models"] := [config["model"]]
+let credential := env(config["api_key_env"])
+if credential == null || trim(to_string(credential)) == "" {
+    print(to_json({"ok": false, "code": "missing_credential", "credential_name": config["api_key_env"]}))
+    exit(2)
+}
+let client := create_client(provider, credential)
+let messages := [
+    create_message("system", "Follow the repository-owned Agent instructions and policies."),
+    create_message("user", prompt)
+]
+let result := chat_completion(client, messages, {
+    "model": config["model"],
+    "timeout": 60,
+    "max_retries": 2
+})
+print(to_json(result))
+if result["ok"] == false { exit(1) }
