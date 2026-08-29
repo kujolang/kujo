@@ -34,7 +34,7 @@ agent context/proof tools, and the Kujo skills, agents, and workflow packs.
 
 Profiles:
   --core                 Foundation and everyday agent-development tools (default)
-  --group <name>         Add one profile: ai, quality, showcases, or operating
+  --group <name>         Add one profile: agent, ai, quality, showcases, or operating
   --package <name>       Install one dependency closure (currently: dispatch)
   --all                  Install every profile (the kitchen sink)
   --list                 Show the profile catalog and exit
@@ -68,6 +68,7 @@ profile_catalog() {
 	cat <<'EOF'
 core       kujo kennel spec eval scout scent packwrite runledger casefile patchbrief changebucket muzzle kujo-skills kujo-agents kujo-workflows
 ai         ai-sdk agents-sdk dispatch watchdog mcp rag relay
+agent      ai-sdk agents-sdk dispatch watchdog mcp rag workcell
 quality    concord shipcheck fence redact lens tribunal workcell howl
 showcases  ssg cms crud-api ai-chat intake site-kit
 operating  kujo-skills kujo-agents kujo-workflows
@@ -82,6 +83,8 @@ core       Everyday local-first development: runtime, package management,
            task contracts, context, agent packs, proof, and run receipts.
 ai         Provider and agent infrastructure: AI SDK, Agents SDK, Dispatch,
            Watchdog, MCP, RAG, and Relay.
+agent      Focused owned-agent environment: SDKs, workflows, connectivity,
+           retrieval, observability, and bounded execution.
 quality    Architecture, release, privacy, browser, sandbox, governance,
            and evidence rendering tools.
 showcases  Copyable applications and design/publishing surfaces.
@@ -529,7 +532,7 @@ parse_args() {
 				[[ "$#" -ge 2 ]] || die "--group requires a value"
 				[[ -z "$INSTALL_PACKAGE" ]] || die "--group cannot be combined with --package"
 				case "$2" in
-					core|ai|quality|showcases|operating) ;;
+					core|agent|ai|quality|showcases|operating) ;;
 					*) die "unknown group: $2" ;;
 				 esac
 				[[ " $SELECTED_GROUPS " == *" $2 "* ]] || SELECTED_GROUPS="$SELECTED_GROUPS $2"
@@ -636,6 +639,13 @@ ai|watchdog|kujo|watchdog.kujo|watchdog|
 ai|mcp|kujo|mcp.kujo|mcp|
 ai|rag|kujo|main.kujo|rag|
 ai|relay|shell|bin/relay|relay|
+agent|ai-sdk|none|||
+agent|agents-sdk|none|||
+agent|dispatch|kujo|dispatch.kujo|dispatch|
+agent|watchdog|kujo|watchdog.kujo|watchdog|
+agent|mcp|kujo|mcp.kujo|mcp|
+agent|rag|kujo|main.kujo|rag|
+agent|workcell|shell|bin/workcell|workcell|
 quality|concord|kujo|concord.kujo|concord|
 quality|shipcheck|kujo|shipcheck.kujo|shipcheck|
 quality|fence|shell|fence.sh|fence|

@@ -56,12 +56,14 @@ The default is `core` plus `operating`. It is intentionally small enough for eve
 | `ai` | AI SDK, Agents SDK, Dispatch, Watchdog, MCP, RAG, Relay | Provider-gated AI, agent orchestration, telemetry, gateways, retrieval, and resumable missions |
 | `quality` | Concord, ShipCheck, Fence, Redact, Lens, Tribunal, Workcell, Howl | Cross-artifact drift, release checks, architecture boundaries, privacy, browser proof, review, Docker-backed execution, and asset rendering |
 | `showcases` | SSG, CMS, CRUD API, AI Chat, Intake, Site Kit | Copyable applications and design/publishing surfaces; not required to write Kujo tools |
+| `agent` | AI SDK, Agents SDK, Dispatch, Watchdog, MCP, RAG, Workcell | Focused environment for normal Kujo Agent Projects without installing every showcase or quality tool |
 | `operating` | Kujo Skills, Kujo Agents, Kujo Workflows | Agent-readable instructions, role contracts, and runnable end-to-end workflow kits |
 
 Install one additional profile with `--group`:
 
 ```bash
 bash install.sh --group ai
+bash install.sh --group agent
 bash install.sh --group quality --group showcases
 ```
 
