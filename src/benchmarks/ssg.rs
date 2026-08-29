@@ -1379,7 +1379,10 @@ mod tests {
 
     #[cfg(unix)]
     fn unique_test_dir(prefix: &str) -> PathBuf {
-        let mut base = std::env::current_dir().expect("current_dir should resolve");
+        // The test suite exercises os_chdir in parallel. Anchor fixtures to the
+        // manifest directory so another test cannot place and remove them under
+        // its temporary working directory.
+        let mut base = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         base.push("tmp");
         base.push("bench_ssg_harness_tests");
         fs::create_dir_all(&base).expect("bench-ssg test root should be created");
@@ -2884,7 +2887,10 @@ mod tests {
         )
         .unwrap_err();
 
-        assert!(err.contains("Metric 'KUJO_SSG_FILES_PER_SEC' not found in output"));
+        assert!(
+            err.contains("Metric 'KUJO_SSG_FILES_PER_SEC' not found in output"),
+            "unexpected benchmark error: {err}"
+        );
     }
 
     #[cfg(unix)]
