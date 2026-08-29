@@ -10,6 +10,8 @@ use crate::workflow_pack::types::{CheckResult, CheckSeverity, CheckStatus, Docto
 
 const CONTRACT: &str = "kujo-agent-project/v1";
 const INSPECT_CONTRACT: &str = "kujo-agent-inspect/v1";
+const RUN_CONTRACT: &str = "kujo-agent-run/v1";
+const EVAL_CONTRACT: &str = "kujo-agent-eval/v1";
 const PROFILES: &[&str] =
     &["basic", "tools", "knowledge", "workflow", "hardened", "observable", "full"];
 
@@ -295,10 +297,10 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         ),
     )?;
     write(root, "src/main.kujo", "from src.agents.testing.no_network import create_no_network_harness\nfrom src.agents.runner import create_agent_runner, run_agent\nfrom src.agents.core_types import create_agent, create_agent_run_request\n\nlet argv := args()\nmut prompt := \"Hello\"\nif len(argv) > 0 { prompt = argv[0] }\nlet harness := create_no_network_harness({\"model\": {\"output_text\": \"Owned agent fixture: \" + prompt}})\nif harness[\"ok\"] == false {\n    print(to_json(harness))\n} else {\n    let runner := create_agent_runner({\"ai_adapter\": harness[\"model_adapter\"]})\n    let agent := create_agent({\"id\": \"owned-agent\", \"name\": \"Owned Agent\", \"instructions\": \"Follow agent/instructions.md and the repository policy.\"})\n    let request := create_agent_run_request(prompt, {\"run_id\": \"run-owned-fixture\", \"session_id\": \"session-owned-fixture\"})\n    let result := run_agent(runner, agent, request, {\"tool_registry\": harness[\"tool_registry\"]})\n    print(result[\"output\"][\"text\"])\n}\n")?;
-    write(root, "evals/eval.json", "{\"name\":\"owned-agent-fixture\",\"version\":\"1.0.0\",\"tests\":[{\"name\":\"fixture response\",\"check\":\"output_contains\",\"expected\":\"Owned agent fixture\"}]}\n")?;
+    write(root, "evals/eval.json", "{\n  \"name\": \"owned-agent-fixture\",\n  \"description\": \"Deterministic Agents SDK fixture evaluation\",\n  \"version\": \"1.0.0\",\n  \"output_dir\": \".eval-results\",\n  \"stop_on_failure\": true,\n  \"tests\": [\n    {\n      \"name\": \"fixture response\",\n      \"check\": \"output_contains\",\n      \"params\": {\n        \"command\": \"kujo agent run fixture-check\",\n        \"expected\": \"Owned agent fixture: fixture-check\"\n      }\n    }\n  ]\n}\n")?;
     write(root, "kujo.toml", &format!("[package]\nname = \"{}\"\nversion = \"0.1.0\"\nentrypoint = \"src/main.kujo\"\n\n[dependencies]\n", a.name))?;
     write(root, "kujo.lock", "version = 1\npackages = []\n")?;
-    write(root, "kennel.toml", "[package]\nname = \"owned-agent-project\"\nversion = \"0.1.0\"\n\n[kujo]\nminimum_version = \"1.0.2\"\nentry = \"src/main.kujo\"\nsources = [\".\"]\nexcludes = [\".git\", \"kennel_packages\", \".kennel_tmp\"]\n\n[dependencies]\nai-sdk = { source = \"github:kujolang/ai-sdk\", commit = \"be9617a32344728919b1394b80f72f46559d69a7\" }\nagents-sdk = { source = \"github:kujolang/agents-sdk\", commit = \"d3904d348754b492bda298b6c30f49c1eb24b7ea\" }\n")?;
+    write(root, "kennel.toml", &kennel_manifest(&a.profile))?;
     write(
         root,
         ".env.example",
@@ -344,6 +346,67 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         write(root, "config/relay.json", "{\"enabled\":true,\"adapter\":\"agent-project\"}\n")?;
     }
     Ok(())
+}
+
+fn kennel_manifest(profile: &str) -> String {
+    let has = |name: &str| profile == name || profile == "full";
+    let mut dependencies = vec![
+        ("ai-sdk", "github:kujolang/ai-sdk", "be9617a32344728919b1394b80f72f46559d69a7"),
+        ("agents-sdk", "github:kujolang/agents-sdk", "d3904d348754b492bda298b6c30f49c1eb24b7ea"),
+        ("eval", "github:kujolang/eval", "955713f487c094b20b7b8c44414ae17395194cc9"),
+    ];
+    if has("tools") {
+        dependencies.push((
+            "mcp",
+            "github:kujolang/mcp",
+            "2ab8111f2c5174841204f5c762d8ce8d281e57b6",
+        ));
+    }
+    if has("knowledge") {
+        dependencies.push((
+            "rag",
+            "github:kujolang/rag",
+            "28690e3aa1b7a5947616843574cacf03b32905c9",
+        ));
+    }
+    if has("workflow") {
+        dependencies.push((
+            "dispatch",
+            "github:kujolang/dispatch",
+            "662417c264bd55f8d802eef3fc21f9f372590753",
+        ));
+    }
+    if has("hardened") {
+        dependencies.push((
+            "workcell",
+            "github:kujolang/workcell",
+            "7bcdb7f29ddf74843aec6b70eafbf33cc7944c6f",
+        ));
+    }
+    if has("observable") {
+        dependencies.push((
+            "watchdog",
+            "github:kujolang/watchdog",
+            "1af292b3e03217760649dcb4f903e443f48c563c",
+        ));
+        dependencies.push((
+            "runledger",
+            "github:kujolang/runledger",
+            "12bbf2b3723325913eb75ececaba0ce3fdc68b87",
+        ));
+    }
+    if profile == "full" {
+        dependencies.push((
+            "relay",
+            "github:kujolang/relay",
+            "0480733735a69f3b01d5452e6c86b4df3343c9d6",
+        ));
+    }
+    let mut out = String::from("[package]\nname = \"owned-agent-project\"\nversion = \"0.1.0\"\n\n[kujo]\nminimum_version = \"1.0.2\"\nentry = \"src/main.kujo\"\nsources = [\".\"]\nexcludes = [\".git\", \"kennel_packages\", \".kennel_tmp\"]\n\n[dependencies]\n");
+    for (name, source, commit) in dependencies {
+        out.push_str(&format!("{name} = {{ source = \"{source}\", commit = \"{commit}\" }}\n"));
+    }
+    out
 }
 
 fn find_git_root(start: &Path) -> Option<PathBuf> {
@@ -472,7 +535,7 @@ fn run(a: RunArgs) -> Result<(), AgentError> {
     }
     let text = String::from_utf8_lossy(&out.stdout).trim().to_string();
     if a.json {
-        println!("{}",serde_json::to_string_pretty(&json!({"contract":"kujo-agent-run/v1","status":"ok","project":m.name,"provider_mode":if m.runtime.fixture{"fixture"}else{"live"},"output":text})).unwrap());
+        println!("{}",serde_json::to_string_pretty(&json!({"contract":RUN_CONTRACT,"status":"ok","project":m.name,"provider_mode":if m.runtime.fixture{"fixture"}else{"live"},"output":text})).unwrap());
     } else {
         println!("{text}");
     }
@@ -482,36 +545,67 @@ fn eval(a: ProjectArgs) -> Result<(), AgentError> {
     let cwd = std::env::current_dir().map_err(|e| ioerr(e.to_string()))?;
     let root = discover(&cwd)?;
     let m = load(&root)?;
-    let agents_sdk = root.join("kennel_packages/agents-sdk");
-    if !agents_sdk.join("src/agents/runner.kujo").is_file() {
-        return Err(fail("Agents SDK is not installed. Run `kennel install` before evaluation."));
+    let eval_root = root.join("kennel_packages/eval");
+    let eval_entrypoint = eval_root.join("main.kujo");
+    if !eval_entrypoint.is_file() {
+        return Err(fail("Eval is not installed. Run `kennel install` before evaluation."));
     }
     let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
     let mut command = Command::new(exe);
-    command.env("KUJO_MODULE_PATH", &agents_sdk);
+    command.env("KUJO_MODULE_PATH", &eval_root);
+    prepend_executable_dir_to_path(&mut command)?;
     let out = command
         .arg("run")
-        .arg(&m.runtime.entrypoint)
-        .arg("--")
-        .arg("evaluation")
+        .arg(&eval_entrypoint)
+        .arg("run")
+        .arg(root.join(&m.agent.evals))
+        .arg("--output-dir")
+        .arg(root.join(".eval-results"))
+        .arg("--json")
         .current_dir(&root)
         .output()
         .map_err(|e| ioerr(e.to_string()))?;
-    let passed = out.status.success()
-        && String::from_utf8_lossy(&out.stdout).contains("Owned agent fixture");
+    let passed = out.status.success();
     if a.json {
-        println!("{}",serde_json::to_string_pretty(&json!({"contract":"kujo-agent-eval/v1","status":if passed{"pass"}else{"fail"},"suite":m.agent.evals,"checks":{"passed":if passed{1}else{0},"failed":if passed{0}else{1}}})).unwrap());
-    } else {
+        let summary = fs::read_to_string(root.join(".eval-results/summary.json"))
+            .ok()
+            .and_then(|value| serde_json::from_str::<Value>(&value).ok());
         println!(
-            "Agent eval: {} (1 deterministic fixture check)",
-            if passed { "PASS" } else { "FAIL" }
+            "{}",
+            serde_json::to_string_pretty(&json!({
+                "contract": EVAL_CONTRACT,
+                "status": if passed { "pass" } else { "fail" },
+                "suite": m.agent.evals,
+                "engine": "eval",
+                "summary": summary,
+                "artifacts": ".eval-results"
+            }))
+            .unwrap()
         );
+    } else {
+        println!("Agent eval: {} (Eval)", if passed { "PASS" } else { "FAIL" });
     }
     if passed {
         Ok(())
     } else {
-        Err(fail("Agent evaluation failed."))
+        let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        let detail = if !stderr.is_empty() { stderr } else { stdout };
+        Err(fail(format!("Agent evaluation failed through Eval: {detail}")))
     }
+}
+
+fn prepend_executable_dir_to_path(command: &mut Command) -> Result<(), AgentError> {
+    let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+    let dir = exe.parent().ok_or_else(|| ioerr("Cannot resolve the Kujo executable directory."))?;
+    let mut paths = vec![dir.to_path_buf()];
+    if let Some(existing) = std::env::var_os("PATH") {
+        paths.extend(std::env::split_paths(&existing));
+    }
+    let joined = std::env::join_paths(paths)
+        .map_err(|e| ioerr(format!("Cannot construct Eval PATH: {e}")))?;
+    command.env("PATH", joined);
+    Ok(())
 }
 
 pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
