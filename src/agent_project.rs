@@ -553,7 +553,7 @@ if result["ok"] == false { exit(1) }
     write(
         root,
         ".gitignore",
-        ".env\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n.workcell/\n.relay/\n.dispatch-runs/\n.kujo-agent/\ndata/\nworkcell-image/agents-sdk/\n",
+        ".env\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n.workcell/\n.relay/\n.dispatch-runs/\n.kujo-agent/\ndata/\nresults/\nworkcell-image/agents-sdk/\n",
     )?;
     write(root, "AGENTS.md", "# Agent Project Guide\n\nTreat `agent.project.json` as the root contract. Never commit credentials. Run `kujo doctor agent`, `kujo agent inspect`, `kujo agent run`, and `kujo agent eval`.\n")?;
     write(root, "README.md", &format!("# {}\n\nThis Git repository owns the agent definition, instructions, model preference, skills, tools, knowledge, policies, workflows, evals, and execution boundaries.\n\n```bash\nkennel install\nkujo doctor agent\nkujo agent inspect\nkujo agent run \"Hello\"\nkujo agent eval\n```\n\nFixture mode uses the Agents SDK no-network harness and requires no provider credentials. Change `config/model.json` for a live AI SDK provider and provide credentials through the environment only. Kujo capabilities authorize effects; they are not a sandbox. Hardened projects use Workcell for container-backed isolation.\n", a.name))?;

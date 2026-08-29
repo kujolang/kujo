@@ -8,4 +8,5 @@ kennel_packages/
 .dispatch-runs/
 .kujo-agent/
 data/
+results/
 workcell-image/agents-sdk/
