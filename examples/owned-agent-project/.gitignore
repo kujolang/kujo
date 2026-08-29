@@ -1,4 +1,5 @@
 .env
+.env.local
 .kennel_tmp/
 kennel_packages/
 .eval-results/

@@ -16,6 +16,8 @@ kujo agent eval
 
 Fixture mode uses the Agents SDK no-network harness and local RAG adapter, so it
 requires no provider credentials. Change `config/model.json` for a live AI SDK
-provider and provide credentials through the environment only. Kujo
-capabilities authorize effects; they are not a sandbox. Use a hardened project
-and Workcell for a container-backed isolation boundary.
+provider and run `kujo agent auth set <provider>` once; later Agent Projects can
+reuse the credential from the operating-system credential store. CI environment
+variables and ignored owner-only `.env.local` project overrides are also
+supported. Kujo capabilities authorize effects; they are not a sandbox. Use a
+hardened project and Workcell for a container-backed isolation boundary.

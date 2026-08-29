@@ -15,6 +15,10 @@ kujo agent new <name> [--profile <profile>] [--dir <path>] [--provider <id>] [--
 kujo agent inspect [--json]
 kujo agent run [prompt] [--file <path>] [--workcell] [--json]
 kujo agent eval [--json]
+kujo agent auth set <provider> [--from-stdin|--from-env] [--project] [--json]
+kujo agent auth status <provider> [--project] [--json]
+kujo agent auth remove <provider> [--project] [--json]
+kujo agent auth set --name <CONNECTOR_CREDENTIAL_ENV> [--project]
 kujo doctor agent [--json] [--deep]
 ```
 
@@ -25,7 +29,7 @@ The diagnostic command is deliberately `kujo doctor agent`; no competing
 
 Agent Doctor extends the existing Doctor framework and preserves its report and
 JSON conventions. It checks project discovery and contracts, runtime entrypoints
-and provider configuration, installed pinned dependencies, agent package paths,
+and provider configuration, credential availability and safe storage, installed pinned dependencies, agent package paths,
 enabled integrations, external tools, secret-like files, capability declarations,
 and hardened Workcell configuration. `--deep` performs additional local checks
 without silently initiating provider requests.
@@ -83,8 +87,11 @@ the same implementation and passes the standard lifecycle.
 Scaffolding uses a sibling staging directory and atomic promotion, rejects unsafe
 names, traversal, filesystem roots, symlink destinations, and non-empty targets,
 and does not perform network access unless `--install` is explicit. Runtime paths
-are revalidated before execution. Live provider credentials are read only from a
-declared environment variable. HTTPS is required except for an explicitly opted-in
+are revalidated before execution. Live provider and API-key connector credentials
+are resolved from CI environment variables, an ignored owner-only project
+`.env.local`, or the operating-system credential store. Interactive entry is
+masked, automation can use stdin, credentials never appear in CLI arguments, and
+child-process failures redact the resolved value. HTTPS is required except for an explicitly opted-in
 loopback development endpoint. Secret-like repository files fail Doctor without
 printing their values. Capability flags authorize effects; they are not described
 as sandboxing. Workcell provides the separately documented container boundary.
@@ -103,6 +110,11 @@ path end to end: AI SDK performs and normalizes the HTTP request, then Agents SD
 owns the agent run and returns the model text. Missing credentials, malformed
 provider config, unsafe base URLs, and undeclared providers fail closed. Real
 third-party availability and billing remain external operational concerns.
+
+Credential contract tests exercise reusable and project-scoped storage, private
+permissions, subdirectory discovery, non-disclosure, explicit config-only live
+scaffolding, and automated stdin setup. Native OS credential storage is provided
+by macOS Keychain, Windows Credential Manager, and Linux Secret Service.
 
 ## Tests
 
@@ -135,6 +147,6 @@ RunLedger `12bbf2b`.
 
 ## Deferred work
 
-Hosted deployment, public package/release publication, remote MCP authentication,
-production Watchdog service operation, and credentials-backed calls to each named
+Hosted deployment, public package/release publication, production Watchdog
+service operation, and credentials-backed calls to each named
 third-party model provider are intentionally outside this local first release.

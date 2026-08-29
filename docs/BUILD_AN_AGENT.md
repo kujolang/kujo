@@ -29,16 +29,46 @@ The base scaffold is offline and makes no network request. `--install` is an exp
 Provider and model choices live in `config/model.json`. Fixture mode requires no secret. OpenAI, OpenRouter, DeepSeek, and custom OpenAI-compatible providers use AI SDK; the normalized response then enters Agents SDK execution. For example:
 
 ```bash
-kujo agent new live-agent --provider openai --model gpt-5-mini
-cd live-agent && kennel install
-export OPENAI_API_KEY=...
+# One-time, masked setup. The key is saved in the operating-system credential store.
+kujo agent auth set openai
+
+# Every later agent can reuse it without another export or copied secret.
+# Auto-selection finds the configured provider and its starter model.
+kujo agent new live-agent --install
+cd live-agent
 kujo agent run "Say hello"
 ```
+
+When a live provider is selected and no credential exists, interactive
+`kujo agent new` asks for it once with hidden input. Non-interactive automation
+uses `--credential-stdin`; `--no-credential` is the explicit config-only escape
+hatch. Environment variables remain supported for CI, but they are no longer the
+primary local workflow.
+
+Credentials resolve in this order: the current process environment, the
+project's ignored `.env.local`, then the user's operating-system credential
+store. Project overrides are created with `kujo agent auth set openai --project`
+and written with owner-only permissions. `kujo agent auth status openai` reports
+the source without printing the value, and `kujo agent auth remove openai`
+revokes the saved user credential.
+
+API-key connectors use the same secure path without adding secrets to connector
+configuration or source control:
+
+```bash
+kujo agent auth set --name LINEAR_API_TOKEN
+kujo agent auth status --name LINEAR_API_TOKEN
+```
+
+The connector configuration owns only the credential name. OAuth consent and
+token refresh remain the responsibility of the connector implementation; do not
+substitute a long-lived API key when the connector supports scoped OAuth.
 
 For a custom provider, set `provider`, `model`, `base_url`, and
 `api_key_env` in `config/model.json`. HTTPS is required unless
 `allow_insecure_localhost` explicitly enables a loopback development endpoint.
-Secret values never belong in the repository, inspect output, or Doctor output.
+Secret values never belong in the repository, command arguments, inspect output,
+Doctor output, or JSON contracts.
 
 Project-local Agent Skills use `SKILL.md`. Tools retain inspectable names, schemas, risk, and approval metadata. MCP is separate from WebMCP: publishing a public website is optional and belongs to Kujo SSG, whose existing `llms.txt` and WebMCP build surfaces can index this guide.
 
@@ -48,4 +78,7 @@ The executable lifecycle workflow lives in the `kujo-workflows` repository at
 `owned-agent-project/scripts/run.sh`. This repository also self-hosts a generated
 knowledge profile at `examples/owned-agent-project`.
 
-`kujo agent inspect --json`, `run --json`, `eval --json`, and `new --json` emit versioned machine-readable payloads. `kujo doctor agent --json` reuses the canonical Doctor report. There is deliberately no `kujo agent doctor` command.
+`kujo agent inspect --json`, `run --json`, `eval --json`, `new --json`, and
+`auth ... --json` emit versioned machine-readable payloads. `kujo doctor agent
+--json` reuses the canonical Doctor report. There is deliberately no `kujo agent
+doctor` command.
