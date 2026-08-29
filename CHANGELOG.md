@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Eliminate the remaining Cargo audit maintenance warnings by upgrading
+  Cranelift off `region 2`/`mach`, retaining EXR support on the last pre-`pulp`
+  release, and dropping an unused image-codec parallelism feature that locked
+  the unmaintained `paste` macro; the release gate now denies warnings.
 - Remove the `RUSTSEC-2023-0071` RSA timing advisory by moving public RSA
   operations to a current vendored OpenSSL implementation and using AWS-LC for
   the HS256-only JWT backend; the release gate no longer suppresses the advisory.

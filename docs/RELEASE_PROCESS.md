@@ -113,7 +113,7 @@ Full gate command order:
    - `cargo test --test vm_interpreter_parity_surfaces`
    - optional `cargo test --test serve_command_integration` when `KUJO_ENABLE_SOCKET_TESTS=1`
 5. Kujo self-test fixtures: `cargo run -- test`
-6. Optional tools when installed: `cargo audit`, `cargo deny check`
+6. Optional tools when installed: `cargo audit --deny warnings`, `cargo deny check`
 
 Optional benchmark smoke in full mode:
 

@@ -88,7 +88,7 @@ if [[ "${mode}" == "full" ]]; then
     echo "- Skipping benchmark smoke (set KUJO_RELEASE_GATE_RUN_BENCH=1 to enable)"
   fi
 
-  run_optional_cmd cargo-audit cargo audit
+  run_optional_cmd cargo-audit cargo audit --deny warnings
   run_optional_cmd cargo-deny cargo deny check
 else
   run_cmd bash scripts/repo_hygiene_audit.sh
