@@ -55,7 +55,7 @@
     "runtime": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["entrypoint", "provider_config", "capabilities", "workcell", "fixture"],
+      "required": ["entrypoint", "provider_config", "capabilities", "workcell"],
       "properties": {
         "entrypoint": {"$ref": "#/$defs/projectPath"},
         "provider_config": {"$ref": "#/$defs/projectPath"},
@@ -69,8 +69,7 @@
             {"type": "null"},
             {"$ref": "#/$defs/projectPath"}
           ]
-        },
-        "fixture": {"type": "boolean"}
+        }
       }
     },
     "integrations": {

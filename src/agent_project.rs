@@ -64,6 +64,49 @@ pub struct ProjectArgs {
     pub json: bool,
 }
 
+struct ProviderSettings {
+    mode: &'static str,
+    base_url: &'static str,
+    api_key_env: &'static str,
+    env_example: &'static str,
+}
+
+fn provider_settings(provider: &str) -> Option<ProviderSettings> {
+    match provider {
+        "fixture" => Some(ProviderSettings {
+            mode: "fixture",
+            base_url: "",
+            api_key_env: "",
+            env_example: "# Fixture mode requires no credentials.\n",
+        }),
+        "openai" => Some(ProviderSettings {
+            mode: "live",
+            base_url: "https://api.openai.com/v1",
+            api_key_env: "OPENAI_API_KEY",
+            env_example: "OPENAI_API_KEY=\n",
+        }),
+        "openrouter" => Some(ProviderSettings {
+            mode: "live",
+            base_url: "https://openrouter.ai/api/v1",
+            api_key_env: "OPENROUTER_API_KEY",
+            env_example: "OPENROUTER_API_KEY=\n",
+        }),
+        "deepseek" => Some(ProviderSettings {
+            mode: "live",
+            base_url: "https://api.deepseek.com/v1",
+            api_key_env: "DEEPSEEK_API_KEY",
+            env_example: "DEEPSEEK_API_KEY=\n",
+        }),
+        "custom" => Some(ProviderSettings {
+            mode: "live",
+            base_url: "https://api.example.invalid/v1",
+            api_key_env: "CUSTOM_API_KEY",
+            env_example: "CUSTOM_API_KEY=\n",
+        }),
+        _ => None,
+    }
+}
+
 pub struct AgentError {
     pub message: String,
     pub exit_code: i32,
@@ -123,6 +166,7 @@ struct RuntimeConfig {
     provider_config: String,
     capabilities: Vec<String>,
     workcell: Option<String>,
+    #[serde(skip)]
     fixture: bool,
 }
 
@@ -157,6 +201,12 @@ fn scaffold(a: NewArgs) -> Result<(), AgentError> {
             PROFILES.join(", ")
         )));
     }
+    provider_settings(&a.provider).ok_or_else(|| {
+        usage(format!(
+            "Unknown provider '{}'. Expected one of: fixture, openai, openrouter, deepseek, custom.",
+            a.provider
+        ))
+    })?;
     let base = a.dir.clone().unwrap_or(std::env::current_dir().map_err(|e| ioerr(e.to_string()))?);
     if base.components().any(|c| matches!(c, Component::ParentDir)) {
         return Err(usage("Agent destination may not contain '..'."));
@@ -239,6 +289,8 @@ fn write(path: &Path, rel: &str, body: &str) -> Result<(), AgentError> {
     fs::write(p, body).map_err(|e| ioerr(e.to_string()))
 }
 fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
+    let provider = provider_settings(&a.provider)
+        .ok_or_else(|| usage(format!("Unsupported provider '{}'.", a.provider)))?;
     let has = |p: &str| a.profile == p || a.profile == "full";
     for directory in [
         "agent/skills",
@@ -302,10 +354,8 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         integrations.insert("relay".into(), true);
         integration_configs.insert("relay".into(), "config/relay.json".into());
     }
-    let mut capabilities = vec!["fs-read:project".into(), "clock".into()];
-    if a.provider != "fixture" {
-        capabilities.push("ai:configured-endpoints".into());
-    }
+    let capabilities =
+        vec!["fs-read:project".into(), "clock".into(), "ai:configured-endpoints".into()];
     let manifest = ProjectManifest {
         contract: CONTRACT.into(),
         schema: "schemas/agent-project.schema.json".into(),
@@ -343,7 +393,23 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         "schemas/agent-project.schema.json",
         include_str!("../schemas/agent-project.schema.json"),
     )?;
-    write(root, "config/model.json", &format!("{{\n  \"contract\": \"kujo-ai-sdk/model-preference/v1\",\n  \"provider\": \"{}\",\n  \"model\": \"{}\",\n  \"mode\": \"{}\"\n}}\n", a.provider, a.model, if a.provider == "fixture" {"fixture"} else {"live"}))?;
+    write(
+        root,
+        "config/model.json",
+        &format!(
+            "{}\n",
+            serde_json::to_string_pretty(&json!({
+                "contract":"kujo-ai-sdk/model-preference/v1",
+                "provider":a.provider,
+                "model":a.model,
+                "mode":provider.mode,
+                "base_url":provider.base_url,
+                "api_key_env":provider.api_key_env,
+                "allow_insecure_localhost":false
+            }))
+            .unwrap()
+        ),
+    )?;
     write(root, "agent/manifest.json", &format!("{{\n  \"schema_version\": \"kujo-agent-package/v1\",\n  \"name\": \"{}\",\n  \"instructions\": \"instructions.md\",\n  \"input_schema\": \"input.schema.json\",\n  \"output_schema\": \"output.schema.json\"\n}}\n", a.name))?;
     write(
         root,
@@ -366,7 +432,90 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
                 .unwrap()
         ),
     )?;
-    write(root, "src/main.kujo", "from src.agents.testing.no_network import create_no_network_harness\nfrom src.agents.runner import create_agent_runner, run_agent\nfrom src.agents.core_types import create_agent, create_agent_run_request\n\nlet argv := args()\nmut prompt := \"Hello\"\nif len(argv) > 0 { prompt = argv[0] }\nlet harness := create_no_network_harness({\"model\": {\"output_text\": \"Owned agent fixture: \" + prompt}})\nif harness[\"ok\"] == false {\n    print(to_json(harness))\n} else {\n    let runner := create_agent_runner({\"ai_adapter\": harness[\"model_adapter\"]})\n    let agent := create_agent({\"id\": \"owned-agent\", \"name\": \"Owned Agent\", \"instructions\": \"Follow agent/instructions.md and the repository policy.\"})\n    let request := create_agent_run_request(prompt, {\"run_id\": \"run-owned-fixture\", \"session_id\": \"session-owned-fixture\"})\n    let result := run_agent(runner, agent, request, {\"tool_registry\": harness[\"tool_registry\"]})\n    print(result[\"output\"][\"text\"])\n}\n")?;
+    write(
+        root,
+        "src/main.kujo",
+        r#"from src.agents.testing.no_network import create_no_network_harness
+from src.agents.runner import create_agent_runner, run_agent
+from src.agents.core_types import create_agent, create_agent_run_request
+
+let argv := args()
+mut prompt := "Hello"
+if len(argv) > 0 { prompt = argv[0] }
+
+mut harness := create_no_network_harness({"model": {"output_text": "Owned agent fixture: " + prompt}})
+if len(argv) > 1 {
+    let normalized_response := parse_json(argv[1])
+    harness = create_no_network_harness({"model": {
+        "provider": normalized_response["provider"],
+        "model": normalized_response["model"],
+        "output_text": normalized_response["output_text"]
+    }})
+}
+if harness["ok"] == false {
+    print(to_json(harness))
+} else {
+    let runner := create_agent_runner({"ai_adapter": harness["model_adapter"]})
+    let agent := create_agent({
+        "id": "owned-agent",
+        "name": "Owned Agent",
+        "instructions": "Follow agent/instructions.md and the repository policy."
+    })
+    let request := create_agent_run_request(prompt, {
+        "run_id": "run-owned-agent",
+        "session_id": "session-owned-agent"
+    })
+    let result := run_agent(runner, agent, request, {"tool_registry": harness["tool_registry"]})
+    print(result["output"]["text"])
+}
+"#,
+    )?;
+    write(
+        root,
+        "src/live_model.kujo",
+        r#"from src.providers import openai_provider, openrouter_provider, deepseek_provider, custom_openai_compatible_provider_with_options
+from src.ai_sdk import create_client, create_message, chat_completion
+
+let argv := args()
+let config := parse_json(argv[0])
+let prompt := argv[1]
+let provider_id := config["provider"]
+mut provider := openai_provider()
+if provider_id == "openrouter" {
+    provider = openrouter_provider()
+}
+if provider_id == "deepseek" {
+    provider = deepseek_provider()
+}
+if provider_id == "custom" {
+    provider = custom_openai_compatible_provider_with_options(
+        config["base_url"],
+        config["api_key_env"],
+        config["model"],
+        config["allow_insecure_localhost"]
+    )
+}
+provider["default_model"] := config["model"]
+provider["supported_models"] := [config["model"]]
+let credential := env(config["api_key_env"])
+if credential == null || trim(to_string(credential)) == "" {
+    print(to_json({"ok": false, "code": "missing_credential", "credential_name": config["api_key_env"]}))
+    exit(2)
+}
+let client := create_client(provider, credential)
+let messages := [
+    create_message("system", "Follow the repository-owned Agent instructions and policies."),
+    create_message("user", prompt)
+]
+let result := chat_completion(client, messages, {
+    "model": config["model"],
+    "timeout": 60,
+    "max_retries": 2
+})
+print(to_json(result))
+if result["ok"] == false { exit(1) }
+"#,
+    )?;
     write(
         root,
         "evals/eval.json",
@@ -395,10 +544,10 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
     write(
         root,
         ".env.example",
-        if a.provider == "fixture" {
+        if provider.api_key_env.is_empty() {
             "# Fixture mode requires no credentials.\n"
         } else {
-            "OPENAI_API_KEY=\n"
+            provider.env_example
         },
     )?;
     write(
@@ -522,7 +671,7 @@ fn discover(start: &Path) -> Result<PathBuf, AgentError> {
 fn load(root: &Path) -> Result<ProjectManifest, AgentError> {
     let text =
         fs::read_to_string(root.join("agent.project.json")).map_err(|e| ioerr(e.to_string()))?;
-    let m: ProjectManifest = serde_json::from_str(&text)
+    let mut m: ProjectManifest = serde_json::from_str(&text)
         .map_err(|e| usage(format!("Malformed Agent Project manifest: {e}")))?;
     if m.contract != CONTRACT {
         return Err(usage(format!("Unsupported Agent Project contract '{}'.", m.contract)));
@@ -576,7 +725,7 @@ fn load(root: &Path) -> Result<ProjectManifest, AgentError> {
         validate_project_path(&root, workcell, true)?;
         validate_workcell(&root.join(workcell))?;
     }
-    validate_provider_config(&root.join(&m.runtime.provider_config), m.runtime.fixture)?;
+    m.runtime.fixture = validate_provider_config(&root.join(&m.runtime.provider_config))?;
     validate_agent_package(&root, &m)?;
     Ok(m)
 }
@@ -620,20 +769,46 @@ fn required_string<'a>(value: &'a Value, key: &str, label: &str) -> Result<&'a s
         .ok_or_else(|| usage(format!("{label} requires a non-empty '{key}' string.")))
 }
 
-fn validate_provider_config(path: &Path, fixture: bool) -> Result<(), AgentError> {
+fn validate_provider_config(path: &Path) -> Result<bool, AgentError> {
     let value = parse_json_file(path, "provider configuration")?;
-    required_string(&value, "provider", "Provider configuration")?;
+    let provider = required_string(&value, "provider", "Provider configuration")?;
+    if provider_settings(provider).is_none() {
+        return Err(usage(format!("Unsupported provider '{provider}'.")));
+    }
     required_string(&value, "model", "Provider configuration")?;
     let mode = required_string(&value, "mode", "Provider configuration")?;
     if !matches!(mode, "fixture" | "live") {
         return Err(usage("Provider configuration mode must be 'fixture' or 'live'."));
     }
-    if fixture != (mode == "fixture") {
-        return Err(usage(
-            "Agent Project runtime.fixture conflicts with the provider configuration mode.",
-        ));
+    if (provider == "fixture") != (mode == "fixture") {
+        return Err(usage("Provider configuration uses an inconsistent provider and mode."));
     }
-    Ok(())
+    if mode == "live" {
+        let base_url = required_string(&value, "base_url", "Provider configuration")?;
+        let api_key_env = required_string(&value, "api_key_env", "Provider configuration")?;
+        if !api_key_env.chars().all(|character| {
+            character.is_ascii_uppercase() || character.is_ascii_digit() || character == '_'
+        }) {
+            return Err(usage(
+                "Provider configuration api_key_env must be an uppercase environment variable name.",
+            ));
+        }
+        if base_url.contains('@') || base_url.contains('?') || base_url.contains('#') {
+            return Err(usage(
+                "Provider base_url may not contain credentials, query parameters, or fragments.",
+            ));
+        }
+        let local =
+            base_url.starts_with("http://127.0.0.1:") || base_url.starts_with("http://localhost:");
+        let allow_local =
+            value.get("allow_insecure_localhost").and_then(Value::as_bool).unwrap_or(false);
+        if !base_url.starts_with("https://") && !(local && allow_local) {
+            return Err(usage(
+                "Provider base_url must use HTTPS; loopback HTTP requires allow_insecure_localhost.",
+            ));
+        }
+    }
+    Ok(mode == "fixture")
 }
 
 fn validate_agent_package(root: &Path, project: &ProjectManifest) -> Result<(), AgentError> {
@@ -1080,6 +1255,47 @@ fn prepare_integrations(
             }),
         );
     }
+    if project.integrations.get("relay").copied().unwrap_or(false) {
+        let relay_root = installed_package(root, "relay")?;
+        let ai_sdk_root = installed_package(root, "ai-sdk")?;
+        let agents_sdk_root = installed_package(root, "agents-sdk")?;
+        let kujo_bin = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+        let relay_value = relay_root.to_string_lossy().into_owned();
+        let ai_sdk_value = ai_sdk_root.to_string_lossy().into_owned();
+        let agents_sdk_value = agents_sdk_root.to_string_lossy().into_owned();
+        let kujo_value = kujo_bin.to_string_lossy().into_owned();
+        let state_value = root.join(".relay").to_string_lossy().into_owned();
+        let output = run_kujo_script(
+            root,
+            &relay_root.join("main.kujo"),
+            &relay_root,
+            &["chat", prompt, "--fixture", "--json"],
+            &[
+                ("RELAY_ROOT", &relay_value),
+                ("RELAY_STATE_ROOT", &state_value),
+                ("RELAY_AI_SDK_PATH", &ai_sdk_value),
+                ("RELAY_AGENTS_SDK_PATH", &agents_sdk_value),
+                ("KUJO_BIN", &kujo_value),
+            ],
+            false,
+        )?;
+        let relay = parse_last_json(&output, "Relay fixture result")?;
+        if relay.get("ok").and_then(Value::as_bool) != Some(true) {
+            return Err(fail("Relay fixture execution failed."));
+        }
+        let relay_text = relay.get("output_text").and_then(Value::as_str).unwrap_or("");
+        context.push(format!("Relay mission adapter result: {}", truncate_text(relay_text, 800)));
+        evidence.insert(
+            "relay".into(),
+            json!({
+                "status":"pass",
+                "mode":"fixture",
+                "provider":relay.get("provider"),
+                "model":relay.get("model"),
+                "usage":relay.get("usage")
+            }),
+        );
+    }
     let effective = if context.is_empty() {
         prompt.to_string()
     } else {
@@ -1173,18 +1389,21 @@ fn run(a: RunArgs) -> Result<(), AgentError> {
     };
     let outcome = (|| {
         let prepared = prepare_integrations(&root, &m, &prompt)?;
+        let live_response = if m.runtime.fixture {
+            None
+        } else {
+            Some(invoke_live_model(&root, &m, &prepared.prompt)?)
+        };
         let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
         let mut command = Command::new(exe);
         command.env("KUJO_MODULE_PATH", &agents_sdk);
         command.arg("run").arg("--untrusted");
-        apply_runtime_capabilities(&mut command, &m.runtime.capabilities)?;
-        let out = command
-            .arg(&m.runtime.entrypoint)
-            .arg("--")
-            .arg(&prepared.prompt)
-            .current_dir(&root)
-            .output()
-            .map_err(|e| ioerr(e.to_string()))?;
+        apply_runtime_capabilities(&mut command, &m.runtime.capabilities, m.runtime.fixture)?;
+        command.arg(&m.runtime.entrypoint).arg("--").arg(&prepared.prompt);
+        if let Some(response) = &live_response {
+            command.arg(response);
+        }
+        let out = command.current_dir(&root).output().map_err(|e| ioerr(e.to_string()))?;
         if !out.status.success() {
             return Err(fail(String::from_utf8_lossy(&out.stderr).trim().to_string()));
         }
@@ -1201,6 +1420,72 @@ fn run(a: RunArgs) -> Result<(), AgentError> {
         println!("{text}");
     }
     Ok(())
+}
+
+fn invoke_live_model(
+    root: &Path,
+    project: &ProjectManifest,
+    prompt: &str,
+) -> Result<String, AgentError> {
+    let ai_sdk = installed_package(root, "ai-sdk")?;
+    let config_source = fs::read_to_string(root.join(&project.runtime.provider_config))
+        .map_err(|e| ioerr(e.to_string()))?;
+    let config: Value = serde_json::from_str(&config_source)
+        .map_err(|e| usage(format!("Malformed provider configuration: {e}")))?;
+    let allow_local =
+        config.get("allow_insecure_localhost").and_then(Value::as_bool).unwrap_or(false);
+    let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
+    let mut command = Command::new(exe);
+    command
+        .arg("run")
+        .arg("--interpreter")
+        .arg("--untrusted")
+        .arg("--allow-fs-read")
+        .arg("--allow-env-read")
+        .arg("--allow-net-client")
+        .arg("--allow-ai")
+        .arg("--allow-clock");
+    if !allow_local {
+        command.arg("--deny-private-net");
+    } else {
+        command.env("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1");
+    }
+    let output = command
+        .arg(root.join("src/live_model.kujo"))
+        .arg(&config_source)
+        .arg(prompt)
+        .env("KUJO_MODULE_PATH", &ai_sdk)
+        .current_dir(root)
+        .output()
+        .map_err(|e| ioerr(format!("Failed to launch AI SDK live provider bridge: {e}")))?;
+    if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        return Err(fail(if !stdout.is_empty() { stdout } else { stderr }));
+    }
+    let result = parse_last_json(&String::from_utf8_lossy(&output.stdout), "AI SDK live response")?;
+    if result.get("ok").and_then(Value::as_bool) != Some(true) {
+        return Err(fail(
+            result
+                .pointer("/error/message")
+                .and_then(Value::as_str)
+                .unwrap_or("AI SDK live provider request failed.")
+                .to_string(),
+        ));
+    }
+    let normalized = json!({
+        "ok":true,
+        "provider":result.get("provider"),
+        "model":result.get("model"),
+        "request_id":result.get("request_id"),
+        "output_text":result.get("output_text"),
+        "finish_reason":result.get("finish_reason"),
+        "tool_calls":result.get("tool_calls"),
+        "usage":result.get("usage"),
+        "status_code":result.get("status_code"),
+        "contract_version":result.get("contract_version")
+    });
+    serde_json::to_string(&normalized).map_err(|e| ioerr(e.to_string()))
 }
 
 fn run_in_workcell(
@@ -1440,6 +1725,7 @@ fn invoke_runledger(root: &Path, args: &[&str]) -> Result<String, AgentError> {
 fn apply_runtime_capabilities(
     command: &mut Command,
     capabilities: &[String],
+    fixture: bool,
 ) -> Result<(), AgentError> {
     for capability in capabilities {
         match capability.as_str() {
@@ -1450,11 +1736,13 @@ fn apply_runtime_capabilities(
                 command.arg("--allow-clock");
             }
             "ai:configured-endpoints" => {
-                command
-                    .arg("--allow-ai")
-                    .arg("--allow-env-read")
-                    .arg("--allow-net-client")
-                    .arg("--deny-private-net");
+                if !fixture {
+                    command
+                        .arg("--allow-ai")
+                        .arg("--allow-env-read")
+                        .arg("--allow-net-client")
+                        .arg("--deny-private-net");
+                }
             }
             unsupported => {
                 return Err(usage(format!(

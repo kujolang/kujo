@@ -1,7 +1,10 @@
 use serde_json::Value;
 use std::fs;
+use std::io::{Read, Write};
+use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn temp() -> PathBuf {
@@ -189,6 +192,50 @@ fn project_is_portable_without_sibling_repositories() {
         assert!(run(args, &copy).status.success());
     }
 }
+
+#[test]
+fn live_custom_provider_flows_through_ai_sdk_and_agents_sdk() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let server = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut request = [0_u8; 16_384];
+        let _ = stream.read(&mut request).unwrap();
+        let body = r#"{"id":"live-proof","model":"mock-model","choices":[{"message":{"content":"live bridge verified"},"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}"#;
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+            body.len(),
+            body
+        )
+        .unwrap();
+    });
+
+    let project = scaffold("basic");
+    install_project_fixtures(&project);
+    let config_path = project.join("config/model.json");
+    let mut config: Value =
+        serde_json::from_str(&fs::read_to_string(&config_path).unwrap()).unwrap();
+    config["provider"] = Value::String("custom".into());
+    config["mode"] = Value::String("live".into());
+    config["model"] = Value::String("mock-model".into());
+    config["api_key_env"] = Value::String("CUSTOM_API_KEY".into());
+    config["base_url"] = Value::String(format!("http://127.0.0.1:{port}/v1"));
+    config["allow_insecure_localhost"] = Value::Bool(true);
+    fs::write(&config_path, format!("{}\n", serde_json::to_string_pretty(&config).unwrap()))
+        .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["agent", "run", "live", "--json"])
+        .env("CUSTOM_API_KEY", "not-a-real-secret")
+        .current_dir(&project)
+        .output()
+        .unwrap();
+    server.join().unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let payload: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(payload["provider_mode"], "live");
+    assert_eq!(payload["output"], "live bridge verified");
+}
 fn copy_dir(src: &Path, dst: &Path) {
     fs::create_dir_all(dst).unwrap();
     for e in fs::read_dir(src).unwrap() {
@@ -273,6 +320,7 @@ fn install_project_fixtures(project: &Path) {
     );
     copy_package_paths(ecosystem, project, "runledger", &["runledger.kujo", "cli.kujo", "src"]);
     copy_package_paths(ecosystem, project, "watchdog", &["watchdog.kujo"]);
+    copy_package_paths(ecosystem, project, "relay", &["main.kujo", "src", "schemas"]);
 }
 
 fn copy_package_paths(ecosystem: &Path, project: &Path, package: &str, paths: &[&str]) {
