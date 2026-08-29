@@ -119,6 +119,20 @@ fn copy_dir(src: &Path, dst: &Path) {
 
 fn install_project_fixtures(project: &Path) {
     let ecosystem = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    for package in [
+        "ai-sdk",
+        "agents-sdk",
+        "eval",
+        "mcp",
+        "rag",
+        "dispatch",
+        "workcell",
+        "watchdog",
+        "runledger",
+        "relay",
+    ] {
+        fs::create_dir_all(project.join("kennel_packages").join(package)).unwrap();
+    }
     let source = ecosystem.join("agents-sdk/src");
     assert!(source.is_dir(), "Agents SDK checkout is required for the integration fixture");
     copy_dir(&source, &project.join("kennel_packages/agents-sdk/src"));

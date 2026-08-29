@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/agent-project/v1.json",
+  "title": "Kujo Agent Project",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "schema",
+    "name",
+    "profile",
+    "agent",
+    "runtime",
+    "integrations",
+    "integration_configs"
+  ],
+  "properties": {
+    "contract": {"const": "kujo-agent-project/v1"},
+    "schema": {"const": "schemas/agent-project.schema.json"},
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "profile": {
+      "enum": ["basic", "tools", "knowledge", "workflow", "hardened", "observable", "full"]
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition",
+        "manifest",
+        "instructions",
+        "skills",
+        "tools",
+        "knowledge",
+        "policies",
+        "evals",
+        "workflows"
+      ],
+      "properties": {
+        "definition": {"$ref": "#/$defs/projectPath"},
+        "manifest": {"$ref": "#/$defs/projectPath"},
+        "instructions": {"$ref": "#/$defs/projectPath"},
+        "skills": {"$ref": "#/$defs/projectPath"},
+        "tools": {"$ref": "#/$defs/projectPath"},
+        "knowledge": {"$ref": "#/$defs/projectPath"},
+        "policies": {"$ref": "#/$defs/projectPath"},
+        "evals": {"$ref": "#/$defs/projectPath"},
+        "workflows": {"$ref": "#/$defs/projectPath"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entrypoint", "provider_config", "capabilities", "workcell", "fixture"],
+      "properties": {
+        "entrypoint": {"$ref": "#/$defs/projectPath"},
+        "provider_config": {"$ref": "#/$defs/projectPath"},
+        "capabilities": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "workcell": {
+          "oneOf": [
+            {"type": "null"},
+            {"$ref": "#/$defs/projectPath"}
+          ]
+        },
+        "fixture": {"type": "boolean"}
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": {"type": "boolean"}
+    },
+    "integration_configs": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/projectPath"}
+    }
+  },
+  "$defs": {
+    "projectPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|[\\/])\.\.(?:[\\/]|$)).+$"
+    }
+  }
+}
