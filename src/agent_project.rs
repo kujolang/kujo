@@ -6,6 +6,7 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
+mod credentials;
 mod doctor;
 mod scaffold;
 
@@ -32,6 +33,54 @@ pub enum AgentCommands {
     Inspect(ProjectArgs),
     /// Run the project's deterministic evaluation
     Eval(ProjectArgs),
+    /// Securely configure reusable provider and connector credentials
+    Auth {
+        #[command(subcommand)]
+        command: AuthCommands,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+pub enum AuthCommands {
+    /// Store a provider or connector credential without exposing it in shell history
+    Set(AuthSetArgs),
+    /// Report whether a credential is available without revealing it
+    Status(AuthProjectArgs),
+    /// Remove a stored provider or connector credential
+    Remove(AuthProjectArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct AuthSetArgs {
+    /// Built-in provider name (openai, openrouter, deepseek, or custom)
+    #[arg(conflicts_with = "name")]
+    pub provider: Option<String>,
+    /// Explicit environment-variable contract for an API-key connector
+    #[arg(long, conflicts_with = "provider")]
+    pub name: Option<String>,
+    /// Read the credential from stdin for non-interactive automation
+    #[arg(long, conflicts_with = "from_env")]
+    pub from_stdin: bool,
+    /// Import the provider or connector's declared environment variable
+    #[arg(long, conflicts_with = "from_stdin")]
+    pub from_env: bool,
+    /// Store the credential in this project's ignored .env.local instead of the OS credential store
+    #[arg(long)]
+    pub project: bool,
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct AuthProjectArgs {
+    #[arg(conflicts_with = "name")]
+    pub provider: Option<String>,
+    #[arg(long, conflicts_with = "provider")]
+    pub name: Option<String>,
+    #[arg(long)]
+    pub project: bool,
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args, Debug)]
@@ -41,14 +90,22 @@ pub struct NewArgs {
     pub dir: Option<PathBuf>,
     #[arg(long, default_value = "basic")]
     pub profile: String,
-    #[arg(long, default_value = "fixture")]
+    /// Provider id, or auto to reuse an already configured provider
+    #[arg(long, default_value = "auto")]
     pub provider: String,
-    #[arg(long, default_value = "fixture-owned-agent-v1")]
+    /// Model id, or auto to use the provider's starter model
+    #[arg(long, default_value = "auto")]
     pub model: String,
     #[arg(long)]
     pub no_git: bool,
     #[arg(long)]
     pub install: bool,
+    /// Read a missing live-provider credential from stdin and save it in the OS credential store
+    #[arg(long)]
+    pub credential_stdin: bool,
+    /// Scaffold a live-provider project without requiring a configured credential
+    #[arg(long, conflicts_with = "credential_stdin")]
+    pub no_credential: bool,
     #[arg(long)]
     pub json: bool,
 }
@@ -71,6 +128,7 @@ pub struct ProjectArgs {
     pub json: bool,
 }
 
+#[derive(Clone, Copy)]
 struct ProviderSettings {
     mode: &'static str,
     base_url: &'static str,
@@ -182,12 +240,17 @@ pub fn execute(command: AgentCommands) -> Result<(), AgentError> {
         AgentCommands::New(args) => args.json,
         AgentCommands::Run(args) => args.json,
         AgentCommands::Inspect(args) | AgentCommands::Eval(args) => args.json,
+        AgentCommands::Auth { command } => match command {
+            AuthCommands::Set(args) => args.json,
+            AuthCommands::Status(args) | AuthCommands::Remove(args) => args.json,
+        },
     };
     let result = match command {
         AgentCommands::New(a) => scaffold(a),
         AgentCommands::Run(a) => run(a),
         AgentCommands::Inspect(a) => inspect(a),
         AgentCommands::Eval(a) => eval(a),
+        AgentCommands::Auth { command } => credentials::execute_auth(command),
     };
     result.map_err(|mut error| {
         if json_output {
@@ -438,8 +501,25 @@ fn inspection(root: &Path, m: &ProjectManifest) -> Value {
             }),
         );
     }
-    unresolved.sort();
     let credentials = credential_names(root);
+    let credential_state =
+        model.get("api_key_env").and_then(Value::as_str).filter(|name| !name.is_empty()).map(
+            |name| {
+                let resolved = credentials::resolve_for_project(root, name).ok().flatten();
+                if resolved.is_none() {
+                    unresolved.push(format!(
+                        "{name}: run `kujo agent auth set {}`",
+                        model.get("provider").and_then(Value::as_str).unwrap_or("custom")
+                    ));
+                }
+                json!({
+                    "name":name,
+                    "configured":resolved.is_some(),
+                    "source":resolved.map(|value| value.source.label())
+                })
+            },
+        );
+    unresolved.sort();
     let mcp_servers = m
         .integration_configs
         .get("mcp")
@@ -489,6 +569,7 @@ fn inspection(root: &Path, m: &ProjectManifest) -> Value {
         "dependencies":{"declared":dependencies,"external_tools":external_tools,"unresolved":unresolved},
         "external_state":{
             "credential_names":credentials,
+            "credential":credential_state,
             "container_runtime":if m.runtime.workcell.is_some(){"Docker or Podman required for isolated runs"}else{"not required"},
             "watchdog":if observability.pointer("/watchdog/enabled").and_then(Value::as_bool)==Some(true){"configured"}else{"disabled"},
             "mcp_endpoints":mcp_servers
@@ -616,7 +697,7 @@ fn inspect(a: ProjectArgs) -> Result<(), AgentError> {
             .filter_map(Value::as_str)
             .collect();
         println!(
-            "Kujo Agent Project: {}\nContract: {}\nProfile: {}\nEntrypoint: {}\nProvider: {}\nModel: {}\nSkills: {}\nTools: {}\nKnowledge: {}\nWorkflow: {}\nEval: {} via Eval\nIntegrations: {}\nWorkcell: {}\nCapabilities: {}\nDependencies unresolved: {}\nExternal state:\n  Credentials: {}\n  Container runtime: {}\n  Watchdog: {}\n  MCP endpoints: {}",
+            "Kujo Agent Project: {}\nContract: {}\nProfile: {}\nEntrypoint: {}\nProvider: {}\nModel: {}\nSkills: {}\nTools: {}\nKnowledge: {}\nWorkflow: {}\nEval: {} via Eval\nIntegrations: {}\nWorkcell: {}\nCapabilities: {}\nDependencies unresolved: {}\nExternal state:\n  Credentials: {}\n  Credential status: {}\n  Container runtime: {}\n  Watchdog: {}\n  MCP endpoints: {}",
             m.name,
             m.contract,
             m.profile,
@@ -633,6 +714,20 @@ fn inspect(a: ProjectArgs) -> Result<(), AgentError> {
             m.runtime.capabilities.join(", "),
             unresolved,
             if credentials.is_empty() { "none".into() } else { credentials.join(", ") },
+            v["external_state"]["credential"]
+                .get("configured")
+                .and_then(Value::as_bool)
+                .map(|configured| if configured {
+                    format!(
+                        "configured via {}",
+                        v["external_state"]["credential"]["source"]
+                            .as_str()
+                            .unwrap_or("unknown source")
+                    )
+                } else {
+                    "missing".into()
+                })
+                .unwrap_or_else(|| "not required".into()),
             v["external_state"]["container_runtime"].as_str().unwrap_or("unknown"),
             v["external_state"]["watchdog"].as_str().unwrap_or("unknown"),
             v["external_state"]["mcp_endpoints"].as_u64().unwrap_or(0)
@@ -991,6 +1086,14 @@ fn invoke_live_model(
         .map_err(|e| ioerr(e.to_string()))?;
     let config: Value = serde_json::from_str(&config_source)
         .map_err(|e| usage(format!("Malformed provider configuration: {e}")))?;
+    let credential_name = required_string(&config, "api_key_env", "Provider configuration")?;
+    let credential = credentials::resolve_for_project(root, credential_name)?.ok_or_else(|| {
+        fail(format!(
+            "{credential_name} is not configured. Run `kujo agent auth set {}` or `kujo agent auth set {} --project`.",
+            config.get("provider").and_then(Value::as_str).unwrap_or("custom"),
+            config.get("provider").and_then(Value::as_str).unwrap_or("custom")
+        ))
+    })?;
     let allow_local =
         config.get("allow_insecure_localhost").and_then(Value::as_bool).unwrap_or(false);
     let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
@@ -1013,13 +1116,20 @@ fn invoke_live_model(
         .arg(root.join("src/live_model.kujo"))
         .arg(&config_source)
         .arg(prompt)
+        .env(credential_name, &credential.value)
         .env("KUJO_MODULE_PATH", &ai_sdk)
         .current_dir(root)
         .output()
         .map_err(|e| ioerr(format!("Failed to launch AI SDK live provider bridge: {e}")))?;
     if !output.status.success() {
-        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        let redact = |source: &[u8]| {
+            String::from_utf8_lossy(source)
+                .replace(&credential.value, "[REDACTED]")
+                .trim()
+                .to_string()
+        };
+        let stdout = redact(&output.stdout);
+        let stderr = redact(&output.stderr);
         return Err(fail(if !stdout.is_empty() { stdout } else { stderr }));
     }
     let result = parse_last_json(&String::from_utf8_lossy(&output.stdout), "AI SDK live response")?;
@@ -1044,7 +1154,9 @@ fn invoke_live_model(
         "status_code":result.get("status_code"),
         "contract_version":result.get("contract_version")
     });
-    serde_json::to_string(&normalized).map_err(|e| ioerr(e.to_string()))
+    serde_json::to_string(&normalized)
+        .map(|value| value.replace(&credential.value, "[REDACTED]"))
+        .map_err(|e| ioerr(e.to_string()))
 }
 
 fn run_in_workcell(

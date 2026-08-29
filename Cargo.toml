@@ -78,6 +78,8 @@ rayon = "1.10"
 mime_guess = "2.0"
 infer = "0.16"
 libc = "0.2"
+rpassword = "7.3.1"
+keyring = "4.1.6"
 
 # JIT Compilation
 cranelift = { version = "0.112", optional = true }

@@ -13,7 +13,7 @@ pub(super) fn validate_name(name: &str) -> Result<(), AgentError> {
     Ok(())
 }
 
-pub(super) fn scaffold(a: NewArgs) -> Result<(), AgentError> {
+pub(super) fn scaffold(mut a: NewArgs) -> Result<(), AgentError> {
     validate_name(&a.name)?;
     if !PROFILES.contains(&a.profile.as_str()) {
         return Err(usage(format!(
@@ -22,12 +22,19 @@ pub(super) fn scaffold(a: NewArgs) -> Result<(), AgentError> {
             PROFILES.join(", ")
         )));
     }
+    if a.provider == "auto" {
+        a.provider = credentials::preferred_provider(a.json)?;
+    }
     provider_settings(&a.provider).ok_or_else(|| {
         usage(format!(
             "Unknown provider '{}'. Expected one of: fixture, openai, openrouter, deepseek, custom.",
             a.provider
         ))
     })?;
+    if a.model == "auto" {
+        a.model = default_model(&a.provider).to_string();
+    }
+    credentials::configure_new_project_credential(&a)?;
     let base = a.dir.clone().unwrap_or(std::env::current_dir().map_err(|e| ioerr(e.to_string()))?);
     if base.components().any(|c| matches!(c, Component::ParentDir)) {
         return Err(usage("Agent destination may not contain '..'."));
@@ -89,7 +96,10 @@ pub(super) fn scaffold(a: NewArgs) -> Result<(), AgentError> {
             return Err(fail("Kennel dependency installation failed."));
         }
     }
-    let payload = json!({"contract":"kujo-agent-new/v1","status":"created","project":a.name,"profile":a.profile,"path":target,"git":!a.no_git});
+    let provider = provider_settings(&a.provider).unwrap();
+    let credential_ready = provider.mode == "fixture"
+        || credentials::resolve_for_project(&target, provider.api_key_env)?.is_some();
+    let payload = json!({"contract":"kujo-agent-new/v1","status":"created","project":a.name,"profile":a.profile,"path":target,"git":!a.no_git,"provider":a.provider,"credential_ready":credential_ready});
     if a.json {
         println!("{}", serde_json::to_string_pretty(&payload).unwrap());
     } else {
@@ -98,8 +108,25 @@ pub(super) fn scaffold(a: NewArgs) -> Result<(), AgentError> {
             "Next: cd {} && kennel install && kujo doctor agent && kujo agent inspect",
             target.display()
         );
+        if provider.mode == "live" && !credential_ready {
+            println!(
+                "Credential pending: run `kujo agent auth set {}` before the first live request.",
+                a.provider
+            );
+        }
     }
     Ok(())
+}
+
+fn default_model(provider: &str) -> &'static str {
+    match provider {
+        "fixture" => "fixture-owned-agent-v1",
+        "openai" => "gpt-5-mini",
+        "openrouter" => "openai/gpt-5-mini",
+        "deepseek" => "deepseek-chat",
+        "custom" => "custom-model",
+        _ => "fixture-owned-agent-v1",
+    }
 }
 
 fn write(path: &Path, rel: &str, body: &str) -> Result<(), AgentError> {
@@ -374,10 +401,10 @@ if result["ok"] == false { exit(1) }
     write(
         root,
         ".gitignore",
-        ".env\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n.workcell/\n.relay/\n.dispatch-runs/\n.kujo-agent/\ndata/\nresults/\nworkcell-image/agents-sdk/\n",
+        ".env\n.env.local\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n.workcell/\n.relay/\n.dispatch-runs/\n.kujo-agent/\ndata/\nresults/\nworkcell-image/agents-sdk/\n",
     )?;
     write(root, "AGENTS.md", "# Agent Project Guide\n\nTreat `agent.project.json` as the root contract. Never commit credentials. Run `kujo doctor agent`, `kujo agent inspect`, `kujo agent run`, and `kujo agent eval`.\n")?;
-    write(root, "README.md", &format!("# {}\n\nThis Git repository owns the agent definition, instructions, model preference, skills, tools, knowledge, policies, workflows, evals, and execution boundaries.\n\n```bash\nkennel install\nkujo doctor agent\nkujo agent inspect\nkujo agent run \"Hello\"\nkujo agent eval\n```\n\nFixture mode uses the Agents SDK no-network harness and requires no provider credentials. Change `config/model.json` for a live AI SDK provider and provide credentials through the environment only. Kujo capabilities authorize effects; they are not a sandbox. Hardened projects use Workcell for container-backed isolation.\n", a.name))?;
+    write(root, "README.md", &format!("# {}\n\nThis Git repository owns the agent definition, instructions, model preference, skills, tools, knowledge, policies, workflows, evals, and execution boundaries.\n\n```bash\nkennel install\nkujo doctor agent\nkujo agent inspect\nkujo agent run \"Hello\"\nkujo agent eval\n```\n\nFixture mode uses the Agents SDK no-network harness and requires no provider credentials. For live providers, store a reusable credential in the operating-system credential store with `kujo agent auth set <provider>`. Use `--project` only when the agent needs its own credential; Kujo writes it to the ignored, owner-only `.env.local`. Environment variables remain supported for CI. Kujo capabilities authorize effects; they are not a sandbox. Hardened projects use Workcell for container-backed isolation.\n", a.name))?;
     if has("tools") {
         write(root, "agent/tools/read-project.json", "{\"name\":\"read_project_docs\",\"description\":\"Read allowlisted project documentation\",\"risk\":\"read_only\",\"approval\":\"never\"}\n")?;
         write(root, "config/mcp.json", "{\n  \"contract\": \"kujo-mcp/project/v1\",\n  \"servers\": [\n    {\n      \"id\": \"project-docs\",\n      \"transport\": \"local\",\n      \"package\": \"mcp\",\n      \"tool\": \"read_project_docs\",\n      \"config\": \"mcp-server.json\"\n    }\n  ]\n}\n")?;

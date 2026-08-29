@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   profiles, Agent Doctor diagnostics, inspect/run/eval commands, pinned
   ecosystem composition, live AI SDK bridging, Workcell execution, and a
   checked-in self-hosted knowledge-agent example.
+- Add first-class `kujo agent auth` credential management backed by macOS
+  Keychain, Windows Credential Manager, or Linux Secret Service, with masked
+  interactive entry, stdin/CI setup, private project overrides, connector-key
+  support, credential readiness diagnostics, and secret redaction.
 - Add stable `encode_uri_component(text)` RFC 3986 UTF-8 percent encoding for provider and web integrations.
 - Add bounded, streaming `jsonl_query(path, options)` filtering and constant-memory join support for Kujo-native evidence workflows.
 - Accept standard JSON Schema Draft 2020-12 identification and annotation keywords in `json_schema_validate`, including `$schema`, `$id`, `$comment`, `format`, `deprecated`, `readOnly`, and `writeOnly`.

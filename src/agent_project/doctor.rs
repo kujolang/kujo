@@ -74,6 +74,42 @@ pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
                     ));
                 }
             }
+            let provider =
+                parse_json_file(&root.join(&m.runtime.provider_config), "provider configuration")
+                    .unwrap_or_else(|_| json!({}));
+            if let Some(name) =
+                provider.get("api_key_env").and_then(Value::as_str).filter(|name| !name.is_empty())
+            {
+                let credential = credentials::resolve_for_project(&root, name);
+                let (status, observed, message) = match credential {
+                    Ok(Some(value)) => (
+                        CheckStatus::Pass,
+                        format!("configured via {}", value.source.label()),
+                        None,
+                    ),
+                    Ok(None) => (
+                        CheckStatus::Fail,
+                        "missing".into(),
+                        Some(format!(
+                            "Run `kujo agent auth set {}` to save it securely.",
+                            provider.get("provider").and_then(Value::as_str).unwrap_or("custom")
+                        )),
+                    ),
+                    Err(error) => (CheckStatus::Fail, "unavailable".into(), Some(error.message)),
+                };
+                checks.push(check(
+                    "agent.provider.credential",
+                    &format!("{name} credential available"),
+                    status,
+                    if status == CheckStatus::Pass {
+                        CheckSeverity::Info
+                    } else {
+                        CheckSeverity::High
+                    },
+                    Some(observed),
+                    message,
+                ));
+            }
             let secret_files = secret_like_files(&root);
             checks.push(check(
                 "agent.security.committed-secrets",
@@ -185,6 +221,7 @@ fn secret_like_files(root: &Path) -> Vec<String> {
                 continue;
             }
             if name == ".env.example"
+                || name == ".env.local"
                 || path.metadata().map(|m| m.len() > 1_048_576).unwrap_or(true)
             {
                 continue;

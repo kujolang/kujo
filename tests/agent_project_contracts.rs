@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::process::Stdio;
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -15,6 +16,27 @@ fn temp() -> PathBuf {
 }
 fn run(args: &[&str], cwd: &Path) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_kujo")).args(args).current_dir(cwd).output().unwrap()
+}
+
+fn run_with_stdin(
+    args: &[&str],
+    cwd: &Path,
+    stdin: &str,
+    environment: &[(&str, &Path)],
+) -> std::process::Output {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+    command
+        .args(args)
+        .current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    for (name, value) in environment {
+        command.env(name, value);
+    }
+    let mut child = command.spawn().unwrap();
+    child.stdin.as_mut().unwrap().write_all(stdin.as_bytes()).unwrap();
+    child.wait_with_output().unwrap()
 }
 
 #[test]
@@ -144,6 +166,217 @@ fn rejects_unsafe_and_conflicting_scaffolds() {
     assert_eq!(
         run(&["agent", "new", "root-target", "--dir", "/", "--no-git"], &root).status.code(),
         Some(2)
+    );
+}
+
+#[test]
+fn reusable_credentials_are_stored_without_shell_arguments_or_output_leaks() {
+    let root = temp();
+    let store = root.join("credentials.json");
+    let output = run_with_stdin(
+        &["agent", "auth", "set", "openai", "--from-stdin", "--json"],
+        &root,
+        "sk-test-reusable\n",
+        &[("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)],
+    );
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    assert!(!String::from_utf8_lossy(&output.stdout).contains("sk-test-reusable"));
+
+    let status = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["agent", "auth", "status", "openai", "--json"])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(status.status.success());
+    let payload: Value = serde_json::from_slice(&status.stdout).unwrap();
+    assert_eq!(payload["status"], "configured");
+    assert_eq!(payload["source"], "OS credential store");
+    assert!(!String::from_utf8_lossy(&status.stdout).contains("sk-test-reusable"));
+
+    let scaffold = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args([
+            "agent",
+            "new",
+            "live",
+            "--provider",
+            "openai",
+            "--dir",
+            root.to_str().unwrap(),
+            "--no-git",
+            "--json",
+        ])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(scaffold.status.success(), "{}", String::from_utf8_lossy(&scaffold.stderr));
+    let created: Value = serde_json::from_slice(&scaffold.stdout).unwrap();
+    assert_eq!(created["credential_ready"], true);
+    assert_eq!(created["provider"], "openai");
+    assert!(!String::from_utf8_lossy(&scaffold.stdout).contains("sk-test-reusable"));
+    let inspected = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["agent", "inspect", "--json"])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .current_dir(root.join("live"))
+        .output()
+        .unwrap();
+    assert!(inspected.status.success());
+    let inspection: Value = serde_json::from_slice(&inspected.stdout).unwrap();
+    assert_eq!(inspection["external_state"]["credential"]["configured"], true);
+    assert_eq!(inspection["external_state"]["credential"]["source"], "OS credential store");
+    assert!(!String::from_utf8_lossy(&inspected.stdout).contains("sk-test-reusable"));
+
+    let automatic = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["agent", "new", "auto-live", "--dir", root.to_str().unwrap(), "--no-git"])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(automatic.status.success());
+    let automatic_model: Value = serde_json::from_str(
+        &fs::read_to_string(root.join("auto-live/config/model.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(automatic_model["provider"], "openai");
+    assert_eq!(automatic_model["model"], "gpt-5-mini");
+
+    let removed = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["agent", "auth", "remove", "openai", "--json"])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(removed.status.success());
+    assert_eq!(serde_json::from_slice::<Value>(&removed.stdout).unwrap()["status"], "removed");
+}
+
+#[test]
+fn connector_api_keys_use_the_same_redacted_credential_contract() {
+    let root = temp();
+    let store = root.join("connector-credentials.json");
+    let saved = run_with_stdin(
+        &["agent", "auth", "set", "--name", "LINEAR_API_TOKEN", "--from-stdin", "--json"],
+        &root,
+        "linear-secret-value\n",
+        &[("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)],
+    );
+    assert!(saved.status.success());
+    assert!(!String::from_utf8_lossy(&saved.stdout).contains("linear-secret-value"));
+    let status = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args(["agent", "auth", "status", "--name", "LINEAR_API_TOKEN", "--json"])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    let payload: Value = serde_json::from_slice(&status.stdout).unwrap();
+    assert_eq!(payload["status"], "configured");
+    assert_eq!(payload["credential_name"], "LINEAR_API_TOKEN");
+    assert!(!String::from_utf8_lossy(&status.stdout).contains("linear-secret-value"));
+}
+
+#[test]
+fn project_credentials_are_private_ignored_and_discoverable_from_subdirectories() {
+    let project = scaffold("basic");
+    let output = run_with_stdin(
+        &["agent", "auth", "set", "openai", "--project", "--from-stdin"],
+        &project,
+        "sk-project-only\n",
+        &[],
+    );
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let local = project.join(".env.local");
+    assert!(local.is_file());
+    assert!(fs::read_to_string(&local).unwrap().contains("OPENAI_API_KEY=sk-project-only"));
+    assert!(fs::read_to_string(project.join(".gitignore"))
+        .unwrap()
+        .lines()
+        .any(|line| line == ".env.local"));
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(fs::metadata(&local).unwrap().permissions().mode() & 0o777, 0o600);
+    }
+    let nested = project.join("agent/skills");
+    let status = run(&["agent", "auth", "status", "openai", "--project", "--json"], &nested);
+    assert!(status.status.success());
+    let payload: Value = serde_json::from_slice(&status.stdout).unwrap();
+    assert_eq!(payload["source"], "project .env.local");
+    assert!(!String::from_utf8_lossy(&status.stdout).contains("sk-project-only"));
+}
+
+#[cfg(unix)]
+#[test]
+fn project_credentials_fail_closed_on_unsafe_permissions_or_symlinks() {
+    use std::os::unix::fs::{symlink, PermissionsExt};
+    let project = scaffold("basic");
+    let local = project.join(".env.local");
+    fs::write(&local, "OPENAI_API_KEY=never-print-permission-secret\n").unwrap();
+    fs::set_permissions(&local, fs::Permissions::from_mode(0o644)).unwrap();
+    let unsafe_permissions =
+        run(&["agent", "auth", "status", "openai", "--project", "--json"], &project);
+    assert_eq!(unsafe_permissions.status.code(), Some(1));
+    assert!(!String::from_utf8_lossy(&unsafe_permissions.stderr)
+        .contains("never-print-permission-secret"));
+
+    fs::remove_file(&local).unwrap();
+    let outside = project.parent().unwrap().join("outside-credential");
+    fs::write(&outside, "OPENAI_API_KEY=never-print-symlink-secret\n").unwrap();
+    fs::set_permissions(&outside, fs::Permissions::from_mode(0o600)).unwrap();
+    symlink(&outside, &local).unwrap();
+    let symlinked = run(&["agent", "auth", "status", "openai", "--project", "--json"], &project);
+    assert_eq!(symlinked.status.code(), Some(2));
+    assert!(!String::from_utf8_lossy(&symlinked.stderr).contains("never-print-symlink-secret"));
+}
+
+#[test]
+fn live_scaffold_requires_an_explicit_credential_decision() {
+    let root = temp();
+    let store = root.join("empty-credentials.json");
+    let missing = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args([
+            "agent",
+            "new",
+            "live",
+            "--provider",
+            "openai",
+            "--dir",
+            root.to_str().unwrap(),
+            "--no-git",
+            "--json",
+        ])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .env_remove("OPENAI_API_KEY")
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert_eq!(missing.status.code(), Some(1));
+    let error: Value = serde_json::from_slice(&missing.stderr).unwrap();
+    assert!(error["message"].as_str().unwrap().contains("kujo agent auth set openai"));
+    assert!(!root.join("live").exists());
+
+    let config_only = Command::new(env!("CARGO_BIN_EXE_kujo"))
+        .args([
+            "agent",
+            "new",
+            "live",
+            "--provider",
+            "openai",
+            "--dir",
+            root.to_str().unwrap(),
+            "--no-git",
+            "--no-credential",
+            "--json",
+        ])
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .env_remove("OPENAI_API_KEY")
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(config_only.status.success());
+    assert_eq!(
+        serde_json::from_slice::<Value>(&config_only.stdout).unwrap()["credential_ready"],
+        false
     );
 }
 
@@ -288,9 +521,18 @@ fn live_custom_provider_flows_through_ai_sdk_and_agents_sdk() {
     config["allow_insecure_localhost"] = Value::Bool(true);
     fs::write(&config_path, format!("{}\n", serde_json::to_string_pretty(&config).unwrap()))
         .unwrap();
+    let store = project.parent().unwrap().join("credential-test-store.json");
+    let saved = run_with_stdin(
+        &["agent", "auth", "set", "custom", "--from-stdin", "--json"],
+        &project,
+        "not-a-real-secret\n",
+        &[("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)],
+    );
+    assert!(saved.status.success());
     let output = Command::new(env!("CARGO_BIN_EXE_kujo"))
         .args(["agent", "run", "live", "--json"])
-        .env("CUSTOM_API_KEY", "not-a-real-secret")
+        .env("KUJO_AGENT_TEST_CREDENTIAL_STORE", &store)
+        .env_remove("CUSTOM_API_KEY")
         .current_dir(&project)
         .output()
         .unwrap();

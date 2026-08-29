@@ -221,6 +221,24 @@ Human-render determinism policy:
 - For operator-facing colorized paths, `NO_COLOR=1` should route to deterministic plain-text output when supported.
 - Snapshot/test updates for human text must only happen when output intent changes are deliberate and documented in the same change.
 
+## Agent Project Contracts
+
+Agent Project commands use versioned payload identifiers:
+
+- `kujo-agent-new/v1` for successful scaffolds, including `provider` and the
+  boolean `credential_ready`; a live provider without a configured credential
+  fails unless `--no-credential` explicitly requests a config-only scaffold.
+- `kujo-agent-inspect/v1` for inspection. `external_state.credential` exposes
+  only the declared name, configured state, and source; it never exposes a value.
+- `kujo-agent-run/v1` and `kujo-agent-eval/v1` for execution and evaluation.
+- `kujo-agent-auth/v1` for credential set/status/remove operations. Payloads may
+  expose the provider or connector target, credential environment-variable name,
+  scope, storage class, and status, but never credential bytes.
+- `kujo-agent-error/v1` on Agent Project JSON-mode failures written to `stderr`.
+
+Agent credentials must never be accepted as ordinary command arguments because
+arguments may be retained in shell history or visible in process listings.
+
 ## Contract Change Rules
 
 Any payload-affecting change to the documented JSON shapes requires all of the following in the same change set:
