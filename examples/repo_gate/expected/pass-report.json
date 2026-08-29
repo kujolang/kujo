@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "root": "repo_gate/fixtures/passing_project",
+  "policy_path": "repo_gate/gate-policy.json",
+  "gate_passed": true,
+  "incomplete_scan": false,
+  "counts": {
+    "files_scanned": 5,
+    "findings": 0,
+    "hashes": 3,
+    "skipped": 0,
+    "errors": 0
+  },
+  "findings": [],
+  "hashes": [
+    {"path": "src/app.js", "sha256": "7394d5f1c3db2138b5e225cdba26beaaf06058187b38b26d37263fa4e370cbdd"},
+    {"path": "src/main.kujo", "sha256": "ef6dba0bddc1f78ec724a54dfa12ffaa88dce215333e977a27847d532e6e81df"},
+    {"path": "styles/main.css", "sha256": "23adb0331860c294986fd7151ab6cb3ed601bdfe5abbeb953ea5854919fdc45f"}
+  ],
+  "skipped_paths": [],
+  "errors": []
+}

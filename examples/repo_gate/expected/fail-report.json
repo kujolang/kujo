@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "root": "repo_gate/fixtures/failing_project",
+  "policy_path": "repo_gate/gate-policy.json",
+  "gate_passed": false,
+  "incomplete_scan": false,
+  "counts": {
+    "files_scanned": 3,
+    "findings": 1,
+    "hashes": 0,
+    "skipped": 0,
+    "errors": 0
+  },
+  "findings": [
+    {
+      "type": "forbidden_path",
+      "path": "config.env.txt",
+      "message": "Path contains forbidden fragment"
+    }
+  ],
+  "hashes": [],
+  "skipped_paths": [],
+  "errors": []
+}

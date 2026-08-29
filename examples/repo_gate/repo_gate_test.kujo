@@ -1,0 +1,53 @@
+# repo_gate_test.kujo - deterministic helper smoke coverage
+# Run from examples/ with: ../target/debug/kujo run repo_gate/repo_gate_test.kujo
+
+from repo_gate.fs_helpers import normalize_path, has_forbidden_fragment, has_extension, path_basename, sort_strings, array_contains
+
+let root := "/tmp/test"
+assert_equal(normalize_path(root, "file.txt"), "/tmp/test/file.txt")
+assert_equal(normalize_path(root, "src/main.kujo"), "/tmp/test/src/main.kujo")
+assert_equal(normalize_path(root, "a/b/c/d.txt"), "/tmp/test/a/b/c/d.txt")
+
+assert(normalize_path(root, "../etc/passwd") == null, "Should reject .. escape")
+assert(normalize_path(root, "src/../../../etc/passwd") == null, "Should reject nested .. escape")
+assert(normalize_path(root, "/absolute/path") == null, "Should reject absolute path")
+
+assert(has_forbidden_fragment("src/.env", [".env"]), "Should detect .env")
+assert(has_forbidden_fragment("keys/id_rsa", ["id_rsa"]), "Should detect id_rsa")
+assert(has_forbidden_fragment("node_modules/pkg/index.js", ["node_modules"]), "Should detect node_modules")
+assert(has_forbidden_fragment("src/main.kujo", [".env", "id_rsa"]) == false, "Should allow safe paths")
+
+assert(has_extension("src/main.js", [".js"]), "Should match .js")
+assert(has_extension("styles/app.css", [".css"]), "Should match .css")
+assert(has_extension("src/module.kujo", [".kujo"]), "Should match .kujo")
+assert(has_extension("README.md", [".js", ".css"]) == false, "Should reject unmatched extension")
+
+assert_equal(path_basename("src/main.kujo"), "main.kujo")
+assert_equal(path_basename("README.md"), "README.md")
+assert_equal(path_basename("a/b/c/d.txt"), "d.txt")
+
+let sorted := sort_strings(["zebra", "apple", "mango", "banana"])
+assert_equal(sorted[0], "apple")
+assert_equal(sorted[1], "banana")
+assert_equal(sorted[2], "mango")
+assert_equal(sorted[3], "zebra")
+
+let sample_values := ["a", "b", "c"]
+assert(array_contains(sample_values, "a"), "Should find a")
+assert(array_contains(sample_values, "b"), "Should find b")
+assert(array_contains(sample_values, "c"), "Should find c")
+assert(array_contains(sample_values, "d") == false, "Should not find d")
+
+assert(file_exists("repo_gate/fixtures/passing_project/README.md"), "README.md should exist")
+assert(file_exists("repo_gate/fixtures/passing_project/package.json"), "package.json should exist")
+assert(file_exists("repo_gate/fixtures/passing_project/src/main.kujo"), "src/main.kujo should exist")
+assert(file_exists("repo_gate/fixtures/failing_project/config.env.txt"), "config.env.txt should exist")
+
+let policy_content := read_file("repo_gate/gate-policy.json")
+let policy := parse_json(policy_content)
+assert(has_key(policy, "required") == 1, "Policy should declare required")
+assert(has_key(policy, "forbidden_fragments") == 1, "Policy should declare forbidden_fragments")
+assert(has_key(policy, "max_file_bytes") == 1, "Policy should declare max_file_bytes")
+assert(has_key(policy, "hash_extensions") == 1, "Policy should declare hash_extensions")
+
+print("repo_gate helper smoke passed")

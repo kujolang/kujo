@@ -1,0 +1,6 @@
+{
+  "required": ["README.md", "package.json"],
+  "forbidden_fragments": [".env", "id_rsa", "node_modules"],
+  "max_file_bytes": 1048576,
+  "hash_extensions": [".js", ".css", ".kujo"]
+}

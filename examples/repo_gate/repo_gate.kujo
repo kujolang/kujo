@@ -1,0 +1,410 @@
+# repo_gate.kujo - Web project audit CLI for CI gate acceptance
+# 
+# Usage:
+#   kujo run repo_gate.kujo -- --root ./project --policy gate-policy.json --json gate-report.json
+#   kujo run repo_gate.kujo -- --root ./project --policy gate-policy.json --stdout-json
+#
+# Exit codes:
+#   0 - Pass (all checks passed)
+#   1 - Completed gate failure (missing required, forbidden path, or oversized file found)
+#   2 - Usage/policy errors (invalid arguments, missing policy, parse errors)
+#   4 - Incomplete runtime scans (permission/read errors during scan)
+
+from repo_gate.fs_helpers import normalize_path, walk_files, get_file_size, hash_file_sha256, has_forbidden_fragment, has_extension, sort_strings, array_contains
+
+# Main entry point
+func main() {
+    let argv := args()
+    
+    # Simple argument parsing
+    let parsed := parse_args_manual(argv)
+    
+    if parsed["ok"] == false {
+        eprint("Error: " + parsed["error"])
+        eprint("Usage: kujo run repo_gate.kujo -- --root <dir> --policy <file> [--json <output>] [--stdout-json]")
+        exit(2)
+    }
+    
+    let root := parsed["root"]
+    let policy_path := parsed["policy"]
+    let json_output := parsed["json"]
+    let stdout_json := parsed["stdout_json"]
+    
+    # Validate root directory
+    if file_exists(root) == false {
+        eprint("Error: Root directory does not exist: " + root)
+        exit(2)
+    }
+    
+    if path_is_dir(root) == false {
+        eprint("Error: Root path is not a directory: " + root)
+        exit(2)
+    }
+    
+    # Load policy
+    let policy_content := read_file_with_error(policy_path)
+    if policy_content == null {
+        eprint("Error: Cannot read policy file: " + policy_path)
+        exit(2)
+    }
+    
+    mut policy := null
+    try {
+        policy = parse_json(policy_content)
+    } except err {
+        eprint("Error: Invalid JSON in policy file: " + policy_path)
+        exit(2)
+    }
+    if policy == null {
+        eprint("Error: Invalid JSON in policy file: " + policy_path)
+        exit(2)
+    }
+    
+    # Extract policy fields
+    let required := get_default(policy, "required", [])
+    let forbidden_fragments := get_default(policy, "forbidden_fragments", [])
+    let max_file_bytes := get_default(policy, "max_file_bytes", 1048576)
+    let hash_extensions := get_default(policy, "hash_extensions", [])
+    
+    # Initialize report structure
+    mut findings := []
+    mut hashes := []
+    mut skipped_paths := []
+    mut errors := []
+    mut gate_passed := true
+    mut incomplete_scan := false
+    
+    # Collect all files
+    let all_files := walk_files(root, "", [])
+    let sorted_files := sort_strings(all_files)
+    
+    # Check required files
+    mut found := false
+    for req_file in required {
+        found = array_contains(all_files, req_file)
+        if found == false {
+            findings = push(findings, {
+                "type": "missing_required",
+                "path": req_file,
+                "message": "Required file is missing"
+            })
+            gate_passed = false
+        }
+    }
+    
+    # Scan each file
+    mut full_path := ""
+    mut normalized := null
+    mut size := 0
+    mut hash_val := null
+    mut scan_content := true
+    for rel_path in sorted_files {
+        full_path = root + "/" + rel_path
+        scan_content = true
+        
+        # Normalize and validate path stays within root
+        normalized = normalize_path(root, rel_path)
+        if normalized == null {
+            skipped_paths = push(skipped_paths, {
+                "path": rel_path,
+                "reason": "Path normalization failed - potential escape attempt"
+            })
+            scan_content = false
+        }
+        
+        # Check for forbidden fragments
+        if scan_content == true && has_forbidden_fragment(rel_path, forbidden_fragments) {
+            findings = push(findings, {
+                "type": "forbidden_path",
+                "path": rel_path,
+                "message": "Path contains forbidden fragment"
+            })
+            gate_passed = false
+            scan_content = false
+        }
+        
+        # Check file size
+        if scan_content == true {
+            size = get_file_size(full_path)
+            if size < 0 {
+                errors = push(errors, {
+                    "path": rel_path,
+                    "error": "Cannot read file size - permission denied or I/O error"
+                })
+                incomplete_scan = true
+                skipped_paths = push(skipped_paths, {
+                    "path": rel_path,
+                    "reason": "Permission or read error"
+                })
+                scan_content = false
+            } else if size > max_file_bytes {
+                findings = push(findings, {
+                    "type": "oversized_file",
+                    "path": rel_path,
+                    "size": size,
+                    "max_allowed": max_file_bytes,
+                    "message": "File exceeds maximum allowed size"
+                })
+                gate_passed = false
+                scan_content = false
+            }
+        }
+        
+        # Hash files with matching extensions
+        if scan_content == true && has_extension(rel_path, hash_extensions) {
+            hash_val = hash_file_sha256(full_path)
+            if hash_val == null {
+                errors = push(errors, {
+                    "path": rel_path,
+                    "error": "Cannot compute hash - permission denied or I/O error"
+                })
+                incomplete_scan = true
+                skipped_paths = push(skipped_paths, {
+                    "path": rel_path,
+                    "reason": "Cannot read file for hashing"
+                })
+            } else {
+                hashes = push(hashes, {
+                    "path": rel_path,
+                    "sha256": hash_val
+                })
+            }
+        }
+    }
+    
+    # Sort findings deterministically
+    let sorted_findings := sort_findings(findings)
+    let sorted_hashes := sort_hashes(hashes)
+    let sorted_skipped := sort_skipped(skipped_paths)
+    let sorted_errors := sort_errors(errors)
+    
+    # Build report
+    let report := {
+        "schema_version": "1.0.0",
+        "root": root,
+        "policy_path": policy_path,
+        "gate_passed": gate_passed,
+        "incomplete_scan": incomplete_scan,
+        "counts": {
+            "files_scanned": len(sorted_files),
+            "findings": len(sorted_findings),
+            "hashes": len(sorted_hashes),
+            "skipped": len(sorted_skipped),
+            "errors": len(sorted_errors)
+        },
+        "findings": sorted_findings,
+        "hashes": sorted_hashes,
+        "skipped_paths": sorted_skipped,
+        "errors": sorted_errors
+    }
+    
+    # Output JSON
+    let json_report := to_json(report)
+    
+    if stdout_json == true {
+        # Output JSON to stdout
+        print(json_report)
+    } else if json_output != "" {
+        # Write to file
+        write_file(json_output, json_report, {"overwrite": true})
+        eprint("Report written to: " + json_output)
+    }
+    
+    # Human-readable summary to stderr
+    eprint("")
+    eprint("=== Repo Gate Audit Complete ===")
+    eprint("Root: " + root)
+    eprint("Files scanned: " + to_string(len(sorted_files)))
+    eprint("Findings: " + to_string(len(sorted_findings)))
+    eprint("Gate passed: " + to_string(gate_passed))
+    
+    if len(sorted_findings) > 0 {
+        eprint("")
+        eprint("Findings:")
+        for finding in sorted_findings {
+            eprint("  - [" + finding["type"] + "] " + finding["path"] + ": " + finding["message"])
+        }
+    }
+    
+    if incomplete_scan == true {
+        eprint("")
+        eprint("Warning: Scan was incomplete due to errors")
+        exit(4)
+    }
+    
+    if gate_passed == false {
+        exit(1)
+    }
+    
+    exit(0)
+}
+
+# Manual argument parser for simplicity
+func parse_args_manual(argv) {
+    mut root := ""
+    mut policy := ""
+    mut json_out := ""
+    mut stdout_json := false
+    mut i := 0
+    mut arg := ""
+    
+    while i < len(argv) {
+        arg = argv[i]
+        
+        if arg == "--root" {
+            if i + 1 >= len(argv) {
+                return {"ok": false, "error": "--root requires a value"}
+            }
+            root = argv[i + 1]
+            i = i + 2
+        } else if arg == "--policy" {
+            if i + 1 >= len(argv) {
+                return {"ok": false, "error": "--policy requires a value"}
+            }
+            policy = argv[i + 1]
+            i = i + 2
+        } else if arg == "--json" {
+            if i + 1 >= len(argv) {
+                return {"ok": false, "error": "--json requires a value"}
+            }
+            json_out = argv[i + 1]
+            i = i + 2
+        } else if arg == "--stdout-json" {
+            stdout_json = true
+            i = i + 1
+        } else if starts_with(arg, "-") {
+            return {"ok": false, "error": "Unknown option: " + arg}
+        } else {
+            i = i + 1
+        }
+    }
+    
+    if root == "" {
+        return {"ok": false, "error": "Missing required --root argument"}
+    }
+    if policy == "" {
+        return {"ok": false, "error": "Missing required --policy argument"}
+    }
+    
+    return {
+        "ok": true,
+        "root": root,
+        "policy": policy,
+        "json": json_out,
+        "stdout_json": stdout_json
+    }
+}
+
+# Safe file read that returns null on error
+func read_file_with_error(path) {
+    try {
+        return read_file(path)
+    } except err {
+        return null
+    }
+}
+
+# Sort findings by type then path
+func sort_findings(findings) {
+    # Simple bubble sort for determinism
+    mut result := findings
+    mut n := len(result)
+    mut i := 0
+    mut j := 0
+    mut a := {}
+    mut b := {}
+    mut swap := false
+    mut temp := {}
+    while i < n {
+        j = 0
+        while j < n - 1 - i {
+            a = result[j]
+            b = result[j + 1]
+            swap = false
+            
+            if a["type"] > b["type"] {
+                swap = true
+            } else if a["type"] == b["type"] && a["path"] > b["path"] {
+                swap = true
+            }
+            
+            if swap == true {
+                temp = result[j]
+                result[j] = result[j + 1]
+                result[j + 1] = temp
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return result
+}
+
+# Sort hashes by path
+func sort_hashes(hashes) {
+    mut result := hashes
+    mut n := len(result)
+    mut i := 0
+    mut j := 0
+    mut temp := {}
+    while i < n {
+        j = 0
+        while j < n - 1 - i {
+            if result[j]["path"] > result[j + 1]["path"] {
+                temp = result[j]
+                result[j] = result[j + 1]
+                result[j + 1] = temp
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return result
+}
+
+# Sort skipped by path
+func sort_skipped(skipped) {
+    mut result := skipped
+    mut n := len(result)
+    mut i := 0
+    mut j := 0
+    mut temp := {}
+    while i < n {
+        j = 0
+        while j < n - 1 - i {
+            if result[j]["path"] > result[j + 1]["path"] {
+                temp = result[j]
+                result[j] = result[j + 1]
+                result[j + 1] = temp
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return result
+}
+
+# Sort errors by path
+func sort_errors(errors) {
+    mut result := errors
+    mut n := len(result)
+    mut i := 0
+    mut j := 0
+    mut temp := {}
+    while i < n {
+        j = 0
+        while j < n - 1 - i {
+            if result[j]["path"] > result[j + 1]["path"] {
+                temp = result[j]
+                result[j] = result[j + 1]
+                result[j + 1] = temp
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    return result
+}
+
+# Run main
+main()

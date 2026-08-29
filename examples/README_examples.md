@@ -61,6 +61,7 @@ These files are intended as current, copyable examples. `tests/docs_examples.rs`
 - `cli_tool.kujo`: command-line tool structure.
 - `arg_parser_demo.kujo`: argument parsing patterns.
 - `env_config.kujo`: environment-driven configuration.
+- `repo_gate/`: deterministic, Kujo-native repository policy gate with passing and failing fixtures.
 
 ### File and System Work
 

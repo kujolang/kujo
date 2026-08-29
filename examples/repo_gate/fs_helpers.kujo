@@ -1,0 +1,136 @@
+# fs_helpers.kujo - Exported filesystem utilities for repo_gate
+# This module provides path-safe filesystem operations for the repo gate auditor.
+
+# Normalize a path by removing redundant separators and resolving . and ..
+# Returns null if the path attempts to escape the root.
+export func normalize_path(root, relative_path) {
+    # Reject absolute paths
+    if starts_with(relative_path, "/") {
+        return null
+    }
+    
+    # Reject paths with ..
+    if contains(relative_path, "..") {
+        return null
+    }
+    
+    # Build normalized path
+    let full_path := root + "/" + relative_path
+    
+    # Remove double slashes
+    let normalized := replace(full_path, "//", "/")
+    
+    return normalized
+}
+
+# Check if a path is a directory.
+export func is_directory(path) {
+    return path_is_dir(path)
+}
+
+# Recursively collect all file paths under a directory
+# Does not follow symlinks. Returns array of relative paths.
+export func walk_files(root, current_relative, accumulator) {
+    let full_path := root + "/" + current_relative
+    
+    # Skip if doesn't exist
+    if file_exists(full_path) == false {
+        return accumulator
+    }
+    
+    # Check if directory
+    let is_dir := is_directory(full_path)
+    
+    if is_dir == true {
+        let entries := list_dir(full_path)
+        mut new_relative := ""
+        mut normalized := null
+        for entry in entries {
+            # Hidden files and directories are intentionally excluded.
+            if starts_with(entry, ".") == false {
+                new_relative = current_relative
+                if current_relative == "" {
+                    new_relative = entry
+                } else {
+                    new_relative = current_relative + "/" + entry
+                }
+
+                normalized = normalize_path(root, new_relative)
+                if normalized != null {
+                    accumulator = walk_files(root, new_relative, accumulator)
+                }
+            }
+        }
+    } else {
+        # It's a file
+        accumulator = push(accumulator, current_relative)
+    }
+    
+    return accumulator
+}
+
+# Get file size in bytes (returns integer or -1 on error)
+export func get_file_size(path) {
+    try {
+        return file_size(path)
+    } except err {
+        return -1
+    }
+}
+
+# Read file and compute SHA256 hash
+# Returns hex string or null on error
+export func hash_file_sha256(path) {
+    try {
+        let content := read_file(path)
+        let hash := sha256(content)
+        return hash
+    } except err {
+        return null
+    }
+}
+
+# Check if path has forbidden fragment
+export func has_forbidden_fragment(path, fragments) {
+    for fragment in fragments {
+        if contains(path, fragment) {
+            return true
+        }
+    }
+    return false
+}
+
+# Check if file extension matches any in list
+export func has_extension(path, extensions) {
+    let basename_val := path_basename(path)
+    for ext in extensions {
+        if ends_with(basename_val, ext) {
+            return true
+        }
+    }
+    return false
+}
+
+# Path basename helper
+export func path_basename(path) {
+    let parts := split(path, "/")
+    if len(parts) > 0 {
+        return parts[len(parts) - 1]
+    }
+    return path
+}
+
+# Sort array of strings deterministically
+export func sort_strings(arr) {
+    return sort(arr)
+}
+
+# Check if array contains a value
+export func array_contains(arr, value) {
+    for item in arr {
+        if item == value {
+            return true
+        }
+    }
+    return false
+}
