@@ -4,6 +4,7 @@
 // Exposes modules for integration testing and external use.
 #![allow(clippy::all)]
 
+pub mod agent_project;
 pub mod ast;
 pub mod benchmarks;
 pub mod builtins;

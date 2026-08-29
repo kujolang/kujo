@@ -5,6 +5,7 @@
 // subcommand (run, repl, or test).
 #![allow(clippy::all)]
 
+mod agent_project;
 mod ast;
 mod benchmarks;
 mod builtins;
@@ -154,6 +155,11 @@ enum TestRuntimeMode {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Create, inspect, run, and evaluate repository-owned Kujo agents
+    Agent {
+        #[command(subcommand)]
+        command: agent_project::AgentCommands,
+    },
     /// Run a Kujo script file
     Run {
         /// Path to the .kujo file
@@ -1951,6 +1957,13 @@ async fn async_main() {
             );
         }
 
+        Commands::Agent { command } => {
+            if let Err(err) = agent_project::execute(command) {
+                eprintln!("{}", err.message);
+                std::process::exit(err.exit_code);
+            }
+        }
+
         Commands::Pack { command } => match command {
             PackCommands::Run { namespace, command, json, save, command_args } => {
                 if let Some(reservation) = reserved_names::reservation_for_namespace(&namespace) {
@@ -2005,6 +2018,7 @@ async fn async_main() {
                 .collect();
             available_profiles
                 .push(workflow_pack::builtins::doctor::GENERIC_PROFILE_NAME.to_string());
+            available_profiles.push("agent".to_string());
             available_profiles.sort();
             available_profiles.dedup();
 
@@ -2033,6 +2047,19 @@ async fn async_main() {
             let selected_profile = profile.or(profile_name).unwrap_or_else(|| {
                 workflow_pack::builtins::doctor::GENERIC_PROFILE_NAME.to_string()
             });
+
+            if selected_profile == "agent" {
+                let report = agent_project::doctor_report(&cwd, deep);
+                if json {
+                    emit_json_or_internal_error(&report, "agent doctor report");
+                } else {
+                    workflow_pack::renderer::render_human(&report);
+                }
+                if report.status == "fail" {
+                    std::process::exit(1);
+                }
+                return;
+            }
 
             if !available_profiles.iter().any(|candidate| candidate == &selected_profile) {
                 report_cli_error_and_exit(
