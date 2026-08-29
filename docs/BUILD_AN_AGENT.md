@@ -2,6 +2,68 @@
 
 Kujo Agent Projects make an agent's intelligence and execution contract a normal Git repository.
 
+## Test the complete installation
+
+Until the next Kujo release is published, install the current source and the
+focused Agent toolchain in one command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh \
+  | bash -s -- --source --ref main --group agent
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+If the repositories are private, set `KUJO_GITHUB_TOKEN` for the install only.
+The installer must finish without errors, and these commands must resolve:
+
+```bash
+kujo --version
+kennel --help
+kujo agent --help
+```
+
+First verify the offline path. It needs no API key and makes no model request:
+
+```bash
+mkdir -p "$HOME/kujo-agent-tests"
+cd "$HOME/kujo-agent-tests"
+kujo agent new fixture-agent --profile basic --install --no-git
+cd fixture-agent
+kujo doctor agent
+kujo agent inspect
+kujo agent run "Reply with exactly: install verified"
+kujo agent eval
+```
+
+Doctor, inspect, run, and eval must all succeed. The basic profile does not
+require Watchdog or RunLedger. Those dependencies are declared and installed
+when `observable` or `full` is selected.
+
+Then verify a real provider. This prompt is masked and saves the key in the
+operating-system credential store, not in shell history or the project:
+
+```bash
+kujo agent auth set openai
+kujo agent auth status openai
+cd "$HOME/kujo-agent-tests"
+kujo agent new live-agent --provider openai --install --no-git
+cd live-agent
+kujo doctor agent
+kujo agent run "Reply with exactly: live agent verified"
+```
+
+The status command must report that the credential is available without
+printing its value. The final command must return a real model response. Later
+agents reuse the same stored key automatically. To remove the test credential,
+run `kujo agent auth remove openai`.
+
+For the observable path, repeat the scaffold with
+`--profile observable --install`. Missing ecosystem dependencies are surfaced by
+Agent Doctor with the exact install command; `--install` normally resolves them
+during scaffolding.
+
+## Create an Agent Project
+
 ```bash
 kujo agent new my-agent --profile basic
 cd my-agent
