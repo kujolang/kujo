@@ -5,6 +5,7 @@ Kujo Agent Projects make an agent's intelligence and execution contract a normal
 ```bash
 kujo agent new my-agent --profile basic
 cd my-agent
+kennel install
 kujo doctor agent
 kujo agent inspect
 kujo agent run "Say hello"

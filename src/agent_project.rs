@@ -183,14 +183,13 @@ fn scaffold(a: NewArgs) -> Result<(), AgentError> {
         }
     }
     if a.install {
-        let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
-        let status = Command::new(exe)
-            .args(["package-install", "--frozen"])
+        let status = Command::new("kennel")
+            .arg("install")
             .current_dir(&target)
             .status()
-            .map_err(|e| ioerr(e.to_string()))?;
+            .map_err(|e| ioerr(format!("Failed to run `kennel install`: {e}")))?;
         if !status.success() {
-            return Err(fail("Project dependency validation failed."));
+            return Err(fail("Kennel dependency installation failed."));
         }
     }
     let payload = json!({"contract":"kujo-agent-new/v1","status":"created","project":a.name,"profile":a.profile,"path":target,"git":!a.no_git});
@@ -198,7 +197,10 @@ fn scaffold(a: NewArgs) -> Result<(), AgentError> {
         println!("{}", serde_json::to_string_pretty(&payload).unwrap());
     } else {
         println!("Created Kujo Agent Project '{}' ({}) at {}", a.name, a.profile, target.display());
-        println!("Next: cd {} && kujo doctor agent && kujo agent inspect", target.display());
+        println!(
+            "Next: cd {} && kennel install && kujo doctor agent && kujo agent inspect",
+            target.display()
+        );
     }
     Ok(())
 }
@@ -292,11 +294,11 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
                 .unwrap()
         ),
     )?;
-    write(root, "src/main.kujo", "let argv := args()\nmut prompt := \"Hello\"\nif len(argv) > 0 { prompt = argv[0] }\nprint(\"Owned agent fixture: \" + prompt)\n")?;
+    write(root, "src/main.kujo", "from src.agents.testing.no_network import create_no_network_harness\nfrom src.agents.runner import create_agent_runner, run_agent\nfrom src.agents.core_types import create_agent, create_agent_run_request\n\nlet argv := args()\nmut prompt := \"Hello\"\nif len(argv) > 0 { prompt = argv[0] }\nlet harness := create_no_network_harness({\"model\": {\"output_text\": \"Owned agent fixture: \" + prompt}})\nif harness[\"ok\"] == false {\n    print(to_json(harness))\n} else {\n    let runner := create_agent_runner({\"ai_adapter\": harness[\"model_adapter\"]})\n    let agent := create_agent({\"id\": \"owned-agent\", \"name\": \"Owned Agent\", \"instructions\": \"Follow agent/instructions.md and the repository policy.\"})\n    let request := create_agent_run_request(prompt, {\"run_id\": \"run-owned-fixture\", \"session_id\": \"session-owned-fixture\"})\n    let result := run_agent(runner, agent, request, {\"tool_registry\": harness[\"tool_registry\"]})\n    print(result[\"output\"][\"text\"])\n}\n")?;
     write(root, "evals/eval.json", "{\"name\":\"owned-agent-fixture\",\"version\":\"1.0.0\",\"tests\":[{\"name\":\"fixture response\",\"check\":\"output_contains\",\"expected\":\"Owned agent fixture\"}]}\n")?;
     write(root, "kujo.toml", &format!("[package]\nname = \"{}\"\nversion = \"0.1.0\"\nentrypoint = \"src/main.kujo\"\n\n[dependencies]\n", a.name))?;
     write(root, "kujo.lock", "version = 1\npackages = []\n")?;
-    write(root, "kennel.toml", "[package]\nname = \"owned-agent-project\"\nversion = \"0.1.0\"\n\n[dependencies]\nai-sdk = { git = \"https://github.com/kujolang/ai-sdk\", rev = \"be9617a32344728919b1394b80f72f46559d69a7\" }\nagents-sdk = { git = \"https://github.com/kujolang/agents-sdk\", rev = \"d3904d348754b492bda298b6c30f49c1eb24b7ea\" }\n")?;
+    write(root, "kennel.toml", "[package]\nname = \"owned-agent-project\"\nversion = \"0.1.0\"\n\n[kujo]\nminimum_version = \"1.0.2\"\nentry = \"src/main.kujo\"\nsources = [\".\"]\nexcludes = [\".git\", \"kennel_packages\", \".kennel_tmp\"]\n\n[dependencies]\nai-sdk = { source = \"github:kujolang/ai-sdk\", commit = \"be9617a32344728919b1394b80f72f46559d69a7\" }\nagents-sdk = { source = \"github:kujolang/agents-sdk\", commit = \"d3904d348754b492bda298b6c30f49c1eb24b7ea\" }\n")?;
     write(
         root,
         ".env.example",
@@ -312,7 +314,7 @@ fn write_project(root: &Path, a: &NewArgs) -> Result<(), AgentError> {
         ".env\n.kennel_tmp/\nkennel_packages/\n.eval-results/\n.runledger/\n",
     )?;
     write(root, "AGENTS.md", "# Agent Project Guide\n\nTreat `agent.project.json` as the root contract. Never commit credentials. Run `kujo doctor agent`, `kujo agent inspect`, `kujo agent run`, and `kujo agent eval`.\n")?;
-    write(root, "README.md", &format!("# {}\n\nThis Git repository owns the agent definition, instructions, model preference, skills, tools, knowledge, policies, workflows, evals, and execution boundaries.\n\n```bash\nkujo doctor agent\nkujo agent inspect\nkujo agent run \"Hello\"\nkujo agent eval\n```\n\nFixture mode is offline. Change `config/model.json` for a live AI SDK provider and provide credentials through the environment only. Kujo capabilities authorize effects; they are not a sandbox. Hardened projects use Workcell for container-backed isolation.\n", a.name))?;
+    write(root, "README.md", &format!("# {}\n\nThis Git repository owns the agent definition, instructions, model preference, skills, tools, knowledge, policies, workflows, evals, and execution boundaries.\n\n```bash\nkennel install\nkujo doctor agent\nkujo agent inspect\nkujo agent run \"Hello\"\nkujo agent eval\n```\n\nFixture mode uses the Agents SDK no-network harness and requires no provider credentials. Change `config/model.json` for a live AI SDK provider and provide credentials through the environment only. Kujo capabilities authorize effects; they are not a sandbox. Hardened projects use Workcell for container-backed isolation.\n", a.name))?;
     if has("tools") {
         write(root, "agent/tools/read-project.json", "{\"name\":\"read_project_docs\",\"description\":\"Read allowlisted project documentation\",\"risk\":\"read_only\",\"approval\":\"never\"}\n")?;
         write(root, "config/mcp.json", "{\"contract\":\"kujo-mcp/project/v1\",\"servers\":[]}\n")?;
@@ -399,7 +401,12 @@ fn inspection(root: &Path, m: &ProjectManifest) -> Value {
         .unwrap_or(json!({}));
     let skills = list_names(&root.join(&m.agent.skills));
     let tools = list_names(&root.join(&m.agent.tools));
-    json!({"contract":INSPECT_CONTRACT,"project":{"name":m.name,"profile":m.profile,"root":root},"agent":{"definition":m.agent.definition,"instructions":m.agent.instructions,"skills":skills,"tools":tools},"runtime":{"entrypoint":m.runtime.entrypoint,"provider":model.get("provider"),"model":model.get("model"),"fixture":m.runtime.fixture},"integrations":m.integrations,"workcell":m.runtime.workcell,"capabilities":m.runtime.capabilities,"external_state":{"credential_names":if m.runtime.fixture {Vec::<String>::new()} else {vec!["OPENAI_API_KEY".to_string()]},"container_runtime":if m.runtime.workcell.is_some(){"Docker or Podman required"}else{"not required"}}})
+    let unresolved = if root.join("kennel_packages/agents-sdk/src/agents/runner.kujo").is_file() {
+        Vec::<String>::new()
+    } else {
+        vec!["agents-sdk: run `kennel install`".to_string()]
+    };
+    json!({"contract":INSPECT_CONTRACT,"project":{"name":m.name,"profile":m.profile,"root":root},"agent":{"definition":m.agent.definition,"instructions":m.agent.instructions,"skills":skills,"tools":tools},"runtime":{"entrypoint":m.runtime.entrypoint,"provider":model.get("provider"),"model":model.get("model"),"fixture":m.runtime.fixture},"integrations":m.integrations,"workcell":m.runtime.workcell,"capabilities":m.runtime.capabilities,"unresolved_dependencies":unresolved,"external_state":{"credential_names":if m.runtime.fixture {Vec::<String>::new()} else {vec!["OPENAI_API_KEY".to_string()]},"container_runtime":if m.runtime.workcell.is_some(){"Docker or Podman required"}else{"not required"}}})
 }
 fn list_names(path: &Path) -> Vec<String> {
     let mut out = Vec::new();
@@ -443,8 +450,16 @@ fn run(a: RunArgs) -> Result<(), AgentError> {
     let root = discover(&cwd)?;
     let m = load(&root)?;
     let prompt = prompt_from(&a, &root)?;
+    let agents_sdk = root.join("kennel_packages/agents-sdk");
+    if !agents_sdk.join("src/agents/runner.kujo").is_file() {
+        return Err(fail(
+            "Agents SDK is not installed. Run `kennel install` from the Agent Project root.",
+        ));
+    }
     let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
-    let out = Command::new(exe)
+    let mut command = Command::new(exe);
+    command.env("KUJO_MODULE_PATH", &agents_sdk);
+    let out = command
         .arg("run")
         .arg(&m.runtime.entrypoint)
         .arg("--")
@@ -467,8 +482,14 @@ fn eval(a: ProjectArgs) -> Result<(), AgentError> {
     let cwd = std::env::current_dir().map_err(|e| ioerr(e.to_string()))?;
     let root = discover(&cwd)?;
     let m = load(&root)?;
+    let agents_sdk = root.join("kennel_packages/agents-sdk");
+    if !agents_sdk.join("src/agents/runner.kujo").is_file() {
+        return Err(fail("Agents SDK is not installed. Run `kennel install` before evaluation."));
+    }
     let exe = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
-    let out = Command::new(exe)
+    let mut command = Command::new(exe);
+    command.env("KUJO_MODULE_PATH", &agents_sdk);
+    let out = command
         .arg("run")
         .arg(&m.runtime.entrypoint)
         .arg("--")
@@ -520,12 +541,26 @@ pub fn doctor_report(cwd: &Path, deep: bool) -> DoctorReport {
                     None,
                 ));
             }
+            let sdk_installed =
+                root.join("kennel_packages/agents-sdk/src/agents/runner.kujo").is_file();
+            checks.push(check(
+                "agent.dependencies.agents-sdk",
+                "Agents SDK installed",
+                if sdk_installed { CheckStatus::Pass } else { CheckStatus::Fail },
+                if sdk_installed { CheckSeverity::Info } else { CheckSeverity::High },
+                Some(if sdk_installed { "installed".into() } else { "missing".into() }),
+                if sdk_installed {
+                    None
+                } else {
+                    Some("Run `kennel install` from the Agent Project root.".into())
+                },
+            ));
             if deep {
                 checks.push(check(
                     "agent.dependencies",
                     "Pinned ecosystem dependencies",
                     if fs::read_to_string(root.join("kennel.toml"))
-                        .map(|s| s.contains("rev ="))
+                        .map(|s| s.contains("commit ="))
                         .unwrap_or(false)
                     {
                         CheckStatus::Pass

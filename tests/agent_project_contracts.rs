@@ -39,6 +39,7 @@ fn all_profiles_scaffold_deterministically_and_validate() {
                 .unwrap();
         assert_eq!(m["contract"], "kujo-agent-project/v1");
         assert_eq!(m["profile"], profile);
+        install_agents_sdk_fixture(&project);
         let commands: &[&[&str]] = &[
             &["agent", "inspect", "--json"],
             &["doctor", "agent", "--json"],
@@ -81,6 +82,7 @@ fn project_is_portable_without_sibling_repositories() {
     assert!(run(&["agent", "new", "portable", "--dir", root.to_str().unwrap(), "--no-git"], &root)
         .status
         .success());
+    install_agents_sdk_fixture(&root.join("portable"));
     let copy = temp().join("restored");
     fs::create_dir_all(&copy).unwrap();
     for entry in fs::read_dir(root.join("portable")).unwrap() {
@@ -113,4 +115,11 @@ fn copy_dir(src: &Path, dst: &Path) {
             fs::copy(e.path(), d).unwrap();
         }
     }
+}
+
+fn install_agents_sdk_fixture(project: &Path) {
+    let ecosystem = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let source = ecosystem.join("agents-sdk/src");
+    assert!(source.is_dir(), "Agents SDK checkout is required for the integration fixture");
+    copy_dir(&source, &project.join("kennel_packages/agents-sdk/src"));
 }
