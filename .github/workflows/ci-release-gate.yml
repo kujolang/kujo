@@ -69,10 +69,83 @@ jobs:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
+      - name: Checkout AI SDK fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/ai-sdk
+          ref: be9617a32344728919b1394b80f72f46559d69a7
+          path: .agent-fixtures/ai-sdk
+          persist-credentials: false
+
+      - name: Checkout Agents SDK fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/agents-sdk
+          ref: d3904d348754b492bda298b6c30f49c1eb24b7ea
+          path: .agent-fixtures/agents-sdk
+          persist-credentials: false
+
+      - name: Checkout Eval fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/eval
+          ref: 955713f487c094b20b7b8c44414ae17395194cc9
+          path: .agent-fixtures/eval
+          persist-credentials: false
+
+      - name: Checkout MCP fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/mcp
+          ref: 2ab8111f2c5174841204f5c762d8ce8d281e57b6
+          path: .agent-fixtures/mcp
+          persist-credentials: false
+
+      - name: Checkout RAG fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/rag
+          ref: 28690e3aa1b7a5947616843574cacf03b32905c9
+          path: .agent-fixtures/rag
+          persist-credentials: false
+
+      - name: Checkout Dispatch fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/dispatch
+          ref: 662417c264bd55f8d802eef3fc21f9f372590753
+          path: .agent-fixtures/dispatch
+          persist-credentials: false
+
+      - name: Checkout RunLedger fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/runledger
+          ref: 12bbf2b3723325913eb75ececaba0ce3fdc68b87
+          path: .agent-fixtures/runledger
+          persist-credentials: false
+
+      - name: Checkout Watchdog fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/watchdog
+          ref: 1af292b3e03217760649dcb4f903e443f48c563c
+          path: .agent-fixtures/watchdog
+          persist-credentials: false
+
+      - name: Checkout Relay fixtures
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: kujolang/relay
+          ref: 0480733735a69f3b01d5452e6c86b4df3343c9d6
+          path: .agent-fixtures/relay
+          persist-credentials: false
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run release gate checks
         env:
+          KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT: ${{ github.workspace }}/.agent-fixtures
           KUJO_ENABLE_SOCKET_TESTS: "1"
         run: bash scripts/release_gate.sh

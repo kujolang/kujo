@@ -555,6 +555,23 @@ fn copy_dir(src: &Path, dst: &Path) {
     }
 }
 
+fn fixture_ecosystem_root() -> PathBuf {
+    if let Some(root) = std::env::var_os("KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT") {
+        let root = PathBuf::from(root);
+        assert!(
+            root.is_dir(),
+            "KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT is not a directory: {}",
+            root.display()
+        );
+        return root;
+    }
+
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("Kujo checkout should have an ecosystem parent directory")
+        .to_path_buf()
+}
+
 fn scaffold(profile: &str) -> PathBuf {
     let root = temp();
     let output = run(
@@ -582,7 +599,7 @@ fn mutate_manifest(project: &Path, mutate: impl FnOnce(&mut Value)) {
 }
 
 fn install_project_fixtures(project: &Path) {
-    let ecosystem = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+    let ecosystem = fixture_ecosystem_root();
     for package in [
         "ai-sdk",
         "agents-sdk",
@@ -597,7 +614,7 @@ fn install_project_fixtures(project: &Path) {
     ] {
         fs::create_dir_all(project.join("kennel_packages").join(package)).unwrap();
     }
-    copy_package_paths(ecosystem, project, "ai-sdk", &["src"]);
+    copy_package_paths(&ecosystem, project, "ai-sdk", &["src"]);
     let source = ecosystem.join("agents-sdk/src");
     assert!(source.is_dir(), "Agents SDK checkout is required for the integration fixture");
     copy_dir(&source, &project.join("kennel_packages/agents-sdk/src"));
@@ -616,17 +633,17 @@ fn install_project_fixtures(project: &Path) {
             fs::copy(source, target).unwrap();
         }
     }
-    copy_package_paths(ecosystem, project, "mcp", &["src"]);
-    copy_package_paths(ecosystem, project, "rag", &["main.kujo", "src"]);
+    copy_package_paths(&ecosystem, project, "mcp", &["src"]);
+    copy_package_paths(&ecosystem, project, "rag", &["main.kujo", "src"]);
     copy_package_paths(
-        ecosystem,
+        &ecosystem,
         project,
         "dispatch",
         &["dispatch.kujo", "bridge_chat.kujo", "sdk_adapter.kujo", "src", "examples"],
     );
-    copy_package_paths(ecosystem, project, "runledger", &["runledger.kujo", "cli.kujo", "src"]);
-    copy_package_paths(ecosystem, project, "watchdog", &["watchdog.kujo"]);
-    copy_package_paths(ecosystem, project, "relay", &["main.kujo", "src", "schemas"]);
+    copy_package_paths(&ecosystem, project, "runledger", &["runledger.kujo", "cli.kujo", "src"]);
+    copy_package_paths(&ecosystem, project, "watchdog", &["watchdog.kujo"]);
+    copy_package_paths(&ecosystem, project, "relay", &["main.kujo", "src", "schemas"]);
 }
 
 fn copy_package_paths(ecosystem: &Path, project: &Path, package: &str, paths: &[&str]) {

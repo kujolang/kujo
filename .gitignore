@@ -335,3 +335,4 @@ benchmark_output.txt
 /truthlens-extension.zip
 /artifacts/coverage/
 /.coverage
+/.agent-fixtures/
