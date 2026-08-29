@@ -42,6 +42,7 @@ fn all_profiles_scaffold_deterministically_and_validate() {
                 .unwrap();
         assert_eq!(m["contract"], "kujo-agent-project/v1");
         assert_eq!(m["profile"], profile);
+        assert_generated_shape(&project, profile);
         install_project_fixtures(&project);
         let commands: &[&[&str]] = &[
             &["agent", "inspect", "--json"],
@@ -54,6 +55,61 @@ fn all_profiles_scaffold_deterministically_and_validate() {
             assert!(out.status.success(), "{profile}: {}", String::from_utf8_lossy(&out.stderr));
             serde_json::from_slice::<Value>(&out.stdout).unwrap();
         }
+    }
+}
+
+fn assert_generated_shape(project: &Path, profile: &str) {
+    for required in [
+        "agent.project.json",
+        "schemas/agent-project.schema.json",
+        "agent/manifest.json",
+        "agent/instructions.md",
+        "agent/input.schema.json",
+        "agent/output.schema.json",
+        "agent/skills/owned-agent/SKILL.md",
+        "agent/policies/capabilities.json",
+        "config/model.json",
+        "src/main.kujo",
+        "src/live_model.kujo",
+        "evals/eval.json",
+        "kennel.toml",
+        "kujo.toml",
+        "README.md",
+        "AGENTS.md",
+        ".env.example",
+        ".gitignore",
+    ] {
+        assert!(project.join(required).is_file(), "{profile}: missing {required}");
+    }
+    let feature = |name: &str| profile == name || profile == "full";
+    for (path, expected) in [
+        ("config/mcp.json", feature("tools")),
+        ("mcp-server.json", feature("tools")),
+        ("config/retrieval.json", feature("knowledge")),
+        ("agent/knowledge/example.md", feature("knowledge")),
+        ("workflows/default.json", feature("workflow")),
+        ("workcell.json", feature("hardened")),
+        ("config/observability.json", feature("observable")),
+        ("config/relay.json", profile == "full"),
+    ] {
+        assert_eq!(
+            project.join(path).is_file(),
+            expected,
+            "{profile}: unexpected generated shape for {path}"
+        );
+    }
+    for json_path in [
+        "agent.project.json",
+        "schemas/agent-project.schema.json",
+        "agent/manifest.json",
+        "agent/input.schema.json",
+        "agent/output.schema.json",
+        "agent/policies/capabilities.json",
+        "config/model.json",
+        "evals/eval.json",
+    ] {
+        serde_json::from_str::<Value>(&fs::read_to_string(project.join(json_path)).unwrap())
+            .unwrap_or_else(|error| panic!("{profile}: invalid {json_path}: {error}"));
     }
 }
 
@@ -77,6 +133,14 @@ fn rejects_unsafe_and_conflicting_scaffolds() {
         Some(2)
     );
     assert_eq!(run(&["agent", "doctor"], &root).status.code(), Some(2));
+    let json_error = run(
+        &["agent", "new", "x", "--profile", "unknown", "--dir", root.to_str().unwrap(), "--json"],
+        &root,
+    );
+    assert_eq!(json_error.status.code(), Some(2));
+    let error: Value = serde_json::from_slice(&json_error.stderr).unwrap();
+    assert_eq!(error["contract"], "kujo-agent-error/v1");
+    assert_eq!(error["status"], "error");
     assert_eq!(
         run(&["agent", "new", "unsafe-root", "--dir", "/", "--no-git"], &root).status.code(),
         Some(2)

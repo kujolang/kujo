@@ -2,40 +2,139 @@
 
 ## Executive summary
 
-Kujo now provides a repository-owned Agent Project façade: deterministic scaffolding, discovery, inspection, fixture execution, evaluation, and the canonical Agent Doctor profile. The ownership goal is satisfied for the project contract and locally verified fixture path; live-provider and external-service behavior remains governed by the existing ecosystem components.
+Kujo now provides a repository-owned Agent Project experience across creation,
+dependency installation, diagnosis, inspection, deterministic and live-model
+execution, evaluation, workflow composition, bounded Workcell execution, and
+run evidence. The repository owns intelligence configuration while existing
+ecosystem components retain their established responsibilities.
 
 ## Final CLI
 
 ```text
 kujo agent new <name> [--profile <profile>] [--dir <path>] [--provider <id>] [--model <id>] [--no-git] [--install] [--json]
 kujo agent inspect [--json]
-kujo agent run [prompt] [--file <path>] [--json]
+kujo agent run [prompt] [--file <path>] [--workcell] [--json]
 kujo agent eval [--json]
 kujo doctor agent [--json] [--deep]
 ```
 
-`kujo agent doctor` was not added.
+The diagnostic command is deliberately `kujo doctor agent`; no competing
+`kujo agent doctor` command exists.
 
-## Architecture
+## Doctor
 
-Kujo owns the CLI façade, project discovery, capability authorization, and contract validation. Kennel owns reproducible dependency declarations. AI SDK owns provider/model selection. Agents SDK owns execution semantics and tools. Kujo Agents owns the agent package. Kujo Skills owns `SKILL.md`. MCP owns external tools; RAG owns retrieval; Dispatch owns workflows; Relay owns advanced missions; Workcell owns container-backed isolation; Watchdog owns telemetry; RunLedger owns run evidence; Eval owns general evaluation. Agent Project composes and exposes these boundaries without absorbing their internals.
+Agent Doctor extends the existing Doctor framework and preserves its report and
+JSON conventions. It checks project discovery and contracts, runtime entrypoints
+and provider configuration, installed pinned dependencies, agent package paths,
+enabled integrations, external tools, secret-like files, capability declarations,
+and hardened Workcell configuration. `--deep` performs additional local checks
+without silently initiating provider requests.
 
-## Contract and profiles
+## Architecture audit and ownership
 
-`agent.project.json` is `kujo-agent-project/v1`. Root discovery stops at the containing Git repository. Required files are canonicalized and rejected if missing or outside the root. The compositional profiles are `basic`, `tools`, `knowledge`, `workflow`, `hardened`, `observable`, and `full`.
+The pre-implementation audit found all required primitives already present in
+the ecosystem. The Agent Project layer therefore composes rather than forks them:
 
-## Security and portability
+| Owner | Responsibility used by Agent Project |
+| --- | --- |
+| Kujo | CLI façade, root discovery, schema/path validation, capability authorization |
+| Kennel | immutable dependency sources and installation |
+| AI SDK | provider presets, credentials, retries, and normalized live responses |
+| Agents SDK | agent runner, package semantics, tools, retrieval and telemetry adapters |
+| Kujo Agents / Skills | agent package and `SKILL.md` conventions |
+| MCP | local tool/resource server behavior |
+| RAG | offline indexing, retrieval, and citations |
+| Dispatch | project workflow execution and resumable evidence |
+| Relay | full-profile local mission adapter |
+| Workcell | container-backed execution and receipts |
+| Watchdog | optional live-provider telemetry target |
+| RunLedger | observable-profile run receipts |
+| Eval | evaluation execution and nonzero failure behavior |
 
-Scaffolding rejects traversal, symlink destinations, unknown profiles, and non-empty destinations. It stages the tree and atomically promotes it. Git initializes only outside an existing repository. Base scaffolding performs no network I/O. Credentials are environment-only. Generated dependencies use immutable revisions and no sibling checkout paths. Hardened configuration keeps capability authorization and Workcell isolation distinct.
+## Agent Project contract
 
-## Offline and live paths
+`agent.project.json` uses `kujo-agent-project/v1` and references a bundled
+versioned JSON Schema. All declared paths are canonicalized inside the project
+root. Root discovery works from subdirectories and stops at the containing Git
+boundary. Generated dependency declarations use exact Git commits, and generated
+projects do not contain sibling-checkout paths or credential values.
 
-The generated fixture entrypoint runs deterministically without credentials. A live path is selected in `config/model.json` and uses an AI SDK provider plus environment credentials; live calls are not part of the offline verification claim.
+## Profiles
 
-## Verification record
+`basic` provides the minimal fixture runner. `tools` adds MCP and an Agents SDK
+tool adapter. `knowledge` adds RAG ingestion/query and citation normalization.
+`workflow` adds a runnable Dispatch workflow. `hardened` adds least-privilege
+declarations and real Workcell execution. `observable` adds Watchdog adapter
+configuration and RunLedger receipts. `full` composes compatible features and
+adds Relay execution. Optional external services remain explicit in inspect and
+Doctor output.
 
-The repository gate includes formatting, compilation, Agent CLI contract tests, all-profile scaffold checks, Doctor/inspect/run/eval fixture checks, negative path checks, and a portability copy test. Exact executed commands and commit are recorded in Git history and the final task handoff.
+## Generated tree
 
-## Deferred external proof
+The deterministic tree contains `agent.project.json`, the agent package,
+project-owned skills/tools/knowledge/policies, provider and integration configs,
+source entrypoints, Eval contract, workflow definitions, schema, Kennel manifest,
+Kujo package files, `.env.example`, `.gitignore`, `AGENTS.md`, and project README.
+The self-hosted `examples/owned-agent-project` knowledge profile is generated from
+the same implementation and passes the standard lifecycle.
 
-Docker/Podman execution, live provider calls, remote MCP services, and a running Watchdog instance require external infrastructure and are not claimed by the local fixture verification.
+## Security
+
+Scaffolding uses a sibling staging directory and atomic promotion, rejects unsafe
+names, traversal, filesystem roots, symlink destinations, and non-empty targets,
+and does not perform network access unless `--install` is explicit. Runtime paths
+are revalidated before execution. Live provider credentials are read only from a
+declared environment variable. HTTPS is required except for an explicitly opted-in
+loopback development endpoint. Secret-like repository files fail Doctor without
+printing their values. Capability flags authorize effects; they are not described
+as sandboxing. Workcell provides the separately documented container boundary.
+
+## Offline proof
+
+All seven profiles scaffold deterministically and pass Doctor, inspect, run, and
+Eval using local fixture packages. The fixture model needs no credentials and no
+provider network. MCP, RAG, Dispatch, Relay, and RunLedger paths execute their
+own installed component code in applicable profiles.
+
+## Live provider path
+
+A deterministic loopback OpenAI-compatible server test proves the custom live
+path end to end: AI SDK performs and normalizes the HTTP request, then Agents SDK
+owns the agent run and returns the model text. Missing credentials, malformed
+provider config, unsafe base URLs, and undeclared providers fail closed. Real
+third-party availability and billing remain external operational concerns.
+
+## Tests
+
+The implementation is covered by Rust CLI contract tests for every profile,
+deterministic generation, root discovery, Doctor/inspect/run/Eval, live bridging,
+portability, path escape, symlink, conflict, malformed contract/config, missing
+dependency/file, secret non-disclosure, and JSON behavior. Repository validation
+uses `cargo fmt`, Clippy with warnings denied, the full locked test suite, Bash
+syntax checks, and diff checks.
+
+## Portability proof
+
+A generated project was copied away from the ecosystem checkout, its dependency
+directory was recreated from the repository-owned pinned Kennel declaration, and
+Doctor, inspect, run, and Eval succeeded. The automated portability test likewise
+copies the project and installed package contents to an unrelated temporary root
+before exercising the lifecycle.
+
+## Repositories changed
+
+- `kujolang/kujo`: Agent Project CLI, schema, tests, documentation, installer
+  profile expansion, and self-hosted example.
+- `kujolang/kujo-workflows`: executable `owned-agent-project` lifecycle kit and
+  catalog entry.
+
+Generated pins at implementation time: AI SDK `be9617a`, Agents SDK `d3904d3`,
+Eval `955713f`, MCP `2ab8111`, RAG `28690e3`, Dispatch `662417c`, Relay `0480733`,
+and Workcell `7bcdb7f`. Optional external tools are Watchdog `1af292b` and
+RunLedger `12bbf2b`.
+
+## Deferred work
+
+Hosted deployment, public package/release publication, remote MCP authentication,
+production Watchdog service operation, and credentials-backed calls to each named
+third-party model provider are intentionally outside this local first release.

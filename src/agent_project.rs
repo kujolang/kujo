@@ -12,6 +12,7 @@ const CONTRACT: &str = "kujo-agent-project/v1";
 const INSPECT_CONTRACT: &str = "kujo-agent-inspect/v1";
 const RUN_CONTRACT: &str = "kujo-agent-run/v1";
 const EVAL_CONTRACT: &str = "kujo-agent-eval/v1";
+const ERROR_CONTRACT: &str = "kujo-agent-error/v1";
 const PROFILES: &[&str] =
     &["basic", "tools", "knowledge", "workflow", "hardened", "observable", "full"];
 
@@ -171,12 +172,29 @@ struct RuntimeConfig {
 }
 
 pub fn execute(command: AgentCommands) -> Result<(), AgentError> {
-    match command {
+    let json_output = match &command {
+        AgentCommands::New(args) => args.json,
+        AgentCommands::Run(args) => args.json,
+        AgentCommands::Inspect(args) | AgentCommands::Eval(args) => args.json,
+    };
+    let result = match command {
         AgentCommands::New(a) => scaffold(a),
         AgentCommands::Run(a) => run(a),
         AgentCommands::Inspect(a) => inspect(a),
         AgentCommands::Eval(a) => eval(a),
-    }
+    };
+    result.map_err(|mut error| {
+        if json_output {
+            error.message = serde_json::to_string_pretty(&json!({
+                "contract": ERROR_CONTRACT,
+                "status": "error",
+                "exit_code": error.exit_code,
+                "message": error.message,
+            }))
+            .unwrap();
+        }
+        error
+    })
 }
 
 fn validate_name(name: &str) -> Result<(), AgentError> {
