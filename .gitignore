@@ -336,3 +336,12 @@ benchmark_output.txt
 /artifacts/coverage/
 /.coverage
 /.agent-fixtures/
+/sdk/rust/target/
+/.fence/cache-v1.json
+/data/*.db-journal
+/data/*.sqlite-journal
+/data/*.sqlite3-journal
+/data/audits/
+/*.db-journal
+/*.sqlite-journal
+/*.sqlite3-journal
