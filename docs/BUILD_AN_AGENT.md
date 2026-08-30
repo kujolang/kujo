@@ -4,17 +4,17 @@ Kujo Agent Projects make an agent's intelligence and execution contract a normal
 
 ## Test the complete installation
 
-Until the next Kujo release is published, install the current source and the
-focused Agent toolchain in one command:
+Install the stable Kujo v1.1.0 runtime and focused Agent Development Platform
+in one command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh \
-  | bash -s -- --source --ref main --group agent
+curl -fsSL https://kujolang.ai/install.sh | bash -s -- --group agent
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-If the repositories are private, set `KUJO_GITHUB_TOKEN` for the install only.
-The installer must finish without errors, and these commands must resolve:
+The installer downloads the published release archive, verifies its checksum,
+and installs the focused ecosystem tools. It must finish without errors, and
+these commands must resolve:
 
 ```bash
 kujo --version
