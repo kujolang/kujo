@@ -3,7 +3,7 @@
 Last audit date: 2026-05-06
 > Current crate version: `1.1.0` in [Cargo.toml](Cargo.toml)
 Target release: 1.0.0
-Release state: Kujo `v1.0.2` is the current stable release. Launch verification and artifact evidence are preserved in `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md` and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`.
+Release state: Kujo `v1.1.0` is the current stable release. Launch verification and artifact evidence are preserved in `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md` and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`.
 Roadmap status: active production-readiness backlog
 
 This roadmap replaces the previous release-execution roadmap. The prior roadmap stated that Kujo had no known P0 language/runtime parity blockers. That is no longer accurate. The current audit found at least one failing test plus multiple security, correctness, diagnostics, runtime, HTTP, filesystem, and documentation gaps that must be closed before Kujo can credibly ship a production-ready 1.0 release.

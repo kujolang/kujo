@@ -12,7 +12,7 @@ fn read(path: &str) -> String {
 #[test]
 fn high_risk_docs_policies_remain_consistent() {
     let canonical =
-        "Release boundary: Kujo `v1.0.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.";
+        "Release boundary: Kujo `v1.1.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.";
 
     let readme = read("README.md");
     let v1_scope = read("docs/V1_SCOPE.md");

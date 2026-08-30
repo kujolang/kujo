@@ -18,7 +18,7 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
 
     assert!(
         readme.contains(
-            "The source tree is currently at `1.1.0` in `Cargo.toml`; the latest published stable release tag is `v1.0.2`."
+            "The source tree is currently at `1.1.0` in `Cargo.toml`; the latest published stable release tag is `v1.1.0`."
         ) && readme.contains("Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries"),
         "README must keep explicit stable-release and artifact wording"
     );

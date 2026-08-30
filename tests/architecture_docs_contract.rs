@@ -12,7 +12,7 @@ fn architecture_doc_matches_current_runtime_posture() {
 
     for marker in [
         "# Kujo Architecture",
-        "Current stable release: `v1.0.2`",
+        "Current stable release: `v1.1.0`",
         "VM (default `kujo run` path)",
         "Tree-walking interpreter (explicit fallback path)",
         "Package bootstrap and lockfile verification are tracked as separate tooling contracts",
