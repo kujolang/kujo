@@ -59,6 +59,12 @@
 /results/
 /scout-baseline.json
 
+# SearchBridge
+/sdk/rust/target/
+
+# Fence
+/.fence/cache-v1.json
+
 # Eval and ShipCheck evaluation output
 /eval_results/
 /.eval_*
@@ -156,7 +162,11 @@
 /data/*.db
 /data/*.db-shm
 /data/*.db-wal
+/data/*.db-journal
+/data/*.sqlite-journal
+/data/*.sqlite3-journal
 /data/*.log
+/data/audits/
 /data/benchmark-runs/
 /data/backups/
 /data/tool-artifacts/
@@ -166,8 +176,11 @@
 /*.db
 /*.db-shm
 /*.db-wal
+/*.db-journal
 /*.sqlite
+/*.sqlite-journal
 /*.sqlite3
+/*.sqlite3-journal
 /watchdog_proxy_config.json
 /.watchdog-backup-result-*.json
 
