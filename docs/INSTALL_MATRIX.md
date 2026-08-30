@@ -1,7 +1,7 @@
 # Kujo Install & Distribution Matrix
 
-Status: stable v1.0.0 install matrix
-Last updated: 2026-05-25
+Status: stable v1.1.0 install matrix
+Last updated: 2026-08-30
 
 This document defines supported installation paths and known platform caveats for Kujo operators.
 
@@ -12,6 +12,7 @@ This document defines supported installation paths and known platform caveats fo
 | Local development from source | `cargo run -- --help` | Debug binary via Cargo | Iterating on runtime/compiler code | Fastest edit/run loop for contributors. |
 | Local production-like build | `cargo build --release` | `./target/release/kujo` | Performance verification, smoke checks | Preferred for realistic runtime/perf behavior. |
 | Install on current machine via Cargo | `cargo install --path .` | `kujo` on `PATH` | Operator/dev host install without package manager | Re-run after local upgrades to refresh binary. |
+| Install from crates.io after registry publication | `cargo install kujolang` | `kujo` on `PATH` | Rust/Cargo users who prefer registry distribution | The registry package is `kujolang`; the command remains `kujo`. |
 | Pinned commit install | `cargo install --git https://github.com/kujolang/kujo --rev <sha>` | `kujo` on `PATH` | Reproducible deployment from known commit | Use immutable commit SHA, not floating branches. |
 | Prebuilt release binary | Download `kujo-<TAG>-<PLATFORM>.<EXT>` from GitHub Releases | Standalone `kujo`/`kujo.exe` | End users and onboarding without Rust/Cargo | See `docs/RELEASE_BINARIES.md` for asset names and checksum verification. |
 | CI reproducible build artifact | `cargo build --locked --release` | Deterministic release binary (lockfile pinned) | CI pipelines and artifact promotion | Fails fast if lockfile drift occurs. |

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use `kujolang` as the Cargo/crates.io package name while preserving `kujo` as
+  the installed CLI command and Rust library crate name.
+
 ## [1.1.0] - 2026-08-30
 
 ### Added

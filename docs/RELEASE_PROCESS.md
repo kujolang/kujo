@@ -269,9 +269,13 @@ git push origin vX.Y.Z
 
 3. Publish crate (when applicable):
 
+The registry package is named `kujolang`; it installs the `kujo` executable and
+keeps `kujo` as the Rust library crate name. A registry publication must come
+from the exact signed release commit and use the same version as its tag.
+
 ```bash
-cargo publish --dry-run
-cargo publish
+cargo publish --dry-run --locked
+cargo publish --locked
 ```
 
 4. Publish GitHub release artifacts (Linux/macOS/Windows binaries + checksums) via release workflows.
