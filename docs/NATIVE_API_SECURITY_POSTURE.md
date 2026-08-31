@@ -62,7 +62,9 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 | `--allow-ai` | AI provider egress | `ai_chat`, `ai_stream_chat`, `ai_embedding`, `ai_tool_loop` | Prompt/data exfiltration to model endpoints |
 | `--allow-net-server` | Listener/network server | `http_server.listen`, server-side sockets | Local service exposure |
 
-Routed HTTP servers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies in both VM and interpreter modes. They read at most one byte beyond the limit to detect overflow and return HTTP 413 before invoking application handlers; body read failures return HTTP 400.
+Routed HTTP servers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies in both VM and interpreter modes. They read at most one byte beyond the limit to detect overflow and return HTTP 413 before invoking application handlers. Accepted sockets receive a read deadline before headers or bodies are parsed; stalled headers and incomplete bodies return HTTP 408 without route dispatch. `KUJO_HTTP_SERVER_READ_TIMEOUT_MS` defaults to 10000 and is clamped to 100..300000 milliseconds.
+
+Routed request dictionaries expose `peer_address`, `peer_ip`, `peer_port`, and `peer_transport` from the accepted socket. These fields identify the direct TCP peer and do not trust forwarding headers. Behind a proxy they identify the proxy; applications must apply an explicit trusted-proxy policy before using `Forwarded` or `X-Forwarded-For` as an end-client identity. Address-unavailable transports use empty address/IP values, port `0`, and transport `unknown`.
 | `--allow-net` | Net client + server | Union of network-client/network-server surfaces | Combined network risk |
 | `--allow-database` | Database access | `db_connect`, query/transaction helpers | Unauthorized data access |
 | `--allow-clock` | Clock/time | `now`, timestamp helpers | Timing side-channel support |

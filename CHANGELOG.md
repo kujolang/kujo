@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Bound routed HTTP header/body reads with a configurable socket deadline and
+  expose direct socket peer address, IP, port, and transport fields with
+  matching VM/interpreter behavior.
 - Use `kujolang` as the Cargo/crates.io package name while preserving `kujo` as
   the installed CLI command and Rust library crate name.
 - Align `parse_json`'s input ceiling with the 8 MiB file-I/O boundary so JSON
