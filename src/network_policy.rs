@@ -367,31 +367,45 @@ pub fn read_http_response_bytes(
     response: BlockingResponse,
     surface: &str,
 ) -> Result<(u16, reqwest::header::HeaderMap, Vec<u8>), String> {
+    read_http_response_bytes_bounded(response, surface, MAX_NETWORK_BODY_BYTES)
+}
+
+pub fn read_http_response_bytes_bounded(
+    response: BlockingResponse,
+    surface: &str,
+    max_body_bytes: usize,
+) -> Result<(u16, reqwest::header::HeaderMap, Vec<u8>), String> {
+    if max_body_bytes == 0 || max_body_bytes > MAX_NETWORK_BODY_BYTES {
+        return Err(format!(
+            "{} failed: response body limit must be 1-{} bytes",
+            surface, MAX_NETWORK_BODY_BYTES
+        ));
+    }
     let status = response.status().as_u16();
     let headers = response.headers().clone();
 
     if let Some(content_length) = response.content_length() {
-        if content_length > MAX_NETWORK_BODY_BYTES as u64 {
+        if content_length > max_body_bytes as u64 {
             return Err(format!(
                 "{} failed: response body exceeds maximum network body size ({} bytes > {} bytes)",
-                surface, content_length, MAX_NETWORK_BODY_BYTES
+                surface, content_length, max_body_bytes
             ));
         }
     }
 
-    let max_plus_one = (MAX_NETWORK_BODY_BYTES as u64).saturating_add(1);
+    let max_plus_one = (max_body_bytes as u64).saturating_add(1);
     let mut bytes = Vec::new();
     response
         .take(max_plus_one)
         .read_to_end(&mut bytes)
         .map_err(|error| format!("{} failed while reading response body: {}", surface, error))?;
 
-    if bytes.len() > MAX_NETWORK_BODY_BYTES {
+    if bytes.len() > max_body_bytes {
         return Err(format!(
             "{} failed: response body exceeds maximum network body size ({} bytes > {} bytes)",
             surface,
             bytes.len(),
-            MAX_NETWORK_BODY_BYTES
+            max_body_bytes
         ));
     }
 

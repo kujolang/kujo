@@ -1876,6 +1876,32 @@ pub fn handle_with_interpreter(
                 .unwrap_or_else(|| network_policy::default_http_timeout().as_secs_f64())
                 .max(0.001_f64);
 
+            let max_response_bytes = match options.get("max_response_bytes") {
+                None => network_policy::MAX_NETWORK_BODY_BYTES,
+                Some(Value::Int(value))
+                    if *value > 0 && *value <= network_policy::MAX_NETWORK_BODY_BYTES as i64 =>
+                {
+                    *value as usize
+                }
+                Some(Value::Int(_)) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(format!(
+                            "HTTP max_response_bytes must be 1-{}",
+                            network_policy::MAX_NETWORK_BODY_BYTES
+                        )))),
+                    });
+                }
+                Some(_) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(
+                            "HTTP max_response_bytes must be an integer".to_string(),
+                        ))),
+                    });
+                }
+            };
+
             let force_deny_private = match options.get("destination_policy") {
                 None => false,
                 Some(Value::Str(policy)) if policy.as_ref() == "inherit" => false,
@@ -1974,7 +2000,11 @@ pub fn handle_with_interpreter(
                     let response = request
                         .send()
                         .map_err(|error| format!("HTTP request failed: {}", error))?;
-                    network_policy::read_http_response_bytes(response, "HTTP request")
+                    network_policy::read_http_response_bytes_bounded(
+                        response,
+                        "HTTP request",
+                        max_response_bytes,
+                    )
                 });
 
             match request_result {

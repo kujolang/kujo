@@ -1024,6 +1024,42 @@ fn network_http_request_can_pin_resolution_and_disable_redirects() {
 }
 
 #[test]
+fn network_http_request_enforces_per_request_response_limit() {
+    let body = vec![b'x'; 65];
+    let Some((port, server_handle)) = spawn_one_shot_http_server(body, Duration::from_millis(0))
+    else {
+        eprintln!("Skipping response-limit test: sandbox denied local TCP bind permissions");
+        return;
+    };
+    let project_root = unique_temp_dir("network_http_request_response_limit");
+    let script_path = project_root.join("response_limit.kujo");
+    let script_source = format!(
+        "let result := http_request(\"http://127.0.0.1:{port}/callback\", {{\"max_response_bytes\": 64}})\nprint(result)\n"
+    );
+    fs::write(&script_path, script_source).expect("failed to write response-limit script");
+
+    let output = run_kujo_with_env(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-net-client",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+        &[("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1")],
+    );
+    server_handle.join().expect("response-limit server should finish");
+    assert_eq!(output.status.code(), Some(0));
+    assert!(
+        stdout_text(&output).contains("65 bytes > 64 bytes"),
+        "per-request response limit should be enforced: stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+}
+
+#[test]
 fn native_capability_untrusted_denies_database() {
     assert_runtime_boundary_failure_with_args(
         "db_connect(\"sqlite\", \"tmp.db\")\n",

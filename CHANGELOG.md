@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fields without filesystem conversion or lossy UTF-8 behavior.
 - Add per-request `http_request` destination denial, DNS pinning, and redirect
   disabling so untrusted webhook-style callbacks can close DNS-rebinding and
-  redirect-based SSRF paths without relying on process-global policy.
+  redirect-based SSRF paths without relying on process-global policy; callers
+  can also lower the bounded response-body ceiling per request.
 
 ### Changed
 

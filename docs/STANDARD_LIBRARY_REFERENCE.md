@@ -528,7 +528,7 @@ destinations remain subject to the outbound destination policy described in
 | `regex_replace` | stable | `out := regex_replace(text, "\\s+", " ")` |
 | `regex_split` | stable | `parts := regex_split(text, ",\\s*")` |
 | `http_get` | preview | `res := http_get("https://example.com")` |
-| `http_request` | preview | `res := http_request({"method":"GET", "url": url, "destination_policy":"deny_private", "pin_dns":true, "redirects":"none"})` |
+| `http_request` | preview | `res := http_request({"method":"GET", "url": url, "destination_policy":"deny_private", "pin_dns":true, "redirects":"none", "max_response_bytes":65536})` |
 | `http_post` | preview | `res := http_post("https://example.com", {"x":1})` |
 | `http_put` | preview | `res := http_put("https://example.com", {"x":1})` |
 | `http_delete` | preview | `res := http_delete("https://example.com")` |
@@ -560,7 +560,8 @@ installs the validated address set into the HTTP client so the request does not
 perform a second DNS resolution. `redirects: "none"` returns 3xx responses
 without following `Location`. Use all three explicitly for webhooks and similar
 SSRF-sensitive callbacks. The backward-compatible defaults are `"inherit"`,
-`false`, and `"follow"` respectively.
+`false`, and `"follow"` respectively. `max_response_bytes` may lower the global
+8 MiB response ceiling for a specific request and must be a positive integer.
 | `jwt_encode` | preview | `tok := jwt_encode({"sub":"user"}, "secret")` |
 | `jwt_decode` | preview | `payload := jwt_decode(tok, "secret")` |
 | `jwt_verify` | preview | `ok := jwt_verify(tok, "secret")` |
