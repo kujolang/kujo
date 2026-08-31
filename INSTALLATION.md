@@ -23,6 +23,7 @@ Minimum release validation assumptions for current supported install flow:
 - Windows x64 (`windows-latest` baseline)
 
 See `docs/RELEASE_BINARIES.md` and `docs/RELEASE_ARTIFACT_VALIDATION.md` for cross-platform release asset naming, clean-environment validation, and checksum verification flow.
+For reusable checksum-verified GitHub Actions installation, see `docs/SETUP_KUJO_ACTION.md`.
 
 ### Install Rust
 
