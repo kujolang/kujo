@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add capability-gated, bounded MX, TXT, PTR, and TLSA DNS lookup primitives
+  with deterministic result envelopes and DNSSEC proof status.
+
 ### Changed
 
 - Use `kujolang` as the Cargo/crates.io package name while preserving `kujo` as

@@ -174,7 +174,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         "parallel_http" | "http_get" | "http_post" | "http_request" | "http_put"
         | "http_delete" | "http_get_binary" | "http_get_stream" | "http_download_file"
         | "http_upload_file" | "oauth2_get_token" | "tcp_connect" | "tcp_send" | "tcp_receive"
-        | "udp_send_to" | "udp_receive_from" | "async_http_get" | "async_http_post" => {
+        | "udp_send_to" | "udp_receive_from" | "async_http_get" | "async_http_post"
+        | "dns_lookup_mx" | "dns_lookup_txt" | "dns_lookup_ptr" | "dns_lookup_tlsa" => {
             Some(NativeCapability::NetworkClient)
         }
         "ai_chat" | "ai_stream_chat" | "ai_embedding" | "ai_tool_loop" => {

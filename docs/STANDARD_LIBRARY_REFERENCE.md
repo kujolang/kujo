@@ -578,6 +578,17 @@ edge cases are higher-risk than the HTTP helper surface.
 | `udp_send_to` | experimental | `udp_send_to(sock, "hi", "127.0.0.1", 9002)` |
 | `udp_receive_from` | experimental | `packet := udp_receive_from(sock, 1024)` |
 | `udp_close` | experimental | `udp_close(sock)` |
+| `dns_lookup_mx` | preview | `mx := dns_lookup_mx("example.com")` |
+| `dns_lookup_txt` | preview | `txt := dns_lookup_txt("_dmarc.example.com")` |
+| `dns_lookup_ptr` | preview | `ptr := dns_lookup_ptr("192.0.2.1")` |
+| `dns_lookup_tlsa` | preview | `tlsa := dns_lookup_tlsa("_25._tcp.mail.example.com")` |
+
+DNS lookups require `network-client`. Their optional dictionary accepts bounded
+`timeout_ms` (250-30000), `attempts` (1-5), `max_records` (1-256), and `dnssec`
+(boolean, default `true`). Results use the `kujo.dns.lookup.v1` envelope and
+distinguish `OK` from `NO_RECORDS`; resolver failures remain errors. When DNSSEC
+checking is enabled, the envelope reports `SECURE`, `INSECURE`, `BOGUS`, or
+`INDETERMINATE`. Callers that require DANE must accept only `SECURE` TLSA data.
 
 ## Database, Compression, Crypto, and Image
 

@@ -485,6 +485,15 @@ fn native_capability_untrusted_denies_network_client() {
     );
 }
 
+#[test]
+fn native_capability_untrusted_denies_dns_lookup() {
+    assert_runtime_boundary_failure_with_args(
+        "dns_lookup_mx(\"example.com\")\n",
+        "Capability denied: network-client required for dns_lookup_mx",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
 fn ai_replay_fixture_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ai_cassettes")
 }

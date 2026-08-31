@@ -10,6 +10,7 @@ pub mod concurrency;
 pub mod crypto;
 #[cfg(feature = "runtime-db")]
 pub mod database;
+pub mod dns;
 #[cfg(not(feature = "runtime-db"))]
 pub mod database {
     use super::super::Value;
@@ -198,6 +199,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = database::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = dns::handle(interp, canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = network::handle(interp, canonical_name, arg_values) {
@@ -501,6 +505,10 @@ mod tests {
             "udp_send_to",
             "udp_receive_from",
             "udp_close",
+            "dns_lookup_mx",
+            "dns_lookup_txt",
+            "dns_lookup_ptr",
+            "dns_lookup_tlsa",
             "sha256",
             "hmac_sha256",
             "hmac_sha256_verify",

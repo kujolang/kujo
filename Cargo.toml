@@ -82,6 +82,7 @@ md-5 = "0.10"
 bcrypt = "0.15"
 aes-gcm = "0.10"
 openssl = { version = "0.10.81", features = ["vendored"] }
+hickory-resolver = { version = "0.26.1", features = ["dnssec-ring"] }
 nohash-hasher = "0.2"
 rayon = "1.10"
 mime_guess = "2.0"

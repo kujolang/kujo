@@ -462,6 +462,10 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `udp_send_to` | `udp_send_to(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := udp_send_to(...)` |
 | `udp_receive_from` | `udp_receive_from(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := udp_receive_from(...)` |
 | `udp_close` | `udp_close(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := udp_close(...)` |
+| `dns_lookup_mx` | `dns_lookup_mx(name, options?)` | handler-defined | dictionary | Bounded MX lookup with deterministic sorting, per-record TTL/DNSSEC proof, and `kujo.dns.lookup.v1` envelope. | `network-client` | `result := dns_lookup_mx("example.com")` |
+| `dns_lookup_txt` | `dns_lookup_txt(name, options?)` | handler-defined | dictionary | Bounded TXT lookup; split DNS character strings are joined in wire order and records are deterministically sorted. | `network-client` | `result := dns_lookup_txt("_dmarc.example.com")` |
+| `dns_lookup_ptr` | `dns_lookup_ptr(ip, options?)` | handler-defined | dictionary | Bounded reverse lookup for a validated IPv4 or IPv6 address. | `network-client` | `result := dns_lookup_ptr("192.0.2.1")` |
+| `dns_lookup_tlsa` | `dns_lookup_tlsa(name, options?)` | handler-defined | dictionary | Bounded TLSA lookup with numeric usage/selector/matching fields, lowercase association-data hex, and DNSSEC proof. | `network-client` | `result := dns_lookup_tlsa("_25._tcp.mail.example.com")` |
 
 ## Coverage Contract
 

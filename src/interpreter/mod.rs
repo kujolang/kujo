@@ -911,6 +911,10 @@ impl Interpreter {
             "udp_send_to",
             "udp_receive_from",
             "udp_close",
+            "dns_lookup_mx",
+            "dns_lookup_txt",
+            "dns_lookup_ptr",
+            "dns_lookup_tlsa",
         ]
     }
 
@@ -1720,6 +1724,22 @@ impl Interpreter {
             Value::NativeFunction("udp_receive_from".to_string()),
         );
         self.env.define("udp_close".to_string(), Value::NativeFunction("udp_close".to_string()));
+        self.env.define(
+            "dns_lookup_mx".to_string(),
+            Value::NativeFunction("dns_lookup_mx".to_string()),
+        );
+        self.env.define(
+            "dns_lookup_txt".to_string(),
+            Value::NativeFunction("dns_lookup_txt".to_string()),
+        );
+        self.env.define(
+            "dns_lookup_ptr".to_string(),
+            Value::NativeFunction("dns_lookup_ptr".to_string()),
+        );
+        self.env.define(
+            "dns_lookup_tlsa".to_string(),
+            Value::NativeFunction("dns_lookup_tlsa".to_string()),
+        );
     }
 
     /// Sets the source file and content for error reporting
