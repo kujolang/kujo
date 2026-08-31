@@ -2289,6 +2289,15 @@ pub fn format_debug_value(value: &Value) -> String {
         Value::ZipArchive { path, .. } => format!("ZipArchive(path: {})", path),
         Value::TcpListener { addr, .. } => format!("TcpListener(addr: {})", addr),
         Value::TcpStream { peer_addr, .. } => format!("TcpStream(peer: {})", peer_addr),
+        Value::TlsStream { peer_addr, protocol, cipher, .. } => {
+            format!("TlsStream(peer: {}, protocol: {}, cipher: {})", peer_addr, protocol, cipher)
+        }
+        Value::TlsAcceptor { certificate_sha256, min_protocol, .. } => {
+            format!(
+                "TlsAcceptor(certificate_sha256: {}, min_protocol: {})",
+                certificate_sha256, min_protocol
+            )
+        }
         Value::UdpSocket { addr, .. } => format!("UdpSocket(addr: {})", addr),
         Value::Result { is_ok, value } => {
             if *is_ok {

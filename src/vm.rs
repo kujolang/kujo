@@ -918,6 +918,8 @@ impl VM {
                 | Value::DenseIntDictIntFull(_)
                 | Value::TcpListener { .. }
                 | Value::TcpStream { .. }
+                | Value::TlsStream { .. }
+                | Value::TlsAcceptor { .. }
                 | Value::UdpSocket { .. }
                 | Value::Channel(_)
                 | Value::GeneratorDef(_, _)

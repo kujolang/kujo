@@ -654,7 +654,23 @@ pub enum Value {
     /// TCP stream for bidirectional communication
     /// Infrastructure for network.rs stub module
     #[allow(dead_code)]
-    TcpStream { stream: Arc<Mutex<std::net::TcpStream>>, peer_addr: String },
+    TcpStream { stream: Arc<Mutex<Option<std::net::TcpStream>>>, peer_addr: String },
+    /// TLS stream for verified client connections or server-side accepted sessions.
+    TlsStream {
+        stream: Arc<Mutex<Option<openssl::ssl::SslStream<std::net::TcpStream>>>>,
+        peer_addr: String,
+        server_name: String,
+        protocol: String,
+        cipher: String,
+        peer_certificate_sha256: Option<String>,
+        peer_verified: bool,
+    },
+    /// Reusable server TLS configuration loaded from a certificate chain and private key.
+    TlsAcceptor {
+        acceptor: Arc<openssl::ssl::SslAcceptor>,
+        certificate_sha256: String,
+        min_protocol: String,
+    },
     /// UDP socket for datagram communication
     /// Infrastructure for network.rs stub module
     #[allow(dead_code)]
@@ -876,6 +892,16 @@ impl std::fmt::Debug for Value {
             }
             Value::TcpStream { peer_addr, .. } => {
                 write!(f, "TcpStream(peer={})", peer_addr)
+            }
+            Value::TlsStream { peer_addr, protocol, cipher, .. } => {
+                write!(f, "TlsStream(peer={}, protocol={}, cipher={})", peer_addr, protocol, cipher)
+            }
+            Value::TlsAcceptor { certificate_sha256, min_protocol, .. } => {
+                write!(
+                    f,
+                    "TlsAcceptor(certificate_sha256={}, min_protocol={})",
+                    certificate_sha256, min_protocol
+                )
             }
             Value::UdpSocket { addr, .. } => {
                 write!(f, "UdpSocket(addr={})", addr)

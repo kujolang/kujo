@@ -36,6 +36,7 @@ pub mod network;
 pub mod schema;
 pub mod strings;
 pub mod system;
+pub mod tls;
 pub mod token;
 pub mod type_ops;
 pub mod vector;
@@ -202,6 +203,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = dns::handle(interp, canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = tls::handle(interp, canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = network::handle(interp, canonical_name, arg_values) {
@@ -509,6 +513,14 @@ mod tests {
             "dns_lookup_txt",
             "dns_lookup_ptr",
             "dns_lookup_tlsa",
+            "tls_connect",
+            "tls_upgrade_client",
+            "tls_acceptor",
+            "tls_upgrade_server",
+            "tls_send",
+            "tls_receive",
+            "tls_close",
+            "tls_info",
             "sha256",
             "hmac_sha256",
             "hmac_sha256_verify",

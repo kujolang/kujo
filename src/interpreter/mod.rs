@@ -915,6 +915,14 @@ impl Interpreter {
             "dns_lookup_txt",
             "dns_lookup_ptr",
             "dns_lookup_tlsa",
+            "tls_connect",
+            "tls_upgrade_client",
+            "tls_acceptor",
+            "tls_upgrade_server",
+            "tls_send",
+            "tls_receive",
+            "tls_close",
+            "tls_info",
         ]
     }
 
@@ -1740,6 +1748,23 @@ impl Interpreter {
             "dns_lookup_tlsa".to_string(),
             Value::NativeFunction("dns_lookup_tlsa".to_string()),
         );
+        self.env
+            .define("tls_connect".to_string(), Value::NativeFunction("tls_connect".to_string()));
+        self.env.define(
+            "tls_upgrade_client".to_string(),
+            Value::NativeFunction("tls_upgrade_client".to_string()),
+        );
+        self.env
+            .define("tls_acceptor".to_string(), Value::NativeFunction("tls_acceptor".to_string()));
+        self.env.define(
+            "tls_upgrade_server".to_string(),
+            Value::NativeFunction("tls_upgrade_server".to_string()),
+        );
+        self.env.define("tls_send".to_string(), Value::NativeFunction("tls_send".to_string()));
+        self.env
+            .define("tls_receive".to_string(), Value::NativeFunction("tls_receive".to_string()));
+        self.env.define("tls_close".to_string(), Value::NativeFunction("tls_close".to_string()));
+        self.env.define("tls_info".to_string(), Value::NativeFunction("tls_info".to_string()));
     }
 
     /// Sets the source file and content for error reporting

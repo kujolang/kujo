@@ -494,6 +494,24 @@ fn native_capability_untrusted_denies_dns_lookup() {
     );
 }
 
+#[test]
+fn native_capability_untrusted_denies_tls_client() {
+    assert_runtime_boundary_failure_with_args(
+        "tls_connect(\"127.0.0.1\", 1)\n",
+        "Capability denied: network-client required for tls_connect",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
+fn native_capability_tls_acceptor_requires_network_server_and_filesystem_read() {
+    assert_runtime_boundary_failure_with_args(
+        "tls_acceptor(\"certificate.pem\", \"private-key.pem\")\n",
+        "Capability denied: filesystem-read required for tls_acceptor",
+        &["--interpreter", "--untrusted", "--allow-net-server"],
+    );
+}
+
 fn ai_replay_fixture_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ai_cassettes")
 }

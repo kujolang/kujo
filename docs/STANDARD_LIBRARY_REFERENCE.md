@@ -582,6 +582,14 @@ edge cases are higher-risk than the HTTP helper surface.
 | `dns_lookup_txt` | preview | `txt := dns_lookup_txt("_dmarc.example.com")` |
 | `dns_lookup_ptr` | preview | `ptr := dns_lookup_ptr("192.0.2.1")` |
 | `dns_lookup_tlsa` | preview | `tlsa := dns_lookup_tlsa("_25._tcp.mail.example.com")` |
+| `tls_connect` | preview | `tls := tls_connect("mail.example.com", 465)` |
+| `tls_upgrade_client` | preview | `tls := tls_upgrade_client(tcp, "mail.example.com")` |
+| `tls_acceptor` | preview | `acceptor := tls_acceptor("cert.pem", "key.pem")` |
+| `tls_upgrade_server` | preview | `tls := tls_upgrade_server(tcp, acceptor)` |
+| `tls_send` | preview | `tls_send(tls, "EHLO sender.example\r\n")` |
+| `tls_receive` | preview | `reply := tls_receive(tls, 4096)` |
+| `tls_close` | preview | `tls_close(tls)` |
+| `tls_info` | preview | `info := tls_info(tls)` |
 
 DNS lookups require `network-client`. Their optional dictionary accepts bounded
 `timeout_ms` (250-30000), `attempts` (1-5), `max_records` (1-256), and `dnssec`
@@ -589,6 +597,13 @@ DNS lookups require `network-client`. Their optional dictionary accepts bounded
 distinguish `OK` from `NO_RECORDS`; resolver failures remain errors. When DNSSEC
 checking is enabled, the envelope reports `SECURE`, `INSECURE`, `BOGUS`, or
 `INDETERMINATE`. Callers that require DANE must accept only `SECURE` TLSA data.
+
+TLS client verification cannot be disabled. `tls_connect` and
+`tls_upgrade_client` use SNI and hostname verification, trust platform roots,
+and may add a bounded public CA bundle with `ca_pem`. Both upgrade calls consume
+the source `TcpStream`; reuse returns a deterministic closed/upgraded error.
+Server private keys must be owner-only on Unix, and TLS info exposes only public
+negotiation metadata and SHA-256 fingerprints. TLS 1.0 and 1.1 are rejected.
 
 ## Database, Compression, Crypto, and Image
 

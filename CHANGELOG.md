@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add capability-gated, bounded MX, TXT, PTR, and TLSA DNS lookup primitives
   with deterministic result envelopes and DNSSEC proof status.
+- Add verified TLS client sockets, server acceptors, consumptive STARTTLS-style
+  TCP upgrades, bounded TLS I/O, certificate fingerprints, and TLS 1.2+
+  fail-closed protocol policy.
 
 ### Changed
 

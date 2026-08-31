@@ -80,7 +80,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                         Ok((stream, peer_address)) => {
                             match network_policy::apply_tcp_stream_timeouts(&stream, "tcp_accept") {
                                 Ok(()) => Value::TcpStream {
-                                    stream: Arc::new(Mutex::new(stream)),
+                                    stream: Arc::new(Mutex::new(Some(stream))),
                                     peer_addr: peer_address.to_string(),
                                 },
                                 Err(error) => Value::ErrorObject {
@@ -128,7 +128,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                         let address = format!("{}:{}", host.as_ref(), port);
                         match network_policy::connect_tcp_stream(&address, "tcp_connect") {
                             Ok(stream) => Value::TcpStream {
-                                stream: Arc::new(Mutex::new(stream)),
+                                stream: Arc::new(Mutex::new(Some(stream))),
                                 peer_addr: address,
                             },
                             Err(error) => Value::ErrorObject {
@@ -158,8 +158,13 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                             Ok(guard) => guard,
                             Err(error) => return Some(error),
                         };
-                        match stream_guard.write_all(data.as_ref().as_bytes()) {
-                            Ok(_) => match stream_guard.flush() {
+                        let Some(stream) = stream_guard.as_mut() else {
+                            return Some(Value::Error(
+                                "tcp_send: TCP stream is closed or upgraded".to_string(),
+                            ));
+                        };
+                        match stream.write_all(data.as_ref().as_bytes()) {
+                            Ok(_) => match stream.flush() {
                                 Ok(_) => Value::Int(data.len() as i64),
                                 Err(error) => Value::ErrorObject {
                                     message: timeout_aware_error_message(
@@ -187,8 +192,13 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                             Ok(guard) => guard,
                             Err(error) => return Some(error),
                         };
-                        match stream_guard.write_all(data) {
-                            Ok(_) => match stream_guard.flush() {
+                        let Some(stream) = stream_guard.as_mut() else {
+                            return Some(Value::Error(
+                                "tcp_send: TCP stream is closed or upgraded".to_string(),
+                            ));
+                        };
+                        match stream.write_all(data) {
+                            Ok(_) => match stream.flush() {
                                 Ok(_) => Value::Int(data.len() as i64),
                                 Err(error) => Value::ErrorObject {
                                     message: timeout_aware_error_message(
@@ -235,7 +245,12 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                             Err(error) => return Some(error),
                         };
                         let mut buffer = vec![0u8; size];
-                        match stream_guard.read(&mut buffer) {
+                        let Some(stream) = stream_guard.as_mut() else {
+                            return Some(Value::Error(
+                                "tcp_receive: TCP stream is closed or upgraded".to_string(),
+                            ));
+                        };
+                        match stream.read(&mut buffer) {
                             Ok(read_size) => {
                                 buffer.truncate(read_size);
                                 match String::from_utf8(buffer.clone()) {
@@ -266,9 +281,17 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 Value::Error("tcp_close requires a TcpStream or TcpListener argument".to_string())
             } else {
                 match arg_values.first() {
-                    Some(Value::TcpStream { .. }) | Some(Value::TcpListener { .. }) => {
+                    Some(Value::TcpStream { stream, .. }) => {
+                        let mut stream_guard = match lock_or_network_error(stream, "tcp_close") {
+                            Ok(guard) => guard,
+                            Err(error) => return Some(error),
+                        };
+                        if let Some(stream) = stream_guard.take() {
+                            let _ = stream.shutdown(std::net::Shutdown::Both);
+                        }
                         Value::Bool(true)
                     }
+                    Some(Value::TcpListener { .. }) => Value::Bool(true),
                     _ => Value::Error(
                         "tcp_close requires a TcpStream or TcpListener argument".to_string(),
                     ),
@@ -290,7 +313,12 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                                 Ok(guard) => guard,
                                 Err(error) => return Some(error),
                             };
-                        match stream_guard.set_nonblocking(*nonblocking) {
+                        let Some(stream) = stream_guard.as_ref() else {
+                            return Some(Value::Error(
+                                "tcp_set_nonblocking: TCP stream is closed or upgraded".to_string(),
+                            ));
+                        };
+                        match stream.set_nonblocking(*nonblocking) {
                             Ok(_) => Value::Bool(true),
                             Err(error) => Value::ErrorObject {
                                 message: format!(
