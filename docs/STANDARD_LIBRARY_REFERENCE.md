@@ -591,6 +591,7 @@ edge cases are higher-risk than the HTTP helper surface.
 | `tcp_info` | preview | `info := tcp_info(conn)` |
 | `tcp_set_timeouts` | preview | `tcp_set_timeouts(conn, 30000, 30000)` |
 | `ip_classify` | preview | `info := ip_classify("192.0.2.1")` |
+| `tcp_bind_probe` | preview | `probe := tcp_bind_probe("127.0.0.1")` |
 | `udp_bind` | experimental | `sock := udp_bind("127.0.0.1", 9001)` |
 | `udp_send_to` | experimental | `udp_send_to(sock, "hi", "127.0.0.1", 9002)` |
 | `udp_receive_from` | experimental | `packet := udp_receive_from(sock, 1024)` |

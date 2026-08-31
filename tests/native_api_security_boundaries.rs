@@ -1059,6 +1059,35 @@ fn network_ip_classification_is_fail_closed_and_capability_free() {
 }
 
 #[test]
+fn network_tcp_bind_probe_is_structured_and_server_capability_gated() {
+    let project_root = unique_temp_dir("network_tcp_bind_probe");
+    let script_path = project_root.join("tcp_bind_probe.kujo");
+    fs::write(
+        &script_path,
+        "print(to_json([tcp_bind_probe(\"127.0.0.1\"),tcp_bind_probe(\"192.0.2.10\"),tcp_bind_probe(\"invalid\")]))\n",
+    )
+    .expect("failed to write bind probe script");
+    let denied =
+        run_kujo(&["run", "--untrusted", script_path.to_str().expect("utf-8 path")], &project_root);
+    assert_ne!(denied.status.code(), Some(0));
+    assert!(stderr_text(&denied).contains("network-server"));
+    for mode in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(mode);
+        args.push("--untrusted");
+        args.push("--allow-net-server");
+        args.push(script_path.to_str().expect("utf-8 path"));
+        let output = run_kujo(&args, &project_root);
+        assert_eq!(output.status.code(), Some(0), "stderr={}", stderr_text(&output));
+        let stdout = stdout_text(&output);
+        assert!(stdout.contains("TCP_BIND_PROBE_AVAILABLE"));
+        assert!(stdout.contains("TCP_BIND_PROBE_UNAVAILABLE"));
+        assert!(stdout.contains("TCP_BIND_PROBE_ADDRESS_INVALID"));
+        assert!(!stdout.contains("os error"));
+    }
+}
+
+#[test]
 fn network_http_request_explicit_deny_private_ignores_global_override() {
     let project_root = unique_temp_dir("network_http_request_explicit_deny_private");
     let script_path = project_root.join("explicit_destination_policy.kujo");

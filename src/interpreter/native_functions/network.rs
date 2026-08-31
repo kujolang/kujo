@@ -150,6 +150,72 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 Value::Error("ip_classify requires a string IP literal argument".to_string())
             }
         }
+        "tcp_bind_probe" => {
+            if arg_values.len() != 1 {
+                Value::Error("tcp_bind_probe requires a string IP literal argument".to_string())
+            } else if let Some(Value::Str(input)) = arg_values.first() {
+                match input.parse::<IpAddr>() {
+                    Ok(address) => {
+                        let (scope, publicly_routable) = ip_scope(address);
+                        let probe = std::net::TcpListener::bind((address, 0));
+                        let bindable = probe.is_ok();
+                        drop(probe);
+                        let mut result = DictMap::default();
+                        network_insert(
+                            &mut result,
+                            "schema_version",
+                            network_string_value("kujo.net.tcp-bind-probe.v1"),
+                        );
+                        network_insert(
+                            &mut result,
+                            "address",
+                            network_string_value(address.to_string()),
+                        );
+                        network_insert(&mut result, "scope", network_string_value(scope));
+                        network_insert(
+                            &mut result,
+                            "publicly_routable",
+                            Value::Bool(publicly_routable),
+                        );
+                        network_insert(&mut result, "bindable", Value::Bool(bindable));
+                        network_insert(&mut result, "ok", Value::Bool(bindable));
+                        network_insert(
+                            &mut result,
+                            "code",
+                            network_string_value(if bindable {
+                                "TCP_BIND_PROBE_AVAILABLE"
+                            } else {
+                                "TCP_BIND_PROBE_UNAVAILABLE"
+                            }),
+                        );
+                        Value::dict(result)
+                    }
+                    Err(_) => {
+                        let mut result = DictMap::default();
+                        network_insert(
+                            &mut result,
+                            "schema_version",
+                            network_string_value("kujo.net.tcp-bind-probe.v1"),
+                        );
+                        network_insert(
+                            &mut result,
+                            "address",
+                            network_string_value(input.as_ref()),
+                        );
+                        network_insert(&mut result, "bindable", Value::Bool(false));
+                        network_insert(&mut result, "ok", Value::Bool(false));
+                        network_insert(
+                            &mut result,
+                            "code",
+                            network_string_value("TCP_BIND_PROBE_ADDRESS_INVALID"),
+                        );
+                        Value::dict(result)
+                    }
+                }
+            } else {
+                Value::Error("tcp_bind_probe requires a string IP literal argument".to_string())
+            }
+        }
         "tcp_listen" => {
             if arg_values.len() != 2 {
                 Value::Error("tcp_listen requires (string_host, int_port) arguments".to_string())

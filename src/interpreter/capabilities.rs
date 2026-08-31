@@ -182,8 +182,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         "ai_chat" | "ai_stream_chat" | "ai_embedding" | "ai_tool_loop" => {
             Some(NativeCapability::NetworkAi)
         }
-        "tcp_listen" | "tcp_accept" | "udp_bind" | "http_listen" | "tls_acceptor"
-        | "tls_upgrade_server" => Some(NativeCapability::NetworkServer),
+        "tcp_bind_probe" | "tcp_listen" | "tcp_accept" | "udp_bind" | "http_listen"
+        | "tls_acceptor" | "tls_upgrade_server" => Some(NativeCapability::NetworkServer),
 
         // Database
         "db_connect" | "db_execute" | "db_query" | "db_close" | "db_pool" | "db_pool_acquire"

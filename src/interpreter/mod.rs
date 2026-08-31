@@ -902,6 +902,7 @@ impl Interpreter {
             "pipe_commands",
             // Network functions
             "ip_classify",
+            "tcp_bind_probe",
             "tcp_listen",
             "tcp_accept",
             "tcp_connect",
@@ -1723,6 +1724,10 @@ impl Interpreter {
         // Network functions (TCP/UDP)
         self.env
             .define("ip_classify".to_string(), Value::NativeFunction("ip_classify".to_string()));
+        self.env.define(
+            "tcp_bind_probe".to_string(),
+            Value::NativeFunction("tcp_bind_probe".to_string()),
+        );
         self.env.define("tcp_listen".to_string(), Value::NativeFunction("tcp_listen".to_string()));
         self.env.define("tcp_accept".to_string(), Value::NativeFunction("tcp_accept".to_string()));
         self.env
@@ -2957,6 +2962,7 @@ impl Interpreter {
                 CallableArity::exact("decode_base64_utf8", vec!["text".to_string()])
             }
             "ip_classify" => CallableArity::exact("ip_classify", vec!["address".to_string()]),
+            "tcp_bind_probe" => CallableArity::exact("tcp_bind_probe", vec!["address".to_string()]),
             "jsonl_query" => {
                 CallableArity::exact("jsonl_query", vec!["path".to_string(), "options".to_string()])
             }

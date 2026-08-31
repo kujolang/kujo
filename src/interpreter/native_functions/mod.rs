@@ -499,6 +499,7 @@ mod tests {
             "zip_close",
             "unzip",
             "ip_classify",
+            "tcp_bind_probe",
             "tcp_listen",
             "tcp_accept",
             "tcp_connect",
