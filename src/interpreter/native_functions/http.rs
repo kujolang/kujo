@@ -1876,6 +1876,65 @@ pub fn handle_with_interpreter(
                 .unwrap_or_else(|| network_policy::default_http_timeout().as_secs_f64())
                 .max(0.001_f64);
 
+            let force_deny_private = match options.get("destination_policy") {
+                None => false,
+                Some(Value::Str(policy)) if policy.as_ref() == "inherit" => false,
+                Some(Value::Str(policy)) if policy.as_ref() == "deny_private" => true,
+                Some(Value::Str(policy)) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(format!(
+                            "Invalid HTTP destination_policy '{}'; expected inherit or deny_private",
+                            policy
+                        )))),
+                    });
+                }
+                Some(_) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(
+                            "HTTP destination_policy must be a string".to_string(),
+                        ))),
+                    });
+                }
+            };
+
+            let pin_dns = match options.get("pin_dns") {
+                None => false,
+                Some(Value::Bool(value)) => *value,
+                Some(_) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(
+                            "HTTP pin_dns must be a boolean".to_string(),
+                        ))),
+                    });
+                }
+            };
+
+            let follow_redirects = match options.get("redirects") {
+                None => true,
+                Some(Value::Str(policy)) if policy.as_ref() == "follow" => true,
+                Some(Value::Str(policy)) if policy.as_ref() == "none" => false,
+                Some(Value::Str(policy)) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(format!(
+                            "Invalid HTTP redirects policy '{}'; expected follow or none",
+                            policy
+                        )))),
+                    });
+                }
+                Some(_) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(
+                            "HTTP redirects policy must be a string".to_string(),
+                        ))),
+                    });
+                }
+            };
+
             let headers: Vec<(String, String)> = options
                 .get("_headers")
                 .or_else(|| options.get("headers"))
@@ -1892,13 +1951,17 @@ pub fn handle_with_interpreter(
 
             let request_result =
                 network_policy::run_blocking_http_task("HTTP request", move || {
-                    network_policy::enforce_http_url_destination_policy(&url, "HTTP request")?;
                     let method = Method::from_bytes(method_name.as_bytes()).map_err(|error| {
                         format!("Invalid HTTP method '{}': {}", method_name, error)
                     })?;
-                    let client = network_policy::build_http_client(Duration::from_secs_f64(
-                        timeout_seconds,
-                    ))?;
+                    let client = network_policy::build_policy_http_client(
+                        &url,
+                        Duration::from_secs_f64(timeout_seconds),
+                        force_deny_private,
+                        pin_dns,
+                        follow_redirects,
+                        "HTTP request",
+                    )?;
 
                     let mut request = client.request(method, &url);
                     for (key, value) in headers {

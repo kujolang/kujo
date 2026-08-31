@@ -101,6 +101,26 @@ fn spawn_one_shot_http_server(
     Some((port, handle))
 }
 
+fn spawn_one_shot_redirect_server(location: String) -> Option<(u16, thread::JoinHandle<()>)> {
+    let listener = match TcpListener::bind("127.0.0.1:0") {
+        Ok(listener) => listener,
+        Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => return None,
+        Err(error) => panic!("failed to bind local HTTP redirect listener: {error}"),
+    };
+    let port = listener.local_addr().expect("local addr should resolve").port();
+    let handle = thread::spawn(move || {
+        if let Ok((mut stream, _)) = listener.accept() {
+            read_http_request(&mut stream);
+            let response = format!(
+                "HTTP/1.1 302 Found\r\nLocation: {location}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = stream.flush();
+        }
+    });
+    Some((port, handle))
+}
+
 fn stdout_text(output: &Output) -> String {
     String::from_utf8(output.stdout.clone()).expect("stdout should be utf-8")
 }
@@ -929,6 +949,77 @@ fn network_destination_policy_override_allows_trusted_loopback_http_client() {
         output.status.code(),
         stdout_text(&output),
         stderr_text(&output)
+    );
+}
+
+#[test]
+fn network_http_request_explicit_deny_private_ignores_global_override() {
+    let project_root = unique_temp_dir("network_http_request_explicit_deny_private");
+    let script_path = project_root.join("explicit_destination_policy.kujo");
+    fs::write(
+        &script_path,
+        "let result := http_request(\"http://127.0.0.1:1/callback\", {\"destination_policy\": \"deny_private\", \"pin_dns\": true, \"redirects\": \"none\"})\nprint(result)\n",
+    )
+    .expect("failed to write explicit destination policy script");
+
+    let output = run_kujo_with_env(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-net-client",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+        &[("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1")],
+    );
+    assert_eq!(output.status.code(), Some(0));
+    assert!(
+        stdout_text(&output).contains("explicit outbound destination policy 'deny_private'"),
+        "explicit callback policy should fail closed: stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+}
+
+#[test]
+fn network_http_request_can_pin_resolution_and_disable_redirects() {
+    let Some((port, server_handle)) =
+        spawn_one_shot_redirect_server("http://127.0.0.1:1/private".to_string())
+    else {
+        eprintln!("Skipping redirect policy test: sandbox denied local TCP bind permissions");
+        return;
+    };
+    let project_root = unique_temp_dir("network_http_request_no_redirect");
+    let script_path = project_root.join("no_redirect.kujo");
+    let script_source = format!(
+        "let result := http_request(\"http://127.0.0.1:{port}/callback\", {{\"pin_dns\": true, \"redirects\": \"none\"}})\nprint(result)\n"
+    );
+    fs::write(&script_path, script_source).expect("failed to write no-redirect script");
+
+    let output = run_kujo_with_env(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-net-client",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+        &[("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1")],
+    );
+    server_handle.join().expect("redirect server should finish");
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "no-redirect request failed: stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+    assert!(
+        stdout_text(&output).contains("302"),
+        "redirect response should be returned without following Location: {}",
+        stdout_text(&output)
     );
 }
 

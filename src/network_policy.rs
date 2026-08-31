@@ -1,7 +1,7 @@
 use crate::runtime_limits;
 use reqwest::blocking::{Client, Response as BlockingResponse};
 use std::io::Read;
-use std::net::{IpAddr, TcpStream, ToSocketAddrs, UdpSocket};
+use std::net::{IpAddr, SocketAddr, TcpStream, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
 
 pub const DEFAULT_NETWORK_CONNECT_TIMEOUT_MS: u64 = 10_000;
@@ -139,6 +139,102 @@ pub fn enforce_http_url_destination_policy(url: &str, surface: &str) -> Result<(
     })? as i64;
 
     enforce_host_port_destination_policy(host, port, surface)
+}
+
+fn resolved_http_destination(
+    url: &str,
+    surface: &str,
+) -> Result<(reqwest::Url, String, Vec<SocketAddr>), String> {
+    let parsed = reqwest::Url::parse(url)
+        .map_err(|error| format!("{} failed: invalid URL '{}': {}", surface, url, error))?;
+    let scheme = parsed.scheme().to_ascii_lowercase();
+    if !ALLOWED_HTTP_URL_SCHEMES.iter().any(|allowed| *allowed == scheme) {
+        return Err(format!(
+            "{} failed: unsupported URL scheme '{}'; expected http or https",
+            surface, scheme
+        ));
+    }
+
+    let host = parsed
+        .host_str()
+        .ok_or_else(|| format!("{} failed: URL '{}' is missing a host", surface, url))?
+        .to_string();
+    let port = parsed.port_or_known_default().ok_or_else(|| {
+        format!(
+            "{} failed: URL '{}' has unsupported scheme/port for destination resolution",
+            surface, url
+        )
+    })?;
+    let mut addresses = (host.as_str(), port)
+        .to_socket_addrs()
+        .map_err(|error| {
+            format!(
+                "{} failed to resolve network destination '{}:{}': {}",
+                surface, host, port, error
+            )
+        })?
+        .collect::<Vec<_>>();
+    addresses.sort_unstable();
+    addresses.dedup();
+    if addresses.is_empty() {
+        return Err(format!(
+            "{} failed: no socket addresses resolved for '{}:{}'",
+            surface, host, port
+        ));
+    }
+    Ok((parsed, host, addresses))
+}
+
+/// Build an HTTP client whose destination resolution and redirect behavior are
+/// fixed before the request is sent. `force_deny_private` cannot be relaxed by
+/// the process-wide private-destination override and is intended for untrusted
+/// callback destinations such as webhooks. When `pin_dns` is enabled, the same
+/// validated address set is installed into reqwest so the request cannot
+/// silently re-resolve to a different address after policy evaluation.
+pub fn build_policy_http_client(
+    url: &str,
+    timeout: Duration,
+    force_deny_private: bool,
+    pin_dns: bool,
+    follow_redirects: bool,
+    surface: &str,
+) -> Result<Client, String> {
+    let (_parsed, host, addresses) = resolved_http_destination(url, surface)?;
+
+    if force_deny_private && follow_redirects {
+        return Err(format!(
+            "{} failed: explicit destination policy 'deny_private' requires redirects 'none'",
+            surface
+        ));
+    }
+
+    if force_deny_private {
+        let mut blocked = addresses
+            .iter()
+            .map(SocketAddr::ip)
+            .filter(|address| is_blocked_destination(*address))
+            .collect::<Vec<_>>();
+        blocked.sort_unstable();
+        blocked.dedup();
+        if !blocked.is_empty() {
+            return Err(format!(
+                "{} blocked by explicit outbound destination policy 'deny_private' (resolved to blocked addresses: {})",
+                surface,
+                blocked.iter().map(IpAddr::to_string).collect::<Vec<_>>().join(", ")
+            ));
+        }
+    } else {
+        enforce_http_url_destination_policy(url, surface)?;
+    }
+
+    let mut builder = Client::builder().timeout(timeout);
+    if !follow_redirects {
+        builder = builder.redirect(reqwest::redirect::Policy::none());
+    }
+    if pin_dns || force_deny_private {
+        builder = builder.resolve_to_addrs(&host, &addresses);
+    }
+    builder.build().map_err(|error| format!("Failed to create HTTP client: {}", error))
 }
 
 fn http_url_for_policy(url: &str, surface: &str) -> Result<reqwest::Url, String> {
@@ -528,6 +624,51 @@ mod tests {
             assert!(error.contains("unsupported URL scheme 'ftp'"));
             assert!(error.contains("expected http or https"));
         });
+    }
+
+    #[test]
+    fn explicit_http_policy_cannot_be_relaxed_by_private_destination_override() {
+        with_policy_env(None, Some("1"), || {
+            let error = build_policy_http_client(
+                "http://127.0.0.1:8080",
+                default_http_timeout(),
+                true,
+                true,
+                false,
+                "webhook",
+            )
+            .expect_err("explicit deny_private must reject loopback even with the global override");
+            assert!(error.contains("explicit outbound destination policy 'deny_private'"));
+            assert!(error.contains("127.0.0.1"));
+        });
+    }
+
+    #[test]
+    fn policy_http_client_rejects_unsupported_scheme_before_resolution() {
+        let error = build_policy_http_client(
+            "ftp://127.0.0.1/file",
+            default_http_timeout(),
+            true,
+            true,
+            false,
+            "webhook",
+        )
+        .expect_err("unsupported schemes must fail closed");
+        assert!(error.contains("unsupported URL scheme 'ftp'"));
+    }
+
+    #[test]
+    fn explicit_http_policy_requires_redirects_none() {
+        let error = build_policy_http_client(
+            "http://93.184.216.34/callback",
+            default_http_timeout(),
+            true,
+            true,
+            true,
+            "webhook",
+        )
+        .expect_err("strict destination policy must not allow unchecked redirect hops");
+        assert!(error.contains("requires redirects 'none'"));
     }
 
     #[test]

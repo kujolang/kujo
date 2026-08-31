@@ -528,7 +528,7 @@ destinations remain subject to the outbound destination policy described in
 | `regex_replace` | stable | `out := regex_replace(text, "\\s+", " ")` |
 | `regex_split` | stable | `parts := regex_split(text, ",\\s*")` |
 | `http_get` | preview | `res := http_get("https://example.com")` |
-| `http_request` | preview | `res := http_request({"method":"GET", "url": url})` |
+| `http_request` | preview | `res := http_request({"method":"GET", "url": url, "destination_policy":"deny_private", "pin_dns":true, "redirects":"none"})` |
 | `http_post` | preview | `res := http_post("https://example.com", {"x":1})` |
 | `http_put` | preview | `res := http_put("https://example.com", {"x":1})` |
 | `http_delete` | preview | `res := http_delete("https://example.com")` |
@@ -550,6 +550,17 @@ destinations remain subject to the outbound destination policy described in
 | `redirect_response` | preview | `res := redirect_response("/next")` |
 | `set_header` | preview | `res := set_header(res, "X-Trace", "1")` |
 | `set_headers` | preview | `res := set_headers(res, {"X-Trace": "1"})` |
+
+For untrusted callback destinations, `http_request` supports three composable
+request policies. `destination_policy: "deny_private"` rejects any DNS answer
+in loopback, private, link-local, multicast, or unspecified ranges, pins the
+validated answers, cannot be relaxed by the process-wide private-network
+override, and requires `redirects: "none"`. `pin_dns: true` independently
+installs the validated address set into the HTTP client so the request does not
+perform a second DNS resolution. `redirects: "none"` returns 3xx responses
+without following `Location`. Use all three explicitly for webhooks and similar
+SSRF-sensitive callbacks. The backward-compatible defaults are `"inherit"`,
+`false`, and `"follow"` respectively.
 | `jwt_encode` | preview | `tok := jwt_encode({"sub":"user"}, "secret")` |
 | `jwt_decode` | preview | `payload := jwt_decode(tok, "secret")` |
 | `jwt_verify` | preview | `ok := jwt_verify(tok, "secret")` |
