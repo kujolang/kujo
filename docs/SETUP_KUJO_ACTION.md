@@ -4,7 +4,7 @@ The repository publishes a composite action at `.github/actions/setup-kujo`. Pin
 
 ```yaml
 - name: Setup Kujo
-  uses: kujolang/kujo/.github/actions/setup-kujo@8ea137b92587f28efea430acb92bf974f90d9b62
+  uses: kujolang/kujo/.github/actions/setup-kujo@8ea137b0235f7272fb776eaf9203e34fc10591b1
   with:
     version: v1.1.0
 - run: kujo --version
