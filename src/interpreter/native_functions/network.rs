@@ -5,6 +5,7 @@
 use crate::interpreter::{DictMap, Interpreter, Value};
 use crate::network_policy;
 use std::io::{Read, Write};
+use std::net::IpAddr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 fn network_string_value(value: impl Into<String>) -> Value {
@@ -28,6 +29,76 @@ fn timeout_aware_error_message(operation: &str, error: &std::io::Error) -> Strin
     }
 }
 
+fn ip_scope(address: IpAddr) -> (&'static str, bool) {
+    match address {
+        IpAddr::V4(ip) => {
+            let octets = ip.octets();
+            if ip.is_unspecified() {
+                return ("unspecified", false);
+            }
+            if ip.is_loopback() {
+                return ("loopback", false);
+            }
+            if ip.is_private() {
+                return ("private", false);
+            }
+            if ip.is_link_local() {
+                return ("link_local", false);
+            }
+            if ip.is_multicast() {
+                return ("multicast", false);
+            }
+            if ip.is_broadcast() {
+                return ("broadcast", false);
+            }
+            if ip.is_documentation() {
+                return ("documentation", false);
+            }
+            if octets[0] == 100 && (64..=127).contains(&octets[1]) {
+                return ("shared", false);
+            }
+            if octets[0] == 198 && (18..=19).contains(&octets[1]) {
+                return ("benchmark", false);
+            }
+            if octets[0] == 0
+                || octets[0] >= 240
+                || (octets[0] == 192 && octets[1] == 0 && octets[2] == 0)
+            {
+                return ("reserved", false);
+            }
+            ("global", true)
+        }
+        IpAddr::V6(ip) => {
+            let segments = ip.segments();
+            if ip.is_unspecified() {
+                return ("unspecified", false);
+            }
+            if ip.is_loopback() {
+                return ("loopback", false);
+            }
+            if ip.is_multicast() {
+                return ("multicast", false);
+            }
+            if ip.is_unique_local() {
+                return ("private", false);
+            }
+            if ip.is_unicast_link_local() {
+                return ("link_local", false);
+            }
+            if segments[0] == 0x2001 && segments[1] == 0x0db8 {
+                return ("documentation", false);
+            }
+            if segments[..5] == [0, 0, 0, 0, 0] && segments[5] == 0xffff {
+                return ("ipv4_mapped", false);
+            }
+            if (segments[0] & 0xe000) != 0x2000 {
+                return ("reserved", false);
+            }
+            ("global", true)
+        }
+    }
+}
+
 fn lock_or_network_error<'a, T>(
     mutex: &'a Mutex<T>,
     context: &str,
@@ -42,6 +113,43 @@ fn lock_or_network_error<'a, T>(
 
 pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
+        "ip_classify" => {
+            if arg_values.len() != 1 {
+                Value::Error("ip_classify requires a string IP literal argument".to_string())
+            } else if let Some(Value::Str(input)) = arg_values.first() {
+                match input.parse::<IpAddr>() {
+                    Ok(address) => {
+                        let (scope, publicly_routable) = ip_scope(address);
+                        let mut result = DictMap::default();
+                        network_insert(
+                            &mut result,
+                            "schema_version",
+                            network_string_value("kujo.net.ip-classification.v1"),
+                        );
+                        network_insert(
+                            &mut result,
+                            "address",
+                            network_string_value(address.to_string()),
+                        );
+                        network_insert(
+                            &mut result,
+                            "family",
+                            network_string_value(if address.is_ipv4() { "ipv4" } else { "ipv6" }),
+                        );
+                        network_insert(&mut result, "scope", network_string_value(scope));
+                        network_insert(
+                            &mut result,
+                            "publicly_routable",
+                            Value::Bool(publicly_routable),
+                        );
+                        Value::dict(result)
+                    }
+                    Err(_) => Value::Error("ip_classify requires a valid IP literal".to_string()),
+                }
+            } else {
+                Value::Error("ip_classify requires a string IP literal argument".to_string())
+            }
+        }
         "tcp_listen" => {
             if arg_values.len() != 2 {
                 Value::Error("tcp_listen requires (string_host, int_port) arguments".to_string())
@@ -753,4 +861,21 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
     };
 
     Some(result)
+}
+
+#[cfg(test)]
+mod ip_classification_tests {
+    use super::*;
+
+    #[test]
+    fn fail_closed_ip_scope_classification() {
+        assert_eq!(ip_scope("8.8.8.8".parse().unwrap()), ("global", true));
+        assert_eq!(ip_scope("127.0.0.1".parse().unwrap()), ("loopback", false));
+        assert_eq!(ip_scope("10.0.0.1".parse().unwrap()), ("private", false));
+        assert_eq!(ip_scope("192.0.2.1".parse().unwrap()), ("documentation", false));
+        assert_eq!(ip_scope("100.64.0.1".parse().unwrap()), ("shared", false));
+        assert_eq!(ip_scope("2001:4860:4860::8888".parse().unwrap()), ("global", true));
+        assert_eq!(ip_scope("2001:db8::1".parse().unwrap()), ("documentation", false));
+        assert_eq!(ip_scope("::ffff:8.8.8.8".parse().unwrap()), ("ipv4_mapped", false));
+    }
 }

@@ -1024,6 +1024,41 @@ fn network_tcp_connect_bound_rejects_non_unicast_source() {
 }
 
 #[test]
+fn network_ip_classification_is_fail_closed_and_capability_free() {
+    let project_root = unique_temp_dir("network_ip_classify");
+    let script_path = project_root.join("ip_classify.kujo");
+    fs::write(
+        &script_path,
+        "print(to_json([ip_classify(\"8.8.8.8\"),ip_classify(\"127.0.0.1\"),ip_classify(\"192.0.2.1\"),ip_classify(\"2001:4860:4860::8888\"),ip_classify(\"2001:db8::1\")]))\n",
+    )
+    .expect("failed to write IP classification script");
+    for mode in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(mode);
+        args.push("--untrusted");
+        args.push(script_path.to_str().expect("script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "IP classification failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        let stdout = stdout_text(&output);
+        assert!(
+            stdout.contains("\"address\":\"8.8.8.8\"")
+                && stdout.contains("\"publicly_routable\":true")
+        );
+        assert!(
+            stdout.contains("\"scope\":\"loopback\"")
+                && stdout.contains("\"scope\":\"documentation\"")
+        );
+        assert!(!stdout.contains("capability denied"));
+    }
+}
+
+#[test]
 fn network_http_request_explicit_deny_private_ignores_global_override() {
     let project_root = unique_temp_dir("network_http_request_explicit_deny_private");
     let script_path = project_root.join("explicit_destination_policy.kujo");

@@ -498,6 +498,7 @@ mod tests {
             "zip_add_dir",
             "zip_close",
             "unzip",
+            "ip_classify",
             "tcp_listen",
             "tcp_accept",
             "tcp_connect",

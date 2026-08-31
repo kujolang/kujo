@@ -275,7 +275,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `to_csv` | `to_csv(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_csv(...)` |
 | `encode_base64` | `encode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := encode_base64(...)` |
 | `decode_base64` | `decode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := decode_base64(...)` |
-| `decode_base64_utf8` | `decode_base64_utf8(text)` | string | string | Error on malformed base64 or invalid UTF-8. | `none` | `text := decode_base64_utf8(encoded)` |
+| `decode_base64_utf8` | `decode_base64_utf8(text)` | exact 1 | string | Error on malformed base64 or invalid UTF-8. | `none` | `text := decode_base64_utf8(encoded)` |
 | `encode_uri_component` | `encode_uri_component(...)` | handler-defined | string | Value::Error on invalid args/types. | `none` | `part := encode_uri_component("café & tea")` |
 | `random` | `random(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random(...)` |
 | `random_int` | `random_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random_int(...)` |
@@ -454,7 +454,9 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `pipe_commands` | `pipe_commands(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `process-exec` | `result := pipe_commands(...)` |
 | `tcp_listen` | `tcp_listen(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_listen(...)` |
 | `tcp_accept` | `tcp_accept(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := tcp_accept(...)` |
+| `ip_classify` | `ip_classify(address)` | exact 1 | dictionary | Deterministically classifies an IP literal as global, private, loopback, link-local, multicast, documentation, shared, benchmark, mapped, reserved, or unspecified and reports fail-closed public routability. | `none` | `result := ip_classify("192.0.2.1")` |
 | `tcp_connect` | `tcp_connect(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := tcp_connect(...)` |
+| `tcp_connect_bound` | `tcp_connect_bound(host, port, source_ip)` | handler-defined | TcpStream | Resolves deterministic same-family candidates, binds a validated unicast source IP before connecting, and applies bounded socket timeouts. | `network-client` | `stream := tcp_connect_bound("mx.example.net", 25, "192.0.2.10")` |
 | `tcp_send` | `tcp_send(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := tcp_send(...)` |
 | `tcp_receive` | `tcp_receive(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := tcp_receive(...)` |
 | `tcp_close` | `tcp_close(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := tcp_close(...)` |
