@@ -1,0 +1,79 @@
+name: Setup Kujo
+description: Install an exact checksum-verified Kujo release on supported GitHub-hosted runners.
+
+inputs:
+  version:
+    description: Exact published Kujo release tag, including the v prefix.
+    required: false
+    default: v1.1.0
+
+outputs:
+  kujo-path:
+    description: Absolute path to the installed Kujo executable.
+    value: ${{ steps.install.outputs.kujo-path }}
+  version:
+    description: Installed Kujo release tag.
+    value: ${{ steps.install.outputs.version }}
+  checksum:
+    description: Verified release archive SHA-256.
+    value: ${{ steps.install.outputs.checksum }}
+  asset:
+    description: Verified GitHub release asset name.
+    value: ${{ steps.install.outputs.asset }}
+  provenance-url:
+    description: GitHub release URL from which the asset and checksum were fetched.
+    value: ${{ steps.install.outputs.provenance-url }}
+
+runs:
+  using: composite
+  steps:
+    - name: Cache Kujo runtime
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: ${{ runner.tool_cache }}/kujo/${{ inputs.version }}/${{ runner.os }}-${{ runner.arch }}
+        key: setup-kujo-${{ inputs.version }}-${{ runner.os }}-${{ runner.arch }}-v1
+
+    - name: Install Kujo on POSIX
+      if: runner.os != 'Windows'
+      id: install-posix
+      shell: bash
+      env:
+        KUJO_SETUP_VERSION: ${{ inputs.version }}
+        KUJO_SETUP_DIRECTORY: ${{ runner.tool_cache }}/kujo/${{ inputs.version }}/${{ runner.os }}-${{ runner.arch }}
+      run: bash "$GITHUB_ACTION_PATH/install.sh" "$KUJO_SETUP_VERSION" "$KUJO_SETUP_DIRECTORY"
+
+    - name: Install Kujo on Windows
+      if: runner.os == 'Windows'
+      id: install-windows
+      shell: pwsh
+      env:
+        KUJO_SETUP_VERSION: ${{ inputs.version }}
+        KUJO_SETUP_DIRECTORY: ${{ runner.tool_cache }}\kujo\${{ inputs.version }}\${{ runner.os }}-${{ runner.arch }}
+      run: '& "$env:GITHUB_ACTION_PATH/install.ps1" -Version "$env:KUJO_SETUP_VERSION" -InstallDirectory "$env:KUJO_SETUP_DIRECTORY"'
+
+    - name: Publish setup outputs
+      id: install
+      shell: bash
+      env:
+        POSIX_PATH: ${{ steps.install-posix.outputs.kujo-path }}
+        POSIX_CHECKSUM: ${{ steps.install-posix.outputs.checksum }}
+        POSIX_ASSET: ${{ steps.install-posix.outputs.asset }}
+        POSIX_PROVENANCE: ${{ steps.install-posix.outputs.provenance-url }}
+        WINDOWS_PATH: ${{ steps.install-windows.outputs.kujo-path }}
+        WINDOWS_CHECKSUM: ${{ steps.install-windows.outputs.checksum }}
+        WINDOWS_ASSET: ${{ steps.install-windows.outputs.asset }}
+        WINDOWS_PROVENANCE: ${{ steps.install-windows.outputs.provenance-url }}
+        KUJO_SETUP_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        printf 'kujo-path=%s\n' "${POSIX_PATH:-${WINDOWS_PATH}}" >> "$GITHUB_OUTPUT"
+        printf 'version=%s\n' "$KUJO_SETUP_VERSION" >> "$GITHUB_OUTPUT"
+        printf 'checksum=%s\n' "${POSIX_CHECKSUM:-${WINDOWS_CHECKSUM}}" >> "$GITHUB_OUTPUT"
+        printf 'asset=%s\n' "${POSIX_ASSET:-${WINDOWS_ASSET}}" >> "$GITHUB_OUTPUT"
+        printf 'provenance-url=%s\n' "${POSIX_PROVENANCE:-${WINDOWS_PROVENANCE}}" >> "$GITHUB_OUTPUT"
+
+    - name: Verify installed runtime
+      shell: bash
+      run: |
+        set -euo pipefail
+        kujo --version
