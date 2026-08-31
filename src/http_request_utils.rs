@@ -1,10 +1,29 @@
 use std::collections::HashMap;
-use std::io::Read;
+use std::io::{ErrorKind, Read};
+use std::time::Duration;
+
+pub const DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 10_000;
+pub const MIN_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 100;
+pub const MAX_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 300_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HttpRequestBodyError {
     TooLarge,
+    TimedOut,
     ReadFailed,
+}
+
+pub fn routed_http_read_timeout() -> Duration {
+    let configured = std::env::var("KUJO_HTTP_SERVER_READ_TIMEOUT_MS").ok();
+    routed_http_read_timeout_from(configured.as_deref())
+}
+
+fn routed_http_read_timeout_from(configured: Option<&str>) -> Duration {
+    let milliseconds = configured
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .unwrap_or(DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS)
+        .clamp(MIN_ROUTED_HTTP_READ_TIMEOUT_MS, MAX_ROUTED_HTTP_READ_TIMEOUT_MS);
+    Duration::from_millis(milliseconds)
 }
 
 /// Read an inbound HTTP request body with the same global bound used for
@@ -16,7 +35,13 @@ pub fn read_bounded_http_request_body(
     let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
     let mut limited = reader.take((maximum + 1) as u64);
     let mut buffer = Vec::with_capacity(maximum.min(64 * 1024));
-    limited.read_to_end(&mut buffer).map_err(|_| HttpRequestBodyError::ReadFailed)?;
+    limited.read_to_end(&mut buffer).map_err(|error| {
+        if matches!(error.kind(), ErrorKind::TimedOut | ErrorKind::WouldBlock) {
+            HttpRequestBodyError::TimedOut
+        } else {
+            HttpRequestBodyError::ReadFailed
+        }
+    })?;
     if buffer.len() > maximum {
         return Err(HttpRequestBodyError::TooLarge);
     }
@@ -128,7 +153,11 @@ fn decode_hex_nibble(byte: u8) -> Option<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{read_bounded_http_request_body, split_http_path_and_query, HttpRequestBodyError};
+    use super::{
+        read_bounded_http_request_body, routed_http_read_timeout_from, split_http_path_and_query,
+        HttpRequestBodyError, DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS, MAX_ROUTED_HTTP_READ_TIMEOUT_MS,
+        MIN_ROUTED_HTTP_READ_TIMEOUT_MS,
+    };
     use std::collections::HashMap;
 
     #[test]
@@ -142,6 +171,23 @@ mod tests {
             read_bounded_http_request_body(&mut oversized),
             Err(HttpRequestBodyError::TooLarge)
         );
+    }
+
+    #[test]
+    fn routed_http_read_timeout_defaults_and_clamps() {
+        assert_eq!(
+            routed_http_read_timeout_from(None).as_millis(),
+            u128::from(DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS)
+        );
+        assert_eq!(
+            routed_http_read_timeout_from(Some("1")).as_millis(),
+            u128::from(MIN_ROUTED_HTTP_READ_TIMEOUT_MS)
+        );
+        assert_eq!(
+            routed_http_read_timeout_from(Some("999999")).as_millis(),
+            u128::from(MAX_ROUTED_HTTP_READ_TIMEOUT_MS)
+        );
+        assert_eq!(routed_http_read_timeout_from(Some("250")).as_millis(), 250);
     }
 
     #[test]

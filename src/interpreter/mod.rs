@@ -2186,7 +2186,10 @@ impl Interpreter {
 
         println!("Starting HTTP server on {}:{}...", host, port);
 
-        let server = match Server::http(format!("{}:{}", host, port)) {
+        let server = match Server::http_with_read_timeout(
+            format!("{}:{}", host, port),
+            http_request_utils::routed_http_read_timeout(),
+        ) {
             Ok(s) => s,
             Err(e) => return Value::Error(format!("Failed to start server: {}", e)),
         };
@@ -2198,6 +2201,11 @@ impl Interpreter {
         for mut request in server.incoming_requests() {
             let method = request.method().to_string();
             let request_url = request.url().to_string();
+            let peer_address = request.remote_addr().map(ToString::to_string).unwrap_or_default();
+            let peer_ip =
+                request.remote_addr().map(|address| address.ip().to_string()).unwrap_or_default();
+            let peer_port =
+                request.remote_addr().map(|address| i64::from(address.port())).unwrap_or(0);
             let (url_path, query_params, decoded_query_params, raw_query) =
                 http_request_utils::split_http_path_and_query_with_decoded(&request_url);
 
@@ -2208,6 +2216,12 @@ impl Interpreter {
                     Err(http_request_utils::HttpRequestBodyError::TooLarge) => {
                         let response =
                             Response::from_string("Payload Too Large").with_status_code(413);
+                        let _ = request.respond(response);
+                        continue;
+                    }
+                    Err(http_request_utils::HttpRequestBodyError::TimedOut) => {
+                        let response =
+                            Response::from_string("Request Timeout").with_status_code(408);
                         let _ = request.respond(response);
                         continue;
                     }
@@ -2263,6 +2277,18 @@ impl Interpreter {
                 req_fields.insert("raw_path".into(), Value::Str(Arc::new(request_url.clone())));
                 req_fields.insert("body".into(), Value::Str(Arc::new(body_content.clone())));
                 req_fields.insert("params".into(), Value::Dict(Arc::new(params_dict)));
+                req_fields
+                    .insert("peer_address".into(), Value::Str(Arc::new(peer_address.clone())));
+                req_fields.insert("peer_ip".into(), Value::Str(Arc::new(peer_ip.clone())));
+                req_fields.insert("peer_port".into(), Value::Int(peer_port));
+                req_fields.insert(
+                    "peer_transport".into(),
+                    Value::Str(Arc::new(if peer_address.is_empty() {
+                        "unknown".to_string()
+                    } else {
+                        "tcp".to_string()
+                    })),
+                );
 
                 // Extract query params from URL
                 let mut query_dict = DictMap::default();

@@ -61,6 +61,25 @@ fn spawn_interpreter(script_path: &Path, current_dir: &Path) -> Child {
         .expect("failed to launch interpreter process")
 }
 
+fn spawn_runtime_with_read_timeout(
+    script_path: &Path,
+    current_dir: &Path,
+    interpreter: bool,
+) -> Child {
+    let mut command = Command::new(kujo_binary());
+    command.current_dir(current_dir).arg("run").arg(script_path);
+    if interpreter {
+        command.arg("--interpreter");
+    }
+    command
+        .arg("--allow-net-server")
+        .env("KUJO_HTTP_SERVER_READ_TIMEOUT_MS", "150")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("failed to launch routed HTTP runtime")
+}
+
 fn terminate_child(mut child: Child) -> Output {
     if child.try_wait().ok().flatten().is_none() {
         let _ = child.kill();
@@ -180,6 +199,170 @@ fn wait_for_response(child: &mut Child, port: u16, path: &str) -> Result<(u16, S
     }
 
     Err("timed out waiting for server response".to_string())
+}
+
+fn send_incomplete_http_body(port: u16) -> std::io::Result<(u16, String)> {
+    let mut stream = TcpStream::connect(("127.0.0.1", port))?;
+    stream.set_read_timeout(Some(Duration::from_secs(2)))?;
+    stream.set_write_timeout(Some(Duration::from_secs(2)))?;
+    let request = format!(
+        "POST /body HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nContent-Length: 4\r\nConnection: close\r\n\r\nx"
+    );
+    stream.write_all(request.as_bytes())?;
+    let mut response = Vec::new();
+    stream.read_to_end(&mut response)?;
+    parse_http_response(&response)
+}
+
+fn send_oversized_http_body(port: u16) -> std::io::Result<(u16, String)> {
+    let mut stream = TcpStream::connect(("127.0.0.1", port))?;
+    stream.set_read_timeout(Some(Duration::from_secs(5)))?;
+    stream.set_write_timeout(Some(Duration::from_secs(5)))?;
+    let body = vec![b'x'; 8 * 1024 * 1024 + 1];
+    let headers = format!(
+        "POST /body HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    );
+    stream.write_all(headers.as_bytes())?;
+    stream.write_all(&body)?;
+    let mut response = Vec::new();
+    stream.read_to_end(&mut response)?;
+    parse_http_response(&response)
+}
+
+#[test]
+fn routed_http_request_exposes_socket_peer_in_vm_and_interpreter() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else {
+            eprintln!("Skipping peer identity test: unable to reserve localhost test port");
+            return;
+        };
+        let project_root =
+            unique_temp_dir(if interpreter { "http_peer_interpreter" } else { "http_peer_vm" });
+        let script_path = project_root.join("main.kujo");
+        let script_source = format!(
+            "server := http_server({port})\nserver = server.route(\"GET\", \"/peer\", func(req) {{\n    payload := req[\"peer_address\"] + \"|\" + req[\"peer_ip\"] + \"|\" + to_string(req[\"peer_port\"]) + \"|\" + req[\"peer_transport\"]\n    return http_response(200, payload)\n}})\nserver.listen()\n"
+        );
+        fs::write(&script_path, script_source).expect("failed to write peer identity script");
+
+        let mut child = spawn_runtime_with_read_timeout(&script_path, &project_root, interpreter);
+        let response = match wait_for_response(&mut child, port, "/peer") {
+            Ok(response) => response,
+            Err(message) => {
+                let output = terminate_child(child);
+                panic!(
+                    "{message}; stdout={}; stderr={}",
+                    stdout_text(&output),
+                    stderr_text(&output)
+                );
+            }
+        };
+        let output = terminate_child(child);
+        let fields: Vec<&str> = response.1.trim().split('|').collect();
+        assert_eq!(
+            response.0,
+            200,
+            "stdout={}; stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert_eq!(fields.len(), 4, "unexpected peer payload: {}", response.1);
+        assert!(fields[0].starts_with("127.0.0.1:"), "unexpected peer address: {}", fields[0]);
+        assert_eq!(fields[1], "127.0.0.1");
+        assert!(fields[2].parse::<u16>().is_ok(), "unexpected peer port: {}", fields[2]);
+        assert_eq!(fields[3], "tcp");
+    }
+}
+
+#[test]
+fn routed_http_incomplete_body_times_out_before_dispatch_in_vm_and_interpreter() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else {
+            eprintln!("Skipping read deadline test: unable to reserve localhost test port");
+            return;
+        };
+        let project_root = unique_temp_dir(if interpreter {
+            "http_timeout_interpreter"
+        } else {
+            "http_timeout_vm"
+        });
+        let script_path = project_root.join("main.kujo");
+        let script_source = format!(
+            "server := http_server({port})\nserver = server.route(\"GET\", \"/health\", func(req) {{ return http_response(200, \"ok\") }})\nserver = server.route(\"POST\", \"/body\", func(req) {{ return http_response(200, \"dispatched\") }})\nserver.listen()\n"
+        );
+        fs::write(&script_path, script_source).expect("failed to write timeout script");
+
+        let mut child = spawn_runtime_with_read_timeout(&script_path, &project_root, interpreter);
+        if let Err(message) = wait_for_response(&mut child, port, "/health") {
+            let output = terminate_child(child);
+            panic!("{message}; stdout={}; stderr={}", stdout_text(&output), stderr_text(&output));
+        }
+        let response = match send_incomplete_http_body(port) {
+            Ok(response) => response,
+            Err(error) => {
+                let output = terminate_child(child);
+                panic!(
+                    "incomplete body request failed: {error}; stdout={}; stderr={}",
+                    stdout_text(&output),
+                    stderr_text(&output)
+                );
+            }
+        };
+        let output = terminate_child(child);
+        assert_eq!(
+            response.0,
+            408,
+            "body={}; stdout={}; stderr={}",
+            response.1,
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert!(!response.1.contains("dispatched"));
+    }
+}
+
+#[test]
+fn routed_http_oversized_body_is_rejected_before_dispatch_in_vm_and_interpreter() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else {
+            eprintln!("Skipping body bound test: unable to reserve localhost test port");
+            return;
+        };
+        let project_root =
+            unique_temp_dir(if interpreter { "http_bound_interpreter" } else { "http_bound_vm" });
+        let script_path = project_root.join("main.kujo");
+        let script_source = format!(
+            "server := http_server({port})\nserver = server.route(\"GET\", \"/health\", func(req) {{ return http_response(200, \"ok\") }})\nserver = server.route(\"POST\", \"/body\", func(req) {{ return http_response(200, \"dispatched\") }})\nserver.listen()\n"
+        );
+        fs::write(&script_path, script_source).expect("failed to write body bound script");
+
+        let mut child = spawn_runtime_with_read_timeout(&script_path, &project_root, interpreter);
+        if let Err(message) = wait_for_response(&mut child, port, "/health") {
+            let output = terminate_child(child);
+            panic!("{message}; stdout={}; stderr={}", stdout_text(&output), stderr_text(&output));
+        }
+        let response = match send_oversized_http_body(port) {
+            Ok(response) => response,
+            Err(error) => {
+                let output = terminate_child(child);
+                panic!(
+                    "oversized body request failed: {error}; stdout={}; stderr={}",
+                    stdout_text(&output),
+                    stderr_text(&output)
+                );
+            }
+        };
+        let output = terminate_child(child);
+        assert_eq!(
+            response.0,
+            413,
+            "body={}; stdout={}; stderr={}",
+            response.1,
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert!(!response.1.contains("dispatched"));
+    }
 }
 
 #[test]
