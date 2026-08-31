@@ -501,6 +501,7 @@ mod tests {
             "tcp_listen",
             "tcp_accept",
             "tcp_connect",
+            "tcp_connect_bound",
             "tcp_send",
             "tcp_receive",
             "tcp_close",

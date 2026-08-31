@@ -583,6 +583,7 @@ edge cases are higher-risk than the HTTP helper surface.
 | `tcp_listen` | experimental | `srv := tcp_listen("127.0.0.1", 9000)` |
 | `tcp_accept` | experimental | `conn := tcp_accept(srv)` |
 | `tcp_connect` | experimental | `conn := tcp_connect("127.0.0.1", 9000)` |
+| `tcp_connect_bound` | preview | `conn := tcp_connect_bound("mx.example.net", 25, "192.0.2.10")` |
 | `tcp_send` | experimental | `tcp_send(conn, "hello")` |
 | `tcp_receive` | experimental | `data := tcp_receive(conn, 1024)` |
 | `tcp_close` | experimental | `tcp_close(conn)` |

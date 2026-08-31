@@ -154,6 +154,68 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
             }
         }
 
+        "tcp_connect_bound" => {
+            if arg_values.len() != 3 {
+                Value::Error(
+                    "tcp_connect_bound requires (string_host, int_port, string_source_ip) arguments"
+                        .to_string(),
+                )
+            } else {
+                match (arg_values.first(), arg_values.get(1), arg_values.get(2)) {
+                    (
+                        Some(Value::Str(host)),
+                        Some(Value::Int(port)),
+                        Some(Value::Str(source_ip)),
+                    ) => {
+                        if let Err(error) = network_policy::enforce_host_port_destination_policy(
+                            host.as_ref(),
+                            *port,
+                            "tcp_connect_bound",
+                        ) {
+                            return Some(Value::ErrorObject {
+                                message: error,
+                                stack: Vec::new(),
+                                line: None,
+                                cause: None,
+                            });
+                        }
+                        if !(1..=65535).contains(port) {
+                            return Some(Value::Error(
+                                "tcp_connect_bound destination port must be 1-65535".to_string(),
+                            ));
+                        }
+                        match network_policy::connect_tcp_stream_bound(
+                            host.as_ref(),
+                            *port as u16,
+                            source_ip.as_ref(),
+                            "tcp_connect_bound",
+                        ) {
+                            Ok(stream) => {
+                                let peer_addr = stream
+                                    .peer_addr()
+                                    .map(|address| address.to_string())
+                                    .unwrap_or_else(|_| format!("{}:{}", host, port));
+                                Value::TcpStream {
+                                    stream: Arc::new(Mutex::new(Some(stream))),
+                                    peer_addr,
+                                }
+                            }
+                            Err(error) => Value::ErrorObject {
+                                message: error,
+                                stack: Vec::new(),
+                                line: None,
+                                cause: None,
+                            },
+                        }
+                    }
+                    _ => Value::Error(
+                        "tcp_connect_bound requires (string_host, int_port, string_source_ip) arguments"
+                            .to_string(),
+                    ),
+                }
+            }
+        }
+
         "tcp_send" => {
             if arg_values.len() != 2 {
                 Value::Error(

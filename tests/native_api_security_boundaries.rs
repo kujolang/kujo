@@ -953,6 +953,77 @@ fn network_destination_policy_override_allows_trusted_loopback_http_client() {
 }
 
 #[test]
+fn network_tcp_connect_bound_uses_requested_source_address() {
+    let listener = match TcpListener::bind("127.0.0.1:0") {
+        Ok(listener) => listener,
+        Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+            eprintln!("Skipping source-bound TCP test: sandbox denied local TCP bind permissions");
+            return;
+        }
+        Err(error) => panic!("failed to bind source-bound TCP listener: {error}"),
+    };
+    let port = listener.local_addr().expect("listener address").port();
+    let server = thread::spawn(move || {
+        let (_stream, peer) = listener.accept().expect("source-bound client should connect");
+        assert!(peer.ip().is_loopback());
+        thread::sleep(Duration::from_millis(250));
+    });
+
+    let project_root = unique_temp_dir("network_tcp_connect_bound");
+    let script_path = project_root.join("tcp_connect_bound.kujo");
+    let script_source = format!(
+        "let conn := tcp_connect_bound(\"127.0.0.1\", {port}, \"127.0.0.1\")\nlet info := tcp_info(conn)\nprint(to_json(info))\ntcp_close(conn)\n"
+    );
+    fs::write(&script_path, script_source).expect("failed to write source-bound TCP script");
+    let output = run_kujo_with_env(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-net-client",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+        &[("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1")],
+    );
+    server.join().expect("source-bound TCP server should finish");
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "source-bound connect failed: stdout={} stderr={}",
+        stdout_text(&output),
+        stderr_text(&output)
+    );
+    assert!(
+        stdout_text(&output).contains("\"local_address\":\"127.0.0.1:"),
+        "tcp_info should expose requested local source: {}",
+        stdout_text(&output)
+    );
+}
+
+#[test]
+fn network_tcp_connect_bound_rejects_non_unicast_source() {
+    let project_root = unique_temp_dir("network_tcp_connect_bound_invalid_source");
+    let script_path = project_root.join("tcp_connect_bound_invalid.kujo");
+    fs::write(&script_path, "tcp_connect_bound(\"127.0.0.1\", 25, \"0.0.0.0\")\n")
+        .expect("failed to write invalid source-bound TCP script");
+    let output = run_kujo_with_env(
+        &[
+            "run",
+            "--interpreter",
+            "--untrusted",
+            "--allow-net-client",
+            script_path.to_str().expect("script path should be utf-8"),
+        ],
+        &project_root,
+        &[("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1")],
+    );
+    assert_eq!(output.status.code(), Some(4));
+    assert!(format!("{}\n{}", stdout_text(&output), stderr_text(&output))
+        .contains("source_ip must be a unicast local address"));
+}
+
+#[test]
 fn network_http_request_explicit_deny_private_ignores_global_override() {
     let project_root = unique_temp_dir("network_http_request_explicit_deny_private");
     let script_path = project_root.join("explicit_destination_policy.kujo");

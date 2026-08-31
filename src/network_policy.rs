@@ -1,5 +1,6 @@
 use crate::runtime_limits;
 use reqwest::blocking::{Client, Response as BlockingResponse};
+use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::io::Read;
 use std::net::{IpAddr, SocketAddr, TcpStream, ToSocketAddrs, UdpSocket};
 use std::time::Duration;
@@ -493,6 +494,70 @@ pub fn connect_tcp_stream(address: &str, surface: &str) -> Result<TcpStream, Str
     match last_error {
         Some(error) => Err(format!("{} failed to connect to '{}': {}", surface, address, error)),
         None => Err(format!("{} failed: no socket addresses resolved for '{}'", surface, address)),
+    }
+}
+
+pub fn connect_tcp_stream_bound(
+    host: &str,
+    port: u16,
+    source_ip: &str,
+    surface: &str,
+) -> Result<TcpStream, String> {
+    let source = source_ip.parse::<IpAddr>().map_err(|error| {
+        format!("{} failed: source_ip must be an IP literal: {}", surface, error)
+    })?;
+    if source.is_unspecified() || source.is_multicast() {
+        return Err(format!("{} failed: source_ip must be a unicast local address", surface));
+    }
+
+    let mut candidates = (host, port)
+        .to_socket_addrs()
+        .map_err(|error| format!("{} failed to resolve '{}:{}': {}", surface, host, port, error))?
+        .filter(|candidate| candidate.is_ipv4() == source.is_ipv4())
+        .collect::<Vec<_>>();
+    candidates.sort_unstable();
+    candidates.dedup();
+    if candidates.is_empty() {
+        return Err(format!(
+            "{} failed: no destination addresses match source_ip address family",
+            surface
+        ));
+    }
+
+    let source_address = SocketAddr::new(source, 0);
+    let mut last_error = None;
+    for candidate in candidates {
+        let domain = Domain::for_address(candidate);
+        let socket = match Socket::new(domain, Type::STREAM, Some(Protocol::TCP)) {
+            Ok(socket) => socket,
+            Err(error) => {
+                last_error = Some(error);
+                continue;
+            }
+        };
+        if let Err(error) = socket.bind(&SockAddr::from(source_address)) {
+            last_error = Some(error);
+            continue;
+        }
+        match socket.connect_timeout(&SockAddr::from(candidate), connect_timeout()) {
+            Ok(()) => {
+                let stream: TcpStream = socket.into();
+                apply_tcp_stream_timeouts(&stream, surface)?;
+                return Ok(stream);
+            }
+            Err(error) => last_error = Some(error),
+        }
+    }
+
+    match last_error {
+        Some(error) => Err(format!(
+            "{} failed to connect to '{}:{}' from '{}': {}",
+            surface, host, port, source_ip, error
+        )),
+        None => Err(format!(
+            "{} failed: no destination addresses resolved for '{}:{}'",
+            surface, host, port
+        )),
     }
 }
 

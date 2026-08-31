@@ -2420,6 +2420,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sha2 0.10.9",
+ "socket2",
  "target-lexicon",
  "tiny_http",
  "tokio",

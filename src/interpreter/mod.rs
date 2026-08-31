@@ -904,6 +904,7 @@ impl Interpreter {
             "tcp_listen",
             "tcp_accept",
             "tcp_connect",
+            "tcp_connect_bound",
             "tcp_send",
             "tcp_receive",
             "tcp_close",
@@ -1723,6 +1724,10 @@ impl Interpreter {
         self.env.define("tcp_accept".to_string(), Value::NativeFunction("tcp_accept".to_string()));
         self.env
             .define("tcp_connect".to_string(), Value::NativeFunction("tcp_connect".to_string()));
+        self.env.define(
+            "tcp_connect_bound".to_string(),
+            Value::NativeFunction("tcp_connect_bound".to_string()),
+        );
         self.env.define("tcp_send".to_string(), Value::NativeFunction("tcp_send".to_string()));
         self.env
             .define("tcp_receive".to_string(), Value::NativeFunction("tcp_receive".to_string()));

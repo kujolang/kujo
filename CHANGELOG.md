@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read/write timeout controls for protocol servers.
 - Add strict `decode_base64_utf8(text)` decoding for text-based binary protocol
   fields without filesystem conversion or lossy UTF-8 behavior.
+- Add capability-gated `tcp_connect_bound(host, port, source_ip)` so protocols
+  that require deterministic egress-IP selection can bind a validated unicast
+  local address before connecting.
 - Add per-request `http_request` destination denial, DNS pinning, and redirect
   disabling so untrusted webhook-style callbacks can close DNS-rebinding and
   redirect-based SSRF paths without relying on process-global policy; callers
