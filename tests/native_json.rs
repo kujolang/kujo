@@ -57,7 +57,13 @@ fn parse_json_invalid_input_reports_location() {
 
 #[test]
 fn parse_json_rejects_excessive_input_size() {
-    let oversized = format!("\"{}\"", "x".repeat(2 * 1024 * 1024));
+    let within_file_io_limit = format!("\"{}\"", "x".repeat(2 * 1024 * 1024));
+    assert!(
+        builtins::parse_json(&within_file_io_limit).is_ok(),
+        "JSON accepted by read_file should remain parseable"
+    );
+
+    let oversized = format!("\"{}\"", "x".repeat(kujo::runtime_limits::MAX_FILE_IO_BYTES));
     let error = builtins::parse_json(&oversized).expect_err("oversized json should fail");
     assert!(error.contains("maximum input size"), "expected size-limit error, got: {error}");
 }

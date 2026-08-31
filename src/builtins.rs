@@ -575,7 +575,7 @@ pub fn format_string(template: &str, args: &[Value]) -> Result<String, String> {
 }
 
 /// JSON functions
-const MAX_JSON_INPUT_BYTES: usize = 1_048_576;
+const MAX_JSON_INPUT_BYTES: usize = runtime_limits::MAX_FILE_IO_BYTES;
 const MAX_JSON_NESTING_DEPTH: usize = 64;
 
 /// Parse a JSON string into a Kujo value

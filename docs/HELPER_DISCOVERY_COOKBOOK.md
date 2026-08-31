@@ -114,7 +114,7 @@ floats, strings, arrays, dictionaries, and redacted `secret` values. Runtime
 structs such as `ProcessResult`, functions, bytes, and other unsupported values
 must be copied into a dictionary or are returned as a runtime error.
 
-`parse_json` accepts any JSON root value, caps input at 1 MiB and nesting at
+`parse_json` accepts any JSON root value, caps input at 8 MiB and nesting at
 64 levels, and returns a runtime error with parser location details for
 invalid input. `to_json` and `to_json_pretty` return a runtime error for
 non-finite floats and unsupported values. These helpers are pure and require
