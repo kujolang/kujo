@@ -2185,12 +2185,21 @@ impl Interpreter {
                 http_request_utils::split_http_path_and_query_with_decoded(&request_url);
 
             // Read body first (before any response handling)
-            let body_content = {
-                let mut reader = request.as_reader();
-                let mut buffer = Vec::new();
-                std::io::Read::read_to_end(&mut reader, &mut buffer).ok();
-                String::from_utf8_lossy(&buffer).to_string()
-            };
+            let body_content =
+                match http_request_utils::read_bounded_http_request_body(request.as_reader()) {
+                    Ok(body) => body,
+                    Err(http_request_utils::HttpRequestBodyError::TooLarge) => {
+                        let response =
+                            Response::from_string("Payload Too Large").with_status_code(413);
+                        let _ = request.respond(response);
+                        continue;
+                    }
+                    Err(http_request_utils::HttpRequestBodyError::ReadFailed) => {
+                        let response = Response::from_string("Bad Request").with_status_code(400);
+                        let _ = request.respond(response);
+                        continue;
+                    }
+                };
 
             // Find matching route (supports path parameters like /:code)
             // Exact matches take priority over parameterized routes

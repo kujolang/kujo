@@ -541,8 +541,8 @@ destinations remain subject to the outbound destination policy described in
 | `ai_embedding` | preview | `vec := ai_embedding("hello", options)` |
 | `ai_tool_loop` | preview | `res := ai_tool_loop(messages, tools, options)` |
 | `http_get_stream` | experimental | `ch := http_get_stream(url, options)` |
-| `http_server` | experimental | `srv := http_server(8080)` |
-| `http_listen` | experimental | `http_listen(srv, handler)` |
+| `http_server` | experimental | `srv := http_server(8080)`; inbound bodies are bounded to 8 MiB and overflow returns 413 before dispatch |
+| `http_listen` | experimental | `srv := http_listen("127.0.0.1", 8080)`; uses the same bounded-body policy |
 | `http_response` | preview | `res := http_response(200, "ok")` |
 | `json_response` | preview | `res := json_response({"ok": true})` |
 | `html_response` | preview | `res := html_response("<p>ok</p>")` |

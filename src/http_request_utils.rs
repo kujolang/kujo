@@ -1,4 +1,27 @@
 use std::collections::HashMap;
+use std::io::Read;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HttpRequestBodyError {
+    TooLarge,
+    ReadFailed,
+}
+
+/// Read an inbound HTTP request body with the same global bound used for
+/// outbound network bodies. One extra byte is read so overflow is detected
+/// without buffering an unbounded request.
+pub fn read_bounded_http_request_body(
+    reader: &mut dyn Read,
+) -> Result<String, HttpRequestBodyError> {
+    let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
+    let mut limited = reader.take((maximum + 1) as u64);
+    let mut buffer = Vec::with_capacity(maximum.min(64 * 1024));
+    limited.read_to_end(&mut buffer).map_err(|_| HttpRequestBodyError::ReadFailed)?;
+    if buffer.len() > maximum {
+        return Err(HttpRequestBodyError::TooLarge);
+    }
+    Ok(String::from_utf8_lossy(&buffer).to_string())
+}
 
 /// Split a request URL into a path, parsed query parameters, and raw query string.
 ///
@@ -105,8 +128,21 @@ fn decode_hex_nibble(byte: u8) -> Option<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::split_http_path_and_query;
+    use super::{read_bounded_http_request_body, split_http_path_and_query, HttpRequestBodyError};
     use std::collections::HashMap;
+
+    #[test]
+    fn bounded_request_body_accepts_limit_and_rejects_overflow() {
+        let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
+        let mut exact = std::io::Cursor::new(vec![b'a'; maximum]);
+        assert_eq!(read_bounded_http_request_body(&mut exact).unwrap().len(), maximum);
+
+        let mut oversized = std::io::Cursor::new(vec![b'b'; maximum + 1]);
+        assert_eq!(
+            read_bounded_http_request_body(&mut oversized),
+            Err(HttpRequestBodyError::TooLarge)
+        );
+    }
 
     #[test]
     fn split_http_path_and_query_without_query_returns_empty_metadata() {

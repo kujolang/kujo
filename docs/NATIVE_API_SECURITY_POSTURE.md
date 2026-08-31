@@ -61,6 +61,8 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 | `--allow-net-client` | Outbound network | `http_get/post/request`, TCP/UDP client operations | Data exfiltration/SSRF-style pivots |
 | `--allow-ai` | AI provider egress | `ai_chat`, `ai_stream_chat`, `ai_embedding`, `ai_tool_loop` | Prompt/data exfiltration to model endpoints |
 | `--allow-net-server` | Listener/network server | `http_server.listen`, server-side sockets | Local service exposure |
+
+Routed HTTP servers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies in both VM and interpreter modes. They read at most one byte beyond the limit to detect overflow and return HTTP 413 before invoking application handlers; body read failures return HTTP 400.
 | `--allow-net` | Net client + server | Union of network-client/network-server surfaces | Combined network risk |
 | `--allow-database` | Database access | `db_connect`, query/transaction helpers | Unauthorized data access |
 | `--allow-clock` | Clock/time | `now`, timestamp helpers | Timing side-channel support |
