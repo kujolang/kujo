@@ -458,6 +458,8 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `tcp_receive` | `tcp_receive(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := tcp_receive(...)` |
 | `tcp_close` | `tcp_close(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := tcp_close(...)` |
 | `tcp_set_nonblocking` | `tcp_set_nonblocking(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := tcp_set_nonblocking(...)` |
+| `tcp_info` | `tcp_info(stream)` | handler-defined | dictionary | Returns the stable `kujo.tcp.info.v1` peer/local-address and read/write-timeout envelope; errors after close or TLS upgrade. | `none` | `info := tcp_info(conn)` |
+| `tcp_set_timeouts` | `tcp_set_timeouts(stream, read_ms, write_ms)` | handler-defined | bool | Sets both blocking socket timeouts, each bounded to 1–600000 ms; the settings survive a TLS upgrade. | `none` | `tcp_set_timeouts(conn, 30000, 30000)` |
 | `udp_bind` | `udp_bind(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-server` | `result := udp_bind(...)` |
 | `udp_send_to` | `udp_send_to(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := udp_send_to(...)` |
 | `udp_receive_from` | `udp_receive_from(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `network-client` | `result := udp_receive_from(...)` |

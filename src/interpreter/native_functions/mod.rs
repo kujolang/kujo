@@ -505,6 +505,8 @@ mod tests {
             "tcp_receive",
             "tcp_close",
             "tcp_set_nonblocking",
+            "tcp_info",
+            "tcp_set_timeouts",
             "udp_bind",
             "udp_send_to",
             "udp_receive_from",
@@ -5413,6 +5415,16 @@ mod tests {
             matches!(tcp_nonblocking_missing, Value::Error(message) if message.contains("tcp_set_nonblocking requires (TcpStream/TcpListener, bool) arguments"))
         );
 
+        let tcp_info_missing = call_native_function(&mut interpreter, "tcp_info", &[]);
+        assert!(
+            matches!(tcp_info_missing, Value::Error(message) if message.contains("tcp_info requires a TcpStream argument"))
+        );
+
+        let tcp_timeouts_missing = call_native_function(&mut interpreter, "tcp_set_timeouts", &[]);
+        assert!(
+            matches!(tcp_timeouts_missing, Value::Error(message) if message.contains("tcp_set_timeouts requires (TcpStream, int_read_ms, int_write_ms) arguments"))
+        );
+
         let udp_bind_missing = call_native_function(&mut interpreter, "udp_bind", &[]);
         assert!(
             matches!(udp_bind_missing, Value::Error(message) if message.contains("udp_bind requires (string_host, int_port) arguments"))
@@ -5493,6 +5505,21 @@ mod tests {
         );
         assert!(
             matches!(tcp_nonblocking_extra, Value::Error(message) if message.contains("tcp_set_nonblocking requires (TcpStream/TcpListener, bool) arguments"))
+        );
+
+        let tcp_info_extra =
+            call_native_function(&mut interpreter, "tcp_info", &[Value::Int(1), Value::Int(2)]);
+        assert!(
+            matches!(tcp_info_extra, Value::Error(message) if message.contains("tcp_info requires a TcpStream argument"))
+        );
+
+        let tcp_timeouts_extra = call_native_function(
+            &mut interpreter,
+            "tcp_set_timeouts",
+            &[Value::Int(1), Value::Int(2), Value::Int(3), Value::Int(4)],
+        );
+        assert!(
+            matches!(tcp_timeouts_extra, Value::Error(message) if message.contains("tcp_set_timeouts requires (TcpStream, int_read_ms, int_write_ms) arguments"))
         );
 
         let udp_bind_extra = call_native_function(
@@ -5699,6 +5726,39 @@ mod tests {
             &[listener_value.clone(), Value::Bool(false)],
         );
         assert!(matches!(nonblocking_listener_result, Value::Bool(true)));
+
+        let invalid_timeout_result = call_native_function(
+            &mut server_interpreter,
+            "tcp_set_timeouts",
+            &[accepted_stream.clone(), Value::Int(0), Value::Int(100)],
+        );
+        assert!(
+            matches!(invalid_timeout_result, Value::Error(message) if message.contains("between 1 and 600000 milliseconds"))
+        );
+
+        let timeout_result = call_native_function(
+            &mut server_interpreter,
+            "tcp_set_timeouts",
+            &[accepted_stream.clone(), Value::Int(250), Value::Int(500)],
+        );
+        assert!(matches!(timeout_result, Value::Bool(true)));
+
+        let info_result =
+            call_native_function(&mut server_interpreter, "tcp_info", &[accepted_stream.clone()]);
+        let Value::Dict(info) = info_result else {
+            panic!("Expected deterministic tcp_info dictionary")
+        };
+        assert!(
+            matches!(info.get("schema"), Some(Value::Str(value)) if value.as_ref() == "kujo.tcp.info.v1")
+        );
+        assert!(
+            matches!(info.get("peer_address"), Some(Value::Str(value)) if value.starts_with("127.0.0.1:"))
+        );
+        assert!(
+            matches!(info.get("local_address"), Some(Value::Str(value)) if value.starts_with("127.0.0.1:"))
+        );
+        assert!(matches!(info.get("read_timeout_ms"), Some(Value::Int(250))));
+        assert!(matches!(info.get("write_timeout_ms"), Some(Value::Int(500))));
 
         let close_stream_result =
             call_native_function(&mut server_interpreter, "tcp_close", &[accepted_stream]);

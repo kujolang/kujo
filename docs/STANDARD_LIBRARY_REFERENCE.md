@@ -574,6 +574,8 @@ edge cases are higher-risk than the HTTP helper surface.
 | `tcp_receive` | experimental | `data := tcp_receive(conn, 1024)` |
 | `tcp_close` | experimental | `tcp_close(conn)` |
 | `tcp_set_nonblocking` | experimental | `tcp_set_nonblocking(conn, true)` |
+| `tcp_info` | preview | `info := tcp_info(conn)` |
+| `tcp_set_timeouts` | preview | `tcp_set_timeouts(conn, 30000, 30000)` |
 | `udp_bind` | experimental | `sock := udp_bind("127.0.0.1", 9001)` |
 | `udp_send_to` | experimental | `udp_send_to(sock, "hi", "127.0.0.1", 9002)` |
 | `udp_receive_from` | experimental | `packet := udp_receive_from(sock, 1024)` |

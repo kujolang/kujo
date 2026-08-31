@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add verified TLS client sockets, server acceptors, consumptive STARTTLS-style
   TCP upgrades, bounded TLS I/O, certificate fingerprints, and TLS 1.2+
   fail-closed protocol policy.
+- Add deterministic TCP peer/local-address inspection and bounded per-stream
+  read/write timeout controls for protocol servers.
 
 ### Changed
 

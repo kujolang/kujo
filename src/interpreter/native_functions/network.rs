@@ -7,6 +7,14 @@ use crate::network_policy;
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex, MutexGuard};
 
+fn network_string_value(value: impl Into<String>) -> Value {
+    Value::Str(Arc::new(value.into()))
+}
+
+fn network_insert(map: &mut DictMap, key: &str, value: Value) {
+    map.insert(Arc::<str>::from(key), value);
+}
+
 fn timeout_aware_error_message(operation: &str, error: &std::io::Error) -> String {
     match error.kind() {
         std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock => format!(
@@ -352,6 +360,123 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                     }
                     _ => Value::Error(
                         "tcp_set_nonblocking requires (TcpStream/TcpListener, bool) arguments"
+                            .to_string(),
+                    ),
+                }
+            }
+        }
+
+        "tcp_info" => {
+            if arg_values.len() != 1 {
+                Value::Error("tcp_info requires a TcpStream argument".to_string())
+            } else if let Some(Value::TcpStream { stream, peer_addr }) = arg_values.first() {
+                let stream_guard = match lock_or_network_error(stream, "tcp_info") {
+                    Ok(guard) => guard,
+                    Err(error) => return Some(error),
+                };
+                let Some(stream) = stream_guard.as_ref() else {
+                    return Some(Value::Error(
+                        "tcp_info: TCP stream is closed or upgraded".to_string(),
+                    ));
+                };
+                let local_address = match stream.local_addr() {
+                    Ok(address) => address.to_string(),
+                    Err(error) => {
+                        return Some(Value::Error(format!(
+                            "tcp_info failed to read local address: {}",
+                            error
+                        )))
+                    }
+                };
+                let read_timeout_ms = match stream.read_timeout() {
+                    Ok(Some(timeout)) => timeout.as_millis().min(i64::MAX as u128) as i64,
+                    Ok(None) => 0,
+                    Err(error) => {
+                        return Some(Value::Error(format!(
+                            "tcp_info failed to read receive timeout: {}",
+                            error
+                        )))
+                    }
+                };
+                let write_timeout_ms = match stream.write_timeout() {
+                    Ok(Some(timeout)) => timeout.as_millis().min(i64::MAX as u128) as i64,
+                    Ok(None) => 0,
+                    Err(error) => {
+                        return Some(Value::Error(format!(
+                            "tcp_info failed to read send timeout: {}",
+                            error
+                        )))
+                    }
+                };
+                let mut info = DictMap::default();
+                network_insert(&mut info, "schema", network_string_value("kujo.tcp.info.v1"));
+                network_insert(&mut info, "peer_address", network_string_value(peer_addr.clone()));
+                network_insert(&mut info, "local_address", network_string_value(local_address));
+                network_insert(&mut info, "read_timeout_ms", Value::Int(read_timeout_ms));
+                network_insert(&mut info, "write_timeout_ms", Value::Int(write_timeout_ms));
+                Value::Dict(Arc::new(info))
+            } else {
+                Value::Error("tcp_info requires a TcpStream argument".to_string())
+            }
+        }
+
+        "tcp_set_timeouts" => {
+            if arg_values.len() != 3 {
+                Value::Error(
+                    "tcp_set_timeouts requires (TcpStream, int_read_ms, int_write_ms) arguments"
+                        .to_string(),
+                )
+            } else {
+                match (arg_values.first(), arg_values.get(1), arg_values.get(2)) {
+                    (
+                        Some(Value::TcpStream { stream, .. }),
+                        Some(Value::Int(read_ms)),
+                        Some(Value::Int(write_ms)),
+                    ) => {
+                        const MAX_TIMEOUT_MS: i64 = 600_000;
+                        if *read_ms < 1
+                            || *read_ms > MAX_TIMEOUT_MS
+                            || *write_ms < 1
+                            || *write_ms > MAX_TIMEOUT_MS
+                        {
+                            Value::Error(
+                                "tcp_set_timeouts requires timeout values between 1 and 600000 milliseconds"
+                                    .to_string(),
+                            )
+                        } else {
+                            let stream_guard =
+                                match lock_or_network_error(stream, "tcp_set_timeouts") {
+                                    Ok(guard) => guard,
+                                    Err(error) => return Some(error),
+                                };
+                            let Some(stream) = stream_guard.as_ref() else {
+                                return Some(Value::Error(
+                                    "tcp_set_timeouts: TCP stream is closed or upgraded".to_string(),
+                                ));
+                            };
+                            let read_timeout =
+                                std::time::Duration::from_millis(*read_ms as u64);
+                            let write_timeout =
+                                std::time::Duration::from_millis(*write_ms as u64);
+                            if let Err(error) = stream.set_read_timeout(Some(read_timeout)) {
+                                Value::Error(format!(
+                                    "tcp_set_timeouts failed to set receive timeout: {}",
+                                    error
+                                ))
+                            } else if let Err(error) =
+                                stream.set_write_timeout(Some(write_timeout))
+                            {
+                                Value::Error(format!(
+                                    "tcp_set_timeouts failed to set send timeout: {}",
+                                    error
+                                ))
+                            } else {
+                                Value::Bool(true)
+                            }
+                        }
+                    }
+                    _ => Value::Error(
+                        "tcp_set_timeouts requires (TcpStream, int_read_ms, int_write_ms) arguments"
                             .to_string(),
                     ),
                 }

@@ -907,6 +907,8 @@ impl Interpreter {
             "tcp_receive",
             "tcp_close",
             "tcp_set_nonblocking",
+            "tcp_info",
+            "tcp_set_timeouts",
             "udp_bind",
             "udp_send_to",
             "udp_receive_from",
@@ -1723,6 +1725,11 @@ impl Interpreter {
         self.env.define(
             "tcp_set_nonblocking".to_string(),
             Value::NativeFunction("tcp_set_nonblocking".to_string()),
+        );
+        self.env.define("tcp_info".to_string(), Value::NativeFunction("tcp_info".to_string()));
+        self.env.define(
+            "tcp_set_timeouts".to_string(),
+            Value::NativeFunction("tcp_set_timeouts".to_string()),
         );
         self.env.define("udp_bind".to_string(), Value::NativeFunction("udp_bind".to_string()));
         self.env
