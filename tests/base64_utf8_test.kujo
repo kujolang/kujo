@@ -1,0 +1,17 @@
+let decoded := decode_base64_utf8("YXV0aHppZAB1c2VyAHNlY3JldA==")
+let nul := parse_json("\"\\u0000\"")
+let parts := split(decoded,nul)
+assert(len(parts) == 3, "decoded PLAIN credentials retain NUL separators")
+assert(parts[0] == "authzid" && parts[1] == "user" && parts[2] == "secret", "decoded UTF-8 text is exact")
+
+mut malformed_rejected := false
+try { decode_base64_utf8("%%") }
+except error { malformed_rejected = contains(to_string(error),"Base64 decode error") }
+assert(malformed_rejected, "malformed base64 is rejected")
+
+mut invalid_utf8_rejected := false
+try { decode_base64_utf8("/w==") }
+except error { invalid_utf8_rejected = contains(to_string(error),"not valid UTF-8") }
+assert(invalid_utf8_rejected, "invalid UTF-8 is rejected")
+
+print("base64 UTF-8 tests: 4 passed")

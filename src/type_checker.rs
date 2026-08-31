@@ -2037,6 +2037,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "decode_base64_utf8".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
             "encode_uri_component".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)],

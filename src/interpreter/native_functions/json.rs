@@ -187,6 +187,23 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "decode_base64_utf8" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error(
+                    "decode_base64_utf8 requires a string argument".to_string(),
+                ));
+            }
+
+            if let Some(Value::Str(s)) = arg_values.first() {
+                match builtins::decode_base64_utf8(s.as_ref()) {
+                    Ok(text) => Value::Str(Arc::new(text)),
+                    Err(error) => Value::Error(error),
+                }
+            } else {
+                Value::Error("decode_base64_utf8 requires a string argument".to_string())
+            }
+        }
+
         _ => return None,
     };
 
@@ -312,6 +329,22 @@ mod tests {
     }
 
     #[test]
+    fn test_base64_utf8_decode_is_strict() {
+        let decoded = handle("decode_base64_utf8", &[string_value("a3VqbyDimIM=")]).unwrap();
+        assert!(matches!(decoded, Value::Str(value) if value.as_ref() == "kujo ☃"));
+
+        let invalid_utf8 = handle("decode_base64_utf8", &[string_value("/w==")]).unwrap();
+        assert!(
+            matches!(invalid_utf8, Value::Error(message) if message == "Base64 decoded value is not valid UTF-8")
+        );
+
+        let malformed = handle("decode_base64_utf8", &[string_value("%%")]).unwrap();
+        assert!(
+            matches!(malformed, Value::Error(message) if message.starts_with("Base64 decode error:"))
+        );
+    }
+
+    #[test]
     fn test_encode_uri_component_rfc3986_and_utf8() {
         let cases = [
             ("AZaz09-._~", "AZaz09-._~"),
@@ -337,6 +370,11 @@ mod tests {
         let decode_base64_error = handle("decode_base64", &[Value::Int(1)]).unwrap();
         assert!(
             matches!(decode_base64_error, Value::Error(message) if message.contains("decode_base64 requires a string argument"))
+        );
+
+        let decode_base64_utf8_error = handle("decode_base64_utf8", &[Value::Int(1)]).unwrap();
+        assert!(
+            matches!(decode_base64_utf8_error, Value::Error(message) if message.contains("decode_base64_utf8 requires a string argument"))
         );
 
         let encode_base64_error = handle("encode_base64", &[Value::Int(1)]).unwrap();

@@ -1806,6 +1806,13 @@ pub fn decode_base64(s: &str) -> Result<Vec<u8>, String> {
     general_purpose::STANDARD.decode(s).map_err(|e| format!("Base64 decode error: {}", e))
 }
 
+/// Decode a base64 string as strict UTF-8 text without filesystem round trips.
+#[allow(dead_code)]
+pub fn decode_base64_utf8(s: &str) -> Result<String, String> {
+    let bytes = decode_base64(s)?;
+    String::from_utf8(bytes).map_err(|_| "Base64 decoded value is not valid UTF-8".to_string())
+}
+
 /// JWT Authentication Functions
 /// JWT Claims structure for encoding/decoding
 #[derive(Debug, Serialize, Deserialize)]

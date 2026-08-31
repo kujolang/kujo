@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fail-closed protocol policy.
 - Add deterministic TCP peer/local-address inspection and bounded per-stream
   read/write timeout controls for protocol servers.
+- Add strict `decode_base64_utf8(text)` decoding for text-based binary protocol
+  fields without filesystem conversion or lossy UTF-8 behavior.
 
 ### Changed
 
