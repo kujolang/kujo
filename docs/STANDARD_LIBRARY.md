@@ -19,12 +19,12 @@ Capability key:
 
 JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 
-- `parse_json` enforces a maximum input size of `1,048,576` bytes and a maximum nesting depth of `64`.
+- `parse_json` enforces a maximum input size of `8,388,608` bytes, aligned with file I/O, and a maximum nesting depth of `64`.
 - Invalid JSON returns a `Value::Error` message including parse-location details from `serde_json`.
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
 - `to_json` and `to_json_pretty` accept JSON-compatible scalar/container values, including `secret` values which serialize as `"***"`; runtime structs, functions, bytes, and other unsupported values return `Value::Error`.
 - Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
-- `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `1,048,576` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
+- `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `8,388,608` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
 
 JSON Schema subset contract (`json_schema_validate`):
 
@@ -263,7 +263,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `io_write_private_file` | `io_write_private_file(path, content, mode)` | exact 3 | dictionary | Creates a same-directory temporary file with the restrictive mode at creation, verifies the same handle, syncs, and atomically publishes without overwrite. | `filesystem-write` | `receipt := io_write_private_file("private.pem", pem, 384)` |
 | `io_truncate` | `io_truncate(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_truncate(...)` |
 | `io_copy_range` | `io_copy_range(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_copy_range(...)` |
-| `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>1,048,576 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
+| `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>8,388,608 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
 | `to_json` | `to_json(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json({"ok": true})` |
 | `to_json_pretty` | `to_json_pretty(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json_pretty({"ok": true})` |
 | `json_schema_validate` | `json_schema_validate(value, schema)` | exact 2 | dict | Value::Error on invalid args/types, malformed or unsupported schema keywords, invalid regex patterns, unsupported `$ref`, or resource-limit violations. Integer bounds are compared without converting them through floating point. Otherwise returns `{valid, errors}` with JSON-pointer-like paths. | `none` | `result := json_schema_validate({"name":"Kujo"}, {"type":"object","required":["name"]})` |
