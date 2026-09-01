@@ -1,22 +1,24 @@
 # Unsafe Inventory
 
-Generated: 2026-08-26
+Generated: 2026-09-01
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
 
-- Total matches: 69
+- Total matches: 71
 - Executable matches: 58
-- Non-executable matches: 11
+- Non-executable matches: 13
 - Unknown classifications: 0
 
 ## Rows
 
 | Path | Line | Kind | Classification | Text |
 | --- | ---: | --- | --- | --- |
+| src/interpreter/native_functions/compression.rs | 201 | non_executable | src_comment_or_string |         writer.write_all(b""unsafe"").unwrap(); |
 | src/interpreter/native_functions/system.rs | 83 | executable | src_executable_other |         unsafe { |
 | src/interpreter/native_functions/system.rs | 578 | executable | src_executable_other |     unsafe { |
 | src/interpreter/native_functions/system.rs | 595 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
+| src/interpreter/native_functions/tls.rs | 618 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
 | src/jit.rs | 61 | executable | jit_executable |     let vm_ctx = unsafe { &mut *ctx }; |
 | src/jit.rs | 78 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
 | src/jit.rs | 89 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |
