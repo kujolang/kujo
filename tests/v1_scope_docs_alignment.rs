@@ -15,11 +15,25 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
         .expect("failed to read docs/V1_SCOPE.md for alignment");
     let optional_typing = fs::read_to_string(root.join("docs").join("OPTIONAL_TYPING_DESIGN.md"))
         .expect("failed to read docs/OPTIONAL_TYPING_DESIGN.md for alignment");
+    let cargo_manifest = fs::read_to_string(root.join("Cargo.toml"))
+        .expect("failed to read Cargo.toml for release version alignment");
+    let cargo_version = cargo_manifest
+        .lines()
+        .find_map(|line| {
+            line.strip_prefix("version = \"")
+                .and_then(|value| value.strip_suffix('"'))
+        })
+        .expect("Cargo.toml must define a package version");
+    let release_state_line = readme
+        .lines()
+        .find(|line| line.starts_with("- The source tree is currently at `"))
+        .expect("README must state the source and stable release versions");
 
     assert!(
-        readme.contains(
-            "The source tree is currently at `1.1.0` in `Cargo.toml`; the latest published stable release tag is `v1.1.0`."
-        ) && readme.contains("Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries"),
+        release_state_line.starts_with(&format!(
+            "- The source tree is currently at `{cargo_version}` in `Cargo.toml`; the latest published stable release tag is `v"
+        )) && release_state_line.ends_with("`.")
+            && readme.contains("Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries"),
         "README must keep explicit stable-release and artifact wording"
     );
     assert!(
