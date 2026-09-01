@@ -1,7 +1,9 @@
 # Kujo Ability Architecture Research
 
-Status: architecture recommendation; no production implementation  
-Decision date: 2026-09-01  
+Status: architecture recommendation; no production implementation
+
+Decision date: 2026-09-01
+
 Decision: **BUILD WITH CHANGES**
 
 ## 1. Executive Summary
@@ -785,12 +787,20 @@ Deferral is a compatibility feature: each item can be added beside the small con
 
 ## 20. Final Recommendation
 
-**Recommended architecture:** A portable `AbilityDefinition` with separate implementation, policy, exposure, and receipt contracts, enforced through a common invocation gateway.  
-**Recommended repository ownership:** Experimental shared package first; graduate to a standalone `ability` ecosystem repository only after CMS and one independent consumer pass the same conformance suite. Keep registries and policy out of Kujo core.  
-**Recommended name:** Ability, with transport-neutral dotted canonical IDs and explicit legacy aliases.  
-**Recommended declaration mechanism:** Strict versioned manifest plus small Kujo/library APIs and SDK registration; no native syntax.  
-**Recommended relationship with CMS:** Reuse the current vertical slice and compatibility surfaces, fix enforcement first, then separate its definitions from CMS handlers, permissions, storage, plugins, and audit.  
-**Recommended relationship with WebMCP:** Optional, explicit, public-read projection; retain current CMS/SSG built-ins until the adapter proves equal or stronger privacy and origin guarantees.  
-**Recommended relationship with MCP:** Optional tool projection through an explicit exposure binding; MCP control tools remain protocol-native.  
-**Recommended first implementation:** Phase 0 CMS safety enforcement followed by a `kujo.ability/v1` contract proof and legacy converter—no production-wide extraction yet.  
+**Recommended architecture:** A portable `AbilityDefinition` with separate implementation, policy, exposure, and receipt contracts, enforced through a common invocation gateway.
+
+**Recommended repository ownership:** Experimental shared package first; graduate to a standalone `ability` ecosystem repository only after CMS and one independent consumer pass the same conformance suite. Keep registries and policy out of Kujo core.
+
+**Recommended name:** Ability, with transport-neutral dotted canonical IDs and explicit legacy aliases.
+
+**Recommended declaration mechanism:** Strict versioned manifest plus small Kujo/library APIs and SDK registration; no native syntax.
+
+**Recommended relationship with CMS:** Reuse the current vertical slice and compatibility surfaces, fix enforcement first, then separate its definitions from CMS handlers, permissions, storage, plugins, and audit.
+
+**Recommended relationship with WebMCP:** Optional, explicit, public-read projection; retain current CMS/SSG built-ins until the adapter proves equal or stronger privacy and origin guarantees.
+
+**Recommended relationship with MCP:** Optional tool projection through an explicit exposure binding; MCP control tools remain protocol-native.
+
+**Recommended first implementation:** Phase 0 CMS safety enforcement followed by a `kujo.ability/v1` contract proof and legacy converter—no production-wide extraction yet.
+
 **Biggest architectural risk:** Treating descriptive metadata as enforced security while collapsing semantic Ability, invocation Tool, policy, and execution into one registry.
