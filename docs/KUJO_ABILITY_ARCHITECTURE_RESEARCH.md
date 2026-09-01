@@ -1,10 +1,34 @@
 # Kujo Ability Architecture Research
 
-Status: architecture recommendation; no production implementation
+Status: implemented initial production architecture
 
 Decision date: 2026-09-01
 
 Decision: **BUILD WITH CHANGES**
+
+Implementation completed: 2026-09-01
+
+The gated rollout described in this report is now implemented:
+
+- `kujolang/ability` is the protocol-neutral canonical package at `e7237f2`,
+  with the `kujo.ability/v1` JSON Schema, Kujo validators, compatibility rules,
+  consumer conformance checks, and a fail-closed Fence boundary.
+- CMS is the first producer and product gateway at `382a084`. It publishes
+  canonical definitions, validates inputs and outputs around handlers, applies
+  generic confirmation preflight, validates plugin descriptors, preserves
+  legacy routes and names, and enriches MCP descriptors without changing
+  product-local permissions, bindings, or audit ownership.
+- Agents SDK is the independent consumer at `c96c76a`. Its adapter projects a
+  definition plus separate binding and exposure policy into the existing Tool
+  contract, validates invocation schemas, preserves canonical identity, and
+  derives only a conservative risk hint from effects.
+- MCP is the protocol consumer at `0357bd2`. Its adapter requires explicit
+  exposure, defaults to read-only effects, rejects undeclared mutation
+  exposure, and preserves schemas and canonical identity in MCP metadata.
+
+This implementation does not add Kujo language syntax, a global registry,
+provider routing, authorization policy, or general WebMCP mutation. Those
+non-goals remain binding architecture constraints.
 
 ## 1. Executive Summary
 
