@@ -20,8 +20,7 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
     let cargo_version = cargo_manifest
         .lines()
         .find_map(|line| {
-            line.strip_prefix("version = \"")
-                .and_then(|value| value.strip_suffix('"'))
+            line.strip_prefix("version = \"").and_then(|value| value.strip_suffix('"'))
         })
         .expect("Cargo.toml must define a package version");
     let release_state_line = readme
