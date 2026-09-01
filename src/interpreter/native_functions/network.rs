@@ -605,7 +605,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
         "tcp_info" => {
             if arg_values.len() != 1 {
                 Value::Error("tcp_info requires a TcpStream argument".to_string())
-            } else if let Some(Value::TcpStream { stream, peer_addr }) = arg_values.first() {
+            } else if let Some(Value::TcpStream { stream, peer_addr: _ }) = arg_values.first() {
                 let stream_guard = match lock_or_network_error(stream, "tcp_info") {
                     Ok(guard) => guard,
                     Err(error) => return Some(error),
@@ -615,8 +615,17 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                         "tcp_info: TCP stream is closed or upgraded".to_string(),
                     ));
                 };
-                let local_address = match stream.local_addr() {
-                    Ok(address) => address.to_string(),
+                let peer_socket_address = match stream.peer_addr() {
+                    Ok(address) => address,
+                    Err(error) => {
+                        return Some(Value::Error(format!(
+                            "tcp_info failed to read peer address: {}",
+                            error
+                        )))
+                    }
+                };
+                let local_socket_address = match stream.local_addr() {
+                    Ok(address) => address,
                     Err(error) => {
                         return Some(Value::Error(format!(
                             "tcp_info failed to read local address: {}",
@@ -646,8 +655,36 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 };
                 let mut info = DictMap::default();
                 network_insert(&mut info, "schema", network_string_value("kujo.tcp.info.v1"));
-                network_insert(&mut info, "peer_address", network_string_value(peer_addr.clone()));
-                network_insert(&mut info, "local_address", network_string_value(local_address));
+                network_insert(
+                    &mut info,
+                    "peer_address",
+                    network_string_value(peer_socket_address.to_string()),
+                );
+                network_insert(
+                    &mut info,
+                    "peer_ip",
+                    network_string_value(peer_socket_address.ip().to_string()),
+                );
+                network_insert(
+                    &mut info,
+                    "peer_port",
+                    Value::Int(peer_socket_address.port() as i64),
+                );
+                network_insert(
+                    &mut info,
+                    "local_address",
+                    network_string_value(local_socket_address.to_string()),
+                );
+                network_insert(
+                    &mut info,
+                    "local_ip",
+                    network_string_value(local_socket_address.ip().to_string()),
+                );
+                network_insert(
+                    &mut info,
+                    "local_port",
+                    Value::Int(local_socket_address.port() as i64),
+                );
                 network_insert(&mut info, "read_timeout_ms", Value::Int(read_timeout_ms));
                 network_insert(&mut info, "write_timeout_ms", Value::Int(write_timeout_ms));
                 Value::Dict(Arc::new(info))

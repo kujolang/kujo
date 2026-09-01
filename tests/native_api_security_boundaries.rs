@@ -999,6 +999,21 @@ fn network_tcp_connect_bound_uses_requested_source_address() {
         "tcp_info should expose requested local source: {}",
         stdout_text(&output)
     );
+    assert!(
+        stdout_text(&output).contains("\"peer_ip\":\"127.0.0.1\""),
+        "tcp_info should expose the socket-derived peer IP: {}",
+        stdout_text(&output)
+    );
+    assert!(
+        stdout_text(&output).contains(&format!("\"peer_port\":{port}")),
+        "tcp_info should expose the socket-derived peer port: {}",
+        stdout_text(&output)
+    );
+    assert!(
+        stdout_text(&output).contains("\"local_ip\":\"127.0.0.1\""),
+        "tcp_info should expose the socket-derived local IP: {}",
+        stdout_text(&output)
+    );
 }
 
 #[test]
