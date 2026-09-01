@@ -1140,6 +1140,30 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "io_private_spool_open".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "io_private_spool_write".to_string(),
+            FunctionSignature { param_types: vec![None, None], return_type: None },
+        );
+
+        for function_name in ["io_private_spool_finish", "io_private_spool_abort"] {
+            self.functions.insert(
+                function_name.to_string(),
+                FunctionSignature { param_types: vec![None], return_type: None },
+            );
+        }
+
+        self.functions.insert(
             "aes_encrypt_file_stream".to_string(),
             FunctionSignature {
                 param_types: vec![

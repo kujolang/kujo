@@ -2305,6 +2305,9 @@ pub fn format_debug_value(value: &Value) -> String {
                 certificate_sha256, min_protocol
             )
         }
+        Value::PrivateSpool { destination, .. } => {
+            format!("PrivateSpool(destination: {})", destination)
+        }
         Value::UdpSocket { addr, .. } => format!("UdpSocket(addr: {})", addr),
         Value::Result { is_ok, value } => {
             if *is_ok {

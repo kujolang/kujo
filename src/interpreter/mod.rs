@@ -679,6 +679,10 @@ impl Interpreter {
             "io_file_metadata",
             "io_set_permissions",
             "io_write_private_file",
+            "io_private_spool_open",
+            "io_private_spool_write",
+            "io_private_spool_finish",
+            "io_private_spool_abort",
             "io_truncate",
             "io_copy_range",
             // JSON functions
@@ -1234,6 +1238,22 @@ impl Interpreter {
         self.env.define(
             "io_write_private_file".to_string(),
             Value::NativeFunction("io_write_private_file".to_string()),
+        );
+        self.env.define(
+            "io_private_spool_open".to_string(),
+            Value::NativeFunction("io_private_spool_open".to_string()),
+        );
+        self.env.define(
+            "io_private_spool_write".to_string(),
+            Value::NativeFunction("io_private_spool_write".to_string()),
+        );
+        self.env.define(
+            "io_private_spool_finish".to_string(),
+            Value::NativeFunction("io_private_spool_finish".to_string()),
+        );
+        self.env.define(
+            "io_private_spool_abort".to_string(),
+            Value::NativeFunction("io_private_spool_abort".to_string()),
         );
         self.env
             .define("io_truncate".to_string(), Value::NativeFunction("io_truncate".to_string()));
@@ -3096,6 +3116,20 @@ impl Interpreter {
                 "io_write_private_file",
                 vec!["path".to_string(), "content".to_string(), "mode".to_string()],
             ),
+            "io_private_spool_open" => CallableArity::exact(
+                "io_private_spool_open",
+                vec!["path".to_string(), "max_bytes".to_string(), "mode".to_string()],
+            ),
+            "io_private_spool_write" => CallableArity::exact(
+                "io_private_spool_write",
+                vec!["spool".to_string(), "content".to_string()],
+            ),
+            "io_private_spool_finish" => {
+                CallableArity::exact("io_private_spool_finish", vec!["spool".to_string()])
+            }
+            "io_private_spool_abort" => {
+                CallableArity::exact("io_private_spool_abort", vec!["spool".to_string()])
+            }
             "http_download_file" => CallableArity::exact(
                 "http_download_file",
                 vec!["url".to_string(), "output_path".to_string(), "options".to_string()],

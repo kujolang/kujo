@@ -15,15 +15,37 @@ use postgres::Client as PostgresClient;
 #[cfg(feature = "runtime-db")]
 use rusqlite::Connection as SqliteConnection;
 use std::collections::HashMap;
-#[cfg(feature = "runtime-archive")]
 use std::fs::File;
 use std::hash::BuildHasherDefault;
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
 #[cfg(feature = "runtime-archive")]
 use zip::ZipWriter;
+
+/// Open, bounded, atomically published private-file spool state.
+///
+/// The live file is reachable only through a `Value::PrivateSpool` handle. If
+/// the handle is dropped or explicitly aborted before publication, the
+/// same-directory temporary file is removed.
+pub struct PrivateSpoolState {
+    pub file: Option<File>,
+    pub destination: PathBuf,
+    pub temp: PathBuf,
+    pub mode: u32,
+    pub max_bytes: u64,
+    pub bytes_written: u64,
+    pub hasher: sha2::Sha256,
+}
+
+impl Drop for PrivateSpoolState {
+    fn drop(&mut self) {
+        self.file.take();
+        let _ = std::fs::remove_file(&self.temp);
+    }
+}
 
 // Forward declaration - Environment is in a sibling module
 use super::environment::Environment;
@@ -671,6 +693,8 @@ pub enum Value {
         certificate_sha256: String,
         min_protocol: String,
     },
+    /// Bounded private-file spool with an open, non-reopenable file handle.
+    PrivateSpool { spool: Arc<Mutex<Option<PrivateSpoolState>>>, destination: String },
     /// UDP socket for datagram communication
     /// Infrastructure for network.rs stub module
     #[allow(dead_code)]
@@ -902,6 +926,9 @@ impl std::fmt::Debug for Value {
                     "TlsAcceptor(certificate_sha256={}, min_protocol={})",
                     certificate_sha256, min_protocol
                 )
+            }
+            Value::PrivateSpool { destination, .. } => {
+                write!(f, "PrivateSpool(destination={})", destination)
             }
             Value::UdpSocket { addr, .. } => {
                 write!(f, "UdpSocket(addr={})", addr)

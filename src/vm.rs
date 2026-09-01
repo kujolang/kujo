@@ -920,6 +920,7 @@ impl VM {
                 | Value::TcpStream { .. }
                 | Value::TlsStream { .. }
                 | Value::TlsAcceptor { .. }
+                | Value::PrivateSpool { .. }
                 | Value::UdpSocket { .. }
                 | Value::Channel(_)
                 | Value::GeneratorDef(_, _)

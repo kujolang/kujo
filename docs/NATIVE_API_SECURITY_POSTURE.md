@@ -52,7 +52,7 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 | Flag | Capability | Typical APIs Unlocked | Primary Risk |
 | --- | --- | --- | --- |
 | `--allow-fs-read` | Filesystem read | `read_file`, `read_lines`, `read_binary_file`, metadata/path reads | Data disclosure |
-| `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, mkdir/write helpers | Data tampering |
+| `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, bounded private spools, mkdir/write helpers | Data tampering |
 | `--allow-fs-delete` | Filesystem delete | `delete_file`, delete-adjacent flows | Data loss |
 | `--allow-process-exec` | Direct process execution | `spawn_process`, `pipe_commands` | Arbitrary command execution |
 | `--allow-shell-exec` | Shell-string execution | `execute`, `execute_status` | Shell injection/command abuse |

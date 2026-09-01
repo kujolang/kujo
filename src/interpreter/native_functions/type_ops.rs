@@ -255,6 +255,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::TcpStream { .. } => "tcpstream",
                     Value::TlsStream { .. } => "tlsstream",
                     Value::TlsAcceptor { .. } => "tlsacceptor",
+                    Value::PrivateSpool { .. } => "privatespool",
                     Value::UdpSocket { .. } => "udpsocket",
                     Value::Return(_) => "return",
                     Value::Error(_) | Value::ErrorObject { .. } => "error",

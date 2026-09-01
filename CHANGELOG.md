@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add capability-gated bounded private-file spools (`io_private_spool_open`,
+  `io_private_spool_write`, `io_private_spool_finish`, and
+  `io_private_spool_abort`) with restrictive-at-creation permissions,
+  single-use handles, incremental SHA-256 receipts, no-overwrite atomic
+  publication, VM/interpreter parity, fail-closed cleanup, and explicit
+  post-publication durability/temporary-cleanup facts.
 - Add lifecycle-script-free npm runtime packaging with exact-version native
   platform packages, an allow-listed launcher, package contract tests, and a
   release packaging dry run.

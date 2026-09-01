@@ -1,0 +1,25 @@
+let directory := "tmp/private_spool_runtime"
+if path_exists(directory) == false { create_dir(directory) }
+let path := directory + "/message.eml"
+if path_exists(path) { delete_file(path) }
+
+let spool := io_private_spool_open(path,16,384)
+assert(type(spool) == "privatespool","private spool handle type")
+let first := io_private_spool_write(spool,"Subject: x\r\n")
+assert(first["bytes_written"] == 12 && first["remaining_bytes"] == 4,"bounded write receipt")
+let second := io_private_spool_write(spool,"\r\nhi")
+assert(second["bytes_written"] == 16 && second["remaining_bytes"] == 0,"exact maximum accepted")
+mut overflow_rejected := false
+try { io_private_spool_write(spool,"x") }
+except error { overflow_rejected = true }
+assert(overflow_rejected,"overflow rejected before write")
+let receipt := io_private_spool_finish(spool)
+assert(receipt["published"] && receipt["temporary_removed"] && receipt["directory_synced"],"unambiguous publication receipt")
+assert(receipt["verified"] && receipt["mode"] == 384 && receipt["bytes_written"] == 16,"private finish receipt")
+assert(len(receipt["sha256"]) == 64 && read_file(path) == "Subject: x\r\n\r\nhi","published content and digest")
+mut second_finish_rejected := false
+try { io_private_spool_finish(spool) }
+except error { second_finish_rejected = true }
+assert(second_finish_rejected,"finish is single-use")
+delete_file(path)
+print("private spool runtime tests: 8 passed")

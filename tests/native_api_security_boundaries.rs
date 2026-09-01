@@ -2,6 +2,8 @@ use kujo::runtime_limits;
 use std::fs;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -342,6 +344,64 @@ fn native_capability_untrusted_denies_filesystem_write() {
         "Capability denied: filesystem-write required for write_file",
         &["--interpreter", "--untrusted"],
     );
+}
+
+#[test]
+fn native_capability_untrusted_denies_private_spool_in_vm_and_interpreter() {
+    let script = "io_private_spool_open(\"blocked.eml\", 1024, 384)\n";
+    assert_runtime_boundary_failure_with_args(
+        script,
+        "Capability denied: filesystem-write required for io_private_spool_open",
+        &["--untrusted"],
+    );
+    assert_runtime_boundary_failure_with_args(
+        script,
+        "Capability denied: filesystem-write required for io_private_spool_open",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
+fn private_spool_round_trip_has_vm_interpreter_parity() {
+    let project_root = unique_temp_dir("private_spool_runtime_parity");
+    let script_path = project_root.join("private_spool.kujo");
+    let output_path = project_root.join("message.eml");
+    let output_literal = escape_kujo_string(
+        output_path.to_str().expect("private spool output path should be utf-8"),
+    );
+    let script = format!(
+        "let spool := io_private_spool_open(\"{output_literal}\",16,384)\n\
+         io_private_spool_write(spool,\"Subject: x\\r\\n\")\n\
+         io_private_spool_write(spool,\"\\r\\nhi\")\n\
+         let receipt := io_private_spool_finish(spool)\n\
+         print(to_json(receipt))\n"
+    );
+    fs::write(&script_path, script).expect("private spool script should be written");
+
+    for runtime_args in [vec![], vec!["--interpreter"]] {
+        let _ = fs::remove_file(&output_path);
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script_path.to_str().expect("private spool script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert!(
+            output.status.success(),
+            "private spool runtime failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        let stdout = stdout_text(&output);
+        assert!(stdout.contains("\"verified\":true"));
+        assert!(stdout.contains("\"published\":true"));
+        assert!(stdout.contains("\"temporary_removed\":true"));
+        assert!(stdout.contains("\"directory_synced\":true"));
+        assert!(stdout.contains("\"bytes_written\":16"));
+        assert_eq!(fs::read(&output_path).unwrap(), b"Subject: x\r\n\r\nhi");
+        #[cfg(unix)]
+        assert_eq!(fs::metadata(&output_path).unwrap().permissions().mode() & 0o777, 0o600);
+    }
+
+    let _ = fs::remove_dir_all(project_root);
 }
 
 #[test]
