@@ -157,6 +157,17 @@ cargo install --path .
 kujo --version
 ```
 
+After npm registry publication, Node.js 18+ users on a supported target can use
+the lifecycle-script-free runtime package:
+
+```bash
+npm install --global @kujolang/kujo-runtime
+kujo --version
+```
+
+See [docs/RELEASE_BINARIES.md](docs/RELEASE_BINARIES.md) for the native package
+layout and the separate registry-publication gate.
+
 Build a standalone local artifact for your current machine, with optional user-path install:
 
 ```bash

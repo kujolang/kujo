@@ -25,6 +25,11 @@ jobs:
             binary_name: kujo
             archive_ext: tar.gz
             archive_kind: tar
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
           - os: macos-15-intel
             platform: macos-x64
             binary_name: kujo

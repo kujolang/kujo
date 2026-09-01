@@ -18,6 +18,7 @@ Minimum release validation assumptions for current supported install flow:
 
 - Rust stable `1.86+`
 - Linux x64 (`ubuntu-latest` baseline)
+- Linux arm64 (`ubuntu-24.04-arm` baseline)
 - macOS Intel (`macos-15-intel` baseline)
 - macOS Apple Silicon (`macos-15` baseline)
 - Windows x64 (`windows-latest` baseline)

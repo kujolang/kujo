@@ -9,7 +9,8 @@ For tag `<TAG>` such as `v1.0.0`, the release workflow publishes these assets:
 
 | Platform | Runner | Archive | Binary inside |
 | --- | --- | --- | --- |
-| Linux x64 | `ubuntu-latest` | `kujo-<TAG>-linux-x64.tar.gz` | `kujo` |
+| Linux x64 | `ubuntu-22.04` | `kujo-<TAG>-linux-x64.tar.gz` | `kujo` |
+| Linux arm64 | `ubuntu-24.04-arm` | `kujo-<TAG>-linux-arm64.tar.gz` | `kujo` |
 | macOS Intel | `macos-15-intel` | `kujo-<TAG>-macos-x64.tar.gz` | `kujo` |
 | macOS Apple Silicon | `macos-15` | `kujo-<TAG>-macos-arm64.tar.gz` | `kujo` |
 | Windows x64 | `windows-latest` | `kujo-<TAG>-windows-x64.zip` | `kujo.exe` |
@@ -50,6 +51,43 @@ For a tag release, the workflow:
 
 Manual runs upload artifacts to the workflow run, but they do not publish GitHub
 release assets unless the run is for a `v*` tag.
+
+## npm Runtime Packages
+
+The npm packaging under `npm/` reuses the binaries built and smoke-tested by
+this matrix. `@kujolang/kujo-runtime` is a lifecycle-script-free resolver and
+launcher with exact-version optional dependencies on these native packages:
+
+| Runtime target | npm package |
+| --- | --- |
+| Linux x64 (glibc) | `@kujolang/kujo-linux-x64` |
+| Linux arm64 (glibc) | `@kujolang/kujo-linux-arm64` |
+| macOS Intel | `@kujolang/kujo-darwin-x64` |
+| macOS Apple Silicon | `@kujolang/kujo-darwin-arm64` |
+| Windows x64 | `@kujolang/kujo-win32-x64` |
+
+Installation performs no download in `preinstall`, `install`, or `postinstall`.
+npm selects an optional platform package, and the launcher resolves only the
+allow-listed package for `process.platform` and `process.arch`. It starts the
+bundled executable directly with `shell: false`.
+
+Each native npm tarball also contains a generated `metadata.json` provenance
+record with `runtimeVersion`, the full 40-character `gitCommit`, the npm
+`target`, and the SHA-256 digest of its bundled executable. Release packaging
+derives this record from the tested binary and `GITHUB_SHA`; source templates do
+not carry stale provenance.
+
+Run the local manifest, resolver, and package-content rehearsal with:
+
+```bash
+npm test --prefix npm
+npm run pack:dry-run --prefix npm
+```
+
+Registry publication must publish every native package for a version before
+the same-version neutral resolver. npm publication is not implied by a GitHub
+tag or GitHub release asset; it requires separate registry authorization and
+evidence.
 
 ## Manual Dry Run
 

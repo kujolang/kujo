@@ -287,6 +287,22 @@ cargo publish --locked
 
 4. Publish GitHub release artifacts (Linux/macOS/Windows binaries + checksums) via release workflows.
 
+   The binary matrix also creates npm platform-package tarballs from those same
+   tested executables. Before any npm publication, run:
+
+   ```bash
+   npm test --prefix npm
+   npm run pack:dry-run --prefix npm
+   ```
+
+   Publish all exact-version `@kujolang/kujo-<target>` packages before
+   `@kujolang/kujo-runtime`. npm publication is an independent registry gate
+   and must not be inferred from a successful GitHub release. None of these packages may
+   add `preinstall`, `install`, or `postinstall` download behavior.
+   Inspect each platform tarball's generated `metadata.json` and confirm its
+   runtime version, full source commit, target, and binary SHA-256 before
+   publication.
+
 5. Run published-artifact smoke validation and record outcomes.
 
 6. After publication and artifact smoke validation succeed, update public stable-release strings to the new tag and re-run `bash .github/scripts/check-release-state.sh`.

@@ -113,21 +113,31 @@ jobs:
           # This keeps its glibc floor compatible with Ubuntu 22.04 consumers.
           - os: ubuntu-22.04
             platform: linux-x64
+            npm_target: linux-x64
+            binary_name: kujo
+            archive_ext: tar.gz
+            archive_kind: tar
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+            npm_target: linux-arm64
             binary_name: kujo
             archive_ext: tar.gz
             archive_kind: tar
           - os: macos-15-intel
             platform: macos-x64
+            npm_target: darwin-x64
             binary_name: kujo
             archive_ext: tar.gz
             archive_kind: tar
           - os: macos-15
             platform: macos-arm64
+            npm_target: darwin-arm64
             binary_name: kujo
             archive_ext: tar.gz
             archive_kind: tar
           - os: windows-latest
             platform: windows-x64
+            npm_target: win32-x64
             binary_name: kujo.exe
             archive_ext: zip
             archive_kind: zip
@@ -138,6 +148,11 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
 
       - name: Configure OpenSSL for Windows
         if: runner.os == 'Windows'
@@ -187,6 +202,18 @@ jobs:
             pwsh -NoLogo -NoProfile -Command "\$hash = (Get-FileHash -Algorithm SHA256 '${archive_name}').Hash.ToLower(); \"\$hash  ${archive_name}\" | Set-Content '${archive_name}.sha256'"
           fi
 
+      - name: Pack lifecycle-script-free npm platform package
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)"
+          node npm/scripts/pack-platform.js \
+            --target "${{ matrix.npm_target }}" \
+            --binary "target/release/${{ matrix.binary_name }}" \
+            --version "${npm_version}" \
+            --git-commit "${GITHUB_SHA}" \
+            --output npm-dist
+
       - name: Upload artifact bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -196,9 +223,38 @@ jobs:
             kujo-*.tar.gz.sha256
             kujo-*.zip
             kujo-*.zip.sha256
+            npm-dist/*.tgz
+
+  pack-npm-runtime:
+    needs: build-release-artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
+
+      - name: Test and pack neutral npm runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test --prefix npm
+          npm run pack:dry-run --prefix npm
+          npm_version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)"
+          node npm/scripts/pack-runtime.js --version "${npm_version}" --output npm-dist
+
+      - name: Upload neutral npm runtime
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-npm-runtime
+          path: npm-dist/*.tgz
 
   publish-release-assets:
-    needs: build-release-artifacts
+    needs: [build-release-artifacts, pack-npm-runtime]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add lifecycle-script-free npm runtime packaging with exact-version native
+  platform packages, an allow-listed launcher, package contract tests, and a
+  release packaging dry run.
 - Add capability-free bounded in-memory gzip decompression and safe
   single-regular-entry ZIP reading for hostile compressed protocol inputs.
 - Add a checksum-verified reusable GitHub Action for installing exact Kujo

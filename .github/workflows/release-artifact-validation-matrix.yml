@@ -28,6 +28,11 @@ jobs:
       - name: Validate release artifact install/checksum flow
         run: bash .github/scripts/validate-release-artifact.sh
 
+      - name: Validate npm runtime package contracts
+        run: |
+          npm test --prefix npm
+          npm run pack:dry-run --prefix npm
+
       - name: Validate first-party extension smoke check
         working-directory: tools/vscode-kujo-extension
         run: |
