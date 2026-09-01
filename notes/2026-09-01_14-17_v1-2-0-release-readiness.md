@@ -21,6 +21,10 @@
   the warning-free dependency contract.
 - Kujo fixture execution creates an untracked `tests/base64_utf8_test.out` file;
   clean-worktree automation must account for or remove that known test artifact.
+- The normalized Cargo package cannot use the repository-local patched
+  `tiny_http`; its verification build falls back to upstream 0.12.0, which does
+  not expose `http_with_read_timeout`. This blocks crates.io publication, not
+  the repository-built GitHub binaries.
 
 ## Things I Learned
 
@@ -36,6 +40,7 @@
 | `KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT=/Users/robertdevore/2026/Kujolang/kujo-repos KUJO_ENABLE_SOCKET_TESTS=1 bash scripts/release_candidate_gate.sh --full` | PASS | Clean detached worktree at `3eea278`; formatting, Clippy, all Rust tests, focused security/package/parity suites, 31 socket-bound serve tests, 146/146 runnable Kujo fixtures, and `cargo audit --deny warnings` passed. |
 | `bash .github/scripts/check-release-state.sh` | PASS | Prepared source version 1.2.0 remains distinct from published stable tag v1.1.0. |
 | `cargo metadata --locked --no-deps --format-version 1` | PASS | The locked package metadata reports `kujolang 1.2.0`. |
+| `cargo publish --dry-run --locked` | FAIL | Cargo normalized away the local `tiny_http` path patch and the packaged crate could not compile the hardened routed-HTTP calls. Registry publication is excluded from this release. |
 | Loop Engineering configured gates | PASS | Release-state, focused routed-HTTP, setup-action, minimal-release, and clean-diff gates passed; the loop remains partial only because tagging, artifact publication, and post-publication stable-string updates are release-pipeline steps. |
 
 Warnings and exceptions:
@@ -43,10 +48,13 @@ Warnings and exceptions:
 - `cargo-deny` is not installed on the verification host, so the canonical gate skipped that optional command. The required RustSec audit passed with warnings denied.
 - The release-candidate gate does not run the optional benchmark smoke unless `KUJO_RELEASE_GATE_RUN_BENCH=1` is set; no release claim depends on that optional benchmark.
 - The repository-required `UNBLOCK_V1_RELEASE` directive was supplied in the active release-execution context.
+- GitHub release binaries remain the canonical Kujo distribution; do not run
+  `cargo publish --locked` until the patched HTTP dependency is consumable from
+  a registry or the runtime no longer needs the patch.
 
 Release readiness sign-off:
 
-The v1.2.0 source is ready for a signed release tag after the release-preparation commit is pushed and its hosted required checks pass. Publication is not complete until all platform assets, checksums, and the published-artifact smoke workflow succeed.
+The v1.2.0 source is ready for a signed GitHub binary release tag after the release-preparation commit is pushed and its hosted required checks pass. Crates.io publication is explicitly blocked and excluded. GitHub publication is not complete until all platform assets, checksums, and the published-artifact smoke workflow succeed.
 
 ## Follow-ups / TODO (For Future Agents)
 
@@ -54,6 +62,8 @@ The v1.2.0 source is ready for a signed release tag after the release-preparatio
 - Wait for all four platform artifacts, consolidated checksums, and the
   published-artifact smoke workflow before updating stable-release strings.
 - Migrate downstream repositories to the checksum-verified setup action.
+- Replace or upstream the patched `tiny_http` boundary, then restore a passing
+  normalized-package dry run before enabling crates.io publication.
 
 ## Links / References
 

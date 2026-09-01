@@ -273,6 +273,13 @@ The registry package is named `kujolang`; it installs the `kujo` executable and
 keeps `kujo` as the Rust library crate name. A registry publication must come
 from the exact signed release commit and use the same version as its tag.
 
+Registry publication is an independent distribution gate. `cargo publish
+--dry-run --locked` must compile the normalized package tarball, because Cargo
+does not preserve local path patches for registry consumers. A failed dry run
+blocks registry publication. It does not by itself block the signed GitHub
+binary release when the release evidence explicitly records the registry
+exception and the published binaries remain the canonical distribution.
+
 ```bash
 cargo publish --dry-run --locked
 cargo publish --locked
