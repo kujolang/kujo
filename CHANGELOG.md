@@ -47,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Honor declared HTTP request-body lengths in routed interpreter and VM
+  servers, rejecting declared overflow before reading and avoiding a read
+  deadline stall after complete request bodies.
 - Replace the yanked `mysql_async 0.37.0` dependency with `0.37.1` so the
   release dependency audit remains warning-free.
 

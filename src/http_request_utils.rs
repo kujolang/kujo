@@ -31,10 +31,15 @@ fn routed_http_read_timeout_from(configured: Option<&str>) -> Duration {
 /// without buffering an unbounded request.
 pub fn read_bounded_http_request_body(
     reader: &mut dyn Read,
+    declared_length: Option<usize>,
 ) -> Result<String, HttpRequestBodyError> {
     let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
-    let mut limited = reader.take((maximum + 1) as u64);
-    let mut buffer = Vec::with_capacity(maximum.min(64 * 1024));
+    if declared_length.is_some_and(|length| length > maximum) {
+        return Err(HttpRequestBodyError::TooLarge);
+    }
+    let read_limit = declared_length.unwrap_or(maximum + 1);
+    let mut limited = reader.take(read_limit as u64);
+    let mut buffer = Vec::with_capacity(read_limit.min(64 * 1024));
     limited.read_to_end(&mut buffer).map_err(|error| {
         if matches!(error.kind(), ErrorKind::TimedOut | ErrorKind::WouldBlock) {
             HttpRequestBodyError::TimedOut
@@ -44,6 +49,9 @@ pub fn read_bounded_http_request_body(
     })?;
     if buffer.len() > maximum {
         return Err(HttpRequestBodyError::TooLarge);
+    }
+    if declared_length.is_some_and(|length| buffer.len() != length) {
+        return Err(HttpRequestBodyError::ReadFailed);
     }
     Ok(String::from_utf8_lossy(&buffer).to_string())
 }
@@ -164,12 +172,31 @@ mod tests {
     fn bounded_request_body_accepts_limit_and_rejects_overflow() {
         let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
         let mut exact = std::io::Cursor::new(vec![b'a'; maximum]);
-        assert_eq!(read_bounded_http_request_body(&mut exact).unwrap().len(), maximum);
+        assert_eq!(read_bounded_http_request_body(&mut exact, None).unwrap().len(), maximum);
 
         let mut oversized = std::io::Cursor::new(vec![b'b'; maximum + 1]);
         assert_eq!(
-            read_bounded_http_request_body(&mut oversized),
+            read_bounded_http_request_body(&mut oversized, None),
             Err(HttpRequestBodyError::TooLarge)
+        );
+    }
+
+    #[test]
+    fn bounded_request_body_rejects_declared_overflow_before_reading() {
+        let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
+        let mut empty = std::io::Cursor::new(Vec::<u8>::new());
+        assert_eq!(
+            read_bounded_http_request_body(&mut empty, Some(maximum + 1)),
+            Err(HttpRequestBodyError::TooLarge)
+        );
+    }
+
+    #[test]
+    fn bounded_request_body_stops_at_declared_length() {
+        let mut body_with_trailing_bytes = std::io::Cursor::new(b"bodytrailing".to_vec());
+        assert_eq!(
+            read_bounded_http_request_body(&mut body_with_trailing_bytes, Some(4)).unwrap(),
+            "body"
         );
     }
 

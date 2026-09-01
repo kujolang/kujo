@@ -6125,27 +6125,28 @@ impl VM {
             let (url_path, query_params, decoded_query_params, raw_query) =
                 http_request_utils::split_http_path_and_query_with_decoded(&request_url);
 
-            let body_content =
-                match http_request_utils::read_bounded_http_request_body(request.as_reader()) {
-                    Ok(body) => body,
-                    Err(http_request_utils::HttpRequestBodyError::TooLarge) => {
-                        let response =
-                            Response::from_string("Payload Too Large").with_status_code(413);
-                        let _ = request.respond(response);
-                        continue;
-                    }
-                    Err(http_request_utils::HttpRequestBodyError::TimedOut) => {
-                        let response =
-                            Response::from_string("Request Timeout").with_status_code(408);
-                        let _ = request.respond(response);
-                        continue;
-                    }
-                    Err(http_request_utils::HttpRequestBodyError::ReadFailed) => {
-                        let response = Response::from_string("Bad Request").with_status_code(400);
-                        let _ = request.respond(response);
-                        continue;
-                    }
-                };
+            let declared_body_length = request.body_length();
+            let body_content = match http_request_utils::read_bounded_http_request_body(
+                request.as_reader(),
+                declared_body_length,
+            ) {
+                Ok(body) => body,
+                Err(http_request_utils::HttpRequestBodyError::TooLarge) => {
+                    let response = Response::from_string("Payload Too Large").with_status_code(413);
+                    let _ = request.respond(response);
+                    continue;
+                }
+                Err(http_request_utils::HttpRequestBodyError::TimedOut) => {
+                    let response = Response::from_string("Request Timeout").with_status_code(408);
+                    let _ = request.respond(response);
+                    continue;
+                }
+                Err(http_request_utils::HttpRequestBodyError::ReadFailed) => {
+                    let response = Response::from_string("Bad Request").with_status_code(400);
+                    let _ = request.respond(response);
+                    continue;
+                }
+            };
 
             let mut matched_handler: Option<(Value, HashMap<String, String>)> = None;
 
