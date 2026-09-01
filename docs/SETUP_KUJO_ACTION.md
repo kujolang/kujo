@@ -6,7 +6,7 @@ The repository publishes a composite action at `.github/actions/setup-kujo`. Pin
 - name: Setup Kujo
   uses: kujolang/kujo/.github/actions/setup-kujo@8ea137b0235f7272fb776eaf9203e34fc10591b1
   with:
-    version: v1.1.0
+    version: v1.2.0
 - run: kujo --version
 - run: kujo check main.kujo
 - run: kujo test

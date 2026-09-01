@@ -4,7 +4,7 @@ Kujo Agent Projects make an agent's intelligence and execution contract a normal
 
 ## Test the complete installation
 
-Install the stable Kujo v1.1.0 runtime and focused Agent Development Platform
+Install the stable Kujo v1.2.0 runtime and focused Agent Development Platform
 in one command:
 
 ```bash

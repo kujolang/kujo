@@ -3,7 +3,7 @@
 Status: completed `v1.0.0` launch checklist
 Last updated: 2026-08-08
 
-Release boundary: Kujo `v1.1.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.2.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 This file preserves the human-facing verification path used for the official release. Historical planning docs remain in the repository as audit evidence.
 
