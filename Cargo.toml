@@ -50,7 +50,7 @@ tokio-stream = "0.1"
 futures = "0.3"
 rusqlite = { version = "0.31", features = ["bundled"], optional = true }
 postgres = { version = "0.19", features = ["with-chrono-0_4"], optional = true }
-mysql_async = { version = "0.37", optional = true }
+mysql_async = { version = "0.37.1", optional = true }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros", "time", "io-util", "fs"] }
 base64 = "0.21"
 jsonwebtoken = { version = "10.4.0", default-features = false, features = ["aws_lc_rs"] }
