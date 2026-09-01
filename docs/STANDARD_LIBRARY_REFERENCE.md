@@ -650,6 +650,8 @@ filesystem read permission.
 | `zip_add_dir` | preview | `zip_add_dir(z, "assets")` |
 | `zip_close` | preview | `zip_close(z)` |
 | `unzip` | preview | `unzip("in.zip", "out")` |
+| `gzip_decompress` | preview | `plain := gzip_decompress(compressed, 4194304)` |
+| `zip_single_file_read` | preview | `entry := zip_single_file_read(archive, 4194304)` |
 | `sha256` | stable | `h := sha256("hello")` |
 | `hmac_sha256` | stable | `signature := hmac_sha256(secret, payload)` |
 | `hmac_sha256_verify` | stable | `valid := hmac_sha256_verify(secret, payload, signature)` |

@@ -6,6 +6,7 @@
 
 pub mod async_ops;
 pub mod collections;
+pub mod compression;
 pub mod concurrency;
 pub mod crypto;
 #[cfg(feature = "runtime-db")]
@@ -173,6 +174,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = collections::handle(interp, canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = compression::handle(canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = type_ops::handle(canonical_name, arg_values) {
@@ -498,6 +502,8 @@ mod tests {
             "zip_add_dir",
             "zip_close",
             "unzip",
+            "gzip_decompress",
+            "zip_single_file_read",
             "ip_classify",
             "tcp_bind_probe",
             "tcp_listen",

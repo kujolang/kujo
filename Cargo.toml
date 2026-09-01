@@ -22,7 +22,7 @@ path = "src/main.rs"
 default = ["runtime-db", "runtime-image", "runtime-archive", "runtime-jit"]
 runtime-db = ["dep:rusqlite", "dep:postgres", "dep:mysql_async"]
 runtime-image = ["dep:image"]
-runtime-archive = ["dep:zip"]
+runtime-archive = ["dep:zip", "dep:flate2"]
 runtime-jit = [
     "dep:cranelift",
     "dep:cranelift-module",
@@ -77,6 +77,7 @@ image = { version = "0.25", default-features = false, features = [
     "webp",
 ], optional = true }
 zip = { version = "7.0.0", optional = true }
+flate2 = { version = "1.1", optional = true }
 sha2 = "0.10"
 hmac = "0.12"
 md-5 = "0.10"

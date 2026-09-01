@@ -1059,6 +1059,47 @@ fn network_ip_classification_is_fail_closed_and_capability_free() {
 }
 
 #[test]
+fn compression_in_memory_readers_are_bounded_and_capability_free() {
+    let project_root = unique_temp_dir("compression_in_memory");
+    let script_path = project_root.join("compression.kujo");
+    fs::write(
+        &script_path,
+        r#"
+let expected := "<feedback><report_id>x</report_id></feedback>"
+let gzip_data := decode_base64("H4sIAAAAAAAC/7NJS01NSUpMzrazKUotyC8qic9Msauw0UdwbPThSgA6Q8SWLQAAAA==")
+let gzip_plain := gzip_decompress(gzip_data,1024)
+assert(decode_base64_utf8(encode_base64(gzip_plain)) == expected,"gzip output")
+let zip_data := decode_base64("UEsDBBQAAAAIADFyH106Q8SWHwAAAC0AAAAKAAAAcmVwb3J0LnhtbLNJS01NSUpMzrazKUotyC8qic9Msauw0UdwbPThSgBQSwECFAMUAAAACAAxch9dOkPElh8AAAAtAAAACgAAAAAAAAAAAAAAgAEAAAAAcmVwb3J0LnhtbFBLBQYAAAAAAQABADgAAABHAAAAAAA=")
+let entry := zip_single_file_read(zip_data,1024)
+assert(entry["name"] == "report.xml","zip name")
+assert(decode_base64_utf8(encode_base64(entry["bytes"])) == expected,"zip output")
+mut bounded := false
+try { gzip_decompress(gzip_data,4) }
+except error { bounded = contains(to_string(error),"exceeds max_output_bytes") }
+assert(bounded,"gzip bound")
+print("COMPRESSION_OK")
+"#,
+    )
+    .expect("failed to write compression script");
+    for mode in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(mode);
+        args.push("--untrusted");
+        args.push(script_path.to_str().expect("script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "compression primitive failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert!(stdout_text(&output).contains("COMPRESSION_OK"));
+        assert!(!stdout_text(&output).contains("capability denied"));
+    }
+}
+
+#[test]
 fn network_tcp_bind_probe_is_structured_and_server_capability_gated() {
     let project_root = unique_temp_dir("network_tcp_bind_probe");
     let script_path = project_root.join("tcp_bind_probe.kujo");

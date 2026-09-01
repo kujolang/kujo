@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add capability-free bounded in-memory gzip decompression and safe
+  single-regular-entry ZIP reading for hostile compressed protocol inputs.
 - Add capability-gated, bounded MX, TXT, PTR, and TLSA DNS lookup primitives
   with deterministic result envelopes and DNSSEC proof status.
 - Add verified TLS client sockets, server acceptors, consumptive STARTTLS-style

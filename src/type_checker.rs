@@ -1857,6 +1857,22 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "gzip_decompress".to_string(),
+            FunctionSignature {
+                param_types: vec![None, Some(TypeAnnotation::Int)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "zip_single_file_read".to_string(),
+            FunctionSignature {
+                param_types: vec![None, Some(TypeAnnotation::Int)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "sha256".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // data

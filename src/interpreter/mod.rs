@@ -876,6 +876,8 @@ impl Interpreter {
             "zip_add_dir",
             "zip_close",
             "unzip",
+            "gzip_decompress",
+            "zip_single_file_read",
             // Hashing & Cryptography functions
             "sha256",
             "hmac_sha256",
@@ -1657,6 +1659,14 @@ impl Interpreter {
             .define("zip_add_dir".to_string(), Value::NativeFunction("zip_add_dir".to_string()));
         self.env.define("zip_close".to_string(), Value::NativeFunction("zip_close".to_string()));
         self.env.define("unzip".to_string(), Value::NativeFunction("unzip".to_string()));
+        self.env.define(
+            "gzip_decompress".to_string(),
+            Value::NativeFunction("gzip_decompress".to_string()),
+        );
+        self.env.define(
+            "zip_single_file_read".to_string(),
+            Value::NativeFunction("zip_single_file_read".to_string()),
+        );
 
         // Hashing & Crypto functions
         self.env.define("sha256".to_string(), Value::NativeFunction("sha256".to_string()));
@@ -2962,6 +2972,14 @@ impl Interpreter {
                 CallableArity::exact("decode_base64_utf8", vec!["text".to_string()])
             }
             "ip_classify" => CallableArity::exact("ip_classify", vec!["address".to_string()]),
+            "gzip_decompress" => CallableArity::exact(
+                "gzip_decompress",
+                vec!["bytes_data".to_string(), "max_output_bytes".to_string()],
+            ),
+            "zip_single_file_read" => CallableArity::exact(
+                "zip_single_file_read",
+                vec!["bytes_data".to_string(), "max_output_bytes".to_string()],
+            ),
             "tcp_bind_probe" => CallableArity::exact("tcp_bind_probe", vec!["address".to_string()]),
             "jsonl_query" => {
                 CallableArity::exact("jsonl_query", vec!["path".to_string(), "options".to_string()])

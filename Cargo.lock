@@ -2394,6 +2394,7 @@ dependencies = [
  "cranelift-native",
  "criterion",
  "csv",
+ "flate2",
  "futures",
  "hickory-resolver",
  "hmac 0.12.1",
