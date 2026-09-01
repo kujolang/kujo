@@ -5,12 +5,16 @@ All notable changes to Kujo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-09-01
 
 ### Added
 
 - Add capability-free bounded in-memory gzip decompression and safe
   single-regular-entry ZIP reading for hostile compressed protocol inputs.
+- Add a checksum-verified reusable GitHub Action for installing exact Kujo
+  release versions on Linux, macOS, and Windows CI runners.
+- Add deterministic IP-scope classification and structured TCP bind probes for
+  network policy checks and server startup diagnostics.
 - Add capability-gated, bounded MX, TXT, PTR, and TLSA DNS lookup primitives
   with deterministic result envelopes and DNSSEC proof status.
 - Add verified TLS client sockets, server acceptors, consumptive STARTTLS-style
@@ -37,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the installed CLI command and Rust library crate name.
 - Align `parse_json`'s input ceiling with the 8 MiB file-I/O boundary so JSON
   written and read by Kujo remains parseable without an artificial 1 MiB gap.
+
+### Fixed
+
+- Replace the yanked `mysql_async 0.37.0` dependency with `0.37.1` so the
+  release dependency audit remains warning-free.
 
 ## [1.1.0] - 2026-08-30
 
