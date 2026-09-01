@@ -84,10 +84,10 @@ npm test --prefix npm
 npm run pack:dry-run --prefix npm
 ```
 
-Registry publication must publish every native package for a version before
-the same-version neutral resolver. npm publication is not implied by a GitHub
-tag or GitHub release asset; it requires separate registry authorization and
-evidence.
+The tagged workflow publishes every native package for a version before the
+same-version neutral resolver through the protected `npm` environment and npm
+trusted publishing/OIDC. A tag or GitHub release asset alone does not prove npm
+publication; preserve the protected-job log as registry evidence.
 
 ## Manual Dry Run
 

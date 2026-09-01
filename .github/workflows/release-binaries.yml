@@ -295,3 +295,46 @@ jobs:
           --repo "${GITHUB_REPOSITORY}"
           --ref main
           --raw-field tag_name="${GITHUB_REF_NAME}"
+
+  publish-npm-runtime:
+    needs: [build-release-artifacts, pack-npm-runtime]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Setup Node for trusted publishing
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24.11.0"
+          registry-url: https://registry.npmjs.org
+
+      - name: Download npm package artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: release-*
+          path: npm-release
+          merge-multiple: true
+
+      - name: Publish native packages before the neutral resolver
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          native_packages=(npm-release/kujolang-kujo-darwin-*.tgz npm-release/kujolang-kujo-linux-*.tgz npm-release/kujolang-kujo-win32-*.tgz)
+          if [[ "${#native_packages[@]}" -ne 5 ]]; then
+            printf 'expected 5 native npm packages, found %s\n' "${#native_packages[@]}" >&2
+            exit 1
+          fi
+          for package in "${native_packages[@]}"; do
+            npm publish "${package}" --access public --provenance
+          done
+          runtime_packages=(npm-release/kujolang-kujo-runtime-*.tgz)
+          if [[ "${#runtime_packages[@]}" -ne 1 ]]; then
+            printf 'expected 1 neutral npm runtime package, found %s\n' "${#runtime_packages[@]}" >&2
+            exit 1
+          fi
+          npm publish "${runtime_packages[0]}" --access public --provenance

@@ -295,10 +295,13 @@ cargo publish --locked
    npm run pack:dry-run --prefix npm
    ```
 
-   Publish all exact-version `@kujolang/kujo-<target>` packages before
-   `@kujolang/kujo-runtime`. npm publication is an independent registry gate
-   and must not be inferred from a successful GitHub release. None of these packages may
-   add `preinstall`, `install`, or `postinstall` download behavior.
+   The tagged workflow's protected `npm` environment uses npm trusted
+   publishing/OIDC to publish all exact-version `@kujolang/kujo-<target>`
+   packages before `@kujolang/kujo-runtime`. Configure those package trust
+   relationships and required environment reviewers before creating the tag.
+   npm publication is an independent registry gate and must not be inferred
+   from a successful GitHub release. None of these packages may add
+   `preinstall`, `install`, or `postinstall` download behavior.
    Inspect each platform tarball's generated `metadata.json` and confirm its
    runtime version, full source commit, target, and binary SHA-256 before
    publication.
