@@ -1,0 +1,10 @@
+{
+  "name": "@kujolang/kujo-darwin-x64",
+  "version": "1.2.0",
+  "description": "Kujo runtime binary for macOS x64",
+  "license": "MIT",
+  "repository": "https://github.com/kujolang/kujo",
+  "os": ["darwin"],
+  "cpu": ["x64"],
+  "files": ["bin/kujo", "metadata.json", "README.md"]
+}

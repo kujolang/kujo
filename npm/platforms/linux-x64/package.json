@@ -1,0 +1,11 @@
+{
+  "name": "@kujolang/kujo-linux-x64",
+  "version": "1.2.0",
+  "description": "Kujo runtime binary for Linux x64 (glibc)",
+  "license": "MIT",
+  "repository": "https://github.com/kujolang/kujo",
+  "os": ["linux"],
+  "cpu": ["x64"],
+  "libc": ["glibc"],
+  "files": ["bin/kujo", "metadata.json", "README.md"]
+}

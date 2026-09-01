@@ -1,0 +1,12 @@
+{
+  "name": "kujo-npm-release-workspace",
+  "private": true,
+  "version": "1.2.0",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "pack:dry-run": "node scripts/release-dry-run.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

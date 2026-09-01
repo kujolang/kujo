@@ -1,0 +1,41 @@
+{
+  "name": "@kujolang/kujo-runtime",
+  "version": "1.2.0",
+  "description": "Kujo programming language runtime",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kujolang/kujo.git",
+    "directory": "npm/runtime"
+  },
+  "homepage": "https://github.com/kujolang/kujo",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "kujo": "bin/kujo.js"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin/kujo.js",
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "optionalDependencies": {
+    "@kujolang/kujo-darwin-arm64": "1.2.0",
+    "@kujolang/kujo-darwin-x64": "1.2.0",
+    "@kujolang/kujo-linux-arm64": "1.2.0",
+    "@kujolang/kujo-linux-x64": "1.2.0",
+    "@kujolang/kujo-win32-x64": "1.2.0"
+  }
+}

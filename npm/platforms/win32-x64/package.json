@@ -1,0 +1,10 @@
+{
+  "name": "@kujolang/kujo-win32-x64",
+  "version": "1.2.0",
+  "description": "Kujo runtime binary for Windows x64",
+  "license": "MIT",
+  "repository": "https://github.com/kujolang/kujo",
+  "os": ["win32"],
+  "cpu": ["x64"],
+  "files": ["bin/kujo.exe", "metadata.json", "README.md"]
+}
