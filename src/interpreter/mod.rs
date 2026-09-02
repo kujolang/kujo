@@ -2968,6 +2968,9 @@ impl Interpreter {
             "join" => {
                 CallableArity::exact("join", vec!["values".to_string(), "separator".to_string()])
             }
+            "concat" => {
+                CallableArity::exact("concat", vec!["left".to_string(), "right".to_string()])
+            }
             "contains" => {
                 CallableArity::exact("contains", vec!["value".to_string(), "needle".to_string()])
             }
