@@ -53,10 +53,13 @@ function pack(directory, destination, dryRun = false) {
   const result = spawnSync(npmCommand, args, {
     cwd: directory,
     encoding: 'utf8',
-    shell: false
+    // Windows cannot execute npm.cmd directly through spawnSync without a
+    // command shell. All arguments here are fixed packaging inputs.
+    shell: process.platform === 'win32'
   });
   if (result.status !== 0) {
-    throw new Error(`npm pack failed in ${directory}: ${result.stderr || result.stdout}`);
+    const detail = result.error?.message || result.stderr || result.stdout || 'unknown error';
+    throw new Error(`npm pack failed in ${directory}: ${detail}`);
   }
   const report = JSON.parse(result.stdout);
   if (!Array.isArray(report) || report.length !== 1) {

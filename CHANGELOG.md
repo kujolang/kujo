@@ -9,13 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Preserve raw byte payloads for outbound HTTP request bodies and expose raw
-  response bytes alongside decoded text across the interpreter and VM paths.
+- Preserve raw byte payloads for outbound and server-side HTTP request bodies,
+  and expose raw response bytes alongside decoded text across interpreter and
+  VM paths.
 
 ### Fixed
 
 - Keep Unix-only private-spool metadata checks out of Windows builds, restoring
   the complete native release and npm package matrix.
+- Run `npm pack` through the Windows command shell so the native `npm.cmd`
+  launcher works during platform-package assembly.
 
 ## [1.2.1] - 2026-09-01
 
