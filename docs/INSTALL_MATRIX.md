@@ -1,6 +1,6 @@
 # Kujo Install & Distribution Matrix
 
-Status: stable v1.2.2 install matrix
+Status: stable v1.2.3 install matrix
 Last updated: 2026-08-30
 
 This document defines supported installation paths and known platform caveats for Kujo operators.

@@ -1,6 +1,6 @@
 # Kujo
 
-[![Version](https://img.shields.io/badge/version-1.2.2-black)](https://github.com/kujolang/kujo/releases/tag/v1.2.2)
+[![Version](https://img.shields.io/badge/version-1.2.3-black)](https://github.com/kujolang/kujo/releases/tag/v1.2.3)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Rust](https://img.shields.io/badge/built%20with-Rust-white.svg)](https://www.rust-lang.org/)
 
@@ -23,7 +23,7 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
   lifecycle callbacks for transparent proxying and disconnect-aware telemetry.
 - Runtime-generated sequence and string helpers now reject unsafe edge cases such as non-finite range bounds, reversed random bounds, negative string widths/counts, and oversized generated outputs instead of panicking or attempting unbounded allocation.
 - Native capability controls are available for trusted and untrusted execution modes.
-- Kujo `v1.2.2` is the current stable release, with prebuilt binaries and checksums published through GitHub Releases.
+- Kujo `v1.2.3` is the current stable release, with prebuilt binaries and checksums published through GitHub Releases.
 
 ## Why Kujo
 
@@ -55,9 +55,9 @@ See [docs/AI_RUNTIME.md](docs/AI_RUNTIME.md) and [docs/STANDARD_LIBRARY.md](docs
 
 ## 1.0 Release Status
 
-Release boundary: Kujo `v1.2.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.2.3` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
-- The source tree is currently at `1.2.3` in `Cargo.toml`; the latest published stable release tag is `v1.2.2`.
+- The source tree is currently at `1.2.3` in `Cargo.toml`; the latest published stable release tag is `v1.2.3`.
 - Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries are distributed with per-asset SHA-256 files and a consolidated `checksums.txt`.
 - [docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md](docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md) preserves the completed launch verification record.
 - [ROADMAP.md](ROADMAP.md) remains the source of truth for historical v1 implementation tracking and post-1.0 planning.
