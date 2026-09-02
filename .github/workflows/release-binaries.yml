@@ -349,11 +349,11 @@ jobs:
             exit 1
           fi
           for package in "${native_packages[@]}"; do
-            npm publish "${package}" --access public --provenance
+            npm publish "./${package}" --access public --provenance
           done
           runtime_packages=(npm-release/**/kujolang-kujo-runtime-*.tgz)
           if [[ "${#runtime_packages[@]}" -ne 1 ]]; then
             printf 'expected 1 neutral npm runtime package, found %s\n' "${#runtime_packages[@]}" >&2
             exit 1
           fi
-          npm publish "${runtime_packages[0]}" --access public --provenance
+          npm publish "./${runtime_packages[0]}" --access public --provenance

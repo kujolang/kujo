@@ -52,14 +52,23 @@ jobs:
             printf 'expected 5 native packages and 1 resolver; found %s and %s\n' "${#native_packages[@]}" "${#runtime_packages[@]}" >&2
             exit 1
           fi
-          for package in "${native_packages[@]}" "${runtime_packages[@]}"; do
-            package_version="$(tar -xOf "${package}" package/package.json | node -e "let input=''; process.stdin.on('data', data => input += data).on('end', () => process.stdout.write(JSON.parse(input).version))")"
+          publish_if_missing() {
+            local package="$1"
+            local package_manifest package_name package_version
+            package_manifest="$(tar -xOf "${package}" package/package.json)"
+            package_name="$(printf '%s' "${package_manifest}" | node -e "let input=''; process.stdin.on('data', data => input += data).on('end', () => process.stdout.write(JSON.parse(input).name))")"
+            package_version="$(printf '%s' "${package_manifest}" | node -e "let input=''; process.stdin.on('data', data => input += data).on('end', () => process.stdout.write(JSON.parse(input).version))")"
             if [[ "${package_version}" != "${EXPECTED_VERSION}" ]]; then
               printf '%s contains version %s, expected %s\n' "${package}" "${package_version}" "${EXPECTED_VERSION}" >&2
               exit 1
             fi
-          done
+            if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
+              printf '%s@%s is already published; skipping\n' "${package_name}" "${package_version}"
+              return
+            fi
+            npm publish "./${package}" --access public --provenance
+          }
           for package in "${native_packages[@]}"; do
-            npm publish "${package}" --access public --provenance
+            publish_if_missing "${package}"
           done
-          npm publish "${runtime_packages[0]}" --access public --provenance
+          publish_if_missing "${runtime_packages[0]}"
