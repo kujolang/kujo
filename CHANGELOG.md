@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Preserve raw byte payloads for outbound and server-side HTTP request bodies,
-  and expose raw response bytes alongside decoded text across interpreter and
-  VM paths.
+- Preserve raw bytes for outbound and server-side HTTP request and response
+  bodies across interpreter and VM paths.
+- Add binary-safe gzip compression for byte payloads.
 
 ### Fixed
 
