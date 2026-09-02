@@ -326,6 +326,7 @@ jobs:
         with:
           node-version: "24.11.0"
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Download npm package artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -336,6 +337,10 @@ jobs:
 
       - name: Publish native packages before the neutral resolver
         shell: bash
+        env:
+          # Required only for the first publication of each package. npm uses
+          # trusted publishing/OIDC first once the package relationship exists.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
           shopt -s nullglob
