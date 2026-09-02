@@ -4,7 +4,7 @@ Status: stable v1.0.0 scope baseline
 
 This document defines what is in-scope for Kujo `v1.0.0`, what is explicitly out-of-scope, and what compatibility commitments apply.
 
-Release boundary: Kujo `v1.2.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.2.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 ## In-Scope For v1.0.0
 

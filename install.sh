@@ -5,7 +5,7 @@ set -Eeuo pipefail
 readonly KUJO_INSTALL_VERSION="0.1.0"
 readonly GITHUB_OWNER="${KUJO_GITHUB_OWNER:-kujolang}"
 readonly DEFAULT_REF="${KUJO_ECOSYSTEM_REF:-main}"
-readonly DEFAULT_RELEASE_VERSION="${KUJO_RELEASE_VERSION:-v1.2.0}"
+readonly DEFAULT_RELEASE_VERSION="${KUJO_RELEASE_VERSION:-v1.2.2}"
 readonly DEFAULT_PREFIX="${KUJO_INSTALL_ROOT:-${HOME}/.kujo}"
 readonly DEFAULT_BIN_DIR="${KUJO_BIN_DIR:-${HOME}/.local/bin}"
 
@@ -55,7 +55,7 @@ Examples:
   curl -fsSL https://kujolang.ai/install.sh | bash
   curl -fsSL https://kujolang.ai/install.sh | bash -s -- --all
   bash install.sh --group ai --group quality
-  bash install.sh --ref v1.2.0 --with-deps
+  bash install.sh --ref v1.2.2 --with-deps
   bash install.sh --package dispatch --release-manifest ./dispatch-v1.1.0.refs
 
 Environment overrides:
