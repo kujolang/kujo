@@ -163,6 +163,7 @@ Collection update semantics:
 - Helpers like `push`, `insert`, `remove_at`, `concat`, and `map` return updated values.
 - Reassign the result when building arrays iteratively (`items = push(items, value)`).
 - `index_of(bytes([13, 10]), bytes([10]))` performs a raw-octet-safe byte search and returns `1`.
+- `bytes_is_ascii(bytes([0, 127]))` performs a native bounded 7-bit check without text decoding.
 
 ## Output and Report Conventions
 
@@ -662,6 +663,7 @@ filesystem read permission.
 | `hmac_sha256` | stable | `signature := hmac_sha256(secret, payload)` |
 | `hmac_sha256_verify` | stable | `valid := hmac_sha256_verify(secret, payload, signature)` |
 | `sha256_file` | stable | `h := sha256_file("artifact.bin")` |
+| `sha256_file_range` | stable | `h := sha256_file_range("artifact.bin", 4096, 65536)` |
 | `md5` | stable | `h := md5("hello")` |
 | `md5_file` | stable | `h := md5_file("artifact.bin")` |
 | `hash_password` | preview | `h := hash_password("secret")` |

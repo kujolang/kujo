@@ -121,9 +121,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "path_absolute" | "path_is_symlink" | "dirname" | "basename" | "join_path"
         | "path_join" | "os_getcwd" | "os_environ" | "io_read_bytes" | "io_read_at"
         | "io_seek_read" | "io_file_metadata" | "load_image" | "md5_file" | "sha256_file"
-        | "read_file_lossy" | "async_read_file" | "async_read_files" | "kv_get" => {
-            Some(NativeCapability::FilesystemRead)
-        }
+        | "sha256_file_range" | "read_file_lossy" | "async_read_file" | "async_read_files"
+        | "kv_get" => Some(NativeCapability::FilesystemRead),
 
         // Filesystem write
         "write_file"

@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 
 use crate::interpreter::{DictMap, Value};
 use std::fs::{self, File, OpenOptions};
-use std::io::{BufReader, BufWriter, ErrorKind, Read, Write};
+use std::io::{BufReader, BufWriter, ErrorKind, Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -35,6 +35,34 @@ fn sha256_hex(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     format!("{:x}", hasher.finalize())
+}
+
+fn sha256_reader_range(file: File, offset: u64, count: Option<u64>) -> Result<String, String> {
+    let mut reader = BufReader::new(file);
+    reader.seek(SeekFrom::Start(offset)).map_err(|error| error.to_string())?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0u8; 64 * 1024];
+    let mut remaining = count;
+    loop {
+        let ceiling = remaining
+            .map(|value| usize::try_from(value.min(buffer.len() as u64)).unwrap_or(buffer.len()))
+            .unwrap_or(buffer.len());
+        if ceiling == 0 {
+            break;
+        }
+        let read = reader.read(&mut buffer[..ceiling]).map_err(|error| error.to_string())?;
+        if read == 0 {
+            if remaining.is_some_and(|value| value > 0) {
+                return Err("requested hash range exceeds file length".to_string());
+            }
+            break;
+        }
+        hasher.update(&buffer[..read]);
+        if let Some(value) = remaining {
+            remaining = Some(value - read as u64);
+        }
+    }
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 fn hmac_sha256_hex(secret: &[u8], message: &[u8]) -> String {
@@ -477,14 +505,51 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::Str(path)) = arg_values.first() {
-                match std::fs::read(path.as_ref()) {
-                    Ok(contents) => Value::Str(Arc::new(sha256_hex(&contents))),
+                match File::open(path.as_ref())
+                    .map_err(|error| error.to_string())
+                    .and_then(|file| sha256_reader_range(file, 0, None))
+                {
+                    Ok(digest) => Value::Str(Arc::new(digest)),
                     Err(e) => {
                         error_object(format!("Failed to read file '{}': {}", path.as_ref(), e))
                     }
                 }
             } else {
                 Value::Error("sha256_file requires a string path argument".to_string())
+            }
+        }
+
+        "sha256_file_range" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(
+                    "sha256_file_range requires path, offset, and count arguments".to_string(),
+                ));
+            }
+            let (Some(Value::Str(path)), Some(Value::Int(offset)), Some(Value::Int(count))) =
+                (arg_values.first(), arg_values.get(1), arg_values.get(2))
+            else {
+                return Some(Value::Error(
+                    "sha256_file_range requires path (string), offset (int), and count (int)"
+                        .to_string(),
+                ));
+            };
+            if *offset < 0 || *count < 0 {
+                return Some(Value::Error(
+                    "sha256_file_range offset and count must be non-negative".to_string(),
+                ));
+            }
+            match File::open(path.as_ref())
+                .map_err(|error| error.to_string())
+                .and_then(|file| sha256_reader_range(file, *offset as u64, Some(*count as u64)))
+            {
+                Ok(digest) => Value::Str(Arc::new(digest)),
+                Err(error) => error_object(format!(
+                    "Failed to hash {} bytes at offset {} in '{}': {}",
+                    count,
+                    offset,
+                    path.as_ref(),
+                    error
+                )),
             }
         }
 
@@ -1087,6 +1152,19 @@ mod tests {
         assert!(
             matches!(direct, Value::Str(value) if value.as_ref() == "5b35354055af6a5442460fc80a36f4c47cf5fe7cade16773e1c474a2d37e9a3d")
         );
+
+        let range =
+            handle("sha256_file_range", &[string_value(&path), Value::Int(1), Value::Int(3)])
+                .unwrap();
+        assert!(
+            matches!(range, Value::Str(value) if value.as_ref() == "ace363ce5f10b61a6f5ec523b0717cffa1d98857cb6b19be4651339e0316ebe9")
+        );
+
+        let beyond_eof =
+            handle("sha256_file_range", &[string_value(&path), Value::Int(5), Value::Int(2)])
+                .unwrap();
+        assert!(matches!(beyond_eof, Value::ErrorObject { message, .. }
+            if message.contains("exceeds file length")));
 
         let _ = fs::remove_file(&path);
     }

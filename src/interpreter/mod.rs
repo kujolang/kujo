@@ -632,6 +632,7 @@ impl Interpreter {
             "reveal",
             "to_bool",
             "bytes",
+            "bytes_is_ascii",
             "dict",
             "array",
             "error",
@@ -888,6 +889,7 @@ impl Interpreter {
             "hmac_sha256",
             "hmac_sha256_verify",
             "sha256_file",
+            "sha256_file_range",
             "md5",
             "md5_file",
             "hash_password",
@@ -1151,6 +1153,10 @@ impl Interpreter {
         self.env.define("to_bool".to_string(), Value::NativeFunction("to_bool".to_string()));
         self.env.define("is_truthy".to_string(), Value::NativeFunction("is_truthy".to_string()));
         self.env.define("bytes".to_string(), Value::NativeFunction("bytes".to_string()));
+        self.env.define(
+            "bytes_is_ascii".to_string(),
+            Value::NativeFunction("bytes_is_ascii".to_string()),
+        );
         self.env.define("dict".to_string(), Value::NativeFunction("dict".to_string()));
         self.env.define("array".to_string(), Value::NativeFunction("array".to_string()));
         self.env.define("error".to_string(), Value::NativeFunction("error".to_string()));
@@ -1703,6 +1709,10 @@ impl Interpreter {
         );
         self.env
             .define("sha256_file".to_string(), Value::NativeFunction("sha256_file".to_string()));
+        self.env.define(
+            "sha256_file_range".to_string(),
+            Value::NativeFunction("sha256_file_range".to_string()),
+        );
         self.env.define("md5".to_string(), Value::NativeFunction("md5".to_string()));
         self.env.define("md5_file".to_string(), Value::NativeFunction("md5_file".to_string()));
         self.env.define(
@@ -2983,6 +2993,10 @@ impl Interpreter {
             "index_of" => {
                 CallableArity::exact("index_of", vec!["value".to_string(), "needle".to_string()])
             }
+            "bytes_is_ascii" => CallableArity::exact("bytes_is_ascii", vec!["value".to_string()]),
+            "concat" => {
+                CallableArity::exact("concat", vec!["left".to_string(), "right".to_string()])
+            }
             "replace" => CallableArity::exact(
                 "replace",
                 vec!["value".to_string(), "from".to_string(), "to".to_string()],
@@ -3120,6 +3134,10 @@ impl Interpreter {
                 vec!["secret".to_string(), "message".to_string(), "expected_hex".to_string()],
             ),
             "sha256_file" => CallableArity::exact("sha256_file", vec!["path".to_string()]),
+            "sha256_file_range" => CallableArity::exact(
+                "sha256_file_range",
+                vec!["path".to_string(), "offset".to_string(), "count".to_string()],
+            ),
             "path_is_symlink" => CallableArity::exact("path_is_symlink", vec!["path".to_string()]),
             "io_set_permissions" => CallableArity::exact(
                 "io_set_permissions",

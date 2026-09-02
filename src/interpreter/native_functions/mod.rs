@@ -330,6 +330,7 @@ mod tests {
             "is_secret",
             "to_bool",
             "bytes",
+            "bytes_is_ascii",
             "Set",
             "ssg_render_pages",
             "ssg_build_output_paths",
@@ -6069,6 +6070,18 @@ mod tests {
         );
         assert!(
             matches!(sha_file, Value::Str(message) if message.as_ref() == "5b35354055af6a5442460fc80a36f4c47cf5fe7cade16773e1c474a2d37e9a3d")
+        );
+        let sha_file_range = call_native_function(
+            &mut interpreter,
+            "sha256_file_range",
+            &[
+                Value::Str(std::sync::Arc::new(sha_file_path.to_string_lossy().to_string())),
+                Value::Int(1),
+                Value::Int(3),
+            ],
+        );
+        assert!(
+            matches!(sha_file_range, Value::Str(message) if message.as_ref() == "ace363ce5f10b61a6f5ec523b0717cffa1d98857cb6b19be4651339e0316ebe9")
         );
         let _ = std::fs::remove_file(sha_file_path);
 

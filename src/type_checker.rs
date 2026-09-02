@@ -125,6 +125,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "bytes_is_ascii".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::Any)],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
             "to_upper".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)],
@@ -1950,6 +1958,18 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // file path
                 return_type: Some(TypeAnnotation::String),       // hash
+            },
+        );
+
+        self.functions.insert(
+            "sha256_file_range".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: Some(TypeAnnotation::String),
             },
         );
 

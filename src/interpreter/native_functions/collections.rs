@@ -91,6 +91,11 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             _ => return None, // Let strings module handle string case.
         },
 
+        "bytes_is_ascii" => match arg_values.first() {
+            Some(Value::Bytes(value)) => Value::Bool(value.iter().all(|octet| *octet <= 0x7f)),
+            _ => Value::Error("bytes_is_ascii() requires one bytes value".to_string()),
+        },
+
         // Array functions
         "push" | "append" => {
             if 2 != arg_values.len() {
@@ -1840,6 +1845,15 @@ mod tests {
         )
         .expect("handler");
         assert!(matches!(index_bytes_missing, Value::Int(-1)));
+
+        let ascii_bytes =
+            handle(&mut interpreter, "bytes_is_ascii", &[Value::Bytes(vec![0, 13, 127])])
+                .expect("handler");
+        assert!(matches!(ascii_bytes, Value::Bool(true)));
+        let non_ascii_bytes =
+            handle(&mut interpreter, "bytes_is_ascii", &[Value::Bytes(vec![128])])
+                .expect("handler");
+        assert!(matches!(non_ascii_bytes, Value::Bool(false)));
 
         let clear_wrong_type = handle(&mut interpreter, "clear", &[Value::Null]).expect("handler");
         assert!(

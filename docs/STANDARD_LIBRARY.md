@@ -167,6 +167,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `to_snake_case` | `to_snake_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_snake_case(...)` |
 | `to_kebab_case` | `to_kebab_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_kebab_case(...)` |
 | `index_of` | `index_of(value, needle)` | exact 2 | dynamic (Value) | Searches strings, arrays, or raw bytes; returns the zero-based index or `-1`. Both operands must be bytes for byte search. Value::Error on invalid args/types/operation. | `none` | `result := index_of(...)` |
+| `bytes_is_ascii` | `bytes_is_ascii(value)` | exact 1 | bytes | Returns true only when every octet is in the inclusive 0–127 range. | `none` | `safe := bytes_is_ascii(payload)` |
 | `repeat` | `repeat(value, count)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := repeat(...)` |
 | `char_at` | `char_at(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := char_at(...)` |
 | `is_empty` | `is_empty(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_empty(...)` |
@@ -442,6 +443,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `hmac_sha256` | `hmac_sha256(secret, message)` | exact 2 | string | Returns lowercase hexadecimal HMAC-SHA256 for string or bytes secret/message; Value::Error on invalid args/types. | `none` | `signature := hmac_sha256(secret, payload)` |
 | `hmac_sha256_verify` | `hmac_sha256_verify(secret, message, expected_hex)` | exact 3 | bool | Verifies a lowercase or uppercase hexadecimal HMAC-SHA256 using the HMAC implementation's constant-time tag comparison; malformed tags return `false`. | `none` | `valid := hmac_sha256_verify(secret, payload, signature)` |
 | `sha256_file` | `sha256_file(path)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := sha256_file(...)` |
+| `sha256_file_range` | `sha256_file_range(path, offset, count)` | exact 3 | string, int, int | Streams an exact file range through SHA-256 with bounded memory; rejects negative or beyond-EOF ranges. | `filesystem-read` | `digest := sha256_file_range(path, 0, size)` |
 | `md5` | `md5(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := md5(...)` |
 | `md5_file` | `md5_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := md5_file(...)` |
 | `hash_password` | `hash_password(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := hash_password(...)` |
