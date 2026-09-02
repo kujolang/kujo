@@ -34,8 +34,8 @@ pub use environment::{BindingKind, Environment};
 pub use test_runner::{TestCase, TestReport, TestResult, TestRunner};
 // Database infrastructure - used by stub database.rs module
 pub use value::{
-    CallableArity, DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap, IntDictMap,
-    LeakyFunctionBody, Value,
+    CallableArity, DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap,
+    HttpResponseStreamParts, IntDictMap, LeakyFunctionBody, SharedHttpResponseStream, Value,
 };
 #[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
@@ -80,6 +80,7 @@ use std::io::Read;
 use std::io::Write;
 #[allow(unused_imports)]
 use std::path::Path;
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 #[cfg(feature = "runtime-archive")]
 #[allow(unused_imports)]
@@ -319,6 +320,21 @@ impl SpawnCapturedValue {
             }
         }
     }
+}
+
+enum RoutedHttpResponse {
+    Buffered {
+        status: u16,
+        body: Vec<u8>,
+        headers: HashMap<String, String>,
+    },
+    Streaming {
+        status: u16,
+        headers: HashMap<String, String>,
+        stream: SharedHttpResponseStream,
+        callback: Option<Box<Value>>,
+    },
+    InternalError,
 }
 
 /// Main interpreter that executes Kujo programs
@@ -2261,6 +2277,84 @@ impl Interpreter {
         Some(params)
     }
 
+    pub(crate) fn http_stream_event_type(event: &Value) -> Option<&str> {
+        let Value::Dict(fields) = event else {
+            return None;
+        };
+        let Value::Str(kind) = fields.get("type")? else {
+            return None;
+        };
+        Some(kind.as_str())
+    }
+
+    fn respond_incremental_http(
+        &mut self,
+        request: tiny_http::Request,
+        status: u16,
+        headers: HashMap<String, String>,
+        stream: SharedHttpResponseStream,
+        callback: Option<Box<Value>>,
+    ) {
+        use tiny_http::{Header, Response, StatusCode};
+
+        let Some(parts) = stream.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).take()
+        else {
+            let _ = request.respond(
+                Response::from_string("Internal Server Error: streaming response already consumed")
+                    .with_status_code(500),
+            );
+            return;
+        };
+
+        let mut response =
+            Response::new(StatusCode(status), Vec::new(), parts.body, parts.content_length, None)
+                .with_chunked_threshold(0);
+        for (name, value) in headers {
+            if matches!(
+                name.to_ascii_lowercase().as_str(),
+                "connection"
+                    | "content-length"
+                    | "keep-alive"
+                    | "proxy-authenticate"
+                    | "proxy-authorization"
+                    | "te"
+                    | "trailer"
+                    | "transfer-encoding"
+                    | "upgrade"
+            ) {
+                continue;
+            }
+            if let Ok(header) = Header::from_bytes(name.as_bytes(), value.as_bytes()) {
+                response.add_header(header);
+            }
+        }
+
+        let events = parts.events;
+        let cancelled = parts.cancelled;
+        let response_thread = std::thread::spawn(move || request.respond(response));
+
+        while let Ok(event) = events.recv() {
+            let terminal = matches!(
+                Self::http_stream_event_type(&event),
+                Some("complete" | "error" | "cancelled")
+            );
+            if let Some(callback) = callback.as_deref() {
+                let callback_result = self.call_user_function(callback, &[event]);
+                if matches!(
+                    callback_result,
+                    Value::Bool(false) | Value::Error(_) | Value::ErrorObject { .. }
+                ) {
+                    cancelled.store(true, Ordering::Release);
+                }
+            }
+            if terminal {
+                break;
+            }
+        }
+
+        let _ = response_thread.join();
+    }
+
     /// Starts an HTTP server with registered routes
     fn start_http_server(
         &mut self,
@@ -2327,7 +2421,7 @@ impl Interpreter {
 
             // Find matching route (supports path parameters like /:code)
             // Exact matches take priority over parameterized routes
-            let mut response_to_send: Option<Response<std::io::Cursor<Vec<u8>>>> = None;
+            let mut response_to_send: Option<RoutedHttpResponse> = None;
             let mut matched_handler: Option<(&Value, HashMap<String, String>)> = None;
 
             // First pass: look for exact matches
@@ -2500,39 +2594,46 @@ impl Interpreter {
 
                     self.call_stack.pop();
 
-                    // Build response
-                    if let Value::HttpResponse { status, body, headers } = result {
-                        let mut response = Response::from_data(body);
-                        response = response.with_status_code(status);
-
-                        for (key, value) in headers {
-                            if let Ok(header) =
-                                tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
-                            {
-                                response = response.with_header(header);
-                            }
+                    response_to_send = Some(match result {
+                        Value::HttpResponse { status, body, headers } => {
+                            RoutedHttpResponse::Buffered { status, body, headers }
                         }
-
-                        response_to_send = Some(response);
-                    } else if let Value::Error(_) | Value::ErrorObject { .. } = result {
-                        response_to_send = Some(
-                            Response::from_string("Internal Server Error").with_status_code(500),
-                        );
-                    } else {
-                        // Handler didn't return HttpResponse
-                        response_to_send = Some(
-                            Response::from_string("Internal Server Error").with_status_code(500),
-                        );
-                    }
+                        Value::HttpStreamingResponse { status, headers, stream, callback } => {
+                            RoutedHttpResponse::Streaming { status, headers, stream, callback }
+                        }
+                        Value::Error(_) | Value::ErrorObject { .. } => {
+                            RoutedHttpResponse::InternalError
+                        }
+                        _ => RoutedHttpResponse::InternalError,
+                    });
                 }
             }
 
             // Send response
-            if let Some(response) = response_to_send {
-                let _ = request.respond(response);
-            } else {
-                // 404 Not Found
-                let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
+            match response_to_send {
+                Some(RoutedHttpResponse::Buffered { status, body, headers }) => {
+                    let mut response = Response::from_data(body).with_status_code(status);
+                    for (key, value) in headers {
+                        if let Ok(header) =
+                            tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
+                        {
+                            response = response.with_header(header);
+                        }
+                    }
+                    let _ = request.respond(response);
+                }
+                Some(RoutedHttpResponse::Streaming { status, headers, stream, callback }) => {
+                    self.respond_incremental_http(request, status, headers, stream, callback);
+                }
+                Some(RoutedHttpResponse::InternalError) => {
+                    let _ = request.respond(
+                        Response::from_string("Internal Server Error").with_status_code(500),
+                    );
+                }
+                None => {
+                    let _ =
+                        request.respond(Response::from_string("Not Found").with_status_code(404));
+                }
             }
         }
 

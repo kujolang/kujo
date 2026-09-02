@@ -2,7 +2,7 @@
 //
 // HTTP client native functions
 
-use crate::interpreter::{DictMap, Interpreter, Value};
+use crate::interpreter::{DictMap, HttpResponseStreamParts, Interpreter, Value};
 use crate::runtime_limits;
 use crate::{builtins, network_policy};
 use chrono::{DateTime, Utc};
@@ -12,12 +12,200 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{sync_channel, SyncSender};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const MAX_AI_TOOL_LOOP_STEPS: i64 = 16;
 const AI_CASSETTE_VERSION: i64 = 1;
+const HTTP_RESPONSE_STREAM_CHUNK_BYTES: usize = 16 * 1024;
+const HTTP_RESPONSE_STREAM_EVENT_CAPACITY: usize = 16;
+
+fn http_stream_observed_at_ms() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis()
+        .min(i64::MAX as u128) as i64
+}
+
+fn http_stream_event(kind: &str) -> DictMap {
+    let mut event = DictMap::default();
+    event.insert("type".into(), Value::Str(Arc::new(kind.to_string())));
+    event.insert("observed_at_ms".into(), Value::Int(http_stream_observed_at_ms()));
+    event
+}
+
+struct IncrementalHttpResponseBody {
+    response: reqwest::blocking::Response,
+    events: SyncSender<Value>,
+    cancelled: Arc<AtomicBool>,
+    max_response_bytes: usize,
+    total_bytes: usize,
+    chunk_index: i64,
+    terminal: bool,
+}
+
+enum HttpRequestResult {
+    Buffered(u16, reqwest::header::HeaderMap, Vec<u8>),
+    Incremental(reqwest::blocking::Response),
+}
+
+impl IncrementalHttpResponseBody {
+    fn emit(&self, event: DictMap) {
+        let _ = self.events.send(Value::Dict(Arc::new(event)));
+    }
+
+    fn emit_terminal(&mut self, kind: &str, reason: Option<&str>) {
+        if self.terminal {
+            return;
+        }
+        self.terminal = true;
+        let mut event = http_stream_event(kind);
+        event.insert("total_bytes".into(), Value::Int(self.total_bytes as i64));
+        event.insert("chunks".into(), Value::Int(self.chunk_index));
+        if let Some(reason) = reason {
+            event.insert("reason".into(), Value::Str(Arc::new(reason.to_string())));
+        }
+        self.emit(event);
+    }
+}
+
+impl Read for IncrementalHttpResponseBody {
+    fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
+        if self.cancelled.load(Ordering::Acquire) {
+            self.emit_terminal("cancelled", Some("callback_cancelled"));
+            return Ok(0);
+        }
+
+        if self.total_bytes >= self.max_response_bytes {
+            let mut probe = [0_u8; 1];
+            return match self.response.read(&mut probe) {
+                Ok(0) => {
+                    self.emit_terminal("complete", None);
+                    Ok(0)
+                }
+                Ok(_) => {
+                    self.emit_terminal("error", Some("max_response_bytes_exceeded"));
+                    Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "incremental HTTP response exceeded max_response_bytes",
+                    ))
+                }
+                Err(error) => {
+                    self.emit_terminal("error", Some("upstream_read_error"));
+                    Err(error)
+                }
+            };
+        }
+
+        let allowed = output
+            .len()
+            .min(HTTP_RESPONSE_STREAM_CHUNK_BYTES)
+            .min(self.max_response_bytes - self.total_bytes);
+        if allowed == 0 {
+            return Ok(0);
+        }
+
+        match self.response.read(&mut output[..allowed]) {
+            Ok(0) => {
+                self.emit_terminal("complete", None);
+                Ok(0)
+            }
+            Ok(read) => {
+                self.total_bytes += read;
+                self.chunk_index += 1;
+                let mut event = http_stream_event("chunk");
+                event.insert("chunk_index".into(), Value::Int(self.chunk_index));
+                event.insert("total_bytes".into(), Value::Int(self.total_bytes as i64));
+                event.insert("bytes".into(), Value::Bytes(output[..read].to_vec()));
+                self.emit(event);
+                Ok(read)
+            }
+            Err(error) => {
+                self.emit_terminal("error", Some("upstream_read_error"));
+                Err(error)
+            }
+        }
+    }
+}
+
+impl Drop for IncrementalHttpResponseBody {
+    fn drop(&mut self) {
+        if !self.terminal {
+            let reason = if self.cancelled.load(Ordering::Acquire) {
+                "callback_cancelled"
+            } else {
+                "downstream_disconnected"
+            };
+            self.emit_terminal("cancelled", Some(reason));
+        }
+    }
+}
+
+fn incremental_http_response_value(
+    response: reqwest::blocking::Response,
+    max_response_bytes: usize,
+    callback: Option<Value>,
+) -> Result<Value, String> {
+    let status = response.status().as_u16();
+    let content_length = response.content_length().and_then(|value| usize::try_from(value).ok());
+    if content_length.is_some_and(|value| value > max_response_bytes) {
+        return Err(format!(
+            "HTTP request failed: response body exceeds maximum network body size ({} bytes > {} bytes)",
+            content_length.unwrap_or_default(),
+            max_response_bytes
+        ));
+    }
+
+    let mut headers = HashMap::new();
+    let mut event_headers = DictMap::default();
+    for (name, value) in response.headers() {
+        if let Ok(value) = value.to_str() {
+            headers.insert(name.as_str().to_string(), value.to_string());
+            event_headers
+                .insert(name.as_str().to_string().into(), Value::Str(Arc::new(value.to_string())));
+        }
+    }
+
+    let (events_tx, events_rx) = sync_channel(HTTP_RESPONSE_STREAM_EVENT_CAPACITY);
+    let cancelled = Arc::new(AtomicBool::new(false));
+    let mut headers_event = http_stream_event("headers");
+    headers_event.insert("status".into(), Value::Int(i64::from(status)));
+    headers_event.insert("headers".into(), Value::Dict(Arc::new(event_headers)));
+    if let Some(length) = content_length {
+        headers_event.insert("content_length".into(), Value::Int(length as i64));
+    } else {
+        headers_event.insert("content_length".into(), Value::Null);
+    }
+    let _ = events_tx.send(Value::Dict(Arc::new(headers_event)));
+
+    let body = IncrementalHttpResponseBody {
+        response,
+        events: events_tx,
+        cancelled: Arc::clone(&cancelled),
+        max_response_bytes,
+        total_bytes: 0,
+        chunk_index: 0,
+        terminal: false,
+    };
+    let stream = HttpResponseStreamParts {
+        body: Box::new(body),
+        events: events_rx,
+        cancelled,
+        content_length,
+    };
+
+    Ok(Value::HttpStreamingResponse {
+        status,
+        headers,
+        stream: Arc::new(Mutex::new(Some(stream))),
+        callback: callback.map(Box::new),
+    })
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum AiCassetteMode {
@@ -1793,12 +1981,26 @@ pub fn handle_with_interpreter(
         }
 
         "http_request" => {
-            if !(1..=2).contains(&arg_values.len()) {
+            if !(1..=3).contains(&arg_values.len()) {
                 return Some(Value::Error(format!(
-                    "http_request() expects 1-2 arguments ((request), or (url, options)), got {}",
+                    "http_request() expects 1-3 arguments ((request), (url, options), or (url, options, on_stream_event)), got {}",
                     arg_values.len()
                 )));
             }
+
+            let callback = match arg_values.get(2) {
+                None => None,
+                Some(
+                    value @ (Value::Function(_, _, _)
+                    | Value::NativeFunction(_)
+                    | Value::BytecodeFunction { .. }),
+                ) => Some(value.clone()),
+                Some(_) => {
+                    return Some(Value::Error(
+                        "http_request() third argument must be a function".to_string(),
+                    ));
+                }
+            };
 
             let (url, options): (String, DictMap) = if arg_values.len() == 1 {
                 let options = match arg_values.first().and_then(dict_like_from_value) {
@@ -1844,6 +2046,25 @@ pub fn handle_with_interpreter(
 
                 (url, options)
             };
+
+            let incremental = match options.get("response_stream") {
+                None => false,
+                Some(Value::Bool(value)) => *value,
+                Some(_) => {
+                    return Some(Value::Result {
+                        is_ok: false,
+                        value: Box::new(Value::Str(Arc::new(
+                            "HTTP response_stream must be a boolean".to_string(),
+                        ))),
+                    });
+                }
+            };
+            if callback.is_some() && !incremental {
+                return Some(Value::Error(
+                    "http_request() stream callback requires options.response_stream=true"
+                        .to_string(),
+                ));
+            }
 
             let method_name = options
                 .get("method")
@@ -2001,15 +2222,22 @@ pub fn handle_with_interpreter(
                     let response = request
                         .send()
                         .map_err(|error| format!("HTTP request failed: {}", error))?;
-                    network_policy::read_http_response_bytes_bounded(
-                        response,
-                        "HTTP request",
-                        max_response_bytes,
-                    )
+                    if incremental {
+                        Ok(HttpRequestResult::Incremental(response))
+                    } else {
+                        network_policy::read_http_response_bytes_bounded(
+                            response,
+                            "HTTP request",
+                            max_response_bytes,
+                        )
+                        .map(|(status, headers, body)| {
+                            HttpRequestResult::Buffered(status, headers, body)
+                        })
+                    }
                 });
 
             match request_result {
-                Ok((status, response_headers, body_bytes)) => {
+                Ok(HttpRequestResult::Buffered(status, response_headers, body_bytes)) => {
                     let status = status as i64;
                     let body = String::from_utf8_lossy(&body_bytes).to_string();
 
@@ -2034,6 +2262,15 @@ pub fn handle_with_interpreter(
                     Value::Result {
                         is_ok: true,
                         value: Box::new(Value::Dict(Arc::new(result_dict))),
+                    }
+                }
+                Ok(HttpRequestResult::Incremental(response)) => {
+                    match incremental_http_response_value(response, max_response_bytes, callback) {
+                        Ok(response) => Value::Result { is_ok: true, value: Box::new(response) },
+                        Err(error) => Value::Result {
+                            is_ok: false,
+                            value: Box::new(Value::Str(Arc::new(error))),
+                        },
                     }
                 }
                 Err(error) => {
@@ -2829,6 +3066,17 @@ pub fn handle_with_interpreter(
                         body: body.clone(),
                         headers: new_headers,
                     }
+                } else if let Value::HttpStreamingResponse { status, headers, stream, callback } =
+                    response
+                {
+                    let mut new_headers = headers.clone();
+                    new_headers.insert(key.as_ref().to_string(), value.as_ref().to_string());
+                    Value::HttpStreamingResponse {
+                        status: *status,
+                        headers: new_headers,
+                        stream: stream.clone(),
+                        callback: callback.clone(),
+                    }
                 } else {
                     Value::Error(
                         "set_header requires an HTTP response as first argument".to_string(),
@@ -2879,6 +3127,25 @@ pub fn handle_with_interpreter(
                             status: *status,
                             body: body.clone(),
                             headers: new_headers,
+                        }
+                    } else if let Value::HttpStreamingResponse {
+                        status,
+                        headers,
+                        stream,
+                        callback,
+                    } = response
+                    {
+                        let mut new_headers = headers.clone();
+                        for (key, value) in header_pairs {
+                            if let Value::Str(header_value) = value {
+                                new_headers.insert(key, header_value.as_ref().to_string());
+                            }
+                        }
+                        Value::HttpStreamingResponse {
+                            status: *status,
+                            headers: new_headers,
+                            stream: stream.clone(),
+                            callback: callback.clone(),
                         }
                     } else {
                         Value::Error(
@@ -3217,6 +3484,86 @@ mod tests {
         });
 
         Some((endpoint, request_rx, handle))
+    }
+
+    fn gated_stream_server(
+    ) -> Option<(String, mpsc::Receiver<()>, mpsc::Sender<()>, std::thread::JoinHandle<()>)> {
+        let listener = match TcpListener::bind("127.0.0.1:0") {
+            Ok(listener) => listener,
+            Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => return None,
+            Err(error) => panic!("test listener should bind: {error}"),
+        };
+        let address = listener.local_addr().expect("test listener should have address");
+        let endpoint = format!("http://127.0.0.1:{}/stream", address.port());
+        let (first_chunk_tx, first_chunk_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel();
+        let handle = std::thread::spawn(move || {
+            let Ok((mut stream, _)) = listener.accept() else {
+                return;
+            };
+            let mut request = [0_u8; 4096];
+            let _ = stream.read(&mut request);
+            let first = b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\ndata: {\"delta\":\"first\"}\n\n";
+            let _ = stream.write_all(first);
+            let _ = stream.flush();
+            let _ = first_chunk_tx.send(());
+            let _ = release_rx.recv();
+            let _ = stream.write_all(b"data: [DONE]\n\n");
+            let _ = stream.flush();
+        });
+        Some((endpoint, first_chunk_rx, release_tx, handle))
+    }
+
+    #[test]
+    fn http_request_incremental_response_exposes_headers_chunks_and_completion() {
+        let Some((endpoint, first_chunk_rx, release_tx, server)) = gated_stream_server() else {
+            eprintln!("skipping incremental HTTP response test: local TCP bind unavailable");
+            return;
+        };
+
+        let mut options = DictMap::default();
+        options.insert("method".into(), str_value("GET"));
+        options.insert("response_stream".into(), Value::Bool(true));
+        options.insert("max_response_bytes".into(), Value::Int(4096));
+        let result =
+            handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
+                .expect("http_request should be handled");
+        first_chunk_rx.recv().expect("upstream should flush the first chunk");
+
+        let Value::Result { is_ok: true, value } = result else {
+            panic!("expected successful incremental HTTP result, got {result:?}");
+        };
+        let Value::HttpStreamingResponse { status, stream, .. } = *value else {
+            panic!("expected a streaming HTTP response");
+        };
+        assert_eq!(status, 200);
+        let mut parts = stream
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .take()
+            .expect("stream should be single-use and available");
+        let headers = parts.events.recv().expect("headers event should arrive");
+        assert_eq!(Interpreter::http_stream_event_type(&headers), Some("headers"));
+
+        let mut first = [0_u8; 128];
+        let first_len = parts.body.read(&mut first).expect("first chunk should read");
+        assert!(String::from_utf8_lossy(&first[..first_len]).contains("first"));
+        let first_event = parts.events.recv().expect("chunk event should arrive");
+        assert_eq!(Interpreter::http_stream_event_type(&first_event), Some("chunk"));
+
+        release_tx.send(()).expect("second upstream chunk should be released");
+        let mut remainder = Vec::new();
+        parts.body.read_to_end(&mut remainder).expect("stream should finish");
+        assert!(String::from_utf8_lossy(&remainder).contains("[DONE]"));
+        let mut saw_complete = false;
+        while let Ok(event) = parts.events.recv_timeout(Duration::from_millis(100)) {
+            if Interpreter::http_stream_event_type(&event) == Some("complete") {
+                saw_complete = true;
+                break;
+            }
+        }
+        assert!(saw_complete, "stream should emit a completion event");
+        server.join().expect("stream server should finish");
     }
 
     fn ai_options(endpoint: &str, model: &str) -> Value {

@@ -243,6 +243,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::Channel(_) => "channel",
                     Value::HttpServer { .. } => "httpserver",
                     Value::HttpResponse { .. } => "httpresponse",
+                    Value::HttpStreamingResponse { .. } => "httpresponse",
                     #[cfg(feature = "runtime-db")]
                     Value::Database { .. } => "database",
                     #[cfg(feature = "runtime-db")]

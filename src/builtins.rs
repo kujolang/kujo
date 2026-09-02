@@ -2286,6 +2286,9 @@ pub fn format_debug_value(value: &Value) -> String {
             format!("HttpServer(host: {}, port: {})", host, port)
         }
         Value::HttpResponse { status, .. } => format!("HttpResponse(status: {})", status),
+        Value::HttpStreamingResponse { status, .. } => {
+            format!("HttpStreamingResponse(status: {})", status)
+        }
         #[cfg(feature = "runtime-db")]
         Value::Database { db_type, .. } => format!("Database(type: {})", db_type),
         #[cfg(feature = "runtime-db")]

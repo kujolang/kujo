@@ -898,6 +898,7 @@ impl VM {
                 #[cfg(feature = "runtime-archive")]
                 Value::ZipArchive { .. } => {}
                 Value::HttpResponse { .. }
+                | Value::HttpStreamingResponse { .. }
                 | Value::Int(_)
                 | Value::Float(_)
                 | Value::Str(_)
@@ -6251,6 +6252,12 @@ impl VM {
                         }
                         response
                     }
+                    Ok(Value::HttpStreamingResponse { status, headers, stream, callback }) => {
+                        self.respond_incremental_http_vm(
+                            request, status, headers, stream, callback,
+                        );
+                        continue;
+                    }
                     Ok(_other) => Response::from_string(
                         "Internal Server Error: route handler must return an HTTP response",
                     )
@@ -6265,6 +6272,77 @@ impl VM {
         }
 
         Ok(Value::Int(0))
+    }
+
+    fn respond_incremental_http_vm(
+        &mut self,
+        request: tiny_http::Request,
+        status: u16,
+        headers: HashMap<String, String>,
+        stream: crate::interpreter::SharedHttpResponseStream,
+        callback: Option<Box<Value>>,
+    ) {
+        use tiny_http::{Header, Response, StatusCode};
+
+        let Some(parts) = stream.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).take()
+        else {
+            let _ = request.respond(
+                Response::from_string("Internal Server Error: streaming response already consumed")
+                    .with_status_code(500),
+            );
+            return;
+        };
+
+        let mut response =
+            Response::new(StatusCode(status), Vec::new(), parts.body, parts.content_length, None)
+                .with_chunked_threshold(0);
+        for (name, value) in headers {
+            if matches!(
+                name.to_ascii_lowercase().as_str(),
+                "connection"
+                    | "content-length"
+                    | "keep-alive"
+                    | "proxy-authenticate"
+                    | "proxy-authorization"
+                    | "te"
+                    | "trailer"
+                    | "transfer-encoding"
+                    | "upgrade"
+            ) {
+                continue;
+            }
+            if let Ok(header) = Header::from_bytes(name.as_bytes(), value.as_bytes()) {
+                response.add_header(header);
+            }
+        }
+
+        let events = parts.events;
+        let cancelled = parts.cancelled;
+        let response_thread = std::thread::spawn(move || request.respond(response));
+        while let Ok(event) = events.recv() {
+            let terminal = matches!(
+                Interpreter::http_stream_event_type(&event),
+                Some("complete" | "error" | "cancelled")
+            );
+            if let Some(callback) = callback.as_deref() {
+                let callback_result = match callback {
+                    Value::BytecodeFunction { .. } => self
+                        .call_function_from_jit(callback.clone(), vec![event])
+                        .unwrap_or_else(Value::Error),
+                    _ => self.interpreter.call_user_function(callback, &[event]),
+                };
+                if matches!(
+                    callback_result,
+                    Value::Bool(false) | Value::Error(_) | Value::ErrorObject { .. }
+                ) {
+                    cancelled.store(true, Ordering::Release);
+                }
+            }
+            if terminal {
+                break;
+            }
+        }
+        let _ = response_thread.join();
     }
 
     /// Call a native function (returns synchronously)

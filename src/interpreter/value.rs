@@ -20,6 +20,7 @@ use std::hash::BuildHasherDefault;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc::Receiver;
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
 #[cfg(feature = "runtime-archive")]
@@ -64,6 +65,21 @@ pub type DenseIntDictIntFull = Vec<i64>;
 
 /// Hash map for string-keyed dictionaries.
 pub type DictMap = HashMap<Arc<str>, Value, BuildHasherDefault<AHasher>>;
+
+/// One-shot parts of an incremental HTTP response.
+///
+/// The response body is consumed by the routed HTTP server while stream events
+/// are dispatched to the Kujo callback on the interpreter/VM thread. Keeping
+/// this state behind an `Option` makes a streaming response explicitly
+/// single-use even though runtime values are cheaply cloneable.
+pub struct HttpResponseStreamParts {
+    pub body: Box<dyn std::io::Read + Send>,
+    pub events: Receiver<Value>,
+    pub cancelled: Arc<std::sync::atomic::AtomicBool>,
+    pub content_length: Option<usize>,
+}
+
+pub type SharedHttpResponseStream = Arc<Mutex<Option<HttpResponseStreamParts>>>;
 
 /// Stores function bodies and drops deeply nested statement trees iteratively.
 ///
@@ -646,6 +662,13 @@ pub enum Value {
     },
     /// HTTP response
     HttpResponse { status: u16, body: Vec<u8>, headers: HashMap<String, String> },
+    /// Incremental, single-use HTTP response with an optional event callback.
+    HttpStreamingResponse {
+        status: u16,
+        headers: HashMap<String, String>,
+        stream: SharedHttpResponseStream,
+        callback: Option<Box<Value>>,
+    },
     /// Database connection
     /// Infrastructure for database.rs stub module
     #[cfg(feature = "runtime-db")]
@@ -892,6 +915,9 @@ impl std::fmt::Debug for Value {
             }
             Value::HttpResponse { status, body, .. } => {
                 write!(f, "HttpResponse(status={}, body_len={})", status, body.len())
+            }
+            Value::HttpStreamingResponse { status, .. } => {
+                write!(f, "HttpStreamingResponse(status={})", status)
             }
             #[cfg(feature = "runtime-db")]
             Value::Database { db_type, connection_string, .. } => {
