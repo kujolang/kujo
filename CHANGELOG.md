@@ -5,7 +5,7 @@ All notable changes to Kujo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-09-01
+## [1.2.1] - 2026-09-01
 
 ### Added
 
@@ -16,8 +16,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   publication, VM/interpreter parity, fail-closed cleanup, and explicit
   post-publication durability/temporary-cleanup facts.
 - Add lifecycle-script-free npm runtime packaging with exact-version native
-  platform packages, an allow-listed launcher, package contract tests, and a
-  release packaging dry run.
+  platform packages, an allow-listed launcher, package contract tests, and
+  trusted-publishing provenance.
+- Extend `tcp_info` with socket-derived peer/local IP and port fields so raw
+  protocol servers can enforce address-scoped admission policy without parsing
+  ambiguous combined address strings.
+
+### Fixed
+
+- Honor declared HTTP request-body lengths in routed interpreter and VM
+  servers, rejecting declared overflow before reading and responding as soon as
+  a complete keep-alive body arrives instead of waiting for the read deadline.
+- Reject tag-time binary and npm publication when the Git tag, Cargo version,
+  and npm package versions do not match exactly.
+
+### Security
+
+- Close the routed HTTP request boundary so oversized declared bodies are
+  rejected before buffering and completed requests cannot be held until the
+  read deadline.
+
+## [1.2.0] - 2026-09-01
+
+### Added
+
 - Add capability-free bounded in-memory gzip decompression and safe
   single-regular-entry ZIP reading for hostile compressed protocol inputs.
 - Add a checksum-verified reusable GitHub Action for installing exact Kujo
@@ -31,9 +53,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fail-closed protocol policy.
 - Add deterministic TCP peer/local-address inspection and bounded per-stream
   read/write timeout controls for protocol servers.
-- Extend `tcp_info` with socket-derived peer/local IP and port fields so raw
-  protocol servers can enforce address-scoped admission policy without parsing
-  ambiguous combined address strings.
 - Add strict `decode_base64_utf8(text)` decoding for text-based binary protocol
   fields without filesystem conversion or lossy UTF-8 behavior.
 - Add capability-gated `tcp_connect_bound(host, port, source_ip)` so protocols
@@ -56,9 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Honor declared HTTP request-body lengths in routed interpreter and VM
-  servers, rejecting declared overflow before reading and avoiding a read
-  deadline stall after complete request bodies.
 - Replace the yanked `mysql_async 0.37.0` dependency with `0.37.1` so the
   release dependency audit remains warning-free.
 

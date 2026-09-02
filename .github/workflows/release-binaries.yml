@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/rag
-          ref: 28690e3aa1b7a5947616843574cacf03b32905c9
+          ref: b850db11f353a9ffbaea627d1991e62d7c281fb0
           path: .agent-fixtures/rag
           persist-credentials: false
 
@@ -94,11 +94,26 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
+
+      - name: Verify release tag and package versions
+        run: bash .github/scripts/check-tag-version.sh
+
       - name: Run release gate checks
         env:
           KUJO_AGENT_FIXTURE_ECOSYSTEM_ROOT: ${{ github.workspace }}/.agent-fixtures
           KUJO_ENABLE_SOCKET_TESTS: "1"
         run: bash scripts/release_gate.sh
+
+      - name: Validate hardened RAG HTTP request boundary
+        working-directory: .agent-fixtures/rag
+        env:
+          KUJO_BIN: ${{ github.workspace }}/target/debug/kujo
+        run: >-
+          "${KUJO_BIN}" run tests/test_runtime_http_security.kujo --interpreter
 
   build-release-artifacts:
     needs: release-gate
