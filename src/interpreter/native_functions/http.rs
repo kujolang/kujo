@@ -4546,6 +4546,8 @@ mod tests {
 
     #[test]
     fn test_http_request_supports_single_request_dictionary_form() {
+        let _guard = AI_ENV_LOCK.lock().expect("HTTP env lock should not be poisoned");
+        clear_ai_cassette_env();
         let Some((endpoint, _request_rx, server_handle)) =
             one_shot_json_server(200, "{\"ok\":true}")
         else {
@@ -4582,6 +4584,8 @@ mod tests {
 
     #[test]
     fn test_http_request_preserves_binary_body_bytes() {
+        let _guard = AI_ENV_LOCK.lock().expect("HTTP env lock should not be poisoned");
+        clear_ai_cassette_env();
         let Some((endpoint, request_rx, server_handle)) = one_shot_json_server(200, "{}") else {
             eprintln!("skipping test_http_request_preserves_binary_body_bytes: local TCP bind not permitted in this environment");
             return;
