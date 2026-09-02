@@ -1,7 +1,7 @@
 path,line,kind,classification,text
 "src/interpreter/native_functions/compression.rs",201,"non_executable","src_comment_or_string","        writer.write_all(b""unsafe"").unwrap();"
-"src/interpreter/native_functions/io.rs",596,"non_executable","src_comment_or_string","                                    ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"","
-"src/interpreter/native_functions/io.rs",1236,"non_executable","src_comment_or_string","            matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory""))"
+"src/interpreter/native_functions/io.rs",597,"non_executable","src_comment_or_string","                                    ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"","
+"src/interpreter/native_functions/io.rs",1243,"non_executable","src_comment_or_string","            matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory""))"
 "src/interpreter/native_functions/system.rs",83,"executable","src_executable_other","        unsafe {"
 "src/interpreter/native_functions/system.rs",578,"executable","src_executable_other","    unsafe {"
 "src/interpreter/native_functions/system.rs",595,"executable","src_executable_other","        if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 {"
