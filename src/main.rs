@@ -1160,10 +1160,14 @@ fn reserved_external_alias_error(name: &str) -> Option<String> {
 }
 
 fn main() {
-    let runtime = Builder::new_multi_thread().enable_all().build().unwrap_or_else(|error| {
-        eprintln!("Error: failed to initialize tokio runtime: {}", error);
-        std::process::exit(1);
-    });
+    let runtime = Builder::new_multi_thread()
+        .thread_stack_size(8 * 1024 * 1024)
+        .enable_all()
+        .build()
+        .unwrap_or_else(|error| {
+            eprintln!("Error: failed to initialize tokio runtime: {}", error);
+            std::process::exit(1);
+        });
 
     runtime.block_on(async_main());
 }

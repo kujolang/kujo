@@ -13,14 +13,23 @@
 
 use once_cell::sync::Lazy;
 use std::time::Duration;
-use tokio::runtime::{Runtime, RuntimeFlavor};
+use tokio::runtime::{Builder, Runtime, RuntimeFlavor};
 use tokio::task::JoinHandle;
 
 use crate::interpreter::Value;
 
 /// Global tokio runtime instance, initialized lazily on first access
-static RUNTIME: Lazy<Runtime> =
-    Lazy::new(|| Runtime::new().expect("Failed to create tokio runtime"));
+const KUJO_ASYNC_WORKER_STACK_BYTES: usize = 8 * 1024 * 1024;
+
+fn build_runtime() -> Runtime {
+    Builder::new_multi_thread()
+        .thread_stack_size(KUJO_ASYNC_WORKER_STACK_BYTES)
+        .enable_all()
+        .build()
+        .expect("Failed to create tokio runtime")
+}
+
+static RUNTIME: Lazy<Runtime> = Lazy::new(build_runtime);
 
 /// Async runtime wrapper providing task execution capabilities
 pub struct AsyncRuntime;
@@ -132,6 +141,21 @@ mod tests {
     fn test_runtime_initialization() {
         // Runtime should initialize successfully
         let _runtime = AsyncRuntime::runtime();
+    }
+
+    #[test]
+    fn async_worker_stack_budget_is_bounded_and_nontrivial() {
+        assert_eq!(KUJO_ASYNC_WORKER_STACK_BYTES, 8 * 1024 * 1024);
+        let runtime = build_runtime();
+        let result = runtime.block_on(async {
+            AsyncRuntime::spawn_task(async { Value::str("stack-ready".to_string()) })
+                .await
+                .expect("task should complete")
+        });
+        match result {
+            Value::Str(value) => assert_eq!(value.as_str(), "stack-ready"),
+            _ => panic!("unexpected async result type"),
+        }
     }
 
     #[test]
