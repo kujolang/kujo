@@ -27,3 +27,6 @@ jobs:
 
       - name: Fuzz parser target (smoke)
         run: cargo +nightly fuzz run parser -- -max_total_time=20
+
+      - name: Fuzz bounded XML target (smoke)
+        run: cargo +nightly fuzz run xml_bounded -- -max_total_time=20

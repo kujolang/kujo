@@ -1069,6 +1069,25 @@ fn assert_interpreter_and_vm_bool(script: &str, flag_name: &str) {
 }
 
 #[test]
+fn vm_and_interpreter_match_bounded_namespace_aware_xml_parsing() {
+    let script = r#"
+        parsed := parse_xml_bounded(
+            "<feedback xmlns=\"urn:ietf:params:xml:ns:dmarc-2.0\"><record id=\"1\"><domain>example.com</domain></record></feedback>",
+            {"max_input_bytes": 4096, "max_depth": 8, "max_nodes": 8, "max_attributes": 8, "max_text_bytes": 1024, "max_tree_bytes": 4096}
+        )
+        xml_parity_ok := parsed["ok"] &&
+            parsed["code"] == "XML_DOCUMENT_PARSED" &&
+            parsed["node_count"] == 3 &&
+            parsed["attribute_count"] == 2 &&
+            parsed["tree_bytes"] > 0 &&
+            parsed["root"]["name"] == "feedback" &&
+            parsed["root"]["namespace"] == "urn:ietf:params:xml:ns:dmarc-2.0"
+    "#;
+
+    assert_interpreter_and_vm_bool(script, "xml_parity_ok");
+}
+
+#[test]
 fn vm_and_interpreter_keep_string_literals_explicit() {
     let script = r#"
         literal := "missing_top_level_name"

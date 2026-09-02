@@ -702,6 +702,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "parse_xml_bounded".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), None],
+                return_type: None, // Returns a deterministic document dictionary.
+            },
+        );
+
+        self.functions.insert(
             "to_json".to_string(),
             FunctionSignature {
                 param_types: vec![None], // Accepts any value

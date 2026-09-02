@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add capability-free `parse_xml_bounded` with namespace-aware deterministic
+  trees, caller-lowerable absolute resource ceilings, VM/interpreter parity,
+  a dedicated cargo-fuzz target, and fail-closed DTD, non-predefined entity,
+  namespace, and malformed-document handling.
+
 - Add a filesystem-read-gated, fixed-memory file-range decoder for strict
   identity, Base64 and quoted-printable transfer encodings. It returns a
   bounded inspection prefix, decoded length, SHA-256, UTF-8/ASCII/NUL facts
@@ -40,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   private auto-deleting file and reopened read-only before process spawn.
 
 ### Fixed
+
+- Point the cargo-fuzz harness at the renamed `kujolang` package while keeping
+  the library import alias `kujo`, restoring all configured fuzz targets.
 
 - Give both CLI and shared interpreter async runtimes a fixed 8 MiB worker
   stack so bounded protocol and policy functions can run under `promise_all`

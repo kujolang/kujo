@@ -41,6 +41,7 @@ pub mod tls;
 pub mod token;
 pub mod type_ops;
 pub mod vector;
+pub mod xml;
 
 use super::{Interpreter, Value};
 
@@ -189,6 +190,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = json::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = xml::handle(canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = schema::handle(canonical_name, arg_values) {
@@ -604,6 +608,7 @@ mod tests {
             "get_default",
             "format",
             "parse_json",
+            "parse_xml_bounded",
             "to_json",
             "to_json_pretty",
             "parse_toml",

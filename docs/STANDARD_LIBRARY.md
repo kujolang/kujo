@@ -1,7 +1,7 @@
 # Standard Library Inventory
 
 Status: stable v1.0.0 inventory
-Last updated: 2026-08-12
+Last updated: 2026-09-02
 
 This inventory is the canonical support table for runtime-native functions registered by `Interpreter::get_builtin_names()` in `src/interpreter/mod.rs`.
 
@@ -25,6 +25,13 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - `to_json` and `to_json_pretty` accept JSON-compatible scalar/container values, including `secret` values which serialize as `"***"`; runtime structs, functions, bytes, and other unsupported values return `Value::Error`.
 - Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
 - `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `8,388,608` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
+
+Bounded XML parsing contract (`parse_xml_bounded`):
+
+- `parse_xml_bounded(xml, options)` parses an in-memory UTF-8 XML 1.0 document into a deterministic namespace-aware tree without filesystem, network, process, clock, or random access.
+- The returned dictionary has `ok`, `code`, `schema`, `node_count`, `attribute_count`, `text_bytes`, `tree_bytes`, and `root`. Every element and non-namespace attribute exposes `name`, `qualified_name`, and `namespace`; elements also expose direct `text`, `attributes`, and `children` arrays in document order.
+- `options` is required and accepts only `max_input_bytes`, `max_depth`, `max_nodes`, `max_attributes`, `max_text_bytes`, and `max_tree_bytes`. Each positive integer may lower, but never raise, the absolute ceilings of 8 MiB input, depth 64, 100,000 elements, 200,000 attributes (including namespace declarations), 8 MiB decoded text, and 16 MiB copied tree-string data. The tree-string ceiling prevents namespace/name amplification from turning a bounded input into unbounded owned output.
+- XML declarations must be the first document event, identify XML 1.0 and, when present, UTF-8, and use only `yes` or `no` for `standalone`. Unknown prefixes, duplicate expanded attribute names, malformed or multiple roots, text outside the root, and limit violations fail deterministically. DTDs and non-predefined entity references are denied; XML character references and the five predefined entities are bounded and decoded; comments and processing instructions are discarded; bounded CDATA is preserved as direct text.
 
 JSON Schema subset contract (`json_schema_validate`):
 
@@ -275,6 +282,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `io_truncate` | `io_truncate(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_truncate(...)` |
 | `io_copy_range` | `io_copy_range(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_copy_range(...)` |
 | `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>8,388,608 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
+| `parse_xml_bounded` | `parse_xml_bounded(xml, options)` | exact 2 | dictionary | Value::Error on invalid args/types/options, malformed or unsupported XML, denied DTD/non-predefined entity content, namespace errors, duplicate expanded attributes, or resource-limit violations. | `none` | `result := parse_xml_bounded("<root/>", {})` |
 | `to_json` | `to_json(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json({"ok": true})` |
 | `to_json_pretty` | `to_json_pretty(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json_pretty({"ok": true})` |
 | `json_schema_validate` | `json_schema_validate(value, schema)` | exact 2 | dict | Value::Error on invalid args/types, malformed or unsupported schema keywords, invalid regex patterns, unsupported `$ref`, or resource-limit violations. Integer bounds are compared without converting them through floating point. Otherwise returns `{valid, errors}` with JSON-pointer-like paths. | `none` | `result := json_schema_validate({"name":"Kujo"}, {"type":"object","required":["name"]})` |

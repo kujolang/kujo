@@ -5,7 +5,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/fuzz_smoke.sh [--check-prereqs] [--max-total-time <seconds>] [target...]
 
-Runs bounded cargo-fuzz smoke targets (default: lexer parser) with prerequisite checks.
+Runs bounded cargo-fuzz smoke targets (default: lexer parser xml_bounded) with prerequisite checks.
 
 Options:
   --check-prereqs          Validate toolchain prerequisites only; do not run fuzz targets.
@@ -15,7 +15,7 @@ Options:
 Examples:
   scripts/fuzz_smoke.sh --check-prereqs
   scripts/fuzz_smoke.sh
-  scripts/fuzz_smoke.sh --max-total-time 30 lexer parser
+  scripts/fuzz_smoke.sh --max-total-time 30 lexer parser xml_bounded
 EOF
 }
 
@@ -50,7 +50,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#TARGETS[@]} -eq 0 ]]; then
-  TARGETS=(lexer parser)
+  TARGETS=(lexer parser xml_bounded)
 fi
 
 if ! [[ "$MAX_TOTAL_TIME" =~ ^[1-9][0-9]*$ ]]; then

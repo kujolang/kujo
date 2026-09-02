@@ -167,6 +167,7 @@ fn test_builtin_names_include_release_hardening_contract_entries() {
         "ai_text",
         "ai_image_url",
         "ai_message",
+        "parse_xml_bounded",
         "secret",
         "reveal",
         "is_secret",

@@ -197,6 +197,7 @@ Guideline:
 | `update` | preview | `m := update({"a": 1}, {"a": 2})` |
 | `invert` | preview | `m := invert({"a": 1, "b": 2})` |
 | `parse_json` | stable | `obj := parse_json("{\"a\":1}")` |
+| `parse_xml_bounded` | stable | `doc := parse_xml_bounded("<root/>", {})` |
 | `to_json` | stable | `txt := to_json({"a": 1})` |
 | `to_json_pretty` | stable | `txt := to_json_pretty({"a": 1})` |
 | `json_schema_validate` | stable | `result := json_schema_validate(value, schema)` |
@@ -222,7 +223,14 @@ dense dictionaries preserve declaration/index order. `to_json_pretty` shares
 the exact conversion and ordering rules and only changes whitespace. Both
 reject non-finite floats; `secret("value")` serializes as `"***"`. Runtime
 structs, functions, bytes, and other unsupported values are errors. `parse_json`
-accepts any JSON root value but caps input at 1 MiB and nesting at 64 levels.
+accepts any JSON root value but caps input at 8 MiB and nesting at 64 levels.
+
+`parse_xml_bounded` returns a namespace-aware tree under absolute input, depth,
+element, attribute, decoded-text, and copied-tree-string ceilings. Callers must
+provide an options dictionary and may only lower those ceilings. It accepts XML 1.0 UTF-8 input,
+preserves bounded text and CDATA, discards comments and processing instructions,
+and rejects DTDs, non-predefined entity references, unresolved namespace prefixes,
+duplicate expanded attribute names, multiple roots, and malformed documents.
 
 Runnable contract example: [`examples/helper_hlp_015_canonical_json.kujo`](../examples/helper_hlp_015_canonical_json.kujo).
 

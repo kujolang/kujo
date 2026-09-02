@@ -9,7 +9,7 @@ Replay a fuzz crash artifact against a cargo-fuzz target.
 
 Options:
   --artifact <path>        Path to a crash artifact file to replay (required).
-  --target <name>          Fuzz target name (for example: lexer, parser). If omitted, infer from .../artifacts/<target>/...
+  --target <name>          Fuzz target name (for example: lexer, parser, xml_bounded). If omitted, infer from .../artifacts/<target>/...
   --dry-run                Print the replay command and exit without running cargo-fuzz.
   --check-prereqs          Validate prerequisites before replay.
   -h, --help               Show this help.

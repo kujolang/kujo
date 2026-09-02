@@ -706,6 +706,7 @@ impl Interpreter {
             "io_copy_range",
             // JSON functions
             "parse_json",
+            "parse_xml_bounded",
             "to_json",
             "to_json_pretty",
             "json_schema_validate",
@@ -1303,6 +1304,10 @@ impl Interpreter {
 
         // JSON functions
         self.env.define("parse_json".to_string(), Value::NativeFunction("parse_json".to_string()));
+        self.env.define(
+            "parse_xml_bounded".to_string(),
+            Value::NativeFunction("parse_xml_bounded".to_string()),
+        );
         self.env.define("to_json".to_string(), Value::NativeFunction("to_json".to_string()));
         self.env.define(
             "to_json_pretty".to_string(),
@@ -3267,6 +3272,10 @@ impl Interpreter {
             "json_schema_validate" => CallableArity::exact(
                 "json_schema_validate",
                 vec!["value".to_string(), "schema".to_string()],
+            ),
+            "parse_xml_bounded" => CallableArity::exact(
+                "parse_xml_bounded",
+                vec!["xml".to_string(), "options".to_string()],
             ),
             "print" | "eprint" | "debug" | "array" => CallableArity::variadic(name, 0, vec![]),
             "hmac_sha256" => CallableArity::exact(

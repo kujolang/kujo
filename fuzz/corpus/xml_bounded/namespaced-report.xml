@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feedback xmlns="urn:ietf:params:xml:ns:dmarc-2.0">
+  <report_metadata><org_name>example.net</org_name></report_metadata>
+  <record><row><count>1</count></row></record>
+</feedback>
