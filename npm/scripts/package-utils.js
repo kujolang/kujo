@@ -6,7 +6,18 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+function npmInvocation(args) {
+  if (process.platform !== 'win32') return { command: 'npm', args };
+
+  // Node does not execute .cmd shims with shell:false on Windows. Invoke npm's
+  // JavaScript entry point directly so packaging remains shell-free and paths
+  // cannot be reinterpreted as command text.
+  const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (!fs.existsSync(npmCli)) {
+    throw new Error(`npm CLI entry point not found beside Node.js: ${npmCli}`);
+  }
+  return { command: process.execPath, args: [npmCli, ...args] };
+}
 
 function copyDirectory(source, destination) {
   fs.cpSync(source, destination, { recursive: true });
@@ -50,13 +61,15 @@ function writeProvenanceMetadata(file, { runtimeVersion, gitCommit, target, bina
 function pack(directory, destination, dryRun = false) {
   const args = ['pack', '--json', '--ignore-scripts', '--pack-destination', destination];
   if (dryRun) args.push('--dry-run');
-  const result = spawnSync(npmCommand, args, {
+  const invocation = npmInvocation(args);
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd: directory,
     encoding: 'utf8',
     shell: false
   });
   if (result.status !== 0) {
-    throw new Error(`npm pack failed in ${directory}: ${result.stderr || result.stdout}`);
+    const detail = result.error?.message || result.stderr || result.stdout || 'unknown process error';
+    throw new Error(`npm pack failed in ${directory}: ${detail}`);
   }
   const report = JSON.parse(result.stdout);
   if (!Array.isArray(report) || report.length !== 1) {
