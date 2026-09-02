@@ -707,6 +707,21 @@ fn native_capability_file_range_sends_require_network_and_filesystem_read() {
 }
 
 #[test]
+fn native_capability_private_spool_file_range_requires_write_and_read() {
+    let source = "io_private_spool_write_file_range(null, \"message.eml\", 0, 1, \"raw\")\n";
+    assert_runtime_boundary_failure_with_args(
+        source,
+        "Capability denied: filesystem-write required for io_private_spool_write_file_range",
+        &["--interpreter", "--untrusted"],
+    );
+    assert_runtime_boundary_failure_with_args(
+        source,
+        "Capability denied: filesystem-read required for io_private_spool_write_file_range",
+        &["--interpreter", "--untrusted", "--allow-fs-write"],
+    );
+}
+
+#[test]
 fn native_capability_tls_acceptor_requires_network_server_and_filesystem_read() {
     assert_runtime_boundary_failure_with_args(
         "tls_acceptor(\"certificate.pem\", \"private-key.pem\")\n",

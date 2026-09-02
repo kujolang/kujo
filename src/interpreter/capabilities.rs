@@ -179,6 +179,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "io_write_private_file"
         | "io_private_spool_open"
         | "io_private_spool_write"
+        | "io_private_spool_write_file_range"
         | "io_private_spool_finish"
         | "io_private_spool_abort"
         | "io_truncate"
@@ -265,6 +266,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 /// merely because network access (or the reverse) was granted.
 pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
     match name {
+        "io_private_spool_write_file_range" => &[NativeCapability::FilesystemRead],
         "http_download_file" => &[NativeCapability::FilesystemWrite],
         "http_upload_file" => &[NativeCapability::FilesystemRead],
         "tcp_send_file_range" | "tls_send_file_range" => &[NativeCapability::FilesystemRead],

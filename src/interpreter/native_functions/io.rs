@@ -5,6 +5,7 @@
 #[cfg(unix)]
 use crate::interpreter::value::PrivateSpoolState;
 use crate::interpreter::{DictMap, Interpreter, Value};
+use base64::Engine;
 use sha2::{Digest, Sha256};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -12,6 +13,9 @@ use std::sync::Arc;
 use std::time::UNIX_EPOCH;
 
 const MAX_PRIVATE_SPOOL_BYTES: u64 = 1_073_741_824;
+const PRIVATE_SPOOL_FILE_RANGE_MAX_BYTES: u64 = 64 * 1024 * 1024;
+const PRIVATE_SPOOL_FILE_RANGE_CHUNK_BYTES: usize = 64 * 1024;
+const PRIVATE_SPOOL_FILE_RANGE_MAX_PATH_BYTES: usize = 4096;
 
 fn private_spool_content_bytes(content: &Value) -> Option<Vec<u8>> {
     match content {
@@ -30,6 +34,164 @@ fn private_spool_parent(destination: &std::path::Path) -> &std::path::Path {
         Some(parent) if !parent.as_os_str().is_empty() => parent,
         _ => std::path::Path::new("."),
     }
+}
+
+#[cfg(unix)]
+fn private_spool_append(
+    state: &mut PrivateSpoolState,
+    bytes: &[u8],
+    operation: &str,
+) -> Result<(), String> {
+    let next_size = state
+        .bytes_written
+        .checked_add(bytes.len() as u64)
+        .ok_or_else(|| format!("{operation} size overflow"))?;
+    if next_size > state.max_bytes {
+        return Err(format!(
+            "{operation} exceeds maximum bytes ({} > {})",
+            next_size, state.max_bytes
+        ));
+    }
+    let file = state.file.as_mut().ok_or_else(|| format!("{operation} spool is closed"))?;
+    file.write_all(bytes).map_err(|error| format!("{operation} write failed: {error}"))?;
+    state.hasher.update(bytes);
+    state.bytes_written = next_size;
+    Ok(())
+}
+
+#[cfg(unix)]
+fn private_spool_open_regular_range(
+    path: &str,
+    offset: u64,
+    count: u64,
+    operation: &str,
+) -> Result<File, String> {
+    if path.is_empty() || path.len() > PRIVATE_SPOOL_FILE_RANGE_MAX_PATH_BYTES {
+        return Err(format!("{operation} path must be 1-4096 bytes"));
+    }
+    if count > PRIVATE_SPOOL_FILE_RANGE_MAX_BYTES {
+        return Err(format!("{operation} count exceeds the 64 MiB limit"));
+    }
+    let end =
+        offset.checked_add(count).ok_or_else(|| format!("{operation} file range overflows"))?;
+    let path = std::path::Path::new(path);
+    let link_metadata = fs::symlink_metadata(path)
+        .map_err(|error| format!("{operation} cannot inspect file: {error}"))?;
+    if link_metadata.file_type().is_symlink() || !link_metadata.is_file() {
+        return Err(format!("{operation} requires a non-symlink regular file"));
+    }
+    let mut options = OpenOptions::new();
+    options.read(true).custom_flags(libc::O_NOFOLLOW);
+    let mut file = options
+        .open(path)
+        .map_err(|error| format!("{operation} cannot open file safely: {error}"))?;
+    let metadata = file
+        .metadata()
+        .map_err(|error| format!("{operation} cannot inspect opened file: {error}"))?;
+    if !metadata.is_file() || end > metadata.len() {
+        return Err(format!("{operation} range exceeds the regular file"));
+    }
+    file.seek(SeekFrom::Start(offset))
+        .map_err(|error| format!("{operation} cannot seek file: {error}"))?;
+    Ok(file)
+}
+
+#[cfg(unix)]
+fn private_spool_write_file_range(
+    state: &mut PrivateSpoolState,
+    path: &str,
+    offset: u64,
+    count: u64,
+    mode: &str,
+) -> Result<u64, String> {
+    const OPERATION: &str = "io_private_spool_write_file_range";
+    if !matches!(mode, "raw" | "crlf" | "base64-crlf" | "smtp-dot-stuff-crlf") {
+        return Err(format!("{OPERATION} mode is unsupported"));
+    }
+    let mut file = private_spool_open_regular_range(path, offset, count, OPERATION)?;
+    let starting_size = state.bytes_written;
+    let mut buffer = vec![0_u8; PRIVATE_SPOOL_FILE_RANGE_CHUNK_BYTES];
+    let mut remaining = count;
+
+    if mode == "raw" {
+        while remaining > 0 {
+            let requested = remaining.min(buffer.len() as u64) as usize;
+            file.read_exact(&mut buffer[..requested])
+                .map_err(|error| format!("{OPERATION} file read failed: {error}"))?;
+            private_spool_append(state, &buffer[..requested], OPERATION)?;
+            remaining -= requested as u64;
+        }
+    } else if mode == "base64-crlf" {
+        let mut carry = Vec::with_capacity(57 + PRIVATE_SPOOL_FILE_RANGE_CHUNK_BYTES);
+        while remaining > 0 {
+            let requested = remaining.min(buffer.len() as u64) as usize;
+            file.read_exact(&mut buffer[..requested])
+                .map_err(|error| format!("{OPERATION} file read failed: {error}"))?;
+            carry.extend_from_slice(&buffer[..requested]);
+            let complete = (carry.len() / 57) * 57;
+            let mut output = Vec::with_capacity((complete / 57) * 78);
+            for chunk in carry[..complete].chunks_exact(57) {
+                output.extend_from_slice(
+                    base64::engine::general_purpose::STANDARD.encode(chunk).as_bytes(),
+                );
+                output.extend_from_slice(b"\r\n");
+            }
+            if !output.is_empty() {
+                private_spool_append(state, &output, OPERATION)?;
+            }
+            carry.drain(..complete);
+            remaining -= requested as u64;
+        }
+        if !carry.is_empty() {
+            let mut output = base64::engine::general_purpose::STANDARD.encode(&carry).into_bytes();
+            output.extend_from_slice(b"\r\n");
+            private_spool_append(state, &output, OPERATION)?;
+        }
+    } else {
+        let dot_stuff = mode == "smtp-dot-stuff-crlf";
+        let mut pending_cr = false;
+        let mut line_start = true;
+        while remaining > 0 {
+            let requested = remaining.min(buffer.len() as u64) as usize;
+            file.read_exact(&mut buffer[..requested])
+                .map_err(|error| format!("{OPERATION} file read failed: {error}"))?;
+            let mut output = Vec::with_capacity(requested.saturating_mul(2).saturating_add(2));
+            for byte in &buffer[..requested] {
+                if pending_cr {
+                    output.extend_from_slice(b"\r\n");
+                    line_start = true;
+                    pending_cr = false;
+                    if *byte == b'\n' {
+                        continue;
+                    }
+                }
+                if *byte == b'\r' {
+                    pending_cr = true;
+                } else if *byte == b'\n' {
+                    output.extend_from_slice(b"\r\n");
+                    line_start = true;
+                } else {
+                    if dot_stuff && line_start && *byte == b'.' {
+                        output.push(b'.');
+                    }
+                    output.push(*byte);
+                    line_start = false;
+                }
+            }
+            if !output.is_empty() {
+                private_spool_append(state, &output, OPERATION)?;
+            }
+            remaining -= requested as u64;
+        }
+        if pending_cr {
+            private_spool_append(state, b"\r\n", OPERATION)?;
+            line_start = true;
+        }
+        if dot_stuff && !line_start {
+            private_spool_append(state, b"\r\n", OPERATION)?;
+        }
+    }
+    Ok(state.bytes_written - starting_size)
 }
 
 #[cfg(unix)]
@@ -757,6 +919,87 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
         }
 
         #[cfg(unix)]
+        "io_private_spool_write_file_range" => {
+            if 5 != arg_values.len() {
+                Value::Error(
+                    "io_private_spool_write_file_range requires spool, path, offset, count, and mode"
+                        .to_string(),
+                )
+            } else if let (
+                Some(Value::PrivateSpool { spool, .. }),
+                Some(Value::Str(path)),
+                Some(Value::Int(offset)),
+                Some(Value::Int(count)),
+                Some(Value::Str(mode)),
+            ) = (
+                arg_values.first(),
+                arg_values.get(1),
+                arg_values.get(2),
+                arg_values.get(3),
+                arg_values.get(4),
+            ) {
+                if *offset < 0 || *count < 0 {
+                    Value::Error(
+                        "io_private_spool_write_file_range offset and count must be non-negative"
+                            .to_string(),
+                    )
+                } else {
+                    let mut guard = match spool.lock() {
+                        Ok(value) => value,
+                        Err(_) => {
+                            return Some(Value::Error(
+                                "io_private_spool_write_file_range spool lock is poisoned"
+                                    .to_string(),
+                            ));
+                        }
+                    };
+                    let Some(state) = guard.as_mut() else {
+                        return Some(Value::Error(
+                            "io_private_spool_write_file_range spool is closed".to_string(),
+                        ));
+                    };
+                    match private_spool_write_file_range(
+                        state,
+                        path.as_ref(),
+                        *offset as u64,
+                        *count as u64,
+                        mode.as_ref(),
+                    ) {
+                        Ok(output_bytes) => {
+                            let mut receipt = DictMap::default();
+                            receipt.insert("input_bytes".into(), Value::Int(*count));
+                            receipt.insert(
+                                "output_bytes".into(),
+                                Value::Int(output_bytes as i64),
+                            );
+                            receipt.insert(
+                                "bytes_written".into(),
+                                Value::Int(state.bytes_written as i64),
+                            );
+                            receipt.insert(
+                                "remaining_bytes".into(),
+                                Value::Int((state.max_bytes - state.bytes_written) as i64),
+                            );
+                            receipt.insert("mode".into(), Value::Str(mode.clone()));
+                            Value::Dict(Arc::new(receipt))
+                        }
+                        Err(error) => Value::Error(error),
+                    }
+                }
+            } else {
+                Value::Error(
+                    "io_private_spool_write_file_range requires (PrivateSpool, string, int, int, string) arguments"
+                        .to_string(),
+                )
+            }
+        }
+        #[cfg(not(unix))]
+        "io_private_spool_write_file_range" => Value::Error(
+            "io_private_spool_write_file_range is unavailable on this platform; use a managed private storage provider"
+                .to_string(),
+        ),
+
+        #[cfg(unix)]
         "io_private_spool_finish" => {
             if 1 != arg_values.len() {
                 Value::Error("io_private_spool_finish requires one spool argument".to_string())
@@ -1177,6 +1420,91 @@ mod tests {
             .expect("second finish should be handled");
         assert!(matches!(closed, Value::Error(message) if message.contains("spool is closed")));
         fs::remove_file(path).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_io_private_spool_write_file_range_streams_all_modes_and_denies_symlinks() {
+        let directory = tempfile::tempdir().unwrap();
+        fs::set_permissions(directory.path(), fs::Permissions::from_mode(0o700)).unwrap();
+        let source = directory.path().join("source.bin");
+        fs::write(&source, b".first\nsecond\rthird\r\n.fourth").unwrap();
+
+        let write_mode = |mode: &str, destination_name: &str| -> Vec<u8> {
+            let destination = directory.path().join(destination_name);
+            let spool = handle(
+                &mut Interpreter::new(),
+                "io_private_spool_open",
+                &[
+                    Value::Str(Arc::new(destination.to_string_lossy().to_string())),
+                    Value::Int(1024),
+                    Value::Int(0o600),
+                ],
+            )
+            .unwrap();
+            let progress = handle(
+                &mut Interpreter::new(),
+                "io_private_spool_write_file_range",
+                &[
+                    spool.clone(),
+                    Value::Str(Arc::new(source.to_string_lossy().to_string())),
+                    Value::Int(0),
+                    Value::Int(fs::metadata(&source).unwrap().len() as i64),
+                    Value::Str(Arc::new(mode.to_string())),
+                ],
+            )
+            .unwrap();
+            assert!(matches!(progress, Value::Dict(ref fields)
+                if matches!(fields.get("input_bytes"), Some(Value::Int(28)))
+                    && matches!(fields.get("mode"), Some(Value::Str(value)) if value.as_ref() == mode)));
+            let finished =
+                handle(&mut Interpreter::new(), "io_private_spool_finish", &[spool]).unwrap();
+            assert!(matches!(finished, Value::Dict(ref fields)
+                if matches!(fields.get("verified"), Some(Value::Bool(true)))));
+            fs::read(destination).unwrap()
+        };
+
+        assert_eq!(write_mode("raw", "raw.bin"), b".first\nsecond\rthird\r\n.fourth");
+        assert_eq!(write_mode("crlf", "crlf.bin"), b".first\r\nsecond\r\nthird\r\n.fourth");
+        assert_eq!(
+            write_mode("smtp-dot-stuff-crlf", "smtp.bin"),
+            b"..first\r\nsecond\r\nthird\r\n..fourth\r\n"
+        );
+        assert_eq!(
+            write_mode("base64-crlf", "base64.bin"),
+            b"LmZpcnN0CnNlY29uZA10aGlyZA0KLmZvdXJ0aA==\r\n"
+        );
+
+        let link = directory.path().join("source-link.bin");
+        std::os::unix::fs::symlink(&source, &link).unwrap();
+        let denied_destination = directory.path().join("denied.bin");
+        let spool = handle(
+            &mut Interpreter::new(),
+            "io_private_spool_open",
+            &[
+                Value::Str(Arc::new(denied_destination.to_string_lossy().to_string())),
+                Value::Int(1024),
+                Value::Int(0o600),
+            ],
+        )
+        .unwrap();
+        let denied = handle(
+            &mut Interpreter::new(),
+            "io_private_spool_write_file_range",
+            &[
+                spool.clone(),
+                Value::Str(Arc::new(link.to_string_lossy().to_string())),
+                Value::Int(0),
+                Value::Int(28),
+                Value::Str(Arc::new("raw".to_string())),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(denied, Value::Error(message) if message.contains("non-symlink")));
+        assert!(matches!(
+            handle(&mut Interpreter::new(), "io_private_spool_abort", &[spool]).unwrap(),
+            Value::Bool(true)
+        ));
     }
 
     #[cfg(unix)]

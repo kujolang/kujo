@@ -1196,6 +1196,20 @@ impl TypeChecker {
             FunctionSignature { param_types: vec![None, None], return_type: None },
         );
 
+        self.functions.insert(
+            "io_private_spool_write_file_range".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    None,
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: None,
+            },
+        );
+
         for function_name in ["io_private_spool_finish", "io_private_spool_abort"] {
             self.functions.insert(
                 function_name.to_string(),

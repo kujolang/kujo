@@ -429,6 +429,7 @@ mod tests {
             "io_write_private_file",
             "io_private_spool_open",
             "io_private_spool_write",
+            "io_private_spool_write_file_range",
             "io_private_spool_finish",
             "io_private_spool_abort",
             "io_truncate",

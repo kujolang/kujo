@@ -700,6 +700,7 @@ impl Interpreter {
             "io_write_private_file",
             "io_private_spool_open",
             "io_private_spool_write",
+            "io_private_spool_write_file_range",
             "io_private_spool_finish",
             "io_private_spool_abort",
             "io_truncate",
@@ -1288,6 +1289,10 @@ impl Interpreter {
         self.env.define(
             "io_private_spool_write".to_string(),
             Value::NativeFunction("io_private_spool_write".to_string()),
+        );
+        self.env.define(
+            "io_private_spool_write_file_range".to_string(),
+            Value::NativeFunction("io_private_spool_write_file_range".to_string()),
         );
         self.env.define(
             "io_private_spool_finish".to_string(),
@@ -3350,6 +3355,16 @@ impl Interpreter {
             "io_private_spool_write" => CallableArity::exact(
                 "io_private_spool_write",
                 vec!["spool".to_string(), "content".to_string()],
+            ),
+            "io_private_spool_write_file_range" => CallableArity::exact(
+                "io_private_spool_write_file_range",
+                vec![
+                    "spool".to_string(),
+                    "path".to_string(),
+                    "offset".to_string(),
+                    "count".to_string(),
+                    "mode".to_string(),
+                ],
             ),
             "io_private_spool_finish" => {
                 CallableArity::exact("io_private_spool_finish", vec!["spool".to_string()])

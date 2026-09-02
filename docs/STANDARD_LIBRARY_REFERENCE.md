@@ -409,6 +409,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `io_write_private_file` | preview | `io_write_private_file("secret.txt", text)` |
 | `io_private_spool_open` | preview | `spool := io_private_spool_open("message.eml", 26214400, 384)` |
 | `io_private_spool_write` | preview | `io_private_spool_write(spool, chunk)` |
+| `io_private_spool_write_file_range` | preview | `io_private_spool_write_file_range(spool, "body.bin", 0, size, "base64-crlf")` |
 | `io_private_spool_finish` | preview | `receipt := io_private_spool_finish(spool)` |
 | `io_private_spool_abort` | preview | `io_private_spool_abort(spool)` |
 | `io_truncate` | preview | `io_truncate("out.bin", 1024)` |
