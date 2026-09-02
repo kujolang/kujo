@@ -27,6 +27,9 @@
 - A loaded local host can make highly parallel CLI contract tests fail with
   `EAGAIN`. Re-run the affected lane with `RUST_TEST_THREADS=1` and require the
   clean hosted matrix before tagging.
+- The normalized Cargo package still loses the repository-local hardened
+  `tiny_http` patch and cannot compile `http_with_read_timeout`; crates.io
+  publication remains excluded while signed GitHub binaries are canonical.
 
 ## Things I Learned
 
@@ -49,6 +52,7 @@
 | Full local release gate | HOST-CONSTRAINED | The parallel CLI lane hit `EAGAIN`; the same 27-test lane passed with `RUST_TEST_THREADS=1`. Hosted clean-runner gates remain mandatory. |
 | `npm test --prefix npm` | PASS | 12/12 package contract tests passed. |
 | `npm run pack:dry-run --prefix npm` | PASS | Six aligned v1.2.3 packages were assembled. |
+| `cargo publish --dry-run --locked` | EXPECTED BLOCK | The normalized tarball uses upstream `tiny_http 0.12.0`, which lacks `http_with_read_timeout`. Do not publish the crate. |
 
 The repository-required `UNBLOCK_V1_RELEASE` directive was supplied in the
 active release-execution context.
@@ -61,6 +65,8 @@ active release-execution context.
 - Run published-artifact smoke, then promote public stable-version strings.
 - Pin RAG to the signed v1.2.3 release commit and land its descriptor-relative
   parser migration.
+- Upstream or registry-publish the hardened HTTP boundary before enabling
+  crates.io publication.
 
 ## Links / References
 
