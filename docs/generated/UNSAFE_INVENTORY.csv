@@ -1,7 +1,7 @@
 path,line,kind,classification,text
 "src/interpreter/native_functions/compression.rs",239,"non_executable","src_comment_or_string","        writer.write_all(b""unsafe"").unwrap();"
 "src/interpreter/native_functions/crypto.rs",1882,"non_executable","src_comment_or_string","        fs::write(&invalid_path, b""unsafe \r\n"").unwrap();"
-"src/interpreter/native_functions/filesystem.rs",1916,"executable","src_executable_other","        assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0);"
+"src/interpreter/native_functions/filesystem.rs",1920,"executable","src_executable_other","        assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0);"
 "src/interpreter/native_functions/io.rs",597,"non_executable","src_comment_or_string","                                    ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"","
 "src/interpreter/native_functions/io.rs",1243,"non_executable","src_comment_or_string","            matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory""))"
 "src/interpreter/native_functions/system.rs",90,"executable","src_executable_other","        unsafe {"

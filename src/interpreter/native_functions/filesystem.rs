@@ -1877,7 +1877,11 @@ mod beneath_tests {
             .unwrap_err();
         assert!(error.contains("[invalid_relative_path]"));
         let error = read_file_beneath_bytes(root.to_str().unwrap(), "nested", 16).unwrap_err();
-        assert!(error.contains("[target_not_regular_file]"));
+        assert!(
+            error.contains("[target_not_regular_file]")
+                || cfg!(windows) && error.contains("[target_open_failed]"),
+            "directory target must fail closed: {error}"
+        );
         let _ = fs::remove_dir_all(root);
     }
 
@@ -1964,9 +1968,10 @@ mod beneath_tests {
         let outside = fixture_root("windows_reparse_outside");
         fs::write(outside.join("secret.txt"), b"outside").unwrap();
         let link = root.join("dir-link");
-        let command = format!("mklink /J \"{}\" \"{}\"", link.display(), outside.display());
         let output = std::process::Command::new("cmd")
-            .args(["/C", command.as_str()])
+            .args(["/C", "mklink", "/J"])
+            .arg(&link)
+            .arg(&outside)
             .output()
             .expect("cmd should create a junction fixture");
         assert!(
