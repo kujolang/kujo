@@ -1,0 +1,66 @@
+name: Publish npm runtime artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_run_id:
+        description: Successful release workflow run that produced the npm tarballs
+        required: true
+        type: string
+      version:
+        description: Exact runtime version to publish
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm
+    steps:
+      - name: Setup Node for trusted publishing
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24.11.0"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Download npm package artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: release-*
+          path: npm-release
+          merge-multiple: true
+          run-id: ${{ inputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Validate and publish packages
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          native_packages=(npm-release/**/kujolang-kujo-darwin-*.tgz npm-release/**/kujolang-kujo-linux-*.tgz npm-release/**/kujolang-kujo-win32-*.tgz)
+          runtime_packages=(npm-release/**/kujolang-kujo-runtime-*.tgz)
+          if [[ "${#native_packages[@]}" -ne 5 || "${#runtime_packages[@]}" -ne 1 ]]; then
+            printf 'expected 5 native packages and 1 resolver; found %s and %s\n' "${#native_packages[@]}" "${#runtime_packages[@]}" >&2
+            exit 1
+          fi
+          for package in "${native_packages[@]}" "${runtime_packages[@]}"; do
+            package_version="$(tar -xOf "${package}" package/package.json | node -e "let input=''; process.stdin.on('data', data => input += data).on('end', () => process.stdout.write(JSON.parse(input).version))")"
+            if [[ "${package_version}" != "${EXPECTED_VERSION}" ]]; then
+              printf '%s contains version %s, expected %s\n' "${package}" "${package_version}" "${EXPECTED_VERSION}" >&2
+              exit 1
+            fi
+          done
+          for package in "${native_packages[@]}"; do
+            npm publish "${package}" --access public --provenance
+          done
+          npm publish "${runtime_packages[0]}" --access public --provenance

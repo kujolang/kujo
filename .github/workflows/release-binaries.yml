@@ -343,8 +343,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          native_packages=(npm-release/kujolang-kujo-darwin-*.tgz npm-release/kujolang-kujo-linux-*.tgz npm-release/kujolang-kujo-win32-*.tgz)
+          shopt -s globstar nullglob
+          native_packages=(npm-release/**/kujolang-kujo-darwin-*.tgz npm-release/**/kujolang-kujo-linux-*.tgz npm-release/**/kujolang-kujo-win32-*.tgz)
           if [[ "${#native_packages[@]}" -ne 5 ]]; then
             printf 'expected 5 native npm packages, found %s\n' "${#native_packages[@]}" >&2
             exit 1
@@ -352,7 +352,7 @@ jobs:
           for package in "${native_packages[@]}"; do
             npm publish "${package}" --access public --provenance
           done
-          runtime_packages=(npm-release/kujolang-kujo-runtime-*.tgz)
+          runtime_packages=(npm-release/**/kujolang-kujo-runtime-*.tgz)
           if [[ "${#runtime_packages[@]}" -ne 1 ]]; then
             printf 'expected 1 neutral npm runtime package, found %s\n' "${#runtime_packages[@]}" >&2
             exit 1
