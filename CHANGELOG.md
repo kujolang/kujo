@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add bounded incremental response streaming to generic `http_request`, with
+  transparent routed-server pass-through, response headers, chunk lifecycle
+  callbacks, callback cancellation, downstream-disconnect reporting, and
+  interpreter/VM server support without full-response buffering.
+
 ## [1.2.3] - 2026-09-02
 
 ### Added

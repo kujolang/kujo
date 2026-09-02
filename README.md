@@ -19,6 +19,8 @@ Kujo is VM-first (`kujo run`), with a tree-walking interpreter available as an e
 - Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport.
 - Core AI-native runtime mechanisms are implemented for deterministic request hashing, offline record/replay cassettes, structured response metadata, JSON Schema validation, vector math, token budgeting, runtime secret redaction, dedicated AI egress capability controls, streaming callbacks, and multimodal message builders.
 - Native helper coverage has expanded for everyday scripting work: hashing (`sha256`, `sha256_file`, `md5`), file inspection (`read_file_lossy`, `path_is_symlink`), formatting (`pad_start`, `pad_end`), introspection (`type_of`, `is_truthy`), and stderr output (`eprint`) are all available without shelling out.
+- Generic `http_request` can return bounded incremental response bodies with
+  lifecycle callbacks for transparent proxying and disconnect-aware telemetry.
 - Runtime-generated sequence and string helpers now reject unsafe edge cases such as non-finite range bounds, reversed random bounds, negative string widths/counts, and oversized generated outputs instead of panicking or attempting unbounded allocation.
 - Native capability controls are available for trusted and untrusted execution modes.
 - Kujo `v1.2.2` is the current stable release, with prebuilt binaries and checksums published through GitHub Releases.
