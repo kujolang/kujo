@@ -1159,7 +1159,7 @@ fn reserved_external_alias_error(name: &str) -> Option<String> {
     None
 }
 
-fn main() {
+fn run_cli() {
     let runtime = Builder::new_multi_thread()
         .thread_stack_size(8 * 1024 * 1024)
         .enable_all()
@@ -1170,6 +1170,21 @@ fn main() {
         });
 
     runtime.block_on(async_main());
+}
+
+fn main() {
+    let runner = std::thread::Builder::new()
+        .name("kujo-cli-runner".to_string())
+        .stack_size(VM_EXECUTION_STACK_SIZE)
+        .spawn(run_cli)
+        .unwrap_or_else(|error| {
+            eprintln!("Error: failed to initialize CLI runner: {}", error);
+            std::process::exit(1);
+        });
+
+    if let Err(payload) = runner.join() {
+        std::panic::resume_unwind(payload);
+    }
 }
 
 async fn async_main() {
