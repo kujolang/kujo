@@ -12,7 +12,7 @@ fn read(path: &str) -> String {
 #[test]
 fn readiness_boundary_wording_is_consistent_across_core_scope_docs() {
     let canonical =
-        "Release boundary: Kujo `v1.2.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.";
+        "Release boundary: Kujo `v1.2.3` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.";
 
     let docs = ["README.md", "docs/V1_SCOPE.md", "docs/LANGUAGE_SPEC.md"];
 
