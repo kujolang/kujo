@@ -3212,6 +3212,16 @@ impl Interpreter {
                 3,
                 vec!["items".to_string(), "mapper".to_string(), "concurrency".to_string()],
             ),
+            "http_request" => CallableArity::range(
+                "http_request",
+                1,
+                3,
+                vec![
+                    "request_or_url".to_string(),
+                    "options".to_string(),
+                    "on_stream_event".to_string(),
+                ],
+            ),
             "ai_request_hash" => CallableArity::exact(
                 "ai_request_hash",
                 vec!["prompt_or_messages".to_string(), "options".to_string()],
