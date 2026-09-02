@@ -2,6 +2,7 @@
 //
 // I/O-related native functions (print, input, etc.)
 
+#[cfg(unix)]
 use crate::interpreter::value::PrivateSpoolState;
 use crate::interpreter::{DictMap, Interpreter, Value};
 use sha2::{Digest, Sha256};
@@ -772,6 +773,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                         "io_private_spool_finish spool is closed".to_string(),
                     ));
                 };
+                #[cfg(not(unix))]
+                let operation: Result<Value, String> = Err(
+                    "io_private_spool_finish is unavailable on this platform; use a managed private storage provider"
+                        .to_string(),
+                );
+                #[cfg(unix)]
                 let operation = (|| -> Result<Value, String> {
                     let Some(file) = state.file.take() else {
                         return Err("private spool file is closed".to_string());
