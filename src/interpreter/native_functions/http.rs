@@ -1968,10 +1968,10 @@ pub fn handle_with_interpreter(
                 .unwrap_or_default();
 
             let body = options.get("_body").or_else(|| options.get("body")).and_then(|value| {
-                if let Value::Str(body) = value {
-                    Some(body.to_string())
-                } else {
-                    None
+                match value {
+                    Value::Str(body) => Some(body.as_bytes().to_vec()),
+                    Value::Bytes(body) => Some(body.clone()),
+                    _ => None,
                 }
             });
 
@@ -3146,7 +3146,7 @@ mod tests {
     fn one_shot_json_server(
         status_code: u16,
         response_body: &'static str,
-    ) -> Option<(String, mpsc::Receiver<String>, std::thread::JoinHandle<()>)> {
+    ) -> Option<(String, mpsc::Receiver<Vec<u8>>, std::thread::JoinHandle<()>)> {
         let listener = match TcpListener::bind("127.0.0.1:0") {
             Ok(listener) => listener,
             Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => return None,
@@ -3155,7 +3155,7 @@ mod tests {
         let address = listener.local_addr().expect("test listener should have address");
         let endpoint = format!("http://127.0.0.1:{}/v1/mock", address.port());
 
-        let (request_tx, request_rx) = mpsc::channel::<String>();
+        let (request_tx, request_rx) = mpsc::channel::<Vec<u8>>();
         let handle = std::thread::spawn(move || {
             let Ok((mut stream, _)) = listener.accept() else {
                 return;
@@ -3198,8 +3198,7 @@ mod tests {
             }
 
             let body_end = body_start.saturating_add(content_length).min(buffer.len());
-            let body = String::from_utf8_lossy(&buffer[body_start..body_end]).to_string();
-            let _ = request_tx.send(body);
+            let _ = request_tx.send(buffer[body_start..body_end].to_vec());
 
             let response = format!(
                 "HTTP/1.1 {} OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -4178,6 +4177,22 @@ mod tests {
                     if matches!(dict.get("status"), Some(Value::Int(200)))
                         && matches!(dict.get("body"), Some(Value::Str(body)) if body.contains("\"ok\":true")))
         ));
+    }
+
+    #[test]
+    fn test_http_request_preserves_binary_body_bytes() {
+        let Some((endpoint, request_rx, server_handle)) = one_shot_json_server(200, "{}") else {
+            eprintln!("skipping test_http_request_preserves_binary_body_bytes: local TCP bind not permitted in this environment");
+            return;
+        };
+        let mut options = DictMap::default();
+        options.insert("method".into(), str_value("POST"));
+        options.insert("_body".into(), Value::Bytes(vec![0, 0x7f, 0x80, 0xff]));
+        let result = handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
+            .expect("http_request should return a result value");
+        server_handle.join().expect("server thread should finish");
+        assert!(matches!(result, Value::Result { is_ok: true, .. }));
+        assert_eq!(request_rx.recv().expect("request body should be captured"), vec![0, 0x7f, 0x80, 0xff]);
     }
 
     #[test]
