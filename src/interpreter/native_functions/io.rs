@@ -2,6 +2,7 @@
 //
 // I/O-related native functions (print, input, etc.)
 
+#[cfg(unix)]
 use crate::interpreter::value::PrivateSpoolState;
 use crate::interpreter::{DictMap, Interpreter, Value};
 use sha2::{Digest, Sha256};
@@ -755,6 +756,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
+        #[cfg(unix)]
         "io_private_spool_finish" => {
             if 1 != arg_values.len() {
                 Value::Error("io_private_spool_finish requires one spool argument".to_string())
@@ -842,6 +844,11 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 Value::Error("io_private_spool_finish requires a private spool handle".to_string())
             }
         }
+        #[cfg(not(unix))]
+        "io_private_spool_finish" => Value::Error(
+            "io_private_spool_finish is unavailable on this platform; use a managed private storage provider"
+                .to_string(),
+        ),
 
         "io_private_spool_abort" => {
             if 1 != arg_values.len() {
