@@ -97,6 +97,17 @@ enum NormalizedRecord {
 struct LookupResult {
     records: Vec<NormalizedRecord>,
     no_records: bool,
+    response_code: &'static str,
+    name_exists: bool,
+}
+
+fn negative_lookup_result(nx_domain: bool) -> LookupResult {
+    LookupResult {
+        records: Vec::new(),
+        no_records: true,
+        response_code: if nx_domain { "NXDOMAIN" } else { "NOERROR" },
+        name_exists: !nx_domain,
+    }
 }
 
 fn error(message: impl Into<String>) -> Value {
@@ -219,7 +230,7 @@ fn lookup_in_runtime(
         let lookup = match lookup {
             Ok(lookup) => lookup,
             Err(err) if err.is_no_records_found() => {
-                return Ok(LookupResult { records: Vec::new(), no_records: true });
+                return Ok(negative_lookup_result(err.is_nx_domain()))
             }
             Err(err) => return Err(format!("dns {} lookup failed: {}", kind.record_type(), err)),
         };
@@ -280,7 +291,7 @@ fn lookup_in_runtime(
         }
         records.sort();
         records.dedup();
-        Ok(LookupResult { records, no_records: false })
+        Ok(LookupResult { records, no_records: false, response_code: "NOERROR", name_exists: true })
     })
 }
 
@@ -402,6 +413,8 @@ fn run_lookup(kind: LookupKind, arg_values: &[Value]) -> Value {
         "status",
         string_value(if result.no_records { "NO_RECORDS" } else { "OK" }),
     );
+    insert(&mut envelope, "response_code", string_value(result.response_code));
+    insert(&mut envelope, "name_exists", Value::Bool(result.name_exists));
     insert(&mut envelope, "records", Value::Array(Arc::new(records)));
     Value::dict(envelope)
 }
@@ -431,6 +444,19 @@ mod tests {
         assert_eq!(validate_query(LookupKind::Aaaa, "v6.example").unwrap(), "v6.example.");
         assert_eq!(validate_query(LookupKind::Mx, "Example.COM").unwrap(), "Example.COM.");
         assert!(validate_query(LookupKind::Txt, "bad name").is_err());
+    }
+
+    #[test]
+    fn negative_answers_distinguish_nxdomain_from_nodata() {
+        let nxdomain = negative_lookup_result(true);
+        assert!(nxdomain.no_records);
+        assert_eq!(nxdomain.response_code, "NXDOMAIN");
+        assert!(!nxdomain.name_exists);
+
+        let nodata = negative_lookup_result(false);
+        assert!(nodata.no_records);
+        assert_eq!(nodata.response_code, "NOERROR");
+        assert!(nodata.name_exists);
     }
 
     #[test]

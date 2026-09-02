@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add stable `response_code` and `name_exists` fields to bounded DNS lookup
+  envelopes so Kujo programs can distinguish `NXDOMAIN` from an existing
+  name with no records of the requested type.
+
 - Add capability-gated, bounded streaming canonical CRLF text-range hashing
   and normalized RSA public-key inspection so protocol implementations can
   verify large signed artifacts without unbounded buffering or exposing key
