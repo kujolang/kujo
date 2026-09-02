@@ -2832,16 +2832,14 @@ mod tests {
         is_known_cli_subcommand, reserved_external_alias_error, CapabilityArgs,
         DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS,
     };
-    use std::sync::Mutex;
     use std::time::Duration;
-
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     fn with_scheduler_timeout_env<F>(value: Option<&str>, test_fn: F)
     where
         F: FnOnce(),
     {
-        let _guard = ENV_LOCK.lock().expect("environment lock poisoned");
+        let _guard =
+            crate::network_policy::test_env_lock().lock().expect("environment lock poisoned");
 
         match value {
             Some(raw) => std::env::set_var("KUJO_SCHEDULER_TIMEOUT_MS", raw),
@@ -2856,7 +2854,8 @@ mod tests {
     where
         F: FnOnce(),
     {
-        let _guard = ENV_LOCK.lock().expect("environment lock poisoned");
+        let _guard =
+            crate::network_policy::test_env_lock().lock().expect("environment lock poisoned");
 
         match value {
             Some(raw) => {

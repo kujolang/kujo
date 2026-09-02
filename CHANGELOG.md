@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add routed, authorization-preflighted HTTP uploads with fixed-memory body
+  streaming into auto-cleaned private files, caller-lowerable 64 MiB ceilings,
+  SHA-256 receipts, read deadlines, and interpreter/VM parity. Upload routes
+  require explicit network-server, filesystem-write, and filesystem-delete
+  capabilities and never expose partial files to application handlers.
+
+- Add `publish_file_noreplace` for atomic same-filesystem adoption without
+  overwriting an existing destination. It requires filesystem-write and
+  filesystem-delete capabilities and returns explicit publication, unlink,
+  directory-durability, inode-identity, byte-count, and verification facts.
+
 - Add bounded incremental response streaming to generic `http_request`, with
   transparent routed-server pass-through, response headers, chunk lifecycle
   callbacks, callback cancellation, downstream-disconnect reporting, and

@@ -722,6 +722,21 @@ fn native_capability_private_spool_file_range_requires_write_and_read() {
 }
 
 #[test]
+fn native_capability_no_replace_publication_requires_write_and_delete() {
+    let source = "publish_file_noreplace(\"source.bin\", \"destination.bin\")\n";
+    assert_runtime_boundary_failure_with_args(
+        source,
+        "Capability denied: filesystem-write required for publish_file_noreplace",
+        &["--interpreter", "--untrusted"],
+    );
+    assert_runtime_boundary_failure_with_args(
+        source,
+        "Capability denied: filesystem-delete required for publish_file_noreplace",
+        &["--interpreter", "--untrusted", "--allow-fs-write"],
+    );
+}
+
+#[test]
 fn native_capability_tls_acceptor_requires_network_server_and_filesystem_read() {
     assert_runtime_boundary_failure_with_args(
         "tls_acceptor(\"certificate.pem\", \"private-key.pem\")\n",

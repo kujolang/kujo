@@ -2785,7 +2785,7 @@ mod tests {
     use std::collections::HashMap;
     use std::fs;
     use std::sync::atomic::{AtomicU64, Ordering};
-    use std::sync::{Arc, Mutex, OnceLock};
+    use std::sync::{Arc, Mutex};
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
     fn string_value(s: &str) -> Value {
@@ -2842,8 +2842,7 @@ mod tests {
     where
         F: FnOnce(),
     {
-        static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        let _guard = ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap();
+        let _guard = crate::network_policy::test_env_lock().lock().unwrap();
         let previous_policy =
             std::env::var(crate::network_policy::OUTBOUND_DESTINATION_POLICY_ENV).ok();
 

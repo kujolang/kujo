@@ -81,6 +81,18 @@ pub struct HttpResponseStreamParts {
 
 pub type SharedHttpResponseStream = Arc<Mutex<Option<HttpResponseStreamParts>>>;
 
+/// A routed HTTP upload that authorizes from request metadata before any body
+/// bytes are accepted, then streams the body into a bounded private file.
+#[derive(Clone)]
+pub struct HttpUploadRoute {
+    pub method: String,
+    pub path: String,
+    pub spool_directory: String,
+    pub max_body_bytes: u64,
+    pub authorize: Value,
+    pub handler: Value,
+}
+
 /// Stores function bodies and drops deeply nested statement trees iteratively.
 ///
 /// Function bodies can contain very deep nesting through statements like loops,
@@ -659,6 +671,7 @@ pub enum Value {
         host: String,
         port: u16,
         routes: Vec<(String, String, Value)>, // (method, path, handler)
+        upload_routes: Vec<HttpUploadRoute>,
     },
     /// HTTP response
     HttpResponse { status: u16, body: Vec<u8>, headers: HashMap<String, String> },
@@ -910,8 +923,15 @@ impl std::fmt::Debug for Value {
             Value::Queue(queue) => write!(f, "Queue({} items)", queue.len()),
             Value::Stack(stack) => write!(f, "Stack({} items)", stack.len()),
             Value::Channel(_) => write!(f, "Channel"),
-            Value::HttpServer { host, port, routes } => {
-                write!(f, "HttpServer(host={}, port={}, {} routes)", host, port, routes.len())
+            Value::HttpServer { host, port, routes, upload_routes } => {
+                write!(
+                    f,
+                    "HttpServer(host={}, port={}, {} routes, {} upload routes)",
+                    host,
+                    port,
+                    routes.len(),
+                    upload_routes.len()
+                )
             }
             Value::HttpResponse { status, body, .. } => {
                 write!(f, "HttpResponse(status={}, body_len={})", status, body.len())

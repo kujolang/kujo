@@ -650,6 +650,7 @@ mod tests {
             "file_size",
             "delete_file",
             "rename_file",
+            "publish_file_noreplace",
             "copy_file",
             "read_binary_file",
             "write_binary_file",
@@ -3623,6 +3624,11 @@ mod tests {
         );
         assert!(
             matches!(rename_extra, Value::Error(message) if message.contains("rename_file requires two arguments"))
+        );
+
+        let publish_missing = call_native_function(&mut interpreter, "publish_file_noreplace", &[]);
+        assert!(
+            matches!(publish_missing, Value::Error(message) if message.contains("publish_file_noreplace expects 2 arguments"))
         );
 
         let copy_missing = call_native_function(&mut interpreter, "copy_file", &[]);

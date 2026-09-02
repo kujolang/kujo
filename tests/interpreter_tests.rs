@@ -4725,6 +4725,44 @@ fn test_rename_file_nonexistent() {
 }
 
 #[test]
+fn test_publish_file_noreplace_is_atomic_and_receipted() {
+    let directory = tempfile::tempdir().unwrap();
+    let source = directory.path().join("source.bin");
+    let destination = directory.path().join("destination.bin");
+    std::fs::write(&source, b"retained bytes").unwrap();
+    let code = format!(
+        r#"receipt := publish_file_noreplace("{}", "{}")"#,
+        source.to_string_lossy(),
+        destination.to_string_lossy()
+    );
+    let interpreter = run_code(&code);
+    assert!(!source.exists());
+    assert_eq!(std::fs::read(&destination).unwrap(), b"retained bytes");
+    match interpreter.env.get("receipt") {
+        Some(Value::Dict(fields)) => {
+            assert!(matches!(fields.get("published"), Some(Value::Bool(true))));
+            assert!(matches!(fields.get("verified"), Some(Value::Bool(true))));
+            assert!(matches!(fields.get("source_removed"), Some(Value::Bool(true))));
+        }
+        value => panic!("expected publication receipt, got {value:?}"),
+    }
+
+    let second_source = directory.path().join("second-source.bin");
+    std::fs::write(&second_source, b"must remain").unwrap();
+    let collision = format!(
+        r#"result := publish_file_noreplace("{}", "{}")"#,
+        second_source.to_string_lossy(),
+        destination.to_string_lossy()
+    );
+    let interpreter = run_code(&collision);
+    assert!(second_source.exists());
+    assert_eq!(std::fs::read(&destination).unwrap(), b"retained bytes");
+    assert!(
+        matches!(interpreter.env.get("result"), Some(Value::Error(message)) if message.contains("atomic no-replace publication failed"))
+    );
+}
+
+#[test]
 fn test_copy_file() {
     use std::fs;
 

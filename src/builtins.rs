@@ -2591,6 +2591,9 @@ mod tests {
 
     #[test]
     fn test_http_download_file_streams_and_rejects_oversize_response() {
+        let _guard = crate::network_policy::test_env_lock()
+            .lock()
+            .expect("HTTP test environment lock should not be poisoned");
         let payload = vec![0x5a; 150_000];
         let response = [
             format!(
@@ -2622,13 +2625,16 @@ mod tests {
         let path = env::temp_dir().join(format!("kujo-http-download-{}.bin", Uuid::new_v4()));
         let error = http_download_file(&url, &path.to_string_lossy(), Vec::new(), 16, false)
             .expect_err("oversize download should fail");
-        assert!(error.contains("exceeds max_bytes"));
+        assert!(error.contains("exceeds max_bytes"), "unexpected oversize download error: {error}");
         assert!(!path.exists());
         server.join().expect("test server should finish");
     }
 
     #[test]
     fn test_http_upload_file_streams_exact_binary_body() {
+        let _guard = crate::network_policy::test_env_lock()
+            .lock()
+            .expect("HTTP test environment lock should not be poisoned");
         let input = env::temp_dir().join(format!("kujo-http-upload-{}.bin", Uuid::new_v4()));
         let payload = (0..180_000).map(|index| (index % 251) as u8).collect::<Vec<_>>();
         fs::write(&input, &payload).expect("upload fixture should write");

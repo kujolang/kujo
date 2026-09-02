@@ -395,6 +395,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `file_size` | stable | `bytes := file_size("notes.txt")` |
 | `delete_file` | stable | `delete_file("old.txt")` |
 | `rename_file` | stable | `rename_file("a.txt", "b.txt")` |
+| `publish_file_noreplace` | preview | `receipt := publish_file_noreplace("private-spool/body", "blobs/body")` |
 | `copy_file` | preview | `copy_file("a.txt", "b.txt")` |
 | `read_binary_file` | preview | `blob := read_binary_file("in.bin")` |
 | `write_binary_file` | preview | `write_binary_file("out.bin", blob)` |
@@ -570,7 +571,7 @@ destinations remain subject to the outbound destination policy described in
 | `ai_embedding` | preview | `vec := ai_embedding("hello", options)` |
 | `ai_tool_loop` | preview | `res := ai_tool_loop(messages, tools, options)` |
 | `http_get_stream` | experimental | `ch := http_get_stream(url, options)` |
-| `http_server` | experimental | `srv := http_server(8080)`; 8 MiB body bound, bounded socket read deadline, 413/408 pre-dispatch errors, and socket-derived peer fields |
+| `http_server` | experimental | `srv := http_server(8080)`; ordinary routes have an 8 MiB body bound. On Unix, `route_upload(method, path, private_directory, max_bytes, authorize, handler)` requires an effective-user-owned exact-mode-0700 directory, authorizes from metadata before fixed-memory descriptor-relative streaming up to 64 MiB, passes a SHA-256 private-file artifact to the handler, and auto-removes artifacts not adopted before handler return. Cleanup failure is a 500; unsupported platforms fail closed. |
 | `http_listen` | experimental | `srv := http_listen("127.0.0.1", 8080)`; uses the same body, deadline, and peer-identity policy |
 | `http_response` | preview | `res := http_response(200, "ok")` |
 | `json_response` | preview | `res := json_response({"ok": true})` |

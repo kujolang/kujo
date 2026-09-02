@@ -3015,6 +3015,7 @@ pub fn handle_with_interpreter(
                     host: "0.0.0.0".to_string(),
                     port: *port as u16,
                     routes: Vec::new(),
+                    upload_routes: Vec::new(),
                 }
             } else {
                 Value::Error("http_server requires a port number".to_string())
@@ -3040,6 +3041,7 @@ pub fn handle_with_interpreter(
                         host: host.to_string(),
                         port: *port as u16,
                         routes: Vec::new(),
+                        upload_routes: Vec::new(),
                     }
                 }
             } else {
@@ -3407,9 +3409,17 @@ mod tests {
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::{mpsc, Mutex};
+    use std::sync::mpsc;
 
-    static AI_ENV_LOCK: Mutex<()> = Mutex::new(());
+    struct SharedTestEnvLock;
+
+    impl SharedTestEnvLock {
+        fn lock(&self) -> std::sync::LockResult<std::sync::MutexGuard<'static, ()>> {
+            network_policy::test_env_lock().lock()
+        }
+    }
+
+    static AI_ENV_LOCK: SharedTestEnvLock = SharedTestEnvLock;
     static TEMP_DIR_COUNTER: AtomicUsize = AtomicUsize::new(1);
 
     fn str_value(value: &str) -> Value {

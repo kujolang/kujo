@@ -52,8 +52,8 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 | Flag | Capability | Typical APIs Unlocked | Primary Risk |
 | --- | --- | --- | --- |
 | `--allow-fs-read` | Filesystem read | `read_file`, `read_lines`, `read_binary_file`, metadata/path reads | Data disclosure |
-| `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, bounded private spools, mkdir/write helpers | Data tampering |
-| `--allow-fs-delete` | Filesystem delete | `delete_file`, delete-adjacent flows | Data loss |
+| `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, bounded private spools, `publish_file_noreplace`, mkdir/write helpers | Data tampering |
+| `--allow-fs-delete` | Filesystem delete | `delete_file`, `publish_file_noreplace`, delete-adjacent flows | Data loss |
 | `--allow-process-exec` | Direct process execution | `spawn_process`, `pipe_commands` | Arbitrary command execution |
 | `--allow-shell-exec` | Shell-string execution | `execute`, `execute_status` | Shell injection/command abuse |
 | `--allow-env-read` | Environment read | `env`, `env_list`, related env readers | Secret leakage |
@@ -63,6 +63,29 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 | `--allow-net-server` | Listener/network server | `http_server.listen`, server-side sockets | Local service exposure |
 
 Routed HTTP servers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies in both VM and interpreter modes. They read at most one byte beyond the limit to detect overflow and return HTTP 413 before invoking application handlers. Accepted sockets receive a read deadline before headers or bodies are parsed; stalled headers and incomplete bodies return HTTP 408 without route dispatch. `KUJO_HTTP_SERVER_READ_TIMEOUT_MS` defaults to 10000 and is clamped to 100..300000 milliseconds.
+
+Large raw uploads must use `HttpServer.route_upload`, not an increased buffered
+limit. An upload route invokes its authorization callback with request metadata
+and `body_mode="preflight"` before reading the body. Only boolean `true`
+continues; boolean `false` returns 403, and an explicit `HttpResponse` is sent as
+the denial response. The runtime then streams through a fixed 64 KiB buffer into
+a fresh mode-0600 file opened descriptor-relative beneath a pre-existing
+non-symlink directory owned by the effective Unix user with exact mode 0700.
+The configured per-route maximum must be 1..67108864 bytes; declared and actual
+overflow return 413, incomplete reads return 400/408, and storage failure returns
+507. The completion callback receives `body_mode="private_spool"` and a
+`kujo.http.upload-artifact.v1` dictionary containing the private path, exact byte
+count, and SHA-256. The runtime removes the file after callback return unless the
+callback has atomically adopted it into application-owned storage. Runtime
+cleanup failures return 500 rather than claiming success; process termination
+can leave a private partial artifact, so applications must collect aged files
+using a bounded startup/runtime recovery policy. Platforms without equivalent
+private-file enforcement fail closed. `publish_file_noreplace` is the matching
+same-filesystem adoption primitive: it never overwrites a destination and its
+receipt separates publication, source unlink, directory sync, identity, and
+overall verification. Starting a
+server with upload routes requires `network-server`, `filesystem-write`, and
+`filesystem-delete`; authorization rejection creates no file.
 
 Routed request dictionaries expose `peer_address`, `peer_ip`, `peer_port`, and `peer_transport` from the accepted socket. These fields identify the direct TCP peer and do not trust forwarding headers. Behind a proxy they identify the proxy; applications must apply an explicit trusted-proxy policy before using `Forwarded` or `X-Forwarded-For` as an end-client identity. Address-unavailable transports use empty address/IP values, port `0`, and transport `unknown`.
 | `--allow-net` | Net client + server | Union of network-client/network-server surfaces | Combined network risk |

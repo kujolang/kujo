@@ -2,7 +2,7 @@
 //
 // Filesystem operation native functions
 
-use crate::interpreter::{AsyncRuntime, Interpreter, Value};
+use crate::interpreter::{AsyncRuntime, Interpreter, NativeCapability, Value};
 #[cfg(feature = "runtime-archive")]
 use crate::path_security;
 use crate::runtime_limits;
@@ -10,10 +10,8 @@ use crate::{builtins, interpreter::DictMap};
 use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
 use cap_std::ambient_authority;
 use cap_std::fs::{Dir, OpenOptions as CapOpenOptions};
-use std::fs;
-#[cfg(feature = "runtime-archive")]
-use std::fs::File;
 use std::fs::OpenOptions;
+use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
 #[cfg(feature = "runtime-archive")]
 use std::path::PathBuf;
@@ -635,7 +633,7 @@ fn extract_zip_archive_with_limits(
     Ok(extracted_files)
 }
 
-pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Option<Value> {
+pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
         // Async file operations - return Promises for true concurrency
         "read_file_async" => {
@@ -1573,6 +1571,117 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 }
             } else {
                 Value::Error("rename_file requires string arguments".to_string())
+            }
+        }
+
+        "publish_file_noreplace" => {
+            if arg_values.len() != 2 {
+                return Some(Value::Error(
+                    "publish_file_noreplace requires two arguments: source_path and destination_path"
+                        .to_string(),
+                ));
+            }
+            if let Err(error) = interp
+                .require_capability(NativeCapability::FilesystemDelete, "publish_file_noreplace")
+            {
+                return Some(error);
+            }
+            if let (Some(Value::Str(source)), Some(Value::Str(destination))) =
+                (arg_values.first(), arg_values.get(1))
+            {
+                let operation = (|| -> Result<Value, String> {
+                    let source_path = Path::new(source.as_ref());
+                    let destination_path = Path::new(destination.as_ref());
+                    if source_path == destination_path {
+                        return Err("source and destination must differ".to_string());
+                    }
+                    let source_metadata = fs::symlink_metadata(source_path)
+                        .map_err(|error| format!("cannot inspect source: {}", error))?;
+                    if source_metadata.file_type().is_symlink() || !source_metadata.is_file() {
+                        return Err("source must be a regular non-symlink file".to_string());
+                    }
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::MetadataExt;
+                        if source_metadata.nlink() != 1 {
+                            return Err(
+                                "source must have exactly one link before publication".to_string()
+                            );
+                        }
+                    }
+                    let destination_parent =
+                        destination_path.parent().unwrap_or_else(|| Path::new("."));
+                    let parent_metadata =
+                        fs::symlink_metadata(destination_parent).map_err(|error| {
+                            format!("cannot inspect destination directory: {}", error)
+                        })?;
+                    if parent_metadata.file_type().is_symlink() || !parent_metadata.is_dir() {
+                        return Err(
+                            "destination parent must be a non-symlink directory".to_string()
+                        );
+                    }
+                    let destination_directory = File::open(destination_parent)
+                        .map_err(|error| format!("cannot open destination directory: {}", error))?;
+                    fs::hard_link(source_path, destination_path).map_err(|error| {
+                        format!("atomic no-replace publication failed: {}", error)
+                    })?;
+
+                    let source_removed = fs::remove_file(source_path).is_ok();
+                    let destination_directory_synced = destination_directory.sync_all().is_ok();
+                    let source_parent = source_path.parent().unwrap_or_else(|| Path::new("."));
+                    let source_directory_synced = if source_parent == destination_parent {
+                        destination_directory_synced
+                    } else {
+                        File::open(source_parent).and_then(|directory| directory.sync_all()).is_ok()
+                    };
+                    let destination_metadata = fs::symlink_metadata(destination_path).ok();
+                    let mut identity_verified =
+                        destination_metadata.as_ref().is_some_and(|metadata| {
+                            metadata.is_file() && metadata.len() == source_metadata.len()
+                        });
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::MetadataExt;
+                        identity_verified = identity_verified
+                            && destination_metadata.as_ref().is_some_and(|metadata| {
+                                metadata.dev() == source_metadata.dev()
+                                    && metadata.ino() == source_metadata.ino()
+                                    && metadata.nlink() == 1
+                            });
+                    }
+                    let verified = source_removed
+                        && destination_directory_synced
+                        && source_directory_synced
+                        && identity_verified;
+                    let mut receipt = DictMap::default();
+                    receipt.insert("published".into(), Value::Bool(true));
+                    receipt.insert("source_removed".into(), Value::Bool(source_removed));
+                    receipt.insert(
+                        "destination_directory_synced".into(),
+                        Value::Bool(destination_directory_synced),
+                    );
+                    receipt.insert(
+                        "source_directory_synced".into(),
+                        Value::Bool(source_directory_synced),
+                    );
+                    receipt.insert("identity_verified".into(), Value::Bool(identity_verified));
+                    receipt.insert("verified".into(), Value::Bool(verified));
+                    receipt.insert(
+                        "bytes".into(),
+                        Value::Int(i64::try_from(source_metadata.len()).unwrap_or(i64::MAX)),
+                    );
+                    Ok(Value::Dict(Arc::new(receipt)))
+                })();
+                match operation {
+                    Ok(receipt) => receipt,
+                    Err(error) => Value::Error(format!(
+                        "Cannot publish file '{}' without replacement: {}",
+                        destination.as_ref(),
+                        error
+                    )),
+                }
+            } else {
+                Value::Error("publish_file_noreplace requires string arguments".to_string())
             }
         }
 

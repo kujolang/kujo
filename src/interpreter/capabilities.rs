@@ -164,6 +164,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "write_binary_file"
         | "create_dir"
         | "rename_file"
+        | "publish_file_noreplace"
         | "copy_file"
         | "os_chdir"
         | "zip_create"
@@ -266,6 +267,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 /// merely because network access (or the reverse) was granted.
 pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
     match name {
+        "publish_file_noreplace" => &[NativeCapability::FilesystemDelete],
         "io_private_spool_write_file_range" => &[NativeCapability::FilesystemRead],
         "http_download_file" => &[NativeCapability::FilesystemWrite],
         "http_upload_file" => &[NativeCapability::FilesystemRead],

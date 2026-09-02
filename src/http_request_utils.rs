@@ -1,6 +1,14 @@
+use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt};
+use cap_std::ambient_authority;
+use cap_std::fs::{Dir, OpenOptions as CapOpenOptions};
+#[cfg(unix)]
+use cap_std::fs::{MetadataExt as CapMetadataExt, OpenOptionsExt as CapOpenOptionsExt};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::io::{ErrorKind, Read};
+use std::io::{ErrorKind, Read, Write};
+use std::path::{Path, PathBuf};
 use std::time::Duration;
+use uuid::Uuid;
 
 pub const DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 10_000;
 pub const MIN_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 100;
@@ -11,6 +19,146 @@ pub enum HttpRequestBodyError {
     TooLarge,
     TimedOut,
     ReadFailed,
+    InvalidSpoolPolicy,
+    SpoolFailed,
+}
+
+pub const MAX_ROUTED_HTTP_UPLOAD_BYTES: u64 = 64 * 1024 * 1024;
+const ROUTED_HTTP_UPLOAD_CHUNK_BYTES: usize = 64 * 1024;
+const MAX_ROUTED_HTTP_UPLOAD_PATH_BYTES: usize = 4096;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HttpRequestBodySpool {
+    pub path: PathBuf,
+    pub bytes: u64,
+    pub sha256: String,
+}
+
+/// Stream a routed upload into a private same-directory artifact. The caller
+/// owns the returned file and must either adopt it or remove it after dispatch.
+/// Partial files are removed on every error path.
+pub fn spool_bounded_http_request_body(
+    reader: &mut dyn Read,
+    declared_length: Option<usize>,
+    spool_directory: &str,
+    max_body_bytes: u64,
+) -> Result<HttpRequestBodySpool, HttpRequestBodyError> {
+    #[cfg(not(unix))]
+    {
+        let _ = (reader, declared_length, spool_directory, max_body_bytes);
+        return Err(HttpRequestBodyError::InvalidSpoolPolicy);
+    }
+
+    if max_body_bytes == 0
+        || max_body_bytes > MAX_ROUTED_HTTP_UPLOAD_BYTES
+        || spool_directory.is_empty()
+        || spool_directory.len() > MAX_ROUTED_HTTP_UPLOAD_PATH_BYTES
+    {
+        return Err(HttpRequestBodyError::InvalidSpoolPolicy);
+    }
+    if declared_length.is_some_and(|length| length as u64 > max_body_bytes) {
+        return Err(HttpRequestBodyError::TooLarge);
+    }
+
+    let directory = Path::new(spool_directory);
+    let metadata = std::fs::symlink_metadata(directory)
+        .map_err(|_| HttpRequestBodyError::InvalidSpoolPolicy)?;
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err(HttpRequestBodyError::InvalidSpoolPolicy);
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if metadata.mode() & 0o777 != 0o700 {
+            return Err(HttpRequestBodyError::InvalidSpoolPolicy);
+        }
+    }
+
+    let directory_handle = Dir::open_ambient_dir(directory, ambient_authority())
+        .map_err(|_| HttpRequestBodyError::InvalidSpoolPolicy)?;
+    #[cfg(unix)]
+    {
+        let handle_metadata = directory_handle
+            .dir_metadata()
+            .map_err(|_| HttpRequestBodyError::InvalidSpoolPolicy)?;
+        if handle_metadata.dev() != std::os::unix::fs::MetadataExt::dev(&metadata)
+            || handle_metadata.ino() != std::os::unix::fs::MetadataExt::ino(&metadata)
+            || handle_metadata.mode() & 0o777 != 0o700
+        {
+            return Err(HttpRequestBodyError::InvalidSpoolPolicy);
+        }
+    }
+    let filename = format!(".kujo-http-upload-{}.body", Uuid::new_v4());
+    let path = directory.join(&filename);
+    let mut options = CapOpenOptions::new();
+    options.write(true).create_new(true).follow(FollowSymlinks::No);
+    #[cfg(unix)]
+    {
+        options.mode(0o600);
+    }
+    let mut file = directory_handle
+        .open_with(&filename, &options)
+        .map_err(|_| HttpRequestBodyError::SpoolFailed)?;
+    #[cfg(unix)]
+    {
+        let file_metadata = file.metadata().map_err(|_| HttpRequestBodyError::SpoolFailed)?;
+        let directory_metadata = directory_handle
+            .dir_metadata()
+            .map_err(|_| HttpRequestBodyError::InvalidSpoolPolicy)?;
+        if file_metadata.mode() & 0o777 != 0o600 || file_metadata.uid() != directory_metadata.uid()
+        {
+            drop(file);
+            let _ = directory_handle.remove_file(&filename);
+            return Err(HttpRequestBodyError::InvalidSpoolPolicy);
+        }
+    }
+    let result = (|| {
+        let mut hasher = Sha256::new();
+        let mut total = 0_u64;
+        let mut buffer = vec![0_u8; ROUTED_HTTP_UPLOAD_CHUNK_BYTES];
+        loop {
+            let count = reader.read(&mut buffer).map_err(|error| {
+                if matches!(error.kind(), ErrorKind::TimedOut | ErrorKind::WouldBlock) {
+                    HttpRequestBodyError::TimedOut
+                } else {
+                    HttpRequestBodyError::ReadFailed
+                }
+            })?;
+            if count == 0 {
+                break;
+            }
+            total = total.checked_add(count as u64).ok_or(HttpRequestBodyError::TooLarge)?;
+            if total > max_body_bytes {
+                return Err(HttpRequestBodyError::TooLarge);
+            }
+            file.write_all(&buffer[..count]).map_err(|_| HttpRequestBodyError::SpoolFailed)?;
+            hasher.update(&buffer[..count]);
+        }
+        if declared_length.is_some_and(|length| total != length as u64) {
+            return Err(HttpRequestBodyError::ReadFailed);
+        }
+        file.sync_all().map_err(|_| HttpRequestBodyError::SpoolFailed)?;
+        Ok(HttpRequestBodySpool {
+            path: path.clone(),
+            bytes: total,
+            sha256: format!("{:x}", hasher.finalize()),
+        })
+    })();
+    drop(file);
+    if result.is_err() {
+        let _ = directory_handle.remove_file(&filename);
+    }
+    result
+}
+
+/// Remove a completed routed-upload spool after dispatch. A missing path means
+/// the handler atomically adopted the artifact and is therefore successful.
+pub fn cleanup_routed_http_upload(path: &Path) -> std::io::Result<()> {
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error),
+    }
 }
 
 pub fn routed_http_read_timeout() -> Duration {
@@ -162,9 +310,10 @@ fn decode_hex_nibble(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        read_bounded_http_request_body_bytes, routed_http_read_timeout_from,
-        split_http_path_and_query, HttpRequestBodyError, DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS,
-        MAX_ROUTED_HTTP_READ_TIMEOUT_MS, MIN_ROUTED_HTTP_READ_TIMEOUT_MS,
+        cleanup_routed_http_upload, read_bounded_http_request_body_bytes,
+        routed_http_read_timeout_from, split_http_path_and_query, spool_bounded_http_request_body,
+        HttpRequestBodyError, DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS, MAX_ROUTED_HTTP_READ_TIMEOUT_MS,
+        MIN_ROUTED_HTTP_READ_TIMEOUT_MS,
     };
     use std::collections::HashMap;
 
@@ -198,6 +347,83 @@ mod tests {
             read_bounded_http_request_body_bytes(&mut body_with_trailing_bytes, Some(4)).unwrap(),
             b"body"
         );
+    }
+
+    #[test]
+    fn routed_upload_streams_beyond_buffered_limit_and_hashes_exact_bytes() {
+        use sha2::{Digest, Sha256};
+        let directory = tempfile::tempdir().unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(directory.path(), std::fs::Permissions::from_mode(0o700))
+                .unwrap();
+        }
+        let body = vec![b'u'; crate::runtime_limits::MAX_NETWORK_BODY_BYTES + 1024];
+        let mut reader = std::io::Cursor::new(body.clone());
+        let result = spool_bounded_http_request_body(
+            &mut reader,
+            Some(body.len()),
+            directory.path().to_str().unwrap(),
+            body.len() as u64,
+        )
+        .unwrap();
+        assert_eq!(result.bytes, body.len() as u64);
+        assert_eq!(result.sha256, format!("{:x}", Sha256::digest(&body)));
+        assert_eq!(std::fs::metadata(&result.path).unwrap().len(), body.len() as u64);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            assert_eq!(std::fs::metadata(&result.path).unwrap().mode() & 0o777, 0o600);
+        }
+        std::fs::remove_file(result.path).unwrap();
+    }
+
+    #[test]
+    fn routed_upload_rejects_overflow_and_unsafe_directory_without_residue() {
+        let directory = tempfile::tempdir().unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(directory.path(), std::fs::Permissions::from_mode(0o700))
+                .unwrap();
+        }
+        let mut reader = std::io::Cursor::new(vec![b'x'; 9]);
+        assert_eq!(
+            spool_bounded_http_request_body(
+                &mut reader,
+                None,
+                directory.path().to_str().unwrap(),
+                8,
+            ),
+            Err(HttpRequestBodyError::TooLarge)
+        );
+        assert_eq!(std::fs::read_dir(directory.path()).unwrap().count(), 0);
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(directory.path(), std::fs::Permissions::from_mode(0o755))
+                .unwrap();
+            let mut empty = std::io::Cursor::new(Vec::<u8>::new());
+            assert_eq!(
+                spool_bounded_http_request_body(
+                    &mut empty,
+                    Some(0),
+                    directory.path().to_str().unwrap(),
+                    8,
+                ),
+                Err(HttpRequestBodyError::InvalidSpoolPolicy)
+            );
+        }
+    }
+
+    #[test]
+    fn routed_upload_cleanup_accepts_adoption_and_rejects_non_file_parent() {
+        let directory = tempfile::tempdir().unwrap();
+        let adopted = directory.path().join("adopted.body");
+        assert!(cleanup_routed_http_upload(&adopted).is_ok());
+        assert!(cleanup_routed_http_upload(directory.path()).is_err());
     }
 
     #[test]

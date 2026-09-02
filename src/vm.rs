@@ -878,9 +878,13 @@ impl VM {
                         stack.push((nested, depth + 1));
                     }
                 }
-                Value::HttpServer { routes, .. } => {
+                Value::HttpServer { routes, upload_routes, .. } => {
                     for (_, _, nested) in routes.iter() {
                         stack.push((nested, depth + 1));
+                    }
+                    for route in upload_routes.iter() {
+                        stack.push((&route.authorize, depth + 1));
+                        stack.push((&route.handler, depth + 1));
                     }
                 }
                 Value::Result { value, .. }
@@ -4759,7 +4763,7 @@ impl VM {
                             Value::NativeFunction(format!("__image_method_{}", field))
                         }
                         Value::HttpServer { .. } => match field.as_str() {
-                            "route" | "listen" | "start" => {
+                            "route" | "route_upload" | "listen" | "start" => {
                                 // Mirror method marker behavior used by channel/image dispatch.
                                 self.stack.push(object.clone());
                                 Value::NativeFunction(format!("__http_server_method_{}", field))
@@ -6108,6 +6112,7 @@ impl VM {
         host: String,
         port: u16,
         routes: Vec<(String, String, Value)>,
+        upload_routes: Vec<crate::interpreter::HttpUploadRoute>,
     ) -> Result<Value, String> {
         use tiny_http::{Response, Server};
         if let Err(error) = self
@@ -6118,6 +6123,23 @@ impl VM {
                 return Err(message);
             }
             return Err("Capability denied: network-server required for http_server.listen; rerun with --allow-net-server".to_string());
+        }
+        if !upload_routes.is_empty() {
+            for capability in
+                [NativeCapability::FilesystemWrite, NativeCapability::FilesystemDelete]
+            {
+                if let Err(error) =
+                    self.interpreter.require_capability(capability, "http_server.route_upload")
+                {
+                    if let Value::Error(message) = error {
+                        return Err(message);
+                    }
+                    return Err(format!(
+                        "Capability denied: {} required for http_server.route_upload",
+                        capability.as_str()
+                    ));
+                }
+            }
         }
 
         println!("Starting HTTP server on {}:{}...", host, port);
@@ -6141,6 +6163,162 @@ impl VM {
             let (url_path, query_params, decoded_query_params, raw_query) =
                 http_request_utils::split_http_path_and_query_with_decoded(&request_url);
 
+            let mut matched_upload: Option<(
+                crate::interpreter::HttpUploadRoute,
+                HashMap<String, String>,
+            )> = None;
+            for route in &upload_routes {
+                if method == route.method && url_path == route.path {
+                    matched_upload = Some((route.clone(), HashMap::new()));
+                    break;
+                }
+            }
+            if matched_upload.is_none() {
+                for route in &upload_routes {
+                    if method == route.method && route.path.contains(':') {
+                        if let Some(params) = Self::match_http_route_pattern(&route.path, &url_path)
+                        {
+                            matched_upload = Some((route.clone(), params));
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if let Some((upload_route, path_params)) = matched_upload {
+                let declared_body_length = request.body_length();
+                let mut req_fields = Interpreter::routed_upload_request_fields(
+                    &method,
+                    &url_path,
+                    &request_url,
+                    &peer_address,
+                    &peer_ip,
+                    peer_port,
+                    &query_params,
+                    &decoded_query_params,
+                    &raw_query,
+                    &path_params,
+                    request.headers(),
+                    declared_body_length,
+                );
+                req_fields
+                    .insert("body_mode".into(), Value::Str(Arc::new("preflight".to_string())));
+                let authorization = self.call_http_handler_vm(
+                    upload_route.authorize.clone(),
+                    Value::Dict(Arc::new(req_fields.clone())),
+                );
+                match authorization {
+                    Ok(Value::Bool(true)) => {}
+                    Ok(Value::Bool(false)) => {
+                        let _ = request
+                            .respond(Response::from_string("Forbidden").with_status_code(403));
+                        continue;
+                    }
+                    Ok(Value::HttpResponse { status, body, headers }) => {
+                        let mut response = Response::from_data(body).with_status_code(status);
+                        for (key, value) in headers {
+                            if let Ok(header) =
+                                tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
+                            {
+                                response = response.with_header(header);
+                            }
+                        }
+                        let _ = request.respond(response);
+                        continue;
+                    }
+                    _ => {
+                        let _ = request.respond(
+                            Response::from_string("Internal Server Error").with_status_code(500),
+                        );
+                        continue;
+                    }
+                }
+
+                let spool = match http_request_utils::spool_bounded_http_request_body(
+                    request.as_reader(),
+                    declared_body_length,
+                    &upload_route.spool_directory,
+                    upload_route.max_body_bytes,
+                ) {
+                    Ok(spool) => spool,
+                    Err(http_request_utils::HttpRequestBodyError::TooLarge) => {
+                        let _ = request.respond(
+                            Response::from_string("Payload Too Large").with_status_code(413),
+                        );
+                        continue;
+                    }
+                    Err(http_request_utils::HttpRequestBodyError::TimedOut) => {
+                        let _ = request.respond(
+                            Response::from_string("Request Timeout").with_status_code(408),
+                        );
+                        continue;
+                    }
+                    Err(http_request_utils::HttpRequestBodyError::ReadFailed) => {
+                        let _ = request
+                            .respond(Response::from_string("Bad Request").with_status_code(400));
+                        continue;
+                    }
+                    Err(http_request_utils::HttpRequestBodyError::InvalidSpoolPolicy) => {
+                        let _ = request.respond(
+                            Response::from_string("Internal Server Error").with_status_code(500),
+                        );
+                        continue;
+                    }
+                    Err(http_request_utils::HttpRequestBodyError::SpoolFailed) => {
+                        let _ = request.respond(
+                            Response::from_string("Insufficient Storage").with_status_code(507),
+                        );
+                        continue;
+                    }
+                };
+                let mut artifact = DictMap::default();
+                artifact.insert(
+                    "path".into(),
+                    Value::Str(Arc::new(spool.path.to_string_lossy().to_string())),
+                );
+                artifact.insert("bytes".into(), Value::Int(spool.bytes as i64));
+                artifact.insert("sha256".into(), Value::Str(Arc::new(spool.sha256.clone())));
+                artifact.insert(
+                    "schema_version".into(),
+                    Value::Str(Arc::new("kujo.http.upload-artifact.v1".to_string())),
+                );
+                req_fields
+                    .insert("body_mode".into(), Value::Str(Arc::new("private_spool".to_string())));
+                req_fields.insert("body_artifact".into(), Value::Dict(Arc::new(artifact)));
+                let result = self
+                    .call_http_handler_vm(upload_route.handler, Value::Dict(Arc::new(req_fields)));
+                if http_request_utils::cleanup_routed_http_upload(&spool.path).is_err() {
+                    let _ = request.respond(
+                        Response::from_string("Internal Server Error").with_status_code(500),
+                    );
+                    continue;
+                }
+                match result {
+                    Ok(Value::HttpResponse { status, body, headers }) => {
+                        let mut response = Response::from_data(body).with_status_code(status);
+                        for (key, value) in headers {
+                            if let Ok(header) =
+                                tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
+                            {
+                                response = response.with_header(header);
+                            }
+                        }
+                        let _ = request.respond(response);
+                    }
+                    Ok(Value::HttpStreamingResponse { status, headers, stream, callback }) => {
+                        self.respond_incremental_http_vm(
+                            request, status, headers, stream, callback,
+                        );
+                    }
+                    _ => {
+                        let _ = request.respond(
+                            Response::from_string("Internal Server Error").with_status_code(500),
+                        );
+                    }
+                }
+                continue;
+            }
+
             let declared_body_length = request.body_length();
             let body_bytes = match http_request_utils::read_bounded_http_request_body_bytes(
                 request.as_reader(),
@@ -6159,6 +6337,15 @@ impl VM {
                 }
                 Err(http_request_utils::HttpRequestBodyError::ReadFailed) => {
                     let response = Response::from_string("Bad Request").with_status_code(400);
+                    let _ = request.respond(response);
+                    continue;
+                }
+                Err(
+                    http_request_utils::HttpRequestBodyError::InvalidSpoolPolicy
+                    | http_request_utils::HttpRequestBodyError::SpoolFailed,
+                ) => {
+                    let response =
+                        Response::from_string("Internal Server Error").with_status_code(500);
                     let _ = request.respond(response);
                     continue;
                 }
@@ -6502,7 +6689,7 @@ impl VM {
 
                 let server = self.stack.pop().ok_or("Stack underflow getting HTTP server")?;
 
-                if let Value::HttpServer { host, port, routes } = server {
+                if let Value::HttpServer { host, port, routes, upload_routes } = server {
                     return match method_name {
                         "route" => {
                             if args.len() != 3 {
@@ -6520,10 +6707,51 @@ impl VM {
                                             path.as_ref().clone(),
                                             args[2].clone(),
                                         ));
-                                        Ok(Value::HttpServer { host, port, routes: new_routes })
+                                        Ok(Value::HttpServer {
+                                            host,
+                                            port,
+                                            routes: new_routes,
+                                            upload_routes,
+                                        })
                                     }
                                     _ => Err("route() requires (method, path, handler_function)"
                                         .to_string()),
+                                }
+                            }
+                        }
+                        "route_upload" => {
+                            if args.len() != 6 {
+                                Err("route_upload() requires (method, path, spool_directory, max_body_bytes, authorize_function, handler_function)".to_string())
+                            } else {
+                                match (&args[0], &args[1], &args[2], &args[3], &args[4], &args[5]) {
+                                    (
+                                        Value::Str(method),
+                                        Value::Str(path),
+                                        Value::Str(directory),
+                                        Value::Int(maximum),
+                                        authorize @ (Value::BytecodeFunction { .. } | Value::NativeFunction(_)),
+                                        handler @ (Value::BytecodeFunction { .. } | Value::NativeFunction(_)),
+                                    ) if *maximum > 0
+                                        && (*maximum as u64)
+                                            <= http_request_utils::MAX_ROUTED_HTTP_UPLOAD_BYTES =>
+                                    {
+                                        let mut next = upload_routes;
+                                        next.push(crate::interpreter::HttpUploadRoute {
+                                            method: method.as_ref().clone(),
+                                            path: path.as_ref().clone(),
+                                            spool_directory: directory.as_ref().clone(),
+                                            max_body_bytes: *maximum as u64,
+                                            authorize: authorize.clone(),
+                                            handler: handler.clone(),
+                                        });
+                                        Ok(Value::HttpServer {
+                                            host,
+                                            port,
+                                            routes,
+                                            upload_routes: next,
+                                        })
+                                    }
+                                    _ => Err("route_upload() requires valid strings, bounded max_body_bytes, and callable authorize/handler functions".to_string()),
                                 }
                             }
                         }
@@ -6544,7 +6772,7 @@ impl VM {
                                     }
                                     return Err("Capability denied: network-server required for http_server.listen; rerun with --allow-net-server".to_string());
                                 }
-                                self.start_http_server_vm(host, port, routes)
+                                self.start_http_server_vm(host, port, routes, upload_routes)
                             }
                         }
                         _ => Err(format!("HttpServer has no method '{}'", method_name)),
@@ -9463,7 +9691,7 @@ mod tests {
         "#;
 
         match run_vm_code_with_natives(code, &["http_server", "http_response"]) {
-            Ok(Value::HttpServer { host, port, routes }) => {
+            Ok(Value::HttpServer { host, port, routes, .. }) => {
                 assert_eq!(host, "0.0.0.0");
                 assert_eq!(port, 4123);
                 assert_eq!(routes.len(), 1);

@@ -15,6 +15,12 @@ pub const ALLOW_PRIVATE_DESTINATIONS_ENV: &str = "KUJO_ALLOW_PRIVATE_NETWORK_DES
 pub const AI_ALLOWED_ENDPOINTS_ENV: &str = "KUJO_AI_ALLOWED_ENDPOINTS";
 const ALLOWED_HTTP_URL_SCHEMES: [&str; 2] = ["http", "https"];
 
+#[cfg(test)]
+pub(crate) fn test_env_lock() -> &'static std::sync::Mutex<()> {
+    static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    LOCK.get_or_init(|| std::sync::Mutex::new(()))
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum OutboundDestinationPolicy {
     AllowAll,
@@ -580,18 +586,12 @@ pub fn validate_receive_size(size: i64, surface: &str) -> Result<usize, String> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Mutex, OnceLock};
-
-    fn env_lock() -> &'static Mutex<()> {
-        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        LOCK.get_or_init(|| Mutex::new(()))
-    }
 
     fn with_policy_env<F, T>(policy: Option<&str>, allow_private: Option<&str>, run: F) -> T
     where
         F: FnOnce() -> T,
     {
-        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+        let _guard = test_env_lock().lock().expect("env lock should not be poisoned");
         let previous_policy = std::env::var(OUTBOUND_DESTINATION_POLICY_ENV).ok();
         let previous_allow = std::env::var(ALLOW_PRIVATE_DESTINATIONS_ENV).ok();
 
@@ -622,7 +622,7 @@ mod tests {
     where
         F: FnOnce() -> T,
     {
-        let _guard = env_lock().lock().expect("env lock should not be poisoned");
+        let _guard = test_env_lock().lock().expect("env lock should not be poisoned");
         let previous = std::env::var(AI_ALLOWED_ENDPOINTS_ENV).ok();
 
         match allowlist {

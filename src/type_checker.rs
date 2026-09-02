@@ -1315,6 +1315,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "publish_file_noreplace".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "copy_file".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
