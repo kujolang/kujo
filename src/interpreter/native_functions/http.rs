@@ -3516,6 +3516,8 @@ mod tests {
 
     #[test]
     fn http_request_incremental_response_exposes_headers_chunks_and_completion() {
+        let _guard = AI_ENV_LOCK.lock().expect("HTTP env lock should not be poisoned");
+        clear_ai_cassette_env();
         let Some((endpoint, first_chunk_rx, release_tx, server)) = gated_stream_server() else {
             eprintln!("skipping incremental HTTP response test: local TCP bind unavailable");
             return;
@@ -3528,11 +3530,12 @@ mod tests {
         let result =
             handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
                 .expect("http_request should be handled");
-        first_chunk_rx.recv().expect("upstream should flush the first chunk");
-
         let Value::Result { is_ok: true, value } = result else {
             panic!("expected successful incremental HTTP result, got {result:?}");
         };
+        first_chunk_rx
+            .recv_timeout(Duration::from_secs(30))
+            .expect("upstream should flush the first chunk within the test deadline");
         let Value::HttpStreamingResponse { status, stream, .. } = *value else {
             panic!("expected a streaming HTTP response");
         };
@@ -3568,6 +3571,8 @@ mod tests {
 
     #[test]
     fn http_request_incremental_response_reports_downstream_disconnect() {
+        let _guard = AI_ENV_LOCK.lock().expect("HTTP env lock should not be poisoned");
+        clear_ai_cassette_env();
         let Some((endpoint, first_chunk_rx, release_tx, server)) = gated_stream_server() else {
             eprintln!("skipping incremental HTTP disconnect test: local TCP bind unavailable");
             return;
@@ -3579,11 +3584,12 @@ mod tests {
         let result =
             handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
                 .expect("http_request should be handled");
-        first_chunk_rx.recv().expect("upstream should flush the first chunk");
-
         let Value::Result { is_ok: true, value } = result else {
             panic!("expected successful incremental HTTP result, got {result:?}");
         };
+        first_chunk_rx
+            .recv_timeout(Duration::from_secs(30))
+            .expect("upstream should flush the first chunk within the test deadline");
         let Value::HttpStreamingResponse { stream, .. } = *value else {
             panic!("expected a streaming HTTP response");
         };
