@@ -139,6 +139,7 @@ Predicate semantics note:
 | `clear` | stable | `arr := clear([1, 2])` |
 | `slice` | stable | `part := slice([1, 2, 3, 4], 1, 3)` |
 | `concat` | stable | `all := concat([1], [2, 3])`; byte-safe: `raw := concat(bytes([0]), bytes([255]))` |
+| `bytes_is_ascii` | stable | `safe := bytes_is_ascii(bytes([0, 127]))` |
 | `map` | stable | `out := map([1, 2], func (x) { return x * 2 })` |
 | `filter` | stable | `out := filter([1, 2, 3], func (x) { return x > 1 })` |
 | `reduce` | stable | `sum := reduce([1, 2, 3], 0, func (a, b) { return a + b })` |
