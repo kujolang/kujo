@@ -1881,6 +1881,11 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "gzip_compress".to_string(),
+            FunctionSignature { param_types: vec![None], return_type: None },
+        );
+
+        self.functions.insert(
             "gzip_decompress".to_string(),
             FunctionSignature {
                 param_types: vec![None, Some(TypeAnnotation::Int)],

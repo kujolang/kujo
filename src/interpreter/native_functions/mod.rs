@@ -506,6 +506,7 @@ mod tests {
             "zip_add_dir",
             "zip_close",
             "unzip",
+            "gzip_compress",
             "gzip_decompress",
             "zip_single_file_read",
             "ip_classify",

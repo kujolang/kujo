@@ -74,6 +74,33 @@ fn gzip_decompress(arg_values: &[Value]) -> Value {
 }
 
 #[cfg(feature = "runtime-archive")]
+fn gzip_compress(arg_values: &[Value]) -> Value {
+    use flate2::{write::GzEncoder, Compression};
+    use std::io::Write;
+    if arg_values.len() != 1 {
+        return Value::Error("gzip_compress requires one bytes argument".to_string());
+    }
+    let bytes = match &arg_values[0] {
+        Value::Bytes(bytes) if bytes.len() <= MAX_DECOMPRESSED_BYTES => bytes,
+        Value::Bytes(_) => {
+            return Value::Error(format!(
+                "gzip_compress input exceeds maximum {}",
+                MAX_DECOMPRESSED_BYTES
+            ))
+        }
+        _ => return Value::Error("gzip_compress requires one bytes argument".to_string()),
+    };
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+    if let Err(error) = encoder.write_all(bytes) {
+        return Value::Error(format!("gzip_compress failed: {}", error));
+    }
+    match encoder.finish() {
+        Ok(output) => Value::Bytes(output),
+        Err(error) => Value::Error(format!("gzip_compress failed: {}", error)),
+    }
+}
+
+#[cfg(feature = "runtime-archive")]
 fn zip_single_file_read(arg_values: &[Value]) -> Value {
     use std::io::Cursor;
     use zip::ZipArchive;
@@ -129,11 +156,13 @@ fn zip_single_file_read(arg_values: &[Value]) -> Value {
 pub fn handle(name: &str, _arg_values: &[Value]) -> Option<Value> {
     let result = match name {
         #[cfg(feature = "runtime-archive")]
+        "gzip_compress" => gzip_compress(_arg_values),
+        #[cfg(feature = "runtime-archive")]
         "gzip_decompress" => gzip_decompress(_arg_values),
         #[cfg(feature = "runtime-archive")]
         "zip_single_file_read" => zip_single_file_read(_arg_values),
         #[cfg(not(feature = "runtime-archive"))]
-        "gzip_decompress" | "zip_single_file_read" => Value::Error(
+        "gzip_compress" | "gzip_decompress" | "zip_single_file_read" => Value::Error(
             "Compression native APIs are disabled in this build (enable the 'runtime-archive' feature)"
                 .to_string(),
         ),
@@ -164,6 +193,15 @@ mod tests {
         assert!(
             matches!(bounded, Value::Error(message) if message.contains("exceeds max_output_bytes"))
         );
+    }
+
+    #[test]
+    fn gzip_compress_round_trips_binary_bytes() {
+        let original = Value::Bytes(vec![0, 1, 0x80, 0xff]);
+        let compressed = gzip_compress(std::slice::from_ref(&original));
+        let Value::Bytes(compressed) = compressed else { panic!("expected compressed bytes") };
+        let decompressed = gzip_decompress(&[Value::Bytes(compressed), Value::Int(64)]);
+        assert!(matches!(decompressed, Value::Bytes(bytes) if bytes == vec![0, 1, 0x80, 0xff]));
     }
 
     #[test]
