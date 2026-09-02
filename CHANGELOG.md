@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Give both CLI and shared interpreter async runtimes a fixed 8 MiB worker
   stack so bounded protocol and policy functions can run under `promise_all`
   without overflowing Tokio's smaller default worker stack.
+- Run the complete CLI lifecycle on a dedicated large-stack thread so Windows
+  does not overflow its smaller default main-thread stack before VM or
+  interpreter execution.
 
 ### Security
 
