@@ -166,7 +166,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `to_camel_case` | `to_camel_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_camel_case(...)` |
 | `to_snake_case` | `to_snake_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_snake_case(...)` |
 | `to_kebab_case` | `to_kebab_case(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_kebab_case(...)` |
-| `index_of` | `index_of(value, needle)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := index_of(...)` |
+| `index_of` | `index_of(value, needle)` | exact 2 | dynamic (Value) | Searches strings, arrays, or raw bytes; returns the zero-based index or `-1`. Both operands must be bytes for byte search. Value::Error on invalid args/types/operation. | `none` | `result := index_of(...)` |
 | `repeat` | `repeat(value, count)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := repeat(...)` |
 | `char_at` | `char_at(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := char_at(...)` |
 | `is_empty` | `is_empty(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := is_empty(...)` |
@@ -179,7 +179,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `remove_at` | `remove_at(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := remove_at(...)` |
 | `clear` | `clear(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := clear(...)` |
 | `slice` | `slice(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := slice(...)` |
-| `concat` | `concat(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := concat(...)` |
+| `concat` | `concat(left, right)` | exact 2 | array or bytes | Concatenates two arrays or two raw-byte values of the same kind; mixed or invalid inputs return `Value::Error`. | `none` | `payload := concat(bytes([0]), bytes([255]))` |
 | `map` | `map(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := map(...)` |
 | `filter` | `filter(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := filter(...)` |
 | `reduce` | `reduce(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := reduce(...)` |

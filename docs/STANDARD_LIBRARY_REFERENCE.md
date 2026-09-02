@@ -138,7 +138,7 @@ Predicate semantics note:
 | `remove_at` | stable | `arr := remove_at([1, 2, 3], 1)` |
 | `clear` | stable | `arr := clear([1, 2])` |
 | `slice` | stable | `part := slice([1, 2, 3, 4], 1, 3)` |
-| `concat` | stable | `all := concat([1], [2, 3])` |
+| `concat` | stable | `all := concat([1], [2, 3])`; byte-safe: `raw := concat(bytes([0]), bytes([255]))` |
 | `map` | stable | `out := map([1, 2], func (x) { return x * 2 })` |
 | `filter` | stable | `out := filter([1, 2, 3], func (x) { return x > 1 })` |
 | `reduce` | stable | `sum := reduce([1, 2, 3], 0, func (a, b) { return a + b })` |
@@ -162,6 +162,7 @@ Collection update semantics:
 
 - Helpers like `push`, `insert`, `remove_at`, `concat`, and `map` return updated values.
 - Reassign the result when building arrays iteratively (`items = push(items, value)`).
+- `index_of(bytes([13, 10]), bytes([10]))` performs a raw-octet-safe byte search and returns `1`.
 
 ## Output and Report Conventions
 

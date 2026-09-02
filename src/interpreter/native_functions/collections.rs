@@ -71,12 +71,24 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             _ => return None, // Let strings module handle string case
         },
 
-        // Polymorphic index_of - handles both strings and arrays
+        // Polymorphic index_of - handles arrays and raw byte sequences.
         "index_of" => match (arg_values.first(), arg_values.get(1)) {
             (Some(Value::Array(arr)), Some(item)) => {
                 Value::Int(builtins::array_index_of(&**arr, item))
             }
-            _ => return None, // Let strings module handle string case
+            (Some(Value::Bytes(value)), Some(Value::Bytes(needle))) => {
+                let index = if needle.is_empty() {
+                    0
+                } else {
+                    value
+                        .windows(needle.len())
+                        .position(|candidate| candidate == needle.as_slice())
+                        .map(|position| position as i64)
+                        .unwrap_or(-1)
+                };
+                Value::Int(index)
+            }
+            _ => return None, // Let strings module handle string case.
         },
 
         // Array functions
@@ -156,8 +168,18 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 result.extend((**arr1).iter().cloned());
                 result.extend((**arr2).iter().cloned());
                 Value::Array(Arc::new(result))
+            } else if let (Some(Value::Bytes(left)), Some(Value::Bytes(right))) =
+                (arg_values.first(), arg_values.get(1))
+            {
+                let Some(capacity) = left.len().checked_add(right.len()) else {
+                    return Some(Value::Error("concat() byte length overflow".to_string()));
+                };
+                let mut result = Vec::with_capacity(capacity);
+                result.extend_from_slice(left);
+                result.extend_from_slice(right);
+                Value::Bytes(result)
             } else {
-                Value::Error("concat() requires two array arguments".to_string())
+                Value::Error("concat() requires two arrays or two bytes values".to_string())
             }
         }
 
@@ -1792,8 +1814,32 @@ mod tests {
             handle(&mut interpreter, "concat", &[Value::Array(Arc::new(vec![])), Value::Null])
                 .expect("handler");
         assert!(
-            matches!(concat_wrong_type, Value::Error(message) if message.contains("concat() requires two array arguments"))
+            matches!(concat_wrong_type, Value::Error(message) if message.contains("concat() requires two arrays or two bytes values"))
         );
+
+        let concat_bytes = handle(
+            &mut interpreter,
+            "concat",
+            &[Value::Bytes(vec![0, 1]), Value::Bytes(vec![2, 255])],
+        )
+        .expect("handler");
+        assert!(matches!(concat_bytes, Value::Bytes(bytes) if bytes == vec![0, 1, 2, 255]));
+
+        let index_bytes = handle(
+            &mut interpreter,
+            "index_of",
+            &[Value::Bytes(vec![0, 13, 10, 255]), Value::Bytes(vec![13, 10])],
+        )
+        .expect("handler");
+        assert!(matches!(index_bytes, Value::Int(1)));
+
+        let index_bytes_missing = handle(
+            &mut interpreter,
+            "index_of",
+            &[Value::Bytes(vec![0, 1]), Value::Bytes(vec![2])],
+        )
+        .expect("handler");
+        assert!(matches!(index_bytes_missing, Value::Int(-1)));
 
         let clear_wrong_type = handle(&mut interpreter, "clear", &[Value::Null]).expect("handler");
         assert!(

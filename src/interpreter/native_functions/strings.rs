@@ -976,23 +976,23 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
         }
 
         "index_of" => {
-            // Polymorphic: strings handled here, arrays delegated to collections.rs
+            // Polymorphic: strings handled here; arrays and bytes are delegated.
             match args.first() {
-                Some(Value::Array(_)) => return None,
+                Some(Value::Array(_)) | Some(Value::Bytes(_)) => return None,
                 Some(Value::Str(s)) => match args.get(1) {
                     Some(Value::Str(substr)) => {
                         Value::Int(builtins::index_of(&**s, &**substr) as i64)
                     }
                     _ => Value::Error(
-                        "index_of() requires two arguments: string/array and substring/item"
+                        "index_of() requires two arguments: string/array/bytes and substring/item"
                             .to_string(),
                     ),
                 },
-                Some(_) => {
-                    Value::Error("index_of() first argument must be a string or array".to_string())
-                }
+                Some(_) => Value::Error(
+                    "index_of() first argument must be a string, array, or bytes".to_string(),
+                ),
                 None => Value::Error(
-                    "index_of() requires two arguments: string/array and substring/item"
+                    "index_of() requires two arguments: string/array/bytes and substring/item"
                         .to_string(),
                 ),
             }

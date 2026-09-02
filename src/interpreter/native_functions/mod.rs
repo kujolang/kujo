@@ -1045,6 +1045,13 @@ mod tests {
             &[Value::Str(Arc::new("a→b".to_string())), Value::Str(Arc::new("b".to_string()))],
         );
         assert!(matches!(index_of_unicode, Value::Int(2)));
+
+        let index_of_bytes = call_native_function(
+            &mut interpreter,
+            "index_of",
+            &[Value::Bytes(vec![0, 13, 10, 255]), Value::Bytes(vec![13, 10])],
+        );
+        assert!(matches!(index_of_bytes, Value::Int(1)));
     }
 
     #[test]
