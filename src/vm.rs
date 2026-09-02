@@ -5761,6 +5761,7 @@ impl VM {
             Constant::Int(n) => Ok(Value::Int(*n)),
             Constant::Float(f) => Ok(Value::Float(*f)),
             Constant::String(s) => Ok(Value::Str(Arc::new(s.clone()))),
+            Constant::Bytes(bytes) => Ok(Value::Bytes(bytes.clone())),
             Constant::Bool(b) => Ok(Value::Bool(*b)),
             Constant::None => Ok(Value::Null),
             Constant::Function(chunk) => Ok(Value::BytecodeFunction {
@@ -6024,6 +6025,7 @@ impl VM {
             Value::Int(n) => Ok(Constant::Int(*n)),
             Value::Float(f) => Ok(Constant::Float(*f)),
             Value::Str(s) => Ok(Constant::String(s.as_ref().clone())),
+            Value::Bytes(bytes) => Ok(Constant::Bytes(bytes.clone())),
             Value::Bool(b) => Ok(Constant::Bool(*b)),
             Value::Array(items) => {
                 let mut constants = Vec::with_capacity(items.len());

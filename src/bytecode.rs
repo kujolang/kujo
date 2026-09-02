@@ -523,6 +523,7 @@ pub enum Constant {
     Int(i64),
     Float(f64),
     String(String),
+    Bytes(Vec<u8>),
     Bool(bool),
     None,
     /// A compiled function (stored as bytecode chunk)
