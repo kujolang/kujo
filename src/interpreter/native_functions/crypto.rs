@@ -26,6 +26,8 @@ type HmacSha256 = Hmac<Sha256>;
 const STREAM_AEAD_MAGIC: &[u8; 9] = b"KUJOAEAD1";
 const STREAM_AEAD_MIN_CHUNK: usize = 4096;
 const STREAM_AEAD_MAX_CHUNK: usize = 16 * 1024 * 1024;
+const DECODE_RANGE_MAX_OUTPUT: u64 = 64 * 1024 * 1024;
+const DECODE_RANGE_MAX_PREFIX: usize = 4096;
 
 fn error_object(message: String) -> Value {
     Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
@@ -160,6 +162,396 @@ fn sha256_canonical_text_reader_range(
         hasher.update(b"\r\n");
     }
     Ok(format!("{:x}", hasher.finalize()))
+}
+
+struct DecodeRangeSink {
+    hasher: Sha256,
+    output_bytes: u64,
+    max_output_bytes: u64,
+    prefix: Vec<u8>,
+    prefix_bytes: usize,
+    ascii: bool,
+    contains_nul: bool,
+    utf8: Utf8State,
+}
+
+#[derive(Default)]
+struct Utf8State {
+    remaining: u8,
+    next_min: u8,
+    next_max: u8,
+    valid: bool,
+    initialized: bool,
+}
+
+impl Utf8State {
+    fn push(&mut self, byte: u8) {
+        if !self.initialized {
+            self.valid = true;
+            self.initialized = true;
+        }
+        if !self.valid {
+            return;
+        }
+        if self.remaining > 0 {
+            if byte < self.next_min || byte > self.next_max {
+                self.valid = false;
+                return;
+            }
+            self.remaining -= 1;
+            self.next_min = 0x80;
+            self.next_max = 0xbf;
+            return;
+        }
+        match byte {
+            0x00..=0x7f => {}
+            0xc2..=0xdf => {
+                self.remaining = 1;
+                self.next_min = 0x80;
+                self.next_max = 0xbf;
+            }
+            0xe0 => {
+                self.remaining = 2;
+                self.next_min = 0xa0;
+                self.next_max = 0xbf;
+            }
+            0xe1..=0xec | 0xee..=0xef => {
+                self.remaining = 2;
+                self.next_min = 0x80;
+                self.next_max = 0xbf;
+            }
+            0xed => {
+                self.remaining = 2;
+                self.next_min = 0x80;
+                self.next_max = 0x9f;
+            }
+            0xf0 => {
+                self.remaining = 3;
+                self.next_min = 0x90;
+                self.next_max = 0xbf;
+            }
+            0xf1..=0xf3 => {
+                self.remaining = 3;
+                self.next_min = 0x80;
+                self.next_max = 0xbf;
+            }
+            0xf4 => {
+                self.remaining = 3;
+                self.next_min = 0x80;
+                self.next_max = 0x8f;
+            }
+            _ => self.valid = false,
+        }
+    }
+
+    fn is_valid(&self) -> bool {
+        (!self.initialized || self.valid) && self.remaining == 0
+    }
+}
+
+impl DecodeRangeSink {
+    fn new(max_output_bytes: u64, prefix_bytes: usize) -> Self {
+        Self {
+            hasher: Sha256::new(),
+            output_bytes: 0,
+            max_output_bytes,
+            prefix: Vec::with_capacity(prefix_bytes),
+            prefix_bytes,
+            ascii: true,
+            contains_nul: false,
+            utf8: Utf8State::default(),
+        }
+    }
+
+    fn push(&mut self, bytes: &[u8]) -> Result<(), String> {
+        let next = self
+            .output_bytes
+            .checked_add(bytes.len() as u64)
+            .ok_or_else(|| "decoded output length overflow".to_string())?;
+        if next > self.max_output_bytes {
+            return Err(format!(
+                "decoded output exceeds configured limit of {} bytes",
+                self.max_output_bytes
+            ));
+        }
+        let available = self.prefix_bytes.saturating_sub(self.prefix.len());
+        self.prefix.extend_from_slice(&bytes[..bytes.len().min(available)]);
+        for byte in bytes.iter().copied() {
+            self.ascii &= byte <= 0x7f;
+            self.contains_nul |= byte == 0;
+            self.utf8.push(byte);
+        }
+        self.hasher.update(bytes);
+        self.output_bytes = next;
+        Ok(())
+    }
+}
+
+fn read_exact_range<F>(file: File, offset: u64, count: u64, mut consume: F) -> Result<(), String>
+where
+    F: FnMut(&[u8]) -> Result<(), String>,
+{
+    let mut reader = BufReader::new(file);
+    reader.seek(SeekFrom::Start(offset)).map_err(|error| error.to_string())?;
+    let mut remaining = count;
+    let mut buffer = [0_u8; 64 * 1024];
+    while remaining > 0 {
+        let ceiling = usize::try_from(remaining.min(buffer.len() as u64)).unwrap_or(buffer.len());
+        let read = reader.read(&mut buffer[..ceiling]).map_err(|error| error.to_string())?;
+        if read == 0 {
+            return Err("requested decode range exceeds file length".to_string());
+        }
+        remaining -= read as u64;
+        consume(&buffer[..read])?;
+    }
+    Ok(())
+}
+
+fn decode_file_range(
+    file: File,
+    offset: u64,
+    count: u64,
+    encoding: &str,
+    max_output_bytes: u64,
+    prefix_bytes: usize,
+) -> Result<Value, String> {
+    if max_output_bytes > DECODE_RANGE_MAX_OUTPUT {
+        return Err(format!("max_output_bytes exceeds {} bytes", DECODE_RANGE_MAX_OUTPUT));
+    }
+    if prefix_bytes > DECODE_RANGE_MAX_PREFIX {
+        return Err(format!("prefix_bytes exceeds {} bytes", DECODE_RANGE_MAX_PREFIX));
+    }
+    let mut sink = DecodeRangeSink::new(max_output_bytes, prefix_bytes);
+    let mut max_input_line_bytes = 0_u64;
+    let mut input_line_bytes = 0_u64;
+    let mut saw_cr = false;
+
+    match encoding {
+        "identity" => read_exact_range(file, offset, count, |bytes| sink.push(bytes))?,
+        "base64" => {
+            let mut quartet = [0_u8; 4];
+            let mut quartet_len = 0_usize;
+            let mut finished = false;
+            read_exact_range(file, offset, count, |bytes| {
+                for byte in bytes.iter().copied() {
+                    if saw_cr {
+                        if byte != b'\n' {
+                            return Err("base64 input contains a bare carriage return".to_string());
+                        }
+                        max_input_line_bytes = max_input_line_bytes.max(input_line_bytes);
+                        input_line_bytes = 0;
+                        saw_cr = false;
+                        continue;
+                    }
+                    if byte == b'\r' {
+                        saw_cr = true;
+                        continue;
+                    }
+                    if byte == b'\n' {
+                        return Err("base64 input contains a bare line feed".to_string());
+                    }
+                    if byte == b' ' || byte == b'\t' {
+                        input_line_bytes += 1;
+                        if input_line_bytes > 76 {
+                            return Err("base64 input line exceeds 76 bytes".to_string());
+                        }
+                        continue;
+                    }
+                    input_line_bytes += 1;
+                    if input_line_bytes > 76 {
+                        return Err("base64 input line exceeds 76 bytes".to_string());
+                    }
+                    if finished {
+                        return Err("base64 input contains data after padding".to_string());
+                    }
+                    if !(byte.is_ascii_alphanumeric()
+                        || byte == b'+'
+                        || byte == b'/'
+                        || byte == b'=')
+                    {
+                        return Err("base64 input contains an invalid byte".to_string());
+                    }
+                    quartet[quartet_len] = byte;
+                    quartet_len += 1;
+                    if quartet_len == 4 {
+                        let decoded =
+                            base64::engine::general_purpose::STANDARD.decode(quartet).map_err(
+                                |_| "base64 input has invalid padding or quartet".to_string(),
+                            )?;
+                        finished = quartet[2] == b'=' || quartet[3] == b'=';
+                        sink.push(&decoded)?;
+                        quartet_len = 0;
+                    }
+                }
+                Ok(())
+            })?;
+            if saw_cr {
+                return Err("base64 input ends with a bare carriage return".to_string());
+            }
+            if quartet_len != 0 {
+                return Err("base64 input ends with an incomplete quartet".to_string());
+            }
+            max_input_line_bytes = max_input_line_bytes.max(input_line_bytes);
+        }
+        "quoted-printable" => {
+            #[derive(Clone, Copy)]
+            enum QpState {
+                Normal,
+                Equals,
+                Hex(u8),
+                SoftCr,
+                Cr,
+            }
+            fn hex(byte: u8) -> Option<u8> {
+                match byte {
+                    b'0'..=b'9' => Some(byte - b'0'),
+                    b'a'..=b'f' => Some(byte - b'a' + 10),
+                    b'A'..=b'F' => Some(byte - b'A' + 10),
+                    _ => None,
+                }
+            }
+            let mut state = QpState::Normal;
+            let mut pending_ws = Vec::new();
+            read_exact_range(file, offset, count, |bytes| {
+                for byte in bytes.iter().copied() {
+                    match state {
+                        QpState::Normal => {
+                            match byte {
+                                b'=' => {
+                                    sink.push(&pending_ws)?;
+                                    pending_ws.clear();
+                                    input_line_bytes += 1;
+                                    if input_line_bytes > 76 {
+                                        return Err("quoted-printable input line exceeds 76 bytes"
+                                            .to_string());
+                                    }
+                                    state = QpState::Equals;
+                                }
+                                b'\r' => {
+                                    if !pending_ws.is_empty() {
+                                        return Err("quoted-printable line has unencoded trailing whitespace".to_string());
+                                    }
+                                    state = QpState::Cr;
+                                }
+                                b'\n' => {
+                                    return Err("quoted-printable input contains a bare line feed"
+                                        .to_string())
+                                }
+                                b' ' | b'\t' => {
+                                    pending_ws.push(byte);
+                                    input_line_bytes += 1;
+                                    if input_line_bytes > 76 {
+                                        return Err("quoted-printable input line exceeds 76 bytes"
+                                            .to_string());
+                                    }
+                                }
+                                _ => {
+                                    if !(33..=126).contains(&byte) {
+                                        return Err("quoted-printable input contains an unencoded non-printable or non-ASCII byte".to_string());
+                                    }
+                                    sink.push(&pending_ws)?;
+                                    pending_ws.clear();
+                                    sink.push(&[byte])?;
+                                    input_line_bytes += 1;
+                                    if input_line_bytes > 76 {
+                                        return Err("quoted-printable input line exceeds 76 bytes"
+                                            .to_string());
+                                    }
+                                }
+                            }
+                        }
+                        QpState::Equals => {
+                            if byte == b'\r' {
+                                state = QpState::SoftCr;
+                            } else if let Some(value) = hex(byte) {
+                                input_line_bytes += 1;
+                                if input_line_bytes > 76 {
+                                    return Err(
+                                        "quoted-printable input line exceeds 76 bytes".to_string()
+                                    );
+                                }
+                                state = QpState::Hex(value);
+                            } else {
+                                return Err(
+                                    "quoted-printable input has an invalid escape".to_string()
+                                );
+                            }
+                        }
+                        QpState::Hex(high) => {
+                            let Some(low) = hex(byte) else {
+                                return Err(
+                                    "quoted-printable input has an invalid hex escape".to_string()
+                                );
+                            };
+                            input_line_bytes += 1;
+                            if input_line_bytes > 76 {
+                                return Err(
+                                    "quoted-printable input line exceeds 76 bytes".to_string()
+                                );
+                            }
+                            sink.push(&[(high << 4) | low])?;
+                            state = QpState::Normal;
+                        }
+                        QpState::SoftCr => {
+                            if byte != b'\n' {
+                                return Err(
+                                    "quoted-printable soft break has a bare carriage return"
+                                        .to_string(),
+                                );
+                            }
+                            max_input_line_bytes = max_input_line_bytes.max(input_line_bytes);
+                            input_line_bytes = 0;
+                            state = QpState::Normal;
+                        }
+                        QpState::Cr => {
+                            if byte != b'\n' {
+                                return Err(
+                                    "quoted-printable input contains a bare carriage return"
+                                        .to_string(),
+                                );
+                            }
+                            sink.push(b"\r\n")?;
+                            max_input_line_bytes = max_input_line_bytes.max(input_line_bytes);
+                            input_line_bytes = 0;
+                            state = QpState::Normal;
+                        }
+                    }
+                }
+                Ok(())
+            })?;
+            if !matches!(state, QpState::Normal) {
+                return Err("quoted-printable input ends with an incomplete escape or line ending"
+                    .to_string());
+            }
+            if !pending_ws.is_empty() {
+                return Err(
+                    "quoted-printable input ends with unencoded trailing whitespace".to_string()
+                );
+            }
+            max_input_line_bytes = max_input_line_bytes.max(input_line_bytes);
+        }
+        _ => return Err("encoding must be identity, base64, or quoted-printable".to_string()),
+    }
+
+    let mut result = DictMap::default();
+    result.insert(
+        Arc::<str>::from("schema"),
+        Value::Str(Arc::new("kujo.file.decode.v1".to_string())),
+    );
+    result.insert(Arc::<str>::from("encoding"), Value::Str(Arc::new(encoding.to_string())));
+    result.insert(Arc::<str>::from("input_bytes"), Value::Int(count as i64));
+    result.insert(Arc::<str>::from("output_bytes"), Value::Int(sink.output_bytes as i64));
+    result.insert(
+        Arc::<str>::from("sha256"),
+        Value::Str(Arc::new(format!("{:x}", sink.hasher.finalize()))),
+    );
+    result.insert(Arc::<str>::from("prefix"), Value::Bytes(sink.prefix));
+    result.insert(Arc::<str>::from("ascii"), Value::Bool(sink.ascii));
+    result.insert(Arc::<str>::from("contains_nul"), Value::Bool(sink.contains_nul));
+    result.insert(Arc::<str>::from("utf8_valid"), Value::Bool(sink.utf8.is_valid()));
+    result
+        .insert(Arc::<str>::from("max_input_line_bytes"), Value::Int(max_input_line_bytes as i64));
+    Ok(Value::Dict(Arc::new(result)))
 }
 
 fn rsa_public_key_info(value: &Value) -> Result<Value, String> {
@@ -669,6 +1061,57 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Ok(digest) => Value::Str(Arc::new(digest)),
                 Err(error) => error_object(format!(
                     "Failed to hash {} bytes at offset {} in '{}': {}",
+                    count,
+                    offset,
+                    path.as_ref(),
+                    error
+                )),
+            }
+        }
+
+        "decode_file_range_info" => {
+            if arg_values.len() != 6 {
+                return Some(Value::Error("decode_file_range_info requires path, offset, count, encoding, max_output_bytes, and prefix_bytes arguments".to_string()));
+            }
+            let (
+                Some(Value::Str(path)),
+                Some(Value::Int(offset)),
+                Some(Value::Int(count)),
+                Some(Value::Str(encoding)),
+                Some(Value::Int(max_output_bytes)),
+                Some(Value::Int(prefix_bytes)),
+            ) = (
+                arg_values.first(),
+                arg_values.get(1),
+                arg_values.get(2),
+                arg_values.get(3),
+                arg_values.get(4),
+                arg_values.get(5),
+            )
+            else {
+                return Some(Value::Error(
+                    "decode_file_range_info requires string, int, int, string, int, int arguments"
+                        .to_string(),
+                ));
+            };
+            if *offset < 0 || *count < 0 || *max_output_bytes < 0 || *prefix_bytes < 0 {
+                return Some(Value::Error(
+                    "decode_file_range_info integer arguments must be non-negative".to_string(),
+                ));
+            }
+            match File::open(path.as_ref()).map_err(|error| error.to_string()).and_then(|file| {
+                decode_file_range(
+                    file,
+                    *offset as u64,
+                    *count as u64,
+                    encoding.as_ref(),
+                    *max_output_bytes as u64,
+                    *prefix_bytes as usize,
+                )
+            }) {
+                Ok(info) => info,
+                Err(error) => error_object(format!(
+                    "Failed to decode {} bytes at offset {} in '{}': {}",
                     count,
                     offset,
                     path.as_ref(),
@@ -1347,6 +1790,148 @@ mod tests {
             if message.contains("exceeds file length")));
 
         let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_decode_file_range_info_streams_strict_transfer_encodings() {
+        let base64_path = unique_temp_file("kujo_crypto_decode_base64");
+        fs::write(&base64_path, b"SGVsbG8s\r\nIHdvcmxkIQ==\r\n").unwrap();
+        let base64 = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&base64_path),
+                Value::Int(0),
+                Value::Int(24),
+                string_value("base64"),
+                Value::Int(64),
+                Value::Int(5),
+            ],
+        )
+        .unwrap();
+        let Value::Dict(base64) = base64 else { panic!("expected base64 decode metadata") };
+        assert!(
+            matches!(base64.get("schema"), Some(Value::Str(value)) if value.as_ref() == "kujo.file.decode.v1")
+        );
+        assert!(matches!(base64.get("output_bytes"), Some(Value::Int(13))));
+        assert!(matches!(base64.get("prefix"), Some(Value::Bytes(value)) if value == b"Hello"));
+        assert!(matches!(base64.get("ascii"), Some(Value::Bool(true))));
+        assert!(matches!(base64.get("utf8_valid"), Some(Value::Bool(true))));
+        assert!(matches!(base64.get("max_input_line_bytes"), Some(Value::Int(12))));
+        assert!(
+            matches!(base64.get("sha256"), Some(Value::Str(value)) if value.as_ref() == "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3")
+        );
+
+        let qp_path = unique_temp_file("kujo_crypto_decode_qp");
+        fs::write(&qp_path, b"caf=C3=A9=\r\n!\r\n").unwrap();
+        let qp = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&qp_path),
+                Value::Int(0),
+                Value::Int(15),
+                string_value("quoted-printable"),
+                Value::Int(64),
+                Value::Int(16),
+            ],
+        )
+        .unwrap();
+        let Value::Dict(qp) = qp else { panic!("expected quoted-printable decode metadata") };
+        assert!(matches!(qp.get("output_bytes"), Some(Value::Int(8))));
+        assert!(
+            matches!(qp.get("prefix"), Some(Value::Bytes(value)) if value == b"caf\xc3\xa9!\r\n")
+        );
+        assert!(matches!(qp.get("ascii"), Some(Value::Bool(false))));
+        assert!(matches!(qp.get("utf8_valid"), Some(Value::Bool(true))));
+
+        let binary_path = unique_temp_file("kujo_crypto_decode_binary");
+        fs::write(&binary_path, [0_u8, 0xff, b'A']).unwrap();
+        let binary = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&binary_path),
+                Value::Int(0),
+                Value::Int(3),
+                string_value("identity"),
+                Value::Int(3),
+                Value::Int(3),
+            ],
+        )
+        .unwrap();
+        let Value::Dict(binary) = binary else { panic!("expected identity decode metadata") };
+        assert!(matches!(binary.get("contains_nul"), Some(Value::Bool(true))));
+        assert!(matches!(binary.get("utf8_valid"), Some(Value::Bool(false))));
+
+        let invalid_path = unique_temp_file("kujo_crypto_decode_invalid");
+        fs::write(&invalid_path, b"AAAA=bad").unwrap();
+        let invalid = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&invalid_path),
+                Value::Int(0),
+                Value::Int(8),
+                string_value("base64"),
+                Value::Int(64),
+                Value::Int(0),
+            ],
+        )
+        .unwrap();
+        assert!(
+            matches!(invalid, Value::ErrorObject { message, .. } if message.contains("invalid padding or quartet"))
+        );
+
+        fs::write(&invalid_path, b"unsafe \r\n").unwrap();
+        let invalid_qp = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&invalid_path),
+                Value::Int(0),
+                Value::Int(9),
+                string_value("quoted-printable"),
+                Value::Int(64),
+                Value::Int(0),
+            ],
+        )
+        .unwrap();
+        assert!(
+            matches!(invalid_qp, Value::ErrorObject { message, .. } if message.contains("trailing whitespace"))
+        );
+
+        fs::write(&invalid_path, [b'A', 0_u8]).unwrap();
+        let invalid_qp_octet = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&invalid_path),
+                Value::Int(0),
+                Value::Int(2),
+                string_value("quoted-printable"),
+                Value::Int(64),
+                Value::Int(0),
+            ],
+        )
+        .unwrap();
+        assert!(
+            matches!(invalid_qp_octet, Value::ErrorObject { message, .. } if message.contains("unencoded non-printable"))
+        );
+
+        let capped = handle(
+            "decode_file_range_info",
+            &[
+                string_value(&base64_path),
+                Value::Int(0),
+                Value::Int(24),
+                string_value("base64"),
+                Value::Int(12),
+                Value::Int(0),
+            ],
+        )
+        .unwrap();
+        assert!(
+            matches!(capped, Value::ErrorObject { message, .. } if message.contains("configured limit"))
+        );
+
+        for path in [base64_path, qp_path, binary_path, invalid_path] {
+            let _ = fs::remove_file(path);
+        }
     }
 
     #[test]

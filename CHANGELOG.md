@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add a filesystem-read-gated, fixed-memory file-range decoder for strict
+  identity, Base64 and quoted-printable transfer encodings. It returns a
+  bounded inspection prefix, decoded length, SHA-256, UTF-8/ASCII/NUL facts
+  and input-line evidence without returning the decoded body.
+
 - Add stable `response_code` and `name_exists` fields to bounded DNS lookup
   envelopes so Kujo programs can distinguish `NXDOMAIN` from an existing
   name with no records of the requested type.

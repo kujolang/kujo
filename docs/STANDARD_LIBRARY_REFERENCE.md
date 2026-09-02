@@ -668,6 +668,7 @@ filesystem read permission.
 | `hmac_sha256_verify` | stable | `valid := hmac_sha256_verify(secret, payload, signature)` |
 | `sha256_file` | stable | `h := sha256_file("artifact.bin")` |
 | `sha256_file_range` | stable | `h := sha256_file_range("artifact.bin", 4096, 65536)` |
+| `decode_file_range_info` | preview | `info := decode_file_range_info("message.eml", offset, count, "base64", 1048576, 64)` |
 | `sha256_canonical_text_file_range` | preview | `h := sha256_canonical_text_file_range("message.eml", offset, count, "relaxed-crlf")` |
 | `md5` | stable | `h := md5("hello")` |
 | `md5_file` | stable | `h := md5_file("artifact.bin")` |

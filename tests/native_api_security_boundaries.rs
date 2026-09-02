@@ -362,6 +362,56 @@ fn native_capability_untrusted_denies_private_spool_in_vm_and_interpreter() {
 }
 
 #[test]
+fn decode_file_range_info_is_filesystem_read_gated_in_vm_and_interpreter() {
+    let script = "decode_file_range_info(\"blocked.eml\",0,0,\"identity\",0,0)\n";
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            script,
+            "Capability denied: filesystem-read required for decode_file_range_info",
+            &runtime_args,
+        );
+    }
+}
+
+#[test]
+fn decode_file_range_info_has_vm_interpreter_parity() {
+    let project_root = unique_temp_dir("decode_file_range_runtime_parity");
+    let script_path = project_root.join("decode.kujo");
+    let input_path = project_root.join("message.txt");
+    fs::write(&input_path, b"SGVsbG8sIHdvcmxkIQ==\r\n").expect("decode input should be written");
+    let input_literal =
+        escape_kujo_string(input_path.to_str().expect("decode input path should be utf-8"));
+    let script = format!(
+        "let info := decode_file_range_info(\"{input_literal}\",0,22,\"base64\",64,5)\n\
+         print(to_json({{\"schema\":info[\"schema\"],\"output_bytes\":info[\"output_bytes\"],\"sha256\":info[\"sha256\"],\"prefix_first\":info[\"prefix\"][0]}}))\n"
+    );
+    fs::write(&script_path, script).expect("decode script should be written");
+
+    let mut outputs = Vec::new();
+    for runtime_args in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script_path.to_str().expect("decode script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert!(
+            output.status.success(),
+            "decode runtime failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        let stdout = stdout_text(&output);
+        assert!(stdout.contains("\"schema\":\"kujo.file.decode.v1\""));
+        assert!(stdout.contains("\"output_bytes\":13"));
+        assert!(stdout.contains("\"prefix_first\":72"));
+        assert!(!stdout.contains("Hello, world!"));
+        outputs.push(stdout);
+    }
+    assert_eq!(outputs[0], outputs[1]);
+
+    let _ = fs::remove_dir_all(project_root);
+}
+
+#[test]
 fn private_spool_round_trip_has_vm_interpreter_parity() {
     let project_root = unique_temp_dir("private_spool_runtime_parity");
     let script_path = project_root.join("private_spool.kujo");
