@@ -2994,9 +2994,6 @@ impl Interpreter {
                 CallableArity::exact("index_of", vec!["value".to_string(), "needle".to_string()])
             }
             "bytes_is_ascii" => CallableArity::exact("bytes_is_ascii", vec!["value".to_string()]),
-            "concat" => {
-                CallableArity::exact("concat", vec!["left".to_string(), "right".to_string()])
-            }
             "replace" => CallableArity::exact(
                 "replace",
                 vec!["value".to_string(), "from".to_string(), "to".to_string()],
