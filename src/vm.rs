@@ -6239,7 +6239,7 @@ impl VM {
 
                 match self.call_http_handler_vm(handler, Value::Dict(Arc::new(req_fields))) {
                     Ok(Value::HttpResponse { status, body, headers }) => {
-                        let mut response = Response::from_string(body).with_status_code(status);
+                        let mut response = Response::from_data(body).with_status_code(status);
                         for (key, value) in headers {
                             if let Ok(header) =
                                 tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
@@ -9441,9 +9441,10 @@ mod tests {
         match vm.call_http_handler_vm(handler, Value::Dict(Arc::new(req_fields))) {
             Ok(Value::HttpResponse { status, body, .. }) => {
                 assert_eq!(status, 200);
-                assert!(body.contains("\"service\":\"Kujo CRUD API Showcase\""));
-                assert!(body.contains("\"status_values\""));
-                assert!(body.contains("\"archived\""));
+                let body_text = String::from_utf8_lossy(&body);
+                assert!(body_text.contains("\"service\":\"Kujo CRUD API Showcase\""));
+                assert!(body_text.contains("\"status_values\""));
+                assert!(body_text.contains("\"archived\""));
             }
             Ok(other) => panic!("Expected HttpResponse, got: {:?}", other),
             Err(e) => panic!("VM error: {}", e),

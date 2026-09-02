@@ -2396,7 +2396,7 @@ impl Interpreter {
                             self.return_value = None;
                             Value::HttpResponse {
                                 status: 200,
-                                body: "OK".to_string(),
+                                body: b"OK".to_vec(),
                                 headers: HashMap::new(),
                             }
                         };
@@ -2436,7 +2436,7 @@ impl Interpreter {
                             self.return_value = None;
                             Value::HttpResponse {
                                 status: 200,
-                                body: "OK".to_string(),
+                                body: b"OK".to_vec(),
                                 headers: HashMap::new(),
                             }
                         };
@@ -2449,7 +2449,7 @@ impl Interpreter {
 
                     // Build response
                     if let Value::HttpResponse { status, body, headers } = result {
-                        let mut response = Response::from_string(body);
+                        let mut response = Response::from_data(body);
                         response = response.with_status_code(status);
 
                         for (key, value) in headers {

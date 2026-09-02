@@ -645,7 +645,7 @@ pub enum Value {
         routes: Vec<(String, String, Value)>, // (method, path, handler)
     },
     /// HTTP response
-    HttpResponse { status: u16, body: String, headers: HashMap<String, String> },
+    HttpResponse { status: u16, body: Vec<u8>, headers: HashMap<String, String> },
     /// Database connection
     /// Infrastructure for database.rs stub module
     #[cfg(feature = "runtime-db")]

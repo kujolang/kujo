@@ -2901,16 +2901,20 @@ pub fn handle_with_interpreter(
                 )));
             }
 
-            if let (Some(Value::Int(status)), Some(Value::Str(body))) =
-                (arg_values.first(), arg_values.get(1))
-            {
-                Value::HttpResponse {
+            match (arg_values.first(), arg_values.get(1)) {
+                (Some(Value::Int(status)), Some(Value::Str(body))) => Value::HttpResponse {
                     status: *status as u16,
-                    body: body.as_ref().to_string(),
+                    body: body.as_bytes().to_vec(),
                     headers: HashMap::new(),
-                }
-            } else {
-                Value::Error("http_response requires status code and body string".to_string())
+                },
+                (Some(Value::Int(status)), Some(Value::Bytes(body))) => Value::HttpResponse {
+                    status: *status as u16,
+                    body: body.clone(),
+                    headers: HashMap::new(),
+                },
+                _ => Value::Error(
+                    "http_response requires status code and string or bytes body".to_string(),
+                ),
             }
         }
 
@@ -2935,7 +2939,7 @@ pub fn handle_with_interpreter(
                 };
                 let mut headers = HashMap::new();
                 headers.insert("Content-Type".to_string(), "application/json".to_string());
-                Value::HttpResponse { status: *status as u16, body, headers }
+                Value::HttpResponse { status: *status as u16, body: body.into_bytes(), headers }
             } else {
                 Value::Error("json_response requires status code and data".to_string())
             }
@@ -2956,7 +2960,7 @@ pub fn handle_with_interpreter(
                 headers.insert("Content-Type".to_string(), "text/html; charset=utf-8".to_string());
                 Value::HttpResponse {
                     status: *status as u16,
-                    body: html.as_ref().to_string(),
+                    body: html.as_bytes().to_vec(),
                     headers,
                 }
             } else {
@@ -2989,7 +2993,7 @@ pub fn handle_with_interpreter(
 
                 Value::HttpResponse {
                     status: 302,
-                    body: format!("Redirecting to {}", url.as_ref()),
+                    body: format!("Redirecting to {}", url.as_ref()).into_bytes(),
                     headers,
                 }
             } else {
@@ -4021,11 +4025,17 @@ mod tests {
         match response {
             Value::HttpResponse { status, body, headers } => {
                 assert_eq!(status, 200);
-                assert_eq!(body, "ok");
+                assert_eq!(body, b"ok");
                 assert!(headers.is_empty());
             }
             _ => panic!("Expected HttpResponse from http_response"),
         }
+
+        let binary_response =
+            handle("http_response", &[Value::Int(200), Value::Bytes(vec![0, 0x80, 0xff])]).unwrap();
+        assert!(
+            matches!(binary_response, Value::HttpResponse { body, .. } if body == vec![0, 0x80, 0xff])
+        );
 
         let json_response = handle("json_response", &[Value::Int(201), Value::Int(7)]).unwrap();
         match json_response {
@@ -4055,11 +4065,7 @@ mod tests {
         let set_header_result = handle(
             "set_header",
             &[
-                Value::HttpResponse {
-                    status: 200,
-                    body: "ok".to_string(),
-                    headers: HashMap::new(),
-                },
+                Value::HttpResponse { status: 200, body: b"ok".to_vec(), headers: HashMap::new() },
                 str_value("X-Test"),
                 str_value("true"),
             ],
@@ -4072,11 +4078,7 @@ mod tests {
         let set_headers_result = handle(
             "set_headers",
             &[
-                Value::HttpResponse {
-                    status: 200,
-                    body: "ok".to_string(),
-                    headers: HashMap::new(),
-                },
+                Value::HttpResponse { status: 200, body: b"ok".to_vec(), headers: HashMap::new() },
                 Value::Dict(Arc::new(headers_dict)),
             ],
         )
