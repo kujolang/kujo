@@ -433,8 +433,21 @@ where
                 Some(TransferEncoding::Chunked) => {
                     use chunked_transfer::Encoder;
 
-                    let mut writer = Encoder::new(writer);
-                    io::copy(&mut reader, &mut writer)?;
+                    // Flush each read from a streaming response as its own HTTP
+                    // chunk. The default encoder buffers short writes up to 8 KiB,
+                    // and Encoder::flush() does not flush its underlying writer;
+                    // both behaviors can hide incremental data until EOF.
+                    let mut writer = Encoder::with_flush_after_write(writer);
+                    let mut buffer = [0_u8; 16 * 1024];
+                    loop {
+                        let read = reader.read(&mut buffer)?;
+                        if read == 0 {
+                            break;
+                        }
+                        writer.write_all(&buffer[..read])?;
+                        writer.flush()?;
+                        writer.get_mut().flush()?;
+                    }
                 }
 
                 Some(TransferEncoding::Identity) => {

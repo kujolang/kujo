@@ -3566,6 +3566,50 @@ mod tests {
         server.join().expect("stream server should finish");
     }
 
+    #[test]
+    fn http_request_incremental_response_reports_downstream_disconnect() {
+        let Some((endpoint, first_chunk_rx, release_tx, server)) = gated_stream_server() else {
+            eprintln!("skipping incremental HTTP disconnect test: local TCP bind unavailable");
+            return;
+        };
+
+        let mut options = DictMap::default();
+        options.insert("method".into(), str_value("GET"));
+        options.insert("response_stream".into(), Value::Bool(true));
+        let result =
+            handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
+                .expect("http_request should be handled");
+        first_chunk_rx.recv().expect("upstream should flush the first chunk");
+
+        let Value::Result { is_ok: true, value } = result else {
+            panic!("expected successful incremental HTTP result, got {result:?}");
+        };
+        let Value::HttpStreamingResponse { stream, .. } = *value else {
+            panic!("expected a streaming HTTP response");
+        };
+        let parts = stream
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .take()
+            .expect("stream should be single-use and available");
+        let headers = parts.events.recv().expect("headers event should arrive");
+        assert_eq!(Interpreter::http_stream_event_type(&headers), Some("headers"));
+
+        drop(parts.body);
+        let cancelled = parts.events.recv().expect("cancellation event should arrive");
+        assert_eq!(Interpreter::http_stream_event_type(&cancelled), Some("cancelled"));
+        let Value::Dict(fields) = cancelled else {
+            panic!("expected cancellation event fields");
+        };
+        assert!(matches!(
+            fields.get("reason"),
+            Some(Value::Str(reason)) if reason.as_str() == "downstream_disconnected"
+        ));
+
+        release_tx.send(()).expect("upstream should be released");
+        server.join().expect("stream server should finish");
+    }
+
     fn ai_options(endpoint: &str, model: &str) -> Value {
         let mut options = DictMap::default();
         options.insert("endpoint".into(), str_value(endpoint));
