@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-09-02
+
 ### Added
 
 - Add a filesystem-read-gated, fixed-memory file-range decoder for strict
@@ -23,11 +25,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   verify large signed artifacts without unbounded buffering or exposing key
   parsing through protocol-specific runtime code.
 
+- Add descriptor-relative text and binary reads that reject symlinks, reparse
+  points, special files, traversal, replacement races, and size-limit drift
+  beneath an explicitly authorized filesystem root.
+
+- Add bounded string/byte stdin to structured process execution, staged in a
+  private auto-deleting file and reopened read-only before process spawn.
+
 ### Fixed
 
 - Give both CLI and shared interpreter async runtimes a fixed 8 MiB worker
   stack so bounded protocol and policy functions can run under `promise_all`
   without overflowing Tokio's smaller default worker stack.
+
+### Security
+
+- Close post-validation filesystem replacement races for applications that
+  read files selected beneath a trusted root.
+- Let applications pass already-authorized bytes to structured argv processes
+  without shell interpolation, unbounded pipe writers, writable inherited
+  stdin handles, or hidden capability expansion.
 
 ## [1.2.2] - 2026-09-01
 

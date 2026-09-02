@@ -1,6 +1,6 @@
 {
   "name": "@kujolang/kujo-runtime",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Kujo programming language runtime",
   "license": "MIT",
   "repository": {
@@ -32,10 +32,10 @@
     "README.md"
   ],
   "optionalDependencies": {
-    "@kujolang/kujo-darwin-arm64": "1.2.2",
-    "@kujolang/kujo-darwin-x64": "1.2.2",
-    "@kujolang/kujo-linux-arm64": "1.2.2",
-    "@kujolang/kujo-linux-x64": "1.2.2",
-    "@kujolang/kujo-win32-x64": "1.2.2"
+    "@kujolang/kujo-darwin-arm64": "1.2.3",
+    "@kujolang/kujo-darwin-x64": "1.2.3",
+    "@kujolang/kujo-linux-arm64": "1.2.3",
+    "@kujolang/kujo-linux-x64": "1.2.3",
+    "@kujolang/kujo-win32-x64": "1.2.3"
   }
 }

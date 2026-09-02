@@ -2469,7 +2469,7 @@ dependencies = [
 
 [[package]]
 name = "kujolang"
-version = "1.2.2"
+version = "1.2.3"
 dependencies = [
  "aes-gcm",
  "ahash",
