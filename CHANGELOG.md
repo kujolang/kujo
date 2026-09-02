@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add capability-gated, bounded streaming canonical CRLF text-range hashing
+  and normalized RSA public-key inspection so protocol implementations can
+  verify large signed artifacts without unbounded buffering or exposing key
+  parsing through protocol-specific runtime code.
+
 ### Fixed
 
 - Give both CLI and shared interpreter async runtimes a fixed 8 MiB worker

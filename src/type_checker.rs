@@ -1974,6 +1974,19 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "sha256_canonical_text_file_range".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
             "hash_password".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // password

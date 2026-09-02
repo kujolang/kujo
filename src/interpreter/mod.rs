@@ -890,6 +890,7 @@ impl Interpreter {
             "hmac_sha256_verify",
             "sha256_file",
             "sha256_file_range",
+            "sha256_canonical_text_file_range",
             "md5",
             "md5_file",
             "hash_password",
@@ -902,6 +903,7 @@ impl Interpreter {
             "aes_encrypt_file_stream",
             "aes_decrypt_file_stream",
             "rsa_generate_keypair",
+            "rsa_public_key_info",
             "rsa_encrypt",
             "rsa_decrypt",
             "rsa_sign",
@@ -1716,6 +1718,10 @@ impl Interpreter {
             "sha256_file_range".to_string(),
             Value::NativeFunction("sha256_file_range".to_string()),
         );
+        self.env.define(
+            "sha256_canonical_text_file_range".to_string(),
+            Value::NativeFunction("sha256_canonical_text_file_range".to_string()),
+        );
         self.env.define("md5".to_string(), Value::NativeFunction("md5".to_string()));
         self.env.define("md5_file".to_string(), Value::NativeFunction("md5_file".to_string()));
         self.env.define(
@@ -1751,6 +1757,10 @@ impl Interpreter {
         self.env.define(
             "rsa_generate_keypair".to_string(),
             Value::NativeFunction("rsa_generate_keypair".to_string()),
+        );
+        self.env.define(
+            "rsa_public_key_info".to_string(),
+            Value::NativeFunction("rsa_public_key_info".to_string()),
         );
         self.env
             .define("rsa_encrypt".to_string(), Value::NativeFunction("rsa_encrypt".to_string()));
@@ -3152,6 +3162,18 @@ impl Interpreter {
                 "sha256_file_range",
                 vec!["path".to_string(), "offset".to_string(), "count".to_string()],
             ),
+            "sha256_canonical_text_file_range" => CallableArity::exact(
+                "sha256_canonical_text_file_range",
+                vec![
+                    "path".to_string(),
+                    "offset".to_string(),
+                    "count".to_string(),
+                    "mode".to_string(),
+                ],
+            ),
+            "rsa_public_key_info" => {
+                CallableArity::exact("rsa_public_key_info", vec!["key".to_string()])
+            }
             "path_is_symlink" => CallableArity::exact("path_is_symlink", vec!["path".to_string()]),
             "io_set_permissions" => CallableArity::exact(
                 "io_set_permissions",

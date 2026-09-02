@@ -65,6 +65,130 @@ fn sha256_reader_range(file: File, offset: u64, count: Option<u64>) -> Result<St
     Ok(format!("{:x}", hasher.finalize()))
 }
 
+fn sha256_canonical_text_reader_range(
+    file: File,
+    offset: u64,
+    count: u64,
+    mode: &str,
+) -> Result<String, String> {
+    if mode != "relaxed-crlf" && mode != "simple-crlf" {
+        return Err("mode must be relaxed-crlf or simple-crlf".to_string());
+    }
+    let mut reader = BufReader::new(file);
+    reader.seek(SeekFrom::Start(offset)).map_err(|error| error.to_string())?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0u8; 64 * 1024];
+    let mut remaining = count;
+    let mut line = Vec::new();
+    let mut pending_empty_lines = 0_u64;
+    let mut wrote_nonempty = false;
+    let mut saw_cr = false;
+
+    let commit_line = |line: &mut Vec<u8>,
+                       hasher: &mut Sha256,
+                       pending_empty_lines: &mut u64,
+                       wrote_nonempty: &mut bool|
+     -> Result<(), String> {
+        let canonical = if mode == "relaxed-crlf" {
+            let mut output = Vec::with_capacity(line.len());
+            let mut whitespace = false;
+            for byte in line.iter().copied() {
+                if byte == b' ' || byte == b'\t' {
+                    whitespace = true;
+                } else {
+                    if whitespace {
+                        output.push(b' ');
+                    }
+                    output.push(byte);
+                    whitespace = false;
+                }
+            }
+            output
+        } else {
+            line.clone()
+        };
+        if canonical.is_empty() {
+            *pending_empty_lines = pending_empty_lines
+                .checked_add(1)
+                .ok_or_else(|| "canonical empty-line count overflow".to_string())?;
+        } else {
+            for _ in 0..*pending_empty_lines {
+                hasher.update(b"\r\n");
+            }
+            *pending_empty_lines = 0;
+            hasher.update(&canonical);
+            hasher.update(b"\r\n");
+            *wrote_nonempty = true;
+        }
+        line.clear();
+        Ok(())
+    };
+
+    while remaining > 0 {
+        let ceiling = usize::try_from(remaining.min(buffer.len() as u64)).unwrap_or(buffer.len());
+        let read = reader.read(&mut buffer[..ceiling]).map_err(|error| error.to_string())?;
+        if read == 0 {
+            return Err("requested canonical hash range exceeds file length".to_string());
+        }
+        remaining -= read as u64;
+        for byte in buffer[..read].iter().copied() {
+            if saw_cr {
+                if byte != b'\n' {
+                    return Err("canonical text range contains a bare carriage return".to_string());
+                }
+                commit_line(&mut line, &mut hasher, &mut pending_empty_lines, &mut wrote_nonempty)?;
+                saw_cr = false;
+            } else if byte == b'\r' {
+                saw_cr = true;
+            } else if byte == b'\n' {
+                return Err("canonical text range contains a bare line feed".to_string());
+            } else {
+                line.push(byte);
+                if line.len() > 1024 * 1024 {
+                    return Err("canonical text line exceeds 1048576 bytes".to_string());
+                }
+            }
+        }
+    }
+    if saw_cr {
+        return Err("canonical text range ends with a bare carriage return".to_string());
+    }
+    if !line.is_empty() {
+        commit_line(&mut line, &mut hasher, &mut pending_empty_lines, &mut wrote_nonempty)?;
+    }
+    if mode == "simple-crlf" && !wrote_nonempty {
+        hasher.update(b"\r\n");
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
+fn rsa_public_key_info(value: &Value) -> Result<Value, String> {
+    let (key, format) = match value {
+        Value::Str(pem) => (
+            PKey::public_key_from_pem(pem.as_bytes())
+                .map_err(|error| format!("Invalid RSA public key PEM: {error}"))?,
+            "pem",
+        ),
+        Value::Bytes(der) => (
+            PKey::public_key_from_der(der)
+                .map_err(|error| format!("Invalid RSA public key DER: {error}"))?,
+            "der",
+        ),
+        _ => return Err("rsa_public_key_info requires a PEM string or DER bytes".to_string()),
+    };
+    key.rsa().map_err(|error| format!("Public key is not RSA: {error}"))?;
+    let pem = key.public_key_to_pem().map_err(|error| error.to_string())?;
+    let pem = String::from_utf8(pem).map_err(|error| error.to_string())?;
+    let der = key.public_key_to_der().map_err(|error| error.to_string())?;
+    let mut result = DictMap::default();
+    result.insert(Arc::<str>::from("algorithm"), Value::Str(Arc::new("rsa".to_string())));
+    result.insert(Arc::<str>::from("bits"), Value::Int(i64::from(key.bits())));
+    result.insert(Arc::<str>::from("format"), Value::Str(Arc::new(format.to_string())));
+    result.insert(Arc::<str>::from("pem"), Value::Str(Arc::new(pem)));
+    result.insert(Arc::<str>::from("sha256"), Value::Str(Arc::new(sha256_hex(&der))));
+    Ok(Value::Dict(Arc::new(result)))
+}
+
 fn hmac_sha256_hex(secret: &[u8], message: &[u8]) -> String {
     let mut mac = <HmacSha256 as Mac>::new_from_slice(secret)
         .expect("HMAC-SHA256 accepts keys of every length");
@@ -553,6 +677,48 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "sha256_canonical_text_file_range" => {
+            if arg_values.len() != 4 {
+                return Some(Value::Error(
+                    "sha256_canonical_text_file_range requires path, offset, count, and mode arguments".to_string(),
+                ));
+            }
+            let (
+                Some(Value::Str(path)),
+                Some(Value::Int(offset)),
+                Some(Value::Int(count)),
+                Some(Value::Str(mode)),
+            ) = (arg_values.first(), arg_values.get(1), arg_values.get(2), arg_values.get(3))
+            else {
+                return Some(Value::Error(
+                    "sha256_canonical_text_file_range requires path (string), offset (int), count (int), and mode (string)".to_string(),
+                ));
+            };
+            if *offset < 0 || *count < 0 {
+                return Some(Value::Error(
+                    "sha256_canonical_text_file_range offset and count must be non-negative"
+                        .to_string(),
+                ));
+            }
+            match File::open(path.as_ref()).map_err(|error| error.to_string()).and_then(|file| {
+                sha256_canonical_text_reader_range(
+                    file,
+                    *offset as u64,
+                    *count as u64,
+                    mode.as_ref(),
+                )
+            }) {
+                Ok(digest) => Value::Str(Arc::new(digest)),
+                Err(error) => error_object(format!(
+                    "Failed to canonically hash {} bytes at offset {} in '{}': {}",
+                    count,
+                    offset,
+                    path.as_ref(),
+                    error
+                )),
+            }
+        }
+
         "md5_file" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("md5_file requires a string path argument".to_string()));
@@ -884,6 +1050,18 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "rsa_public_key_info" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error(
+                    "rsa_public_key_info requires a PEM string or DER bytes argument".to_string(),
+                ));
+            }
+            match rsa_public_key_info(&arg_values[0]) {
+                Ok(value) => value,
+                Err(error) => error_object(error),
+            }
+        }
+
         "rsa_encrypt" => {
             if arg_values.len() != 2 {
                 return Some(Value::Error(
@@ -1037,8 +1215,10 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::handle;
+    use super::{handle, sha256_hex};
     use crate::interpreter::Value;
+    use openssl::pkey::PKey;
+    use openssl::rsa::Rsa;
     use std::fs;
     use std::sync::Arc;
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -1167,6 +1347,87 @@ mod tests {
             if message.contains("exceeds file length")));
 
         let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_sha256_canonical_text_file_range_is_streaming_and_strict() {
+        let path = unique_temp_file("kujo_crypto_canonical_text");
+        let input = b"prefix C \t\r\nD \t E\r\n\r\n\r\nsuffix";
+        fs::write(&path, input).unwrap();
+        let offset = 6_i64;
+        let count = (input.len() - 12) as i64;
+
+        let relaxed = handle(
+            "sha256_canonical_text_file_range",
+            &[
+                string_value(&path),
+                Value::Int(offset),
+                Value::Int(count),
+                string_value("relaxed-crlf"),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(relaxed, Value::Str(value)
+            if value.as_ref() == &sha256_hex(b" C\r\nD E\r\n")));
+
+        let simple = handle(
+            "sha256_canonical_text_file_range",
+            &[
+                string_value(&path),
+                Value::Int(offset),
+                Value::Int(count),
+                string_value("simple-crlf"),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(simple, Value::Str(value)
+            if value.as_ref() == &sha256_hex(b" C \t\r\nD \t E\r\n")));
+
+        fs::write(&path, b"bare\nline").unwrap();
+        let invalid = handle(
+            "sha256_canonical_text_file_range",
+            &[string_value(&path), Value::Int(0), Value::Int(9), string_value("relaxed-crlf")],
+        )
+        .unwrap();
+        assert!(matches!(invalid, Value::ErrorObject { message, .. }
+            if message.contains("bare line feed")));
+
+        fs::write(&path, b"").unwrap();
+        let relaxed_empty = handle(
+            "sha256_canonical_text_file_range",
+            &[string_value(&path), Value::Int(0), Value::Int(0), string_value("relaxed-crlf")],
+        )
+        .unwrap();
+        assert!(matches!(relaxed_empty, Value::Str(value)
+            if value.as_ref() == &sha256_hex(b"")));
+        let simple_empty = handle(
+            "sha256_canonical_text_file_range",
+            &[string_value(&path), Value::Int(0), Value::Int(0), string_value("simple-crlf")],
+        )
+        .unwrap();
+        assert!(matches!(simple_empty, Value::Str(value)
+            if value.as_ref() == &sha256_hex(b"\r\n")));
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_rsa_public_key_info_accepts_pem_and_der() {
+        let rsa = Rsa::generate(2048).unwrap();
+        let key = PKey::from_rsa(rsa).unwrap();
+        let pem = String::from_utf8(key.public_key_to_pem().unwrap()).unwrap();
+        let der = key.public_key_to_der().unwrap();
+        for input in [Value::Str(Arc::new(pem)), Value::Bytes(der)] {
+            let result = handle("rsa_public_key_info", &[input]).unwrap();
+            let Value::Dict(info) = result else { panic!("expected public key info") };
+            assert!(
+                matches!(info.get("algorithm"), Some(Value::Str(value)) if value.as_ref() == "rsa")
+            );
+            assert!(matches!(info.get("bits"), Some(Value::Int(2048))));
+            assert!(
+                matches!(info.get("pem"), Some(Value::Str(value)) if value.contains("BEGIN PUBLIC KEY"))
+            );
+            assert!(matches!(info.get("sha256"), Some(Value::Str(value)) if value.len() == 64));
+        }
     }
 
     #[test]

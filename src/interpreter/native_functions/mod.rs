@@ -555,6 +555,7 @@ mod tests {
             "aes_encrypt_file_stream",
             "aes_decrypt_file_stream",
             "rsa_generate_keypair",
+            "rsa_public_key_info",
             "rsa_encrypt",
             "rsa_decrypt",
             "rsa_sign",

@@ -668,6 +668,7 @@ filesystem read permission.
 | `hmac_sha256_verify` | stable | `valid := hmac_sha256_verify(secret, payload, signature)` |
 | `sha256_file` | stable | `h := sha256_file("artifact.bin")` |
 | `sha256_file_range` | stable | `h := sha256_file_range("artifact.bin", 4096, 65536)` |
+| `sha256_canonical_text_file_range` | preview | `h := sha256_canonical_text_file_range("message.eml", offset, count, "relaxed-crlf")` |
 | `md5` | stable | `h := md5("hello")` |
 | `md5_file` | stable | `h := md5_file("artifact.bin")` |
 | `hash_password` | preview | `h := hash_password("secret")` |
@@ -679,6 +680,7 @@ filesystem read permission.
 | `aes_encrypt_file_stream` | preview | `receipt := aes_encrypt_file_stream("in.bin", "out.aead", key, 1048576)` |
 | `aes_decrypt_file_stream` | preview | `receipt := aes_decrypt_file_stream("out.aead", "restored.bin", key)` |
 | `rsa_generate_keypair` | experimental | `kp := rsa_generate_keypair()` |
+| `rsa_public_key_info` | preview | `info := rsa_public_key_info(der_bytes)` |
 | `rsa_encrypt` | experimental | `c := rsa_encrypt(data, public_key)` |
 | `rsa_decrypt` | experimental | `p := rsa_decrypt(c, private_key)` |
 | `rsa_sign` | experimental | `sig := rsa_sign(data, key)` |
