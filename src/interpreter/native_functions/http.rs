@@ -1967,13 +1967,14 @@ pub fn handle_with_interpreter(
                 .and_then(header_pairs_from_value)
                 .unwrap_or_default();
 
-            let body = options.get("_body").or_else(|| options.get("body")).and_then(|value| {
-                match value {
-                    Value::Str(body) => Some(body.as_bytes().to_vec()),
-                    Value::Bytes(body) => Some(body.clone()),
-                    _ => None,
-                }
-            });
+            let body =
+                options.get("_body").or_else(|| options.get("body")).and_then(
+                    |value| match value {
+                        Value::Str(body) => Some(body.as_bytes().to_vec()),
+                        Value::Bytes(body) => Some(body.clone()),
+                        _ => None,
+                    },
+                );
 
             let request_result =
                 network_policy::run_blocking_http_task("HTTP request", move || {
@@ -4188,11 +4189,15 @@ mod tests {
         let mut options = DictMap::default();
         options.insert("method".into(), str_value("POST"));
         options.insert("_body".into(), Value::Bytes(vec![0, 0x7f, 0x80, 0xff]));
-        let result = handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
-            .expect("http_request should return a result value");
+        let result =
+            handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
+                .expect("http_request should return a result value");
         server_handle.join().expect("server thread should finish");
         assert!(matches!(result, Value::Result { is_ok: true, .. }));
-        assert_eq!(request_rx.recv().expect("request body should be captured"), vec![0, 0x7f, 0x80, 0xff]);
+        assert_eq!(
+            request_rx.recv().expect("request body should be captured"),
+            vec![0, 0x7f, 0x80, 0xff]
+        );
     }
 
     #[test]
