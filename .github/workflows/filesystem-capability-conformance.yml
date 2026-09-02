@@ -37,3 +37,6 @@ jobs:
 
       - name: Run VM/interpreter capability parity
         run: cargo test --locked --test native_api_security_boundaries filesystem_beneath
+
+      - name: Run bounded process stdin conformance
+        run: cargo test --locked test_process_stdin --lib

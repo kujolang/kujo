@@ -42,7 +42,7 @@ Process result contract (`spawn_process` / `execute_status`):
   `stdout_truncated`, and `stderr_truncated`.
 - `spawn_process` uses an explicit argv array and does not invoke a shell. Its
   options are `timeout_ms`, `max_output_bytes`, `inherit_env`, `env_allow`,
-  `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
+  `env_deny`, `env`, `stdin`, `stream_channel`, `stream_stdout_path`,
   `stream_stderr_path`, `redact_values`, `cancel_file`, and optional `cwd`.
   The timeout
   defaults to 30,000 ms; output is capped at 1 MiB per stream by default and
@@ -60,6 +60,10 @@ Process result contract (`spawn_process` / `execute_status`):
 - Captured output is decoded lossily as UTF-8. A timeout or cancellation forces
   `success` to `false`; truncation flags must be checked before treating output
   as complete.
+- `stdin` accepts a string or bytes value up to the runtime's 8 MiB file-I/O
+  ceiling. The runtime stages it in a private, auto-deleting temporary file,
+  reopens that file read-only, and unlinks it before spawning the child. This
+  prevents writable-stdin disk growth and pipe-writer lifecycle deadlocks.
 - `ProcessResult` is a runtime struct, not a JSON value. To serialize a receipt,
   copy selected fields into a dictionary and pass that dictionary to `to_json`.
 

@@ -462,7 +462,7 @@ over shell strings when handling user input.
 | `execute` | preview | `out := execute("echo hi", {"timeout_ms": 1000})` |
 | `execute_status` | preview | `r := execute_status("echo hi")` |
 | `spawn_process` | experimental | `r := spawn_process(["echo", "hi"], {"max_output_bytes": 4096})` |
-| `pipe_commands` | experimental | `out := pipe_commands([["echo", "hi"], ["cat"]], {"timeout_ms": 1000})` |
+| `pipe_commands` | experimental | `out := pipe_commands([["cat"]], {"stdin": blob, "timeout_ms": 1000})` |
 | `channel` | preview | `ch := channel()` |
 | `shared_set` | preview | `shared_set("count", 1)` |
 | `shared_get` | preview | `v := shared_get("count")` |
@@ -508,10 +508,10 @@ Process result contracts:
   for user-controlled arguments. `execute_status` and `execute` take shell
   command strings and are gated by `shell-exec`.
 - Process options include `timeout_ms`, `max_output_bytes`, `inherit_env`,
-  `env_allow`, `env_deny`, `env`, `stream_channel`, `stream_stdout_path`,
+  `env_allow`, `env_deny`, `env`, `stdin`, `stream_channel`, `stream_stdout_path`,
   `stream_stderr_path`, `redact_values`, `cancel_file`, and optional `cwd`.
-  Defaults are 30
-  seconds and 1 MiB per output stream; 16 MiB per stream is the maximum.
+  `stdin` accepts a string or bytes value up to 8 MiB. Defaults are 30 seconds
+  and 1 MiB per output stream; 16 MiB per stream is the maximum.
 - `execute` returns a stdout string on successful, non-truncated exit and
   returns a runtime error on timeout, output-limit overflow, or non-zero exit.
 - A `ProcessResult` cannot be passed directly to `to_json`; copy selected dot

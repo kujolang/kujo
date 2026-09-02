@@ -2515,6 +2515,7 @@ dependencies = [
  "sha2 0.10.9",
  "socket2",
  "target-lexicon",
+ "tempfile",
  "tiny_http",
  "tokio",
  "tokio-stream",
@@ -2522,6 +2523,7 @@ dependencies = [
  "toml",
  "urlencoding",
  "uuid",
+ "windows-sys 0.61.2",
  "zip",
 ]
 

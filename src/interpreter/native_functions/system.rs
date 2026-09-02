@@ -9,7 +9,11 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 #[cfg(unix)]
+use std::os::unix::fs::MetadataExt;
+#[cfg(unix)]
 use std::os::unix::process::CommandExt;
+#[cfg(windows)]
+use std::os::windows::io::{AsRawHandle, FromRawHandle};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{SyncSender, TrySendError};
@@ -20,9 +24,10 @@ use std::time::{Duration, Instant};
 const DEFAULT_PROCESS_TIMEOUT_MS: u64 = 30_000;
 const DEFAULT_PROCESS_MAX_OUTPUT_BYTES: usize = 1024 * 1024;
 const MAX_PROCESS_MAX_OUTPUT_BYTES: usize = 16 * 1024 * 1024;
+const MAX_PROCESS_STDIN_BYTES: usize = runtime_limits::MAX_FILE_IO_BYTES;
 const PROCESS_POLL_INTERVAL_MS: u64 = 10;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct ProcessExecOptions {
     cwd: Option<String>,
     timeout_ms: u64,
@@ -36,6 +41,7 @@ struct ProcessExecOptions {
     stream_stderr_path: Option<String>,
     redact_values: Vec<String>,
     cancel_file: Option<String>,
+    stdin_bytes: Option<Vec<u8>>,
 }
 
 impl Default for ProcessExecOptions {
@@ -53,6 +59,7 @@ impl Default for ProcessExecOptions {
             stream_stderr_path: None,
             redact_values: Vec::new(),
             cancel_file: None,
+            stdin_bytes: None,
         }
     }
 }
@@ -281,9 +288,25 @@ fn parse_process_options(options: Option<&Value>) -> Result<ProcessExecOptions, 
                     .filter(|value| !value.is_empty())
                     .collect();
             }
+            "stdin" => {
+                let bytes = match value {
+                    Value::Str(text) => text.as_bytes().to_vec(),
+                    Value::Bytes(bytes) => bytes,
+                    _ => {
+                        return Err(Value::Error("stdin must be a string or bytes".to_string()));
+                    }
+                };
+                if bytes.len() > MAX_PROCESS_STDIN_BYTES {
+                    return Err(Value::Error(format!(
+                        "stdin exceeds the maximum supported size ({})",
+                        MAX_PROCESS_STDIN_BYTES
+                    )));
+                }
+                options.stdin_bytes = Some(bytes);
+            }
             _ => {
                 return Err(Value::Error(format!(
-                    "unsupported process option '{}'; supported options are cwd, timeout_ms, max_output_bytes, inherit_env, env_allow, env, stream_channel, stream_stdout_path, stream_stderr_path, redact_values, cancel_file",
+                    "unsupported process option '{}'; supported options are cwd, timeout_ms, max_output_bytes, inherit_env, env_allow, env_deny, env, stream_channel, stream_stdout_path, stream_stderr_path, redact_values, cancel_file, stdin",
                     key
                 )));
             }
@@ -599,6 +622,55 @@ fn terminate_process_tree(child: &mut Child) {
     let _ = child.kill();
 }
 
+#[cfg(unix)]
+fn reopen_stdin_spool_read_only(spool: &tempfile::NamedTempFile) -> std::io::Result<File> {
+    let reader = File::open(spool.path())?;
+    let writer_metadata = spool.as_file().metadata()?;
+    let reader_metadata = reader.metadata()?;
+    if writer_metadata.dev() != reader_metadata.dev()
+        || writer_metadata.ino() != reader_metadata.ino()
+    {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "private stdin spool was replaced before reopening",
+        ));
+    }
+    Ok(reader)
+}
+
+#[cfg(windows)]
+fn reopen_stdin_spool_read_only(spool: &tempfile::NamedTempFile) -> std::io::Result<File> {
+    use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
+    use windows_sys::Win32::Storage::FileSystem::{
+        ReOpenFile, FILE_GENERIC_READ, FILE_SHARE_DELETE, FILE_SHARE_READ, FILE_SHARE_WRITE,
+    };
+
+    // SAFETY: the source handle belongs to the live NamedTempFile, the requested
+    // access is read-only, and the returned handle is checked before ownership.
+    let handle = unsafe {
+        ReOpenFile(
+            spool.as_file().as_raw_handle(),
+            FILE_GENERIC_READ,
+            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            0,
+        )
+    };
+    if handle == INVALID_HANDLE_VALUE {
+        return Err(std::io::Error::last_os_error());
+    }
+    // SAFETY: ReOpenFile returned a fresh, valid handle that is transferred
+    // exactly once into File for automatic closure.
+    Ok(unsafe { File::from_raw_handle(handle) })
+}
+
+#[cfg(not(any(unix, windows)))]
+fn reopen_stdin_spool_read_only(_spool: &tempfile::NamedTempFile) -> std::io::Result<File> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "process stdin spooling is supported only on Unix and Windows",
+    ))
+}
+
 fn run_command_with_options(
     mut command: Command,
     options: &ProcessExecOptions,
@@ -613,8 +685,32 @@ fn run_command_with_options(
     start_process_group(&mut command);
 
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    if stdin_input.is_some() {
-        command.stdin(Stdio::piped());
+    if let Some(input) = stdin_input {
+        let mut spool = tempfile::NamedTempFile::new().map_err(|error| {
+            error_object(format!(
+                "Failed to create private stdin spool for '{}': {}",
+                command_label, error
+            ))
+        })?;
+        spool.write_all(&input).map_err(|error| {
+            error_object(format!(
+                "Failed to write private stdin spool for '{}': {}",
+                command_label, error
+            ))
+        })?;
+        let reader = reopen_stdin_spool_read_only(&spool).map_err(|error| {
+            error_object(format!(
+                "Failed to reopen private stdin spool read-only for '{}': {}",
+                command_label, error
+            ))
+        })?;
+        spool.close().map_err(|error| {
+            error_object(format!(
+                "Failed to unlink private stdin spool for '{}': {}",
+                command_label, error
+            ))
+        })?;
+        command.stdin(Stdio::from(reader));
     }
 
     let mut child = match command.spawn() {
@@ -626,17 +722,6 @@ fn run_command_with_options(
             )));
         }
     };
-
-    if let Some(input) = stdin_input {
-        if let Some(mut stdin) = child.stdin.take() {
-            if let Err(error) = stdin.write_all(&input) {
-                return Err(error_object(format!(
-                    "Failed to write stdin for process '{}': {}",
-                    command_label, error
-                )));
-            }
-        }
-    }
 
     let Some(stdout_reader) = child.stdout.take() else {
         return Err(error_object(format!(
@@ -687,7 +772,6 @@ fn run_command_with_options(
             )
         })
     };
-
     let timeout = Duration::from_millis(options.timeout_ms);
     let start = Instant::now();
     let mut timed_out = false;
@@ -772,7 +856,6 @@ fn run_command_with_options(
             )));
         }
     };
-
     Ok(ProcessExecutionResult {
         exitcode: status.code().unwrap_or(-1) as i64,
         success: status.success() && !timed_out,
@@ -1449,7 +1532,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 return Some(Value::Error("execute() requires a string command".to_string()));
             };
 
-            let options = match parse_process_options(arg_values.get(1)) {
+            let mut options = match parse_process_options(arg_values.get(1)) {
                 Ok(options) => options,
                 Err(error) => return Some(error),
             };
@@ -1468,11 +1551,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 cmd
             };
 
-            let result =
-                match run_command_with_options(process, &options, None, command_text.as_str()) {
-                    Ok(result) => result,
-                    Err(error) => return Some(error),
-                };
+            let stdin_input = options.stdin_bytes.take();
+            let result = match run_command_with_options(
+                process,
+                &options,
+                stdin_input,
+                command_text.as_str(),
+            ) {
+                Ok(result) => result,
+                Err(error) => return Some(error),
+            };
 
             if result.timed_out {
                 return Some(error_object(format!(
@@ -1512,7 +1600,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 ));
             };
 
-            let options = match parse_process_options(arg_values.get(1)) {
+            let mut options = match parse_process_options(arg_values.get(1)) {
                 Ok(options) => options,
                 Err(error) => return Some(error),
             };
@@ -1531,7 +1619,8 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 cmd
             };
 
-            match run_command_with_options(process, &options, None, command_text.as_str()) {
+            let stdin_input = options.stdin_bytes.take();
+            match run_command_with_options(process, &options, stdin_input, command_text.as_str()) {
                 Ok(result) => process_result_to_value(result),
                 Err(error) => error,
             }
@@ -1545,7 +1634,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 ));
             }
 
-            let options = match parse_process_options(arg_values.get(1)) {
+            let mut options = match parse_process_options(arg_values.get(1)) {
                 Ok(options) => options,
                 Err(error) => return Some(error),
             };
@@ -1574,7 +1663,8 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 command.args(args_slice);
                 let label = render_command_for_error(program, args_slice);
 
-                match run_command_with_options(command, &options, None, label.as_str()) {
+                let stdin_input = options.stdin_bytes.take();
+                match run_command_with_options(command, &options, stdin_input, label.as_str()) {
                     Ok(result) => process_result_to_value(result),
                     Err(error) => error,
                 }
@@ -1591,7 +1681,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 ));
             }
 
-            let options = match parse_process_options(arg_values.get(1)) {
+            let mut options = match parse_process_options(arg_values.get(1)) {
                 Ok(options) => options,
                 Err(error) => return Some(error),
             };
@@ -1631,7 +1721,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     }
                 }
 
-                let mut previous_output: Option<Vec<u8>> = None;
+                let mut previous_output = options.stdin_bytes.take();
 
                 for cmd_parts in parsed_commands.iter() {
                     let program = &cmd_parts[0];
@@ -1705,7 +1795,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::{handle, StreamingRedactor};
+    use super::{handle, StreamingRedactor, MAX_PROCESS_STDIN_BYTES};
     use crate::interpreter::{DictMap, Value};
     use crate::runtime_limits;
     use std::sync::{mpsc, Arc, Mutex};
@@ -2187,6 +2277,151 @@ mod tests {
             }
             other => panic!("expected ProcessResult, got {:?}", other),
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_spawn_process_accepts_bounded_binary_stdin() {
+        let mut options = DictMap::default();
+        options.insert(Arc::from("stdin"), Value::Bytes(b"hello\0world".to_vec()));
+        let args = vec![string_value("sh"), string_value("-c"), string_value("cat")];
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .expect("spawn_process should return a result");
+        match result {
+            Value::Struct { fields, .. } => {
+                assert!(matches!(fields.get("success"), Some(Value::Bool(true))));
+                assert!(matches!(
+                    fields.get("stdout"),
+                    Some(Value::Str(value)) if value.as_bytes() == b"hello\0world"
+                ));
+            }
+            other => panic!("expected ProcessResult, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn test_process_stdin_rejects_oversized_input_before_spawn() {
+        let mut options = DictMap::default();
+        options.insert(Arc::from("stdin"), Value::Bytes(vec![0_u8; MAX_PROCESS_STDIN_BYTES + 1]));
+        let args = vec![string_value("definitely-not-executed")];
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .expect("spawn_process should reject options");
+        assert!(matches!(
+            result,
+            Value::Error(message) if message.contains("stdin exceeds the maximum supported size")
+        ));
+    }
+
+    #[test]
+    fn test_process_stdin_child_helper() {
+        if std::env::var_os("KUJO_PROCESS_STDIN_CHILD").is_none() {
+            return;
+        }
+        use std::io::Read as _;
+        let mut received = Vec::new();
+        std::io::stdin().read_to_end(&mut received).expect("child should read stdin");
+        assert_eq!(received, b"cross-platform\0stdin");
+    }
+
+    #[test]
+    fn test_spawn_process_stdin_cross_platform() {
+        let exe_path = std::env::current_exe().expect("current test executable should exist");
+        let args = vec![
+            string_value(exe_path.to_string_lossy().as_ref()),
+            string_value("--exact"),
+            string_value(
+                "interpreter::native_functions::system::tests::test_process_stdin_child_helper",
+            ),
+            string_value("--nocapture"),
+        ];
+        let mut env = DictMap::default();
+        env.insert(Arc::from("KUJO_PROCESS_STDIN_CHILD"), string_value("1"));
+        let mut options = DictMap::default();
+        options.insert(Arc::from("env"), Value::Dict(Arc::new(env)));
+        options.insert(Arc::from("stdin"), Value::Bytes(b"cross-platform\0stdin".to_vec()));
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .expect("spawn_process should return the child test result");
+        assert!(matches!(
+            result,
+            Value::Struct { fields, .. }
+                if matches!(fields.get("success"), Some(Value::Bool(true)))
+        ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_process_stdin_inherited_by_descendant_cannot_delay_completion() {
+        let mut options = DictMap::default();
+        options.insert(Arc::from("stdin"), Value::Bytes(vec![b'A'; 1024 * 1024]));
+        options.insert(Arc::from("timeout_ms"), Value::Int(100));
+        let args = vec![
+            string_value("sh"),
+            string_value("-c"),
+            string_value("(sleep 5) <&0 >&- 2>&- & exit 0"),
+        ];
+        let started = Instant::now();
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .expect("spawn_process should return a bounded result");
+        assert!(started.elapsed() < Duration::from_secs(2));
+        assert!(matches!(
+            result,
+            Value::Struct { fields, .. }
+                if matches!(fields.get("timed_out"), Some(Value::Bool(false)))
+                    && matches!(fields.get("success"), Some(Value::Bool(true)))
+        ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_process_stdin_broken_pipe_preserves_successful_result() {
+        let mut options = DictMap::default();
+        options.insert(Arc::from("stdin"), Value::Bytes(vec![b'A'; 1024 * 1024]));
+        let args =
+            vec![string_value("sh"), string_value("-c"), string_value("head -c 1 >/dev/null")];
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .expect("spawn_process should preserve the child result");
+        assert!(matches!(
+            result,
+            Value::Struct { fields, .. }
+                if matches!(fields.get("success"), Some(Value::Bool(true)))
+        ));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_process_stdin_descriptor_is_read_only() {
+        let mut options = DictMap::default();
+        options.insert(Arc::from("stdin"), Value::Bytes(b"bounded".to_vec()));
+        let args = vec![
+            string_value("sh"),
+            string_value("-c"),
+            string_value("if printf X >&0 2>/dev/null; then exit 1; else exit 0; fi"),
+        ];
+        let result = handle(
+            "spawn_process",
+            &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
+        )
+        .expect("spawn_process should return the child result");
+        assert!(matches!(
+            result,
+            Value::Struct { fields, .. }
+                if matches!(fields.get("success"), Some(Value::Bool(true)))
+        ));
     }
 
     #[test]

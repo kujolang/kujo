@@ -1,13 +1,13 @@
 # Unsafe Inventory
 
-Generated: 2026-09-01
+Generated: 2026-09-02
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
 
-- Total matches: 73
-- Executable matches: 58
-- Non-executable matches: 15
+- Total matches: 77
+- Executable matches: 61
+- Non-executable matches: 16
 - Unknown classifications: 0
 
 ## Rows
@@ -15,11 +15,15 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | Path | Line | Kind | Classification | Text |
 | --- | ---: | --- | --- | --- |
 | src/interpreter/native_functions/compression.rs | 239 | non_executable | src_comment_or_string |         writer.write_all(b""unsafe"").unwrap(); |
+| src/interpreter/native_functions/crypto.rs | 1882 | non_executable | src_comment_or_string |         fs::write(&invalid_path, b""unsafe \r\n"").unwrap(); |
+| src/interpreter/native_functions/filesystem.rs | 1916 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
 | src/interpreter/native_functions/io.rs | 597 | non_executable | src_comment_or_string |                                     ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"", |
 | src/interpreter/native_functions/io.rs | 1243 | non_executable | src_comment_or_string |             matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory"")) |
-| src/interpreter/native_functions/system.rs | 83 | executable | src_executable_other |         unsafe { |
-| src/interpreter/native_functions/system.rs | 578 | executable | src_executable_other |     unsafe { |
-| src/interpreter/native_functions/system.rs | 595 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
+| src/interpreter/native_functions/system.rs | 90 | executable | src_executable_other |         unsafe { |
+| src/interpreter/native_functions/system.rs | 601 | executable | src_executable_other |     unsafe { |
+| src/interpreter/native_functions/system.rs | 618 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
+| src/interpreter/native_functions/system.rs | 650 | executable | src_executable_other |     let handle = unsafe { |
+| src/interpreter/native_functions/system.rs | 663 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
 | src/interpreter/native_functions/tls.rs | 618 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
 | src/jit.rs | 61 | executable | jit_executable |     let vm_ctx = unsafe { &mut *ctx }; |
 | src/jit.rs | 78 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
