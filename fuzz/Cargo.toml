@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-kujo = { path = ".." }
+kujo = { package = "kujolang", path = ".." }
 
 [[bin]]
 name = "lexer"
