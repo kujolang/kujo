@@ -28,7 +28,6 @@ jobs:
         with:
           node-version: "24.11.0"
           registry-url: https://registry.npmjs.org
-          package-manager-cache: false
 
       - name: Download npm package artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
