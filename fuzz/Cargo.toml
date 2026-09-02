@@ -11,6 +11,12 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 kujo = { package = "kujolang", path = ".." }
 
+[patch.crates-io]
+# cargo-fuzz treats this manifest as its workspace root, so the parent
+# workspace patch is not inherited. Keep HTTP hardening available in fuzz
+# builds by selecting the same reviewed vendored tiny_http implementation.
+tiny_http = { path = "../vendor/tiny_http-0.12.0" }
+
 [[bin]]
 name = "lexer"
 path = "fuzz_targets/lexer.rs"
