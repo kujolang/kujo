@@ -374,6 +374,8 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | --- | --- | --- |
 | `read_file` | stable | `txt := read_file("notes.txt")` |
 | `read_file_lossy` | stable | `txt := read_file_lossy("legacy.txt")` |
+| `read_file_beneath` | preview | `txt := read_file_beneath("trusted", "docs/note.txt", 1048576)` |
+| `read_binary_file_beneath` | preview | `blob := read_binary_file_beneath("trusted", "docs/file.pdf", 5000000)` |
 | `write_file` | stable | `write_file("notes.txt", "hello")` |
 | `write_file_atomic` | stable | `write_file_atomic("notes.txt", "hello", true)` |
 | `append_file` | stable | `append_file("notes.txt", "more")` |
@@ -403,6 +405,16 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `io_private_spool_abort` | preview | `io_private_spool_abort(spool)` |
 | `io_truncate` | preview | `io_truncate("out.bin", 1024)` |
 | `io_copy_range` | preview | `io_copy_range("in.bin", "out.bin", 0, 1024)` |
+
+`read_file_beneath` and `read_binary_file_beneath` open the trusted root once,
+then traverse every untrusted relative component through directory handles
+without following symbolic links or Windows reparse points. Absolute paths,
+`.` and `..`, non-regular final objects, and reads above the caller limit fail
+closed. The caller limit must be between 1 byte and the runtime's 8 MiB file
+I/O ceiling. The text variant also requires valid UTF-8. Both variants require
+`filesystem-read` and share the same native implementation in interpreter and
+VM execution. They do not prevent an actor with write access from changing the
+contents of a regular file after its handle has been opened.
 | `join_path` | stable | `p := join_path("a", "b")` |
 | `dirname` | stable | `d := dirname("a/b.txt")` |
 | `basename` | stable | `b := basename("a/b.txt")` |

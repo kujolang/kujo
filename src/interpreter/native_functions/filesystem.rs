@@ -7,14 +7,17 @@ use crate::interpreter::{AsyncRuntime, Interpreter, Value};
 use crate::path_security;
 use crate::runtime_limits;
 use crate::{builtins, interpreter::DictMap};
+use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
+use cap_std::ambient_authority;
+use cap_std::fs::{Dir, OpenOptions as CapOpenOptions};
 use std::fs;
 #[cfg(feature = "runtime-archive")]
 use std::fs::File;
 use std::fs::OpenOptions;
-use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
+use std::io::{BufRead, BufReader, Read, Write};
 #[cfg(feature = "runtime-archive")]
 use std::path::PathBuf;
+use std::path::{Component, Path};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -25,6 +28,131 @@ const ZIP_UNIX_FILE_TYPE_MASK: u32 = 0o170000;
 const ZIP_UNIX_SYMLINK_FILE_TYPE: u32 = 0o120000;
 const MAX_FILE_READ_BYTES: u64 = runtime_limits::MAX_FILE_IO_BYTES as u64;
 const MAX_FILE_WRITE_BYTES: usize = runtime_limits::MAX_FILE_IO_BYTES;
+
+fn beneath_error(code: &str, detail: impl std::fmt::Display) -> String {
+    format!("read_file_beneath[{}]: {}", code, detail)
+}
+
+fn validate_beneath_relative_path(relative_path: &Path) -> Result<Vec<&std::ffi::OsStr>, String> {
+    if relative_path.as_os_str().is_empty() || relative_path.is_absolute() {
+        return Err(beneath_error(
+            "invalid_relative_path",
+            "relative_path must be a non-empty relative path",
+        ));
+    }
+
+    let relative_text = relative_path.to_string_lossy();
+    #[cfg(windows)]
+    let lexical_parts = relative_text.split(['/', '\\']);
+    #[cfg(not(windows))]
+    let lexical_parts = relative_text.split('/');
+    if lexical_parts.clone().any(|part| part.is_empty() || part == "." || part == "..") {
+        return Err(beneath_error(
+            "invalid_relative_path",
+            "relative_path must contain only normal non-empty components",
+        ));
+    }
+
+    let mut components = Vec::new();
+    for component in relative_path.components() {
+        match component {
+            Component::Normal(value) if !value.is_empty() => components.push(value),
+            _ => {
+                return Err(beneath_error(
+                    "invalid_relative_path",
+                    "relative_path must contain only normal components (no prefix, root, '.', or '..')",
+                ));
+            }
+        }
+    }
+    if components.is_empty() {
+        return Err(beneath_error("invalid_relative_path", "relative_path must name a file"));
+    }
+    Ok(components)
+}
+
+fn read_file_beneath_bytes(
+    root: &str,
+    relative_path: &str,
+    max_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
+        return Err(beneath_error(
+            "invalid_max_bytes",
+            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
+        ));
+    }
+
+    let relative_path = Path::new(relative_path);
+    let components = validate_beneath_relative_path(relative_path)?;
+    let mut directory = Dir::open_ambient_dir(root, ambient_authority()).map_err(|error| {
+        beneath_error("root_open_failed", format!("cannot open trusted root '{}': {}", root, error))
+    })?;
+
+    for component in &components[..components.len() - 1] {
+        directory =
+            cap_fs_ext::DirExt::open_dir_nofollow(&directory, component).map_err(|error| {
+                beneath_error(
+                    "component_rejected",
+                    format!(
+                        "cannot traverse component '{}': {}",
+                        component.to_string_lossy(),
+                        error
+                    ),
+                )
+            })?;
+    }
+
+    let final_component = components[components.len() - 1];
+    let mut options = CapOpenOptions::new();
+    options.read(true).follow(FollowSymlinks::No).nonblock(true);
+    let mut file = directory.open_with(final_component, &options).map_err(|error| {
+        beneath_error(
+            "target_open_failed",
+            format!("cannot open target '{}': {}", relative_path.display(), error),
+        )
+    })?;
+    let metadata = file.metadata().map_err(|error| {
+        beneath_error(
+            "target_metadata_failed",
+            format!("cannot inspect target '{}': {}", relative_path.display(), error),
+        )
+    })?;
+    if !metadata.is_file() {
+        return Err(beneath_error(
+            "target_not_regular_file",
+            format!("target '{}' is not a regular file", relative_path.display()),
+        ));
+    }
+    if metadata.len() > max_bytes as u64 {
+        return Err(beneath_error(
+            "size_limit_exceeded",
+            format!(
+                "target '{}' exceeds maximum read size ({} bytes > {} bytes)",
+                relative_path.display(),
+                metadata.len(),
+                max_bytes
+            ),
+        ));
+    }
+
+    let mut bytes = Vec::with_capacity((metadata.len() as usize).min(max_bytes));
+    Read::by_ref(&mut file).take(max_bytes as u64 + 1).read_to_end(&mut bytes).map_err(
+        |error| {
+            beneath_error(
+                "read_failed",
+                format!("cannot read target '{}': {}", relative_path.display(), error),
+            )
+        },
+    )?;
+    if bytes.len() > max_bytes {
+        return Err(beneath_error(
+            "size_limit_exceeded",
+            format!("target '{}' grew beyond maximum read size", relative_path.display()),
+        ));
+    }
+    Ok(bytes)
+}
 
 #[derive(Clone, Copy)]
 struct ZipExtractionLimits {
@@ -741,6 +869,46 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 }
             } else {
                 Value::Error("read_file_lossy requires a string path argument".to_string())
+            }
+        }
+
+        "read_file_beneath" | "read_binary_file_beneath" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(format!(
+                    "{} requires root, relative_path, and max_bytes arguments",
+                    name
+                )));
+            }
+            let (
+                Some(Value::Str(root)),
+                Some(Value::Str(relative_path)),
+                Some(Value::Int(max_bytes)),
+            ) = (arg_values.first(), arg_values.get(1), arg_values.get(2))
+            else {
+                return Some(Value::Error(format!(
+                    "{} requires root (string), relative_path (string), and max_bytes (int) arguments",
+                    name
+                )));
+            };
+            let max_bytes = match usize::try_from(*max_bytes) {
+                Ok(value) => value,
+                Err(_) => {
+                    return Some(Value::Error(beneath_error(
+                        "invalid_max_bytes",
+                        format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
+                    )));
+                }
+            };
+            match read_file_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes) {
+                Ok(bytes) if name == "read_binary_file_beneath" => Value::Bytes(bytes),
+                Ok(bytes) => match String::from_utf8(bytes) {
+                    Ok(content) => Value::Str(Arc::new(content)),
+                    Err(_) => Value::Error(beneath_error(
+                        "invalid_utf8",
+                        format!("target '{}' is not valid UTF-8", relative_path),
+                    )),
+                },
+                Err(error) => Value::Error(error),
             }
         }
 
@@ -1667,4 +1835,151 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
     };
 
     Some(result)
+}
+
+#[cfg(test)]
+mod beneath_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::thread;
+
+    fn fixture_root(label: &str) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!("kujo_beneath_{}_{}", label, Uuid::new_v4()));
+        fs::create_dir_all(&path).expect("fixture root");
+        path
+    }
+
+    #[test]
+    fn read_file_beneath_reads_text_and_binary_with_exact_bounds() {
+        let root = fixture_root("valid");
+        fs::create_dir(root.join("nested")).unwrap();
+        fs::write(root.join("nested/note.txt"), b"hello").unwrap();
+        assert_eq!(
+            read_file_beneath_bytes(root.to_str().unwrap(), "nested/note.txt", 5).unwrap(),
+            b"hello"
+        );
+        let error =
+            read_file_beneath_bytes(root.to_str().unwrap(), "nested/note.txt", 4).unwrap_err();
+        assert!(error.contains("[size_limit_exceeded]"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn read_file_beneath_rejects_lexical_escape_and_non_files() {
+        let root = fixture_root("lexical");
+        fs::create_dir(root.join("nested")).unwrap();
+        for path in ["", ".", "..", "../outside", "nested/../outside"] {
+            let error = read_file_beneath_bytes(root.to_str().unwrap(), path, 16).unwrap_err();
+            assert!(error.contains("[invalid_relative_path]"), "{path}: {error}");
+        }
+        let absolute = root.join("nested");
+        let error = read_file_beneath_bytes(root.to_str().unwrap(), absolute.to_str().unwrap(), 16)
+            .unwrap_err();
+        assert!(error.contains("[invalid_relative_path]"));
+        let error = read_file_beneath_bytes(root.to_str().unwrap(), "nested", 16).unwrap_err();
+        assert!(error.contains("[target_not_regular_file]"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_file_beneath_rejects_final_and_intermediate_symlinks() {
+        use std::os::unix::fs::symlink;
+
+        let root = fixture_root("symlink");
+        let outside = fixture_root("outside");
+        fs::create_dir(root.join("safe")).unwrap();
+        fs::write(root.join("safe/note.txt"), b"safe").unwrap();
+        fs::write(outside.join("secret.txt"), b"outside").unwrap();
+        symlink(outside.join("secret.txt"), root.join("final-link")).unwrap();
+        symlink(&outside, root.join("dir-link")).unwrap();
+
+        let final_error =
+            read_file_beneath_bytes(root.to_str().unwrap(), "final-link", 64).unwrap_err();
+        assert!(final_error.contains("[target_open_failed]"));
+        let intermediate_error =
+            read_file_beneath_bytes(root.to_str().unwrap(), "dir-link/secret.txt", 64).unwrap_err();
+        assert!(intermediate_error.contains("[component_rejected]"));
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_file_beneath_rejects_fifo_without_blocking() {
+        use std::ffi::CString;
+        use std::os::unix::ffi::OsStrExt;
+
+        let root = fixture_root("fifo");
+        let fifo = root.join("pipe");
+        let fifo_c = CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0);
+        let error = read_file_beneath_bytes(root.to_str().unwrap(), "pipe", 64).unwrap_err();
+        assert!(error.contains("[target_not_regular_file]"), "{error}");
+        let _ = fs::remove_file(fifo);
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_file_beneath_race_never_reads_outside_root() {
+        use std::os::unix::fs::symlink;
+
+        let root = fixture_root("race");
+        let outside = fixture_root("race_outside");
+        let live = root.join("live");
+        fs::create_dir(&live).unwrap();
+        fs::write(live.join("note.txt"), b"safe").unwrap();
+        fs::write(outside.join("note.txt"), b"outside").unwrap();
+        let stop = std::sync::Arc::new(AtomicBool::new(false));
+        let stop_attacker = stop.clone();
+        let root_attacker = root.clone();
+        let outside_attacker = outside.clone();
+        let attacker = thread::spawn(move || {
+            while !stop_attacker.load(Ordering::Relaxed) {
+                if fs::rename(root_attacker.join("live"), root_attacker.join("parked")).is_ok() {
+                    let _ = symlink(&outside_attacker, root_attacker.join("live"));
+                    let _ = fs::remove_file(root_attacker.join("live"));
+                    let _ = fs::rename(root_attacker.join("parked"), root_attacker.join("live"));
+                }
+            }
+        });
+        for _ in 0..2_000 {
+            if let Ok(bytes) = read_file_beneath_bytes(root.to_str().unwrap(), "live/note.txt", 64)
+            {
+                assert_eq!(bytes, b"safe", "capability traversal escaped trusted root");
+            }
+        }
+        stop.store(true, Ordering::Relaxed);
+        attacker.join().unwrap();
+        let _ = fs::remove_file(&live);
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn read_file_beneath_rejects_windows_directory_reparse_points() {
+        let root = fixture_root("windows_reparse");
+        let outside = fixture_root("windows_reparse_outside");
+        fs::write(outside.join("secret.txt"), b"outside").unwrap();
+        let link = root.join("dir-link");
+        let command = format!("mklink /J \"{}\" \"{}\"", link.display(), outside.display());
+        let output = std::process::Command::new("cmd")
+            .args(["/C", command.as_str()])
+            .output()
+            .expect("cmd should create a junction fixture");
+        assert!(
+            output.status.success(),
+            "junction fixture failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+
+        let error =
+            read_file_beneath_bytes(root.to_str().unwrap(), "dir-link/secret.txt", 64).unwrap_err();
+        assert!(error.contains("[component_rejected]"), "{error}");
+        let _ = fs::remove_dir(&link);
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
 }

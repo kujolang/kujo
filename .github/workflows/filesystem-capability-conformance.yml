@@ -1,0 +1,39 @@
+name: filesystem-capability-conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  descriptor-relative-read:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure OpenSSL for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not $env:VCPKG_INSTALLATION_ROOT) {
+            $env:VCPKG_INSTALLATION_ROOT = "C:\vcpkg"
+          }
+          vcpkg install openssl:x64-windows-static-md
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Run descriptor-relative filesystem conformance
+        run: cargo test --locked read_file_beneath --lib
+
+      - name: Run VM/interpreter capability parity
+        run: cargo test --locked --test native_api_security_boundaries filesystem_beneath

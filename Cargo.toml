@@ -92,6 +92,8 @@ infer = "0.16"
 libc = "0.2"
 rpassword = "7.3.1"
 keyring = "4.1.6"
+cap-std = "=4.0.2"
+cap-fs-ext = "=4.0.2"
 
 # JIT Compilation
 cranelift = { version = "0.113.1", optional = true }

@@ -347,6 +347,58 @@ fn native_capability_untrusted_denies_filesystem_write() {
 }
 
 #[test]
+fn filesystem_beneath_is_filesystem_read_gated_in_vm_and_interpreter() {
+    let script = "read_file_beneath(\".\", \"blocked.txt\", 64)\n";
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            script,
+            "Capability denied: filesystem-read required for read_file_beneath",
+            &runtime_args,
+        );
+    }
+
+    let script = "read_binary_file_beneath(\".\", \"blocked.txt\", 64)\n";
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            script,
+            "Capability denied: filesystem-read required for read_binary_file_beneath",
+            &runtime_args,
+        );
+    }
+}
+
+#[test]
+fn filesystem_beneath_has_vm_interpreter_parity() {
+    let project_root = unique_temp_dir("filesystem_beneath_runtime_parity");
+    let script_path = project_root.join("beneath.kujo");
+    fs::create_dir(project_root.join("trusted")).expect("trusted directory");
+    fs::write(project_root.join("trusted/note.txt"), b"hello").expect("text fixture");
+    fs::write(
+        &script_path,
+        "let text := read_file_beneath(\"trusted\", \"note.txt\", 5)\nlet blob := read_binary_file_beneath(\"trusted\", \"note.txt\", 5)\nprint(text + \":\" + to_string(len(blob)))\n",
+    )
+    .expect("script fixture");
+
+    let mut outputs = Vec::new();
+    for runtime_args in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script_path.to_str().expect("utf-8 script path"));
+        let output = run_kujo(&args, &project_root);
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "runtime failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        outputs.push(stdout_text(&output));
+    }
+    assert_eq!(outputs[0], outputs[1]);
+    assert!(outputs[0].contains("hello:5"));
+}
+
+#[test]
 fn native_capability_untrusted_denies_private_spool_in_vm_and_interpreter() {
     let script = "io_private_spool_open(\"blocked.eml\", 1024, 384)\n";
     assert_runtime_boundary_failure_with_args(

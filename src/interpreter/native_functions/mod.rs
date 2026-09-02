@@ -627,6 +627,8 @@ mod tests {
             "assert_false",
             "assert_contains",
             "read_file",
+            "read_file_beneath",
+            "read_binary_file_beneath",
             "write_file",
             "write_file_atomic",
             "append_file",
