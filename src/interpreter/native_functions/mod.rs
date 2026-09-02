@@ -261,6 +261,7 @@ mod tests {
         let mut path = std::env::current_dir().expect("current_dir should resolve");
         path.push("tmp");
         path.push("native_zip_dispatch_tests");
+        path.push(std::process::id().to_string());
         std::fs::create_dir_all(&path).expect("zip test tmp dir should be created");
         path.push(file_name);
         path.to_string_lossy().to_string()
