@@ -33,6 +33,14 @@ pub fn read_bounded_http_request_body(
     reader: &mut dyn Read,
     declared_length: Option<usize>,
 ) -> Result<String, HttpRequestBodyError> {
+    read_bounded_http_request_body_bytes(reader, declared_length)
+        .map(|buffer| String::from_utf8_lossy(&buffer).to_string())
+}
+
+pub fn read_bounded_http_request_body_bytes(
+    reader: &mut dyn Read,
+    declared_length: Option<usize>,
+) -> Result<Vec<u8>, HttpRequestBodyError> {
     let maximum = crate::runtime_limits::MAX_NETWORK_BODY_BYTES;
     if declared_length.is_some_and(|length| length > maximum) {
         return Err(HttpRequestBodyError::TooLarge);
@@ -53,7 +61,7 @@ pub fn read_bounded_http_request_body(
     if declared_length.is_some_and(|length| buffer.len() != length) {
         return Err(HttpRequestBodyError::ReadFailed);
     }
-    Ok(String::from_utf8_lossy(&buffer).to_string())
+    Ok(buffer)
 }
 
 /// Split a request URL into a path, parsed query parameters, and raw query string.

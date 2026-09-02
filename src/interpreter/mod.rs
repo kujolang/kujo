@@ -2249,7 +2249,7 @@ impl Interpreter {
 
             // Read body first (before any response handling)
             let declared_body_length = request.body_length();
-            let body_content = match http_request_utils::read_bounded_http_request_body(
+            let body_bytes = match http_request_utils::read_bounded_http_request_body_bytes(
                 request.as_reader(),
                 declared_body_length,
             ) {
@@ -2270,6 +2270,7 @@ impl Interpreter {
                     continue;
                 }
             };
+            let body_content = String::from_utf8_lossy(&body_bytes).to_string();
 
             // Find matching route (supports path parameters like /:code)
             // Exact matches take priority over parameterized routes
@@ -2315,6 +2316,7 @@ impl Interpreter {
                 req_fields.insert("path".into(), Value::Str(Arc::new(url_path.clone())));
                 req_fields.insert("raw_path".into(), Value::Str(Arc::new(request_url.clone())));
                 req_fields.insert("body".into(), Value::Str(Arc::new(body_content.clone())));
+                req_fields.insert("body_bytes".into(), Value::Bytes(body_bytes.clone()));
                 req_fields.insert("params".into(), Value::Dict(Arc::new(params_dict)));
                 req_fields
                     .insert("peer_address".into(), Value::Str(Arc::new(peer_address.clone())));
