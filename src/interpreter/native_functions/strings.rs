@@ -1700,7 +1700,7 @@ mod tests {
 
         let index_invalid_type = handle("index_of", &[Value::Bool(true), str_value("x")]).unwrap();
         assert!(
-            matches!(index_invalid_type, Value::Error(message) if message.contains("first argument must be a string or array"))
+            matches!(index_invalid_type, Value::Error(message) if message.contains("first argument must be a string, array, or bytes"))
         );
     }
 
