@@ -20,6 +20,8 @@ const MAX_RECORDS: i64 = 256;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum LookupKind {
+    A,
+    Aaaa,
     Mx,
     Txt,
     Ptr,
@@ -29,6 +31,8 @@ enum LookupKind {
 impl LookupKind {
     fn record_type(self) -> &'static str {
         match self {
+            Self::A => "A",
+            Self::Aaaa => "AAAA",
             Self::Mx => "MX",
             Self::Txt => "TXT",
             Self::Ptr => "PTR",
@@ -58,6 +62,11 @@ impl Default for LookupOptions {
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 enum NormalizedRecord {
+    Address {
+        value: String,
+        ttl: u32,
+        proof: Proof,
+    },
     Mx {
         preference: u16,
         exchange: String,
@@ -194,6 +203,8 @@ fn lookup_in_runtime(
             .map_err(|err| format!("dns resolver initialization failed: {}", err))?;
 
         let lookup = match kind {
+            LookupKind::A => resolver.ipv4_lookup(query).await,
+            LookupKind::Aaaa => resolver.ipv6_lookup(query).await,
             LookupKind::Mx => resolver.mx_lookup(query).await,
             LookupKind::Txt => resolver.txt_lookup(query).await,
             LookupKind::Ptr => {
@@ -218,6 +229,12 @@ fn lookup_in_runtime(
             let ttl = record.ttl;
             let proof = if options.dnssec { record.proof } else { Proof::Indeterminate };
             let normalized = match (kind, &record.data) {
+                (LookupKind::A, RData::A(address)) => {
+                    NormalizedRecord::Address { value: address.0.to_string(), ttl, proof }
+                }
+                (LookupKind::Aaaa, RData::AAAA(address)) => {
+                    NormalizedRecord::Address { value: address.0.to_string(), ttl, proof }
+                }
                 (LookupKind::Mx, RData::MX(mx)) => NormalizedRecord::Mx {
                     preference: mx.preference,
                     exchange: normalize_name(&mx.exchange),
@@ -278,7 +295,8 @@ fn proof_name(proof: Proof) -> &'static str {
 
 fn record_proof(record: &NormalizedRecord) -> Proof {
     match record {
-        NormalizedRecord::Mx { proof, .. }
+        NormalizedRecord::Address { proof, .. }
+        | NormalizedRecord::Mx { proof, .. }
         | NormalizedRecord::Txt { proof, .. }
         | NormalizedRecord::Ptr { proof, .. }
         | NormalizedRecord::Tlsa { proof, .. } => *proof,
@@ -304,6 +322,11 @@ fn dnssec_status(records: &[NormalizedRecord], checked: bool) -> &'static str {
 fn record_value(record: NormalizedRecord) -> Value {
     let mut map = DictMap::default();
     match record {
+        NormalizedRecord::Address { value, ttl, proof } => {
+            insert(&mut map, "value", string_value(value));
+            insert(&mut map, "ttl", Value::Int(ttl as i64));
+            insert(&mut map, "dnssec", string_value(proof_name(proof)));
+        }
         NormalizedRecord::Mx { preference, exchange, ttl, proof } => {
             insert(&mut map, "preference", Value::Int(preference as i64));
             insert(&mut map, "exchange", string_value(exchange));
@@ -385,6 +408,8 @@ fn run_lookup(kind: LookupKind, arg_values: &[Value]) -> Value {
 
 pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Option<Value> {
     let kind = match name {
+        "dns_lookup_a" => LookupKind::A,
+        "dns_lookup_aaaa" => LookupKind::Aaaa,
         "dns_lookup_mx" => LookupKind::Mx,
         "dns_lookup_txt" => LookupKind::Txt,
         "dns_lookup_ptr" => LookupKind::Ptr,
@@ -402,6 +427,8 @@ mod tests {
     fn validates_ptr_and_dns_names() {
         assert_eq!(validate_query(LookupKind::Ptr, "192.0.2.1").unwrap(), "192.0.2.1");
         assert!(validate_query(LookupKind::Ptr, "mail.example").is_err());
+        assert_eq!(validate_query(LookupKind::A, "Mail.Example").unwrap(), "Mail.Example.");
+        assert_eq!(validate_query(LookupKind::Aaaa, "v6.example").unwrap(), "v6.example.");
         assert_eq!(validate_query(LookupKind::Mx, "Example.COM").unwrap(), "Example.COM.");
         assert!(validate_query(LookupKind::Txt, "bad name").is_err());
     }
@@ -433,5 +460,29 @@ mod tests {
         }];
         assert_eq!(dnssec_status(&records, true), "BOGUS");
         assert_eq!(dnssec_status(&records, false), "NOT_CHECKED");
+    }
+
+    #[test]
+    fn address_records_share_the_bounded_dns_envelope_contract() {
+        let record = NormalizedRecord::Address {
+            value: "2001:db8::1".to_string(),
+            ttl: 300,
+            proof: Proof::Secure,
+        };
+        let Value::Dict(value) = record_value(record) else {
+            panic!("address record must normalize to a dictionary");
+        };
+        match value.get("value") {
+            Some(Value::Str(value)) => assert_eq!(value.as_ref(), "2001:db8::1"),
+            other => panic!("unexpected address value: {other:?}"),
+        }
+        match value.get("ttl") {
+            Some(Value::Int(value)) => assert_eq!(*value, 300),
+            other => panic!("unexpected address TTL: {other:?}"),
+        }
+        match value.get("dnssec") {
+            Some(Value::Str(value)) => assert_eq!(value.as_ref(), "SECURE"),
+            other => panic!("unexpected address DNSSEC proof: {other:?}"),
+        }
     }
 }

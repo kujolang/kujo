@@ -910,6 +910,7 @@ impl Interpreter {
             "spawn_process",
             "pipe_commands",
             // Network functions
+            "ip_cidr_contains",
             "ip_classify",
             "tcp_bind_probe",
             "tcp_listen",
@@ -926,6 +927,8 @@ impl Interpreter {
             "udp_send_to",
             "udp_receive_from",
             "udp_close",
+            "dns_lookup_a",
+            "dns_lookup_aaaa",
             "dns_lookup_mx",
             "dns_lookup_txt",
             "dns_lookup_ptr",
@@ -1767,6 +1770,10 @@ impl Interpreter {
         );
 
         // Network functions (TCP/UDP)
+        self.env.define(
+            "ip_cidr_contains".to_string(),
+            Value::NativeFunction("ip_cidr_contains".to_string()),
+        );
         self.env
             .define("ip_classify".to_string(), Value::NativeFunction("ip_classify".to_string()));
         self.env.define(
@@ -1802,6 +1809,12 @@ impl Interpreter {
             Value::NativeFunction("udp_receive_from".to_string()),
         );
         self.env.define("udp_close".to_string(), Value::NativeFunction("udp_close".to_string()));
+        self.env
+            .define("dns_lookup_a".to_string(), Value::NativeFunction("dns_lookup_a".to_string()));
+        self.env.define(
+            "dns_lookup_aaaa".to_string(),
+            Value::NativeFunction("dns_lookup_aaaa".to_string()),
+        );
         self.env.define(
             "dns_lookup_mx".to_string(),
             Value::NativeFunction("dns_lookup_mx".to_string()),
@@ -3013,6 +3026,10 @@ impl Interpreter {
             "decode_base64_utf8" => {
                 CallableArity::exact("decode_base64_utf8", vec!["text".to_string()])
             }
+            "ip_cidr_contains" => CallableArity::exact(
+                "ip_cidr_contains",
+                vec!["address".to_string(), "cidr".to_string()],
+            ),
             "ip_classify" => CallableArity::exact("ip_classify", vec!["address".to_string()]),
             "gzip_compress" => {
                 CallableArity::exact("gzip_compress", vec!["bytes_data".to_string()])

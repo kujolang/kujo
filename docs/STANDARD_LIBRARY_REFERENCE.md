@@ -596,12 +596,15 @@ edge cases are higher-risk than the HTTP helper surface.
 | `tcp_set_nonblocking` | experimental | `tcp_set_nonblocking(conn, true)` |
 | `tcp_info` | preview | `info := tcp_info(conn)` |
 | `tcp_set_timeouts` | preview | `tcp_set_timeouts(conn, 30000, 30000)` |
+| `ip_cidr_contains` | preview | `allowed := ip_cidr_contains("192.0.2.4", "192.0.2.0/24")` |
 | `ip_classify` | preview | `info := ip_classify("192.0.2.1")` |
 | `tcp_bind_probe` | preview | `probe := tcp_bind_probe("127.0.0.1")` |
 | `udp_bind` | experimental | `sock := udp_bind("127.0.0.1", 9001)` |
 | `udp_send_to` | experimental | `udp_send_to(sock, "hi", "127.0.0.1", 9002)` |
 | `udp_receive_from` | experimental | `packet := udp_receive_from(sock, 1024)` |
 | `udp_close` | experimental | `udp_close(sock)` |
+| `dns_lookup_a` | preview | `addresses := dns_lookup_a("mail.example.com")` |
+| `dns_lookup_aaaa` | preview | `addresses := dns_lookup_aaaa("mail.example.com")` |
 | `dns_lookup_mx` | preview | `mx := dns_lookup_mx("example.com")` |
 | `dns_lookup_txt` | preview | `txt := dns_lookup_txt("_dmarc.example.com")` |
 | `dns_lookup_ptr` | preview | `ptr := dns_lookup_ptr("192.0.2.1")` |

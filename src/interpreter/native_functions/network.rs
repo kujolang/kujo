@@ -99,6 +99,30 @@ fn ip_scope(address: IpAddr) -> (&'static str, bool) {
     }
 }
 
+fn ip_cidr_contains(address: IpAddr, cidr: &str) -> Result<bool, String> {
+    let (network_text, prefix_text) = cidr.trim().split_once('/').ok_or_else(|| {
+        "ip_cidr_contains requires CIDR notation with an explicit prefix".to_string()
+    })?;
+    let network = network_text
+        .parse::<IpAddr>()
+        .map_err(|_| "ip_cidr_contains requires a valid CIDR network address".to_string())?;
+    let prefix = prefix_text
+        .parse::<u32>()
+        .map_err(|_| "ip_cidr_contains requires a numeric CIDR prefix".to_string())?;
+    match (address, network) {
+        (IpAddr::V4(address), IpAddr::V4(network)) if prefix <= 32 => {
+            let mask = if prefix == 0 { 0 } else { u32::MAX << (32 - prefix) };
+            Ok((u32::from(address) & mask) == (u32::from(network) & mask))
+        }
+        (IpAddr::V6(address), IpAddr::V6(network)) if prefix <= 128 => {
+            let mask = if prefix == 0 { 0 } else { u128::MAX << (128 - prefix) };
+            Ok((u128::from(address) & mask) == (u128::from(network) & mask))
+        }
+        (IpAddr::V4(_), IpAddr::V6(_)) | (IpAddr::V6(_), IpAddr::V4(_)) => Ok(false),
+        _ => Err("ip_cidr_contains prefix exceeds the address-family width".to_string()),
+    }
+}
+
 fn lock_or_network_error<'a, T>(
     mutex: &'a Mutex<T>,
     context: &str,
@@ -113,6 +137,29 @@ fn lock_or_network_error<'a, T>(
 
 pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
+        "ip_cidr_contains" => {
+            if arg_values.len() != 2 {
+                Value::Error(
+                    "ip_cidr_contains requires string address and CIDR arguments".to_string(),
+                )
+            } else if let (Some(Value::Str(address)), Some(Value::Str(cidr))) =
+                (arg_values.first(), arg_values.get(1))
+            {
+                match address.parse::<IpAddr>() {
+                    Ok(address) => match ip_cidr_contains(address, cidr) {
+                        Ok(contains) => Value::Bool(contains),
+                        Err(message) => Value::Error(message),
+                    },
+                    Err(_) => Value::Error(
+                        "ip_cidr_contains requires a valid IP literal address".to_string(),
+                    ),
+                }
+            } else {
+                Value::Error(
+                    "ip_cidr_contains requires string address and CIDR arguments".to_string(),
+                )
+            }
+        }
         "ip_classify" => {
             if arg_values.len() != 1 {
                 Value::Error("ip_classify requires a string IP literal argument".to_string())
@@ -964,6 +1011,20 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
     };
 
     Some(result)
+}
+
+#[cfg(test)]
+mod cidr_tests {
+    use super::*;
+
+    #[test]
+    fn cidr_membership_is_family_aware_and_prefix_bounded() {
+        assert!(ip_cidr_contains("192.0.2.4".parse().unwrap(), "192.0.2.0/24").unwrap());
+        assert!(!ip_cidr_contains("192.0.3.4".parse().unwrap(), "192.0.2.0/24").unwrap());
+        assert!(ip_cidr_contains("2001:db8::1".parse().unwrap(), "2001:db8::/32").unwrap());
+        assert!(!ip_cidr_contains("192.0.2.1".parse().unwrap(), "2001:db8::/32").unwrap());
+        assert!(ip_cidr_contains("192.0.2.1".parse().unwrap(), "192.0.2.1/33").is_err());
+    }
 }
 
 #[cfg(test)]

@@ -178,8 +178,9 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "http_delete" | "http_get_binary" | "http_get_stream" | "http_download_file"
         | "http_upload_file" | "oauth2_get_token" | "tcp_connect" | "tcp_connect_bound"
         | "tcp_send" | "tcp_receive" | "udp_send_to" | "udp_receive_from" | "async_http_get"
-        | "async_http_post" | "dns_lookup_mx" | "dns_lookup_txt" | "dns_lookup_ptr"
-        | "dns_lookup_tlsa" | "tls_connect" | "tls_upgrade_client" | "tls_send" | "tls_receive" => {
+        | "async_http_post" | "dns_lookup_a" | "dns_lookup_aaaa" | "dns_lookup_mx"
+        | "dns_lookup_txt" | "dns_lookup_ptr" | "dns_lookup_tlsa" | "tls_connect"
+        | "tls_upgrade_client" | "tls_send" | "tls_receive" => {
             Some(NativeCapability::NetworkClient)
         }
         "ai_chat" | "ai_stream_chat" | "ai_embedding" | "ai_tool_loop" => {

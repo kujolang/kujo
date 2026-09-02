@@ -567,11 +567,15 @@ fn native_capability_untrusted_denies_network_client() {
 
 #[test]
 fn native_capability_untrusted_denies_dns_lookup() {
-    assert_runtime_boundary_failure_with_args(
-        "dns_lookup_mx(\"example.com\")\n",
-        "Capability denied: network-client required for dns_lookup_mx",
-        &["--interpreter", "--untrusted"],
-    );
+    for function in ["dns_lookup_a", "dns_lookup_aaaa", "dns_lookup_mx"] {
+        let source = format!("{}(\"example.com\")\n", function);
+        let expected = format!("Capability denied: network-client required for {}", function);
+        assert_runtime_boundary_failure_with_args(
+            &source,
+            &expected,
+            &["--interpreter", "--untrusted"],
+        );
+    }
 }
 
 #[test]
@@ -1131,6 +1135,37 @@ fn network_ip_classification_is_fail_closed_and_capability_free() {
         );
         assert!(!stdout.contains("capability denied"));
     }
+}
+
+#[test]
+fn network_cidr_membership_is_family_aware_capability_free_and_runtime_equivalent() {
+    let project_root = unique_temp_dir("network_ip_cidr_contains");
+    let script_path = project_root.join("ip_cidr_contains.kujo");
+    fs::write(
+        &script_path,
+        "print(to_json([ip_cidr_contains(\"192.0.2.4\",\"192.0.2.0/24\"),ip_cidr_contains(\"192.0.3.4\",\"192.0.2.0/24\"),ip_cidr_contains(\"2001:db8::1\",\"2001:db8::/32\"),ip_cidr_contains(\"192.0.2.1\",\"2001:db8::/32\")]))\n",
+    )
+    .expect("failed to write CIDR membership script");
+    let mut outputs = Vec::new();
+    for mode in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(mode);
+        args.push("--untrusted");
+        args.push(script_path.to_str().expect("script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "CIDR membership failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        let stdout = stdout_text(&output);
+        assert_eq!(stdout.trim(), "[true,false,true,false]");
+        assert!(!stdout.contains("capability denied"));
+        outputs.push(stdout);
+    }
+    assert_eq!(outputs[0], outputs[1]);
 }
 
 #[test]
