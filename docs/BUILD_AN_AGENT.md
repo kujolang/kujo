@@ -134,7 +134,20 @@ Doctor output, or JSON contracts.
 
 Project-local Agent Skills use `SKILL.md`. Tools retain inspectable names, schemas, risk, and approval metadata. MCP is separate from WebMCP: publishing a public website is optional and belongs to Kujo SSG, whose existing `llms.txt` and WebMCP build surfaces can index this guide.
 
-Kujo runtime capabilities authorize effects; they are not a sandbox. The hardened profile also declares a Workcell container boundary with a read-only root, bounded CPU, memory, PIDs, time, writable artifacts, and explicit network policy. Run it with `kujo agent run --workcell`. The generated fixture boundary has no network. Containers do not protect against a compromised host kernel or container daemon.
+Kujo runtime capabilities authorize effects; they are not a sandbox. The hardened profile also declares a Workcell boundary with a read-only root, bounded CPU, memory, PIDs, time, writable artifacts, and explicit network policy. Run the generated v1 definition with `kujo agent run --workcell`. Containers do not protect against a compromised host kernel or container daemon.
+
+Portable Workcell v2 definitions keep backend choice in host/operator configuration rather than the Agent Project's intelligence definition. Select one explicitly at invocation time:
+
+```bash
+kujo agent run --workcell \
+  --workcell-profiles /etc/kujo/workcell-profiles.json \
+  --workcell-profile ci \
+  --workcell-manifest /opt/kujo/adapters/e2b/manifest.json \
+  --workcell-backend e2b \
+  "Review this change"
+```
+
+Kujo passes the portable definition, immutable Git source, profile, and adapter manifest to Workcell. It consumes Workcell's exact machine-readable `receipt_path`; it does not search for the newest run or call a provider API itself. The profile and manifest flags are rejected for v1 definitions, and all three required v2 selections must be present before execution.
 
 The executable lifecycle workflow lives in the `kujo-workflows` repository at
 `owned-agent-project/scripts/run.sh`. This repository also self-hosts a generated

@@ -120,6 +120,18 @@ pub struct RunArgs {
     /// Execute through the project's Workcell boundary
     #[arg(long)]
     pub workcell: bool,
+    /// Host-owned Workcell profile registry (portable Workcell v2 only)
+    #[arg(long, requires = "workcell")]
+    pub workcell_profiles: Option<PathBuf>,
+    /// Host-owned Workcell profile id (portable Workcell v2 only)
+    #[arg(long, requires = "workcell")]
+    pub workcell_profile: Option<String>,
+    /// Explicit Workcell backend adapter manifest (portable Workcell v2 only)
+    #[arg(long, requires = "workcell")]
+    pub workcell_manifest: Option<PathBuf>,
+    /// Assert the backend selected by the host profile (portable Workcell v2 only)
+    #[arg(long, requires = "workcell")]
+    pub workcell_backend: Option<String>,
 }
 
 #[derive(Args, Debug)]
@@ -458,13 +470,20 @@ fn validate_agent_package(root: &Path, project: &ProjectManifest) -> Result<(), 
 
 fn validate_workcell(path: &Path) -> Result<(), AgentError> {
     let value = parse_json_file(path, "Workcell definition")?;
-    if value.get("version").and_then(Value::as_i64) != Some(1) {
-        return Err(usage("Workcell definition requires version 1."));
+    let v1 = value.get("version").and_then(Value::as_i64) == Some(1);
+    let v2 = value.get("schema").and_then(Value::as_str) == Some("workcell-definition/v2alpha1");
+    if !v1 && !v2 {
+        return Err(usage(
+            "Workcell definition requires version 1 or schema workcell-definition/v2alpha1.",
+        ));
     }
-    if value.pointer("/filesystem/read_only_root").and_then(Value::as_bool) != Some(true) {
+    let filesystem =
+        if v1 { "/filesystem/read_only_root" } else { "/requirements/filesystem/read_only_root" };
+    if value.pointer(filesystem).and_then(Value::as_bool) != Some(true) {
         return Err(usage("Workcell definition must keep filesystem.read_only_root enabled."));
     }
-    if value.pointer("/network/mode").and_then(Value::as_str) != Some("none") {
+    let network = if v1 { "/network/mode" } else { "/requirements/network/mode" };
+    if value.pointer(network).and_then(Value::as_str) != Some("none") {
         return Err(usage(
             "Generated hardened Agent Projects require Workcell network.mode 'none'.",
         ));
@@ -1028,7 +1047,7 @@ fn run(a: RunArgs) -> Result<(), AgentError> {
     let m = load(&root)?;
     let prompt = prompt_from(&a, &root)?;
     if a.workcell {
-        return run_in_workcell(&root, &m, &prompt, a.json);
+        return run_in_workcell(&root, &m, &prompt, &a);
     }
     let agents_sdk = root.join("kennel_packages/agents-sdk");
     if !agents_sdk.join("src/agents/runner.kujo").is_file() {
@@ -1163,7 +1182,7 @@ fn run_in_workcell(
     root: &Path,
     project: &ProjectManifest,
     prompt: &str,
-    json_output: bool,
+    args: &RunArgs,
 ) -> Result<(), AgentError> {
     let definition = project
         .runtime
@@ -1193,8 +1212,10 @@ fn run_in_workcell(
     }
     prepare_workcell_agents_sdk(root, &agents_sdk)?;
     let mut value = parse_json_file(&root.join(definition), "Workcell definition")?;
+    let portable =
+        value.get("schema").and_then(Value::as_str) == Some("workcell-definition/v2alpha1");
     let command = value
-        .get_mut("command")
+        .pointer_mut(if portable { "/workload/command" } else { "/command" })
         .and_then(Value::as_array_mut)
         .ok_or_else(|| usage("Workcell definition command must be an array."))?;
     let last =
@@ -1211,12 +1232,42 @@ fn run_in_workcell(
     let kujo = std::env::current_exe().map_err(|e| ioerr(e.to_string()))?;
     let workcell_temp = root.join(".workcell/tmp");
     fs::create_dir_all(&workcell_temp).map_err(|e| ioerr(e.to_string()))?;
-    let output = command
+    command
         .args(["run", "--file"])
         .arg(&runtime_definition)
         .arg("--repo")
         .arg(root)
         .arg("--no-pull")
+        .arg("--json");
+    if portable {
+        let profiles = args
+            .workcell_profiles
+            .as_ref()
+            .ok_or_else(|| usage("Portable Workcell execution requires --workcell-profiles."))?;
+        let profile = args
+            .workcell_profile
+            .as_ref()
+            .ok_or_else(|| usage("Portable Workcell execution requires --workcell-profile."))?;
+        let manifest = args
+            .workcell_manifest
+            .as_ref()
+            .ok_or_else(|| usage("Portable Workcell execution requires --workcell-manifest."))?;
+        command.arg("--profiles").arg(profiles);
+        command.arg("--profile").arg(profile);
+        command.arg("--manifest").arg(manifest);
+        if let Some(backend) = &args.workcell_backend {
+            command.arg("--backend").arg(backend);
+        }
+    } else if args.workcell_profiles.is_some()
+        || args.workcell_profile.is_some()
+        || args.workcell_manifest.is_some()
+        || args.workcell_backend.is_some()
+    {
+        return Err(usage(
+            "Workcell profile, manifest, and backend overrides require a portable v2 definition.",
+        ));
+    }
+    let output = command
         .env("KUJO_BIN", kujo)
         .env("TMPDIR", &workcell_temp)
         .current_dir(root)
@@ -1232,9 +1283,13 @@ fn run_in_workcell(
         return Err(fail(if !stderr.is_empty() { stderr } else { stdout }));
     }
     let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let receipt = latest_child(&root.join(".workcell/runs"))
-        .and_then(|path| path.strip_prefix(root).ok().map(Path::to_path_buf));
-    if json_output {
+    let result = parse_last_json(&stdout, "Workcell result")?;
+    let receipt = result
+        .get("receipt_path")
+        .and_then(Value::as_str)
+        .map(PathBuf::from)
+        .and_then(|path| path.strip_prefix(root).ok().map(Path::to_path_buf).or(Some(path)));
+    if args.json {
         println!(
             "{}",
             serde_json::to_string_pretty(&json!({
@@ -1242,7 +1297,7 @@ fn run_in_workcell(
                 "status":"ok",
                 "project":project.name,
                 "isolation":"workcell",
-                "output":stdout,
+                "output":result,
                 "receipt":receipt
             }))
             .unwrap()
@@ -1309,12 +1364,6 @@ fn copy_tree_bounded(source: &Path, target: &Path, depth: usize) -> Result<(), A
         }
     }
     Ok(())
-}
-
-fn latest_child(path: &Path) -> Option<PathBuf> {
-    let mut entries: Vec<_> = fs::read_dir(path).ok()?.flatten().collect();
-    entries.sort_by_key(|entry| entry.metadata().and_then(|meta| meta.modified()).ok());
-    entries.last().map(|entry| entry.path())
 }
 
 fn start_runledger(root: &Path, project: &ProjectManifest) -> Result<String, AgentError> {
