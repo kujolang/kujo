@@ -2018,6 +2018,7 @@ pub fn handle_with_interpreter(
                     result_dict.insert("_status".into(), Value::Int(status));
                     result_dict.insert("body".into(), Value::Str(Arc::new(body.clone())));
                     result_dict.insert("_body".into(), Value::Str(Arc::new(body)));
+                    result_dict.insert("_body_bytes".into(), Value::Bytes(body_bytes));
 
                     let mut headers_dict = DictMap::default();
                     for (name, value) in response_headers.iter() {
@@ -4193,7 +4194,9 @@ mod tests {
             handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
                 .expect("http_request should return a result value");
         server_handle.join().expect("server thread should finish");
-        assert!(matches!(result, Value::Result { is_ok: true, .. }));
+        assert!(matches!(result, Value::Result { is_ok: true, ref value }
+            if matches!(value.as_ref(), Value::Dict(dict)
+                if matches!(dict.get("_body_bytes"), Some(Value::Bytes(bytes)) if bytes == b"{}"))));
         assert_eq!(
             request_rx.recv().expect("request body should be captured"),
             vec![0, 0x7f, 0x80, 0xff]
