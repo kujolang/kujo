@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.2] - 2026-09-01
 
+### Added
+
+- Preserve raw byte payloads for outbound HTTP request bodies across the
+  interpreter and VM paths.
+
 ### Fixed
 
 - Keep Unix-only private-spool metadata checks out of Windows builds, restoring
