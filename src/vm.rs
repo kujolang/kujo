@@ -973,6 +973,18 @@ impl VM {
                     .map(|c| Value::Str(Arc::new(c.to_string())))
                     .ok_or_else(|| format!("Index out of bounds: {}", i))
             }
+            (Value::Bytes(bytes), Value::Int(i)) => {
+                let resolved = if *i < 0 { bytes.len() as i64 + i } else { *i };
+                if resolved < 0 {
+                    Err(format!("Index out of bounds: {}", i))
+                } else {
+                    bytes
+                        .get(resolved as usize)
+                        .copied()
+                        .map(|byte| Value::Int(byte as i64))
+                        .ok_or_else(|| format!("Index out of bounds: {}", i))
+                }
+            }
             (Value::Dict(dict), Value::Str(key)) => {
                 dict.get(key.as_str()).cloned().ok_or_else(|| Self::missing_map_key_error(index))
             }
@@ -9335,6 +9347,25 @@ mod tests {
         match run_vm_code_with_natives(code, &["len"]) {
             Ok(Value::Str(result)) => assert_eq!(result.as_ref(), "done"),
             Ok(other) => panic!("Expected string result, got: {:?}", other),
+            Err(e) => panic!("VM error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_vm_bytes_indexing_matches_interpreter() {
+        let code = r#"
+            data := bytes([0, 1, 2, 255])
+            return [data[0], data[2], data[-1]]
+        "#;
+
+        match run_vm_code_with_natives(code, &["bytes"]) {
+            Ok(Value::Array(values)) => {
+                assert_eq!(values.len(), 3);
+                assert!(matches!(values.first(), Some(Value::Int(0))));
+                assert!(matches!(values.get(1), Some(Value::Int(2))));
+                assert!(matches!(values.get(2), Some(Value::Int(255))));
+            }
+            Ok(other) => panic!("Expected byte values, got: {:?}", other),
             Err(e) => panic!("VM error: {}", e),
         }
     }
