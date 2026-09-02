@@ -83,6 +83,25 @@ test "tcp_send works with binary data" {
     tcp_close(listener)
 }
 
+test "tcp_send_file_range streams an exact regular-file range" {
+    path := "tmp/net-test-file-range.bin"
+    if path_exists(path) { delete_file(path) }
+    write_binary_file(path, bytes([112, 114, 101, 102, 105, 120, 45, 98, 111, 100, 121, 45, 115, 117, 102, 102, 105, 120]))
+
+    listener := tcp_listen("127.0.0.1", 9005)
+    client := tcp_connect("127.0.0.1", 9005)
+    server_conn := tcp_accept(listener)
+    bytes_sent := tcp_send_file_range(client, path, 7, 4)
+    assert_equal(bytes_sent, 4)
+    received := tcp_receive(server_conn, 4)
+    assert_equal(received, "body")
+
+    tcp_close(client)
+    tcp_close(server_conn)
+    tcp_close(listener)
+    delete_file(path)
+}
+
 # Test 2: UDP Socket Communication
 print("")
 print("Test 2: UDP Socket Communication")

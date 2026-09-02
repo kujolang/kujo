@@ -1,5 +1,6 @@
 // Capability-gated TLS sockets and STARTTLS-style TCP stream upgrades.
 
+use super::file_stream::write_file_range;
 use crate::interpreter::{DictMap, Interpreter, Value};
 use crate::network_policy;
 use openssl::hash::MessageDigest;
@@ -367,6 +368,36 @@ fn tls_send(arg_values: &[Value]) -> Value {
     Value::Int(data.len() as i64)
 }
 
+fn tls_send_file_range(arg_values: &[Value]) -> Value {
+    let (
+        Some(Value::TlsStream { stream, .. }),
+        Some(Value::Str(path)),
+        Some(Value::Int(offset)),
+        Some(Value::Int(count)),
+    ) = (arg_values.first(), arg_values.get(1), arg_values.get(2), arg_values.get(3))
+    else {
+        return Value::Error(
+            "tls_send_file_range requires (TlsStream, string_path, int_offset, int_count) arguments".to_string(),
+        );
+    };
+    if arg_values.len() != 4 {
+        return Value::Error(
+            "tls_send_file_range requires (TlsStream, string_path, int_offset, int_count) arguments".to_string(),
+        );
+    }
+    let mut guard = match lock_or_tls_error(stream, "tls_send_file_range") {
+        Ok(guard) => guard,
+        Err(err) => return err,
+    };
+    let Some(stream) = guard.as_mut() else {
+        return Value::Error("tls_send_file_range: TLS stream is closed".to_string());
+    };
+    match write_file_range(stream, path, *offset, *count, "tls_send_file_range") {
+        Ok(sent) => Value::Int(sent),
+        Err(message) => error(message),
+    }
+}
+
 fn tls_receive(arg_values: &[Value]) -> Value {
     if arg_values.len() != 2 {
         return Value::Error("tls_receive requires (TlsStream, int_size) arguments".to_string());
@@ -466,6 +497,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
         "tls_acceptor" => tls_acceptor(arg_values),
         "tls_upgrade_server" => tls_upgrade_server(arg_values),
         "tls_send" => tls_send(arg_values),
+        "tls_send_file_range" => tls_send_file_range(arg_values),
         "tls_receive" => tls_receive(arg_values),
         "tls_close" => tls_close(arg_values),
         "tls_info" => tls_info(arg_values),
@@ -558,6 +590,8 @@ mod tests {
         let (certificate_pem, private_key_pem) = local_test_certificate();
         std::fs::write(&certificate_path, &certificate_pem).unwrap();
         std::fs::write(&private_key_path, private_key_pem).unwrap();
+        let payload_path = test_dir.join("payload.bin");
+        std::fs::write(&payload_path, b"prefix-ping-suffix").unwrap();
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -621,7 +655,18 @@ mod tests {
         assert!(
             matches!(plain_reuse, Value::Error(message) if message.contains("closed or upgraded"))
         );
-        handle(&mut interpreter, "tls_send", &[tls.clone(), string_value("ping")]).unwrap();
+        let sent = handle(
+            &mut interpreter,
+            "tls_send_file_range",
+            &[
+                tls.clone(),
+                string_value(payload_path.to_string_lossy().into_owned()),
+                Value::Int(7),
+                Value::Int(4),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(sent, Value::Int(4)));
         let received =
             handle(&mut interpreter, "tls_receive", &[tls.clone(), Value::Int(64)]).unwrap();
         assert!(matches!(received, Value::Str(value) if value.as_ref() == "pong"));

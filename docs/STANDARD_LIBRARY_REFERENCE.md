@@ -612,6 +612,7 @@ edge cases are higher-risk than the HTTP helper surface.
 | `tcp_connect` | experimental | `conn := tcp_connect("127.0.0.1", 9000)` |
 | `tcp_connect_bound` | preview | `conn := tcp_connect_bound("mx.example.net", 25, "192.0.2.10")` |
 | `tcp_send` | experimental | `tcp_send(conn, "hello")` |
+| `tcp_send_file_range` | preview | `tcp_send_file_range(conn, "message.eml", 0, size)` |
 | `tcp_receive` | experimental | `data := tcp_receive(conn, 1024)` |
 | `tcp_close` | experimental | `tcp_close(conn)` |
 | `tcp_set_nonblocking` | experimental | `tcp_set_nonblocking(conn, true)` |
@@ -635,6 +636,7 @@ edge cases are higher-risk than the HTTP helper surface.
 | `tls_acceptor` | preview | `acceptor := tls_acceptor("cert.pem", "key.pem")` |
 | `tls_upgrade_server` | preview | `tls := tls_upgrade_server(tcp, acceptor)` |
 | `tls_send` | preview | `tls_send(tls, "EHLO sender.example\r\n")` |
+| `tls_send_file_range` | preview | `tls_send_file_range(tls, "message.eml", 0, size)` |
 | `tls_receive` | preview | `reply := tls_receive(tls, 4096)` |
 | `tls_close` | preview | `tls_close(tls)` |
 | `tls_info` | preview | `info := tls_info(tls)` |

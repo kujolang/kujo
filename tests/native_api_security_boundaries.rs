@@ -690,6 +690,23 @@ fn native_capability_untrusted_denies_tls_client() {
 }
 
 #[test]
+fn native_capability_file_range_sends_require_network_and_filesystem_read() {
+    for function in ["tcp_send_file_range", "tls_send_file_range"] {
+        let source = format!("{}(null, \"message.eml\", 0, 1)\n", function);
+        assert_runtime_boundary_failure_with_args(
+            &source,
+            &format!("Capability denied: network-client required for {}", function),
+            &["--interpreter", "--untrusted"],
+        );
+        assert_runtime_boundary_failure_with_args(
+            &source,
+            &format!("Capability denied: filesystem-read required for {}", function),
+            &["--interpreter", "--untrusted", "--allow-net-client"],
+        );
+    }
+}
+
+#[test]
 fn native_capability_tls_acceptor_requires_network_server_and_filesystem_read() {
     assert_runtime_boundary_failure_with_args(
         "tls_acceptor(\"certificate.pem\", \"private-key.pem\")\n",

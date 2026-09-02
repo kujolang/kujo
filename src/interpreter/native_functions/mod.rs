@@ -28,6 +28,7 @@ pub mod database {
         }
     }
 }
+mod file_stream;
 pub mod filesystem;
 pub mod http;
 pub mod io;
@@ -523,6 +524,7 @@ mod tests {
             "tcp_connect",
             "tcp_connect_bound",
             "tcp_send",
+            "tcp_send_file_range",
             "tcp_receive",
             "tcp_close",
             "tcp_set_nonblocking",
@@ -543,6 +545,7 @@ mod tests {
             "tls_acceptor",
             "tls_upgrade_server",
             "tls_send",
+            "tls_send_file_range",
             "tls_receive",
             "tls_close",
             "tls_info",
@@ -5434,6 +5437,12 @@ mod tests {
             matches!(tcp_send_missing, Value::Error(message) if message.contains("tcp_send requires (TcpStream, string_or_bytes_data) arguments"))
         );
 
+        let tcp_send_file_missing =
+            call_native_function(&mut interpreter, "tcp_send_file_range", &[]);
+        assert!(
+            matches!(tcp_send_file_missing, Value::Error(message) if message.contains("tcp_send_file_range expects 4 arguments"))
+        );
+
         let tcp_receive_missing = call_native_function(&mut interpreter, "tcp_receive", &[]);
         assert!(
             matches!(tcp_receive_missing, Value::Error(message) if message.contains("tcp_receive requires (TcpStream, int_size) arguments"))
@@ -5516,6 +5525,21 @@ mod tests {
         );
         assert!(
             matches!(tcp_send_extra, Value::Error(message) if message.contains("tcp_send requires (TcpStream, string_or_bytes_data) arguments"))
+        );
+
+        let tcp_send_file_extra = call_native_function(
+            &mut interpreter,
+            "tcp_send_file_range",
+            &[
+                Value::Int(1),
+                Value::Str(Arc::new("payload".to_string())),
+                Value::Int(0),
+                Value::Int(1),
+                Value::Int(2),
+            ],
+        );
+        assert!(
+            matches!(tcp_send_file_extra, Value::Error(message) if message.contains("tcp_send_file_range expects 4 arguments"))
         );
 
         let tcp_receive_extra = call_native_function(
@@ -5877,6 +5901,53 @@ mod tests {
         let udp_close_receiver =
             call_native_function(&mut udp_interpreter, "udp_close", &[receiver_value]);
         assert!(matches!(udp_close_receiver, Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_tcp_send_file_range_streams_exact_bytes() {
+        use std::io::Read;
+
+        let listener = match std::net::TcpListener::bind("127.0.0.1:0") {
+            Ok(listener) => listener,
+            Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+                eprintln!("Skipping TCP file-range test: sandbox denied TCP bind permissions");
+                return;
+            }
+            Err(error) => panic!("TCP file-range listener should bind: {error}"),
+        };
+        let address = listener.local_addr().unwrap();
+        let reader = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            let mut payload = [0_u8; 4];
+            stream.read_exact(&mut payload).unwrap();
+            payload
+        });
+
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("payload.bin");
+        std::fs::write(&path, b"prefix-body-suffix").unwrap();
+        let stream = std::net::TcpStream::connect(address).unwrap();
+        let value = Value::TcpStream {
+            stream: Arc::new(Mutex::new(Some(stream))),
+            peer_addr: address.to_string(),
+        };
+        let mut interpreter = Interpreter::new();
+        let sent = call_native_function(
+            &mut interpreter,
+            "tcp_send_file_range",
+            &[
+                value.clone(),
+                Value::Str(Arc::new(path.to_string_lossy().into_owned())),
+                Value::Int(7),
+                Value::Int(4),
+            ],
+        );
+        assert!(matches!(sent, Value::Int(4)));
+        assert!(matches!(
+            call_native_function(&mut interpreter, "tcp_close", &[value]),
+            Value::Bool(true)
+        ));
+        assert_eq!(reader.join().unwrap(), *b"body");
     }
 
     #[test]

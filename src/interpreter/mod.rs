@@ -940,6 +940,7 @@ impl Interpreter {
             "tcp_connect",
             "tcp_connect_bound",
             "tcp_send",
+            "tcp_send_file_range",
             "tcp_receive",
             "tcp_close",
             "tcp_set_nonblocking",
@@ -960,6 +961,7 @@ impl Interpreter {
             "tls_acceptor",
             "tls_upgrade_server",
             "tls_send",
+            "tls_send_file_range",
             "tls_receive",
             "tls_close",
             "tls_info",
@@ -1835,6 +1837,10 @@ impl Interpreter {
             Value::NativeFunction("tcp_connect_bound".to_string()),
         );
         self.env.define("tcp_send".to_string(), Value::NativeFunction("tcp_send".to_string()));
+        self.env.define(
+            "tcp_send_file_range".to_string(),
+            Value::NativeFunction("tcp_send_file_range".to_string()),
+        );
         self.env
             .define("tcp_receive".to_string(), Value::NativeFunction("tcp_receive".to_string()));
         self.env.define("tcp_close".to_string(), Value::NativeFunction("tcp_close".to_string()));
@@ -1890,6 +1896,10 @@ impl Interpreter {
             Value::NativeFunction("tls_upgrade_server".to_string()),
         );
         self.env.define("tls_send".to_string(), Value::NativeFunction("tls_send".to_string()));
+        self.env.define(
+            "tls_send_file_range".to_string(),
+            Value::NativeFunction("tls_send_file_range".to_string()),
+        );
         self.env
             .define("tls_receive".to_string(), Value::NativeFunction("tls_receive".to_string()));
         self.env.define("tls_close".to_string(), Value::NativeFunction("tls_close".to_string()));
@@ -3354,6 +3364,15 @@ impl Interpreter {
             "http_upload_file" => CallableArity::exact(
                 "http_upload_file",
                 vec!["url".to_string(), "input_path".to_string(), "options".to_string()],
+            ),
+            "tcp_send_file_range" | "tls_send_file_range" => CallableArity::exact(
+                name,
+                vec![
+                    "stream".to_string(),
+                    "path".to_string(),
+                    "offset".to_string(),
+                    "count".to_string(),
+                ],
             ),
             "aes_encrypt_file_stream" => CallableArity::exact(
                 "aes_encrypt_file_stream",

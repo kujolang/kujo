@@ -2,6 +2,7 @@
 //
 // Network-related native functions (TCP, UDP sockets)
 
+use super::file_stream::write_file_range;
 use crate::interpreter::{DictMap, Interpreter, Value};
 use crate::network_policy;
 use std::io::{Read, Write};
@@ -514,6 +515,45 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                     }
                     _ => Value::Error(
                         "tcp_send requires (TcpStream, string_or_bytes_data) arguments".to_string(),
+                    ),
+                }
+            }
+        }
+
+        "tcp_send_file_range" => {
+            if arg_values.len() != 4 {
+                Value::Error(
+                    "tcp_send_file_range requires (TcpStream, string_path, int_offset, int_count) arguments".to_string(),
+                )
+            } else {
+                match (arg_values.first(), arg_values.get(1), arg_values.get(2), arg_values.get(3)) {
+                    (
+                        Some(Value::TcpStream { stream, .. }),
+                        Some(Value::Str(path)),
+                        Some(Value::Int(offset)),
+                        Some(Value::Int(count)),
+                    ) => {
+                        let mut stream_guard = match lock_or_network_error(stream, "tcp_send_file_range") {
+                            Ok(guard) => guard,
+                            Err(error) => return Some(error),
+                        };
+                        let Some(stream) = stream_guard.as_mut() else {
+                            return Some(Value::Error(
+                                "tcp_send_file_range: TCP stream is closed or upgraded".to_string(),
+                            ));
+                        };
+                        match write_file_range(stream, path, *offset, *count, "tcp_send_file_range") {
+                            Ok(sent) => Value::Int(sent),
+                            Err(message) => Value::ErrorObject {
+                                message,
+                                stack: Vec::new(),
+                                line: None,
+                                cause: None,
+                            },
+                        }
+                    }
+                    _ => Value::Error(
+                        "tcp_send_file_range requires (TcpStream, string_path, int_offset, int_count) arguments".to_string(),
                     ),
                 }
             }
