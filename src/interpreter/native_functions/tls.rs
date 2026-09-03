@@ -55,37 +55,59 @@ fn parse_min_version(value: Option<&Value>) -> Result<SslVersion, String> {
     }
 }
 
+fn dict_like_get<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
+    match value {
+        Value::Dict(options) => options.get(key),
+        Value::FixedDict { keys, values } => keys
+            .iter()
+            .position(|candidate| candidate.as_ref() == key)
+            .and_then(|index| values.get(index)),
+        _ => None,
+    }
+}
+
+fn dict_like_keys(value: &Value) -> Option<Vec<&str>> {
+    match value {
+        Value::Dict(options) => Some(options.keys().map(|key| key.as_ref()).collect()),
+        Value::FixedDict { keys, .. } => Some(keys.iter().map(|key| key.as_ref()).collect()),
+        _ => None,
+    }
+}
+
 fn parse_client_options(value: Option<&Value>) -> Result<ClientOptions, String> {
     let Some(value) = value else {
         return Ok(ClientOptions::default());
     };
-    let Value::Dict(options) = value else {
+    let Some(keys) = dict_like_keys(value) else {
         return Err("TLS client options must be a dictionary".to_string());
     };
     let allowed = ["min_version", "ca_pem"];
-    if let Some(unknown) = options.keys().find(|key| !allowed.contains(&key.as_ref())) {
+    if let Some(unknown) = keys.into_iter().find(|key| !allowed.contains(key)) {
         return Err(format!("unknown TLS client option '{}'", unknown));
     }
-    let ca_pem = match options.get("ca_pem") {
+    let ca_pem = match dict_like_get(value, "ca_pem") {
         None => None,
         Some(Value::Str(value)) if value.len() <= 1024 * 1024 => Some(value.as_ref().clone()),
         Some(Value::Str(_)) => return Err("TLS ca_pem exceeds the 1 MiB limit".to_string()),
         Some(_) => return Err("TLS ca_pem must be a string".to_string()),
     };
-    Ok(ClientOptions { min_version: parse_min_version(options.get("min_version"))?, ca_pem })
+    Ok(ClientOptions {
+        min_version: parse_min_version(dict_like_get(value, "min_version"))?,
+        ca_pem,
+    })
 }
 
 fn parse_server_min_version(value: Option<&Value>) -> Result<SslVersion, String> {
     let Some(value) = value else {
         return Ok(SslVersion::TLS1_2);
     };
-    let Value::Dict(options) = value else {
+    let Some(keys) = dict_like_keys(value) else {
         return Err("TLS acceptor options must be a dictionary".to_string());
     };
-    if let Some(unknown) = options.keys().find(|key| key.as_ref() != "min_version") {
+    if let Some(unknown) = keys.into_iter().find(|key| *key != "min_version") {
         return Err(format!("unknown TLS acceptor option '{}'", unknown));
     }
-    parse_min_version(options.get("min_version"))
+    parse_min_version(dict_like_get(value, "min_version"))
 }
 
 fn version_name(version: SslVersion) -> &'static str {
@@ -574,6 +596,23 @@ mod tests {
         let parsed = parse_client_options(Some(&Value::dict(options))).unwrap();
         assert_eq!(parsed.min_version, SslVersion::TLS1_3);
         assert_eq!(parsed.ca_pem.as_deref(), Some("not-yet-parsed"));
+    }
+
+    #[test]
+    fn accepts_vm_fixed_dictionary_tls_options() {
+        let server_options = Value::FixedDict {
+            keys: Arc::new(vec![Arc::from("min_version")]),
+            values: vec![string_value("1.3")],
+        };
+        assert_eq!(parse_server_min_version(Some(&server_options)).unwrap(), SslVersion::TLS1_3);
+
+        let client_options = Value::FixedDict {
+            keys: Arc::new(vec![Arc::from("min_version"), Arc::from("ca_pem")]),
+            values: vec![string_value("1.2"), string_value("fixture-ca")],
+        };
+        let parsed = parse_client_options(Some(&client_options)).unwrap();
+        assert_eq!(parsed.min_version, SslVersion::TLS1_2);
+        assert_eq!(parsed.ca_pem.as_deref(), Some("fixture-ca"));
     }
 
     #[test]

@@ -24,7 +24,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/interpreter/native_functions/system.rs | 618 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
 | src/interpreter/native_functions/system.rs | 650 | executable | src_executable_other |     let handle = unsafe { |
 | src/interpreter/native_functions/system.rs | 663 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
-| src/interpreter/native_functions/tls.rs | 652 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
+| src/interpreter/native_functions/tls.rs | 691 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
 | src/jit.rs | 61 | executable | jit_executable |     let vm_ctx = unsafe { &mut *ctx }; |
 | src/jit.rs | 78 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
 | src/jit.rs | 89 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |
