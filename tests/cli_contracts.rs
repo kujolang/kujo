@@ -620,6 +620,71 @@ fn cli_doctor_lists_profiles() {
 }
 
 #[test]
+fn cli_doctor_profile_preserves_large_structured_output_and_deep_argument() {
+    let workspace = unique_temp_dir("cli_doctor_profile_context");
+    let pack_dir = workspace.join(".kujo").join("packs").join("email-doctor");
+    let commands_dir = pack_dir.join("commands");
+    fs::create_dir_all(&commands_dir).expect("failed to create doctor profile directory");
+    write_fixture(
+        &pack_dir.join("kujo-pack.yaml"),
+        r#"id: email-doctor
+namespace: email
+name: Email Doctor
+version: 0.1.0
+commands: []
+contributes:
+  doctor_profiles:
+    - name: email
+      summary: Email readiness checks.
+      entry: commands/doctor-email.kujo
+"#,
+    );
+    write_fixture(
+        &commands_dir.join("doctor-email.kujo"),
+        r#"let argv := args()
+mut deep := false
+for arg in argv { if arg == "--deep" { deep = true } }
+mut checks := []
+mut index := 0
+while index < 80 {
+    checks = push(checks, {
+        "id": "email.fixture." + to_string(index),
+        "label": "Bounded profile check " + to_string(index),
+        "status": "pass",
+        "severity": "info",
+        "observed": "deterministic-structured-profile-output"
+    })
+    index += 1
+}
+print(to_json({
+    "pack": "email-doctor",
+    "namespace": "doctor",
+    "command": "email",
+    "status": "pass",
+    "summary": {"pass": 80, "warn": 0, "fail": 0, "skip": 0, "info": 0},
+    "checks": checks,
+    "readiness": "READY",
+    "production_send_enabled": deep,
+    "profile_data": {"deep": deep}
+}))
+"#,
+    );
+
+    let output = run_kujo_in_dir(&["doctor", "email", "--deep", "--json"], &workspace);
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty(), "doctor profile should not write stderr");
+    let stdout = String::from_utf8(output.stdout).expect("stdout should be utf-8");
+    assert!(stdout.len() > 4096, "fixture should exceed the legacy preview limit");
+    let parsed: Value =
+        serde_json::from_str(&stdout).expect("doctor profile output should remain valid JSON");
+    assert_eq!(parsed["profile"], "email");
+    assert_eq!(parsed["readiness"], "READY");
+    assert_eq!(parsed["production_send_enabled"], true);
+    assert_eq!(parsed["profile_data"]["deep"], true);
+    assert!(parsed["checks"].as_array().is_some_and(|checks| checks.len() >= 80));
+}
+
+#[test]
 fn cli_doctor_rejects_unknown_profile() {
     let workspace = unique_temp_dir("cli_doctor_unknown_profile");
     let output = run_kujo_in_dir(&["doctor", "unknown-profile"], &workspace);

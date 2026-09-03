@@ -85,6 +85,9 @@ pub fn merge_reports(
     let mut merged =
         DoctorReport::new(DOCTOR_PACK_ID, DOCTOR_NAMESPACE, DOCTOR_COMMAND, merged_checks);
     merged.recommended_next_actions = Some(generate_recommended_actions(&merged.checks));
+    merged.readiness = profile_report.readiness.clone();
+    merged.production_send_enabled = profile_report.production_send_enabled;
+    merged.profile_data = profile_report.profile_data.clone();
     decorate_report_metadata(&mut merged, profile_name);
     merged
 }

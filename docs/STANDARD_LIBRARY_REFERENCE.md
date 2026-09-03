@@ -667,9 +667,15 @@ filesystem read permission.
 | Function | Tier | Example |
 | --- | --- | --- |
 | `db_connect` | preview | `db := db_connect("sqlite://local.db")` |
+| `db_connect_readonly` | preview | `db := db_connect_readonly("sqlite", "local.db")` |
 | `db_query` | preview | `rows := db_query(db, "select 1")` |
 | `db_execute` | preview | `n := db_execute(db, "delete from t")` |
 | `db_close` | preview | `db_close(db)` |
+
+`db_connect_readonly` opens only an existing checkpointed SQLite file, uses
+SQLite immutable/read-only mode, and creates no WAL or shared-memory sidecars.
+It fails closed when a non-empty `-wal` file exists so callers cannot mistake a
+stale main-file view for current state.
 | `db_pool` | experimental | `pool := db_pool(cfg)` |
 | `db_pool_acquire` | experimental | `db := db_pool_acquire(pool)` |
 | `db_pool_release` | experimental | `db_pool_release(pool, db)` |

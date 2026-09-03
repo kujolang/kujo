@@ -823,6 +823,7 @@ impl Interpreter {
             "set_headers",
             // Database functions
             "db_connect",
+            "db_connect_readonly",
             "db_execute",
             "db_query",
             "db_close",
@@ -1559,6 +1560,10 @@ impl Interpreter {
 
         // Database functions
         self.env.define("db_connect".to_string(), Value::NativeFunction("db_connect".to_string()));
+        self.env.define(
+            "db_connect_readonly".to_string(),
+            Value::NativeFunction("db_connect_readonly".to_string()),
+        );
         self.env.define("db_execute".to_string(), Value::NativeFunction("db_execute".to_string()));
         self.env.define("db_query".to_string(), Value::NativeFunction("db_query".to_string()));
         self.env.define("db_close".to_string(), Value::NativeFunction("db_close".to_string()));

@@ -1504,6 +1504,15 @@ fn native_capability_untrusted_denies_database() {
 }
 
 #[test]
+fn native_capability_untrusted_denies_readonly_database() {
+    assert_runtime_boundary_failure_with_args(
+        "db_connect_readonly(\"sqlite\", \"tmp.db\")\n",
+        "Capability denied: database required for db_connect_readonly",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
 fn native_capability_untrusted_denies_image_file_read() {
     assert_runtime_boundary_failure_with_args(
         "load_image(\"photo.png\")\n",

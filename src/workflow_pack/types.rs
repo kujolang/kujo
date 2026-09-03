@@ -260,6 +260,15 @@ pub struct DoctorReport {
     pub checks: Vec<CheckResult>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub recommended_next_actions: Option<Vec<String>>,
+    /// Optional profile-specific readiness state such as READY or DEGRADED.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub readiness: Option<String>,
+    /// Optional fail-closed production gate exposed by a profile.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub production_send_enabled: Option<bool>,
+    /// Bounded machine-readable profile details retained through composition.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub profile_data: Option<serde_json::Value>,
 }
 
 impl DoctorReport {
@@ -283,6 +292,9 @@ impl DoctorReport {
             summary,
             checks,
             recommended_next_actions: None,
+            readiness: None,
+            production_send_enabled: None,
+            profile_data: None,
         }
     }
 }

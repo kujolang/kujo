@@ -34,6 +34,12 @@ const MAX_CAPTURED_OUTPUT_BYTES: usize = 4096;
 /// Maximum captured stdout/stderr lines before truncation.
 const MAX_CAPTURED_OUTPUT_LINES: usize = 50;
 
+/// Maximum structured workflow report size. Doctor profiles may legitimately
+/// contain hundreds of bounded checks, so their JSON contract needs a larger
+/// ceiling than diagnostic command previews.
+pub const MAX_STRUCTURED_OUTPUT_BYTES: usize = 1024 * 1024;
+pub const MAX_STRUCTURED_OUTPUT_LINES: usize = 10_000;
+
 /// Run a command with arguments and capture output.
 ///
 /// # Arguments
@@ -48,6 +54,26 @@ pub fn run_command(
     args: &[&str],
     timeout: Option<Duration>,
 ) -> Result<ProcessResult, String> {
+    run_command_with_limits(
+        program,
+        args,
+        timeout,
+        MAX_CAPTURED_OUTPUT_BYTES,
+        MAX_CAPTURED_OUTPUT_LINES,
+    )
+}
+
+/// Run a command with explicit output ceilings.
+pub fn run_command_with_limits(
+    program: &str,
+    args: &[&str],
+    timeout: Option<Duration>,
+    max_output_bytes: usize,
+    max_output_lines: usize,
+) -> Result<ProcessResult, String> {
+    if max_output_bytes == 0 || max_output_lines == 0 {
+        return Err("Process output limits must be greater than zero".to_string());
+    }
     let start = std::time::Instant::now();
 
     let mut cmd = Command::new(program);
@@ -74,7 +100,13 @@ pub fn run_command(
                         .wait_with_output()
                         .map_err(|e| format!("Failed to wait on '{}': {}", command_line, e))?;
                     // Reconstruct output with status for consistency.
-                    return build_process_result(command_line, output, start.elapsed());
+                    return build_process_result(
+                        command_line,
+                        output,
+                        start.elapsed(),
+                        max_output_bytes,
+                        max_output_lines,
+                    );
                 }
                 Ok(None) => {
                     if elapsed >= timeout_dur {
@@ -97,7 +129,7 @@ pub fn run_command(
         cmd.output().map_err(|e| format!("Failed to execute '{}': {}", command_line, e))?
     };
 
-    build_process_result(command_line, output, start.elapsed())
+    build_process_result(command_line, output, start.elapsed(), max_output_bytes, max_output_lines)
 }
 
 /// Run a command and return only the first line of stdout (trimmed).
@@ -124,12 +156,14 @@ fn build_process_result(
     command_line: String,
     output: Output,
     duration: Duration,
+    max_output_bytes: usize,
+    max_output_lines: usize,
 ) -> Result<ProcessResult, String> {
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
-    let (stdout, stdout_truncated) = truncate_output(&stdout);
-    let (stderr, stderr_truncated) = truncate_output(&stderr);
+    let (stdout, stdout_truncated) = truncate_output(&stdout, max_output_bytes, max_output_lines);
+    let (stderr, stderr_truncated) = truncate_output(&stderr, max_output_bytes, max_output_lines);
 
     Ok(ProcessResult {
         command_line,
@@ -144,18 +178,20 @@ fn build_process_result(
 }
 
 /// Truncate output that exceeds line or byte limits.
-fn truncate_output(output: &str) -> (String, bool) {
+fn truncate_output(output: &str, max_bytes: usize, max_lines: usize) -> (String, bool) {
     let lines: Vec<&str> = output.lines().collect();
 
-    if lines.len() > MAX_CAPTURED_OUTPUT_LINES {
-        let truncated: String =
-            lines[..MAX_CAPTURED_OUTPUT_LINES].join("\n") + "\n... (output truncated)";
+    if lines.len() > max_lines {
+        let truncated: String = lines[..max_lines].join("\n") + "\n... (output truncated)";
         return (truncated, true);
     }
 
-    if output.len() > MAX_CAPTURED_OUTPUT_BYTES {
-        let truncated: String = output.chars().take(MAX_CAPTURED_OUTPUT_BYTES).collect::<String>()
-            + "\n... (output truncated)";
+    if output.len() > max_bytes {
+        let mut boundary = max_bytes.min(output.len());
+        while boundary > 0 && !output.is_char_boundary(boundary) {
+            boundary -= 1;
+        }
+        let truncated = output[..boundary].to_string() + "\n... (output truncated)";
         return (truncated, true);
     }
 
@@ -203,7 +239,8 @@ mod tests {
     #[test]
     fn truncate_output_limits_lines() {
         let long = (0..100).map(|i| format!("line {}", i)).collect::<Vec<_>>().join("\n");
-        let (truncated, was_truncated) = truncate_output(&long);
+        let (truncated, was_truncated) =
+            truncate_output(&long, MAX_CAPTURED_OUTPUT_BYTES, MAX_CAPTURED_OUTPUT_LINES);
         assert!(was_truncated);
         assert!(truncated.contains("(output truncated)"));
     }
@@ -211,8 +248,24 @@ mod tests {
     #[test]
     fn truncate_output_preserves_short_output() {
         let short = "hello world";
-        let (truncated, was_truncated) = truncate_output(short);
+        let (truncated, was_truncated) =
+            truncate_output(short, MAX_CAPTURED_OUTPUT_BYTES, MAX_CAPTURED_OUTPUT_LINES);
         assert!(!was_truncated);
         assert_eq!(truncated, short);
+    }
+
+    #[test]
+    fn structured_output_limits_preserve_large_json_sized_payloads() {
+        let payload = "x".repeat(8192);
+        let result = run_command_with_limits(
+            "printf",
+            &["%s", &payload],
+            Some(Duration::from_secs(5)),
+            MAX_STRUCTURED_OUTPUT_BYTES,
+            MAX_STRUCTURED_OUTPUT_LINES,
+        )
+        .expect("structured output command should run");
+        assert!(!result.stdout_truncated);
+        assert_eq!(result.stdout, payload);
     }
 }

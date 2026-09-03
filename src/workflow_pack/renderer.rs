@@ -15,6 +15,12 @@ pub fn render_human(report: &DoctorReport) {
     if let Some(ref cwd) = report.cwd {
         println!("{}", format_kv("cwd", cwd.dimmed()));
     }
+    if let Some(ref readiness) = report.readiness {
+        println!("{}", format_kv("readiness", readiness));
+    }
+    if let Some(enabled) = report.production_send_enabled {
+        println!("{}", format_kv("production send", enabled));
+    }
     println!();
 
     // Group checks by their implicit category based on ID prefix.
@@ -153,6 +159,12 @@ pub fn render_markdown(report: &DoctorReport) -> String {
     }
 
     md.push_str(&format!("**Status:** {}\n\n", report.status));
+    if let Some(ref readiness) = report.readiness {
+        md.push_str(&format!("**Readiness:** {}\n\n", readiness));
+    }
+    if let Some(enabled) = report.production_send_enabled {
+        md.push_str(&format!("**Production send enabled:** {}\n\n", enabled));
+    }
 
     // Summary.
     md.push_str("## Summary\n\n");
@@ -227,6 +239,12 @@ pub fn render_human_text(report: &DoctorReport) -> String {
 
     if let Some(ref cwd) = report.cwd {
         lines.push(format_kv("cwd", cwd));
+    }
+    if let Some(ref readiness) = report.readiness {
+        lines.push(format_kv("readiness", readiness));
+    }
+    if let Some(enabled) = report.production_send_enabled {
+        lines.push(format_kv("production send", enabled));
     }
     lines.push(String::new());
 
@@ -399,6 +417,9 @@ mod tests {
                 },
             ],
             recommended_next_actions: Some(vec!["Install Node.js".to_string()]),
+            readiness: None,
+            production_send_enabled: None,
+            profile_data: None,
         };
 
         let output = render_human_text(&report);
@@ -455,6 +476,9 @@ mod tests {
                 minimum_major: None,
             }],
             recommended_next_actions: Some(vec!["Do thing".to_string()]),
+            readiness: None,
+            production_send_enabled: None,
+            profile_data: None,
         };
 
         let output = render_markdown(&report);

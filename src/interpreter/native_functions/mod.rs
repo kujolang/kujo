@@ -18,9 +18,20 @@ pub mod database {
 
     pub fn handle(name: &str, _arg_values: &[Value]) -> Option<Value> {
         match name {
-            "db_connect" | "db_execute" | "db_query" | "db_close" | "db_pool"
-            | "db_pool_acquire" | "db_pool_release" | "db_pool_stats" | "db_pool_close"
-            | "db_begin" | "db_commit" | "db_rollback" | "db_last_insert_id" => Some(Value::Error(
+            "db_connect"
+            | "db_connect_readonly"
+            | "db_execute"
+            | "db_query"
+            | "db_close"
+            | "db_pool"
+            | "db_pool_acquire"
+            | "db_pool_release"
+            | "db_pool_stats"
+            | "db_pool_close"
+            | "db_begin"
+            | "db_commit"
+            | "db_rollback"
+            | "db_last_insert_id" => Some(Value::Error(
                 "Database native APIs are disabled in this build (enable the 'runtime-db' feature)"
                     .to_string(),
             )),
@@ -458,6 +469,7 @@ mod tests {
             "set_header",
             "set_headers",
             "db_connect",
+            "db_connect_readonly",
             "db_execute",
             "db_query",
             "db_close",

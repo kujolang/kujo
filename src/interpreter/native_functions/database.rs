@@ -153,6 +153,72 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 )
             }
         }
+        "db_connect_readonly" => {
+            if arg_values.len() != 2 {
+                Value::Error(
+                    "db_connect_readonly requires database type 'sqlite' and an existing database path"
+                        .to_string(),
+                )
+            } else if let (Some(Value::Str(db_type)), Some(Value::Str(connection_string))) =
+                (arg_values.first(), arg_values.get(1))
+            {
+                if db_type.to_lowercase() != "sqlite" {
+                    Value::Error(
+                        "db_connect_readonly currently supports only database type 'sqlite'"
+                            .to_string(),
+                    )
+                } else if connection_string.as_ref() == ":memory:" {
+                    Value::Error(
+                        "db_connect_readonly requires an existing filesystem database path"
+                            .to_string(),
+                    )
+                } else {
+                    let database_path = std::path::Path::new(connection_string.as_ref());
+                    if !database_path.is_file() {
+                        return Some(Value::Error(
+                            "db_connect_readonly requires an existing filesystem database path"
+                                .to_string(),
+                        ));
+                    }
+                    let wal_path = format!("{}-wal", connection_string.as_ref());
+                    if std::fs::metadata(&wal_path)
+                        .map(|metadata| metadata.len() > 0)
+                        .unwrap_or(false)
+                    {
+                        return Some(Value::Error(
+                            "db_connect_readonly refuses a database with a non-empty WAL; checkpoint it before immutable inspection"
+                                .to_string(),
+                        ));
+                    }
+                    let immutable_uri = format!(
+                        "file:{}?mode=ro&immutable=1",
+                        urlencoding::encode(connection_string.as_ref())
+                    );
+                    let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY
+                        | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX
+                        | rusqlite::OpenFlags::SQLITE_OPEN_URI;
+                    match rusqlite::Connection::open_with_flags(&immutable_uri, flags) {
+                        Ok(connection) => Value::Database {
+                            connection: DatabaseConnection::Sqlite(Arc::new(Mutex::new(
+                                connection,
+                            ))),
+                            db_type: "sqlite".to_string(),
+                            connection_string: connection_string.as_ref().to_string(),
+                            in_transaction: Arc::new(Mutex::new(false)),
+                        },
+                        Err(error) => Value::Error(format!(
+                            "Failed to connect to SQLite read-only: {}",
+                            error
+                        )),
+                    }
+                }
+            } else {
+                Value::Error(
+                    "db_connect_readonly requires database type 'sqlite' and an existing database path"
+                        .to_string(),
+                )
+            }
+        }
 
         "db_execute" => {
             if arg_values.len() > 3 {
@@ -942,6 +1008,71 @@ mod tests {
         let close_result = handle("db_close", &[db]).unwrap();
         assert!(matches!(close_result, Value::Bool(true)));
 
+        let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn test_db_connect_readonly_queries_and_denies_writes() {
+        let db_path = tmp_db_path("sqlite_readonly.db");
+        let _ = std::fs::remove_file(&db_path);
+        let writable = handle("db_connect", &[str_value("sqlite"), str_value(&db_path)]).unwrap();
+        let created = handle(
+            "db_execute",
+            &[writable.clone(), str_value("CREATE TABLE facts (value TEXT NOT NULL)")],
+        )
+        .unwrap();
+        assert!(matches!(created, Value::Int(_)));
+        let inserted = handle(
+            "db_execute",
+            &[writable.clone(), str_value("INSERT INTO facts VALUES ('present')")],
+        )
+        .unwrap();
+        assert!(matches!(inserted, Value::Int(1)));
+        let _ = handle("db_close", &[writable]).unwrap();
+
+        let readonly =
+            handle("db_connect_readonly", &[str_value("sqlite"), str_value(&db_path)]).unwrap();
+        assert!(matches!(readonly, Value::Database { .. }));
+        assert!(!std::path::Path::new(&format!("{}-wal", db_path)).exists());
+        assert!(!std::path::Path::new(&format!("{}-shm", db_path)).exists());
+        let queried =
+            handle("db_query", &[readonly.clone(), str_value("SELECT value FROM facts")]).unwrap();
+        assert!(matches!(queried, Value::Array(rows) if rows.len() == 1));
+        let denied = handle(
+            "db_execute",
+            &[readonly.clone(), str_value("INSERT INTO facts VALUES ('denied')")],
+        )
+        .unwrap();
+        assert!(matches!(denied, Value::Error(message) if message.contains("readonly")));
+        let _ = handle("db_close", &[readonly]).unwrap();
+
+        let missing_path = tmp_db_path("sqlite_readonly_missing.db");
+        let _ = std::fs::remove_file(&missing_path);
+        let missing =
+            handle("db_connect_readonly", &[str_value("sqlite"), str_value(&missing_path)])
+                .unwrap();
+        assert!(
+            matches!(missing, Value::Error(message) if message.contains("existing filesystem database path"))
+        );
+        let unsupported = handle(
+            "db_connect_readonly",
+            &[str_value("postgres"), str_value("postgres://localhost/example")],
+        )
+        .unwrap();
+        assert!(
+            matches!(unsupported, Value::Error(message) if message.contains("only database type 'sqlite'"))
+        );
+
+        let wal_path = format!("{}-wal", db_path);
+        std::fs::write(&wal_path, b"uncheckpointed").unwrap();
+        let active_wal =
+            handle("db_connect_readonly", &[str_value("sqlite"), str_value(&db_path)])
+                .unwrap();
+        assert!(
+            matches!(active_wal, Value::Error(message) if message.contains("non-empty WAL"))
+        );
+
+        let _ = std::fs::remove_file(wal_path);
         let _ = std::fs::remove_file(db_path);
     }
 

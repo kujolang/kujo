@@ -30,6 +30,13 @@ Preferred behavior:
 
 Profile checks should extend generic checks, not replace them.
 
+The selected profile receives profile arguments after `--`; for example,
+`kujo doctor email --deep` passes `--deep` to the profile entry. Profile stdout
+must be one Doctor report JSON document and is capped at 1 MiB and 10,000
+lines. Truncated output fails instead of being parsed. Optional `readiness`,
+`production_send_enabled`, and `profile_data` fields survive composition into
+the canonical report.
+
 ## What belongs where
 
 Generic doctor should include:

@@ -245,9 +245,20 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "tls_acceptor" | "tls_upgrade_server" => Some(NativeCapability::NetworkServer),
 
         // Database
-        "db_connect" | "db_execute" | "db_query" | "db_close" | "db_pool" | "db_pool_acquire"
-        | "db_pool_release" | "db_pool_stats" | "db_pool_close" | "db_begin" | "db_commit"
-        | "db_rollback" | "db_last_insert_id" => Some(NativeCapability::Database),
+        "db_connect"
+        | "db_connect_readonly"
+        | "db_execute"
+        | "db_query"
+        | "db_close"
+        | "db_pool"
+        | "db_pool_acquire"
+        | "db_pool_release"
+        | "db_pool_stats"
+        | "db_pool_close"
+        | "db_begin"
+        | "db_commit"
+        | "db_rollback"
+        | "db_last_insert_id" => Some(NativeCapability::Database),
 
         // Clock/time
         "now" | "now_utc" | "now_unix" | "current_timestamp" | "performance_now" | "time_us"

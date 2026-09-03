@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `db_connect_readonly("sqlite", path)` for capability-gated, fail-closed
+  immutable inspection of existing checkpointed SQLite databases without
+  create, write, WAL or shared-memory side effects.
+
+- Preserve doctor-profile arguments, bounded structured reports up to 1 MiB,
+  and optional readiness/profile data through generic Doctor composition.
+
 - Add routed, authorization-preflighted HTTP uploads with fixed-memory body
   streaming into auto-cleaned private files, caller-lowerable 64 MiB ceilings,
   SHA-256 receipts, read deadlines, and interpreter/VM parity. Upload routes

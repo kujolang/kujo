@@ -383,7 +383,7 @@ impl WorkflowRegistry {
     fn execute_external(
         &self,
         cmd: &RegisteredCommand,
-        _ctx: &CommandContext,
+        ctx: &CommandContext,
     ) -> Result<DoctorReport, String> {
         if cmd.entry == "builtin" {
             return Err(format!(
@@ -399,16 +399,26 @@ impl WorkflowRegistry {
                 .map(|p| p.to_string_lossy().to_string())
                 .unwrap_or_else(|_| "kujo".to_string());
 
-            process_runner::run_command(
+            let entry = entry_path.to_string_lossy().to_string();
+            let mut owned_args =
+                vec!["run".to_string(), "--allow-all".to_string(), entry, "--".to_string()];
+            owned_args.extend(ctx.args.iter().cloned());
+            let args: Vec<&str> = owned_args.iter().map(String::as_str).collect();
+            process_runner::run_command_with_limits(
                 &kujo_binary,
-                &["run", "--allow-all", &entry_path.to_string_lossy()],
+                &args,
                 Some(EXTERNAL_CMD_TIMEOUT),
+                process_runner::MAX_STRUCTURED_OUTPUT_BYTES,
+                process_runner::MAX_STRUCTURED_OUTPUT_LINES,
             )
         } else {
-            process_runner::run_command(
+            let args: Vec<&str> = ctx.args.iter().map(String::as_str).collect();
+            process_runner::run_command_with_limits(
                 &entry_path.to_string_lossy(),
-                &[],
+                &args,
                 Some(EXTERNAL_CMD_TIMEOUT),
+                process_runner::MAX_STRUCTURED_OUTPUT_BYTES,
+                process_runner::MAX_STRUCTURED_OUTPUT_LINES,
             )
         };
 
@@ -421,6 +431,15 @@ impl WorkflowRegistry {
                         cmd.namespace,
                         cmd.command_name,
                         proc_result.stderr.trim()
+                    ));
+                }
+
+                if proc_result.stdout_truncated {
+                    return Err(format!(
+                        "Command '{}.{}' exceeded the {}-byte structured output limit.",
+                        cmd.namespace,
+                        cmd.command_name,
+                        process_runner::MAX_STRUCTURED_OUTPUT_BYTES
                     ));
                 }
 
@@ -517,6 +536,9 @@ mod tests {
             summary: Default::default(),
             checks: vec![],
             recommended_next_actions: None,
+            readiness: None,
+            production_send_enabled: None,
+            profile_data: None,
         }
     }
 
