@@ -454,3 +454,95 @@ fn http_route_callback_resolves_module_helper_chaining_to_import() {
         stderr_text(&output)
     );
 }
+
+#[test]
+fn http_route_callback_preserves_captured_dictionary_in_vm_and_interpreter() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else {
+            eprintln!("Skipping captured dictionary test: unable to reserve localhost test port");
+            return;
+        };
+        let project_root = unique_temp_dir(if interpreter {
+            "http_captured_dict_interpreter"
+        } else {
+            "http_captured_dict_vm"
+        });
+        let script_path = project_root.join("main.kujo");
+        let script_source = format!(
+            "mut policy := {{\"host\":\"expected.example\",\"body\":\"first\"}}\npolicy = {{\"host\":\"expected.example\",\"body\":\"captured-dictionary-ok\"}}\nserver := http_server({port})\nserver = server.route(\"GET\", \"/policy\", func(req) {{\n    if policy[\"host\"] != \"expected.example\" {{ return http_response(404, \"wrong host\") }}\n    return http_response(200, policy[\"body\"])\n}})\nserver.listen()\n"
+        );
+        fs::write(&script_path, script_source).expect("failed to write captured dictionary script");
+
+        let mut child = spawn_runtime_with_read_timeout(&script_path, &project_root, interpreter);
+        let response = match wait_for_response(&mut child, port, "/policy") {
+            Ok(response) => response,
+            Err(message) => {
+                let output = terminate_child(child);
+                panic!(
+                    "{message}; stdout={}; stderr={}",
+                    stdout_text(&output),
+                    stderr_text(&output)
+                );
+            }
+        };
+        let output = terminate_child(child);
+        assert_eq!(
+            response.0,
+            200,
+            "body={}; stdout={}; stderr={}",
+            response.1,
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert_eq!(response.1, "captured-dictionary-ok");
+    }
+}
+
+#[test]
+fn http_route_callback_preserves_dictionary_returned_by_import_in_vm_and_interpreter() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else {
+            eprintln!("Skipping imported dictionary test: unable to reserve localhost test port");
+            return;
+        };
+        let project_root = unique_temp_dir(if interpreter {
+            "http_imported_dict_interpreter"
+        } else {
+            "http_imported_dict_vm"
+        });
+        let script_path = project_root.join("main.kujo");
+        let helper_path = project_root.join("policy.kujo");
+        fs::write(
+            &helper_path,
+            "export func build_policy() { return {\"host\":\"expected.example\",\"body\":\"imported-dictionary-ok\"} }\n",
+        )
+        .expect("failed to write imported dictionary helper");
+        let script_source = format!(
+            "from policy import build_policy\nfunc serve() {{\n    mut server := http_server({port})\n    if false {{\n        let policy := {{\"host\":\"stale.example\",\"body\":\"stale\"}}\n    }}\n    if true {{\n        mut policy := {{\"ok\":false}}\n        policy = build_policy()\n        server = server.route(\"GET\", \"/policy\", func(req) {{\n            if policy[\"host\"] != \"expected.example\" {{ return http_response(404, \"wrong host\") }}\n            return http_response(200, policy[\"body\"])\n        }})\n    }}\n    server.listen()\n}}\nserve()\n"
+        );
+        fs::write(&script_path, script_source).expect("failed to write imported dictionary script");
+
+        let mut child = spawn_runtime_with_read_timeout(&script_path, &project_root, interpreter);
+        let response = match wait_for_response(&mut child, port, "/policy") {
+            Ok(response) => response,
+            Err(message) => {
+                let output = terminate_child(child);
+                panic!(
+                    "{message}; stdout={}; stderr={}",
+                    stdout_text(&output),
+                    stderr_text(&output)
+                );
+            }
+        };
+        let output = terminate_child(child);
+        assert_eq!(
+            response.0,
+            200,
+            "body={}; stdout={}; stderr={}",
+            response.1,
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert_eq!(response.1, "imported-dictionary-ok");
+    }
+}

@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Capture the lexically nearest same-named local in VM closures. This prevents
+  a closure created in a later block from binding an inactive earlier block's
+  slot, while preserving interpreter parity.
+
 - Accept VM fixed-dictionary option literals in TLS client and server APIs,
   preserving the same allowlist, size limits and minimum-version validation as
   interpreter dictionaries.

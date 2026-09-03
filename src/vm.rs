@@ -3366,7 +3366,7 @@ impl VM {
                                     .chunk
                                     .local_names
                                     .iter()
-                                    .position(|name| name == upvalue_name)
+                                    .rposition(|name| name == upvalue_name)
                                 {
                                     let value = frame
                                         .local_slots
