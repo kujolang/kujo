@@ -1290,6 +1290,30 @@ export func add_one(x) {
 }
 
 #[test]
+fn vm_and_interpreter_match_imported_async_function_invocation_surface() {
+    let module_name = unique_module_name();
+    let module_filename = format!("{module_name}.kujo");
+    let module_source = r#"
+export async func add_one_async(x) {
+    return x + 1
+}
+"#;
+    fs::write(&module_filename, module_source).expect("failed to write async parity module");
+
+    let script = format!(
+        r#"
+        from {module_name} import add_one_async
+        imported_async_promise := add_one_async(41)
+        imported_async_result := await imported_async_promise
+        imported_async_function_ok := imported_async_result == 42
+    "#
+    );
+
+    assert_interpreter_and_vm_bool(&script, "imported_async_function_ok");
+    let _ = fs::remove_file(module_filename);
+}
+
+#[test]
 fn vm_and_interpreter_match_import_all_function_invocation_surface() {
     let module_name = unique_module_name();
     let module_filename = format!("{module_name}.kujo");

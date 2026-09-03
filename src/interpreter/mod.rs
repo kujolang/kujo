@@ -1976,6 +1976,62 @@ impl Interpreter {
                     is_exhausted: false,
                 }
             }
+            Value::AsyncFunction(params, body, captured_env) => {
+                let arity = Self::function_arity("<anonymous async function>", params);
+                if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
+                    return error;
+                }
+                let params = params.clone();
+                let body = body.clone();
+                let arguments = args.to_vec();
+                let base_env = if let Some(env_ref) = captured_env {
+                    env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
+                } else {
+                    self.env.clone()
+                };
+                let closure_env_for_update = captured_env.clone();
+                let capability_policy = self.capability_policy.clone();
+                let (tx, rx) = tokio::sync::oneshot::channel();
+                AsyncRuntime::spawn_task(async move {
+                    let mut async_interpreter =
+                        Interpreter::with_capability_policy(capability_policy);
+                    async_interpreter.env = base_env;
+                    async_interpreter.env.push_scope();
+                    for (index, param) in params.iter().enumerate() {
+                        if let Some(argument) = arguments.get(index) {
+                            async_interpreter.env.define(param.clone(), argument.clone());
+                        }
+                    }
+                    if let Err(error) = async_interpreter
+                        .with_function_context("<async function>", |interp| {
+                            interp.eval_stmts(&body.get())
+                        })
+                    {
+                        async_interpreter.env.pop_scope();
+                        let _ = tx.send(Ok(error));
+                        return Value::Null;
+                    }
+                    let result = match async_interpreter.return_value.take() {
+                        Some(Value::Return(value)) => *value,
+                        Some(Value::Error(message)) => Value::Error(message),
+                        Some(value @ Value::ErrorObject { .. }) => value,
+                        _ => Value::Null,
+                    };
+                    async_interpreter.env.pop_scope();
+                    if let Some(env_ref) = closure_env_for_update {
+                        *env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
+                            async_interpreter.env.clone();
+                    }
+                    let _ = tx.send(Ok(result));
+                    Value::Null
+                });
+                Value::Promise {
+                    receiver: Arc::new(Mutex::new(rx)),
+                    is_polled: Arc::new(Mutex::new(false)),
+                    cached_result: Arc::new(Mutex::new(None)),
+                    task_handle: None,
+                }
+            }
             Value::Function(params, body, captured_env) => {
                 let arity = Self::function_arity("<anonymous function>", params);
                 if let Some(error) = self.validate_callable_arity(&arity, args.len()) {

@@ -25,6 +25,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   callbacks, callback cancellation, downstream-disconnect reporting, and
   interpreter/VM server support without full-response buffering.
 
+### Fixed
+
+- Accept VM fixed-dictionary option literals in TLS client and server APIs,
+  preserving the same allowlist, size limits and minimum-version validation as
+  interpreter dictionaries.
+
+- Make imported async Kujo functions callable through both VM call paths with
+  interpreter-equivalent arity, captured environment and promise behavior.
+
+- Bound the shared async runtime to one scheduler worker instead of inheriting
+  host CPU count. Nonblocking tasks still interleave and explicitly bounded
+  blocking/Rayon lanes retain parallelism without host-dependent stack growth.
+
 ## [1.2.3] - 2026-09-02
 
 ### Added

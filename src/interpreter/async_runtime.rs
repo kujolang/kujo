@@ -20,9 +20,11 @@ use crate::interpreter::Value;
 
 /// Global tokio runtime instance, initialized lazily on first access
 const KUJO_ASYNC_WORKER_STACK_BYTES: usize = 8 * 1024 * 1024;
+const KUJO_ASYNC_WORKER_THREADS: usize = 1;
 
 fn build_runtime() -> Runtime {
     Builder::new_multi_thread()
+        .worker_threads(KUJO_ASYNC_WORKER_THREADS)
         .thread_stack_size(KUJO_ASYNC_WORKER_STACK_BYTES)
         .enable_all()
         .build()
@@ -146,6 +148,7 @@ mod tests {
     #[test]
     fn async_worker_stack_budget_is_bounded_and_nontrivial() {
         assert_eq!(KUJO_ASYNC_WORKER_STACK_BYTES, 8 * 1024 * 1024);
+        assert_eq!(KUJO_ASYNC_WORKER_THREADS, 1);
         let runtime = build_runtime();
         let result = runtime.block_on(async {
             AsyncRuntime::spawn_task(async { Value::str("stack-ready".to_string()) })

@@ -3228,7 +3228,9 @@ impl VM {
                                 }
                             }
                         }
-                        Value::Function(..) | Value::GeneratorDef(..) => {
+                        Value::Function(..)
+                        | Value::AsyncFunction(..)
+                        | Value::GeneratorDef(..) => {
                             let result = self.call_interpreter_callable(&function, &args)?;
                             self.stack.push(result);
                         }
@@ -8057,7 +8059,7 @@ impl VM {
                 // Native function - call it directly
                 self.call_native_function_vm(function, args)
             }
-            Value::Function(..) | Value::GeneratorDef(..) => {
+            Value::Function(..) | Value::AsyncFunction(..) | Value::GeneratorDef(..) => {
                 self.call_interpreter_callable(&function, &args)
             }
             _ => Err(Self::non_callable_error_message("the value being called is not callable")),
