@@ -726,6 +726,7 @@ impl Interpreter {
             "encode_base64",
             "decode_base64",
             "decode_base64_utf8",
+            "decode_charset",
             "encode_uri_component",
             // Random functions
             "random",
@@ -1356,6 +1357,10 @@ impl Interpreter {
         self.env.define(
             "decode_base64_utf8".to_string(),
             Value::NativeFunction("decode_base64_utf8".to_string()),
+        );
+        self.env.define(
+            "decode_charset".to_string(),
+            Value::NativeFunction("decode_charset".to_string()),
         );
         self.env.define(
             "encode_uri_component".to_string(),
@@ -3478,6 +3483,14 @@ impl Interpreter {
             "decode_base64_utf8" => {
                 CallableArity::exact("decode_base64_utf8", vec!["text".to_string()])
             }
+            "decode_charset" => CallableArity::exact(
+                "decode_charset",
+                vec![
+                    "bytes_data".to_string(),
+                    "charset".to_string(),
+                    "max_output_bytes".to_string(),
+                ],
+            ),
             "ip_cidr_contains" => CallableArity::exact(
                 "ip_cidr_contains",
                 vec!["address".to_string(), "cidr".to_string()],

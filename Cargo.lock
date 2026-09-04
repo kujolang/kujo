@@ -2486,6 +2486,7 @@ dependencies = [
  "cranelift-native",
  "criterion",
  "csv",
+ "encoding_rs",
  "flate2",
  "futures",
  "hickory-resolver",

@@ -297,6 +297,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `encode_base64` | `encode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := encode_base64(...)` |
 | `decode_base64` | `decode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := decode_base64(...)` |
 | `decode_base64_utf8` | `decode_base64_utf8(text)` | exact 1 | string | Error on malformed base64 or invalid UTF-8. | `none` | `text := decode_base64_utf8(encoded)` |
+| `decode_charset` | `decode_charset(bytes, charset, max_output_bytes)` | exact 3 | string | Error on invalid/unsupported labels, malformed byte sequences, input over 64 MiB, or output beyond the explicit 1..64 MiB bound. Strictly decodes UTF-8, US-ASCII, ISO-8859-1 and supported registered legacy encodings without replacement. | `none` | `text := decode_charset(raw, "iso-8859-1", 1024)` |
 | `encode_uri_component` | `encode_uri_component(...)` | handler-defined | string | Value::Error on invalid args/types. | `none` | `part := encode_uri_component("café & tea")` |
 | `random` | `random(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random(...)` |
 | `random_int` | `random_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `random` | `result := random_int(...)` |

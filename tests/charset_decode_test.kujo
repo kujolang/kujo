@@ -1,0 +1,27 @@
+assert(decode_charset(decode_base64("Y2Fm6Q=="),"iso-8859-1",16) == "café","ISO-8859-1 decodes exactly")
+assert(decode_charset(decode_base64("Y2Fm6Q=="),"latin1",16) == "café","Latin-1 alias is deterministic")
+assert(decode_charset(decode_base64("c21hcnQgkXF1b3Rlc5I="),"windows-1252",64) == "smart ‘quotes’","Windows-1252 decodes strictly")
+assert(decode_charset(decode_base64("grGC8YLJgr+CzQ=="),"shift_jis",64) == "こんにちは","registered multibyte charset decodes")
+assert(decode_charset(decode_base64("QUJD"),"us-ascii",3) == "ABC","US-ASCII decodes")
+
+mut invalid_ascii := false
+try { decode_charset(decode_base64("/w=="),"us-ascii",8) }
+except error { invalid_ascii = contains(to_string(error),"invalid for the selected charset") }
+assert(invalid_ascii,"invalid ASCII fails without replacement")
+
+mut unsupported := false
+try { decode_charset(decode_base64("QQ=="),"x-kujo-unknown",8) }
+except error { unsupported = contains(to_string(error),"label is unsupported") }
+assert(unsupported,"unknown charset label fails closed")
+
+mut bounded := false
+try { decode_charset(decode_base64("Y2Fm6Q=="),"iso-8859-1",4) }
+except error { bounded = contains(to_string(error),"output exceeds configured limit") }
+assert(bounded,"UTF-8 output expansion respects explicit bound")
+
+mut invalid_multibyte := false
+try { decode_charset(decode_base64("gg=="),"shift_jis",8) }
+except error { invalid_multibyte = contains(to_string(error),"invalid for the selected charset") }
+assert(invalid_multibyte,"incomplete multibyte input fails without replacement")
+
+print("charset decode tests: 9 passed")

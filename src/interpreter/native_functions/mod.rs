@@ -637,6 +637,7 @@ mod tests {
             "encode_base64",
             "decode_base64",
             "decode_base64_utf8",
+            "decode_charset",
             "encode_uri_component",
             "regex_match",
             "regex_find_all",

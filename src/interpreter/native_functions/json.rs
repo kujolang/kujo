@@ -204,6 +204,27 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "decode_charset" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(
+                    "decode_charset requires bytes, charset label, and maximum output bytes"
+                        .to_string(),
+                ));
+            }
+            match (&arg_values[0], &arg_values[1], &arg_values[2]) {
+                (Value::Bytes(bytes), Value::Str(label), Value::Int(max_output_bytes)) => {
+                    match builtins::decode_charset(bytes, label.as_ref(), *max_output_bytes) {
+                        Ok(text) => Value::Str(Arc::new(text)),
+                        Err(error) => Value::Error(error),
+                    }
+                }
+                _ => Value::Error(
+                    "decode_charset requires bytes, charset label, and maximum output bytes"
+                        .to_string(),
+                ),
+            }
+        }
+
         _ => return None,
     };
 
@@ -341,6 +362,45 @@ mod tests {
         let malformed = handle("decode_base64_utf8", &[string_value("%%")]).unwrap();
         assert!(
             matches!(malformed, Value::Error(message) if message.starts_with("Base64 decode error:"))
+        );
+    }
+
+    #[test]
+    fn test_charset_decode_is_strict_bounded_and_label_explicit() {
+        let latin1 = handle(
+            "decode_charset",
+            &[Value::Bytes(b"caf\xe9".to_vec()), string_value("iso-8859-1"), Value::Int(16)],
+        )
+        .unwrap();
+        assert!(matches!(latin1, Value::Str(value) if value.as_ref() == "café"));
+
+        let windows = handle(
+            "decode_charset",
+            &[
+                Value::Bytes(b"smart \x91quotes\x92".to_vec()),
+                string_value("windows-1252"),
+                Value::Int(64),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(windows, Value::Str(value) if value.as_ref() == "smart ‘quotes’"));
+
+        let invalid = handle(
+            "decode_charset",
+            &[Value::Bytes(vec![0xff]), string_value("us-ascii"), Value::Int(8)],
+        )
+        .unwrap();
+        assert!(
+            matches!(invalid, Value::Error(message) if message.contains("invalid for the selected charset"))
+        );
+
+        let bounded = handle(
+            "decode_charset",
+            &[Value::Bytes(b"caf\xe9".to_vec()), string_value("iso-8859-1"), Value::Int(4)],
+        )
+        .unwrap();
+        assert!(
+            matches!(bounded, Value::Error(message) if message.contains("output exceeds configured limit"))
         );
     }
 

@@ -210,6 +210,7 @@ Guideline:
 | `encode_base64` | stable | `txt := encode_base64(bytes)` |
 | `decode_base64` | stable | `bytes := decode_base64(txt)` |
 | `decode_base64_utf8` | stable | `text := decode_base64_utf8(txt)` |
+| `decode_charset` | stable | `text := decode_charset(raw, "iso-8859-1", 1024)` |
 | `encode_uri_component` | stable | `part := encode_uri_component("café & tea")` |
 
 Access semantics:

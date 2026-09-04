@@ -1813,6 +1813,64 @@ pub fn decode_base64_utf8(s: &str) -> Result<String, String> {
     String::from_utf8(bytes).map_err(|_| "Base64 decoded value is not valid UTF-8".to_string())
 }
 
+/// Decode bounded bytes with an explicit registered character-set label.
+///
+/// This is strict: malformed input is rejected rather than replaced. ISO-8859-1
+/// retains its MIME meaning instead of the browser-compatible Windows-1252
+/// alias used by the Encoding Standard.
+#[allow(dead_code)]
+pub fn decode_charset(bytes: &[u8], label: &str, max_output_bytes: i64) -> Result<String, String> {
+    const MAX_BYTES: usize = 64 * 1024 * 1024;
+    let max_output = usize::try_from(max_output_bytes)
+        .ok()
+        .filter(|value| *value > 0 && *value <= MAX_BYTES)
+        .ok_or_else(|| {
+            "decode_charset maximum output bytes must be between 1 and 67108864".to_string()
+        })?;
+    if bytes.len() > MAX_BYTES {
+        return Err("decode_charset input exceeds 67108864 bytes".to_string());
+    }
+    let normalized = label.trim().to_ascii_lowercase();
+    if normalized.is_empty()
+        || normalized.len() > 64
+        || !normalized
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
+    {
+        return Err("decode_charset label is invalid".to_string());
+    }
+
+    let decoded = match normalized.as_str() {
+        "utf-8" | "utf8" => String::from_utf8(bytes.to_vec())
+            .map_err(|_| "decode_charset input is invalid for the selected charset".to_string())?,
+        "us-ascii" | "ascii" => {
+            if !bytes.is_ascii() {
+                return Err("decode_charset input is invalid for the selected charset".to_string());
+            }
+            String::from_utf8(bytes.to_vec()).map_err(|_| {
+                "decode_charset input is invalid for the selected charset".to_string()
+            })?
+        }
+        "iso-8859-1" | "iso_8859-1" | "latin1" | "latin-1" => {
+            bytes.iter().map(|byte| char::from(*byte)).collect()
+        }
+        _ => {
+            let encoding = encoding_rs::Encoding::for_label_no_replacement(normalized.as_bytes())
+                .ok_or_else(|| "decode_charset label is unsupported".to_string())?;
+            encoding
+                .decode_without_bom_handling_and_without_replacement(bytes)
+                .ok_or_else(|| {
+                    "decode_charset input is invalid for the selected charset".to_string()
+                })?
+                .into_owned()
+        }
+    };
+    if decoded.len() > max_output {
+        return Err("decode_charset output exceeds configured limit".to_string());
+    }
+    Ok(decoded)
+}
+
 /// JWT Authentication Functions
 /// JWT Claims structure for encoding/decoding
 #[derive(Debug, Serialize, Deserialize)]

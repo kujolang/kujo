@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add capability-free `decode_charset(bytes, charset, max_output_bytes)` with
+  strict no-replacement decoding, explicit 64 MiB resource ceilings, exact
+  MIME ISO-8859-1 semantics, registered legacy charset support, and
+  VM/interpreter parity.
+
 - Add `db_connect_readonly("sqlite", path)` for capability-gated, fail-closed
   immutable inspection of existing checkpointed SQLite databases without
   create, write, WAL or shared-memory side effects.

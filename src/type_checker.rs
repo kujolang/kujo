@@ -2200,6 +2200,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "decode_charset".to_string(),
+            FunctionSignature {
+                param_types: vec![None, Some(TypeAnnotation::String), Some(TypeAnnotation::Int)],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
             "encode_uri_component".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)],
