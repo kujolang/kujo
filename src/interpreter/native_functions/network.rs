@@ -168,6 +168,15 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                 match input.parse::<IpAddr>() {
                     Ok(address) => {
                         let (scope, publicly_routable) = ip_scope(address);
+                        let expanded_address = match address {
+                            IpAddr::V4(value) => value.to_string(),
+                            IpAddr::V6(value) => value
+                                .segments()
+                                .iter()
+                                .map(|segment| format!("{segment:04x}"))
+                                .collect::<Vec<_>>()
+                                .join(":"),
+                        };
                         let mut result = DictMap::default();
                         network_insert(
                             &mut result,
@@ -178,6 +187,11 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                             &mut result,
                             "address",
                             network_string_value(address.to_string()),
+                        );
+                        network_insert(
+                            &mut result,
+                            "expanded_address",
+                            network_string_value(expanded_address),
                         );
                         network_insert(
                             &mut result,

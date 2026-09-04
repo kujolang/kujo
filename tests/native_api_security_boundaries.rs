@@ -1276,8 +1276,10 @@ fn network_ip_classification_is_fail_closed_and_capability_free() {
         let stdout = stdout_text(&output);
         assert!(
             stdout.contains("\"address\":\"8.8.8.8\"")
+                && stdout.contains("\"expanded_address\":\"8.8.8.8\"")
                 && stdout.contains("\"publicly_routable\":true")
         );
+        assert!(stdout.contains("\"expanded_address\":\"2001:4860:4860:0000:0000:0000:0000:8888\""));
         assert!(
             stdout.contains("\"scope\":\"loopback\"")
                 && stdout.contains("\"scope\":\"documentation\"")
