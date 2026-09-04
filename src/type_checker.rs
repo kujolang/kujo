@@ -1515,6 +1515,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "db_begin_immediate".to_string(),
+            FunctionSignature {
+                param_types: vec![None], // SQLite database connection
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "db_commit".to_string(),
             FunctionSignature {
                 param_types: vec![None], // Database connection

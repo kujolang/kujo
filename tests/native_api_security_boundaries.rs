@@ -1604,6 +1604,15 @@ fn native_capability_untrusted_denies_readonly_database() {
 }
 
 #[test]
+fn native_capability_untrusted_denies_immediate_database_transaction() {
+    assert_runtime_boundary_failure_with_args(
+        "db_begin_immediate(1)\n",
+        "Capability denied: database required for db_begin_immediate",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
 fn native_capability_untrusted_denies_image_file_read() {
     assert_runtime_boundary_failure_with_args(
         "load_image(\"photo.png\")\n",

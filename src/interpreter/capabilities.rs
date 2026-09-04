@@ -257,6 +257,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "db_pool_stats"
         | "db_pool_close"
         | "db_begin"
+        | "db_begin_immediate"
         | "db_commit"
         | "db_rollback"
         | "db_last_insert_id" => Some(NativeCapability::Database),

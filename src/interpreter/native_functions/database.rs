@@ -770,6 +770,54 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "db_begin_immediate" => {
+            if arg_values.len() > 1 {
+                return Some(Value::Error(
+                    "db_begin_immediate requires a database connection as first argument"
+                        .to_string(),
+                ));
+            }
+
+            let (connection, db_type, in_transaction) =
+                if let Some(Value::Database { connection, db_type, in_transaction, .. }) =
+                    arg_values.first()
+                {
+                    (connection.clone(), db_type.clone(), in_transaction.clone())
+                } else {
+                    return Some(Value::Error(
+                        "db_begin_immediate requires a database connection as first argument"
+                            .to_string(),
+                    ));
+                };
+
+            {
+                let in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+                if *in_trans {
+                    return Some(Value::Error(
+                        "Transaction already in progress. Commit or rollback first.".to_string(),
+                    ));
+                }
+            }
+
+            let result = match (connection, db_type.as_str()) {
+                (DatabaseConnection::Sqlite(connection), "sqlite") => {
+                    let connection = lock_or_db_error!(connection, "database.connection");
+                    connection
+                        .execute("BEGIN IMMEDIATE", [])
+                        .map(|_| ())
+                        .map_err(|e| format!("Failed to begin immediate transaction: {}", e))
+                }
+                _ => Err("db_begin_immediate is only supported for sqlite databases".to_string()),
+            };
+
+            if let Err(message) = result {
+                return Some(Value::Error(message));
+            }
+            let mut in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+            *in_trans = true;
+            Value::Bool(true)
+        }
+
         "db_commit" => match arg_values.first().cloned() {
             _ if arg_values.len() > 1 => Value::Error(
                 "db_commit requires a database connection as first argument".to_string(),
@@ -1066,11 +1114,8 @@ mod tests {
         let wal_path = format!("{}-wal", db_path);
         std::fs::write(&wal_path, b"uncheckpointed").unwrap();
         let active_wal =
-            handle("db_connect_readonly", &[str_value("sqlite"), str_value(&db_path)])
-                .unwrap();
-        assert!(
-            matches!(active_wal, Value::Error(message) if message.contains("non-empty WAL"))
-        );
+            handle("db_connect_readonly", &[str_value("sqlite"), str_value(&db_path)]).unwrap();
+        assert!(matches!(active_wal, Value::Error(message) if message.contains("non-empty WAL")));
 
         let _ = std::fs::remove_file(wal_path);
         let _ = std::fs::remove_file(db_path);
@@ -1127,6 +1172,28 @@ mod tests {
         let close_result = handle("db_close", &[db]).unwrap();
         assert!(matches!(close_result, Value::Bool(true)));
 
+        let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn test_db_begin_immediate_sqlite_tracks_transaction_state() {
+        let db_path = tmp_db_path("sqlite_immediate_tx.db");
+        let db = handle("db_connect", &[str_value("sqlite"), str_value(&db_path)]).unwrap();
+        let begun = handle("db_begin_immediate", &[db.clone()]).unwrap();
+        assert!(matches!(begun, Value::Bool(true)));
+        let begun_again = handle("db_begin_immediate", &[db.clone()]).unwrap();
+        assert!(
+            matches!(begun_again, Value::Error(message) if message.contains("Transaction already in progress"))
+        );
+        let created = handle(
+            "db_execute",
+            &[db.clone(), str_value("CREATE TABLE immediate_items (id INTEGER PRIMARY KEY)")],
+        )
+        .unwrap();
+        assert!(matches!(created, Value::Int(_) | Value::Float(_)));
+        let committed = handle("db_commit", &[db.clone()]).unwrap();
+        assert!(matches!(committed, Value::Bool(true)));
+        let _ = handle("db_close", &[db]).unwrap();
         let _ = std::fs::remove_file(db_path);
     }
 

@@ -29,6 +29,7 @@ pub mod database {
             | "db_pool_stats"
             | "db_pool_close"
             | "db_begin"
+            | "db_begin_immediate"
             | "db_commit"
             | "db_rollback"
             | "db_last_insert_id" => Some(Value::Error(
@@ -479,6 +480,7 @@ mod tests {
             "db_pool_stats",
             "db_pool_close",
             "db_begin",
+            "db_begin_immediate",
             "db_commit",
             "db_rollback",
             "db_last_insert_id",
@@ -4529,6 +4531,11 @@ mod tests {
                 "db_begin",
                 vec![Value::Int(1), Value::Int(2)],
                 "db_begin requires a database connection",
+            ),
+            (
+                "db_begin_immediate",
+                vec![Value::Int(1), Value::Int(2)],
+                "db_begin_immediate requires a database connection",
             ),
             (
                 "db_commit",

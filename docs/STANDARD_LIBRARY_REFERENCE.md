@@ -683,6 +683,7 @@ stale main-file view for current state.
 | `db_pool_stats` | experimental | `stats := db_pool_stats(pool)` |
 | `db_pool_close` | experimental | `db_pool_close(pool)` |
 | `db_begin` | preview | `db_begin(db)` |
+| `db_begin_immediate` | preview | `db_begin_immediate(db)` |
 | `db_commit` | preview | `db_commit(db)` |
 | `db_rollback` | preview | `db_rollback(db)` |
 | `db_last_insert_id` | preview | `id := db_last_insert_id(db)` |

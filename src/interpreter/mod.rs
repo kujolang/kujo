@@ -834,6 +834,7 @@ impl Interpreter {
             "db_pool_stats",
             "db_pool_close",
             "db_begin",
+            "db_begin_immediate",
             "db_commit",
             "db_rollback",
             "db_last_insert_id",
@@ -1591,6 +1592,10 @@ impl Interpreter {
             Value::NativeFunction("db_pool_close".to_string()),
         );
         self.env.define("db_begin".to_string(), Value::NativeFunction("db_begin".to_string()));
+        self.env.define(
+            "db_begin_immediate".to_string(),
+            Value::NativeFunction("db_begin_immediate".to_string()),
+        );
         self.env.define("db_commit".to_string(), Value::NativeFunction("db_commit".to_string()));
         self.env
             .define("db_rollback".to_string(), Value::NativeFunction("db_rollback".to_string()));
