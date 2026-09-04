@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MIME ISO-8859-1 semantics, registered legacy charset support, and
   VM/interpreter parity.
 
+- Add filesystem-read-gated `decode_text_file_range_info` to compose strict
+  identity/Base64/quoted-printable streaming with strict registered-charset
+  conversion, independent decoded/UTF-8 hashes, fixed memory, explicit output
+  and prefix ceilings, and VM/interpreter parity.
+
 - Add `db_connect_readonly("sqlite", path)` for capability-gated, fail-closed
   immutable inspection of existing checkpointed SQLite databases without
   create, write, WAL or shared-memory side effects.

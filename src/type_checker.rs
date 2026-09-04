@@ -2051,6 +2051,22 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "decode_text_file_range_info".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: Some(TypeAnnotation::Any),
+            },
+        );
+
+        self.functions.insert(
             "sha256_canonical_text_file_range".to_string(),
             FunctionSignature {
                 param_types: vec![

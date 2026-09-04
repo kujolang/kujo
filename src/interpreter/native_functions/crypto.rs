@@ -15,6 +15,7 @@ use openssl::rsa::{Padding, Rsa};
 use openssl::sign::{Signer, Verifier};
 use sha2::{Digest, Sha256};
 
+use crate::builtins::{strict_charset, StrictCharset};
 use crate::interpreter::{DictMap, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufReader, BufWriter, ErrorKind, Read, Seek, SeekFrom, Write};
@@ -173,6 +174,7 @@ struct DecodeRangeSink {
     ascii: bool,
     contains_nul: bool,
     utf8: Utf8State,
+    text: Option<TextDecodeRangeSink>,
 }
 
 #[derive(Default)]
@@ -249,6 +251,179 @@ impl Utf8State {
     }
 }
 
+enum StreamingCharsetDecoder {
+    Utf8(Utf8State),
+    Ascii,
+    Latin1,
+    Registered { decoder: encoding_rs::Decoder, pending: Vec<u8> },
+}
+
+struct TextDecodeRangeSink {
+    charset: String,
+    decoder: StreamingCharsetDecoder,
+    hasher: Sha256,
+    output_bytes: u64,
+    max_output_bytes: u64,
+    prefix: Vec<u8>,
+    prefix_bytes: usize,
+    ascii: bool,
+    contains_nul: bool,
+}
+
+impl TextDecodeRangeSink {
+    fn new(charset: &str, max_output_bytes: u64, prefix_bytes: usize) -> Result<Self, String> {
+        let (canonical, resolved) = strict_charset(charset)?;
+        let decoder = match resolved {
+            StrictCharset::Utf8 => StreamingCharsetDecoder::Utf8(Utf8State::default()),
+            StrictCharset::Ascii => StreamingCharsetDecoder::Ascii,
+            StrictCharset::Latin1 => StreamingCharsetDecoder::Latin1,
+            StrictCharset::Registered(encoding) => StreamingCharsetDecoder::Registered {
+                decoder: encoding.new_decoder_without_bom_handling(),
+                pending: Vec::new(),
+            },
+        };
+        Ok(Self {
+            charset: canonical,
+            decoder,
+            hasher: Sha256::new(),
+            output_bytes: 0,
+            max_output_bytes,
+            prefix: Vec::with_capacity(prefix_bytes),
+            prefix_bytes,
+            ascii: true,
+            contains_nul: false,
+        })
+    }
+
+    fn record(&mut self, bytes: &[u8]) -> Result<(), String> {
+        let next = self
+            .output_bytes
+            .checked_add(bytes.len() as u64)
+            .ok_or_else(|| "charset output length overflow".to_string())?;
+        if next > self.max_output_bytes {
+            return Err(format!(
+                "charset output exceeds configured limit of {} bytes",
+                self.max_output_bytes
+            ));
+        }
+        let available = self.prefix_bytes.saturating_sub(self.prefix.len());
+        self.prefix.extend_from_slice(&bytes[..bytes.len().min(available)]);
+        for byte in bytes.iter().copied() {
+            self.ascii &= byte <= 0x7f;
+            self.contains_nul |= byte == 0;
+        }
+        self.hasher.update(bytes);
+        self.output_bytes = next;
+        Ok(())
+    }
+
+    fn push(&mut self, bytes: &[u8]) -> Result<(), String> {
+        let converted = match &mut self.decoder {
+            StreamingCharsetDecoder::Utf8(state) => {
+                for byte in bytes.iter().copied() {
+                    state.push(byte);
+                    if state.initialized && !state.valid {
+                        return Err("charset input is invalid for the selected charset".to_string());
+                    }
+                }
+                bytes.to_vec()
+            }
+            StreamingCharsetDecoder::Ascii => {
+                if !bytes.is_ascii() {
+                    return Err("charset input is invalid for the selected charset".to_string());
+                }
+                bytes.to_vec()
+            }
+            StreamingCharsetDecoder::Latin1 => {
+                let mut output = Vec::with_capacity(bytes.len().saturating_mul(2));
+                for byte in bytes.iter().copied() {
+                    if byte <= 0x7f {
+                        output.push(byte);
+                    } else {
+                        output.push(0xc0 | (byte >> 6));
+                        output.push(0x80 | (byte & 0x3f));
+                    }
+                }
+                output
+            }
+            StreamingCharsetDecoder::Registered { decoder, pending } => {
+                pending.extend_from_slice(bytes);
+                if pending.len() < 64 * 1024 {
+                    return Ok(());
+                }
+                let source = std::mem::take(pending);
+                let decode_len = source.len().saturating_sub(16);
+                let mut input = &source[..decode_len];
+                let mut output = Vec::with_capacity(decode_len.saturating_mul(3));
+                loop {
+                    let mut buffer = vec![0_u8; 64 * 1024];
+                    let (result, read, written) =
+                        decoder.decode_to_utf8_without_replacement(input, &mut buffer, false);
+                    output.extend_from_slice(&buffer[..written]);
+                    input = &input[read..];
+                    match result {
+                        encoding_rs::DecoderResult::InputEmpty => {
+                            break;
+                        }
+                        encoding_rs::DecoderResult::OutputFull => {
+                            if read == 0 && written == 0 {
+                                return Err("charset decoder made no progress".to_string());
+                            }
+                        }
+                        encoding_rs::DecoderResult::Malformed(_, _) => {
+                            return Err(
+                                "charset input is invalid for the selected charset".to_string()
+                            )
+                        }
+                    }
+                }
+                pending.extend_from_slice(input);
+                pending.extend_from_slice(&source[decode_len..]);
+                output
+            }
+        };
+        self.record(&converted)
+    }
+
+    fn finish(&mut self) -> Result<(), String> {
+        match &mut self.decoder {
+            StreamingCharsetDecoder::Utf8(state) => {
+                if !state.is_valid() {
+                    return Err("charset input is invalid for the selected charset".to_string());
+                }
+            }
+            StreamingCharsetDecoder::Registered { decoder, pending } => {
+                let source = std::mem::take(pending);
+                let mut input = source.as_slice();
+                let mut output = Vec::with_capacity(source.len().saturating_mul(3).max(16));
+                loop {
+                    let mut buffer = vec![0_u8; 64 * 1024];
+                    let (result, read, written) =
+                        decoder.decode_to_utf8_without_replacement(input, &mut buffer, true);
+                    output.extend_from_slice(&buffer[..written]);
+                    input = &input[read..];
+                    match result {
+                        encoding_rs::DecoderResult::InputEmpty => break,
+                        encoding_rs::DecoderResult::OutputFull => {
+                            if read == 0 && written == 0 {
+                                return Err("charset decoder made no progress".to_string());
+                            }
+                        }
+                        encoding_rs::DecoderResult::Malformed(_, _) => {
+                            return Err(
+                                "charset input is invalid for the selected charset".to_string()
+                            )
+                        }
+                    }
+                }
+                self.record(&output)?;
+            }
+            StreamingCharsetDecoder::Ascii | StreamingCharsetDecoder::Latin1 => {}
+        }
+        Ok(())
+    }
+}
+
 impl DecodeRangeSink {
     fn new(max_output_bytes: u64, prefix_bytes: usize) -> Self {
         Self {
@@ -260,7 +435,14 @@ impl DecodeRangeSink {
             ascii: true,
             contains_nul: false,
             utf8: Utf8State::default(),
+            text: None,
         }
+    }
+
+    fn new_text(max_output_bytes: u64, prefix_bytes: usize, charset: &str) -> Result<Self, String> {
+        let mut sink = Self::new(max_output_bytes, 0);
+        sink.text = Some(TextDecodeRangeSink::new(charset, max_output_bytes, prefix_bytes)?);
+        Ok(sink)
     }
 
     fn push(&mut self, bytes: &[u8]) -> Result<(), String> {
@@ -283,6 +465,9 @@ impl DecodeRangeSink {
         }
         self.hasher.update(bytes);
         self.output_bytes = next;
+        if let Some(text) = self.text.as_mut() {
+            text.push(bytes)?;
+        }
         Ok(())
     }
 }
@@ -314,6 +499,7 @@ fn decode_file_range(
     encoding: &str,
     max_output_bytes: u64,
     prefix_bytes: usize,
+    charset: Option<&str>,
 ) -> Result<Value, String> {
     if max_output_bytes > DECODE_RANGE_MAX_OUTPUT {
         return Err(format!("max_output_bytes exceeds {} bytes", DECODE_RANGE_MAX_OUTPUT));
@@ -321,7 +507,10 @@ fn decode_file_range(
     if prefix_bytes > DECODE_RANGE_MAX_PREFIX {
         return Err(format!("prefix_bytes exceeds {} bytes", DECODE_RANGE_MAX_PREFIX));
     }
-    let mut sink = DecodeRangeSink::new(max_output_bytes, prefix_bytes);
+    let mut sink = match charset {
+        Some(label) => DecodeRangeSink::new_text(max_output_bytes, prefix_bytes, label)?,
+        None => DecodeRangeSink::new(max_output_bytes, prefix_bytes),
+    };
     let mut max_input_line_bytes = 0_u64;
     let mut input_line_bytes = 0_u64;
     let mut saw_cr = false;
@@ -533,10 +722,16 @@ fn decode_file_range(
         _ => return Err("encoding must be identity, base64, or quoted-printable".to_string()),
     }
 
+    if let Some(text) = sink.text.as_mut() {
+        text.finish()?;
+    }
     let mut result = DictMap::default();
     result.insert(
         Arc::<str>::from("schema"),
-        Value::Str(Arc::new("kujo.file.decode.v1".to_string())),
+        Value::Str(Arc::new(
+            if charset.is_some() { "kujo.file.text_decode.v1" } else { "kujo.file.decode.v1" }
+                .to_string(),
+        )),
     );
     result.insert(Arc::<str>::from("encoding"), Value::Str(Arc::new(encoding.to_string())));
     result.insert(Arc::<str>::from("input_bytes"), Value::Int(count as i64));
@@ -551,6 +746,17 @@ fn decode_file_range(
     result.insert(Arc::<str>::from("utf8_valid"), Value::Bool(sink.utf8.is_valid()));
     result
         .insert(Arc::<str>::from("max_input_line_bytes"), Value::Int(max_input_line_bytes as i64));
+    if let Some(text) = sink.text {
+        result.insert(Arc::<str>::from("charset"), Value::Str(Arc::new(text.charset)));
+        result.insert(Arc::<str>::from("utf8_bytes"), Value::Int(text.output_bytes as i64));
+        result.insert(
+            Arc::<str>::from("utf8_sha256"),
+            Value::Str(Arc::new(format!("{:x}", text.hasher.finalize()))),
+        );
+        result.insert(Arc::<str>::from("utf8_prefix"), Value::Bytes(text.prefix));
+        result.insert(Arc::<str>::from("text_ascii"), Value::Bool(text.ascii));
+        result.insert(Arc::<str>::from("text_contains_nul"), Value::Bool(text.contains_nul));
+    }
     Ok(Value::Dict(Arc::new(result)))
 }
 
@@ -1107,11 +1313,64 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     encoding.as_ref(),
                     *max_output_bytes as u64,
                     *prefix_bytes as usize,
+                    None,
                 )
             }) {
                 Ok(info) => info,
                 Err(error) => error_object(format!(
                     "Failed to decode {} bytes at offset {} in '{}': {}",
+                    count,
+                    offset,
+                    path.as_ref(),
+                    error
+                )),
+            }
+        }
+
+        "decode_text_file_range_info" => {
+            if arg_values.len() != 7 {
+                return Some(Value::Error("decode_text_file_range_info requires path, offset, count, transfer encoding, charset, max_output_bytes, and prefix_bytes arguments".to_string()));
+            }
+            let (
+                Some(Value::Str(path)),
+                Some(Value::Int(offset)),
+                Some(Value::Int(count)),
+                Some(Value::Str(encoding)),
+                Some(Value::Str(charset)),
+                Some(Value::Int(max_output_bytes)),
+                Some(Value::Int(prefix_bytes)),
+            ) = (
+                arg_values.first(),
+                arg_values.get(1),
+                arg_values.get(2),
+                arg_values.get(3),
+                arg_values.get(4),
+                arg_values.get(5),
+                arg_values.get(6),
+            )
+            else {
+                return Some(Value::Error("decode_text_file_range_info requires string, int, int, string, string, int, int arguments".to_string()));
+            };
+            if *offset < 0 || *count < 0 || *max_output_bytes < 0 || *prefix_bytes < 0 {
+                return Some(Value::Error(
+                    "decode_text_file_range_info integer arguments must be non-negative"
+                        .to_string(),
+                ));
+            }
+            match File::open(path.as_ref()).map_err(|error| error.to_string()).and_then(|file| {
+                decode_file_range(
+                    file,
+                    *offset as u64,
+                    *count as u64,
+                    encoding.as_ref(),
+                    *max_output_bytes as u64,
+                    *prefix_bytes as usize,
+                    Some(charset.as_ref()),
+                )
+            }) {
+                Ok(info) => info,
+                Err(error) => error_object(format!(
+                    "Failed to decode text from {} bytes at offset {} in '{}': {}",
                     count,
                     offset,
                     path.as_ref(),

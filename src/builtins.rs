@@ -1813,6 +1813,38 @@ pub fn decode_base64_utf8(s: &str) -> Result<String, String> {
     String::from_utf8(bytes).map_err(|_| "Base64 decoded value is not valid UTF-8".to_string())
 }
 
+pub(crate) enum StrictCharset {
+    Utf8,
+    Ascii,
+    Latin1,
+    Registered(&'static encoding_rs::Encoding),
+}
+
+pub(crate) fn strict_charset(label: &str) -> Result<(String, StrictCharset), String> {
+    let normalized = label.trim().to_ascii_lowercase();
+    if normalized.is_empty()
+        || normalized.len() > 64
+        || !normalized
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
+    {
+        return Err("decode_charset label is invalid".to_string());
+    }
+    let resolved = match normalized.as_str() {
+        "utf-8" | "utf8" => ("utf-8".to_string(), StrictCharset::Utf8),
+        "us-ascii" | "ascii" => ("us-ascii".to_string(), StrictCharset::Ascii),
+        "iso-8859-1" | "iso_8859-1" | "latin1" | "latin-1" => {
+            ("iso-8859-1".to_string(), StrictCharset::Latin1)
+        }
+        _ => {
+            let encoding = encoding_rs::Encoding::for_label_no_replacement(normalized.as_bytes())
+                .ok_or_else(|| "decode_charset label is unsupported".to_string())?;
+            (encoding.name().to_ascii_lowercase(), StrictCharset::Registered(encoding))
+        }
+    };
+    Ok(resolved)
+}
+
 /// Decode bounded bytes with an explicit registered character-set label.
 ///
 /// This is strict: malformed input is rejected rather than replaced. ISO-8859-1
@@ -1830,20 +1862,11 @@ pub fn decode_charset(bytes: &[u8], label: &str, max_output_bytes: i64) -> Resul
     if bytes.len() > MAX_BYTES {
         return Err("decode_charset input exceeds 67108864 bytes".to_string());
     }
-    let normalized = label.trim().to_ascii_lowercase();
-    if normalized.is_empty()
-        || normalized.len() > 64
-        || !normalized
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
-    {
-        return Err("decode_charset label is invalid".to_string());
-    }
-
-    let decoded = match normalized.as_str() {
-        "utf-8" | "utf8" => String::from_utf8(bytes.to_vec())
+    let (_, charset) = strict_charset(label)?;
+    let decoded = match charset {
+        StrictCharset::Utf8 => String::from_utf8(bytes.to_vec())
             .map_err(|_| "decode_charset input is invalid for the selected charset".to_string())?,
-        "us-ascii" | "ascii" => {
+        StrictCharset::Ascii => {
             if !bytes.is_ascii() {
                 return Err("decode_charset input is invalid for the selected charset".to_string());
             }
@@ -1851,19 +1874,11 @@ pub fn decode_charset(bytes: &[u8], label: &str, max_output_bytes: i64) -> Resul
                 "decode_charset input is invalid for the selected charset".to_string()
             })?
         }
-        "iso-8859-1" | "iso_8859-1" | "latin1" | "latin-1" => {
-            bytes.iter().map(|byte| char::from(*byte)).collect()
-        }
-        _ => {
-            let encoding = encoding_rs::Encoding::for_label_no_replacement(normalized.as_bytes())
-                .ok_or_else(|| "decode_charset label is unsupported".to_string())?;
-            encoding
-                .decode_without_bom_handling_and_without_replacement(bytes)
-                .ok_or_else(|| {
-                    "decode_charset input is invalid for the selected charset".to_string()
-                })?
-                .into_owned()
-        }
+        StrictCharset::Latin1 => bytes.iter().map(|byte| char::from(*byte)).collect(),
+        StrictCharset::Registered(encoding) => encoding
+            .decode_without_bom_handling_and_without_replacement(bytes)
+            .ok_or_else(|| "decode_charset input is invalid for the selected charset".to_string())?
+            .into_owned(),
     };
     if decoded.len() > max_output {
         return Err("decode_charset output exceeds configured limit".to_string());

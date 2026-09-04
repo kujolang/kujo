@@ -464,6 +464,95 @@ fn decode_file_range_info_has_vm_interpreter_parity() {
 }
 
 #[test]
+fn decode_text_file_range_info_is_filesystem_read_gated_in_vm_and_interpreter() {
+    let script = "decode_text_file_range_info(\"blocked.eml\",0,0,\"identity\",\"utf-8\",0,0)\n";
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            script,
+            "Capability denied: filesystem-read required for decode_text_file_range_info",
+            &runtime_args,
+        );
+    }
+}
+
+#[test]
+fn decode_text_file_range_info_has_vm_interpreter_parity_without_content_leakage() {
+    let project_root = unique_temp_dir("decode_text_file_range_runtime_parity");
+    let script_path = project_root.join("decode.kujo");
+    let input_path = project_root.join("message.txt");
+    fs::write(&input_path, b"caf=E9").expect("decode input should be written");
+    let input_literal =
+        escape_kujo_string(input_path.to_str().expect("decode input path should be utf-8"));
+    let script = format!(
+        "let info := decode_text_file_range_info(\"{input_literal}\",0,6,\"quoted-printable\",\"iso-8859-1\",64,2)\n\
+         print(to_json({{\"schema\":info[\"schema\"],\"charset\":info[\"charset\"],\"decoded_bytes\":info[\"output_bytes\"],\"utf8_bytes\":info[\"utf8_bytes\"],\"prefix_first\":info[\"utf8_prefix\"][0]}}))\n"
+    );
+    fs::write(&script_path, script).expect("decode script should be written");
+
+    let mut outputs = Vec::new();
+    for runtime_args in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script_path.to_str().expect("decode script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert!(
+            output.status.success(),
+            "text decode runtime failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        let stdout = stdout_text(&output);
+        assert!(stdout.contains("\"schema\":\"kujo.file.text_decode.v1\""));
+        assert!(stdout.contains("\"charset\":\"iso-8859-1\""));
+        assert!(stdout.contains("\"decoded_bytes\":4"));
+        assert!(stdout.contains("\"utf8_bytes\":5"));
+        assert!(stdout.contains("\"prefix_first\":99"));
+        assert!(!stdout.contains("café"));
+        outputs.push(stdout);
+    }
+    assert_eq!(outputs[0], outputs[1]);
+
+    let _ = fs::remove_dir_all(project_root);
+}
+
+#[test]
+fn decode_text_file_range_info_preserves_multibyte_sequence_across_input_chunks() {
+    let project_root = unique_temp_dir("decode_text_file_range_chunk_boundary");
+    let script_path = project_root.join("decode.kujo");
+    let input_path = project_root.join("message.txt");
+    let mut input = vec![b'a'; 65_519];
+    input.extend_from_slice(&[0x82, 0xb1]);
+    input.extend_from_slice(&vec![b'b'; 1_000]);
+    fs::write(&input_path, input).expect("decode input should be written");
+    let input_literal =
+        escape_kujo_string(input_path.to_str().expect("decode input path should be utf-8"));
+    let script = format!(
+        "let info := decode_text_file_range_info(\"{input_literal}\",0,66521,\"identity\",\"shift_jis\",200000,0)\n\
+         assert(info[\"utf8_sha256\"] == sha256(repeat(\"a\",65519) + \"こ\" + repeat(\"b\",1000)),\"multibyte boundary hash\")\n\
+         print(info[\"utf8_sha256\"])\n"
+    );
+    fs::write(&script_path, script).expect("decode script should be written");
+
+    let mut outputs = Vec::new();
+    for runtime_args in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script_path.to_str().expect("decode script path should be utf-8"));
+        let output = run_kujo(&args, &project_root);
+        assert!(
+            output.status.success(),
+            "chunk-boundary decode failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        outputs.push(stdout_text(&output));
+    }
+    assert_eq!(outputs[0], outputs[1]);
+
+    let _ = fs::remove_dir_all(project_root);
+}
+
+#[test]
 fn private_spool_round_trip_has_vm_interpreter_parity() {
     let project_root = unique_temp_dir("private_spool_runtime_parity");
     let script_path = project_root.join("private_spool.kujo");

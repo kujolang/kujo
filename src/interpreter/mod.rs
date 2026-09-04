@@ -915,6 +915,7 @@ impl Interpreter {
             "sha256_file",
             "sha256_file_range",
             "decode_file_range_info",
+            "decode_text_file_range_info",
             "sha256_canonical_text_file_range",
             "md5",
             "md5_file",
@@ -1776,6 +1777,10 @@ impl Interpreter {
         self.env.define(
             "decode_file_range_info".to_string(),
             Value::NativeFunction("decode_file_range_info".to_string()),
+        );
+        self.env.define(
+            "decode_text_file_range_info".to_string(),
+            Value::NativeFunction("decode_text_file_range_info".to_string()),
         );
         self.env.define(
             "sha256_canonical_text_file_range".to_string(),
@@ -3642,6 +3647,18 @@ impl Interpreter {
                     "offset".to_string(),
                     "count".to_string(),
                     "encoding".to_string(),
+                    "max_output_bytes".to_string(),
+                    "prefix_bytes".to_string(),
+                ],
+            ),
+            "decode_text_file_range_info" => CallableArity::exact(
+                "decode_text_file_range_info",
+                vec![
+                    "path".to_string(),
+                    "offset".to_string(),
+                    "count".to_string(),
+                    "transfer_encoding".to_string(),
+                    "charset".to_string(),
                     "max_output_bytes".to_string(),
                     "prefix_bytes".to_string(),
                 ],

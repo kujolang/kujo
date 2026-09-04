@@ -1,0 +1,27 @@
+let latin1 := decode_text_file_range_info("tests/fixtures/charset_latin1_qp.txt",0,6,"quoted-printable","iso-8859-1",64,16)
+assert(latin1["schema"] == "kujo.file.text_decode.v1","text decode schema is explicit")
+assert(latin1["encoding"] == "quoted-printable" && latin1["charset"] == "iso-8859-1","transfer and canonical charset are explicit")
+assert(latin1["output_bytes"] == 4 && latin1["utf8_bytes"] == 5,"decoded and UTF-8 sizes are distinct")
+assert(latin1["sha256"] == sha256(decode_base64("Y2Fm6Q==")) && latin1["utf8_sha256"] == sha256("café"),"decoded and UTF-8 hashes are exact")
+assert(decode_base64_utf8(encode_base64(latin1["utf8_prefix"])) == "café","bounded normalized prefix is UTF-8")
+
+let windows_text := decode_text_file_range_info("tests/fixtures/charset_windows_base64.txt",0,20,"base64","windows-1252",64,64)
+assert(windows_text["charset"] == "windows-1252" && decode_base64_utf8(encode_base64(windows_text["utf8_prefix"])) == "smart ‘quotes’","registered single-byte charset streams")
+
+let shift_jis := decode_text_file_range_info("tests/fixtures/charset_shift_jis_qp.txt",0,30,"quoted-printable","shift_jis",64,64)
+assert(shift_jis["charset"] == "shift_jis" && decode_base64_utf8(encode_base64(shift_jis["utf8_prefix"])) == "こんにちは","registered multibyte charset streams")
+
+let utf8 := decode_text_file_range_info("tests/fixtures/charset_utf8_identity.txt",0,5,"identity","utf-8",8,8)
+assert(utf8["utf8_sha256"] == sha256("café") && utf8["utf8_bytes"] == 5,"UTF-8 identity validates and hashes")
+
+mut malformed := false
+try { decode_text_file_range_info("tests/fixtures/charset_invalid_shift_jis_qp.txt",0,3,"quoted-printable","shift_jis",64,0) }
+except error { malformed = contains(to_string(error),"invalid for the selected charset") }
+assert(malformed,"incomplete multibyte stream fails without replacement")
+
+mut bounded := false
+try { decode_text_file_range_info("tests/fixtures/charset_latin1_qp.txt",0,6,"quoted-printable","iso-8859-1",4,0) }
+except error { bounded = contains(to_string(error),"charset output exceeds configured limit") }
+assert(bounded,"UTF-8 expansion respects the explicit output bound")
+
+print("streaming charset tests: 10 passed")
