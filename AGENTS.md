@@ -28,7 +28,7 @@ Core principles:
 8. `examples/README_examples.md`: current examples, showcases, and legacy/expected-fail examples.
 9. `tests/docs_examples.rs`: executable policy for which examples should run, parse, skip, or fail.
 
-For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.2.2` is the current stable release, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
+For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.3.0` is the current stable release, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
 
 ## Repository Map
 
