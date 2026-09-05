@@ -740,3 +740,14 @@ fn run_runtime_json_diagnostic_contract_reports_invalid_binary_help() {
     assert!(message.contains("Invalid binary operation"));
     assert!(help.contains("operands") && help.contains("convert values"));
 }
+
+#[test]
+fn upgrade_json_failures_use_stderr() {
+    let output = run_kujo(&["upgrade", "--json"]);
+    assert_eq!(output.status.code(), Some(4)); // Development binary; no network.
+    assert!(output.stdout.is_empty());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("development target binary"));
+    let output = run_kujo(&["upgrade", "^1.2.3", "--json"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stdout.is_empty());
+}

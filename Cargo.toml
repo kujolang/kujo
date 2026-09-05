@@ -22,7 +22,8 @@ path = "src/main.rs"
 default = ["runtime-db", "runtime-image", "runtime-archive", "runtime-jit"]
 runtime-db = ["dep:rusqlite", "dep:postgres", "dep:postgres-openssl", "dep:mysql_async"]
 runtime-image = ["dep:image"]
-runtime-archive = ["dep:zip", "dep:flate2"]
+# Gates language APIs; native CLI upgrade always needs archive readers.
+runtime-archive = []
 runtime-jit = [
     "dep:cranelift",
     "dep:cranelift-module",
@@ -79,8 +80,12 @@ image = { version = "0.25", default-features = false, features = [
     "tiff",
     "webp",
 ], optional = true }
-zip = { version = "7.0.0", optional = true }
-flate2 = { version = "1.1", optional = true }
+zip = { version = "7.0.0" }
+flate2 = "1.1"
+tar = { version = "0.4.46", default-features = false }
+same-file = "1"
+semver = "1"
+fs2 = "0.4"
 sha2 = "0.10"
 hmac = "0.12"
 md-5 = "0.10"

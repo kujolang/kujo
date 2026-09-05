@@ -45,6 +45,7 @@ mod reserved_names;
 mod runtime_limits;
 mod serve_http;
 mod type_checker;
+mod upgrade;
 mod vm;
 
 mod workflow_pack;
@@ -155,6 +156,17 @@ enum TestRuntimeMode {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Upgrade the standalone runtime from official stable GitHub releases
+    Upgrade {
+        #[arg(value_parser = upgrade::parse_version)]
+        version: Option<String>,
+        #[arg(long)]
+        check: bool,
+        #[arg(long)]
+        json: bool,
+        #[arg(long)]
+        allow_downgrade: bool,
+    },
     /// Create, inspect, run, and evaluate repository-owned Kujo agents
     Agent {
         #[command(subcommand)]
@@ -1117,6 +1129,7 @@ fn is_known_cli_subcommand(name: &str) -> bool {
     matches!(
         name,
         "run"
+            | "upgrade"
             | "check"
             | "serve"
             | "repl"
@@ -1229,6 +1242,40 @@ async fn async_main() {
     let command = cli.command.unwrap();
 
     match command {
+        Commands::Upgrade { version, check, json, allow_downgrade } => {
+            let result =
+                tokio::task::spawn_blocking(move || upgrade::run(version, check, allow_downgrade))
+                    .await;
+            match result {
+                Ok(Ok(outcome)) => {
+                    if json {
+                        match serde_json::to_string(&outcome) {
+                            Ok(payload) => println!("{payload}"),
+                            Err(error) => report_cli_error_and_exit(
+                                error.to_string(),
+                                CliExitCode::InternalError,
+                            ),
+                        }
+                    } else {
+                        println!(
+                            "Kujo {} → {}: {} ({}; {})",
+                            outcome.current_version,
+                            outcome.target_version,
+                            outcome.status,
+                            outcome.destination.display(),
+                            outcome.installation
+                        );
+                        if let Some(backup) = &outcome.backup {
+                            eprintln!("Recovery backup: {}", backup.display());
+                        }
+                    }
+                }
+                Ok(Err(error)) => report_cli_error_and_exit(error, CliExitCode::RuntimeError),
+                Err(error) => {
+                    report_cli_error_and_exit(error.to_string(), CliExitCode::InternalError)
+                }
+            }
+        }
         Commands::Run {
             file,
             interpreter,
@@ -3014,12 +3061,14 @@ mod tests {
         assert!(is_known_cli_subcommand("pack"));
         assert!(is_known_cli_subcommand("ecosystem"));
         assert!(is_known_cli_subcommand("doctor"));
+        assert!(is_known_cli_subcommand("upgrade"));
     }
 
     #[test]
     fn reserved_aliases_are_rejected_before_workflow_routing() {
         assert!(reserved_external_alias_error("run").is_some());
         assert!(reserved_external_alias_error("doctor").is_some());
+        assert!(reserved_external_alias_error("upgrade").is_some());
         assert!(reserved_external_alias_error("kujo").is_some());
         assert!(reserved_external_alias_error("acme-tools").is_none());
     }

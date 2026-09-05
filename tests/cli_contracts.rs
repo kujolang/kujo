@@ -693,3 +693,17 @@ fn cli_doctor_rejects_unknown_profile() {
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
     assert!(stderr.contains("Unknown doctor profile"));
 }
+
+#[test]
+fn upgrade_is_a_native_reserved_command() {
+    let output = run_kujo(&["upgrade", "--help"]);
+    assert!(output.status.success());
+    let help = String::from_utf8_lossy(&output.stdout);
+    for flag in ["--check", "--json", "--allow-downgrade"] {
+        assert!(help.contains(flag));
+    }
+    for value in ["^1.2.3", "1.2", "1.2.3-rc.1", "v1.2.3+build"] {
+        let output = run_kujo(&["upgrade", value]);
+        assert_eq!(output.status.code(), Some(EXIT_USAGE_ERROR));
+    }
+}
