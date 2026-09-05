@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add native runtime-only `kujo upgrade [VERSION]`, exact stable release selection,
+  read-only `--check`, documented `--json`, explicit downgrade opt-in, official
+  SHA-256 verification, managed-install guidance, and retained recovery binaries.
+  Upgrade archive support remains available without default language features.
+
 - Add database-capability-gated `db_connect_postgres_tls` for PostgreSQL over
   mandatory TLS 1.2+ with peer and hostname verification, an explicit bounded
   public CA bundle, TCP-host enforcement, and secret-free deterministic

@@ -181,6 +181,9 @@ jobs:
           "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
           "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      - name: Verify native upgrade and running executable replacement
+        run: cargo test --locked --bin kujo upgrade::tests
+
       - name: Build release binary
         run: cargo build --release --locked
 

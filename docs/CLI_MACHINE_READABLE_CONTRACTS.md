@@ -254,3 +254,42 @@ Any payload-affecting change to the documented JSON shapes requires all of the f
 - missing input files for JSON-mode `format`/`lint` exit with code `5`, emit no JSON payload on `stdout`, and report a deterministic read-failure message on `stderr`
 - malformed CLI parameters (for example non-numeric `--line`) exit with code `2`, emit no JSON payload on `stdout`, and return Clap usage diagnostics on `stderr`
 - unknown-symbol `lsp-rename --json` requests exit with code `4`, emit deterministic JSON error payloads on `stdout`, and keep `stderr` empty
+
+## `kujo upgrade [VERSION] --json`
+
+Success writes one JSON object to stdout; download progress goes to stderr.
+Errors follow the normal stderr diagnostic convention, with no failure JSON:
+exit 2 for malformed arguments, exit 4 for upgrade resolution, ownership,
+transport, verification, permission, and replacement failures, and exit 6 for
+an internal blocking-worker failure. Successful checks, no-ops, and installs
+exit 0.
+
+```json
+{
+  "current_version": "1.2.3",
+  "target_version": "1.2.4",
+  "status": "upgrade_available",
+  "changed": false,
+  "platform": "macos-arm64",
+  "destination": "/Users/example/.local/bin/kujo",
+  "installation": "standalone",
+  "upgrade_available": true,
+  "backup": null
+}
+```
+
+Versions are normalized without `v`. `status` is `upgrade_available`,
+`up_to_date`, `newer_local`, `upgraded`, or `downgraded`. `changed` is true only
+for installation; `upgrade_available` compares the original installed version
+with the target (strictly greater), including after installation. `platform`
+is `linux-x64`, `linux-arm64`, `macos-x64`, `macos-arm64`, or `windows-x64`.
+`destination` is the resolved running executable path. `installation` is
+`standalone`, `npm`, `cargo`, `development`, or `managed`. `backup` is null
+unless replacement succeeded, then it names the retained prior executable.
+
+`--check` resolves latest or an exact target and writes no installation, lock,
+staging, backup, or receipt files. Managed installations may check successfully;
+installation attempts fail with original-package-manager guidance. A newer
+local version is preserved when resolving latest, even with downgrade opt-in.
+Explicit older targets require `--allow-downgrade` only when installing.
+See [runtime upgrade](RUNTIME_UPGRADE.md) for integrity and recovery limits.

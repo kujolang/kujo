@@ -185,3 +185,14 @@ checks used during packaging.
 - If a new platform is added, update this document, `INSTALLATION.md`,
   `docs/INSTALL_MATRIX.md`, `docs/RELEASE_ARTIFACT_VALIDATION.md`, and
   `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md` in the same change.
+
+## Native runtime upgrade
+
+Standalone releases containing the command support `kujo upgrade` (latest),
+`kujo upgrade 1.2.4` (exact stable version), and `kujo upgrade --check --json`
+(read-only inspection). Same versions are no-ops; explicit downgrades require
+`--allow-downgrade`, and latest never downgrades. npm/Cargo installations use
+their package manager. Only the runtime changes; ecosystem sources, profiles,
+and package pins are preserved. Older releases need an installer bootstrap.
+See [native upgrade and recovery documentation](RUNTIME_UPGRADE.md)
+for installation recognition, retained backups, Windows recovery, JSON, and limits.

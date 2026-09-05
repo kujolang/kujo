@@ -393,3 +393,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 **You're ready to start coding in Kujo! 🐾**
 
 *For examples and language features, see the [README](README.md) and [examples/](examples/) directory.*
+
+## Native runtime upgrade
+
+Standalone releases containing the command support `kujo upgrade` (latest),
+`kujo upgrade 1.2.4` (exact stable version), and `kujo upgrade --check --json`
+(read-only inspection). Same versions are no-ops; explicit downgrades require
+`--allow-downgrade`, and latest never downgrades. npm/Cargo installations use
+their package manager. Only the runtime changes; ecosystem sources, profiles,
+and package pins are preserved. Older releases need an installer bootstrap.
+See [native upgrade and recovery documentation](docs/RUNTIME_UPGRADE.md)
+for installation recognition, retained backups, Windows recovery, JSON, and limits.

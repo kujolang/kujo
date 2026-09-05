@@ -1,0 +1,42 @@
+name: native-upgrade
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  native-upgrade:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Configure OpenSSL for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not $env:VCPKG_INSTALLATION_ROOT) {
+            $env:VCPKG_INSTALLATION_ROOT = "C:\vcpkg"
+          }
+          vcpkg install openssl:x64-windows-static-md
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Verify upgrade without language archive features
+        run: cargo check --locked --no-default-features
+
+      - name: Test native upgrades and running executable replacement
+        run: cargo test --locked --bin kujo upgrade::tests
+
+      - name: Test upgrade CLI contracts
+        run: cargo test --locked --test cli_contracts --test cli_json_contracts upgrade_
