@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: scripts/fuzz_smoke.sh [--check-prereqs] [--max-total-time <seconds>] [target...]
+Usage: scripts/fuzz_smoke.sh [--check-prereqs] [--max-total-time <seconds>] [--run-root <directory>] [target...]
 
 Runs bounded cargo-fuzz smoke targets (default: lexer parser xml_bounded gzip_bounded
 zip_single_bounded) with prerequisite checks.
@@ -11,6 +11,7 @@ zip_single_bounded) with prerequisite checks.
 Options:
   --check-prereqs          Validate toolchain prerequisites only; do not run fuzz targets.
   --max-total-time <secs>  libFuzzer max_total_time per target (default: 20).
+  --run-root <directory>   Copy seeds and write corpus/artifacts below this directory.
   -h, --help               Show this help.
 
 Examples:
@@ -22,6 +23,7 @@ EOF
 
 CHECK_PREREQS_ONLY=0
 MAX_TOTAL_TIME=20
+RUN_ROOT=""
 declare -a TARGETS=()
 
 while [[ $# -gt 0 ]]; do
@@ -37,6 +39,15 @@ while [[ $# -gt 0 ]]; do
         exit 2
       fi
       MAX_TOTAL_TIME="$2"
+      shift 2
+      ;;
+    --run-root)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        echo "error: --run-root requires a directory" >&2
+        usage
+        exit 2
+      fi
+      RUN_ROOT="$2"
       shift 2
       ;;
     -h|--help)
@@ -121,7 +132,21 @@ fi
 
 for target in "${TARGETS[@]}"; do
   echo "[run] cargo +nightly fuzz run $target -- -max_total_time=$MAX_TOTAL_TIME"
-  cargo +nightly fuzz run "$target" -- -max_total_time="$MAX_TOTAL_TIME"
+  if [[ -n "$RUN_ROOT" ]]; then
+    corpus_dir="$RUN_ROOT/corpus/$target"
+    artifact_dir="$RUN_ROOT/artifacts/$target"
+    mkdir -p "$corpus_dir" "$artifact_dir"
+    if [[ -d "$repo_root/fuzz/corpus/$target" ]]; then
+      cp -R "$repo_root/fuzz/corpus/$target/." "$corpus_dir/"
+    fi
+    echo "[evidence] corpus=$corpus_dir artifacts=$artifact_dir"
+    cargo +nightly fuzz run "$target" "$corpus_dir" -- \
+      -max_total_time="$MAX_TOTAL_TIME" \
+      -print_final_stats=1 \
+      -artifact_prefix="$artifact_dir/"
+  else
+    cargo +nightly fuzz run "$target" -- -max_total_time="$MAX_TOTAL_TIME"
+  fi
 done
 
 echo "fuzz-smoke run completed"
