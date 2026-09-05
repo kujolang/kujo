@@ -47,6 +47,20 @@ In `--untrusted` mode, host-effect calls fail unless explicitly re-enabled via `
 - `--allow-*` flags imply restricted baseline with only requested capabilities enabled.
 - `--allow-all` force-enables all capabilities and should be treated as trusted mode.
 
+### Cooperative scheduler deadline
+
+`kujo run` applies a 120-second top-level cooperative scheduler deadline by
+default. Use `--scheduler-timeout-ms` to select another finite deadline. An
+externally supervised, trusted long-lived service may instead opt in to
+`--scheduler-no-timeout`; the two flags are mutually exclusive.
+
+`--scheduler-no-timeout` removes only the top-level scheduler wall-clock
+deadline. It does not relax native-operation limits, capability policy, socket
+timeouts, or application bounds. Because a pending execution context can then
+keep the process alive indefinitely, use this mode only with an external
+supervisor that enforces liveness, restart, resource, stop, and drain policy.
+Never use it to execute arbitrary or untrusted programs.
+
 ## 3. Capability Flags
 
 | Flag | Capability | Typical APIs Unlocked | Primary Risk |

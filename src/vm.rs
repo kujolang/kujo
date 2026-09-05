@@ -1324,6 +1324,25 @@ impl VM {
         }
     }
 
+    /// Run the cooperative scheduler until all contexts complete without a
+    /// wall-clock deadline. Callers must supply external supervision because
+    /// a pending context can otherwise keep the process alive indefinitely.
+    pub fn run_scheduler_until_complete_unbounded(&mut self) -> Result<(), String> {
+        loop {
+            if 0 == self.pending_execution_context_count() {
+                return Ok(());
+            }
+
+            let round_result = self.run_scheduler_round()?;
+            if 0 == round_result.pending_contexts {
+                return Ok(());
+            }
+            if 0 == round_result.completed_contexts {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        }
+    }
+
     /// Execute a bytecode chunk
     pub fn execute(&mut self, chunk: BytecodeChunk) -> Result<Value, String> {
         let _hashmap_profile_guard = HashMapProfileGuard::new();
@@ -9493,6 +9512,32 @@ mod tests {
             .run_scheduler_until_complete_with_timeout(Duration::from_millis(0))
             .expect_err("zero timeout should fail");
         assert!(err.contains("timeout"));
+    }
+
+    #[test]
+    fn test_run_scheduler_until_complete_unbounded_completes_pending_async_context() {
+        let chunk = compile_chunk(
+            r#"
+                p := async_sleep(12)
+                await p
+                return 7
+            "#,
+        );
+        let mut vm = VM::new();
+        {
+            let mut globals = vm.globals.lock().unwrap();
+            globals.define(
+                "async_sleep".to_string(),
+                Value::NativeFunction("async_sleep".to_string()),
+            );
+        }
+        match vm.execute_until_suspend(chunk).expect("initial run") {
+            VmExecutionResult::Suspended { .. } => {}
+            VmExecutionResult::Completed => panic!("expected suspension"),
+        }
+        vm.run_scheduler_until_complete_unbounded()
+            .expect("unbounded supervised scheduler should complete");
+        assert_eq!(vm.pending_execution_context_count(), 0);
     }
 
     #[test]

@@ -134,6 +134,29 @@ fn cli_usage_errors_use_usage_exit_code() {
 }
 
 #[test]
+fn cli_scheduler_no_timeout_is_explicit_and_conflicts_with_a_deadline() {
+    let dir = unique_temp_dir("cli_scheduler_no_timeout");
+    let file = dir.join("async.kujo");
+    write_fixture(&file, "p := async_sleep(30)\nawait p\nprint(\"completed\")\n");
+
+    let completed =
+        run_kujo(&["run", file.to_str().expect("path should be utf-8"), "--scheduler-no-timeout"]);
+    assert_eq!(completed.status.code(), Some(0));
+    assert_eq!(String::from_utf8(completed.stdout).unwrap(), "completed\n");
+
+    let conflict = run_kujo(&[
+        "run",
+        file.to_str().expect("path should be utf-8"),
+        "--scheduler-no-timeout",
+        "--scheduler-timeout-ms",
+        "1000",
+    ]);
+    assert_eq!(conflict.status.code(), Some(EXIT_USAGE_ERROR));
+    let stderr = String::from_utf8(conflict.stderr).expect("stderr should be utf-8");
+    assert!(stderr.contains("cannot be used with"));
+}
+
+#[test]
 fn cli_lsp_diagnostics_json_is_valid_json() {
     let dir = unique_temp_dir("cli_lsp_diagnostics_json");
     let file = dir.join("broken.kujo");

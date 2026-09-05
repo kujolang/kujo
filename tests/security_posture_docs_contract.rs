@@ -63,6 +63,10 @@ fn native_security_posture_doc_covers_required_operator_sections_and_flags() {
         content.contains("--untrusted"),
         "expected security posture doc to include explicit --untrusted guidance"
     );
+    assert!(
+        content.contains("--scheduler-no-timeout"),
+        "expected security posture doc to cover explicit supervised service scheduling"
+    );
 }
 
 #[test]
@@ -86,4 +90,8 @@ fn cli_help_includes_documented_capability_flags() {
         );
     }
     assert!(stdout.contains("--untrusted"), "expected run --help output to include --untrusted");
+    assert!(
+        stdout.contains("--scheduler-no-timeout"),
+        "expected run --help output to include explicit supervised service scheduling"
+    );
 }

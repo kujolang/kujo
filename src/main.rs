@@ -189,6 +189,10 @@ enum Commands {
         #[arg(long)]
         scheduler_timeout_ms: Option<u64>,
 
+        /// Disable the top-level cooperative scheduler deadline for an externally supervised long-lived service
+        #[arg(long, default_value_t = false, conflicts_with = "scheduler_timeout_ms")]
+        scheduler_no_timeout: bool,
+
         /// Emit runtime failures for `kujo run` as machine-readable JSON on stdout.
         #[arg(long, default_value_t = false)]
         json_runtime_diagnostics: bool,
@@ -870,21 +874,31 @@ impl CliExitCode {
 
 fn cooperative_scheduler_timeout(
     cli_timeout_ms: Option<u64>,
-) -> Result<std::time::Duration, String> {
+    no_timeout: bool,
+) -> Result<Option<std::time::Duration>, String> {
+    if no_timeout {
+        return Ok(None);
+    }
     if let Some(timeout_ms) = cli_timeout_ms {
         if timeout_ms == 0 {
             return Err("Scheduler timeout must be greater than 0ms".to_string());
         }
 
-        return Ok(std::time::Duration::from_millis(timeout_ms));
+        return Ok(Some(std::time::Duration::from_millis(timeout_ms)));
     }
 
     match std::env::var("KUJO_SCHEDULER_TIMEOUT_MS") {
         Ok(raw_timeout_ms) => match raw_timeout_ms.parse::<u64>() {
-            Ok(timeout_ms) if timeout_ms > 0 => Ok(std::time::Duration::from_millis(timeout_ms)),
-            _ => Ok(std::time::Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS)),
+            Ok(timeout_ms) if timeout_ms > 0 => {
+                Ok(Some(std::time::Duration::from_millis(timeout_ms)))
+            }
+            _ => {
+                Ok(Some(std::time::Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS)))
+            }
         },
-        Err(_) => Ok(std::time::Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS)),
+        Err(_) => {
+            Ok(Some(std::time::Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS)))
+        }
     }
 }
 
@@ -1281,16 +1295,18 @@ async fn async_main() {
             interpreter,
             jit,
             scheduler_timeout_ms,
+            scheduler_no_timeout,
             json_runtime_diagnostics,
             capabilities,
             script_args,
         } => {
-            let scheduler_timeout = match cooperative_scheduler_timeout(scheduler_timeout_ms) {
-                Ok(timeout) => timeout,
-                Err(error_message) => {
-                    report_cli_error_and_exit(error_message, CliExitCode::UsageError);
-                }
-            };
+            let scheduler_timeout =
+                match cooperative_scheduler_timeout(scheduler_timeout_ms, scheduler_no_timeout) {
+                    Ok(timeout) => timeout,
+                    Err(error_message) => {
+                        report_cli_error_and_exit(error_message, CliExitCode::UsageError);
+                    }
+                };
             apply_untrusted_network_destination_policy_defaults(&capabilities);
             let capability_policy = build_runtime_capability_policy(&capabilities);
 
@@ -1381,9 +1397,11 @@ async fn async_main() {
                                         // Run scheduler until all contexts complete.
                                         // Use a timeout budget so long-running async workloads
                                         // can complete without relying on a fixed round count.
-                                        vm.run_scheduler_until_complete_with_timeout(
-                                            scheduler_timeout,
-                                        )
+                                        match scheduler_timeout {
+                                            Some(timeout) => vm
+                                                .run_scheduler_until_complete_with_timeout(timeout),
+                                            None => vm.run_scheduler_until_complete_unbounded(),
+                                        }
                                     }
                                     Err(e) => Err(e),
                                 };
@@ -2943,34 +2961,37 @@ mod tests {
     #[test]
     fn cooperative_scheduler_timeout_uses_default_when_unset() {
         with_scheduler_timeout_env(None, || {
-            let timeout = cooperative_scheduler_timeout(None)
+            let timeout = cooperative_scheduler_timeout(None, false)
                 .expect("default scheduler timeout should resolve successfully");
-            assert_eq!(timeout, Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS));
+            assert_eq!(
+                timeout,
+                Some(Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS))
+            );
         });
     }
 
     #[test]
     fn cooperative_scheduler_timeout_uses_env_when_cli_missing() {
         with_scheduler_timeout_env(Some("2345"), || {
-            let timeout = cooperative_scheduler_timeout(None)
+            let timeout = cooperative_scheduler_timeout(None, false)
                 .expect("env scheduler timeout should resolve successfully");
-            assert_eq!(timeout, Duration::from_millis(2345));
+            assert_eq!(timeout, Some(Duration::from_millis(2345)));
         });
     }
 
     #[test]
     fn cooperative_scheduler_timeout_prefers_cli_over_env() {
         with_scheduler_timeout_env(Some("5000"), || {
-            let timeout = cooperative_scheduler_timeout(Some(2500))
+            let timeout = cooperative_scheduler_timeout(Some(2500), false)
                 .expect("cli scheduler timeout should resolve successfully");
-            assert_eq!(timeout, Duration::from_millis(2500));
+            assert_eq!(timeout, Some(Duration::from_millis(2500)));
         });
     }
 
     #[test]
     fn cooperative_scheduler_timeout_rejects_cli_zero() {
         with_scheduler_timeout_env(Some("5000"), || {
-            let error = cooperative_scheduler_timeout(Some(0))
+            let error = cooperative_scheduler_timeout(Some(0), false)
                 .expect_err("zero cli scheduler timeout should be rejected");
             assert_eq!(error, "Scheduler timeout must be greater than 0ms");
         });
@@ -2979,9 +3000,21 @@ mod tests {
     #[test]
     fn cooperative_scheduler_timeout_falls_back_on_invalid_env() {
         with_scheduler_timeout_env(Some("invalid"), || {
-            let timeout = cooperative_scheduler_timeout(None)
+            let timeout = cooperative_scheduler_timeout(None, false)
                 .expect("invalid env value should fall back to default");
-            assert_eq!(timeout, Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS));
+            assert_eq!(
+                timeout,
+                Some(Duration::from_millis(DEFAULT_COOPERATIVE_SCHEDULER_TIMEOUT_MS))
+            );
+        });
+    }
+
+    #[test]
+    fn cooperative_scheduler_timeout_allows_explicit_supervised_service_mode() {
+        with_scheduler_timeout_env(Some("5000"), || {
+            let timeout = cooperative_scheduler_timeout(None, true)
+                .expect("explicit no-timeout mode should resolve successfully");
+            assert_eq!(timeout, None);
         });
     }
 
