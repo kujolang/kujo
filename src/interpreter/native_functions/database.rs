@@ -4,9 +4,64 @@
 
 use crate::interpreter::{ConnectionPool, DatabaseConnection, DictMap, Value};
 use mysql_async::prelude::Queryable;
+use postgres::types::{to_sql_checked, IsNull, ToSql, Type};
 use postgres::NoTls;
 use std::collections::HashMap;
+use std::error::Error;
 use std::sync::{Arc, Mutex};
+
+#[derive(Debug)]
+enum PostgresParameter {
+    Text(String),
+    Integer(i64),
+    Float(f64),
+    Boolean(bool),
+    Null,
+}
+
+impl ToSql for PostgresParameter {
+    fn to_sql(
+        &self,
+        ty: &Type,
+        out: &mut postgres::types::private::BytesMut,
+    ) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
+        match self {
+            Self::Text(value) if String::accepts(ty) => value.to_sql(ty, out),
+            Self::Integer(value) if *ty == Type::INT8 => value.to_sql(ty, out),
+            Self::Integer(value) if *ty == Type::INT4 => i32::try_from(*value)
+                .map_err(|_| "PostgreSQL int4 parameter out of range")?
+                .to_sql(ty, out),
+            Self::Integer(value) if *ty == Type::INT2 => i16::try_from(*value)
+                .map_err(|_| "PostgreSQL int2 parameter out of range")?
+                .to_sql(ty, out),
+            Self::Float(value) if *ty == Type::FLOAT8 => value.to_sql(ty, out),
+            Self::Float(value) if *ty == Type::FLOAT4 => (*value as f32).to_sql(ty, out),
+            Self::Boolean(value) if *ty == Type::BOOL => value.to_sql(ty, out),
+            Self::Null => Ok(IsNull::Yes),
+            _ => Err(format!("Kujo PostgreSQL parameter is incompatible with {}", ty).into()),
+        }
+    }
+
+    fn accepts(_: &Type) -> bool {
+        true
+    }
+
+    to_sql_checked!();
+}
+
+fn postgres_parameters(values: &[Value]) -> Vec<PostgresParameter> {
+    values
+        .iter()
+        .map(|value| match value {
+            Value::Str(text) => PostgresParameter::Text(text.as_ref().to_string()),
+            Value::Int(number) => PostgresParameter::Integer(*number),
+            Value::Float(number) => PostgresParameter::Float(*number),
+            Value::Bool(flag) => PostgresParameter::Boolean(*flag),
+            Value::Null => PostgresParameter::Null,
+            other => PostgresParameter::Text(format!("{:?}", other)),
+        })
+        .collect()
+}
 
 macro_rules! lock_or_db_error {
     ($mutex:expr, $context:expr) => {
@@ -272,17 +327,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         (DatabaseConnection::Postgres(client), "postgres") => {
                             let mut client = lock_or_db_error!(client, "database.client_mut");
                             let execute_result = if let Some(Value::Array(param_arr)) = params {
-                                let postgres_params: Vec<String> = param_arr
-                                    .iter()
-                                    .map(|value| match value {
-                                        Value::Str(text) => text.as_ref().to_string(),
-                                        Value::Int(number) => number.to_string(),
-                                        Value::Float(number) => number.to_string(),
-                                        Value::Bool(flag) => flag.to_string(),
-                                        Value::Null => String::new(),
-                                        other => format!("{:?}", other),
-                                    })
-                                    .collect();
+                                let postgres_params = postgres_parameters(param_arr);
                                 let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
                                     postgres_params
                                         .iter()
@@ -446,17 +491,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         (DatabaseConnection::Postgres(client), "postgres") => {
                             let mut client = lock_or_db_error!(client, "database.client_mut");
                             let query_result = if let Some(Value::Array(param_arr)) = params {
-                                let postgres_params: Vec<String> = param_arr
-                                    .iter()
-                                    .map(|value| match value {
-                                        Value::Str(text) => text.as_ref().to_string(),
-                                        Value::Int(number) => number.to_string(),
-                                        Value::Float(number) => number.to_string(),
-                                        Value::Bool(flag) => flag.to_string(),
-                                        Value::Null => String::new(),
-                                        other => format!("{:?}", other),
-                                    })
-                                    .collect();
+                                let postgres_params = postgres_parameters(param_arr);
                                 let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
                                     postgres_params
                                         .iter()
@@ -1232,6 +1267,32 @@ mod tests {
         assert!(matches!(close, Value::Bool(true)));
 
         let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn postgres_parameter_preserves_scalar_types_and_null() {
+        let mut output = postgres::types::private::BytesMut::new();
+        let integer = PostgresParameter::Integer(7);
+        assert!(matches!(integer.to_sql_checked(&Type::INT8, &mut output), Ok(IsNull::No)));
+        assert_eq!(output.as_ref(), 7_i64.to_be_bytes());
+
+        output.clear();
+        let small_integer = PostgresParameter::Integer(9);
+        assert!(matches!(small_integer.to_sql_checked(&Type::INT4, &mut output), Ok(IsNull::No)));
+        assert_eq!(output.as_ref(), 9_i32.to_be_bytes());
+
+        output.clear();
+        let boolean = PostgresParameter::Boolean(true);
+        assert!(matches!(boolean.to_sql_checked(&Type::BOOL, &mut output), Ok(IsNull::No)));
+        assert_eq!(output.as_ref(), &[1]);
+
+        output.clear();
+        let null = PostgresParameter::Null;
+        assert!(matches!(null.to_sql_checked(&Type::INT8, &mut output), Ok(IsNull::Yes)));
+        assert!(output.is_empty());
+
+        let incompatible = PostgresParameter::Text("not-an-integer".to_string());
+        assert!(incompatible.to_sql_checked(&Type::INT8, &mut output).is_err());
     }
 
     #[test]

@@ -677,6 +677,12 @@ filesystem read permission.
 SQLite immutable/read-only mode, and creates no WAL or shared-memory sidecars.
 It fails closed when a non-empty `-wal` file exists so callers cannot mistake a
 stale main-file view for current state.
+
+PostgreSQL `db_execute` and `db_query` preserve Kujo string, integer, float,
+boolean and null parameter types. Integers are range-checked for the server's
+`int2`, `int4` or `int8` type, floats support `float4` and `float8`, incompatible
+bindings return deterministic errors, and null remains SQL NULL rather than an
+empty string. PostgreSQL uses `$1` placeholders; SQLite uses `?` placeholders.
 | `db_pool` | experimental | `pool := db_pool(cfg)` |
 | `db_pool_acquire` | experimental | `db := db_pool_acquire(pool)` |
 | `db_pool_release` | experimental | `db_pool_release(pool, db)` |
