@@ -1475,6 +1475,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "db_connect_postgres_tls".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "db_execute".to_string(),
             FunctionSignature {
                 param_types: vec![None, Some(TypeAnnotation::String), None], // db, sql, params (optional array)

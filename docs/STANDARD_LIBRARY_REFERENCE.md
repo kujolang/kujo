@@ -668,6 +668,7 @@ filesystem read permission.
 | Function | Tier | Example |
 | --- | --- | --- |
 | `db_connect` | preview | `db := db_connect("sqlite://local.db")` |
+| `db_connect_postgres_tls` | preview | `db := db_connect_postgres_tls(url, ca_pem)` |
 | `db_connect_readonly` | preview | `db := db_connect_readonly("sqlite", "local.db")` |
 | `db_query` | preview | `rows := db_query(db, "select 1")` |
 | `db_execute` | preview | `n := db_execute(db, "delete from t")` |
@@ -677,6 +678,14 @@ filesystem read permission.
 SQLite immutable/read-only mode, and creates no WAL or shared-memory sidecars.
 It fails closed when a non-empty `-wal` file exists so callers cannot mistake a
 stale main-file view for current state.
+
+`db_connect_postgres_tls` accepts only an explicit TCP-host PostgreSQL
+configuration and a non-empty public CA PEM bundle capped at 1 MiB. It forces
+TLS regardless of a weaker `sslmode` in the input, requires TLS 1.2 or newer,
+trusts only certificates in the supplied bundle, and enables both peer-chain
+and hostname verification. Connection errors never
+echo the URL, password, CA, hostname, or driver diagnostic. Callers must use an
+ordinary `db_connect` only for an explicitly isolated plaintext test fixture.
 
 PostgreSQL `db_execute` and `db_query` preserve Kujo string, integer, float,
 boolean and null parameter types. Integers are range-checked for the server's

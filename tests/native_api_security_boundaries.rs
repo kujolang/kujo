@@ -1595,6 +1595,15 @@ fn native_capability_untrusted_denies_database() {
 }
 
 #[test]
+fn native_capability_untrusted_denies_verified_tls_database() {
+    assert_runtime_boundary_failure_with_args(
+        "db_connect_postgres_tls(\"host=localhost\", \"public-ca\")\n",
+        "Capability denied: database required for db_connect_postgres_tls",
+        &["--interpreter", "--untrusted"],
+    );
+}
+
+#[test]
 fn native_capability_untrusted_denies_readonly_database() {
     assert_runtime_boundary_failure_with_args(
         "db_connect_readonly(\"sqlite\", \"tmp.db\")\n",

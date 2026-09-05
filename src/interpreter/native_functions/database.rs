@@ -4,8 +4,12 @@
 
 use crate::interpreter::{ConnectionPool, DatabaseConnection, DictMap, Value};
 use mysql_async::prelude::Queryable;
+use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode, SslVersion};
+use openssl::x509::X509;
+use postgres::config::{Host, SslMode};
 use postgres::types::{to_sql_checked, IsNull, ToSql, Type};
 use postgres::NoTls;
+use postgres_openssl::MakeTlsConnector;
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
@@ -204,6 +208,106 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             } else {
                 Value::Error(
                     "db_connect requires database type ('sqlite'|'postgres'|'mysql') and connection string"
+                        .to_string(),
+                )
+            }
+        }
+        "db_connect_postgres_tls" => {
+            const MAX_CONNECTION_STRING_BYTES: usize = 8192;
+            const MAX_CA_PEM_BYTES: usize = 1024 * 1024;
+            if arg_values.len() != 2 {
+                Value::Error(
+                    "db_connect_postgres_tls requires a PostgreSQL connection string and a public CA PEM bundle"
+                        .to_string(),
+                )
+            } else if let (Some(Value::Str(connection_string)), Some(Value::Str(ca_pem))) =
+                (arg_values.first(), arg_values.get(1))
+            {
+                if connection_string.is_empty()
+                    || connection_string.len() > MAX_CONNECTION_STRING_BYTES
+                    || connection_string.contains('\0')
+                    || ca_pem.is_empty()
+                    || ca_pem.len() > MAX_CA_PEM_BYTES
+                    || ca_pem.contains('\0')
+                {
+                    Value::Error(
+                        "db_connect_postgres_tls rejected invalid or unbounded connection material"
+                            .to_string(),
+                    )
+                } else {
+                    let config = connection_string.parse::<postgres::Config>();
+                    let certificates = X509::stack_from_pem(ca_pem.as_bytes());
+                    match (config, certificates) {
+                        (Ok(mut config), Ok(certificates))
+                            if !certificates.is_empty()
+                                && !config.get_hosts().is_empty()
+                                && config
+                                    .get_hosts()
+                                    .iter()
+                                    .all(|host| matches!(host, Host::Tcp(_))) =>
+                        {
+                            config.ssl_mode(SslMode::Require);
+                            let connector = SslConnector::builder(SslMethod::tls());
+                            match connector {
+                                Ok(mut builder) => {
+                                    let tls_configured = builder
+                                        .set_min_proto_version(Some(SslVersion::TLS1_2))
+                                        .and_then(|_| {
+                                            builder.set_verify(SslVerifyMode::PEER);
+                                            Ok(())
+                                        })
+                                        .and_then(|_| {
+                                            for certificate in certificates {
+                                                builder.cert_store_mut().add_cert(certificate)?;
+                                            }
+                                            Ok(())
+                                        });
+                                    match tls_configured {
+                                        Ok(()) => {
+                                            let mut connector =
+                                                MakeTlsConnector::new(builder.build());
+                                            connector.set_callback(|configuration, _| {
+                                                configuration.set_verify_hostname(true);
+                                                Ok(())
+                                            });
+                                            match config.connect(connector) {
+                                                Ok(client) => Value::Database {
+                                                    connection: DatabaseConnection::Postgres(
+                                                        Arc::new(Mutex::new(client)),
+                                                    ),
+                                                    db_type: "postgres".to_string(),
+                                                    connection_string: connection_string
+                                                        .as_ref()
+                                                        .to_string(),
+                                                    in_transaction: Arc::new(Mutex::new(false)),
+                                                },
+                                                Err(_) => Value::Error(
+                                                    "Failed to connect to PostgreSQL with verified TLS"
+                                                        .to_string(),
+                                                ),
+                                            }
+                                        }
+                                        Err(_) => Value::Error(
+                                            "db_connect_postgres_tls rejected the CA trust bundle"
+                                                .to_string(),
+                                        ),
+                                    }
+                                }
+                                Err(_) => Value::Error(
+                                    "db_connect_postgres_tls could not initialize verified TLS"
+                                        .to_string(),
+                                ),
+                            }
+                        }
+                        _ => Value::Error(
+                            "db_connect_postgres_tls rejected the connection string or CA trust bundle"
+                                .to_string(),
+                        ),
+                    }
+                }
+            } else {
+                Value::Error(
+                    "db_connect_postgres_tls requires a PostgreSQL connection string and a public CA PEM bundle"
                         .to_string(),
                 )
             }
@@ -1328,6 +1432,33 @@ mod tests {
     }
 
     #[test]
+    fn postgres_tls_connection_rejects_invalid_material_without_echoing_it() {
+        let secret = "postgresql://user:super-secret-value@localhost/postgres";
+        let cases = vec![
+            handle("db_connect_postgres_tls", &[]).unwrap(),
+            handle("db_connect_postgres_tls", &[str_value(secret), str_value("")]).unwrap(),
+            handle("db_connect_postgres_tls", &[str_value(secret), str_value("not a certificate")])
+                .unwrap(),
+            handle(
+                "db_connect_postgres_tls",
+                &[
+                    str_value("host=/tmp user=test"),
+                    str_value("-----BEGIN CERTIFICATE-----\ninvalid\n-----END CERTIFICATE-----"),
+                ],
+            )
+            .unwrap(),
+        ];
+        for result in cases {
+            assert!(matches!(result, Value::Error(_)));
+            if let Value::Error(message) = result {
+                assert!(!message.contains("super-secret-value"));
+                assert!(!message.contains("not a certificate"));
+                assert!(!message.contains("/tmp"));
+            }
+        }
+    }
+
+    #[test]
     fn test_db_strict_arity_rejects_extra_arguments() {
         let db_connect_extra =
             handle("db_connect", &[str_value("sqlite"), str_value(":memory:"), Value::Int(1)])
@@ -1337,6 +1468,17 @@ mod tests {
             Value::Error(message)
                 if message
                     .contains("db_connect requires database type ('sqlite'|'postgres'|'mysql') and connection string")
+        ));
+
+        let postgres_tls_extra = handle(
+            "db_connect_postgres_tls",
+            &[str_value("host=localhost"), str_value("certificate"), Value::Int(1)],
+        )
+        .unwrap();
+        assert!(matches!(
+            postgres_tls_extra,
+            Value::Error(message)
+                if message.contains("db_connect_postgres_tls requires a PostgreSQL connection string")
         ));
 
         let db_execute_extra = handle(

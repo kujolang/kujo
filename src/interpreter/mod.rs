@@ -824,6 +824,7 @@ impl Interpreter {
             "set_headers",
             // Database functions
             "db_connect",
+            "db_connect_postgres_tls",
             "db_connect_readonly",
             "db_execute",
             "db_query",
@@ -1567,6 +1568,10 @@ impl Interpreter {
 
         // Database functions
         self.env.define("db_connect".to_string(), Value::NativeFunction("db_connect".to_string()));
+        self.env.define(
+            "db_connect_postgres_tls".to_string(),
+            Value::NativeFunction("db_connect_postgres_tls".to_string()),
+        );
         self.env.define(
             "db_connect_readonly".to_string(),
             Value::NativeFunction("db_connect_readonly".to_string()),
@@ -3434,6 +3439,10 @@ impl Interpreter {
             "bit_and" | "bit_or" | "bit_xor" | "bit_shl" | "bit_shr" => {
                 CallableArity::exact(name, vec!["left".to_string(), "right".to_string()])
             }
+            "db_connect_postgres_tls" => CallableArity::exact(
+                "db_connect_postgres_tls",
+                vec!["connection_string".to_string(), "ca_pem".to_string()],
+            ),
             "to_upper" | "upper" => CallableArity::exact(name, vec!["value".to_string()]),
             "to_lower" | "lower" => CallableArity::exact(name, vec!["value".to_string()]),
             "capitalize" => CallableArity::exact("capitalize", vec!["value".to_string()]),

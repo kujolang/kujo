@@ -247,6 +247,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 
         // Database
         "db_connect"
+        | "db_connect_postgres_tls"
         | "db_connect_readonly"
         | "db_execute"
         | "db_query"

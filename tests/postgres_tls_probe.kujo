@@ -1,0 +1,8 @@
+let connection_string := env_or("KUJO_POSTGRES_TLS_URL","")
+let ca_pem := read_file(env_or("KUJO_POSTGRES_TLS_CA_FILE",""))
+let db := db_connect_postgres_tls(connection_string,ca_pem)
+if type(db) == "error" { throw("verified PostgreSQL TLS connection failed") }
+let rows := db_query(db,"SELECT 1::BIGINT AS value",[])
+if type(rows) == "error" || len(rows) != 1 || rows[0]["value"] != 1 { throw("verified PostgreSQL TLS query failed") }
+db_close(db)
+print(to_json({"ok":true,"schema":"dev.kujolang.postgres-tls-probe.v1","tls":"verified","value":rows[0]["value"]}))

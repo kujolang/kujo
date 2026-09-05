@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [features]
 default = ["runtime-db", "runtime-image", "runtime-archive", "runtime-jit"]
-runtime-db = ["dep:rusqlite", "dep:postgres", "dep:mysql_async"]
+runtime-db = ["dep:rusqlite", "dep:postgres", "dep:postgres-openssl", "dep:mysql_async"]
 runtime-image = ["dep:image"]
 runtime-archive = ["dep:zip", "dep:flate2"]
 runtime-jit = [
@@ -51,6 +51,7 @@ tokio-stream = "0.1"
 futures = "0.3"
 rusqlite = { version = "0.31", features = ["bundled"], optional = true }
 postgres = { version = "0.19", features = ["with-chrono-0_4"], optional = true }
+postgres-openssl = { version = "0.5.3", optional = true }
 mysql_async = { version = "0.37.1", optional = true }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros", "time", "io-util", "fs"] }
 base64 = "0.21"

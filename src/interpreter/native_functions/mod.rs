@@ -19,6 +19,7 @@ pub mod database {
     pub fn handle(name: &str, _arg_values: &[Value]) -> Option<Value> {
         match name {
             "db_connect"
+            | "db_connect_postgres_tls"
             | "db_connect_readonly"
             | "db_execute"
             | "db_query"
@@ -470,6 +471,7 @@ mod tests {
             "set_header",
             "set_headers",
             "db_connect",
+            "db_connect_postgres_tls",
             "db_connect_readonly",
             "db_execute",
             "db_query",

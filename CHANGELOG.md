@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add database-capability-gated `db_connect_postgres_tls` for PostgreSQL over
+  mandatory TLS 1.2+ with peer and hostname verification, an explicit bounded
+  public CA bundle, TCP-host enforcement, and secret-free deterministic
+  connection failures.
+
 - Add capability-free `decode_charset(bytes, charset, max_output_bytes)` with
   strict no-replacement decoding, explicit 64 MiB resource ceilings, exact
   MIME ISO-8859-1 semantics, registered legacy charset support, and

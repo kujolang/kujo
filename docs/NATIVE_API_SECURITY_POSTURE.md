@@ -89,7 +89,7 @@ server with upload routes requires `network-server`, `filesystem-write`, and
 
 Routed request dictionaries expose `peer_address`, `peer_ip`, `peer_port`, and `peer_transport` from the accepted socket. These fields identify the direct TCP peer and do not trust forwarding headers. Behind a proxy they identify the proxy; applications must apply an explicit trusted-proxy policy before using `Forwarded` or `X-Forwarded-For` as an end-client identity. Address-unavailable transports use empty address/IP values, port `0`, and transport `unknown`.
 | `--allow-net` | Net client + server | Union of network-client/network-server surfaces | Combined network risk |
-| `--allow-database` | Database access | `db_connect`, query/transaction helpers | Unauthorized data access |
+| `--allow-database` | Database access | `db_connect`, `db_connect_postgres_tls`, query/transaction helpers | Unauthorized data access |
 | `--allow-clock` | Clock/time | `now`, timestamp helpers | Timing side-channel support |
 | `--allow-random` | Randomness | `random`, random helpers | Nondeterministic workflows |
 | `--allow-all` | All capabilities | All host-effect APIs | Full ambient-host risk |
