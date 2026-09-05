@@ -19,6 +19,8 @@ use crate::builtins::{strict_charset, StrictCharset};
 use crate::interpreter::{DictMap, Value};
 use std::fs::{self, File, OpenOptions};
 use std::io::{BufReader, BufWriter, ErrorKind, Read, Seek, SeekFrom, Write};
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -933,10 +935,13 @@ fn encrypt_file_stream(
         .map_err(|error| format!("Cannot open stream AEAD input '{}': {}", input_path, error))?;
     let output = Path::new(output_path);
     let temp = stream_temp_path(output);
-    let temp_file =
-        OpenOptions::new().create_new(true).write(true).open(&temp).map_err(|error| {
-            format!("Cannot create stream AEAD output '{}': {}", temp.display(), error)
-        })?;
+    let mut output_options = OpenOptions::new();
+    output_options.create_new(true).write(true);
+    #[cfg(unix)]
+    output_options.mode(0o600);
+    let temp_file = output_options.open(&temp).map_err(|error| {
+        format!("Cannot create stream AEAD output '{}': {}", temp.display(), error)
+    })?;
 
     let result = (|| -> Result<Value, String> {
         let mut key_hasher = Sha256::new();
@@ -1023,10 +1028,13 @@ fn decrypt_file_stream(input_path: &str, output_path: &str, key: &str) -> Result
         .map_err(|error| format!("Cannot open stream AEAD input '{}': {}", input_path, error))?;
     let output = Path::new(output_path);
     let temp = stream_temp_path(output);
-    let temp_file =
-        OpenOptions::new().create_new(true).write(true).open(&temp).map_err(|error| {
-            format!("Cannot create stream AEAD output '{}': {}", temp.display(), error)
-        })?;
+    let mut output_options = OpenOptions::new();
+    output_options.create_new(true).write(true);
+    #[cfg(unix)]
+    output_options.mode(0o600);
+    let temp_file = output_options.open(&temp).map_err(|error| {
+        format!("Cannot create stream AEAD output '{}': {}", temp.display(), error)
+    })?;
 
     let result = (|| -> Result<Value, String> {
         let mut reader = BufReader::new(input);
@@ -1922,6 +1930,8 @@ mod tests {
     use openssl::pkey::PKey;
     use openssl::rsa::Rsa;
     use std::fs;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
     use std::sync::Arc;
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -2356,6 +2366,12 @@ mod tests {
         assert!(matches!(encrypted_result, Value::Dict(ref fields)
             if matches!(fields.get("ok"), Some(Value::Bool(true)))
                 && matches!(fields.get("chunks"), Some(Value::Int(4)))));
+        #[cfg(unix)]
+        assert_eq!(
+            fs::metadata(&encrypted).expect("encrypted metadata should exist").permissions().mode()
+                & 0o777,
+            0o600
+        );
 
         let decrypted_result = handle(
             "aes_decrypt_file_stream",
@@ -2365,6 +2381,12 @@ mod tests {
         assert!(matches!(decrypted_result, Value::Dict(ref fields)
             if matches!(fields.get("ok"), Some(Value::Bool(true)))
                 && matches!(fields.get("chunks"), Some(Value::Int(4)))));
+        #[cfg(unix)]
+        assert_eq!(
+            fs::metadata(&decrypted).expect("decrypted metadata should exist").permissions().mode()
+                & 0o777,
+            0o600
+        );
         assert_eq!(fs::read(&decrypted).expect("decrypted output should exist"), payload);
 
         let mut tampered = fs::read(&encrypted).expect("encrypted file should be readable");
