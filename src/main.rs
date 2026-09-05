@@ -1413,50 +1413,75 @@ async fn async_main() {
                     eprintln!();
                 }
 
-                let mut interpreter =
-                    interpreter::Interpreter::with_capability_policy(capability_policy);
-                for search_path in entry_script_search_paths(&file) {
-                    interpreter.module_loader.add_search_path(search_path);
-                }
-                interpreter.set_source(filename, &code);
-
-                // Execute statements
-                interpreter.eval_stmts(&stmts);
-
-                // Check for errors in return_value and display with call stack
-                if let Some(ref val) = interpreter.return_value {
-                    use crate::errors::KujoError;
-                    match val {
-                        interpreter::Value::Error(msg) => {
-                            let err = KujoError::runtime_error(
-                                msg.clone(),
-                                crate::errors::SourceLocation::unknown(),
-                            )
-                            .with_call_stack(interpreter.get_call_stack());
-                            report_run_runtime_error_and_exit(
-                                &err,
-                                CliExitCode::RuntimeError,
-                                json_runtime_diagnostics,
-                            );
+                // The synchronous PostgreSQL driver owns an internal Tokio runtime and
+                // cannot be entered from the CLI's async runtime. Keep the complete
+                // tree-walking interpreter on a dedicated OS thread, matching the VM
+                // execution boundary above. Async Kujo primitives continue to use the
+                // shared runtime through async_runtime::block_on.
+                let result = std::thread::Builder::new()
+                    .name("kujo-interpreter-runner".to_string())
+                    .stack_size(VM_EXECUTION_STACK_SIZE)
+                    .spawn(move || {
+                        let mut interpreter =
+                            interpreter::Interpreter::with_capability_policy(capability_policy);
+                        for search_path in entry_script_search_paths(&file) {
+                            interpreter.module_loader.add_search_path(search_path);
                         }
-                        interpreter::Value::ErrorObject { message, .. } => {
-                            let err = KujoError::runtime_error(
-                                message.clone(),
-                                crate::errors::SourceLocation::unknown(),
-                            )
-                            .with_call_stack(interpreter.get_call_stack());
-                            report_run_runtime_error_and_exit(
-                                &err,
-                                CliExitCode::RuntimeError,
-                                json_runtime_diagnostics,
-                            );
-                        }
-                        _ => {}
-                    }
-                }
+                        interpreter.set_source(filename, &code);
+                        interpreter.eval_stmts(&stmts);
 
-                interpreter.cleanup();
-                drop(interpreter);
+                        if let Some(ref val) = interpreter.return_value {
+                            use crate::errors::KujoError;
+                            match val {
+                                interpreter::Value::Error(msg) => {
+                                    let err = KujoError::runtime_error(
+                                        msg.clone(),
+                                        crate::errors::SourceLocation::unknown(),
+                                    )
+                                    .with_call_stack(interpreter.get_call_stack());
+                                    report_run_runtime_error_and_exit(
+                                        &err,
+                                        CliExitCode::RuntimeError,
+                                        json_runtime_diagnostics,
+                                    );
+                                }
+                                interpreter::Value::ErrorObject { message, .. } => {
+                                    let err = KujoError::runtime_error(
+                                        message.clone(),
+                                        crate::errors::SourceLocation::unknown(),
+                                    )
+                                    .with_call_stack(interpreter.get_call_stack());
+                                    report_run_runtime_error_and_exit(
+                                        &err,
+                                        CliExitCode::RuntimeError,
+                                        json_runtime_diagnostics,
+                                    );
+                                }
+                                _ => {}
+                            }
+                        }
+
+                        interpreter.cleanup();
+                    })
+                    .unwrap_or_else(|error| {
+                        eprintln!("Error: failed to start Kujo interpreter thread: {}", error);
+                        std::process::exit(1);
+                    })
+                    .join();
+
+                if result.is_err() {
+                    let diagnostic = errors::Diagnostic::new(
+                        errors::DIAGNOSTIC_CODE_RUNTIME,
+                        errors::DiagnosticSeverity::Error,
+                        errors::DiagnosticSubsystem::Runtime,
+                        "Interpreter execution panicked in dedicated runner thread".to_string(),
+                    );
+                    report_run_runtime_diagnostic_and_exit(
+                        &diagnostic,
+                        CliExitCode::InternalError,
+                        json_runtime_diagnostics,
+                    );
+                }
             }
         }
 

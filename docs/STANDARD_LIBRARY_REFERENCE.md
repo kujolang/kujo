@@ -683,6 +683,9 @@ boolean and null parameter types. Integers are range-checked for the server's
 `int2`, `int4` or `int8` type, floats support `float4` and `float8`, incompatible
 bindings return deterministic errors, and null remains SQL NULL rather than an
 empty string. PostgreSQL uses `$1` placeholders; SQLite uses `?` placeholders.
+Tree-walking programs execute on a dedicated runner thread so the synchronous
+PostgreSQL driver never attempts to create its internal runtime inside Kujo's
+CLI Tokio runtime.
 | `db_pool` | experimental | `pool := db_pool(cfg)` |
 | `db_pool_acquire` | experimental | `db := db_pool_acquire(pool)` |
 | `db_pool_release` | experimental | `db_pool_release(pool, db)` |
