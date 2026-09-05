@@ -1,5 +1,6 @@
 # === RUST ===
 /target
+/fuzz/target/
 **/*.rs.bk
 **/*.rs.bak
 **/*.swp

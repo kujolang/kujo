@@ -9,7 +9,7 @@ Replay a fuzz crash artifact against a cargo-fuzz target.
 
 Options:
   --artifact <path>        Path to a crash artifact file to replay (required).
-  --target <name>          Fuzz target name (for example: lexer, parser, xml_bounded). If omitted, infer from .../artifacts/<target>/...
+  --target <name>          Fuzz target name (for example: lexer, parser, xml_bounded, gzip_bounded, zip_single_bounded). If omitted, infer from .../artifacts/<target>/...
   --dry-run                Print the replay command and exit without running cargo-fuzz.
   --check-prereqs          Validate prerequisites before replay.
   -h, --help               Show this help.
@@ -108,6 +108,12 @@ fi
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+if [[ -z "${CXX:-}" && -x /usr/local/opt/llvm/bin/clang++ ]]; then
+  export CXX=/usr/local/opt/llvm/bin/clang++
+elif [[ -z "${CXX:-}" && -x /opt/homebrew/opt/llvm/bin/clang++ ]]; then
+  export CXX=/opt/homebrew/opt/llvm/bin/clang++
+fi
+
 if [[ ! -f "$ARTIFACT" ]]; then
   echo "error: artifact file not found: $ARTIFACT" >&2
   exit 2
@@ -129,7 +135,12 @@ check_cmd() {
 check_prereqs() {
   check_cmd cargo "Install Rust toolchain: https://rustup.rs/"
   check_cmd rustup "Install Rust toolchain manager: https://rustup.rs/"
-  check_cmd clang++ "Install a C++ compiler and headers (Xcode CLT or LLVM package)."
+  if [[ -n "${CXX:-}" ]]; then
+    check_cmd "$CXX" "Install a C++ compiler and headers (Xcode CLT or LLVM package)."
+    echo "[ok] cargo-fuzz CXX=$CXX"
+  else
+    check_cmd clang++ "Install a C++ compiler and headers (Xcode CLT or LLVM package)."
+  fi
 
   if command -v cargo >/dev/null 2>&1; then
     if cargo +nightly --version >/dev/null 2>&1; then

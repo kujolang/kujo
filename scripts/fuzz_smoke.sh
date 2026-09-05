@@ -5,7 +5,8 @@ usage() {
   cat <<'EOF'
 Usage: scripts/fuzz_smoke.sh [--check-prereqs] [--max-total-time <seconds>] [target...]
 
-Runs bounded cargo-fuzz smoke targets (default: lexer parser xml_bounded) with prerequisite checks.
+Runs bounded cargo-fuzz smoke targets (default: lexer parser xml_bounded gzip_bounded
+zip_single_bounded) with prerequisite checks.
 
 Options:
   --check-prereqs          Validate toolchain prerequisites only; do not run fuzz targets.
@@ -15,7 +16,7 @@ Options:
 Examples:
   scripts/fuzz_smoke.sh --check-prereqs
   scripts/fuzz_smoke.sh
-  scripts/fuzz_smoke.sh --max-total-time 30 lexer parser xml_bounded
+  scripts/fuzz_smoke.sh --max-total-time 30 lexer parser xml_bounded gzip_bounded zip_single_bounded
 EOF
 }
 
@@ -50,7 +51,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#TARGETS[@]} -eq 0 ]]; then
-  TARGETS=(lexer parser xml_bounded)
+  TARGETS=(lexer parser xml_bounded gzip_bounded zip_single_bounded)
 fi
 
 if ! [[ "$MAX_TOTAL_TIME" =~ ^[1-9][0-9]*$ ]]; then
@@ -60,6 +61,15 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
+
+# Some macOS Command Line Tools releases provide clang++ without the libc++
+# headers required to compile libFuzzer. Prefer a keg-only Homebrew LLVM when
+# it is installed, while preserving an explicit operator CXX override.
+if [[ -z "${CXX:-}" && -x /usr/local/opt/llvm/bin/clang++ ]]; then
+  export CXX=/usr/local/opt/llvm/bin/clang++
+elif [[ -z "${CXX:-}" && -x /opt/homebrew/opt/llvm/bin/clang++ ]]; then
+  export CXX=/opt/homebrew/opt/llvm/bin/clang++
+fi
 
 missing=0
 
@@ -76,7 +86,12 @@ check_cmd() {
 
 check_cmd cargo "Install Rust toolchain: https://rustup.rs/"
 check_cmd rustup "Install Rust toolchain manager: https://rustup.rs/"
-check_cmd clang++ "Install a C++ compiler and headers (Xcode CLT or LLVM package)."
+if [[ -n "${CXX:-}" ]]; then
+  check_cmd "$CXX" "Install a C++ compiler and headers (Xcode CLT or LLVM package)."
+  echo "[ok] cargo-fuzz CXX=$CXX"
+else
+  check_cmd clang++ "Install a C++ compiler and headers (Xcode CLT or LLVM package)."
+fi
 
 if command -v cargo >/dev/null 2>&1; then
   if cargo +nightly --version >/dev/null 2>&1; then

@@ -9,7 +9,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-kujo = { package = "kujolang", path = "..", default-features = false }
+kujo = { package = "kujolang", path = "..", default-features = false, features = ["runtime-archive"] }
 
 [patch.crates-io]
 # cargo-fuzz treats this manifest as its workspace root, so the parent
@@ -34,6 +34,20 @@ bench = false
 [[bin]]
 name = "xml_bounded"
 path = "fuzz_targets/xml_bounded.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "gzip_bounded"
+path = "fuzz_targets/gzip_bounded.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "zip_single_bounded"
+path = "fuzz_targets/zip_single_bounded.rs"
 test = false
 doc = false
 bench = false
