@@ -92,7 +92,7 @@ impl Transport for Http {
     fn get(&self, url: &str, limit: u64) -> Result<Vec<u8>> {
         let response =
             self.0.get(url).send().map_err(|e| {
-                format!("release request failed (check connectivity/timeouts): {e}")
+                format!("release request failed (check connectivity/timeouts): {e:?}")
             })?;
         match response.status().as_u16() {
             403 | 429 => return Err("GitHub denied the request or rate limit was reached; retry later".into()),

@@ -336,6 +336,10 @@ fn running_executable_replacement() {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join(if cfg!(windows) { "kujo.exe" } else { "kujo" });
     fs::copy(std::env::current_exe().unwrap(), &path).unwrap();
+    // Linux debug test runners exceed release-binary limits. Strip only this
+    // disposable copy, retaining exactly the production installation bounds.
+    #[cfg(target_os = "linux")]
+    assert!(Command::new("strip").arg("--strip-debug").arg(&path).status().unwrap().success());
     fs::write(temp.path().join("disposable-marker"), "").unwrap();
     let status = Command::new(&path)
         .args(["--exact", "upgrade::tests::disposable_running_executable_child", "--nocapture"])
@@ -351,12 +355,31 @@ fn local_http_errors_limits_and_timeouts() {
     use std::net::TcpListener;
     fn serve(response: Vec<u8>, delay: Duration) -> (String, std::thread::JoinHandle<()>) {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
         let address = listener.local_addr().unwrap();
         let handle = std::thread::spawn(move || {
-            let (mut stream, _) = listener.accept().unwrap();
-            stream.set_read_timeout(Some(Duration::from_secs(2))).unwrap();
-            let mut request = [0; 4096];
-            let _ = stream.read(&mut request);
+            let deadline = Instant::now() + Duration::from_secs(30);
+            let mut stream = loop {
+                match listener.accept() {
+                    Ok((stream, _)) => break stream,
+                    Err(error)
+                        if error.kind() == io::ErrorKind::WouldBlock
+                            && Instant::now() < deadline =>
+                    {
+                        std::thread::sleep(Duration::from_millis(10))
+                    }
+                    other => panic!("fixture accept failed: {other:?}"),
+                }
+            };
+            stream.set_nonblocking(false).unwrap();
+            stream.set_read_timeout(Some(Duration::from_secs(20))).unwrap();
+            let mut request = Vec::new();
+            while !request.windows(4).any(|part| part == b"\r\n\r\n") {
+                let mut buffer = [0; 1024];
+                let count = stream.read(&mut buffer).unwrap();
+                assert!(count > 0 && request.len() + count <= 8192);
+                request.extend_from_slice(&buffer[..count]);
+            }
             std::thread::sleep(delay);
             let _ = stream.write_all(&response);
         });
@@ -366,7 +389,7 @@ fn local_http_errors_limits_and_timeouts() {
     let http = Http(
         reqwest::blocking::Client::builder()
             .no_proxy()
-            .timeout(Duration::from_secs(5))
+            .timeout(Duration::from_secs(20))
             .build()
             .unwrap(),
     );
@@ -378,7 +401,8 @@ fn local_http_errors_limits_and_timeouts() {
                 .into_bytes(),
             Duration::ZERO,
         );
-        assert!(http.get(&url, 100).unwrap_err().contains(expected));
+        let error = http.get(&url, 100).unwrap_err();
+        assert!(error.contains(expected), "HTTP {status}: {error}");
         server.join().unwrap();
     }
     for response in [

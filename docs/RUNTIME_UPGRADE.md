@@ -121,7 +121,9 @@ is not replaced or invoked by this command.
 
 Fixture transport is internal to Rust tests. Production has no alternate
 executable-download URL or test endpoint flag. Tests use local HTTP fixtures,
-synthetic archives, and disposable native executables. The native upgrade CI
+synthetic archives, and disposable native executables. They require `rustc`
+and, on Linux, `strip` to remove debug data from the disposable test-runner
+copy while preserving the production executable size limit. The native upgrade CI
 matrix runs these tests, including a copied running-executable replacement,
 on all five release targets. The release-binary jobs also run the focused tests
 before packaging. Cross-platform results are established by those jobs; a
