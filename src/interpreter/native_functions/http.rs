@@ -23,6 +23,53 @@ const MAX_AI_TOOL_LOOP_STEPS: i64 = 16;
 const AI_CASSETTE_VERSION: i64 = 1;
 const HTTP_RESPONSE_STREAM_CHUNK_BYTES: usize = 16 * 1024;
 const HTTP_RESPONSE_STREAM_EVENT_CAPACITY: usize = 16;
+const MAX_FILE_HTTP_TIMEOUT_MS: i64 = 300_000;
+
+fn file_http_policy_options(
+    options: &DictMap,
+    surface: &str,
+) -> Result<(Duration, bool, bool, bool), String> {
+    let timeout_ms = match options.get("timeout_ms") {
+        Some(Value::Int(value)) if *value > 0 && *value <= MAX_FILE_HTTP_TIMEOUT_MS => *value,
+        Some(Value::Int(_)) => {
+            return Err(format!(
+                "{} options.timeout_ms must be between 1 and {}",
+                surface, MAX_FILE_HTTP_TIMEOUT_MS
+            ));
+        }
+        Some(_) => return Err(format!("{} options.timeout_ms must be an integer", surface)),
+        None => network_policy::DEFAULT_HTTP_TIMEOUT_MS as i64,
+    };
+    let force_deny_private = match options.get("destination_policy") {
+        Some(Value::Str(value)) if value.as_ref() == "deny_private" => true,
+        Some(Value::Str(value)) if value.as_ref() == "default" => false,
+        Some(Value::Str(_)) => {
+            return Err(format!(
+                "{} options.destination_policy must be 'default' or 'deny_private'",
+                surface
+            ));
+        }
+        Some(_) => {
+            return Err(format!("{} options.destination_policy must be a string", surface));
+        }
+        None => false,
+    };
+    let pin_dns = match options.get("pin_dns") {
+        Some(Value::Bool(value)) => *value,
+        Some(_) => return Err(format!("{} options.pin_dns must be a boolean", surface)),
+        None => false,
+    };
+    let follow_redirects = match options.get("redirects") {
+        Some(Value::Str(value)) if value.as_ref() == "none" => false,
+        Some(Value::Str(value)) if value.as_ref() == "follow" => true,
+        Some(Value::Str(_)) => {
+            return Err(format!("{} options.redirects must be 'none' or 'follow'", surface));
+        }
+        Some(_) => return Err(format!("{} options.redirects must be a string", surface)),
+        None => true,
+    };
+    Ok((Duration::from_millis(timeout_ms as u64), force_deny_private, pin_dns, follow_redirects))
+}
 
 fn http_stream_observed_at_ms() -> i64 {
     SystemTime::now()
@@ -2896,12 +2943,21 @@ pub fn handle_with_interpreter(
                 },
                 None => Vec::new(),
             };
+            let (timeout, force_deny_private, pin_dns, follow_redirects) =
+                match file_http_policy_options(&options, "http_download_file") {
+                    Ok(policy) => policy,
+                    Err(error) => return Some(Value::Error(error)),
+                };
             match builtins::http_download_file(
                 url.as_ref(),
                 output_path.as_ref(),
                 headers,
                 max_bytes,
                 overwrite,
+                timeout,
+                force_deny_private,
+                pin_dns,
+                follow_redirects,
             ) {
                 Ok(result) => Value::Dict(Arc::new(result)),
                 Err(error) => Value::Error(error),
@@ -2972,12 +3028,21 @@ pub fn handle_with_interpreter(
                 },
                 None => Vec::new(),
             };
+            let (timeout, force_deny_private, pin_dns, follow_redirects) =
+                match file_http_policy_options(&options, "http_upload_file") {
+                    Ok(policy) => policy,
+                    Err(error) => return Some(Value::Error(error)),
+                };
             match builtins::http_upload_file(
                 url.as_ref(),
                 input_path.as_ref(),
                 &method,
                 headers,
                 max_response_bytes,
+                timeout,
+                force_deny_private,
+                pin_dns,
+                follow_redirects,
             ) {
                 Ok(result) => Value::Dict(Arc::new(result)),
                 Err(error) => Value::Error(error),
@@ -3424,6 +3489,36 @@ mod tests {
 
     fn str_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
+    }
+
+    #[test]
+    fn file_http_policy_options_are_bounded_and_fail_closed() {
+        let defaults = file_http_policy_options(&DictMap::default(), "file-http")
+            .expect("default file HTTP policy should remain compatible");
+        assert_eq!(defaults.0, Duration::from_millis(network_policy::DEFAULT_HTTP_TIMEOUT_MS));
+        assert!(!defaults.1);
+        assert!(!defaults.2);
+        assert!(defaults.3);
+
+        let mut strict = DictMap::default();
+        strict.insert("timeout_ms".into(), Value::Int(1_500));
+        strict.insert("destination_policy".into(), str_value("deny_private"));
+        strict.insert("pin_dns".into(), Value::Bool(true));
+        strict.insert("redirects".into(), str_value("none"));
+        let parsed = file_http_policy_options(&strict, "file-http")
+            .expect("strict file HTTP policy should parse");
+        assert_eq!(parsed, (Duration::from_millis(1_500), true, true, false));
+
+        for (key, value) in [
+            ("timeout_ms", Value::Int(0)),
+            ("destination_policy", str_value("allow_private")),
+            ("pin_dns", Value::Int(1)),
+            ("redirects", str_value("sometimes")),
+        ] {
+            let mut invalid = DictMap::default();
+            invalid.insert(key.into(), value);
+            assert!(file_http_policy_options(&invalid, "file-http").is_err());
+        }
     }
 
     fn one_shot_json_server(

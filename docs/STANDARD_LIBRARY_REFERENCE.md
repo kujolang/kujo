@@ -563,8 +563,8 @@ destinations remain subject to the outbound destination policy described in
 | `http_put` | preview | `res := http_put("https://example.com", {"x":1})` |
 | `http_delete` | preview | `res := http_delete("https://example.com")` |
 | `http_get_binary` | preview | `blob := http_get_binary("https://example.com/a.bin")` |
-| `http_download_file` | preview | `receipt := http_download_file(url, "artifact.bin", {"max_bytes": 1073741824})` |
-| `http_upload_file` | preview | `receipt := http_upload_file(url, "artifact.bin", {"method": "PUT", "headers": {"Content-Type": "application/octet-stream"}})` |
+| `http_download_file` | preview | `receipt := http_download_file(url, "artifact.bin", {"max_bytes":1073741824,"destination_policy":"deny_private","pin_dns":true,"redirects":"none"})` |
+| `http_upload_file` | preview | `receipt := http_upload_file(url, "artifact.bin", {"method":"PUT","headers":{"Content-Type":"application/octet-stream"},"destination_policy":"deny_private","pin_dns":true,"redirects":"none"})` |
 | `parallel_http` | preview | `all := parallel_http(["https://a", "https://b"])` |
 | `ai_request_hash` | stable | `hash := ai_request_hash(request)` |
 | `ai_chat` | preview | `res := ai_chat(messages, options)` |

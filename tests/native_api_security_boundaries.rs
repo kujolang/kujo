@@ -1550,6 +1550,59 @@ fn network_http_request_can_pin_resolution_and_disable_redirects() {
 }
 
 #[test]
+fn network_file_http_strict_policy_has_vm_interpreter_parity() {
+    let project_root = unique_temp_dir("network_file_http_strict_policy");
+    let script_path = project_root.join("file_http_strict_policy.kujo");
+    let input_path = project_root.join("upload.bin");
+    let output_path = project_root.join("download.bin");
+    fs::write(&input_path, b"bounded-upload").expect("failed to write upload fixture");
+    let source = format!(
+        r#"
+mut download_denied := false
+try {{ http_download_file("http://127.0.0.1:1/object", "{}", {{"max_bytes":64,"timeout_ms":1000,"destination_policy":"deny_private","pin_dns":true,"redirects":"none"}}) }}
+except error {{ download_denied = contains(to_string(error),"deny_private") }}
+mut upload_denied := false
+try {{ http_upload_file("http://127.0.0.1:1/object", "{}", {{"method":"PUT","timeout_ms":1000,"destination_policy":"deny_private","pin_dns":true,"redirects":"none"}}) }}
+except error {{ upload_denied = contains(to_string(error),"deny_private") }}
+assert(download_denied && upload_denied,"strict file HTTP destination policy")
+print("FILE_HTTP_STRICT_OK")
+"#,
+        output_path.display(),
+        input_path.display()
+    );
+    fs::write(&script_path, source).expect("failed to write strict file HTTP script");
+
+    let mut outputs = Vec::new();
+    for mode in [vec![], vec!["--interpreter"]] {
+        let mut args = vec!["run"];
+        args.extend(mode);
+        args.extend([
+            "--untrusted",
+            "--allow-net-client",
+            "--allow-fs-read",
+            "--allow-fs-write",
+            script_path.to_str().expect("script path should be utf-8"),
+        ]);
+        let output = run_kujo_with_env(
+            &args,
+            &project_root,
+            &[("KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS", "1")],
+        );
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "strict file HTTP policy failed: stdout={} stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+        assert!(stdout_text(&output).contains("FILE_HTTP_STRICT_OK"));
+        assert!(!output_path.exists());
+        outputs.push(stdout_text(&output));
+    }
+    assert_eq!(outputs[0], outputs[1]);
+}
+
+#[test]
 fn network_http_request_enforces_per_request_response_limit() {
     let body = vec![b'x'; 65];
     let Some((port, server_handle)) = spawn_one_shot_http_server(body, Duration::from_millis(0))

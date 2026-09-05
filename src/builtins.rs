@@ -19,6 +19,10 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
+#[cfg(all(unix, test))]
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
@@ -2084,6 +2088,10 @@ pub fn http_download_file(
     headers: Vec<(String, String)>,
     max_bytes: u64,
     overwrite: bool,
+    timeout: Duration,
+    force_deny_private: bool,
+    pin_dns: bool,
+    follow_redirects: bool,
 ) -> Result<DictMap, String> {
     const SURFACE: &str = "HTTP file download";
     if max_bytes == 0 {
@@ -2107,7 +2115,14 @@ pub fn http_download_file(
         })?;
         let temp_path = parent.join(format!(".kujo-download-{}.tmp", Uuid::new_v4()));
         let operation = (|| -> Result<DictMap, String> {
-            let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+            let client = network_policy::build_policy_http_client(
+                &url,
+                timeout,
+                force_deny_private,
+                pin_dns,
+                follow_redirects,
+                SURFACE,
+            )?;
             let request = apply_http_headers(client.get(&url), &headers, SURFACE)?;
             let mut response =
                 request.send().map_err(|error| format!("{} request failed: {}", SURFACE, error))?;
@@ -2124,10 +2139,13 @@ pub fn http_download_file(
                 }
             }
 
-            let mut output =
-                OpenOptions::new().write(true).create_new(true).open(&temp_path).map_err(
-                    |error| format!("{} failed to create temporary file: {}", SURFACE, error),
-                )?;
+            let mut output_options = OpenOptions::new();
+            output_options.write(true).create_new(true);
+            #[cfg(unix)]
+            output_options.mode(0o600);
+            let mut output = output_options.open(&temp_path).map_err(|error| {
+                format!("{} failed to create temporary file: {}", SURFACE, error)
+            })?;
             let mut hasher = Sha256::new();
             let mut total = 0_u64;
             let mut buffer = vec![0_u8; 64 * 1024];
@@ -2185,6 +2203,10 @@ pub fn http_upload_file(
     method: &str,
     headers: Vec<(String, String)>,
     max_response_bytes: usize,
+    timeout: Duration,
+    force_deny_private: bool,
+    pin_dns: bool,
+    follow_redirects: bool,
 ) -> Result<DictMap, String> {
     const SURFACE: &str = "HTTP file upload";
     if max_response_bytes == 0 || max_response_bytes > network_policy::MAX_NETWORK_BODY_BYTES {
@@ -2210,7 +2232,14 @@ pub fn http_upload_file(
             .metadata()
             .map_err(|error| format!("{} failed to inspect input file: {}", SURFACE, error))?
             .len();
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_policy_http_client(
+            &url,
+            timeout,
+            force_deny_private,
+            pin_dns,
+            follow_redirects,
+            SURFACE,
+        )?;
         let request = client
             .request(method, &url)
             .header(reqwest::header::CONTENT_LENGTH, input_bytes)
@@ -2679,12 +2708,28 @@ mod tests {
         .concat();
         let (url, server) = test_http_server(response);
         let path = env::temp_dir().join(format!("kujo-http-download-{}.bin", Uuid::new_v4()));
-        let result = http_download_file(&url, &path.to_string_lossy(), Vec::new(), 200_000, false)
-            .expect("download should succeed");
+        let result = http_download_file(
+            &url,
+            &path.to_string_lossy(),
+            Vec::new(),
+            200_000,
+            false,
+            network_policy::default_http_timeout(),
+            false,
+            false,
+            true,
+        )
+        .expect("download should succeed");
         assert!(
             matches!(result.get("bytes"), Some(Value::Int(value)) if *value == payload.len() as i64)
         );
         assert_eq!(fs::read(&path).expect("download should exist"), payload);
+        #[cfg(unix)]
+        assert_eq!(
+            fs::metadata(&path).expect("download metadata should exist").permissions().mode()
+                & 0o777,
+            0o600
+        );
         server.join().expect("test server should finish");
         fs::remove_file(path).expect("download should clean up");
 
@@ -2696,8 +2741,18 @@ mod tests {
         .concat();
         let (url, server) = test_http_server(response);
         let path = env::temp_dir().join(format!("kujo-http-download-{}.bin", Uuid::new_v4()));
-        let error = http_download_file(&url, &path.to_string_lossy(), Vec::new(), 16, false)
-            .expect_err("oversize download should fail");
+        let error = http_download_file(
+            &url,
+            &path.to_string_lossy(),
+            Vec::new(),
+            16,
+            false,
+            network_policy::default_http_timeout(),
+            false,
+            false,
+            true,
+        )
+        .expect_err("oversize download should fail");
         assert!(error.contains("exceeds max_bytes"), "unexpected oversize download error: {error}");
         assert!(!path.exists());
         server.join().expect("test server should finish");
@@ -2720,6 +2775,10 @@ mod tests {
             "PUT",
             vec![("Content-Type".to_string(), "application/octet-stream".to_string())],
             1024,
+            network_policy::default_http_timeout(),
+            false,
+            false,
+            true,
         )
         .expect("upload should succeed");
         assert!(matches!(result.get("status"), Some(Value::Int(201))));
