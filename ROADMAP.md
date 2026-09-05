@@ -1,7 +1,7 @@
 # Kujo v1.0 Completeness-Ready Roadmap
 
 Last audit date: 2026-05-06
-> Current crate version: `1.2.3` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.3.0` in [Cargo.toml](Cargo.toml)
 Target release: 1.0.0
 Release state: Kujo `v1.2.3` is the current stable release. Launch verification and artifact evidence are preserved in `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md` and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`.
 Roadmap status: active production-readiness backlog

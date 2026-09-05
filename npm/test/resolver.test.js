@@ -48,7 +48,7 @@ test('returns the complete bundled runtime contract', () => {
     platform: 'linux',
     arch: 'arm64',
     packageName: '@kujolang/kujo-linux-arm64',
-    packageVersion: '1.2.3',
+    packageVersion: require('../runtime/package.json').version,
     runtimeVersion: '1.2.0',
     binaryName: 'kujo',
     binaryPath: path.join('/fixture', 'node_modules', '@kujolang', 'kujo-linux-arm64', 'bin', 'kujo'),

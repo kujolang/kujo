@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-05
+
 ### Added
 
 - Add native runtime-only `kujo upgrade [VERSION]`, exact stable release selection,
@@ -52,7 +54,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   callbacks, callback cancellation, downstream-disconnect reporting, and
   interpreter/VM server support without full-response buffering.
 
+- Add bounded TCP/TLS file-range streaming, transformed file-range private
+  spools, tracked SQLite immediate transactions, and expanded IP-literal facts.
+- Add strict per-request destination policies, DNS pinning, redirect controls,
+  and bounded timeouts for streaming HTTP file uploads and downloads.
+
 ### Fixed
+
+- Keep synchronous PostgreSQL operations safe when called from async workers
+  and preserve PostgreSQL parameter types.
+- Run interpreter execution outside the CLI async runtime to avoid nested
+  runtime failures for synchronous host APIs.
+- Refresh generated TODO and unsafe inventories for the shipped source tree.
+
 
 - Capture the lexically nearest same-named local in VM closures. This prevents
   a closure created in a later block from binding an inactive earlier block's
