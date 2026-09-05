@@ -2,7 +2,10 @@
 //
 // Database access native functions
 
-use crate::interpreter::{ConnectionPool, DatabaseConnection, DictMap, Value};
+use crate::interpreter::async_runtime::AsyncRuntime;
+use crate::interpreter::{
+    ConnectionPool, DatabaseConnection, DictMap, RuntimeSafePostgresClient, Value,
+};
 use mysql_async::prelude::Queryable;
 use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode, SslVersion};
 use openssl::x509::X509;
@@ -156,10 +159,12 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         }
                     },
                     "postgres" | "postgresql" => {
-                        match postgres::Client::connect(connection_string.as_ref(), NoTls) {
+                        match AsyncRuntime::run_runtime_safe_blocking(|| {
+                            postgres::Client::connect(connection_string.as_ref(), NoTls)
+                        }) {
                             Ok(client) => Value::Database {
                                 connection: DatabaseConnection::Postgres(Arc::new(Mutex::new(
-                                    client,
+                                    RuntimeSafePostgresClient::new(client),
                                 ))),
                                 db_type: "postgres".to_string(),
                                 connection_string: connection_string.as_ref().to_string(),
@@ -270,10 +275,12 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                                                 configuration.set_verify_hostname(true);
                                                 Ok(())
                                             });
-                                            match config.connect(connector) {
+                                            match AsyncRuntime::run_runtime_safe_blocking(|| {
+                                                config.connect(connector)
+                                            }) {
                                                 Ok(client) => Value::Database {
                                                     connection: DatabaseConnection::Postgres(
-                                                        Arc::new(Mutex::new(client)),
+                                                        Arc::new(Mutex::new(RuntimeSafePostgresClient::new(client))),
                                                     ),
                                                     db_type: "postgres".to_string(),
                                                     connection_string: connection_string
@@ -429,18 +436,29 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             }
                         }
                         (DatabaseConnection::Postgres(client), "postgres") => {
-                            let mut client = lock_or_db_error!(client, "database.client_mut");
-                            let execute_result = if let Some(Value::Array(param_arr)) = params {
-                                let postgres_params = postgres_parameters(param_arr);
-                                let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
-                                    postgres_params
-                                        .iter()
-                                        .map(|value| value as &(dyn postgres::types::ToSql + Sync))
-                                        .collect();
-                                client.execute(sql.as_ref(), params_refs.as_slice())
+                            let client = Arc::clone(client);
+                            let sql = Arc::clone(sql);
+                            let postgres_params = if let Some(Value::Array(param_arr)) = params {
+                                postgres_parameters(param_arr)
                             } else {
-                                client.execute(sql.as_ref(), &[])
+                                Vec::new()
                             };
+                            let execute_result =
+                                AsyncRuntime::run_runtime_safe_blocking(move || {
+                                    let mut client = client.lock().map_err(|_| {
+                                        "PostgreSQL client lock poisoned".to_string()
+                                    })?;
+                                    let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
+                                        postgres_params
+                                            .iter()
+                                            .map(|value| {
+                                                value as &(dyn postgres::types::ToSql + Sync)
+                                            })
+                                            .collect();
+                                    client
+                                        .execute(sql.as_ref(), params_refs.as_slice())
+                                        .map_err(|error| error.to_string())
+                                });
 
                             match execute_result {
                                 Ok(rows_affected) => Value::Int(rows_affected as i64),
@@ -593,18 +611,26 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             Value::Array(Arc::new(results))
                         }
                         (DatabaseConnection::Postgres(client), "postgres") => {
-                            let mut client = lock_or_db_error!(client, "database.client_mut");
-                            let query_result = if let Some(Value::Array(param_arr)) = params {
-                                let postgres_params = postgres_parameters(param_arr);
+                            let client = Arc::clone(client);
+                            let sql = Arc::clone(sql);
+                            let postgres_params = if let Some(Value::Array(param_arr)) = params {
+                                postgres_parameters(param_arr)
+                            } else {
+                                Vec::new()
+                            };
+                            let query_result = AsyncRuntime::run_runtime_safe_blocking(move || {
+                                let mut client = client
+                                    .lock()
+                                    .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
                                 let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
                                     postgres_params
                                         .iter()
                                         .map(|value| value as &(dyn postgres::types::ToSql + Sync))
                                         .collect();
-                                client.query(sql.as_ref(), params_refs.as_slice())
-                            } else {
-                                client.query(sql.as_ref(), &[])
-                            };
+                                client
+                                    .query(sql.as_ref(), params_refs.as_slice())
+                                    .map_err(|error| error.to_string())
+                            });
 
                             match query_result {
                                 Ok(rows) => {
@@ -875,11 +901,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         .map_err(|e| format!("Failed to begin transaction: {}", e))
                 }
                 (DatabaseConnection::Postgres(client), "postgres") => {
-                    let mut client = lock_or_db_error!(client, "database.client_mut");
-                    client
-                        .execute("BEGIN", &[])
-                        .map(|_| ())
-                        .map_err(|e| format!("Failed to begin transaction: {}", e))
+                    let client = Arc::clone(&client);
+                    AsyncRuntime::run_runtime_safe_blocking(move || {
+                        let mut client = client
+                            .lock()
+                            .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                        client
+                            .execute("BEGIN", &[])
+                            .map(|_| ())
+                            .map_err(|e| format!("Failed to begin transaction: {}", e))
+                    })
                 }
                 (DatabaseConnection::Mysql(connection), "mysql") => {
                     let mut connection = lock_or_db_error!(connection, "database.connection_mut");
@@ -980,11 +1011,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             .map_err(|e| format!("Failed to commit transaction: {}", e))
                     }
                     (DatabaseConnection::Postgres(client), "postgres") => {
-                        let mut client = lock_or_db_error!(client, "database.client_mut");
-                        client
-                            .execute("COMMIT", &[])
-                            .map(|_| ())
-                            .map_err(|e| format!("Failed to commit transaction: {}", e))
+                        let client = Arc::clone(&client);
+                        AsyncRuntime::run_runtime_safe_blocking(move || {
+                            let mut client = client
+                                .lock()
+                                .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            client
+                                .execute("COMMIT", &[])
+                                .map(|_| ())
+                                .map_err(|e| format!("Failed to commit transaction: {}", e))
+                        })
                     }
                     (DatabaseConnection::Mysql(connection), "mysql") => {
                         let mut connection =
@@ -1040,11 +1076,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             .map_err(|e| format!("Failed to rollback transaction: {}", e))
                     }
                     (DatabaseConnection::Postgres(client), "postgres") => {
-                        let mut client = lock_or_db_error!(client, "database.client_mut");
-                        client
-                            .execute("ROLLBACK", &[])
-                            .map(|_| ())
-                            .map_err(|e| format!("Failed to rollback transaction: {}", e))
+                        let client = Arc::clone(&client);
+                        AsyncRuntime::run_runtime_safe_blocking(move || {
+                            let mut client = client
+                                .lock()
+                                .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            client
+                                .execute("ROLLBACK", &[])
+                                .map(|_| ())
+                                .map_err(|e| format!("Failed to rollback transaction: {}", e))
+                        })
                     }
                     (DatabaseConnection::Mysql(connection), "mysql") => {
                         let mut connection =
@@ -1094,8 +1135,13 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         Value::Float(connection.last_insert_rowid() as f64)
                     }
                     (DatabaseConnection::Postgres(client), "postgres") => {
-                        let mut client = lock_or_db_error!(client, "database.client_mut");
-                        match client.query("SELECT lastval()", &[]) {
+                        let client = Arc::clone(client);
+                        match AsyncRuntime::run_runtime_safe_blocking(move || {
+                            let mut client = client
+                                .lock()
+                                .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            client.query("SELECT lastval()", &[]).map_err(|error| error.to_string())
+                        }) {
                             Ok(rows) => {
                                 if let Some(row) = rows.first() {
                                     let id: i64 = row.get(0);

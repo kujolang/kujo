@@ -40,7 +40,7 @@ pub use value::{
 };
 #[cfg(feature = "runtime-db")]
 #[allow(unused_imports)]
-pub use value::{ConnectionPool, DatabaseConnection};
+pub use value::{ConnectionPool, DatabaseConnection, RuntimeSafePostgresClient};
 
 // Internal-only imports
 use control_flow::ControlFlow;

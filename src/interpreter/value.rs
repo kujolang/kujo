@@ -4,6 +4,8 @@
 // Defines all value types that can be represented and manipulated at runtime.
 
 use crate::ast::Stmt;
+#[cfg(feature = "runtime-db")]
+use crate::interpreter::async_runtime::AsyncRuntime;
 use ahash::AHasher;
 #[cfg(feature = "runtime-image")]
 use image::DynamicImage;
@@ -18,6 +20,8 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::hash::BuildHasherDefault;
 use std::ops::Deref;
+#[cfg(feature = "runtime-db")]
+use std::ops::DerefMut;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::Receiver;
@@ -390,12 +394,47 @@ mod tests {
 /// Database connection types
 /// Infrastructure for database.rs stub module
 #[cfg(feature = "runtime-db")]
+pub struct RuntimeSafePostgresClient(Option<PostgresClient>);
+
+#[cfg(feature = "runtime-db")]
+impl RuntimeSafePostgresClient {
+    pub fn new(client: PostgresClient) -> Self {
+        Self(Some(client))
+    }
+}
+
+#[cfg(feature = "runtime-db")]
+impl Deref for RuntimeSafePostgresClient {
+    type Target = PostgresClient;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref().expect("PostgreSQL client is available")
+    }
+}
+
+#[cfg(feature = "runtime-db")]
+impl DerefMut for RuntimeSafePostgresClient {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.0.as_mut().expect("PostgreSQL client is available")
+    }
+}
+
+#[cfg(feature = "runtime-db")]
+impl Drop for RuntimeSafePostgresClient {
+    fn drop(&mut self) {
+        if let Some(client) = self.0.take() {
+            AsyncRuntime::run_runtime_safe_blocking(move || drop(client));
+        }
+    }
+}
+
+#[cfg(feature = "runtime-db")]
 #[derive(Clone)]
 pub enum DatabaseConnection {
     #[allow(dead_code)]
     Sqlite(Arc<Mutex<SqliteConnection>>),
     #[allow(dead_code)]
-    Postgres(Arc<Mutex<PostgresClient>>),
+    Postgres(Arc<Mutex<RuntimeSafePostgresClient>>),
     #[allow(dead_code)]
     Mysql(Arc<Mutex<MysqlConn>>),
 }
@@ -560,9 +599,15 @@ impl ConnectionPool {
             "sqlite" => SqliteConnection::open(&self.connection_string)
                 .map(|conn| DatabaseConnection::Sqlite(Arc::new(Mutex::new(conn))))
                 .map_err(|e| format!("Failed to create SQLite connection: {}", e)),
-            "postgres" | "postgresql" => PostgresClient::connect(&self.connection_string, NoTls)
-                .map(|client| DatabaseConnection::Postgres(Arc::new(Mutex::new(client))))
-                .map_err(|e| format!("Failed to create PostgreSQL connection: {}", e)),
+            "postgres" | "postgresql" => AsyncRuntime::run_runtime_safe_blocking(|| {
+                PostgresClient::connect(&self.connection_string, NoTls)
+            })
+            .map(|client| {
+                DatabaseConnection::Postgres(Arc::new(Mutex::new(RuntimeSafePostgresClient::new(
+                    client,
+                ))))
+            })
+            .map_err(|e| format!("Failed to create PostgreSQL connection: {}", e)),
             "mysql" => {
                 let opts = mysql_async::OptsBuilder::from_opts(
                     mysql_async::Opts::from_url(&self.connection_string)

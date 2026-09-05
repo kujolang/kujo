@@ -37,6 +37,27 @@ static RUNTIME: Lazy<Runtime> = Lazy::new(build_runtime);
 pub struct AsyncRuntime;
 
 impl AsyncRuntime {
+    /// Run a synchronous, runtime-owning library call without nesting its
+    /// private Tokio runtime inside Kujo's executor. Some synchronous clients
+    /// (notably `postgres::Client::connect`) create and drive a runtime
+    /// internally and panic when invoked directly from a Tokio worker.
+    pub fn run_runtime_safe_blocking<F, T>(operation: F) -> T
+    where
+        F: FnOnce() -> T + Send,
+        T: Send,
+    {
+        if tokio::runtime::Handle::try_current().is_ok() {
+            std::thread::scope(|scope| {
+                scope
+                    .spawn(operation)
+                    .join()
+                    .unwrap_or_else(|panic| std::panic::resume_unwind(panic))
+            })
+        } else {
+            operation()
+        }
+    }
+
     /// Get reference to the global tokio runtime
     pub fn runtime() -> &'static Runtime {
         &RUNTIME
@@ -177,6 +198,24 @@ mod tests {
             .expect("outer runtime should initialize");
 
         let result = outer.block_on(async { AsyncRuntime::block_on(async { 42 }) });
+        assert_eq!(result, 42);
+    }
+
+    #[test]
+    fn runtime_owning_sync_client_can_initialize_inside_async_worker() {
+        let outer = tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(2)
+            .enable_all()
+            .build()
+            .expect("outer runtime should initialize");
+
+        let result = outer.block_on(async {
+            AsyncRuntime::run_runtime_safe_blocking(|| {
+                tokio::runtime::Runtime::new()
+                    .expect("nested client runtime should initialize on the blocking thread")
+                    .block_on(async { 42 })
+            })
+        });
         assert_eq!(result, 42);
     }
 
