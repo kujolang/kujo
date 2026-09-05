@@ -8,14 +8,14 @@ command authorizes installation; there is no interactive prompt.
 
 ```sh
 kujo upgrade
-kujo upgrade 1.2.4
-kujo upgrade v1.2.4
+kujo upgrade 1.3.0
+kujo upgrade v1.3.0
 kujo upgrade --check --json
-kujo upgrade 1.2.4 --check
+kujo upgrade 1.3.0 --check
 kujo upgrade 1.2.3 --allow-downgrade
 ```
 
-Examples name versions, not promises that a future release is published.
+The exact-version examples select v1.3.0. Same-version requests are no-ops.
 Only exact stable `MAJOR.MINOR.PATCH` versions, optionally prefixed by `v`, are
 accepted. Ranges, prereleases, and build metadata are rejected. Latest resolves
 through GitHub's latest-release API; exact versions use the release-by-tag API.
@@ -114,7 +114,8 @@ Archive dependencies are unconditional because upgrading must work with
 
 ## Bootstrap and validation
 
-Releases predating this command cannot upgrade themselves with it. First install
+The command is available starting with v1.3.0. Earlier releases cannot upgrade
+themselves with it. First install
 a release containing the command using the existing installer or package
 manager. The user's local `kujo-upgrade` helper is a separate custom tool and
 is not replaced or invoked by this command.

@@ -266,14 +266,14 @@ exit 0.
 
 ```json
 {
-  "current_version": "1.2.3",
-  "target_version": "1.2.4",
-  "status": "upgrade_available",
+  "current_version": "1.3.0",
+  "target_version": "1.3.0",
+  "status": "up_to_date",
   "changed": false,
   "platform": "macos-arm64",
   "destination": "/Users/example/.local/bin/kujo",
   "installation": "standalone",
-  "upgrade_available": true,
+  "upgrade_available": false,
   "backup": null
 }
 ```

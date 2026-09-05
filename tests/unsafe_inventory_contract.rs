@@ -131,12 +131,13 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .parse()
         .expect("executable summary value should be numeric");
 
-    // v1.2.3 adds two audited Windows ReOpenFile boundaries for read-only
-    // process stdin handles and one Unix mkfifo test boundary. Keep the
-    // budget exact so any additional executable unsafe requires review.
+    // v1.3.0 adds one test-only libc::geteuid call so the upgrade permission
+    // fixture can skip its non-writable-destination assertion when run as root.
+    // It takes no pointers and does not mutate process state. Keep the budget
+    // exact so any additional executable unsafe requires review.
     assert_eq!(
-        executable_count, 61,
-        "executable unsafe budget changed: expected 61, got {executable_count}"
+        executable_count, 62,
+        "executable unsafe budget changed: expected 62, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
