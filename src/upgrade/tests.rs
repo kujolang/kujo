@@ -553,7 +553,6 @@ fn powershell_release_archive_layout() {
 #[cfg(target_os = "linux")]
 #[test]
 fn inherited_writer_delays_execution_but_preserves_deadline() {
-    use std::io::BufRead;
     let temp = tempfile::tempdir().unwrap();
     let path = destination(&temp);
     struct Holder(std::process::Child);
@@ -566,16 +565,15 @@ fn inherited_writer_delays_execution_but_preserves_deadline() {
     let writer = OpenOptions::new().write(true).open(&path).unwrap();
     let mut holder = Holder(
         Command::new("/bin/sh")
-            .args(["-c", "printf 'writer-ready\\n' >&2; read -r release"])
+            .args(["-c", "read -r release"])
             .stdin(Stdio::piped())
             .stdout(Stdio::from(writer))
-            .stderr(Stdio::piped())
+            .stderr(Stdio::null())
             .spawn()
             .unwrap(),
     );
-    let mut ready = String::new();
-    io::BufReader::new(holder.0.stderr.take().unwrap()).read_line(&mut ready).unwrap();
-    assert_eq!(ready.trim(), "writer-ready");
+    // spawn returns after exec has installed the child descriptors. The shell
+    // only reads stdin; it never temporarily redirects stdout for a ready signal.
     // The parent owns no writable handle. /proc identifies the retained child
     // descriptor and verifies that it is writable, not merely an open reader.
     assert_eq!(fs::read_link(format!("/proc/{}/fd/1", holder.0.id())).unwrap(), path);
@@ -627,7 +625,6 @@ pub(super) fn observe_staged_file(path: &Path, file: &File) {
 #[cfg(target_os = "linux")]
 #[test]
 fn replacement_and_backup_with_inherited_writer() {
-    use std::io::BufRead;
     let temp = tempfile::tempdir().unwrap();
     let path = destination(&temp);
     let original = fs::read(&path).unwrap();
@@ -637,15 +634,12 @@ fn replacement_and_backup_with_inherited_writer() {
             // Inherit the actual staging descriptor before execute closes its
             // parent copy. The child retains it until explicitly released.
             let mut child = Command::new("/bin/sh")
-                .args(["-c", "printf 'writer-ready\\n' >&2; read -r release"])
+                .args(["-c", "read -r release"])
                 .stdin(Stdio::piped())
                 .stdout(Stdio::from(file.try_clone().unwrap()))
-                .stderr(Stdio::piped())
+                .stderr(Stdio::null())
                 .spawn()
                 .unwrap();
-            let mut ready = String::new();
-            io::BufReader::new(child.stderr.take().unwrap()).read_line(&mut ready).unwrap();
-            assert_eq!(ready.trim(), "writer-ready");
             let descriptor = format!("/proc/{}/fd/1", child.id());
             assert_eq!(fs::read_link(&descriptor).unwrap(), staged_path);
             let flags = fs::read_to_string(format!("/proc/{}/fdinfo/1", child.id())).unwrap();
