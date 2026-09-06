@@ -555,6 +555,8 @@ fn decode_text_file_range_info_preserves_multibyte_sequence_across_input_chunks(
 #[test]
 fn private_spool_round_trip_has_vm_interpreter_parity() {
     let project_root = unique_temp_dir("private_spool_runtime_parity");
+    #[cfg(unix)]
+    fs::set_permissions(&project_root, fs::Permissions::from_mode(0o700)).unwrap();
     let script_path = project_root.join("private_spool.kujo");
     let output_path = project_root.join("message.eml");
     let output_literal = escape_kujo_string(
