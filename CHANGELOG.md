@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-09-06
+
+### Fixed
+
+- Prevent transient Linux `Text file busy` errors from aborting verified native
+  runtime upgrades. Staged version checks retry only this condition, sharing
+  one deadline across retries and process execution. Other execution errors,
+  checksum verification, version matching and destination checks remain intact.
+
+### Changed
+
+- Exercise inherited writable executable descriptors and repeated parallel
+  native upgrades in Linux CI. Verify clean, lifecycle-script-disabled npm
+  installations on every supported native target.
+
 ## [1.3.0] - 2026-09-05
 
 ### Added

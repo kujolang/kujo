@@ -387,16 +387,30 @@ fn unchanged(path: &Path, old: &(fs::Metadata, Vec<u8>, same_file::Handle)) -> R
     Ok(())
 }
 fn check_binary(path: &Path, version: &Version, timeout: Duration) -> Result<()> {
-    let mut child = Command::new(path)
-        .arg("--version")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|e| format!("cannot execute staged binary: {e}"))?;
+    // A concurrent fork can retain a writable descriptor until its exec, even
+    // after this process closes the staged file. Linux then returns ETXTBSY.
+    // Retry only that transient error; spawning and version verification share
+    // one deadline so a persistent writer cannot extend the execution budget.
+    let deadline = Instant::now() + timeout;
+    let mut command = Command::new(path);
+    command.arg("--version").stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null());
+    let mut child = loop {
+        match command.spawn() {
+            Ok(child) => break child,
+            #[cfg(target_os = "linux")]
+            Err(error)
+                if error.raw_os_error() == Some(libc::ETXTBSY) && Instant::now() < deadline =>
+            {
+                std::thread::sleep(
+                    Duration::from_millis(10)
+                        .min(deadline.saturating_duration_since(Instant::now())),
+                );
+            }
+            Err(error) => return Err(format!("cannot execute staged binary: {error}")),
+        }
+    };
     let stdout = child.stdout.take().unwrap();
     let reader = std::thread::spawn(move || bounded(stdout, 4096));
-    let deadline = Instant::now() + timeout;
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => break status,
@@ -520,6 +534,8 @@ fn execute(
             .set_permissions(fs::Permissions::from_mode(0o755))
             .map_err(|e| e.to_string())?;
     }
+    #[cfg(all(test, target_os = "linux"))]
+    tests::observe_staged_file(staged.path(), staged.as_file());
     let staged = staged.into_temp_path(); // Close writable handle before execution.
     check_binary(&staged, &target, Duration::from_secs(10))?;
     unchanged(destination, &original)?;
