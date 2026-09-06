@@ -3899,6 +3899,7 @@ mod tests {
 
     #[test]
     fn test_ai_options_api_key_accepts_secret_value() {
+        let _guard = AI_ENV_LOCK.lock().expect("AI env lock should not be poisoned");
         let mut options = DictMap::default();
         options.insert("endpoint".into(), str_value("https://api.example.test/v1/chat"));
         options.insert("model".into(), str_value("gpt-secret"));
