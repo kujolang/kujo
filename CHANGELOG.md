@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Dispatch VM-defined callbacks invoked by imported interpreter functions through
+  the full VM, preserving shared globals, captured cells and capability policy,
+  propagating errors and bounding synchronous cross-runtime recursion.
+- Move and restore the caller environment around captured-function execution
+  instead of cloning it; captured environments retain their existing snapshot
+  semantics. This avoids copying unrelated bytecode globals on every call.
+
+### Added
+
+- Add capability-free `byte_length(value)` for allocation-free UTF-8 string or
+  raw-byte size measurement; `len(string)` continues to count Unicode scalars.
+
 ## [1.3.1] - 2026-09-06
 
 ### Fixed

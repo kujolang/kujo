@@ -4,6 +4,21 @@ Last updated: 2026-05-24
 
 This matrix tracks parity for roadmap item `V1-COMP-001`.
 
+## 2026-09-06 imported callback bridge
+
+Imported interpreter functions can invoke VM-defined callbacks through the full
+VM instruction set. The bridge shares the caller's global environment and
+closure cells, retains capability restrictions, normalizes returned dictionaries
+and propagates failures. A thread-local guard bounds synchronous cross-runtime
+nesting to 32 entries so creating a child VM cannot reset the recursion bound.
+Dedicated results, state, error recovery, arity, capability and recursion
+contracts live in `tests/imported_vm_callback.rs`. This does not erase the
+unrelated historical divergences below.
+
+`byte_length` is an exact one-argument, capability-free operation over strings
+and bytes; it counts UTF-8 octets without Base64 conversion. The same test
+suite includes restricted-runtime Unicode, byte, type and arity contracts.
+
 ## Status Labels
 
 - `supported`: Implemented and parity-covered by tests.

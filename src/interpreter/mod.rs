@@ -352,6 +352,7 @@ pub struct Interpreter {
     call_stack: Vec<String>, // Track function calls for stack traces
     async_task_pool_size: usize,
     capability_policy: RuntimeCapabilityPolicy,
+    pub(crate) vm_globals: Option<Arc<Mutex<Environment>>>,
 }
 
 impl Interpreter {
@@ -409,6 +410,7 @@ impl Interpreter {
             call_stack: Vec::new(),
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
             capability_policy,
+            vm_globals: None,
         };
 
         // Register built-in functions and constants
@@ -448,6 +450,7 @@ impl Interpreter {
 
     /// Set the environment (used by VM to share environment)
     pub fn set_env(&mut self, env: Arc<Mutex<Environment>>) {
+        self.vm_globals = Some(Arc::clone(&env));
         // We need to extract the environment from the Mutex
         let locked_env = env.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         self.env = locked_env.clone();
@@ -650,6 +653,7 @@ impl Interpreter {
             "to_bool",
             "bytes",
             "bytes_is_ascii",
+            "byte_length",
             "dict",
             "array",
             "error",
@@ -1033,6 +1037,8 @@ impl Interpreter {
 
         // String functions
         self.env.define("len".to_string(), Value::NativeFunction("len".to_string()));
+        self.env
+            .define("byte_length".to_string(), Value::NativeFunction("byte_length".to_string()));
         self.env.define(
             "__vm_for_iterable".to_string(),
             Value::NativeFunction("__vm_for_iterable".to_string()),
@@ -1970,10 +1976,31 @@ impl Interpreter {
         self.output = Some(output);
     }
 
+    /// Preserve the caller by moving it, not deeply cloning its bytecode globals.
+    /// The captured environment is still cloned to retain snapshot semantics.
+    fn enter_captured_environment(&mut self, captured: &Arc<Mutex<Environment>>) -> Environment {
+        let environment = captured.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
+        std::mem::replace(&mut self.env, environment)
+    }
+
     /// Helper function to call a user-defined function with given arguments
     /// Used by higher-order functions like map, filter, reduce
     pub(crate) fn call_user_function(&mut self, func: &Value, args: &[Value]) -> Value {
         match func {
+            Value::BytecodeFunction { .. } => {
+                let globals = self
+                    .vm_globals
+                    .clone()
+                    .unwrap_or_else(|| Arc::new(Mutex::new(self.env.clone())));
+                crate::vm::VM::call_interpreter_callback(
+                    func.clone(),
+                    args.to_vec(),
+                    globals,
+                    self.capability_policy.clone(),
+                    self.output.clone(),
+                )
+                .unwrap_or_else(Value::Error)
+            }
             Value::GeneratorDef(params, body) => {
                 let arity = Self::function_arity("<anonymous generator>", params);
                 if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
@@ -2016,11 +2043,13 @@ impl Interpreter {
                 };
                 let closure_env_for_update = captured_env.clone();
                 let capability_policy = self.capability_policy.clone();
+                let vm_globals = self.vm_globals.clone();
                 let (tx, rx) = tokio::sync::oneshot::channel();
                 AsyncRuntime::spawn_task(async move {
                     let mut async_interpreter =
                         Interpreter::with_capability_policy(capability_policy);
                     async_interpreter.env = base_env;
+                    async_interpreter.vm_globals = vm_globals;
                     async_interpreter.env.push_scope();
                     for (index, param) in params.iter().enumerate() {
                         if let Some(argument) = arguments.get(index) {
@@ -2070,14 +2099,7 @@ impl Interpreter {
                 // If this is a closure with captured environment, use it
                 // Otherwise just create a new scope on top of current
                 if let Some(closure_env_ref) = captured_env {
-                    // Save current environment
-                    let saved_env = self.env.clone();
-
-                    // Use the captured environment (which is shared via Arc<Mutex<>>)
-                    self.env = closure_env_ref
-                        .lock()
-                        .unwrap_or_else(|poisoned| poisoned.into_inner())
-                        .clone();
+                    let saved_env = self.enter_captured_environment(closure_env_ref);
                     self.env.push_scope();
 
                     // Bind parameters to arguments
@@ -2854,11 +2876,7 @@ impl Interpreter {
                     let result = if let Some(closure_env_ref) = captured_env {
                         // Route handlers can be closures and must resolve symbols against
                         // their captured lexical environment instead of the request loop state.
-                        let saved_env = self.env.clone();
-                        self.env = closure_env_ref
-                            .lock()
-                            .unwrap_or_else(|poisoned| poisoned.into_inner())
-                            .clone();
+                        let saved_env = self.enter_captured_environment(closure_env_ref);
                         self.env.push_scope();
 
                         if let Some(param) = params.first() {
@@ -3435,6 +3453,7 @@ impl Interpreter {
             "is_secret" => CallableArity::exact("is_secret", vec!["value".to_string()]),
             "collect" => CallableArity::exact("collect", vec!["iterable".to_string()]),
             "len" => CallableArity::exact("len", vec!["value".to_string()]),
+            "byte_length" => CallableArity::exact("byte_length", vec!["value".to_string()]),
             "bit_not" => CallableArity::exact("bit_not", vec!["value".to_string()]),
             "bit_and" | "bit_or" | "bit_xor" | "bit_shl" | "bit_shr" => {
                 CallableArity::exact(name, vec!["left".to_string(), "right".to_string()])
@@ -5595,6 +5614,21 @@ impl Interpreter {
                     _ => "<anonymous function>".to_string(),
                 };
                 let call_result = match func_val {
+                    callback @ Value::BytecodeFunction { .. } => {
+                        let mut values = Vec::with_capacity(args.len());
+                        for arg in args {
+                            let value = self.eval_expr(arg);
+                            if Self::is_error_value(&value) {
+                                return value;
+                            }
+                            values.push(value);
+                        }
+                        let result = self.call_user_function(&callback, &values);
+                        if Self::is_error_value(&result) {
+                            self.return_value = Some(result.clone());
+                        }
+                        result
+                    }
                     Value::NativeFunction(name) => {
                         // Handle native function calls
                         let res = self.call_native_function(&name, args);
@@ -5635,14 +5669,7 @@ impl Interpreter {
 
                         // Handle closure with captured environment
                         if let Some(closure_env_ref) = captured_env {
-                            // Save current environment
-                            let saved_env = self.env.clone();
-
-                            // Use the captured environment
-                            self.env = closure_env_ref
-                                .lock()
-                                .unwrap_or_else(|poisoned| poisoned.into_inner())
-                                .clone();
+                            let saved_env = self.enter_captured_environment(&closure_env_ref);
                             self.env.push_scope();
 
                             for (i, param) in params.iter().enumerate() {
@@ -5753,6 +5780,7 @@ impl Interpreter {
                         };
                         let closure_env_for_update = captured_env.clone();
                         let capability_policy = self.capability_policy.clone();
+                        let vm_globals = self.vm_globals.clone();
 
                         // Create a tokio oneshot channel for the result
                         let (tx, rx) = tokio::sync::oneshot::channel();
@@ -5762,6 +5790,7 @@ impl Interpreter {
                             let mut async_interpreter =
                                 Interpreter::with_capability_policy(capability_policy);
                             async_interpreter.env = base_env;
+                            async_interpreter.vm_globals = vm_globals;
                             async_interpreter.env.push_scope();
 
                             // Bind parameters
@@ -5896,14 +5925,7 @@ impl Interpreter {
 
                             // Handle closure with captured environment
                             if let Some(closure_env_ref) = captured_env {
-                                // Save current environment
-                                let saved_env = self.env.clone();
-
-                                // Use the captured environment
-                                self.env = closure_env_ref
-                                    .lock()
-                                    .unwrap_or_else(|poisoned| poisoned.into_inner())
-                                    .clone();
+                                let saved_env = self.enter_captured_environment(&closure_env_ref);
                                 self.env.push_scope();
 
                                 for (i, param) in params.iter().enumerate() {
@@ -6253,7 +6275,9 @@ impl Interpreter {
                             if *polled {
                                 // Use cached result
                                 return match cached.as_ref() {
-                                    Some(Ok(val)) => val.clone(),
+                                    Some(Ok(val)) => {
+                                        crate::vm::VM::normalize_value_for_interpreter(val.clone())
+                                    }
                                     Some(Err(err)) => {
                                         Value::Error(format!("Promise rejected: {}", err))
                                     }
@@ -6303,6 +6327,7 @@ impl Interpreter {
 
                         match result {
                             Ok(Ok(value)) => {
+                                let value = crate::vm::VM::normalize_value_for_interpreter(value);
                                 // Cache the successful result
                                 *cached = Some(Ok(value.clone()));
                                 *polled = true;

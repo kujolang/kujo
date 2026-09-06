@@ -3250,8 +3250,10 @@ impl VM {
                         Value::Function(..)
                         | Value::AsyncFunction(..)
                         | Value::GeneratorDef(..) => {
-                            let result = self.call_interpreter_callable(&function, &args)?;
-                            self.stack.push(result);
+                            match self.call_interpreter_callable(&function, &args) {
+                                Ok(result) => self.stack.push(result),
+                                Err(error) => self.throw_runtime_value(Value::Error(error))?,
+                            }
                         }
                         _ => {
                             return Err(Self::non_callable_error_message(
@@ -5697,7 +5699,7 @@ impl VM {
         Ok(Value::Null)
     }
 
-    fn normalize_value_for_interpreter(value: Value) -> Value {
+    pub(crate) fn normalize_value_for_interpreter(value: Value) -> Value {
         match value {
             Value::Array(items) => {
                 let normalized = items
@@ -5766,6 +5768,33 @@ impl VM {
         }
     }
 
+    /// Run the full VM instruction set without borrowing/re-entering the caller VM.
+    /// Shared globals and closure cells retain lexical state; no temporary global
+    /// names or trusted interpreter are introduced by the bridge.
+    pub(crate) fn call_interpreter_callback(
+        function: Value,
+        args: Vec<Value>,
+        globals: Arc<Mutex<Environment>>,
+        policy: RuntimeCapabilityPolicy,
+        output: Option<Arc<Mutex<Vec<u8>>>>,
+    ) -> Result<Value, String> {
+        let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
+        let mut vm = VM::new();
+        vm.set_capability_policy(policy);
+        vm.set_globals(globals);
+        if let Some(output) = output {
+            vm.interpreter.set_output(output);
+        }
+        let mut wrapper = BytecodeChunk::new();
+        wrapper.emit(OpCode::Call(args.len()));
+        wrapper.emit(OpCode::Return);
+        vm.set_chunk(wrapper);
+        vm.stack.extend(args);
+        vm.stack.push(function);
+        vm.skip_execute_reset_once = true;
+        vm.execute(BytecodeChunk::new()).map(Self::normalize_value_for_interpreter)
+    }
+
     fn call_interpreter_callable(
         &mut self,
         function: &Value,
@@ -5773,7 +5802,10 @@ impl VM {
     ) -> Result<Value, String> {
         let normalized_args =
             args.iter().cloned().map(Self::normalize_value_for_interpreter).collect::<Vec<_>>();
+        self.interpreter.vm_globals = Some(Arc::clone(&self.globals));
+        let saved_return = self.interpreter.return_value.take();
         let result = self.interpreter.call_user_function(function, &normalized_args);
+        self.interpreter.return_value = saved_return;
         match result {
             Value::Error(message) => Err(message),
             Value::ErrorObject { message, .. } => Err(message),

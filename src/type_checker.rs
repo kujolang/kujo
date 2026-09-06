@@ -133,6 +133,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "byte_length".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::Any)],
+                return_type: Some(TypeAnnotation::Int),
+            },
+        );
+
+        self.functions.insert(
             "to_upper".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)],

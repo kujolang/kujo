@@ -91,6 +91,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             _ => return None, // Let strings module handle string case.
         },
 
+        "byte_length" => match arg_values.first() {
+            Some(Value::Str(value)) => Value::Int(value.len() as i64),
+            Some(Value::Bytes(value)) => Value::Int(value.len() as i64),
+            _ => Value::Error("byte_length() requires a string or bytes value".to_string()),
+        },
+
         "bytes_is_ascii" => match arg_values.first() {
             Some(Value::Bytes(value)) => Value::Bool(value.iter().all(|octet| *octet <= 0x7f)),
             _ => Value::Error("bytes_is_ascii() requires one bytes value".to_string()),

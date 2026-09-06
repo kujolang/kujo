@@ -15,6 +15,31 @@ pub const MAX_GENERATED_STRING_CHARS: usize = MAX_FILE_IO_BYTES + 1;
 pub const DEFAULT_MAX_INTERPRETER_CALL_DEPTH: usize = 32;
 pub const DEFAULT_MAX_VM_CALL_DEPTH: usize = 256;
 
+thread_local! {
+    static CALLBACK_BRIDGE_DEPTH: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// Separate VMs must not reset the bound on synchronous cross-runtime recursion.
+pub(crate) struct CallbackBridgeGuard;
+
+impl CallbackBridgeGuard {
+    pub(crate) fn enter() -> Result<Self, String> {
+        CALLBACK_BRIDGE_DEPTH.with(|depth| {
+            if depth.get() >= DEFAULT_MAX_INTERPRETER_CALL_DEPTH {
+                return Err("Maximum cross-runtime callback depth exceeded".to_string());
+            }
+            depth.set(depth.get() + 1);
+            Ok(Self)
+        })
+    }
+}
+
+impl Drop for CallbackBridgeGuard {
+    fn drop(&mut self) {
+        CALLBACK_BRIDGE_DEPTH.with(|depth| depth.set(depth.get() - 1));
+    }
+}
+
 pub const MAX_FILE_IO_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_NETWORK_BODY_BYTES: usize = 8 * 1024 * 1024;
 pub const MAX_PARALLEL_HTTP_REQUESTS: usize = 128;

@@ -231,6 +231,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `reveal` | `reveal(secret)` | exact 1 | string | Value::Error when the argument is not a secret. | `none` | `plain := reveal(api_key)` |
 | `to_bool` | `to_bool(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_bool(...)` |
 | `bytes` | `bytes(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := bytes(...)` |
+| `byte_length` | `byte_length(value)` | exact 1 | int | String UTF-8 byte length or bytes length in constant time without allocation; rejects other types. | `none` | `byte_length("é") == 2` |
 | `dict` | `dict()` | exact 0 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := dict(...)` |
 | `array` | `array(...)` | variadic (0+) | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := array(...)` |
 | `error` | `error(message)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := error(...)` |

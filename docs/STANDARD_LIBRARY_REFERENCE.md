@@ -140,6 +140,7 @@ Predicate semantics note:
 | `slice` | stable | `part := slice([1, 2, 3, 4], 1, 3)` |
 | `concat` | stable | `all := concat([1], [2, 3])`; byte-safe: `raw := concat(bytes([0]), bytes([255]))` |
 | `bytes_is_ascii` | stable | `safe := bytes_is_ascii(bytes([0, 127]))` |
+| `byte_length` | stable | `octets := byte_length("é")` |
 | `map` | stable | `out := map([1, 2], func (x) { return x * 2 })` |
 | `filter` | stable | `out := filter([1, 2, 3], func (x) { return x > 1 })` |
 | `reduce` | stable | `sum := reduce([1, 2, 3], 0, func (a, b) { return a + b })` |
@@ -283,7 +284,7 @@ may still be refined before a final frozen post-v1 compatibility policy.
 | `to_string` | stable | `s := to_string(42)` |
 | `str` | stable alias | `s := str(42)` |
 | `to_bool` | stable | `b := to_bool("true")` |
-| `bytes` | preview | `b := bytes("hello")` |
+| `bytes` | preview | `b := bytes([104, 101, 108, 108, 111])` |
 | `dict` | stable | `d := dict()` |
 | `array` | stable | `a := array(1, 2, 3)` |
 | `error` | stable | `err := error("bad input")` |
