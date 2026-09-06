@@ -23,7 +23,7 @@ but not modified.
 ## Delivered contracts
 
 The canonical implementation is in
-[Agents SDK context contracts](https://github.com/kujolang/agents-sdk/blob/b5c8c90/docs/CONTEXT_CONTRACTS.md),
+[Agents SDK context contracts](https://github.com/kujolang/agents-sdk/blob/e0be75b/docs/CONTEXT_CONTRACTS.md),
 with modules under `src/agents/context/` and exported package entrypoints.
 
 | Stage | Delivered behavior | Rollback |
@@ -116,7 +116,7 @@ SignalBox records this unresolved issue only:
 ## Commit sequence
 
 Agents SDK: `89bcce6`, `9586593`, `133467a`, `c3f9ede`, `c9c1e2f`, `46b3f2b`,
-`388188d`, `68d9b84`, `b5c8c90`. These cover instrumentation, manifests,
+`388188d`, `68d9b84`, `b5c8c90`, `e0be75b`. These cover instrumentation, manifests,
 handoff/state, scoping, skills, ratchet, runner/dispatch, explicit CLI checks,
 and real observer delivery/redacted evidence respectively.
 
