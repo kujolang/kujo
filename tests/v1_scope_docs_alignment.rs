@@ -32,7 +32,7 @@ fn v1_scope_docs_keep_deferred_boundaries_aligned() {
         release_state_line.starts_with(&format!(
             "- The source tree is currently at `{cargo_version}` in `Cargo.toml`; the latest published stable release tag is `v"
         )) && release_state_line.ends_with("`.")
-            && readme.contains("Prebuilt Linux x64, macOS x64/arm64, and Windows x64 binaries"),
+            && readme.contains("Prebuilt Linux x64/arm64, macOS x64/arm64, and Windows x64 binaries"),
         "README must keep explicit stable-release and artifact wording"
     );
     assert!(
