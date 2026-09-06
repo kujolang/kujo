@@ -1,0 +1,58 @@
+name: npm-release-smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Published npm runtime version to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  clean-install:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04-arm, macos-15-intel, macos-15, windows-latest]
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.11.0'
+      - name: Install and verify published runtime without lifecycle scripts
+        shell: bash
+        env:
+          KUJO_NPM_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "${KUJO_NPM_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          mkdir npm-smoke
+          cd npm-smoke
+          npm install --ignore-scripts --no-audit --no-fund "@kujolang/kujo-runtime@${KUJO_NPM_VERSION}"
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const runtime = require('@kujolang/kujo-runtime');
+          const info = runtime.getKujoRuntimeInfo();
+          const version = process.env.KUJO_NPM_VERSION;
+          assert.equal(info.packageVersion, version);
+          assert.equal(info.runtimeVersion, version);
+          assert.equal(info.source, 'bundled');
+          for (const name of ['@kujolang/kujo-runtime', info.packageName]) {
+            const manifest = JSON.parse(fs.readFileSync(require.resolve(name + '/package.json')));
+            for (const lifecycle of ['preinstall', 'install', 'postinstall']) {
+              assert.equal(manifest.scripts?.[lifecycle], undefined);
+            }
+          }
+          const launcher = require.resolve('@kujolang/kujo-runtime/bin/kujo.js');
+          const output = execFileSync(process.execPath, [launcher, '--version'], { encoding: 'utf8', timeout: 30000 }).trim();
+          assert.equal(output, 'kujo ' + version);
+          fs.writeFileSync('hello.kujo', 'print("npm-smoke")\n');
+          assert.equal(execFileSync(info.binaryPath, ['run', 'hello.kujo'], { encoding: 'utf8', timeout: 30000 }).trim(), 'npm-smoke');
+          console.log(JSON.stringify({ ...info, versionOutput: output, lifecycleScriptsDisabled: true }));
+          NODE
