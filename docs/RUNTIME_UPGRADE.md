@@ -129,3 +129,12 @@ matrix runs these tests, including a copied running-executable replacement,
 on all five release targets. The release-binary jobs also run the focused tests
 before packaging. Cross-platform results are established by those jobs; a
 single local run does not verify the other operating systems.
+
+
+### Temporary executable-busy errors on Linux
+
+Starting with v1.3.1, staged version verification retries Linux `Text file busy`
+errors within its existing execution deadline. This can occur when another
+process inherits a writable descriptor before the upgrader closes its own copy.
+The retry does not repeat the download or skip checksum/version verification.
+If the file stays busy, verification fails and the installed runtime is retained.

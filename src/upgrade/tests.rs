@@ -547,3 +547,129 @@ fn powershell_release_archive_layout() {
     assert!(Command::new("pwsh").args(["-NoLogo","-NoProfile","-Command","Compress-Archive -LiteralPath $env:KUJO_UPGRADE_TEST_BINARY -DestinationPath $env:KUJO_UPGRADE_TEST_ARCHIVE"]).env("KUJO_UPGRADE_TEST_BINARY",&binary).env("KUJO_UPGRADE_TEST_ARCHIVE",&archive).status().unwrap().success());
     assert_eq!(extract(&fs::read(archive).unwrap(), true).unwrap(), native_binary());
 }
+
+// A different process can inherit a writable descriptor during fork even when
+// this process closes its own descriptor before executing the verified file.
+#[cfg(target_os = "linux")]
+#[test]
+fn inherited_writer_delays_execution_but_preserves_deadline() {
+    use std::io::BufRead;
+    let temp = tempfile::tempdir().unwrap();
+    let path = destination(&temp);
+    struct Holder(std::process::Child);
+    impl Drop for Holder {
+        fn drop(&mut self) {
+            let _ = self.0.kill();
+            let _ = self.0.wait();
+        }
+    }
+    let writer = OpenOptions::new().write(true).open(&path).unwrap();
+    let mut holder = Holder(
+        Command::new("/bin/sh")
+            .args(["-c", "printf 'writer-ready\\n' >&2; read -r release"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::from(writer))
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap(),
+    );
+    let mut ready = String::new();
+    io::BufReader::new(holder.0.stderr.take().unwrap()).read_line(&mut ready).unwrap();
+    assert_eq!(ready.trim(), "writer-ready");
+    // The parent owns no writable handle. /proc identifies the retained child
+    // descriptor and verifies that it is writable, not merely an open reader.
+    assert_eq!(fs::read_link(format!("/proc/{}/fd/1", holder.0.id())).unwrap(), path);
+    let flags = fs::read_to_string(format!("/proc/{}/fdinfo/1", holder.0.id())).unwrap();
+    let flags = flags.lines().find_map(|line| line.strip_prefix("flags:\t")).unwrap();
+    assert_eq!(u32::from_str_radix(flags, 8).unwrap() & 3, 1);
+    let error = Command::new(&path).arg("--version").spawn().unwrap_err();
+    assert_eq!(error.raw_os_error(), Some(libc::ETXTBSY));
+
+    // Keep the writer open past the supplied deadline: the retry must remain
+    // bounded and must not execute or modify the candidate.
+    let original = fs::read(&path).unwrap();
+    let started = Instant::now();
+    let blocked =
+        check_binary(&path, &Version::parse("9.0.0").unwrap(), Duration::from_millis(100));
+    assert!(blocked.unwrap_err().contains("busy"));
+    assert!(started.elapsed() < Duration::from_secs(2));
+    assert_eq!(fs::read(&path).unwrap(), original);
+
+    // Releasing precisely the inherited descriptor permits the same candidate
+    // to pass its real --version validation; no re-download or rewrite occurs.
+    let release = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(200));
+        holder.0.stdin.take().unwrap().write_all(b"release\n").unwrap();
+        assert!(holder.0.wait().unwrap().success());
+    });
+    let result = check_binary(&path, &Version::parse("9.0.0").unwrap(), Duration::from_secs(5));
+    release.join().unwrap();
+    assert!(result.is_ok(), "{result:?}");
+    assert_eq!(fs::read(&path).unwrap(), original);
+}
+
+#[cfg(target_os = "linux")]
+type StagedFileObserver = Box<dyn FnOnce(&Path, &File)>;
+#[cfg(target_os = "linux")]
+thread_local! {
+    static STAGED_FILE_OBSERVER: std::cell::RefCell<Option<StagedFileObserver>> =
+        const { std::cell::RefCell::new(None) };
+}
+#[cfg(target_os = "linux")]
+pub(super) fn observe_staged_file(path: &Path, file: &File) {
+    STAGED_FILE_OBSERVER.with(|observer| {
+        if let Some(observer) = observer.borrow_mut().take() {
+            observer(path, file);
+        }
+    });
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn replacement_and_backup_with_inherited_writer() {
+    use std::io::BufRead;
+    let temp = tempfile::tempdir().unwrap();
+    let path = destination(&temp);
+    let original = fs::read(&path).unwrap();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    STAGED_FILE_OBSERVER.with(|observer| {
+        *observer.borrow_mut() = Some(Box::new(move |staged_path, file| {
+            // Inherit the actual staging descriptor before execute closes its
+            // parent copy. The child retains it until explicitly released.
+            let mut child = Command::new("/bin/sh")
+                .args(["-c", "printf 'writer-ready\\n' >&2; read -r release"])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::from(file.try_clone().unwrap()))
+                .stderr(Stdio::piped())
+                .spawn()
+                .unwrap();
+            let mut ready = String::new();
+            io::BufReader::new(child.stderr.take().unwrap()).read_line(&mut ready).unwrap();
+            assert_eq!(ready.trim(), "writer-ready");
+            let descriptor = format!("/proc/{}/fd/1", child.id());
+            assert_eq!(fs::read_link(&descriptor).unwrap(), staged_path);
+            let flags = fs::read_to_string(format!("/proc/{}/fdinfo/1", child.id())).unwrap();
+            let flags = flags.lines().find_map(|line| line.strip_prefix("flags:\t")).unwrap();
+            assert_ne!(u32::from_str_radix(flags, 8).unwrap() & 3, 0);
+            eprintln!("staged writable descriptor retained by {descriptor}: {staged_path:?}");
+            sender
+                .send(std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(200));
+                    child.stdin.take().unwrap().write_all(b"release\n").unwrap();
+                    assert!(child.wait().unwrap().success());
+                }))
+                .unwrap();
+        }));
+    });
+    let result = execute(&fixture("9.0.0", native_binary()), None, false, false, &path, "8.0.0");
+    let _ = STAGED_FILE_OBSERVER.with(|observer| observer.borrow_mut().take());
+    receiver.recv_timeout(Duration::from_secs(5)).unwrap().join().unwrap();
+    if result.is_err() {
+        assert_eq!(fs::read(&path).unwrap(), original);
+    }
+    let result = result.unwrap();
+    assert_eq!(result.status, "upgraded");
+    assert!(result.changed);
+    assert_eq!(fs::read(result.backup.unwrap()).unwrap(), original);
+    check_binary(&path, &Version::parse("9.0.0").unwrap(), Duration::from_secs(5)).unwrap();
+}
