@@ -9,6 +9,10 @@ on:
         description: "Published release tag to validate"
         required: true
         type: string
+      upgrade_from:
+        description: "Optional published source tag for a disposable cross-version upgrade"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -118,3 +122,55 @@ jobs:
               print(filename, result)
           PYTHON
           fi
+
+      - name: Verify upgrade from a previous published runtime
+        if: inputs.upgrade_from != ''
+        shell: bash
+        env:
+          FROM_TAG: ${{ inputs.upgrade_from }}
+          TARGET_TAG: ${{ github.event.release.tag_name || inputs.tag_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          PLATFORM: ${{ matrix.platform }}
+          BINARY_NAME: ${{ matrix.binary_name }}
+          ARCHIVE_EXT: ${{ matrix.archive_ext }}
+        run: |
+          python3 - <<'PYTHON'
+          import hashlib, io, json, os, pathlib, re, subprocess, tarfile, urllib.request, zipfile
+
+          source, target = os.environ["FROM_TAG"], os.environ["TARGET_TAG"]
+          assert all(re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) for tag in [source, target])
+          assert tuple(map(int, source[1:].split("."))) < tuple(map(int, target[1:].split(".")))
+          name = os.environ["BINARY_NAME"]
+          archive = f"kujo-{source}-{os.environ['PLATFORM']}.{os.environ['ARCHIVE_EXT']}"
+          base = f"https://github.com/{os.environ['RELEASE_REPOSITORY']}/releases/download/{source}/"
+          with urllib.request.urlopen(base + archive, timeout=60) as response:
+              payload = response.read()
+          with urllib.request.urlopen(base + archive + ".sha256", timeout=30) as response:
+              expected = response.read().decode().split()[0].lower()
+          assert hashlib.sha256(payload).hexdigest() == expected
+          if archive.endswith(".zip"):
+              with zipfile.ZipFile(io.BytesIO(payload)) as bundle:
+                  old_bytes = bundle.read(name)
+          else:
+              with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as bundle:
+                  member = bundle.getmember(name)
+                  assert member.isfile()
+                  old_bytes = bundle.extractfile(member).read()
+          root = pathlib.Path("published-upgrade").resolve()
+          root.mkdir()
+          binary = root / name
+          binary.write_bytes(old_bytes)
+          binary.chmod(0o755)
+          assert subprocess.check_output([str(binary), "--version"], text=True).strip() == "kujo " + source[1:]
+          result = subprocess.run([str(binary), "upgrade", target, "--json"], capture_output=True, text=True, timeout=180)
+          print(result.stderr)
+          assert result.returncode == 0, result
+          outcome = json.loads(result.stdout)
+          assert outcome["current_version"] == source[1:], outcome
+          assert outcome["target_version"] == target[1:], outcome
+          assert outcome["status"] == "upgraded" and outcome["changed"] is True, outcome
+          assert pathlib.Path(outcome["backup"]).read_bytes() == old_bytes
+          assert binary.read_bytes() == (pathlib.Path("artifact-extract") / name).read_bytes()
+          assert subprocess.check_output([str(binary), "--version"], text=True).strip() == "kujo " + target[1:]
+          print(json.dumps(outcome, indent=2))
+          PYTHON
