@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-09-05
+Generated: 2026-09-06
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
@@ -75,7 +75,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/module.rs | 830 | non_executable | src_comment_or_string |             ""expected unsafe traversal error, got: {}"", |
 | src/upgrade.rs | 266 | non_executable | src_comment_or_string |             return Err(""unsafe ZIP entry"".into()); |
 | src/upgrade.rs | 285 | non_executable | src_comment_or_string |                 return Err(""unsafe, duplicate, or oversized TAR entry"".into()); |
-| src/upgrade.rs | 487 | non_executable | src_comment_or_string |         return Err(""unsafe upgrade lock path"".into()); |
+| src/upgrade.rs | 501 | non_executable | src_comment_or_string |         return Err(""unsafe upgrade lock path"".into()); |
 | src/upgrade/tests.rs | 315 | executable | src_executable_other |     if unsafe { libc::geteuid() } != 0 { |
 | src/upgrade/tests.rs | 497 | non_executable | src_comment_or_string |     archive.extend(tar_bytes(&[(""../unsafe"", b""evil"", b'0')])); |
 | tests/benchmark_publication_policy_contract.rs | 58 | non_executable | test_comment_or_string |             ""retired launch-unsafe artifact should stay removed: {path}"" |

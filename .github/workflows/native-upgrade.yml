@@ -1,6 +1,7 @@
 name: native-upgrade
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -37,6 +38,16 @@ jobs:
 
       - name: Test native upgrades and running executable replacement
         run: cargo test --locked --bin kujo upgrade::tests
+
+      - name: Repeat Linux upgrades under parallel test execution
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for iteration in $(seq 1 20); do
+            echo "Parallel upgrade iteration ${iteration}/20"
+            cargo test --locked --bin kujo upgrade::tests -- --test-threads=16
+          done
 
       - name: Test upgrade CLI contracts
         run: cargo test --locked --test cli_contracts --test cli_json_contracts upgrade_
