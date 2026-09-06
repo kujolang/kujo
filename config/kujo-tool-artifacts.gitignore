@@ -98,6 +98,7 @@
 /.kujo/runs/
 /.kujo/feature-cards/
 /.kujo/agency/auth/
+/.kujo/pi/
 
 # Lens
 /.lens/runs/
@@ -108,6 +109,8 @@
 # Muzzle
 /.muzzle/logs/
 /.muzzle/reports/
+/.muzzle/state/
+/.muzzle/.kujo_cache/
 
 # PackWrite / Fence generated agent packs and reports
 /agent/
@@ -157,7 +160,9 @@
 /hosted-registry/
 /tokens.json
 
-# RAG, Watchdog, AI Chat, CMS, CRUD API local state
+# RAG, Watchdog, AI Chat, CMS, CRUD API, Email local state
+/.email/
+/.email-test*/
 /data/rag_index*.json
 /data/*.db
 /data/*.db-shm
@@ -216,11 +221,15 @@
 /truthlens-extension.zip
 
 # AI SDK / SiteKit local release/security/browser artifacts
+/artifacts/hardening/
 /artifacts/security/
 /artifacts/release/
 /artifacts/browser/
 /artifacts/coverage/
 /.coverage
+
+# Ability Gateway live certification receipts
+/artifacts/live-conformance.json
 
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
