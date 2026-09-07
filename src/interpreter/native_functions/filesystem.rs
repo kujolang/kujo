@@ -441,7 +441,7 @@ fn write_beneath_with_hook(
     path: &str,
     payload: &[u8],
     overwrite: bool,
-    mut hook: impl FnMut(&str),
+    hook: impl FnMut(&str),
 ) -> Result<(), String> {
     let error =
         |stage: &str, detail: String| format!("write_file_atomic_beneath[{}]: {}", stage, detail);
@@ -450,63 +450,75 @@ fn write_beneath_with_hook(
     if path.contains('\0') {
         return Err(error("invalid_relative_path", "NUL is forbidden".into()));
     }
+    #[cfg(windows)]
+    if path.contains(':') {
+        return Err(error("invalid_relative_path", "alternate data streams are forbidden".into()));
+    }
     validate_write_size_limit(path, payload.len())?;
-    let mut dir = Dir::open_ambient_dir(root, ambient_authority())
-        .map_err(|e| error("root_open_failed", e.to_string()))?;
-    for component in &components[..components.len() - 1] {
-        match dir.create_dir(component) {
-            Ok(()) => (),
-            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
-            Err(e) => return Err(error("parent_create_failed", e.to_string())),
-        }
-        dir = cap_fs_ext::DirExt::open_dir_nofollow(&dir, component)
-            .map_err(|e| error("component_rejected", e.to_string()))?;
+    #[cfg(windows)]
+    {
+        return super::confined_write_windows::write(root, &components, payload, overwrite, hook);
     }
-    hook("parent_opened");
-    let target = components[components.len() - 1];
-    let temporary = format!(".kujo-beneath-{}.tmp", Uuid::new_v4());
-    let mut options = CapOpenOptions::new();
-    options.write(true).create_new(true).follow(FollowSymlinks::No);
-    let mut file = dir
-        .open_with(&temporary, &options)
-        .map_err(|e| error("temporary_create_failed", e.to_string()))?;
-    let result = (|| {
-        file.write_all(payload).map_err(|e| error("write_failed", e.to_string()))?;
-        file.sync_all().map_err(|e| error("sync_failed", e.to_string()))?;
-        drop(file);
-        hook("before_publish");
-        // Reject stable final symlinks. A racing replacement is never followed:
-        // rename replaces the directory entry; hard_link fails if it exists.
-        match dir.symlink_metadata(target) {
-            Ok(m) if !m.is_file() => {
-                return Err(error("target_rejected", "target is not a regular file".into()))
+    #[cfg(not(windows))]
+    {
+        let mut hook = hook;
+        let mut dir = Dir::open_ambient_dir(root, ambient_authority())
+            .map_err(|e| error("root_open_failed", e.to_string()))?;
+        for component in &components[..components.len() - 1] {
+            match dir.create_dir(component) {
+                Ok(()) => (),
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
+                Err(e) => return Err(error("parent_create_failed", e.to_string())),
             }
-            Ok(_) => (),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
-            Err(e) => return Err(error("target_metadata_failed", e.to_string())),
+            dir = cap_fs_ext::DirExt::open_dir_nofollow(&dir, component)
+                .map_err(|e| error("component_rejected", e.to_string()))?;
         }
-        if overwrite {
-            dir.rename(&temporary, &dir, target)
-                .map_err(|e| error("publish_failed", e.to_string()))?;
-        } else {
-            dir.hard_link(&temporary, &dir, target)
-                .map_err(|e| error("publish_failed", e.to_string()))?;
-            dir.remove_file(&temporary)
-                .map_err(|e| error("cleanup_failed_after_publish", e.to_string()))?;
-        }
-        Ok(())
-    })();
-    if result.is_err() {
-        if let Err(cleanup) = dir.remove_file(&temporary) {
-            if cleanup.kind() != std::io::ErrorKind::NotFound {
-                return Err(error(
-                    "cleanup_failed",
-                    format!("{}; original: {}", cleanup, result.unwrap_err()),
-                ));
+        hook("parent_opened");
+        let target = components[components.len() - 1];
+        let temporary = format!(".kujo-beneath-{}.tmp", Uuid::new_v4());
+        let mut options = CapOpenOptions::new();
+        options.write(true).create_new(true).follow(FollowSymlinks::No);
+        let mut file = dir
+            .open_with(&temporary, &options)
+            .map_err(|e| error("temporary_create_failed", e.to_string()))?;
+        let result = (|| {
+            file.write_all(payload).map_err(|e| error("write_failed", e.to_string()))?;
+            file.sync_all().map_err(|e| error("sync_failed", e.to_string()))?;
+            drop(file);
+            hook("before_publish");
+            // Reject stable final symlinks. A racing replacement is never followed:
+            // rename replaces the directory entry; hard_link fails if it exists.
+            match dir.symlink_metadata(target) {
+                Ok(m) if !m.is_file() => {
+                    return Err(error("target_rejected", "target is not a regular file".into()))
+                }
+                Ok(_) => (),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
+                Err(e) => return Err(error("target_metadata_failed", e.to_string())),
+            }
+            if overwrite {
+                dir.rename(&temporary, &dir, target)
+                    .map_err(|e| error("publish_failed", e.to_string()))?;
+            } else {
+                dir.hard_link(&temporary, &dir, target)
+                    .map_err(|e| error("publish_failed", e.to_string()))?;
+                dir.remove_file(&temporary)
+                    .map_err(|e| error("cleanup_failed_after_publish", e.to_string()))?;
+            }
+            Ok(())
+        })();
+        if result.is_err() {
+            if let Err(cleanup) = dir.remove_file(&temporary) {
+                if cleanup.kind() != std::io::ErrorKind::NotFound {
+                    return Err(error(
+                        "cleanup_failed",
+                        format!("{}; original: {}", cleanup, result.unwrap_err()),
+                    ));
+                }
             }
         }
+        result
     }
-    result
 }
 
 #[cfg(feature = "runtime-archive")]

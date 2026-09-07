@@ -8,6 +8,8 @@ pub mod async_ops;
 pub mod collections;
 pub mod compression;
 pub mod concurrency;
+#[cfg(windows)]
+mod confined_write_windows;
 pub mod crypto;
 #[cfg(feature = "runtime-db")]
 pub mod database;

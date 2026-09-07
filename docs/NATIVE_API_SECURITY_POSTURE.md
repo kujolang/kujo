@@ -388,7 +388,7 @@ traversal, parent creation, temporary creation, and publication use held directo
 handles and single-component names. Intermediate symlinks/reparse points are
 rejected. Stable final symlinks are rejected; racing final symlinks are never
 followed. Overwrite replaces the entry, while no-overwrite publishes with an
-atomic no-replace hard link. Filesystems without the required operations fail;
+atomic no-replace hard link on Unix or NT handle-relative rename on Windows. Filesystems without the required operations fail;
 there is no path-based fallback.
 
 The boundary is directory identity, not continuous ancestry: if another actor
@@ -399,3 +399,10 @@ protect the workspace against hostile writers for data integrity. File contents
 are synced before publication; this is not a promise of crash-durable directory
 metadata. A cleanup failure after successful no-replace publication is explicitly
 reported as `cleanup_failed_after_publish`; callers must inspect before retrying.
+
+Windows uses NtCreateFile with RootDirectory and OPEN_REPARSE_POINT, and
+NtSetInformationFile for rename/deletion by handle; it deliberately avoids
+cap-std Windows rename/link/remove helpers that reconstruct ambient paths.
+ABI reference: [Microsoft FILE_RENAME_INFORMATION](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_rename_information)
+and [NtCreateFile](https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntcreatefile).
+Windows alternate data stream paths are rejected.
