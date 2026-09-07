@@ -2132,8 +2132,10 @@ mod beneath_tests {
         fn symlink(source: &Path, destination: std::path::PathBuf) -> std::io::Result<()> {
             let output = Command::new("cmd")
                 .args(["/C", "mklink", "/J"])
-                .arg(destination)
-                .arg(source)
+                // cmd's mklink treats forward slashes as switches, unlike the
+                // filesystem APIs. Rebuild components using native separators.
+                .arg(destination.components().collect::<std::path::PathBuf>())
+                .arg(source.components().collect::<std::path::PathBuf>())
                 .output()?;
             if output.status.success() {
                 Ok(())
