@@ -62,6 +62,9 @@ jobs:
       - name: Run VM/interpreter parity suite
         run: cargo test --test vm_interpreter_parity_surfaces
 
+      - name: Run parity without JIT
+        run: cargo test --no-default-features --features runtime-archive,runtime-image --test vm_interpreter_parity_surfaces
+
   release-gate:
     needs: [release-gate-minimal-smoke, fmt-check, clippy, vm-interpreter-parity]
     runs-on: ubuntu-latest

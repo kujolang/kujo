@@ -2175,21 +2175,24 @@ fn immutable_loop_declarations_preserve_function_jit_eligibility() {
         eligible_ok := double_until(100) == 128
     "#;
     assert_interpreter_and_vm_bool(source, "eligible_ok");
-    let mut parser = Parser::new(tokenize(source).unwrap());
-    let chunk = Compiler::new().compile(&parser.parse()).unwrap();
-    let function = chunk
-        .constants
-        .iter()
-        .find_map(|constant| match constant {
-            kujo::bytecode::Constant::Function(function) => Some(function),
-            _ => None,
-        })
-        .expect("compiled function");
-    let jit = kujo::jit::JitCompiler::new().unwrap();
-    assert!(
-        jit.can_compile_function(function),
-        "lexical declarations must not disable otherwise supported function JIT"
-    );
+    #[cfg(feature = "runtime-jit")]
+    {
+        let mut parser = Parser::new(tokenize(source).unwrap());
+        let chunk = Compiler::new().compile(&parser.parse()).unwrap();
+        let function = chunk
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                kujo::bytecode::Constant::Function(function) => Some(function),
+                _ => None,
+            })
+            .expect("compiled function");
+        let jit = kujo::jit::JitCompiler::new().unwrap();
+        assert!(
+            jit.can_compile_function(function),
+            "lexical declarations must not disable otherwise supported function JIT"
+        );
+    }
 }
 
 #[test]
