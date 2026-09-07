@@ -137,8 +137,8 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // writable struct. Platform branches are counted separately by the scanner.
     // Preserve an exact total and an exact module count for future review.
     assert_eq!(
-        executable_count, 67,
-        "executable unsafe budget changed: expected 67, got {executable_count}"
+        executable_count, 73,
+        "executable unsafe budget changed: expected 73, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -151,6 +151,19 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         })
         .count();
     assert_eq!(web_data_executable_count, 5, "review any new web-data FFI site");
+    // Fence confined publication adds exactly six Windows sites: the NT ABI
+    // declaration, status conversion, synchronous relative open, owned-handle
+    // adoption, aligned rename buffer, and handle-based temporary deletion.
+    // Keep both total and module counts exact; every future FFI change needs review.
+    let confined_write_count = csv
+        .lines()
+        .skip(1)
+        .filter(|line| {
+            line.contains("\"src/interpreter/native_functions/confined_write_windows.rs\"")
+                && line.contains("\"executable\"")
+        })
+        .count();
+    assert_eq!(confined_write_count, 6, "review any new confined-write FFI site");
     let jit_executable_count = csv
         .lines()
         .skip(1)

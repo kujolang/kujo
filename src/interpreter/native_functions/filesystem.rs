@@ -457,7 +457,7 @@ fn write_beneath_with_hook(
     validate_write_size_limit(path, payload.len())?;
     #[cfg(windows)]
     {
-        return super::confined_write_windows::write(root, &components, payload, overwrite, hook);
+        super::confined_write_windows::write(root, &components, payload, overwrite, hook)
     }
     #[cfg(not(windows))]
     {
@@ -507,17 +507,18 @@ fn write_beneath_with_hook(
             }
             Ok(())
         })();
-        if result.is_err() {
+        if let Err(original) = result {
             if let Err(cleanup) = dir.remove_file(&temporary) {
                 if cleanup.kind() != std::io::ErrorKind::NotFound {
                     return Err(error(
                         "cleanup_failed",
-                        format!("{}; original: {}", cleanup, result.unwrap_err()),
+                        format!("{}; original: {}", cleanup, original),
                     ));
                 }
             }
+            return Err(original);
         }
-        result
+        Ok(())
     }
 }
 
