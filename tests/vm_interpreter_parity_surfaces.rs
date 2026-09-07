@@ -2088,3 +2088,75 @@ fn vm_and_interpreter_execute_exception_fixture_without_runtime_arity_drift() {
         "vm should complete exception fixture without arity drift/runtime failure: {vm_result:?}"
     );
 }
+
+#[test]
+fn vm_and_interpreter_initialize_fresh_loop_local_bindings() {
+    assert_interpreter_and_vm_bool(
+        r#"
+        func check() {
+            mut total := 0
+            for item in [1, 2, 3] {
+                let value := item
+                if true { const increment := value; total = total + increment }
+            }
+            mut index := 0
+            while index < 3 {
+                let value := index
+                total = total + value
+                index = index + 1
+            }
+            return total == 9
+        }
+        loop_ok := check()
+    "#,
+        "loop_ok",
+    );
+}
+
+#[test]
+fn vm_and_interpreter_keep_loop_closure_snapshots_independent() {
+    assert_interpreter_and_vm_bool(
+        r#"
+        func check() {
+            mut callbacks := []
+            for item in [1, 2, 3] {
+                let value := item
+                callbacks = push(callbacks, func() { return value })
+            }
+            return callbacks[0]() == 1 && callbacks[1]() == 2 && callbacks[2]() == 3
+        }
+        snapshot_ok := check()
+    "#,
+        "snapshot_ok",
+    );
+}
+
+#[test]
+fn vm_and_interpreter_unwind_loop_scopes_on_continue_break_and_return() {
+    assert_interpreter_and_vm_bool(
+        r#"
+        let value := 99
+        mut total := 0
+        for item in [1, 2, 3, 4, 5] {
+            let value := item
+            if item == 2 { continue }
+            if item == 4 { break }
+            total = total + value
+        }
+        mut index := 0
+        while index < 3 {
+            const value := index
+            index = index + 1
+            if index == 2 { continue }
+            total = total + value
+        }
+        func early() {
+            for item in [1, 2] { if true { return item } }
+            return 0
+        }
+        let early_result := early()
+        scopes_ok := total == 6 && value == 99 && early_result == 1
+    "#,
+        "scopes_ok",
+    );
+}

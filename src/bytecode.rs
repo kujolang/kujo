@@ -43,6 +43,9 @@ pub enum OpCode {
     /// Operand: local slot index
     StoreLocal(usize),
 
+    /// Initialize a fresh lexical binding, including each loop iteration.
+    DefineLocal(usize),
+
     /// Store top of stack to a global variable
     /// Operand: variable name
     StoreGlobal(String),

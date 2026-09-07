@@ -21,6 +21,9 @@ pub struct Compiler {
 
     /// Stack of loop end jump indices to patch for break statements
     loop_ends: Vec<Vec<usize>>,
+    loop_continues: Vec<Vec<usize>>,
+    loop_runtime_depths: Vec<usize>,
+    runtime_scope_depth: usize,
 
     /// Current scope depth (0 = global)
     scope_depth: usize,
@@ -84,6 +87,9 @@ impl Compiler {
             chunk: BytecodeChunk::new(),
             loop_starts: Vec::new(),
             loop_ends: Vec::new(),
+            loop_continues: Vec::new(),
+            loop_runtime_depths: Vec::new(),
+            runtime_scope_depth: 0,
             scope_depth: 0,
             locals: Vec::new(),
             next_local_slot: 0,
@@ -227,6 +233,29 @@ impl Compiler {
         self.scope_depth = self.scope_depth.saturating_sub(1);
     }
 
+    fn push_runtime_scope(&mut self) {
+        self.chunk.emit(OpCode::PushScope);
+        self.runtime_scope_depth += 1;
+    }
+
+    fn pop_runtime_scope(&mut self) {
+        self.chunk.emit(OpCode::PopScope);
+        self.runtime_scope_depth -= 1;
+    }
+
+    fn unwind_runtime_scopes(&mut self, target: usize) {
+        for _ in target..self.runtime_scope_depth {
+            self.chunk.emit(OpCode::PopScope);
+        }
+    }
+
+    fn patch_loop_continues(&mut self) {
+        let jumps = std::mem::take(self.loop_continues.last_mut().expect("active loop"));
+        for jump in jumps {
+            self.chunk.patch_jump(jump);
+        }
+    }
+
     fn is_upvalue(&self, name: &str) -> bool {
         self.upvalue_names.contains(name)
     }
@@ -320,13 +349,13 @@ impl Compiler {
                 self.chunk.emit(OpCode::Pop); // Pop condition
 
                 // Compile then block
-                self.chunk.emit(OpCode::PushScope);
+                self.push_runtime_scope();
                 self.enter_scope();
                 for stmt in then_branch {
                     self.compile_stmt(stmt)?;
                 }
                 self.exit_scope();
-                self.chunk.emit(OpCode::PopScope);
+                self.pop_runtime_scope();
 
                 // Jump over else block
                 let end_jump = self.chunk.emit(OpCode::Jump(0));
@@ -337,13 +366,13 @@ impl Compiler {
 
                 // Compile else block if present
                 if let Some(else_stmts) = else_branch {
-                    self.chunk.emit(OpCode::PushScope);
+                    self.push_runtime_scope();
                     self.enter_scope();
                     for stmt in else_stmts {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
-                    self.chunk.emit(OpCode::PopScope);
+                    self.pop_runtime_scope();
                 }
 
                 // Patch end jump
@@ -386,6 +415,8 @@ impl Compiler {
                 let loop_start = self.chunk.instructions.len();
                 self.loop_starts.push(loop_start);
                 self.loop_ends.push(Vec::new());
+                self.loop_continues.push(Vec::new());
+                self.loop_runtime_depths.push(self.runtime_scope_depth);
 
                 // Compile condition
                 self.compile_expr(condition)?;
@@ -415,6 +446,8 @@ impl Compiler {
                     }
                 }
                 self.loop_starts.pop();
+                self.loop_continues.pop();
+                self.loop_runtime_depths.pop();
 
                 Ok(())
             }
@@ -423,6 +456,7 @@ impl Compiler {
                 // For now, compile as a while loop with an iterator
                 // This is a simplified implementation
                 self.enter_scope();
+                self.push_runtime_scope();
 
                 let loop_var_slot = if self.uses_local_slots && !self.is_upvalue(var) {
                     Some(self.declare_local(var, BytecodeBindingKind::Mutable)?)
@@ -469,6 +503,8 @@ impl Compiler {
                 let loop_start = self.chunk.instructions.len();
                 self.loop_starts.push(loop_start);
                 self.loop_ends.push(Vec::new());
+                self.loop_continues.push(Vec::new());
+                self.loop_runtime_depths.push(self.runtime_scope_depth);
 
                 // Load iterator and index
                 if let Some(slot) = iter_slot {
@@ -517,9 +553,13 @@ impl Compiler {
                 }
 
                 // Compile body
+                self.push_runtime_scope();
                 for stmt in body {
                     self.compile_stmt(stmt)?;
                 }
+
+                self.pop_runtime_scope();
+                self.patch_loop_continues();
 
                 // Increment index
                 if let Some(slot) = index_slot {
@@ -550,7 +590,10 @@ impl Compiler {
                     }
                 }
                 self.loop_starts.pop();
+                self.loop_continues.pop();
+                self.loop_runtime_depths.pop();
                 self.exit_scope();
+                self.pop_runtime_scope();
 
                 Ok(())
             }
@@ -558,6 +601,7 @@ impl Compiler {
             Stmt::Return(value) => {
                 if let Some(expr) = value {
                     self.compile_expr(expr)?;
+                    self.unwind_runtime_scopes(0);
                     self.chunk.emit(OpCode::Return);
                 } else {
                     self.chunk.emit(OpCode::ReturnNone);
@@ -570,6 +614,7 @@ impl Compiler {
                     return Err("break can only be used inside a loop".to_string());
                 }
 
+                self.unwind_runtime_scopes(*self.loop_runtime_depths.last().expect("active loop"));
                 // Add a jump that will be patched later
                 let jump_index = self.chunk.emit(OpCode::Jump(0));
                 if let Some(breaks) = self.loop_ends.last_mut() {
@@ -583,10 +628,9 @@ impl Compiler {
                     return Err("continue can only be used inside a loop".to_string());
                 }
 
-                // Jump back to loop start
-                if let Some(&loop_start) = self.loop_starts.last() {
-                    self.chunk.emit(OpCode::JumpBack(loop_start));
-                }
+                self.unwind_runtime_scopes(*self.loop_runtime_depths.last().expect("active loop"));
+                let jump = self.chunk.emit(OpCode::Jump(0));
+                self.loop_continues.last_mut().expect("active loop").push(jump);
                 Ok(())
             }
 
@@ -764,6 +808,8 @@ impl Compiler {
                 let loop_start = self.chunk.instructions.len();
                 self.loop_starts.push(loop_start);
                 self.loop_ends.push(Vec::new());
+                self.loop_continues.push(Vec::new());
+                self.loop_runtime_depths.push(self.runtime_scope_depth);
 
                 // If there's a condition, check it
                 if let Some(cond_expr) = condition {
@@ -775,10 +821,13 @@ impl Compiler {
 
                     // Compile body
                     self.enter_scope();
+                    self.push_runtime_scope();
                     for stmt in body {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
+                    self.pop_runtime_scope();
+                    self.patch_loop_continues();
 
                     // Jump back to start
                     self.chunk.emit(OpCode::JumpBack(loop_start));
@@ -789,10 +838,13 @@ impl Compiler {
                 } else {
                     // Unconditional loop
                     self.enter_scope();
+                    self.push_runtime_scope();
                     for stmt in body {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
+                    self.pop_runtime_scope();
+                    self.patch_loop_continues();
 
                     // Jump back to start
                     self.chunk.emit(OpCode::JumpBack(loop_start));
@@ -805,6 +857,8 @@ impl Compiler {
                     }
                 }
                 self.loop_starts.pop();
+                self.loop_continues.pop();
+                self.loop_runtime_depths.pop();
 
                 Ok(())
             }
@@ -862,7 +916,7 @@ impl Compiler {
 
             Stmt::Block(statements) => {
                 // Enter new scope
-                self.chunk.emit(OpCode::PushScope);
+                self.push_runtime_scope();
                 self.enter_scope();
 
                 // Compile block statements
@@ -872,7 +926,7 @@ impl Compiler {
 
                 // Exit scope
                 self.exit_scope();
-                self.chunk.emit(OpCode::PopScope);
+                self.pop_runtime_scope();
 
                 Ok(())
             }
@@ -883,7 +937,7 @@ impl Compiler {
                     self.chunk.emit(OpCode::DefineGlobal(name.clone(), BytecodeBindingKind::Const));
                 } else {
                     let slot = self.declare_local(name, BytecodeBindingKind::Const)?;
-                    self.chunk.emit(OpCode::StoreLocal(slot));
+                    self.chunk.emit(OpCode::DefineLocal(slot));
                 }
 
                 Ok(())
@@ -1576,7 +1630,7 @@ impl Compiler {
                     self.chunk.emit(OpCode::StoreVar(name.clone()));
                 } else {
                     let slot = self.declare_local(name, binding_kind)?;
-                    self.chunk.emit(OpCode::StoreLocal(slot));
+                    self.chunk.emit(OpCode::DefineLocal(slot));
                 }
                 Ok(())
             }

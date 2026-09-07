@@ -3188,7 +3188,10 @@ impl BytecodeTranslator {
             OpCode::Pop => (1, 0),
 
             // Store operations peek (no pop)
-            OpCode::StoreVar(_) | OpCode::StoreLocal(_) | OpCode::StoreGlobal(_) => (0, 0),
+            OpCode::StoreVar(_)
+            | OpCode::StoreLocal(_)
+            | OpCode::DefineLocal(_)
+            | OpCode::StoreGlobal(_) => (0, 0),
 
             // Binary ops (2 pops, 1 push)
             OpCode::Add
@@ -3426,7 +3429,7 @@ impl BytecodeTranslator {
             if matches!(instruction, OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_)) {
                 if let Some(next) = next_instruction {
                     match next {
-                        OpCode::StoreLocal(slot) => {
+                        OpCode::StoreLocal(slot) | OpCode::DefineLocal(slot) => {
                             if let Some(name) = self.local_names.get(*slot) {
                                 self.non_int_locals.insert(name.clone());
                             }
@@ -5166,7 +5169,7 @@ impl BytecodeTranslator {
                 // If no context, just leave value on stack
             }
 
-            OpCode::StoreLocal(slot) => {
+            OpCode::StoreLocal(slot) | OpCode::DefineLocal(slot) => {
                 let value = self.peek_value()?;
 
                 if let Some(name) = self.local_names.get(*slot) {
@@ -5321,7 +5324,7 @@ impl BytecodeTranslator {
                 Ok(false)
             }
 
-            OpCode::StoreLocal(slot) => {
+            OpCode::StoreLocal(slot) | OpCode::DefineLocal(slot) => {
                 let value = self.peek_value()?;
                 if let Some(name) = self.local_names.get(*slot) {
                     if self.non_int_locals.contains(name) {
@@ -5852,7 +5855,8 @@ impl JitCompiler {
             OpCode::LoadVar(_)
             | OpCode::LoadLocal(_)
             | OpCode::StoreVar(_)
-            | OpCode::StoreLocal(_) => true,
+            | OpCode::StoreLocal(_)
+            | OpCode::DefineLocal(_) => true,
             OpCode::LoadGlobal(_) | OpCode::StoreGlobal(_) => true,
 
             // Control flow - simple jumps only
