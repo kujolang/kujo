@@ -388,7 +388,27 @@ fn publish_dir(source: &Path, dest: &Path) -> Result<(), String> {
         }
     }
     #[cfg(windows)]
-    fs::rename(source, dest).map_err(io)?;
+    {
+        use std::os::windows::ffi::OsStrExt;
+        let wide_path = |path: &Path| -> Result<Vec<u16>, String> {
+            let mut units: Vec<u16> = path.as_os_str().encode_wide().collect();
+            if units.contains(&0) {
+                return Err("path contains a NUL character".into());
+            }
+            units.push(0);
+            Ok(units)
+        };
+        let src = wide_path(source)?;
+        let dst = wide_path(dest)?;
+        // SAFETY: both owned, NUL-terminated UTF-16 arrays remain alive for
+        // this call. Flags zero prohibit replacing an existing destination.
+        let result = unsafe {
+            windows_sys::Win32::Storage::FileSystem::MoveFileExW(src.as_ptr(), dst.as_ptr(), 0)
+        };
+        if result == 0 {
+            return Err(std::io::Error::last_os_error().to_string());
+        }
+    }
     Ok(())
 }
 fn http_file(url: String, destination: String, options: Json) -> Result<Value, String> {

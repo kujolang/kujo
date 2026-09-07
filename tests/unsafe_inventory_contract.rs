@@ -131,14 +131,14 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .parse()
         .expect("executable summary value should be numeric");
 
-    // The web-data addition adds four reviewed FFI sites: macOS/Linux
-    // no-replace rename (owned CStrings remain alive), zero initialization of
+    // The web-data addition adds five reviewed FFI sites: Windows/macOS/Linux
+    // no-replace rename (owned NUL-terminated path buffers remain alive), zero initialization of
     // libc::rusage (integer POD fields), and getrusage into that initialized
     // writable struct. Platform branches are counted separately by the scanner.
     // Preserve an exact total and an exact module count for future review.
     assert_eq!(
-        executable_count, 66,
-        "executable unsafe budget changed: expected 66, got {executable_count}"
+        executable_count, 67,
+        "executable unsafe budget changed: expected 67, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -150,7 +150,7 @@ fn unsafe_inventory_enforces_current_executable_budget() {
                 && line.contains("\"executable\"")
         })
         .count();
-    assert_eq!(web_data_executable_count, 4, "review any new web-data FFI site");
+    assert_eq!(web_data_executable_count, 5, "review any new web-data FFI site");
     let jit_executable_count = csv
         .lines()
         .skip(1)

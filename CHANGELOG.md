@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Atomically reject existing Windows publication directories using MoveFileExW
+  without replacement flags; preserve UTF-16 paths and reject embedded NULs.
+
 - Initialize fresh VM loop-local `let` and `const` declarations without weakening
   immutable assignment checks; unwind lexical scopes on loop control flow and returns.
 - Preserve immutable capture metadata and independent state in async map workers.

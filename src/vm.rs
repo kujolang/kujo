@@ -7732,6 +7732,22 @@ impl VM {
                             }
                         }
 
+                        OpCode::DefineLocal(slot) => {
+                            let value = self.stack.last().ok_or("Stack underflow")?.clone();
+                            let frame = self
+                                .call_frames
+                                .last_mut()
+                                .ok_or("DefineLocal requires call frame")?;
+                            let target = frame
+                                .local_slots
+                                .get_mut(slot)
+                                .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
+                            *target = value;
+                            if let Some(initialized) = frame.local_slot_initialized.get_mut(slot) {
+                                *initialized = true;
+                            }
+                        }
+
                         OpCode::StoreLocal(slot) => {
                             let value = self.stack.pop().ok_or("Stack underflow")?;
                             let binding_name = self
@@ -8728,6 +8744,20 @@ impl VM {
                             self.globals.lock().unwrap().assign_checked(name, value)?;
                         }
                     }
+                    OpCode::DefineLocal(slot) => {
+                        let value = self.stack.last().ok_or("Stack underflow")?.clone();
+                        let frame =
+                            self.call_frames.last_mut().ok_or("DefineLocal requires call frame")?;
+                        let target = frame
+                            .local_slots
+                            .get_mut(slot)
+                            .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
+                        *target = value;
+                        if let Some(initialized) = frame.local_slot_initialized.get_mut(slot) {
+                            *initialized = true;
+                        }
+                    }
+
                     OpCode::StoreLocal(slot) => {
                         let value = self.stack.last().ok_or("Stack underflow")?.clone();
                         let frame =

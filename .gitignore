@@ -346,3 +346,12 @@ benchmark_output.txt
 /*.db-journal
 /*.sqlite-journal
 /*.sqlite3-journal
+
+# Canonical Kujo tool runtime artifacts.
+/.kujo/pi/
+/.muzzle/state/
+/.muzzle/.kujo_cache/
+/.email/
+/.email-test*/
+/artifacts/hardening/
+/artifacts/live-conformance.json

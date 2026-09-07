@@ -427,10 +427,13 @@ impl Compiler {
 
                 // Compile body
                 self.enter_scope();
+                self.push_runtime_scope();
                 for stmt in body {
                     self.compile_stmt(stmt)?;
                 }
                 self.exit_scope();
+                self.pop_runtime_scope();
+                self.patch_loop_continues();
 
                 // Jump back to condition
                 self.chunk.emit(OpCode::JumpBack(loop_start));
@@ -604,6 +607,7 @@ impl Compiler {
                     self.unwind_runtime_scopes(0);
                     self.chunk.emit(OpCode::Return);
                 } else {
+                    self.unwind_runtime_scopes(0);
                     self.chunk.emit(OpCode::ReturnNone);
                 }
                 Ok(())
