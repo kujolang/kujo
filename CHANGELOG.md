@@ -365,3 +365,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Repaired all remaining syntax-drifted examples, removed the expected-fail example list, and added exhaustive per-file verification coverage.
+
+### Unreleased: confined atomic file publication
+
+- Added `write_file_atomic_beneath(root, relative_path, content_or_bytes, overwrite?)`
+  with filesystem-write capability enforcement in VM and interpreter, strict
+  relative path validation, nofollow directory traversal, missing-parent creation,
+  and handle-relative atomic replacement/no-replace publication.
+- Added deterministic ancestor-swap, symlink, cleanup, concurrent no-replace,
+  Windows junction and runtime/capability regression coverage. Existing path-based
+  `write_file_atomic` remains compatible. No new dependency was introduced.

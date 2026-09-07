@@ -170,6 +170,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "publish_directory_noreplace"
         | "write_file"
         | "write_file_atomic"
+        | "write_file_atomic_beneath"
         | "write_file_sync"
         | "write_file_async"
         | "append_file"

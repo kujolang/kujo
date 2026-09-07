@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  descriptor-relative-read:
+  descriptor-relative-filesystem:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,10 +33,10 @@ jobs:
           "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Run descriptor-relative filesystem conformance
-        run: cargo test --locked read_file_beneath --lib
+        run: cargo test --locked beneath --lib
 
       - name: Run VM/interpreter capability parity
-        run: cargo test --locked --test native_api_security_boundaries filesystem_beneath
+        run: cargo test --locked --test native_api_security_boundaries filesystem_
 
       - name: Run bounded process stdin conformance
         run: cargo test --locked test_process_stdin --lib

@@ -681,6 +681,7 @@ impl Interpreter {
             "read_binary_file_beneath",
             "write_file",
             "write_file_atomic",
+            "write_file_atomic_beneath",
             "append_file",
             "file_exists",
             "read_lines",
@@ -1253,6 +1254,10 @@ impl Interpreter {
         self.env.define(
             "read_binary_file_beneath".to_string(),
             Value::NativeFunction("read_binary_file_beneath".to_string()),
+        );
+        self.env.define(
+            "write_file_atomic_beneath".to_string(),
+            Value::NativeFunction("write_file_atomic_beneath".to_string()),
         );
         self.env.define("write_file".to_string(), Value::NativeFunction("write_file".to_string()));
         self.env.define(
@@ -3570,6 +3575,17 @@ impl Interpreter {
             "jsonl_query" => {
                 CallableArity::exact("jsonl_query", vec!["path".to_string(), "options".to_string()])
             }
+            "write_file_atomic_beneath" => CallableArity::range(
+                "write_file_atomic_beneath",
+                3,
+                4,
+                vec![
+                    "root".into(),
+                    "relative_path".into(),
+                    "content_or_bytes".into(),
+                    "overwrite".into(),
+                ],
+            ),
             "write_file_atomic" => CallableArity::range(
                 "write_file_atomic",
                 2,

@@ -368,6 +368,33 @@ fn filesystem_beneath_is_filesystem_read_gated_in_vm_and_interpreter() {
 }
 
 #[test]
+fn filesystem_write_beneath_capability_and_runtime_parity() {
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            "write_file_atomic_beneath(\".\", \"blocked\", \"data\")\n",
+            "Capability denied: filesystem-write required for write_file_atomic_beneath",
+            &runtime_args,
+        );
+    }
+    let root = unique_temp_dir("write_beneath_parity");
+    let script = root.join("write.kujo");
+    fs::write(&script, "write_file_atomic_beneath(\".\", \"nested/data\", \"hello\", true)\n")
+        .unwrap();
+    for runtime_args in [
+        vec!["--untrusted", "--allow-fs-write"],
+        vec!["--interpreter", "--untrusted", "--allow-fs-write"],
+    ] {
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script.to_str().unwrap());
+        let output = run_kujo(&args, &root);
+        assert_eq!(output.status.code(), Some(0), "{}", stderr_text(&output));
+        assert_eq!(fs::read(root.join("nested/data")).unwrap(), b"hello");
+    }
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
 fn filesystem_beneath_has_vm_interpreter_parity() {
     let project_root = unique_temp_dir("filesystem_beneath_runtime_parity");
     let script_path = project_root.join("beneath.kujo");

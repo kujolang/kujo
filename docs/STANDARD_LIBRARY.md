@@ -254,6 +254,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `read_file_beneath` | `read_file_beneath(root, relative_path, max_bytes)` | exact 3 | string | Rejects invalid relative paths, symlink/reparse traversal, non-regular files, oversized reads, and invalid UTF-8; capability-denied when gated. | `filesystem-read` | `text := read_file_beneath("trusted", "docs/note.txt", 1048576)` |
 | `read_binary_file_beneath` | `read_binary_file_beneath(root, relative_path, max_bytes)` | exact 3 | bytes | Rejects invalid relative paths, symlink/reparse traversal, non-regular files, and oversized reads; capability-denied when gated. | `filesystem-read` | `blob := read_binary_file_beneath("trusted", "docs/file.pdf", 5000000)` |
 | `write_file` | `write_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := write_file(...)` |
+| `write_file_atomic_beneath` | `write_file_atomic_beneath(root, relative_path, content_or_bytes, overwrite?)` | 3..=4 | bool | Value::Error on invalid paths, limits, symlinks, or publication failure; default no-overwrite. | `filesystem-write` | `write_file_atomic_beneath(".", "state.json", payload, true)` |
 | `write_file_atomic` | `write_file_atomic(path, content_or_bytes, overwrite?)` | 2..=3 | bool | Value::Error on invalid args/types/operation, size-limit violations, or atomic finalization failures; defaults to no-overwrite. | `filesystem-write` | `ok := write_file_atomic("state.json", payload, true)` |
 | `append_file` | `append_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := append_file(...)` |
 | `file_exists` | `file_exists(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := file_exists(...)` |
@@ -571,3 +572,24 @@ including inline flags, is the identity. Inputs and replacements are never cache
 Compilation and matching occur outside the cache lock. The regex engine's existing
 compiled-program limits are unchanged; caching does not weaken validation or alter
 invalid-pattern return contracts.
+
+### Confined atomic publication
+
+`write_file_atomic_beneath(root, relative_path, content_or_bytes, overwrite?)`
+returns `true` or `Value::Error`. Arity is 3..=4; root/path are strings, payload
+is text or bytes, and overwrite is a bool defaulting to false. Requires only
+`filesystem-write`, including parent creation. Existing `write_file_atomic`
+behavior is unchanged. This additive API is available from the Fence F12 source
+commit; no release version is claimed until it is released.
+
+Relative paths must contain normal nonempty components: no absolute/prefixed
+paths, NUL, `.`, `..`, repeated separators, or trailing separator. Missing parents
+are created. Symlink/reparse parents and stable final symlinks are rejected. The
+normal file-write byte limit applies. Root is trusted ambient input. Errors use
+`write_file_atomic_beneath[stage]` for filesystem stages; argument, capability and
+size validation retain normal native diagnostics. See the security posture for
+held-directory identity, concurrent movement, cleanup, and durability limits.
+
+```kujo
+write_file_atomic_beneath(".", "reports/check.json", "{}", true)
+```

@@ -379,3 +379,23 @@ transactional. XML disallows DTD/entity declarations and bounds expanded gzip da
 Explicit DNS-pinned or deny-private HTTP clients disable ambient proxy discovery.
 A proxy could otherwise resolve the hostname independently, bypassing the pinned
 answer set. Unpinned clients preserve their existing proxy behavior.
+
+### Confined atomic writes
+
+`write_file_atomic_beneath(root, relative_path, payload, overwrite?)` requires
+`filesystem-write`. The caller supplies a trusted root, opened once. All child
+traversal, parent creation, temporary creation, and publication use held directory
+handles and single-component names. Intermediate symlinks/reparse points are
+rejected. Stable final symlinks are rejected; racing final symlinks are never
+followed. Overwrite replaces the entry, while no-overwrite publishes with an
+atomic no-replace hard link. Filesystems without the required operations fail;
+there is no path-based fallback.
+
+The boundary is directory identity, not continuous ancestry: if another actor
+moves an already-open directory elsewhere, publication still targets that held
+directory. Privileged mount manipulation and malicious mutation of the directory's
+contents are not a sandbox guarantee. The caller must trust root selection and
+protect the workspace against hostile writers for data integrity. File contents
+are synced before publication; this is not a promise of crash-durable directory
+metadata. A cleanup failure after successful no-replace publication is explicitly
+reported as `cleanup_failed_after_publish`; callers must inspect before retrying.

@@ -662,6 +662,7 @@ mod tests {
             "read_binary_file_beneath",
             "write_file",
             "write_file_atomic",
+            "write_file_atomic_beneath",
             "append_file",
             "file_exists",
             "read_lines",
@@ -3736,6 +3737,26 @@ mod tests {
                 Value::Str(Arc::new("atomic-text".to_string())),
             ],
         );
+        let beneath_args = [
+            Value::Str(Arc::new(base_dir.clone())),
+            Value::Str(Arc::new("beneath/payload.bin".into())),
+            Value::Bytes(vec![0, 255]),
+        ];
+        assert!(matches!(
+            call_native_function(&mut interpreter, "write_file_atomic_beneath", &beneath_args),
+            Value::Bool(true)
+        ));
+        assert_eq!(std::fs::read(format!("{base_dir}/beneath/payload.bin")).unwrap(), vec![0, 255]);
+        assert!(matches!(
+            call_native_function(&mut interpreter, "write_file_atomic_beneath", &[]),
+            Value::Error(_)
+        ));
+        let mut invalid_flag = beneath_args.to_vec();
+        invalid_flag.push(Value::Int(1));
+        assert!(matches!(
+            call_native_function(&mut interpreter, "write_file_atomic_beneath", &invalid_flag),
+            Value::Error(_)
+        ));
         assert!(matches!(atomic_text_ok, Value::Bool(true)));
         assert_eq!(
             std::fs::read_to_string(&atomic_text_file).expect("atomic text should be readable"),

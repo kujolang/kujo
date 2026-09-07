@@ -425,6 +425,90 @@ fn write_file_atomically(path: &str, payload: &[u8], overwrite: bool) -> Result<
     result
 }
 
+// All names after the trusted root open are single components relative to held
+// directory handles. Renaming an ancestor cannot redirect later publication.
+fn write_file_atomic_beneath(
+    root: &str,
+    path: &str,
+    payload: &[u8],
+    overwrite: bool,
+) -> Result<(), String> {
+    write_beneath_with_hook(root, path, payload, overwrite, |_| {})
+}
+
+fn write_beneath_with_hook(
+    root: &str,
+    path: &str,
+    payload: &[u8],
+    overwrite: bool,
+    mut hook: impl FnMut(&str),
+) -> Result<(), String> {
+    let error =
+        |stage: &str, detail: String| format!("write_file_atomic_beneath[{}]: {}", stage, detail);
+    let components = validate_beneath_relative_path(Path::new(path))
+        .map_err(|e| error("invalid_relative_path", e))?;
+    if path.contains('\0') {
+        return Err(error("invalid_relative_path", "NUL is forbidden".into()));
+    }
+    validate_write_size_limit(path, payload.len())?;
+    let mut dir = Dir::open_ambient_dir(root, ambient_authority())
+        .map_err(|e| error("root_open_failed", e.to_string()))?;
+    for component in &components[..components.len() - 1] {
+        match dir.create_dir(component) {
+            Ok(()) => (),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
+            Err(e) => return Err(error("parent_create_failed", e.to_string())),
+        }
+        dir = cap_fs_ext::DirExt::open_dir_nofollow(&dir, component)
+            .map_err(|e| error("component_rejected", e.to_string()))?;
+    }
+    hook("parent_opened");
+    let target = components[components.len() - 1];
+    let temporary = format!(".kujo-beneath-{}.tmp", Uuid::new_v4());
+    let mut options = CapOpenOptions::new();
+    options.write(true).create_new(true).follow(FollowSymlinks::No);
+    let mut file = dir
+        .open_with(&temporary, &options)
+        .map_err(|e| error("temporary_create_failed", e.to_string()))?;
+    let result = (|| {
+        file.write_all(payload).map_err(|e| error("write_failed", e.to_string()))?;
+        file.sync_all().map_err(|e| error("sync_failed", e.to_string()))?;
+        drop(file);
+        hook("before_publish");
+        // Reject stable final symlinks. A racing replacement is never followed:
+        // rename replaces the directory entry; hard_link fails if it exists.
+        match dir.symlink_metadata(target) {
+            Ok(m) if !m.is_file() => {
+                return Err(error("target_rejected", "target is not a regular file".into()))
+            }
+            Ok(_) => (),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
+            Err(e) => return Err(error("target_metadata_failed", e.to_string())),
+        }
+        if overwrite {
+            dir.rename(&temporary, &dir, target)
+                .map_err(|e| error("publish_failed", e.to_string()))?;
+        } else {
+            dir.hard_link(&temporary, &dir, target)
+                .map_err(|e| error("publish_failed", e.to_string()))?;
+            dir.remove_file(&temporary)
+                .map_err(|e| error("cleanup_failed_after_publish", e.to_string()))?;
+        }
+        Ok(())
+    })();
+    if result.is_err() {
+        if let Err(cleanup) = dir.remove_file(&temporary) {
+            if cleanup.kind() != std::io::ErrorKind::NotFound {
+                return Err(error(
+                    "cleanup_failed",
+                    format!("{}; original: {}", cleanup, result.unwrap_err()),
+                ));
+            }
+        }
+    }
+    result
+}
+
 #[cfg(feature = "runtime-archive")]
 fn zip_add_dir_recursive(
     zip_writer: &mut ZipWriter<File>,
@@ -789,6 +873,34 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
+        "write_file_atomic_beneath" => {
+            let (Some(Value::Str(root)), Some(Value::Str(path)), Some(payload)) =
+                (arg_values.first(), arg_values.get(1), arg_values.get(2))
+            else {
+                return Some(Value::Error(
+                    "write_file_atomic_beneath requires root, relative path and content/bytes"
+                        .into(),
+                ));
+            };
+            let overwrite =
+                match parse_overwrite_flag("write_file_atomic_beneath", &arg_values[1..]) {
+                    Ok(value) => value,
+                    Err(error) => return Some(error),
+                };
+            let bytes: &[u8] = match payload {
+                Value::Str(text) => text.as_bytes(),
+                Value::Bytes(bytes) => bytes.as_slice(),
+                _ => {
+                    return Some(Value::Error(
+                        "write_file_atomic_beneath requires text or bytes payload".into(),
+                    ))
+                }
+            };
+            match write_file_atomic_beneath(root, path, bytes, overwrite) {
+                Ok(()) => Value::Bool(true),
+                Err(error) => Value::Error(error),
+            }
+        }
         "write_file_atomic" => {
             let overwrite = match parse_overwrite_flag("write_file_atomic", arg_values) {
                 Ok(flag) => flag,
@@ -1952,6 +2064,120 @@ mod beneath_tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::thread;
 
+    #[test]
+    fn write_beneath_creates_parents_overwrites_and_cleans_failures() {
+        let root = tempfile::tempdir().unwrap();
+        let root_str = root.path().to_str().unwrap();
+        write_file_atomic_beneath(root_str, "nested/é.txt", b"one", false).unwrap();
+        assert!(write_file_atomic_beneath(root_str, "nested/é.txt", b"two", false).is_err());
+        assert_eq!(fs::read(root.path().join("nested/é.txt")).unwrap(), b"one");
+        write_file_atomic_beneath(root_str, "nested/é.txt", b"two", true).unwrap();
+        assert_eq!(fs::read(root.path().join("nested/é.txt")).unwrap(), b"two");
+        assert_eq!(fs::read_dir(root.path().join("nested")).unwrap().count(), 1);
+        for path in ["", "../escape", "/absolute", "a/../b", "a//b", "a/", "a/./b", "a\0b"] {
+            assert!(write_file_atomic_beneath(root_str, path, b"bad", true).is_err(), "{path:?}");
+        }
+        assert!(write_file_atomic_beneath(root_str, "nested", b"bad", true).is_err());
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn write_beneath_concurrent_no_replace_has_one_winner() {
+        let root = tempfile::tempdir().unwrap();
+        let barrier = Arc::new(std::sync::Barrier::new(2));
+        let workers: Vec<_> = (0..2)
+            .map(|i| {
+                let root = root.path().to_owned();
+                let barrier = barrier.clone();
+                thread::spawn(move || {
+                    write_beneath_with_hook(
+                        root.to_str().unwrap(),
+                        "result",
+                        &[i],
+                        false,
+                        |stage| {
+                            if stage == "before_publish" {
+                                barrier.wait();
+                            }
+                        },
+                    )
+                })
+            })
+            .collect();
+        let results: Vec<_> = workers.into_iter().map(|w| w.join().unwrap()).collect();
+        assert_eq!(results.iter().filter(|r| r.is_ok()).count(), 1);
+        assert_eq!(fs::read(root.path().join("result")).unwrap().len(), 1);
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn write_beneath_ancestor_swaps_do_not_redirect_creation_or_publication() {
+        #[cfg(unix)]
+        use std::os::unix::fs::symlink;
+        #[cfg(windows)]
+        fn symlink(source: &Path, destination: std::path::PathBuf) -> std::io::Result<()> {
+            let output = Command::new("cmd")
+                .args(["/C", "mklink", "/J"])
+                .arg(destination)
+                .arg(source)
+                .output()?;
+            if output.status.success() {
+                Ok(())
+            } else {
+                Err(std::io::Error::other(String::from_utf8_lossy(&output.stderr).into_owned()))
+            }
+        }
+        for stage in ["parent_opened", "before_publish"] {
+            for ancestor in ["parent", "parent/child"] {
+                let root = tempfile::tempdir().unwrap();
+                let outside = tempfile::tempdir().unwrap();
+                fs::create_dir(outside.path().join("child")).unwrap();
+                fs::write(outside.path().join("result"), b"sentinel").unwrap();
+                fs::write(outside.path().join("child/result"), b"sentinel").unwrap();
+                // The hook runs synchronously at the exact vulnerable boundary;
+                // there is no scheduling-dependent sleep or probabilistic race.
+                write_beneath_with_hook(
+                    root.path().to_str().unwrap(),
+                    "parent/child/result",
+                    b"inside",
+                    true,
+                    |point| {
+                        if point == stage {
+                            fs::rename(root.path().join(ancestor), root.path().join("held"))
+                                .unwrap();
+                            symlink(outside.path(), root.path().join(ancestor)).unwrap();
+                        }
+                    },
+                )
+                .unwrap();
+                assert_eq!(fs::read(outside.path().join("result")).unwrap(), b"sentinel");
+                assert_eq!(fs::read(outside.path().join("child/result")).unwrap(), b"sentinel");
+                let held = if ancestor == "parent" { "held/child/result" } else { "held/result" };
+                assert_eq!(fs::read(root.path().join(held)).unwrap(), b"inside");
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn write_beneath_rejects_symlinks_and_preserves_outside_targets() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        fs::write(outside.path().join("sentinel"), b"original").unwrap();
+        symlink(outside.path(), root.path().join("link")).unwrap();
+        symlink(outside.path().join("sentinel"), root.path().join("final")).unwrap();
+        symlink(outside.path().join("missing"), root.path().join("dangling")).unwrap();
+        for path in ["link/sentinel", "final", "dangling"] {
+            assert!(write_file_atomic_beneath(root.path().to_str().unwrap(), path, b"bad", true)
+                .is_err());
+        }
+        assert_eq!(fs::read(outside.path().join("sentinel")).unwrap(), b"original");
+        assert!(!outside.path().join("missing").exists());
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 3);
+    }
+
     fn fixture_root(label: &str) -> std::path::PathBuf {
         let path = std::env::temp_dir().join(format!("kujo_beneath_{}_{}", label, Uuid::new_v4()));
         fs::create_dir_all(&path).expect("fixture root");
@@ -2092,6 +2318,15 @@ mod beneath_tests {
         let error =
             read_file_beneath_bytes(root.to_str().unwrap(), "dir-link/secret.txt", 64).unwrap_err();
         assert!(error.contains("[component_rejected]"), "{error}");
+        let write_error = write_file_atomic_beneath(
+            root.to_str().unwrap(),
+            "dir-link/secret.txt",
+            b"changed",
+            true,
+        )
+        .unwrap_err();
+        assert!(write_error.contains("[component_rejected]"), "{write_error}");
+        assert_eq!(fs::read(outside.join("secret.txt")).unwrap(), b"outside");
         let _ = fs::remove_dir(&link);
         let _ = fs::remove_dir_all(root);
         let _ = fs::remove_dir_all(outside);
