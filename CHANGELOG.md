@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and exceptions.
 - Restore the binary-file fixture to ten complete passing cases instead of a
   saved early VM failure; require missing reads to raise and overwrites to opt in.
+- Keep VM/interpreter parity coverage active without JIT; gate only the
+  JIT-specific eligibility query on its runtime feature.
 - Preserve immutable capture metadata and independent state in async map workers.
 - Move completed closure environments back to their owner and avoid registering
   builtins in workers whose complete environment is supplied by the caller.
