@@ -2160,3 +2160,34 @@ fn vm_and_interpreter_unwind_loop_scopes_on_continue_break_and_return() {
         "scopes_ok",
     );
 }
+
+#[test]
+fn immutable_loop_declarations_preserve_function_jit_eligibility() {
+    let source = r#"
+        func double_until(limit) {
+            mut value := 1
+            while value < limit {
+                let next := value * 2
+                value = next
+            }
+            return value
+        }
+        eligible_ok := double_until(100) == 128
+    "#;
+    assert_interpreter_and_vm_bool(source, "eligible_ok");
+    let mut parser = Parser::new(tokenize(source).unwrap());
+    let chunk = Compiler::new().compile(&parser.parse()).unwrap();
+    let function = chunk
+        .constants
+        .iter()
+        .find_map(|constant| match constant {
+            kujo::bytecode::Constant::Function(function) => Some(function),
+            _ => None,
+        })
+        .expect("compiled function");
+    let jit = kujo::jit::JitCompiler::new().unwrap();
+    assert!(
+        jit.can_compile_function(function),
+        "lexical declarations must not disable otherwise supported function JIT"
+    );
+}

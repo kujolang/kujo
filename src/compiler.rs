@@ -243,6 +243,20 @@ impl Compiler {
         self.runtime_scope_depth -= 1;
     }
 
+    // Function-local slots already encode lexical identity. Adding environment
+    // operations there would unnecessarily exclude otherwise JIT-safe loops.
+    fn push_loop_runtime_scope(&mut self) {
+        if !self.uses_local_slots {
+            self.push_runtime_scope();
+        }
+    }
+
+    fn pop_loop_runtime_scope(&mut self) {
+        if !self.uses_local_slots {
+            self.pop_runtime_scope();
+        }
+    }
+
     fn unwind_runtime_scopes(&mut self, target: usize) {
         for _ in target..self.runtime_scope_depth {
             self.chunk.emit(OpCode::PopScope);
@@ -427,12 +441,12 @@ impl Compiler {
 
                 // Compile body
                 self.enter_scope();
-                self.push_runtime_scope();
+                self.push_loop_runtime_scope();
                 for stmt in body {
                     self.compile_stmt(stmt)?;
                 }
                 self.exit_scope();
-                self.pop_runtime_scope();
+                self.pop_loop_runtime_scope();
                 self.patch_loop_continues();
 
                 // Jump back to condition
@@ -459,7 +473,7 @@ impl Compiler {
                 // For now, compile as a while loop with an iterator
                 // This is a simplified implementation
                 self.enter_scope();
-                self.push_runtime_scope();
+                self.push_loop_runtime_scope();
 
                 let loop_var_slot = if self.uses_local_slots && !self.is_upvalue(var) {
                     Some(self.declare_local(var, BytecodeBindingKind::Mutable)?)
@@ -556,12 +570,12 @@ impl Compiler {
                 }
 
                 // Compile body
-                self.push_runtime_scope();
+                self.push_loop_runtime_scope();
                 for stmt in body {
                     self.compile_stmt(stmt)?;
                 }
 
-                self.pop_runtime_scope();
+                self.pop_loop_runtime_scope();
                 self.patch_loop_continues();
 
                 // Increment index
@@ -596,7 +610,7 @@ impl Compiler {
                 self.loop_continues.pop();
                 self.loop_runtime_depths.pop();
                 self.exit_scope();
-                self.pop_runtime_scope();
+                self.pop_loop_runtime_scope();
 
                 Ok(())
             }
@@ -825,12 +839,12 @@ impl Compiler {
 
                     // Compile body
                     self.enter_scope();
-                    self.push_runtime_scope();
+                    self.push_loop_runtime_scope();
                     for stmt in body {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
-                    self.pop_runtime_scope();
+                    self.pop_loop_runtime_scope();
                     self.patch_loop_continues();
 
                     // Jump back to start
@@ -842,12 +856,12 @@ impl Compiler {
                 } else {
                     // Unconditional loop
                     self.enter_scope();
-                    self.push_runtime_scope();
+                    self.push_loop_runtime_scope();
                     for stmt in body {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
-                    self.pop_runtime_scope();
+                    self.pop_loop_runtime_scope();
                     self.patch_loop_continues();
 
                     // Jump back to start
