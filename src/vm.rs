@@ -8123,6 +8123,13 @@ impl VM {
                             self.stack.push(result);
                         }
 
+                        OpCode::PushScope => {
+                            self.globals.lock().unwrap().push_scope();
+                        }
+                        OpCode::PopScope => {
+                            self.globals.lock().unwrap().pop_scope();
+                        }
+
                         _ => {
                             // For now, unsupported opcodes in nested calls
                             return Err(format!(
