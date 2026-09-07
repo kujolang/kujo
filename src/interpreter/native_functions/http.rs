@@ -25,7 +25,7 @@ const HTTP_RESPONSE_STREAM_CHUNK_BYTES: usize = 16 * 1024;
 const HTTP_RESPONSE_STREAM_EVENT_CAPACITY: usize = 16;
 const MAX_FILE_HTTP_TIMEOUT_MS: i64 = 300_000;
 
-fn file_http_policy_options(
+pub(super) fn file_http_policy_options(
     options: &DictMap,
     surface: &str,
 ) -> Result<(Duration, bool, bool, bool), String> {
@@ -2296,6 +2296,19 @@ pub fn handle_with_interpreter(
                     result_dict.insert("_body_bytes".into(), Value::Bytes(body_bytes));
 
                     let mut headers_dict = DictMap::default();
+                    let mut header_values = DictMap::default();
+                    for name in response_headers.keys() {
+                        let values = response_headers
+                            .get_all(name)
+                            .iter()
+                            .filter_map(|value| value.to_str().ok())
+                            .map(|s| Value::Str(Arc::new(s.to_string())))
+                            .collect();
+                        header_values.insert(
+                            name.as_str().to_string().into(),
+                            Value::Array(Arc::new(values)),
+                        );
+                    }
                     for (name, value) in response_headers.iter() {
                         if let Ok(value_str) = value.to_str() {
                             headers_dict.insert(
@@ -2305,6 +2318,9 @@ pub fn handle_with_interpreter(
                         }
                     }
                     result_dict.insert("headers".into(), Value::Dict(Arc::new(headers_dict)));
+
+                    result_dict
+                        .insert("header_values".into(), Value::Dict(Arc::new(header_values)));
 
                     Value::Result {
                         is_ok: true,

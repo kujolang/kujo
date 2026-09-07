@@ -115,7 +115,12 @@ impl RuntimeCapabilityPolicy {
 pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
     match name {
         // Filesystem read
-        "read_file"
+        "regular_file_digest"
+        | "xml_file_select"
+        | "text_file_read"
+        | "json_file_read"
+        | "jsonl_read_chunk"
+        | "read_file"
         | "read_file_sync"
         | "read_file_async"
         | "read_file_beneath"
@@ -157,7 +162,13 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "kv_get" => Some(NativeCapability::FilesystemRead),
 
         // Filesystem write
-        "write_file"
+        "json_file_write"
+        | "jsonl_write"
+        | "jsonl_wrap_array"
+        | "jsonl_sort"
+        | "create_temp_dir"
+        | "publish_directory_noreplace"
+        | "write_file"
         | "write_file_atomic"
         | "write_file_sync"
         | "write_file_async"
@@ -211,6 +222,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         "parallel_http"
         | "http_get"
         | "http_post"
+        | "http_get_file_response"
+        | "http_destination_check"
         | "http_request"
         | "http_put"
         | "http_delete"
@@ -264,9 +277,11 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "db_last_insert_id" => Some(NativeCapability::Database),
 
         // Clock/time
-        "now" | "now_utc" | "now_unix" | "current_timestamp" | "performance_now" | "time_us"
-        | "time_ns" | "format_duration" | "elapsed" | "format_date" | "parse_date" | "sleep"
-        | "async_sleep" | "async_timeout" => Some(NativeCapability::Clock),
+        "rate_limit_wait" | "process_usage" | "now" | "now_utc" | "now_unix"
+        | "current_timestamp" | "performance_now" | "time_us" | "time_ns" | "format_duration"
+        | "elapsed" | "format_date" | "parse_date" | "sleep" | "async_sleep" | "async_timeout" => {
+            Some(NativeCapability::Clock)
+        }
 
         // Randomness
         "random" | "random_int" | "random_choice" | "uuid_v4" | "random_id" | "set_random_seed"
@@ -281,9 +296,13 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 /// merely because network access (or the reverse) was granted.
 pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
     match name {
-        "publish_file_noreplace" => &[NativeCapability::FilesystemDelete],
-        "io_private_spool_write_file_range" => &[NativeCapability::FilesystemRead],
-        "http_download_file" => &[NativeCapability::FilesystemWrite],
+        "publish_directory_noreplace" | "publish_file_noreplace" => {
+            &[NativeCapability::FilesystemDelete]
+        }
+        "jsonl_sort" | "jsonl_wrap_array" | "io_private_spool_write_file_range" => {
+            &[NativeCapability::FilesystemRead]
+        }
+        "http_get_file_response" | "http_download_file" => &[NativeCapability::FilesystemWrite],
         "http_upload_file" => &[NativeCapability::FilesystemRead],
         "tcp_send_file_range" | "tls_send_file_range" => &[NativeCapability::FilesystemRead],
         "aes_encrypt_file_stream" | "aes_decrypt_file_stream" => {

@@ -363,3 +363,19 @@ Cross-platform module-escape coverage strategy:
 - Unix builds run a real symlink-escape integration regression in `tests/runtime_security.rs` (`runtime_security_rejects_module_symlink_escape`).
 - Non-Unix environments use deterministic module-name traversal hardening coverage via `runtime_security_module_loader_rejects_parent_traversal_import_name_cross_platform` (integration) plus module-loader unit contracts that reject unsafe import names before filesystem resolution.
 - This split avoids flaky Windows symlink privilege assumptions while preserving deterministic escape-boundary coverage for release gates.
+
+## Bounded web-data mechanisms
+
+The web-data APIs documented in STANDARD_LIBRARY.md are capability-gated before
+dispatch. Multi-effect file HTTP, JSONL transformation, and directory publication
+also check their secondary capability before work. Input is bounded before reads;
+regular-file readers reject symlinks and, on Unix, use O_NOFOLLOW/O_NONBLOCK and
+compare pre-open/open-handle identity. Windows readers reject reparse symlinks at
+preflight but are not an OS sandbox; hostile concurrent directory substitution
+requires external filesystem isolation. Temporary output publishes without replacing
+an existing entry. JSONL appends are intended for caller-owned staging and are not
+transactional. XML disallows DTD/entity declarations and bounds expanded gzip data.
+
+Explicit DNS-pinned or deny-private HTTP clients disable ambient proxy discovery.
+A proxy could otherwise resolve the hostname independently, bypassing the pinned
+answer set. Unpinned clients preserve their existing proxy behavior.

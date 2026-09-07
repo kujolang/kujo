@@ -771,3 +771,31 @@ When adding/removing/renaming builtins, update all of:
 - `src/interpreter/mod.rs` builtin registration/dispatch
 - this document
 - the reference contract tests
+
+## Bounded web-data mechanisms (preview)
+
+Generic parsing, bounded artifact I/O and pacing support native Kujo tools.
+Product crawl, robots, retry and reporting policy belongs in Kujo packages.
+Detailed bounds, capabilities and failure contracts are in [the canonical inventory](STANDARD_LIBRARY.md#bounded-web-data-and-artifact-mechanisms).
+
+| Builtin | Tier | Example |
+| --- | --- | --- |
+| `html_tokens` | preview | `html_tokens("<title>Hi</title>", 100)` |
+| `url_normalize` | preview | `url_normalize("/docs", "https://example.com", {})` |
+| `url_components` | preview | `url_components("https://example.com/docs")` |
+| `decode_text_lossy` | preview | `decode_text_lossy(bytes([65]), "utf-8", 1024)` |
+| `http_destination_check` | preview | `http_destination_check("https://example.com")` |
+| `http_get_file_response` | preview | `http_get_file_response("https://example.com/sitemap.xml", "sitemap.xml", {"max_bytes":1048576,"redirects":"none","pin_dns":true})` |
+| `xml_file_select` | preview | `xml_file_select("sitemap.xml", {"element":"loc","max_matches":1000,"max_bytes":1048576})` |
+| `text_file_read` | preview | `text_file_read("report.md", 1048576)` |
+| `json_file_read` | preview | `json_file_read("data.json", 1048576)` |
+| `json_file_write` | preview | `json_file_write("data.json", {"ok":true}, 1048576)` |
+| `jsonl_read_chunk` | preview | `jsonl_read_chunk("pages.jsonl", 0, 64, 1048576)` |
+| `jsonl_write` | preview | `jsonl_write("pages.jsonl", [{"url":"https://example.com"}], false, 1048576)` |
+| `jsonl_sort` | preview | `jsonl_sort("pages.jsonl", "sorted.jsonl", ["url"], 65536)` |
+| `jsonl_wrap_array` | preview | `jsonl_wrap_array("pages.jsonl", "pages.json", "pages", {}, 1048576)` |
+| `regular_file_digest` | preview | `regular_file_digest("pages.jsonl", 1048576)` |
+| `create_temp_dir` | preview | `create_temp_dir(".", ".stage-")` |
+| `publish_directory_noreplace` | preview | `publish_directory_noreplace(".stage", "run")` |
+| `rate_limit_wait` | preview | `rate_limit_wait(channel(), 0)` |
+| `process_usage` | preview | `process_usage()` |

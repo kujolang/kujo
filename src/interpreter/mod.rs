@@ -713,6 +713,25 @@ impl Interpreter {
             "io_copy_range",
             // JSON functions
             "parse_json",
+            "http_get_file_response",
+            "xml_file_select",
+            "http_destination_check",
+            "process_usage",
+            "rate_limit_wait",
+            "regular_file_digest",
+            "jsonl_wrap_array",
+            "html_tokens",
+            "url_normalize",
+            "url_components",
+            "decode_text_lossy",
+            "text_file_read",
+            "json_file_read",
+            "json_file_write",
+            "jsonl_read_chunk",
+            "jsonl_write",
+            "jsonl_sort",
+            "create_temp_dir",
+            "publish_directory_noreplace",
             "parse_xml_bounded",
             "to_json",
             "to_json_pretty",
@@ -1327,6 +1346,9 @@ impl Interpreter {
         );
 
         // JSON functions
+        for (name, _) in native_functions::web_data::BUILTINS {
+            self.env.define(name.to_string(), Value::NativeFunction(name.to_string()));
+        }
         self.env.define("parse_json".to_string(), Value::NativeFunction("parse_json".to_string()));
         self.env.define(
             "parse_xml_bounded".to_string(),
@@ -3442,6 +3464,11 @@ impl Interpreter {
     }
 
     pub(crate) fn native_callable_arity(name: &str) -> Option<CallableArity> {
+        if let Some((_, n)) =
+            native_functions::web_data::BUILTINS.iter().find(|(key, _)| *key == name)
+        {
+            return Some(CallableArity::exact(name, (0..*n).map(|i| format!("arg{i}")).collect()));
+        }
         let metadata = match name {
             "__vm_for_iterable" => {
                 CallableArity::exact("__vm_for_iterable", vec!["value".to_string()])

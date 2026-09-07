@@ -108,7 +108,7 @@ fn limits(value: &Value) -> Result<Limits, String> {
     })
 }
 
-fn namespace_value(namespace: ResolveResult<'_>) -> Result<String, String> {
+pub(super) fn namespace_value(namespace: ResolveResult<'_>) -> Result<String, String> {
     match namespace {
         ResolveResult::Unbound => Ok(String::new()),
         ResolveResult::Bound(Namespace(value)) => Ok(value.to_string()),

@@ -131,16 +131,26 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .parse()
         .expect("executable summary value should be numeric");
 
-    // v1.3.0 adds one test-only libc::geteuid call so the upgrade permission
-    // fixture can skip its non-writable-destination assertion when run as root.
-    // It takes no pointers and does not mutate process state. Keep the budget
-    // exact so any additional executable unsafe requires review.
+    // The web-data addition adds four reviewed FFI sites: macOS/Linux
+    // no-replace rename (owned CStrings remain alive), zero initialization of
+    // libc::rusage (integer POD fields), and getrusage into that initialized
+    // writable struct. Platform branches are counted separately by the scanner.
+    // Preserve an exact total and an exact module count for future review.
     assert_eq!(
-        executable_count, 62,
-        "executable unsafe budget changed: expected 62, got {executable_count}"
+        executable_count, 66,
+        "executable unsafe budget changed: expected 66, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
+    let web_data_executable_count = csv
+        .lines()
+        .skip(1)
+        .filter(|line| {
+            line.contains("\"src/interpreter/native_functions/web_data.rs\"")
+                && line.contains("\"executable\"")
+        })
+        .count();
+    assert_eq!(web_data_executable_count, 4, "review any new web-data FFI site");
     let jit_executable_count = csv
         .lines()
         .skip(1)

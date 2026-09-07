@@ -700,6 +700,12 @@ impl TypeChecker {
             },
         );
 
+        for (name, n) in crate::interpreter::native_functions::web_data::BUILTINS {
+            self.functions.insert(
+                name.to_string(),
+                FunctionSignature { param_types: vec![None; *n], return_type: None },
+            );
+        }
         // JSON functions
         self.functions.insert(
             "parse_json".to_string(),

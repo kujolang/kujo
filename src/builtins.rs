@@ -624,7 +624,7 @@ pub fn to_json_pretty(value: &Value) -> Result<String, String> {
 }
 
 /// Convert serde_json::Value to Kujo Value
-fn json_to_kujo_value(json: serde_json::Value) -> Value {
+pub(crate) fn json_to_kujo_value(json: serde_json::Value) -> Value {
     match json {
         serde_json::Value::Null => Value::Null, // null -> Null
         serde_json::Value::Bool(b) => Value::Bool(b),
@@ -660,7 +660,7 @@ fn json_to_kujo_value(json: serde_json::Value) -> Value {
 }
 
 /// Convert Kujo Value to serde_json::Value
-fn kujo_value_to_json(value: &Value) -> Result<serde_json::Value, String> {
+pub(crate) fn kujo_value_to_json(value: &Value) -> Result<serde_json::Value, String> {
     kujo_value_to_json_with_depth(value, 0)
 }
 
@@ -730,7 +730,10 @@ fn kujo_value_to_json_with_depth(value: &Value, depth: usize) -> Result<serde_js
     }
 }
 
-fn validate_json_nesting_depth(root: &serde_json::Value, max_depth: usize) -> Result<(), String> {
+pub(crate) fn validate_json_nesting_depth(
+    root: &serde_json::Value,
+    max_depth: usize,
+) -> Result<(), String> {
     let mut stack: Vec<(&serde_json::Value, usize)> = vec![(root, 0)];
 
     while let Some((value, depth)) = stack.pop() {

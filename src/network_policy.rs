@@ -239,7 +239,9 @@ pub fn build_policy_http_client(
         builder = builder.redirect(reqwest::redirect::Policy::none());
     }
     if pin_dns || force_deny_private {
-        builder = builder.resolve_to_addrs(&host, &addresses);
+        // A proxy can resolve the hostname again and bypass the pinned answer set.
+        // Explicit pinning/strict destination policy therefore requires direct transport.
+        builder = builder.no_proxy().resolve_to_addrs(&host, &addresses);
     }
     builder.build().map_err(|error| format!("Failed to create HTTP client: {}", error))
 }

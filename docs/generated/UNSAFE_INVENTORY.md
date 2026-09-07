@@ -1,12 +1,12 @@
 # Unsafe Inventory
 
-Generated: 2026-09-06
+Generated: 2026-09-07
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
 
-- Total matches: 82
-- Executable matches: 62
+- Total matches: 86
+- Executable matches: 66
 - Non-executable matches: 20
 - Unknown classifications: 0
 
@@ -25,6 +25,10 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/interpreter/native_functions/system.rs | 650 | executable | src_executable_other |     let handle = unsafe { |
 | src/interpreter/native_functions/system.rs | 663 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
 | src/interpreter/native_functions/tls.rs | 691 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
+| src/interpreter/native_functions/web_data.rs | 372 | executable | src_executable_other |         let result = unsafe { libc::renamex_np(src.as_ptr(), dst.as_ptr(), libc::RENAME_EXCL) }; |
+| src/interpreter/native_functions/web_data.rs | 374 | executable | src_executable_other |         let result = unsafe { |
+| src/interpreter/native_functions/web_data.rs | 793 | executable | src_executable_other |                     let mut usage: libc::rusage = unsafe { std::mem::zeroed() }; |
+| src/interpreter/native_functions/web_data.rs | 794 | executable | src_executable_other |                     if unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut usage) } != 0 { |
 | src/jit.rs | 61 | executable | jit_executable |     let vm_ctx = unsafe { &mut *ctx }; |
 | src/jit.rs | 78 | executable | jit_executable |         let stack = unsafe { &mut *vm_ctx.stack_ptr }; |
 | src/jit.rs | 89 | executable | jit_executable |     unsafe { std::mem::transmute(code_ptr) } |
