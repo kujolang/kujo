@@ -22,7 +22,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/interpreter/native_functions/confined_write_windows.rs | 134 | executable | src_executable_other |     let result = unsafe { |
 | src/interpreter/native_functions/confined_write_windows.rs | 153 | executable | src_executable_other |     status_result(unsafe { |
 | src/interpreter/native_functions/crypto.rs | 2151 | non_executable | src_comment_or_string |         fs::write(&invalid_path, b""unsafe \r\n"").unwrap(); |
-| src/interpreter/native_functions/filesystem.rs | 2268 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
+| src/interpreter/native_functions/filesystem.rs | 2288 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
 | src/interpreter/native_functions/io.rs | 759 | non_executable | src_comment_or_string |                                     ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"", |
 | src/interpreter/native_functions/io.rs | 1571 | non_executable | src_comment_or_string |             matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory"")) |
 | src/interpreter/native_functions/system.rs | 90 | executable | src_executable_other |         unsafe { |

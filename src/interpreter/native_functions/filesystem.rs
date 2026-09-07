@@ -2150,6 +2150,8 @@ mod beneath_tests {
                 fs::write(outside.path().join("child/result"), b"sentinel").unwrap();
                 // The hook runs synchronously at the exact vulnerable boundary;
                 // there is no scheduling-dependent sleep or probabilistic race.
+                let mut attempted = false;
+                let mut moved = false;
                 write_beneath_with_hook(
                     root.path().to_str().unwrap(),
                     "parent/child/result",
@@ -2157,16 +2159,34 @@ mod beneath_tests {
                     true,
                     |point| {
                         if point == stage {
-                            fs::rename(root.path().join(ancestor), root.path().join("held"))
-                                .unwrap();
-                            symlink(outside.path(), root.path().join(ancestor)).unwrap();
+                            attempted = true;
+                            match fs::rename(root.path().join(ancestor), root.path().join("held")) {
+                                Ok(()) => {
+                                    symlink(outside.path(), root.path().join(ancestor)).unwrap();
+                                    moved = true;
+                                }
+                                // NT forbids renaming directories containing open
+                                // handles (FILE_RENAME_INFORMATION, rename rules).
+                                // This is kernel prevention of the attempted attack;
+                                // still require successful confined output below.
+                                #[cfg(windows)]
+                                Err(error) if error.raw_os_error() == Some(5) => (),
+                                Err(error) => panic!("ancestor mutation failed: {error}"),
+                            }
                         }
                     },
                 )
                 .unwrap();
+                assert!(attempted, "mutation hook must execute");
                 assert_eq!(fs::read(outside.path().join("result")).unwrap(), b"sentinel");
                 assert_eq!(fs::read(outside.path().join("child/result")).unwrap(), b"sentinel");
-                let held = if ancestor == "parent" { "held/child/result" } else { "held/result" };
+                let held = if !moved {
+                    "parent/child/result"
+                } else if ancestor == "parent" {
+                    "held/child/result"
+                } else {
+                    "held/result"
+                };
                 assert_eq!(fs::read(root.path().join(held)).unwrap(), b"inside");
             }
         }
