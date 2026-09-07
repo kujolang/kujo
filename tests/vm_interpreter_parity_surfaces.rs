@@ -2191,3 +2191,30 @@ fn immutable_loop_declarations_preserve_function_jit_eligibility() {
         "lexical declarations must not disable otherwise supported function JIT"
     );
 }
+
+#[test]
+fn vm_and_interpreter_unwind_loop_scopes_after_exceptions() {
+    assert_interpreter_and_vm_bool(
+        r#"
+        let value := 99
+        mut caught := 0
+        for item in [1, 2] {
+            try {
+                while true {
+                    let value := item
+                    if true { throw("boom") }
+                }
+            } except err { caught = caught + 1 }
+        }
+        func fail() { if true { throw("nested") } }
+        try {
+            for item in [3, 4] {
+                let value := item
+                fail()
+            }
+        } except err { caught = caught + 1 }
+        exception_scopes_ok := value == 99 && caught == 3
+        "#,
+        "exception_scopes_ok",
+    );
+}

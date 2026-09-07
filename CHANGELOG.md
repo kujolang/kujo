@@ -13,7 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   without replacement flags; preserve UTF-16 paths and reject embedded NULs.
 
 - Initialize fresh VM loop-local `let` and `const` declarations without weakening
-  immutable assignment checks; unwind lexical scopes on loop control flow and returns.
+  immutable assignment checks; unwind lexical scopes on loop control flow, returns
+  and exceptions.
+- Restore the binary-file fixture to ten complete passing cases instead of a
+  saved early VM failure; require missing reads to raise and overwrites to opt in.
 - Preserve immutable capture metadata and independent state in async map workers.
 - Move completed closure environments back to their owner and avoid registering
   builtins in workers whose complete environment is supplied by the caller.

@@ -6,5 +6,33 @@ Test 1: Basic binary file read/write
 
 Test 2: Base64 encoding/decoding
 ✓ Base64 round-trip successful for: Hello
-[KUJOVM001] [vm] Runtime Error: Duplicate declaration in the same scope: bytes_value
-  --> 0:0
+✓ Base64 round-trip successful for: Test123
+✓ Base64 round-trip successful for: Special chars: !@#$%
+✓ Base64 round-trip successful for: Unicode: 你好世界
+
+Test 3: Binary file with known size
+✓ Binary file size is correct: 3 bytes
+
+Test 4: Empty binary file handling
+✓ Empty binary file handled correctly
+
+Test 5: Larger binary data handling
+✓ Large binary data written and read correctly
+
+Test 6: Error handling for non-existent file
+  Attempted to read non-existent file
+  (Error handling verified - function didn't crash)
+
+Test 7: Base64 with special patterns
+✓ Special characters (newlines, tabs) handled correctly
+
+Test 8: Multiple file operations
+✓ Multiple binary files handled correctly
+
+Test 9: len() function with binary data
+✓ len() correctly reports binary data length
+
+Test 10: Overwriting existing binary file
+✓ Binary file overwrite successful
+
+=== Binary File Test Suite Complete ===

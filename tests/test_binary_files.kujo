@@ -104,8 +104,8 @@ print("Test 5: Larger binary data handling")
 let large_file := "/tmp/kujo_large_binary.bin"
 
 # Create larger data by repeating a pattern
-let chunk := "0123456789ABCDEF"
-let repeated := chunk + chunk + chunk + chunk + chunk  # 80 chars
+let binary_chunk := "0123456789ABCDEF"
+let repeated := binary_chunk + binary_chunk + binary_chunk + binary_chunk + binary_chunk  # 80 chars
 let large_bytes := decode_base64(encode_base64(repeated))
 
 result := write_binary_file(large_file, large_bytes, true)
@@ -127,10 +127,14 @@ print()
 # Test 6: Error handling - non-existent file
 print("Test 6: Error handling for non-existent file")
 let nonexistent := "/tmp/this_file_should_not_exist_kujo_binary_test_12345.bin"
-let read_result := read_binary_file(nonexistent)
+mut missing_read_failed := false
+try {
+    read_binary_file(nonexistent)
+} except err {
+    missing_read_failed = contains(err.message, "Cannot read file")
+}
+assert(missing_read_failed, "Missing binary input must raise a read error")
 
-# Check if it's an error (the result should be an error value)
-# In Kujo, errors are typically Error values, but we can check behavior
 print("  Attempted to read non-existent file")
 print("  (Error handling verified - function didn't crash)")
 print()
@@ -187,9 +191,9 @@ print()
 print("Test 9: len() function with binary data")
 let length_test_data := "12345"
 let length_bytes := decode_base64(encode_base64(length_test_data))
-let byte_length := len(length_bytes)
+let measured_byte_length := len(length_bytes)
 
-if byte_length == 5.0 {
+if measured_byte_length == 5.0 {
     print("✓ len() correctly reports binary data length")
 } else {
     print("✗ len() returned incorrect length")
@@ -203,8 +207,8 @@ let overwrite_file := "/tmp/kujo_overwrite_test.bin"
 let first_data := decode_base64(encode_base64("First"))
 let second_data := decode_base64(encode_base64("Second version - longer"))
 
-write_binary_file(overwrite_file, first_data)
-write_binary_file(overwrite_file, second_data)
+write_binary_file(overwrite_file, first_data, true)
+write_binary_file(overwrite_file, second_data, true)
 
 let final_content := encode_base64(read_binary_file(overwrite_file))
 let expected_final := encode_base64(second_data)
