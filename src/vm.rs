@@ -313,6 +313,9 @@ struct ExceptionHandlerFrame {
 
     /// Call frame depth when entering try block (for unwinding)
     frame_offset: usize,
+
+    /// Environment scope depth owned by the caller of this try block.
+    scope_depth: usize,
 }
 
 /// Snapshot of VM execution state for suspend/resume workflows.
@@ -518,6 +521,12 @@ impl VM {
                 }
             }
 
+            {
+                let mut globals = self.globals.lock().unwrap();
+                while globals.scopes.len() > handler.scope_depth {
+                    globals.pop_scope();
+                }
+            }
             self.stack.truncate(handler.stack_offset);
             self.stack.push(normalized_error);
             self.ip = handler.catch_ip;
@@ -5396,6 +5405,7 @@ impl VM {
                         catch_ip,
                         stack_offset: self.stack.len(),
                         frame_offset: self.call_frames.len(),
+                        scope_depth: self.globals.lock().unwrap().scopes.len(),
                     });
                 }
 
@@ -9113,8 +9123,12 @@ mod tests {
         vm.chunk = snapshot_chunk.clone();
         vm.upvalues =
             vec![Upvalue { value: Arc::new(Mutex::new(Value::Int(123))), is_closed: true }];
-        vm.exception_handlers =
-            vec![ExceptionHandlerFrame { catch_ip: 19, stack_offset: 2, frame_offset: 1 }];
+        vm.exception_handlers = vec![ExceptionHandlerFrame {
+            catch_ip: 19,
+            stack_offset: 2,
+            frame_offset: 1,
+            scope_depth: 1,
+        }];
         vm.function_call_stack = vec!["outer".to_string(), "inner".to_string()];
         vm.function_call_counts.insert("hot_fn".to_string(), 42);
         vm.recursion_depth = 3;
