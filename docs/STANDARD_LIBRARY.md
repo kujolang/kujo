@@ -561,3 +561,13 @@ They raise inspectable runtime errors on invalid input or bounds violations.
 Buffered `http_request` additionally returns `header_values`, an object of header
 name → array of values. Existing `headers` and response behavior are unchanged.
 The explicit APIs above do not raise the default network or file buffering limits.
+
+### Regular-expression reuse
+
+The string regex helpers share a process-local LRU containing at most eight
+compiled patterns (including invalid-pattern results). Only pattern keys up to
+4,096 UTF-8 bytes are retained; larger patterns execute uncached. The full pattern,
+including inline flags, is the identity. Inputs and replacements are never cached.
+Compilation and matching occur outside the cache lock. The regex engine's existing
+compiled-program limits are unchanged; caching does not weaken validation or alter
+invalid-pattern return contracts.

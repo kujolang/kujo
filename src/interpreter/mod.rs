@@ -397,8 +397,14 @@ impl Interpreter {
     }
 
     pub fn with_capability_policy(capability_policy: RuntimeCapabilityPolicy) -> Self {
-        let mut interpreter = Interpreter {
-            env: Environment::default(),
+        let mut interpreter = Self::with_environment(capability_policy, Environment::default());
+        interpreter.register_builtins();
+        interpreter
+    }
+
+    fn with_environment(capability_policy: RuntimeCapabilityPolicy, env: Environment) -> Self {
+        Interpreter {
+            env,
             return_value: None,
             control_flow: ControlFlow::None,
             function_depth: 0,
@@ -411,12 +417,7 @@ impl Interpreter {
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
             capability_policy,
             vm_globals: None,
-        };
-
-        // Register built-in functions and constants
-        interpreter.register_builtins();
-
-        interpreter
+        }
     }
 
     pub fn capability_policy(&self) -> &RuntimeCapabilityPolicy {
@@ -2069,8 +2070,7 @@ impl Interpreter {
                 let (tx, rx) = tokio::sync::oneshot::channel();
                 AsyncRuntime::spawn_task(async move {
                     let mut async_interpreter =
-                        Interpreter::with_capability_policy(capability_policy);
-                    async_interpreter.env = base_env;
+                        Interpreter::with_environment(capability_policy, base_env);
                     async_interpreter.vm_globals = vm_globals;
                     async_interpreter.env.push_scope();
                     for (index, param) in params.iter().enumerate() {
@@ -2164,10 +2164,7 @@ impl Interpreter {
 
                     // Update the captured environment with the modified state
                     *closure_env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                        self.env.clone();
-
-                    // Restore the saved environment
-                    self.env = saved_env;
+                        std::mem::replace(&mut self.env, saved_env);
 
                     // Pop from call stack
                     self.call_stack.pop();
@@ -2242,17 +2239,15 @@ impl Interpreter {
                 params.len()
             ));
         }
-        let mut interpreter = Interpreter::with_capability_policy(capability_policy);
-        interpreter.env = base_env;
-        if let Some(env_ref) = captured_env {
-            let captured = env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
-            for scope in captured.scopes {
-                interpreter.env.push_scope();
-                for (name, value) in scope {
-                    interpreter.env.define(name, value);
-                }
-            }
-        }
+        // A closure already captures its complete lexical environment. Keep its
+        // binding metadata and snapshot isolation instead of flattening copies
+        // into the caller and accidentally making immutable bindings mutable.
+        let environment = if let Some(env_ref) = captured_env {
+            env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
+        } else {
+            base_env
+        };
+        let mut interpreter = Interpreter::with_environment(capability_policy, environment);
         interpreter.env.push_scope();
         interpreter.env.define(params[0].clone(), arg);
         if let Err(error) = interpreter.with_function_context("<parallel async mapper>", |interp| {
@@ -2932,8 +2927,7 @@ impl Interpreter {
 
                         self.env.pop_scope();
                         *closure_env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                            self.env.clone();
-                        self.env = saved_env;
+                            std::mem::replace(&mut self.env, saved_env);
 
                         result
                     } else {
@@ -5736,8 +5730,7 @@ impl Interpreter {
                             *closure_env_ref
                                 .lock()
                                 .unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                                self.env.clone();
-                            self.env = saved_env;
+                                std::mem::replace(&mut self.env, saved_env);
                             self.call_stack.pop();
 
                             result
@@ -5999,8 +5992,7 @@ impl Interpreter {
                                 *closure_env_ref
                                     .lock()
                                     .unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                                    self.env.clone();
-                                self.env = saved_env;
+                                    std::mem::replace(&mut self.env, saved_env);
                                 self.call_stack.pop();
 
                                 return result;

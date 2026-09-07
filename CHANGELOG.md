@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Initialize fresh VM loop-local `let` and `const` declarations without weakening
+  immutable assignment checks; unwind lexical scopes on loop control flow and returns.
+- Preserve immutable capture metadata and independent state in async map workers.
+- Move completed closure environments back to their owner and avoid registering
+  builtins in workers whose complete environment is supplied by the caller.
+- Reuse immutable compiled regex programs through a bounded eight-entry cache;
+  matching, replacement, inline flags and invalid-pattern results are unchanged.
+
 - Harden explicit DNS pinning and deny-private HTTP policy by disabling ambient
   proxies for those clients; proxies must not re-resolve a pinned destination.
 

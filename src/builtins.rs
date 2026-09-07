@@ -1455,14 +1455,47 @@ pub fn path_exists(path_str: &str) -> bool {
     Path::new(path_str).exists()
 }
 
-/// Regular expression functions
-/// Check if string matches regex pattern
-/// Infrastructure for regex.match() builtin
+// Patterns are immutable and include inline flags, so the complete pattern is the
+// cache identity. Bound retained programs and keys; large patterns still compile
+// normally without retention. No input text or replacement strings are cached.
+const REGEX_CACHE_CAPACITY: usize = 8;
+const REGEX_CACHE_MAX_KEY_BYTES: usize = 4096;
+type RegexCache = std::collections::VecDeque<(String, Option<Arc<Regex>>)>;
+static REGEX_CACHE: std::sync::OnceLock<Mutex<RegexCache>> = std::sync::OnceLock::new();
+
+fn cached_regex(pattern: &str) -> Option<Arc<Regex>> {
+    if pattern.len() > REGEX_CACHE_MAX_KEY_BYTES {
+        return Regex::new(pattern).ok().map(Arc::new);
+    }
+    let cache = REGEX_CACHE.get_or_init(|| Mutex::new(RegexCache::new()));
+    {
+        let mut entries = cache.lock().unwrap_or_else(|error| error.into_inner());
+        if let Some(index) = entries.iter().position(|(key, _)| key == pattern) {
+            let entry = entries.remove(index).expect("located cache entry");
+            let result = entry.1.clone();
+            entries.push_back(entry);
+            return result;
+        }
+    }
+    // Compilation and matching never hold the cache lock.
+    let compiled = Regex::new(pattern).ok().map(Arc::new);
+    let mut entries = cache.lock().unwrap_or_else(|error| error.into_inner());
+    if let Some((_, existing)) = entries.iter().find(|(key, _)| key == pattern) {
+        return existing.clone();
+    }
+    if entries.len() == REGEX_CACHE_CAPACITY {
+        entries.pop_front();
+    }
+    entries.push_back((pattern.to_string(), compiled.clone()));
+    compiled
+}
+
+/// Check if string matches regex pattern.
 #[allow(dead_code)]
 pub fn regex_match(text: &str, pattern: &str) -> bool {
-    match Regex::new(pattern) {
-        Ok(re) => re.is_match(text),
-        Err(_) => false, // Invalid regex returns false
+    match cached_regex(pattern) {
+        Some(re) => re.is_match(text),
+        None => false, // Invalid regex returns false
     }
 }
 
@@ -1470,9 +1503,9 @@ pub fn regex_match(text: &str, pattern: &str) -> bool {
 /// Infrastructure for regex.findAll() builtin
 #[allow(dead_code)]
 pub fn regex_find_all(text: &str, pattern: &str) -> Vec<String> {
-    match Regex::new(pattern) {
-        Ok(re) => re.find_iter(text).map(|m| m.as_str().to_string()).collect(),
-        Err(_) => vec![], // Invalid regex returns empty array
+    match cached_regex(pattern) {
+        Some(re) => re.find_iter(text).map(|m| m.as_str().to_string()).collect(),
+        None => vec![], // Invalid regex returns empty array
     }
 }
 
@@ -1480,9 +1513,9 @@ pub fn regex_find_all(text: &str, pattern: &str) -> Vec<String> {
 /// Infrastructure for regex.replace() builtin
 #[allow(dead_code)]
 pub fn regex_replace(text: &str, pattern: &str, replacement: &str) -> String {
-    match Regex::new(pattern) {
-        Ok(re) => re.replace_all(text, replacement).to_string(),
-        Err(_) => text.to_string(), // Invalid regex returns original text
+    match cached_regex(pattern) {
+        Some(re) => re.replace_all(text, replacement).to_string(),
+        None => text.to_string(), // Invalid regex returns original text
     }
 }
 
@@ -1490,9 +1523,9 @@ pub fn regex_replace(text: &str, pattern: &str, replacement: &str) -> String {
 /// Infrastructure for regex.split() builtin
 #[allow(dead_code)]
 pub fn regex_split(text: &str, pattern: &str) -> Vec<String> {
-    match Regex::new(pattern) {
-        Ok(re) => re.split(text).map(|s| s.to_string()).collect(),
-        Err(_) => vec![text.to_string()], // Invalid regex returns original text as single element
+    match cached_regex(pattern) {
+        Some(re) => re.split(text).map(|s| s.to_string()).collect(),
+        None => vec![text.to_string()], // Invalid regex returns original text as single element
     }
 }
 
@@ -2956,5 +2989,47 @@ mod tests {
         let post_epoch = UNIX_EPOCH + Duration::from_secs(42);
         let duration = safe_duration_since_unix_epoch(post_epoch);
         assert_eq!(duration, Duration::from_secs(42));
+    }
+}
+
+#[cfg(test)]
+mod regex_cache_regressions {
+    use super::*;
+
+    #[test]
+    fn cached_patterns_preserve_inputs_flags_replacements_and_invalid_behavior() {
+        for _ in 0..3 {
+            assert!(regex_match("CAFÉ", "(?i)café"));
+            assert!(!regex_match("CAFÉ", "café"));
+            assert_eq!(regex_find_all("a12 b34", "[0-9]+"), vec!["12", "34"]);
+            assert_eq!(regex_replace("a1", "([0-9])", "$1$1"), "a11");
+            assert_eq!(regex_replace("b2", "([0-9])", "X"), "bX");
+            assert_eq!(regex_split("a,b", ","), vec!["a", "b"]);
+            assert!(!regex_match("a", "["));
+            assert!(regex_find_all("a", "[").is_empty());
+            assert_eq!(regex_replace("a", "[", "X"), "a");
+            assert_eq!(regex_split("a", "["), vec!["a"]);
+        }
+        let large = "a".repeat(REGEX_CACHE_MAX_KEY_BYTES + 1);
+        assert!(regex_match(&large, &large));
+        let entries = REGEX_CACHE.get().unwrap().lock().unwrap();
+        assert!(entries.len() <= REGEX_CACHE_CAPACITY);
+        assert!(entries.iter().all(|(pattern, _)| pattern.len() <= REGEX_CACHE_MAX_KEY_BYTES));
+    }
+
+    #[test]
+    fn concurrent_pattern_churn_preserves_results() {
+        std::thread::scope(|scope| {
+            for worker in 0..4 {
+                scope.spawn(move || {
+                    for index in 0..64 {
+                        let text = format!("worker-{worker}-{index}");
+                        let pattern = format!("^{text}$");
+                        assert!(regex_match(&text, &pattern));
+                        assert!(!regex_match("different", &pattern));
+                    }
+                });
+            }
+        });
     }
 }

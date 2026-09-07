@@ -5740,3 +5740,50 @@ fn test_par_each_scalability() {
     // Verify the operation completed successfully
     assert!(matches!(interp.env.get("verified"), Some(Value::Bool(true))));
 }
+
+#[test]
+fn parallel_async_mapper_preserves_captured_immutable_binding() {
+    let source = r#"
+        func make_mapper() {
+            let protected := 1
+            async func mapper(value) { protected = 2; return value }
+            return mapper
+        }
+        promise_wait(parallel_map([1, 2], make_mapper(), 2))
+    "#;
+    let tokens = tokenize(source).unwrap();
+    let program = Parser::new(tokens).parse();
+    let mut interpreter = Interpreter::new();
+    interpreter.eval_stmts(&program);
+    let message = match interpreter.return_value {
+        Some(Value::Error(message)) | Some(Value::ErrorObject { message, .. }) => message,
+        other => panic!("expected immutable capture rejection, got {other:?}"),
+    };
+    assert!(message.contains("Cannot reassign immutable let binding: protected"), "{message}");
+}
+
+#[test]
+fn parallel_async_mapper_keeps_worker_state_isolated() {
+    let source = r#"
+        func make_mapper() {
+            mut count := 0
+            async func mapper(value) { count = count + 1; return value + count }
+            return mapper
+        }
+        let result := promise_wait(parallel_map([10, 20, 30], make_mapper(), 3))
+    "#;
+    let tokens = tokenize(source).unwrap();
+    let program = Parser::new(tokens).parse();
+    let mut interpreter = Interpreter::new();
+    interpreter.eval_stmts(&program);
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    match interpreter.env.get("result") {
+        Some(Value::Array(values)) => {
+            assert_eq!(values.len(), 3);
+            for (value, expected) in values.iter().zip([11, 21, 31]) {
+                assert!(matches!(value, Value::Int(actual) if *actual == expected));
+            }
+        }
+        other => panic!("expected mapped array, got {other:?}"),
+    }
+}
