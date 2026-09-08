@@ -196,8 +196,7 @@ impl ModuleLoader {
 
     /// Creates a new module loader with default search paths.
     pub fn new() -> Self {
-        let mut search_paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
-        search_paths.extend(configured_module_search_paths());
+        let search_paths = initial_module_search_paths();
         let automatic_search_paths =
             automatic_kennel_package_search_paths(&current_working_directory());
         ModuleLoader {
@@ -508,6 +507,22 @@ impl ModuleLoader {
     }
 }
 
+/// Opt-in for installed tools: preserve cwd for I/O without importing its modules.
+/// Inherited by child Kujo processes launched by packaged script entry points.
+pub fn isolated_imports_enabled() -> bool {
+    std::env::var("KUJO_ISOLATED_IMPORTS").as_deref() == Ok("1")
+}
+
+pub fn initial_module_search_paths() -> Vec<PathBuf> {
+    let mut paths = if isolated_imports_enabled() {
+        Vec::new()
+    } else {
+        vec![PathBuf::from("."), PathBuf::from("./modules")]
+    };
+    paths.extend(configured_module_search_paths());
+    paths
+}
+
 /// Returns additional module roots configured for the current process.
 ///
 /// The path-list environment variable lets an installed Kujo executable use
@@ -530,6 +545,9 @@ fn current_working_directory() -> PathBuf {
 /// keeps package discovery project-scoped and prevents stale or unlocked source
 /// trees from shadowing a resolved dependency.
 pub fn automatic_kennel_package_search_paths(start: &Path) -> Vec<PathBuf> {
+    if isolated_imports_enabled() {
+        return Vec::new();
+    }
     let Some(project_root) = nearest_kennel_project_root(start) else {
         return Vec::new();
     };

@@ -177,6 +177,10 @@ enum Commands {
         /// Path to the .kujo file
         file: PathBuf,
 
+        /// Resolve imports only from entry-file roots and KUJO_MODULE_PATH, not the caller project
+        #[arg(long)]
+        isolated_imports: bool,
+
         /// Use tree-walking interpreter instead of bytecode VM (default: VM)
         #[arg(long)]
         interpreter: bool,
@@ -1292,6 +1296,7 @@ async fn async_main() {
         }
         Commands::Run {
             file,
+            isolated_imports,
             interpreter,
             jit,
             scheduler_timeout_ms,
@@ -1300,6 +1305,16 @@ async fn async_main() {
             capabilities,
             script_args,
         } => {
+            if isolated_imports {
+                std::env::set_var("KUJO_ISOLATED_IMPORTS", "1");
+            }
+            if module::isolated_imports_enabled() {
+                // Preserve exact argv, including no arguments and unit separators.
+                std::env::set_var(
+                    "KUJO_SCRIPT_ARGS_JSON",
+                    serde_json::to_string(&script_args).unwrap(),
+                );
+            }
             let scheduler_timeout =
                 match cooperative_scheduler_timeout(scheduler_timeout_ms, scheduler_no_timeout) {
                     Ok(timeout) => timeout,
