@@ -63,8 +63,7 @@ impl TypeChecker {
             errors: Vec::new(),
             recursion_depth: 0,
             module_search_paths: {
-                let mut paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
-                paths.extend(crate::module::configured_module_search_paths());
+                let mut paths = crate::module::initial_module_search_paths();
                 paths.extend(crate::module::automatic_kennel_package_search_paths(
                     &std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
                 ));

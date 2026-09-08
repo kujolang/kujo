@@ -293,3 +293,7 @@ installation attempts fail with original-package-manager guidance. A newer
 local version is preserved when resolving latest, even with downgrade opt-in.
 Explicit older targets require `--allow-downgrade` only when installing.
 See [runtime upgrade](RUNTIME_UPGRADE.md) for integrity and recovery limits.
+
+## Installed-tool import isolation (unreleased)
+
+`kujo run --isolated-imports FILE -- ARGS...` disables implicit `.`/`./modules` roots and automatic Kennel lockfile discovery. Imports use entry-file roots and explicit `KUJO_MODULE_PATH` roots; filesystem operations still use the caller's current directory. The mode propagates to child Kujo processes through `KUJO_ISOLATED_IMPORTS=1`. Isolated mode passes exact script arguments through a JSON array in `KUJO_SCRIPT_ARGS_JSON`, including empty argv. This does not restrict program permissions and is not a sandbox. Default runs retain existing import lookup behavior.
