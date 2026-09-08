@@ -1,11 +1,5 @@
 # CHANGELOG
 
-## Unreleased — installed-tool import isolation
-
-- Add `kujo run --isolated-imports` and inherited `KUJO_ISOLATED_IMPORTS=1`: resolve from explicitly configured/entry roots without caller-directory or caller-lockfile discovery. The interpreter, VM module loader and type checker share this policy.
-- Preserve exact script arguments in isolated mode, including empty argv and separator characters. Existing default import behavior is unchanged.
-- Required by the upcoming Kennel global-tool installer. This feature has not yet shipped in a runtime release.
-
 All notable changes to Kujo will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
@@ -42,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   semantics. This avoids copying unrelated bytecode globals on every call.
 
 ### Added
+
+- Add opt-in `kujo run --isolated-imports` and inherited `KUJO_ISOLATED_IMPORTS=1` for installed tools. Configured and entry roots resolve imports without caller-directory or caller-lockfile discovery in the VM, interpreter and type checker. Preserve exact arguments, including empty arguments and separator characters. Default import behavior is unchanged. Required by the upcoming Kennel global-tool installer; not yet released.
 
 - Add bounded HTML tokenizer, URL components/normalization, text decoding, streaming
   XML projection, JSON/JSONL artifact operations, regular-file digests, private

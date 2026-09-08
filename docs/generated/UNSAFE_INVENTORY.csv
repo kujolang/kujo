@@ -68,7 +68,7 @@ path,line,kind,classification,text
 "src/jit.rs",8180,"executable","jit_executable","    unsafe extern ""C"" fn dummy_compiled_fn(_ctx: *mut VMContext) -> i64 {"
 "src/jit.rs",8190,"executable","jit_executable","    unsafe extern ""C"" fn dummy_compiled_fn_with_arg(_ctx: *mut VMContext, arg: i64) -> i64 {"
 "src/jit.rs",9254,"executable","jit_executable","        unsafe {"
-"src/module.rs",830,"non_executable","src_comment_or_string","            ""expected unsafe traversal error, got: {}"","
+"src/module.rs",848,"non_executable","src_comment_or_string","            ""expected unsafe traversal error, got: {}"","
 "src/upgrade.rs",266,"non_executable","src_comment_or_string","            return Err(""unsafe ZIP entry"".into());"
 "src/upgrade.rs",285,"non_executable","src_comment_or_string","                return Err(""unsafe, duplicate, or oversized TAR entry"".into());"
 "src/upgrade.rs",501,"non_executable","src_comment_or_string","        return Err(""unsafe upgrade lock path"".into());"
