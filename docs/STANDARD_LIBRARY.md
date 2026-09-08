@@ -154,7 +154,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `trim` | `trim(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := trim(...)` |
 | `trim_start` | `trim_start(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := trim_start(...)` |
 | `trim_end` | `trim_end(value)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := trim_end(...)` |
-| `contains` | `contains(value, needle)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := contains(...)` |
+| `contains` | `contains(value, needle)` | exact 2 | string: int 0/1; array/dictionary: bool | Strings and dictionaries require a string needle; arrays accept any item. Value::Error on invalid args/types. Static inference follows the first argument. Use the global function; string method syntax is unsupported at runtime. | `none` | `absent := contains("email", "x") == 0` |
 | `replace_str` | `replace_str(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := replace_str(...)` |
 | `replace` | `replace(value, from, to)` | exact 3 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := replace(...)` |
 | `split` | `split(value, delimiter)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := split(...)` |

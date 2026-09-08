@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Infer builtin string `contains` as integer 0/1 and array/dictionary membership
+  as Boolean, without overriding user or imported
+  function signatures. Runtime values are unchanged.
+
 - Atomically reject existing Windows publication directories using MoveFileExW
   without replacement flags; preserve UTF-16 paths and reject embedded NULs.
 
