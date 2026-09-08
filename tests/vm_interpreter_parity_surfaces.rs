@@ -90,6 +90,34 @@ fn unique_module_name() -> String {
 }
 
 #[test]
+fn vm_and_interpreter_preserve_contains_result_types() {
+    let script = r#"
+        let string_hit := contains("email", "mail")
+        let string_miss := contains("email", "x")
+        let array_hit := contains([1, 2], 1)
+        let dict_hit := contains({"key": 1}, "key")
+    "#;
+    let interpreter = run_interpreter(script);
+    assert!(
+        interpreter.return_value.is_none(),
+        "unexpected interpreter result: {:?}",
+        interpreter.return_value
+    );
+    let vm_env = vm_env_with_builtins();
+    run_vm(script, vm_env.clone()).expect("contains script should execute in the VM");
+    let globals = vm_env.lock().unwrap();
+    for name in ["string_hit", "string_miss", "array_hit", "dict_hit"] {
+        for value in [interpreter.env.get(name), globals.get(name)] {
+            match name {
+                "string_hit" => assert!(matches!(value, Some(Value::Int(1)))),
+                "string_miss" => assert!(matches!(value, Some(Value::Int(0)))),
+                _ => assert!(matches!(value, Some(Value::Bool(true)))),
+            }
+        }
+    }
+}
+
+#[test]
 fn vm_and_interpreter_match_struct_method_behavior_contract() {
     let script = r#"
         struct Vec2 {

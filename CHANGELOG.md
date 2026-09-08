@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Infer builtin string `contains` as integer 0/1 and array/dictionary membership
+  as Boolean, without overriding user or imported
+  function signatures. Runtime values are unchanged.
+
 - Atomically reject existing Windows publication directories using MoveFileExW
   without replacement flags; preserve UTF-16 paths and reject embedded NULs.
 
@@ -36,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   semantics. This avoids copying unrelated bytecode globals on every call.
 
 ### Added
+
+- Add opt-in `kujo run --isolated-imports` and inherited `KUJO_ISOLATED_IMPORTS=1` for installed tools. Configured and entry roots resolve imports without caller-directory or caller-lockfile discovery in the VM, interpreter and type checker. Preserve exact arguments, including empty arguments and separator characters. Default import behavior is unchanged. Required by the upcoming Kennel global-tool installer; not yet released.
 
 - Add bounded HTML tokenizer, URL components/normalization, text decoding, streaming
   XML projection, JSON/JSONL artifact operations, regular-file digests, private

@@ -388,6 +388,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `read_binary_file_beneath` | preview | `blob := read_binary_file_beneath("trusted", "docs/file.pdf", 5000000)` |
 | `write_file` | stable | `write_file("notes.txt", "hello")` |
 | `write_file_atomic` | stable | `write_file_atomic("notes.txt", "hello", true)` |
+| `write_file_atomic_beneath` | preview (unreleased) | `write_file_atomic_beneath(".", "reports/check.json", "{}", true)` |
 | `append_file` | stable | `append_file("notes.txt", "more")` |
 | `file_exists` | stable | `ok := file_exists("notes.txt")` |
 | `read_lines` | stable | `rows := read_lines("notes.txt")` |
@@ -443,6 +444,14 @@ contents of a regular file after its handle has been opened.
 | `os_environ` | preview | `vars := os_environ()` |
 
 Write-file overwrite contract:
+
+`write_file_atomic_beneath` is an unreleased source API for atomic publication
+under a trusted root. It accepts text or bytes, creates missing parent directories,
+requires `filesystem-write`, and defaults to refusing an existing destination.
+Invalid relative paths and symlink/reparse parents fail closed. See
+[the complete contract](STANDARD_LIBRARY.md#confined-atomic-publication) and
+[security posture](NATIVE_API_SECURITY_POSTURE.md) for limits and concurrent
+filesystem mutation behavior.
 
 - `write_file(path, content)` errors if `path` already exists.
 - To replace an existing file, pass options with overwrite enabled:

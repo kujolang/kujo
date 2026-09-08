@@ -35,6 +35,8 @@ pub struct TypeChecker {
     variables: HashMap<String, Option<TypeAnnotation>>,
     /// Function signatures mapping function names to their types
     functions: HashMap<String, FunctionSignature>,
+    /// The polymorphic builtin must not override a user/imported function.
+    builtin_contains_active: bool,
     /// Stack of scopes for nested blocks
     scope_stack: Vec<HashMap<String, Option<TypeAnnotation>>>,
     /// Current function return type (for checking return statements)
@@ -58,13 +60,13 @@ impl TypeChecker {
         let mut checker = TypeChecker {
             variables: HashMap::new(),
             functions: HashMap::new(),
+            builtin_contains_active: true,
             scope_stack: Vec::new(),
             current_function_return: None,
             errors: Vec::new(),
             recursion_depth: 0,
             module_search_paths: {
-                let mut paths = vec![PathBuf::from("."), PathBuf::from("./modules")];
-                paths.extend(crate::module::configured_module_search_paths());
+                let mut paths = crate::module::initial_module_search_paths();
                 paths.extend(crate::module::automatic_kennel_package_search_paths(
                     &std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
                 ));
@@ -231,8 +233,8 @@ impl TypeChecker {
         self.functions.insert(
             "contains".to_string(),
             FunctionSignature {
-                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
-                return_type: Some(TypeAnnotation::Bool),
+                param_types: vec![Some(TypeAnnotation::Any), Some(TypeAnnotation::Any)],
+                return_type: Some(TypeAnnotation::Any),
             },
         );
 
@@ -2465,6 +2467,9 @@ impl TypeChecker {
         signature: Option<FunctionSignature>,
         allow_callable_fallback: bool,
     ) {
+        if name == "contains" {
+            self.builtin_contains_active = false;
+        }
         // Imported Kujo values should be visible to the checker even when the
         // module export cannot be resolved statically. If we do know the
         // exported function signature, keep it precise so later calls type-check
@@ -2782,7 +2787,14 @@ impl TypeChecker {
     pub fn check(&mut self, stmts: &[Stmt]) -> Result<(), Vec<KujoError>> {
         // First pass: collect function signatures
         for stmt in stmts {
+            let stmt = match stmt {
+                Stmt::Export { stmt } => stmt.as_ref(),
+                other => other,
+            };
             if let Stmt::FuncDef { name, param_types, return_type, .. } = stmt {
+                if name == "contains" {
+                    self.builtin_contains_active = false;
+                }
                 self.functions.insert(
                     name.clone(),
                     FunctionSignature {
@@ -3247,6 +3259,12 @@ impl TypeChecker {
             Expr::Call { function, args } => {
                 // Look up function signature
                 if let Expr::Identifier(func_name) = &**function {
+                    if func_name == "contains"
+                        && self.builtin_contains_active
+                        && !self.variables.contains_key(func_name)
+                    {
+                        return self.infer_builtin_contains(args);
+                    }
                     // Clone the signature to avoid borrow conflicts
                     let sig = self.functions.get(func_name).cloned();
 
@@ -3618,6 +3636,42 @@ impl TypeChecker {
         }
     }
 
+    fn infer_builtin_contains(&mut self, args: &[Expr]) -> Option<TypeAnnotation> {
+        let types: Vec<_> = args.iter().map(|arg| self.infer_expr(arg)).collect();
+        if args.len() != 2 {
+            self.errors.push(KujoError::new(
+                ErrorKind::TypeError,
+                format!("Function 'contains' expects 2 arguments but got {}", args.len()),
+                SourceLocation::unknown(),
+            ));
+            return Some(TypeAnnotation::Any);
+        }
+        let (result, string_needle) = match types[0].as_ref() {
+            Some(TypeAnnotation::String) => (TypeAnnotation::Int, true),
+            Some(TypeAnnotation::Array(_)) => (TypeAnnotation::Bool, false),
+            Some(TypeAnnotation::Dict { .. }) => (TypeAnnotation::Bool, true),
+            None | Some(TypeAnnotation::Any) => return Some(TypeAnnotation::Any),
+            _ => {
+                self.errors.push(KujoError::new(
+                    ErrorKind::TypeError,
+                    "Function 'contains' first argument must be String, Array or Dict".to_string(),
+                    SourceLocation::unknown(),
+                ));
+                return Some(TypeAnnotation::Any);
+            }
+        };
+        if string_needle
+            && !matches!(types[1], None | Some(TypeAnnotation::Any | TypeAnnotation::String))
+        {
+            self.errors.push(KujoError::new(
+                ErrorKind::TypeError,
+                "Function 'contains' requires a String needle for String or Dict input".to_string(),
+                SourceLocation::unknown(),
+            ));
+        }
+        Some(result)
+    }
+
     fn infer_known_method_return_type(
         object_type: Option<&TypeAnnotation>,
         method: &str,
@@ -3663,6 +3717,66 @@ impl TypeChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn contains_inference_matches_each_runtime_receiver() {
+        let source = r#"
+            let text := contains("hello", "h")
+            let array := contains([1, 2], 1)
+            let dict := contains({"key": 1}, "key")
+        "#;
+        let mut parser = Parser::new(crate::lexer::tokenize(source).unwrap());
+        let statements = parser.parse();
+        let mut checker = TypeChecker::new();
+        assert!(checker.check(&statements).is_ok(), "{:?}", checker.errors);
+        assert_eq!(checker.variables.get("text"), Some(&Some(TypeAnnotation::Int)));
+        for name in ["array", "dict"] {
+            assert_eq!(checker.variables.get(name), Some(&Some(TypeAnnotation::Bool)));
+        }
+    }
+
+    #[test]
+    fn contains_inference_rejects_invalid_arity_and_types() {
+        for source in ["contains()", "contains(1, 2)", "contains(\"text\", 1)", "contains({}, 1)"] {
+            let mut parser = Parser::new(crate::lexer::tokenize(source).unwrap());
+            assert!(TypeChecker::new().check(&parser.parse()).is_err(), "{source}");
+        }
+    }
+
+    #[test]
+    fn contains_inference_preserves_user_and_imported_signatures() {
+        let source =
+            "func contains(value, needle) -> bool { return true }\nlet result := contains(1, 2)";
+        let mut parser = Parser::new(crate::lexer::tokenize(source).unwrap());
+        let mut checker = TypeChecker::new();
+        assert!(checker.check(&parser.parse()).is_ok(), "{:?}", checker.errors);
+        assert_eq!(checker.variables.get("result"), Some(&Some(TypeAnnotation::Bool)));
+        let exported_source = format!("export {source}");
+        let mut parser = Parser::new(crate::lexer::tokenize(&exported_source).unwrap());
+        let mut exported = TypeChecker::new();
+        assert!(exported.check(&parser.parse()).is_ok(), "{:?}", exported.errors);
+        assert_eq!(exported.variables.get("result"), Some(&Some(TypeAnnotation::Bool)));
+        let mut parser = Parser::new(
+            crate::lexer::tokenize("func invoke(contains) { contains(1, 2) }").unwrap(),
+        );
+        assert!(TypeChecker::new().check(&parser.parse()).is_ok());
+        let mut imported = TypeChecker::new();
+        imported.register_imported_symbol(
+            "contains",
+            Some(FunctionSignature {
+                param_types: vec![],
+                return_type: Some(TypeAnnotation::String),
+            }),
+            true,
+        );
+        assert_eq!(
+            imported.infer_expr(&Expr::Call {
+                function: Box::new(Expr::Identifier("contains".to_string())),
+                args: vec![],
+            }),
+            Some(TypeAnnotation::String)
+        );
+    }
 
     #[test]
     fn release_filesystem_builtins_and_gradual_any_are_warning_free() {
