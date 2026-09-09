@@ -224,7 +224,7 @@ cd ../..
 
 ## 7. Version Bump And Documentation Sync
 
-1. Set `[package].version` in `Cargo.toml`.
+1. Set `[package].version` in `Cargo.toml` and align `install.sh`'s default runtime version. Run `bash tests/install_release_manifest.sh` to verify the bootstrap default and explicit pin overrides.
 2. Create/complete the target release section in `CHANGELOG.md`.
 3. Keep public stable-release strings in `README.md`, `ROADMAP.md`, and core policy docs pinned to the latest published GitHub release. A Cargo version bump prepares the next release; it does not publish it.
 4. Re-run release-state guard:
@@ -232,6 +232,13 @@ cd ../..
 ```bash
 bash .github/scripts/check-release-state.sh
 ```
+
+After release artifacts and published-install checks pass, synchronize the
+canonical `install.sh` into `kujolang/kujolang.ai`'s `public/install.sh` and update
+its site-contract version expectation. Deploy and verify the public installer
+bytes and a fresh installation in a disposable prefix. Updating prose alone does
+not update the installer's pinned runtime. Preserve explicit release-manifest and
+environment overrides, and do not rewrite an existing release tag.
 
 ## 8. Tagging And Publication Order
 

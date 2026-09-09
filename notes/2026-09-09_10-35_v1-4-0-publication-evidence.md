@@ -61,3 +61,15 @@ The new installer/process operations are POSIX capabilities for Linux/macOS;
 they do not establish native Windows Kennel support. The user-installed local
 runtime and unrelated original checkout changes were preserved. Kennel's release
 and published-runtime workflow pins are the next separately requested phase.
+
+## Bootstrap follow-up
+
+Production review found stale defaults in the canonical ecosystem installer
+(v1.2.2) and its website copy (v1.1.0). Commit `7089ded` aligns the default with
+v1.4.0 and adds a release-manifest test against Cargo's version. Website commit
+`9c208a3` synchronizes the exact canonical script and its delivery contract.
+An isolated real `--package dispatch` installation downloaded and verified the
+published runtime, returned `kujo 1.4.0`, and passed the native upgrade check with
+`status=up_to_date`, `changed=false`. Explicit pins and hostile-manifest rejection
+tests passed. This changes the mutable installer on main; the released runtime
+tag and native assets remain untouched.
