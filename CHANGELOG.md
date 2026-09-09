@@ -7,9 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-09
+
+### Added
+
+- Support supervised services without a scheduler-wide deadline.
+- Add handle-relative atomic file publication with confined POSIX and Windows paths.
+
 - Add POSIX advisory file locks, ownership checks, atomic symlink publication and exact process replacement for Kujo-native package-manager installers and command launchers.
 
 ### Fixed
+
+- Create streaming AEAD outputs privately.
 
 - Unlink directory and dangling symlinks with `delete_file` while preserving their targets and continuing to reject actual directories.
 
@@ -45,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add opt-in `kujo run --isolated-imports` and inherited `KUJO_ISOLATED_IMPORTS=1` for installed tools. Configured and entry roots resolve imports without caller-directory or caller-lockfile discovery in the VM, interpreter and type checker. Preserve exact arguments, including empty arguments and separator characters. Default import behavior is unchanged. Required by the upcoming Kennel global-tool installer; not yet released.
+- Add opt-in `kujo run --isolated-imports` and inherited `KUJO_ISOLATED_IMPORTS=1` for installed tools. Configured and entry roots resolve imports without caller-directory or caller-lockfile discovery in the VM, interpreter and type checker. Preserve exact arguments, including empty arguments and separator characters. Default import behavior is unchanged. Supports the upcoming Kennel global-tool installer; Kennel publication is separate.
 
 - Add bounded HTML tokenizer, URL components/normalization, text decoding, streaming
   XML projection, JSON/JSONL artifact operations, regular-file digests, private
