@@ -5,6 +5,11 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 temp_root="$(mktemp -d "${TMPDIR:-/tmp}/kujo-installer-test.XXXXXX")"
 trap 'rm -rf "$temp_root"' EXIT
 
+# The public bootstrap must install the current package version by default.
+version="$(awk -F '"' '/^version = / { print $2; exit }' "$repo_root/Cargo.toml")"
+default_output="$(env -u KUJO_RELEASE_VERSION -u KUJO_ECOSYSTEM_REF bash "$repo_root/install.sh" --dry-run --prefix "$temp_root/default" --bin-dir "$temp_root/default-bin")"
+grep -F "would download and verify Kujo release v$version" <<<"$default_output" >/dev/null
+
 manifest="$temp_root/dispatch.refs"
 cat > "$manifest" <<'EOF'
 # Exact dependency closure for Dispatch.
