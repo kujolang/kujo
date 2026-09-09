@@ -593,3 +593,17 @@ held-directory identity, concurrent movement, cleanup, and durability limits.
 ```kujo
 write_file_atomic_beneath(".", "reports/check.json", "{}", true)
 ```
+
+## POSIX package-manager mechanisms (unreleased)
+
+| Builtin | Signature | Arity | Result | Contract | Capability | Example |
+| --- | --- | --- | --- | --- | --- | --- |
+| `file_lock` | `file_lock(path, timeout_ms)` | exact 2 | int | POSIX advisory exclusive lock, no-follow user-owned regular file, no group/world write, 0–600000 ms, at most 64 active handles per process. | `filesystem-write` | `h := file_lock(".lock", 30000)` |
+| `file_unlock` | `file_unlock(handle)` | exact 1 | bool | Release known process-local lock handle; unknown handles fail. | `filesystem-write` | `file_unlock(h)` |
+| `symlink_atomic` | `symlink_atomic(target, destination)` | exact 2 | bool | POSIX atomic link publication, trusted parent required, refuses observed non-symlink destination. | `filesystem-write`, `filesystem-delete` | `symlink_atomic("generation", "./current")` |
+| `path_owned` | `path_owned(path)` | exact 1 | bool | POSIX non-following metadata matches effective uid; symlinks return false. | `filesystem-read` | `ok := path_owned("private")` |
+| `exec_process` | `exec_process(argv, options)` | exact 2 | does not return on success | POSIX process replacement, exact argv, inherited cwd/stdio, explicit env/env_deny, no shell parsing, 65536 arguments/8 MiB cap. | `process-exec` | `exec_process(["tool", ""], {})` |
+
+All five share the native implementation between VM and interpreter and fail
+explicitly on unsupported platforms. See STANDARD_LIBRARY_REFERENCE.md for
+lifecycle, environment and concurrency details.

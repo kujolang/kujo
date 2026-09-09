@@ -406,3 +406,27 @@ cap-std Windows rename/link/remove helpers that reconstruct ambient paths.
 ABI reference: [Microsoft FILE_RENAME_INFORMATION](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_rename_information)
 and [NtCreateFile](https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntcreatefile).
 Windows alternate data stream paths are rejected.
+
+### Native POSIX publication and process replacement (unreleased)
+
+`file_lock` uses a close-on-exec, no-follow descriptor and checks regular-file
+kind, effective ownership and writable mode before advisory locking. Handles are
+process-local and capped at 64; callers must unlock in failure paths and leave
+the coordination file in place. OS exit/replacement releases locks. This is
+coordination among cooperating processes, not protection from a malicious
+same-user process that can replace the lock file or parent directory.
+
+`symlink_atomic` uses a private sibling staging directory and atomic rename. It
+requires filesystem-write/delete and a trusted, caller-controlled destination
+parent; it is not a descriptor-confined filesystem API. The non-symlink refusal
+is an observation, not a guarantee against concurrent malicious parent writes.
+Kennel additionally rejects linked/unowned/writable installation directories and
+serializes mutation. `path_owned` is a non-following ownership probe, not an
+immutable authorization grant.
+
+`exec_process` is gated by process-exec, validates bounded explicit argv and a
+closed options schema, then replaces the process with inherited terminal streams
+and cwd. Environment overrides/removals do not create a sandbox. Untrusted code
+must not receive process-exec unless arbitrary host process invocation is
+intended. POSIX-only APIs fail closed on Windows rather than emulating unsafe
+shell operations.

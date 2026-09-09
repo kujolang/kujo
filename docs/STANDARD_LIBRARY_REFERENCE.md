@@ -808,3 +808,35 @@ Detailed bounds, capabilities and failure contracts are in [the canonical invent
 | `publish_directory_noreplace` | preview | `publish_directory_noreplace(".stage", "run")` |
 | `rate_limit_wait` | preview | `rate_limit_wait(channel(), 0)` |
 | `process_usage` | preview | `process_usage()` |
+
+## Native POSIX publication and command launch (unreleased)
+
+| Builtin | Tier | Example |
+| --- | --- | --- |
+| `file_lock` | preview | `handle := file_lock(".update.lock", 30000)` |
+| `file_unlock` | preview | `file_unlock(handle)` |
+| `symlink_atomic` | preview | `symlink_atomic("generations/review", "./current")` |
+| `path_owned` | preview | `owned := path_owned("private-state")` |
+| `exec_process` | preview | `exec_process(["tool", "space argument", ""], {"env": {"MODE":"safe"}, "env_deny":["OLD_SETTING"]})` |
+
+These APIs support native package-manager OS integration. They are POSIX-only;
+Windows returns an explicit unsupported-platform error. `file_lock` acquires a
+user-owned, non-symlink regular file with no group/world write permissions,
+waits up to 0–600000 ms and returns a process-local handle. At most 64 handles
+can be held. Unlock explicitly; exit or successful process replacement also
+releases locks. The advisory lock file stays on disk and must not be unlinked
+while writers coordinate on it.
+
+`symlink_atomic` publishes a link through a private sibling temporary directory
+and refuses a destination observed to be a non-symlink. Callers must use a
+trusted parent directory and coordinate concurrent writers. It requires both
+filesystem-write and filesystem-delete. `path_owned` uses non-following metadata
+and the current effective user ID; it requires filesystem-read.
+
+`exec_process` requires process-exec and replaces the process, preserving cwd and
+terminal streams. It inherits the environment, applies string `env` overrides,
+then removes keys listed in `env_deny`. It accepts 1–65536 argv strings totaling
+at most 8 MiB, including empty argument strings after the executable. No shell
+parsing occurs. Success does not return; invalid options, unsupported platforms
+and OS execution failures return runtime errors. Unlike bounded `spawn_process`,
+it deliberately has no capture buffer or timeout for interactive commands.

@@ -732,6 +732,11 @@ impl Interpreter {
             "jsonl_read_chunk",
             "jsonl_write",
             "jsonl_sort",
+            "file_lock",
+            "file_unlock",
+            "symlink_atomic",
+            "exec_process",
+            "path_owned",
             "create_temp_dir",
             "publish_directory_noreplace",
             "parse_xml_bounded",
@@ -1352,7 +1357,9 @@ impl Interpreter {
         );
 
         // JSON functions
-        for (name, _) in native_functions::web_data::BUILTINS {
+        for (name, _) in
+            native_functions::web_data::BUILTINS.iter().chain(native_functions::platform::BUILTINS)
+        {
             self.env.define(name.to_string(), Value::NativeFunction(name.to_string()));
         }
         self.env.define("parse_json".to_string(), Value::NativeFunction("parse_json".to_string()));
@@ -3463,8 +3470,10 @@ impl Interpreter {
     }
 
     pub(crate) fn native_callable_arity(name: &str) -> Option<CallableArity> {
-        if let Some((_, n)) =
-            native_functions::web_data::BUILTINS.iter().find(|(key, _)| *key == name)
+        if let Some((_, n)) = native_functions::web_data::BUILTINS
+            .iter()
+            .chain(native_functions::platform::BUILTINS)
+            .find(|(key, _)| *key == name)
         {
             return Some(CallableArity::exact(name, (0..*n).map(|i| format!("arg{i}")).collect()));
         }
