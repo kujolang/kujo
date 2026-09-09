@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add POSIX advisory file locks, ownership checks, atomic symlink publication and exact process replacement for Kujo-native package-manager installers and command launchers.
+
 ### Fixed
+
+- Unlink directory and dangling symlinks with `delete_file` while preserving their targets and continuing to reject actual directories.
 
 - Infer builtin string `contains` as integer 0/1 and array/dictionary membership
   as Boolean, without overriding user or imported

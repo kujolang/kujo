@@ -148,6 +148,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "io_read_bytes"
         | "io_read_at"
         | "io_seek_read"
+        | "path_owned"
         | "io_file_metadata"
         | "load_image"
         | "md5_file"
@@ -162,7 +163,10 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "kv_get" => Some(NativeCapability::FilesystemRead),
 
         // Filesystem write
-        "json_file_write"
+        "file_lock"
+        | "file_unlock"
+        | "symlink_atomic"
+        | "json_file_write"
         | "jsonl_write"
         | "jsonl_wrap_array"
         | "jsonl_sort"
@@ -208,7 +212,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         "delete_file" | "os_rmdir" => Some(NativeCapability::FilesystemDelete),
 
         // Process execution
-        "spawn_process" | "pipe_commands" => Some(NativeCapability::ProcessExec),
+        "exec_process" | "spawn_process" | "pipe_commands" => Some(NativeCapability::ProcessExec),
 
         // Shell execution
         "execute" | "execute_status" => Some(NativeCapability::ShellExec),
@@ -297,7 +301,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 /// merely because network access (or the reverse) was granted.
 pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
     match name {
-        "publish_directory_noreplace" | "publish_file_noreplace" => {
+        "publish_directory_noreplace" | "publish_file_noreplace" | "symlink_atomic" => {
             &[NativeCapability::FilesystemDelete]
         }
         "jsonl_sort" | "jsonl_wrap_array" | "io_private_spool_write_file_range" => {

@@ -135,13 +135,24 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // no-replace rename (owned NUL-terminated path buffers remain alive), zero initialization of
     // libc::rusage (integer POD fields), and getrusage into that initialized
     // writable struct. Platform branches are counted separately by the scanner.
-    // Preserve an exact total and an exact module count for future review.
+    // Native package ownership/lock checks add two reviewed geteuid calls.
+    // These take no pointers or arguments and have no memory preconditions.
+    // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 73,
-        "executable unsafe budget changed: expected 73, got {executable_count}"
+        executable_count, 75,
+        "executable unsafe budget changed: expected 75, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
+    let platform_executable_count = csv
+        .lines()
+        .skip(1)
+        .filter(|line| {
+            line.contains("\"src/interpreter/native_functions/platform.rs\"")
+                && line.contains("\"executable\"")
+        })
+        .count();
+    assert_eq!(platform_executable_count, 2, "review any new native-platform FFI site");
     let web_data_executable_count = csv
         .lines()
         .skip(1)

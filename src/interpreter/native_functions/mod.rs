@@ -50,6 +50,7 @@ pub mod io;
 pub mod json;
 pub mod math;
 pub mod network;
+pub mod platform;
 pub mod schema;
 pub mod strings;
 pub mod system;
@@ -207,6 +208,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = json::handle(canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = platform::handle(interp, canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = web_data::handle(interp, canonical_name, arg_values) {

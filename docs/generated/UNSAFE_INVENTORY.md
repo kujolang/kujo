@@ -5,8 +5,8 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 
 ## Summary
 
-- Total matches: 93
-- Executable matches: 73
+- Total matches: 95
+- Executable matches: 75
 - Non-executable matches: 20
 - Unknown classifications: 0
 
@@ -25,6 +25,8 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/interpreter/native_functions/filesystem.rs | 2290 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
 | src/interpreter/native_functions/io.rs | 759 | non_executable | src_comment_or_string |                                     ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"", |
 | src/interpreter/native_functions/io.rs | 1571 | non_executable | src_comment_or_string |             matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory"")) |
+| src/interpreter/native_functions/platform.rs | 54 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
+| src/interpreter/native_functions/platform.rs | 73 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
 | src/interpreter/native_functions/system.rs | 90 | executable | src_executable_other |         unsafe { |
 | src/interpreter/native_functions/system.rs | 601 | executable | src_executable_other |     unsafe { |
 | src/interpreter/native_functions/system.rs | 618 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |

@@ -1658,7 +1658,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
 
             if let Some(Value::Str(path)) = arg_values.first() {
-                if Path::new(path.as_ref()).is_dir() {
+                if fs::symlink_metadata(path.as_ref()).is_ok_and(|metadata| metadata.is_dir()) {
                     return Some(Value::Error(format!(
                         "Cannot delete file '{}': path is a directory",
                         path.as_ref()

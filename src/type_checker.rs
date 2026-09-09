@@ -121,7 +121,7 @@ impl TypeChecker {
         self.functions.insert(
             "len".to_string(),
             FunctionSignature {
-                param_types: vec![Some(TypeAnnotation::String)],
+                param_types: vec![None], // Strings, arrays, bytes, dictionaries and other sized values.
                 return_type: Some(TypeAnnotation::Int),
             },
         );
@@ -702,12 +702,33 @@ impl TypeChecker {
             },
         );
 
-        for (name, n) in crate::interpreter::native_functions::web_data::BUILTINS {
+        for (name, n) in crate::interpreter::native_functions::web_data::BUILTINS
+            .iter()
+            .chain(crate::interpreter::native_functions::platform::BUILTINS)
+        {
             self.functions.insert(
                 name.to_string(),
                 FunctionSignature { param_types: vec![None; *n], return_type: None },
             );
         }
+        for (name, n) in [
+            ("bytes", 1),
+            ("bit_and", 2),
+            ("bit_or", 2),
+            ("bit_xor", 2),
+            ("bit_not", 1),
+            ("bit_shl", 2),
+            ("bit_shr", 2),
+        ] {
+            self.functions.insert(
+                name.to_string(),
+                FunctionSignature { param_types: vec![None; n], return_type: None },
+            );
+        }
+        self.functions.insert(
+            "http_request".to_string(),
+            FunctionSignature { param_types: vec![], return_type: None },
+        );
         // JSON functions
         self.functions.insert(
             "parse_json".to_string(),
