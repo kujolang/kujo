@@ -73,3 +73,22 @@ published runtime, returned `kujo 1.4.0`, and passed the native upgrade check wi
 `status=up_to_date`, `changed=false`. Explicit pins and hostile-manifest rejection
 tests passed. This changes the mutable installer on main; the released runtime
 tag and native assets remain untouched.
+
+Final installer-follow-up CI passed: full gate `34364787004`, native upgrades
+`34364787134` (all five platforms), filesystem conformance `34364787462`, artifact
+validation `34364787169`, LSP `34364787188`, release-state `34364787146`, and the
+field-note/tool-artifact guards. The final main-site deployment `34365028256`
+published source `1f45a580fa184a7b696d1f435211de45eaf45084`; documentation build
+`34365024615` published source `268c76483164ff648fd7242287ed2721b2227f13` through
+gh-pages `9fa0c34` and deployment `34366147020`. Both deployments passed.
+
+The public installer SHA-256 is
+`d269bbc9d4e77f82425a0ac0a5902d9025387bbdd5c88679f3b527824b420449`:
+anonymous HTTPS bytes match both canonical and website source, and its default
+dry run selects v1.4.0. Production audits passed all 233 main-site and 101
+documentation canonical pages, 23 redirect variants and 20 crawler profiles;
+no confirmed external 404/410 remained. Transient network timeouts were retried
+without weakening TLS, with original receipts preserved. Lighthouse accessibility
+and SEO were 100 on both sampled pages. Performance observations (main 64, docs
+100) are lab-only; rankings, citations and field metrics were not available.
+Reviewed audit evidence is committed at website `0d264e1` and docs `3d74591`.
