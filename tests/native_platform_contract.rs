@@ -38,6 +38,17 @@ assert_equal(read_file("target"), "original")
 write_file("other", "updated")
 symlink_atomic("other", "./current")
 assert_equal(read_file("current"), "updated")
+create_dir("directory")
+write_file("directory/keep", "preserved")
+symlink_atomic("directory", "./directory-link")
+delete_file("directory-link")
+assert_equal(read_file("directory/keep"), "preserved")
+symlink_atomic("missing", "./dangling-link")
+delete_file("dangling-link")
+failed = false
+try { delete_file("directory") } except err { failed = true }
+assert_true(failed)
+assert_equal(read_file("directory/keep"), "preserved")
 print("PASS")
 "#;
     for interpreter in [false, true] {

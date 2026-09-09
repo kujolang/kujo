@@ -228,7 +228,7 @@ Built-in file IO guardrails:
 - Whole-file read operations capped at `8 MiB`.
 - Write payload operations capped at `8 MiB`.
 - `write_file` and `write_binary_file` require explicit `overwrite=true` for replacement.
-- `delete_file` rejects directory paths.
+- `delete_file` rejects actual directories; it unlinks a symlink itself without following its target, including directory and dangling links.
 
 `unzip` hardening:
 

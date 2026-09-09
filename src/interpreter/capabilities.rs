@@ -301,7 +301,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 /// merely because network access (or the reverse) was granted.
 pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
     match name {
-        "publish_directory_noreplace" | "publish_file_noreplace" => {
+        "publish_directory_noreplace" | "publish_file_noreplace" | "symlink_atomic" => {
             &[NativeCapability::FilesystemDelete]
         }
         "jsonl_sort" | "jsonl_wrap_array" | "io_private_spool_write_file_range" => {
