@@ -107,6 +107,7 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
+source "$repo_root/scripts/fuzz_environment.sh"
 
 if [[ -z "${CXX:-}" && -x /usr/local/opt/llvm/bin/clang++ ]]; then
   export CXX=/usr/local/opt/llvm/bin/clang++
@@ -143,17 +144,17 @@ check_prereqs() {
   fi
 
   if command -v cargo >/dev/null 2>&1; then
-    if cargo +nightly --version >/dev/null 2>&1; then
-      echo "[ok] nightly toolchain available via 'cargo +nightly'"
+    if cargo "+$FUZZ_TOOLCHAIN" --version >/dev/null 2>&1; then
+      echo "[ok] pinned toolchain $FUZZ_TOOLCHAIN available"
     else
-      echo "[missing] nightly Rust toolchain not available. Run: rustup toolchain install nightly --profile minimal" >&2
+      echo "[missing] Run: rustup toolchain install $FUZZ_TOOLCHAIN --profile minimal" >&2
       missing=1
     fi
 
-    if cargo fuzz --help >/dev/null 2>&1; then
+    if [[ "$(cargo fuzz --version 2>/dev/null)" == "cargo-fuzz $FUZZ_CARGO_VERSION" ]]; then
       echo "[ok] cargo-fuzz is installed"
     else
-      echo "[missing] cargo-fuzz is not installed. Run: cargo +stable install cargo-fuzz --locked" >&2
+      echo "[missing] Run: cargo +stable install cargo-fuzz --version $FUZZ_CARGO_VERSION --locked" >&2
       missing=1
     fi
   fi
@@ -169,11 +170,15 @@ if [[ "$missing" -ne 0 ]]; then
 fi
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
-  echo "[dry-run] cargo +nightly fuzz run $TARGET $ARTIFACT"
+  echo "[dry-run] cargo +$FUZZ_TOOLCHAIN fuzz run $TARGET $ARTIFACT"
   exit 0
 fi
 
-echo "[run] cargo +nightly fuzz run $TARGET $ARTIFACT"
-cargo +nightly fuzz run "$TARGET" "$ARTIFACT"
+if [[ "$CHECK_PREREQS" -eq 0 ]]; then check_prereqs; fi
+if [[ "$missing" -ne 0 ]]; then exit 1; fi
+fuzz_require_lock
+echo "[run] cargo +$FUZZ_TOOLCHAIN fuzz run $TARGET $ARTIFACT"
+cargo "+$FUZZ_TOOLCHAIN" fuzz run "$TARGET" "$ARTIFACT"
+fuzz_check_lock
 
 echo "fuzz-repro run completed"

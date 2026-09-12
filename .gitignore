@@ -68,6 +68,7 @@ Icon?
 
 # Keep lockfile tracked for reproducible binary releases
 !/Cargo.lock
+!/fuzz/Cargo.lock
 
 # === BY PRODUCTS ===
 *.dSYM/

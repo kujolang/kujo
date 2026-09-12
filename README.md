@@ -376,6 +376,9 @@ cargo test --test runtime_security
 cargo test --test native_api_security_boundaries
 ```
 
+For pinned native fuzz campaigns and crash reproduction, see
+[fuzz reproducibility](docs/FUZZ_REPRODUCIBILITY.md).
+
 Release-gate scripts:
 
 ```bash

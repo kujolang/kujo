@@ -72,6 +72,7 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
+source "$repo_root/scripts/fuzz_environment.sh"
 
 # Some macOS Command Line Tools releases provide clang++ without the libc++
 # headers required to compile libFuzzer. Prefer a keg-only Homebrew LLVM when
@@ -105,17 +106,17 @@ else
 fi
 
 if command -v cargo >/dev/null 2>&1; then
-  if cargo +nightly --version >/dev/null 2>&1; then
-    echo "[ok] nightly toolchain available via 'cargo +nightly'"
+  if cargo "+$FUZZ_TOOLCHAIN" --version >/dev/null 2>&1; then
+    echo "[ok] pinned toolchain $FUZZ_TOOLCHAIN available"
   else
-    echo "[missing] nightly Rust toolchain not available. Run: rustup toolchain install nightly --profile minimal" >&2
+    echo "[missing] Run: rustup toolchain install $FUZZ_TOOLCHAIN --profile minimal" >&2
     missing=1
   fi
 
-  if cargo fuzz --help >/dev/null 2>&1; then
+  if [[ "$(cargo fuzz --version 2>/dev/null)" == "cargo-fuzz $FUZZ_CARGO_VERSION" ]]; then
     echo "[ok] cargo-fuzz is installed"
   else
-    echo "[missing] cargo-fuzz is not installed. Run: cargo +stable install cargo-fuzz --locked" >&2
+    echo "[missing] Run: cargo +stable install cargo-fuzz --version $FUZZ_CARGO_VERSION --locked" >&2
     missing=1
   fi
 fi
@@ -130,8 +131,10 @@ if [[ "$CHECK_PREREQS_ONLY" -eq 1 ]]; then
   exit 0
 fi
 
+fuzz_require_lock
+
 for target in "${TARGETS[@]}"; do
-  echo "[run] cargo +nightly fuzz run $target -- -max_total_time=$MAX_TOTAL_TIME"
+  echo "[run] cargo +$FUZZ_TOOLCHAIN fuzz run $target -- -max_total_time=$MAX_TOTAL_TIME"
   if [[ -n "$RUN_ROOT" ]]; then
     corpus_dir="$RUN_ROOT/corpus/$target"
     artifact_dir="$RUN_ROOT/artifacts/$target"
@@ -140,13 +143,14 @@ for target in "${TARGETS[@]}"; do
       cp -R "$repo_root/fuzz/corpus/$target/." "$corpus_dir/"
     fi
     echo "[evidence] corpus=$corpus_dir artifacts=$artifact_dir"
-    cargo +nightly fuzz run "$target" "$corpus_dir" -- \
+    cargo "+$FUZZ_TOOLCHAIN" fuzz run "$target" "$corpus_dir" -- \
       -max_total_time="$MAX_TOTAL_TIME" \
       -print_final_stats=1 \
       -artifact_prefix="$artifact_dir/"
   else
-    cargo +nightly fuzz run "$target" -- -max_total_time="$MAX_TOTAL_TIME"
+    cargo "+$FUZZ_TOOLCHAIN" fuzz run "$target" -- -max_total_time="$MAX_TOTAL_TIME"
   fi
+  fuzz_check_lock
 done
 
 echo "fuzz-smoke run completed"

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Pin the native fuzz compiler and cargo-fuzz version, commit the independent
+  fuzz dependency lock, and reject stale or changed locks in campaign scripts.
+
 - Restore the type-checker recursion budget after early-returning function
   inference, avoiding false depth errors across many shallow calls.
 

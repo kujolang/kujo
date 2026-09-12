@@ -17,16 +17,10 @@ jobs:
       - name: Install Rust toolchains
         run: |
           rustup toolchain install stable --profile minimal
-          rustup toolchain install nightly --profile minimal
+          rustup toolchain install "$(cat fuzz/RUST_TOOLCHAIN)" --profile minimal
 
       - name: Install cargo-fuzz
-        run: cargo +stable install cargo-fuzz --locked
+        run: cargo +stable install cargo-fuzz --version "$(cat fuzz/CARGO_FUZZ_VERSION)" --locked
 
-      - name: Fuzz lexer target (smoke)
-        run: cargo +nightly fuzz run lexer -- -max_total_time=20
-
-      - name: Fuzz parser target (smoke)
-        run: cargo +nightly fuzz run parser -- -max_total_time=20
-
-      - name: Fuzz bounded XML target (smoke)
-        run: cargo +nightly fuzz run xml_bounded -- -max_total_time=20
+      - name: Fuzz pinned targets (smoke)
+        run: bash scripts/fuzz_smoke.sh --max-total-time 20 lexer parser xml_bounded
