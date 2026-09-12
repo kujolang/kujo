@@ -3139,7 +3139,14 @@ impl TypeChecker {
 
         self.recursion_depth += 1;
 
-        let result = match expr {
+        let result = self.infer_expr_inner(expr);
+        self.recursion_depth -= 1;
+        result
+    }
+
+    // Keep early returns in inference branches inside the depth-accounted call.
+    fn infer_expr_inner(&mut self, expr: &Expr) -> Option<TypeAnnotation> {
+        match expr {
             Expr::Int(_) => Some(TypeAnnotation::Int),
             Expr::Float(_) => Some(TypeAnnotation::Float),
 
@@ -3594,10 +3601,7 @@ impl TypeChecker {
                 // For now, return Any
                 Some(TypeAnnotation::Any)
             }
-        };
-
-        self.recursion_depth -= 1;
-        result
+        }
     }
 
     /// Push a new scope onto the scope stack
@@ -3717,6 +3721,22 @@ impl TypeChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sequential_builtin_calls_do_not_consume_recursion_budget() {
+        let source =
+            "len(\"email\")\ncontains(\"email\", \"mail\")\n".repeat(MAX_RECURSION_DEPTH + 1);
+        let mut parser = Parser::new(crate::lexer::tokenize(&source).unwrap());
+        let statements = parser.parse();
+        assert_eq!(statements.len(), (MAX_RECURSION_DEPTH + 1) * 2);
+        let mut checker = TypeChecker::new();
+        assert!(
+            checker.check(&statements).is_ok(),
+            "{} unexpected diagnostics",
+            checker.errors.len()
+        );
+        assert_eq!(checker.recursion_depth, 0);
+    }
 
     #[test]
     fn contains_inference_matches_each_runtime_receiver() {

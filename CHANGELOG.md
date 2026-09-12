@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restore the type-checker recursion budget after early-returning function
+  inference, avoiding false depth errors across many shallow calls.
+
 - Infer builtin string `contains` as integer 0/1 and array/dictionary membership
   as Boolean, without overriding user or imported
   function signatures. Runtime values are unchanged.
