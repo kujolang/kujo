@@ -63,6 +63,7 @@
 /sdk/rust/target/
 
 # Fence
+/.audit-evidence/
 /.fence/cache-v1.json
 
 # Eval and ShipCheck evaluation output
@@ -92,6 +93,8 @@
 # Kujo workflow runners
 /.runs/
 /.work/
+/.runtime/
+/.local/
 /.suites/
 /.cleanup-runs/
 /.webops/
@@ -128,6 +131,7 @@
 
 # Tribunal
 /tribunal-runs/
+/.tribunal/
 /.strata-tmp/
 
 # Local-first Kujo record tool state
@@ -234,6 +238,12 @@
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
 /tests/*.out
+/test-results/
+/playwright-report/
+/.cache/
+__pycache__/
+*.py[cod]
+.DS_Store
 *.tmp-*
 *.bak
 *.log
