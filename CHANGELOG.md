@@ -1,9 +1,8 @@
-# CHANGELOG
+# Changelog
 
-All notable changes to Kujo will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+This file records user-visible changes to Kujo. It follows
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -11,62 +10,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support supervised services without a scheduler-wide deadline.
-- Add handle-relative atomic file publication with confined POSIX and Windows paths.
-
-- Add POSIX advisory file locks, ownership checks, atomic symlink publication and exact process replacement for Kujo-native package-manager installers and command launchers.
+- Added `kujo run --scheduler-no-timeout` for long-lived services supervised by
+  another process.
+- Added `kujo run --isolated-imports` and inherited import isolation for installed
+  tools. Isolated runs use the entry file and explicit module paths instead of the
+  caller's project, while preserving exact script arguments.
+- Added the bounded web and artifact primitives needed by native Kujo tools:
+  HTML tokenization, URL handling, text decoding, streaming XML, JSON/JSONL file
+  operations, digests, private staging, and atomic no-replace publication.
+- Added POSIX file locks, ownership checks, atomic symlink updates, exact process
+  replacement, and confined atomic file publication for native package installers
+  and command launchers.
+- Added `byte_length(value)` for the UTF-8 byte length of strings and raw bytes.
+- Preserved repeated HTTP response headers in `http_request.header_values`.
 
 ### Fixed
 
-- Create streaming AEAD outputs privately.
-
-- Unlink directory and dangling symlinks with `delete_file` while preserving their targets and continuing to reject actual directories.
-
-- Infer builtin string `contains` as integer 0/1 and array/dictionary membership
-  as Boolean, without overriding user or imported
-  function signatures. Runtime values are unchanged.
-
-- Atomically reject existing Windows publication directories using MoveFileExW
-  without replacement flags; preserve UTF-16 paths and reject embedded NULs.
-
-- Initialize fresh VM loop-local `let` and `const` declarations without weakening
-  immutable assignment checks; unwind lexical scopes on loop control flow, returns
-  and exceptions.
-- Restore the binary-file fixture to ten complete passing cases instead of a
-  saved early VM failure; require missing reads to raise and overwrites to opt in.
-- Keep VM/interpreter parity coverage active without JIT; gate only the
-  JIT-specific eligibility query on its runtime feature.
-- Preserve immutable capture metadata and independent state in async map workers.
-- Move completed closure environments back to their owner and avoid registering
-  builtins in workers whose complete environment is supplied by the caller.
-- Reuse immutable compiled regex programs through a bounded eight-entry cache;
-  matching, replacement, inline flags and invalid-pattern results are unchanged.
-
-- Harden explicit DNS pinning and deny-private HTTP policy by disabling ambient
-  proxies for those clients; proxies must not re-resolve a pinned destination.
-
-- Dispatch VM-defined callbacks invoked by imported interpreter functions through
-  the full VM, preserving shared globals, captured cells and capability policy,
-  propagating errors and bounding synchronous cross-runtime recursion.
-- Move and restore the caller environment around captured-function execution
-  instead of cloning it; captured environments retain their existing snapshot
-  semantics. This avoids copying unrelated bytecode globals on every call.
-
-### Added
-
-- Add opt-in `kujo run --isolated-imports` and inherited `KUJO_ISOLATED_IMPORTS=1` for installed tools. Configured and entry roots resolve imports without caller-directory or caller-lockfile discovery in the VM, interpreter and type checker. Preserve exact arguments, including empty arguments and separator characters. Default import behavior is unchanged. Supports the upcoming Kennel global-tool installer; Kennel publication is separate.
-
-- Add bounded HTML tokenizer, URL components/normalization, text decoding, streaming
-  XML projection, JSON/JSONL artifact operations, regular-file digests, private
-  staging and atomic no-replace directory publication.
-- Add explicitly bounded file HTTP responses, destination preflight, monotonic
-  request pacing and process resource measurement. Product policy stays in Kujo.
-- Preserve repeated response headers through additive `http_request.header_values`.
-- Add regression tests for large artifacts, gzip expansion, malformed XML, unsafe
-  URLs, output collisions, and multi-generation external sorting.
-
-- Add capability-free `byte_length(value)` for allocation-free UTF-8 string or
-  raw-byte size measurement; `len(string)` continues to count Unicode scalars.
+- Streaming AEAD now creates private output files.
+- `delete_file` can unlink symlinks, including dangling ones, without touching
+  their targets. It still rejects real directories.
+- String `contains` keeps its integer `1`/`0` result, while collection membership
+  is inferred as Boolean. User and imported signatures still take precedence.
+- Windows no-replace directory publication now preserves UTF-16 paths, rejects
+  embedded NULs, and atomically refuses existing destinations.
+- VM loop scopes now initialize fresh `let` and `const` values and unwind cleanly
+  on control flow, returns, and exceptions.
+- Async map workers now keep independent state and immutable capture metadata.
+- Cross-runtime callbacks now preserve globals, captures, capabilities, errors,
+  and bounded recursion without cloning unrelated bytecode state on each call.
+- Regex helpers now reuse compiled expressions through a bounded cache.
+- Explicit DNS pinning and deny-private HTTP clients now ignore ambient proxies,
+  preventing a proxy from resolving the destination again.
+- Binary file fixtures, non-JIT parity tests, and bounded web-data regressions now
+  cover the shipped behavior instead of skipping or stopping early.
 
 ## [1.3.1] - 2026-09-06
 
@@ -389,13 +365,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Repaired all remaining syntax-drifted examples, removed the expected-fail example list, and added exhaustive per-file verification coverage.
-
-### Unreleased: confined atomic file publication
-
-- Added `write_file_atomic_beneath(root, relative_path, content_or_bytes, overwrite?)`
-  with filesystem-write capability enforcement in VM and interpreter, strict
-  relative path validation, nofollow directory traversal, missing-parent creation,
-  and handle-relative atomic replacement/no-replace publication.
-- Added deterministic ancestor-swap, symlink, cleanup, concurrent no-replace,
-  Windows junction and runtime/capability regression coverage. Existing path-based
-  `write_file_atomic` remains compatible. No new dependency was introduced.
