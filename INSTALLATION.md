@@ -1,406 +1,212 @@
-# Installation Guide
+# Install Kujo
 
-Return to [README](README.md) for full language overview.
+Kujo 1.4.0 is the current stable release. Choose the install that matches what
+you need.
 
-> Looking for how to get Kujo installed on your system? You're in the right place.
+## Kujo and the core toolset
 
-Kujo is the Kujo core language/runtime built with Rust. You can install Kujo either from prebuilt release artifacts (recommended for users) or by building from source with Cargo.
-
-If another `kujo` command is already on your machine, make sure you are using the binary from this repository so you do not confuse it with unrelated tools that share the same name.
-
----
-
-## Prerequisites
-
-Kujo requires **Rust 1.86+** to build from source.
-
-Minimum release validation assumptions for current supported install flow:
-
-- Rust stable `1.86+`
-- Linux x64 (`ubuntu-latest` baseline)
-- Linux arm64 (`ubuntu-24.04-arm` baseline)
-- macOS Intel (`macos-15-intel` baseline)
-- macOS Apple Silicon (`macos-15` baseline)
-- Windows x64 (`windows-latest` baseline)
-
-See `docs/RELEASE_BINARIES.md` and `docs/RELEASE_ARTIFACT_VALIDATION.md` for cross-platform release asset naming, clean-environment validation, and checksum verification flow.
-For reusable checksum-verified GitHub Actions installation, see `docs/SETUP_KUJO_ACTION.md`.
-
-### Install Rust
-
-**macOS / Linux:**
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-**Windows:**  
-Download and run the installer from [rustup.rs](https://rustup.rs/)
-
-Verify Rust installation:
-```bash
-rustc --version
-cargo --version
-```
-
----
-
-## Install From Prebuilt Release Artifacts (Recommended)
-
-Use this path when consuming a tagged Kujo release.
-
-Set the release tag and detect platform:
+On macOS or Linux, this installs the current Kujo runtime, Kennel, and the core
+Kujo tools without `sudo`:
 
 ```bash
-KUJO_VERSION="v1.0.0"
-
-case "$(uname -s)" in
-   Darwin) KUJO_OS="macos" ;;
-   Linux) KUJO_OS="linux" ;;
-   *) echo "Use the Windows PowerShell instructions below for Windows."; exit 1 ;;
-esac
-
-case "$(uname -m)" in
-   x86_64) KUJO_ARCH="x64" ;;
-   arm64|aarch64) KUJO_ARCH="arm64" ;;
-   *) echo "Unsupported architecture: $(uname -m)"; exit 1 ;;
-esac
-
-KUJO_TARGET="${KUJO_OS}-${KUJO_ARCH}"
-```
-
-Download binary archive and checksum:
-
-```bash
-BASE_URL="https://github.com/kujolang/kujo/releases/download/${KUJO_VERSION}"
-ARCHIVE="kujo-${KUJO_VERSION}-${KUJO_TARGET}.tar.gz"
-
-curl -sSfL "${BASE_URL}/${ARCHIVE}" -o "${ARCHIVE}"
-curl -sSfL "${BASE_URL}/${ARCHIVE}.sha256" -o "${ARCHIVE}.sha256"
-```
-
-Verify checksum:
-
-```bash
-if command -v sha256sum >/dev/null 2>&1; then
-   sha256sum -c "${ARCHIVE}.sha256"
-else
-   shasum -a 256 -c "${ARCHIVE}.sha256"
-fi
-```
-
-Install and verify commands:
-
-```bash
-mkdir -p ~/.local/bin
-tar -xzf "${ARCHIVE}"
-cp kujo ~/.local/bin/kujo
-chmod +x ~/.local/bin/kujo
-
+curl -fsSL https://kujolang.ai/install.sh | bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
-kujo run examples/hello.kujo
-kujo lsp --help
 ```
 
-Windows PowerShell:
+The installer downloads a prebuilt Kujo release, verifies its SHA-256 checksum,
+and stores source snapshots and tools under `~/.kujo`. Commands go in
+`~/.local/bin`. Change those locations with `--prefix` and `--bin-dir`.
 
-```powershell
-$KujoVersion = "v1.0.0"
-$Archive = "kujo-$KujoVersion-windows-x64.zip"
-$BaseUrl = "https://github.com/kujolang/kujo/releases/download/$KujoVersion"
+Inspect the available profiles before installing more:
 
-Invoke-WebRequest "$BaseUrl/$Archive" -OutFile $Archive
-Invoke-WebRequest "$BaseUrl/$Archive.sha256" -OutFile "$Archive.sha256"
-
-$Expected = (Get-Content "$Archive.sha256").Split(" ")[0].ToLower()
-$Actual = (Get-FileHash -Algorithm SHA256 $Archive).Hash.ToLower()
-if ($Expected -ne $Actual) { throw "Checksum mismatch" }
-
-New-Item -ItemType Directory -Force "$HOME\.kujo\bin" | Out-Null
-Expand-Archive $Archive -DestinationPath "$HOME\.kujo\bin" -Force
-& "$HOME\.kujo\bin\kujo.exe" --version
+```bash
+curl -fsSL https://kujolang.ai/install.sh -o install.sh
+bash install.sh --list
+bash install.sh --group ai
 ```
 
-## Build from Source
+`--all` installs every profile. `--source` builds Kujo from source instead of
+using a release binary. See [ecosystem installation](docs/ECOSYSTEM_INSTALL.md)
+for profile contents and pinned multi-repository installs.
 
-### 1. Clone the Repository
+## Runtime only
+
+Node.js 18 or newer can install the lifecycle-script-free runtime package on
+Linux x64/arm64, macOS x64/arm64, and Windows x64:
+
+```bash
+npm install --global @kujolang/kujo-runtime@1.4.0
+kujo --version
+```
+
+You can also download a checksum file and matching archive from the
+[v1.4.0 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.4.0).
+Release assets use these names:
+
+```text
+kujo-v1.4.0-linux-x64.tar.gz
+kujo-v1.4.0-linux-arm64.tar.gz
+kujo-v1.4.0-macos-x64.tar.gz
+kujo-v1.4.0-macos-arm64.tar.gz
+kujo-v1.4.0-windows-x64.zip
+```
+
+Each archive has a matching `.sha256` file, and `checksums.txt` lists them all.
+Read [release binaries](docs/RELEASE_BINARIES.md) for manual verification steps.
+
+## Install Kennel
+
+[Kennel](https://kennel.kujolang.ai/) manages Kujo packages and global Kujo
+tools. It requires Kujo 1.4.0 or newer and currently supports macOS and Linux.
+
+```bash
+curl -fsSLO https://kennel.kujolang.ai/install.sh
+sh install.sh
+. "$HOME/.kennel/env"
+kennel --version
+```
+
+The shell script starts a Kujo installer, which downloads and verifies the
+Kennel release. It installs under `~/.kennel` and adds `~/.kennel/bin` to Bash,
+Zsh, and POSIX shell profiles. Use `sh install.sh --no-modify-path` if you want
+to manage `PATH` yourself.
+
+Install a project dependency:
+
+```bash
+kennel init --name my-project
+kennel add ability
+kennel install
+```
+
+Install a command globally:
+
+```bash
+kennel tool install shipcheck
+kennel tool list
+```
+
+Browse the official packages at
+[kennel.kujolang.ai](https://kennel.kujolang.ai/). Public reads need no account.
+
+## Build from source
+
+Source builds need Git, Rust 1.86 or newer, and the platform's C build tools.
 
 ```bash
 git clone https://github.com/kujolang/kujo.git
 cd kujo
-```
-
-### 2. Build the Project
-
-**Development build** (faster compilation, slower runtime):
-```bash
-cargo build
-```
-
-**Release build** (optimized, recommended for daily use):
-```bash
-cargo build --release
-```
-
-### 3. Run Kujo
-
-**Without installing** (from project directory):
-```bash
-# Development build
-cargo run -- run examples/hello.kujo
-
-# Installed command
-kujo run examples/hello.kujo
-```
-
-### 4. Install System-Wide (Optional)
-
-**macOS / Linux:**
-```bash
-cargo install --path .
-# Or manually copy the binary
-sudo cp target/release/kujo /usr/local/bin/
-```
-
-**Windows (PowerShell as Administrator):**
-```powershell
-cargo install --path .
-# Or manually copy the binary to a directory in your PATH
-```
-
-Verify installation:
-```bash
+cargo build --release --locked
+cargo install --path . --locked
 kujo --version
 ```
 
----
-
-## Platform-Specific Notes
-
-### macOS
-
-**Supported versions**: macOS 10.15 (Catalina) or later  
-**Architectures**: Intel (x86_64) and Apple Silicon (ARM64)
-
-If you encounter permissions issues:
-```bash
-sudo chown -R $(whoami) /usr/local/bin
-```
-
-### Linux
-
-**Tested distributions**: Ubuntu 20.04+, Debian 11+, Fedora 35+, Arch Linux
-
-**Dependencies**: None required beyond Rust toolchain
-
-If you need to install to a user directory:
-```bash
-mkdir -p ~/.local/bin
-cp target/release/kujo ~/.local/bin/
-# Add to PATH in ~/.bashrc or ~/.zshrc:
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-### Windows
-
-**Supported versions**: Windows 10 or later  
-**Architectures**: x64
-
-**Common issues**:
-- If you get "VCRUNTIME140.dll missing" errors, install the [Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe)
-- Ensure your PATH includes the directory where `kujo.exe` is located
-
----
-
-## Quick Start
-
-Once installed, you can run Kujo programs:
+For a faster contributor build:
 
 ```bash
-# Run a script
-kujo run examples/hello.kujo
-
-# Run tests
-kujo test
-
-# Update test snapshots
-kujo test --update
+cargo run -- run examples/hello.kujo
 ```
 
----
+Platform notes:
 
-## Future Installation Methods
+- macOS: install Xcode Command Line Tools with `xcode-select --install`.
+- Ubuntu or Debian: install `build-essential` if the linker is missing.
+- Fedora: install `gcc` and `make` if the linker is missing.
+- Arch Linux: install `base-devel` if the linker is missing.
+- Windows: use the Rust MSVC toolchain. The supported release target is x64.
 
-The following installation methods are planned for future releases:
+## Verify the install
 
-### Homebrew (macOS / Linux)
 ```bash
-# Coming soon
-brew tap kujolang/tap
-brew install kujo
+kujo --version
+kujo doctor --json
 ```
 
-### Scoop (Windows)
-```powershell
-# Coming soon
-scoop bucket add kujo https://github.com/kujolang/scoop-bucket
-scoop install kujo
+Then create a file named `hello.kujo`:
+
+```kujo
+print("Hello, Kujo!")
 ```
 
-### Package Managers
-- **apt** (Ubuntu/Debian): Planned
-- **dnf** (Fedora): Planned
-- **pacman** (Arch): Planned
-- **winget** (Windows): Planned
+Run it:
 
----
+```bash
+kujo check hello.kujo
+kujo run hello.kujo
+```
+
+## Update
+
+Standalone Kujo installs from v1.3.0 onward can update the runtime from official
+GitHub releases:
+
+```bash
+kujo upgrade --check
+kujo upgrade
+```
+
+Select an exact version with `kujo upgrade 1.4.0`. Downgrades require
+`--allow-downgrade`. The command verifies the release checksum and keeps a backup
+of the previous executable.
+
+Use the original manager for managed installs:
+
+```bash
+npm install --global @kujolang/kujo-runtime@1.4.0
+cargo install --path . --locked --force
+```
+
+Update Kennel separately:
+
+```bash
+kennel self update
+```
+
+`kujo upgrade` does not update Kennel, ecosystem tools, or project dependencies.
+Read [runtime upgrade and recovery](docs/RUNTIME_UPGRADE.md) for ownership checks,
+backups, and Windows recovery.
 
 ## Troubleshooting
 
-### Build Failures
-
-**"linker \`cc\` not found"** (Linux)
-```bash
-# Ubuntu/Debian
-sudo apt install build-essential
-
-# Fedora
-sudo dnf install gcc
-
-# Arch
-sudo pacman -S base-devel
-```
-
-**"failed to run custom build command"**
-- Ensure you have the latest Rust version: `rustup update`
-- Clean and rebuild: `cargo clean && cargo build --release`
-
-### Runtime Issues
-
-**"command not found: kujo"**
-- Verify the binary is in your PATH
-- Reinstall with `cargo install --path .` or add your install directory to `PATH`
-
-**Slow compilation**
-- Use `cargo build` for development (faster compile, slower runtime)
-- Use `cargo build --release` only when you need performance
-
-### Getting Help
-
-If you encounter issues:
-1. Check [GitHub Issues](https://github.com/kujolang/kujo/issues)
-2. Read the [Contributing Guide](CONTRIBUTING.md)
-3. Open a new issue with:
-   - Your OS and version
-   - Rust version (`rustc --version`)
-   - Full error message
-   - Steps to reproduce
-
----
-
-## Updating Kujo
-
-### Built from Source
-```bash
-cd kujo
-git pull
-cargo build --release
-# If installed system-wide:
-sudo cp target/release/kujo /usr/local/bin/
-```
-
-### Via Package Manager (Future)
-```bash
-# Homebrew
-brew upgrade kujo
-
-# Scoop
-scoop update kujo
-```
-
----
-
-## 🗑️ Uninstalling
-
-### Cargo Install
-```bash
-cargo uninstall kujo
-```
-
-### Manual Installation
-```bash
-# macOS/Linux
-sudo rm /usr/local/bin/kujo
-
-# Windows - Delete kujo.exe from your installation directory
-```
-
----
-
-## Verification
-
-After installation, verify everything works:
+If `kujo` is not found, inspect the command path and add the right directory:
 
 ```bash
-# Check version
-kujo --version
-
-# Run a test script
-echo 'print("Hello, Kujo!")' > test.kujo
-kujo run test.kujo
-
-# Run test suite
-cd kujo
-kujo test
+command -v kujo
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Expected output:
-```
-Hello, Kujo!
-```
-
----
-
-## Development Setup
-
-For contributors and developers:
+For Kennel:
 
 ```bash
-# Clone and setup
-git clone https://github.com/kujolang/kujo.git
-cd kujo
-
-# Install dev dependencies
-rustup component add rustfmt clippy
-
-# Run tests
-cargo test
-
-# Format code
-cargo fmt
-
-# Lint code
-cargo clippy
-
-# Build documentation
-cargo doc --open
+. "$HOME/.kennel/env"
+command -v kennel
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
+If a source build fails, first check the toolchain:
 
----
+```bash
+rustc --version
+cargo --version
+rustup update
+```
 
-**You're ready to start coding in Kujo! 🐾**
+Open a [GitHub issue](https://github.com/kujolang/kujo/issues) with your OS,
+Rust version, full error, and steps to reproduce if the problem remains.
 
-*For examples and language features, see the [README](README.md) and [examples/](examples/) directory.*
+## Uninstall
 
-## Native runtime upgrade
+Remove only the path used by your installer.
 
-Standalone releases from v1.3.0 onward support `kujo upgrade` (latest),
-`kujo upgrade 1.3.0` (exact stable version), and `kujo upgrade --check --json`
-(read-only inspection). Same versions are no-ops; explicit downgrades require
-`--allow-downgrade`, and latest never downgrades. npm/Cargo installations use
-their package manager. Only the runtime changes; ecosystem sources, profiles,
-and package pins are preserved. Older releases need an installer bootstrap.
-See [native upgrade and recovery documentation](docs/RUNTIME_UPGRADE.md)
-for installation recognition, retained backups, Windows recovery, JSON, and limits.
+- npm: `npm uninstall --global @kujolang/kujo-runtime`
+- Cargo: `cargo uninstall kujolang`
+- ecosystem installer: remove `~/.kujo` and any Kujo command shims it placed in
+  `~/.local/bin`
+- Kennel: remove `~/.kennel` and the PATH line its installer added to your shell
+  profile
+
+Before deleting a command, use `command -v kujo` or `command -v kennel` so you do
+not remove a different installation.
+
+For contributor setup and test commands, continue with
+[CONTRIBUTING.md](CONTRIBUTING.md).
