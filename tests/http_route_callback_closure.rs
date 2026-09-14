@@ -546,3 +546,49 @@ fn http_route_callback_preserves_dictionary_returned_by_import_in_vm_and_interpr
         assert_eq!(response.1, "imported-dictionary-ok");
     }
 }
+
+#[test]
+fn routed_request_preserves_duplicate_header_values_in_both_runtimes() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else { return };
+        let root = unique_temp_dir("header_values");
+        let script = root.join("server.kujo");
+        fs::write(
+            &script,
+            format!(
+                r#"
+func handler(request) {{ return json_response(200, request["header_values"]) }}
+mut server := http_listen("127.0.0.1", {port})
+server = server.route("GET", "/headers", handler)
+server.listen()
+"#
+            ),
+        )
+        .unwrap();
+        let child = spawn_runtime_with_read_timeout(&script, &root, interpreter);
+        let result = (|| -> Result<String, String> {
+            let deadline = std::time::Instant::now() + Duration::from_secs(10);
+            let mut stream = loop {
+                match TcpStream::connect(("127.0.0.1", port)) {
+                    Ok(stream) => break stream,
+                    Err(_) if std::time::Instant::now() < deadline => {
+                        thread::sleep(Duration::from_millis(20))
+                    }
+                    Err(error) => return Err(error.to_string()),
+                }
+            };
+            stream.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
+            stream.write_all(b"GET /headers HTTP/1.1\r\nHost: localhost\r\nAuthorization: first\r\nauthorization: second\r\nAuthorization: third\r\nConnection: close\r\n\r\n").unwrap();
+            let mut response = String::new();
+            stream.read_to_string(&mut response).map_err(|error| error.to_string())?;
+            Ok(response)
+        })();
+        let output = terminate_child(child);
+        fs::remove_dir_all(root).unwrap();
+        let response = result.unwrap_or_else(|error| panic!("{error}: {}", stderr_text(&output)));
+        assert!(response.contains("200 OK"), "{response}");
+        let body = response.split_once("\r\n\r\n").unwrap().1;
+        let values: serde_json::Value = serde_json::from_str(body).unwrap();
+        assert_eq!(values["authorization"], serde_json::json!(["first", "second", "third"]));
+    }
+}
