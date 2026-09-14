@@ -71,6 +71,10 @@ fn vm_runtime_mismatch_inventory_script_generates_expected_outputs() {
         !csv.contains("jit_direct_recursion.kujo"),
         "inventory should mirror kujo test and exclude test-run-only fixtures"
     );
+    assert!(
+        !csv.contains("postgres_tls_probe.kujo"),
+        "inventory should exclude fixtures that require live external services"
+    );
 
     let mut mismatch_rows = 0usize;
     let mut has_classified_mismatch = false;

@@ -1,8 +1,9 @@
-# VM/Interpreter/Compiler Parity Matrix (v1.0.0)
+# VM/Interpreter/Compiler Parity Matrix
 
-Last updated: 2026-05-24
+Last updated: 2026-09-13
 
-This matrix tracks parity for roadmap item `V1-COMP-001`.
+This matrix is the release-facing record for VM, interpreter, and compiler
+parity. New runtime work must update the table and its named test evidence.
 
 ## 2026-09-06 imported callback bridge
 
@@ -71,13 +72,20 @@ does not produce false undefined-function warnings. Coverage: the
 
 ### `kujo test` Default Runtime Decision (2026-05-21)
 
-Updated evidence snapshot: 2026-06-27
+Updated evidence snapshot: 2026-09-13
 
 - Decision: keep default `kujo test` runtime at `dual` for now.
 - Evidence:
-  - `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual` passed locally on current `main`.
-  - Both modes report `Passed 145/145 tests` plus `Fixture outcomes: passed=145, failed=0, skipped=6, expected_fail=0, runnable=145, discovered=151`.
-  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` currently reports `P0 runtime-parity-bug: 0`, `P1 stale-snapshot-expectation: 0`, `P2 harness-debt: 0`, `P2 intentional-divergence: 38`, and `vm_matches_snapshot: 145/145`.
+  - `cargo run -- test --runtime vm` and `cargo run -- test --runtime dual`
+    pass locally on the current tree when run separately.
+  - Both modes report `Passed 150/150 tests` plus `Fixture outcomes:
+    passed=150, failed=0, skipped=6, expected_fail=0, runnable=150,
+    discovered=156`.
+  - `docs/generated/VM_RUNTIME_MISMATCH_INVENTORY.md` reports
+    `P0 runtime-parity-bug: 0`, `P1 stale-snapshot-expectation: 0`, `P2
+    harness-debt: 0`, `P2 intentional-divergence: 34`, and
+    `vm_matches_snapshot: 149/149`. The live PostgreSQL TLS probe is verified by
+    its dedicated harness and excluded from the offline inventory.
 - Risk analysis:
   - The generated inventory supports release review: default VM output matches every runnable fixture snapshot. Residual rows are legacy interpreter-only drift and are explicitly classified as post-v1 compatibility debt.
   - Keeping `dual` continues deterministic compatibility signaling while the release-readiness checklist continues mismatch ownership burn-down.
@@ -99,5 +107,7 @@ Updated evidence snapshot: 2026-06-27
 
 ## Notes
 
-- This matrix tracks interpreter/VM/compiler parity only. JIT remains an experimental, opt-in surface (`kujo run --jit`) with explicit unsupported-opcode detection and deterministic fallback messaging; see `V1-JIT-001` notes in `ROADMAP.md`.
+- This matrix tracks interpreter/VM/compiler parity only. JIT remains an
+  experimental, opt-in surface (`kujo run --jit`) with explicit
+  unsupported-opcode detection and deterministic fallback messaging.
 - Any newly added language/runtime surface must update this matrix and add parity evidence in the same change.

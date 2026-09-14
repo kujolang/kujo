@@ -16,12 +16,12 @@ assert(utf8["utf8_sha256"] == sha256("café") && utf8["utf8_bytes"] == 5,"UTF-8 
 
 mut malformed := false
 try { decode_text_file_range_info("tests/fixtures/charset_invalid_shift_jis_qp.txt",0,3,"quoted-printable","shift_jis",64,0) }
-except error { malformed = contains(to_string(error),"invalid for the selected charset") }
+except error { malformed = contains(to_string(error),"invalid for the selected charset") == 1 }
 assert(malformed,"incomplete multibyte stream fails without replacement")
 
 mut bounded := false
 try { decode_text_file_range_info("tests/fixtures/charset_latin1_qp.txt",0,6,"quoted-printable","iso-8859-1",4,0) }
-except error { bounded = contains(to_string(error),"charset output exceeds configured limit") }
+except error { bounded = contains(to_string(error),"charset output exceeds configured limit") == 1 }
 assert(bounded,"UTF-8 expansion respects the explicit output bound")
 
 print("streaming charset tests: 10 passed")

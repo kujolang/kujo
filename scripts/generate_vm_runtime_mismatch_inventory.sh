@@ -177,6 +177,11 @@ is_test_run_fixture() {
   head -n 3 "$ROOT/$fixture" | grep -q "Run with: kujo test-run"
 }
 
+is_inventory_skipped_fixture() {
+  local fixture="$1"
+  head -n 3 "$ROOT/$fixture" | grep -q "Inventory: skip"
+}
+
 classify_delta() {
   local vm_match="$1"
   local interpreter_match="$2"
@@ -248,7 +253,7 @@ fixtures=$(
   cd "$ROOT"
   for fixture in "$TESTS_DIR"/*.kujo; do
     [[ -e "$fixture" ]] || continue
-    if is_test_run_fixture "$fixture"; then
+    if is_test_run_fixture "$fixture" || is_inventory_skipped_fixture "$fixture"; then
       continue
     fi
     printf '%s\n' "$fixture"

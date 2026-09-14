@@ -1,3 +1,4 @@
+# Inventory: skip (requires a live PostgreSQL TLS endpoint)
 let connection_string := env_or("KUJO_POSTGRES_TLS_URL","")
 let ca_pem := read_file(env_or("KUJO_POSTGRES_TLS_CA_FILE",""))
 let db := db_connect_postgres_tls(connection_string,ca_pem)

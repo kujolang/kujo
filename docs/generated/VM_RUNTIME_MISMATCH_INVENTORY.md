@@ -1,6 +1,6 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-09-02
+Generated: 2026-09-13
 Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
 Fixture root: `tests`
 
@@ -8,8 +8,10 @@ Fixture root: `tests`
 | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
 | `tests/arg_parser.kujo` | 0 | 4 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/array_methods_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
-| `tests/base64_utf8_test.kujo` | 0 | 0 | no | no | `both_mismatch_same_output` | `stale-snapshot-expectation` | docs-owner | `P1` | both runtimes agree on output but snapshot expectation diverges |
+| `tests/base64_utf8_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/bytecode_vm.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/charset_decode_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/charset_file_range_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/cli_module.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/destructuring.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/dict_methods_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
@@ -24,7 +26,7 @@ Fixture root: `tests`
 | `tests/match_no_param.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/minimal_match_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/net_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
-| `tests/private_spool_runtime_test.kujo` | 0 | 0 | no | no | `both_mismatch_same_output` | `stale-snapshot-expectation` | docs-owner | `P1` | both runtimes agree on output but snapshot expectation diverges |
+| `tests/private_spool_runtime_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/range_format_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/result_option.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/simple_error_test.kujo` | 4 | 4 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
@@ -35,7 +37,7 @@ Fixture root: `tests`
 | `tests/spread_operator.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/stdlib_io_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/stdlib_os_path_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/stdlib_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
+| `tests/stdlib_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/string_methods_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_arithmetic.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_array_contains.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
@@ -43,7 +45,7 @@ Fixture root: `tests`
 | `tests/test_assert_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_assertions.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/test_basic_print.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
-| `tests/test_binary_files.kujo` | 4 | 4 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
+| `tests/test_binary_files.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_binary_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_call_method.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_chain.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -101,7 +103,7 @@ Fixture root: `tests`
 | `tests/test_range_debug.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_range_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_reassign.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
-| `tests/test_regex.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
+| `tests/test_regex.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_regex_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_self_backward_compat.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_self_field.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -152,23 +154,23 @@ Fixture root: `tests`
 | `tests/vm_closure_multiple.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/vm_closure_order.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
 | `tests/vm_closure_simple.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
-| `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | no | `interpreter_only_mismatch` | `intentional-divergence` | runtime-owner | `P2` | default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt |
+| `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 
-Summary: `147` fixtures scanned
-- both match snapshot: `108`
+Summary: `149` fixtures scanned
+- both match snapshot: `115`
 - VM-only mismatch: `0`
-- interpreter-only mismatch: `37`
-- both mismatch: `2`
+- interpreter-only mismatch: `34`
+- both mismatch: `0`
 
 Mismatch classification totals (priority order):
 - P0 runtime-parity-bug (`runtime-owner`): `0`
-- P1 stale-snapshot-expectation (`docs-owner`): `2`
+- P1 stale-snapshot-expectation (`docs-owner`): `0`
 - P1 parser-invalid-fixture (`language-owner`): `0`
 - P2 harness-debt (`harness-owner`): `0`
-- P2 intentional-divergence (`runtime-owner`): `37`
+- P2 intentional-divergence (`runtime-owner`): `34`
 
 VM coverage gate:
 - metric: `vm_matches_snapshot / fixtures_scanned`
-- vm_matches_snapshot: `145/147` (`98.6%`)
+- vm_matches_snapshot: `149/149` (`100.0%`)
 - target threshold: `70.0%`
 - gate status: `PASS`
