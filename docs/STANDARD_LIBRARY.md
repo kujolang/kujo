@@ -561,6 +561,10 @@ They raise inspectable runtime errors on invalid input or bounds violations.
 
 Buffered `http_request` additionally returns `header_values`, an object of header
 name → array of values. Existing `headers` and response behavior are unchanged.
+Routed HTTP server requests also expose `header_values`, with lowercase names
+and all received values in wire order. Use it to reject duplicate authorization
+headers; the compatibility `headers` dictionary alone cannot preserve duplicates.
+This server field is unreleased and is not present in the v1.4.0 binary.
 The explicit APIs above do not raise the default network or file buffering limits.
 
 ### Regular-expression reuse

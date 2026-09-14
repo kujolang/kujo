@@ -2889,12 +2889,20 @@ impl Interpreter {
 
                 // Extract headers from request
                 let mut headers_dict = DictMap::default();
+                let mut header_values = DictMap::default();
                 for header in request.headers() {
                     let header_name = header.field.as_str().to_string();
                     let header_value = header.value.as_str().to_string();
+                    let values = header_values
+                        .entry(header_name.to_ascii_lowercase().into())
+                        .or_insert_with(|| Value::Array(Arc::new(Vec::new())));
+                    if let Value::Array(values) = values {
+                        Arc::make_mut(values).push(Value::Str(Arc::new(header_value.clone())));
+                    }
                     headers_dict.insert(header_name.into(), Value::Str(Arc::new(header_value)));
                 }
                 req_fields.insert("headers".into(), Value::Dict(Arc::new(headers_dict)));
+                req_fields.insert("header_values".into(), Value::Dict(Arc::new(header_values)));
 
                 let req_obj = Value::Dict(Arc::new(req_fields));
 

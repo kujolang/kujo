@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Added lowercase `header_values` arrays to routed HTTP server requests in both
+  runtimes, preserving duplicate headers for explicit application validation.
+
 - Expanded scheduled fuzz smoke coverage from the lexer, parser, and XML parser
   to every maintained bounded decoder target, including gzip and ZIP.
 - Added a weekly RustSec audit that rejects vulnerable locked dependencies.
