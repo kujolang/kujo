@@ -1,11 +1,13 @@
-# Kennel Namespace Plan
+# Kennel Namespace Policy
 
-The reserved-name system is the foundation for future Kennel package naming and namespace safety.
+The public Kennel registry is live at
+[kennel.kujolang.ai](https://kennel.kujolang.ai/). This document separates the
+historical Kujo 1.0 boundary from the namespace work that Kennel still owns.
 
 ## v1.0 Boundary
 
-Kennel is not a public package registry in Kujo v1.0. The v1.0 launch boundary
-is:
+Kennel was not a public package registry when Kujo v1.0 shipped. The v1.0
+runtime boundary was:
 
 - local `kujo.toml` manifest parsing
 - deterministic `kujo.lock` generation and `--frozen` verification
@@ -13,19 +15,26 @@ is:
   workflow pack identities
 - local workflow-pack discovery and execution
 
-Public registry APIs, namespace ownership accounts, registry authentication, remote package resolution, upload transport, and signed package distribution are future Kennel work, not v1.0 release promises.
+That historical boundary does not describe the current ecosystem. Kennel now
+provides public registry reads, exact release resolution, checksums, local
+project installs, and global tools. Kujo's built-in `package-publish` command is
+still a metadata preview and does not upload to Kennel.
 
-## What this enables now
+## Current boundary
 
-- Deterministic blocking of core and first-party names.
-- Separation between namespace routing, command ownership, and package identity.
-- Explicit first-party trust boundaries.
+- Registry and publishing policy belongs in Kennel, not the Kujo runtime.
+- Kujo owns the bounded filesystem, locking, publication, symlink, process, and
+  import mechanisms that Kennel uses.
+- Public reads do not imply open third-party publishing.
+- Third-party accounts, organization scopes, private packages, transfers, and
+  signed distribution are not current release promises.
 
 ## Package-name uniqueness
 
 Current `kujo.toml` parsing rejects reserved package names for third-party manifests.
 
-Future Kennel registries should extend this into global uniqueness checks for:
+Future Kennel publishing work should extend this into global uniqueness checks
+for:
 
 - unscoped package names
 - scoped package names
@@ -48,9 +57,9 @@ First-party names remain explicitly reserved (for example `kennel`, `spec`, `eva
 
 Generic names (`dev`, `admin`, `tools`, `system`, etc.) are blocked in top-level alias routing to avoid ambiguous command surfaces.
 
-## Future registry validation
+## Future publishing validation
 
-When Kennel registry APIs exist in a future release, validation should include:
+When third-party publishing is opened, validation should include:
 
 - reserved-name enforcement server-side
 - namespace/package collision checks
@@ -60,6 +69,8 @@ When Kennel registry APIs exist in a future release, validation should include:
 ## Migration path from local packs to Kennel packages
 
 1. Keep local workflow packs namespaced and non-reserved.
-2. Use `kujo pack run <namespace> <command>` as canonical execution.
-3. Publish under scoped Kennel names when a future registry exists.
-4. Keep contributions (for example doctor profiles) in explicit manifest extension points rather than top-level command claims.
+2. Use `kujo pack run <namespace> <command>` for local workflow packs.
+3. Use Kennel for packages and global tools that have registry releases.
+4. Add scoped publishing only after account and ownership policy ships.
+5. Keep contributions (for example doctor profiles) in explicit manifest
+   extension points rather than top-level command claims.

@@ -60,19 +60,21 @@ Exit code classes are contract-stable for automation:
 
 ### 2.6 Package registry and Kennel boundary
 
-- Kujo v1.0 package scope is local manifest and lockfile determinism:
+- Kujo v1.0 package scope was local manifest and lockfile determinism:
   `kujo init`, `kujo package-add`, `kujo package-install`, and
   `kujo package-install --frozen`.
 - Workflow packs are local extension points discovered from project-local,
   user-local, and explicit environment paths.
-- Kujo v1.0 does not include a public Kennel registry, remote package
-  resolution, registry authentication, package upload transport, or a
-  first-party `kennel.toml` for the language/runtime repository.
+- Kujo v1.0 did not include the public Kennel registry that exists today.
+  Registry resolution and publishing policy remain separate from these built-in
+  runtime commands, and this language/runtime repository intentionally has no
+  first-party `kennel.toml`.
 - `kujo package-publish` is metadata preview only; `--publish` is reserved for
   future registry transport and must fail deterministically until that transport
   exists.
-- Future registry semantics belong in `docs/KENNEL_NAMESPACE_PLAN.md` and must
-  not be described as a v1.0 release promise.
+- Current and planned registry semantics belong in Kennel and are summarized in
+  `docs/KENNEL_NAMESPACE_PLAN.md`. Do not describe later Kennel features as
+  Kujo v1.0 runtime guarantees.
 
 ## 3. Required CI And Local Gates
 

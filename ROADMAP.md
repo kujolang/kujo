@@ -21,6 +21,25 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 - Kujo's built-in `kujo.toml` / `kujo.lock` commands remain separate from
   Kennel's `kennel.toml` / `kennel.lock` workflow.
 
+## Recently completed
+
+The September 13 reliability sweep closed the current short-term checklist:
+
+- Rechecked VM/interpreter behavior for closures, lexical scopes, async
+  captures, generators, spawn, imports, collections, control flow, and errors.
+- Re-ran the host-effect security boundaries for filesystem, archive, process,
+  network, HTTP, TLS, database, AI, environment, clock, and random access.
+- Removed a race from the source-bound TCP security regression.
+- Expanded scheduled fuzzing to every maintained language and bounded-decoder
+  target, and added a weekly RustSec dependency audit.
+- Rechecked the release installer, native upgrade contracts, npm packages, and
+  Kennel's public installer boundary.
+- Aligned current docs on Kujo 1.4.0, the live Kennel registry, and the split
+  between Kujo's built-in lockfile commands and Kennel packages.
+
+These are continuing release gates, not one-time tasks. Their automated checks
+must stay green as the runtime changes.
+
 ## Current direction
 
 ### Keep the v1 line dependable

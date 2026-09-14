@@ -28,7 +28,7 @@ Core principles:
 8. `examples/README_examples.md`: current examples, showcases, and legacy/expected-fail examples.
 9. `tests/docs_examples.rs`: executable policy for which examples should run, parse, skip, or fail.
 
-For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.3.1` is the current stable release, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
+For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.4.0` is the current stable release, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
 
 ## Repository Map
 
@@ -112,7 +112,10 @@ For new Kujo-language projects, keep the implementation Kujo-native:
 - Keep adapters and connectors in Kujo unless they need to modify the Rust runtime itself.
 - Avoid Python bridge scripts for Kujo project behavior. If a non-Kujo helper is unavoidable, prefer Rust for runtime/tooling internals and explain the exception in docs.
 
-Current package scope is local manifest and lockfile determinism only. Do not imply a public Kennel registry or package publish transport exists unless the repository gains that feature.
+Kujo's built-in package commands remain limited to local manifest and lockfile
+determinism. The separate Kennel package manager and public registry are live at
+`kennel.kujolang.ai`; do not imply that Kujo's `package-publish` preview uploads
+to Kennel or that registry policy belongs in the runtime.
 
 ## Determinism And Automation Contracts
 

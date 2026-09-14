@@ -184,7 +184,8 @@ Release boundary: Kujo `v1.4.0` is the current stable release; explicit deferral
 - The source tree is currently at `1.4.0` in `Cargo.toml`; the latest published stable release tag is `v1.4.0`.
 - Prebuilt Linux x64/arm64, macOS x64/arm64, and Windows x64 binaries ship with
   SHA-256 checksums.
-- Kujo v1.0 package scope is local manifest and lockfile determinism only; it does not include a public Kennel registry or package publish transport. That sentence
+- Kujo v1.0 package scope was local manifest and lockfile determinism only; it
+  did not include a public Kennel registry or package publish transport. That
   describes the historical 1.0 runtime boundary. The separate Kennel registry is
   now live at [kennel.kujolang.ai](https://kennel.kujolang.ai/).
 - The v1.0 launch record remains in

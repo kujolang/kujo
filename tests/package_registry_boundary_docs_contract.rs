@@ -10,14 +10,14 @@ fn read(path: &str) -> String {
 }
 
 #[test]
-fn package_registry_boundary_is_consistent_across_launch_docs() {
+fn package_registry_boundary_distinguishes_history_from_current_ecosystem() {
     let readme = read("README.md");
     let release_process = read("docs/RELEASE_PROCESS.md");
     let workflow_packs = read("docs/WORKFLOW_PACKS.md");
     let kennel = read("docs/KENNEL_NAMESPACE_PLAN.md");
     let shipcheck = read("docs/SHIPCHECK_RELEASE_EXCEPTIONS.md");
 
-    let required_boundary = "Kujo v1.0 package scope is local manifest and lockfile determinism";
+    let required_boundary = "Kujo v1.0 package scope was local manifest and lockfile determinism";
 
     assert!(
         readme.contains(required_boundary),
@@ -26,7 +26,7 @@ fn package_registry_boundary_is_consistent_across_launch_docs() {
     assert!(
         release_process.contains("### 2.6 Package registry and Kennel boundary")
             && release_process.contains(required_boundary)
-            && release_process.contains("does not include a public Kennel registry")
+            && release_process.contains("public Kennel registry that exists today")
             && release_process.contains("`kujo package-publish` is metadata preview only")
             && release_process.contains("--publish")
             && release_process.contains("must fail deterministically"),
@@ -41,15 +41,15 @@ fn package_registry_boundary_is_consistent_across_launch_docs() {
     );
     assert!(
         kennel.contains("## v1.0 Boundary")
-            && kennel.contains("Kennel is not a public package registry in Kujo v1.0")
-            && kennel.contains("future Kennel work")
-            && kennel.contains("not v1.0 release promises"),
-        "Kennel namespace plan should separate v1 local guarantees from future registry design"
+            && kennel.contains("public Kennel registry is live")
+            && kennel.contains("## Current boundary")
+            && kennel.contains("not current release promises"),
+        "Kennel namespace policy should separate v1 history from the current registry boundary"
     );
     assert!(
         shipcheck.contains("No kennel.toml found")
             && shipcheck.contains("local manifest/lockfile determinism")
-            && shipcheck.contains("no public Kennel registry"),
-        "ShipCheck exception should explain why missing kennel.toml is intentional"
+            && shipcheck.contains("public Kennel registry is now live"),
+        "ShipCheck exception should explain why missing kennel.toml remains intentional"
     );
 }
