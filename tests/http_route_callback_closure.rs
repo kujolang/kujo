@@ -66,6 +66,15 @@ fn spawn_runtime_with_read_timeout(
     current_dir: &Path,
     interpreter: bool,
 ) -> Child {
+    spawn_runtime_with_timeout_ms(script_path, current_dir, interpreter, 150)
+}
+
+fn spawn_runtime_with_timeout_ms(
+    script_path: &Path,
+    current_dir: &Path,
+    interpreter: bool,
+    timeout_ms: u64,
+) -> Child {
     let mut command = Command::new(kujo_binary());
     command.current_dir(current_dir).arg("run").arg(script_path);
     if interpreter {
@@ -73,7 +82,7 @@ fn spawn_runtime_with_read_timeout(
     }
     command
         .arg("--allow-net-server")
-        .env("KUJO_HTTP_SERVER_READ_TIMEOUT_MS", "150")
+        .env("KUJO_HTTP_SERVER_READ_TIMEOUT_MS", timeout_ms.to_string())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -565,7 +574,9 @@ server.listen()
             ),
         )
         .unwrap();
-        let child = spawn_runtime_with_read_timeout(&script, &root, interpreter);
+        // Header preservation is not a slow-client deadline test. Allow scheduling
+        // headroom when this target runs multiple runtime processes concurrently.
+        let child = spawn_runtime_with_timeout_ms(&script, &root, interpreter, 2_000);
         let result = (|| -> Result<String, String> {
             let deadline = std::time::Instant::now() + Duration::from_secs(10);
             let mut stream = loop {
