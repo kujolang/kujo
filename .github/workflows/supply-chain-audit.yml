@@ -1,0 +1,27 @@
+name: supply-chain-audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '40 7 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  rust-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Reject vulnerable locked dependencies
+        run: cargo audit --deny warnings

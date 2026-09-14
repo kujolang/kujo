@@ -1295,9 +1295,13 @@ fn network_tcp_connect_bound_uses_requested_source_address() {
     };
     let port = listener.local_addr().expect("listener address").port();
     let server = thread::spawn(move || {
-        let (_stream, peer) = listener.accept().expect("source-bound client should connect");
+        let (mut stream, peer) = listener.accept().expect("source-bound client should connect");
         assert!(peer.ip().is_loopback());
-        thread::sleep(Duration::from_millis(250));
+        stream
+            .set_read_timeout(Some(Duration::from_secs(10)))
+            .expect("source-bound server should set a read timeout");
+        let mut byte = [0_u8; 1];
+        let _ = stream.read(&mut byte);
     });
 
     let project_root = unique_temp_dir("network_tcp_connect_bound");

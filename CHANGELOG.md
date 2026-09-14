@@ -6,6 +6,22 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### Changed
+
+- Expanded scheduled fuzz smoke coverage from the lexer, parser, and XML parser
+  to every maintained bounded decoder target, including gzip and ZIP.
+- Added a weekly RustSec audit that rejects vulnerable locked dependencies.
+- Updated package documentation to distinguish Kujo 1.0's historical local-only
+  boundary from the public Kennel registry available today.
+
+### Fixed
+
+- Kept the source-bound TCP security regression server open until the client
+  closes, removing a startup-speed race on slower debug builds.
+- Restored the runtime mismatch inventory to 149/149 VM matches by adding
+  charset snapshots, making integer membership checks explicitly Boolean, and
+  excluding the credentialed PostgreSQL TLS probe from offline inventory runs.
+
 ## [1.4.0] - 2026-09-09
 
 ### Added

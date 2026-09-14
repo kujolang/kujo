@@ -22,11 +22,5 @@ jobs:
       - name: Install cargo-fuzz
         run: cargo +stable install cargo-fuzz --locked
 
-      - name: Fuzz lexer target (smoke)
-        run: cargo +nightly fuzz run lexer -- -max_total_time=20
-
-      - name: Fuzz parser target (smoke)
-        run: cargo +nightly fuzz run parser -- -max_total_time=20
-
-      - name: Fuzz bounded XML target (smoke)
-        run: cargo +nightly fuzz run xml_bounded -- -max_total_time=20
+      - name: Fuzz language and bounded-decoder targets
+        run: bash scripts/fuzz_smoke.sh --max-total-time 20
