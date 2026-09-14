@@ -1,0 +1,104 @@
+{
+  "name": "kujo-september-2026-hardening",
+  "description": "Deterministic before/after checks for the September 2026 documentation and recurring-gate hardening pass.",
+  "version": "1.0.0",
+  "output_dir": "./eval_results",
+  "stop_on_failure": false,
+  "tests": [
+    {
+      "name": "minimal runtime starts",
+      "check": "output_contains",
+      "params": {
+        "command": "$KUJO_BIN --version",
+        "expected": "kujo 1.4.0"
+      }
+    },
+    {
+      "name": "typical program succeeds",
+      "check": "output_contains",
+      "params": {
+        "command": "$KUJO_BIN run examples/string_interpolation.kujo",
+        "expected": "New way: Hello, Alice! You are 25 years old."
+      }
+    },
+    {
+      "name": "large deterministic workload succeeds",
+      "check": "output_contains",
+      "params": {
+        "command": "$KUJO_BIN run benchmarks/hardening-2026-09/scale_workload.kujo -- 50000",
+        "expected": "\"iterations\":50000"
+      }
+    },
+    {
+      "name": "stress deterministic workload succeeds",
+      "check": "output_contains",
+      "params": {
+        "command": "$KUJO_BIN run benchmarks/hardening-2026-09/scale_workload.kujo -- 100000",
+        "expected": "\"iterations\":100000"
+      }
+    },
+    {
+      "name": "invalid source fails",
+      "check": "command_fails",
+      "params": {
+        "command": "$KUJO_BIN run benchmarks/hardening-2026-09/invalid_source.kujo"
+      }
+    },
+    {
+      "name": "invalid source preserves parser evidence",
+      "check": "output_contains",
+      "params": {
+        "command": "$KUJO_BIN run benchmarks/hardening-2026-09/invalid_source.kujo 2>&1 || true",
+        "expected": "[KUJOPARSE001]"
+      }
+    },
+    {
+      "name": "README identifies current stable release",
+      "check": "file_contains",
+      "params": {
+        "path": "README.md",
+        "expected": "v1.4.0` is the current stable release"
+      }
+    },
+    {
+      "name": "README retains trust boundary",
+      "check": "file_contains",
+      "params": {
+        "path": "README.md",
+        "expected": "Kujo is not a sandbox"
+      }
+    },
+    {
+      "name": "README exposes primary installer",
+      "check": "file_contains",
+      "params": {
+        "path": "README.md",
+        "expected": "https://kujolang.ai/install.sh"
+      }
+    },
+    {
+      "name": "README stays within 12000-byte onboarding budget",
+      "check": "file_size_less_than",
+      "params": {
+        "path": "README.md",
+        "bytes": 12000
+      }
+    },
+    {
+      "name": "installation guide stays within 7000-byte task budget",
+      "check": "file_size_less_than",
+      "params": {
+        "path": "INSTALLATION.md",
+        "bytes": 7000
+      }
+    },
+    {
+      "name": "roadmap stays within 10000-byte current-state budget",
+      "check": "file_size_less_than",
+      "params": {
+        "path": "ROADMAP.md",
+        "bytes": 10000
+      }
+    }
+  ]
+}

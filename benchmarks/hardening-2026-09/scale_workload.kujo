@@ -1,0 +1,21 @@
+let argv := args()
+
+if len(argv) != 1 {
+    print("usage: scale_workload.kujo ITERATIONS")
+    exit(2)
+}
+
+let iterations := to_int(argv[0])
+if iterations < 1 {
+    print("ITERATIONS must be positive")
+    exit(2)
+}
+
+mut i := 0
+mut checksum := 0
+while i < iterations {
+    checksum = (checksum + ((i * 31) % 997)) % 1000003
+    i += 1
+}
+
+print(to_json({"iterations": iterations, "checksum": checksum}))

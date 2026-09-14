@@ -1,0 +1,16 @@
+baseline
+     402    2026   17302 /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//kujo-hardening-eval.G04PQT/baseline/README.md
+     406    1134    8790 /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//kujo-hardening-eval.G04PQT/baseline/INSTALLATION.md
+    2022   19061  164341 /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//kujo-hardening-eval.G04PQT/baseline/ROADMAP.md
+    2830   22221  190433 total
+install|package|registry lines=101 bytes=17103
+security|untrusted|sandbox|allow- lines=130 bytes=28039
+release|version|stable lines=187 bytes=37531
+current
+     241    1075    9021 /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//kujo-hardening-eval.G04PQT/current/README.md
+     212     697    5256 /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//kujo-hardening-eval.G04PQT/current/INSTALLATION.md
+     137     811    5795 /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//kujo-hardening-eval.G04PQT/current/ROADMAP.md
+     590    2583   20072 total
+install|package|registry lines=89 bytes=6664
+security|untrusted|sandbox|allow- lines=12 bytes=982
+release|version|stable lines=58 bytes=4249

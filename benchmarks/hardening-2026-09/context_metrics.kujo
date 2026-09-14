@@ -1,0 +1,29 @@
+let argv := args()
+
+if len(argv) != 3 {
+    print("usage: context_metrics.kujo README.md INSTALLATION.md ROADMAP.md")
+    exit(2)
+}
+
+let readme := read_file(argv[0])
+let installation := read_file(argv[1])
+let roadmap := read_file(argv[2])
+let combined := readme + "\n\n" + installation + "\n\n" + roadmap
+let options := {"model": "gpt-4o"}
+
+print(to_json({
+    "model": options["model"],
+    "estimator": "kujo.ai_count_tokens",
+    "readme": {
+        "estimated_tokens": ai_count_tokens(readme, options)
+    },
+    "installation": {
+        "estimated_tokens": ai_count_tokens(installation, options)
+    },
+    "roadmap": {
+        "estimated_tokens": ai_count_tokens(roadmap, options)
+    },
+    "combined": {
+        "estimated_tokens": ai_count_tokens(combined, options)
+    }
+}))

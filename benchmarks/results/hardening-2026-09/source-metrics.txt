@@ -1,0 +1,16 @@
+baseline
+tracked_files 1408
+rust_source_lines 119982 total
+rust_test_lines 25409 total
+direct_dependencies 62
+lockfile_packages 583
+a617f0d8a48b95c78306f260a36e68e3b4aeda9a247f5359c73c6ed72b9e1bd0  Cargo.toml
+a9a73cf183d819bea0e4c0bc828984f0d6a01363d70c8a43142e06f954a9a97c  Cargo.lock
+current
+tracked_files 1411
+rust_source_lines 119982 total
+rust_test_lines 25419 total
+direct_dependencies 62
+lockfile_packages 583
+a617f0d8a48b95c78306f260a36e68e3b4aeda9a247f5359c73c6ed72b9e1bd0  Cargo.toml
+a9a73cf183d819bea0e4c0bc828984f0d6a01363d70c8a43142e06f954a9a97c  Cargo.lock

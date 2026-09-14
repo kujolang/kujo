@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-09-14T14:22:31Z",
+  "evaluation": "Kujo September 2026 documentation and recurring-gate hardening",
+  "baseline": {
+    "sha": "1a7b6ef0eacd4918912ef58cfb5ec8533bff9e91",
+    "timestamp": "2026-09-09T11:06:32-04:00",
+    "selection_reason": "Immediate parent boundary before the contiguous September 13 onboarding, roadmap, parity-inventory, and recurring-gate hardening series."
+  },
+  "current": {
+    "sha": "1395f49ff794707380728df3b80ed363788461c0",
+    "timestamp": "2026-09-13T21:41:37-04:00",
+    "branch_at_measurement": "codex/humanize-core-docs",
+    "worktree_clean_at_measurement": true
+  },
+  "environment": {
+    "os": "Darwin 25.6.0 x86_64",
+    "cpu": "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz",
+    "logical_cores": 12,
+    "ram_bytes": 17179869184,
+    "rustc": "1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "1.96.0 (30a34c682 2026-05-25)",
+    "kujo": "1.4.0",
+    "runtime_profile": "debug",
+    "network_used": false
+  },
+  "methodology": {
+    "warmups": 3,
+    "runtime_sample_counts": {
+      "minimal": 30,
+      "typical": 30,
+      "large": 20,
+      "stress": 10,
+      "failure": 30,
+      "each_scaling_point": 10,
+      "search_latency": 50,
+      "memory_each_version": 10
+    },
+    "runtime_binary_note": "The baseline and current runtime inputs are byte-identical. One Kujo 1.4.0 debug artifact was deliberately reused for both checkout workloads so measurements isolate checkout content and host noise rather than introduce compiler variance.",
+    "percent_change_convention": "Positive runtime percentage means current is slower; positive reduction percentage means current is smaller."
+  },
+  "source_and_dependency_metrics": {
+    "production_runtime_files_changed": 0,
+    "rust_source_lines": {"baseline": 119982, "current": 119982, "change": 0},
+    "rust_test_lines": {"baseline": 25409, "current": 25419, "change": 10},
+    "tracked_files": {"baseline": 1408, "current": 1411, "change": 3},
+    "tracked_bytes": {"baseline": 19609792, "current": 19439302, "change": -170490, "reduction_percent": 0.869413},
+    "direct_dependencies": {"baseline": 62, "current": 62, "change": 0},
+    "lockfile_packages": {"baseline": 583, "current": 583, "change": 0},
+    "cargo_toml_sha256_equal": true,
+    "cargo_lock_sha256_equal": true,
+    "todo_fixme_count": {"baseline": 35, "current": 35},
+    "unwrap_expect_count_in_src": {"baseline": 2017, "current": 2017}
+  },
+  "context_metrics": {
+    "core_documents": ["README.md", "INSTALLATION.md", "ROADMAP.md"],
+    "bytes": {"baseline": 190433, "current": 20072, "saved": 170361, "reduction_percent": 89.459810},
+    "words": {"baseline": 22221, "current": 2583, "saved": 19638, "reduction_percent": 88.375861},
+    "lines": {"baseline": 2830, "current": 590, "saved": 2240, "reduction_percent": 79.151943},
+    "estimated_tokens": {
+      "estimator": "kujo.ai_count_tokens",
+      "model_hint": "gpt-4o",
+      "baseline": 47608,
+      "current": 5019,
+      "saved": 42589,
+      "reduction_percent": 89.457654,
+      "billing_grade": false
+    }
+  },
+  "agent_search_output": {
+    "install_package_registry": {"baseline_lines": 101, "current_lines": 89, "baseline_bytes": 17103, "current_bytes": 6664, "byte_reduction_percent": 61.036076},
+    "security_untrusted_sandbox_allow": {"baseline_lines": 130, "current_lines": 12, "baseline_bytes": 28039, "current_bytes": 982, "byte_reduction_percent": 96.497735},
+    "release_version_stable": {"baseline_lines": 187, "current_lines": 58, "baseline_bytes": 37531, "current_bytes": 4249, "byte_reduction_percent": 88.678692},
+    "security_query_latency_seconds": {
+      "samples": 50,
+      "baseline_median": 0.0221686762,
+      "current_median": 0.0212397497,
+      "reduction_percent": 4.190266,
+      "classification": "INCONCLUSIVE",
+      "reason": "The 0.929 ms median difference is smaller than run-to-run standard deviation and process startup dominates."
+    }
+  },
+  "kujo_eval": {
+    "suite": "benchmarks/hardening-2026-09/eval.json",
+    "checks": 12,
+    "baseline": {"passed": 8, "failed": 4, "pass_rate_percent_exact": 66.666667},
+    "current": {"passed": 12, "failed": 0, "pass_rate_percent_exact": 100.0},
+    "delta_percentage_points": 33.333333,
+    "criteria_note": "Six runtime/failure checks and two retained-document-contract checks pass in both versions. Current additionally passes the primary-installer check and three explicit context-budget checks."
+  },
+  "runtime_measurements_seconds": {
+    "minimal": {"samples": 30, "baseline_median": 0.03515403642, "current_median": 0.03493774842, "percent_change": -0.615258, "baseline_p95": 0.04592517592, "current_p95": 0.04030265892, "classification": "NEUTRAL"},
+    "typical": {"samples": 30, "baseline_median": 0.07507016178, "current_median": 0.07529200728, "percent_change": 0.295518, "baseline_p95": 0.09228795878, "current_p95": 0.08209848078, "classification": "NEUTRAL"},
+    "large": {"samples": 20, "baseline_median": 1.15017433296, "current_median": 1.12962168396, "percent_change": -1.786916, "baseline_p95": 1.34459319196, "current_p95": 1.19489268096, "classification": "INCONCLUSIVE"},
+    "stress": {"samples": 10, "baseline_median": 2.36202265284, "current_median": 2.28262077984, "percent_change": -3.361605, "baseline_max": 2.87890095284, "current_max": 2.77671601184, "classification": "INCONCLUSIVE"},
+    "failure": {"samples": 30, "baseline_median": 0.0334014981, "current_median": 0.0351807911, "percent_change": 5.326986, "baseline_p95": 0.0366636156, "current_p95": 0.0390557786, "classification": "INCONCLUSIVE"}
+  },
+  "memory_stress": {
+    "samples_each": 10,
+    "baseline_mean_peak_rss_bytes": 15636480,
+    "current_mean_peak_rss_bytes": 15552512,
+    "reduction_percent": 0.537001,
+    "baseline_range_bytes": [15527936, 15740928],
+    "current_range_bytes": [15360000, 15708160],
+    "classification": "NEUTRAL"
+  },
+  "reliability": {
+    "targeted_tests_baseline": {"passed": 97, "failed": 0, "harness_rerun_required": true},
+    "targeted_tests_current": {"passed": 97, "failed": 0},
+    "baseline_harness_note": "The first cross-worktree run could not find target/debug/kujo inside the detached worktree; rerunning with the verified source-identical binary in the expected path passed both inventory tests.",
+    "deterministic_failure_exit_code": 3,
+    "deterministic_failure_diagnostic": "KUJOPARSE001",
+    "current_full_cargo_test": "pass",
+    "current_full_cargo_test_ignored_doctests": 1
+  },
+  "build_and_artifact_metrics": {
+    "clean_build_comparison": "not demonstrated",
+    "reason": "Concurrent clean release builds exhausted host process-spawn capacity, and the isolated release build was stopped before completion. Runtime inputs and dependency manifests are byte-identical, but that derived fact is not a timing measurement.",
+    "binary_size_comparison": "not demonstrated",
+    "measured_current_debug_binary_bytes": 99441608
+  },
+  "regressions": [],
+  "final_assessment": "PARTIALLY"
+}
