@@ -81,7 +81,7 @@ use std::io::Read;
 use std::io::Write;
 #[allow(unused_imports)]
 use std::path::Path;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 #[cfg(feature = "runtime-archive")]
 #[allow(unused_imports)]
@@ -321,21 +321,6 @@ impl SpawnCapturedValue {
             }
         }
     }
-}
-
-enum RoutedHttpResponse {
-    Buffered {
-        status: u16,
-        body: Vec<u8>,
-        headers: HashMap<String, String>,
-    },
-    Streaming {
-        status: u16,
-        headers: HashMap<String, String>,
-        stream: SharedHttpResponseStream,
-        callback: Option<Box<Value>>,
-    },
-    InternalError,
 }
 
 /// Main interpreter that executes Kujo programs
@@ -2611,6 +2596,9 @@ impl Interpreter {
         println!("Server listening on http://{}:{}", host, port);
         println!("Press Ctrl+C to stop");
 
+        let maximum_in_flight = http_request_utils::routed_http_max_in_flight();
+        let in_flight = Arc::new(AtomicUsize::new(0));
+
         // Main server loop
         for mut request in server.incoming_requests() {
             let method = request.method().to_string();
@@ -2814,7 +2802,6 @@ impl Interpreter {
 
             // Find matching route (supports path parameters like /:code)
             // Exact matches take priority over parameterized routes
-            let mut response_to_send: Option<RoutedHttpResponse> = None;
             let mut matched_handler: Option<(&Value, HashMap<String, String>)> = None;
 
             // First pass: look for exact matches
@@ -2906,131 +2893,64 @@ impl Interpreter {
 
                 let req_obj = Value::Dict(Arc::new(req_fields));
 
-                // Call handler function
-                if let Value::Function(params, body, captured_env) = handler {
-                    self.call_stack.push("<http route handler>".to_string());
-
-                    let result = if let Some(closure_env_ref) = captured_env {
-                        // Route handlers can be closures and must resolve symbols against
-                        // their captured lexical environment instead of the request loop state.
-                        let saved_env = self.enter_captured_environment(closure_env_ref);
-                        self.env.push_scope();
-
-                        if let Some(param) = params.first() {
-                            self.env.define(param.clone(), req_obj.clone());
-                        }
-
-                        if let Err(error) = self
-                            .with_function_context("<http route handler>", |interp| {
-                                interp.eval_stmts(&body.get())
-                            })
-                        {
-                            self.return_value = Some(error);
-                        }
-
-                        let result = if let Some(Value::Return(val)) = self.return_value.clone() {
-                            self.return_value = None;
-                            *val
-                        } else if let Some(Value::Error(message)) = self.return_value.clone() {
-                            self.return_value = None;
-                            Value::Error(message)
-                        } else if let Some(Value::ErrorObject { .. }) = self.return_value.clone() {
-                            self.return_value.clone().unwrap()
-                        } else {
-                            self.return_value = None;
-                            Value::HttpResponse {
-                                status: 200,
-                                body: b"OK".to_vec(),
-                                headers: HashMap::new(),
-                            }
-                        };
-
-                        self.env.pop_scope();
-                        *closure_env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                            std::mem::replace(&mut self.env, saved_env);
-
-                        result
-                    } else {
-                        self.env.push_scope();
-
-                        // Bind request parameter
-                        if let Some(param) = params.first() {
-                            self.env.define(param.clone(), req_obj);
-                        }
-
-                        if let Err(error) = self
-                            .with_function_context("<http route handler>", |interp| {
-                                interp.eval_stmts(&body.get())
-                            })
-                        {
-                            self.return_value = Some(error);
-                        }
-
-                        // Get result
-                        let result = if let Some(Value::Return(val)) = self.return_value.clone() {
-                            self.return_value = None;
-                            *val
-                        } else if let Some(Value::Error(message)) = self.return_value.clone() {
-                            self.return_value = None;
-                            Value::Error(message)
-                        } else if let Some(Value::ErrorObject { .. }) = self.return_value.clone() {
-                            self.return_value.clone().unwrap()
-                        } else {
-                            self.return_value = None;
-                            Value::HttpResponse {
-                                status: 200,
-                                body: b"OK".to_vec(),
-                                headers: HashMap::new(),
-                            }
-                        };
-
-                        self.env.pop_scope();
-                        result
-                    };
-
-                    self.call_stack.pop();
-
-                    response_to_send = Some(match result {
+                let Some(permit) = http_request_utils::try_acquire_routed_http_permit(
+                    &in_flight,
+                    maximum_in_flight,
+                ) else {
+                    let _ = request.respond(
+                        Response::from_string("Service Unavailable")
+                            .with_status_code(503)
+                            .with_header(
+                                tiny_http::Header::from_bytes(
+                                    b"Retry-After".as_slice(),
+                                    b"1".as_slice(),
+                                )
+                                .expect("static Retry-After header is valid"),
+                            ),
+                    );
+                    continue;
+                };
+                let handler = handler.clone();
+                let capability_policy = self.capability_policy.clone();
+                let output = self.output.clone();
+                std::thread::spawn(move || {
+                    let _permit = permit;
+                    let mut worker = Interpreter::with_capability_policy(capability_policy);
+                    worker.output = output;
+                    let result = worker.call_user_function(&handler, &[req_obj]);
+                    match result {
                         Value::HttpResponse { status, body, headers } => {
-                            RoutedHttpResponse::Buffered { status, body, headers }
+                            let mut response = Response::from_data(body).with_status_code(status);
+                            for (key, value) in headers {
+                                if let Ok(header) =
+                                    tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
+                                {
+                                    response = response.with_header(header);
+                                }
+                            }
+                            let _ = request.respond(response);
                         }
                         Value::HttpStreamingResponse { status, headers, stream, callback } => {
-                            RoutedHttpResponse::Streaming { status, headers, stream, callback }
+                            worker.respond_incremental_http(
+                                request, status, headers, stream, callback,
+                            );
                         }
-                        Value::Error(_) | Value::ErrorObject { .. } => {
-                            RoutedHttpResponse::InternalError
+                        Value::Null => {
+                            let _ =
+                                request.respond(Response::from_string("OK").with_status_code(200));
                         }
-                        _ => RoutedHttpResponse::InternalError,
-                    });
-                }
-            }
-
-            // Send response
-            match response_to_send {
-                Some(RoutedHttpResponse::Buffered { status, body, headers }) => {
-                    let mut response = Response::from_data(body).with_status_code(status);
-                    for (key, value) in headers {
-                        if let Ok(header) =
-                            tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
-                        {
-                            response = response.with_header(header);
+                        _ => {
+                            let _ = request.respond(
+                                Response::from_string("Internal Server Error")
+                                    .with_status_code(500),
+                            );
                         }
                     }
-                    let _ = request.respond(response);
-                }
-                Some(RoutedHttpResponse::Streaming { status, headers, stream, callback }) => {
-                    self.respond_incremental_http(request, status, headers, stream, callback);
-                }
-                Some(RoutedHttpResponse::InternalError) => {
-                    let _ = request.respond(
-                        Response::from_string("Internal Server Error").with_status_code(500),
-                    );
-                }
-                None => {
-                    let _ =
-                        request.respond(Response::from_string("Not Found").with_status_code(404));
-                }
+                });
+                continue;
             }
+
+            let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
         }
 
         Value::Int(0)

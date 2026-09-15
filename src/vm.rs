@@ -17,7 +17,7 @@ use crate::jit::{
 use crate::runtime_limits;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
 
@@ -25,6 +25,7 @@ use std::sync::{Arc, Mutex};
 /// A function will be JIT-compiled after being called this many times
 const JIT_FUNCTION_THRESHOLD: usize = 100;
 const DENSE_INT_DICT_MIN_CAPACITY: usize = 131072;
+static HTTP_HANDLER_SEQUENCE: AtomicU64 = AtomicU64::new(1);
 
 /// Stable identifier for a suspendable VM execution context.
 pub type VmContextId = u64;
@@ -6146,8 +6147,10 @@ impl VM {
     fn call_http_handler_vm(&mut self, handler: Value, req_obj: Value) -> Result<Value, String> {
         match handler {
             Value::BytecodeFunction { .. } | Value::NativeFunction(_) => {
-                let handler_name = format!("__http_handler_tmp_{}", self.next_execution_context_id);
-                self.next_execution_context_id = self.next_execution_context_id.wrapping_add(1);
+                let handler_name = format!(
+                    "__http_handler_tmp_{}",
+                    HTTP_HANDLER_SEQUENCE.fetch_add(1, Ordering::Relaxed)
+                );
 
                 {
                     let mut globals = self.globals.lock().unwrap();
@@ -6228,6 +6231,9 @@ impl VM {
 
         println!("Server listening on http://{}:{}", host, port);
         println!("Press Ctrl+C to stop");
+
+        let maximum_in_flight = http_request_utils::routed_http_max_in_flight();
+        let in_flight = Arc::new(AtomicUsize::new(0));
 
         for mut request in server.incoming_requests() {
             let method = request.method().to_string();
@@ -6512,30 +6518,64 @@ impl VM {
                 req_fields.insert("headers".into(), Value::Dict(Arc::new(headers_dict)));
                 req_fields.insert("header_values".into(), Value::Dict(Arc::new(header_values)));
 
-                match self.call_http_handler_vm(handler, Value::Dict(Arc::new(req_fields))) {
-                    Ok(Value::HttpResponse { status, body, headers }) => {
-                        let mut response = Response::from_data(body).with_status_code(status);
-                        for (key, value) in headers {
-                            if let Ok(header) =
-                                tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
-                            {
-                                response = response.with_header(header);
+                let Some(permit) = http_request_utils::try_acquire_routed_http_permit(
+                    &in_flight,
+                    maximum_in_flight,
+                ) else {
+                    let _ = request.respond(
+                        Response::from_string("Service Unavailable")
+                            .with_status_code(503)
+                            .with_header(
+                                tiny_http::Header::from_bytes(
+                                    b"Retry-After".as_slice(),
+                                    b"1".as_slice(),
+                                )
+                                .expect("static Retry-After header is valid"),
+                            ),
+                    );
+                    continue;
+                };
+                let globals = Arc::clone(&self.globals);
+                let capability_policy = self.interpreter.capability_policy().clone();
+                let req_obj = Value::Dict(Arc::new(req_fields));
+                std::thread::spawn(move || {
+                    let _permit = permit;
+                    let mut worker = VM::new();
+                    worker.jit_enabled = false;
+                    worker.set_capability_policy(capability_policy);
+                    worker.set_globals(globals);
+                    match worker.call_http_handler_vm(handler, req_obj) {
+                        Ok(Value::HttpResponse { status, body, headers }) => {
+                            let mut response = Response::from_data(body).with_status_code(status);
+                            for (key, value) in headers {
+                                if let Ok(header) =
+                                    tiny_http::Header::from_bytes(key.as_bytes(), value.as_bytes())
+                                {
+                                    response = response.with_header(header);
+                                }
                             }
+                            let _ = request.respond(response);
                         }
-                        response
+                        Ok(Value::HttpStreamingResponse { status, headers, stream, callback }) => {
+                            worker.respond_incremental_http_vm(
+                                request, status, headers, stream, callback,
+                            )
+                        }
+                        Ok(_) => {
+                            let _ = request.respond(
+                                Response::from_string(
+                                    "Internal Server Error: route handler must return an HTTP response",
+                                )
+                                .with_status_code(500),
+                            );
+                        }
+                        Err(error) => {
+                            let _ =
+                                request.respond(Response::from_string(error).with_status_code(500));
+                        }
                     }
-                    Ok(Value::HttpStreamingResponse { status, headers, stream, callback }) => {
-                        self.respond_incremental_http_vm(
-                            request, status, headers, stream, callback,
-                        );
-                        continue;
-                    }
-                    Ok(_other) => Response::from_string(
-                        "Internal Server Error: route handler must return an HTTP response",
-                    )
-                    .with_status_code(500),
-                    Err(error) => Response::from_string(error).with_status_code(500),
-                }
+                });
+                continue;
             } else {
                 Response::from_string("Not Found").with_status_code(404)
             };

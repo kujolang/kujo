@@ -7,12 +7,55 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::io::{ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
 
 pub const DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 10_000;
 pub const MIN_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 100;
 pub const MAX_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 300_000;
+pub const DEFAULT_ROUTED_HTTP_MAX_IN_FLIGHT: usize = 32;
+pub const MAX_ROUTED_HTTP_MAX_IN_FLIGHT: usize = 1024;
+
+pub struct RoutedHttpPermit {
+    in_flight: Arc<AtomicUsize>,
+}
+
+impl Drop for RoutedHttpPermit {
+    fn drop(&mut self) {
+        self.in_flight.fetch_sub(1, Ordering::AcqRel);
+    }
+}
+
+pub fn routed_http_max_in_flight() -> usize {
+    std::env::var("KUJO_HTTP_SERVER_MAX_IN_FLIGHT")
+        .ok()
+        .and_then(|value| value.trim().parse::<usize>().ok())
+        .unwrap_or(DEFAULT_ROUTED_HTTP_MAX_IN_FLIGHT)
+        .clamp(1, MAX_ROUTED_HTTP_MAX_IN_FLIGHT)
+}
+
+pub fn try_acquire_routed_http_permit(
+    in_flight: &Arc<AtomicUsize>,
+    maximum: usize,
+) -> Option<RoutedHttpPermit> {
+    let mut current = in_flight.load(Ordering::Acquire);
+    loop {
+        if current >= maximum {
+            return None;
+        }
+        match in_flight.compare_exchange_weak(
+            current,
+            current + 1,
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        ) {
+            Ok(_) => return Some(RoutedHttpPermit { in_flight: Arc::clone(in_flight) }),
+            Err(observed) => current = observed,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HttpRequestBodyError {
