@@ -7,9 +7,9 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::io::{ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::{Arc, Once};
+use std::time::{Duration, Instant};
 use uuid::Uuid;
 
 pub const DEFAULT_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 10_000;
@@ -17,6 +17,57 @@ pub const MIN_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 100;
 pub const MAX_ROUTED_HTTP_READ_TIMEOUT_MS: u64 = 300_000;
 pub const DEFAULT_ROUTED_HTTP_MAX_IN_FLIGHT: usize = 32;
 pub const MAX_ROUTED_HTTP_MAX_IN_FLIGHT: usize = 1024;
+pub const DEFAULT_ROUTED_HTTP_SHUTDOWN_GRACE_MS: u64 = 5_000;
+pub const MAX_ROUTED_HTTP_SHUTDOWN_GRACE_MS: u64 = 60_000;
+const ROUTED_HTTP_ACCEPT_POLL_MS: u64 = 50;
+static ROUTED_HTTP_SHUTDOWN_REQUESTED: AtomicBool = AtomicBool::new(false);
+static ROUTED_HTTP_SIGNAL_HANDLER: Once = Once::new();
+
+#[cfg(unix)]
+extern "C" fn routed_http_signal_handler(_signal: libc::c_int) {
+    ROUTED_HTTP_SHUTDOWN_REQUESTED.store(true, Ordering::Release);
+}
+
+pub fn install_routed_http_shutdown_handler() {
+    ROUTED_HTTP_SHUTDOWN_REQUESTED.store(false, Ordering::Release);
+    ROUTED_HTTP_SIGNAL_HANDLER.call_once(|| {
+        #[cfg(unix)]
+        unsafe {
+            libc::signal(
+                libc::SIGINT,
+                routed_http_signal_handler as *const () as libc::sighandler_t,
+            );
+            libc::signal(
+                libc::SIGTERM,
+                routed_http_signal_handler as *const () as libc::sighandler_t,
+            );
+        }
+    });
+}
+
+pub fn routed_http_shutdown_requested() -> bool {
+    ROUTED_HTTP_SHUTDOWN_REQUESTED.load(Ordering::Acquire)
+}
+
+pub fn routed_http_accept_poll_interval() -> Duration {
+    Duration::from_millis(ROUTED_HTTP_ACCEPT_POLL_MS)
+}
+
+pub fn wait_for_routed_http_handlers(in_flight: &AtomicUsize) -> bool {
+    let grace = std::env::var("KUJO_HTTP_SERVER_SHUTDOWN_GRACE_MS")
+        .ok()
+        .and_then(|value| value.trim().parse::<u64>().ok())
+        .unwrap_or(DEFAULT_ROUTED_HTTP_SHUTDOWN_GRACE_MS)
+        .min(MAX_ROUTED_HTTP_SHUTDOWN_GRACE_MS);
+    let deadline = Instant::now() + Duration::from_millis(grace);
+    while in_flight.load(Ordering::Acquire) > 0 {
+        if Instant::now() >= deadline {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    true
+}
 
 pub struct RoutedHttpPermit {
     in_flight: Arc<AtomicUsize>,

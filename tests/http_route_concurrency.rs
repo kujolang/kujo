@@ -170,13 +170,14 @@ fn exhausted_capacity_returns_service_unavailable() {
 }
 
 #[test]
+#[cfg(unix)]
 fn process_shutdown_terminates_in_flight_handlers() {
     for_each_runtime(|interpreter| {
         let Some(port) = reserve_port() else { return };
         let script = temp_script(
             "shutdown",
             &format!(
-                "server := http_server({port})\nserver = server.route(\"GET\", \"/ready\", func(req) {{ return http_response(200, \"ready\") }})\nserver = server.route(\"GET\", \"/hold\", func(req) {{ sleep(5000) return http_response(200, \"done\") }})\nserver.listen()\n"
+                "server := http_server({port})\nserver = server.route(\"GET\", \"/ready\", func(req) {{ return http_response(200, \"ready\") }})\nserver = server.route(\"GET\", \"/hold\", func(req) {{ sleep(350) return http_response(200, \"done\") }})\nserver.listen()\n"
             ),
         );
         let mut child = spawn_server(&script, interpreter, 2);
@@ -185,10 +186,16 @@ fn process_shutdown_terminates_in_flight_handlers() {
         thread::sleep(Duration::from_millis(60));
 
         let started = Instant::now();
-        child.kill().expect("server process should terminate");
-        child.wait().expect("terminated server should be waitable");
+        let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) };
+        assert_eq!(signal_result, 0, "SIGTERM should be delivered");
+        let status = child.wait().expect("terminated server should be waitable");
+        assert!(status.success(), "graceful server shutdown should succeed");
         assert!(started.elapsed() < Duration::from_secs(1));
-        assert!(pending.join().expect("pending request thread should join").is_err());
+        let (pending_status, pending_body) = pending
+            .join()
+            .expect("pending request thread should join")
+            .expect("in-flight request should drain");
+        assert_eq!((pending_status, pending_body.as_str()), (200, "done"));
         let _ = fs::remove_file(script);
     });
 }

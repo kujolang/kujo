@@ -2598,9 +2598,20 @@ impl Interpreter {
 
         let maximum_in_flight = http_request_utils::routed_http_max_in_flight();
         let in_flight = Arc::new(AtomicUsize::new(0));
+        http_request_utils::install_routed_http_shutdown_handler();
 
         // Main server loop
-        for mut request in server.incoming_requests() {
+        loop {
+            if http_request_utils::routed_http_shutdown_requested() {
+                break;
+            }
+            let mut request = match server
+                .recv_timeout(http_request_utils::routed_http_accept_poll_interval())
+            {
+                Ok(Some(request)) => request,
+                Ok(None) => continue,
+                Err(error) => return Value::Error(format!("HTTP server receive failed: {error}")),
+            };
             let method = request.method().to_string();
             let request_url = request.url().to_string();
             let peer_address = request.remote_addr().map(ToString::to_string).unwrap_or_default();
@@ -2951,6 +2962,10 @@ impl Interpreter {
             }
 
             let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
+        }
+
+        if !http_request_utils::wait_for_routed_http_handlers(in_flight.as_ref()) {
+            return Value::Error("HTTP server shutdown grace period expired".to_string());
         }
 
         Value::Int(0)
