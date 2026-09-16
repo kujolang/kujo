@@ -26,24 +26,60 @@ SERVER_RUNNING=1
 
 psql -h 127.0.0.1 -p "${PORT}" -d postgres -v ON_ERROR_STOP=1 <<'SQL' >/dev/null
 CREATE ROLE qf_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+CREATE ROLE qf_migrator NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+SET ROLE qf_migrator;
+CREATE TABLE qf_schema_migrations (version bigint PRIMARY KEY);
 CREATE TABLE qf_tenant_rows (organization_id text NOT NULL, value text NOT NULL);
 CREATE TABLE qf_commands (organization_id text NOT NULL, command_id text PRIMARY KEY);
 CREATE TABLE qf_events (organization_id text NOT NULL, event_id text PRIMARY KEY);
+CREATE TABLE qf_outbox (organization_id text NOT NULL, outbox_id text PRIMARY KEY);
+CREATE TABLE qf_jobs (organization_id text NOT NULL, job_id text PRIMARY KEY, status text NOT NULL DEFAULT 'ready');
+INSERT INTO qf_schema_migrations VALUES (1);
 INSERT INTO qf_tenant_rows VALUES ('tenant_a', 'A'), ('tenant_b', 'B');
+INSERT INTO qf_jobs VALUES ('tenant_a', 'job-a-1', 'ready'), ('tenant_a', 'job-a-2', 'ready'), ('tenant_b', 'job-b-1', 'ready');
 ALTER TABLE qf_tenant_rows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE qf_tenant_rows FORCE ROW LEVEL SECURITY;
 ALTER TABLE qf_commands ENABLE ROW LEVEL SECURITY;
 ALTER TABLE qf_commands FORCE ROW LEVEL SECURITY;
 ALTER TABLE qf_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE qf_events FORCE ROW LEVEL SECURITY;
+ALTER TABLE qf_outbox ENABLE ROW LEVEL SECURITY;
+ALTER TABLE qf_outbox FORCE ROW LEVEL SECURITY;
+ALTER TABLE qf_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE qf_jobs FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_rows_policy ON qf_tenant_rows USING (organization_id = current_setting('app.organization_id', true)) WITH CHECK (organization_id = current_setting('app.organization_id', true));
 CREATE POLICY commands_policy ON qf_commands USING (organization_id = current_setting('app.organization_id', true)) WITH CHECK (organization_id = current_setting('app.organization_id', true));
 CREATE POLICY events_policy ON qf_events USING (organization_id = current_setting('app.organization_id', true)) WITH CHECK (organization_id = current_setting('app.organization_id', true));
-GRANT SELECT, INSERT, UPDATE, DELETE ON qf_tenant_rows, qf_commands, qf_events TO qf_app;
+CREATE POLICY outbox_policy ON qf_outbox USING (organization_id = current_setting('app.organization_id', true)) WITH CHECK (organization_id = current_setting('app.organization_id', true));
+CREATE POLICY jobs_policy ON qf_jobs USING (organization_id = current_setting('app.organization_id', true)) WITH CHECK (organization_id = current_setting('app.organization_id', true));
+CREATE FUNCTION qf_try_insert(target_organization text, target_id text) RETURNS boolean LANGUAGE plpgsql SECURITY INVOKER AS $$
+BEGIN
+    INSERT INTO qf_commands (organization_id, command_id) VALUES (target_organization, target_id);
+    RETURN true;
+EXCEPTION WHEN OTHERS THEN
+    RETURN false;
+END;
+$$;
+CREATE FUNCTION qf_try_atomic_fault(command_id text, event_id text, outbox_id text, duplicate_id text) RETURNS boolean LANGUAGE plpgsql SECURITY INVOKER AS $$
+BEGIN
+    INSERT INTO qf_commands (organization_id, command_id) VALUES (current_setting('app.organization_id'), command_id);
+    INSERT INTO qf_events (organization_id, event_id) VALUES (current_setting('app.organization_id'), event_id);
+    INSERT INTO qf_outbox (organization_id, outbox_id) VALUES (current_setting('app.organization_id'), outbox_id);
+    INSERT INTO qf_commands (organization_id, command_id) VALUES (current_setting('app.organization_id'), duplicate_id);
+    RETURN true;
+EXCEPTION WHEN OTHERS THEN
+    RETURN false;
+END;
+$$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON qf_tenant_rows, qf_commands, qf_events, qf_outbox, qf_jobs TO qf_app;
+GRANT SELECT ON qf_schema_migrations TO qf_app;
+GRANT EXECUTE ON FUNCTION qf_try_insert(text, text), qf_try_atomic_fault(text, text, text, text) TO qf_app;
+RESET ROLE;
 SQL
 
 export KUJO_POSTGRES_TLS_CA_FILE="${TMP_ROOT}/ca.pem"
 export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} user=$(id -un) dbname=postgres connect_timeout=3 sslmode=disable"
+export KUJO_POSTGRES_TLS_ADMIN_URL="${KUJO_POSTGRES_TLS_URL}"
 for engine in vm interpreter; do
     if [[ "${engine}" == "interpreter" ]]; then
         output="$(${KUJO} run "${ROOT}/tests/postgres_tls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env 2>&1)"
@@ -61,7 +97,24 @@ for engine in vm interpreter; do
     else
         output="$(${KUJO} run "${ROOT}/tests/postgres_tls_pool_rls_probe.kujo" --allow-db --allow-fs --allow-env 2>&1)"
     fi
-    python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value == {"atomicity":"verified","ok":True,"rls":"enforced","schema":"dev.kujolang.postgres-tls-pool-rls.v1","session_reset":"verified","tls":"verified"}' "${output}"
+    python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value == {"atomicity":"verified","claims":"distinct","ok":True,"recovery":"verified","rls":"forced","roles":"separated","schema":"dev.kujolang.postgres-tls-pool-rls.v1","session_reset":"verified","timeouts":"bounded","tls":"verified"}' "${output}"
+done
+
+export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} user=qf_app dbname=postgres connect_timeout=3 sslmode=disable password=timeout-secret"
+for engine in vm interpreter; do
+    if [[ "${engine}" == "interpreter" ]]; then
+        if output="$(${KUJO} run "${ROOT}/tests/postgres_tls_pool_timeout_probe.kujo" --interpreter --allow-db --allow-fs --allow-env 2>&1)"; then
+            echo "PostgreSQL statement timeout unexpectedly succeeded" >&2
+            exit 1
+        fi
+    else
+        if output="$(${KUJO} run "${ROOT}/tests/postgres_tls_pool_timeout_probe.kujo" --allow-db --allow-fs --allow-env 2>&1)"; then
+            echo "PostgreSQL statement timeout unexpectedly succeeded" >&2
+            exit 1
+        fi
+    fi
+    [[ "${output}" == *"PostgreSQL query error"* ]]
+    [[ "${output}" != *"timeout-secret"* ]]
 done
 
 export KUJO_POSTGRES_TLS_URL="host=127.0.0.1 port=${PORT} user=$(id -un) dbname=postgres connect_timeout=3 password=hostname-secret"

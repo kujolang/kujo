@@ -1437,6 +1437,53 @@ mod tests {
     }
 
     #[test]
+    fn pool_capacity_reservation_is_atomic_and_acquisition_is_bounded() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Barrier;
+        use std::time::Duration;
+
+        let db_path = tmp_db_path("sqlite_pool_race.db");
+        let mut config = HashMap::new();
+        config.insert("min_connections".to_string(), Value::Int(0));
+        config.insert("max_connections".to_string(), Value::Int(2));
+        config.insert("acquisition_timeout_ms".to_string(), Value::Int(100));
+        let pool = Arc::new(
+            ConnectionPool::new("sqlite".to_string(), db_path.clone(), config)
+                .expect("bounded pool"),
+        );
+        let barrier = Arc::new(Barrier::new(13));
+        let successes = Arc::new(AtomicUsize::new(0));
+        let peak_total = Arc::new(AtomicUsize::new(0));
+        let mut threads = Vec::new();
+        for _ in 0..12 {
+            let pool = Arc::clone(&pool);
+            let barrier = Arc::clone(&barrier);
+            let successes = Arc::clone(&successes);
+            let peak_total = Arc::clone(&peak_total);
+            threads.push(std::thread::spawn(move || {
+                barrier.wait();
+                if let Ok(connection) = pool.acquire() {
+                    successes.fetch_add(1, Ordering::AcqRel);
+                    peak_total.fetch_max(pool.stats()["total"], Ordering::AcqRel);
+                    std::thread::sleep(Duration::from_millis(150));
+                    pool.release(connection).expect("single valid release");
+                }
+            }));
+        }
+        barrier.wait();
+        for thread in threads {
+            thread.join().expect("acquisition worker");
+        }
+        let stats = pool.stats();
+        assert_eq!(successes.load(Ordering::Acquire), 2);
+        assert!(peak_total.load(Ordering::Acquire) <= 2);
+        assert_eq!(stats["total"], 2);
+        assert_eq!(stats["acquire_timeouts"], 10);
+        pool.close();
+        let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
     fn postgres_parameter_preserves_scalar_types_and_null() {
         let mut output = postgres::types::private::BytesMut::new();
         let integer = PostgresParameter::Integer(7);

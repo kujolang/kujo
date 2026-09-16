@@ -1,0 +1,18 @@
+# Inventory: skip (requires the real TLS PostgreSQL integration environment)
+let pool := db_pool_postgres_tls(
+    env_or("KUJO_POSTGRES_TLS_URL", ""),
+    read_file(env_or("KUJO_POSTGRES_TLS_CA_FILE", "")),
+    {
+        "min_connections": 1,
+        "max_connections": 1,
+        "acquisition_timeout_ms": 200,
+        "connect_timeout_ms": 3000,
+        "idle_timeout_seconds": 60,
+        "max_lifetime_seconds": 60,
+        "statement_timeout_ms": 100,
+        "health_check": true
+    }
+)
+let db := db_pool_acquire(pool)
+db_query(db, "SELECT pg_sleep(5)", [])
+throw("PostgreSQL statement timeout unexpectedly allowed query")
