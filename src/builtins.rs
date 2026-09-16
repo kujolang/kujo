@@ -1229,6 +1229,15 @@ pub fn parse_date(date_str: &str, format: &str) -> Result<f64, String> {
     Ok(dt.timestamp() as f64)
 }
 
+/// Parse an RFC 3339 timestamp and return Unix seconds, preserving the
+/// instant represented by its required UTC offset.
+pub fn parse_datetime(value: &str) -> Result<f64, String> {
+    let parsed = chrono::DateTime::parse_from_rfc3339(value).map_err(|error| {
+        format!("parse_datetime failed: '{}' is not RFC 3339 ({})", value, error)
+    })?;
+    Ok(parsed.timestamp_millis() as f64 / 1000.0)
+}
+
 fn kv_store_path() -> Result<PathBuf, String> {
     if let Ok(path) = env::var("KUJO_KV_PATH") {
         let trimmed = path.trim();
@@ -3023,6 +3032,19 @@ mod tests {
         let error = format_date_tz(0.0, "YYYY-MM-DD", "Mars/Olympus")
             .expect_err("invalid time zone must fail");
         assert!(error.contains("Invalid time zone"));
+    }
+
+    #[test]
+    fn test_parse_datetime_normalizes_offsets() {
+        let local = parse_datetime("2026-09-16T09:30:00-04:00").expect("valid RFC 3339");
+        let utc = parse_datetime("2026-09-16T13:30:00Z").expect("valid RFC 3339");
+        assert_eq!(local, utc);
+    }
+
+    #[test]
+    fn test_parse_datetime_rejects_missing_offset() {
+        let error = parse_datetime("2026-09-16T09:30:00").expect_err("offset is required");
+        assert!(error.contains("not RFC 3339"));
     }
 
     #[test]

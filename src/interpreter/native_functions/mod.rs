@@ -615,6 +615,7 @@ mod tests {
             "format_date",
             "format_date_tz",
             "parse_date",
+            "parse_datetime",
             "abs",
             "sqrt",
             "pow",

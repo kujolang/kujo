@@ -1243,6 +1243,23 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Value::Error("parse_date requires date string and format string".to_string())
             }
         }
+        "parse_datetime" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error(format!(
+                    "parse_datetime() expects 1 argument (RFC 3339 timestamp), got {}",
+                    arg_values.len()
+                )));
+            }
+            match &arg_values[0] {
+                Value::Str(value) => match builtins::parse_datetime(value.as_ref()) {
+                    Ok(timestamp) => Value::Float(timestamp),
+                    Err(message) => {
+                        Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
+                    }
+                },
+                _ => Value::Error("parse_datetime requires a string".to_string()),
+            }
+        }
 
         "kv_set" => {
             if arg_values.len() != 2 {

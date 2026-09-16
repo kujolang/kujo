@@ -1078,6 +1078,13 @@ impl TypeChecker {
                 return_type: Some(TypeAnnotation::Float),
             },
         );
+        self.functions.insert(
+            "parse_datetime".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::Float),
+            },
+        );
 
         // System operation functions
         self.functions.insert(

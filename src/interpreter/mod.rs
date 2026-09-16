@@ -766,6 +766,7 @@ impl Interpreter {
             "format_date",
             "format_date_tz",
             "parse_date",
+            "parse_datetime",
             // System operation functions
             "env",
             "env_or",
@@ -1444,6 +1445,10 @@ impl Interpreter {
             Value::NativeFunction("format_date_tz".to_string()),
         );
         self.env.define("parse_date".to_string(), Value::NativeFunction("parse_date".to_string()));
+        self.env.define(
+            "parse_datetime".to_string(),
+            Value::NativeFunction("parse_datetime".to_string()),
+        );
 
         // System operation functions
         self.env.define("env".to_string(), Value::NativeFunction("env".to_string()));

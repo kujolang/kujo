@@ -363,6 +363,7 @@ Secret redaction contract:
 | `format_date` | stable | `day := format_date(now_unix(), "YYYY-MM-DD")` |
 | `format_date_tz` | stable | `local := format_date_tz(now_unix(), "YYYY-MM-DD HH:mm", "America/Detroit")` |
 | `parse_date` | stable | `seconds := parse_date("1970-01-01", "YYYY-MM-DD")` |
+| `parse_datetime` | stable | `seconds := parse_datetime("2026-09-16T09:30:00-04:00")` |
 | `performance_now` | preview | `ms := performance_now()` |
 | `elapsed` | preview | `dt := elapsed(start_ms, end_ms)` |
 

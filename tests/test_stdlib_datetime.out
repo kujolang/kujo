@@ -8,6 +8,7 @@ format_date(1640995200, 'YYYY-MM-DD') = 2022-01-01
 Round-trip: 2026-01-23
 ✓ parse_date round-trip works correctly
 ✓ parse_date correctly orders dates
+✓ parse_datetime normalizes RFC 3339 offsets
 ✓ Custom format DD/MM/YYYY works
 ✓ Custom format HH:mm works
 ✓ format_date_tz applies IANA daylight-saving rules

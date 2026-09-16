@@ -284,8 +284,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         // Clock/time
         "rate_limit_wait" | "process_usage" | "now" | "now_utc" | "now_unix"
         | "current_timestamp" | "performance_now" | "time_us" | "time_ns" | "format_duration"
-        | "elapsed" | "format_date" | "format_date_tz" | "parse_date" | "sleep" | "async_sleep"
-        | "async_timeout" => Some(NativeCapability::Clock),
+        | "elapsed" | "format_date" | "format_date_tz" | "parse_date" | "parse_datetime"
+        | "sleep" | "async_sleep" | "async_timeout" => Some(NativeCapability::Clock),
 
         // Randomness
         "random" | "random_int" | "random_choice" | "uuid_v4" | "random_id" | "set_random_seed"
