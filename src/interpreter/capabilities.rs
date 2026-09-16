@@ -272,6 +272,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "db_query"
         | "db_close"
         | "db_pool"
+        | "db_pool_postgres_tls"
         | "db_pool_acquire"
         | "db_pool_release"
         | "db_pool_stats"

@@ -13,7 +13,15 @@ use image::DynamicImage;
 use mysql_async::Conn as MysqlConn;
 use nohash_hasher::NoHashHasher;
 #[cfg(feature = "runtime-db")]
+use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode, SslVersion};
+#[cfg(feature = "runtime-db")]
+use openssl::x509::X509;
+#[cfg(feature = "runtime-db")]
+use postgres::config::{Host, SslMode};
+#[cfg(feature = "runtime-db")]
 use postgres::Client as PostgresClient;
+#[cfg(feature = "runtime-db")]
+use postgres_openssl::MakeTlsConnector;
 #[cfg(feature = "runtime-db")]
 use rusqlite::Connection as SqliteConnection;
 use std::collections::HashMap;
@@ -23,7 +31,7 @@ use std::ops::Deref;
 #[cfg(feature = "runtime-db")]
 use std::ops::DerefMut;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::Receiver;
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
@@ -483,169 +491,329 @@ pub enum DatabaseConnection {
     Mysql(Arc<Mutex<MysqlConn>>),
 }
 
-/// Connection pool for database connections
-/// Infrastructure for database.rs stub module
+#[cfg(feature = "runtime-db")]
+#[derive(Clone)]
+enum PoolTransport {
+    Legacy,
+    VerifiedPostgresTls { ca_pem: Arc<String> },
+}
+
+#[cfg(feature = "runtime-db")]
+struct AvailableConnection {
+    connection: DatabaseConnection,
+    created_at: std::time::Instant,
+    idle_since: std::time::Instant,
+}
+
+#[cfg(feature = "runtime-db")]
+#[derive(Default)]
+struct PoolMetrics {
+    acquire_timeout_count: usize,
+    connection_error_count: usize,
+    eviction_count: usize,
+    health_check_failure_count: usize,
+    reset_failure_count: usize,
+}
+
+#[cfg(feature = "runtime-db")]
+#[derive(Default)]
+struct PoolState {
+    available: std::collections::VecDeque<AvailableConnection>,
+    checked_out: HashMap<usize, std::time::Instant>,
+    total: usize,
+    metrics: PoolMetrics,
+}
+
+/// Bounded database connection pool with verified-TLS PostgreSQL support.
 #[cfg(feature = "runtime-db")]
 #[derive(Clone)]
 pub struct ConnectionPool {
-    #[allow(dead_code)]
     pub(crate) db_type: String,
-    #[allow(dead_code)]
     pub(crate) connection_string: String,
-    #[allow(dead_code)] // Reserved for future use
     pub(crate) min_connections: usize,
-    #[allow(dead_code)]
     pub(crate) max_connections: usize,
-    #[allow(dead_code)]
-    pub(crate) connection_timeout: u64, // seconds
-    #[allow(dead_code)]
-    pub(crate) available: Arc<Mutex<std::collections::VecDeque<DatabaseConnection>>>,
-    #[allow(dead_code)]
-    pub(crate) in_use: Arc<Mutex<usize>>,
-    #[allow(dead_code)]
-    pub(crate) total_created: Arc<Mutex<usize>>,
+    acquisition_timeout: std::time::Duration,
+    connect_timeout: std::time::Duration,
+    idle_timeout: std::time::Duration,
+    max_lifetime: std::time::Duration,
+    statement_timeout_ms: u64,
+    health_check: bool,
+    transport: PoolTransport,
+    state: Arc<Mutex<PoolState>>,
+    closed: Arc<AtomicBool>,
 }
 
 #[cfg(feature = "runtime-db")]
 impl ConnectionPool {
-    #[allow(dead_code)]
     pub fn new(
         db_type: String,
         connection_string: String,
         config: HashMap<String, Value>,
     ) -> Result<Self, String> {
-        // Parse configuration
-        let min_connections = config
-            .get("min_connections")
-            .and_then(|v| match v {
-                Value::Int(n) => Some(*n as usize),
-                Value::Float(n) => Some(*n as usize),
-                _ => None,
-            })
-            .unwrap_or(5);
+        Self::from_config(db_type, connection_string, PoolTransport::Legacy, config, false)
+    }
 
-        let max_connections = config
-            .get("max_connections")
-            .and_then(|v| match v {
-                Value::Int(n) => Some(*n as usize),
-                Value::Float(n) => Some(*n as usize),
-                _ => None,
-            })
-            .unwrap_or(20);
+    pub fn new_postgres_tls(
+        connection_string: String,
+        ca_pem: String,
+        config: HashMap<String, Value>,
+    ) -> Result<Self, String> {
+        let pool = Self::from_config(
+            "postgres".to_string(),
+            connection_string,
+            PoolTransport::VerifiedPostgresTls { ca_pem: Arc::new(ca_pem) },
+            config,
+            true,
+        )?;
+        pool.warm_minimum()?;
+        Ok(pool)
+    }
 
-        let connection_timeout = config
-            .get("connection_timeout")
-            .and_then(|v| match v {
-                Value::Int(n) => Some(*n as u64),
-                Value::Float(n) => Some(*n as u64),
-                _ => None,
-            })
-            .unwrap_or(30);
+    fn integer_option(
+        config: &HashMap<String, Value>,
+        name: &str,
+        default: u64,
+        minimum: u64,
+        maximum: u64,
+    ) -> Result<u64, String> {
+        let value = match config.get(name) {
+            None => default,
+            Some(Value::Int(value)) if *value >= 0 => *value as u64,
+            _ => return Err(format!("pool option '{name}' must be a non-negative integer")),
+        };
+        if !(minimum..=maximum).contains(&value) {
+            return Err(format!("pool option '{name}' must be between {minimum} and {maximum}"));
+        }
+        Ok(value)
+    }
 
+    fn from_config(
+        db_type: String,
+        connection_string: String,
+        transport: PoolTransport,
+        config: HashMap<String, Value>,
+        strict: bool,
+    ) -> Result<Self, String> {
+        let allowed = [
+            "min_connections",
+            "max_connections",
+            "connection_timeout",
+            "acquisition_timeout_ms",
+            "connect_timeout_ms",
+            "idle_timeout_seconds",
+            "max_lifetime_seconds",
+            "statement_timeout_ms",
+            "health_check",
+        ];
+        if strict {
+            for key in config.keys() {
+                if !allowed.contains(&key.as_str()) {
+                    return Err(format!("unknown pool option '{key}'"));
+                }
+            }
+        }
+        let min_connections = Self::integer_option(&config, "min_connections", 2, 0, 64)? as usize;
+        let max_connections =
+            Self::integer_option(&config, "max_connections", 20, 1, 128)? as usize;
         if min_connections > max_connections {
             return Err("min_connections cannot be greater than max_connections".to_string());
         }
-
-        Ok(ConnectionPool {
+        let legacy_timeout_ms =
+            Self::integer_option(&config, "connection_timeout", 30, 1, 300)? * 1000;
+        let acquisition_timeout_ms = Self::integer_option(
+            &config,
+            "acquisition_timeout_ms",
+            legacy_timeout_ms,
+            100,
+            300_000,
+        )?;
+        let connect_timeout_ms =
+            Self::integer_option(&config, "connect_timeout_ms", 10_000, 100, 300_000)?;
+        let idle_timeout_seconds =
+            Self::integer_option(&config, "idle_timeout_seconds", 300, 1, 86_400)?;
+        let max_lifetime_seconds =
+            Self::integer_option(&config, "max_lifetime_seconds", 1800, 1, 86_400)?;
+        let statement_timeout_ms =
+            Self::integer_option(&config, "statement_timeout_ms", 30_000, 1, 300_000)?;
+        let health_check = match config.get("health_check") {
+            None => true,
+            Some(Value::Bool(value)) => *value,
+            _ => return Err("pool option 'health_check' must be a boolean".to_string()),
+        };
+        Ok(Self {
             db_type,
             connection_string,
             min_connections,
             max_connections,
-            connection_timeout,
-            available: Arc::new(Mutex::new(std::collections::VecDeque::new())),
-            in_use: Arc::new(Mutex::new(0)),
-            total_created: Arc::new(Mutex::new(0)),
+            acquisition_timeout: std::time::Duration::from_millis(acquisition_timeout_ms),
+            connect_timeout: std::time::Duration::from_millis(connect_timeout_ms),
+            idle_timeout: std::time::Duration::from_secs(idle_timeout_seconds),
+            max_lifetime: std::time::Duration::from_secs(max_lifetime_seconds),
+            statement_timeout_ms,
+            health_check,
+            transport,
+            state: Arc::new(Mutex::new(PoolState::default())),
+            closed: Arc::new(AtomicBool::new(false)),
         })
     }
 
-    #[allow(dead_code)]
+    fn warm_minimum(&self) -> Result<(), String> {
+        for _ in 0..self.min_connections {
+            let connection = self.create_connection()?;
+            let now = std::time::Instant::now();
+            let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+            state.total += 1;
+            state.available.push_back(AvailableConnection {
+                connection,
+                created_at: now,
+                idle_since: now,
+            });
+        }
+        Ok(())
+    }
+
     pub fn acquire(&self) -> Result<DatabaseConnection, String> {
-        let start_time = std::time::Instant::now();
+        let deadline = std::time::Instant::now() + self.acquisition_timeout;
 
         loop {
-            // Try to get an available connection
-            {
-                let mut available = self.available.lock().unwrap();
-                if let Some(conn) = available.pop_front() {
-                    let mut in_use = self.in_use.lock().unwrap();
-                    *in_use += 1;
-                    return Ok(conn);
+            if self.closed.load(Ordering::Acquire) {
+                return Err("database pool is closed".to_string());
+            }
+            let candidate = {
+                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                state.available.pop_front()
+            };
+            if let Some(candidate) = candidate {
+                let now = std::time::Instant::now();
+                if now.duration_since(candidate.created_at) >= self.max_lifetime
+                    || now.duration_since(candidate.idle_since) >= self.idle_timeout
+                {
+                    self.evict_connection();
+                    continue;
+                }
+                if self.health_check && !self.connection_is_healthy(&candidate.connection) {
+                    let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                    state.metrics.health_check_failure_count += 1;
+                    drop(state);
+                    self.evict_connection();
+                    continue;
+                }
+                return self.checkout(candidate.connection, candidate.created_at);
+            }
+
+            let reserved = {
+                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                if state.total < self.max_connections {
+                    state.total += 1;
+                    true
+                } else {
+                    false
+                }
+            };
+            if reserved {
+                match self.create_connection() {
+                    Ok(connection) => return self.checkout(connection, std::time::Instant::now()),
+                    Err(error) => {
+                        let mut state =
+                            self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                        state.total = state.total.saturating_sub(1);
+                        state.metrics.connection_error_count += 1;
+                        return Err(error);
+                    }
                 }
             }
-
-            // No available connections - try to create a new one
-            {
-                let mut total = self.total_created.lock().unwrap();
-                if *total < self.max_connections {
-                    // Reserve capacity while holding the counter lock so concurrent
-                    // acquirers cannot all observe the same available slot.
-                    *total += 1;
-                    drop(total);
-
-                    let conn = match self.create_connection() {
-                        Ok(connection) => connection,
-                        Err(error) => {
-                            let mut total = self.total_created.lock().unwrap();
-                            *total = total.saturating_sub(1);
-                            return Err(error);
-                        }
-                    };
-
-                    let mut in_use = self.in_use.lock().unwrap();
-                    *in_use += 1;
-
-                    return Ok(conn);
-                }
+            if std::time::Instant::now() >= deadline {
+                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                state.metrics.acquire_timeout_count += 1;
+                return Err("database pool acquisition deadline exceeded".to_string());
             }
-
-            // All connections in use and at max - check timeout
-            if start_time.elapsed().as_secs() >= self.connection_timeout {
-                return Err("Connection pool timeout: all connections are in use".to_string());
-            }
-
-            // Wait a bit before retrying
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            std::thread::sleep(std::time::Duration::from_millis(20));
         }
     }
 
-    #[allow(dead_code)]
-    pub fn release(&self, conn: DatabaseConnection) {
-        let mut available = self.available.lock().unwrap();
-        available.push_back(conn);
-        let mut in_use = self.in_use.lock().unwrap();
-        if *in_use > 0 {
-            *in_use -= 1;
+    fn checkout(
+        &self,
+        connection: DatabaseConnection,
+        created_at: std::time::Instant,
+    ) -> Result<DatabaseConnection, String> {
+        let key = connection_key(&connection);
+        let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+        if self.closed.load(Ordering::Acquire) {
+            state.total = state.total.saturating_sub(1);
+            return Err("database pool is closed".to_string());
         }
+        state.checked_out.insert(key, created_at);
+        Ok(connection)
     }
 
-    #[allow(dead_code)]
+    pub fn release(&self, connection: DatabaseConnection) -> Result<(), String> {
+        let key = connection_key(&connection);
+        let created_at = {
+            let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+            state
+                .checked_out
+                .remove(&key)
+                .ok_or_else(|| "connection is not checked out from this pool".to_string())?
+        };
+        if self.closed.load(Ordering::Acquire) {
+            let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+            state.total = state.total.saturating_sub(1);
+            return Ok(());
+        }
+        if let Err(error) = self.reset_connection(&connection) {
+            let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+            state.total = state.total.saturating_sub(1);
+            state.metrics.reset_failure_count += 1;
+            return Err(error);
+        }
+        let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+        state.available.push_back(AvailableConnection {
+            connection,
+            created_at,
+            idle_since: std::time::Instant::now(),
+        });
+        Ok(())
+    }
+
     pub fn stats(&self) -> HashMap<String, usize> {
-        let available = self.available.lock().unwrap();
-        let in_use = self.in_use.lock().unwrap();
-        let total = self.total_created.lock().unwrap();
-
+        let state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         let mut stats = HashMap::new();
-        stats.insert("available".to_string(), available.len());
-        stats.insert("in_use".to_string(), *in_use);
-        stats.insert("total".to_string(), *total);
+        stats.insert("available".to_string(), state.available.len());
+        stats.insert("in_use".to_string(), state.checked_out.len());
+        stats.insert("total".to_string(), state.total);
+        stats.insert("min".to_string(), self.min_connections);
         stats.insert("max".to_string(), self.max_connections);
+        stats.insert("closed".to_string(), usize::from(self.closed.load(Ordering::Acquire)));
+        stats.insert("acquire_timeouts".to_string(), state.metrics.acquire_timeout_count);
+        stats.insert("connection_errors".to_string(), state.metrics.connection_error_count);
+        stats.insert("evictions".to_string(), state.metrics.eviction_count);
+        stats.insert("health_check_failures".to_string(), state.metrics.health_check_failure_count);
+        stats.insert("reset_failures".to_string(), state.metrics.reset_failure_count);
         stats
     }
 
-    #[allow(dead_code)]
     pub fn close(&self) {
-        let mut available = self.available.lock().unwrap();
-        available.clear();
-        let mut in_use = self.in_use.lock().unwrap();
-        *in_use = 0;
-        let mut total = self.total_created.lock().unwrap();
-        *total = 0;
+        self.closed.store(true, Ordering::Release);
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let drained = state.available.len();
+        state.available.clear();
+        state.total = state.total.saturating_sub(drained);
     }
 
-    #[allow(dead_code)]
     fn create_connection(&self) -> Result<DatabaseConnection, String> {
         use postgres::NoTls;
 
+        if let PoolTransport::VerifiedPostgresTls { ca_pem } = &self.transport {
+            let client = connect_postgres_verified_tls(
+                &self.connection_string,
+                ca_pem,
+                self.connect_timeout,
+                self.statement_timeout_ms,
+            )?;
+            return Ok(DatabaseConnection::Postgres(Arc::new(Mutex::new(
+                RuntimeSafePostgresClient::new(client),
+            ))));
+        }
         match self.db_type.as_str() {
             "sqlite" => SqliteConnection::open(&self.connection_string)
                 .map(|conn| DatabaseConnection::Sqlite(Arc::new(Mutex::new(conn))))
@@ -678,6 +846,115 @@ impl ConnectionPool {
             _ => Err(format!("Unsupported database type: {}", self.db_type)),
         }
     }
+
+    fn connection_is_healthy(&self, connection: &DatabaseConnection) -> bool {
+        match connection {
+            DatabaseConnection::Postgres(client) => {
+                let client = Arc::clone(client);
+                AsyncRuntime::run_runtime_safe_blocking(move || {
+                    client.lock().map_err(|_| ())?.simple_query("SELECT 1").map_err(|_| ())
+                })
+                .is_ok()
+            }
+            _ => true,
+        }
+    }
+
+    fn reset_connection(&self, connection: &DatabaseConnection) -> Result<(), String> {
+        match connection {
+            DatabaseConnection::Postgres(client) => {
+                let client = Arc::clone(client);
+                let statement_timeout_ms = self.statement_timeout_ms;
+                AsyncRuntime::run_runtime_safe_blocking(move || {
+                    let mut client = client
+                        .lock()
+                        .map_err(|_| "database pool connection lock poisoned".to_string())?;
+                    client
+                        .batch_execute("ROLLBACK")
+                        .and_then(|_| client.batch_execute("DISCARD ALL"))
+                        .and_then(|_| {
+                            client.batch_execute(&format!(
+                                "SET statement_timeout = {statement_timeout_ms}"
+                            ))
+                        })
+                        .map_err(|_| "database pool could not reset PostgreSQL session".to_string())
+                })
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn evict_connection(&self) {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.total = state.total.saturating_sub(1);
+        state.metrics.eviction_count += 1;
+    }
+}
+
+#[cfg(feature = "runtime-db")]
+fn connection_key(connection: &DatabaseConnection) -> usize {
+    match connection {
+        DatabaseConnection::Sqlite(value) => Arc::as_ptr(value) as usize,
+        DatabaseConnection::Postgres(value) => Arc::as_ptr(value) as usize,
+        DatabaseConnection::Mysql(value) => Arc::as_ptr(value) as usize,
+    }
+}
+
+#[cfg(feature = "runtime-db")]
+pub(crate) fn connect_postgres_verified_tls(
+    connection_string: &str,
+    ca_pem: &str,
+    connect_timeout: std::time::Duration,
+    statement_timeout_ms: u64,
+) -> Result<PostgresClient, String> {
+    const MAX_CONNECTION_STRING_BYTES: usize = 8192;
+    const MAX_CA_PEM_BYTES: usize = 1024 * 1024;
+    if connection_string.is_empty()
+        || connection_string.len() > MAX_CONNECTION_STRING_BYTES
+        || connection_string.contains('\0')
+        || ca_pem.is_empty()
+        || ca_pem.len() > MAX_CA_PEM_BYTES
+        || ca_pem.contains('\0')
+    {
+        return Err("verified PostgreSQL TLS rejected invalid connection material".to_string());
+    }
+    let mut config = connection_string
+        .parse::<postgres::Config>()
+        .map_err(|_| "verified PostgreSQL TLS rejected the connection string".to_string())?;
+    if config.get_hosts().is_empty()
+        || !config.get_hosts().iter().all(|host| matches!(host, Host::Tcp(_)))
+    {
+        return Err("verified PostgreSQL TLS requires an explicit TCP host".to_string());
+    }
+    let certificates = X509::stack_from_pem(ca_pem.as_bytes())
+        .map_err(|_| "verified PostgreSQL TLS rejected the CA trust bundle".to_string())?;
+    if certificates.is_empty() {
+        return Err("verified PostgreSQL TLS rejected the CA trust bundle".to_string());
+    }
+    config.ssl_mode(SslMode::Require).connect_timeout(connect_timeout);
+    let mut builder = SslConnector::builder(SslMethod::tls())
+        .map_err(|_| "verified PostgreSQL TLS could not initialize TLS".to_string())?;
+    builder
+        .set_min_proto_version(Some(SslVersion::TLS1_2))
+        .map_err(|_| "verified PostgreSQL TLS could not enforce TLS 1.2".to_string())?;
+    builder.set_verify(SslVerifyMode::PEER);
+    for certificate in certificates {
+        builder
+            .cert_store_mut()
+            .add_cert(certificate)
+            .map_err(|_| "verified PostgreSQL TLS rejected the CA trust bundle".to_string())?;
+    }
+    let mut connector = MakeTlsConnector::new(builder.build());
+    connector.set_callback(|configuration, _| {
+        configuration.set_verify_hostname(true);
+        Ok(())
+    });
+    let mut client = AsyncRuntime::run_runtime_safe_blocking(|| config.connect(connector))
+        .map_err(|_| "failed to connect to PostgreSQL with verified TLS".to_string())?;
+    client
+        .batch_execute(&format!("SET statement_timeout = {statement_timeout_ms}"))
+        .map_err(|_| "failed to initialize PostgreSQL session limits".to_string())?;
+    Ok(client)
 }
 
 /// Runtime values in the Kujo interpreter

@@ -1610,6 +1610,28 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "db_pool_postgres_tls".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String), None],
+                return_type: None,
+            },
+        );
+
+        for name in ["db_pool_acquire", "db_pool_stats", "db_pool_close"] {
+            self.functions.insert(
+                name.to_string(),
+                FunctionSignature { param_types: vec![None], return_type: None },
+            );
+        }
+        self.functions.insert(
+            "db_pool_release".to_string(),
+            FunctionSignature {
+                param_types: vec![None, None],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
             "db_begin".to_string(),
             FunctionSignature {
                 param_types: vec![None], // Database connection

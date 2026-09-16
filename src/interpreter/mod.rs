@@ -33,6 +33,8 @@ pub use environment::{BindingKind, Environment};
 #[allow(unused_imports)]
 pub use test_runner::{TestCase, TestReport, TestResult, TestRunner};
 // Database infrastructure - used by stub database.rs module
+#[cfg(feature = "runtime-db")]
+pub(crate) use value::connect_postgres_verified_tls;
 pub use value::{
     CallableArity, DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap,
     HttpResponseStreamParts, HttpUploadRoute, IntDictMap, LeakyFunctionBody,
@@ -850,6 +852,7 @@ impl Interpreter {
             "db_query",
             "db_close",
             "db_pool",
+            "db_pool_postgres_tls",
             "db_pool_acquire",
             "db_pool_release",
             "db_pool_stats",
@@ -1631,6 +1634,10 @@ impl Interpreter {
         self.env.define("db_query".to_string(), Value::NativeFunction("db_query".to_string()));
         self.env.define("db_close".to_string(), Value::NativeFunction("db_close".to_string()));
         self.env.define("db_pool".to_string(), Value::NativeFunction("db_pool".to_string()));
+        self.env.define(
+            "db_pool_postgres_tls".to_string(),
+            Value::NativeFunction("db_pool_postgres_tls".to_string()),
+        );
         self.env.define(
             "db_pool_acquire".to_string(),
             Value::NativeFunction("db_pool_acquire".to_string()),
@@ -3464,6 +3471,10 @@ impl Interpreter {
             "db_connect_postgres_tls" => CallableArity::exact(
                 "db_connect_postgres_tls",
                 vec!["connection_string".to_string(), "ca_pem".to_string()],
+            ),
+            "db_pool_postgres_tls" => CallableArity::exact(
+                "db_pool_postgres_tls",
+                vec!["connection_string".to_string(), "ca_pem".to_string(), "options".to_string()],
             ),
             "secure_random_token" => {
                 CallableArity::exact("secure_random_token", vec!["byte_length".to_string()])

@@ -13,6 +13,9 @@ This file records user-visible changes to Kujo. It follows
   external renderer.
 - Added `secure_random_token(byte_length)`, an OS-CSPRNG-backed, base64url,
   redacted token primitive isolated from deterministic random seeding.
+- Added `db_pool_postgres_tls`, a bounded verified-TLS PostgreSQL pool with
+  warm-up, deadlines, health checks, connection expiry, session reset, clean
+  shutdown, and operational counters.
 
 - Added lowercase `header_values` arrays to routed HTTP server requests in both
   runtimes, preserving duplicate headers for explicit application validation.

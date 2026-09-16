@@ -1,0 +1,80 @@
+# Inventory: skip (requires the real TLS PostgreSQL integration environment)
+let connection_string := env_or("KUJO_POSTGRES_TLS_URL", "")
+let ca_pem := read_file(env_or("KUJO_POSTGRES_TLS_CA_FILE", ""))
+let run_id := env_or("KUJO_POSTGRES_TEST_RUN", "run")
+let rolled_back_command := "rolled-back-command-" + run_id
+let rolled_back_event := "rolled-back-event-" + run_id
+let committed_command := "committed-command-" + run_id
+let committed_event := "committed-event-" + run_id
+let pool := db_pool_postgres_tls(connection_string, ca_pem, {
+    "min_connections": 1,
+    "max_connections": 1,
+    "acquisition_timeout_ms": 1000,
+    "connect_timeout_ms": 3000,
+    "idle_timeout_seconds": 60,
+    "max_lifetime_seconds": 300,
+    "statement_timeout_ms": 3000,
+    "health_check": true
+})
+if type(pool) == "error" { throw("verified PostgreSQL TLS pool creation failed") }
+
+let initial := db_pool_stats(pool)
+if initial["available"] != 1 || initial["total"] != 1 || initial["in_use"] != 0 {
+    throw("verified PostgreSQL TLS pool warm-up failed")
+}
+
+let db := db_pool_acquire(pool)
+let tls := db_query(db, "SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()", [])
+if len(tls) != 1 || tls[0]["ssl"] != true { throw("pooled PostgreSQL transport is not TLS") }
+
+db_execute(db, "SET app.organization_id = 'tenant_a'", [])
+let visible := db_query(db, "SELECT organization_id, value FROM qf_tenant_rows ORDER BY organization_id", [])
+if len(visible) != 1 || visible[0]["organization_id"] != "tenant_a" {
+    throw("database RLS did not isolate tenant A")
+}
+let cross_update := db_execute(db, "UPDATE qf_tenant_rows SET value = 'tampered' WHERE organization_id = 'tenant_b'", [])
+if cross_update != 0 { throw("database RLS allowed cross-tenant update") }
+
+# A leaked transaction must be rolled back and tenant session state discarded.
+db_begin(db)
+db_execute(db, "INSERT INTO qf_commands (organization_id, command_id) VALUES ('tenant_a', $1)", [rolled_back_command])
+db_execute(db, "INSERT INTO qf_events (organization_id, event_id) VALUES ('tenant_a', $1)", [rolled_back_event])
+db_pool_release(pool, db)
+
+let clean := db_pool_acquire(pool)
+let setting := db_query(clean, "SELECT COALESCE(current_setting('app.organization_id', true), '') AS organization_id", [])
+if len(setting) != 1 || setting[0]["organization_id"] != "" {
+    throw("pool checkout leaked tenant session state")
+}
+db_execute(clean, "SET app.organization_id = 'tenant_a'", [])
+let rolled_back := db_query(clean, "SELECT (SELECT COUNT(*) FROM qf_commands WHERE command_id = $1)::BIGINT AS commands, (SELECT COUNT(*) FROM qf_events WHERE event_id = $2)::BIGINT AS events", [rolled_back_command, rolled_back_event])
+if rolled_back[0]["commands"] != 0 || rolled_back[0]["events"] != 0 {
+    throw("pool reset did not roll back abandoned command/event transaction")
+}
+
+db_begin(clean)
+db_execute(clean, "INSERT INTO qf_commands (organization_id, command_id) VALUES ('tenant_a', $1)", [committed_command])
+db_execute(clean, "INSERT INTO qf_events (organization_id, event_id) VALUES ('tenant_a', $1)", [committed_event])
+db_commit(clean)
+let committed := db_query(clean, "SELECT (SELECT COUNT(*) FROM qf_commands WHERE command_id = $1)::BIGINT AS commands, (SELECT COUNT(*) FROM qf_events WHERE event_id = $2)::BIGINT AS events", [committed_command, committed_event])
+if committed[0]["commands"] != 1 || committed[0]["events"] != 1 {
+    throw("command and event did not commit atomically")
+}
+
+db_pool_release(pool, clean)
+let ready := db_pool_stats(pool)
+if ready["available"] != 1 || ready["in_use"] != 0 || ready["reset_failures"] != 0 {
+    throw("pool lifecycle counters are inconsistent")
+}
+db_pool_close(pool)
+let closed := db_pool_stats(pool)
+if closed["closed"] != 1 || closed["total"] != 0 { throw("pool close did not drain idle connections") }
+
+print(to_json({
+    "ok": true,
+    "schema": "dev.kujolang.postgres-tls-pool-rls.v1",
+    "tls": "verified",
+    "rls": "enforced",
+    "session_reset": "verified",
+    "atomicity": "verified"
+}))

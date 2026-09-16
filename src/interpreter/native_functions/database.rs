@@ -4,15 +4,12 @@
 
 use crate::interpreter::async_runtime::AsyncRuntime;
 use crate::interpreter::{
-    ConnectionPool, DatabaseConnection, DictMap, RuntimeSafePostgresClient, Value,
+    connect_postgres_verified_tls, ConnectionPool, DatabaseConnection, DictMap,
+    RuntimeSafePostgresClient, Value,
 };
 use mysql_async::prelude::Queryable;
-use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode, SslVersion};
-use openssl::x509::X509;
-use postgres::config::{Host, SslMode};
 use postgres::types::{to_sql_checked, IsNull, ToSql, Type};
 use postgres::NoTls;
-use postgres_openssl::MakeTlsConnector;
 use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
@@ -218,8 +215,6 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
         "db_connect_postgres_tls" => {
-            const MAX_CONNECTION_STRING_BYTES: usize = 8192;
-            const MAX_CA_PEM_BYTES: usize = 1024 * 1024;
             if arg_values.len() != 2 {
                 Value::Error(
                     "db_connect_postgres_tls requires a PostgreSQL connection string and a public CA PEM bundle"
@@ -228,89 +223,21 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             } else if let (Some(Value::Str(connection_string)), Some(Value::Str(ca_pem))) =
                 (arg_values.first(), arg_values.get(1))
             {
-                if connection_string.is_empty()
-                    || connection_string.len() > MAX_CONNECTION_STRING_BYTES
-                    || connection_string.contains('\0')
-                    || ca_pem.is_empty()
-                    || ca_pem.len() > MAX_CA_PEM_BYTES
-                    || ca_pem.contains('\0')
-                {
-                    Value::Error(
-                        "db_connect_postgres_tls rejected invalid or unbounded connection material"
-                            .to_string(),
-                    )
-                } else {
-                    let config = connection_string.parse::<postgres::Config>();
-                    let certificates = X509::stack_from_pem(ca_pem.as_bytes());
-                    match (config, certificates) {
-                        (Ok(mut config), Ok(certificates))
-                            if !certificates.is_empty()
-                                && !config.get_hosts().is_empty()
-                                && config
-                                    .get_hosts()
-                                    .iter()
-                                    .all(|host| matches!(host, Host::Tcp(_))) =>
-                        {
-                            config.ssl_mode(SslMode::Require);
-                            let connector = SslConnector::builder(SslMethod::tls());
-                            match connector {
-                                Ok(mut builder) => {
-                                    let tls_configured = builder
-                                        .set_min_proto_version(Some(SslVersion::TLS1_2))
-                                        .and_then(|_| {
-                                            builder.set_verify(SslVerifyMode::PEER);
-                                            Ok(())
-                                        })
-                                        .and_then(|_| {
-                                            for certificate in certificates {
-                                                builder.cert_store_mut().add_cert(certificate)?;
-                                            }
-                                            Ok(())
-                                        });
-                                    match tls_configured {
-                                        Ok(()) => {
-                                            let mut connector =
-                                                MakeTlsConnector::new(builder.build());
-                                            connector.set_callback(|configuration, _| {
-                                                configuration.set_verify_hostname(true);
-                                                Ok(())
-                                            });
-                                            match AsyncRuntime::run_runtime_safe_blocking(|| {
-                                                config.connect(connector)
-                                            }) {
-                                                Ok(client) => Value::Database {
-                                                    connection: DatabaseConnection::Postgres(
-                                                        Arc::new(Mutex::new(RuntimeSafePostgresClient::new(client))),
-                                                    ),
-                                                    db_type: "postgres".to_string(),
-                                                    connection_string: connection_string
-                                                        .as_ref()
-                                                        .to_string(),
-                                                    in_transaction: Arc::new(Mutex::new(false)),
-                                                },
-                                                Err(_) => Value::Error(
-                                                    "Failed to connect to PostgreSQL with verified TLS"
-                                                        .to_string(),
-                                                ),
-                                            }
-                                        }
-                                        Err(_) => Value::Error(
-                                            "db_connect_postgres_tls rejected the CA trust bundle"
-                                                .to_string(),
-                                        ),
-                                    }
-                                }
-                                Err(_) => Value::Error(
-                                    "db_connect_postgres_tls could not initialize verified TLS"
-                                        .to_string(),
-                                ),
-                            }
-                        }
-                        _ => Value::Error(
-                            "db_connect_postgres_tls rejected the connection string or CA trust bundle"
-                                .to_string(),
-                        ),
-                    }
+                match connect_postgres_verified_tls(
+                    connection_string,
+                    ca_pem,
+                    std::time::Duration::from_secs(10),
+                    30_000,
+                ) {
+                    Ok(client) => Value::Database {
+                        connection: DatabaseConnection::Postgres(Arc::new(Mutex::new(
+                            RuntimeSafePostgresClient::new(client),
+                        ))),
+                        db_type: "postgres".to_string(),
+                        connection_string: connection_string.as_ref().to_string(),
+                        in_transaction: Arc::new(Mutex::new(false)),
+                    },
+                    Err(error) => Value::Error(error),
                 }
             } else {
                 Value::Error(
@@ -786,6 +713,45 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "db_pool_postgres_tls" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(
+                    "db_pool_postgres_tls requires connection string, public CA PEM bundle, and config dictionary"
+                        .to_string(),
+                ));
+            }
+            let (Some(Value::Str(connection_string)), Some(Value::Str(ca_pem))) =
+                (arg_values.first(), arg_values.get(1))
+            else {
+                return Some(Value::Error(
+                    "db_pool_postgres_tls requires string connection and CA arguments".to_string(),
+                ));
+            };
+            let config = match arg_values.get(2) {
+                Some(Value::Dict(config)) => {
+                    config.iter().map(|(key, value)| (key.to_string(), value.clone())).collect()
+                }
+                Some(Value::FixedDict { keys, values }) => keys
+                    .iter()
+                    .zip(values.iter())
+                    .map(|(key, value)| (key.to_string(), value.clone()))
+                    .collect(),
+                _ => {
+                    return Some(Value::Error(
+                        "db_pool_postgres_tls config must be a dictionary".to_string(),
+                    ))
+                }
+            };
+            match ConnectionPool::new_postgres_tls(
+                connection_string.as_ref().to_string(),
+                ca_pem.as_ref().to_string(),
+                config,
+            ) {
+                Ok(pool) => Value::DatabasePool { pool: Arc::new(Mutex::new(pool)) },
+                Err(error) => Value::Error(error),
+            }
+        }
+
         "db_pool_acquire" => {
             if arg_values.len() > 1 {
                 return Some(Value::Error("db_pool_acquire requires a database pool".to_string()));
@@ -818,8 +784,10 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::DatabasePool { pool }) = arg_values.first() {
                 if let Some(Value::Database { connection, .. }) = arg_values.get(1) {
                     let pool_guard = lock_or_db_error!(pool, "database.pool");
-                    pool_guard.release(connection.clone());
-                    Value::Bool(true)
+                    match pool_guard.release(connection.clone()) {
+                        Ok(()) => Value::Bool(true),
+                        Err(error) => Value::Error(error),
+                    }
                 } else {
                     Value::Error(
                         "db_pool_release requires a database connection as second argument"
@@ -1417,6 +1385,55 @@ mod tests {
         assert!(matches!(close, Value::Bool(true)));
 
         let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn pool_rejects_double_release_and_acquire_after_close() {
+        let db_path = tmp_db_path("sqlite_pool_lifecycle.db");
+        let pool = handle("db_pool", &[str_value("sqlite"), str_value(&db_path)]).unwrap();
+        let connection = handle("db_pool_acquire", &[pool.clone()]).unwrap();
+        let first = handle("db_pool_release", &[pool.clone(), connection.clone()]).unwrap();
+        assert!(matches!(first, Value::Bool(true)));
+        let second = handle("db_pool_release", &[pool.clone(), connection]).unwrap();
+        assert!(matches!(second, Value::Error(message) if message.contains("not checked out")));
+        assert!(matches!(handle("db_pool_close", &[pool.clone()]), Some(Value::Bool(true))));
+        assert!(matches!(
+            handle("db_pool_acquire", &[pool]),
+            Some(Value::Error(message)) if message.contains("closed")
+        ));
+        let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn verified_tls_pool_rejects_unknown_config_before_connecting() {
+        let mut config = DictMap::default();
+        config.insert("surprise".into(), Value::Int(1));
+        let result = handle(
+            "db_pool_postgres_tls",
+            &[
+                str_value("postgres://user:password@localhost:5432/app"),
+                str_value("not a certificate"),
+                Value::Dict(Arc::new(config)),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(result, Value::Error(message) if message.contains("unknown pool option")));
+    }
+
+    #[test]
+    fn verified_tls_pool_rejects_invalid_bounds_before_connecting() {
+        let mut config = DictMap::default();
+        config.insert("max_connections".into(), Value::Int(0));
+        let result = handle(
+            "db_pool_postgres_tls",
+            &[
+                str_value("postgres://user:password@localhost:5432/app"),
+                str_value("not a certificate"),
+                Value::Dict(Arc::new(config)),
+            ],
+        )
+        .unwrap();
+        assert!(matches!(result, Value::Error(message) if message.contains("max_connections")));
     }
 
     #[test]

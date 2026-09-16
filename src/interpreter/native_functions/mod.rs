@@ -27,6 +27,7 @@ pub mod database {
             | "db_query"
             | "db_close"
             | "db_pool"
+            | "db_pool_postgres_tls"
             | "db_pool_acquire"
             | "db_pool_release"
             | "db_pool_stats"
@@ -506,6 +507,7 @@ mod tests {
             "db_query",
             "db_close",
             "db_pool",
+            "db_pool_postgres_tls",
             "db_pool_acquire",
             "db_pool_release",
             "db_pool_stats",
