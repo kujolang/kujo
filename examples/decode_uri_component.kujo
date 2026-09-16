@@ -1,0 +1,2 @@
+print(decode_uri_component("caf%C3%A9%20%26%20tea"))
+print(decode_uri_component("%E6%9D%B1%E4%BA%AC%2F%E6%A4%9C%E7%B4%A2"))

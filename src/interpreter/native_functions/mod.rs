@@ -679,6 +679,7 @@ mod tests {
             "pdf_render_html",
             "pdf_render_html_to_file",
             "encode_uri_component",
+            "decode_uri_component",
             "regex_match",
             "regex_find_all",
             "regex_replace",

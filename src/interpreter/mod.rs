@@ -754,6 +754,7 @@ impl Interpreter {
             "decode_base64_utf8",
             "decode_charset",
             "encode_uri_component",
+            "decode_uri_component",
             // Random functions
             "random",
             "random_int",
@@ -1417,6 +1418,10 @@ impl Interpreter {
         self.env.define(
             "encode_uri_component".to_string(),
             Value::NativeFunction("encode_uri_component".to_string()),
+        );
+        self.env.define(
+            "decode_uri_component".to_string(),
+            Value::NativeFunction("decode_uri_component".to_string()),
         );
 
         // Random functions

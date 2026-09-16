@@ -172,6 +172,22 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "decode_uri_component" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error(
+                    "decode_uri_component requires one string argument".to_string(),
+                ));
+            }
+            if let Some(Value::Str(value)) = arg_values.first() {
+                match builtins::decode_uri_component(value.as_ref()) {
+                    Ok(decoded) => Value::Str(Arc::new(decoded)),
+                    Err(error) => Value::Error(error),
+                }
+            } else {
+                Value::Error("decode_uri_component requires one string argument".to_string())
+            }
+        }
+
         "decode_base64" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("decode_base64 requires a string argument".to_string()));
@@ -417,6 +433,27 @@ mod tests {
         for (input, expected) in cases {
             let result = handle("encode_uri_component", &[string_value(input)]).unwrap();
             assert!(matches!(result, Value::Str(value) if value.as_ref() == expected));
+        }
+    }
+
+    #[test]
+    fn test_decode_uri_component_is_strict_and_utf8_aware() {
+        let cases = [
+            ("AZaz09-._~", "AZaz09-._~"),
+            ("a%20b%2Bc%26d%3De%3Ff%23%3A%2F", "a b+c&d=e?f#:/"),
+            ("caf%C3%A9", "café"),
+            ("%E6%9D%B1%E4%BA%AC", "東京"),
+            ("%F0%9F%92%A1", "💡"),
+            ("a+b", "a+b"),
+        ];
+        for (input, expected) in cases {
+            let result = handle("decode_uri_component", &[string_value(input)]).unwrap();
+            assert!(matches!(result, Value::Str(value) if value.as_ref() == expected));
+        }
+
+        for invalid in ["%", "%2", "%GG", "%FF"] {
+            let result = handle("decode_uri_component", &[string_value(invalid)]).unwrap();
+            assert!(matches!(result, Value::Error(_)));
         }
     }
 

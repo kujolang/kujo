@@ -213,6 +213,7 @@ Guideline:
 | `decode_base64_utf8` | stable | `text := decode_base64_utf8(txt)` |
 | `decode_charset` | stable | `text := decode_charset(raw, "iso-8859-1", 1024)` |
 | `encode_uri_component` | stable | `part := encode_uri_component("café & tea")` |
+| `decode_uri_component` | stable | `text := decode_uri_component("caf%C3%A9")` |
 
 Access semantics:
 

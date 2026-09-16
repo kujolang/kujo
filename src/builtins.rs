@@ -1881,6 +1881,47 @@ pub fn encode_uri_component(value: &str) -> String {
     encoded
 }
 
+/// Strictly percent-decode one UTF-8 URI component.
+///
+/// This intentionally leaves `+` unchanged because plus-as-space is an
+/// `application/x-www-form-urlencoded` convention rather than URI syntax.
+/// Callers parsing HTML forms can replace `+` with a space before decoding.
+#[allow(dead_code)]
+pub fn decode_uri_component(value: &str) -> Result<String, String> {
+    fn hex_nibble(byte: u8) -> Option<u8> {
+        match byte {
+            b'0'..=b'9' => Some(byte - b'0'),
+            b'a'..=b'f' => Some(byte - b'a' + 10),
+            b'A'..=b'F' => Some(byte - b'A' + 10),
+            _ => None,
+        }
+    }
+
+    let source = value.as_bytes();
+    let mut decoded = Vec::with_capacity(source.len());
+    let mut index = 0;
+    while index < source.len() {
+        if source[index] != b'%' {
+            decoded.push(source[index]);
+            index += 1;
+            continue;
+        }
+        if index + 2 >= source.len() {
+            return Err("decode_uri_component contains an incomplete percent escape".to_string());
+        }
+        let Some(high) = hex_nibble(source[index + 1]) else {
+            return Err("decode_uri_component contains an invalid percent escape".to_string());
+        };
+        let Some(low) = hex_nibble(source[index + 2]) else {
+            return Err("decode_uri_component contains an invalid percent escape".to_string());
+        };
+        decoded.push((high << 4) | low);
+        index += 3;
+    }
+    String::from_utf8(decoded)
+        .map_err(|_| "decode_uri_component result is not valid UTF-8".to_string())
+}
+
 /// Decode base64 string to bytes
 /// Infrastructure for base64.decode() builtin
 #[allow(dead_code)]
