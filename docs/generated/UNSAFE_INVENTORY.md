@@ -1,19 +1,21 @@
 # Unsafe Inventory
 
-Generated: 2026-09-08
+Generated: 2026-09-16
 Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
 
-- Total matches: 95
-- Executable matches: 75
-- Non-executable matches: 20
+- Total matches: 103
+- Executable matches: 78
+- Non-executable matches: 25
 - Unknown classifications: 0
 
 ## Rows
 
 | Path | Line | Kind | Classification | Text |
 | --- | ---: | --- | --- | --- |
+| fuzz/target/debug/build/pulp-a320cd1cc70b6fc0/out/x86_64_asm.rs | 2475 | executable | other | static LD_ST: [unsafe extern ""C"" fn(); 2 * ((16 + 1) * 16)] = [ |
+| src/http_request_utils.rs | 35 | executable | src_executable_other |         unsafe { |
 | src/interpreter/native_functions/compression.rs | 239 | non_executable | src_comment_or_string |         writer.write_all(b""unsafe"").unwrap(); |
 | src/interpreter/native_functions/confined_write_windows.rs | 42 | executable | src_executable_other | unsafe extern ""system"" { |
 | src/interpreter/native_functions/confined_write_windows.rs | 71 | executable | src_executable_other |         Err(io::Error::from_raw_os_error(unsafe { RtlNtStatusToDosError(status) } as i32)) |
@@ -21,10 +23,15 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | src/interpreter/native_functions/confined_write_windows.rs | 117 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
 | src/interpreter/native_functions/confined_write_windows.rs | 134 | executable | src_executable_other |     let result = unsafe { |
 | src/interpreter/native_functions/confined_write_windows.rs | 153 | executable | src_executable_other |     status_result(unsafe { |
-| src/interpreter/native_functions/crypto.rs | 2151 | non_executable | src_comment_or_string |         fs::write(&invalid_path, b""unsafe \r\n"").unwrap(); |
+| src/interpreter/native_functions/crypto.rs | 2236 | non_executable | src_comment_or_string |         fs::write(&invalid_path, b""unsafe \r\n"").unwrap(); |
 | src/interpreter/native_functions/filesystem.rs | 2290 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
 | src/interpreter/native_functions/io.rs | 759 | non_executable | src_comment_or_string |                                     ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"", |
 | src/interpreter/native_functions/io.rs | 1571 | non_executable | src_comment_or_string |             matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory"")) |
+| src/interpreter/native_functions/pdf.rs | 485 | non_executable | src_comment_or_string |                         ""unsupported or unsafe pdf HTML attribute '{key}' on '{name}'"" |
+| src/interpreter/native_functions/pdf.rs | 821 | non_executable | src_comment_or_string |             ""<p onclick=\""steal()\"">unsafe</p>"", |
+| src/interpreter/native_functions/pdf.rs | 822 | non_executable | src_comment_or_string |             ""<p style=\""background:url(https://attacker.test/x)\"">unsafe</p>"", |
+| src/interpreter/native_functions/pdf.rs | 825 | non_executable | src_comment_or_string |             let error = render_html(html).expect_err(""unsafe HTML must fail closed""); |
+| src/interpreter/native_functions/pdf.rs | 828 | non_executable | src_comment_or_string |                     \|\| error.contains(""unsafe"") |
 | src/interpreter/native_functions/platform.rs | 54 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
 | src/interpreter/native_functions/platform.rs | 73 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
 | src/interpreter/native_functions/system.rs | 90 | executable | src_executable_other |         unsafe { |
@@ -104,6 +111,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | tests/fixtures/unsafe_safety_contracts/wrong_headings.rs | 5 | executable | test_executable |     unsafe { *ptr } |
 | tests/generated_artifact_freshness_contract.rs | 150 | non_executable | test_comment_or_string |     let output_md = temp_dir.join(""unsafe.md""); |
 | tests/generated_artifact_freshness_contract.rs | 151 | non_executable | test_comment_or_string |     let output_csv = temp_dir.join(""unsafe.csv""); |
+| tests/http_route_concurrency.rs | 189 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
 | tests/jit_safety_contract_checker.rs | 152 | non_executable | test_comment_or_string |     assert!(stdout.contains(""Checked 0 executable unsafe boundaries"")); |
 | tests/runtime_security.rs | 323 | non_executable | test_comment_or_string |         ""expected unsafe traversal error, got: {}"", |
 | tests/unsafe_safety_gate_contract.rs | 14 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate help""); |
