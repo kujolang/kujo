@@ -2013,6 +2013,25 @@ mod tests {
     }
 
     #[test]
+    fn secure_random_token_is_unique_under_concurrent_use() {
+        let mut threads = Vec::new();
+        for _ in 0..16 {
+            threads.push(std::thread::spawn(|| {
+                let Some(Value::Secret(value)) = handle("secure_random_token", &[Value::Int(32)])
+                else {
+                    panic!("secure token generation failed")
+                };
+                value.as_ref().clone()
+            }));
+        }
+        let mut values = std::collections::HashSet::new();
+        for thread in threads {
+            assert!(values.insert(thread.join().expect("secure token worker")));
+        }
+        assert_eq!(values.len(), 16);
+    }
+
+    #[test]
     fn test_sha256_and_md5_hashes_match_known_values() {
         let sha = handle("sha256", &[string_value("kujo")]).unwrap();
         assert!(
