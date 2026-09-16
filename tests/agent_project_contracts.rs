@@ -5,12 +5,16 @@ use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::Stdio;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
 fn temp() -> PathBuf {
     let n = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-    let p = std::env::temp_dir().join(format!("kujo-agent-{n}"));
+    let sequence = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let p = std::env::temp_dir().join(format!("kujo-agent-{}-{n}-{sequence}", std::process::id()));
     fs::create_dir_all(&p).unwrap();
     p
 }
