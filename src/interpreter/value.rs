@@ -251,9 +251,15 @@ impl LeakyFunctionBody {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "runtime-db")]
+    use super::ConnectionPool;
     use super::{DictMap, LeakyFunctionBody, Value};
     use crate::ast::Stmt;
+    #[cfg(feature = "runtime-db")]
+    use std::collections::HashMap;
     use std::sync::Arc;
+    #[cfg(feature = "runtime-db")]
+    use std::sync::Barrier;
 
     fn deeply_nested_loop_stmt(depth: usize) -> Stmt {
         let mut current = Stmt::Break;
@@ -290,6 +296,44 @@ mod tests {
         let clone = body.clone();
 
         assert_eq!(body.get().len(), clone.get().len());
+    }
+
+    #[cfg(feature = "runtime-db")]
+    #[test]
+    fn database_pool_reserves_capacity_atomically() {
+        let path = std::env::temp_dir().join(format!(
+            "kujo_pool_capacity_{}_{}.sqlite",
+            std::process::id(),
+            std::thread::current().name().unwrap_or("test")
+        ));
+        let mut config = HashMap::new();
+        config.insert("min_connections".to_string(), Value::Int(0));
+        config.insert("max_connections".to_string(), Value::Int(1));
+        config.insert("connection_timeout".to_string(), Value::Int(0));
+        let pool = Arc::new(
+            ConnectionPool::new("sqlite".to_string(), path.to_string_lossy().to_string(), config)
+                .expect("pool should initialize"),
+        );
+        let barrier = Arc::new(Barrier::new(17));
+        let mut workers = Vec::new();
+        for _ in 0..16 {
+            let pool = Arc::clone(&pool);
+            let barrier = Arc::clone(&barrier);
+            workers.push(std::thread::spawn(move || {
+                barrier.wait();
+                pool.acquire().ok()
+            }));
+        }
+        barrier.wait();
+        let connections = workers
+            .into_iter()
+            .filter_map(|worker| worker.join().expect("worker should not panic"))
+            .collect::<Vec<_>>();
+        assert_eq!(connections.len(), 1);
+        assert_eq!(pool.stats().get("total"), Some(&1));
+        drop(connections);
+        pool.close();
+        let _ = std::fs::remove_file(path);
     }
 
     #[test]
@@ -531,15 +575,22 @@ impl ConnectionPool {
 
             // No available connections - try to create a new one
             {
-                let total = self.total_created.lock().unwrap();
+                let mut total = self.total_created.lock().unwrap();
                 if *total < self.max_connections {
-                    drop(total); // Release lock before creating connection
-
-                    // Create new connection
-                    let conn = self.create_connection()?;
-
-                    let mut total = self.total_created.lock().unwrap();
+                    // Reserve capacity while holding the counter lock so concurrent
+                    // acquirers cannot all observe the same available slot.
                     *total += 1;
+                    drop(total);
+
+                    let conn = match self.create_connection() {
+                        Ok(connection) => connection,
+                        Err(error) => {
+                            let mut total = self.total_created.lock().unwrap();
+                            *total = total.saturating_sub(1);
+                            return Err(error);
+                        }
+                    };
+
                     let mut in_use = self.in_use.lock().unwrap();
                     *in_use += 1;
 
