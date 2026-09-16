@@ -2254,7 +2254,7 @@ mod tests {
 
         let format_date_tz_missing = call_native_function(&mut interpreter, "format_date_tz", &[]);
         assert!(
-            matches!(format_date_tz_missing, Value::Error(message) if message.contains("format_date_tz() expects 3 arguments"))
+            matches!(format_date_tz_missing, Value::Error(message) if message.contains("format_date_tz expects 3 arguments"))
         );
 
         let parse_date_epoch = call_native_function(

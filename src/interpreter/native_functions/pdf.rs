@@ -730,6 +730,12 @@ mod tests {
     use super::*;
     use base64::Engine;
 
+    static PDF_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    fn test_guard() -> std::sync::MutexGuard<'static, ()> {
+        PDF_TEST_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
     fn empty_dict() -> Value {
         Value::Dict(Arc::new(DictMap::default()))
     }
@@ -778,6 +784,7 @@ mod tests {
 
     #[test]
     fn renders_parseable_branded_business_document() {
+        let _guard = test_guard();
         let html = include_str!("../../../tests/fixtures/pdf/hvac-estimate.html");
         let first = render_html(html).expect("render succeeds");
         let second = render_html(html).expect("repeat render succeeds");
@@ -806,6 +813,7 @@ mod tests {
 
     #[test]
     fn rejects_active_content_and_external_resource_references() {
+        let _guard = test_guard();
         for html in [
             "<script>alert(1)</script>",
             "<img src=\"https://attacker.test/a.png\">",
@@ -826,6 +834,7 @@ mod tests {
 
     #[test]
     fn enforces_strict_option_bounds() {
+        let _guard = test_guard();
         let mut options = DictMap::default();
         options.insert("unexpected".into(), Value::Bool(true));
         let result = handle(
@@ -843,6 +852,7 @@ mod tests {
 
     #[test]
     fn file_publish_is_private_atomic_and_no_clobber() {
+        let _guard = test_guard();
         let directory = tempfile::tempdir().expect("temp directory");
         let path = directory.path().join("estimate.pdf");
         let arguments = || {
@@ -867,6 +877,7 @@ mod tests {
 
     #[test]
     fn page_break_and_header_footer_create_multi_page_document() {
+        let _guard = test_guard();
         let mut options = DictMap::default();
         options.insert("show_page_numbers".into(), Value::Bool(true));
         options.insert("header_text".into(), Value::Str(Arc::new("QuoteFlow quotation".into())));
@@ -888,6 +899,7 @@ mod tests {
 
     #[test]
     fn renders_caller_supplied_logo_without_external_resolution() {
+        let _guard = test_guard();
         let png = base64::engine::general_purpose::STANDARD
             .decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
             .expect("fixture PNG");
@@ -911,6 +923,7 @@ mod tests {
 
     #[test]
     fn renders_multi_page_fabrication_quotation_fixture() {
+        let _guard = test_guard();
         let value =
             render_html(include_str!("../../../tests/fixtures/pdf/fabrication-quotation.html"))
                 .expect("fabrication quotation renders");
@@ -926,6 +939,7 @@ mod tests {
 
     #[test]
     fn rejects_malformed_and_oversized_assets_before_rendering() {
+        let _guard = test_guard();
         let mut malformed_images = DictMap::default();
         malformed_images.insert("logo.png".into(), Value::Bytes(vec![0_u8; 32]));
         let mut assets = DictMap::default();
@@ -957,6 +971,7 @@ mod tests {
 
     #[test]
     fn rejects_decompressed_image_dimension_bomb() {
+        let _guard = test_guard();
         let image = image::DynamicImage::new_rgba8(4097, 1);
         let mut cursor = std::io::Cursor::new(Vec::new());
         image.write_to(&mut cursor, image::ImageFormat::Png).expect("encode image fixture");
@@ -965,6 +980,7 @@ mod tests {
 
     #[test]
     fn concurrency_reservation_is_atomic_and_bounded() {
+        let _guard = test_guard();
         let counter = AtomicUsize::new(0);
         for _ in 0..MAX_CONCURRENT_RENDERS {
             reserve_render_slot(&counter, MAX_CONCURRENT_RENDERS).expect("slot available");
@@ -977,6 +993,7 @@ mod tests {
 
     #[test]
     fn render_deadline_fails_closed() {
+        let _guard = test_guard();
         let (_sender, receiver) = mpsc::sync_channel::<()>(1);
         assert!(receive_before_deadline(receiver, Duration::from_millis(5))
             .unwrap_err()
@@ -985,6 +1002,7 @@ mod tests {
 
     #[test]
     fn malformed_font_fails_without_content_disclosure() {
+        let _guard = test_guard();
         let mut fonts = DictMap::default();
         let mut fake = vec![0_u8; 64];
         fake[..4].copy_from_slice(&[0, 1, 0, 0]);
