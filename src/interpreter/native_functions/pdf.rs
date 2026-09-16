@@ -19,7 +19,7 @@ use std::sync::{mpsc, Arc};
 use std::time::{Duration, Instant};
 
 const API_VERSION: &str = "kujo.pdf.html/v1";
-const RENDERER_VERSION: &str = "printpdf/0.12.8-kujo-profile-v1";
+const RENDERER_VERSION: &str = "printpdf/0.12.8-kujo-profile-v2";
 const MAX_HTML_BYTES: usize = 1024 * 1024;
 const MAX_HTML_TOKENS: usize = 5_000;
 const MAX_HTML_DEPTH: usize = 128;
@@ -427,6 +427,182 @@ struct PdfHtmlSink<'a> {
     failed: RefCell<Option<String>>,
     tokens: Cell<usize>,
     depth: Cell<usize>,
+    roots: RefCell<Vec<SafeNode>>,
+    stack: RefCell<Vec<SafeElement>>,
+}
+
+#[derive(Clone)]
+enum SafeNode {
+    Element(SafeElement),
+    Text(String),
+}
+
+#[derive(Clone)]
+struct SafeElement {
+    name: String,
+    attrs: Vec<(String, String)>,
+    children: Vec<SafeNode>,
+}
+
+fn escape_html_text(value: &str, attribute: bool) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        match character {
+            '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            '"' if attribute => escaped.push_str("&quot;"),
+            _ => escaped.push(character),
+        }
+    }
+    escaped
+}
+
+fn is_void_element(name: &str) -> bool {
+    matches!(name, "br" | "hr" | "img")
+}
+
+fn serialize_attrs(attrs: &[(String, String)], excluded: Option<&str>) -> String {
+    let mut rendered = String::new();
+    for (name, value) in attrs.iter().filter(|(name, _)| excluded != Some(name.as_str())) {
+        rendered.push(' ');
+        rendered.push_str(name);
+        rendered.push_str("=\"");
+        rendered.push_str(&escape_html_text(value, true));
+        rendered.push('"');
+    }
+    rendered
+}
+
+fn serialize_node(node: &SafeNode, output: &mut String) -> Result<(), String> {
+    match node {
+        SafeNode::Text(text) => output.push_str(&escape_html_text(text, false)),
+        SafeNode::Element(element) => serialize_element(element, output)?,
+    }
+    Ok(())
+}
+
+fn only_whitespace(nodes: &[SafeNode]) -> bool {
+    nodes.iter().all(|node| matches!(node, SafeNode::Text(text) if text.trim().is_empty()))
+}
+
+fn direct_elements<'a>(element: &'a SafeElement, name: &str) -> Vec<&'a SafeElement> {
+    element
+        .children
+        .iter()
+        .filter_map(|node| match node {
+            SafeNode::Element(child) if child.name == name => Some(child),
+            _ => None,
+        })
+        .collect()
+}
+
+fn serialize_repeating_table(
+    element: &SafeElement,
+    every: usize,
+    output: &mut String,
+) -> Result<(), String> {
+    let headers = direct_elements(element, "thead");
+    let bodies = direct_elements(element, "tbody");
+    if headers.len() != 1 || bodies.len() != 1 {
+        return Err("pdf repeating tables require exactly one direct thead and one direct tbody"
+            .to_string());
+    }
+    let header = headers[0];
+    let body = bodies[0];
+    let rows: Vec<&SafeNode> = body
+        .children
+        .iter()
+        .filter(|node| matches!(node, SafeNode::Element(child) if child.name == "tr"))
+        .collect();
+    let body_extras: Vec<SafeNode> = body
+        .children
+        .iter()
+        .filter(|node| !matches!(node, SafeNode::Element(child) if child.name == "tr"))
+        .cloned()
+        .collect();
+    if !only_whitespace(&body_extras) || rows.is_empty() {
+        return Err("pdf repeating table tbody must contain direct tr rows only".to_string());
+    }
+    let table_extras: Vec<SafeNode> = element
+        .children
+        .iter()
+        .filter(|node| {
+            !matches!(node, SafeNode::Element(child) if matches!(child.name.as_str(), "thead" | "tbody" | "tfoot"))
+        })
+        .cloned()
+        .collect();
+    if !only_whitespace(&table_extras) || direct_elements(element, "tfoot").len() > 1 {
+        return Err("pdf repeating table has unsupported direct content".to_string());
+    }
+    let foot = direct_elements(element, "tfoot").into_iter().next();
+    for (index, chunk) in rows.chunks(every).enumerate() {
+        if index > 0 {
+            output.push_str("<div style=\"page-break-before:always\"></div>");
+        }
+        output.push_str("<table");
+        output.push_str(&serialize_attrs(&element.attrs, Some("data-repeat-header-every")));
+        output.push('>');
+        serialize_element(header, output)?;
+        output.push_str("<tbody");
+        output.push_str(&serialize_attrs(&body.attrs, None));
+        output.push('>');
+        for row in chunk {
+            serialize_node(row, output)?;
+        }
+        output.push_str("</tbody>");
+        if index + 1 == rows.chunks(every).len() {
+            if let Some(foot) = foot {
+                serialize_element(foot, output)?;
+            }
+        }
+        output.push_str("</table>");
+    }
+    Ok(())
+}
+
+fn serialize_element(element: &SafeElement, output: &mut String) -> Result<(), String> {
+    if element.name == "table" {
+        if let Some((_, value)) =
+            element.attrs.iter().find(|(name, _)| name == "data-repeat-header-every")
+        {
+            let every = value
+                .parse::<usize>()
+                .map_err(|_| "pdf repeating table row count is invalid".to_string())?;
+            return serialize_repeating_table(element, every, output);
+        }
+    }
+    output.push('<');
+    output.push_str(&element.name);
+    output.push_str(&serialize_attrs(&element.attrs, None));
+    output.push('>');
+    if !is_void_element(&element.name) {
+        for child in &element.children {
+            serialize_node(child, output)?;
+        }
+        output.push_str("</");
+        output.push_str(&element.name);
+        output.push('>');
+    }
+    Ok(())
+}
+
+impl PdfHtmlSink<'_> {
+    fn fail(&self, error: impl Into<String>) {
+        if self.failed.borrow().is_none() {
+            *self.failed.borrow_mut() = Some(error.into());
+        }
+    }
+
+    fn append(&self, node: SafeNode) {
+        let mut stack = self.stack.borrow_mut();
+        if let Some(parent) = stack.last_mut() {
+            parent.children.push(node);
+        } else {
+            drop(stack);
+            self.roots.borrow_mut().push(node);
+        }
+    }
 }
 
 impl TokenSink for PdfHtmlSink<'_> {
@@ -453,15 +629,7 @@ impl TokenSink for PdfHtmlSink<'_> {
                 *self.failed.borrow_mut() = Some(format!("unsupported pdf HTML tag '{name}'"));
                 return TokenSinkResult::Continue;
             }
-            if tag.kind == TagKind::StartTag && !tag.self_closing && name != "br" && name != "hr" {
-                self.depth.set(self.depth.get() + 1);
-                if self.depth.get() > MAX_HTML_DEPTH {
-                    *self.failed.borrow_mut() = Some("pdf HTML nesting limit exceeded".to_string());
-                    return TokenSinkResult::Continue;
-                }
-            } else if tag.kind == TagKind::EndTag {
-                self.depth.set(self.depth.get().saturating_sub(1));
-            }
+            let mut safe_attrs = Vec::with_capacity(tag.attrs.len());
             for attribute in tag.attrs {
                 let key = attribute.name.local.to_string().to_ascii_lowercase();
                 let value = attribute.value.to_string();
@@ -478,6 +646,9 @@ impl TokenSink for PdfHtmlSink<'_> {
                     }
                     "src" if name == "img" => self.images.contains(&value),
                     "href" if name == "a" => value.starts_with('#') && value.len() <= 256,
+                    "data-repeat-header-every" if name == "table" => {
+                        value.parse::<usize>().is_ok_and(|number| (1..=100).contains(&number))
+                    }
                     _ => false,
                 };
                 if !valid {
@@ -486,13 +657,50 @@ impl TokenSink for PdfHtmlSink<'_> {
                     ));
                     return TokenSinkResult::Continue;
                 }
+                safe_attrs.push((key, value));
             }
+            safe_attrs.sort();
+            if tag.kind == TagKind::StartTag {
+                let element =
+                    SafeElement { name: name.clone(), attrs: safe_attrs, children: Vec::new() };
+                if tag.self_closing || is_void_element(&name) {
+                    self.append(SafeNode::Element(element));
+                } else {
+                    self.depth.set(self.depth.get() + 1);
+                    if self.depth.get() > MAX_HTML_DEPTH {
+                        self.fail("pdf HTML nesting limit exceeded");
+                        return TokenSinkResult::Continue;
+                    }
+                    self.stack.borrow_mut().push(element);
+                }
+            } else {
+                if is_void_element(&name) {
+                    self.fail("pdf HTML void elements must not have closing tags");
+                    return TokenSinkResult::Continue;
+                }
+                let Some(element) = self.stack.borrow_mut().pop() else {
+                    self.fail("pdf HTML has an unmatched closing tag");
+                    return TokenSinkResult::Continue;
+                };
+                if element.name != name {
+                    self.fail("pdf HTML tags must be explicitly and correctly nested");
+                    return TokenSinkResult::Continue;
+                }
+                self.depth.set(self.depth.get().saturating_sub(1));
+                self.append(SafeNode::Element(element));
+            }
+        } else if let Token::CharacterTokens(text) = token {
+            self.append(SafeNode::Text(text.to_string()));
+        } else if matches!(token, Token::NullCharacterToken) {
+            self.fail("pdf HTML contains a null character");
+        } else if matches!(token, Token::ParseError(_)) {
+            self.fail("pdf HTML is malformed");
         }
         TokenSinkResult::Continue
     }
 }
 
-fn validate_html(html: &str, image_names: &HashSet<String>) -> Result<(), String> {
+fn normalize_html(html: &str, image_names: &HashSet<String>) -> Result<String, String> {
     if html.is_empty() || html.len() > MAX_HTML_BYTES {
         return Err(format!("pdf HTML must be 1..{MAX_HTML_BYTES} bytes"));
     }
@@ -504,6 +712,8 @@ fn validate_html(html: &str, image_names: &HashSet<String>) -> Result<(), String
         failed: RefCell::new(None),
         tokens: Cell::new(0),
         depth: Cell::new(0),
+        roots: RefCell::new(Vec::new()),
+        stack: RefCell::new(Vec::new()),
     };
     let tokenizer = Tokenizer::new(sink, TokenizerOpts::default());
     let queue = BufferQueue::default();
@@ -513,12 +723,22 @@ fn validate_html(html: &str, image_names: &HashSet<String>) -> Result<(), String
     if let Some(error) = tokenizer.sink.failed.into_inner() {
         return Err(error);
     }
-    Ok(())
+    if !tokenizer.sink.stack.into_inner().is_empty() {
+        return Err("pdf HTML tags must be explicitly closed".to_string());
+    }
+    let mut normalized = String::with_capacity(html.len());
+    for node in tokenizer.sink.roots.into_inner() {
+        serialize_node(&node, &mut normalized)?;
+    }
+    if normalized.is_empty() || normalized.len() > MAX_HTML_BYTES {
+        return Err("pdf normalized HTML exceeds the byte limit".to_string());
+    }
+    Ok(normalized)
 }
 
 #[allow(dead_code)]
 pub(crate) fn validate_html_for_fuzz(html: &str) -> Result<(), String> {
-    validate_html(html, &HashSet::new())
+    normalize_html(html, &HashSet::new()).map(|_| ())
 }
 
 fn render(
@@ -696,12 +916,13 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
         Err(error) => return Some(Value::Error(error)),
     };
     let image_names = images.keys().cloned().collect();
-    if let Err(error) = validate_html(html, &image_names) {
-        return Some(Value::Error(error));
-    }
-    let input_sha256 = sha256_hex(html.as_bytes());
+    let normalized_html = match normalize_html(html, &image_names) {
+        Ok(value) => value,
+        Err(error) => return Some(Value::Error(error)),
+    };
+    let input_sha256 = sha256_hex(normalized_html.as_bytes());
     let started = Instant::now();
-    let rendered = match render(html.as_ref().clone(), options, images, fonts) {
+    let rendered = match render(normalized_html, options, images, fonts) {
         Ok(value) => value,
         Err(error) => return Some(Value::Error(error)),
     };
@@ -812,6 +1033,53 @@ mod tests {
     }
 
     #[test]
+    fn renders_letter_landscape_with_expected_dimensions() {
+        let _guard = test_guard();
+        let mut options = DictMap::default();
+        options.insert("page_size".into(), Value::Str(Arc::new("Letter".into())));
+        options.insert("orientation".into(), Value::Str(Arc::new("landscape".into())));
+        let value = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new("<h1>Landscape quotation</h1>".into())),
+                Value::Dict(Arc::new(options)),
+                empty_dict(),
+            ],
+        )
+        .expect("handler result");
+        let document =
+            lopdf::Document::load_mem(receipt_bytes(&value)).expect("generated PDF parses");
+        let pages = document.get_pages();
+        let (width, height) = page_size_points(&document, pages[&1]);
+        assert!((width - 792.0).abs() < 1.0);
+        assert!((height - 612.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn concurrent_business_document_renders_are_isolated() {
+        let _guard = test_guard();
+        let barrier = Arc::new(std::sync::Barrier::new(4));
+        let threads = (1..=4)
+            .map(|number| {
+                let barrier = Arc::clone(&barrier);
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    let expected = format!("Customer {number} total ${number},000.00");
+                    let html = format!("<h1>Quote {number}</h1><p>{expected}</p>");
+                    let value = render_html(&html).expect("concurrent render succeeds");
+                    let document = lopdf::Document::load_mem(receipt_bytes(&value))
+                        .expect("concurrent PDF parses");
+                    let text = document.extract_text(&[1]).expect("text extraction succeeds");
+                    assert!(text.contains(&expected));
+                })
+            })
+            .collect::<Vec<_>>();
+        for thread in threads {
+            thread.join().expect("render worker did not panic");
+        }
+    }
+
+    #[test]
     fn rejects_active_content_and_external_resource_references() {
         let _guard = test_guard();
         for html in [
@@ -848,6 +1116,39 @@ mod tests {
         assert!(
             matches!(result, Some(Value::Error(error)) if error.contains("unknown pdf option"))
         );
+    }
+
+    #[test]
+    fn canonical_html_normalization_is_attribute_order_independent() {
+        let _guard = test_guard();
+        let first = render_html("<p id=\"quote\" class=\"total\">A &amp; B</p>")
+            .expect("first render succeeds");
+        let second = render_html("<p class=\"total\" id=\"quote\">A &amp; B</p>")
+            .expect("second render succeeds");
+        let Value::Dict(first) = first else { panic!("expected first receipt") };
+        let Value::Dict(second) = second else { panic!("expected second receipt") };
+        let Some(Value::Str(first_input)) = first.get("input_sha256") else {
+            panic!("expected first input digest")
+        };
+        let Some(Value::Str(second_input)) = second.get("input_sha256") else {
+            panic!("expected second input digest")
+        };
+        let Some(Value::Str(first_output)) = first.get("output_sha256") else {
+            panic!("expected first output digest")
+        };
+        let Some(Value::Str(second_output)) = second.get("output_sha256") else {
+            panic!("expected second output digest")
+        };
+        assert_eq!(first_input, second_input);
+        assert_eq!(first_output, second_output);
+    }
+
+    #[test]
+    fn malformed_or_implicitly_closed_html_fails_closed() {
+        let _guard = test_guard();
+        for html in ["<div><span>broken</div></span>", "<div>unclosed"] {
+            assert!(render_html(html).unwrap_err().contains("pdf HTML"));
+        }
     }
 
     #[test]
@@ -922,6 +1223,40 @@ mod tests {
     }
 
     #[test]
+    fn embeds_and_uses_caller_supplied_approved_unicode_font() {
+        let _guard = test_guard();
+        let mut fonts = DictMap::default();
+        fonts.insert(
+            "Sansation".into(),
+            Value::Bytes(
+                include_bytes!("../../../tests/fixtures/pdf/Sansation-Regular.ttf").to_vec(),
+            ),
+        );
+        let mut assets = DictMap::default();
+        assets.insert("fonts".into(), Value::Dict(Arc::new(fonts)));
+        let value = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new(
+                    "<p style=\"font-family:Sansation\">José · naïve · €9,850</p>".into(),
+                )),
+                empty_dict(),
+                Value::Dict(Arc::new(assets)),
+            ],
+        )
+        .expect("handler result");
+        let document =
+            lopdf::Document::load_mem(receipt_bytes(&value)).expect("generated PDF parses");
+        let text = document.extract_text(&[1]).expect("text extraction succeeds");
+        assert!(text.contains("José"));
+        assert!(text.contains("naïve"));
+        assert!(text.contains("€9,850"));
+        let objects = format!("{:?}", document.objects);
+        assert!(objects.contains("Sansation"), "approved font name must be embedded");
+        assert!(objects.contains("FontFile2"), "approved TrueType bytes must be embedded");
+    }
+
+    #[test]
     fn renders_multi_page_fabrication_quotation_fixture() {
         let _guard = test_guard();
         let value =
@@ -929,12 +1264,60 @@ mod tests {
                 .expect("fabrication quotation renders");
         let bytes = receipt_bytes(&value);
         let document = lopdf::Document::load_mem(bytes).expect("independent parser accepts PDF");
-        assert!(document.get_pages().len() >= 2);
-        let text = document.extract_text(&[1, 2]).expect("text extraction succeeds");
-        let normalized = text.split_whitespace().collect::<Vec<_>>().join(" ");
+        let page_count = document.get_pages().len();
+        assert!(page_count >= 4);
+        let page_text = (1..=page_count as u32)
+            .map(|page| {
+                document
+                    .extract_text(&[page])
+                    .expect("text extraction succeeds")
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
+            .collect::<Vec<_>>();
+        let normalized = page_text.join(" ");
         assert!(normalized.contains("ABC Manufacturing Quotation"));
         assert!(normalized.contains("250 mounting brackets"));
         assert!(normalized.contains("Terms"));
+        let terms_page =
+            page_text.iter().position(|text| text.contains("Terms")).expect("terms page exists");
+        assert!(terms_page >= 3, "fixture must contain at least three table pages");
+        for (index, text) in page_text.iter().take(terms_page).enumerate() {
+            assert!(
+                text.contains("Specification") && text.contains("Quantity"),
+                "repeating table header missing from fixture page {}",
+                index + 1
+            );
+        }
+    }
+
+    #[test]
+    fn repeats_table_header_on_every_automatically_paginated_page() {
+        let _guard = test_guard();
+        let rows = (1..=90)
+            .map(|number| {
+                format!(
+                    "<tr><td style=\"border:1px solid #333;padding:6px\">{number}</td><td style=\"border:1px solid #333;padding:6px\">Bracket {number}</td></tr>"
+                )
+            })
+            .collect::<String>();
+        let html = format!(
+            "<html><body><table data-repeat-header-every=\"20\" style=\"width:100%;border-collapse:collapse\"><thead><tr><th style=\"border:1px solid #333;padding:6px\">Line</th><th style=\"border:1px solid #333;padding:6px\">Part number</th></tr></thead><tbody>{rows}</tbody></table></body></html>"
+        );
+        let value = render_html(&html).expect("long table renders");
+        let document =
+            lopdf::Document::load_mem(receipt_bytes(&value)).expect("generated PDF parses");
+        let pages = document.get_pages();
+        assert!(pages.len() >= 2, "fixture must exercise automatic pagination");
+        for page_number in 1..=pages.len() as u32 {
+            let text = document.extract_text(&[page_number]).expect("page text extracts");
+            let normalized = text.split_whitespace().collect::<Vec<_>>().join(" ");
+            assert!(
+                normalized.contains("Part number"),
+                "table header missing from automatically paginated page {page_number}: {normalized}"
+            );
+        }
     }
 
     #[test]

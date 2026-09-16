@@ -40,6 +40,10 @@ Supported elements are `html`, `head`, `title`, `body`, `div`, `section`, `heade
 
 Supported inline CSS properties cover block/flex layout, dimensions, gap, padding, margin, borders, border collapse/radius, background and foreground colors, font family/size/style/weight, line height, text alignment/decoration, vertical alignment, whitespace, table layout, and explicit page/break controls. Stylesheets and arbitrary selectors are not supported. An unknown element, attribute, property, or unsafe value is an error rather than a silent fallback.
 
+Input must be explicitly and correctly nested and closed. Before rendering, Kujo converts it into a canonical form with normalized tag/attribute names, sorted attributes, escaped text, and versioned structural expansion. Equivalent attribute ordering therefore produces the same input digest and PDF bytes.
+
+For deterministic table pagination, add `data-repeat-header-every="N"` to a table, where `N` is 1–100. That table must contain exactly one direct `thead` and one direct `tbody`; the body may contain only direct `tr` rows, and an optional direct `tfoot` is emitted only with the final chunk. Kujo splits the rows into `N`-row page chunks, repeats the header for every chunk, and inserts explicit page breaks. Applications choose `N` for their template's page geometry and must visually regression-test that choice.
+
 This profile is intended for quotations, estimates, invoices, customer details, line-item tables, terms, tenant branding, page headers/footers, page numbers, and explicit or automatic pagination. It is not browser-compatible HTML and does not support JavaScript, forms, SVG, embedded media, floats, CSS Grid, external stylesheets, or arbitrary web application markup.
 
 ## Bounds and isolation
@@ -54,7 +58,7 @@ This profile is intended for quotations, estimates, invoices, customer details, 
 
 Active tags, event attributes, remote/file/data URLs, CSS imports, CSS URL expressions, JavaScript, behavior expressions, path traversal asset names, malformed assets, and decompression-dimension bombs fail closed. Renderer panics are caught and converted to content-free errors. A timed-out render thread cannot be force-killed safely by Rust and retains its concurrency permit until it exits; the four-permit ceiling bounds accumulation. Deployments must still apply process CPU/memory limits and restart policy.
 
-Output identifiers are rewritten from the input digest, renderer metadata excludes wall-clock and host identity, and identical normalized inputs under the same renderer version produce identical bytes. Golden tests reparse output and verify commercial text, dimensions, pagination, digest repeatability, and absence of executable or remote PDF actions. `tests/pdf_external_validation.sh` additionally validates structure and extracted text with the independent Poppler tools.
+Output identifiers are rewritten from the canonical input digest, renderer metadata excludes wall-clock and host identity, and identical normalized inputs under the same renderer version produce identical bytes. Golden tests reparse output and verify commercial text, A4 and Letter dimensions, repeated table headers, concurrent-render isolation, approved embedded-font Unicode text, pagination, digest repeatability, and absence of executable or remote PDF actions. `tests/pdf_external_validation.sh` additionally validates structure and extracted text with the independent Poppler tools.
 
 ## Engine and limitations
 
@@ -62,4 +66,4 @@ The implementation pins `printpdf` 0.12.8 (MIT) and `lopdf` 0.44.0 in `Cargo.loc
 
 The direct renderer dependencies are MIT; the layout/font stack is MIT or Apache-2.0. `cargo audit` reports no known vulnerability. It does report RUSTSEC-2025-0141 because `hyphenation`, a build dependency of the pinned layout engine, uses unmaintained `bincode` 1.3.3. That advisory is not a vulnerability and the crate is not part of the runtime input path. The release gate ignores only that exact advisory while continuing to deny every vulnerability and other warning; replacing the upstream layout dependency remains tracked release maintenance.
 
-Tagged-PDF accessibility is not implemented or claimed. PDF/A conformance and digital signatures are not part of this profile. Complex-script shaping and Unicode coverage depend on the explicitly supplied approved font. Repeated table header behavior follows the pinned engine and must be visually regression-tested for each application template before release.
+The embedded-font golden uses Sansation Regular from Google Fonts under the SIL Open Font License 1.1; the exact font and license text are checked in under `tests/fixtures/pdf/`. Tagged-PDF accessibility is not implemented or claimed. PDF/A conformance and digital signatures are not part of this profile. Unicode coverage depends on the explicitly supplied approved font, and the current engine does not claim general complex-script shaping.
