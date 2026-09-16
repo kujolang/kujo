@@ -1060,6 +1060,18 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "format_date_tz".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::Float),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: Some(TypeAnnotation::String),
+            },
+        );
+
+        self.functions.insert(
             "parse_date".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],

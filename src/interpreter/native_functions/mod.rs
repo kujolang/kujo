@@ -613,6 +613,7 @@ mod tests {
             "format_duration",
             "elapsed",
             "format_date",
+            "format_date_tz",
             "parse_date",
             "abs",
             "sqrt",
@@ -2211,6 +2212,24 @@ mod tests {
         let format_date_missing = call_native_function(&mut interpreter, "format_date", &[]);
         assert!(
             matches!(format_date_missing, Value::Error(message) if message.contains("format_date() expects 2 arguments"))
+        );
+
+        let format_date_tz_detroit = call_native_function(
+            &mut interpreter,
+            "format_date_tz",
+            &[
+                Value::Float(1_719_835_200.0),
+                Value::Str(Arc::new("YYYY-MM-DD HH:mm".to_string())),
+                Value::Str(Arc::new("America/Detroit".to_string())),
+            ],
+        );
+        assert!(
+            matches!(format_date_tz_detroit, Value::Str(value) if value.as_ref() == "2024-07-01 08:00")
+        );
+
+        let format_date_tz_missing = call_native_function(&mut interpreter, "format_date_tz", &[]);
+        assert!(
+            matches!(format_date_tz_missing, Value::Error(message) if message.contains("format_date_tz() expects 3 arguments"))
         );
 
         let parse_date_epoch = call_native_function(

@@ -1169,6 +1169,7 @@ pub fn format_date(timestamp: f64, format_str: &str) -> String {
 
     // Simple format string replacement
     let result = format_str
+        .replace("ddd", &dt.format("%a").to_string())
         .replace("YYYY", &dt.format("%Y").to_string())
         .replace("MM", &dt.format("%m").to_string())
         .replace("DD", &dt.format("%d").to_string())
@@ -1177,6 +1178,33 @@ pub fn format_date(timestamp: f64, format_str: &str) -> String {
         .replace("ss", &dt.format("%S").to_string());
 
     result
+}
+
+/// Format a Unix timestamp in an IANA time zone using the same replacement
+/// tokens as `format_date`.
+pub fn format_date_tz(timestamp: f64, format_str: &str, timezone: &str) -> Result<String, String> {
+    use chrono_tz::Tz;
+
+    if !timestamp.is_finite() {
+        return Err("Invalid timestamp: value must be a finite number".to_string());
+    }
+    if timestamp < i64::MIN as f64 || timestamp > i64::MAX as f64 {
+        return Err("Invalid timestamp: value is out of supported range".to_string());
+    }
+    let tz: Tz = timezone.parse().map_err(|_| format!("Invalid time zone: {timezone}"))?;
+    let dt = Utc
+        .timestamp_opt(timestamp as i64, 0)
+        .single()
+        .ok_or_else(|| "Invalid timestamp: value is out of supported range".to_string())?
+        .with_timezone(&tz);
+    Ok(format_str
+        .replace("ddd", &dt.format("%a").to_string())
+        .replace("YYYY", &dt.format("%Y").to_string())
+        .replace("MM", &dt.format("%m").to_string())
+        .replace("DD", &dt.format("%d").to_string())
+        .replace("HH", &dt.format("%H").to_string())
+        .replace("mm", &dt.format("%M").to_string())
+        .replace("ss", &dt.format("%S").to_string()))
 }
 
 /// Parse a date string to Unix timestamp
@@ -2978,6 +3006,23 @@ mod tests {
     fn test_format_date_rejects_out_of_range_timestamp_without_panicking() {
         let formatted = format_date(i64::MAX as f64, "YYYY-MM-DD");
         assert_eq!(formatted, "Invalid timestamp: value is out of supported range");
+    }
+
+    #[test]
+    fn test_format_date_tz_applies_iana_daylight_saving_rules() {
+        let summer = format_date_tz(1_719_835_200.0, "YYYY-MM-DD HH:mm", "America/Detroit")
+            .expect("valid summer timestamp and time zone");
+        let winter = format_date_tz(1_704_110_400.0, "YYYY-MM-DD HH:mm", "America/Detroit")
+            .expect("valid winter timestamp and time zone");
+        assert_eq!(summer, "2024-07-01 08:00");
+        assert_eq!(winter, "2024-01-01 07:00");
+    }
+
+    #[test]
+    fn test_format_date_tz_rejects_invalid_zone() {
+        let error = format_date_tz(0.0, "YYYY-MM-DD", "Mars/Olympus")
+            .expect_err("invalid time zone must fail");
+        assert!(error.contains("Invalid time zone"));
     }
 
     #[test]

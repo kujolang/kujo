@@ -764,6 +764,7 @@ impl Interpreter {
             "format_duration",
             "elapsed",
             "format_date",
+            "format_date_tz",
             "parse_date",
             // System operation functions
             "env",
@@ -1438,6 +1439,10 @@ impl Interpreter {
         self.env.define("elapsed".to_string(), Value::NativeFunction("elapsed".to_string()));
         self.env
             .define("format_date".to_string(), Value::NativeFunction("format_date".to_string()));
+        self.env.define(
+            "format_date_tz".to_string(),
+            Value::NativeFunction("format_date_tz".to_string()),
+        );
         self.env.define("parse_date".to_string(), Value::NativeFunction("parse_date".to_string()));
 
         // System operation functions

@@ -91,4 +91,12 @@ if len(custom2) == 5 {
     print("✗ Custom format HH:mm failed")
 }
 
+detroit_summer := format_date_tz(1719835200.0, "YYYY-MM-DD HH:mm", "America/Detroit")
+detroit_winter := format_date_tz(1704110400.0, "YYYY-MM-DD HH:mm", "America/Detroit")
+if detroit_summer == "2024-07-01 08:00" && detroit_winter == "2024-01-01 07:00" {
+    print("✓ format_date_tz applies IANA daylight-saving rules")
+} else {
+    print("✗ format_date_tz returned unexpected local times")
+}
+
 print("Date/time function tests completed!")

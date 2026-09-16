@@ -10,4 +10,5 @@ Round-trip: 2026-01-23
 ✓ parse_date correctly orders dates
 ✓ Custom format DD/MM/YYYY works
 ✓ Custom format HH:mm works
+✓ format_date_tz applies IANA daylight-saving rules
 Date/time function tests completed!

@@ -1188,6 +1188,40 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "format_date_tz" => {
+            if arg_values.len() != 3 {
+                return Some(Value::Error(format!(
+                    "format_date_tz() expects 3 arguments (timestamp, format, timezone), got {}",
+                    arg_values.len()
+                )));
+            }
+
+            if let (Some(ts_val), Some(Value::Str(format)), Some(Value::Str(timezone))) =
+                (arg_values.first(), arg_values.get(1), arg_values.get(2))
+            {
+                let timestamp = match ts_val {
+                    Value::Int(n) => *n as f64,
+                    Value::Float(n) => *n,
+                    _ => {
+                        return Some(Value::Error(
+                            "format_date_tz requires a number timestamp".to_string(),
+                        ))
+                    }
+                };
+                match builtins::format_date_tz(timestamp, format.as_ref(), timezone.as_ref()) {
+                    Ok(formatted) => Value::Str(Arc::new(formatted)),
+                    Err(message) => {
+                        Value::ErrorObject { message, stack: Vec::new(), line: None, cause: None }
+                    }
+                }
+            } else {
+                Value::Error(
+                    "format_date_tz requires timestamp (number), format (string), and timezone (string)"
+                        .to_string(),
+                )
+            }
+        }
+
         "parse_date" => {
             if arg_values.len() != 2 {
                 return Some(Value::Error(format!(

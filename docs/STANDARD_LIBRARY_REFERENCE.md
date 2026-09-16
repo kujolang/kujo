@@ -361,6 +361,7 @@ Secret redaction contract:
 | `time_ns` | preview | `ns := time_ns()` |
 | `format_duration` | preview | `text := format_duration(1530)` |
 | `format_date` | stable | `day := format_date(now_unix(), "YYYY-MM-DD")` |
+| `format_date_tz` | stable | `local := format_date_tz(now_unix(), "YYYY-MM-DD HH:mm", "America/Detroit")` |
 | `parse_date` | stable | `seconds := parse_date("1970-01-01", "YYYY-MM-DD")` |
 | `performance_now` | preview | `ms := performance_now()` |
 | `elapsed` | preview | `dt := elapsed(start_ms, end_ms)` |
@@ -369,8 +370,12 @@ Time units are explicit: `now` and `now_unix` return Unix seconds,
 `current_timestamp` returns Unix milliseconds, and `now_utc` returns a UTC
 string in `YYYY-MM-DDTHH:mm:ssZ` form. `format_date` consumes Unix seconds;
 use `now_unix()` rather than `current_timestamp()`. Its supported replacement
-tokens are `YYYY`, `MM`, `DD`, `HH`, `mm`, and `ss`. `parse_date` currently
+tokens are `ddd`, `YYYY`, `MM`, `DD`, `HH`, `mm`, and `ss`, where `ddd` is the
+English abbreviated weekday. `parse_date` currently
 accepts only `YYYY-MM-DD` and returns Unix seconds.
+`format_date_tz` accepts an IANA time-zone identifier, uses the same timestamp
+units and replacement tokens, and applies daylight-saving transitions. Invalid
+identifiers fail instead of silently falling back to UTC.
 
 Runnable contract example: [`examples/helper_hlp_007_text_time.kujo`](../examples/helper_hlp_007_text_time.kujo).
 
