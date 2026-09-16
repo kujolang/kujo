@@ -6181,6 +6181,7 @@ impl VM {
 
                 result
             }
+            Value::Function(..) => self.call_interpreter_callable(&handler, &[req_obj]),
             _ => Err(Self::non_callable_error_message(
                 "route handlers must evaluate to a callable function",
             )),

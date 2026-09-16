@@ -19,6 +19,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- VM routed HTTP dispatch now invokes closures created by imported modules,
+  allowing modular route registrars to capture application context with the
+  same behavior as interpreter mode.
 - Kept the source-bound TCP security regression server open until the client
   closes, removing a startup-speed race on slower debug builds.
 - Restored the runtime mismatch inventory to 149/149 VM matches by adding

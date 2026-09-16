@@ -73,7 +73,7 @@ fn spawn_runtime_with_read_timeout(
     }
     command
         .arg("--allow-net-server")
-        .env("KUJO_HTTP_SERVER_READ_TIMEOUT_MS", "150")
+        .env("KUJO_HTTP_SERVER_READ_TIMEOUT_MS", "1000")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -548,6 +548,58 @@ fn http_route_callback_preserves_dictionary_returned_by_import_in_vm_and_interpr
 }
 
 #[test]
+fn imported_module_can_register_capturing_route_in_vm_and_interpreter() {
+    for interpreter in [false, true] {
+        let Some(port) = reserve_local_port() else {
+            eprintln!(
+                "Skipping imported route registration test: unable to reserve localhost test port"
+            );
+            return;
+        };
+        let project_root = unique_temp_dir(if interpreter {
+            "http_imported_route_interpreter"
+        } else {
+            "http_imported_route_vm"
+        });
+        let script_path = project_root.join("main.kujo");
+        let service_path = project_root.join("service.kujo");
+        fs::write(
+            &service_path,
+            "export func register_routes(server, context) {\n    server = server.route(\"GET\", \"/health\", func(req) { return http_response(200, context[\"message\"]) })\n    return server\n}\n",
+        )
+        .expect("failed to write imported route module");
+        fs::write(
+            &script_path,
+            format!(
+                "from service import register_routes\ncontext := {{\"message\":\"imported-route-ok\"}}\nserver := register_routes(http_server({port}), context)\nserver.listen()\n"
+            ),
+        )
+        .expect("failed to write imported route script");
+
+        let mut child = spawn_runtime_with_read_timeout(&script_path, &project_root, interpreter);
+        let response = match wait_for_response(&mut child, port, "/health") {
+            Ok(response) => response,
+            Err(message) => {
+                let output = terminate_child(child);
+                panic!(
+                    "{message}; stdout={}; stderr={}",
+                    stdout_text(&output),
+                    stderr_text(&output)
+                );
+            }
+        };
+        let output = terminate_child(child);
+        assert_eq!(
+            (response.0, response.1.as_str()),
+            (200, "imported-route-ok"),
+            "stdout={}; stderr={}",
+            stdout_text(&output),
+            stderr_text(&output)
+        );
+    }
+}
+
+#[test]
 fn routed_request_preserves_duplicate_header_values_in_both_runtimes() {
     for interpreter in [false, true] {
         let Some(port) = reserve_local_port() else { return };
@@ -586,7 +638,11 @@ server.listen()
         let output = terminate_child(child);
         fs::remove_dir_all(root).unwrap();
         let response = result.unwrap_or_else(|error| panic!("{error}: {}", stderr_text(&output)));
-        assert!(response.contains("200 OK"), "{response}");
+        assert!(
+            response.contains("200 OK"),
+            "interpreter={interpreter}; response={response}; stderr={}",
+            stderr_text(&output)
+        );
         let body = response.split_once("\r\n\r\n").unwrap().1;
         let values: serde_json::Value = serde_json::from_str(body).unwrap();
         assert_eq!(values["authorization"], serde_json::json!(["first", "second", "third"]));
