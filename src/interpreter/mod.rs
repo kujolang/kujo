@@ -728,6 +728,8 @@ impl Interpreter {
             "to_json",
             "to_json_pretty",
             "json_schema_validate",
+            "pdf_render_html",
+            "pdf_render_html_to_file",
             // TOML functions
             "parse_toml",
             "to_toml",
@@ -1363,6 +1365,14 @@ impl Interpreter {
         self.env.define(
             "json_schema_validate".to_string(),
             Value::NativeFunction("json_schema_validate".to_string()),
+        );
+        self.env.define(
+            "pdf_render_html".to_string(),
+            Value::NativeFunction("pdf_render_html".to_string()),
+        );
+        self.env.define(
+            "pdf_render_html_to_file".to_string(),
+            Value::NativeFunction("pdf_render_html_to_file".to_string()),
         );
 
         // TOML functions
@@ -3458,6 +3468,14 @@ impl Interpreter {
             "secure_random_token" => {
                 CallableArity::exact("secure_random_token", vec!["byte_length".to_string()])
             }
+            "pdf_render_html" => CallableArity::exact(
+                "pdf_render_html",
+                vec!["html".into(), "options".into(), "assets".into()],
+            ),
+            "pdf_render_html_to_file" => CallableArity::exact(
+                "pdf_render_html_to_file",
+                vec!["html".into(), "options".into(), "assets".into(), "destination".into()],
+            ),
             "format_date_tz" => CallableArity::exact(
                 "format_date_tz",
                 vec!["timestamp".into(), "format".into(), "timezone".into()],

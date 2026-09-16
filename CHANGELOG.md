@@ -1,9 +1,5 @@
 # Changelog
 
-## Unreleased
-
-- Added `secure_random_token(byte_length)`, an OS-CSPRNG-backed, base64url, redacted token primitive isolated from deterministic random seeding.
-
 This file records user-visible changes to Kujo. It follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -11,6 +7,12 @@ This file records user-visible changes to Kujo. It follows
 ## [Unreleased]
 
 ### Changed
+
+- Added bounded, in-process `pdf_render_html` and atomic
+  `pdf_render_html_to_file` APIs for branded business documents without an
+  external renderer.
+- Added `secure_random_token(byte_length)`, an OS-CSPRNG-backed, base64url,
+  redacted token primitive isolated from deterministic random seeding.
 
 - Added lowercase `header_values` arrays to routed HTTP server requests in both
   runtimes, preserving duplicate headers for explicit application validation.

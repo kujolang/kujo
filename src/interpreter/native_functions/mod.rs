@@ -50,7 +50,23 @@ pub mod io;
 pub mod json;
 pub mod math;
 pub mod network;
+#[cfg(feature = "runtime-pdf")]
+pub mod pdf;
 pub mod platform;
+#[cfg(not(feature = "runtime-pdf"))]
+pub mod pdf {
+    use super::super::Value;
+
+    pub fn handle(name: &str, _arg_values: &[Value]) -> Option<Value> {
+        match name {
+            "pdf_render_html" | "pdf_render_html_to_file" => Some(Value::Error(
+                "PDF native APIs are disabled in this build (enable the 'runtime-pdf' feature)"
+                    .to_string(),
+            )),
+            _ => None,
+        }
+    }
+}
 pub mod schema;
 pub mod strings;
 pub mod system;
@@ -211,6 +227,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
         return result;
     }
     if let Some(result) = platform::handle(interp, canonical_name, arg_values) {
+        return result;
+    }
+    if let Some(result) = pdf::handle(canonical_name, arg_values) {
         return result;
     }
     if let Some(result) = web_data::handle(interp, canonical_name, arg_values) {
@@ -655,6 +674,8 @@ mod tests {
             "decode_base64",
             "decode_base64_utf8",
             "decode_charset",
+            "pdf_render_html",
+            "pdf_render_html_to_file",
             "encode_uri_component",
             "regex_match",
             "regex_find_all",

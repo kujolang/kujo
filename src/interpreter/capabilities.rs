@@ -206,7 +206,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "async_write_files"
         | "ssg_render_and_write_pages"
         | "ssg_read_render_and_write_pages"
-        | "kv_set" => Some(NativeCapability::FilesystemWrite),
+        | "kv_set"
+        | "pdf_render_html_to_file" => Some(NativeCapability::FilesystemWrite),
 
         // Filesystem delete
         "delete_file" | "os_rmdir" => Some(NativeCapability::FilesystemDelete),

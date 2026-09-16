@@ -66,7 +66,7 @@ Never use it to execute arbitrary or untrusted programs.
 | Flag | Capability | Typical APIs Unlocked | Primary Risk |
 | --- | --- | --- | --- |
 | `--allow-fs-read` | Filesystem read | `read_file`, `read_lines`, `read_binary_file`, metadata/path reads | Data disclosure |
-| `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, bounded private spools, `publish_file_noreplace`, mkdir/write helpers | Data tampering |
+| `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, `pdf_render_html_to_file`, bounded private spools, `publish_file_noreplace`, mkdir/write helpers | Data tampering |
 | `--allow-fs-delete` | Filesystem delete | `delete_file`, `publish_file_noreplace`, delete-adjacent flows | Data loss |
 | `--allow-process-exec` | Direct process execution | `spawn_process`, `pipe_commands` | Arbitrary command execution |
 | `--allow-shell-exec` | Shell-string execution | `execute`, `execute_status` | Shell injection/command abuse |
@@ -113,6 +113,8 @@ Per-function capability metadata is maintained in `docs/STANDARD_LIBRARY.md` and
 ## 4. High-Risk Native Surface Guidance
 
 `secure_random_token(byte_length)` is the only standard-library random helper intended for session identifiers, CSRF values, invitations, verification/reset links, bearer grants, action nonces, API keys, or signing/encryption key material. It draws directly from OpenSSL's operating-system-seeded CSPRNG, accepts 16–128 bytes, returns a redacted `Secret`, and is isolated from `set_random_seed`. `random_id`, UUID helpers, and seeded random functions remain unsuitable for security credentials. Callers should persist only a one-way digest where token recovery is unnecessary and use constant-time verification helpers for keyed comparisons.
+
+`pdf_render_html` and `pdf_render_html_to_file` use an in-process Rust renderer; they do not spawn a browser, process, service, or sidecar. The accepted HTML/CSS profile is intentionally strict: active tags, event handlers, external URLs, data/file URLs, arbitrary attributes, and unknown CSS properties fail closed. Images and fonts must be caller-provided bounded byte assets referenced by logical name. Rendering has byte, token, nesting, asset, page-output, deadline, and process-wide concurrency limits. A deadline stops the caller from waiting, but Rust cannot cancel a render thread safely; the timed-out thread retains one of four permits until it exits, bounding accumulation. Operators should still apply process memory/CPU limits and restart policy. File output requires `filesystem-write`, uses a same-directory private temporary file, syncs it, and refuses replacement. The in-memory variant has no host-effect capability because its input cannot resolve external resources.
 
 ### 4.1 Process and Shell APIs
 

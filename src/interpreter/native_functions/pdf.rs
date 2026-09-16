@@ -1,0 +1,845 @@
+//! Bounded, in-process HTML-to-PDF rendering for business documents.
+//!
+//! This surface deliberately implements a strict HTML/CSS profile. It never
+//! performs network I/O or resolves filesystem paths from document input.
+
+use crate::interpreter::{DictMap, Value};
+use html5ever::tokenizer::{
+    BufferQueue, TagKind, Token, TokenSink, TokenSinkResult, Tokenizer, TokenizerOpts,
+};
+use printpdf::{Base64OrRaw, GeneratePdfOptions, PdfDocument, PdfSaveOptions};
+use sha2::{Digest, Sha256};
+use std::cell::{Cell, RefCell};
+use std::collections::{BTreeMap, HashSet};
+use std::fs;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{mpsc, Arc};
+use std::time::{Duration, Instant};
+
+const API_VERSION: &str = "kujo.pdf.html/v1";
+const RENDERER_VERSION: &str = "printpdf/0.12.8-kujo-profile-v1";
+const MAX_HTML_BYTES: usize = 1024 * 1024;
+const MAX_HTML_TOKENS: usize = 5_000;
+const MAX_HTML_DEPTH: usize = 128;
+const MAX_ASSET_COUNT: usize = 24;
+const MAX_IMAGE_BYTES: usize = 5 * 1024 * 1024;
+const MAX_FONT_BYTES: usize = 4 * 1024 * 1024;
+const MAX_ASSET_BYTES: usize = 16 * 1024 * 1024;
+const MAX_OUTPUT_BYTES: usize = 32 * 1024 * 1024;
+const MAX_RENDER_SECONDS: u64 = 30;
+const MAX_CONCURRENT_RENDERS: usize = 4;
+
+static ACTIVE_RENDERS: AtomicUsize = AtomicUsize::new(0);
+
+#[derive(Clone)]
+struct RenderOptions {
+    page_width_mm: f32,
+    page_height_mm: f32,
+    margin_top_mm: f32,
+    margin_right_mm: f32,
+    margin_bottom_mm: f32,
+    margin_left_mm: f32,
+    show_page_numbers: bool,
+    header_text: Option<String>,
+    footer_text: Option<String>,
+    title: String,
+    max_output_bytes: usize,
+    timeout: Duration,
+}
+
+struct RenderedPdf {
+    bytes: Vec<u8>,
+    pages: usize,
+    width_mm: f32,
+    height_mm: f32,
+    warning_count: usize,
+}
+
+struct RenderPermit;
+
+impl RenderPermit {
+    fn acquire() -> Result<Self, String> {
+        let result = ACTIVE_RENDERS.fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
+            (current < MAX_CONCURRENT_RENDERS).then_some(current + 1)
+        });
+        result.map(|_| Self).map_err(|_| "pdf renderer concurrency limit reached".to_string())
+    }
+}
+
+impl Drop for RenderPermit {
+    fn drop(&mut self) {
+        ACTIVE_RENDERS.fetch_sub(1, Ordering::AcqRel);
+    }
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut digest = Sha256::new();
+    digest.update(bytes);
+    format!("{:x}", digest.finalize())
+}
+
+fn canonicalize_pdf_identifier(bytes: &[u8], source: &[u8]) -> Result<Vec<u8>, String> {
+    use lopdf::Object::{Array, String as PdfString};
+    use lopdf::StringFormat::Literal;
+
+    let mut document = lopdf::Document::load_mem(bytes)
+        .map_err(|_| "pdf renderer produced an unreadable document".to_string())?;
+    let identifier = sha256_hex(source).into_bytes();
+    document.trailer.set(
+        "ID",
+        Array(vec![PdfString(identifier.clone(), Literal), PdfString(identifier, Literal)]),
+    );
+    let mut canonical = Vec::with_capacity(bytes.len());
+    document
+        .save_to(&mut canonical)
+        .map_err(|_| "pdf renderer could not finalize document".to_string())?;
+    Ok(canonical)
+}
+
+fn number(value: Option<&Value>, name: &str, default: f32) -> Result<f32, String> {
+    let result = match value {
+        None => default,
+        Some(Value::Int(value)) => *value as f32,
+        Some(Value::Float(value)) => *value as f32,
+        _ => return Err(format!("pdf option '{name}' must be a number")),
+    };
+    if !result.is_finite() {
+        return Err(format!("pdf option '{name}' must be finite"));
+    }
+    Ok(result)
+}
+
+fn bounded_text(
+    value: Option<&Value>,
+    name: &str,
+    maximum: usize,
+) -> Result<Option<String>, String> {
+    match value {
+        None | Some(Value::Null) => Ok(None),
+        Some(Value::Str(value)) if value.len() <= maximum => Ok(Some(value.as_ref().clone())),
+        Some(Value::Str(_)) => Err(format!("pdf option '{name}' exceeds {maximum} bytes")),
+        _ => Err(format!("pdf option '{name}' must be a string")),
+    }
+}
+
+fn parse_options(value: &Value) -> Result<RenderOptions, String> {
+    let Value::Dict(options) = value else {
+        return Err("pdf options must be a dictionary".to_string());
+    };
+    let allowed: HashSet<&str> = [
+        "page_size",
+        "orientation",
+        "margin_mm",
+        "margin_top_mm",
+        "margin_right_mm",
+        "margin_bottom_mm",
+        "margin_left_mm",
+        "show_page_numbers",
+        "header_text",
+        "footer_text",
+        "title",
+        "max_output_bytes",
+        "timeout_ms",
+    ]
+    .into_iter()
+    .collect();
+    for key in options.keys() {
+        if !allowed.contains(key.as_ref()) {
+            return Err(format!("unknown pdf option '{}'", key));
+        }
+    }
+
+    let page_size = match options.get("page_size") {
+        None => "A4",
+        Some(Value::Str(value)) if value.as_ref() == "A4" || value.as_ref() == "Letter" => value,
+        _ => return Err("pdf option 'page_size' must be 'A4' or 'Letter'".to_string()),
+    };
+    let orientation = match options.get("orientation") {
+        None => "portrait",
+        Some(Value::Str(value))
+            if value.as_ref() == "portrait" || value.as_ref() == "landscape" =>
+        {
+            value
+        }
+        _ => return Err("pdf option 'orientation' must be 'portrait' or 'landscape'".to_string()),
+    };
+    let (mut page_width_mm, mut page_height_mm) =
+        if page_size == "Letter" { (215.9, 279.4) } else { (210.0, 297.0) };
+    if orientation == "landscape" {
+        std::mem::swap(&mut page_width_mm, &mut page_height_mm);
+    }
+
+    let all_margin = number(options.get("margin_mm"), "margin_mm", 12.0)?;
+    let margin_top_mm = number(options.get("margin_top_mm"), "margin_top_mm", all_margin)?;
+    let margin_right_mm = number(options.get("margin_right_mm"), "margin_right_mm", all_margin)?;
+    let margin_bottom_mm = number(options.get("margin_bottom_mm"), "margin_bottom_mm", all_margin)?;
+    let margin_left_mm = number(options.get("margin_left_mm"), "margin_left_mm", all_margin)?;
+    for (name, value) in [
+        ("margin_top_mm", margin_top_mm),
+        ("margin_right_mm", margin_right_mm),
+        ("margin_bottom_mm", margin_bottom_mm),
+        ("margin_left_mm", margin_left_mm),
+    ] {
+        if !(0.0..=50.0).contains(&value) {
+            return Err(format!("pdf option '{name}' must be between 0 and 50"));
+        }
+    }
+
+    let show_page_numbers = match options.get("show_page_numbers") {
+        None => false,
+        Some(Value::Bool(value)) => *value,
+        _ => return Err("pdf option 'show_page_numbers' must be a boolean".to_string()),
+    };
+    let max_output_bytes = match options.get("max_output_bytes") {
+        None => MAX_OUTPUT_BYTES,
+        Some(Value::Int(value)) if *value > 0 && (*value as usize) <= MAX_OUTPUT_BYTES => {
+            *value as usize
+        }
+        _ => {
+            return Err(format!(
+                "pdf option 'max_output_bytes' must be between 1 and {MAX_OUTPUT_BYTES}"
+            ))
+        }
+    };
+    let timeout_ms = match options.get("timeout_ms") {
+        None => 10_000_u64,
+        Some(Value::Int(value))
+            if *value >= 100 && *value <= (MAX_RENDER_SECONDS * 1000) as i64 =>
+        {
+            *value as u64
+        }
+        _ => {
+            return Err(format!(
+                "pdf option 'timeout_ms' must be between 100 and {}",
+                MAX_RENDER_SECONDS * 1000
+            ))
+        }
+    };
+
+    Ok(RenderOptions {
+        page_width_mm,
+        page_height_mm,
+        margin_top_mm,
+        margin_right_mm,
+        margin_bottom_mm,
+        margin_left_mm,
+        show_page_numbers,
+        header_text: bounded_text(options.get("header_text"), "header_text", 256)?,
+        footer_text: bounded_text(options.get("footer_text"), "footer_text", 256)?,
+        title: bounded_text(options.get("title"), "title", 256)?
+            .unwrap_or_else(|| "Kujo business document".to_string()),
+        max_output_bytes,
+        timeout: Duration::from_millis(timeout_ms),
+    })
+}
+
+fn valid_asset_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 64
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-' | b':'))
+        && !name.contains("..")
+}
+
+fn validate_image(bytes: &[u8]) -> Result<(), String> {
+    if bytes.is_empty() || bytes.len() > MAX_IMAGE_BYTES {
+        return Err(format!("pdf image assets must be 1..{MAX_IMAGE_BYTES} bytes"));
+    }
+    let reader = image::ImageReader::new(std::io::Cursor::new(bytes))
+        .with_guessed_format()
+        .map_err(|_| "pdf image asset has an unsupported format".to_string())?;
+    let (width, height) =
+        reader.into_dimensions().map_err(|_| "pdf image asset is malformed".to_string())?;
+    if width == 0 || height == 0 || width > 4096 || height > 4096 {
+        return Err("pdf image dimensions must be between 1 and 4096 pixels".to_string());
+    }
+    if u64::from(width) * u64::from(height) > 16_777_216 {
+        return Err("pdf image decompressed pixel limit exceeded".to_string());
+    }
+    Ok(())
+}
+
+fn validate_font(bytes: &[u8]) -> Result<(), String> {
+    if bytes.len() < 12 || bytes.len() > MAX_FONT_BYTES {
+        return Err(format!("pdf font assets must be 12..{MAX_FONT_BYTES} bytes"));
+    }
+    let signature = &bytes[..4];
+    if signature != [0, 1, 0, 0] && signature != b"OTTO" {
+        return Err("pdf font asset must be a single OpenType or TrueType font".to_string());
+    }
+    Ok(())
+}
+
+type PdfAssets = (BTreeMap<String, Base64OrRaw>, BTreeMap<String, Base64OrRaw>);
+
+fn parse_assets(value: &Value) -> Result<PdfAssets, String> {
+    let Value::Dict(assets) = value else {
+        return Err("pdf assets must be a dictionary".to_string());
+    };
+    for key in assets.keys() {
+        if key.as_ref() != "images" && key.as_ref() != "fonts" {
+            return Err(format!("unknown pdf asset group '{}'", key));
+        }
+    }
+
+    let mut images = BTreeMap::new();
+    let mut fonts = BTreeMap::new();
+    let mut total_count = 0_usize;
+    let mut total_bytes = 0_usize;
+
+    for (group_name, destination, validator) in [
+        ("images", &mut images, validate_image as fn(&[u8]) -> Result<(), String>),
+        ("fonts", &mut fonts, validate_font as fn(&[u8]) -> Result<(), String>),
+    ] {
+        let Some(group) = assets.get(group_name) else {
+            continue;
+        };
+        let Value::Dict(group) = group else {
+            return Err(format!("pdf asset group '{group_name}' must be a dictionary"));
+        };
+        for (name, value) in group.iter() {
+            if !valid_asset_name(name) {
+                return Err("pdf asset names must be bounded alphanumeric identifiers".to_string());
+            }
+            let Value::Bytes(bytes) = value else {
+                return Err(format!("pdf asset '{name}' must contain bytes"));
+            };
+            validator(bytes)?;
+            total_count += 1;
+            total_bytes = total_bytes
+                .checked_add(bytes.len())
+                .ok_or_else(|| "pdf asset byte total overflow".to_string())?;
+            destination.insert(name.to_string(), Base64OrRaw::Raw(bytes.clone()));
+        }
+    }
+    if total_count > MAX_ASSET_COUNT || total_bytes > MAX_ASSET_BYTES {
+        return Err("pdf asset count or total byte limit exceeded".to_string());
+    }
+    Ok((images, fonts))
+}
+
+fn style_allowed(style: &str) -> bool {
+    if style.len() > 4096 {
+        return false;
+    }
+    let lowered = style.to_ascii_lowercase();
+    if ["url(", "@import", "expression(", "javascript:", "file:", "data:", "behavior:"]
+        .iter()
+        .any(|needle| lowered.contains(needle))
+    {
+        return false;
+    }
+    let allowed: HashSet<&str> = [
+        "display",
+        "flex-direction",
+        "justify-content",
+        "align-items",
+        "gap",
+        "width",
+        "height",
+        "min-width",
+        "max-width",
+        "min-height",
+        "max-height",
+        "padding",
+        "padding-top",
+        "padding-right",
+        "padding-bottom",
+        "padding-left",
+        "margin",
+        "margin-top",
+        "margin-right",
+        "margin-bottom",
+        "margin-left",
+        "border",
+        "border-width",
+        "border-style",
+        "border-color",
+        "border-top",
+        "border-right",
+        "border-bottom",
+        "border-left",
+        "border-collapse",
+        "border-radius",
+        "background",
+        "background-color",
+        "color",
+        "font-family",
+        "font-size",
+        "font-style",
+        "font-weight",
+        "line-height",
+        "text-align",
+        "text-decoration",
+        "vertical-align",
+        "white-space",
+        "table-layout",
+        "page-break-before",
+        "page-break-after",
+        "page-break-inside",
+        "break-before",
+        "break-after",
+        "break-inside",
+    ]
+    .into_iter()
+    .collect();
+    style.split(';').all(|declaration| {
+        let declaration = declaration.trim();
+        if declaration.is_empty() {
+            return true;
+        }
+        let Some((property, value)) = declaration.split_once(':') else {
+            return false;
+        };
+        allowed.contains(property.trim().to_ascii_lowercase().as_str())
+            && !value.trim().is_empty()
+            && value.len() <= 512
+    })
+}
+
+struct PdfHtmlSink<'a> {
+    images: &'a HashSet<String>,
+    failed: RefCell<Option<String>>,
+    tokens: Cell<usize>,
+    depth: Cell<usize>,
+}
+
+impl TokenSink for PdfHtmlSink<'_> {
+    type Handle = ();
+
+    fn process_token(&self, token: Token, _line: u64) -> TokenSinkResult<()> {
+        if self.failed.borrow().is_some() {
+            return TokenSinkResult::Continue;
+        }
+        self.tokens.set(self.tokens.get() + 1);
+        if self.tokens.get() > MAX_HTML_TOKENS {
+            *self.failed.borrow_mut() = Some("pdf HTML token limit exceeded".to_string());
+            return TokenSinkResult::Continue;
+        }
+        if let Token::TagToken(tag) = token {
+            let name = tag.name.to_string().to_ascii_lowercase();
+            let allowed = [
+                "html", "head", "title", "body", "div", "section", "header", "footer", "main",
+                "article", "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "strong", "b", "em",
+                "i", "u", "small", "ul", "ol", "li", "table", "thead", "tbody", "tfoot", "tr",
+                "th", "td", "hr", "br", "img", "a",
+            ];
+            if !allowed.contains(&name.as_str()) {
+                *self.failed.borrow_mut() = Some(format!("unsupported pdf HTML tag '{name}'"));
+                return TokenSinkResult::Continue;
+            }
+            if tag.kind == TagKind::StartTag && !tag.self_closing && name != "br" && name != "hr" {
+                self.depth.set(self.depth.get() + 1);
+                if self.depth.get() > MAX_HTML_DEPTH {
+                    *self.failed.borrow_mut() = Some("pdf HTML nesting limit exceeded".to_string());
+                    return TokenSinkResult::Continue;
+                }
+            } else if tag.kind == TagKind::EndTag {
+                self.depth.set(self.depth.get().saturating_sub(1));
+            }
+            for attribute in tag.attrs {
+                let key = attribute.name.local.to_string().to_ascii_lowercase();
+                let value = attribute.value.to_string();
+                if key.starts_with("on") {
+                    *self.failed.borrow_mut() =
+                        Some("event handler attributes are not supported in pdf HTML".to_string());
+                    return TokenSinkResult::Continue;
+                }
+                let valid = match key.as_str() {
+                    "style" => style_allowed(&value),
+                    "class" | "id" | "alt" => value.len() <= 256,
+                    "colspan" | "rowspan" | "width" | "height" => {
+                        value.parse::<u16>().is_ok_and(|number| number > 0 && number <= 4096)
+                    }
+                    "src" if name == "img" => self.images.contains(&value),
+                    "href" if name == "a" => value.starts_with('#') && value.len() <= 256,
+                    _ => false,
+                };
+                if !valid {
+                    *self.failed.borrow_mut() = Some(format!(
+                        "unsupported or unsafe pdf HTML attribute '{key}' on '{name}'"
+                    ));
+                    return TokenSinkResult::Continue;
+                }
+            }
+        }
+        TokenSinkResult::Continue
+    }
+}
+
+fn validate_html(html: &str, image_names: &HashSet<String>) -> Result<(), String> {
+    if html.is_empty() || html.len() > MAX_HTML_BYTES {
+        return Err(format!("pdf HTML must be 1..{MAX_HTML_BYTES} bytes"));
+    }
+    if html.contains('\0') {
+        return Err("pdf HTML contains a null character".to_string());
+    }
+    let sink = PdfHtmlSink {
+        images: image_names,
+        failed: RefCell::new(None),
+        tokens: Cell::new(0),
+        depth: Cell::new(0),
+    };
+    let tokenizer = Tokenizer::new(sink, TokenizerOpts::default());
+    let queue = BufferQueue::default();
+    queue.push_back(html.into());
+    let _ = tokenizer.feed(&queue);
+    tokenizer.end();
+    if let Some(error) = tokenizer.sink.failed.into_inner() {
+        return Err(error);
+    }
+    Ok(())
+}
+
+fn render(
+    html: String,
+    options: RenderOptions,
+    images: BTreeMap<String, Base64OrRaw>,
+    fonts: BTreeMap<String, Base64OrRaw>,
+) -> Result<RenderedPdf, String> {
+    let permit = RenderPermit::acquire()?;
+    let (sender, receiver) = mpsc::sync_channel(1);
+    let wait = options.timeout;
+    std::thread::spawn(move || {
+        let _permit = permit;
+        let result = std::panic::catch_unwind(|| {
+            let font_bytes: BTreeMap<String, Vec<u8>> = fonts
+                .iter()
+                .filter_map(|(name, value)| match value {
+                    Base64OrRaw::Raw(bytes) => Some((name.clone(), bytes.clone())),
+                    Base64OrRaw::B64(_) => None,
+                })
+                .collect();
+            let pool = printpdf::html::build_font_pool(&font_bytes, Some(&[]));
+            let generate = GeneratePdfOptions {
+                font_embedding: Some(true),
+                page_width: Some(options.page_width_mm),
+                page_height: Some(options.page_height_mm),
+                margin_top: Some(options.margin_top_mm),
+                margin_right: Some(options.margin_right_mm),
+                margin_bottom: Some(options.margin_bottom_mm),
+                margin_left: Some(options.margin_left_mm),
+                image_optimization: None,
+                show_page_numbers: Some(options.show_page_numbers),
+                header_text: options.header_text.clone(),
+                footer_text: options.footer_text.clone(),
+                skip_first_page: Some(false),
+            };
+            let mut warnings = Vec::new();
+            let mut document = PdfDocument::from_html_with_cache(
+                &html,
+                &images,
+                &fonts,
+                &generate,
+                &mut warnings,
+                Some(pool),
+            )?;
+            if document.pages.is_empty() {
+                return Err("pdf renderer produced no pages".to_string());
+            }
+            document.metadata.info.document_title = options.title;
+            document.metadata.info.creator = "Kujo".to_string();
+            document.metadata.info.producer = RENDERER_VERSION.to_string();
+            let pages = document.pages.len();
+            let mut save_warnings = Vec::new();
+            let serialized = document.save(&PdfSaveOptions::default(), &mut save_warnings);
+            let bytes = canonicalize_pdf_identifier(&serialized, html.as_bytes())?;
+            let warning_count = warnings.len() + save_warnings.len();
+            if bytes.len() > options.max_output_bytes {
+                return Err("pdf output byte limit exceeded".to_string());
+            }
+            if !bytes.starts_with(b"%PDF-") {
+                return Err("pdf renderer produced an invalid header".to_string());
+            }
+            Ok(RenderedPdf {
+                bytes,
+                pages,
+                width_mm: options.page_width_mm,
+                height_mm: options.page_height_mm,
+                warning_count,
+            })
+        })
+        .unwrap_or_else(|_| Err("pdf renderer failed safely".to_string()));
+        let _ = sender.send(result);
+    });
+    receiver.recv_timeout(wait).map_err(|_| "pdf render deadline exceeded".to_string())?
+}
+
+fn receipt(
+    rendered: RenderedPdf,
+    input_sha256: String,
+    elapsed: Duration,
+    include_bytes: bool,
+) -> Value {
+    let output_sha256 = sha256_hex(&rendered.bytes);
+    let mut result = DictMap::default();
+    result.insert("ok".into(), Value::Bool(true));
+    result.insert("api_version".into(), Value::Str(Arc::new(API_VERSION.to_string())));
+    result.insert("renderer_version".into(), Value::Str(Arc::new(RENDERER_VERSION.to_string())));
+    result.insert("input_sha256".into(), Value::Str(Arc::new(input_sha256)));
+    result.insert("output_sha256".into(), Value::Str(Arc::new(output_sha256)));
+    result.insert("bytes".into(), Value::Int(rendered.bytes.len() as i64));
+    result.insert("pages".into(), Value::Int(rendered.pages as i64));
+    result.insert("page_width_mm".into(), Value::Float(rendered.width_mm as f64));
+    result.insert("page_height_mm".into(), Value::Float(rendered.height_mm as f64));
+    result.insert("warning_count".into(), Value::Int(rendered.warning_count as i64));
+    result.insert(
+        "render_duration_ms".into(),
+        Value::Int(elapsed.as_millis().min(i64::MAX as u128) as i64),
+    );
+    if include_bytes {
+        result.insert("pdf_bytes".into(), Value::Bytes(rendered.bytes));
+    }
+    Value::Dict(Arc::new(result))
+}
+
+fn destination(value: &Value) -> Result<PathBuf, String> {
+    let Value::Str(value) = value else {
+        return Err("pdf destination must be a string path".to_string());
+    };
+    let path = PathBuf::from(value.as_ref());
+    if !path.is_absolute() || path.file_name().is_none() {
+        return Err("pdf destination must be an absolute file path".to_string());
+    }
+    Ok(path)
+}
+
+fn publish_private_noreplace(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let parent = path.parent().ok_or_else(|| "pdf destination has no parent".to_string())?;
+    if !parent.is_dir() {
+        return Err("pdf destination parent must be an existing directory".to_string());
+    }
+    let mut temporary = tempfile::Builder::new()
+        .prefix(".kujo-pdf-")
+        .tempfile_in(parent)
+        .map_err(|_| "could not create private pdf output".to_string())?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        temporary
+            .as_file()
+            .set_permissions(fs::Permissions::from_mode(0o600))
+            .map_err(|_| "could not secure private pdf output".to_string())?;
+    }
+    temporary
+        .write_all(bytes)
+        .and_then(|_| temporary.flush())
+        .and_then(|_| temporary.as_file().sync_all())
+        .map_err(|_| "could not write private pdf output".to_string())?;
+    temporary
+        .persist_noclobber(path)
+        .map_err(|_| "pdf destination already exists or could not be published".to_string())?;
+    Ok(())
+}
+
+pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
+    if name != "pdf_render_html" && name != "pdf_render_html_to_file" {
+        return None;
+    }
+    let expected = if name == "pdf_render_html" { 3 } else { 4 };
+    if arg_values.len() != expected {
+        return Some(Value::Error(format!("{name} expects {expected} arguments")));
+    }
+    let Value::Str(html) = &arg_values[0] else {
+        return Some(Value::Error("pdf HTML input must be a string".to_string()));
+    };
+    let options = match parse_options(&arg_values[1]) {
+        Ok(value) => value,
+        Err(error) => return Some(Value::Error(error)),
+    };
+    let (images, fonts) = match parse_assets(&arg_values[2]) {
+        Ok(value) => value,
+        Err(error) => return Some(Value::Error(error)),
+    };
+    let image_names = images.keys().cloned().collect();
+    if let Err(error) = validate_html(html, &image_names) {
+        return Some(Value::Error(error));
+    }
+    let input_sha256 = sha256_hex(html.as_bytes());
+    let started = Instant::now();
+    let rendered = match render(html.as_ref().clone(), options, images, fonts) {
+        Ok(value) => value,
+        Err(error) => return Some(Value::Error(error)),
+    };
+
+    if name == "pdf_render_html_to_file" {
+        let path = match destination(&arg_values[3]) {
+            Ok(value) => value,
+            Err(error) => return Some(Value::Error(error)),
+        };
+        if let Err(error) = publish_private_noreplace(&path, &rendered.bytes) {
+            return Some(Value::Error(error));
+        }
+        let mut value = receipt(rendered, input_sha256, started.elapsed(), false);
+        if let Value::Dict(fields) = &mut value {
+            Arc::make_mut(fields)
+                .insert("path".into(), Value::Str(Arc::new(path.to_string_lossy().to_string())));
+        }
+        Some(value)
+    } else {
+        Some(receipt(rendered, input_sha256, started.elapsed(), true))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use base64::Engine;
+
+    fn empty_dict() -> Value {
+        Value::Dict(Arc::new(DictMap::default()))
+    }
+
+    fn render_html(html: &str) -> Result<Value, String> {
+        match handle(
+            "pdf_render_html",
+            &[Value::Str(Arc::new(html.to_string())), empty_dict(), empty_dict()],
+        ) {
+            Some(Value::Error(error)) => Err(error),
+            Some(value) => Ok(value),
+            None => Err("pdf handler declined request".to_string()),
+        }
+    }
+
+    fn receipt_bytes(value: &Value) -> &[u8] {
+        let Value::Dict(fields) = value else { panic!("expected pdf receipt") };
+        let Some(Value::Bytes(bytes)) = fields.get("pdf_bytes") else {
+            panic!("expected pdf bytes")
+        };
+        bytes
+    }
+
+    #[test]
+    fn renders_parseable_branded_business_document() {
+        let html = r#"<html><body style="font-family:Helvetica;color:#17221b">
+            <header style="border-bottom:1px solid #7a8a72;padding-bottom:8px">
+                <h1>Northstar Heating &amp; Air</h1><p>Estimate QF-1007</p>
+            </header>
+            <table style="width:100%;border-collapse:collapse">
+                <thead><tr><th style="text-align:left">Description</th><th>Total</th></tr></thead>
+                <tbody><tr><td>High-efficiency furnace replacement</td><td>$9,850.00</td></tr></tbody>
+            </table>
+            <footer><p>Thank you, Jane Williams.</p></footer>
+        </body></html>"#;
+        let first = render_html(html).expect("render succeeds");
+        let second = render_html(html).expect("repeat render succeeds");
+        let first_bytes = receipt_bytes(&first);
+        let second_bytes = receipt_bytes(&second);
+        assert!(first_bytes.starts_with(b"%PDF-"));
+        assert_eq!(sha256_hex(first_bytes), sha256_hex(second_bytes));
+
+        let document =
+            lopdf::Document::load_mem(first_bytes).expect("independent parser accepts PDF");
+        assert!(!document.get_pages().is_empty());
+        let text = document.extract_text(&[1]).expect("text extraction succeeds");
+        assert!(text.is_ascii());
+    }
+
+    #[test]
+    fn rejects_active_content_and_external_resource_references() {
+        for html in [
+            "<script>alert(1)</script>",
+            "<img src=\"https://attacker.test/a.png\">",
+            "<img src=\"file:///etc/passwd\">",
+            "<p onclick=\"steal()\">unsafe</p>",
+            "<p style=\"background:url(https://attacker.test/x)\">unsafe</p>",
+            "<p style=\"position:absolute\">unsupported</p>",
+        ] {
+            let error = render_html(html).expect_err("unsafe HTML must fail closed");
+            assert!(
+                error.contains("unsupported")
+                    || error.contains("unsafe")
+                    || error.contains("event handler"),
+                "{error}"
+            );
+        }
+    }
+
+    #[test]
+    fn enforces_strict_option_bounds() {
+        let mut options = DictMap::default();
+        options.insert("unexpected".into(), Value::Bool(true));
+        let result = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new("<p>test</p>".to_string())),
+                Value::Dict(Arc::new(options)),
+                empty_dict(),
+            ],
+        );
+        assert!(
+            matches!(result, Some(Value::Error(error)) if error.contains("unknown pdf option"))
+        );
+    }
+
+    #[test]
+    fn file_publish_is_private_atomic_and_no_clobber() {
+        let directory = tempfile::tempdir().expect("temp directory");
+        let path = directory.path().join("estimate.pdf");
+        let arguments = || {
+            vec![
+                Value::Str(Arc::new("<h1>Estimate</h1>".to_string())),
+                empty_dict(),
+                empty_dict(),
+                Value::Str(Arc::new(path.to_string_lossy().to_string())),
+            ]
+        };
+        let first = handle("pdf_render_html_to_file", &arguments());
+        assert!(matches!(first, Some(Value::Dict(_))));
+        assert!(fs::read(&path).expect("published PDF").starts_with(b"%PDF-"));
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
+        }
+        let second = handle("pdf_render_html_to_file", &arguments());
+        assert!(matches!(second, Some(Value::Error(error)) if error.contains("already exists")));
+    }
+
+    #[test]
+    fn page_break_and_header_footer_create_multi_page_document() {
+        let mut options = DictMap::default();
+        options.insert("show_page_numbers".into(), Value::Bool(true));
+        options.insert("header_text".into(), Value::Str(Arc::new("QuoteFlow quotation".into())));
+        options.insert("footer_text".into(), Value::Str(Arc::new("Confidential".into())));
+        let value = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new(
+                    "<section><h1>Page one</h1></section><section style=\"page-break-before:always\"><h1>Page two</h1></section>".into(),
+                )),
+                Value::Dict(Arc::new(options)),
+                empty_dict(),
+            ],
+        )
+        .expect("handler result");
+        let Value::Dict(fields) = value else { panic!("expected receipt") };
+        assert!(matches!(fields.get("pages"), Some(Value::Int(pages)) if *pages >= 2));
+    }
+
+    #[test]
+    fn renders_caller_supplied_logo_without_external_resolution() {
+        let png = base64::engine::general_purpose::STANDARD
+            .decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+            .expect("fixture PNG");
+        let mut images = DictMap::default();
+        images.insert("logo.png".into(), Value::Bytes(png));
+        let mut assets = DictMap::default();
+        assets.insert("images".into(), Value::Dict(Arc::new(images)));
+        let value = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new(
+                    "<header><img src=\"logo.png\" width=\"32\" height=\"32\"><h1>Branded quotation</h1></header>".into(),
+                )),
+                empty_dict(),
+                Value::Dict(Arc::new(assets)),
+            ],
+        )
+        .expect("handler result");
+        assert!(receipt_bytes(&value).starts_with(b"%PDF-"));
+    }
+}

@@ -980,6 +980,27 @@ impl TypeChecker {
             FunctionSignature { param_types: vec![Some(TypeAnnotation::Int)], return_type: None },
         );
 
+        self.functions.insert(
+            "pdf_render_html".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), None, None],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
+            "pdf_render_html_to_file".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    None,
+                    None,
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: None,
+            },
+        );
+
         // Random seed control (for deterministic testing)
         self.functions.insert(
             "set_random_seed".to_string(),
