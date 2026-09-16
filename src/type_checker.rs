@@ -975,6 +975,11 @@ impl TypeChecker {
             },
         );
 
+        self.functions.insert(
+            "secure_random_token".to_string(),
+            FunctionSignature { param_types: vec![Some(TypeAnnotation::Int)], return_type: None },
+        );
+
         // Random seed control (for deterministic testing)
         self.functions.insert(
             "set_random_seed".to_string(),

@@ -749,6 +749,7 @@ impl Interpreter {
             "random_choice",
             "uuid_v4",
             "random_id",
+            "secure_random_token",
             "set_random_seed",
             "clear_random_seed",
             // Date/Time functions
@@ -1407,6 +1408,10 @@ impl Interpreter {
         );
         self.env.define("uuid_v4".to_string(), Value::NativeFunction("uuid_v4".to_string()));
         self.env.define("random_id".to_string(), Value::NativeFunction("random_id".to_string()));
+        self.env.define(
+            "secure_random_token".to_string(),
+            Value::NativeFunction("secure_random_token".to_string()),
+        );
         self.env.define(
             "set_random_seed".to_string(),
             Value::NativeFunction("set_random_seed".to_string()),
@@ -3450,6 +3455,14 @@ impl Interpreter {
                 "db_connect_postgres_tls",
                 vec!["connection_string".to_string(), "ca_pem".to_string()],
             ),
+            "secure_random_token" => {
+                CallableArity::exact("secure_random_token", vec!["byte_length".to_string()])
+            }
+            "format_date_tz" => CallableArity::exact(
+                "format_date_tz",
+                vec!["timestamp".into(), "format".into(), "timezone".into()],
+            ),
+            "parse_datetime" => CallableArity::exact("parse_datetime", vec!["value".to_string()]),
             "to_upper" | "upper" => CallableArity::exact(name, vec!["value".to_string()]),
             "to_lower" | "lower" => CallableArity::exact(name, vec!["value".to_string()]),
             "capitalize" => CallableArity::exact("capitalize", vec!["value".to_string()]),

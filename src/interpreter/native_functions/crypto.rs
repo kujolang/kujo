@@ -11,6 +11,7 @@ use openssl::encrypt::{Decrypter, Encrypter};
 use openssl::error::ErrorStack;
 use openssl::hash::MessageDigest;
 use openssl::pkey::{PKey, Private, Public};
+use openssl::rand::rand_bytes;
 use openssl::rsa::{Padding, Rsa};
 use openssl::sign::{Signer, Verifier};
 use sha2::{Digest, Sha256};
@@ -860,6 +861,7 @@ fn rsa_verify_sha256(
 fn string_or_bytes(value: &Value) -> Option<&[u8]> {
     match value {
         Value::Str(value) => Some(value.as_bytes()),
+        Value::Secret(value) => Some(value.as_bytes()),
         Value::Bytes(value) => Some(value.as_slice()),
         _ => None,
     }
@@ -1158,6 +1160,34 @@ fn decrypt_file_stream(input_path: &str, output_path: &str, key: &str) -> Result
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
+        "secure_random_token" => {
+            const MIN_BYTES: i64 = 16;
+            const MAX_BYTES: i64 = 128;
+
+            let byte_length = match arg_values.first() {
+                Some(Value::Int(value)) if arg_values.len() == 1 => *value,
+                _ => {
+                    return Some(Value::Error(
+                        "secure_random_token requires one integer byte_length argument".to_string(),
+                    ))
+                }
+            };
+            if !(MIN_BYTES..=MAX_BYTES).contains(&byte_length) {
+                return Some(Value::Error(format!(
+                    "secure_random_token byte_length must be between {MIN_BYTES} and {MAX_BYTES}"
+                )));
+            }
+
+            let mut bytes = vec![0_u8; byte_length as usize];
+            if rand_bytes(&mut bytes).is_err() {
+                return Some(Value::Error(
+                    "secure_random_token could not obtain operating-system randomness".to_string(),
+                ));
+            }
+            let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes);
+            Value::Secret(Arc::new(encoded))
+        }
+
         "sha256" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error(
@@ -1166,7 +1196,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             match arg_values.first() {
-                Some(Value::Str(data)) => Value::Str(Arc::new(sha256_hex(data.as_bytes()))),
+                Some(Value::Str(data) | Value::Secret(data)) => {
+                    Value::Str(Arc::new(sha256_hex(data.as_bytes())))
+                }
                 Some(Value::Bytes(bytes)) => Value::Str(Arc::new(sha256_hex(bytes))),
                 _ => Value::Error("sha256 requires a string or bytes argument".to_string()),
             }
@@ -1944,6 +1976,40 @@ mod tests {
         let mut path = std::env::temp_dir();
         path.push(format!("{}_{}.txt", prefix, nanos));
         path.to_string_lossy().to_string()
+    }
+
+    #[test]
+    fn secure_random_token_is_secret_url_safe_and_seed_independent() {
+        crate::builtins::set_random_seed(7);
+        let first = handle("secure_random_token", &[Value::Int(32)]).unwrap();
+        crate::builtins::set_random_seed(7);
+        let second = handle("secure_random_token", &[Value::Int(32)]).unwrap();
+        crate::builtins::clear_random_seed();
+
+        let (Value::Secret(first), Value::Secret(second)) = (first, second) else {
+            panic!("secure_random_token should return redacted Secret values");
+        };
+        assert_eq!(first.len(), 43, "32 random bytes encode to 43 base64url characters");
+        assert_eq!(second.len(), 43);
+        assert!(first
+            .chars()
+            .all(|value| value.is_ascii_alphanumeric() || value == '-' || value == '_'));
+        assert_ne!(first, second, "deterministic test seeding must not affect secure tokens");
+
+        let first_hash = handle("sha256", &[Value::Secret(first)]).unwrap();
+        assert!(matches!(first_hash, Value::Str(value) if value.len() == 64));
+    }
+
+    #[test]
+    fn secure_random_token_rejects_unbounded_or_invalid_lengths_without_secret_output() {
+        for value in
+            [Value::Int(0), Value::Int(15), Value::Int(129), Value::Str(Arc::new("32".into()))]
+        {
+            let result = handle("secure_random_token", &[value]).unwrap();
+            assert!(matches!(result, Value::Error(message) if !message.contains("Secret(")));
+        }
+        let result = handle("secure_random_token", &[]).unwrap();
+        assert!(matches!(result, Value::Error(_)));
     }
 
     #[test]

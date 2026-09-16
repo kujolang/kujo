@@ -288,7 +288,13 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "sleep" | "async_sleep" | "async_timeout" => Some(NativeCapability::Clock),
 
         // Randomness
-        "random" | "random_int" | "random_choice" | "uuid_v4" | "random_id" | "set_random_seed"
+        "random"
+        | "random_int"
+        | "random_choice"
+        | "uuid_v4"
+        | "random_id"
+        | "secure_random_token"
+        | "set_random_seed"
         | "clear_random_seed" => Some(NativeCapability::Random),
 
         _ => None,

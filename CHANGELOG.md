@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added `secure_random_token(byte_length)`, an OS-CSPRNG-backed, base64url, redacted token primitive isolated from deterministic random seeding.
+
 This file records user-visible changes to Kujo. It follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

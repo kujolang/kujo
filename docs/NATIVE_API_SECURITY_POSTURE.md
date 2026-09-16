@@ -105,12 +105,14 @@ Routed request dictionaries expose `peer_address`, `peer_ip`, `peer_port`, and `
 | `--allow-net` | Net client + server | Union of network-client/network-server surfaces | Combined network risk |
 | `--allow-database` | Database access | `db_connect`, `db_connect_postgres_tls`, query/transaction helpers | Unauthorized data access |
 | `--allow-clock` | Clock/time | `now`, timestamp helpers | Timing side-channel support |
-| `--allow-random` | Randomness | `random`, random helpers | Nondeterministic workflows |
+| `--allow-random` | Randomness | `random`, deterministic helpers, `secure_random_token` | Nondeterministic workflows and security-token generation |
 | `--allow-all` | All capabilities | All host-effect APIs | Full ambient-host risk |
 
 Per-function capability metadata is maintained in `docs/STANDARD_LIBRARY.md` and contract-tested in `tests/stdlib_reference_contract.rs`.
 
 ## 4. High-Risk Native Surface Guidance
+
+`secure_random_token(byte_length)` is the only standard-library random helper intended for session identifiers, CSRF values, invitations, verification/reset links, bearer grants, action nonces, API keys, or signing/encryption key material. It draws directly from OpenSSL's operating-system-seeded CSPRNG, accepts 16–128 bytes, returns a redacted `Secret`, and is isolated from `set_random_seed`. `random_id`, UUID helpers, and seeded random functions remain unsuitable for security credentials. Callers should persist only a one-way digest where token recovery is unnecessary and use constant-time verification helpers for keyed comparisons.
 
 ### 4.1 Process and Shell APIs
 

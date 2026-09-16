@@ -600,6 +600,7 @@ mod tests {
             "random_choice",
             "uuid_v4",
             "random_id",
+            "secure_random_token",
             "set_random_seed",
             "clear_random_seed",
             "now",
