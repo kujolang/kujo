@@ -42,7 +42,7 @@ let missing_write := db_query(db, "SELECT qf_try_insert('tenant_a', $1) AS inser
 if missing_write[0]["inserted"] != false { throw("missing tenant context allowed a write") }
 
 db_execute(db, "SET app.organization_id = 'tenant_a'", [])
-db_execute(db, "UPDATE qf_jobs SET status = 'ready'", [])
+db_execute(db, "UPDATE qf_jobs SET status = 'ready', claimed_by = NULL, leased_until = NULL", [])
 let visible := db_query(db, "SELECT organization_id, value FROM qf_tenant_rows ORDER BY organization_id", [])
 if len(visible) != 1 || visible[0]["organization_id"] != "tenant_a" { throw("database RLS did not isolate tenant A") }
 let joined := db_query(db, "SELECT COUNT(*)::BIGINT AS count FROM qf_tenant_rows a JOIN qf_tenant_rows b ON true WHERE b.organization_id = 'tenant_b'", [])
@@ -87,11 +87,18 @@ if faulted[0]["commands"] != 0 || faulted[0]["events"] != 0 || faulted[0]["outbo
 db_execute(worker, "SET app.organization_id = 'tenant_a'", [])
 db_begin(clean)
 db_begin(worker)
-let claim_one := db_query(clean, "UPDATE qf_jobs SET status = 'claimed' WHERE job_id = (SELECT job_id FROM qf_jobs WHERE status = 'ready' ORDER BY job_id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING job_id", [])
-let claim_two := db_query(worker, "UPDATE qf_jobs SET status = 'claimed' WHERE job_id = (SELECT job_id FROM qf_jobs WHERE status = 'ready' ORDER BY job_id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING job_id", [])
+let claim_one := db_query(clean, "UPDATE qf_jobs SET status = 'claimed', claimed_by = 'worker-one', leased_until = CURRENT_TIMESTAMP + INTERVAL '5 minutes' WHERE job_id = (SELECT job_id FROM qf_jobs WHERE status = 'ready' ORDER BY job_id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING job_id", [])
+let claim_two := db_query(worker, "UPDATE qf_jobs SET status = 'claimed', claimed_by = 'worker-two', leased_until = CURRENT_TIMESTAMP + INTERVAL '5 minutes' WHERE job_id = (SELECT job_id FROM qf_jobs WHERE status = 'ready' ORDER BY job_id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING job_id", [])
 if len(claim_one) != 1 || len(claim_two) != 1 || claim_one[0]["job_id"] == claim_two[0]["job_id"] { throw("concurrent workers duplicated or lost a claim") }
 db_commit(clean)
 db_commit(worker)
+
+# An expired worker lease is recoverable without disturbing a live lease.
+db_execute(clean, "UPDATE qf_jobs SET leased_until = CURRENT_TIMESTAMP - INTERVAL '1 minute' WHERE job_id = $1", [claim_one[0]["job_id"]])
+let recovered_lease := db_query(clean, "UPDATE qf_jobs SET status = 'ready', claimed_by = NULL, leased_until = NULL WHERE job_id = (SELECT job_id FROM qf_jobs WHERE status = 'claimed' AND leased_until < CURRENT_TIMESTAMP ORDER BY job_id FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING job_id", [])
+if len(recovered_lease) != 1 || recovered_lease[0]["job_id"] != claim_one[0]["job_id"] { throw("expired worker lease was not recovered safely") }
+let live_lease := db_query(clean, "SELECT status, claimed_by FROM qf_jobs WHERE job_id = $1", [claim_two[0]["job_id"]])
+if len(live_lease) != 1 || live_lease[0]["status"] != "claimed" || live_lease[0]["claimed_by"] != "worker-two" { throw("lease recovery disturbed a live worker lease") }
 
 # Kill one idle backend. Checkout must evict it and create a healthy replacement.
 let worker_pid := db_query(worker, "SELECT pg_backend_pid()::BIGINT AS pid", [])[0]["pid"]
@@ -141,6 +148,7 @@ print(to_json({
     "session_reset": "verified",
     "atomicity": "verified",
     "claims": "distinct",
+    "expired_leases": "recovered",
     "recovery": "verified",
     "timeouts": "bounded"
 }))

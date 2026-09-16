@@ -43,7 +43,13 @@ CREATE TABLE qf_tenant_rows (organization_id text NOT NULL, value text NOT NULL)
 CREATE TABLE qf_commands (organization_id text NOT NULL, command_id text PRIMARY KEY);
 CREATE TABLE qf_events (organization_id text NOT NULL, event_id text PRIMARY KEY);
 CREATE TABLE qf_outbox (organization_id text NOT NULL, outbox_id text PRIMARY KEY);
-CREATE TABLE qf_jobs (organization_id text NOT NULL, job_id text PRIMARY KEY, status text NOT NULL DEFAULT 'ready');
+CREATE TABLE qf_jobs (
+  organization_id text NOT NULL,
+  job_id text PRIMARY KEY,
+  status text NOT NULL DEFAULT 'ready',
+  claimed_by text,
+  leased_until timestamptz
+);
 INSERT INTO qf_schema_migrations VALUES (1);
 INSERT INTO qf_tenant_rows VALUES ('tenant_a', 'A'), ('tenant_b', 'B');
 INSERT INTO qf_jobs VALUES ('tenant_a', 'job-a-1', 'ready'), ('tenant_a', 'job-a-2', 'ready'), ('tenant_b', 'job-b-1', 'ready');
@@ -107,7 +113,7 @@ for engine in vm interpreter; do
     else
         output="$(${KUJO} run "${ROOT}/tests/postgres_tls_pool_rls_probe.kujo" --allow-db --allow-fs --allow-env 2>&1)"
     fi
-    python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value == {"atomicity":"verified","claims":"distinct","ok":True,"recovery":"verified","rls":"forced","roles":"separated","schema":"dev.kujolang.postgres-tls-pool-rls.v1","session_reset":"verified","timeouts":"bounded","tls":"verified"}' "${output}"
+    python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value == {"atomicity":"verified","claims":"distinct","expired_leases":"recovered","ok":True,"recovery":"verified","rls":"forced","roles":"separated","schema":"dev.kujolang.postgres-tls-pool-rls.v1","session_reset":"verified","timeouts":"bounded","tls":"verified"}' "${output}"
 done
 
 export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} user=qf_app dbname=postgres connect_timeout=3 sslmode=disable password=timeout-secret"
