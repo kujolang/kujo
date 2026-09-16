@@ -703,7 +703,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     connection_string.as_ref().to_string(),
                     config,
                 ) {
-                    Ok(pool) => Value::DatabasePool { pool: Arc::new(Mutex::new(pool)) },
+                    Ok(pool) => Value::DatabasePool { pool: Arc::new(pool) },
                     Err(error) => {
                         Value::Error(format!("Failed to create connection pool: {}", error))
                     }
@@ -747,7 +747,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 ca_pem.as_ref().to_string(),
                 config,
             ) {
-                Ok(pool) => Value::DatabasePool { pool: Arc::new(Mutex::new(pool)) },
+                Ok(pool) => Value::DatabasePool { pool: Arc::new(pool) },
                 Err(error) => Value::Error(error),
             }
         }
@@ -758,12 +758,11 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::DatabasePool { pool }) = arg_values.first() {
-                let pool_guard = lock_or_db_error!(pool, "database.pool");
-                match pool_guard.acquire() {
+                match pool.acquire() {
                     Ok(connection) => Value::Database {
                         connection,
-                        db_type: pool_guard.db_type.clone(),
-                        connection_string: pool_guard.connection_string.clone(),
+                        db_type: pool.db_type.clone(),
+                        connection_string: pool.connection_string.clone(),
                         in_transaction: Arc::new(Mutex::new(false)),
                     },
                     Err(error) => Value::Error(format!("Failed to acquire connection: {}", error)),
@@ -783,8 +782,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             if let Some(Value::DatabasePool { pool }) = arg_values.first() {
                 if let Some(Value::Database { connection, .. }) = arg_values.get(1) {
-                    let pool_guard = lock_or_db_error!(pool, "database.pool");
-                    match pool_guard.release(connection.clone()) {
+                    match pool.release(connection.clone()) {
                         Ok(()) => Value::Bool(true),
                         Err(error) => Value::Error(error),
                     }
@@ -807,8 +805,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::DatabasePool { pool }) = arg_values.first() {
-                let pool_guard = lock_or_db_error!(pool, "database.pool");
-                let stats = pool_guard.stats();
+                let stats = pool.stats();
                 let mut dict = DictMap::default();
                 for (key, value) in stats {
                     dict.insert(key.into(), Value::Int(value as i64));
@@ -825,8 +822,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::DatabasePool { pool }) = arg_values.first() {
-                let pool_guard = lock_or_db_error!(pool, "database.pool");
-                pool_guard.close();
+                pool.close();
                 Value::Bool(true)
             } else {
                 Value::Error("db_pool_close requires a database pool".to_string())
@@ -1401,6 +1397,40 @@ mod tests {
             handle("db_pool_acquire", &[pool]),
             Some(Value::Error(message)) if message.contains("closed")
         ));
+        let _ = std::fs::remove_file(db_path);
+    }
+
+    #[test]
+    fn pool_release_can_unblock_a_concurrent_native_acquire() {
+        use std::time::Duration;
+
+        let db_path = tmp_db_path("sqlite_pool_native_concurrency.db");
+        let mut config = DictMap::default();
+        config.insert("min_connections".into(), Value::Int(0));
+        config.insert("max_connections".into(), Value::Int(1));
+        config.insert("acquisition_timeout_ms".into(), Value::Int(1_000));
+        let pool = handle(
+            "db_pool",
+            &[str_value("sqlite"), str_value(&db_path), Value::Dict(Arc::new(config))],
+        )
+        .expect("pool result");
+        let first = handle("db_pool_acquire", &[pool.clone()]).expect("first lease");
+        let waiting_pool = pool.clone();
+        let waiter = std::thread::spawn(move || {
+            handle("db_pool_acquire", &[waiting_pool]).expect("waiting lease")
+        });
+        std::thread::sleep(Duration::from_millis(100));
+        assert!(matches!(
+            handle("db_pool_release", &[pool.clone(), first]),
+            Some(Value::Bool(true))
+        ));
+        let second = waiter.join().expect("waiter thread");
+        assert!(matches!(second, Value::Database { .. }));
+        assert!(matches!(
+            handle("db_pool_release", &[pool.clone(), second]),
+            Some(Value::Bool(true))
+        ));
+        let _ = handle("db_pool_close", &[pool]);
         let _ = std::fs::remove_file(db_path);
     }
 

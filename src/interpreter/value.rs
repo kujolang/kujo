@@ -317,7 +317,7 @@ mod tests {
         let mut config = HashMap::new();
         config.insert("min_connections".to_string(), Value::Int(0));
         config.insert("max_connections".to_string(), Value::Int(1));
-        config.insert("connection_timeout".to_string(), Value::Int(0));
+        config.insert("acquisition_timeout_ms".to_string(), Value::Int(100));
         let pool = Arc::new(
             ConnectionPool::new("sqlite".to_string(), path.to_string_lossy().to_string(), config)
                 .expect("pool should initialize"),
@@ -1069,7 +1069,7 @@ pub enum Value {
     /// Infrastructure for database.rs stub module
     #[cfg(feature = "runtime-db")]
     #[allow(dead_code)]
-    DatabasePool { pool: Arc<Mutex<ConnectionPool>> },
+    DatabasePool { pool: Arc<ConnectionPool> },
     /// Image data
     #[cfg(feature = "runtime-image")]
     Image { data: Arc<Mutex<DynamicImage>>, format: String },
@@ -1318,8 +1318,7 @@ impl std::fmt::Debug for Value {
             }
             #[cfg(feature = "runtime-db")]
             Value::DatabasePool { pool } => {
-                let p = pool.lock().unwrap();
-                write!(f, "DatabasePool(type={}, max={})", p.db_type, p.max_connections)
+                write!(f, "DatabasePool(type={}, max={})", pool.db_type, pool.max_connections)
             }
             #[cfg(feature = "runtime-image")]
             Value::Image { format, data } => {
