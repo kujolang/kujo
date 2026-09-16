@@ -349,6 +349,7 @@ Secret redaction contract:
 | `random_choice` | preview | `v := random_choice(["a", "b"])` |
 | `uuid_v4` | preview | `id := uuid_v4()` |
 | `random_id` | preview | `id := random_id(12)` |
+| `secure_random_token` | preview | `token := secure_random_token(32)` |
 | `set_random_seed` | preview | `set_random_seed(42)` |
 | `clear_random_seed` | preview | `clear_random_seed()` |
 | `now` | stable | `t := now()` |
@@ -685,6 +686,7 @@ filesystem read permission.
 | --- | --- | --- |
 | `db_connect` | preview | `db := db_connect("sqlite://local.db")` |
 | `db_connect_postgres_tls` | preview | `db := db_connect_postgres_tls(url, ca_pem)` |
+| `db_pool_postgres_tls` | preview | `pool := db_pool_postgres_tls(url, ca_pem, {"min_connections":2,"max_connections":20})` |
 | `db_connect_readonly` | preview | `db := db_connect_readonly("sqlite", "local.db")` |
 | `db_query` | preview | `rows := db_query(db, "select 1")` |
 | `db_execute` | preview | `n := db_execute(db, "delete from t")` |
@@ -755,6 +757,12 @@ CLI Tokio runtime.
 | `rsa_verify` | experimental | `ok := rsa_verify(data, sig, key)` |
 | `load_image` | preview | `img := load_image("photo.png")` |
 | `gif_to_webp` | preview | `out := gif_to_webp("in.gif", "out.webp")` |
+| `pdf_render_html` | preview | `receipt := pdf_render_html(html, {"page_size":"A4"}, assets)` |
+| `pdf_render_html_to_file` | preview | `receipt := pdf_render_html_to_file(html, {}, assets, "/private/quote.pdf")` |
+
+The PDF functions implement the strict, in-process business-document profile
+defined in `docs/PDF_RENDERING.md`; they do not execute a browser or resolve
+network/filesystem resources from document input.
 
 Image values expose bounded, constant-allocation pixel access through methods:
 
