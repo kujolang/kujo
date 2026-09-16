@@ -3,6 +3,12 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KUJO="${KUJO:-${ROOT}/target/debug/kujo}"
+POSTGRES_TEST_MAJOR="${POSTGRES_TEST_MAJOR:-14}"
+POSTGRES_VERSION="$(initdb --version)"
+if [[ "${POSTGRES_VERSION}" != *" ${POSTGRES_TEST_MAJOR}."* ]]; then
+    echo "PostgreSQL TLS gate requires pinned major ${POSTGRES_TEST_MAJOR}; found ${POSTGRES_VERSION}" >&2
+    exit 2
+fi
 TMP_ROOT="$(mktemp -d)"
 DATA_DIR="${TMP_ROOT}/data"
 PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"

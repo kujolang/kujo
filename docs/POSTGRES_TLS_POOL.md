@@ -81,3 +81,9 @@ isolation, absent tenant context, pooled-state reset, atomic state/event/outbox
 writes and rollback, statement timeout, connection recovery, and lifetime
 eviction. It requires local PostgreSQL server tools and OpenSSL; no database
 daemon or certificate survives teardown.
+
+The gate pins PostgreSQL major 14 by default and rejects a different server
+major so local and CI evidence is comparable. Install PostgreSQL 14 client and
+server tools on `PATH`, or set `POSTGRES_TEST_MAJOR` explicitly when qualifying
+a deliberate future-major upgrade. OpenSSL is required only to generate the
+ephemeral test CA and hostile certificate fixtures.
