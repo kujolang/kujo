@@ -6,7 +6,7 @@ usage() {
 Usage: scripts/fuzz_smoke.sh [--check-prereqs] [--max-total-time <seconds>] [--run-root <directory>] [target...]
 
 Runs bounded cargo-fuzz smoke targets (default: lexer parser xml_bounded gzip_bounded
-zip_single_bounded) with prerequisite checks.
+zip_single_bounded pdf_html_profile) with prerequisite checks.
 
 Options:
   --check-prereqs          Validate toolchain prerequisites only; do not run fuzz targets.
@@ -17,7 +17,7 @@ Options:
 Examples:
   scripts/fuzz_smoke.sh --check-prereqs
   scripts/fuzz_smoke.sh
-  scripts/fuzz_smoke.sh --max-total-time 30 lexer parser xml_bounded gzip_bounded zip_single_bounded
+  scripts/fuzz_smoke.sh --max-total-time 30 lexer parser xml_bounded gzip_bounded zip_single_bounded pdf_html_profile
 EOF
 }
 
@@ -62,7 +62,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ${#TARGETS[@]} -eq 0 ]]; then
-  TARGETS=(lexer parser xml_bounded gzip_bounded zip_single_bounded)
+  TARGETS=(lexer parser xml_bounded gzip_bounded zip_single_bounded pdf_html_profile)
 fi
 
 if ! [[ "$MAX_TOTAL_TIME" =~ ^[1-9][0-9]*$ ]]; then

@@ -28,6 +28,7 @@ const MAX_IMAGE_BYTES: usize = 5 * 1024 * 1024;
 const MAX_FONT_BYTES: usize = 4 * 1024 * 1024;
 const MAX_ASSET_BYTES: usize = 16 * 1024 * 1024;
 const MAX_OUTPUT_BYTES: usize = 32 * 1024 * 1024;
+const MAX_PAGES: usize = 256;
 const MAX_RENDER_SECONDS: u64 = 30;
 const MAX_CONCURRENT_RENDERS: usize = 4;
 
@@ -55,6 +56,7 @@ struct RenderedPdf {
     width_mm: f32,
     height_mm: f32,
     warning_count: usize,
+    warning_codes: Vec<String>,
 }
 
 struct RenderPermit;
@@ -124,10 +126,20 @@ fn bounded_text(
     }
 }
 
+fn dictionary(value: &Value, description: &str) -> Result<DictMap, String> {
+    match value {
+        Value::Dict(values) => Ok(values.as_ref().clone()),
+        Value::FixedDict { keys, values } => Ok(keys
+            .iter()
+            .zip(values.iter())
+            .map(|(key, value)| (Arc::<str>::from(key.as_ref()), value.clone()))
+            .collect()),
+        _ => Err(format!("{description} must be a dictionary")),
+    }
+}
+
 fn parse_options(value: &Value) -> Result<RenderOptions, String> {
-    let Value::Dict(options) = value else {
-        return Err("pdf options must be a dictionary".to_string());
-    };
+    let options = dictionary(value, "pdf options")?;
     let allowed: HashSet<&str> = [
         "page_size",
         "orientation",
@@ -276,9 +288,7 @@ fn validate_font(bytes: &[u8]) -> Result<(), String> {
 type PdfAssets = (BTreeMap<String, Base64OrRaw>, BTreeMap<String, Base64OrRaw>);
 
 fn parse_assets(value: &Value) -> Result<PdfAssets, String> {
-    let Value::Dict(assets) = value else {
-        return Err("pdf assets must be a dictionary".to_string());
-    };
+    let assets = dictionary(value, "pdf assets")?;
     for key in assets.keys() {
         if key.as_ref() != "images" && key.as_ref() != "fonts" {
             return Err(format!("unknown pdf asset group '{}'", key));
@@ -297,9 +307,7 @@ fn parse_assets(value: &Value) -> Result<PdfAssets, String> {
         let Some(group) = assets.get(group_name) else {
             continue;
         };
-        let Value::Dict(group) = group else {
-            return Err(format!("pdf asset group '{group_name}' must be a dictionary"));
-        };
+        let group = dictionary(group, &format!("pdf asset group '{group_name}'"))?;
         for (name, value) in group.iter() {
             if !valid_asset_name(name) {
                 return Err("pdf asset names must be bounded alphanumeric identifiers".to_string());
@@ -494,6 +502,11 @@ fn validate_html(html: &str, image_names: &HashSet<String>) -> Result<(), String
     Ok(())
 }
 
+#[allow(dead_code)]
+pub(crate) fn validate_html_for_fuzz(html: &str) -> Result<(), String> {
+    validate_html(html, &HashSet::new())
+}
+
 fn render(
     html: String,
     options: RenderOptions,
@@ -540,6 +553,9 @@ fn render(
             if document.pages.is_empty() {
                 return Err("pdf renderer produced no pages".to_string());
             }
+            if document.pages.len() > MAX_PAGES {
+                return Err(format!("pdf output page limit of {MAX_PAGES} exceeded"));
+            }
             document.metadata.info.document_title = options.title;
             document.metadata.info.creator = "Kujo".to_string();
             document.metadata.info.producer = RENDERER_VERSION.to_string();
@@ -560,6 +576,7 @@ fn render(
                 width_mm: options.page_width_mm,
                 height_mm: options.page_height_mm,
                 warning_count,
+                warning_codes: vec!["renderer_warning".to_string(); warning_count],
             })
         })
         .unwrap_or_else(|_| Err("pdf renderer failed safely".to_string()));
@@ -586,6 +603,16 @@ fn receipt(
     result.insert("page_width_mm".into(), Value::Float(rendered.width_mm as f64));
     result.insert("page_height_mm".into(), Value::Float(rendered.height_mm as f64));
     result.insert("warning_count".into(), Value::Int(rendered.warning_count as i64));
+    result.insert(
+        "warnings".into(),
+        Value::Array(Arc::new(
+            rendered
+                .warning_codes
+                .into_iter()
+                .map(|warning| Value::Str(Arc::new(warning)))
+                .collect(),
+        )),
+    );
     result.insert(
         "render_duration_ms".into(),
         Value::Int(elapsed.as_millis().min(i64::MAX as u128) as i64),
@@ -712,18 +739,32 @@ mod tests {
         bytes
     }
 
+    fn page_size_points(document: &lopdf::Document, page: lopdf::ObjectId) -> (f32, f32) {
+        let mut current = page;
+        loop {
+            let dictionary = document
+                .get_object(current)
+                .expect("page object")
+                .as_dict()
+                .expect("page dictionary");
+            if let Ok(media_box) = dictionary.get(b"MediaBox") {
+                let values = media_box.as_array().expect("MediaBox array");
+                return (
+                    values[2].as_float().expect("page width"),
+                    values[3].as_float().expect("page height"),
+                );
+            }
+            current = dictionary
+                .get(b"Parent")
+                .expect("inherited MediaBox parent")
+                .as_reference()
+                .expect("parent reference");
+        }
+    }
+
     #[test]
     fn renders_parseable_branded_business_document() {
-        let html = r#"<html><body style="font-family:Helvetica;color:#17221b">
-            <header style="border-bottom:1px solid #7a8a72;padding-bottom:8px">
-                <h1>Northstar Heating &amp; Air</h1><p>Estimate QF-1007</p>
-            </header>
-            <table style="width:100%;border-collapse:collapse">
-                <thead><tr><th style="text-align:left">Description</th><th>Total</th></tr></thead>
-                <tbody><tr><td>High-efficiency furnace replacement</td><td>$9,850.00</td></tr></tbody>
-            </table>
-            <footer><p>Thank you, Jane Williams.</p></footer>
-        </body></html>"#;
+        let html = include_str!("../../../tests/fixtures/pdf/hvac-estimate.html");
         let first = render_html(html).expect("render succeeds");
         let second = render_html(html).expect("repeat render succeeds");
         let first_bytes = receipt_bytes(&first);
@@ -733,9 +774,20 @@ mod tests {
 
         let document =
             lopdf::Document::load_mem(first_bytes).expect("independent parser accepts PDF");
-        assert!(!document.get_pages().is_empty());
+        let pages = document.get_pages();
+        assert!(!pages.is_empty());
+        let (width, height) = page_size_points(&document, pages[&1]);
+        assert!((width - 595.28).abs() < 1.0);
+        assert!((height - 841.89).abs() < 1.0);
         let text = document.extract_text(&[1]).expect("text extraction succeeds");
-        assert!(text.is_ascii());
+        let normalized = text.split_whitespace().collect::<Vec<_>>().join(" ");
+        assert!(normalized.contains("Northstar Heating & Air"));
+        assert!(normalized.contains("$9,850.00"));
+        assert!(normalized.contains("José"));
+        let debug = format!("{:?}{:?}", document.trailer, document.objects);
+        assert!(!debug.contains("/JavaScript"));
+        assert!(!debug.contains("/Launch"));
+        assert!(!debug.contains("/URI"));
     }
 
     #[test]
@@ -841,5 +893,59 @@ mod tests {
         )
         .expect("handler result");
         assert!(receipt_bytes(&value).starts_with(b"%PDF-"));
+    }
+
+    #[test]
+    fn renders_multi_page_fabrication_quotation_fixture() {
+        let value =
+            render_html(include_str!("../../../tests/fixtures/pdf/fabrication-quotation.html"))
+                .expect("fabrication quotation renders");
+        let bytes = receipt_bytes(&value);
+        let document = lopdf::Document::load_mem(bytes).expect("independent parser accepts PDF");
+        assert!(document.get_pages().len() >= 2);
+        let text = document.extract_text(&[1, 2]).expect("text extraction succeeds");
+        let normalized = text.split_whitespace().collect::<Vec<_>>().join(" ");
+        assert!(normalized.contains("ABC Manufacturing Quotation"));
+        assert!(normalized.contains("250 mounting brackets"));
+        assert!(normalized.contains("Terms"));
+    }
+
+    #[test]
+    fn rejects_malformed_and_oversized_assets_before_rendering() {
+        let mut malformed_images = DictMap::default();
+        malformed_images.insert("logo.png".into(), Value::Bytes(vec![0_u8; 32]));
+        let mut assets = DictMap::default();
+        assets.insert("images".into(), Value::Dict(Arc::new(malformed_images)));
+        let result = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new("<img src=\"logo.png\">".into())),
+                empty_dict(),
+                Value::Dict(Arc::new(assets)),
+            ],
+        );
+        assert!(matches!(result, Some(Value::Error(error)) if error.contains("image asset")));
+
+        let mut oversized_fonts = DictMap::default();
+        oversized_fonts.insert("tenant.ttf".into(), Value::Bytes(vec![0_u8; MAX_FONT_BYTES + 1]));
+        let mut assets = DictMap::default();
+        assets.insert("fonts".into(), Value::Dict(Arc::new(oversized_fonts)));
+        let result = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new("<p>bounded</p>".into())),
+                empty_dict(),
+                Value::Dict(Arc::new(assets)),
+            ],
+        );
+        assert!(matches!(result, Some(Value::Error(error)) if error.contains("font assets")));
+    }
+
+    #[test]
+    fn rejects_decompressed_image_dimension_bomb() {
+        let image = image::DynamicImage::new_rgba8(4097, 1);
+        let mut cursor = std::io::Cursor::new(Vec::new());
+        image.write_to(&mut cursor, image::ImageFormat::Png).expect("encode image fixture");
+        assert!(validate_image(cursor.get_ref()).unwrap_err().contains("dimensions"));
     }
 }

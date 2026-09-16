@@ -1,0 +1,16 @@
+# Inventory: skip (invoked by tests/pdf_external_validation.sh)
+let html := read_file(env_or("KUJO_PDF_HTML", ""))
+let receipt := pdf_render_html_to_file(html, {
+    "page_size": "A4",
+    "orientation": "portrait",
+    "show_page_numbers": true,
+    "header_text": "QuoteFlow",
+    "footer_text": "Confidential",
+    "title": "QuoteFlow HVAC Estimate"
+}, {}, env_or("KUJO_PDF_OUTPUT", ""))
+print(to_json({
+    "ok": receipt["ok"],
+    "pages": receipt["pages"],
+    "bytes": receipt["bytes"],
+    "output_sha256": receipt["output_sha256"]
+}))

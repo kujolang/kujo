@@ -35,6 +35,13 @@ pub use test_runner::{TestCase, TestReport, TestResult, TestRunner};
 // Database infrastructure - used by stub database.rs module
 #[cfg(feature = "runtime-db")]
 pub(crate) use value::connect_postgres_verified_tls;
+
+#[cfg(feature = "runtime-pdf")]
+#[doc(hidden)]
+#[allow(dead_code)]
+pub fn validate_pdf_html_for_fuzz(html: &str) -> Result<(), String> {
+    native_functions::pdf::validate_html_for_fuzz(html)
+}
 pub use value::{
     CallableArity, DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap,
     HttpResponseStreamParts, HttpUploadRoute, IntDictMap, LeakyFunctionBody,
