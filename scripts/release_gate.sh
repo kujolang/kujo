@@ -88,7 +88,11 @@ if [[ "${mode}" == "full" ]]; then
     echo "- Skipping benchmark smoke (set KUJO_RELEASE_GATE_RUN_BENCH=1 to enable)"
   fi
 
-  run_optional_cmd cargo-audit cargo audit --deny warnings
+  # RUSTSEC-2025-0141 is an unmaintained (not vulnerable) build-only bincode
+  # dependency pulled by printpdf -> azul-layout -> hyphenation. Keep every
+  # vulnerability and every other warning release-blocking while that upstream
+  # toolchain dependency is tracked for replacement.
+  run_optional_cmd cargo-audit cargo audit --deny warnings --ignore RUSTSEC-2025-0141
   run_optional_cmd cargo-deny cargo deny check
 else
   run_cmd bash scripts/repo_hygiene_audit.sh

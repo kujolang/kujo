@@ -60,4 +60,6 @@ Output identifiers are rewritten from the input digest, renderer metadata exclud
 
 The implementation pins `printpdf` 0.12.8 (MIT) and `lopdf` 0.44.0 in `Cargo.lock`. `printpdf` supplies the in-process HTML layout and PDF writer; `lopdf` canonicalizes identifiers and reparses golden output. The feature is compiled as `runtime-pdf` and is enabled by default.
 
+The direct renderer dependencies are MIT; the layout/font stack is MIT or Apache-2.0. `cargo audit` reports no known vulnerability. It does report RUSTSEC-2025-0141 because `hyphenation`, a build dependency of the pinned layout engine, uses unmaintained `bincode` 1.3.3. That advisory is not a vulnerability and the crate is not part of the runtime input path. The release gate ignores only that exact advisory while continuing to deny every vulnerability and other warning; replacing the upstream layout dependency remains tracked release maintenance.
+
 Tagged-PDF accessibility is not implemented or claimed. PDF/A conformance and digital signatures are not part of this profile. Complex-script shaping and Unicode coverage depend on the explicitly supplied approved font. Repeated table header behavior follows the pinned engine and must be visually regression-tested for each application template before release.
