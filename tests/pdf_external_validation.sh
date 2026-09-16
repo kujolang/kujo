@@ -11,7 +11,11 @@ if [[ -z "${PDFINFO}" || -z "${PDFTOTEXT}" ]]; then
 fi
 
 TMP_ROOT="$(mktemp -d)"
-trap 'rm -rf "${TMP_ROOT}"' EXIT
+cleanup() {
+    rm -rf "${TMP_ROOT}"
+    rm -f "${ROOT}/tests/pdf_external_validation_probe.out"
+}
+trap cleanup EXIT
 export KUJO_PDF_HTML="${ROOT}/tests/fixtures/pdf/hvac-estimate.html"
 export KUJO_PDF_OUTPUT="${TMP_ROOT}/hvac-estimate.pdf"
 

@@ -11,6 +11,10 @@ SERVER_RUNNING=0
 cleanup() {
     if [[ "${SERVER_RUNNING}" == "1" ]]; then pg_ctl -D "${DATA_DIR}" -m immediate stop >/dev/null 2>&1 || true; fi
     rm -rf "${TMP_ROOT}"
+    rm -f \
+        "${ROOT}/tests/postgres_tls_probe.out" \
+        "${ROOT}/tests/postgres_tls_pool_rls_probe.out" \
+        "${ROOT}/tests/postgres_tls_pool_timeout_probe.out"
 }
 trap cleanup EXIT
 
