@@ -34,6 +34,15 @@ const MAX_CONCURRENT_RENDERS: usize = 4;
 
 static ACTIVE_RENDERS: AtomicUsize = AtomicUsize::new(0);
 
+fn reserve_render_slot(counter: &AtomicUsize, limit: usize) -> Result<(), String> {
+    counter
+        .fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
+            (current < limit).then_some(current + 1)
+        })
+        .map(|_| ())
+        .map_err(|_| "pdf renderer concurrency limit reached".to_string())
+}
+
 #[derive(Clone)]
 struct RenderOptions {
     page_width_mm: f32,
@@ -63,11 +72,12 @@ struct RenderPermit;
 
 impl RenderPermit {
     fn acquire() -> Result<Self, String> {
-        let result = ACTIVE_RENDERS.fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {
-            (current < MAX_CONCURRENT_RENDERS).then_some(current + 1)
-        });
-        result.map(|_| Self).map_err(|_| "pdf renderer concurrency limit reached".to_string())
+        reserve_render_slot(&ACTIVE_RENDERS, MAX_CONCURRENT_RENDERS).map(|_| Self)
     }
+}
+
+fn receive_before_deadline<T>(receiver: mpsc::Receiver<T>, wait: Duration) -> Result<T, String> {
+    receiver.recv_timeout(wait).map_err(|_| "pdf render deadline exceeded".to_string())
 }
 
 impl Drop for RenderPermit {
@@ -281,6 +291,10 @@ fn validate_font(bytes: &[u8]) -> Result<(), String> {
     let signature = &bytes[..4];
     if signature != [0, 1, 0, 0] && signature != b"OTTO" {
         return Err("pdf font asset must be a single OpenType or TrueType font".to_string());
+    }
+    let mut warnings = Vec::new();
+    if printpdf::ParsedFont::from_bytes(bytes, 0, &mut warnings).is_none() {
+        return Err("pdf font asset is malformed or unsupported".to_string());
     }
     Ok(())
 }
@@ -582,7 +596,7 @@ fn render(
         .unwrap_or_else(|_| Err("pdf renderer failed safely".to_string()));
         let _ = sender.send(result);
     });
-    receiver.recv_timeout(wait).map_err(|_| "pdf render deadline exceeded".to_string())?
+    receive_before_deadline(receiver, wait)?
 }
 
 fn receipt(
@@ -947,5 +961,46 @@ mod tests {
         let mut cursor = std::io::Cursor::new(Vec::new());
         image.write_to(&mut cursor, image::ImageFormat::Png).expect("encode image fixture");
         assert!(validate_image(cursor.get_ref()).unwrap_err().contains("dimensions"));
+    }
+
+    #[test]
+    fn concurrency_reservation_is_atomic_and_bounded() {
+        let counter = AtomicUsize::new(0);
+        for _ in 0..MAX_CONCURRENT_RENDERS {
+            reserve_render_slot(&counter, MAX_CONCURRENT_RENDERS).expect("slot available");
+        }
+        assert_eq!(counter.load(Ordering::Acquire), MAX_CONCURRENT_RENDERS);
+        assert!(reserve_render_slot(&counter, MAX_CONCURRENT_RENDERS)
+            .unwrap_err()
+            .contains("concurrency limit"));
+    }
+
+    #[test]
+    fn render_deadline_fails_closed() {
+        let (_sender, receiver) = mpsc::sync_channel::<()>(1);
+        assert!(receive_before_deadline(receiver, Duration::from_millis(5))
+            .unwrap_err()
+            .contains("deadline exceeded"));
+    }
+
+    #[test]
+    fn malformed_font_fails_without_content_disclosure() {
+        let mut fonts = DictMap::default();
+        let mut fake = vec![0_u8; 64];
+        fake[..4].copy_from_slice(&[0, 1, 0, 0]);
+        fonts.insert("tenant.ttf".into(), Value::Bytes(fake));
+        let mut assets = DictMap::default();
+        assets.insert("fonts".into(), Value::Dict(Arc::new(fonts)));
+        let result = handle(
+            "pdf_render_html",
+            &[
+                Value::Str(Arc::new("<p>PRIVATE-CUSTOMER-TEXT</p>".into())),
+                empty_dict(),
+                Value::Dict(Arc::new(assets)),
+            ],
+        );
+        assert!(
+            matches!(result, Some(Value::Error(error)) if !error.contains("PRIVATE-CUSTOMER-TEXT"))
+        );
     }
 }
