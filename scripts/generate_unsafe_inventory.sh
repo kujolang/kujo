@@ -31,8 +31,8 @@ mkdir -p "$(dirname "$OUTPUT_MD")" "$(dirname "$OUTPUT_CSV")"
 TMP_MATCHES="$(mktemp)"
 trap 'rm -f "$TMP_MATCHES"' EXIT
 
-SEARCH_COMMAND="grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\\<unsafe\\>' src tests benches fuzz"
-grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz > "$TMP_MATCHES" || true
+SEARCH_COMMAND="grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inventory_contract.rs' '\\<unsafe\\>' src tests benches fuzz"
+grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz > "$TMP_MATCHES" || true
 sort -t: -k1,1 -k2,2n "$TMP_MATCHES" -o "$TMP_MATCHES"
 
 TOTAL=0

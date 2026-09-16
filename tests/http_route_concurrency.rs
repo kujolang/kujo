@@ -186,6 +186,8 @@ fn process_shutdown_terminates_in_flight_handlers() {
         thread::sleep(Duration::from_millis(60));
 
         let started = Instant::now();
+        // SAFETY: the PID belongs to the still-live child process owned by
+        // this test and SIGTERM is a valid signal number.
         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) };
         assert_eq!(signal_result, 0, "SIGTERM should be delivered");
         let status = child.wait().expect("terminated server should be waitable");

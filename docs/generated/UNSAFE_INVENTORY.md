@@ -1,12 +1,12 @@
 # Unsafe Inventory
 
 Generated: 2026-09-16
-Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
+Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
 
-- Total matches: 103
-- Executable matches: 78
+- Total matches: 102
+- Executable matches: 77
 - Non-executable matches: 25
 - Unknown classifications: 0
 
@@ -14,8 +14,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 
 | Path | Line | Kind | Classification | Text |
 | --- | ---: | --- | --- | --- |
-| fuzz/target/debug/build/pulp-a320cd1cc70b6fc0/out/x86_64_asm.rs | 2475 | executable | other | static LD_ST: [unsafe extern ""C"" fn(); 2 * ((16 + 1) * 16)] = [ |
-| src/http_request_utils.rs | 35 | executable | src_executable_other |         unsafe { |
+| src/http_request_utils.rs | 38 | executable | src_executable_other |         unsafe { |
 | src/interpreter/native_functions/compression.rs | 239 | non_executable | src_comment_or_string |         writer.write_all(b""unsafe"").unwrap(); |
 | src/interpreter/native_functions/confined_write_windows.rs | 42 | executable | src_executable_other | unsafe extern ""system"" { |
 | src/interpreter/native_functions/confined_write_windows.rs | 71 | executable | src_executable_other |         Err(io::Error::from_raw_os_error(unsafe { RtlNtStatusToDosError(status) } as i32)) |
@@ -111,7 +110,7 @@ Command: grep -RInE --include='*.rs' --exclude='unsafe_inventory_contract.rs' '\
 | tests/fixtures/unsafe_safety_contracts/wrong_headings.rs | 5 | executable | test_executable |     unsafe { *ptr } |
 | tests/generated_artifact_freshness_contract.rs | 150 | non_executable | test_comment_or_string |     let output_md = temp_dir.join(""unsafe.md""); |
 | tests/generated_artifact_freshness_contract.rs | 151 | non_executable | test_comment_or_string |     let output_csv = temp_dir.join(""unsafe.csv""); |
-| tests/http_route_concurrency.rs | 189 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
+| tests/http_route_concurrency.rs | 191 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
 | tests/jit_safety_contract_checker.rs | 152 | non_executable | test_comment_or_string |     assert!(stdout.contains(""Checked 0 executable unsafe boundaries"")); |
 | tests/runtime_security.rs | 323 | non_executable | test_comment_or_string |         ""expected unsafe traversal error, got: {}"", |
 | tests/unsafe_safety_gate_contract.rs | 14 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate help""); |

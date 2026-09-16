@@ -137,10 +137,13 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // writable struct. Platform branches are counted separately by the scanner.
     // Native package ownership/lock checks add two reviewed geteuid calls.
     // These take no pointers or arguments and have no memory preconditions.
+    // Routed HTTP graceful shutdown adds one reviewed libc::signal registration,
+    // and its integration test adds one reviewed libc::kill call against its
+    // owned live child process.
     // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 75,
-        "executable unsafe budget changed: expected 75, got {executable_count}"
+        executable_count, 77,
+        "executable unsafe budget changed: expected 77, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");

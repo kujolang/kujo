@@ -32,6 +32,9 @@ pub fn install_routed_http_shutdown_handler() {
     ROUTED_HTTP_SHUTDOWN_REQUESTED.store(false, Ordering::Release);
     ROUTED_HTTP_SIGNAL_HANDLER.call_once(|| {
         #[cfg(unix)]
+        // SAFETY: both constants are valid signals and the callback is an
+        // extern-C function that remains live for the process lifetime. The
+        // handler performs only a lock-free atomic store.
         unsafe {
             libc::signal(
                 libc::SIGINT,
