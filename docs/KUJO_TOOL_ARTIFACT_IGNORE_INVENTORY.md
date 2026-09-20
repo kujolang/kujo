@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-09-06
+Last updated: 2026-09-20
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -15,6 +15,8 @@ This inventory captures local files and directories created by Kujo and adjacent
 
 | Tool | Default/generated paths | Notes |
 | --- | --- | --- |
+| Kujo core runtime | `.kujo-http-upload-<uuid>.body`, interrupted `.<project>.kujo-agent-stage-<pid>/` agent scaffold directories | Routed HTTP uploads are streamed into private same-directory spool files that callers should adopt or remove after dispatch; the ignore block covers leftovers. Agent scaffolding writes through a hidden staging directory before promotion. |
+| Kujo Agent Projects | `.env.local`, `.kujo-agent/`, `.dispatch-runs/`, `.workcell/`, `.relay/`, `.eval-results/`, `.runledger/`, `workcell-image/agents-sdk/`, `workcell-image/.agents-sdk-stage-<pid>/`, `data/`, `results/` | `kujo agent new` writes these into the generated project `.gitignore`; the shared block covers the Kujo-owned local state roots while leaving the generated source/config files tracked. `.env.local` can contain project-scoped credentials from `kujo agent auth set --project`. The generated project still owns any broader `data/` policy because some repositories intentionally track source data. |
 | Loop Engineering | `.loop-engineering/`, `SUMMARY.md`, `blockers.md`, `ledger.tsv`, `loop.yml`, `checklist.tsv`, `evidence/`, `iterations/<n>/` | Repo-local loop state and verification evidence. |
 | RunLedger | `.runledger/`, `.runledger/runs/`, `RUNLEDGER_REPORT.md`, `runledger-entry.json` | `--ledger` can redirect the ledger; report path is caller-selected. |
 | CaseFile | `.casefile/<case-id>/case.{md,json}`, `.casefile-agency-loop/<case-id>/case.md`, `command.txt`, `environment.json`, `git-*.txt`, `stdout.log`, `stderr.log`, `combined.log`, `reproduction.md`, `handoff.md` | `casefile.toml` is created by `init`; keep it tracked only when it is shared config. `kujo-workflows/agency-verified-fix-loop/scripts/run-loop.sh` directs pre-fix Lens captures into `.casefile-agency-loop/` inside disposable fixture repositories. |
@@ -94,6 +96,7 @@ allowed; adding or modifying one remains blocked.
 The block also carries a few exact or broad support patterns that intentionally
 serve multiple rows in the inventory:
 
+- `/.kujo-http-upload-*.body` covers routed HTTP upload spool leftovers; `/.*.kujo-agent-stage-*/` covers interrupted `kujo agent new` staging directories; `/.env.local`, `/.kujo-agent/`, `/.dispatch-runs/`, `/workcell-image/agents-sdk/`, and `/workcell-image/.agents-sdk-stage-*/` cover generated Kujo Agent Project local credentials, runtime definitions, Dispatch evidence, and managed Workcell dependency copies.
 - `/runledger-report.md` mirrors `RUNLEDGER_REPORT.md` for lower-case redirected RunLedger reports.
 - `/.cinch/pack/` covers generated Cinch wrapper packs beside `/.cinch/artifacts/`.
 - `/.runs/` covers timestamped Kujo workflow-runner packets; `/.work/` covers disposable workflow workspaces such as `agency-verified-fix-loop/.work/<timestamp>/`.
