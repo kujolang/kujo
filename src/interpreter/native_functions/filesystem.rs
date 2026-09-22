@@ -10,6 +10,7 @@ use crate::{builtins, interpreter::DictMap};
 use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
 use cap_std::ambient_authority;
 use cap_std::fs::{Dir, OpenOptions as CapOpenOptions};
+use sha2::{Digest, Sha256};
 use std::collections::BinaryHeap;
 use std::fs::OpenOptions;
 use std::fs::{self, File};
@@ -190,7 +191,15 @@ fn list_dir_beneath_page(
     Ok(DirectoryPage { names, next_cursor, truncated, scanned })
 }
 
-fn open_regular_file_beneath(root: &str, relative_path: &str) -> Result<cap_std::fs::File, String> {
+fn open_regular_beneath(
+    root: &str,
+    relative_path: &str,
+    max_bytes: u64,
+) -> Result<cap_std::fs::File, String> {
+    #[cfg(windows)]
+    if relative_path.contains(':') {
+        return Err(beneath_error("invalid_relative_path", "alternate data streams are forbidden"));
+    }
     let relative_path = Path::new(relative_path);
     let components = validate_beneath_relative_path(relative_path)?;
     let mut directory = Dir::open_ambient_dir(root, ambient_authority()).map_err(|error| {
@@ -232,7 +241,52 @@ fn open_regular_file_beneath(root: &str, relative_path: &str) -> Result<cap_std:
             format!("target '{}' is not a regular file", relative_path.display()),
         ));
     }
+    if metadata.len() > max_bytes as u64 {
+        return Err(beneath_error(
+            "size_limit_exceeded",
+            format!(
+                "target '{}' exceeds maximum read size ({} bytes > {} bytes)",
+                relative_path.display(),
+                metadata.len(),
+                max_bytes
+            ),
+        ));
+    }
+
     Ok(file)
+}
+
+fn read_file_beneath_bytes(
+    root: &str,
+    relative_path: &str,
+    max_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
+        return Err(beneath_error(
+            "invalid_max_bytes",
+            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
+        ));
+    }
+
+    let mut file = open_regular_beneath(root, relative_path, max_bytes as u64)?;
+    let metadata =
+        file.metadata().map_err(|error| beneath_error("target_metadata_failed", error))?;
+    let mut bytes = Vec::with_capacity((metadata.len() as usize).min(max_bytes));
+    Read::by_ref(&mut file).take(max_bytes as u64 + 1).read_to_end(&mut bytes).map_err(
+        |error| {
+            beneath_error(
+                "read_failed",
+                format!("cannot read target '{}': {}", relative_path, error),
+            )
+        },
+    )?;
+    if bytes.len() > max_bytes {
+        return Err(beneath_error(
+            "size_limit_exceeded",
+            format!("target '{}' grew beyond maximum read size", relative_path),
+        ));
+    }
+    Ok(bytes)
 }
 
 fn digest_file_beneath(root: &str, relative_path: &str, max_bytes: usize) -> Result<Value, String> {
@@ -240,7 +294,8 @@ fn digest_file_beneath(root: &str, relative_path: &str, max_bytes: usize) -> Res
     if max_bytes == 0 || max_bytes > 67_108_864 {
         return Err("digest_file_beneath[invalid_max_bytes]: limit must be 1..=67108864".into());
     }
-    let mut reader = open_regular_file_beneath(root, relative_path)?.take(max_bytes as u64 + 1);
+    let mut reader =
+        open_regular_beneath(root, relative_path, max_bytes as u64)?.take(max_bytes as u64 + 1);
     let mut buffer = [0u8; 65_536];
     let mut digest = Sha256::new();
     let mut count = 0usize;
@@ -262,50 +317,46 @@ fn digest_file_beneath(root: &str, relative_path: &str, max_bytes: usize) -> Res
     Ok(Value::Dict(Arc::new(result)))
 }
 
-fn read_file_beneath_bytes(
+const MAX_CONFINED_DIGEST_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+
+fn sha256_bounded_reader(reader: &mut impl Read, max_bytes: u64) -> Result<(String, u64), String> {
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 64 * 1024];
+    let mut total = 0_u64;
+    loop {
+        let requested = (max_bytes - total + 1).min(buffer.len() as u64) as usize;
+        let count = match reader.read(&mut buffer[..requested]) {
+            Ok(count) => count,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(format!("sha256_file_beneath[read_failed]: {error}")),
+        };
+        if count == 0 {
+            break;
+        }
+        total += count as u64;
+        if total > max_bytes {
+            return Err(
+                "sha256_file_beneath[size_limit_exceeded]: input exceeded maximum bytes".into()
+            );
+        }
+        hasher.update(&buffer[..count]);
+    }
+    Ok((format!("{:x}", hasher.finalize()), total))
+}
+
+fn sha256_file_beneath_digest(
     root: &str,
-    relative_path: &str,
-    max_bytes: usize,
-) -> Result<Vec<u8>, String> {
-    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
-        return Err(beneath_error(
-            "invalid_max_bytes",
-            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
-        ));
+    relative: &str,
+    maximum: u64,
+) -> Result<(String, u64), String> {
+    if maximum == 0 || maximum > MAX_CONFINED_DIGEST_BYTES {
+        return Err(
+            "sha256_file_beneath[invalid_max_bytes]: max_bytes must be 1..4294967296".into()
+        );
     }
-
-    let mut file = open_regular_file_beneath(root, relative_path)?;
-    let metadata =
-        file.metadata().map_err(|error| beneath_error("target_metadata_failed", error))?;
-    let relative_path = Path::new(relative_path);
-    if metadata.len() > max_bytes as u64 {
-        return Err(beneath_error(
-            "size_limit_exceeded",
-            format!(
-                "target '{}' exceeds maximum read size ({} bytes > {} bytes)",
-                relative_path.display(),
-                metadata.len(),
-                max_bytes
-            ),
-        ));
-    }
-
-    let mut bytes = Vec::with_capacity((metadata.len() as usize).min(max_bytes));
-    Read::by_ref(&mut file).take(max_bytes as u64 + 1).read_to_end(&mut bytes).map_err(
-        |error| {
-            beneath_error(
-                "read_failed",
-                format!("cannot read target '{}': {}", relative_path.display(), error),
-            )
-        },
-    )?;
-    if bytes.len() > max_bytes {
-        return Err(beneath_error(
-            "size_limit_exceeded",
-            format!("target '{}' grew beyond maximum read size", relative_path.display()),
-        ));
-    }
-    Ok(bytes)
+    let mut file = open_regular_beneath(root, relative, maximum)
+        .map_err(|error| error.replacen("read_file_beneath", "sha256_file_beneath", 1))?;
+    sha256_bounded_reader(&mut file, maximum)
 }
 
 /// Read a bounded prefix through a single handle rooted at `root`. Unlike the
@@ -621,6 +672,64 @@ fn write_file_atomically(path: &str, payload: &[u8], overwrite: bool) -> Result<
     result
 }
 
+// The returned digest covers the exact bytes copied through retained handles.
+// Concurrent source mutation is not a snapshot; callers can compare this
+// receipt to an expected content digest before publishing a backup manifest.
+fn copy_file_beneath_stream(
+    source_root: &str,
+    source_path: &str,
+    target_root: &str,
+    target_path: &str,
+    maximum: u64,
+) -> Result<(String, u64), String> {
+    if maximum == 0 || maximum > 4_294_967_296 {
+        return Err("copy_file_beneath max_bytes must be in 1..4294967296".into());
+    }
+    let mut source = open_regular_beneath(source_root, source_path, maximum)?;
+    let mut receipt = None;
+    write_stream_beneath_with_hook(
+        target_root,
+        target_path,
+        false,
+        |_| {},
+        |target| {
+            receipt = Some(copy_bounded_reader(&mut source, target, maximum)?);
+            Ok(())
+        },
+    )?;
+    Ok(receipt.expect("successful writer produced a receipt"))
+}
+
+fn copy_bounded_reader(
+    source: &mut impl Read,
+    target: &mut impl Write,
+    maximum: u64,
+) -> Result<(String, u64), String> {
+    let mut observed = 0_u64;
+    let mut digest = Sha256::new();
+    let mut buffer = [0_u8; 65536];
+    loop {
+        let wanted = (maximum - observed + 1).min(buffer.len() as u64) as usize;
+        let count = source
+            .read(&mut buffer[..wanted])
+            .map_err(|error| format!("copy_file_beneath[read_failed]: {error}"))?;
+        if count == 0 {
+            break;
+        }
+        observed += count as u64;
+        if observed > maximum {
+            return Err(
+                "copy_file_beneath[size_limit_exceeded]: source grew beyond its bound".into()
+            );
+        }
+        target
+            .write_all(&buffer[..count])
+            .map_err(|error| format!("copy_file_beneath[write_failed]: {error}"))?;
+        digest.update(&buffer[..count]);
+    }
+    Ok((format!("{:x}", digest.finalize()), observed))
+}
+
 // All names after the trusted root open are single components relative to held
 // directory handles. Renaming an ancestor cannot redirect later publication.
 fn write_file_atomic_beneath(
@@ -639,6 +748,20 @@ fn write_beneath_with_hook(
     overwrite: bool,
     hook: impl FnMut(&str),
 ) -> Result<(), String> {
+    validate_write_size_limit(path, payload.len())?;
+    write_stream_beneath_with_hook(root, path, overwrite, hook, |file| {
+        file.write_all(payload)
+            .map_err(|error| format!("write_file_atomic_beneath[write_failed]: {error}"))
+    })
+}
+
+fn write_stream_beneath_with_hook(
+    root: &str,
+    path: &str,
+    overwrite: bool,
+    hook: impl FnMut(&str),
+    write_payload: impl FnOnce(&mut File) -> Result<(), String>,
+) -> Result<(), String> {
     let error =
         |stage: &str, detail: String| format!("write_file_atomic_beneath[{}]: {}", stage, detail);
     let components = validate_beneath_relative_path(Path::new(path))
@@ -650,10 +773,9 @@ fn write_beneath_with_hook(
     if path.contains(':') {
         return Err(error("invalid_relative_path", "alternate data streams are forbidden".into()));
     }
-    validate_write_size_limit(path, payload.len())?;
     #[cfg(windows)]
     {
-        super::confined_write_windows::write(root, &components, payload, overwrite, hook)
+        super::confined_write_windows::write(root, &components, overwrite, hook, write_payload)
     }
     #[cfg(not(windows))]
     {
@@ -676,9 +798,10 @@ fn write_beneath_with_hook(
         options.write(true).create_new(true).follow(FollowSymlinks::No);
         let mut file = dir
             .open_with(&temporary, &options)
-            .map_err(|e| error("temporary_create_failed", e.to_string()))?;
+            .map_err(|e| error("temporary_create_failed", e.to_string()))?
+            .into_std();
         let result = (|| {
-            file.write_all(payload).map_err(|e| error("write_failed", e.to_string()))?;
+            write_payload(&mut file)?;
             file.sync_all().map_err(|e| error("sync_failed", e.to_string()))?;
             drop(file);
             hook("before_publish");
@@ -1219,6 +1342,53 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     result.insert("next_cursor".into(), Value::Str(Arc::new(page.next_cursor)));
                     result.insert("truncated".into(), Value::Bool(page.truncated));
                     result.insert("scanned".into(), Value::Int(page.scanned as i64));
+                    Value::Dict(Arc::new(result))
+                }
+                Err(error) => Value::Error(error),
+            }
+        }
+
+        "copy_file_beneath" => {
+            let [Value::Str(source_root), Value::Str(source), Value::Str(target_root), Value::Str(target), Value::Int(maximum)] =
+                arg_values
+            else {
+                return Some(Value::Error("copy_file_beneath requires source_root, source_path, target_root, target_path (strings), max_bytes (integer)".into()));
+            };
+            if *maximum < 1 {
+                return Some(Value::Error("copy_file_beneath max_bytes must be positive".into()));
+            }
+            match copy_file_beneath_stream(
+                source_root,
+                source,
+                target_root,
+                target,
+                *maximum as u64,
+            ) {
+                Ok((digest, bytes)) => {
+                    let mut result = DictMap::default();
+                    result.insert("sha256".into(), Value::Str(Arc::new(digest)));
+                    result.insert("bytes".into(), Value::Int(bytes as i64));
+                    Value::Dict(Arc::new(result))
+                }
+                Err(error) => Value::Error(error),
+            }
+        }
+
+        "sha256_file_beneath" => {
+            let [Value::Str(root), Value::Str(relative), Value::Int(maximum)] = arg_values else {
+                return Some(Value::Error("sha256_file_beneath requires root (string), relative_path (string), and max_bytes (int)".into()));
+            };
+            if *maximum < 1 {
+                return Some(Value::Error(
+                    "sha256_file_beneath[invalid_max_bytes]: max_bytes must be 1..4294967296"
+                        .into(),
+                ));
+            }
+            match sha256_file_beneath_digest(root, relative, *maximum as u64) {
+                Ok((digest, bytes)) => {
+                    let mut result = DictMap::default();
+                    result.insert("sha256".into(), Value::Str(Arc::new(digest)));
+                    result.insert("bytes".into(), Value::Int(bytes as i64));
                     Value::Dict(Arc::new(result))
                 }
                 Err(error) => Value::Error(error),
@@ -2922,5 +3092,141 @@ mod beneath_tests {
         let _ = fs::remove_dir(root.join("outside"));
         let _ = fs::remove_dir_all(root);
         let _ = fs::remove_dir_all(outside);
+    }
+    #[test]
+    fn copy_beneath_streams_exact_bytes_and_never_replaces() {
+        let root = fixture_root("copy_bounds");
+        let anchor = root.to_str().unwrap();
+        let bytes = vec![0x9f; 131073];
+        fs::write(root.join("source"), &bytes).unwrap();
+        fs::write(root.join("empty"), []).unwrap();
+        let receipt =
+            copy_file_beneath_stream(anchor, "source", anchor, "nested/copy", bytes.len() as u64)
+                .unwrap();
+        assert_eq!(receipt, (format!("{:x}", Sha256::digest(&bytes)), bytes.len() as u64));
+        assert_eq!(fs::read(root.join("nested/copy")).unwrap(), bytes);
+        assert!(copy_file_beneath_stream(anchor, "empty", anchor, "nested/copy", 1).is_err());
+        assert_eq!(fs::read(root.join("nested/copy")).unwrap(), bytes);
+        assert_eq!(
+            copy_file_beneath_stream(anchor, "empty", anchor, "empty-copy", 1).unwrap().1,
+            0
+        );
+        for maximum in [0, 131072, 4294967297] {
+            assert!(
+                copy_file_beneath_stream(anchor, "source", anchor, "rejected", maximum).is_err()
+            );
+            assert!(!root.join("rejected").exists());
+        }
+        for path in ["../source", "/source", "nested/../source", "nested", ""] {
+            assert!(copy_file_beneath_stream(anchor, path, anchor, "rejected", 200000).is_err());
+        }
+        // Simulate growth after metadata was inspected. The partial temporary
+        // must be discarded, and no visible destination may be published.
+        let result = write_stream_beneath_with_hook(
+            anchor,
+            "failed",
+            false,
+            |_| {},
+            |file| {
+                copy_bounded_reader(&mut std::io::Cursor::new(vec![7; 65537]), file, 65536)
+                    .map(|_| ())
+            },
+        );
+        assert!(result.unwrap_err().contains("size_limit_exceeded"));
+        assert!(!root.join("failed").exists());
+        assert!(!fs::read_dir(&root).unwrap().any(|e| e
+            .unwrap()
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".kujo-beneath-")));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn copy_beneath_rejects_source_and_destination_links() {
+        use std::os::unix::fs::symlink;
+        let root = fixture_root("copy_links");
+        let outside = fixture_root("copy_outside");
+        let anchor = root.to_str().unwrap();
+        fs::write(root.join("source"), b"safe").unwrap();
+        fs::write(outside.join("sentinel"), b"outside").unwrap();
+        symlink(&outside, root.join("alias")).unwrap();
+        symlink(outside.join("sentinel"), root.join("link")).unwrap();
+        symlink(outside.join("missing"), root.join("dangling")).unwrap();
+        for path in ["alias/sentinel", "link", "dangling"] {
+            assert!(copy_file_beneath_stream(anchor, path, anchor, "copy", 32).is_err());
+            assert!(copy_file_beneath_stream(anchor, "source", anchor, path, 32).is_err());
+        }
+        assert!(!root.join("copy").exists());
+        assert_eq!(fs::read(outside.join("sentinel")).unwrap(), b"outside");
+        assert!(!outside.join("missing").exists());
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(outside).unwrap();
+    }
+
+    #[test]
+    fn sha256_beneath_bounds_and_streaming() {
+        let root = fixture_root("digest_bounds");
+        fs::write(root.join("binary"), [0, 255, 1, 2]).unwrap();
+        fs::write(root.join("empty"), []).unwrap();
+        let (digest, bytes) =
+            sha256_file_beneath_digest(root.to_str().unwrap(), "binary", 4).unwrap();
+        assert_eq!(digest, format!("{:x}", Sha256::digest([0, 255, 1, 2])));
+        assert_eq!(bytes, 4);
+        assert_eq!(sha256_file_beneath_digest(root.to_str().unwrap(), "empty", 1).unwrap().1, 0);
+        assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "binary", 3)
+            .unwrap_err()
+            .contains("size_limit_exceeded"));
+        for maximum in [0, MAX_CONFINED_DIGEST_BYTES + 1] {
+            assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "binary", maximum).is_err());
+        }
+        assert!(sha256_file_beneath_digest(
+            root.to_str().unwrap(),
+            "binary",
+            MAX_CONFINED_DIGEST_BYTES
+        )
+        .is_ok());
+        for path in ["", ".", "..", "../binary", "/binary", "a/../binary", "a//binary", "binary/"] {
+            assert!(
+                sha256_file_beneath_digest(root.to_str().unwrap(), path, 10).is_err(),
+                "{path}"
+            );
+        }
+        fs::create_dir(root.join("directory")).unwrap();
+        assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "directory", 10).is_err());
+        // Enforce observed bytes independently of the earlier file metadata check.
+        let mut growing = std::io::Cursor::new(vec![7; 65537]);
+        assert!(sha256_bounded_reader(&mut growing, 65536)
+            .unwrap_err()
+            .contains("size_limit_exceeded"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn sha256_beneath_rejects_links_and_keeps_open_handle_after_rename() {
+        use std::os::unix::fs::symlink;
+        let root = fixture_root("digest_links");
+        let outside = fixture_root("digest_outside");
+        fs::create_dir(root.join("nested")).unwrap();
+        fs::write(root.join("nested/file"), b"safe").unwrap();
+        fs::write(outside.join("file"), b"outside").unwrap();
+        symlink(outside.join("file"), root.join("link")).unwrap();
+        symlink(&outside, root.join("dir-link")).unwrap();
+        symlink(outside.join("absent"), root.join("dangling")).unwrap();
+        for path in ["link", "dir-link/file", "dangling"] {
+            assert!(sha256_file_beneath_digest(root.to_str().unwrap(), path, 32).is_err());
+        }
+        let mut file = open_regular_beneath(root.to_str().unwrap(), "nested/file", 32).unwrap();
+        fs::rename(root.join("nested"), root.join("held")).unwrap();
+        symlink(&outside, root.join("nested")).unwrap();
+        assert_eq!(
+            sha256_bounded_reader(&mut file, 32).unwrap().0,
+            format!("{:x}", Sha256::digest(b"safe"))
+        );
+        assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "nested/file", 32).is_err());
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(outside).unwrap();
     }
 }

@@ -6,6 +6,7 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-22
 - Added `digest_file_beneath` for bounded streaming SHA-256 of rooted regular
   files up to 64 MiB without retaining the full artifact in memory.
 
@@ -15,6 +16,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Added `copy_file_beneath`, a bounded streaming, no-follow copy with atomic no-replace publication and a SHA-256/byte receipt. Both filesystem read and write capabilities are required.
+- Added `sha256_file_beneath` for bounded streaming SHA-256 through no-follow
+  rooted file handles, returning the digest and actual byte count up to 4 GiB.
 - Added capability-gated `list_dir_page(path, after, limit, suffix)` for sorted
   directory pages retaining at most limit+1 filenames. Each page still scans
   the directory; entry/UTF-8 errors are explicit and no cross-call snapshot is

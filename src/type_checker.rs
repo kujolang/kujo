@@ -1229,6 +1229,32 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "copy_file_beneath".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: Some(TypeAnnotation::Any),
+            },
+        );
+
+        self.functions.insert(
+            "sha256_file_beneath".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: Some(TypeAnnotation::Any),
+            },
+        );
+
+        self.functions.insert(
             "read_file_beneath".to_string(),
             FunctionSignature {
                 param_types: vec![

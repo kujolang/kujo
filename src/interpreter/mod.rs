@@ -673,6 +673,8 @@ impl Interpreter {
             "read_file",
             "read_file_lossy",
             "read_file_beneath",
+            "sha256_file_beneath",
+            "copy_file_beneath",
             "list_dir_beneath",
             "read_binary_file_beneath",
             "digest_file_beneath",
@@ -1261,6 +1263,14 @@ impl Interpreter {
         );
         self.env
             .define("list_dir_beneath".into(), Value::NativeFunction("list_dir_beneath".into()));
+        self.env.define(
+            "copy_file_beneath".to_string(),
+            Value::NativeFunction("copy_file_beneath".to_string()),
+        );
+        self.env.define(
+            "sha256_file_beneath".to_string(),
+            Value::NativeFunction("sha256_file_beneath".to_string()),
+        );
         self.env.define(
             "read_file_beneath".to_string(),
             Value::NativeFunction("read_file_beneath".to_string()),
@@ -3588,9 +3598,20 @@ impl Interpreter {
                     "max_entries".into(),
                 ],
             ),
+            "copy_file_beneath" => CallableArity::exact(
+                name,
+                vec![
+                    "source_root".into(),
+                    "source_path".into(),
+                    "target_root".into(),
+                    "target_path".into(),
+                    "max_bytes".into(),
+                ],
+            ),
             "read_file_beneath"
             | "read_binary_file_beneath"
             | "read_binary_prefix_beneath"
+            | "sha256_file_beneath"
             | "digest_file_beneath" => CallableArity::exact(
                 name,
                 vec!["root".to_string(), "relative_path".to_string(), "max_bytes".to_string()],
