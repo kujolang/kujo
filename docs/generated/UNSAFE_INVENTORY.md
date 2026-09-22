@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-09-16
+Generated: 2026-09-22
 Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
@@ -27,10 +27,10 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/interpreter/native_functions/io.rs | 759 | non_executable | src_comment_or_string |                                     ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"", |
 | src/interpreter/native_functions/io.rs | 1571 | non_executable | src_comment_or_string |             matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory"")) |
 | src/interpreter/native_functions/pdf.rs | 656 | non_executable | src_comment_or_string |                         ""unsupported or unsafe pdf HTML attribute '{key}' on '{name}'"" |
-| src/interpreter/native_functions/pdf.rs | 1089 | non_executable | src_comment_or_string |             ""<p onclick=\""steal()\"">unsafe</p>"", |
-| src/interpreter/native_functions/pdf.rs | 1090 | non_executable | src_comment_or_string |             ""<p style=\""background:url(https://attacker.test/x)\"">unsafe</p>"", |
-| src/interpreter/native_functions/pdf.rs | 1093 | non_executable | src_comment_or_string |             let error = render_html(html).expect_err(""unsafe HTML must fail closed""); |
-| src/interpreter/native_functions/pdf.rs | 1096 | non_executable | src_comment_or_string |                     \|\| error.contains(""unsafe"") |
+| src/interpreter/native_functions/pdf.rs | 1096 | non_executable | src_comment_or_string |             ""<p onclick=\""steal()\"">unsafe</p>"", |
+| src/interpreter/native_functions/pdf.rs | 1097 | non_executable | src_comment_or_string |             ""<p style=\""background:url(https://attacker.test/x)\"">unsafe</p>"", |
+| src/interpreter/native_functions/pdf.rs | 1100 | non_executable | src_comment_or_string |             let error = render_html(html).expect_err(""unsafe HTML must fail closed""); |
+| src/interpreter/native_functions/pdf.rs | 1103 | non_executable | src_comment_or_string |                     \|\| error.contains(""unsafe"") |
 | src/interpreter/native_functions/platform.rs | 54 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
 | src/interpreter/native_functions/platform.rs | 73 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
 | src/interpreter/native_functions/system.rs | 90 | executable | src_executable_other |         unsafe { |
