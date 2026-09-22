@@ -2249,3 +2249,86 @@ fn vm_and_interpreter_unwind_loop_scopes_after_exceptions() {
         "exception_scopes_ok",
     );
 }
+
+#[test]
+fn top_level_functions_cannot_overwrite_caller_locals() {
+    let script = r#"
+        mut calls := 0
+        func inner(value) {
+            digest := "callee"
+            calls += 1
+            return value + 1
+        }
+        func outer() {
+            digest := "caller"
+            let direct := inner(4)
+            let indirect := inner
+            let alias_result := indirect(5)
+            let piped := 6 |> inner
+            return [digest, direct, alias_result, piped]
+        }
+        let result := outer()
+    "#;
+    let interp = run_interpreter(script);
+    assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
+    let vm_env = vm_env_with_builtins();
+    run_vm(script, vm_env.clone()).unwrap();
+    let globals = vm_env.lock().unwrap();
+    for environment in [&interp.env, &*globals] {
+        assert_eq!(
+            format!("{:?}", environment.get("result")),
+            "Some(Array([Str(\"caller\"), Int(5), Int(6), Int(7)]))"
+        );
+        assert!(matches!(environment.get("calls"), Some(Value::Int(3))));
+        assert!(environment.get("digest").is_none());
+    }
+}
+
+#[test]
+fn top_level_functions_cannot_read_caller_locals() {
+    assert_interpreter_and_vm_error_contains(
+        r#"
+            func inner() { return caller_only }
+            func outer() { let caller_only := 42; return inner() }
+            outer()
+        "#,
+        "caller_only",
+    );
+}
+
+#[test]
+fn lexical_capture_and_block_assignment_survive_function_isolation() {
+    let script = r#"
+        func inner() { counter := 99; return counter }
+        func outer() {
+            mut counter := 1
+            func captured() {
+                counter += 1
+                let ignored := inner()
+                if true { counter += 1 }
+                return counter
+            }
+            return captured()
+        }
+        let result := outer()
+    "#;
+    let interp = run_interpreter(script);
+    assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
+    let vm_env = vm_env_with_builtins();
+    run_vm(script, vm_env.clone()).unwrap();
+    assert!(matches!(interp.env.get("result"), Some(Value::Int(3))));
+    assert!(matches!(vm_env.lock().unwrap().get("result"), Some(Value::Int(3))));
+}
+
+#[test]
+fn global_immutability_survives_function_isolation() {
+    assert_interpreter_and_vm_error_contains(
+        r#"
+            const protected := 1
+            func inner() { protected := 2 }
+            func outer() { mut protected := 3; inner() }
+            outer()
+        "#,
+        "const binding: protected",
+    );
+}

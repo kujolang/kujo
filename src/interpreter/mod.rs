@@ -2220,8 +2220,8 @@ impl Interpreter {
 
                     result
                 } else {
-                    // Non-closure: just create new scope on current environment
-                    self.env.push_scope();
+                    // Top-level function: hide unrelated caller-local scopes
+                    let caller_scopes = self.env.enter_global_function();
 
                     // Bind parameters to arguments
                     for (i, param) in params.iter().enumerate() {
@@ -2236,7 +2236,7 @@ impl Interpreter {
                             interp.eval_stmts(&body.get())
                         })
                     {
-                        self.env.pop_scope();
+                        self.env.leave_global_function(caller_scopes);
                         self.call_stack.pop();
                         return error;
                     }
@@ -2258,7 +2258,7 @@ impl Interpreter {
                     };
 
                     // Restore parent environment
-                    self.env.pop_scope();
+                    self.env.leave_global_function(caller_scopes);
 
                     // Pop from call stack
                     self.call_stack.pop();
@@ -5098,59 +5098,8 @@ impl Interpreter {
                         }
 
                         // Call the function with the value as the first argument
-                        if let Value::Function(params, body, captured_env) = func {
-                            // Push new scope
-                            self.env.push_scope();
-
-                            // Restore captured environment if this is a closure
-                            let restore_env = if let Some(ref closure_env) = captured_env {
-                                // Store current environment
-                                let current = self.env.clone();
-                                // Set interpreter's environment to the closure's captured environment
-                                self.env = closure_env
-                                    .lock()
-                                    .unwrap_or_else(|poisoned| poisoned.into_inner())
-                                    .clone();
-                                Some(current)
-                            } else {
-                                None
-                            };
-
-                            // Bind the piped value as the first parameter
-                            if let Some(param) = params.first() {
-                                self.env.define(param.clone(), value);
-                            }
-
-                            // Execute function body
-                            if let Err(error) = self
-                                .with_function_context("<pipe function>", |interp| {
-                                    interp.eval_stmts(&body.get())
-                                })
-                            {
-                                self.return_value = Some(error);
-                            }
-                            let mut result = Value::Null;
-                            if let Some(Value::Return(val)) = self.return_value.clone() {
-                                self.return_value = None;
-                                result = *val;
-                            } else if let Some(Value::Error(message)) = self.return_value.clone() {
-                                self.return_value = None;
-                                result = Value::Error(message);
-                            } else if let Some(Value::ErrorObject { .. }) =
-                                self.return_value.clone()
-                            {
-                                result = self.return_value.clone().unwrap();
-                            }
-
-                            // Restore environment if we changed it
-                            if let Some(env) = restore_env {
-                                self.env = env;
-                            }
-
-                            // Pop scope
-                            self.env.pop_scope();
-
-                            return result;
+                        if matches!(func, Value::Function(..)) {
+                            return self.call_user_function(&func, &[value]);
                         } else if let Value::NativeFunction(ref name) = func {
                             // Handle built-in functions
                             // Create a simple expression for the value and call the native function
@@ -5788,8 +5737,8 @@ impl Interpreter {
 
                             result
                         } else {
-                            // Non-closure: just create new scope
-                            self.env.push_scope();
+                            // Top-level function: hide unrelated caller-local scopes
+                            let caller_scopes = self.env.enter_global_function();
 
                             for (i, param) in params.iter().enumerate() {
                                 if let Some(arg) = evaluated_args.get(i) {
@@ -5802,7 +5751,7 @@ impl Interpreter {
                                     interp.eval_stmts(&body.get())
                                 })
                             {
-                                self.env.pop_scope();
+                                self.env.leave_global_function(caller_scopes);
                                 self.call_stack.pop();
                                 return error;
                             }
@@ -5822,7 +5771,7 @@ impl Interpreter {
                                 Value::Null
                             };
 
-                            self.env.pop_scope();
+                            self.env.leave_global_function(caller_scopes);
                             self.call_stack.pop();
 
                             result
@@ -6050,13 +5999,13 @@ impl Interpreter {
 
                                 return result;
                             } else {
-                                // Non-closure: just create new scope
-                                self.env.push_scope();
+                                // Top-level function: hide unrelated caller-local scopes
+                                let caller_scopes = self.env.enter_global_function();
 
                                 for (i, param) in params.iter().enumerate() {
                                     if let Some(arg) = evaluated_args.get(i) {
                                         if Self::is_error_value(arg) {
-                                            self.env.pop_scope();
+                                            self.env.leave_global_function(caller_scopes);
                                             self.call_stack.pop();
                                             return arg.clone();
                                         }
@@ -6069,7 +6018,7 @@ impl Interpreter {
                                         interp.eval_stmts(&body.get())
                                     })
                                 {
-                                    self.env.pop_scope();
+                                    self.env.leave_global_function(caller_scopes);
                                     self.call_stack.pop();
                                     return error;
                                 }
@@ -6090,7 +6039,7 @@ impl Interpreter {
                                     Value::Null
                                 };
 
-                                self.env.pop_scope();
+                                self.env.leave_global_function(caller_scopes);
                                 self.call_stack.pop();
 
                                 return result;

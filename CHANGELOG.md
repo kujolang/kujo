@@ -39,6 +39,10 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Interpreter top-level function calls no longer read or overwrite unrelated
+  caller-local bindings. Direct, indirect, callback, and pipe calls preserve
+  lexical boundaries while retaining global assignment and captured closures.
+
 - VM routed HTTP dispatch now invokes closures created by imported modules,
   allowing modular route registrars to capture application context with the
   same behavior as interpreter mode.
