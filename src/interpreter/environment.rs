@@ -84,6 +84,25 @@ impl Environment {
         }
     }
 
+    /// Enter a top-level function's lexical environment without cloning globals.
+    /// Caller-local scopes are suspended, so assignment cannot mutate unrelated
+    /// caller bindings. Captured closures use their own environment instead.
+    pub(crate) fn enter_global_function(&mut self) -> Environment {
+        let caller = Environment {
+            scopes: self.scopes.split_off(1),
+            binding_kinds: self.binding_kinds.split_off(1),
+        };
+        self.push_scope();
+        caller
+    }
+
+    pub(crate) fn leave_global_function(&mut self, caller: Environment) {
+        self.scopes.truncate(1);
+        self.binding_kinds.truncate(1);
+        self.scopes.extend(caller.scopes);
+        self.binding_kinds.extend(caller.binding_kinds);
+    }
+
     /// Get a variable from the environment, searching from inner to outer scopes
     /// Returns a cloned value if found
     pub fn get(&self, name: &str) -> Option<Value> {

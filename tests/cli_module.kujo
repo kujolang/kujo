@@ -21,6 +21,11 @@ let unknown := parse(["build", "--unknown"], spec)
 assert(unknown["ok"] == false, "unknown option should fail")
 assert(unknown["error"]["code"] == "unknown_option", "expected unknown-option error")
 
+let before_long_flag := parse(["build", "--output", "--json"], spec)
+assert(before_long_flag["error"]["code"] == "missing_value", "long option must use its explicit spec when the next token is a flag")
+let before_short_flag := parse(["build", "-o", "-j"], spec)
+assert(before_short_flag["error"]["code"] == "missing_value", "short option must use its explicit spec when the next token is a flag")
+
 let terminated := parse(["build", "--output", "x", "--", "--literal"], spec)
 assert(terminated["ok"] == true, "terminator parse should succeed")
 assert(terminated["value"]["positionals"][0] == "--literal", "terminator should preserve literal")

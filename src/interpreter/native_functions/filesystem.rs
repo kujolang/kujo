@@ -289,6 +289,34 @@ fn read_file_beneath_bytes(
     Ok(bytes)
 }
 
+fn digest_file_beneath(root: &str, relative_path: &str, max_bytes: usize) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    if max_bytes == 0 || max_bytes > 67_108_864 {
+        return Err("digest_file_beneath[invalid_max_bytes]: limit must be 1..=67108864".into());
+    }
+    let mut reader =
+        open_regular_beneath(root, relative_path, max_bytes as u64)?.take(max_bytes as u64 + 1);
+    let mut buffer = [0u8; 65_536];
+    let mut digest = Sha256::new();
+    let mut count = 0usize;
+    loop {
+        let bytes =
+            reader.read(&mut buffer).map_err(|error| beneath_error("read_failed", error))?;
+        if bytes == 0 {
+            break;
+        }
+        count += bytes;
+        if count > max_bytes {
+            return Err("digest_file_beneath[size_limit_exceeded]: file exceeds byte limit".into());
+        }
+        digest.update(&buffer[..bytes]);
+    }
+    let mut result = DictMap::default();
+    result.insert("bytes".into(), Value::Int(count as i64));
+    result.insert("sha256".into(), Value::Str(Arc::new(format!("{:x}", digest.finalize()))));
+    Ok(Value::Dict(Arc::new(result)))
+}
+
 const MAX_CONFINED_DIGEST_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 
 fn sha256_bounded_reader(reader: &mut impl Read, max_bytes: u64) -> Result<(String, u64), String> {
@@ -1367,7 +1395,10 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
-        "read_file_beneath" | "read_binary_file_beneath" | "read_binary_prefix_beneath" => {
+        "read_file_beneath"
+        | "read_binary_file_beneath"
+        | "read_binary_prefix_beneath"
+        | "digest_file_beneath" => {
             if arg_values.len() != 3 {
                 return Some(Value::Error(format!(
                     "{} requires root, relative_path, and max_bytes arguments",
@@ -1399,6 +1430,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     return Some(Value::Error(message));
                 }
             };
+            if name == "digest_file_beneath" {
+                return Some(
+                    digest_file_beneath(root, relative_path, max_bytes)
+                        .unwrap_or_else(Value::Error),
+                );
+            }
             let result = if name == "read_binary_prefix_beneath" {
                 read_binary_prefix_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes)
             } else {
@@ -2469,6 +2506,121 @@ mod beneath_tests {
     use std::thread;
 
     #[test]
+    fn digest_beneath_streams_large_files_and_enforces_exact_limit() {
+        use sha2::{Digest, Sha256};
+        let root = tempfile::tempdir().unwrap();
+        let data = vec![0x61; 9 * 1024 * 1024];
+        fs::write(root.path().join("large.bin"), &data).unwrap();
+        let path = root.path().to_str().unwrap();
+        let result = digest_file_beneath(path, "large.bin", data.len()).unwrap();
+        let Value::Dict(result) = result else { panic!("digest must be a dictionary") };
+        assert!(matches!(result.get("bytes"), Some(Value::Int(n)) if *n == data.len() as i64));
+        assert!(
+            matches!(result.get("sha256"), Some(Value::Str(hash)) if hash.as_str() == format!("{:x}", Sha256::digest(&data)))
+        );
+        assert!(digest_file_beneath(path, "large.bin", data.len() - 1)
+            .unwrap_err()
+            .contains("size_limit_exceeded"));
+        assert!(digest_file_beneath(path, "large.bin", 0).is_err());
+        assert!(digest_file_beneath(path, "large.bin", 67_108_865).is_err());
+        fs::write(root.path().join("empty"), "").unwrap();
+        assert!(digest_file_beneath(path, "empty", 1).is_ok());
+        assert!(digest_file_beneath(path, "../outside", 100).is_err());
+        fs::create_dir(root.path().join("directory")).unwrap();
+        assert!(digest_file_beneath(path, "directory", 100).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn digest_beneath_rejects_links_and_fifo() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("target"), "private").unwrap();
+        symlink("target", root.path().join("alias")).unwrap();
+        let path = root.path().to_str().unwrap();
+        assert!(digest_file_beneath(path, "alias", 100).is_err());
+        let status =
+            std::process::Command::new("mkfifo").arg(root.path().join("pipe")).status().unwrap();
+        assert!(status.success());
+        assert!(digest_file_beneath(path, "pipe", 100).is_err());
+    }
+
+    #[test]
+    fn list_beneath_pages_stems_with_bounded_memory_and_scan() {
+        let root = tempfile::tempdir().unwrap();
+        fs::create_dir(root.path().join("records")).unwrap();
+        for name in ["review-a-b.json", "review-a.json", "review-z.json", "ignored.txt"] {
+            fs::write(root.path().join("records").join(name), "{}").unwrap();
+        }
+        let root = root.path().to_str().unwrap();
+        let first = list_dir_beneath_page(root, "records", "", ".json", 1, 4).unwrap();
+        assert_eq!(first.names, ["review-a.json"]);
+        assert_eq!(first.next_cursor, "review-a");
+        assert!(first.truncated);
+        assert_eq!(first.scanned, 4);
+        let second =
+            list_dir_beneath_page(root, "records", &first.next_cursor, ".json", 2, 4).unwrap();
+        assert_eq!(second.names, ["review-a-b.json", "review-z.json"]);
+        assert!(!second.truncated);
+        assert!(list_dir_beneath_page(root, "records", "", ".json", 1, 3)
+            .unwrap_err()
+            .contains("scan_limit"));
+        for relative in ["../escape", "/absolute", "records/../records", "records//child", ""] {
+            assert!(list_dir_beneath_page(root, relative, "", "", 1, 100).is_err());
+        }
+        for (limit, scan) in [(0, 1), (1001, 1), (1, 0), (1, 100001)] {
+            assert!(list_dir_beneath_page(root, "records", "", "", limit, scan).is_err());
+        }
+        assert!(list_dir_beneath_page(root, "records", "../bad", "", 1, 100).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn list_beneath_rejects_symlinks_and_ancestor_swaps() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        fs::write(outside.path().join("secret.json"), "outside").unwrap();
+        symlink(outside.path(), root.path().join("linked")).unwrap();
+        symlink(root.path().join("missing"), root.path().join("dangling")).unwrap();
+        for relative in ["linked", "dangling"] {
+            assert!(list_dir_beneath_page(
+                root.path().to_str().unwrap(),
+                relative,
+                "",
+                ".json",
+                10,
+                100
+            )
+            .is_err());
+        }
+        fs::create_dir(root.path().join("live")).unwrap();
+        fs::write(root.path().join("live/inside.json"), "inside").unwrap();
+        let running = Arc::new(AtomicBool::new(true));
+        let flag = running.clone();
+        let root_path = root.path().to_path_buf();
+        let outside_path = outside.path().to_path_buf();
+        let mover = thread::spawn(move || {
+            while flag.load(Ordering::Relaxed) {
+                if fs::rename(root_path.join("live"), root_path.join("parked")).is_ok() {
+                    let _ = symlink(&outside_path, root_path.join("live"));
+                    let _ = fs::remove_file(root_path.join("live"));
+                    let _ = fs::rename(root_path.join("parked"), root_path.join("live"));
+                }
+            }
+        });
+        for _ in 0..500 {
+            if let Ok(page) =
+                list_dir_beneath_page(root.path().to_str().unwrap(), "live", "", ".json", 10, 100)
+            {
+                assert!(!page.names.iter().any(|name| name == "secret.json"));
+            }
+        }
+        running.store(false, Ordering::Relaxed);
+        mover.join().unwrap();
+    }
+
+    #[test]
     fn directory_pages_are_ordered_filtered_and_bounded() {
         let root = tempfile::tempdir().unwrap();
         for i in (0..2000).rev() {
@@ -2882,6 +3034,9 @@ mod beneath_tests {
         let error =
             read_file_beneath_bytes(root.to_str().unwrap(), "dir-link/secret.txt", 64).unwrap_err();
         assert!(error.contains("[component_rejected]"), "{error}");
+        assert!(list_dir_beneath_page(root.to_str().unwrap(), "dir-link", "", "", 10, 100)
+            .unwrap_err()
+            .contains("[component_rejected]"));
         let write_error = write_file_atomic_beneath(
             root.to_str().unwrap(),
             "dir-link/secret.txt",
@@ -2938,81 +3093,6 @@ mod beneath_tests {
         let _ = fs::remove_dir_all(root);
         let _ = fs::remove_dir_all(outside);
     }
-    #[test]
-    fn list_beneath_pages_stems_with_bounded_memory_and_scan() {
-        let root = tempfile::tempdir().unwrap();
-        fs::create_dir(root.path().join("records")).unwrap();
-        for name in ["review-a-b.json", "review-a.json", "review-z.json", "ignored.txt"] {
-            fs::write(root.path().join("records").join(name), "{}").unwrap();
-        }
-        let root = root.path().to_str().unwrap();
-        let first = list_dir_beneath_page(root, "records", "", ".json", 1, 4).unwrap();
-        assert_eq!(first.names, ["review-a.json"]);
-        assert_eq!(first.next_cursor, "review-a");
-        assert!(first.truncated);
-        assert_eq!(first.scanned, 4);
-        let second =
-            list_dir_beneath_page(root, "records", &first.next_cursor, ".json", 2, 4).unwrap();
-        assert_eq!(second.names, ["review-a-b.json", "review-z.json"]);
-        assert!(!second.truncated);
-        assert!(list_dir_beneath_page(root, "records", "", ".json", 1, 3)
-            .unwrap_err()
-            .contains("scan_limit"));
-        for relative in ["../escape", "/absolute", "records/../records", "records//child", ""] {
-            assert!(list_dir_beneath_page(root, relative, "", "", 1, 100).is_err());
-        }
-        for (limit, scan) in [(0, 1), (1001, 1), (1, 0), (1, 100001)] {
-            assert!(list_dir_beneath_page(root, "records", "", "", limit, scan).is_err());
-        }
-        assert!(list_dir_beneath_page(root, "records", "../bad", "", 1, 100).is_err());
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn list_beneath_rejects_symlinks_and_ancestor_swaps() {
-        use std::os::unix::fs::symlink;
-        let root = tempfile::tempdir().unwrap();
-        let outside = tempfile::tempdir().unwrap();
-        fs::write(outside.path().join("secret.json"), "outside").unwrap();
-        symlink(outside.path(), root.path().join("linked")).unwrap();
-        symlink(root.path().join("missing"), root.path().join("dangling")).unwrap();
-        for relative in ["linked", "dangling"] {
-            assert!(list_dir_beneath_page(
-                root.path().to_str().unwrap(),
-                relative,
-                "",
-                ".json",
-                10,
-                100
-            )
-            .is_err());
-        }
-        fs::create_dir(root.path().join("live")).unwrap();
-        fs::write(root.path().join("live/inside.json"), "inside").unwrap();
-        let running = Arc::new(AtomicBool::new(true));
-        let flag = running.clone();
-        let root_path = root.path().to_path_buf();
-        let outside_path = outside.path().to_path_buf();
-        let mover = thread::spawn(move || {
-            while flag.load(Ordering::Relaxed) {
-                if fs::rename(root_path.join("live"), root_path.join("parked")).is_ok() {
-                    let _ = symlink(&outside_path, root_path.join("live"));
-                    let _ = fs::remove_file(root_path.join("live"));
-                    let _ = fs::rename(root_path.join("parked"), root_path.join("live"));
-                }
-            }
-        });
-        for _ in 0..500 {
-            if let Ok(page) =
-                list_dir_beneath_page(root.path().to_str().unwrap(), "live", "", ".json", 10, 100)
-            {
-                assert!(!page.names.iter().any(|name| name == "secret.json"));
-            }
-        }
-        running.store(false, Ordering::Relaxed);
-        mover.join().unwrap();
-    }
-
     #[test]
     fn copy_beneath_streams_exact_bytes_and_never_replaces() {
         let root = fixture_root("copy_bounds");

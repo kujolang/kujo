@@ -128,6 +128,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "sha256_file_beneath"
         | "copy_file_beneath"
         | "read_binary_file_beneath"
+        | "digest_file_beneath"
         | "read_binary_prefix_beneath"
         | "read_binary_file"
         | "read_lines"

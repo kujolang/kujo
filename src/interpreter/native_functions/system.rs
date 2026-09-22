@@ -1507,6 +1507,21 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             Value::Struct { name: "ArgParser".to_string(), fields }
         }
 
+        "read_stdin" => {
+            let limit = match arg_values {
+                [Value::Int(limit)] if (1..=8_388_608).contains(limit) => *limit as usize,
+                _ => {
+                    return Some(Value::Error(
+                        "read_stdin() expects one integer byte limit in 1..=8388608".to_string(),
+                    ))
+                }
+            };
+            match read_bounded_utf8(std::io::stdin().lock(), limit) {
+                Ok(text) => Value::Str(Arc::new(text)),
+                Err(message) => Value::Error(message),
+            }
+        }
+
         "input" => {
             if arg_values.len() > 1 {
                 return Some(Value::Error("input() expects 0-1 arguments".to_string()));
@@ -2586,5 +2601,35 @@ mod tests {
             Value::Error(message)
                 if message == "execute_status() expects 1-2 arguments (command, [options])"
         ));
+    }
+}
+
+/// Read at most limit + 1 bytes; preserve whitespace and reject lossy decoding.
+fn read_bounded_utf8(reader: impl Read, limit: usize) -> Result<String, String> {
+    let mut bytes = Vec::new();
+    reader
+        .take(limit as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| "read_stdin() could not read input".to_string())?;
+    if bytes.len() > limit {
+        return Err("read_stdin() input exceeds byte limit".to_string());
+    }
+    String::from_utf8(bytes).map_err(|_| "read_stdin() input is not valid UTF-8".to_string())
+}
+
+#[cfg(test)]
+mod bounded_stdin_tests {
+    use super::read_bounded_utf8;
+    use std::io::Cursor;
+
+    #[test]
+    fn bounded_stdin_preserves_exact_bytes_and_rejects_overflow_and_invalid_utf8() {
+        assert_eq!(read_bounded_utf8(Cursor::new(b" a\n"), 3).unwrap(), " a\n");
+        assert_eq!(read_bounded_utf8(Cursor::new(b""), 1).unwrap(), "");
+        assert!(read_bounded_utf8(Cursor::new(b"abcd"), 3).unwrap_err().contains("exceeds"));
+        assert!(read_bounded_utf8(Cursor::new([0xff]), 1).unwrap_err().contains("UTF-8"));
+        let mut input = Cursor::new(b"abcdefgh");
+        assert!(read_bounded_utf8(&mut input, 3).is_err());
+        assert_eq!(input.position(), 4);
     }
 }

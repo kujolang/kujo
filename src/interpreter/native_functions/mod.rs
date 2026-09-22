@@ -5424,6 +5424,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "runtime-image")]
     fn test_release_hardening_load_image_round_trip_behavior() {
         let mut interpreter = Interpreter::new();
         let image_path = tmp_test_path("dispatch_load_image.png");
@@ -6145,6 +6146,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "runtime-archive")]
     fn test_release_hardening_zip_module_round_trip_behaviors() {
         let mut interpreter = Interpreter::new();
         let archive_path = tmp_test_path("dispatch_zip_roundtrip.zip");
