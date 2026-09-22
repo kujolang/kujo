@@ -2275,10 +2275,14 @@ fn top_level_functions_cannot_overwrite_caller_locals() {
     run_vm(script, vm_env.clone()).unwrap();
     let globals = vm_env.lock().unwrap();
     for environment in [&interp.env, &*globals] {
-        assert_eq!(
-            format!("{:?}", environment.get("result")),
-            "Some(Array([Str(\"caller\"), Int(5), Int(6), Int(7)]))"
-        );
+        let Some(Value::Array(values)) = environment.get("result") else {
+            panic!("expected the caller's returned array");
+        };
+        assert_eq!(values.len(), 4);
+        assert!(matches!(&values[0], Value::Str(text) if text.as_str() == "caller"));
+        for (value, expected) in values[1..].iter().zip([5, 6, 7]) {
+            assert!(matches!(value, Value::Int(actual) if *actual == expected));
+        }
         assert!(matches!(environment.get("calls"), Some(Value::Int(3))));
         assert!(environment.get("digest").is_none());
     }
