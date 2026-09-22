@@ -1382,6 +1382,19 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "list_dir_page".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::String),
+                ],
+                return_type: None,
+            },
+        );
+
+        self.functions.insert(
             "list_dir".to_string(),
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)],

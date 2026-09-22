@@ -8,6 +8,14 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Added capability-gated `list_dir_page(path, after, limit, suffix)` for sorted
+  directory pages retaining at most limit+1 filenames. Each page still scans
+  the directory; entry/UTF-8 errors are explicit and no cross-call snapshot is
+  promised.
+- Streaming AES encryption/decryption now publish with atomic no-replace
+  semantics, so concurrent writers cannot overwrite a successful output.
+  Additive receipt fields expose publication and temporary-file cleanup facts.
+
 - Added `read_binary_prefix_beneath` for bounded regular-file prefix reads
   through a rooted handle, retaining in-root relative symlinks and rejecting
   concurrent symlink escapes.
