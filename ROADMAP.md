@@ -3,7 +3,7 @@
 Updated: 2026-09-13
 Stable release: [v1.4.0](https://github.com/kujolang/kujo/releases/tag/v1.4.0)
 
-> Current crate version: `1.4.0` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.5.0` in [Cargo.toml](Cargo.toml)
 
 Kujo 1.0 shipped on August 8, 2026. The current 1.4 line is stable and adds the
 runtime primitives needed by native Kujo package installers and global tools.

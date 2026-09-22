@@ -6,6 +6,8 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-22
+
 - Added bounded, descriptor-relative `list_dir_beneath` pages with explicit scan ceilings, suffix-based cursors, and symlink/race coverage.
 
 ### Changed
