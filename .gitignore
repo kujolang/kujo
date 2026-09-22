@@ -355,3 +355,12 @@ benchmark_output.txt
 /.email-test*/
 /artifacts/hardening/
 /artifacts/live-conformance.json
+
+# Runtime local artifacts required by the shared artifact guard
+/.kujo-http-upload-*.body
+/.*.kujo-agent-stage-*/
+/.env.local
+/.kujo-agent/
+/.dispatch-runs/
+/workcell-image/agents-sdk/
+/workcell-image/.agents-sdk-stage-*/
