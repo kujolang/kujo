@@ -693,6 +693,7 @@ mod tests {
             "read_file",
             "read_file_beneath",
             "read_binary_file_beneath",
+            "read_binary_prefix_beneath",
             "write_file",
             "write_file_atomic",
             "write_file_atomic_beneath",

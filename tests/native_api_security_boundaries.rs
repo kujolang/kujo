@@ -365,6 +365,14 @@ fn filesystem_beneath_is_filesystem_read_gated_in_vm_and_interpreter() {
             &runtime_args,
         );
     }
+    let script = "read_binary_prefix_beneath(\".\", \"blocked.txt\", 64)\n";
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            script,
+            "Capability denied: filesystem-read required for read_binary_prefix_beneath",
+            &runtime_args,
+        );
+    }
 }
 
 #[test]
@@ -402,7 +410,7 @@ fn filesystem_beneath_has_vm_interpreter_parity() {
     fs::write(project_root.join("trusted/note.txt"), b"hello").expect("text fixture");
     fs::write(
         &script_path,
-        "let text := read_file_beneath(\"trusted\", \"note.txt\", 5)\nlet blob := read_binary_file_beneath(\"trusted\", \"note.txt\", 5)\nprint(text + \":\" + to_string(len(blob)))\n",
+        "let text := read_file_beneath(\"trusted\", \"note.txt\", 5)\nlet blob := read_binary_file_beneath(\"trusted\", \"note.txt\", 5)\nlet prefix := read_binary_prefix_beneath(\"trusted\", \"note.txt\", 3)\nprint(text + \":\" + to_string(len(blob)) + \":\" + to_string(len(prefix)))\n",
     )
     .expect("script fixture");
 
@@ -422,7 +430,7 @@ fn filesystem_beneath_has_vm_interpreter_parity() {
         outputs.push(stdout_text(&output));
     }
     assert_eq!(outputs[0], outputs[1]);
-    assert!(outputs[0].contains("hello:5"));
+    assert!(outputs[0].contains("hello:5:3"));
 }
 
 #[test]

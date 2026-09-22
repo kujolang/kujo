@@ -394,6 +394,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `read_file_lossy` | stable | `txt := read_file_lossy("legacy.txt")` |
 | `read_file_beneath` | preview | `txt := read_file_beneath("trusted", "docs/note.txt", 1048576)` |
 | `read_binary_file_beneath` | preview | `blob := read_binary_file_beneath("trusted", "docs/file.pdf", 5000000)` |
+| `read_binary_prefix_beneath` | preview (unreleased) | `prefix := read_binary_prefix_beneath("trusted", "src/main.kujo", 2000000)` |
 | `write_file` | stable | `write_file("notes.txt", "hello")` |
 | `write_file_atomic` | stable | `write_file_atomic("notes.txt", "hello", true)` |
 | `write_file_atomic_beneath` | preview (unreleased) | `write_file_atomic_beneath(".", "reports/check.json", "{}", true)` |
@@ -427,15 +428,6 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `io_truncate` | preview | `io_truncate("out.bin", 1024)` |
 | `io_copy_range` | preview | `io_copy_range("in.bin", "out.bin", 0, 1024)` |
 
-`read_file_beneath` and `read_binary_file_beneath` open the trusted root once,
-then traverse every untrusted relative component through directory handles
-without following symbolic links or Windows reparse points. Absolute paths,
-`.` and `..`, non-regular final objects, and reads above the caller limit fail
-closed. The caller limit must be between 1 byte and the runtime's 8 MiB file
-I/O ceiling. The text variant also requires valid UTF-8. Both variants require
-`filesystem-read` and share the same native implementation in interpreter and
-VM execution. They do not prevent an actor with write access from changing the
-contents of a regular file after its handle has been opened.
 | `join_path` | stable | `p := join_path("a", "b")` |
 | `dirname` | stable | `d := dirname("a/b.txt")` |
 | `basename` | stable | `b := basename("a/b.txt")` |
@@ -450,6 +442,25 @@ contents of a regular file after its handle has been opened.
 | `os_chdir` | preview | `os_chdir("work")` |
 | `os_rmdir` | preview | `os_rmdir("empty-dir")` |
 | `os_environ` | preview | `vars := os_environ()` |
+
+`read_file_beneath` and `read_binary_file_beneath` open the trusted root once,
+then traverse every untrusted relative component through directory handles
+without following symbolic links or Windows reparse points. Absolute paths,
+`.` and `..`, non-regular final objects, and reads above the caller limit fail
+closed. The caller limit must be between 1 byte and the runtime's 8 MiB file
+I/O ceiling. The text variant also requires valid UTF-8. Both variants require
+`filesystem-read` and share the same native implementation in interpreter and
+VM execution. They do not prevent an actor with write access from changing the
+contents of a regular file after its handle has been opened.
+
+`read_binary_prefix_beneath` separately reads up to the caller's nonnegative
+`max_bytes` limit from one regular-file handle rooted at `root`, even if the
+file itself is larger. Relative in-root file or directory symlinks may resolve;
+escapes, non-regular objects, and invalid paths fail closed. Absolute symlink
+targets are not supported by the capability resolver. Callers must keep the
+trusted root path stable: a separate actor replacing the root itself before
+the root handle opens is outside this API's containment guarantee. Contents
+of an opened regular file can still change during the read.
 
 Write-file overwrite contract:
 

@@ -66,6 +66,7 @@ Never use it to execute arbitrary or untrusted programs.
 | Flag | Capability | Typical APIs Unlocked | Primary Risk |
 | --- | --- | --- | --- |
 | `--allow-fs-read` | Filesystem read | `read_file`, `read_lines`, `read_binary_file`, metadata/path reads | Data disclosure |
+
 | `--allow-fs-write` | Filesystem write | `write_file`, `append_file`, `write_binary_file`, `pdf_render_html_to_file`, bounded private spools, `publish_file_noreplace`, mkdir/write helpers | Data tampering |
 | `--allow-fs-delete` | Filesystem delete | `delete_file`, `publish_file_noreplace`, delete-adjacent flows | Data loss |
 | `--allow-process-exec` | Direct process execution | `spawn_process`, `pipe_commands` | Arbitrary command execution |
@@ -75,6 +76,13 @@ Never use it to execute arbitrary or untrusted programs.
 | `--allow-net-client` | Outbound network | `http_get/post/request`, TCP/UDP client operations | Data exfiltration/SSRF-style pivots |
 | `--allow-ai` | AI provider egress | `ai_chat`, `ai_stream_chat`, `ai_embedding`, `ai_tool_loop` | Prompt/data exfiltration to model endpoints |
 | `--allow-net-server` | Listener/network server | `http_server.listen`, server-side sockets | Local service exposure |
+
+The unreleased `read_binary_prefix_beneath` is filesystem-read gated. It
+confines each prefix read to a single regular-file handle beneath an opened
+trusted root, even when in-root relative symlinks change concurrently. The
+caller must keep the trusted root path itself stable; it is not a process
+sandbox, a snapshot of mutable file contents, or a defense against a root-path
+swap before the handle opens.
 
 Routed HTTP servers apply `MAX_NETWORK_BODY_BYTES` to inbound bodies in both VM and interpreter modes. They read at most one byte beyond the limit to detect overflow and return HTTP 413 before invoking application handlers. Accepted sockets receive a read deadline before headers or bodies are parsed; stalled headers and incomplete bodies return HTTP 408 without route dispatch. `KUJO_HTTP_SERVER_READ_TIMEOUT_MS` defaults to 10000 and is clamped to 100..300000 milliseconds.
 

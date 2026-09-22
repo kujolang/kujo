@@ -8,6 +8,10 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Added `read_binary_prefix_beneath` for bounded regular-file prefix reads
+  through a rooted handle, retaining in-root relative symlinks and rejecting
+  concurrent symlink escapes.
+
 - Added opt-in `kujo run --isolated-imports` and inherited
   `KUJO_ISOLATED_IMPORTS=1` for installed tools: imports use entry-file and
   explicit module roots without discovering the caller's modules or lockfile,

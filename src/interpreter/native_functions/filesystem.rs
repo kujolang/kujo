@@ -152,6 +152,46 @@ fn read_file_beneath_bytes(
     Ok(bytes)
 }
 
+/// Read a bounded prefix through a single handle rooted at `root`. Unlike the
+/// whole-file reader, an in-root relative symlink is permitted and a large
+/// regular file does not fail just because its tail exceeds `max_bytes`.
+fn read_binary_prefix_beneath_bytes(
+    root: &str,
+    relative_path: &str,
+    max_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    let error =
+        |code: &str, detail: String| format!("read_binary_prefix_beneath[{}]: {}", code, detail);
+    let relative_path = Path::new(relative_path);
+    validate_beneath_relative_path(relative_path).map_err(|message| {
+        message.replacen("read_file_beneath", "read_binary_prefix_beneath", 1)
+    })?;
+    let directory = Dir::open_ambient_dir(root, ambient_authority())
+        .map_err(|source| error("root_open_failed", source.to_string()))?;
+    let mut options = CapOpenOptions::new();
+    options.read(true).nonblock(true);
+    let mut file = directory
+        .open_with(relative_path, &options)
+        .map_err(|source| error("target_open_failed", source.to_string()))?;
+    let metadata =
+        file.metadata().map_err(|source| error("target_metadata_failed", source.to_string()))?;
+    if !metadata.is_file() {
+        return Err(error(
+            "target_not_regular_file",
+            format!("target '{}' is not a regular file", relative_path.display()),
+        ));
+    }
+
+    let mut bytes = Vec::with_capacity(
+        metadata.len().min(max_bytes as u64).min(MAX_FILE_WRITE_BYTES as u64) as usize,
+    );
+    Read::by_ref(&mut file)
+        .take(max_bytes as u64)
+        .read_to_end(&mut bytes)
+        .map_err(|source| error("read_failed", source.to_string()))?;
+    Ok(bytes)
+}
+
 #[derive(Clone, Copy)]
 struct ZipExtractionLimits {
     max_entries: usize,
@@ -995,7 +1035,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
-        "read_file_beneath" | "read_binary_file_beneath" => {
+        "read_file_beneath" | "read_binary_file_beneath" | "read_binary_prefix_beneath" => {
             if arg_values.len() != 3 {
                 return Some(Value::Error(format!(
                     "{} requires root, relative_path, and max_bytes arguments",
@@ -1016,14 +1056,24 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             let max_bytes = match usize::try_from(*max_bytes) {
                 Ok(value) => value,
                 Err(_) => {
-                    return Some(Value::Error(beneath_error(
-                        "invalid_max_bytes",
-                        format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
-                    )));
+                    let message = if name == "read_binary_prefix_beneath" {
+                        "read_binary_prefix_beneath[invalid_max_bytes]: max_bytes must be non-negative".to_string()
+                    } else {
+                        beneath_error(
+                            "invalid_max_bytes",
+                            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
+                        )
+                    };
+                    return Some(Value::Error(message));
                 }
             };
-            match read_file_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes) {
-                Ok(bytes) if name == "read_binary_file_beneath" => Value::Bytes(bytes),
+            let result = if name == "read_binary_prefix_beneath" {
+                read_binary_prefix_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes)
+            } else {
+                read_file_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes)
+            };
+            match result {
+                Ok(bytes) if name != "read_file_beneath" => Value::Bytes(bytes),
                 Ok(bytes) => match String::from_utf8(bytes) {
                     Ok(content) => Value::Str(Arc::new(content)),
                     Err(_) => Value::Error(beneath_error(
@@ -2331,6 +2381,107 @@ mod beneath_tests {
         let _ = fs::remove_dir_all(outside);
     }
 
+    #[test]
+    fn read_binary_prefix_beneath_bounds_large_regular_files() {
+        let root = fixture_root("prefix_large");
+        let mut file = File::create(root.join("large.py")).unwrap();
+        file.write_all(b"import pathlib\n").unwrap();
+        file.set_len(64 * 1024 * 1024).unwrap();
+        assert_eq!(
+            read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "large.py", 14).unwrap(),
+            b"import pathlib"
+        );
+        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "large.py", 0)
+            .unwrap()
+            .is_empty());
+        assert_eq!(
+            read_binary_prefix_beneath_bytes(
+                root.to_str().unwrap(),
+                "large.py",
+                MAX_FILE_WRITE_BYTES + 1
+            )
+            .unwrap()
+            .len(),
+            MAX_FILE_WRITE_BYTES + 1
+        );
+        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "../large.py", 14)
+            .unwrap_err()
+            .contains("[invalid_relative_path]"));
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_binary_prefix_beneath_follows_inside_aliases_not_outside_aliases() {
+        use std::os::unix::fs::symlink;
+        let root = fixture_root("prefix_alias");
+        let outside = fixture_root("prefix_outside");
+        fs::create_dir(root.join("safe")).unwrap();
+        fs::create_dir(root.join("nested")).unwrap();
+        fs::write(root.join("safe/note.txt"), b"safe").unwrap();
+        fs::write(outside.join("note.txt"), b"secret").unwrap();
+        symlink("safe", root.join("inside-dir")).unwrap();
+        symlink("../safe", root.join("nested/inside-parent")).unwrap();
+        symlink("safe/note.txt", root.join("inside-file")).unwrap();
+        symlink(&outside, root.join("outside-dir")).unwrap();
+        symlink(outside.join("note.txt"), root.join("outside-file")).unwrap();
+        for path in ["inside-dir/note.txt", "inside-file", "nested/inside-parent/note.txt"] {
+            assert_eq!(
+                read_binary_prefix_beneath_bytes(root.to_str().unwrap(), path, 64).unwrap(),
+                b"safe"
+            );
+        }
+        for path in ["outside-dir/note.txt", "outside-file"] {
+            assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), path, 64).is_err());
+        }
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn read_binary_prefix_beneath_race_does_not_escape_or_block_on_fifo() {
+        use std::os::unix::fs::symlink;
+        let root = fixture_root("prefix_race");
+        let outside = fixture_root("prefix_race_outside");
+        fs::create_dir(root.join("live")).unwrap();
+        fs::write(root.join("live/note.txt"), b"safe").unwrap();
+        fs::write(outside.join("note.txt"), b"secret").unwrap();
+        let stop = std::sync::Arc::new(AtomicBool::new(false));
+        let signal = stop.clone();
+        let mutable_root = root.clone();
+        let mutable_outside = outside.clone();
+        let attacker = thread::spawn(move || {
+            while !signal.load(Ordering::Relaxed) {
+                if fs::rename(mutable_root.join("live"), mutable_root.join("parked")).is_ok() {
+                    let _ = symlink(&mutable_outside, mutable_root.join("live"));
+                    let _ = fs::remove_file(mutable_root.join("live"));
+                    let _ = fs::rename(mutable_root.join("parked"), mutable_root.join("live"));
+                }
+            }
+        });
+        for _ in 0..2_000 {
+            if let Ok(bytes) =
+                read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "live/note.txt", 64)
+            {
+                assert_eq!(bytes, b"safe", "rooted read escaped during symlink swap");
+            }
+        }
+        stop.store(true, Ordering::Relaxed);
+        attacker.join().unwrap();
+        let _ = fs::remove_file(root.join("live"));
+        let fifo = root.join("pipe");
+        use std::ffi::CString;
+        use std::os::unix::ffi::OsStrExt;
+        let fifo_name = CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(fifo_name.as_ptr(), 0o600) }, 0);
+        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "pipe", 64)
+            .unwrap_err()
+            .contains("[target_not_regular_file]"));
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
+
     #[cfg(windows)]
     #[test]
     fn read_file_beneath_rejects_windows_directory_reparse_points() {
@@ -2363,6 +2514,36 @@ mod beneath_tests {
         assert!(write_error.contains("[component_rejected]"), "{write_error}");
         assert_eq!(fs::read(outside.join("secret.txt")).unwrap(), b"outside");
         let _ = fs::remove_dir(&link);
+        let _ = fs::remove_dir_all(root);
+        let _ = fs::remove_dir_all(outside);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn read_binary_prefix_beneath_confines_windows_junctions() {
+        let root = fixture_root("prefix_windows_reparse");
+        let outside = fixture_root("prefix_windows_outside");
+        fs::create_dir(root.join("safe")).unwrap();
+        fs::write(root.join("safe/note.txt"), b"safe").unwrap();
+        fs::write(outside.join("note.txt"), b"secret").unwrap();
+        for (name, target) in [("inside", root.join("safe")), ("outside", outside.clone())] {
+            let output = std::process::Command::new("cmd")
+                .args(["/C", "mklink", "/J"])
+                .arg(root.join(name))
+                .arg(target)
+                .output()
+                .expect("cmd junction fixture");
+            assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        }
+        assert_eq!(
+            read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "inside/note.txt", 64)
+                .unwrap(),
+            b"safe"
+        );
+        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "outside/note.txt", 64)
+            .is_err());
+        let _ = fs::remove_dir(root.join("inside"));
+        let _ = fs::remove_dir(root.join("outside"));
         let _ = fs::remove_dir_all(root);
         let _ = fs::remove_dir_all(outside);
     }

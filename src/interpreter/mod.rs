@@ -673,6 +673,7 @@ impl Interpreter {
             "read_file_lossy",
             "read_file_beneath",
             "read_binary_file_beneath",
+            "read_binary_prefix_beneath",
             "write_file",
             "write_file_atomic",
             "write_file_atomic_beneath",
@@ -1260,6 +1261,10 @@ impl Interpreter {
         self.env.define(
             "read_binary_file_beneath".to_string(),
             Value::NativeFunction("read_binary_file_beneath".to_string()),
+        );
+        self.env.define(
+            "read_binary_prefix_beneath".to_string(),
+            Value::NativeFunction("read_binary_prefix_beneath".to_string()),
         );
         self.env.define(
             "write_file_atomic_beneath".to_string(),
@@ -3556,10 +3561,12 @@ impl Interpreter {
             "type" | "type_of" => CallableArity::exact("type", vec!["value".to_string()]),
             "is_truthy" => CallableArity::exact("is_truthy", vec!["value".to_string()]),
             "read_file_lossy" => CallableArity::exact("read_file_lossy", vec!["path".to_string()]),
-            "read_file_beneath" | "read_binary_file_beneath" => CallableArity::exact(
-                name,
-                vec!["root".to_string(), "relative_path".to_string(), "max_bytes".to_string()],
-            ),
+            "read_file_beneath" | "read_binary_file_beneath" | "read_binary_prefix_beneath" => {
+                CallableArity::exact(
+                    name,
+                    vec!["root".to_string(), "relative_path".to_string(), "max_bytes".to_string()],
+                )
+            }
             "decode_base64_utf8" => {
                 CallableArity::exact("decode_base64_utf8", vec!["text".to_string()])
             }
