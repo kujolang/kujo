@@ -746,6 +746,7 @@ CLI Tokio runtime.
 | `sha256` | stable | `h := sha256("hello")` |
 | `hmac_sha256` | stable | `signature := hmac_sha256(secret, payload)` |
 | `hmac_sha256_verify` | stable | `valid := hmac_sha256_verify(secret, payload, signature)` |
+| `sha256_file_beneath` | preview (unreleased) | `digest := sha256_file_beneath("assets", "video.mp4", 4294967296)` |
 | `sha256_file` | stable | `h := sha256_file("artifact.bin")` |
 | `sha256_file_range` | stable | `h := sha256_file_range("artifact.bin", 4096, 65536)` |
 | `decode_file_range_info` | preview | `info := decode_file_range_info("message.eml", offset, count, "base64", 1048576, 64)` |

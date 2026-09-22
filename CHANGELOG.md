@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Added `sha256_file_beneath` for bounded streaming SHA-256 through no-follow
+  rooted file handles, returning the digest and actual byte count up to 4 GiB.
+
 - Added `read_binary_prefix_beneath` for bounded regular-file prefix reads
   through a rooted handle, retaining in-root relative symlinks and rejecting
   concurrent symlink escapes.

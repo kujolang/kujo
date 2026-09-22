@@ -2450,3 +2450,40 @@ fn unzip_extracts_safe_nested_entries() {
     assert_eq!(fs::read_to_string(first_file).expect("expected first extracted file"), "hello");
     assert_eq!(fs::read_to_string(second_file).expect("expected second extracted file"), "world");
 }
+
+#[test]
+fn sha256_beneath_capability_and_runtime_parity() {
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            "sha256_file_beneath(\".\", \"blocked\", 64)\n",
+            "Capability denied: filesystem-read required for sha256_file_beneath",
+            &runtime_args,
+        );
+    }
+    let root = unique_temp_dir("sha256_beneath_parity");
+    fs::write(root.join("input"), b"hello").unwrap();
+    let script = root.join("digest.kujo");
+    fs::write(&script, "let result := sha256_file_beneath(\".\", \"input\", 5)\nprint(result[\"sha256\"] + \":\" + to_string(result[\"bytes\"]))\n").unwrap();
+    for runtime_args in [
+        vec!["--untrusted", "--allow-fs-read"],
+        vec!["--interpreter", "--untrusted", "--allow-fs-read"],
+    ] {
+        let mut args = vec!["run"];
+        args.extend(runtime_args);
+        args.push(script.to_str().unwrap());
+        let output = run_kujo(&args, &root);
+        assert_eq!(output.status.code(), Some(0), "{}", stderr_text(&output));
+        assert!(stdout_text(&output)
+            .contains("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824:5"));
+    }
+    for script in [
+        "sha256_file_beneath()\n",
+        "sha256_file_beneath(\".\", \"input\", \"5\")\n",
+        "sha256_file_beneath(\".\", \"input\", -1)\n",
+    ] {
+        for args in [vec![], vec!["--interpreter"]] {
+            assert_runtime_boundary_failure_with_args(script, "sha256_file_beneath", &args);
+        }
+    }
+    fs::remove_dir_all(root).unwrap();
+}

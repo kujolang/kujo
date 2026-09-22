@@ -124,6 +124,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "read_file_sync"
         | "read_file_async"
         | "read_file_beneath"
+        | "sha256_file_beneath"
         | "read_binary_file_beneath"
         | "read_binary_prefix_beneath"
         | "read_binary_file"

@@ -10,6 +10,7 @@ use crate::{builtins, interpreter::DictMap};
 use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
 use cap_std::ambient_authority;
 use cap_std::fs::{Dir, OpenOptions as CapOpenOptions};
+use sha2::{Digest, Sha256};
 use std::fs::OpenOptions;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
@@ -69,18 +70,15 @@ fn validate_beneath_relative_path(relative_path: &Path) -> Result<Vec<&std::ffi:
     Ok(components)
 }
 
-fn read_file_beneath_bytes(
+fn open_regular_beneath(
     root: &str,
     relative_path: &str,
-    max_bytes: usize,
-) -> Result<Vec<u8>, String> {
-    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
-        return Err(beneath_error(
-            "invalid_max_bytes",
-            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
-        ));
+    max_bytes: u64,
+) -> Result<cap_std::fs::File, String> {
+    #[cfg(windows)]
+    if relative_path.contains(':') {
+        return Err(beneath_error("invalid_relative_path", "alternate data streams are forbidden"));
     }
-
     let relative_path = Path::new(relative_path);
     let components = validate_beneath_relative_path(relative_path)?;
     let mut directory = Dir::open_ambient_dir(root, ambient_authority()).map_err(|error| {
@@ -104,7 +102,7 @@ fn read_file_beneath_bytes(
     let final_component = components[components.len() - 1];
     let mut options = CapOpenOptions::new();
     options.read(true).follow(FollowSymlinks::No).nonblock(true);
-    let mut file = directory.open_with(final_component, &options).map_err(|error| {
+    let file = directory.open_with(final_component, &options).map_err(|error| {
         beneath_error(
             "target_open_failed",
             format!("cannot open target '{}': {}", relative_path.display(), error),
@@ -134,22 +132,82 @@ fn read_file_beneath_bytes(
         ));
     }
 
+    Ok(file)
+}
+
+fn read_file_beneath_bytes(
+    root: &str,
+    relative_path: &str,
+    max_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
+        return Err(beneath_error(
+            "invalid_max_bytes",
+            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
+        ));
+    }
+
+    let mut file = open_regular_beneath(root, relative_path, max_bytes as u64)?;
+    let metadata =
+        file.metadata().map_err(|error| beneath_error("target_metadata_failed", error))?;
     let mut bytes = Vec::with_capacity((metadata.len() as usize).min(max_bytes));
     Read::by_ref(&mut file).take(max_bytes as u64 + 1).read_to_end(&mut bytes).map_err(
         |error| {
             beneath_error(
                 "read_failed",
-                format!("cannot read target '{}': {}", relative_path.display(), error),
+                format!("cannot read target '{}': {}", relative_path, error),
             )
         },
     )?;
     if bytes.len() > max_bytes {
         return Err(beneath_error(
             "size_limit_exceeded",
-            format!("target '{}' grew beyond maximum read size", relative_path.display()),
+            format!("target '{}' grew beyond maximum read size", relative_path),
         ));
     }
     Ok(bytes)
+}
+
+const MAX_CONFINED_DIGEST_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+
+fn sha256_bounded_reader(reader: &mut impl Read, max_bytes: u64) -> Result<(String, u64), String> {
+    let mut hasher = Sha256::new();
+    let mut buffer = [0_u8; 64 * 1024];
+    let mut total = 0_u64;
+    loop {
+        let requested = (max_bytes - total + 1).min(buffer.len() as u64) as usize;
+        let count = match reader.read(&mut buffer[..requested]) {
+            Ok(count) => count,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(format!("sha256_file_beneath[read_failed]: {error}")),
+        };
+        if count == 0 {
+            break;
+        }
+        total += count as u64;
+        if total > max_bytes {
+            return Err(
+                "sha256_file_beneath[size_limit_exceeded]: input exceeded maximum bytes".into()
+            );
+        }
+        hasher.update(&buffer[..count]);
+    }
+    Ok((format!("{:x}", hasher.finalize()), total))
+}
+
+fn sha256_file_beneath_digest(
+    root: &str,
+    relative: &str,
+    maximum: u64,
+) -> Result<(String, u64), String> {
+    if maximum == 0 || maximum > MAX_CONFINED_DIGEST_BYTES {
+        return Err(
+            "sha256_file_beneath[invalid_max_bytes]: max_bytes must be 1..4294967296".into()
+        );
+    }
+    let mut file = open_regular_beneath(root, relative, maximum)
+        .map_err(|error| error.replacen("read_file_beneath", "sha256_file_beneath", 1))?;
+    sha256_bounded_reader(&mut file, maximum)
 }
 
 /// Read a bounded prefix through a single handle rooted at `root`. Unlike the
@@ -1032,6 +1090,27 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 }
             } else {
                 Value::Error("read_file_lossy requires a string path argument".to_string())
+            }
+        }
+
+        "sha256_file_beneath" => {
+            let [Value::Str(root), Value::Str(relative), Value::Int(maximum)] = arg_values else {
+                return Some(Value::Error("sha256_file_beneath requires root (string), relative_path (string), and max_bytes (int)".into()));
+            };
+            if *maximum < 1 {
+                return Some(Value::Error(
+                    "sha256_file_beneath[invalid_max_bytes]: max_bytes must be 1..4294967296"
+                        .into(),
+                ));
+            }
+            match sha256_file_beneath_digest(root, relative, *maximum as u64) {
+                Ok((digest, bytes)) => {
+                    let mut result = DictMap::default();
+                    result.insert("sha256".into(), Value::Str(Arc::new(digest)));
+                    result.insert("bytes".into(), Value::Int(bytes as i64));
+                    Value::Dict(Arc::new(result))
+                }
+                Err(error) => Value::Error(error),
             }
         }
 
@@ -2546,5 +2625,69 @@ mod beneath_tests {
         let _ = fs::remove_dir(root.join("outside"));
         let _ = fs::remove_dir_all(root);
         let _ = fs::remove_dir_all(outside);
+    }
+    #[test]
+    fn sha256_beneath_bounds_and_streaming() {
+        let root = fixture_root("digest_bounds");
+        fs::write(root.join("binary"), [0, 255, 1, 2]).unwrap();
+        fs::write(root.join("empty"), []).unwrap();
+        let (digest, bytes) =
+            sha256_file_beneath_digest(root.to_str().unwrap(), "binary", 4).unwrap();
+        assert_eq!(digest, format!("{:x}", Sha256::digest([0, 255, 1, 2])));
+        assert_eq!(bytes, 4);
+        assert_eq!(sha256_file_beneath_digest(root.to_str().unwrap(), "empty", 1).unwrap().1, 0);
+        assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "binary", 3)
+            .unwrap_err()
+            .contains("size_limit_exceeded"));
+        for maximum in [0, MAX_CONFINED_DIGEST_BYTES + 1] {
+            assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "binary", maximum).is_err());
+        }
+        assert!(sha256_file_beneath_digest(
+            root.to_str().unwrap(),
+            "binary",
+            MAX_CONFINED_DIGEST_BYTES
+        )
+        .is_ok());
+        for path in ["", ".", "..", "../binary", "/binary", "a/../binary", "a//binary", "binary/"] {
+            assert!(
+                sha256_file_beneath_digest(root.to_str().unwrap(), path, 10).is_err(),
+                "{path}"
+            );
+        }
+        fs::create_dir(root.join("directory")).unwrap();
+        assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "directory", 10).is_err());
+        // Enforce observed bytes independently of the earlier file metadata check.
+        let mut growing = std::io::Cursor::new(vec![7; 65537]);
+        assert!(sha256_bounded_reader(&mut growing, 65536)
+            .unwrap_err()
+            .contains("size_limit_exceeded"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn sha256_beneath_rejects_links_and_keeps_open_handle_after_rename() {
+        use std::os::unix::fs::symlink;
+        let root = fixture_root("digest_links");
+        let outside = fixture_root("digest_outside");
+        fs::create_dir(root.join("nested")).unwrap();
+        fs::write(root.join("nested/file"), b"safe").unwrap();
+        fs::write(outside.join("file"), b"outside").unwrap();
+        symlink(outside.join("file"), root.join("link")).unwrap();
+        symlink(&outside, root.join("dir-link")).unwrap();
+        symlink(outside.join("absent"), root.join("dangling")).unwrap();
+        for path in ["link", "dir-link/file", "dangling"] {
+            assert!(sha256_file_beneath_digest(root.to_str().unwrap(), path, 32).is_err());
+        }
+        let mut file = open_regular_beneath(root.to_str().unwrap(), "nested/file", 32).unwrap();
+        fs::rename(root.join("nested"), root.join("held")).unwrap();
+        symlink(&outside, root.join("nested")).unwrap();
+        assert_eq!(
+            sha256_bounded_reader(&mut file, 32).unwrap().0,
+            format!("{:x}", Sha256::digest(b"safe"))
+        );
+        assert!(sha256_file_beneath_digest(root.to_str().unwrap(), "nested/file", 32).is_err());
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(outside).unwrap();
     }
 }
