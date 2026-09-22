@@ -11,6 +11,8 @@
 
 Prepared the 1.5.0 crate/npm metadata and changelog. Added confined streaming copy with atomic no-replace publication. Merged upstream bounded stdin/digest and lexical-scope fixes without modifying the user's original Kujo checkout. The AssetWorks follow-up explicitly requests a tested tagged runtime and installed-artifact verification.
 
+Aligned the source installer's default and help example with the 1.5.0 candidate, and verified its release-manifest/default/override contract. Public stable-release prose remains at the published version until artifact verification succeeds.
+
 ## Gotchas (Read This Next Time)
 
 Published-stable references remain v1.4.0 until publication succeeds. No Cargo registry release is requested. Existing GitHub/npm automation remains the distribution mechanism. Regenerate source inventories after Rust line changes. New notes must follow this repository's complete field-note template.
