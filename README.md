@@ -1,6 +1,6 @@
 # Kujo
 
-[![Version](https://img.shields.io/badge/version-1.4.0-black)](https://github.com/kujolang/kujo/releases/tag/v1.4.0)
+[![Version](https://img.shields.io/badge/version-1.5.0-black)](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Rust](https://img.shields.io/badge/built%20with-Rust-white.svg)](https://www.rust-lang.org/)
 
@@ -179,9 +179,9 @@ See the [VM/interpreter migration playbook](docs/VM_INTERPRETER_MIGRATION_PLAYBO
 
 ## 1.0 Release Status
 
-Release boundary: Kujo `v1.4.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.5.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
-- The source tree is currently at `1.5.0` in `Cargo.toml`; the latest published stable release tag is `v1.4.0`.
+- The source tree is currently at `1.5.0` in `Cargo.toml`; the latest published stable release tag is `v1.5.0`.
 - Prebuilt Linux x64/arm64, macOS x64/arm64, and Windows x64 binaries ship with
   SHA-256 checksums.
 - Kujo v1.0 package scope was local manifest and lockfile determinism only; it

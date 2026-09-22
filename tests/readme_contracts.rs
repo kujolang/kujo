@@ -34,7 +34,7 @@ fn readme_covers_v1_status_cli_security_and_core_reference_links() {
         "[Security response](docs/SECURITY_RESPONSE.md)",
         "[Release process](docs/RELEASE_PROCESS.md)",
         "Core AI-native runtime mechanisms are implemented for deterministic request hashing, offline record/replay cassettes, structured response metadata, JSON Schema validation, vector math, token budgeting, runtime secret redaction, dedicated AI egress capability controls, streaming callbacks, and multimodal message builders.",
-        "Release boundary: Kujo `v1.4.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.",
+        "Release boundary: Kujo `v1.5.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.",
         "ai_text`, `ai_image_url`, and `ai_message",
         "Dotted module import workflows are supported on the default VM path",
         "workflows are deterministic:",

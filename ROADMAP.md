@@ -1,7 +1,7 @@
 # Kujo Roadmap
 
 Updated: 2026-09-13
-Stable release: [v1.4.0](https://github.com/kujolang/kujo/releases/tag/v1.4.0)
+Stable release: [v1.5.0](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
 
 > Current crate version: `1.5.0` in [Cargo.toml](Cargo.toml)
 

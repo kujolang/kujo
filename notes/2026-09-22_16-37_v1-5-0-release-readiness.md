@@ -15,7 +15,7 @@ Aligned the source installer's default and help example with the 1.5.0 candidate
 
 ## Gotchas (Read This Next Time)
 
-Published-stable references remain v1.4.0 until publication succeeds. No Cargo registry release is requested. Existing GitHub/npm automation remains the distribution mechanism. Regenerate source inventories after Rust line changes. New notes must follow this repository's complete field-note template.
+Published-stable references stayed at v1.4.0 during preparation and moved to v1.5.0 only after published-artifact verification. No Cargo registry release is requested. Existing GitHub/npm automation remains the distribution mechanism. Regenerate source inventories after Rust line changes. New notes must follow this repository's complete field-note template.
 
 ## Things I Learned
 
@@ -31,10 +31,20 @@ At a0d433e, 21 confined filesystem unit tests, five VM/interpreter boundary inte
 
 ## Follow-ups / TODO (For Future Agents)
 
-Complete candidate platform/release gates and AssetWorks' matrix before publication. Verify published checksummed artifacts and installation afterwards, then record exact tags, run IDs and checksums. This is an acceptance checklist, not a completed publication claim. Language/CLI contract versions remain 1.0.0.
+Native publication and downloaded-install verification are complete, with receipts below. The independent npm registry authorization remains an open maintainer follow-up. Language/CLI contract versions remain 1.0.0.
 
 ## Links / References
 
 - Runtime PR: https://github.com/kujolang/kujo/pull/10
 - AssetWorks acceptance: https://github.com/kujolang/assetworks/blob/main/docs/NEXT_SESSION_IMPLEMENTATION.md
 - Release mechanics: .github/workflows/release-binaries.yml and .github/workflows/release-published-artifact-smoke.yml
+
+## Published result
+
+Signed `v1.5.0` targets `cc2d7dbb59a8dc05f00d629e100932f56f4062f6`, integrated by merge `44aaf58a7fd1fbcecff46bdaddac614f99e052d7` with an identical tree. Run 35787043614 passed the complete gate, hardened RAG integration, all five native builds and npm packaging. Native/npm binary digests and full source metadata were checked before publication. All five native archive SHA-256 values are bound into the SSH-signed tag, verified by GitHub.
+
+Published-download run 35793560616 passed on all five platforms; its first macOS ARM64 attempt hit a GitHub public API rate limit after successful download/execution, and the unchanged failed-job retry passed. The tag-triggered duplicate build 35793320106 was cancelled because the already-verified exact-revision artifacts from 35787043614 were published, preserving the signed archive digests.
+
+The independent npm publisher run 35793388734 failed with registry E404 on the existing @kujolang/kujo-darwin-arm64 package; public lookup still reports 1.4.0. npm 1.5.0 publication is not claimed. Native GitHub archives remain canonical, and no Cargo registry publication was attempted. Registry authorization requires maintainer review; no trust or credential boundary was bypassed.
+
+AssetWorks v0.3.0 is signed and published from 1cef9b0. Its final installation/website receipts and next-session scope are maintained in AssetWorks docs/NEXT_SESSION_IMPLEMENTATION.md. The public installer synchronization is isolated in kujolang.ai commit 8d60dd0.
