@@ -435,6 +435,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `path_exists` | stable | `ok := path_exists("notes.txt")` |
 | `path_join` | stable alias | `p := path_join("a", "b")` |
 | `list_dir_beneath` | unreleased | `page := list_dir_beneath(".", "records", "", ".json", 100, 100000)` |
+| `copy_file_beneath` | preview (1.5.0 candidate) | `receipt := copy_file_beneath("source", "media.bin", "backup", "media.bin", 4294967296)`; confined regular-file copy with a fixed 64 KiB buffer, atomic no-replace publication and exact copied-byte SHA-256/size receipt; requires filesystem read and write capabilities |
 | `read_stdin` | preview (unreleased) | `request := read_stdin(1048576)`; exact UTF-8 through EOF, maximum 8 MiB, overflow rejected |
 | `digest_file_beneath` | preview (unreleased) | `digest := digest_file_beneath("trusted", "article.pdf", 67108864)`; confined regular-file SHA-256 with a fixed 64 KiB read buffer |
 | `path_absolute` | preview | `p := path_absolute(".")` |

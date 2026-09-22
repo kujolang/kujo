@@ -23,6 +23,8 @@ Copy requires both filesystem capabilities and returns the digest of the bytes a
 
 The merged documentation initially duplicated the `list_dir_beneath` inventory row. Hosted release gate 35781463163 caught this after the runtime suites passed; removed the duplicate and retained the more detailed canonical row. This was documentation drift, not a waived test.
 
+The artifact gate 35784868167 then caught the new copy API missing from the separate tiered standard-library reference. Added its bounded copy, publication, receipt and capability contract there and ran the related documentation policy suites together before retrying publication builds.
+
 At a0d433e, 21 confined filesystem unit tests, five VM/interpreter boundary integration tests and upstream bounded stdin/rooted digest tests pass locally. The earlier full local application gate passed 300 assertions; isolation passed 21 after explicit no-fallback error handling. Hosted release verification is pending. The local inventory test's VM fixture subtest expects target/debug/kujo and cannot use the separate CARGO_TARGET_DIR automatically; the two source-inventory freshness tests passed.
 
 ## Follow-ups / TODO (For Future Agents)
