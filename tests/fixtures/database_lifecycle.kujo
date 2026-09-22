@@ -1,0 +1,36 @@
+let db := db_connect("sqlite", "lifecycle.sqlite")
+let aliases := [db, {"db": db}]
+db_execute(db, "CREATE TABLE items(value INTEGER)", [])
+db_begin_immediate(db)
+db_execute(db, "INSERT INTO items VALUES(1)", [])
+assert(db_close(db) == true, "close acknowledges release")
+assert(db_close(aliases[0]) == true, "repeated close succeeds")
+let closed := aliases[1]["db"]
+mut failures := 0
+try { db_query(closed, "SELECT 1", []) } except error { failures += 1 }
+try { db_execute(closed, "SELECT 1", []) } except error { failures += 1 }
+try { db_begin(closed) } except error { failures += 1 }
+try { db_begin_immediate(closed) } except error { failures += 1 }
+try { db_commit(closed) } except error { failures += 1 }
+try { db_rollback(closed) } except error { failures += 1 }
+try { db_last_insert_id(closed) } except error { failures += 1 }
+assert(failures == 7, "all closed operations fail")
+let readonly := db_connect_readonly("sqlite", "lifecycle.sqlite")
+assert(db_query(readonly, "SELECT count(*) AS count FROM items", [])[0]["count"] == 0, "close rolls back")
+db_close(readonly)
+assert(delete_file("lifecycle.sqlite") == true, "native file is released while aliases remain")
+let pool := db_pool("sqlite", ":memory:", {"min_connections": 1, "max_connections": 1})
+let first := db_pool_acquire(pool)
+db_execute(first, "CREATE TABLE preserved(value)", [])
+db_pool_release(pool, first)
+let second := db_pool_acquire(pool)
+db_close(first)
+assert(len(db_query(second, "SELECT * FROM preserved", [])) == 0, "old alias cannot close reused native session")
+db_close(second)
+db_pool_release(pool, second)
+assert(db_pool_stats(pool)["in_use"] == 0, "closed lease releases accounting")
+let third := db_pool_acquire(pool)
+assert(db_query(third, "SELECT 1 AS value", [])[0]["value"] == 1, "pool replaces closed connection")
+db_pool_release(pool, third)
+db_pool_close(pool)
+print("database lifecycle: passed")

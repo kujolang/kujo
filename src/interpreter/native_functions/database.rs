@@ -3,6 +3,7 @@
 // Database access native functions
 
 use crate::interpreter::async_runtime::AsyncRuntime;
+use crate::interpreter::database_handle::DatabaseHandle;
 use crate::interpreter::{
     connect_postgres_verified_tls, ConnectionPool, DatabaseConnection, DictMap,
     RuntimeSafePostgresClient, Value,
@@ -76,6 +77,19 @@ macro_rules! lock_or_db_error {
     };
 }
 
+macro_rules! lock_connection_or_error {
+    ($mutex:expr, $context:expr) => {
+        match $mutex.lock() {
+            Ok(guard) => guard,
+            Err(error) => {
+                return Some(Value::Error(
+                    error.message(&format!("{}: database lock poisoned", $context)),
+                ))
+            }
+        }
+    };
+}
+
 fn map_sqlite_value(value: rusqlite::types::Value) -> Value {
     match value {
         rusqlite::types::Value::Integer(number) => Value::Int(number),
@@ -123,10 +137,6 @@ fn to_mysql_value(value: &Value) -> mysql_async::Value {
     }
 }
 
-fn create_runtime() -> Result<tokio::runtime::Runtime, String> {
-    tokio::runtime::Runtime::new().map_err(|e| format!("Failed to create async runtime: {}", e))
-}
-
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
         "db_connect" => {
@@ -144,7 +154,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 match db_type_lower.as_str() {
                     "sqlite" => match rusqlite::Connection::open(connection_string.as_ref()) {
                         Ok(connection) => Value::Database {
-                            connection: DatabaseConnection::Sqlite(Arc::new(Mutex::new(
+                            connection: DatabaseConnection::Sqlite(Arc::new(DatabaseHandle::new(
                                 connection,
                             ))),
                             db_type: "sqlite".to_string(),
@@ -160,9 +170,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             postgres::Client::connect(connection_string.as_ref(), NoTls)
                         }) {
                             Ok(client) => Value::Database {
-                                connection: DatabaseConnection::Postgres(Arc::new(Mutex::new(
-                                    RuntimeSafePostgresClient::new(client),
-                                ))),
+                                connection: DatabaseConnection::Postgres(Arc::new(
+                                    DatabaseHandle::new(RuntimeSafePostgresClient::new(client)),
+                                )),
                                 db_type: "postgres".to_string(),
                                 connection_string: connection_string.as_ref().to_string(),
                                 in_transaction: Arc::new(Mutex::new(false)),
@@ -183,23 +193,18 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             }
                         };
 
-                        match create_runtime() {
-                            Ok(runtime) => match runtime
-                                .block_on(async { mysql_async::Conn::new(opts).await })
-                            {
-                                Ok(connection) => Value::Database {
-                                    connection: DatabaseConnection::Mysql(Arc::new(Mutex::new(
-                                        connection,
-                                    ))),
-                                    db_type: "mysql".to_string(),
-                                    connection_string: connection_string.as_ref().to_string(),
-                                    in_transaction: Arc::new(Mutex::new(false)),
-                                },
-                                Err(error) => {
-                                    Value::Error(format!("Failed to connect to MySQL: {}", error))
-                                }
+                        match AsyncRuntime::block_on(async { mysql_async::Conn::new(opts).await }) {
+                            Ok(connection) => Value::Database {
+                                connection: DatabaseConnection::Mysql(Arc::new(
+                                    DatabaseHandle::new(connection),
+                                )),
+                                db_type: "mysql".to_string(),
+                                connection_string: connection_string.as_ref().to_string(),
+                                in_transaction: Arc::new(Mutex::new(false)),
                             },
-                            Err(error) => Value::Error(error),
+                            Err(error) => {
+                                Value::Error(format!("Failed to connect to MySQL: {}", error))
+                            }
                         }
                     }
                     _ => Value::Error(format!(
@@ -230,7 +235,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     30_000,
                 ) {
                     Ok(client) => Value::Database {
-                        connection: DatabaseConnection::Postgres(Arc::new(Mutex::new(
+                        connection: DatabaseConnection::Postgres(Arc::new(DatabaseHandle::new(
                             RuntimeSafePostgresClient::new(client),
                         ))),
                         db_type: "postgres".to_string(),
@@ -292,7 +297,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         | rusqlite::OpenFlags::SQLITE_OPEN_URI;
                     match rusqlite::Connection::open_with_flags(&immutable_uri, flags) {
                         Ok(connection) => Value::Database {
-                            connection: DatabaseConnection::Sqlite(Arc::new(Mutex::new(
+                            connection: DatabaseConnection::Sqlite(Arc::new(DatabaseHandle::new(
                                 connection,
                             ))),
                             db_type: "sqlite".to_string(),
@@ -326,7 +331,8 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     let params = arg_values.get(2);
                     match (connection, db_type.as_str()) {
                         (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                            let connection = lock_or_db_error!(connection, "database.connection");
+                            let connection =
+                                lock_connection_or_error!(connection, "database.connection");
                             let execute_result = if let Some(Value::Array(param_arr)) = params {
                                 let param_values: Vec<Box<dyn rusqlite::ToSql>> = param_arr
                                     .iter()
@@ -372,8 +378,8 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                             };
                             let execute_result =
                                 AsyncRuntime::run_runtime_safe_blocking(move || {
-                                    let mut client = client.lock().map_err(|_| {
-                                        "PostgreSQL client lock poisoned".to_string()
+                                    let mut client = client.lock().map_err(|error| {
+                                        error.message("PostgreSQL client lock poisoned")
                                     })?;
                                     let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
                                         postgres_params
@@ -396,32 +402,27 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         }
                         (DatabaseConnection::Mysql(connection), "mysql") => {
                             let mut connection =
-                                lock_or_db_error!(connection, "database.connection_mut");
-                            match create_runtime() {
-                                Ok(runtime) => {
-                                    let execute_result = if let Some(Value::Array(param_arr)) =
-                                        params
-                                    {
-                                        let mysql_params: Vec<mysql_async::Value> =
-                                            param_arr.iter().map(to_mysql_value).collect();
-                                        runtime.block_on(async {
-                                            connection.exec_drop(sql.as_ref(), mysql_params).await
-                                        })
-                                    } else {
-                                        runtime.block_on(async {
-                                            connection.exec_drop(sql.as_ref(), ()).await
-                                        })
-                                    };
+                                lock_connection_or_error!(connection, "database.connection_mut");
+                            let connection = &mut *connection;
+                            {
+                                let execute_result = if let Some(Value::Array(param_arr)) = params {
+                                    let mysql_params: Vec<mysql_async::Value> =
+                                        param_arr.iter().map(to_mysql_value).collect();
+                                    AsyncRuntime::block_on(async {
+                                        connection.exec_drop(sql.as_ref(), mysql_params).await
+                                    })
+                                } else {
+                                    AsyncRuntime::block_on(async {
+                                        connection.exec_drop(sql.as_ref(), ()).await
+                                    })
+                                };
 
-                                    match execute_result {
-                                        Ok(_) => Value::Int(connection.affected_rows() as i64),
-                                        Err(error) => Value::Error(format!(
-                                            "MySQL execution error: {}",
-                                            error
-                                        )),
+                                match execute_result {
+                                    Ok(_) => Value::Int(connection.affected_rows() as i64),
+                                    Err(error) => {
+                                        Value::Error(format!("MySQL execution error: {}", error))
                                     }
                                 }
-                                Err(error) => Value::Error(error),
                             }
                         }
                         _ => Value::Error(
@@ -452,7 +453,8 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     let params = arg_values.get(2);
                     match (connection, db_type.as_str()) {
                         (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                            let connection = lock_or_db_error!(connection, "database.connection");
+                            let connection =
+                                lock_connection_or_error!(connection, "database.connection");
 
                             let param_values: Vec<Box<dyn rusqlite::ToSql>> =
                                 if let Some(Value::Array(param_arr)) = params {
@@ -546,9 +548,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                                 Vec::new()
                             };
                             let query_result = AsyncRuntime::run_runtime_safe_blocking(move || {
-                                let mut client = client
-                                    .lock()
-                                    .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                                let mut client = client.lock().map_err(|error| {
+                                    error.message("PostgreSQL client lock poisoned")
+                                })?;
                                 let params_refs: Vec<&(dyn postgres::types::ToSql + Sync)> =
                                     postgres_params
                                         .iter()
@@ -593,48 +595,46 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         }
                         (DatabaseConnection::Mysql(connection), "mysql") => {
                             let mut connection =
-                                lock_or_db_error!(connection, "database.connection_mut");
-                            match create_runtime() {
-                                Ok(runtime) => {
-                                    let query_result: Result<
-                                        Vec<mysql_async::Row>,
-                                        mysql_async::Error,
-                                    > = if let Some(Value::Array(param_arr)) = params {
-                                        let mysql_params: Vec<mysql_async::Value> =
-                                            param_arr.iter().map(to_mysql_value).collect();
-                                        runtime.block_on(async {
-                                            connection.exec(sql.as_ref(), mysql_params).await
-                                        })
-                                    } else {
-                                        runtime.block_on(async {
-                                            connection.exec(sql.as_ref(), ()).await
-                                        })
-                                    };
+                                lock_connection_or_error!(connection, "database.connection_mut");
+                            let connection = &mut *connection;
+                            {
+                                let query_result: Result<
+                                    Vec<mysql_async::Row>,
+                                    mysql_async::Error,
+                                > = if let Some(Value::Array(param_arr)) = params {
+                                    let mysql_params: Vec<mysql_async::Value> =
+                                        param_arr.iter().map(to_mysql_value).collect();
+                                    AsyncRuntime::block_on(async {
+                                        connection.exec(sql.as_ref(), mysql_params).await
+                                    })
+                                } else {
+                                    AsyncRuntime::block_on(async {
+                                        connection.exec(sql.as_ref(), ()).await
+                                    })
+                                };
 
-                                    match query_result {
-                                        Ok(rows) => {
-                                            let mut results = Vec::new();
-                                            for mut row in rows {
-                                                let mut row_dict = DictMap::default();
-                                                let columns = row.columns();
-                                                for (index, column) in columns.iter().enumerate() {
-                                                    let col_name = column.name_str().to_string();
-                                                    let value = row
-                                                        .take::<mysql_async::Value, _>(index)
-                                                        .map(map_mysql_value)
-                                                        .unwrap_or(Value::Null);
-                                                    row_dict.insert(col_name.into(), value);
-                                                }
-                                                results.push(Value::Dict(Arc::new(row_dict)));
+                                match query_result {
+                                    Ok(rows) => {
+                                        let mut results = Vec::new();
+                                        for mut row in rows {
+                                            let mut row_dict = DictMap::default();
+                                            let columns = row.columns();
+                                            for (index, column) in columns.iter().enumerate() {
+                                                let col_name = column.name_str().to_string();
+                                                let value = row
+                                                    .take::<mysql_async::Value, _>(index)
+                                                    .map(map_mysql_value)
+                                                    .unwrap_or(Value::Null);
+                                                row_dict.insert(col_name.into(), value);
                                             }
-                                            Value::Array(Arc::new(results))
+                                            results.push(Value::Dict(Arc::new(row_dict)));
                                         }
-                                        Err(error) => {
-                                            Value::Error(format!("MySQL query error: {}", error))
-                                        }
+                                        Value::Array(Arc::new(results))
+                                    }
+                                    Err(error) => {
+                                        Value::Error(format!("MySQL query error: {}", error))
                                     }
                                 }
-                                Err(error) => Value::Error(error),
                             }
                         }
                         _ => Value::Error(
@@ -657,8 +657,15 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 return Some(Value::Error("db_close requires a database connection".to_string()));
             }
 
-            if let Some(Value::Database { .. }) = arg_values.first() {
-                Value::Bool(true)
+            if let Some(Value::Database { connection, in_transaction, .. }) = arg_values.first() {
+                let mut transaction = lock_or_db_error!(in_transaction, "database.in_transaction");
+                match connection.close() {
+                    Ok(()) => {
+                        *transaction = false;
+                        Value::Bool(true)
+                    }
+                    Err(error) => Value::Error(error),
+                }
             } else {
                 Value::Error("db_close requires a database connection".to_string())
             }
@@ -781,9 +788,15 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
 
             if let Some(Value::DatabasePool { pool }) = arg_values.first() {
-                if let Some(Value::Database { connection, .. }) = arg_values.get(1) {
+                if let Some(Value::Database { connection, in_transaction, .. }) = arg_values.get(1)
+                {
+                    let mut transaction =
+                        lock_or_db_error!(in_transaction, "database.in_transaction");
                     match pool.release(connection.clone()) {
-                        Ok(()) => Value::Bool(true),
+                        Ok(()) => {
+                            *transaction = false;
+                            Value::Bool(true)
+                        }
                         Err(error) => Value::Error(error),
                     }
                 } else {
@@ -847,18 +860,19 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     ));
                 };
 
-            {
-                let in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
-                if *in_trans {
-                    return Some(Value::Error(
-                        "Transaction already in progress. Commit or rollback first.".to_string(),
-                    ));
-                }
+            let mut in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+            if let Err(error) = connection.ensure_open() {
+                return Some(Value::Error(error));
+            }
+            if *in_trans {
+                return Some(Value::Error(
+                    "Transaction already in progress. Commit or rollback first.".to_string(),
+                ));
             }
 
             let result = match (connection, db_type.as_str()) {
                 (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                    let connection = lock_or_db_error!(connection, "database.connection");
+                    let connection = lock_connection_or_error!(connection, "database.connection");
                     connection
                         .execute("BEGIN TRANSACTION", [])
                         .map(|_| ())
@@ -869,7 +883,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     AsyncRuntime::run_runtime_safe_blocking(move || {
                         let mut client = client
                             .lock()
-                            .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            .map_err(|error| error.message("PostgreSQL client lock poisoned"))?;
                         client
                             .execute("BEGIN", &[])
                             .map(|_| ())
@@ -877,26 +891,20 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     })
                 }
                 (DatabaseConnection::Mysql(connection), "mysql") => {
-                    let mut connection = lock_or_db_error!(connection, "database.connection_mut");
-                    match create_runtime() {
-                        Ok(runtime) => runtime
-                            .block_on(async {
-                                connection
-                                    .exec_drop("START TRANSACTION", mysql_async::Params::Empty)
-                                    .await
-                            })
-                            .map(|_| ())
-                            .map_err(|e| format!("Failed to begin transaction: {}", e)),
-                        Err(error) => Err(error),
-                    }
+                    let mut connection =
+                        lock_connection_or_error!(connection, "database.connection_mut");
+                    let connection = &mut *connection;
+                    AsyncRuntime::block_on(async {
+                        connection.exec_drop("START TRANSACTION", mysql_async::Params::Empty).await
+                    })
+                    .map(|_| ())
+                    .map_err(|e| format!("Failed to begin transaction: {}", e))
                 }
                 _ => Err("Invalid database connection".to_string()),
             };
 
             match result {
                 Ok(()) => {
-                    let mut in_trans =
-                        lock_or_db_error!(in_transaction, "database.in_transaction_mut");
                     *in_trans = true;
                     Value::Bool(true)
                 }
@@ -924,18 +932,19 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     ));
                 };
 
-            {
-                let in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
-                if *in_trans {
-                    return Some(Value::Error(
-                        "Transaction already in progress. Commit or rollback first.".to_string(),
-                    ));
-                }
+            let mut in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+            if let Err(error) = connection.ensure_open() {
+                return Some(Value::Error(error));
+            }
+            if *in_trans {
+                return Some(Value::Error(
+                    "Transaction already in progress. Commit or rollback first.".to_string(),
+                ));
             }
 
             let result = match (connection, db_type.as_str()) {
                 (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                    let connection = lock_or_db_error!(connection, "database.connection");
+                    let connection = lock_connection_or_error!(connection, "database.connection");
                     connection
                         .execute("BEGIN IMMEDIATE", [])
                         .map(|_| ())
@@ -947,7 +956,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Err(message) = result {
                 return Some(Value::Error(message));
             }
-            let mut in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+
             *in_trans = true;
             Value::Bool(true)
         }
@@ -957,18 +966,20 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 "db_commit requires a database connection as first argument".to_string(),
             ),
             Some(Value::Database { connection, db_type, in_transaction, .. }) => {
-                {
-                    let in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
-                    if !*in_trans {
-                        return Some(Value::Error(
-                            "No transaction in progress. Use db_begin() first.".to_string(),
-                        ));
-                    }
+                let mut in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+                if let Err(error) = connection.ensure_open() {
+                    return Some(Value::Error(error));
+                }
+                if !*in_trans {
+                    return Some(Value::Error(
+                        "No transaction in progress. Use db_begin() first.".to_string(),
+                    ));
                 }
 
                 let result = match (connection, db_type.as_str()) {
                     (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                        let connection = lock_or_db_error!(connection, "database.connection");
+                        let connection =
+                            lock_connection_or_error!(connection, "database.connection");
                         connection
                             .execute("COMMIT", [])
                             .map(|_| ())
@@ -977,9 +988,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     (DatabaseConnection::Postgres(client), "postgres") => {
                         let client = Arc::clone(&client);
                         AsyncRuntime::run_runtime_safe_blocking(move || {
-                            let mut client = client
-                                .lock()
-                                .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            let mut client = client.lock().map_err(|error| {
+                                error.message("PostgreSQL client lock poisoned")
+                            })?;
                             client
                                 .execute("COMMIT", &[])
                                 .map(|_| ())
@@ -988,24 +999,19 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     }
                     (DatabaseConnection::Mysql(connection), "mysql") => {
                         let mut connection =
-                            lock_or_db_error!(connection, "database.connection_mut");
-                        match create_runtime() {
-                            Ok(runtime) => runtime
-                                .block_on(async {
-                                    connection.exec_drop("COMMIT", mysql_async::Params::Empty).await
-                                })
-                                .map(|_| ())
-                                .map_err(|e| format!("Failed to commit transaction: {}", e)),
-                            Err(error) => Err(error),
-                        }
+                            lock_connection_or_error!(connection, "database.connection_mut");
+                        let connection = &mut *connection;
+                        AsyncRuntime::block_on(async {
+                            connection.exec_drop("COMMIT", mysql_async::Params::Empty).await
+                        })
+                        .map(|_| ())
+                        .map_err(|e| format!("Failed to commit transaction: {}", e))
                     }
                     _ => Err("Invalid database connection".to_string()),
                 };
 
                 match result {
                     Ok(()) => {
-                        let mut in_trans =
-                            lock_or_db_error!(in_transaction, "database.in_transaction_mut");
                         *in_trans = false;
                         Value::Bool(true)
                     }
@@ -1022,18 +1028,20 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 "db_rollback requires a database connection as first argument".to_string(),
             ),
             Some(Value::Database { connection, db_type, in_transaction, .. }) => {
-                {
-                    let in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
-                    if !*in_trans {
-                        return Some(Value::Error(
-                            "No transaction in progress. Use db_begin() first.".to_string(),
-                        ));
-                    }
+                let mut in_trans = lock_or_db_error!(in_transaction, "database.in_transaction");
+                if let Err(error) = connection.ensure_open() {
+                    return Some(Value::Error(error));
+                }
+                if !*in_trans {
+                    return Some(Value::Error(
+                        "No transaction in progress. Use db_begin() first.".to_string(),
+                    ));
                 }
 
                 let result = match (connection, db_type.as_str()) {
                     (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                        let connection = lock_or_db_error!(connection, "database.connection");
+                        let connection =
+                            lock_connection_or_error!(connection, "database.connection");
                         connection
                             .execute("ROLLBACK", [])
                             .map(|_| ())
@@ -1042,9 +1050,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     (DatabaseConnection::Postgres(client), "postgres") => {
                         let client = Arc::clone(&client);
                         AsyncRuntime::run_runtime_safe_blocking(move || {
-                            let mut client = client
-                                .lock()
-                                .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            let mut client = client.lock().map_err(|error| {
+                                error.message("PostgreSQL client lock poisoned")
+                            })?;
                             client
                                 .execute("ROLLBACK", &[])
                                 .map(|_| ())
@@ -1053,26 +1061,19 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     }
                     (DatabaseConnection::Mysql(connection), "mysql") => {
                         let mut connection =
-                            lock_or_db_error!(connection, "database.connection_mut");
-                        match create_runtime() {
-                            Ok(runtime) => runtime
-                                .block_on(async {
-                                    connection
-                                        .exec_drop("ROLLBACK", mysql_async::Params::Empty)
-                                        .await
-                                })
-                                .map(|_| ())
-                                .map_err(|e| format!("Failed to rollback transaction: {}", e)),
-                            Err(error) => Err(error),
-                        }
+                            lock_connection_or_error!(connection, "database.connection_mut");
+                        let connection = &mut *connection;
+                        AsyncRuntime::block_on(async {
+                            connection.exec_drop("ROLLBACK", mysql_async::Params::Empty).await
+                        })
+                        .map(|_| ())
+                        .map_err(|e| format!("Failed to rollback transaction: {}", e))
                     }
                     _ => Err("Invalid database connection".to_string()),
                 };
 
                 match result {
                     Ok(()) => {
-                        let mut in_trans =
-                            lock_or_db_error!(in_transaction, "database.in_transaction_mut");
                         *in_trans = false;
                         Value::Bool(true)
                     }
@@ -1095,15 +1096,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Database { connection, db_type, .. }) = arg_values.first() {
                 match (connection, db_type.as_str()) {
                     (DatabaseConnection::Sqlite(connection), "sqlite") => {
-                        let connection = lock_or_db_error!(connection, "database.connection");
+                        let connection =
+                            lock_connection_or_error!(connection, "database.connection");
                         Value::Float(connection.last_insert_rowid() as f64)
                     }
                     (DatabaseConnection::Postgres(client), "postgres") => {
                         let client = Arc::clone(client);
                         match AsyncRuntime::run_runtime_safe_blocking(move || {
-                            let mut client = client
-                                .lock()
-                                .map_err(|_| "PostgreSQL client lock poisoned".to_string())?;
+                            let mut client = client.lock().map_err(|error| {
+                                error.message("PostgreSQL client lock poisoned")
+                            })?;
                             client.query("SELECT lastval()", &[]).map_err(|error| error.to_string())
                         }) {
                             Ok(rows) => {
@@ -1122,18 +1124,16 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     }
                     (DatabaseConnection::Mysql(connection), "mysql") => {
                         let mut connection =
-                            lock_or_db_error!(connection, "database.connection_mut");
-                        match create_runtime() {
-                            Ok(runtime) => match runtime.block_on(async {
-                                connection.query_first::<u64, _>("SELECT LAST_INSERT_ID()").await
-                            }) {
-                                Ok(Some(id)) => Value::Int(id as i64),
-                                Ok(None) => Value::Error("No last insert ID available".to_string()),
-                                Err(error) => {
-                                    Value::Error(format!("Failed to get last insert ID: {}", error))
-                                }
-                            },
-                            Err(error) => Value::Error(error),
+                            lock_connection_or_error!(connection, "database.connection_mut");
+                        let connection = &mut *connection;
+                        match AsyncRuntime::block_on(async {
+                            connection.query_first::<u64, _>("SELECT LAST_INSERT_ID()").await
+                        }) {
+                            Ok(Some(id)) => Value::Int(id as i64),
+                            Ok(None) => Value::Error("No last insert ID available".to_string()),
+                            Err(error) => {
+                                Value::Error(format!("Failed to get last insert ID: {}", error))
+                            }
                         }
                     }
                     _ => Value::Error("Invalid database connection".to_string()),

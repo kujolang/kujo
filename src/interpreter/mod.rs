@@ -20,6 +20,8 @@
 mod async_runtime;
 mod capabilities;
 mod control_flow;
+#[cfg(feature = "runtime-db")]
+pub mod database_handle;
 mod environment;
 pub(crate) mod native_functions;
 mod test_runner;
@@ -7623,12 +7625,10 @@ impl Interpreter {
                             }
                             (DatabaseConnection::Mysql(conn_arc), "mysql") => {
                                 if let Ok(mut conn) = conn_arc.lock() {
-                                    if let Ok(runtime) = tokio::runtime::Runtime::new() {
-                                        let _ = runtime.block_on(async {
-                                            conn.exec_drop("ROLLBACK", mysql_async::Params::Empty)
-                                                .await
-                                        });
-                                    }
+                                    let conn = &mut *conn;
+                                    let _ = async_runtime::AsyncRuntime::block_on(async {
+                                        conn.exec_drop("ROLLBACK", mysql_async::Params::Empty).await
+                                    });
                                 }
                             }
                             _ => {}

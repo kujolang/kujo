@@ -1,0 +1,48 @@
+# Inventory: skip (requires a disposable MySQL-compatible server)
+let url := env_required("KUJO_MYSQL_TEST_URL")
+let db := db_connect("mysql", url)
+let alias := db
+db_execute(db, "DROP TABLE IF EXISTS kujo_lifecycle", [])
+db_execute(db, "CREATE TABLE kujo_lifecycle(value BIGINT) ENGINE=InnoDB", [])
+db_begin(db)
+db_execute(db, "INSERT INTO kujo_lifecycle VALUES(?)", [42])
+assert(db_query(db, "SELECT value FROM kujo_lifecycle", [])[0]["value"] == 42, "query works after connect and execute")
+db_rollback(db)
+db_begin(db)
+db_execute(db, "INSERT INTO kujo_lifecycle VALUES(?)", [1])
+db_commit(db)
+db_begin(db)
+db_execute(db, "INSERT INTO kujo_lifecycle VALUES(?)", [2])
+assert(db_close(db) == true, "close releases MySQL session")
+assert(db_close(alias) == true, "repeated close succeeds")
+mut failures := 0
+try { db_query(alias, "SELECT 1", []) } except error { failures += 1 }
+try { db_execute(alias, "SELECT 1", []) } except error { failures += 1 }
+try { db_begin(alias) } except error { failures += 1 }
+try { db_commit(alias) } except error { failures += 1 }
+try { db_rollback(alias) } except error { failures += 1 }
+try { db_last_insert_id(alias) } except error { failures += 1 }
+assert(failures == 6, "closed MySQL aliases reject all operations")
+let pool := db_pool("mysql", url, {"min_connections": 1, "max_connections": 1})
+let first := db_pool_acquire(pool)
+assert(db_query(first, "SELECT count(*) AS count FROM kujo_lifecycle", [])[0]["count"] == 1, "close rolled back uncommitted insert only")
+let session := db_query(first, "SELECT CONNECTION_ID() AS id", [])[0]["id"]
+db_pool_release(pool, first)
+let second := db_pool_acquire(pool)
+db_close(first)
+assert(db_query(second, "SELECT CONNECTION_ID() AS id", [])[0]["id"] == session, "return preserves session and invalidates old aliases")
+db_execute(second, "DROP TABLE kujo_lifecycle", [])
+db_close(second)
+db_pool_release(pool, second)
+let replacement := db_pool_acquire(pool)
+assert(db_query(replacement, "SELECT 1 AS value", [])[0]["value"] == 1, "closed lease is replaced")
+db_pool_release(pool, replacement)
+db_pool_close(pool)
+async func nested_mysql(url) {
+    let connection := db_connect("mysql", url)
+    let result := db_query(connection, "SELECT 1 AS value", [])[0]["value"]
+    db_close(connection)
+    return result
+}
+assert(await nested_mysql(url) == 1, "MySQL lifecycle works from async code")
+print("mysql lifecycle: passed")

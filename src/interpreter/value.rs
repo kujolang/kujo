@@ -3,6 +3,8 @@
 // Runtime value types for the Kujo programming language.
 // Defines all value types that can be represented and manipulated at runtime.
 
+#[cfg(feature = "runtime-db")]
+use super::database_handle::DatabaseHandle;
 use crate::ast::Stmt;
 #[cfg(feature = "runtime-db")]
 use crate::interpreter::async_runtime::AsyncRuntime;
@@ -480,6 +482,11 @@ impl RuntimeSafePostgresClient {
     pub fn new(client: PostgresClient) -> Self {
         Self(Some(client))
     }
+
+    pub fn close(mut self) -> Result<(), postgres::Error> {
+        let client = self.0.take().expect("PostgreSQL client is available");
+        AsyncRuntime::run_runtime_safe_blocking(move || client.close())
+    }
 }
 
 #[cfg(feature = "runtime-db")]
@@ -511,11 +518,11 @@ impl Drop for RuntimeSafePostgresClient {
 #[derive(Clone)]
 pub enum DatabaseConnection {
     #[allow(dead_code)]
-    Sqlite(Arc<Mutex<SqliteConnection>>),
+    Sqlite(Arc<DatabaseHandle<SqliteConnection>>),
     #[allow(dead_code)]
-    Postgres(Arc<Mutex<RuntimeSafePostgresClient>>),
+    Postgres(Arc<DatabaseHandle<RuntimeSafePostgresClient>>),
     #[allow(dead_code)]
-    Mysql(Arc<Mutex<MysqlConn>>),
+    Mysql(Arc<DatabaseHandle<MysqlConn>>),
 }
 
 #[cfg(feature = "runtime-db")]
@@ -782,6 +789,15 @@ impl ConnectionPool {
                 .remove(&key)
                 .ok_or_else(|| "connection is not checked out from this pool".to_string())?
         };
+        // A returned lease must never remain an alias of the next borrower's handle.
+        let connection = match connection.detach() {
+            Ok(Some(connection)) => connection,
+            result => {
+                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                state.total = state.total.saturating_sub(1);
+                return result.map(|_| ());
+            }
+        };
         if self.closed.load(Ordering::Acquire) {
             let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
             state.total = state.total.saturating_sub(1);
@@ -850,21 +866,21 @@ impl ConnectionPool {
                 self.connect_timeout,
                 self.statement_timeout_ms,
             )?;
-            return Ok(DatabaseConnection::Postgres(Arc::new(Mutex::new(
+            return Ok(DatabaseConnection::Postgres(Arc::new(DatabaseHandle::new(
                 RuntimeSafePostgresClient::new(client),
             ))));
         }
         match self.db_type.as_str() {
             "sqlite" => SqliteConnection::open(&self.connection_string)
-                .map(|conn| DatabaseConnection::Sqlite(Arc::new(Mutex::new(conn))))
+                .map(|conn| DatabaseConnection::Sqlite(Arc::new(DatabaseHandle::new(conn))))
                 .map_err(|e| format!("Failed to create SQLite connection: {}", e)),
             "postgres" | "postgresql" => AsyncRuntime::run_runtime_safe_blocking(|| {
                 PostgresClient::connect(&self.connection_string, NoTls)
             })
             .map(|client| {
-                DatabaseConnection::Postgres(Arc::new(Mutex::new(RuntimeSafePostgresClient::new(
-                    client,
-                ))))
+                DatabaseConnection::Postgres(Arc::new(DatabaseHandle::new(
+                    RuntimeSafePostgresClient::new(client),
+                )))
             })
             .map_err(|e| format!("Failed to create PostgreSQL connection: {}", e)),
             "mysql" => {
@@ -873,13 +889,10 @@ impl ConnectionPool {
                         .map_err(|e| format!("Invalid MySQL connection string: {}", e))?,
                 );
 
-                let runtime = tokio::runtime::Runtime::new()
-                    .map_err(|e| format!("Failed to create runtime: {}", e))?;
-
-                runtime.block_on(async {
+                AsyncRuntime::block_on(async {
                     mysql_async::Conn::new(opts)
                         .await
-                        .map(|conn| DatabaseConnection::Mysql(Arc::new(Mutex::new(conn))))
+                        .map(|conn| DatabaseConnection::Mysql(Arc::new(DatabaseHandle::new(conn))))
                         .map_err(|e| format!("Failed to create MySQL connection: {}", e))
                 })
             }

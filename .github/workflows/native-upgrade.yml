@@ -49,5 +49,8 @@ jobs:
             cargo test --locked --bin kujo upgrade::tests -- --test-threads=16
           done
 
+      - name: Test database lifecycle in both engines
+        run: cargo test --locked --test database_lifecycle
+
       - name: Test upgrade CLI contracts
         run: cargo test --locked --test cli_contracts --test cli_json_contracts upgrade_

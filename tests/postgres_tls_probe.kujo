@@ -5,5 +5,10 @@ let db := db_connect_postgres_tls(connection_string,ca_pem)
 if type(db) == "error" { throw("verified PostgreSQL TLS connection failed") }
 let rows := db_query(db,"SELECT 1::BIGINT AS value",[])
 if type(rows) == "error" || len(rows) != 1 || rows[0]["value"] != 1 { throw("verified PostgreSQL TLS query failed") }
-db_close(db)
+let alias := db
+assert(db_close(db) == true, "PostgreSQL closes")
+assert(db_close(alias) == true, "PostgreSQL close is idempotent")
+mut rejected := false
+try { db_query(alias, "SELECT 1", []) } except error { rejected = true }
+assert(rejected, "PostgreSQL alias rejects queries after close")
 print(to_json({"ok":true,"schema":"dev.kujolang.postgres-tls-probe.v1","tls":"verified","value":rows[0]["value"]}))

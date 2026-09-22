@@ -6,6 +6,16 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `db_close` now releases SQLite, PostgreSQL and MySQL resources immediately,
+  invalidates retained aliases, and rolls back uncommitted work. Repeated close
+  remains successful; operations on closed or returned pool leases fail explicitly.
+  Pool returns preserve the native session but invalidate the old lease so stale
+  aliases cannot affect a later borrower. See `docs/DATABASE_LIFECYCLE.md`.
+- MySQL connections now use Kujo's persistent async executor instead of a reactor
+  destroyed after each operation, fixing queries against a shut-down runtime.
+
 ## [1.5.0] - 2026-09-22
 - Added `digest_file_beneath` for bounded streaming SHA-256 of rooted regular
   files up to 64 MiB without retaining the full artifact in memory.
@@ -59,6 +69,7 @@ This file records user-visible changes to Kujo. It follows
 - Interpreter top-level function calls no longer read or overwrite unrelated
   caller-local bindings. Direct, indirect, callback, and pipe calls preserve
   lexical boundaries while retaining global assignment and captured closures.
+
 
 - VM routed HTTP dispatch now invokes closures created by imported modules,
   allowing modular route registrars to capture application context with the

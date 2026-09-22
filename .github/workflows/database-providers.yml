@@ -1,0 +1,45 @@
+name: database-providers
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  mysql-lifecycle:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ['mysql:8.4', 'mariadb:10.11']
+    services:
+      database:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: kujo-test-only
+          MYSQL_DATABASE: kujo_lifecycle
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pkujo-test-only || mariadb-admin ping -h 127.0.0.1 -pkujo-test-only"
+          --health-interval=5s --health-timeout=3s --health-retries=30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --locked
+      - name: Verify lifecycle in both engines
+        env:
+          KUJO_MYSQL_TEST_URL: mysql://root:kujo-test-only@127.0.0.1:${{ job.services.database.ports[3306] }}/kujo_lifecycle
+        run: |
+          target/debug/kujo run tests/mysql_lifecycle_probe.kujo
+          target/debug/kujo run tests/mysql_lifecycle_probe.kujo --interpreter
+  postgres-tls:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-14
+      - run: cargo build --locked
+      - name: Verify TLS, pooling, RLS and lifecycle in both engines
+        run: PATH="/usr/lib/postgresql/14/bin:$PATH" bash tests/postgres_tls.sh
