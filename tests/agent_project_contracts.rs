@@ -639,13 +639,17 @@ fn install_project_fixtures(project: &Path) {
     }
     copy_package_paths(&ecosystem, project, "mcp", &["src"]);
     copy_package_paths(&ecosystem, project, "rag", &["main.kujo", "src"]);
-    copy_package_paths(
+    copy_package_paths(&ecosystem, project, "dispatch", &["dispatch.kujo", "src", "examples"]);
+    // Current Dispatch keeps both bridges under src/bridge; older pinned CI
+    // fixtures also publish root-level compatibility entrypoints.
+    copy_optional_package_paths(
         &ecosystem,
         project,
         "dispatch",
-        &["dispatch.kujo", "bridge_chat.kujo", "sdk_adapter.kujo", "src", "examples"],
+        &["bridge_chat.kujo", "sdk_adapter.kujo"],
     );
-    copy_package_paths(&ecosystem, project, "runledger", &["runledger.kujo", "cli.kujo", "src"]);
+    copy_package_paths(&ecosystem, project, "runledger", &["runledger.kujo", "src"]);
+    copy_optional_package_paths(&ecosystem, project, "runledger", &["cli.kujo"]);
     copy_package_paths(&ecosystem, project, "watchdog", &["watchdog.kujo"]);
     copy_package_paths(&ecosystem, project, "relay", &["main.kujo", "src", "schemas"]);
 }
@@ -660,6 +664,14 @@ fn copy_package_paths(ecosystem: &Path, project: &Path, package: &str, paths: &[
         } else {
             fs::create_dir_all(target.parent().unwrap()).unwrap();
             fs::copy(source, target).unwrap();
+        }
+    }
+}
+
+fn copy_optional_package_paths(ecosystem: &Path, project: &Path, package: &str, paths: &[&str]) {
+    for rel in paths {
+        if ecosystem.join(package).join(rel).exists() {
+            copy_package_paths(ecosystem, project, package, &[*rel]);
         }
     }
 }
