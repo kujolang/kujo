@@ -403,6 +403,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `read_lines` | stable | `rows := read_lines("notes.txt")` |
 | `jsonl_query` | stable | `rows := jsonl_query("evidence.jsonl", {"filter_field": "provider", "filter_equals": "gsc", "max_rows": 100})` |
 | `list_dir` | stable | `entries := list_dir(".")` |
+| `list_dir_page` | preview | `page := list_dir_page("records", "", 100, ".json")` |
 | `create_dir` | stable | `create_dir("tmp")` |
 | `file_size` | stable | `bytes := file_size("notes.txt")` |
 | `delete_file` | stable | `delete_file("old.txt")` |

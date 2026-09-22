@@ -917,6 +917,20 @@ fn write_stream_frame<W: Write>(
     Ok(9 + ciphertext.len())
 }
 
+// The completed file and destination are in the same directory/filesystem.
+// Publication must never replace another writer's successful output. Cleanup
+// after publication is a receipt fact, not an ambiguous operation failure.
+fn publish_stream_output(temp: &Path, output: &Path) -> Result<bool, String> {
+    fs::hard_link(temp, output).map_err(|error| {
+        format!(
+            "Cannot publish stream AEAD output '{}' without replacement: {}",
+            output.display(),
+            error
+        )
+    })?;
+    Ok(fs::remove_file(temp).is_ok())
+}
+
 fn encrypt_file_stream(
     input_path: &str,
     output_path: &str,
@@ -993,18 +1007,19 @@ fn encrypt_file_stream(
         writer.flush().map_err(|error| error.to_string())?;
         writer.get_ref().sync_all().map_err(|error| error.to_string())?;
         drop(writer);
-        fs::rename(&temp, output).map_err(|error| {
-            format!(
-                "Cannot publish stream AEAD output '{}' from '{}': {}",
-                output.display(),
-                temp.display(),
-                error
-            )
-        })?;
+        let temporary_removed = publish_stream_output(&temp, output)?;
 
         let mut report = DictMap::default();
         report.insert("ok".into(), Value::Bool(true));
         report.insert("format".into(), Value::Str(Arc::new("KUJOAEAD1".to_string())));
+        report.insert("published".into(), Value::Bool(true));
+        report.insert("temporary_removed".into(), Value::Bool(temporary_removed));
+        if !temporary_removed {
+            report.insert(
+                "temporary_path".into(),
+                Value::Str(Arc::new(temp.to_string_lossy().into_owned())),
+            );
+        }
         report.insert("chunk_size".into(), Value::Int(chunk_size as i64));
         report.insert("chunks".into(), Value::Int(chunks as i64));
         report.insert("bytes_in".into(), Value::Int(bytes_in as i64));
@@ -1130,18 +1145,19 @@ fn decrypt_file_stream(input_path: &str, output_path: &str, key: &str) -> Result
         writer.flush().map_err(|error| error.to_string())?;
         writer.get_ref().sync_all().map_err(|error| error.to_string())?;
         drop(writer);
-        fs::rename(&temp, output).map_err(|error| {
-            format!(
-                "Cannot publish stream AEAD output '{}' from '{}': {}",
-                output.display(),
-                temp.display(),
-                error
-            )
-        })?;
+        let temporary_removed = publish_stream_output(&temp, output)?;
 
         let mut report = DictMap::default();
         report.insert("ok".into(), Value::Bool(true));
         report.insert("format".into(), Value::Str(Arc::new("KUJOAEAD1".to_string())));
+        report.insert("published".into(), Value::Bool(true));
+        report.insert("temporary_removed".into(), Value::Bool(temporary_removed));
+        if !temporary_removed {
+            report.insert(
+                "temporary_path".into(),
+                Value::Str(Arc::new(temp.to_string_lossy().into_owned())),
+            );
+        }
         report.insert("chunk_size".into(), Value::Int(chunk_size as i64));
         report.insert("chunks".into(), Value::Int(expected_counter as i64));
         report.insert("bytes_out".into(), Value::Int(bytes_out as i64));
@@ -1957,7 +1973,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use super::{handle, sha256_hex};
+    use super::{
+        decrypt_file_stream, encrypt_file_stream, handle, publish_stream_output, sha256_hex,
+    };
     use crate::interpreter::Value;
     use openssl::pkey::PKey;
     use openssl::rsa::Rsa;
@@ -1976,6 +1994,120 @@ mod tests {
         let mut path = std::env::temp_dir();
         path.push(format!("{}_{}.txt", prefix, nanos));
         path.to_string_lossy().to_string()
+    }
+
+    #[test]
+    fn stream_encrypt_and_decrypt_each_have_one_winner() {
+        let root = tempfile::tempdir().unwrap();
+        for i in 0..4 {
+            let input = root.path().join(format!("plain-{i}"));
+            fs::write(&input, vec![b'a' + i; 2 * 1024 * 1024]).unwrap();
+            encrypt_file_stream(
+                input.to_str().unwrap(),
+                root.path().join(format!("encrypted-{i}")).to_str().unwrap(),
+                "test-key",
+                4096,
+            )
+            .unwrap();
+        }
+        for decrypt in [false, true] {
+            let output = root.path().join(if decrypt { "shared-plain" } else { "shared-cipher" });
+            let barrier = Arc::new(std::sync::Barrier::new(4));
+            let workers: Vec<_> = (0..4)
+                .map(|i| {
+                    let input = root
+                        .path()
+                        .join(format!("{}-{i}", if decrypt { "encrypted" } else { "plain" }));
+                    let output = output.clone();
+                    let barrier = barrier.clone();
+                    std::thread::spawn(move || {
+                        barrier.wait();
+                        let result = if decrypt {
+                            decrypt_file_stream(
+                                input.to_str().unwrap(),
+                                output.to_str().unwrap(),
+                                "test-key",
+                            )
+                        } else {
+                            encrypt_file_stream(
+                                input.to_str().unwrap(),
+                                output.to_str().unwrap(),
+                                "test-key",
+                                4096,
+                            )
+                        };
+                        (i, result.is_ok())
+                    })
+                })
+                .collect();
+            let winners: Vec<_> =
+                workers.into_iter().map(|w| w.join().unwrap()).filter(|(_, ok)| *ok).collect();
+            assert_eq!(winners.len(), 1);
+            let plain = if decrypt {
+                output
+            } else {
+                let plain = root.path().join("recovered");
+                decrypt_file_stream(output.to_str().unwrap(), plain.to_str().unwrap(), "test-key")
+                    .unwrap();
+                plain
+            };
+            assert_eq!(fs::read(plain).unwrap(), vec![b'a' + winners[0].0; 2 * 1024 * 1024]);
+        }
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 11, "no abandoned temporary files");
+    }
+
+    #[test]
+    fn stream_publication_is_exclusive_under_contention() {
+        let root = tempfile::tempdir().unwrap();
+        let output = root.path().join("output");
+        let barrier = Arc::new(std::sync::Barrier::new(8));
+        let workers: Vec<_> = (0..8)
+            .map(|i| {
+                let temp = root.path().join(format!("input-{i}"));
+                fs::write(&temp, i.to_string()).unwrap();
+                let output = output.clone();
+                let barrier = barrier.clone();
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    let result = publish_stream_output(&temp, &output);
+                    if result.is_err() {
+                        fs::remove_file(&temp).unwrap();
+                    }
+                    (i, result)
+                })
+            })
+            .collect();
+        let winners: Vec<_> = workers
+            .into_iter()
+            .map(|w| w.join().unwrap())
+            .filter(|(_, result)| result.is_ok())
+            .collect();
+        assert_eq!(winners.len(), 1);
+        assert_eq!(winners[0].1, Ok(true));
+        assert_eq!(fs::read_to_string(&output).unwrap(), winners[0].0.to_string());
+        assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn stream_publication_preserves_existing_entries() {
+        let root = tempfile::tempdir().unwrap();
+        let temp = root.path().join("temp");
+        let output = root.path().join("output");
+        fs::write(&temp, "new").unwrap();
+        fs::write(&output, "existing").unwrap();
+        assert!(publish_stream_output(&temp, &output).is_err());
+        assert_eq!(fs::read_to_string(&output).unwrap(), "existing");
+        fs::remove_file(&output).unwrap();
+        fs::create_dir(&output).unwrap();
+        assert!(publish_stream_output(&temp, &output).is_err());
+        #[cfg(unix)]
+        {
+            fs::remove_dir(&output).unwrap();
+            std::os::unix::fs::symlink(root.path().join("missing"), &output).unwrap();
+            assert!(publish_stream_output(&temp, &output).is_err());
+            assert!(fs::symlink_metadata(&output).unwrap().file_type().is_symlink());
+        }
+        assert_eq!(fs::read_to_string(&temp).unwrap(), "new");
     }
 
     #[test]

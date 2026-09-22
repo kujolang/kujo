@@ -131,6 +131,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "read_binary_file"
         | "read_lines"
         | "jsonl_query"
+        | "list_dir_page"
         | "list_dir"
         | "list_dir_sync"
         | "list_dir_async"
