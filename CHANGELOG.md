@@ -6,6 +6,8 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+- Added bounded, descriptor-relative `list_dir_beneath` pages with explicit scan ceilings, suffix-based cursors, and symlink/race coverage.
+
 ### Changed
 
 - Added `read_binary_prefix_beneath` for bounded regular-file prefix reads

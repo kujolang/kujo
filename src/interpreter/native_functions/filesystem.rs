@@ -69,6 +69,83 @@ fn validate_beneath_relative_path(relative_path: &Path) -> Result<Vec<&std::ffi:
     Ok(components)
 }
 
+#[derive(Debug)]
+struct DirectoryPage {
+    names: Vec<String>,
+    next_cursor: String,
+    truncated: bool,
+    scanned: usize,
+}
+
+// Retain only the smallest limit+1 keys while scanning through an opened directory.
+// The suffix is removed solely for ordering/cursors; returned names are unchanged.
+fn list_dir_beneath_page(
+    root: &str,
+    relative: &str,
+    after: &str,
+    suffix: &str,
+    limit: usize,
+    max_entries: usize,
+) -> Result<DirectoryPage, String> {
+    let error = |stage: &str, detail: String| format!("list_dir_beneath[{}]: {}", stage, detail);
+    if !(1..=1000).contains(&limit) || !(1..=100_000).contains(&max_entries) {
+        return Err(error(
+            "invalid_bounds",
+            "limit must be 1..1000 and max_entries 1..100000".into(),
+        ));
+    }
+    if after.len() > 4096
+        || suffix.len() > 255
+        || after.contains(['/', '\\', '\0'])
+        || suffix.contains(['/', '\\', '\0'])
+    {
+        return Err(error(
+            "invalid_cursor",
+            "cursor/suffix is not a bounded filename component".into(),
+        ));
+    }
+    let components = validate_beneath_relative_path(Path::new(relative))
+        .map_err(|e| error("invalid_relative_path", e))?;
+    let mut directory = Dir::open_ambient_dir(root, ambient_authority())
+        .map_err(|e| error("root_open_failed", e.to_string()))?;
+    for component in components {
+        directory = cap_fs_ext::DirExt::open_dir_nofollow(&directory, component)
+            .map_err(|e| error("component_rejected", e.to_string()))?;
+    }
+    let entries = directory.entries().map_err(|e| error("directory_read_failed", e.to_string()))?;
+    let mut selected = std::collections::BTreeSet::<String>::new();
+    let mut scanned = 0;
+    for entry in entries {
+        if scanned >= max_entries {
+            return Err(error(
+                "scan_limit",
+                "directory exceeds max_entries; no complete page can be returned".into(),
+            ));
+        }
+        scanned += 1;
+        let entry = entry.map_err(|e| error("entry_read_failed", e.to_string()))?;
+        let name = entry
+            .file_name()
+            .into_string()
+            .map_err(|_| error("invalid_utf8", "directory contains a non-UTF-8 filename".into()))?;
+        if let Some(key) = name.strip_suffix(suffix) {
+            if after.is_empty() || key > after {
+                selected.insert(key.to_owned());
+                if selected.len() > limit + 1 {
+                    selected.pop_last();
+                }
+            }
+        }
+    }
+    let truncated = selected.len() > limit;
+    if truncated {
+        selected.pop_last();
+    }
+    let next_cursor = selected.last().cloned().unwrap_or_else(|| after.to_owned());
+    let names = selected.into_iter().map(|key| format!("{}{}", key, suffix)).collect();
+    Ok(DirectoryPage { names, next_cursor, truncated, scanned })
+}
+
 fn read_file_beneath_bytes(
     root: &str,
     relative_path: &str,
@@ -1032,6 +1109,40 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 }
             } else {
                 Value::Error("read_file_lossy requires a string path argument".to_string())
+            }
+        }
+
+        "list_dir_beneath" => {
+            if arg_values.len() != 6 {
+                return Some(Value::Error("list_dir_beneath requires root, relative directory, after, suffix, limit, max_entries".into()));
+            }
+            let [Value::Str(root), Value::Str(relative), Value::Str(after), Value::Str(suffix), Value::Int(limit), Value::Int(max_entries)] =
+                arg_values
+            else {
+                return Some(Value::Error(
+                    "list_dir_beneath requires four strings and two integer bounds".into(),
+                ));
+            };
+            let (Ok(limit), Ok(max_entries)) =
+                (usize::try_from(*limit), usize::try_from(*max_entries))
+            else {
+                return Some(Value::Error("list_dir_beneath bounds must be positive".into()));
+            };
+            match list_dir_beneath_page(root, relative, after, suffix, limit, max_entries) {
+                Ok(page) => {
+                    let mut result = DictMap::default();
+                    result.insert(
+                        "names".into(),
+                        Value::Array(Arc::new(
+                            page.names.into_iter().map(|n| Value::Str(Arc::new(n))).collect(),
+                        )),
+                    );
+                    result.insert("next_cursor".into(), Value::Str(Arc::new(page.next_cursor)));
+                    result.insert("truncated".into(), Value::Bool(page.truncated));
+                    result.insert("scanned".into(), Value::Int(page.scanned as i64));
+                    Value::Dict(Arc::new(result))
+                }
+                Err(error) => Value::Error(error),
             }
         }
 
@@ -2126,6 +2237,81 @@ mod beneath_tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::thread;
+
+    #[test]
+    fn list_beneath_pages_stems_with_bounded_memory_and_scan() {
+        let root = tempfile::tempdir().unwrap();
+        fs::create_dir(root.path().join("records")).unwrap();
+        for name in ["review-a-b.json", "review-a.json", "review-z.json", "ignored.txt"] {
+            fs::write(root.path().join("records").join(name), "{}").unwrap();
+        }
+        let root = root.path().to_str().unwrap();
+        let first = list_dir_beneath_page(root, "records", "", ".json", 1, 4).unwrap();
+        assert_eq!(first.names, ["review-a.json"]);
+        assert_eq!(first.next_cursor, "review-a");
+        assert!(first.truncated);
+        assert_eq!(first.scanned, 4);
+        let second =
+            list_dir_beneath_page(root, "records", &first.next_cursor, ".json", 2, 4).unwrap();
+        assert_eq!(second.names, ["review-a-b.json", "review-z.json"]);
+        assert!(!second.truncated);
+        assert!(list_dir_beneath_page(root, "records", "", ".json", 1, 3)
+            .unwrap_err()
+            .contains("scan_limit"));
+        for relative in ["../escape", "/absolute", "records/../records", "records//child", ""] {
+            assert!(list_dir_beneath_page(root, relative, "", "", 1, 100).is_err());
+        }
+        for (limit, scan) in [(0, 1), (1001, 1), (1, 0), (1, 100001)] {
+            assert!(list_dir_beneath_page(root, "records", "", "", limit, scan).is_err());
+        }
+        assert!(list_dir_beneath_page(root, "records", "../bad", "", 1, 100).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn list_beneath_rejects_symlinks_and_ancestor_swaps() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        fs::write(outside.path().join("secret.json"), "outside").unwrap();
+        symlink(outside.path(), root.path().join("linked")).unwrap();
+        symlink(root.path().join("missing"), root.path().join("dangling")).unwrap();
+        for relative in ["linked", "dangling"] {
+            assert!(list_dir_beneath_page(
+                root.path().to_str().unwrap(),
+                relative,
+                "",
+                ".json",
+                10,
+                100
+            )
+            .is_err());
+        }
+        fs::create_dir(root.path().join("live")).unwrap();
+        fs::write(root.path().join("live/inside.json"), "inside").unwrap();
+        let running = Arc::new(AtomicBool::new(true));
+        let flag = running.clone();
+        let root_path = root.path().to_path_buf();
+        let outside_path = outside.path().to_path_buf();
+        let mover = thread::spawn(move || {
+            while flag.load(Ordering::Relaxed) {
+                if fs::rename(root_path.join("live"), root_path.join("parked")).is_ok() {
+                    let _ = symlink(&outside_path, root_path.join("live"));
+                    let _ = fs::remove_file(root_path.join("live"));
+                    let _ = fs::rename(root_path.join("parked"), root_path.join("live"));
+                }
+            }
+        });
+        for _ in 0..500 {
+            if let Ok(page) =
+                list_dir_beneath_page(root.path().to_str().unwrap(), "live", "", ".json", 10, 100)
+            {
+                assert!(!page.names.iter().any(|name| name == "secret.json"));
+            }
+        }
+        running.store(false, Ordering::Relaxed);
+        mover.join().unwrap();
+    }
 
     #[test]
     fn write_beneath_creates_parents_overwrites_and_cleans_failures() {

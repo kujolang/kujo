@@ -619,3 +619,21 @@ write_file_atomic_beneath(".", "reports/check.json", "{}", true)
 All five share the native implementation between VM and interpreter and fail
 explicitly on unsupported platforms. See STANDARD_LIBRARY_REFERENCE.md for
 lifecycle, environment and concurrency details.
+
+### Bounded confined directory pages (unreleased)
+
+`list_dir_beneath(root, relative_directory, after, suffix, limit, max_entries)`
+requires filesystem-read and returns `{names, next_cursor, truncated, scanned}`.
+It opens every directory component without following symlinks/reparse points
+relative to a trusted ambient root, then enumerates through that held directory.
+The root itself must be trusted, as with `read_file_beneath`.
+
+`limit` is 1..1000; `max_entries` is 1..100000. Every directory entry counts
+against the scan ceiling, including names not matching the suffix. Exceeding
+that ceiling returns an error, never a misleading partial page. Memory retains
+only the smallest `limit+1` matching names after the cursor. Ordering and cursors
+use names with the supplied suffix removed; returned names retain the suffix.
+An empty suffix selects all names. No entry content or symlink target is read.
+Invalid UTF-8 names, bad types/bounds/paths, and directory I/O failures fail closed.
+Pagination is deterministic for a stable directory, not a filesystem snapshot.
+Concurrent insertions before the cursor require starting a new traversal.

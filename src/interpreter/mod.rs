@@ -672,6 +672,7 @@ impl Interpreter {
             "read_file",
             "read_file_lossy",
             "read_file_beneath",
+            "list_dir_beneath",
             "read_binary_file_beneath",
             "read_binary_prefix_beneath",
             "write_file",
@@ -1254,6 +1255,8 @@ impl Interpreter {
             "read_file_lossy".to_string(),
             Value::NativeFunction("read_file_lossy".to_string()),
         );
+        self.env
+            .define("list_dir_beneath".into(), Value::NativeFunction("list_dir_beneath".into()));
         self.env.define(
             "read_file_beneath".to_string(),
             Value::NativeFunction("read_file_beneath".to_string()),
@@ -3561,6 +3564,17 @@ impl Interpreter {
             "type" | "type_of" => CallableArity::exact("type", vec!["value".to_string()]),
             "is_truthy" => CallableArity::exact("is_truthy", vec!["value".to_string()]),
             "read_file_lossy" => CallableArity::exact("read_file_lossy", vec!["path".to_string()]),
+            "list_dir_beneath" => CallableArity::exact(
+                name,
+                vec![
+                    "root".into(),
+                    "relative_directory".into(),
+                    "after".into(),
+                    "suffix".into(),
+                    "limit".into(),
+                    "max_entries".into(),
+                ],
+            ),
             "read_file_beneath" | "read_binary_file_beneath" | "read_binary_prefix_beneath" => {
                 CallableArity::exact(
                     name,

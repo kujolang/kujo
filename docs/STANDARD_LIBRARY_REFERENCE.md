@@ -433,6 +433,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `basename` | stable | `b := basename("a/b.txt")` |
 | `path_exists` | stable | `ok := path_exists("notes.txt")` |
 | `path_join` | stable alias | `p := path_join("a", "b")` |
+| `list_dir_beneath` | unreleased | `page := list_dir_beneath(".", "records", "", ".json", 100, 100000)` |
 | `path_absolute` | preview | `p := path_absolute(".")` |
 | `path_is_dir` | stable | `ok := path_is_dir(".")` |
 | `path_is_file` | stable | `ok := path_is_file("a.txt")` |
