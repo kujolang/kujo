@@ -693,6 +693,7 @@ mod tests {
             "read_file",
             "read_file_beneath",
             "sha256_file_beneath",
+            "list_dir_beneath",
             "read_binary_file_beneath",
             "read_binary_prefix_beneath",
             "write_file",
