@@ -456,9 +456,12 @@ contents of a regular file after its handle has been opened.
 
 `read_binary_prefix_beneath` separately reads up to the caller's nonnegative
 `max_bytes` limit from one regular-file handle rooted at `root`, even if the
-file itself is larger. Relative in-root file or directory symlinks may resolve;
-escapes, non-regular objects, and invalid paths fail closed. Absolute symlink
-targets are not supported by the capability resolver. Callers must keep the
+file itself is larger. Relative in-root file or directory symlinks may resolve
+on Unix; Windows junction traversal and absolute symlink targets are not
+supported by the capability resolver. A caller may separately canonicalize an
+in-root alias and supply its target-relative path, but each actual read remains
+rooted. Escapes, non-regular objects, and invalid paths fail closed. Callers
+must keep the
 trusted root path stable: a separate actor replacing the root itself before
 the root handle opens is outside this API's containment guarantee. Contents
 of an opened regular file can still change during the read.
