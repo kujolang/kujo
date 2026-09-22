@@ -25,7 +25,7 @@ func find_entry(spec, token) {
     return null
 }
 
-func option_value(entry, token, argv, index) {
+func option_value(entry, token, argv, index, spec) {
     let kind := entry["kind"]
     if kind == "bool" {
         if token == "--" + entry["name"] || token == get_default(entry, "short", "") {
@@ -98,7 +98,7 @@ export func parse(argv, spec) {
             if entry == null {
                 return cli_error(index, token, "unknown_option", "unknown option")
             }
-            let parsed := option_value(entry, token, argv, index)
+            let parsed := option_value(entry, token, argv, index, spec)
             if parsed["ok"] != true {
                 return parsed
             }
@@ -114,7 +114,7 @@ export func parse(argv, spec) {
             if entry == null {
                 return cli_error(index, token, "unknown_option", "unknown option")
             }
-            let parsed := option_value(entry, token, argv, index)
+            let parsed := option_value(entry, token, argv, index, spec)
             if parsed["ok"] != true {
                 return parsed
             }
