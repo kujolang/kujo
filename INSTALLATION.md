@@ -1,6 +1,6 @@
 # Install Kujo
 
-Kujo 1.4.0 is the current stable release. Choose the install that matches what
+Kujo 1.5.0 is the current stable native release. Choose the install that matches what
 you need.
 
 ## Kujo and the core toolset
@@ -32,28 +32,31 @@ for profile contents and pinned multi-repository installs.
 
 ## Runtime only
 
-Node.js 18 or newer can install the lifecycle-script-free runtime package on
-Linux x64/arm64, macOS x64/arm64, and Windows x64:
+Download the checksum file and matching archive from the
+[v1.5.0 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.5.0).
+Release assets use these names:
+
+```text
+kujo-v1.5.0-linux-x64.tar.gz
+kujo-v1.5.0-linux-arm64.tar.gz
+kujo-v1.5.0-macos-x64.tar.gz
+kujo-v1.5.0-macos-arm64.tar.gz
+kujo-v1.5.0-windows-x64.zip
+```
+
+Each archive has a matching `.sha256` file, and `checksums.txt` lists them all.
+The signed release tag also binds these archive digests.
+Read [release binaries](docs/RELEASE_BINARIES.md) for manual verification steps.
+
+The independent npm channel currently remains at **1.4.0**. Publishing 1.5.0
+was rejected by the registry and requires maintainer authorization review; use
+the native archives when you need 1.5.0 APIs. Node.js 18 or newer can still
+install the previous lifecycle-script-free runtime package:
 
 ```bash
 npm install --global @kujolang/kujo-runtime@1.4.0
 kujo --version
 ```
-
-You can also download a checksum file and matching archive from the
-[v1.4.0 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.4.0).
-Release assets use these names:
-
-```text
-kujo-v1.4.0-linux-x64.tar.gz
-kujo-v1.4.0-linux-arm64.tar.gz
-kujo-v1.4.0-macos-x64.tar.gz
-kujo-v1.4.0-macos-arm64.tar.gz
-kujo-v1.4.0-windows-x64.zip
-```
-
-Each archive has a matching `.sha256` file, and `checksums.txt` lists them all.
-Read [release binaries](docs/RELEASE_BINARIES.md) for manual verification steps.
 
 ## Install Kennel
 
@@ -146,11 +149,12 @@ kujo upgrade --check
 kujo upgrade
 ```
 
-Select an exact version with `kujo upgrade 1.4.0`. Downgrades require
+Select an exact version with `kujo upgrade 1.5.0`. Downgrades require
 `--allow-downgrade`. The command verifies the release checksum and keeps a backup
 of the previous executable.
 
-Use the original manager for managed installs:
+Use the original manager for managed installs. The npm command below deliberately
+selects the currently published 1.4.0 package; it does not install 1.5.0:
 
 ```bash
 npm install --global @kujolang/kujo-runtime@1.4.0

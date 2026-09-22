@@ -578,7 +578,7 @@ name → array of values. Existing `headers` and response behavior are unchanged
 Routed HTTP server requests also expose `header_values`, with lowercase names
 and all received values in wire order. Use it to reject duplicate authorization
 headers; the compatibility `headers` dictionary alone cannot preserve duplicates.
-This server field is unreleased and is not present in the v1.4.0 binary.
+This server field is available in v1.5.0 and is not present in the v1.4.0 binary.
 The explicit APIs above do not raise the default network or file buffering limits.
 
 ### Regular-expression reuse
@@ -612,7 +612,7 @@ held-directory identity, concurrent movement, cleanup, and durability limits.
 write_file_atomic_beneath(".", "reports/check.json", "{}", true)
 ```
 
-## POSIX package-manager mechanisms (unreleased)
+## POSIX package-manager mechanisms (since v1.5.0)
 
 | Builtin | Signature | Arity | Result | Contract | Capability | Example |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -626,7 +626,7 @@ All five share the native implementation between VM and interpreter and fail
 explicitly on unsupported platforms. See STANDARD_LIBRARY_REFERENCE.md for
 lifecycle, environment and concurrency details.
 
-### Bounded confined directory pages (unreleased)
+### Bounded confined directory pages (preview, since v1.5.0)
 
 `list_dir_beneath(root, relative_directory, after, suffix, limit, max_entries)`
 requires filesystem-read and returns `{names, next_cursor, truncated, scanned}`.

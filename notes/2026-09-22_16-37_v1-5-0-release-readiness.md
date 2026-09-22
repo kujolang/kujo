@@ -48,3 +48,5 @@ Published-download run 35793560616 passed on all five platforms; its first macOS
 The independent npm publisher run 35793388734 failed with registry E404 on the existing @kujolang/kujo-darwin-arm64 package; public lookup still reports 1.4.0. npm 1.5.0 publication is not claimed. Native GitHub archives remain canonical, and no Cargo registry publication was attempted. Registry authorization requires maintainer review; no trust or credential boundary was bypassed.
 
 AssetWorks v0.3.0 is signed and published from 1cef9b0. Its final installation/website receipts and next-session scope are maintained in AssetWorks docs/NEXT_SESSION_IMPLEMENTATION.md. The public installer synchronization is isolated in kujolang.ai commit 8d60dd0.
+
+Installation guidance distinguishes verified native 1.5.0 from the still-published npm 1.4.0 package; npm lookup confirmed both the resolver and darwin-arm64 package remain 1.4.0. Standard-library availability labels now identify the APIs shipped in 1.5.0.
