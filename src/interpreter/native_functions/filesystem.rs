@@ -2690,6 +2690,9 @@ mod beneath_tests {
         let error =
             read_file_beneath_bytes(root.to_str().unwrap(), "dir-link/secret.txt", 64).unwrap_err();
         assert!(error.contains("[component_rejected]"), "{error}");
+        assert!(list_dir_beneath_page(root.to_str().unwrap(), "dir-link", "", "", 10, 100)
+            .unwrap_err()
+            .contains("[component_rejected]"));
         let write_error = write_file_atomic_beneath(
             root.to_str().unwrap(),
             "dir-link/secret.txt",
@@ -2722,10 +2725,14 @@ mod beneath_tests {
             assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         }
         assert_eq!(
-            read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "inside/note.txt", 64)
-                .unwrap(),
+            read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "safe/note.txt", 64).unwrap(),
             b"safe"
         );
+        // Windows junctions encode absolute targets. cap-std rejects absolute
+        // redirects even when their target happens to be inside the root;
+        // the prefix API only promises in-root relative symlink traversal.
+        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "inside/note.txt", 64)
+            .is_err());
         assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "outside/note.txt", 64)
             .is_err());
         let _ = fs::remove_dir(root.join("inside"));
