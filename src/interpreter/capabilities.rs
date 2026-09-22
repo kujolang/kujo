@@ -126,6 +126,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "list_dir_beneath"
         | "read_file_beneath"
         | "sha256_file_beneath"
+        | "copy_file_beneath"
         | "read_binary_file_beneath"
         | "read_binary_prefix_beneath"
         | "read_binary_file"
@@ -312,6 +313,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
 /// merely because network access (or the reverse) was granted.
 pub fn additional_capabilities_for_native_function(name: &str) -> &'static [NativeCapability] {
     match name {
+        "copy_file_beneath" => &[NativeCapability::FilesystemWrite],
         "publish_directory_noreplace" | "publish_file_noreplace" | "symlink_atomic" => {
             &[NativeCapability::FilesystemDelete]
         }

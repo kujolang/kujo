@@ -644,6 +644,64 @@ fn write_file_atomically(path: &str, payload: &[u8], overwrite: bool) -> Result<
     result
 }
 
+// The returned digest covers the exact bytes copied through retained handles.
+// Concurrent source mutation is not a snapshot; callers can compare this
+// receipt to an expected content digest before publishing a backup manifest.
+fn copy_file_beneath_stream(
+    source_root: &str,
+    source_path: &str,
+    target_root: &str,
+    target_path: &str,
+    maximum: u64,
+) -> Result<(String, u64), String> {
+    if maximum == 0 || maximum > 4_294_967_296 {
+        return Err("copy_file_beneath max_bytes must be in 1..4294967296".into());
+    }
+    let mut source = open_regular_beneath(source_root, source_path, maximum)?;
+    let mut receipt = None;
+    write_stream_beneath_with_hook(
+        target_root,
+        target_path,
+        false,
+        |_| {},
+        |target| {
+            receipt = Some(copy_bounded_reader(&mut source, target, maximum)?);
+            Ok(())
+        },
+    )?;
+    Ok(receipt.expect("successful writer produced a receipt"))
+}
+
+fn copy_bounded_reader(
+    source: &mut impl Read,
+    target: &mut impl Write,
+    maximum: u64,
+) -> Result<(String, u64), String> {
+    let mut observed = 0_u64;
+    let mut digest = Sha256::new();
+    let mut buffer = [0_u8; 65536];
+    loop {
+        let wanted = (maximum - observed + 1).min(buffer.len() as u64) as usize;
+        let count = source
+            .read(&mut buffer[..wanted])
+            .map_err(|error| format!("copy_file_beneath[read_failed]: {error}"))?;
+        if count == 0 {
+            break;
+        }
+        observed += count as u64;
+        if observed > maximum {
+            return Err(
+                "copy_file_beneath[size_limit_exceeded]: source grew beyond its bound".into()
+            );
+        }
+        target
+            .write_all(&buffer[..count])
+            .map_err(|error| format!("copy_file_beneath[write_failed]: {error}"))?;
+        digest.update(&buffer[..count]);
+    }
+    Ok((format!("{:x}", digest.finalize()), observed))
+}
+
 // All names after the trusted root open are single components relative to held
 // directory handles. Renaming an ancestor cannot redirect later publication.
 fn write_file_atomic_beneath(
@@ -662,6 +720,20 @@ fn write_beneath_with_hook(
     overwrite: bool,
     hook: impl FnMut(&str),
 ) -> Result<(), String> {
+    validate_write_size_limit(path, payload.len())?;
+    write_stream_beneath_with_hook(root, path, overwrite, hook, |file| {
+        file.write_all(payload)
+            .map_err(|error| format!("write_file_atomic_beneath[write_failed]: {error}"))
+    })
+}
+
+fn write_stream_beneath_with_hook(
+    root: &str,
+    path: &str,
+    overwrite: bool,
+    hook: impl FnMut(&str),
+    write_payload: impl FnOnce(&mut File) -> Result<(), String>,
+) -> Result<(), String> {
     let error =
         |stage: &str, detail: String| format!("write_file_atomic_beneath[{}]: {}", stage, detail);
     let components = validate_beneath_relative_path(Path::new(path))
@@ -673,10 +745,9 @@ fn write_beneath_with_hook(
     if path.contains(':') {
         return Err(error("invalid_relative_path", "alternate data streams are forbidden".into()));
     }
-    validate_write_size_limit(path, payload.len())?;
     #[cfg(windows)]
     {
-        super::confined_write_windows::write(root, &components, payload, overwrite, hook)
+        super::confined_write_windows::write(root, &components, overwrite, hook, write_payload)
     }
     #[cfg(not(windows))]
     {
@@ -699,9 +770,10 @@ fn write_beneath_with_hook(
         options.write(true).create_new(true).follow(FollowSymlinks::No);
         let mut file = dir
             .open_with(&temporary, &options)
-            .map_err(|e| error("temporary_create_failed", e.to_string()))?;
+            .map_err(|e| error("temporary_create_failed", e.to_string()))?
+            .into_std();
         let result = (|| {
-            file.write_all(payload).map_err(|e| error("write_failed", e.to_string()))?;
+            write_payload(&mut file)?;
             file.sync_all().map_err(|e| error("sync_failed", e.to_string()))?;
             drop(file);
             hook("before_publish");
@@ -1242,6 +1314,32 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     result.insert("next_cursor".into(), Value::Str(Arc::new(page.next_cursor)));
                     result.insert("truncated".into(), Value::Bool(page.truncated));
                     result.insert("scanned".into(), Value::Int(page.scanned as i64));
+                    Value::Dict(Arc::new(result))
+                }
+                Err(error) => Value::Error(error),
+            }
+        }
+
+        "copy_file_beneath" => {
+            let [Value::Str(source_root), Value::Str(source), Value::Str(target_root), Value::Str(target), Value::Int(maximum)] =
+                arg_values
+            else {
+                return Some(Value::Error("copy_file_beneath requires source_root, source_path, target_root, target_path (strings), max_bytes (integer)".into()));
+            };
+            if *maximum < 1 {
+                return Some(Value::Error("copy_file_beneath max_bytes must be positive".into()));
+            }
+            match copy_file_beneath_stream(
+                source_root,
+                source,
+                target_root,
+                target,
+                *maximum as u64,
+            ) {
+                Ok((digest, bytes)) => {
+                    let mut result = DictMap::default();
+                    result.insert("sha256".into(), Value::Str(Arc::new(digest)));
+                    result.insert("bytes".into(), Value::Int(bytes as i64));
                     Value::Dict(Arc::new(result))
                 }
                 Err(error) => Value::Error(error),
@@ -2913,6 +3011,78 @@ mod beneath_tests {
         }
         running.store(false, Ordering::Relaxed);
         mover.join().unwrap();
+    }
+
+    #[test]
+    fn copy_beneath_streams_exact_bytes_and_never_replaces() {
+        let root = fixture_root("copy_bounds");
+        let anchor = root.to_str().unwrap();
+        let bytes = vec![0x9f; 131073];
+        fs::write(root.join("source"), &bytes).unwrap();
+        fs::write(root.join("empty"), []).unwrap();
+        let receipt =
+            copy_file_beneath_stream(anchor, "source", anchor, "nested/copy", bytes.len() as u64)
+                .unwrap();
+        assert_eq!(receipt, (format!("{:x}", Sha256::digest(&bytes)), bytes.len() as u64));
+        assert_eq!(fs::read(root.join("nested/copy")).unwrap(), bytes);
+        assert!(copy_file_beneath_stream(anchor, "empty", anchor, "nested/copy", 1).is_err());
+        assert_eq!(fs::read(root.join("nested/copy")).unwrap(), bytes);
+        assert_eq!(
+            copy_file_beneath_stream(anchor, "empty", anchor, "empty-copy", 1).unwrap().1,
+            0
+        );
+        for maximum in [0, 131072, 4294967297] {
+            assert!(
+                copy_file_beneath_stream(anchor, "source", anchor, "rejected", maximum).is_err()
+            );
+            assert!(!root.join("rejected").exists());
+        }
+        for path in ["../source", "/source", "nested/../source", "nested", ""] {
+            assert!(copy_file_beneath_stream(anchor, path, anchor, "rejected", 200000).is_err());
+        }
+        // Simulate growth after metadata was inspected. The partial temporary
+        // must be discarded, and no visible destination may be published.
+        let result = write_stream_beneath_with_hook(
+            anchor,
+            "failed",
+            false,
+            |_| {},
+            |file| {
+                copy_bounded_reader(&mut std::io::Cursor::new(vec![7; 65537]), file, 65536)
+                    .map(|_| ())
+            },
+        );
+        assert!(result.unwrap_err().contains("size_limit_exceeded"));
+        assert!(!root.join("failed").exists());
+        assert!(!fs::read_dir(&root).unwrap().any(|e| e
+            .unwrap()
+            .file_name()
+            .to_string_lossy()
+            .starts_with(".kujo-beneath-")));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn copy_beneath_rejects_source_and_destination_links() {
+        use std::os::unix::fs::symlink;
+        let root = fixture_root("copy_links");
+        let outside = fixture_root("copy_outside");
+        let anchor = root.to_str().unwrap();
+        fs::write(root.join("source"), b"safe").unwrap();
+        fs::write(outside.join("sentinel"), b"outside").unwrap();
+        symlink(&outside, root.join("alias")).unwrap();
+        symlink(outside.join("sentinel"), root.join("link")).unwrap();
+        symlink(outside.join("missing"), root.join("dangling")).unwrap();
+        for path in ["alias/sentinel", "link", "dangling"] {
+            assert!(copy_file_beneath_stream(anchor, path, anchor, "copy", 32).is_err());
+            assert!(copy_file_beneath_stream(anchor, "source", anchor, path, 32).is_err());
+        }
+        assert!(!root.join("copy").exists());
+        assert_eq!(fs::read(outside.join("sentinel")).unwrap(), b"outside");
+        assert!(!outside.join("missing").exists());
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(outside).unwrap();
     }
 
     #[test]

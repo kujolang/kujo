@@ -5,7 +5,7 @@
 use cap_std::{ambient_authority, fs::Dir};
 use std::ffi::{c_void, OsStr};
 use std::fs::File;
-use std::io::{self, Write};
+use std::io;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::fs::MetadataExt;
 use std::os::windows::io::{AsRawHandle, FromRawHandle};
@@ -164,9 +164,9 @@ fn discard(file: &File) -> io::Result<()> {
 pub(super) fn write(
     root: &str,
     components: &[&OsStr],
-    payload: &[u8],
     overwrite: bool,
     mut hook: impl FnMut(&str),
+    write_payload: impl FnOnce(&mut File) -> Result<(), String>,
 ) -> Result<(), String> {
     let error = |stage: &str, e: io::Error| format!("write_file_atomic_beneath[{stage}]: {e}");
     let mut directory = Dir::open_ambient_dir(root, ambient_authority())
@@ -188,7 +188,7 @@ pub(super) fn write(
     let mut file = open_at(&directory, OsStr::new(&temporary), 0x4011_0080, 2, false)
         .map_err(|e| error("temporary_create_failed", e))?;
     let result = (|| {
-        file.write_all(payload).map_err(|e| error("write_failed", e))?;
+        write_payload(&mut file)?;
         file.sync_all().map_err(|e| error("sync_failed", e))?;
         hook("before_publish");
         let target = components[components.len() - 1];
