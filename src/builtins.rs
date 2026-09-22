@@ -1381,9 +1381,11 @@ pub fn env_list() -> HashMap<String, String> {
 
 /// Get command-line arguments
 pub fn get_args() -> Vec<String> {
-    if let Ok(json) = env::var("KUJO_SCRIPT_ARGS_JSON") {
-        if let Ok(args) = serde_json::from_str::<Vec<String>>(&json) {
-            return args;
+    if crate::module::isolated_imports_enabled() {
+        if let Ok(json) = env::var("KUJO_SCRIPT_ARGS_JSON") {
+            if let Ok(args) = serde_json::from_str::<Vec<String>>(&json) {
+                return args;
+            }
         }
     }
     // Check if arguments were explicitly set via KUJO_SCRIPT_ARGS environment variable

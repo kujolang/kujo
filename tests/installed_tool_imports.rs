@@ -32,7 +32,7 @@ fn isolated_tools_preserve_cwd_without_loading_caller_modules() {
             if isolated {
                 command.arg("--isolated-imports");
             }
-            command.args(["--", "space argument", "a\u{1f}b"]);
+            command.args(["--", "space argument", "", "a\u{1f}b"]);
             let output = command.output().unwrap();
             assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
             let text = String::from_utf8(output.stdout).unwrap();
@@ -41,9 +41,32 @@ fn isolated_tools_preserve_cwd_without_loading_caller_modules() {
             assert_eq!(lines[1], caller.canonicalize().unwrap().to_str().unwrap());
             if isolated {
                 let args: Vec<String> = serde_json::from_str(lines[2]).unwrap();
-                assert_eq!(args, vec!["space argument", "a\u{1f}b"]);
+                assert_eq!(args, vec!["space argument", "", "a\u{1f}b"]);
             }
         }
+    }
+}
+
+#[test]
+fn ordinary_runs_ignore_isolated_argument_json_from_the_environment() {
+    let temp = tempfile::tempdir().unwrap();
+    let script = temp.path().join("args.kujo");
+    fs::write(&script, "print(to_json(args()))\n").unwrap();
+    for interpreter in [false, true] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command
+            .current_dir(temp.path())
+            .env_remove("KUJO_ISOLATED_IMPORTS")
+            .env_remove("KUJO_SCRIPT_ARGS")
+            .env("KUJO_SCRIPT_ARGS_JSON", "[\"stale\"]")
+            .arg("run")
+            .arg(&script);
+        if interpreter {
+            command.arg("--interpreter");
+        }
+        let output = command.args(["--", "current"]).output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "[\"current\"]");
     }
 }
 
