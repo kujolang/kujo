@@ -11,6 +11,7 @@ use cap_fs_ext::{FollowSymlinks, OpenOptionsFollowExt, OpenOptionsSyncExt};
 use cap_std::ambient_authority;
 use cap_std::fs::{Dir, OpenOptions as CapOpenOptions};
 use sha2::{Digest, Sha256};
+use std::collections::BinaryHeap;
 use std::fs::OpenOptions;
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read, Write};
@@ -27,6 +28,49 @@ const ZIP_UNIX_FILE_TYPE_MASK: u32 = 0o170000;
 const ZIP_UNIX_SYMLINK_FILE_TYPE: u32 = 0o120000;
 const MAX_FILE_READ_BYTES: u64 = runtime_limits::MAX_FILE_IO_BYTES as u64;
 const MAX_FILE_WRITE_BYTES: usize = runtime_limits::MAX_FILE_IO_BYTES;
+
+// Retain only the smallest limit+1 matching names. Enumerating the directory is
+// still O(N); memory and the final sort are bounded independently of N.
+fn directory_page(path: &str, after: &str, limit: i64, suffix: &str) -> Result<Value, String> {
+    if !(1..=10000).contains(&limit) {
+        return Err("list_dir_page limit must be an integer in 1..10000".into());
+    }
+    let capacity = limit as usize + 1;
+    let mut names = BinaryHeap::with_capacity(capacity);
+    let mut examined: i64 = 0;
+    let mut peak = 0;
+    for entry in fs::read_dir(path).map_err(|e| format!("Cannot list directory '{path}': {e}"))? {
+        let entry = entry.map_err(|e| format!("Cannot read directory entry in '{path}': {e}"))?;
+        examined = examined.checked_add(1).ok_or("directory entry count overflow")?;
+        let name = entry
+            .file_name()
+            .into_string()
+            .map_err(|_| "list_dir_page requires UTF-8 directory names")?;
+        if name.as_str() <= after || !name.ends_with(suffix) {
+            continue;
+        }
+        if names.len() < capacity {
+            names.push(name);
+        } else if names.peek().is_some_and(|largest| &name < largest) {
+            *names.peek_mut().unwrap() = name;
+        }
+        peak = peak.max(names.len());
+    }
+    let mut names = names.into_sorted_vec();
+    let truncated = names.len() > limit as usize;
+    names.truncate(limit as usize);
+    let next_after = names.last().map(String::as_str).unwrap_or(after).to_string();
+    let mut result = DictMap::default();
+    result.insert(
+        "entries".into(),
+        Value::Array(Arc::new(names.into_iter().map(|name| Value::Str(Arc::new(name))).collect())),
+    );
+    result.insert("truncated".into(), Value::Bool(truncated));
+    result.insert("next_after".into(), Value::Str(Arc::new(next_after)));
+    result.insert("examined_entries".into(), Value::Int(examined));
+    result.insert("buffered_entries".into(), Value::Int(peak as i64));
+    Ok(Value::Dict(Arc::new(result)))
+}
 
 fn beneath_error(code: &str, detail: impl std::fmt::Display) -> String {
     format!("read_file_beneath[{}]: {}", code, detail)
@@ -1829,6 +1873,15 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
+        "list_dir_page" => match arg_values {
+            [Value::Str(path), Value::Str(after), Value::Int(limit), Value::Str(suffix)] => {
+                directory_page(path, after, *limit, suffix).unwrap_or_else(Value::Error)
+            }
+            _ => {
+                Value::Error("list_dir_page requires path, after, integer limit, and suffix".into())
+            }
+        },
+
         "list_dir" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("list_dir requires a string path argument".to_string()));
@@ -2316,6 +2369,48 @@ mod beneath_tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::thread;
+
+    #[test]
+    fn directory_pages_are_ordered_filtered_and_bounded() {
+        let root = tempfile::tempdir().unwrap();
+        for i in (0..2000).rev() {
+            fs::write(root.path().join(format!("item-{i:04}.json")), "").unwrap();
+        }
+        fs::write(root.path().join("ignored.txt"), "").unwrap();
+        let mut cursor = String::new();
+        let mut all = Vec::new();
+        loop {
+            let Value::Dict(page) =
+                directory_page(root.path().to_str().unwrap(), &cursor, 137, ".json").unwrap()
+            else {
+                panic!()
+            };
+            assert!(matches!(page.get("buffered_entries"), Some(Value::Int(n)) if *n <= 138));
+            assert!(matches!(page.get("examined_entries"), Some(Value::Int(2001))));
+            let Value::Array(entries) = &page["entries"] else { panic!() };
+            for entry in entries.iter() {
+                let Value::Str(name) = entry else { panic!() };
+                all.push(name.to_string());
+            }
+            let Value::Str(next) = &page["next_after"] else { panic!() };
+            cursor = next.to_string();
+            if matches!(page.get("truncated"), Some(Value::Bool(false))) {
+                break;
+            }
+        }
+        assert_eq!(all, (0..2000).map(|i| format!("item-{i:04}.json")).collect::<Vec<_>>());
+        for limit in [0, -1, 10001] {
+            assert!(directory_page(root.path().to_str().unwrap(), "", limit, "").is_err());
+        }
+        assert!(directory_page(root.path().join("missing").to_str().unwrap(), "", 1, "").is_err());
+        let Value::Dict(empty) =
+            directory_page(root.path().to_str().unwrap(), "zzz", 1, "").unwrap()
+        else {
+            panic!()
+        };
+        assert!(matches!(&empty["entries"], Value::Array(v) if v.is_empty()));
+        assert!(matches!(&empty["next_after"], Value::Str(v) if v.as_str() == "zzz"));
+    }
 
     #[test]
     fn write_beneath_creates_parents_overwrites_and_cleans_failures() {

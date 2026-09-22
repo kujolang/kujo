@@ -704,6 +704,7 @@ mod tests {
             "read_lines",
             "jsonl_query",
             "list_dir",
+            "list_dir_page",
             "create_dir",
             "file_size",
             "delete_file",

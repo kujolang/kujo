@@ -684,6 +684,7 @@ impl Interpreter {
             "read_lines",
             "jsonl_query",
             "list_dir",
+            "list_dir_page",
             "create_dir",
             "file_size",
             "delete_file",
@@ -1291,6 +1292,10 @@ impl Interpreter {
         self.env
             .define("jsonl_query".to_string(), Value::NativeFunction("jsonl_query".to_string()));
         self.env.define("list_dir".to_string(), Value::NativeFunction("list_dir".to_string()));
+        self.env.define(
+            "list_dir_page".to_string(),
+            Value::NativeFunction("list_dir_page".to_string()),
+        );
         self.env.define("create_dir".to_string(), Value::NativeFunction("create_dir".to_string()));
         self.env.define("file_size".to_string(), Value::NativeFunction("file_size".to_string()));
         self.env
@@ -3634,6 +3639,10 @@ impl Interpreter {
                 2,
                 3,
                 vec!["path".to_string(), "content_or_bytes".to_string(), "overwrite".to_string()],
+            ),
+            "list_dir_page" => CallableArity::exact(
+                "list_dir_page",
+                vec!["path".into(), "after".into(), "limit".into(), "suffix".into()],
             ),
             "publish_file_noreplace" => CallableArity::exact(
                 "publish_file_noreplace",
