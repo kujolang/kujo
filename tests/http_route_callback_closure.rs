@@ -626,6 +626,8 @@ server.listen()
             ),
         )
         .unwrap();
+        // Header preservation is not a slow-client deadline test. Allow scheduling
+        // headroom when this target runs multiple runtime processes concurrently.
         let child = spawn_runtime_with_timeout_ms(&script, &root, interpreter, 10_000);
         let result = (|| -> Result<String, String> {
             let deadline = std::time::Instant::now() + Duration::from_secs(10);
