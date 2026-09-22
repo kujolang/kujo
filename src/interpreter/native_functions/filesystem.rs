@@ -2340,6 +2340,9 @@ mod beneath_tests {
         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0);
         let error = read_file_beneath_bytes(root.to_str().unwrap(), "pipe", 64).unwrap_err();
         assert!(error.contains("[target_not_regular_file]"), "{error}");
+        let prefix_error =
+            read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "pipe", 64).unwrap_err();
+        assert!(prefix_error.contains("[target_not_regular_file]"), "{prefix_error}");
         let _ = fs::remove_file(fifo);
         let _ = fs::remove_dir_all(root);
     }
@@ -2440,7 +2443,7 @@ mod beneath_tests {
 
     #[cfg(unix)]
     #[test]
-    fn read_binary_prefix_beneath_race_does_not_escape_or_block_on_fifo() {
+    fn read_binary_prefix_beneath_race_does_not_escape() {
         use std::os::unix::fs::symlink;
         let root = fixture_root("prefix_race");
         let outside = fixture_root("prefix_race_outside");
@@ -2470,14 +2473,6 @@ mod beneath_tests {
         stop.store(true, Ordering::Relaxed);
         attacker.join().unwrap();
         let _ = fs::remove_file(root.join("live"));
-        let fifo = root.join("pipe");
-        use std::ffi::CString;
-        use std::os::unix::ffi::OsStrExt;
-        let fifo_name = CString::new(fifo.as_os_str().as_bytes()).unwrap();
-        assert_eq!(unsafe { libc::mkfifo(fifo_name.as_ptr(), 0o600) }, 0);
-        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "pipe", 64)
-            .unwrap_err()
-            .contains("[target_not_regular_file]"));
         let _ = fs::remove_dir_all(root);
         let _ = fs::remove_dir_all(outside);
     }
@@ -2535,11 +2530,24 @@ mod beneath_tests {
                 .expect("cmd junction fixture");
             assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         }
+        // The Windows capability resolver rejects junction traversal, even
+        // when the junction happens to point inside the root. A caller such as
+        // Scout can canonicalize a known in-root alias and pass its rooted
+        // target-relative path, while the actual read remains descriptor-bound.
+        let canonical_root = fs::canonicalize(&root).unwrap();
+        let canonical_inside = fs::canonicalize(root.join("inside/note.txt")).unwrap();
+        let inside_relative = canonical_inside.strip_prefix(canonical_root).unwrap();
         assert_eq!(
-            read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "inside/note.txt", 64)
-                .unwrap(),
+            read_binary_prefix_beneath_bytes(
+                root.to_str().unwrap(),
+                inside_relative.to_str().unwrap(),
+                64
+            )
+            .unwrap(),
             b"safe"
         );
+        assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "inside/note.txt", 64)
+            .is_err());
         assert!(read_binary_prefix_beneath_bytes(root.to_str().unwrap(), "outside/note.txt", 64)
             .is_err());
         let _ = fs::remove_dir(root.join("inside"));
