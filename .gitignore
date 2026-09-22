@@ -356,7 +356,7 @@ benchmark_output.txt
 /artifacts/hardening/
 /artifacts/live-conformance.json
 
-# Complete canonical tool-artifact coverage required by CI.
+# Runtime local artifacts required by the shared artifact guard
 /.kujo-http-upload-*.body
 /.*.kujo-agent-stage-*/
 /.env.local
