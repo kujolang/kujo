@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+- Added `digest_file_beneath` for bounded streaming SHA-256 of rooted regular
+  files up to 64 MiB without retaining the full artifact in memory.
+
+- Added `read_stdin(max_bytes)` for bounded, exact UTF-8 process input through EOF.
+
 - Added bounded, descriptor-relative `list_dir_beneath` pages with explicit scan ceilings, suffix-based cursors, and symlink/race coverage.
 
 ### Changed

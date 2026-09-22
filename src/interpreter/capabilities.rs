@@ -126,6 +126,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "list_dir_beneath"
         | "read_file_beneath"
         | "read_binary_file_beneath"
+        | "digest_file_beneath"
         | "read_binary_prefix_beneath"
         | "read_binary_file"
         | "read_lines"

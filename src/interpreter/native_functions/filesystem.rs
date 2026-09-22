@@ -146,18 +146,7 @@ fn list_dir_beneath_page(
     Ok(DirectoryPage { names, next_cursor, truncated, scanned })
 }
 
-fn read_file_beneath_bytes(
-    root: &str,
-    relative_path: &str,
-    max_bytes: usize,
-) -> Result<Vec<u8>, String> {
-    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
-        return Err(beneath_error(
-            "invalid_max_bytes",
-            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
-        ));
-    }
-
+fn open_regular_file_beneath(root: &str, relative_path: &str) -> Result<cap_std::fs::File, String> {
     let relative_path = Path::new(relative_path);
     let components = validate_beneath_relative_path(relative_path)?;
     let mut directory = Dir::open_ambient_dir(root, ambient_authority()).map_err(|error| {
@@ -181,7 +170,7 @@ fn read_file_beneath_bytes(
     let final_component = components[components.len() - 1];
     let mut options = CapOpenOptions::new();
     options.read(true).follow(FollowSymlinks::No).nonblock(true);
-    let mut file = directory.open_with(final_component, &options).map_err(|error| {
+    let file = directory.open_with(final_component, &options).map_err(|error| {
         beneath_error(
             "target_open_failed",
             format!("cannot open target '{}': {}", relative_path.display(), error),
@@ -199,6 +188,52 @@ fn read_file_beneath_bytes(
             format!("target '{}' is not a regular file", relative_path.display()),
         ));
     }
+    Ok(file)
+}
+
+fn digest_file_beneath(root: &str, relative_path: &str, max_bytes: usize) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    if max_bytes == 0 || max_bytes > 67_108_864 {
+        return Err("digest_file_beneath[invalid_max_bytes]: limit must be 1..=67108864".into());
+    }
+    let mut reader = open_regular_file_beneath(root, relative_path)?.take(max_bytes as u64 + 1);
+    let mut buffer = [0u8; 65_536];
+    let mut digest = Sha256::new();
+    let mut count = 0usize;
+    loop {
+        let bytes =
+            reader.read(&mut buffer).map_err(|error| beneath_error("read_failed", error))?;
+        if bytes == 0 {
+            break;
+        }
+        count += bytes;
+        if count > max_bytes {
+            return Err("digest_file_beneath[size_limit_exceeded]: file exceeds byte limit".into());
+        }
+        digest.update(&buffer[..bytes]);
+    }
+    let mut result = DictMap::default();
+    result.insert("bytes".into(), Value::Int(count as i64));
+    result.insert("sha256".into(), Value::Str(Arc::new(format!("{:x}", digest.finalize()))));
+    Ok(Value::Dict(Arc::new(result)))
+}
+
+fn read_file_beneath_bytes(
+    root: &str,
+    relative_path: &str,
+    max_bytes: usize,
+) -> Result<Vec<u8>, String> {
+    if max_bytes == 0 || max_bytes > MAX_FILE_WRITE_BYTES {
+        return Err(beneath_error(
+            "invalid_max_bytes",
+            format!("max_bytes must be between 1 and {}", MAX_FILE_WRITE_BYTES),
+        ));
+    }
+
+    let mut file = open_regular_file_beneath(root, relative_path)?;
+    let metadata =
+        file.metadata().map_err(|error| beneath_error("target_metadata_failed", error))?;
+    let relative_path = Path::new(relative_path);
     if metadata.len() > max_bytes as u64 {
         return Err(beneath_error(
             "size_limit_exceeded",
@@ -1146,7 +1181,10 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
-        "read_file_beneath" | "read_binary_file_beneath" | "read_binary_prefix_beneath" => {
+        "read_file_beneath"
+        | "read_binary_file_beneath"
+        | "read_binary_prefix_beneath"
+        | "digest_file_beneath" => {
             if arg_values.len() != 3 {
                 return Some(Value::Error(format!(
                     "{} requires root, relative_path, and max_bytes arguments",
@@ -1178,6 +1216,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     return Some(Value::Error(message));
                 }
             };
+            if name == "digest_file_beneath" {
+                return Some(
+                    digest_file_beneath(root, relative_path, max_bytes)
+                        .unwrap_or_else(Value::Error),
+                );
+            }
             let result = if name == "read_binary_prefix_beneath" {
                 read_binary_prefix_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes)
             } else {
@@ -2237,6 +2281,46 @@ mod beneath_tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::thread;
+
+    #[test]
+    fn digest_beneath_streams_large_files_and_enforces_exact_limit() {
+        use sha2::{Digest, Sha256};
+        let root = tempfile::tempdir().unwrap();
+        let data = vec![0x61; 9 * 1024 * 1024];
+        fs::write(root.path().join("large.bin"), &data).unwrap();
+        let path = root.path().to_str().unwrap();
+        let result = digest_file_beneath(path, "large.bin", data.len()).unwrap();
+        let Value::Dict(result) = result else { panic!("digest must be a dictionary") };
+        assert!(matches!(result.get("bytes"), Some(Value::Int(n)) if *n == data.len() as i64));
+        assert!(
+            matches!(result.get("sha256"), Some(Value::Str(hash)) if hash.as_str() == format!("{:x}", Sha256::digest(&data)))
+        );
+        assert!(digest_file_beneath(path, "large.bin", data.len() - 1)
+            .unwrap_err()
+            .contains("size_limit_exceeded"));
+        assert!(digest_file_beneath(path, "large.bin", 0).is_err());
+        assert!(digest_file_beneath(path, "large.bin", 67_108_865).is_err());
+        fs::write(root.path().join("empty"), "").unwrap();
+        assert!(digest_file_beneath(path, "empty", 1).is_ok());
+        assert!(digest_file_beneath(path, "../outside", 100).is_err());
+        fs::create_dir(root.path().join("directory")).unwrap();
+        assert!(digest_file_beneath(path, "directory", 100).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn digest_beneath_rejects_links_and_fifo() {
+        use std::os::unix::fs::symlink;
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("target"), "private").unwrap();
+        symlink("target", root.path().join("alias")).unwrap();
+        let path = root.path().to_str().unwrap();
+        assert!(digest_file_beneath(path, "alias", 100).is_err());
+        let status =
+            std::process::Command::new("mkfifo").arg(root.path().join("pipe")).status().unwrap();
+        assert!(status.success());
+        assert!(digest_file_beneath(path, "pipe", 100).is_err());
+    }
 
     #[test]
     fn list_beneath_pages_stems_with_bounded_memory_and_scan() {

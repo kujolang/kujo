@@ -220,6 +220,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `invert` | `invert(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := invert(...)` |
 | `update` | `update(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := update(...)` |
 | `get_default` | `get_default(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := get_default(...)` |
+| `read_stdin` | `read_stdin(max_bytes)` | 1 | string | Error on invalid limit, overflow, I/O, or invalid UTF-8. | `none` | `request := read_stdin(1048576)` |
 | `input` | `input(prompt?)` | 0..=1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := input(...)` |
 | `parse_int` | `parse_int(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_int(...)` |
 | `parse_float` | `parse_float(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_float(...)` |
@@ -252,6 +253,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `read_file` | `read_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_file(...)` |
 | `read_file_lossy` | `read_file_lossy(path)` | exact 1 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_file_lossy(...)` |
 | `read_file_beneath` | `read_file_beneath(root, relative_path, max_bytes)` | exact 3 | string | Rejects invalid relative paths, symlink/reparse traversal, non-regular files, oversized reads, and invalid UTF-8; capability-denied when gated. | `filesystem-read` | `text := read_file_beneath("trusted", "docs/note.txt", 1048576)` |
+| `digest_file_beneath` | `digest_file_beneath(root, relative_path, max_bytes)` | exact 3 | dict | Same no-follow regular-file boundary as rooted readers; limit 1..=67108864; fails on overflow. | `filesystem-read` | `digest := digest_file_beneath("trusted", "article.pdf", 67108864)` |
 | `read_binary_file_beneath` | `read_binary_file_beneath(root, relative_path, max_bytes)` | exact 3 | bytes | Rejects invalid relative paths, symlink/reparse traversal, non-regular files, and oversized reads; capability-denied when gated. | `filesystem-read` | `blob := read_binary_file_beneath("trusted", "docs/file.pdf", 5000000)` |
 | `read_binary_prefix_beneath` | `read_binary_prefix_beneath(root, relative_path, max_bytes)` | exact 3 | bytes | Reads at most the caller's nonnegative `max_bytes` from one rooted regular-file handle (including large files); permits confined relative symlinks where supported but rejects Windows junction traversal. Requires a stable trusted root path and `filesystem-read`. | `filesystem-read` | `prefix := read_binary_prefix_beneath("trusted", "src/main.kujo", 2000000)` |
 | `write_file` | `write_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := write_file(...)` |
@@ -637,3 +639,19 @@ An empty suffix selects all names. No entry content or symlink target is read.
 Invalid UTF-8 names, bad types/bounds/paths, and directory I/O failures fail closed.
 Pagination is deterministic for a stable directory, not a filesystem snapshot.
 Concurrent insertions before the cursor require starting a new traversal.
+
+### Bounded standard input
+
+`read_stdin(max_bytes)` reads UTF-8 from standard input until EOF, preserving all
+whitespace. The integer limit must be 1 through 8,388,608 bytes. At most limit + 1
+bytes are consumed before overflow is rejected. Invalid UTF-8 and read failures
+are errors, never silently truncated or replaced. Like `input`, this uses the
+explicit process input stream and requires no ambient filesystem capability.
+The caller must close stdin and enforce a process deadline: the byte limit is
+not a timeout for a producer that stalls before EOF.
+
+`digest_file_beneath` returns `{"sha256": "<lowercase hex>", "bytes": <integer>}`
+from one opened regular-file handle, using a 64 KiB buffer. It consumes at most
+max_bytes + 1 bytes and rejects overflow, links, and non-regular files. The root
+must be trusted. A same-handle digest does not provide snapshot isolation against
+concurrent in-place writes; immutable artifacts or quiesced writers are required.
