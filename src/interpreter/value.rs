@@ -344,6 +344,33 @@ mod tests {
         let _ = std::fs::remove_file(path);
     }
 
+    #[cfg(feature = "runtime-db")]
+    #[test]
+    fn database_pool_discards_a_return_completed_after_close() {
+        let mut config = HashMap::new();
+        config.insert("min_connections".to_string(), Value::Int(0));
+        config.insert("max_connections".to_string(), Value::Int(1));
+        let pool = ConnectionPool::new("sqlite".to_string(), ":memory:".to_string(), config)
+            .expect("pool should initialize");
+        let connection = pool.acquire().expect("connection should be available");
+        let created_at = pool
+            .state
+            .lock()
+            .unwrap()
+            .checked_out
+            .remove(&super::connection_key(&connection))
+            .expect("connection should be checked out");
+
+        // Simulate close winning the race after reset, before the returned
+        // connection can re-enter the available queue.
+        pool.close();
+        pool.return_reset_connection(connection, created_at).unwrap();
+        let stats = pool.stats();
+        assert_eq!(stats["available"], 0);
+        assert_eq!(stats["total"], 0);
+        assert_eq!(stats["closed"], 1);
+    }
+
     #[test]
     fn value_truthiness_semantics_match_runtime_contract() {
         let mut non_empty_dict = DictMap::default();
@@ -766,12 +793,25 @@ impl ConnectionPool {
             state.metrics.reset_failure_count += 1;
             return Err(error);
         }
+        self.return_reset_connection(connection, created_at)?;
+        Ok(())
+    }
+
+    fn return_reset_connection(
+        &self,
+        connection: DatabaseConnection,
+        created_at: std::time::Instant,
+    ) -> Result<(), String> {
         let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
-        state.available.push_back(AvailableConnection {
-            connection,
-            created_at,
-            idle_since: std::time::Instant::now(),
-        });
+        if self.closed.load(Ordering::Acquire) {
+            state.total = state.total.saturating_sub(1);
+        } else {
+            state.available.push_back(AvailableConnection {
+                connection,
+                created_at,
+                idle_since: std::time::Instant::now(),
+            });
+        }
         Ok(())
     }
 

@@ -63,7 +63,8 @@ lifetime, closed socket, or poisoned connection causes eviction rather than
 reuse.
 
 `db_pool_close` stops new acquisitions and closes all currently available
-connections. Connections already leased are discarded when returned. Shutdown
+connections. Connections already leased, including returns racing with close,
+are discarded rather than re-entering the available queue. Shutdown
 code must first stop accepting work, wait for application requests/jobs to
 drain within its own bounded shutdown deadline, and then close the pool.
 
