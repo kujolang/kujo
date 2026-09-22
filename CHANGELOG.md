@@ -8,6 +8,11 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Added opt-in `kujo run --isolated-imports` and inherited
+  `KUJO_ISOLATED_IMPORTS=1` for installed tools: imports use entry-file and
+  explicit module roots without discovering the caller's modules or lockfile,
+  while filesystem operations retain the caller's working directory. Isolated
+  runs preserve exact script arguments; default import behavior is unchanged.
 - Added bounded, in-process `pdf_render_html` and atomic
   `pdf_render_html_to_file` APIs for branded business documents without an
   external renderer.
