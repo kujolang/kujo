@@ -1734,6 +1734,11 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "db_last_insert_id".to_string(),
+            FunctionSignature { param_types: vec![None], return_type: Some(TypeAnnotation::Int) },
+        );
+
+        self.functions.insert(
             "db_rollback".to_string(),
             FunctionSignature {
                 param_types: vec![None], // Database connection
@@ -3899,6 +3904,18 @@ impl TypeChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn database_last_insert_id_is_a_known_integer_builtin() {
+        let mut checker = TypeChecker::new();
+        let tokens = crate::lexer::tokenize(
+            "let db := db_connect(\"sqlite\", \":memory:\")\nlet id: int := db_last_insert_id(db)",
+        )
+        .unwrap();
+        let statements = crate::parser::Parser::new(tokens).parse();
+        assert!(checker.check(&statements).is_ok());
+        assert_eq!(checker.variables.get("id"), Some(&Some(TypeAnnotation::Int)));
+    }
 
     #[test]
     fn contains_inference_matches_each_runtime_receiver() {

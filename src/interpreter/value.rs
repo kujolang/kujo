@@ -1002,12 +1002,15 @@ pub(crate) fn connect_postgres_verified_tls(
         configuration.set_verify_hostname(true);
         Ok(())
     });
-    let mut client = AsyncRuntime::run_runtime_safe_blocking(|| config.connect(connector))
-        .map_err(|_| "failed to connect to PostgreSQL with verified TLS".to_string())?;
-    client
-        .batch_execute(&format!("SET statement_timeout = {statement_timeout_ms}"))
-        .map_err(|_| "failed to initialize PostgreSQL session limits".to_string())?;
-    Ok(client)
+    AsyncRuntime::run_runtime_safe_blocking(|| {
+        let mut client = config
+            .connect(connector)
+            .map_err(|_| "failed to connect to PostgreSQL with verified TLS".to_string())?;
+        client
+            .batch_execute(&format!("SET statement_timeout = {statement_timeout_ms}"))
+            .map_err(|_| "failed to initialize PostgreSQL session limits".to_string())?;
+        Ok(client)
+    })
 }
 
 /// Runtime values in the Kujo interpreter

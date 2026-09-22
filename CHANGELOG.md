@@ -8,6 +8,11 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- PostgreSQL TLS session initialization and cleanup now stay outside an active
+  Tokio executor, preventing nested-runtime panics from async interpreter code.
+- Registered the existing `db_last_insert_id` builtin with the type checker,
+  eliminating an incorrect undefined-function warning.
+
 - `db_close` now releases SQLite, PostgreSQL and MySQL resources immediately,
   invalidates retained aliases, and rolls back uncommitted work. Repeated close
   remains successful; operations on closed or returned pool leases fail explicitly.
@@ -69,6 +74,7 @@ This file records user-visible changes to Kujo. It follows
 - Interpreter top-level function calls no longer read or overwrite unrelated
   caller-local bindings. Direct, indirect, callback, and pipe calls preserve
   lexical boundaries while retaining global assignment and captured closures.
+
 
 
 - VM routed HTTP dispatch now invokes closures created by imported modules,

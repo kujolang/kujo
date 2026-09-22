@@ -5,10 +5,25 @@ let db := db_connect_postgres_tls(connection_string,ca_pem)
 if type(db) == "error" { throw("verified PostgreSQL TLS connection failed") }
 let rows := db_query(db,"SELECT 1::BIGINT AS value",[])
 if type(rows) == "error" || len(rows) != 1 || rows[0]["value"] != 1 { throw("verified PostgreSQL TLS query failed") }
+db_execute(db, "CREATE TABLE qf_close_rollback(value BIGINT)", [])
+db_begin(db)
+db_execute(db, "INSERT INTO qf_close_rollback VALUES(1)", [])
 let alias := db
 assert(db_close(db) == true, "PostgreSQL closes")
 assert(db_close(alias) == true, "PostgreSQL close is idempotent")
 mut rejected := false
 try { db_query(alias, "SELECT 1", []) } except error { rejected = true }
 assert(rejected, "PostgreSQL alias rejects queries after close")
+let reader := db_connect_postgres_tls(connection_string, ca_pem)
+assert(db_query(reader, "SELECT count(*)::BIGINT AS count FROM qf_close_rollback", [])[0]["count"] == 0, "PostgreSQL close rolls back")
+db_execute(reader, "DROP TABLE qf_close_rollback", [])
+db_close(reader)
+async func nested_postgres(url, ca) {
+    let connection := db_connect_postgres_tls(url, ca)
+    let value := db_query(connection, "SELECT 1::BIGINT AS value", [])[0]["value"]
+    db_close(connection)
+    return value
+}
+let nested_result := await nested_postgres(connection_string, ca_pem)
+assert(nested_result == 1, "PostgreSQL close works from async code")
 print(to_json({"ok":true,"schema":"dev.kujolang.postgres-tls-probe.v1","tls":"verified","value":rows[0]["value"]}))

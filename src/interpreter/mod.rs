@@ -7619,9 +7619,11 @@ impl Interpreter {
                                 }
                             }
                             (DatabaseConnection::Postgres(client_arc), "postgres") => {
-                                if let Ok(mut client) = client_arc.lock() {
-                                    let _ = client.execute("ROLLBACK", &[]);
-                                }
+                                async_runtime::AsyncRuntime::run_runtime_safe_blocking(|| {
+                                    if let Ok(mut client) = client_arc.lock() {
+                                        let _ = client.execute("ROLLBACK", &[]);
+                                    }
+                                });
                             }
                             (DatabaseConnection::Mysql(conn_arc), "mysql") => {
                                 if let Ok(mut conn) = conn_arc.lock() {

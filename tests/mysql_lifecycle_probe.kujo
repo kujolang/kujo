@@ -44,5 +44,6 @@ async func nested_mysql(url) {
     db_close(connection)
     return result
 }
-assert(await nested_mysql(url) == 1, "MySQL lifecycle works from async code")
+let nested_result := await nested_mysql(url)
+assert(nested_result == 1, "MySQL lifecycle works from async code")
 print("mysql lifecycle: passed")
