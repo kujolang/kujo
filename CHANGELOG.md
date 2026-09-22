@@ -6,6 +6,13 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+- Added `digest_file_beneath` for bounded streaming SHA-256 of rooted regular
+  files up to 64 MiB without retaining the full artifact in memory.
+
+- Added `read_stdin(max_bytes)` for bounded, exact UTF-8 process input through EOF.
+
+- Added bounded, descriptor-relative `list_dir_beneath` pages with explicit scan ceilings, suffix-based cursors, and symlink/race coverage.
+
 ### Changed
 
 - Added capability-gated `list_dir_page(path, after, limit, suffix)` for sorted
@@ -44,6 +51,10 @@ This file records user-visible changes to Kujo. It follows
   boundary from the public Kennel registry available today.
 
 ### Fixed
+
+- Interpreter top-level function calls no longer read or overwrite unrelated
+  caller-local bindings. Direct, indirect, callback, and pipe calls preserve
+  lexical boundaries while retaining global assignment and captured closures.
 
 - VM routed HTTP dispatch now invokes closures created by imported modules,
   allowing modular route registrars to capture application context with the

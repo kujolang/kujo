@@ -636,6 +636,7 @@ impl Interpreter {
             "get_default",
             // I/O functions
             "input",
+            "read_stdin",
             // Type conversion functions
             "parse_int",
             "parse_float",
@@ -672,7 +673,9 @@ impl Interpreter {
             "read_file",
             "read_file_lossy",
             "read_file_beneath",
+            "list_dir_beneath",
             "read_binary_file_beneath",
+            "digest_file_beneath",
             "read_binary_prefix_beneath",
             "write_file",
             "write_file_atomic",
@@ -1208,6 +1211,7 @@ impl Interpreter {
             .define("get_default".to_string(), Value::NativeFunction("get_default".to_string()));
 
         // I/O functions
+        self.env.define("read_stdin".to_string(), Value::NativeFunction("read_stdin".to_string()));
         self.env.define("input".to_string(), Value::NativeFunction("input".to_string()));
 
         // Type conversion functions
@@ -1255,9 +1259,15 @@ impl Interpreter {
             "read_file_lossy".to_string(),
             Value::NativeFunction("read_file_lossy".to_string()),
         );
+        self.env
+            .define("list_dir_beneath".into(), Value::NativeFunction("list_dir_beneath".into()));
         self.env.define(
             "read_file_beneath".to_string(),
             Value::NativeFunction("read_file_beneath".to_string()),
+        );
+        self.env.define(
+            "digest_file_beneath".to_string(),
+            Value::NativeFunction("digest_file_beneath".to_string()),
         );
         self.env.define(
             "read_binary_file_beneath".to_string(),
@@ -2222,8 +2232,8 @@ impl Interpreter {
 
                     result
                 } else {
-                    // Non-closure: just create new scope on current environment
-                    self.env.push_scope();
+                    // Top-level function: hide unrelated caller-local scopes
+                    let caller_scopes = self.env.enter_global_function();
 
                     // Bind parameters to arguments
                     for (i, param) in params.iter().enumerate() {
@@ -2238,7 +2248,7 @@ impl Interpreter {
                             interp.eval_stmts(&body.get())
                         })
                     {
-                        self.env.pop_scope();
+                        self.env.leave_global_function(caller_scopes);
                         self.call_stack.pop();
                         return error;
                     }
@@ -2260,7 +2270,7 @@ impl Interpreter {
                     };
 
                     // Restore parent environment
-                    self.env.pop_scope();
+                    self.env.leave_global_function(caller_scopes);
 
                     // Pop from call stack
                     self.call_stack.pop();
@@ -3561,17 +3571,30 @@ impl Interpreter {
             "repeat" => {
                 CallableArity::exact("repeat", vec!["value".to_string(), "count".to_string()])
             }
+            "read_stdin" => CallableArity::exact("read_stdin", vec!["max_bytes".to_string()]),
             "input" => CallableArity::range("input", 0, 1, vec!["prompt".to_string()]),
             "exit" => CallableArity::range("exit", 0, 1, vec!["code".to_string()]),
             "type" | "type_of" => CallableArity::exact("type", vec!["value".to_string()]),
             "is_truthy" => CallableArity::exact("is_truthy", vec!["value".to_string()]),
             "read_file_lossy" => CallableArity::exact("read_file_lossy", vec!["path".to_string()]),
-            "read_file_beneath" | "read_binary_file_beneath" | "read_binary_prefix_beneath" => {
-                CallableArity::exact(
-                    name,
-                    vec!["root".to_string(), "relative_path".to_string(), "max_bytes".to_string()],
-                )
-            }
+            "list_dir_beneath" => CallableArity::exact(
+                name,
+                vec![
+                    "root".into(),
+                    "relative_directory".into(),
+                    "after".into(),
+                    "suffix".into(),
+                    "limit".into(),
+                    "max_entries".into(),
+                ],
+            ),
+            "read_file_beneath"
+            | "read_binary_file_beneath"
+            | "read_binary_prefix_beneath"
+            | "digest_file_beneath" => CallableArity::exact(
+                name,
+                vec!["root".to_string(), "relative_path".to_string(), "max_bytes".to_string()],
+            ),
             "decode_base64_utf8" => {
                 CallableArity::exact("decode_base64_utf8", vec!["text".to_string()])
             }
@@ -5093,59 +5116,8 @@ impl Interpreter {
                         }
 
                         // Call the function with the value as the first argument
-                        if let Value::Function(params, body, captured_env) = func {
-                            // Push new scope
-                            self.env.push_scope();
-
-                            // Restore captured environment if this is a closure
-                            let restore_env = if let Some(ref closure_env) = captured_env {
-                                // Store current environment
-                                let current = self.env.clone();
-                                // Set interpreter's environment to the closure's captured environment
-                                self.env = closure_env
-                                    .lock()
-                                    .unwrap_or_else(|poisoned| poisoned.into_inner())
-                                    .clone();
-                                Some(current)
-                            } else {
-                                None
-                            };
-
-                            // Bind the piped value as the first parameter
-                            if let Some(param) = params.first() {
-                                self.env.define(param.clone(), value);
-                            }
-
-                            // Execute function body
-                            if let Err(error) = self
-                                .with_function_context("<pipe function>", |interp| {
-                                    interp.eval_stmts(&body.get())
-                                })
-                            {
-                                self.return_value = Some(error);
-                            }
-                            let mut result = Value::Null;
-                            if let Some(Value::Return(val)) = self.return_value.clone() {
-                                self.return_value = None;
-                                result = *val;
-                            } else if let Some(Value::Error(message)) = self.return_value.clone() {
-                                self.return_value = None;
-                                result = Value::Error(message);
-                            } else if let Some(Value::ErrorObject { .. }) =
-                                self.return_value.clone()
-                            {
-                                result = self.return_value.clone().unwrap();
-                            }
-
-                            // Restore environment if we changed it
-                            if let Some(env) = restore_env {
-                                self.env = env;
-                            }
-
-                            // Pop scope
-                            self.env.pop_scope();
-
-                            return result;
+                        if matches!(func, Value::Function(..)) {
+                            return self.call_user_function(&func, &[value]);
                         } else if let Value::NativeFunction(ref name) = func {
                             // Handle built-in functions
                             // Create a simple expression for the value and call the native function
@@ -5783,8 +5755,8 @@ impl Interpreter {
 
                             result
                         } else {
-                            // Non-closure: just create new scope
-                            self.env.push_scope();
+                            // Top-level function: hide unrelated caller-local scopes
+                            let caller_scopes = self.env.enter_global_function();
 
                             for (i, param) in params.iter().enumerate() {
                                 if let Some(arg) = evaluated_args.get(i) {
@@ -5797,7 +5769,7 @@ impl Interpreter {
                                     interp.eval_stmts(&body.get())
                                 })
                             {
-                                self.env.pop_scope();
+                                self.env.leave_global_function(caller_scopes);
                                 self.call_stack.pop();
                                 return error;
                             }
@@ -5817,7 +5789,7 @@ impl Interpreter {
                                 Value::Null
                             };
 
-                            self.env.pop_scope();
+                            self.env.leave_global_function(caller_scopes);
                             self.call_stack.pop();
 
                             result
@@ -6045,13 +6017,13 @@ impl Interpreter {
 
                                 return result;
                             } else {
-                                // Non-closure: just create new scope
-                                self.env.push_scope();
+                                // Top-level function: hide unrelated caller-local scopes
+                                let caller_scopes = self.env.enter_global_function();
 
                                 for (i, param) in params.iter().enumerate() {
                                     if let Some(arg) = evaluated_args.get(i) {
                                         if Self::is_error_value(arg) {
-                                            self.env.pop_scope();
+                                            self.env.leave_global_function(caller_scopes);
                                             self.call_stack.pop();
                                             return arg.clone();
                                         }
@@ -6064,7 +6036,7 @@ impl Interpreter {
                                         interp.eval_stmts(&body.get())
                                     })
                                 {
-                                    self.env.pop_scope();
+                                    self.env.leave_global_function(caller_scopes);
                                     self.call_stack.pop();
                                     return error;
                                 }
@@ -6085,7 +6057,7 @@ impl Interpreter {
                                     Value::Null
                                 };
 
-                                self.env.pop_scope();
+                                self.env.leave_global_function(caller_scopes);
                                 self.call_stack.pop();
 
                                 return result;

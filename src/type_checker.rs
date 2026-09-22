@@ -1214,6 +1214,21 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "list_dir_beneath".into(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: Some(TypeAnnotation::Any),
+            },
+        );
+
+        self.functions.insert(
             "read_file_beneath".to_string(),
             FunctionSignature {
                 param_types: vec![
@@ -1227,6 +1242,18 @@ impl TypeChecker {
 
         self.functions.insert(
             "read_binary_file_beneath".to_string(),
+            FunctionSignature {
+                param_types: vec![
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Int),
+                ],
+                return_type: Some(TypeAnnotation::Any),
+            },
+        );
+
+        self.functions.insert(
+            "digest_file_beneath".to_string(),
             FunctionSignature {
                 param_types: vec![
                     Some(TypeAnnotation::String),
@@ -1973,6 +2000,14 @@ impl TypeChecker {
             FunctionSignature {
                 param_types: vec![Some(TypeAnnotation::String)], // Optional prompt
                 return_type: Some(TypeAnnotation::String),       // Returns user input
+            },
+        );
+
+        self.functions.insert(
+            "read_stdin".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::Int)],
+                return_type: Some(TypeAnnotation::String),
             },
         );
 
