@@ -961,10 +961,16 @@ mod tests {
         Value::Dict(Arc::new(DictMap::default()))
     }
 
+    fn render_test_options() -> Value {
+        let mut options = DictMap::default();
+        options.insert("timeout_ms".into(), Value::Int(MAX_RENDER_SECONDS as i64 * 1000));
+        Value::Dict(Arc::new(options))
+    }
+
     fn render_html(html: &str) -> Result<Value, String> {
         match handle(
             "pdf_render_html",
-            &[Value::Str(Arc::new(html.to_string())), empty_dict(), empty_dict()],
+            &[Value::Str(Arc::new(html.to_string())), render_test_options(), empty_dict()],
         ) {
             Some(Value::Error(error)) => Err(error),
             Some(value) => Ok(value),
@@ -1038,6 +1044,7 @@ mod tests {
         let mut options = DictMap::default();
         options.insert("page_size".into(), Value::Str(Arc::new("Letter".into())));
         options.insert("orientation".into(), Value::Str(Arc::new("landscape".into())));
+        options.insert("timeout_ms".into(), Value::Int(MAX_RENDER_SECONDS as i64 * 1000));
         let value = handle(
             "pdf_render_html",
             &[
@@ -1159,7 +1166,7 @@ mod tests {
         let arguments = || {
             vec![
                 Value::Str(Arc::new("<h1>Estimate</h1>".to_string())),
-                empty_dict(),
+                render_test_options(),
                 empty_dict(),
                 Value::Str(Arc::new(path.to_string_lossy().to_string())),
             ]
@@ -1183,6 +1190,7 @@ mod tests {
         options.insert("show_page_numbers".into(), Value::Bool(true));
         options.insert("header_text".into(), Value::Str(Arc::new("QuoteFlow quotation".into())));
         options.insert("footer_text".into(), Value::Str(Arc::new("Confidential".into())));
+        options.insert("timeout_ms".into(), Value::Int(MAX_RENDER_SECONDS as i64 * 1000));
         let value = handle(
             "pdf_render_html",
             &[
@@ -1214,7 +1222,7 @@ mod tests {
                 Value::Str(Arc::new(
                     "<header><img src=\"logo.png\" width=\"32\" height=\"32\"><h1>Branded quotation</h1></header>".into(),
                 )),
-                empty_dict(),
+                render_test_options(),
                 Value::Dict(Arc::new(assets)),
             ],
         )
@@ -1240,7 +1248,7 @@ mod tests {
                 Value::Str(Arc::new(
                     "<p style=\"font-family:Sansation\">José · naïve · €9,850</p>".into(),
                 )),
-                empty_dict(),
+                render_test_options(),
                 Value::Dict(Arc::new(assets)),
             ],
         )
