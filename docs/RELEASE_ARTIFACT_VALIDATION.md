@@ -4,7 +4,7 @@ This document defines reproducible artifact validation steps for Kujo release ca
 
 ## Minimum Supported Toolchain And Platform Assumptions
 
-- Rust toolchain: stable Rust `1.86+`
+- Rust toolchain: stable Rust `1.89+`
 - Supported release validation OS targets:
   - Linux x64: `ubuntu-latest` (GitHub Actions baseline)
   - macOS Intel: `macos-15-intel` (GitHub Actions baseline)

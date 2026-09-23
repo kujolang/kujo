@@ -193,7 +193,7 @@ Release boundary: Kujo `v1.5.0` is the current stable release; explicit deferral
 
 ## Build and test from source
 
-Kujo requires Rust 1.86 or newer:
+Kujo requires Rust 1.89 or newer:
 
 ```bash
 git clone https://github.com/kujolang/kujo.git

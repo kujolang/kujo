@@ -12,6 +12,10 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Declared and documented Rust 1.89 as the source-build MSRV, added an MSRV CI
+  check, made the REPL banner use the crate version, and corrected upgrade
+  guidance that previously implied `kujolang` was published on crates.io.
+
 - MySQL transaction control uses the text protocol, as required by MySQL 8.4,
   while parameterized application queries continue using prepared statements.
 

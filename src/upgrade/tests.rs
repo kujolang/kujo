@@ -215,7 +215,9 @@ fn managed_installs() {
     fs::write(temp.path().join(".crates2.json"), "{}").unwrap();
     assert_eq!(classify(&path).unwrap(), "cargo");
     let f = fixture("9.0.0", native_binary());
-    assert!(execute(&f, None, false, false, &path, "8.0.0").unwrap_err().contains("cargo install"));
+    let cargo_guidance = execute(&f, None, false, false, &path, "8.0.0").unwrap_err();
+    assert!(cargo_guidance.contains("no kujolang crate is currently published"));
+    assert!(cargo_guidance.contains("cargo install --path . --locked --force"));
     assert!(f.calls.lock().unwrap().is_empty());
     let check = execute(&f, None, true, false, &path, "8.0.0").unwrap();
     assert_eq!(check.installation, "cargo");

@@ -95,7 +95,7 @@ Browse the official packages at
 
 ## Build from source
 
-Source builds need Git, Rust 1.86 or newer, and the platform's C build tools.
+Source builds need Git, Rust 1.89 or newer, and the platform's C build tools.
 
 ```bash
 git clone https://github.com/kujolang/kujo.git

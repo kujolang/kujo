@@ -114,16 +114,14 @@ pub struct Repl {
 
 impl Repl {
     fn render_banner_text() -> String {
-        [
-            "╔══════════════════════════════════════════════════════╗",
-            "║          Kujo REPL v0.5.0 - Interactive Shell       ║",
-            "╚══════════════════════════════════════════════════════╝",
-            "",
-            "  Welcome! Use :help for commands or :quit",
-            "  Tip: Multi-line input: End with unclosed braces",
-            "",
-        ]
-        .join("\n")
+        format!(
+            "╔══════════════════════════════════════════════════════╗\n\
+             ║          Kujo REPL v{:<5} - Interactive Shell       ║\n\
+             ╚══════════════════════════════════════════════════════╝\n\n\
+               Welcome! Use :help for commands or :quit\n\
+               Tip: Multi-line input: End with unclosed braces\n",
+            env!("CARGO_PKG_VERSION")
+        )
     }
 
     fn render_help_text() -> String {
@@ -176,7 +174,14 @@ impl Repl {
         }
 
         println!("{}", "╔══════════════════════════════════════════════════════╗".bright_cyan());
-        println!("{}", "║          Kujo REPL v0.5.0 - Interactive Shell       ║".bright_cyan());
+        println!(
+            "{}",
+            format!(
+                "║          Kujo REPL v{:<5} - Interactive Shell       ║",
+                env!("CARGO_PKG_VERSION")
+            )
+            .bright_cyan()
+        );
         println!("{}", "╚══════════════════════════════════════════════════════╝".bright_cyan());
         println!();
         println!(
@@ -645,7 +650,9 @@ mod tests {
     #[test]
     fn banner_text_snapshot_is_deterministic_and_no_color() {
         let text = Repl::render_banner_text();
-        assert!(text.contains("Kujo REPL v0.5.0 - Interactive Shell"));
+        assert!(
+            text.contains(&format!("Kujo REPL v{} - Interactive Shell", env!("CARGO_PKG_VERSION")))
+        );
         assert!(text.contains("Welcome! Use :help for commands or :quit"));
         assert!(!text.contains("\u{1b}["), "snapshot text should not include ANSI escapes");
     }

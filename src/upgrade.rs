@@ -345,7 +345,7 @@ fn classify(path: &Path) -> Result<String> {
 fn guidance(kind: &str) -> String {
     match kind {
         "npm" => "npm-managed runtime: use npm install --global @kujolang/kujo-runtime@VERSION (or your original project's package manager)",
-        "cargo" => "Cargo-managed runtime: use cargo install kujolang --version VERSION --locked --force",
+        "cargo" => "Cargo-managed runtime: no kujolang crate is currently published; reinstall from the original source checkout with cargo install --path . --locked --force, or install the official GitHub release archive",
         "development" => "development target binary: rebuild the checkout; install an official standalone binary to use upgrade",
         _ => "managed installation: upgrade with its original package manager",
     }.into()
