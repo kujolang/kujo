@@ -158,7 +158,11 @@ if output="$(${KUJO} run "${ROOT}/tests/postgres_tls_probe.kujo" --interpreter -
     exit 1
 fi
 [[ "${output}" != *"hostname-secret"* ]]
-[[ "${output}" == *"verified PostgreSQL TLS connection failed"* ]]
+if [[ "${output}" != *"verified PostgreSQL TLS connection failed"* ]]; then
+    # The preceding assertion proved the fixture credential is absent.
+    printf 'Unexpected hostname-rejection diagnostic: %s\n' "${output}" >&2
+    exit 1
+fi
 
 openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj '/CN=Wrong Kujo CA' -keyout "${TMP_ROOT}/wrong-ca.key" -out "${TMP_ROOT}/wrong-ca.pem" >/dev/null 2>&1
 chmod 600 "${TMP_ROOT}/wrong-ca.pem"

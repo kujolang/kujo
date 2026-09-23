@@ -1,8 +1,16 @@
 # Inventory: skip (requires a live PostgreSQL TLS endpoint)
 let connection_string := env_or("KUJO_POSTGRES_TLS_URL","")
 let ca_pem := read_file(env_or("KUJO_POSTGRES_TLS_CA_FILE",""))
-let db := db_connect_postgres_tls(connection_string,ca_pem)
-if type(db) == "error" { throw("verified PostgreSQL TLS connection failed") }
+func connect_for_probe(url, ca) {
+    try {
+        let connection := db_connect_postgres_tls(url, ca)
+        if type(connection) == "error" { throw(to_string(connection)) }
+        return connection
+    } except error {
+        throw("verified PostgreSQL TLS connection failed: " + to_string(error))
+    }
+}
+let db := connect_for_probe(connection_string,ca_pem)
 let rows := db_query(db,"SELECT 1::BIGINT AS value",[])
 if type(rows) == "error" || len(rows) != 1 || rows[0]["value"] != 1 { throw("verified PostgreSQL TLS query failed") }
 db_execute(db, "CREATE TABLE qf_close_rollback(value BIGINT)", [])
