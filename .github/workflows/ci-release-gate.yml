@@ -46,6 +46,19 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+  msrv:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Setup minimum supported Rust
+        uses: dtolnay/rust-toolchain@1.89.0
+
+      - name: Check locked dependencies at the MSRV
+        run: cargo check --locked
+
   vm-interpreter-parity:
     runs-on: ubuntu-latest
 
@@ -66,7 +79,7 @@ jobs:
         run: cargo test --no-default-features --features runtime-archive,runtime-image --test vm_interpreter_parity_surfaces
 
   release-gate:
-    needs: [release-gate-minimal-smoke, fmt-check, clippy, vm-interpreter-parity]
+    needs: [release-gate-minimal-smoke, fmt-check, clippy, msrv, vm-interpreter-parity]
     runs-on: ubuntu-latest
 
     steps:
