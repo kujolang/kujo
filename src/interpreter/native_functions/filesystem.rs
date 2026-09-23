@@ -96,7 +96,16 @@ fn sync_directory_with(
                 .map_err(|e| error("component_rejected", e.to_string()))?;
         }
     }
-    sync(&directory.into_std_file()).map_err(|e| error("durability_unconfirmed", e.to_string()))
+    // cap-std directory capabilities may be O_PATH descriptors on Linux,
+    // which cannot be fsynced. Reopen the held directory itself for reading;
+    // never resolve its original ambient pathname again.
+    let mut options = CapOpenOptions::new();
+    options.read(true).follow(FollowSymlinks::No);
+    let sync_handle = directory
+        .open_with(".", &options)
+        .map_err(|e| error("sync_handle_open_failed", e.to_string()))?
+        .into_std();
+    sync(&sync_handle).map_err(|e| error("durability_unconfirmed", e.to_string()))
 }
 
 fn beneath_error(code: &str, detail: impl std::fmt::Display) -> String {

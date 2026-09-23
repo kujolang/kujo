@@ -46,3 +46,14 @@ All commands from Kujo. Complete output is in `evidence/directory-durability/`.
 Release build and downstream gate results are recorded in ReaderSignal's
 `docs/audits/durability-and-backups.md`. No throughput improvement is claimed;
 barriers intentionally add I/O to establish ordering.
+
+## Linux handle correction
+
+CI run 35912612913 exposed `EBADF` when syncing a nested directory on Linux.
+The directory traversal capability can be an `O_PATH` handle on that platform;
+macOS unit tests did not expose this distinction. The barrier now opens `.` for
+reading relative to the retained directory capability, then syncs that readable
+handle. It never reopens the original ambient path. The same root/nested sync
+regression remains enabled and passed locally after the change; Linux CI must
+verify the platform correction. No assertion was weakened. Docker-based local
+Linux verification was unavailable because the Docker daemon was not running.
