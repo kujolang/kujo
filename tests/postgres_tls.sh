@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'printf "PostgreSQL TLS gate failed at line %s (status %s)\n" "$LINENO" "$?" >&2' ERR
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KUJO="${KUJO:-${ROOT}/target/debug/kujo}"
@@ -31,11 +32,26 @@ printf 'subjectAltName=DNS:localhost\nextendedKeyUsage=serverAuth\n' >"${TMP_ROO
 openssl x509 -req -days 1 -in "${TMP_ROOT}/server.csr" -CA "${TMP_ROOT}/ca.pem" -CAkey "${TMP_ROOT}/ca.key" -CAcreateserial -extfile "${TMP_ROOT}/server.ext" -out "${TMP_ROOT}/server.pem" >/dev/null 2>&1
 chmod 600 "${TMP_ROOT}/server.key" "${TMP_ROOT}/ca.pem"
 
-SERVER_RUNNING=1
-if ! pg_ctl -D "${DATA_DIR}" -l "${TMP_ROOT}/server.log" -o "-h 127.0.0.1 -k '${TMP_ROOT}' -p ${PORT} -c ssl=on -c ssl_cert_file='${TMP_ROOT}/server.pem' -c ssl_key_file='${TMP_ROOT}/server.key'" -w start >/dev/null; then
-    cat "${TMP_ROOT}/server.log" >&2
-    exit 1
-fi
+start_server() {
+    SERVER_RUNNING=1
+    if ! pg_ctl -D "${DATA_DIR}" -l "${TMP_ROOT}/server.log" -o "-h 127.0.0.1 -k '${TMP_ROOT}' -p ${PORT} $1" -w start >/dev/null; then
+        cat "${TMP_ROOT}/server.log" >&2
+        exit 1
+    fi
+}
+
+run_probe() {
+    local result status
+    if result="$("${KUJO}" run "$@" 2>&1)"; then
+        printf '%s\n' "${result}"
+    else
+        status=$?
+        printf '%s\n' "${result}" >&2
+        return "${status}"
+    fi
+}
+
+start_server "-c ssl=on -c ssl_cert_file='${TMP_ROOT}/server.pem' -c ssl_key_file='${TMP_ROOT}/server.key'"
 
 psql -h 127.0.0.1 -p "${PORT}" -d postgres -v ON_ERROR_STOP=1 <<'SQL' >/dev/null
 CREATE ROLE qf_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
@@ -101,9 +117,9 @@ export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} use
 export KUJO_POSTGRES_TLS_ADMIN_URL="${KUJO_POSTGRES_TLS_URL}"
 for engine in vm interpreter; do
     if [[ "${engine}" == "interpreter" ]]; then
-        output="$(${KUJO} run "${ROOT}/tests/postgres_tls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env 2>&1)"
+        output="$(run_probe "${ROOT}/tests/postgres_tls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env)"
     else
-        output="$(${KUJO} run "${ROOT}/tests/postgres_tls_probe.kujo" --allow-db --allow-fs --allow-env 2>&1)"
+        output="$(run_probe "${ROOT}/tests/postgres_tls_probe.kujo" --allow-db --allow-fs --allow-env)"
     fi
     python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value == {"ok":True,"schema":"dev.kujolang.postgres-tls-probe.v1","tls":"verified","value":1}' "${output}"
 done
@@ -112,9 +128,9 @@ export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} use
 for engine in vm interpreter; do
     export KUJO_POSTGRES_TEST_RUN="${engine}"
     if [[ "${engine}" == "interpreter" ]]; then
-        output="$(${KUJO} run "${ROOT}/tests/postgres_tls_pool_rls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env 2>&1)"
+        output="$(run_probe "${ROOT}/tests/postgres_tls_pool_rls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env)"
     else
-        output="$(${KUJO} run "${ROOT}/tests/postgres_tls_pool_rls_probe.kujo" --allow-db --allow-fs --allow-env 2>&1)"
+        output="$(run_probe "${ROOT}/tests/postgres_tls_pool_rls_probe.kujo" --allow-db --allow-fs --allow-env)"
     fi
     python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value == {"atomicity":"verified","claims":"distinct","expired_leases":"recovered","ok":True,"recovery":"verified","rls":"forced","roles":"separated","schema":"dev.kujolang.postgres-tls-pool-rls.v1","session_reset":"verified","timeouts":"bounded","tls":"verified"}' "${output}"
 done
@@ -178,8 +194,7 @@ subjectAltName = DNS:localhost
 extendedKeyUsage = serverAuth
 EOF
 openssl ca -batch -config "${TMP_ROOT}/ca.cnf" -startdate 20200101000000Z -enddate 20200102000000Z -in "${TMP_ROOT}/server.csr" -out "${TMP_ROOT}/expired-server.pem" >/dev/null 2>&1
-pg_ctl -D "${DATA_DIR}" -o "-h 127.0.0.1 -p ${PORT} -c ssl=on -c ssl_cert_file='${TMP_ROOT}/expired-server.pem' -c ssl_key_file='${TMP_ROOT}/server.key'" -w start >/dev/null
-SERVER_RUNNING=1
+start_server "-c ssl=on -c ssl_cert_file='${TMP_ROOT}/expired-server.pem' -c ssl_key_file='${TMP_ROOT}/server.key'"
 export KUJO_POSTGRES_TLS_CA_FILE="${TMP_ROOT}/ca.pem"
 export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} user=$(id -un) dbname=postgres connect_timeout=3 password=expired-secret"
 if output="$(${KUJO} run "${ROOT}/tests/postgres_tls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env 2>&1)"; then
@@ -191,8 +206,7 @@ fi
 pg_ctl -D "${DATA_DIR}" -m fast -w stop >/dev/null
 SERVER_RUNNING=0
 export KUJO_POSTGRES_TLS_CA_FILE="${TMP_ROOT}/ca.pem"
-pg_ctl -D "${DATA_DIR}" -o "-h 127.0.0.1 -p ${PORT} -c ssl=off" -w start >/dev/null
-SERVER_RUNNING=1
+start_server "-c ssl=off"
 export KUJO_POSTGRES_TLS_URL="host=localhost hostaddr=127.0.0.1 port=${PORT} user=$(id -un) dbname=postgres connect_timeout=3 password=plaintext-secret"
 if output="$(${KUJO} run "${ROOT}/tests/postgres_tls_probe.kujo" --interpreter --allow-db --allow-fs --allow-env 2>&1)"; then
     echo "plaintext PostgreSQL unexpectedly succeeded" >&2
