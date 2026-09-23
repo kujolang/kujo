@@ -1,16 +1,18 @@
 ---
 agent: "agent"
-description: "Execute active-cycle roadmap work (v0.12.0+) and v1.0.0 readiness tasks with evidence, tests, docs, commits, and push workflow."
+description: "Execute current Kujo roadmap work with evidence, tests, docs, commits, and push workflow."
 ---
 
-Read `.github/AGENT_INSTRUCTIONS.md` and follow all rules.
+Read `AGENTS.md` and follow all rules. Treat `.github/AGENT_INSTRUCTIONS.md` as
+historical only.
 
 Before starting, read `./notes/README.md`, `./notes/GOTCHAS.md`, and any linked notes relevant to the selected roadmap item.
 
 Review `ROADMAP.md` and determine the active release cycle and highest-priority incomplete item:
 - Prefer the highest-priority incomplete item under the active release checklist/section.
 - If no explicit checklist exists, pick the highest-priority incomplete roadmap item for the active cycle.
-- Treat `v0.12.0` as active unless roadmap text explicitly says otherwise.
+- Use the stable and active lines stated in `ROADMAP.md`; do not infer them from
+  historical prompts or notes.
 
 Important:
 - If the top item is benchmark or release evidence, do not invent a new feature. Run required commands, capture outputs, classify evidence quality, and update release docs.
@@ -27,10 +29,10 @@ Requirements:
 4. Add or update comprehensive tests whenever behavior changes.
 5. Update only relevant docs when appropriate: `CHANGELOG.md`, `ROADMAP.md`, `README.md`, and notes files for evidence, behavior, release status, or plan changes.
 6. Commit after each major completed step, not all at once.
-7. Use clear, descriptive commit messages that follow `.github/AGENT_INSTRUCTIONS.md`.
+7. Use clear, descriptive commit messages consistent with current repository history.
 8. Run required verification commands (build/test/benchmark as applicable) and report results clearly.
 9. Push completed commits to origin unless explicitly told not to.
 10. At the end, summarize:
 - what changed,
 - what was verified (with commands and pass/fail),
-- what remains for the active release cycle and for `v1.0.0` readiness.
+- what remains for the active release cycle.

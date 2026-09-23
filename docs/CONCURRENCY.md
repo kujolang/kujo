@@ -2,8 +2,16 @@
 
 This document describes Kujo's concurrency primitives and their internal implementation.
 
-**Last Updated**: January 27, 2026  
-**Version**: v0.9.0
+**Status**: Legacy implementation deep dive; not the current release contract
+
+**Last verified against**: Kujo v0.9.0 (January 27, 2026)
+
+This file preserves the original concurrency implementation narrative. Several
+details below, including the statement that async/await is synchronous and the
+old source line references, no longer describe Kujo 1.5.0. For current behavior,
+use [the VM/interpreter parity matrix](VM_INTERPRETER_PARITY_MATRIX.md),
+[the architecture guide](ARCHITECTURE.md), and the executable async/concurrency
+tests. Do not use this file as current API or implementation guidance.
 
 ---
 
@@ -26,7 +34,7 @@ This document describes Kujo's concurrency primitives and their internal impleme
 
 Kujo provides multiple concurrency primitives to handle different use cases:
 
-- **Async/Await**: Promise-based asynchronous execution (currently synchronous, see Phase 5 in ROADMAP)
+- **Async/Await**: Historical v0.9.0 promise implementation (the current runtime uses the later async runtime)
 - **Spawn Blocks**: True parallel execution with OS threads
 - **Channels**: Thread-safe message passing between concurrent tasks
 - **Generators**: Lazy evaluation with cooperative multitasking (yield/resume)
@@ -881,7 +889,9 @@ worker_pool(range(10), 2)
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
 - [MEMORY.md](MEMORY.md) - Memory management and ownership
 - [ROADMAP.md](../ROADMAP.md) - Planned concurrency features
-- [examples/concurrency/](../examples/concurrency/) - Concurrency examples
+- [`concurrency_channels.kujo`](../examples/concurrency_channels.kujo) - Channel example
+- [`concurrency_parallel_http.kujo`](../examples/concurrency_parallel_http.kujo) - Parallel HTTP example
+- [`concurrency_spawn.kujo`](../examples/concurrency_spawn.kujo) - Spawn example
 
 ---
 

@@ -1,5 +1,11 @@
 # Agent Instructions for Kujo Language Development
 
+> **Historical guidance:** this file predates Kujo 1.0 and contains obsolete
+> release numbers, tag syntax, roadmap priorities, and source paths. Current
+> agents must use [`AGENTS.md`](../AGENTS.md), [`ROADMAP.md`](../ROADMAP.md), and
+> [`docs/RELEASE_PROCESS.md`](../docs/RELEASE_PROCESS.md). In particular, current
+> release tags use `vMAJOR.MINOR.PATCH`; do not follow the no-`v` examples below.
+
 This document provides strict guidelines for AI coding agents working on the Kujo programming language codebase. Following these rules ensures consistent, high-quality contributions and proper documentation.
 
 ---

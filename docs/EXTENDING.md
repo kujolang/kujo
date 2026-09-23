@@ -1,5 +1,10 @@
 # Kujo Language - Extension API
 
+> **Historical implementation note:** This document describes the v0.9-era
+> native-function layout and is not a current extension API contract. Verify
+> current implementation details against `src/interpreter/native_functions/`
+> and [ARCHITECTURE.md](ARCHITECTURE.md).
+
 This document explains how to add native functions to Kujo by writing Rust code.
 
 **Last Updated**: January 27, 2026  

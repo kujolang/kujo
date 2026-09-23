@@ -1,5 +1,11 @@
 # Agent Instructions for Kujo Development
 
+> **Historical implementation notes:** this guide describes the pre-VM-default
+> repository and includes obsolete version milestones and source paths. Current
+> architecture and workflow guidance live in [`AGENTS.md`](../AGENTS.md),
+> [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md), and
+> [`ROADMAP.md`](../ROADMAP.md).
+
 This document contains critical lessons learned and best practices for AI agents working on the Kujo programming language codebase.
 
 ---

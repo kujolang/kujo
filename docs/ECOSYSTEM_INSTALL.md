@@ -4,15 +4,16 @@ The supported onboarding path is the repository's [`install.sh`](../install.sh).
 
 ## One-command install
 
-After the public Kujo release is tagged:
+Install the current stable Kujo runtime and the current ecosystem sources:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash -s -- --ref v1.2.3
+curl -fsSL https://kujolang.ai/install.sh | bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```
 
-Until release artifacts exist, use a source build explicitly:
+Use a source build explicitly when testing the current runtime source instead of
+the published archive:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kujolang/kujo/main/install.sh | bash -s -- --source
@@ -34,7 +35,7 @@ Products that span repositories publish a release manifest containing strict `re
 
 ```bash
 bash install.sh --package dispatch \
-  --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.1.0/release/dispatch-v1.1.0.refs
+  --release-manifest https://raw.githubusercontent.com/kujolang/dispatch/v1.2.0/release/dispatch-v1.2.0.refs
 ```
 
 Remote manifests must use HTTPS. Unknown repositories, invalid refs, duplicate pins, and missing required dependency pins fail before downloads begin. The install receipt records the manifest source and resolved per-repository refs. `--repo-ref repo=ref` is available for controlled development overrides; release automation should use a reviewed manifest.
@@ -135,7 +136,11 @@ For a pinned release, verify the downloaded Kujo archive checksum. For a source 
 
 ## Release boundary
 
-Kujo's tagged binaries, checksum files, and published-artifact smokes are the canonical ecosystem onboarding path. Treat `main` as development state; use the immutable `v1.2.3` tag or a later supported release tag for reproducible release installs.
+Kujo's tagged binaries, checksum files, and published-artifact smokes are the
+canonical runtime onboarding path. Treat ecosystem repositories' `main` branches
+as development state. For a reproducible multi-repository product install, use
+that product's reviewed release manifest rather than assuming all repositories
+share the Kujo runtime's tag.
 
 ## Native runtime upgrade
 

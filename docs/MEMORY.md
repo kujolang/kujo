@@ -1,5 +1,10 @@
 # Kujo Language - Memory Model
 
+> **Historical implementation note:** This document describes the v0.9-era
+> memory model and is not a current release contract. For current architecture
+> and compatibility guarantees, use [ARCHITECTURE.md](ARCHITECTURE.md) and
+> [LANGUAGE_SPEC.md](LANGUAGE_SPEC.md).
+
 This document describes Kujo's memory management, ownership model, and garbage collection strategy.
 
 **Last Updated**: January 27, 2026  

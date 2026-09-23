@@ -5,7 +5,7 @@ and installed.
 
 ## Supported Release Assets
 
-For tag `<TAG>` such as `v1.0.0`, the release workflow publishes these assets:
+For tag `<TAG>` such as `v1.5.0`, the release workflow publishes these assets:
 
 | Platform | Runner | Archive | Binary inside |
 | --- | --- | --- | --- |
@@ -97,7 +97,7 @@ Use this before a release tag when you want to verify the artifact matrix.
 2. Go to **Actions**.
 3. Select **release-binaries**.
 4. Choose **Run workflow**.
-5. Optionally set `version`, for example `v1.0.0-rc-dry-run`.
+5. Optionally set `version`, for example `v1.5.0-rc-dry-run`.
 6. Download the uploaded artifacts from the completed workflow run.
 
 The manual artifact names use the supplied version value, or `manual-<run number>`
@@ -110,7 +110,7 @@ Download the asset for your platform from the GitHub release page.
 macOS Apple Silicon:
 
 ```bash
-KUJO_VERSION="v1.0.0"
+KUJO_VERSION="v1.5.0"
 ARCHIVE="kujo-${KUJO_VERSION}-macos-arm64.tar.gz"
 BASE_URL="https://github.com/kujolang/kujo/releases/download/${KUJO_VERSION}"
 
@@ -128,7 +128,7 @@ chmod +x ~/.local/bin/kujo
 Linux x64:
 
 ```bash
-KUJO_VERSION="v1.0.0"
+KUJO_VERSION="v1.5.0"
 ARCHIVE="kujo-${KUJO_VERSION}-linux-x64.tar.gz"
 BASE_URL="https://github.com/kujolang/kujo/releases/download/${KUJO_VERSION}"
 
@@ -146,7 +146,7 @@ chmod +x ~/.local/bin/kujo
 Windows x64 PowerShell:
 
 ```powershell
-$KujoVersion = "v1.0.0"
+$KujoVersion = "v1.5.0"
 $Archive = "kujo-$KujoVersion-windows-x64.zip"
 $BaseUrl = "https://github.com/kujolang/kujo/releases/download/$KujoVersion"
 

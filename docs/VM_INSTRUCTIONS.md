@@ -1,5 +1,9 @@
 # Kujo VM Instruction Set Reference
 
+> **Implementation reference, not a versioned public contract:** Instruction
+> names and coverage can change with the compiler and VM. Verify current details
+> against `src/bytecode.rs`, `src/compiler.rs`, and `src/vm.rs`.
+
 This document provides a comprehensive reference for all bytecode instructions in the Kujo Virtual Machine.
 
 ## Overview

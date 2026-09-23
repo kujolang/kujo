@@ -1,5 +1,10 @@
 # How to Start an Agent Session
 
+> **Historical prompt collection:** the examples below target pre-1.0 roadmap
+> work. For current sessions, point the agent at [`AGENTS.md`](../AGENTS.md) and
+> the current [`ROADMAP.md`](../ROADMAP.md). Do not use the old release targets
+> or `.github/AGENT_INSTRUCTIONS.md` as current policy.
+
 This guide shows you how to effectively start a conversation with an AI coding agent for working on the Kujo language.
 
 ---
@@ -11,7 +16,7 @@ This guide shows you how to effectively start a conversation with an AI coding a
 Always start with this prompt:
 
 ```
-Read and follow the instructions in .github/AGENT_INSTRUCTIONS.md
+Read and follow the instructions in AGENTS.md
 
 Then read ROADMAP.md and tell me what the current high priority items are.
 ```

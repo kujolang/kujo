@@ -1,12 +1,13 @@
 # Kujo Roadmap
 
-Updated: 2026-09-13
+Updated: 2026-09-23
 Stable release: [v1.5.0](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
 
 > Current crate version: `1.5.0` in [Cargo.toml](Cargo.toml)
 
-Kujo 1.0 shipped on August 8, 2026. The current 1.4 line is stable and adds the
-runtime primitives needed by native Kujo package installers and global tools.
+Kujo 1.0 shipped on August 8, 2026. The current 1.5 line is stable and adds
+bounded, descriptor-confined artifact I/O on top of the package-installer
+runtime primitives introduced in 1.4.
 This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
 ## Where Kujo stands
@@ -16,7 +17,8 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The npm runtime package covers the same targets.
+  SHA-256 checksums. The npm runtime package covers the same targets but its
+  public channel remains at 1.4.0 pending publisher authorization for 1.5.0.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
   packages and global tools on macOS and Linux.
@@ -36,7 +38,7 @@ The September 13 reliability sweep closed the current short-term checklist:
   target, and added a weekly RustSec dependency audit.
 - Rechecked the release installer, native upgrade contracts, npm packages, and
   Kennel's public installer boundary.
-- Aligned current docs on Kujo 1.4.0, the live Kennel registry, and the split
+- Aligned current docs on Kujo 1.5.0, the live Kennel registry, and the split
   between Kujo's built-in lockfile commands and Kennel packages.
 
 These are continuing release gates, not one-time tasks. Their automated checks
@@ -59,7 +61,7 @@ Work in this lane includes:
 
 ### Make Kujo packages easy to trust
 
-Kujo 1.4 supplies isolated imports, file locks, ownership checks, atomic
+Kujo 1.4 and 1.5 supply isolated imports, file locks, ownership checks, atomic
 publication, safe symlink updates, and exact process replacement. Kennel uses
 those mechanisms to install packages and commands without hiding the source or
 lock state.

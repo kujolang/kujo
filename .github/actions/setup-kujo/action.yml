@@ -5,7 +5,7 @@ inputs:
   version:
     description: Exact published Kujo release tag, including the v prefix.
     required: false
-    default: v1.2.3
+    default: v1.5.0
 
 outputs:
   kujo-path:
