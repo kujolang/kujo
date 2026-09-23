@@ -895,7 +895,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         lock_connection_or_error!(connection, "database.connection_mut");
                     let connection = &mut *connection;
                     AsyncRuntime::block_on(async {
-                        connection.exec_drop("START TRANSACTION", mysql_async::Params::Empty).await
+                        connection.query_drop("START TRANSACTION").await
                     })
                     .map(|_| ())
                     .map_err(|e| format!("Failed to begin transaction: {}", e))
@@ -1001,11 +1001,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         let mut connection =
                             lock_connection_or_error!(connection, "database.connection_mut");
                         let connection = &mut *connection;
-                        AsyncRuntime::block_on(async {
-                            connection.exec_drop("COMMIT", mysql_async::Params::Empty).await
-                        })
-                        .map(|_| ())
-                        .map_err(|e| format!("Failed to commit transaction: {}", e))
+                        AsyncRuntime::block_on(async { connection.query_drop("COMMIT").await })
+                            .map(|_| ())
+                            .map_err(|e| format!("Failed to commit transaction: {}", e))
                     }
                     _ => Err("Invalid database connection".to_string()),
                 };
@@ -1063,11 +1061,9 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         let mut connection =
                             lock_connection_or_error!(connection, "database.connection_mut");
                         let connection = &mut *connection;
-                        AsyncRuntime::block_on(async {
-                            connection.exec_drop("ROLLBACK", mysql_async::Params::Empty).await
-                        })
-                        .map(|_| ())
-                        .map_err(|e| format!("Failed to rollback transaction: {}", e))
+                        AsyncRuntime::block_on(async { connection.query_drop("ROLLBACK").await })
+                            .map(|_| ())
+                            .map_err(|e| format!("Failed to rollback transaction: {}", e))
                     }
                     _ => Err("Invalid database connection".to_string()),
                 };

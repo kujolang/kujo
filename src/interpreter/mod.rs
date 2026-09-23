@@ -7629,7 +7629,7 @@ impl Interpreter {
                                 if let Ok(mut conn) = conn_arc.lock() {
                                     let conn = &mut *conn;
                                     let _ = async_runtime::AsyncRuntime::block_on(async {
-                                        conn.exec_drop("ROLLBACK", mysql_async::Params::Empty).await
+                                        conn.query_drop("ROLLBACK").await
                                     });
                                 }
                             }

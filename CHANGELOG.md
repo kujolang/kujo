@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- MySQL transaction control uses the text protocol, as required by MySQL 8.4,
+  while parameterized application queries continue using prepared statements.
+
 - PostgreSQL TLS session initialization and cleanup now stay outside an active
   Tokio executor, preventing nested-runtime panics from async interpreter code.
 - Registered the existing `db_last_insert_id` builtin with the type checker,
