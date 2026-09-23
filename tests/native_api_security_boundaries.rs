@@ -2521,3 +2521,28 @@ fn copy_beneath_requires_both_capabilities_and_has_runtime_parity() {
         fs::remove_dir_all(root).unwrap();
     }
 }
+
+#[test]
+fn directory_sync_capability_and_runtime_parity() {
+    for runtime_args in [vec!["--untrusted"], vec!["--interpreter", "--untrusted"]] {
+        assert_runtime_boundary_failure_with_args(
+            "sync_directory_beneath(\".\", \".\")\n",
+            "Capability denied: filesystem-write required for sync_directory_beneath",
+            &runtime_args,
+        );
+    }
+    #[cfg(unix)]
+    {
+        let root = unique_temp_dir("directory_sync_parity");
+        let script = root.join("sync.kujo");
+        fs::write(&script, "assert(sync_directory_beneath(\".\", \".\"))\n").unwrap();
+        for runtime_args in [vec!["--allow-fs-write"], vec!["--interpreter", "--allow-fs-write"]] {
+            let mut args = vec!["run"];
+            args.extend(runtime_args);
+            args.push(script.to_str().unwrap());
+            let output = run_kujo(&args, &root);
+            assert_eq!(output.status.code(), Some(0), "{}", stderr_text(&output));
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+}

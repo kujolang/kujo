@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### Added
+
+- POSIX `sync_directory_beneath(root, relative_directory)` preview durability barrier, capability-gated and descriptor-confined below a trusted root. Sync failures do not imply preceding publications were rolled back.
+
 ### Fixed
 
 - MySQL transaction control uses the text protocol, as required by MySQL 8.4,

@@ -683,6 +683,7 @@ impl Interpreter {
             "read_binary_prefix_beneath",
             "write_file",
             "write_file_atomic",
+            "sync_directory_beneath",
             "write_file_atomic_beneath",
             "append_file",
             "file_exists",
@@ -1288,6 +1289,10 @@ impl Interpreter {
         self.env.define(
             "read_binary_prefix_beneath".to_string(),
             Value::NativeFunction("read_binary_prefix_beneath".to_string()),
+        );
+        self.env.define(
+            "sync_directory_beneath".into(),
+            Value::NativeFunction("sync_directory_beneath".into()),
         );
         self.env.define(
             "write_file_atomic_beneath".to_string(),
@@ -3649,6 +3654,10 @@ impl Interpreter {
             "jsonl_query" => {
                 CallableArity::exact("jsonl_query", vec!["path".to_string(), "options".to_string()])
             }
+            "sync_directory_beneath" => CallableArity::exact(
+                "sync_directory_beneath",
+                vec!["root".into(), "relative_directory".into()],
+            ),
             "write_file_atomic_beneath" => CallableArity::range(
                 "write_file_atomic_beneath",
                 3,

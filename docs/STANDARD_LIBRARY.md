@@ -258,6 +258,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `read_binary_file_beneath` | `read_binary_file_beneath(root, relative_path, max_bytes)` | exact 3 | bytes | Rejects invalid relative paths, symlink/reparse traversal, non-regular files, and oversized reads; capability-denied when gated. | `filesystem-read` | `blob := read_binary_file_beneath("trusted", "docs/file.pdf", 5000000)` |
 | `read_binary_prefix_beneath` | `read_binary_prefix_beneath(root, relative_path, max_bytes)` | exact 3 | bytes | Reads at most the caller's nonnegative `max_bytes` from one rooted regular-file handle (including large files); permits confined relative symlinks where supported but rejects Windows junction traversal. Requires a stable trusted root path and `filesystem-read`. | `filesystem-read` | `prefix := read_binary_prefix_beneath("trusted", "src/main.kujo", 2000000)` |
 | `write_file` | `write_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := write_file(...)` |
+| `sync_directory_beneath` | `sync_directory_beneath(root, relative_directory)` | 2 | bool | Error on unsupported platform, rejected path or unconfirmed directory sync. | `filesystem-write` | `sync_directory_beneath(".", "state")` |
 | `write_file_atomic_beneath` | `write_file_atomic_beneath(root, relative_path, content_or_bytes, overwrite?)` | 3..=4 | bool | Value::Error on invalid paths, limits, symlinks, or publication failure; default no-overwrite. | `filesystem-write` | `write_file_atomic_beneath(".", "state.json", payload, true)` |
 | `write_file_atomic` | `write_file_atomic(path, content_or_bytes, overwrite?)` | 2..=3 | bool | Value::Error on invalid args/types/operation, size-limit violations, or atomic finalization failures; defaults to no-overwrite. | `filesystem-write` | `ok := write_file_atomic("state.json", payload, true)` |
 | `append_file` | `append_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := append_file(...)` |
@@ -659,3 +660,26 @@ from one opened regular-file handle, using a 64 KiB buffer. It consumes at most
 max_bytes + 1 bytes and rejects overflow, links, and non-regular files. The root
 must be trusted. A same-handle digest does not provide snapshot isolation against
 concurrent in-place writes; immutable artifacts or quiesced writers are required.
+
+### Directory durability barrier (POSIX preview)
+
+`sync_directory_beneath(root, relative_directory)` opens a directory beneath a
+trusted root with no symlink traversal and calls the operating system's directory
+`fsync` barrier. `"."` selects the trusted root itself; other relative paths must
+have ordinary components (no traversal, absolute paths or symlinks). It returns
+`true` only after successful sync. It requires `filesystem-write` in both VM and
+interpreter; unsupported platforms fail explicitly.
+
+This operation publishes and deletes nothing. A failure, including
+`sync_directory_beneath[durability_unconfirmed]`, means durability was not
+confirmed; it does **not** roll back or negate any preceding publication. Callers
+must retain transaction evidence and distinguish an already published file from
+an unconfirmed barrier. No process-wide sync or arbitrary delay is substituted.
+
+For a newly created directory, sync its parent entry; for an atomically written
+file, sync the containing directory after the file content has been synced; for
+unlink, sync the containing directory after deletion. Persist a journal before
+publishing its targets and persist those targets before deleting the journal.
+A later successful sync can confirm preceding namespace changes. These guarantees
+are subject to operating system, filesystem and storage hardware honoring sync;
+this is not an assurance against hardware failure or a multi-tenant sandbox.

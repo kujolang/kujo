@@ -699,6 +699,7 @@ mod tests {
             "read_binary_prefix_beneath",
             "write_file",
             "write_file_atomic",
+            "sync_directory_beneath",
             "write_file_atomic_beneath",
             "append_file",
             "file_exists",

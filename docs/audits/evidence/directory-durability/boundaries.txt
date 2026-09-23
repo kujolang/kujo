@@ -1,0 +1,114 @@
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.67s
+     Running tests/native_api_security_boundaries.rs (target/debug/deps/native_api_security_boundaries-f3ca11e3f8722430)
+
+running 90 tests
+test database_native_api_misuse_reports_deterministic_error ... ok
+test crypto_native_api_misuse_reports_deterministic_error ... ok
+test filesystem_directory_delete_behavior_is_non_recursive ... ok
+test decode_text_file_range_info_is_filesystem_read_gated_in_vm_and_interpreter ... ok
+test decode_file_range_info_is_filesystem_read_gated_in_vm_and_interpreter ... ok
+test filesystem_native_api_misuse_reports_deterministic_error ... ok
+test filesystem_beneath_has_vm_interpreter_parity ... ok
+test decode_file_range_info_has_vm_interpreter_parity ... ok
+test decode_text_file_range_info_has_vm_interpreter_parity_without_content_leakage ... ok
+test compression_in_memory_readers_are_bounded_and_capability_free ... ok
+test filesystem_write_overwrite_requires_explicit_flag ... ok
+test filesystem_read_file_rejects_payload_over_limit ... ok
+test filesystem_write_file_rejects_payload_over_limit ... ok
+test filesystem_write_overwrite_succeeds_with_explicit_flag ... ok
+test decode_text_file_range_info_preserves_multibyte_sequence_across_input_chunks ... ok
+test native_capability_ai_endpoint_allowlist_denies_miss_with_structured_error ... ok
+test native_capability_allow_fs_delete_enables_delete_file ... ok
+test filesystem_write_and_read_succeeds_at_size_limit_boundary ... ok
+test native_capability_allows_only_requested_capability ... ok
+test native_capability_allow_fs_write_enables_write_file ... ok
+test directory_sync_capability_and_runtime_parity ... ok
+test native_capability_tls_acceptor_requires_network_server_and_filesystem_read ... ok
+test native_capability_untrusted_allows_ai_when_enabled ... ok
+test native_capability_no_replace_publication_requires_write_and_delete ... ok
+test native_capability_untrusted_denies_ai_with_only_network_client ... ok
+test native_capability_untrusted_allows_shell_exec_when_enabled ... ok
+test native_capability_private_spool_file_range_requires_write_and_read ... ok
+test native_capability_untrusted_denies_ai_without_allow_ai ... ok
+test filesystem_beneath_is_filesystem_read_gated_in_vm_and_interpreter ... ok
+test native_capability_spawned_interpreter_inherits_policy ... ok
+test native_capability_untrusted_denies_clock ... ok
+test native_capability_untrusted_denies_database ... ok
+test native_capability_untrusted_denies_env_read ... ok
+test native_capability_untrusted_denies_env_write ... ok
+test native_capability_untrusted_denies_filesystem_write ... ok
+test native_capability_untrusted_denies_filesystem_delete ... ok
+test filesystem_write_beneath_capability_and_runtime_parity ... ok
+test native_capability_untrusted_denies_image_conversion_write ... ok
+test native_capability_untrusted_denies_image_file_read ... ok
+test copy_beneath_requires_both_capabilities_and_has_runtime_parity ... ok
+test native_capability_untrusted_denies_immediate_database_transaction ... ok
+test native_capability_untrusted_denies_network_client ... ok
+test native_capability_untrusted_denies_network_server ... ok
+test native_capability_untrusted_denies_random ... ok
+test native_capability_untrusted_denies_process_exec ... ok
+test native_capability_untrusted_denies_readonly_database ... ok
+test native_capability_untrusted_denies_verified_tls_database ... ok
+test native_capability_untrusted_denies_shell_exec ... ok
+test native_capability_untrusted_denies_tls_client ... ok
+test network_destination_policy_deny_private_blocks_loopback_http_client ... ok
+test network_destination_policy_deny_private_blocks_loopback_tcp_client ... ok
+test native_capability_file_range_sends_require_network_and_filesystem_read ... ok
+test native_capability_untrusted_denies_private_spool_in_vm_and_interpreter ... ok
+test network_http_client_rejects_invalid_port_before_request_execution ... ok
+test network_http_client_rejects_malformed_url_before_request_execution ... ok
+test native_capability_untrusted_denies_dns_lookup ... ok
+test native_capability_vm_and_interpreter_both_enforce_denial ... ok
+test network_http_client_rejects_unsupported_url_scheme_before_request_execution ... ok
+test network_http_request_explicit_deny_private_ignores_global_override ... ok
+test network_destination_policy_override_allows_trusted_loopback_http_client ... ok
+test network_file_http_strict_policy_has_vm_interpreter_parity ... ok
+test network_http_request_can_pin_resolution_and_disable_redirects ... ok
+test network_native_api_misuse_reports_deterministic_error ... ok
+test network_http_request_enforces_per_request_response_limit ... ok
+test network_tcp_connect_bound_rejects_non_unicast_source ... ok
+test network_http_get_rejects_oversized_response_body ... ok
+test network_cidr_membership_is_family_aware_capability_free_and_runtime_equivalent ... ok
+test network_http_request_timeout_is_reported_deterministically ... ok
+test process_execute_rejects_empty_shell_command ... ok
+test process_direct_exec_does_not_expand_shell_tokens ... ok
+test network_tcp_connect_bound_uses_requested_source_address ... ok
+test process_execute_status_rejects_newline_shell_command ... ok
+test process_native_api_misuse_reports_deterministic_error ... ok
+test process_env_allow_and_deny_policy_is_enforced ... ok
+test process_env_deny_overrides_allow_for_inherited_values ... ok
+test unzip_rejects_absolute_entries ... ok
+test network_ip_classification_is_fail_closed_and_capability_free ... ok
+test private_spool_round_trip_has_vm_interpreter_parity ... ok
+test process_timeout_kills_long_running_process ... ok
+test unzip_extracts_safe_nested_entries ... ok
+test process_output_limit_sets_truncation_flags ... ok
+test network_tcp_bind_probe_is_structured_and_server_capability_gated ... ok
+test unzip_rejects_null_byte_entries ... ok
+test unzip_rejects_parent_traversal_entries ... ok
+test unzip_rejects_symlink_entries ... ok
+test unzip_rejects_windows_drive_prefixed_entries ... ok
+test unzip_rejects_archives_exceeding_entry_count_limit ... ok
+test unzip_rejects_archives_exceeding_single_entry_limit ... ok
+test sha256_beneath_capability_and_runtime_parity ... ok
+test unzip_rejects_archives_exceeding_total_size_limit ... ok
+
+test result: ok. 90 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.48s
+

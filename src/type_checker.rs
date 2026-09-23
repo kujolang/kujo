@@ -1311,6 +1311,14 @@ impl TypeChecker {
         );
 
         self.functions.insert(
+            "sync_directory_beneath".into(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
+        self.functions.insert(
             "write_file_atomic_beneath".to_string(),
             FunctionSignature {
                 param_types: vec![

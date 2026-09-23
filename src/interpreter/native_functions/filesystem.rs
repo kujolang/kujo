@@ -72,6 +72,33 @@ fn directory_page(path: &str, after: &str, limit: i64, suffix: &str) -> Result<V
     Ok(Value::Dict(Arc::new(result)))
 }
 
+// This is a barrier, not a publication operation: failure never means that a
+// preceding write/delete did not happen. The caller owns transaction ordering.
+#[cfg(unix)]
+fn sync_directory_beneath(root: &str, relative: &str) -> Result<(), String> {
+    sync_directory_with(root, relative, |file| file.sync_all())
+}
+
+#[cfg(unix)]
+fn sync_directory_with(
+    root: &str,
+    relative: &str,
+    sync: impl FnOnce(&File) -> std::io::Result<()>,
+) -> Result<(), String> {
+    let error = |stage: &str, detail: String| format!("sync_directory_beneath[{stage}]: {detail}");
+    let mut directory = Dir::open_ambient_dir(root, ambient_authority())
+        .map_err(|e| error("root_open_failed", e.to_string()))?;
+    if relative != "." {
+        let components = validate_beneath_relative_path(Path::new(relative))
+            .map_err(|e| error("invalid_relative_path", e))?;
+        for component in components {
+            directory = cap_fs_ext::DirExt::open_dir_nofollow(&directory, component)
+                .map_err(|e| error("component_rejected", e.to_string()))?;
+        }
+    }
+    sync(&directory.into_std_file()).map_err(|e| error("durability_unconfirmed", e.to_string()))
+}
+
 fn beneath_error(code: &str, detail: impl std::fmt::Display) -> String {
     format!("read_file_beneath[{}]: {}", code, detail)
 }
@@ -1202,6 +1229,29 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 }
             } else {
                 Value::Error("write_file requires string arguments".to_string())
+            }
+        }
+
+        "sync_directory_beneath" => {
+            let [Value::Str(root), Value::Str(relative)] = arg_values else {
+                return Some(Value::Error(
+                    "sync_directory_beneath requires root and relative directory strings".into(),
+                ));
+            };
+            #[cfg(unix)]
+            {
+                match sync_directory_beneath(root, relative) {
+                    Ok(()) => Value::Bool(true),
+                    Err(error) => Value::Error(error),
+                }
+            }
+            #[cfg(not(unix))]
+            {
+                let _ = (root, relative);
+                Value::Error(
+                    "sync_directory_beneath[unsupported_platform]: POSIX directory sync required"
+                        .into(),
+                )
             }
         }
 
@@ -2504,6 +2554,27 @@ mod beneath_tests {
     use super::*;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::thread;
+
+    #[cfg(unix)]
+    #[test]
+    fn directory_sync_confines_paths_and_reports_failure() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().to_str().unwrap();
+        fs::create_dir(root.path().join("nested")).unwrap();
+        fs::write(root.path().join("file"), b"data").unwrap();
+        sync_directory_beneath(path, ".").unwrap();
+        sync_directory_beneath(path, "nested").unwrap();
+        for relative in ["", "..", "nested/..", "/", "file", "missing"] {
+            assert!(sync_directory_beneath(path, relative).is_err(), "{relative}");
+        }
+        std::os::unix::fs::symlink("nested", root.path().join("link")).unwrap();
+        assert!(sync_directory_beneath(path, "link").is_err());
+        let failure =
+            sync_directory_with(path, ".", |_| Err(std::io::Error::other("injected sync failure")))
+                .unwrap_err();
+        assert!(failure.contains("durability_unconfirmed"));
+        assert_eq!(fs::read(root.path().join("file")).unwrap(), b"data");
+    }
 
     #[test]
     fn digest_beneath_streams_large_files_and_enforces_exact_limit() {

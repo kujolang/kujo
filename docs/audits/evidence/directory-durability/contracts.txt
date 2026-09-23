@@ -1,0 +1,95 @@
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+   Compiling kujolang v1.5.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.33s
+     Running tests/cli_contracts.rs (target/debug/deps/cli_contracts-e7d6f9393dc5f8bd)
+
+running 30 tests
+test cli_help_exits_zero ... ok
+test cli_lsp_rename_invalid_identifier_uses_runtime_error_stderr ... ok
+test cli_lsp_diagnostics_missing_file_uses_io_error_and_stderr ... ok
+test cli_check_does_not_execute_script_side_effects ... ok
+test cli_doctor_lists_profiles ... ok
+test cli_doctor_rejects_unknown_profile ... ok
+test cli_check_json_success_is_valid_json ... ok
+test cli_lsp_diagnostics_json_is_valid_json ... ok
+test cli_pack_run_rejects_reserved_namespace ... ok
+test cli_lsp_rename_keyword_identifier_uses_runtime_error_stderr ... ok
+test cli_check_verbose_and_quiet_output_are_deterministic ... ok
+test cli_run_missing_file_exits_with_io_error_code ... ok
+test cli_reserved_alias_name_is_rejected_before_workflow_routing ... ok
+test cli_lsp_complete_plain_and_json_modes_are_stable ... ok
+test cli_run_parse_error_exits_with_lex_parse_code ... ok
+test cli_run_runtime_error_json_mode_emits_stdout_payload ... ok
+test cli_run_runtime_error_exits_with_runtime_code ... ok
+test cli_run_executes_program_output ... ok
+test cli_pack_run_executes_pack_local_command_and_supports_json ... ok
+test cli_version_exits_zero_and_prints_crate_version ... ok
+test cli_usage_errors_use_usage_exit_code ... ok
+test cli_test_discovers_and_runs_expected_fixtures ... ok
+test cli_scheduler_no_timeout_is_explicit_and_conflicts_with_a_deadline ... ok
+test cli_test_runtime_vm_mode_executes_vm_drift_fixture_without_snapshot_mismatch ... ok
+test cli_test_runtime_dual_mode_keeps_vm_primary_for_vm_drift_fixture ... ok
+test cli_test_reports_nonzero_fixture_exit_codes_as_failures ... ok
+test upgrade_is_a_native_reserved_command ... ok
+test cli_test_reports_fixture_failures_with_verification_exit_code ... ok
+test cli_doctor_json_contract_is_stable ... ok
+test cli_doctor_profile_preserves_large_structured_output_and_deep_argument ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.20s
+
+     Running tests/cli_json_contracts.rs (target/debug/deps/cli_json_contracts-7c779dc010bd519d)
+
+running 19 tests
+test docgen_json_discovery_limits_fail_on_invalid_env_values ... ok
+test docgen_json_discovery_limits_fail_on_zero_cli_values ... ok
+test lint_json_contract_is_stable ... ok
+test format_json_contract_is_stable ... ok
+test lsp_rename_json_failure_contract_is_stable ... ok
+test docgen_json_contract_snapshot_is_stable ... ok
+test run_runtime_json_diagnostic_contract_includes_missing_module_help ... ok
+test cli_json_negative_paths_have_stable_failure_signals ... ok
+test run_runtime_json_diagnostic_contract_is_stable ... ok
+test run_runtime_json_diagnostic_contract_reports_invalid_binary_help ... ok
+test run_runtime_json_diagnostic_contract_reports_capability_hint ... ok
+test run_runtime_json_diagnostic_contract_reports_non_callable_call_hint ... ok
+test upgrade_json_failures_use_stderr ... ok
+test docgen_json_warns_for_external_mode_without_allowlist ... ok
+test docgen_json_contract_is_stable ... ok
+test docgen_json_link_mode_failure_breakdown_is_stable ... ok
+test lsp_cli_json_contracts_are_stable ... ok
+test docgen_json_discovery_limits_support_cli_and_env_overrides ... ok
+test docgen_json_cache_mode_reports_hit_miss_counters ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
+
+     Running tests/diagnostics_golden.rs (target/debug/deps/diagnostics_golden-c8eeea17d60d9d42)
+
+running 2 tests
+test diagnostics_golden_normalizes_line_endings ... ok
+test diagnostics_golden_lexer_parse_semantic_runtime_cli_and_server_contracts ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
+
+     Running tests/readme_contracts.rs (target/debug/deps/readme_contracts-3f8f5199a79c7f2b)
+
+running 1 test
+test readme_covers_v1_status_cli_security_and_core_reference_links ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
