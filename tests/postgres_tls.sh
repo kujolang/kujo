@@ -31,8 +31,11 @@ printf 'subjectAltName=DNS:localhost\nextendedKeyUsage=serverAuth\n' >"${TMP_ROO
 openssl x509 -req -days 1 -in "${TMP_ROOT}/server.csr" -CA "${TMP_ROOT}/ca.pem" -CAkey "${TMP_ROOT}/ca.key" -CAcreateserial -extfile "${TMP_ROOT}/server.ext" -out "${TMP_ROOT}/server.pem" >/dev/null 2>&1
 chmod 600 "${TMP_ROOT}/server.key" "${TMP_ROOT}/ca.pem"
 
-pg_ctl -D "${DATA_DIR}" -o "-h 127.0.0.1 -p ${PORT} -c ssl=on -c ssl_cert_file='${TMP_ROOT}/server.pem' -c ssl_key_file='${TMP_ROOT}/server.key'" -w start >/dev/null
 SERVER_RUNNING=1
+if ! pg_ctl -D "${DATA_DIR}" -l "${TMP_ROOT}/server.log" -o "-h 127.0.0.1 -k '${TMP_ROOT}' -p ${PORT} -c ssl=on -c ssl_cert_file='${TMP_ROOT}/server.pem' -c ssl_key_file='${TMP_ROOT}/server.key'" -w start >/dev/null; then
+    cat "${TMP_ROOT}/server.log" >&2
+    exit 1
+fi
 
 psql -h 127.0.0.1 -p "${PORT}" -d postgres -v ON_ERROR_STOP=1 <<'SQL' >/dev/null
 CREATE ROLE qf_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
