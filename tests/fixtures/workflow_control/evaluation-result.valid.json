@@ -10,5 +10,16 @@
   "finished_at": "2026-09-24T14:32:15Z",
   "input_evidence_ids": ["ev_patch_1"],
   "evidence": [{"$ref": "ev_eval_report_1"}],
+  "evidence_refs": [{
+    "schema": "kujo.evidence-ref/v1",
+    "id": "ev_eval_report_1",
+    "producer": {"name": "eval", "version": "1.5.0"},
+    "subject": {"run_id": "run_1", "step_id": "edit", "attempt_id": "a1"},
+    "kind": "eval.report",
+    "uri": "file:eval_results/eval-report.md",
+    "media_type": "text/markdown",
+    "created_at": "2026-09-24T14:32:15Z",
+    "integrity": {"status": "sha256", "sha256": "d8f9a8b7d59e8c03a3f1d9c7c19f4d2e75a0db5a2e3bb7b87dfd1f0a68f07219"}
+  }],
   "annotations": [{"code": "tests.failed", "message": "2 contract tests failed"}]
 }

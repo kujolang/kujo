@@ -33,6 +33,7 @@
     "finished_at": {"type": "string", "format": "date-time"},
     "input_evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true, "maxItems": 1000},
     "evidence": {"type": "array", "items": {"$ref": "#/$defs/reference"}, "maxItems": 1000},
+    "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidenceRef"}, "maxItems": 1000},
     "annotations": {
       "type": "array",
       "items": {
@@ -45,6 +46,21 @@
   },
   "$defs": {
     "subject": {"type": "object", "required": ["run_id"], "properties": {"run_id": {"type": "string", "minLength": 1}, "step_id": {"type": "string"}, "attempt_id": {"type": "string"}}},
-    "reference": {"type": "object", "required": ["$ref"], "properties": {"$ref": {"type": "string", "minLength": 1}}}
+    "reference": {"type": "object", "required": ["$ref"], "properties": {"$ref": {"type": "string", "minLength": 1}}},
+    "evidenceRef": {
+      "type": "object",
+      "required": ["schema", "id", "producer", "subject", "kind", "uri", "media_type", "created_at", "integrity"],
+      "properties": {
+        "schema": {"const": "kujo.evidence-ref/v1"},
+        "id": {"type": "string", "minLength": 1},
+        "producer": {"type": "object", "required": ["name", "version"], "properties": {"name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}},
+        "subject": {"$ref": "#/$defs/subject"},
+        "kind": {"type": "string", "minLength": 1},
+        "uri": {"type": "string", "minLength": 1},
+        "media_type": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "format": "date-time"},
+        "integrity": {"type": "object", "required": ["status"], "properties": {"status": {"enum": ["sha256", "manifest", "unverified"]}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}}
+      }
+    }
   }
 }
