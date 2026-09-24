@@ -1,0 +1,15 @@
+{
+  "schema": "kujo.preservation-outcome/v1",
+  "result_id": "po_1",
+  "subject": {"run_id": "run_1", "step_id": "edit", "attempt_id": "a1"},
+  "requested_mode": "snapshot",
+  "actual_mode": "handoff_bundle",
+  "status": "degraded",
+  "provider": {"name": "remote-provider-x", "workspace_id": "opaque:9c41"},
+  "reconstructability": "clean_source_plus_patch",
+  "evidence": [{"$ref": "ev_workcell_handoff_1"}],
+  "limitations": ["process memory and open sockets were not preserved"],
+  "created_at": "2026-09-24T14:32:17Z",
+  "retain_until": "2026-10-24T14:32:17Z",
+  "cleanup": {"owner": "workcell-gc", "handle": "cleanup:run1:a1"}
+}

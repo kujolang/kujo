@@ -8,6 +8,10 @@ This file records user-visible changes to Kujo. It follows
 
 ### Added
 
+- Versioned, producer-neutral workflow-control JSON Schemas for evidence,
+  execution and evaluation results, policy decisions, preservation outcomes,
+  intervention requests/decisions, and re-execution descriptors.
+
 - POSIX `sync_directory_beneath(root, relative_directory)` preview durability barrier, capability-gated and descriptor-confined below a trusted root. Sync failures do not imply preceding publications were rolled back.
 
 ### Fixed

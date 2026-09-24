@@ -1,0 +1,11 @@
+{
+  "schema": "kujo.reexecution-descriptor/v1",
+  "capability": "re_executable",
+  "source": {"repository": "kujo", "commit": "abc123", "dirty_patch_ref": "ev_patch_1"},
+  "workflow": {"id": "agent-change", "version": "7", "sha256": "1d35ce6d7a83dfa3c3fe2a6351860961fb93f36dc69e46d797cc93fd4ac76b5a"},
+  "tool": {"name": "coding-agent", "version": "2.4.1", "image_digest": "sha256:abc123"},
+  "inputs": [{"name": "task", "evidence_ref": "ev_task_input"}],
+  "secret_refs": ["secret://provider/api-key"],
+  "external_dependencies": [{"name": "model", "mode": "live", "replayable": false}],
+  "effects": {"automatic_retry_allowed": false}
+}

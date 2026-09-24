@@ -1,0 +1,14 @@
+{
+  "schema": "kujo.execution-result/v1",
+  "result_id": "xr_1",
+  "subject": {"run_id": "run_1", "step_id": "deploy", "attempt_id": "a1"},
+  "producer": {"name": "deployer", "version": "4.2.0"},
+  "status": "failure",
+  "classification": "verification_failure",
+  "started_at": "2026-09-24T14:31:00Z",
+  "finished_at": "2026-09-24T14:31:14Z",
+  "attempt": 1,
+  "retry": {"disposition": "operator_required", "reason": "remote effect may have committed"},
+  "effects": [{"effect_id": "effect_1", "class": "external_idempotent", "state": "unknown", "idempotency_key": "deploy:service-a:551", "enforced_by": "remote_service"}],
+  "evidence": [{"$ref": "ev_patch_1"}]
+}

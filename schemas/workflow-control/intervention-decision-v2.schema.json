@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/workflow-control/intervention-decision/v2.json",
+  "title": "Kujo Intervention Decision v2",
+  "type": "object",
+  "required": ["schema", "decision_id", "request_id", "boundary_id", "expected_state_revision", "action", "continuation", "actor", "reason", "decided_at"],
+  "properties": {
+    "schema": {"const": "kujo.intervention-decision/v2"},
+    "decision_id": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string", "minLength": 1},
+    "boundary_id": {"type": "string", "minLength": 1},
+    "expected_state_revision": {"type": "integer", "minimum": 1},
+    "action": {"enum": ["resume_from_boundary", "retry_evaluation", "retry_step", "retry_clean", "amend_inputs", "approve_override", "abort", "cancel"]},
+    "continuation": {
+      "type": "object",
+      "properties": {
+        "target_step_id": {"type": "string", "minLength": 1},
+        "source": {"enum": ["preserved_workspace", "original_source", "amended_inputs", "existing_evidence"]},
+        "reuse_inputs": {"type": "boolean"},
+        "reuse_effects": {"type": "boolean"},
+        "new_attempt": {"type": "boolean"},
+        "input_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "actor": {
+      "type": "object",
+      "required": ["id", "type", "authenticated_by", "authorization"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"enum": ["human", "policy_engine", "system"]},
+        "authenticated_by": {"type": "string", "minLength": 1},
+        "authorization": {"type": "string", "minLength": 1}
+      }
+    },
+    "reason": {"type": "string", "minLength": 1, "maxLength": 4000},
+    "decided_at": {"type": "string", "format": "date-time"},
+    "review_evidence": {"type": "array", "items": {"type": "object", "required": ["$ref"], "properties": {"$ref": {"type": "string", "minLength": 1}}}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"action": {"enum": ["retry_evaluation", "retry_step", "retry_clean", "amend_inputs"]}}},
+      "then": {"properties": {"continuation": {"required": ["target_step_id", "new_attempt"]}}}
+    }
+  ]
+}

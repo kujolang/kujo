@@ -1,0 +1,12 @@
+{
+  "schema": "kujo.intervention-decision/v2",
+  "decision_id": "id_1",
+  "request_id": "ir_1",
+  "boundary_id": "boundary_run1_7",
+  "expected_state_revision": 42,
+  "action": "retry_clean",
+  "continuation": {"target_step_id": "edit", "source": "original_source", "reuse_inputs": true, "reuse_effects": false, "new_attempt": true},
+  "actor": {"id": "user_416", "type": "human", "authenticated_by": "oidc", "authorization": "release-reviewer"},
+  "reason": "Retry from the recorded source revision after fixing the toolchain image",
+  "decided_at": "2026-09-24T15:02:00Z"
+}

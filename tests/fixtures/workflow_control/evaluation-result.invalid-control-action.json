@@ -1,0 +1,12 @@
+{
+  "schema": "kujo.evaluation-result/v1",
+  "result_id": "er_invalid",
+  "evaluator": {"name": "eval", "version": "1.5.0"},
+  "subject": {"run_id": "run_1"},
+  "verdict": "pause",
+  "severity": "error",
+  "checks": {"passed": 0, "failed": 1, "warned": 0, "skipped": 0},
+  "started_at": "2026-09-24T14:32:08Z",
+  "finished_at": "2026-09-24T14:32:15Z",
+  "evidence": []
+}

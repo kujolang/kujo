@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/workflow-control/preservation-outcome/v1.json",
+  "title": "Kujo Preservation Outcome v1",
+  "type": "object",
+  "required": ["schema", "result_id", "subject", "requested_mode", "actual_mode", "status", "provider", "evidence", "created_at", "cleanup"],
+  "properties": {
+    "schema": {"const": "kujo.preservation-outcome/v1"},
+    "result_id": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string", "minLength": 1},
+    "subject": {
+      "type": "object",
+      "required": ["run_id", "step_id", "attempt_id"],
+      "properties": {"run_id": {"type": "string", "minLength": 1}, "step_id": {"type": "string", "minLength": 1}, "attempt_id": {"type": "string", "minLength": 1}}
+    },
+    "requested_mode": {"enum": ["none", "filesystem", "handoff_bundle", "snapshot", "live_pause"]},
+    "actual_mode": {"enum": ["none", "filesystem", "handoff_bundle", "snapshot", "live_pause"]},
+    "status": {"enum": ["satisfied", "degraded", "unsupported", "failed"]},
+    "provider": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {"name": {"type": "string", "minLength": 1}, "workspace_id": {"type": "string"}}
+    },
+    "reconstructability": {"enum": ["none", "same_filesystem", "clean_source_plus_patch", "provider_snapshot", "live_runtime"]},
+    "evidence": {"type": "array", "items": {"type": "object", "required": ["$ref"], "properties": {"$ref": {"type": "string", "minLength": 1}}}},
+    "limitations": {"type": "array", "items": {"type": "string", "maxLength": 2000}, "maxItems": 100},
+    "created_at": {"type": "string", "format": "date-time"},
+    "retain_until": {"type": "string", "format": "date-time"},
+    "cleanup": {
+      "type": "object",
+      "required": ["owner"],
+      "properties": {"owner": {"type": "string", "minLength": 1}, "handle": {"type": "string"}}
+    },
+    "deletion_receipt_ref": {"type": "string", "minLength": 1}
+  }
+}

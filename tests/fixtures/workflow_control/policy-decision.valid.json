@@ -1,0 +1,13 @@
+{
+  "schema": "kujo.policy-decision/v1",
+  "decision_id": "pd_1",
+  "policy": {"id": "code-change-gates", "version": "3", "sha256": "1d35ce6d7a83dfa3c3fe2a6351860961fb93f36dc69e46d797cc93fd4ac76b5a"},
+  "inputs": ["er_1", "xr_1"],
+  "disposition": "require_intervention",
+  "reason": {"code": "evaluation_failed", "message": "Required checks failed"},
+  "scope": {"kind": "descendants", "root_step_id": "edit"},
+  "in_flight": "allow_finish",
+  "preservation": {"required": true, "acceptable_modes": ["handoff_bundle", "snapshot"], "retention_policy": "failed-run-30d"},
+  "allowed_actions": ["retry_evaluation", "retry_step", "retry_clean", "amend_inputs", "approve_override", "abort"],
+  "decided_at": "2026-09-24T14:32:16Z"
+}

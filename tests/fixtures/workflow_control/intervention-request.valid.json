@@ -1,0 +1,16 @@
+{
+  "schema": "kujo.intervention-request/v2",
+  "request_id": "ir_1",
+  "boundary_id": "boundary_run1_7",
+  "run_id": "run_1",
+  "state_revision": 42,
+  "reason": {"type": "evaluation_failed", "message": "Required checks failed"},
+  "summary": "Two required contract tests failed after the edit step.",
+  "policy_decision_ref": "pd_1",
+  "evidence": [{"$ref": "ev_eval_report_1"}],
+  "preservation": {"$ref": "po_1"},
+  "allowed_actions": ["retry_evaluation", "retry_step", "retry_clean", "amend_inputs", "approve_override", "abort"],
+  "created_at": "2026-09-24T14:32:18Z",
+  "expires_at": "2026-10-24T14:32:18Z",
+  "callback": {"target": "dispatch://run_1/boundary_run1_7", "correlation_id": "corr_1"}
+}

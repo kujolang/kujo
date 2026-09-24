@@ -1,0 +1,12 @@
+{
+  "schema": "kujo.evidence-ref/v1",
+  "id": "ev_patch_1",
+  "producer": {"name": "workcell", "version": "2.0.0-alpha.1"},
+  "subject": {"run_id": "run_1", "step_id": "edit", "attempt_id": "a1"},
+  "kind": "changes.patch",
+  "uri": "artifact://run_1/edit/a1/changes.patch",
+  "media_type": "text/x-diff",
+  "created_at": "2026-09-24T14:32:05Z",
+  "integrity": {"status": "sha256", "sha256": "d8f9a8b7d59e8c03a3f1d9c7c19f4d2e75a0db5a2e3bb7b87dfd1f0a68f07219"},
+  "sensitivity": "internal"
+}

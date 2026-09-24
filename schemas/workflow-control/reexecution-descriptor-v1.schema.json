@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/workflow-control/reexecution-descriptor/v1.json",
+  "title": "Kujo Re-execution Descriptor v1",
+  "type": "object",
+  "required": ["schema", "capability", "source", "workflow", "tool", "inputs", "secret_refs", "external_dependencies", "effects"],
+  "properties": {
+    "schema": {"const": "kujo.reexecution-descriptor/v1"},
+    "capability": {"enum": ["inspectable", "re_executable", "deterministic_replay"]},
+    "source": {
+      "type": "object",
+      "required": ["repository", "commit"],
+      "properties": {"repository": {"type": "string", "minLength": 1}, "commit": {"type": "string", "minLength": 1}, "dirty_patch_ref": {"type": "string"}, "workspace_digest": {"type": "string"}}
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["id", "version", "sha256"],
+      "properties": {"id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {"name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "image_digest": {"type": "string"}}
+    },
+    "inputs": {"type": "array", "items": {"type": "object", "required": ["name", "evidence_ref"], "properties": {"name": {"type": "string", "minLength": 1}, "evidence_ref": {"type": "string", "minLength": 1}}}},
+    "secret_refs": {"type": "array", "items": {"type": "string", "pattern": "^secret://"}, "uniqueItems": true},
+    "external_dependencies": {"type": "array", "items": {"type": "object", "required": ["name", "mode", "replayable"], "properties": {"name": {"type": "string", "minLength": 1}, "mode": {"enum": ["live", "recorded", "fixture", "none"]}, "replayable": {"type": "boolean"}}}},
+    "effects": {"type": "object", "required": ["automatic_retry_allowed"], "properties": {"automatic_retry_allowed": {"type": "boolean"}}}
+  }
+}

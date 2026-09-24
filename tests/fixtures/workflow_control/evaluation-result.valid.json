@@ -1,0 +1,14 @@
+{
+  "schema": "kujo.evaluation-result/v1",
+  "result_id": "er_1",
+  "evaluator": {"name": "eval", "version": "1.5.0", "configuration_sha256": "2dbf69e99af54159f50d2f61526bd4d4f9f45e10a585529799b2df36ab3bb4a2"},
+  "subject": {"run_id": "run_1", "step_id": "edit", "attempt_id": "a1"},
+  "verdict": "fail",
+  "severity": "error",
+  "checks": {"passed": 18, "failed": 2, "warned": 0, "skipped": 1},
+  "started_at": "2026-09-24T14:32:08Z",
+  "finished_at": "2026-09-24T14:32:15Z",
+  "input_evidence_ids": ["ev_patch_1"],
+  "evidence": [{"$ref": "ev_eval_report_1"}],
+  "annotations": [{"code": "tests.failed", "message": "2 contract tests failed"}]
+}

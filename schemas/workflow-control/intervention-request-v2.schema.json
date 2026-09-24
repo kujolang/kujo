@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/workflow-control/intervention-request/v2.json",
+  "title": "Kujo Intervention Request v2",
+  "type": "object",
+  "required": ["schema", "request_id", "boundary_id", "run_id", "state_revision", "reason", "summary", "policy_decision_ref", "evidence", "preservation", "allowed_actions", "created_at", "expires_at", "callback"],
+  "properties": {
+    "schema": {"const": "kujo.intervention-request/v2"},
+    "request_id": {"type": "string", "minLength": 1},
+    "boundary_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "state_revision": {"type": "integer", "minimum": 1},
+    "reason": {
+      "type": "object",
+      "required": ["type", "message"],
+      "properties": {
+        "type": {"enum": ["approval_required", "evaluation_failed", "policy_denied", "verification_failed", "unsafe_side_effect", "external_dependency", "operator_requested", "changes_requested", "other"]},
+        "message": {"type": "string", "minLength": 1, "maxLength": 4000}
+      }
+    },
+    "summary": {"type": "string", "minLength": 1, "maxLength": 8000},
+    "policy_decision_ref": {"type": "string", "minLength": 1},
+    "evidence": {"type": "array", "items": {"type": "object", "required": ["$ref"], "properties": {"$ref": {"type": "string", "minLength": 1}}}, "maxItems": 1000},
+    "preservation": {"type": "object"},
+    "allowed_actions": {
+      "type": "array",
+      "items": {"enum": ["resume_from_boundary", "retry_evaluation", "retry_step", "retry_clean", "amend_inputs", "approve_override", "abort", "cancel"]},
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "callback": {
+      "type": "object",
+      "required": ["target"],
+      "properties": {"target": {"type": "string", "minLength": 1}, "correlation_id": {"type": "string"}}
+    }
+  }
+}

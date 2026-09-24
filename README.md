@@ -214,6 +214,7 @@ and a least-privilege execution example. The longer contributor workflow lives i
 - [Standard library](docs/STANDARD_LIBRARY.md)
 - [AI runtime](docs/AI_RUNTIME.md)
 - [CLI machine-readable contracts](docs/CLI_MACHINE_READABLE_CONTRACTS.md)
+- [Workflow-control JSON contracts](schemas/workflow-control/README.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [v1 scope and deferrals](docs/V1_SCOPE.md)
 - [Optional typing policy](docs/OPTIONAL_TYPING_DESIGN.md)

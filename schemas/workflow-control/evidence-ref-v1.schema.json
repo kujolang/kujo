@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/workflow-control/evidence-ref/v1.json",
+  "title": "Kujo Evidence Reference v1",
+  "type": "object",
+  "required": ["schema", "id", "producer", "subject", "kind", "uri", "media_type", "created_at", "integrity"],
+  "properties": {
+    "schema": {"const": "kujo.evidence-ref/v1"},
+    "id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "producer": {"$ref": "#/$defs/producer"},
+    "subject": {"$ref": "#/$defs/subject"},
+    "kind": {"type": "string", "minLength": 1, "maxLength": 200},
+    "uri": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "media_type": {"type": "string", "minLength": 1, "maxLength": 200},
+    "created_at": {"type": "string", "format": "date-time"},
+    "integrity": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["sha256", "manifest", "unverified"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "manifest_ref": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"const": "sha256"}}}, "then": {"required": ["sha256"]}},
+        {"if": {"properties": {"status": {"const": "manifest"}}}, "then": {"required": ["manifest_ref"]}}
+      ]
+    },
+    "bytes": {"type": "integer", "minimum": 0},
+    "artifact_schema": {"type": ["object", "null"]},
+    "label": {"type": "string", "maxLength": 500},
+    "correlation_id": {"type": "string", "maxLength": 200},
+    "causation_id": {"type": "string", "maxLength": 200},
+    "sensitivity": {"enum": ["public", "internal", "restricted", "secret"]},
+    "redaction": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["not_required", "applied", "unknown"]},
+        "profile": {"type": "string", "maxLength": 200}
+      }
+    },
+    "retention": {
+      "type": "object",
+      "required": ["owner", "policy"],
+      "properties": {
+        "owner": {"type": "string", "minLength": 1, "maxLength": 200},
+        "policy": {"type": "string", "minLength": 1, "maxLength": 200},
+        "retain_until": {"type": "string", "format": "date-time"}
+      }
+    }
+  },
+  "$defs": {
+    "producer": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 200},
+        "version": {"type": "string", "minLength": 1, "maxLength": 100}
+      }
+    },
+    "subject": {
+      "type": "object",
+      "required": ["run_id"],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "step_id": {"type": "string", "maxLength": 200},
+        "attempt_id": {"type": "string", "maxLength": 200}
+      }
+    }
+  }
+}
