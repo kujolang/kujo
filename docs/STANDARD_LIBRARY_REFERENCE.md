@@ -398,6 +398,7 @@ flags (`--allow-fs-read`, `--allow-fs-write`, and/or `--allow-fs-delete`).
 | `write_file` | stable | `write_file("notes.txt", "hello")` |
 | `write_file_atomic` | stable | `write_file_atomic("notes.txt", "hello", true)` |
 | `write_file_atomic_beneath` | preview (unreleased) | `write_file_atomic_beneath(".", "reports/check.json", "{}", true)` |
+| `sync_directory_beneath` | preview (POSIX) | `sync_directory_beneath(".", "reports")` |
 | `append_file` | stable | `append_file("notes.txt", "more")` |
 | `file_exists` | stable | `ok := file_exists("notes.txt")` |
 | `read_lines` | stable | `rows := read_lines("notes.txt")` |
@@ -471,6 +472,13 @@ the root handle opens is outside this API's containment guarantee. Contents
 of an opened regular file can still change during the read.
 
 Write-file overwrite contract:
+
+`sync_directory_beneath` requires `filesystem-write` and synchronizes an opened
+directory beneath a trusted root, rejecting symlinks in relative components.
+It publishes and removes nothing. Failure leaves the durability of preceding
+namespace changes unconfirmed; it does not undo those changes. Success depends
+on the OS/filesystem/storage honoring sync. See the [directory durability
+contract](STANDARD_LIBRARY.md#directory-durability-barrier-posix-preview).
 
 `write_file_atomic_beneath` is an unreleased source API for atomic publication
 under a trusted root. It accepts text or bytes, creates missing parent directories,
