@@ -104,3 +104,150 @@ fn control_contracts_keep_secrets_as_references() {
         assert!(!serialized.to_lowercase().contains(forbidden));
     }
 }
+
+#[test]
+fn workflow_control_rejects_missing_fields_bad_versions_and_bounds() {
+    for (schema, fixture) in [
+        ("execution-result-v1", "execution-result.valid"),
+        ("evaluation-result-v1", "evaluation-result.valid"),
+        ("evidence-ref-v1", "evidence-ref.valid"),
+        ("policy-decision-v1", "policy-decision.valid"),
+        ("preservation-outcome-v1", "preservation-outcome.valid"),
+        ("intervention-request-v2", "intervention-request.valid"),
+        ("intervention-decision-v2", "intervention-decision.valid"),
+        ("reexecution-descriptor-v1", "reexecution-descriptor.valid"),
+    ] {
+        let definition = read_json(&schema_path(schema));
+        let compiled = compile_schema(schema);
+        let original = read_json(&fixture_path(fixture));
+        for field in definition["required"].as_array().unwrap() {
+            let mut invalid = original.clone();
+            invalid.as_object_mut().unwrap().remove(field.as_str().unwrap());
+            assert!(!compiled.is_valid(&invalid), "{schema}: missing {field}");
+        }
+        let mut invalid = original.clone();
+        invalid["schema"] = "kujo.unknown/v99".into();
+        assert!(!compiled.is_valid(&invalid));
+        let mut extended = original;
+        extended["third_party_metadata"] = serde_json::json!({"fixture": true});
+        assert!(compiled.is_valid(&extended), "additive compatibility: {schema}");
+    }
+}
+
+#[test]
+fn embedded_evidence_has_the_same_integrity_requirements_as_standalone() {
+    let mut result = read_json(&fixture_path("evaluation-result.valid"));
+    let mut evidence = read_json(&fixture_path("evidence-ref.valid"));
+    evidence["integrity"] = serde_json::json!({"status": "sha256"});
+    result["evidence_refs"] = serde_json::json!([evidence]);
+    assert!(!compile_schema("evaluation-result-v1").is_valid(&result));
+    result["evidence_refs"][0]["integrity"]["sha256"] = "not-a-hash".into();
+    assert!(!compile_schema("evaluation-result-v1").is_valid(&result));
+    result["evidence_refs"][0]["integrity"]["sha256"] = "a".repeat(64).into();
+    assert!(compile_schema("evaluation-result-v1").is_valid(&result));
+}
+
+#[test]
+fn producer_neutral_evaluations_preserve_error_and_rule_facts() {
+    for producer in ["eval", "shipcheck", "fence", "third-party"] {
+        let mut result = read_json(&fixture_path("evaluation-result.valid"));
+        result["evaluator"]["name"] = producer.into();
+        result["verdict"] = "indeterminate".into();
+        result["evaluation_status"] = "error".into();
+        result["rule_ids"] = serde_json::json!(["quality.fixture"]);
+        assert!(compile_schema("evaluation-result-v1").is_valid(&result));
+        for command in ["action", "disposition", "pause", "retry", "continue"] {
+            let mut invalid = result.clone();
+            invalid[command] = true.into();
+            assert!(!compile_schema("evaluation-result-v1").is_valid(&invalid));
+        }
+    }
+}
+
+#[test]
+fn portable_control_event_is_bounded_and_versioned() {
+    let mut event = serde_json::json!({
+        "schema": "kujo.control-event/v1", "sequence": 1, "event_id": "event-1",
+        "run_id": "run-1", "state_revision": 7, "kind": "policy_decided",
+        "subject": {"step_id": "gate", "attempt_id": "attempt-1"},
+        "refs": ["result-1"], "details": {}, "occurred_at": "2026-09-25T00:00:00Z"
+    });
+    let compiled = compile_schema("control-event-v1");
+    assert!(compiled.is_valid(&event));
+    event["sequence"] = 0.into();
+    assert!(!compiled.is_valid(&event));
+    event["sequence"] = 1.into();
+    event["event_sha256"] = "bad".into();
+    assert!(!compiled.is_valid(&event));
+}
+
+#[test]
+fn error_verdict_and_reexecution_modes_have_explicit_semantics() {
+    let mut evaluation = read_json(&fixture_path("evaluation-result.valid"));
+    evaluation["evaluation_status"] = "error".into();
+    evaluation["verdict"] = "fail".into();
+    assert!(!compile_schema("evaluation-result-v1").is_valid(&evaluation));
+    let mut descriptor = read_json(&fixture_path("reexecution-descriptor.valid"));
+    descriptor["mode"] = "same_workspace".into();
+    assert!(!compile_schema("reexecution-descriptor-v1").is_valid(&descriptor));
+    descriptor["preservation_ref"] = "preservation-1".into();
+    assert!(compile_schema("reexecution-descriptor-v1").is_valid(&descriptor));
+    descriptor["mode"] = "prohibited".into();
+    descriptor["effects"]["automatic_retry_allowed"] = true.into();
+    assert!(!compile_schema("reexecution-descriptor-v1").is_valid(&descriptor));
+}
+
+#[test]
+fn oversized_evidence_and_invalid_effect_enums_are_rejected() {
+    let mut evaluation = read_json(&fixture_path("evaluation-result.valid"));
+    evaluation["evidence"] = serde_json::json!(vec![serde_json::json!({"$ref": "ev"}); 1001]);
+    assert!(!compile_schema("evaluation-result-v1").is_valid(&evaluation));
+    let mut execution = read_json(&fixture_path("execution-result.valid"));
+    execution["effects"] =
+        serde_json::json!([{"effect_id": "e", "class": "magic_retry", "state": "unknown"}]);
+    assert!(!compile_schema("execution-result-v1").is_valid(&execution));
+}
+
+#[test]
+#[ignore = "requires the local Dispatch failure-gate golden-path handoff"]
+fn actual_cross_component_failure_evidence_conforms() {
+    let handoff_path = std::env::var("KUJO_FAILURE_GATE_HANDOFF").expect("handoff JSON path");
+    let dispatch_root =
+        std::env::var("KUJO_FAILURE_GATE_DISPATCH_ROOT").expect("Dispatch checkout");
+    let handoff = read_json(Path::new(&handoff_path));
+    let output = Path::new(&handoff_path).parent().unwrap();
+    let workcell = PathBuf::from(handoff["workcell"]["output_dir"].as_str().unwrap());
+    let validate = |schema: &str, value: &Value| {
+        if let Err(errors) = compile_schema(schema).validate(value) {
+            panic!("{schema}: {:?}", errors.map(|e| e.to_string()).collect::<Vec<_>>());
+        }
+    };
+    for (schema, file) in [
+        ("execution-result-v1", "execution-result.json"),
+        ("preservation-outcome-v1", "preservation.json"),
+        ("reexecution-descriptor-v1", "reexecution.json"),
+    ] {
+        validate(schema, &read_json(&workcell.join(file)));
+    }
+    for attempt in [1, 2] {
+        let evaluation =
+            read_json(&output.join(format!("evaluation-{attempt}/evaluation-result.json")));
+        validate("evaluation-result-v1", &evaluation);
+        for reference in evaluation["evidence_refs"].as_array().unwrap() {
+            validate("evidence-ref-v1", reference);
+        }
+    }
+    validate("intervention-decision-v2", &handoff["decision"]);
+    let state = read_json(&Path::new(&dispatch_root).join(handoff["state_path"].as_str().unwrap()));
+    validate("intervention-request-v2", &state["human_intervention"]);
+    for decision in state["control_decisions"].as_array().unwrap() {
+        validate("policy-decision-v1", decision);
+    }
+    let journal = fs::read_to_string(
+        Path::new(&dispatch_root).join(handoff["journal_path"].as_str().unwrap()),
+    )
+    .unwrap();
+    for line in journal.lines().filter(|line| !line.is_empty()) {
+        validate("control-event-v1", &serde_json::from_str(line).unwrap());
+    }
+}

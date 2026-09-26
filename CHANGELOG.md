@@ -8,6 +8,12 @@ This file records user-visible changes to Kujo. It follows
 
 ### Added
 
+- Portable control-event audit schema and additive evaluator error, rule, metric,
+  idempotency-enforcement evidence, and explicit re-execution mode/attempt fields;
+  expanded schema compatibility/negative tests and the ecosystem failure-path
+  integration record. Evaluator errors remain distinct from failed judgments.
+
+
 - Versioned, producer-neutral workflow-control JSON Schemas for evidence,
   execution and evaluation results, policy decisions, preservation outcomes,
   intervention requests/decisions, and re-execution descriptors.

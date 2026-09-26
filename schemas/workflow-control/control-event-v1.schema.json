@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/workflow-control/control-event/v1.json",
+  "title": "Kujo Control Event v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "sequence",
+    "event_id",
+    "run_id",
+    "state_revision",
+    "kind",
+    "subject",
+    "refs",
+    "details",
+    "occurred_at"
+  ],
+  "properties": {
+    "schema": {
+      "const": "kujo.control-event/v1"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "state_revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "kind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "subject": {
+      "type": "object"
+    },
+    "refs": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "string"
+      }
+    },
+    "details": {
+      "type": "object"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "previous_sha256": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{64})?$"
+    },
+    "event_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
