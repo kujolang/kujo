@@ -35,6 +35,40 @@ export func await_callback(callback, value) { let result := await callback(value
 }
 
 #[test]
+fn closures_retain_function_local_imports_after_return() {
+    for (name, import, expression) in [
+        ("selected", "from bridge import invoke", "invoke(func(n) { return n + 1 }, 6)"),
+        ("all", "import bridge", "invoke(func(n) { return n + 1 }, 6)"),
+        ("namespace", "import bridge", "bridge.invoke(func(n) { return n + 1 }, 6)"),
+    ] {
+        for nested in [false, true] {
+            let body = format!("return func() {{ return {expression} }}");
+            let body = if nested { format!("return func() {{ {body} }}") } else { body };
+            let invoke = if nested { "callback()()" } else { "callback()" };
+            let source = format!(
+                "func factory() {{ {import}\n{body} }}\nlet callback := factory()\nprint({invoke})"
+            );
+            for (runtime, output) in
+                run_case(&format!("local_import_{name}_{nested}"), &source, true)
+                    .into_iter()
+                    .enumerate()
+            {
+                if name == "namespace" && runtime == 1 {
+                    // The interpreter does not expose this namespace binding;
+                    // preserve its baseline diagnostic without claiming parity.
+                    assert!(!output.status.success());
+                    assert!(String::from_utf8_lossy(&output.stderr)
+                        .contains("Undefined variable: bridge"));
+                    continue;
+                }
+                assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+                assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "7");
+            }
+        }
+    }
+}
+
+#[test]
 fn imported_callbacks_preserve_results_captures_and_globals() {
     let outputs = run_case(
         "values",

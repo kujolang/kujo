@@ -42,6 +42,9 @@ pub struct Compiler {
     capture_sources: Vec<LexicalCapture>,
     runtime_bindings: HashSet<String>,
     runtime_binding_scopes: Vec<HashSet<String>>,
+    imports_all: bool,
+    import_scopes: Vec<bool>,
+    outer_import_depth: Option<usize>,
     environment_bindings: HashMap<String, BytecodeBindingKind>,
     environment_binding_scopes: Vec<HashMap<String, BytecodeBindingKind>>,
 
@@ -114,6 +117,9 @@ impl Compiler {
             capture_sources: Vec::new(),
             runtime_bindings: HashSet::new(),
             runtime_binding_scopes: Vec::new(),
+            imports_all: false,
+            import_scopes: Vec::new(),
+            outer_import_depth: None,
             environment_bindings: HashMap::new(),
             environment_binding_scopes: Vec::new(),
             used_locals: HashSet::new(),
@@ -244,6 +250,7 @@ impl Compiler {
     }
 
     fn enter_scope(&mut self) {
+        self.import_scopes.push(self.imports_all);
         self.scope_markers.push(self.locals.len());
         self.runtime_binding_scopes.push(self.runtime_bindings.clone());
         self.environment_binding_scopes.push(self.environment_bindings.clone());
@@ -251,6 +258,9 @@ impl Compiler {
     }
 
     fn exit_scope(&mut self) {
+        if let Some(imports_all) = self.import_scopes.pop() {
+            self.imports_all = imports_all;
+        }
         if let Some(bindings) = self.environment_binding_scopes.pop() {
             self.environment_bindings = bindings;
         }
@@ -328,7 +338,18 @@ impl Compiler {
         if let Some(index) = self.chunk.upvalues.iter().position(|n| n == name) {
             return Some(index);
         }
-        let source = self.outer_bindings.get(name)?.clone();
+        let source = self.outer_bindings.get(name).cloned().or_else(|| {
+            // Import-all exports are known only at runtime. Resolve only names
+            // actually used by descendants, retaining global fallback when the
+            // defining frame did not import that name.
+            self.outer_import_depth.map(|depth| {
+                if depth == 0 {
+                    LexicalCapture::Named(name.to_owned())
+                } else {
+                    LexicalCapture::Parent(name.to_owned())
+                }
+            })
+        })?;
         let index = self.chunk.upvalues.len();
         self.chunk.upvalues.push(name.to_owned());
         self.upvalue_names.insert(name.to_owned());
@@ -765,6 +786,11 @@ impl Compiler {
                     func_compiler.add_local(param, 1, BytecodeBindingKind::Mutable);
                 }
                 func_compiler.outer_bindings = self.child_bindings();
+                func_compiler.outer_import_depth = if self.imports_all {
+                    Some(0)
+                } else {
+                    self.outer_import_depth.map(|depth| depth + 1)
+                };
                 if self.scope_depth > 0 && func_compiler.used_locals.contains(name) {
                     func_compiler.chunk.lexical_self = Some(name.clone());
                     func_compiler.outer_bindings.remove(name);
@@ -841,6 +867,11 @@ impl Compiler {
                             func_compiler.add_local(param, 1, BytecodeBindingKind::Mutable);
                         }
                         func_compiler.outer_bindings = self.child_bindings();
+                        func_compiler.outer_import_depth = if self.imports_all {
+                            Some(0)
+                        } else {
+                            self.outer_import_depth.map(|depth| depth + 1)
+                        };
                         if params.first().map(String::as_str) != Some("self") {
                             func_compiler
                                 .runtime_bindings
@@ -1070,6 +1101,9 @@ impl Compiler {
             Stmt::Const { name, value, .. } => {
                 self.compile_expr(value)?;
                 if !self.uses_local_slots || self.scope_depth == 0 {
+                    if self.scope_depth > 0 {
+                        self.environment_bindings.insert(name.clone(), BytecodeBindingKind::Const);
+                    }
                     self.chunk.emit(OpCode::DefineGlobal(name.clone(), BytecodeBindingKind::Const));
                 } else {
                     let slot = self.declare_local(name, BytecodeBindingKind::Const)?;
@@ -1125,6 +1159,9 @@ impl Compiler {
 
                 match symbols {
                     Some(symbol_list) => {
+                        if self.scope_depth > 0 {
+                            self.runtime_bindings.extend(symbol_list.iter().cloned());
+                        }
                         for symbol_name in symbol_list {
                             let import_symbol_const =
                                 self.chunk.add_constant(Constant::String(symbol_name.clone()));
@@ -1137,6 +1174,7 @@ impl Compiler {
                         }
                     }
                     None => {
+                        self.imports_all |= self.scope_depth > 0;
                         self.chunk.emit(OpCode::LoadConst(import_module_const));
                         self.chunk.emit(OpCode::CallNative("__vm_import_all".to_string(), 1));
                         self.chunk.emit(OpCode::Pop);
@@ -1519,6 +1557,11 @@ impl Compiler {
                     func_compiler.add_local(param, 1, BytecodeBindingKind::Mutable);
                 }
                 func_compiler.outer_bindings = self.child_bindings();
+                func_compiler.outer_import_depth = if self.imports_all {
+                    Some(0)
+                } else {
+                    self.outer_import_depth.map(|depth| depth + 1)
+                };
 
                 // Compile function body
                 for stmt in body {

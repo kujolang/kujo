@@ -25,6 +25,8 @@ This file records user-visible changes to Kujo. It follows
 
 - Closures retain the active lexical binding when a later block reuses its name.
   Nested named functions use lexical locals instead of leaking into globals.
+  Returned closures also retain function-local imports, including import-all
+  exports and module namespaces through intermediate closures.
 
 - Declared and documented Rust 1.89 as the source-build MSRV, added an MSRV CI
   check, made the REPL banner use the crate version, and corrected upgrade

@@ -48,6 +48,10 @@ retained; names are not resolved by searching a completed function's slot list.
 `BytecodeChunk.capture_sources` describes each snapshot source: a parent local
 slot, a parent capture index, a scoped script binding, or a runtime-created named
 binding (including bare assignment, destructuring and legacy receiver fields).
+Function-local selected imports register named bindings. Import-all exports
+are discovered at runtime, so descendant references lazily request named
+captures through the intervening compiler boundaries; absent names keep global
+fallback. This does not retain the whole import environment.
 Ordinary global reads remain global lookups. `LoadCapture` and `StoreCapture` address frame-local
 capture indices. Runtime-created bindings retain the v1 rule that a bare
 assignment may target an existing global instead of creating a local.

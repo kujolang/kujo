@@ -404,6 +404,35 @@ fn captures_survive_script_block_exit_and_root_loop_shadowing() {
 }
 
 #[test]
+fn script_block_const_capture_survives_scope_and_remains_immutable() {
+    characterize(
+        r#"
+        mut escaped := null
+        if true {
+            const value := 7
+            escaped = func() { return value }
+        }
+        audit_ok := escaped() == 7
+    "#,
+    );
+    let source =
+        "mut writer := null; if true { const value := 7; writer = func() { value = 8 } }; writer()";
+    let mut parser = Parser::new(tokenize(source).unwrap());
+    let parsed = parser.parse_with_diagnostics();
+    assert!(parsed.diagnostics.is_empty());
+    let mut interpreter = Interpreter::new();
+    interpreter.eval_stmts(&parsed.stmts);
+    let Some(Value::Error(error)) = interpreter.return_value else {
+        panic!("expected immutable capture error");
+    };
+    assert!(error.contains("const binding: value"));
+    let mut vm = VM::new();
+    vm.set_globals(Arc::new(Mutex::new(Interpreter::new().env)));
+    let error = vm.execute(Compiler::new().compile(&parsed.stmts).unwrap()).unwrap_err();
+    assert!(error.contains("const binding: value"));
+}
+
+#[test]
 fn loop_iterable_resolves_before_the_iteration_binding() {
     characterize(
         r#"
