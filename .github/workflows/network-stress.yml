@@ -1,0 +1,43 @@
+name: network-stress
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [runtime/generator-async-spawn-completion]
+    paths:
+      - .github/workflows/network-stress.yml
+      - scripts/network_stress_gate.sh
+      - scripts/loopback_network_probe.rs
+
+permissions:
+  contents: read
+
+jobs:
+  network-stress:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      KUJO_NETWORK_STRESS_EVIDENCE: ${{ runner.temp }}/kujo-network-stress
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Verify 50 consecutive host and Docgen suites
+        run: bash scripts/network_stress_gate.sh 50
+      - name: Preserve all stress evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: network-stress-${{ matrix.os }}
+          path: ${{ runner.temp }}/kujo-network-stress
+          if-no-files-found: error
+          retention-days: 14
