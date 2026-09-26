@@ -3334,7 +3334,14 @@ impl TypeChecker {
 
         self.recursion_depth += 1;
 
-        let result = match expr {
+        let result = self.infer_expr_inner(expr);
+        self.recursion_depth -= 1;
+        result
+    }
+
+    // Keep early returns in expression inference inside the balanced depth guard.
+    fn infer_expr_inner(&mut self, expr: &Expr) -> Option<TypeAnnotation> {
+        match expr {
             Expr::Int(_) => Some(TypeAnnotation::Int),
             Expr::Float(_) => Some(TypeAnnotation::Float),
 
@@ -3789,10 +3796,7 @@ impl TypeChecker {
                 // For now, return Any
                 Some(TypeAnnotation::Any)
             }
-        };
-
-        self.recursion_depth -= 1;
-        result
+        }
     }
 
     /// Push a new scope onto the scope stack
@@ -3912,6 +3916,33 @@ impl TypeChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sequential_function_calls_do_not_consume_recursion_budget() {
+        for expression in ["contains(\"evidence\", \"e\")", "len(\"evidence\")"] {
+            let source = format!("{expression}\n").repeat(MAX_RECURSION_DEPTH + 1);
+            let mut parser = Parser::new(crate::lexer::tokenize(&source).unwrap());
+            let mut checker = TypeChecker::new();
+            assert!(checker.check(&parser.parse()).is_ok(), "{:?}", checker.errors);
+            assert_eq!(checker.recursion_depth, 0);
+        }
+    }
+
+    #[test]
+    fn function_inference_still_enforces_nested_depth_and_unwinds_after_errors() {
+        let mut checker = TypeChecker::new();
+        checker.recursion_depth = MAX_RECURSION_DEPTH - 1;
+        checker.infer_expr(&Expr::Call {
+            function: Box::new(Expr::Identifier("len".into())),
+            args: vec![Expr::String("evidence".into())],
+        });
+        assert_eq!(checker.errors.len(), 1);
+        assert!(checker.errors[0].to_string().contains("recursion depth exceeded"));
+        assert_eq!(checker.recursion_depth, MAX_RECURSION_DEPTH - 1);
+        checker.recursion_depth = 0;
+        assert_eq!(checker.infer_expr(&Expr::Int(1)), Some(TypeAnnotation::Int));
+        assert_eq!(checker.recursion_depth, 0);
+    }
 
     #[test]
     fn database_last_insert_id_is_a_known_integer_builtin() {

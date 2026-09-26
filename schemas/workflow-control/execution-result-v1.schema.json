@@ -3,51 +3,247 @@
   "$id": "https://kujolang.ai/schemas/workflow-control/execution-result/v1.json",
   "title": "Kujo Execution Result v1",
   "type": "object",
-  "required": ["schema", "result_id", "subject", "producer", "status", "started_at", "finished_at", "attempt", "effects", "evidence"],
+  "required": [
+    "schema",
+    "result_id",
+    "subject",
+    "producer",
+    "status",
+    "started_at",
+    "finished_at",
+    "attempt",
+    "effects",
+    "evidence"
+  ],
   "properties": {
-    "schema": {"const": "kujo.execution-result/v1"},
-    "result_id": {"type": "string", "minLength": 1, "maxLength": 200},
-    "subject": {"$ref": "#/$defs/subject"},
-    "producer": {"$ref": "#/$defs/producer"},
-    "status": {"enum": ["success", "failure", "timeout", "cancelled", "indeterminate"]},
-    "classification": {"enum": ["execution_failure", "infrastructure_failure", "verification_failure", "artifact_failure", "policy_denial", "unsafe_output", "unknown"]},
-    "started_at": {"type": "string", "format": "date-time"},
-    "finished_at": {"type": "string", "format": "date-time"},
-    "attempt": {"type": "integer", "minimum": 1},
+    "schema": {
+      "const": "kujo.execution-result/v1"
+    },
+    "result_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "subject": {
+      "$ref": "#/$defs/subject"
+    },
+    "producer": {
+      "$ref": "#/$defs/producer"
+    },
+    "status": {
+      "enum": [
+        "success",
+        "failure",
+        "timeout",
+        "cancelled",
+        "indeterminate"
+      ]
+    },
+    "classification": {
+      "enum": [
+        "execution_failure",
+        "infrastructure_failure",
+        "verification_failure",
+        "artifact_failure",
+        "policy_denial",
+        "unsafe_output",
+        "unknown"
+      ]
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
     "retry": {
       "type": "object",
-      "required": ["disposition"],
+      "required": [
+        "disposition"
+      ],
       "properties": {
-        "disposition": {"enum": ["automatic", "policy_required", "operator_required", "forbidden", "unknown"]},
-        "reason": {"type": "string", "maxLength": 2000}
+        "disposition": {
+          "enum": [
+            "automatic",
+            "policy_required",
+            "operator_required",
+            "forbidden",
+            "unknown"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 2000
+        }
       }
     },
-    "effects": {"type": "array", "items": {"$ref": "#/$defs/effect"}, "maxItems": 1000},
-    "evidence": {"type": "array", "items": {"$ref": "#/$defs/reference"}, "maxItems": 1000},
-    "output": {},
-    "warnings": {"type": "array", "items": {"type": "string", "maxLength": 2000}, "maxItems": 1000},
-    "reexecution_descriptor_ref": {"type": "string", "minLength": 1, "maxLength": 200}
+    "effects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/effect"
+      },
+      "maxItems": 1000
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reference"
+      },
+      "maxItems": 1000
+    },
+    "output": {
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 2000
+      },
+      "maxItems": 1000
+    },
+    "reexecution_descriptor_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "workspace_ref": {
+      "type": "string",
+      "maxLength": 4096
+    }
   },
   "allOf": [
     {
-      "if": {"properties": {"status": {"enum": ["failure", "timeout", "indeterminate"]}}},
-      "then": {"required": ["classification"]}
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "failure",
+              "timeout",
+              "indeterminate"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "classification"
+        ]
+      }
     }
   ],
   "$defs": {
-    "producer": {"type": "object", "required": ["name", "version"], "properties": {"name": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}},
-    "subject": {"type": "object", "required": ["run_id", "step_id", "attempt_id"], "properties": {"run_id": {"type": "string", "minLength": 1}, "step_id": {"type": "string", "minLength": 1}, "attempt_id": {"type": "string", "minLength": 1}}},
-    "reference": {"type": "object", "required": ["$ref"], "properties": {"$ref": {"type": "string", "minLength": 1}}},
+    "producer": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "run_id",
+        "step_id",
+        "attempt_id"
+      ],
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "step_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": [
+        "$ref"
+      ],
+      "properties": {
+        "$ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "effect": {
       "type": "object",
-      "required": ["effect_id", "class", "state"],
+      "required": [
+        "effect_id",
+        "class",
+        "state"
+      ],
       "properties": {
-        "effect_id": {"type": "string", "minLength": 1},
-        "class": {"enum": ["none", "local_reversible", "external_idempotent", "external_non_idempotent", "destructive"]},
-        "state": {"enum": ["not_started", "started", "committed", "compensated", "failed_before_commit", "unknown"]},
-        "idempotency_key": {"type": ["string", "null"]},
-        "enforced_by": {"type": ["string", "null"]},
-        "compensation": {"type": "object"}
+        "effect_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "class": {
+          "enum": [
+            "none",
+            "local_reversible",
+            "external_idempotent",
+            "external_non_idempotent",
+            "destructive"
+          ]
+        },
+        "state": {
+          "enum": [
+            "not_started",
+            "started",
+            "committed",
+            "compensated",
+            "failed_before_commit",
+            "unknown"
+          ]
+        },
+        "idempotency_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "enforced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "compensation": {
+          "type": "object"
+        },
+        "enforcement_evidence_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
       }
     }
   }

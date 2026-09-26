@@ -17,7 +17,10 @@ This file records user-visible changes to Kujo. It follows
 
 - Versioned, producer-neutral workflow-control JSON Schemas for evidence,
   execution and evaluation results, policy decisions, preservation outcomes,
-  intervention requests/decisions, and re-execution descriptors.
+  intervention requests/decisions, re-execution descriptors and control events.
+  Contracts distinguish evaluator errors from failed judgments and carry rule,
+  metric, idempotency-enforcement evidence, and explicit re-execution mode/attempt
+  fields.
 
 - POSIX `sync_directory_beneath(root, relative_directory)` preview durability barrier, capability-gated and descriptor-confined below a trusted root. Sync failures do not imply preceding publications were rolled back.
 
@@ -28,8 +31,11 @@ This file records user-visible changes to Kujo. It follows
 
 - Closures retain the active lexical binding when a later block reuses its name.
   Nested named functions use lexical locals instead of leaking into globals.
-  Returned closures also retain function-local imports, including import-all
+  Returned closures also retain scoped constants and function-local imports, including import-all
   exports and module namespaces through intermediate closures.
+
+- Type-checker depth accounting now unwinds after function-call inference, so
+  large sequential workflows do not exhaust the nested-expression limit.
 
 - Declared and documented Rust 1.89 as the source-build MSRV, added an MSRV CI
   check, made the REPL banner use the crate version, and corrected upgrade
