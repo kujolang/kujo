@@ -44,9 +44,10 @@ cargo install --path . --locked --force
 ```
 
 For a project-local npm install, use that project's package manager and scope.
-The npm registry currently publishes Kujo 1.4.0. No `kujolang` crate is
-currently published on crates.io, so Cargo-owned installations must be rebuilt
-from their original checkout (or replaced with an official GitHub archive).
+The npm registry publishes Kujo 1.5.0 for the supported native targets. No
+`kujolang` crate is currently published on crates.io, so Cargo-owned
+installations must be rebuilt from their original checkout (or replaced with an
+official GitHub archive).
 Development `target` directories and recognized Homebrew, Nix, Scoop,
 Chocolatey, Snap, WinGet, WindowsApps, and system `/usr/bin`/`/bin` locations
 are refused. `--check` still reports release availability and installation kind

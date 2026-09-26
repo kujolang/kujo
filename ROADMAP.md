@@ -17,8 +17,8 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The npm runtime package covers the same targets but its
-  public channel remains at 1.4.0 pending publisher authorization for 1.5.0.
+  SHA-256 checksums. The public npm 1.5.0 runtime package covers the same targets
+  with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
   packages and global tools on macOS and Linux.
@@ -26,6 +26,10 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
   Kennel's `kennel.toml` / `kennel.lock` workflow.
 
 ## Recently completed
+
+- Published `@kujolang/kujo-runtime` and all five native platform packages at
+  1.5.0 through npm trusted publishing, with signed provenance and clean-install
+  verification across the supported runtime matrix.
 
 - Merged the runtime-hardening baseline into Kujo `main` at
   `9d3c6edeba2b20cb22216816b1a95ee5f24a61b1`

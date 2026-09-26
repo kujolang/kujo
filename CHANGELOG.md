@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Published the npm runtime resolver and all five native platform packages at
+  1.5.0 through trusted publishing with signed provenance.
+
 - Async function calls start eagerly under bounded task admission and return a
   reusable completion promise. Body errors are reported by await. Detached spawn
   now executes in the VM and rejects unsupported referenced captures explicitly.

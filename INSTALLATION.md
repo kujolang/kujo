@@ -48,13 +48,12 @@ Each archive has a matching `.sha256` file, and `checksums.txt` lists them all.
 The signed release tag also binds these archive digests.
 Read [release binaries](docs/RELEASE_BINARIES.md) for manual verification steps.
 
-The independent npm channel currently remains at **1.4.0**. Publishing 1.5.0
-was rejected by the registry and requires maintainer authorization review; use
-the native archives when you need 1.5.0 APIs. Node.js 18 or newer can still
-install the previous lifecycle-script-free runtime package:
+The lifecycle-script-free npm channel publishes Kujo **1.5.0** for Linux x64
+and arm64, macOS x64 and arm64, and Windows x64. Node.js 18 or newer can install
+the current runtime package:
 
 ```bash
-npm install --global @kujolang/kujo-runtime@1.4.0
+npm install --global @kujolang/kujo-runtime@1.5.0
 kujo --version
 ```
 
@@ -153,11 +152,10 @@ Select an exact version with `kujo upgrade 1.5.0`. Downgrades require
 `--allow-downgrade`. The command verifies the release checksum and keeps a backup
 of the previous executable.
 
-Use the original manager for managed installs. The npm command below deliberately
-selects the currently published 1.4.0 package; it does not install 1.5.0:
+Use the original manager for managed installs:
 
 ```bash
-npm install --global @kujolang/kujo-runtime@1.4.0
+npm install --global @kujolang/kujo-runtime@1.5.0
 cargo install --path . --locked --force
 ```
 

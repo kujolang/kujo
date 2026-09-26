@@ -5,6 +5,11 @@ Repository: `kujolang/kujo`
 Audited development revision: `b811f24` plus the corrective changes listed below
 Stable release audited: `v1.5.0` (`cc2d7db`, annotated tag object `83fbdd4`)
 
+> **Resolved 2026-09-26:** npm trusted-publisher authorization was corrected.
+> `@kujolang/kujo-runtime` and all five native packages now publish 1.5.0 with
+> signed provenance. The original findings below remain unchanged as the dated
+> audit record; current installation documents reflect the resolved state.
+
 ## A. Executive Summary
 
 The authoritative current Kujo release is **1.5.0**. `Cargo.toml`, the CLI,
