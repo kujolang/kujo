@@ -63,3 +63,10 @@ URLs. See `docs/FAILURE_GATE_IMPLEMENTATION.md` for integration and validation.
 Evaluation v1 retains its additional-field compatibility policy. Schema validity
 does not grant executable authority to extension fields; control consumers reject
 or ignore producer-supplied orchestration commands at admission.
+
+Intervention request v2 optionally includes `unavailable_actions` with an action,
+rejection code and explanation. `allowed_actions` is policy authorization;
+availability describes current preservation/effect facts and never grants new
+authority. Consumers must revalidate admission after the operator responds.
+Unknown policy reason codes use the `other` reason type, preserving the original
+code as additional metadata.

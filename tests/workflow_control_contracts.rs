@@ -248,7 +248,60 @@ fn actual_cross_component_failure_evidence_conforms() {
         Path::new(&dispatch_root).join(handoff["journal_path"].as_str().unwrap()),
     )
     .unwrap();
+    let mut request_snapshots = 0;
     for line in journal.lines().filter(|line| !line.is_empty()) {
-        validate("control-event-v1", &serde_json::from_str(line).unwrap());
+        let event: Value = serde_json::from_str(line).unwrap();
+        validate("control-event-v1", &event);
+        if event["kind"] == "intervention_requested" {
+            request_snapshots += 1;
+            validate("intervention-request-v2", &event["details"]["request"]);
+            assert_eq!(event["details"]["request"]["callback"]["target"], "redacted-transport");
+        }
     }
+    assert_eq!(request_snapshots, 2);
+}
+
+#[test]
+#[ignore = "requires Dispatch tests/reexecution_lifecycle_fixture.kujo output"]
+fn actual_workspace_reexecution_artifacts_match_shared_schemas() {
+    let root =
+        PathBuf::from(std::env::var("KUJO_FAILURE_GATE_DISPATCH_ROOT").expect("Dispatch root"));
+    let proof = read_json(&root.join("tests/tmp/reexecution-proof.json"));
+    assert_eq!(proof.as_array().unwrap().len(), 3);
+    for run in proof.as_array().unwrap() {
+        let workspace_root = root.join(run["root"].as_str().unwrap());
+        let state = read_json(&root.join(run["state_path"].as_str().unwrap()));
+        assert_eq!(state["status"], "completed");
+        let request = read_json(&workspace_root.join("intervention-request.json"));
+        assert!(compile_schema("intervention-request-v2").is_valid(&request));
+        let first = read_json(&workspace_root.join("execution-1.json"));
+        let second = read_json(&workspace_root.join("execution-2.json"));
+        assert_eq!(first["input_sha256"], second["input_sha256"]);
+        assert_ne!(first["subject"]["attempt_id"], second["subject"]["attempt_id"]);
+        assert_eq!(first["workspace_ref"] == second["workspace_ref"], run["mode"] == "same");
+        for execution in [&first, &second] {
+            for (schema, value) in [
+                ("execution-result-v1", execution),
+                ("preservation-outcome-v1", &execution["preservation_outcome"]),
+                ("reexecution-descriptor-v1", &execution["reexecution_descriptor"]),
+            ] {
+                if let Err(errors) = compile_schema(schema).validate(value) {
+                    panic!("{schema}: {:?}", errors.map(|e| e.to_string()).collect::<Vec<_>>());
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn intervention_availability_is_additive_and_typed() {
+    let mut request = read_json(&fixture_path("intervention-request.valid"));
+    let schema = compile_schema("intervention-request-v2");
+    assert!(schema.is_valid(&request));
+    request["unavailable_actions"] = serde_json::json!([{
+        "action": "retry_step", "code": "unsafe_retry", "message": "Unknown external effects"
+    }]);
+    assert!(schema.is_valid(&request));
+    request["unavailable_actions"][0]["action"] = "execute_arbitrary_command".into();
+    assert!(!schema.is_valid(&request));
 }

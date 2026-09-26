@@ -122,7 +122,7 @@ cargo test --test workflow_control_contracts -- --include-ignored
 
 Initial full runs encountered unrelated HTTP shutdown and LSP latency failures
 under shared host load; both passed isolated reruns and the subsequent full serial
-run. Runtime source was unchanged by this branch. Initial baseline command startup
+run. Runtime source was unchanged during that first full run. Initial baseline command startup
 preceded behavior edits; the long full baseline run overlapped additive schema
 work, so it is not represented as a pristine post-checkout schema benchmark.
 
@@ -157,4 +157,28 @@ recursion-depth exhaustion, although the command exits zero. An archived,
 unmodified Dispatch base `a01a365` reproduces the same diagnostic with the
 source-built Kujo runtime; VM-mode help/version emit no diagnostics. This is a
 pre-existing runtime validation blocker, not a new workflow test failure. The
-failure-control branch does not change the type checker or suppress the gate.
+completion audit traced it to successful function-call inference returning before
+unwinding the depth counter. A focused guard/inner-function split now balances
+that counter on every return while preserving the original recursion limit. The
+new sequential-call regression failed before the fix, then all 30 type-checker
+tests passed, including nested-limit enforcement and unwind after errors. Actual
+Dispatch interpreter help now exits zero with empty stderr; no gate is suppressed.
+
+## Completion-audit additions
+
+- Intervention requests distinguish policy authorization from current replay
+  availability. Unavailable actions carry rejection codes/messages; admission
+  rechecks them. Custom policy reason codes retain their value under the portable
+  `other` reason type. Action lists are unique and capped at eight.
+- An immutable `intervention_requested` event retains the review request alongside
+  policy/results and preservation. Transport target/routing metadata is redacted
+  before the durable record is written.
+- The local reexecution lifecycle fixture executes real retained and fresh
+  workspaces, verifies identical input hashes and new attempt identity, and
+  enforces a stable idempotency key at a fixture sink. Its counter proves one
+  effect over two attempts. Separate execution coverage proves an accepted failed
+  action continues without replaying its effect.
+- Canonical schema validation now includes these actual execution, preservation,
+  descriptor and request artifacts, alongside the cross-repository golden path.
+- The type-checker edit shifts four generated TODO source locations. The canonical
+  generator regenerated the inventory; its three freshness contracts passed.
