@@ -2388,7 +2388,7 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
         ),
     );
 
-    let (_project, summary) = run_docgen_with_link_validation(
+    let (project, summary) = run_docgen_with_link_validation(
         &DocgenConfig {
             input,
             out_dir: out,
@@ -2421,13 +2421,13 @@ fn docgen_external_validation_allows_same_host_redirect_hops() {
     )
     .expect("docgen run should complete");
 
-    assert_eq!(summary.broken_link_count, 0);
+    assert_eq!(summary.broken_link_count, 0, "{:?}", project.diagnostics);
     assert!(summary.gate_failures.is_empty());
 }
 
 #[test]
 fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlisted() {
-    // Allow extra requests because redirect validation may issue retries under load.
+    // Keep both fixtures available for the complete redirect validation.
     let Some(destination_server) = spawn_http_server(16, |_path| http_200_response()) else {
         return;
     };
@@ -2449,7 +2449,7 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
         ),
     );
 
-    let (_project, summary) = run_docgen_with_link_validation(
+    let (project, summary) = run_docgen_with_link_validation(
         &DocgenConfig {
             input,
             out_dir: out,
@@ -2485,7 +2485,7 @@ fn docgen_external_validation_allows_cross_host_redirect_when_hosts_are_allowlis
     )
     .expect("docgen run should complete");
 
-    assert_eq!(summary.broken_link_count, 0);
+    assert_eq!(summary.broken_link_count, 0, "{:?}", project.diagnostics);
     assert!(summary.gate_failures.is_empty());
 }
 

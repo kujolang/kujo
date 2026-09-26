@@ -185,6 +185,11 @@ impl Environment {
                     pending.extend(fields.into_values())
                 }
                 Value::Result { value, .. } | Value::Option { value, .. } => pending.push(*value),
+                Value::Iterator { source, transformer, filter_fn, .. } => {
+                    pending.push(*source);
+                    pending.extend(transformer.map(|value| *value));
+                    pending.extend(filter_fn.map(|value| *value));
+                }
                 _ => {}
             }
         }
