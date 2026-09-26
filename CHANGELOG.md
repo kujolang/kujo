@@ -22,6 +22,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Type-checker depth accounting now unwinds after function-call inference, so
+  large sequential workflows do not exhaust the nested-expression limit.
+
 - Declared and documented Rust 1.89 as the source-build MSRV, added an MSRV CI
   check, made the REPL banner use the crate version, and corrected upgrade
   guidance that previously implied `kujolang` was published on crates.io.
