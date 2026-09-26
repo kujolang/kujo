@@ -1,10 +1,16 @@
 # Runtime concurrency completion record
 
+Current disposition (2026-09-26): Phase B and its compatibility follow-up are
+merged into `main` through [PR #12](https://github.com/kujolang/kujo/pull/12).
+The [roadmap](../ROADMAP.md#next-work-and-remaining-boundaries) records the current
+base, completed work and remaining scope. Branch status and incomplete-validation
+statements below describe the earlier delivery, not current merge readiness.
+
 Follow-up: the user subsequently requested fixing the retained interpreter,
 Docgen and provider-validation items. See [the follow-up record](RUNTIME_COMPATIBILITY_FOLLOWUP.md)
 for the new evidence. The validation table below records the earlier Phase-B delivery.
 
-Status: Phase-B implementation verified; full release gate **PASS**. Live-provider
+Status at the original delivery: Phase-B implementation verified; full release gate **PASS**. Live-provider
 certification and complete legacy interpreter parity are not claimed. The
 intermittent Docgen timeout below remains unresolved despite final passing runs.
 

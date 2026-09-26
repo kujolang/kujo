@@ -27,21 +27,32 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
 ## Recently completed
 
+- Merged the runtime-hardening baseline into Kujo `main` at
+  `9d3c6edeba2b20cb22216816b1a95ee5f24a61b1`
+  ([PR #12](https://github.com/kujolang/kujo/pull/12)), with companion
+  [Dispatch #1](https://github.com/kujolang/dispatch/pull/1) and
+  [Workcell #2](https://github.com/kujolang/workcell/pull/2) merged into their
+  respective `main` branches. Final PR and post-merge CI checks passed in all
+  three repositories. These are merged source changes, not a new published
+  runtime release; the latest stable release remains 1.5.0.
+
 - Followed up the Phase-B interpreter fixture drift: corrected static-checker
   binding/signature handling, ArgParser dispatch, VM relational overloads and
-  interpreter error-frame preservation. Exact engine-specific diagnostic
-  snapshots retain real warnings. See [the follow-up record](docs/RUNTIME_COMPATIBILITY_FOLLOWUP.md).
+  interpreter error-frame preservation, including unknown collection-value
+  inference exposed by Dispatch's CLI smoke checks. VM, dual and interpreter
+  sweeps each pass all 149 runnable fixtures; eleven dedicated-harness skips
+  remain explicit. Exact engine-specific diagnostic snapshots retain real
+  warnings. See [the follow-up record](docs/RUNTIME_COMPATIBILITY_FOLLOWUP.md).
 
 - Completed explicit VM lexical captures under the existing per-closure snapshot
   contract, including nested/returned lifetime, captured mutation, mutability,
   imports and callback regressions. This does not introduce shared sibling cells
   or atomic concurrent capture mutation.
 - Completed generator/async/spawn Phase A: source audit, 13 characterization
-  tests and an updated dependency plan. Phase B implements owned generator
+  tests and an updated dependency plan. Completed and merged Phase B: owned generator
   continuation, eager bounded tasks, reusable promise completion, real detached
-  spawn and interpreter recursion/namespace fixes on
-  `runtime/generator-async-spawn-completion`. Validation and remaining boundaries
-  are recorded in [the completion record](docs/RUNTIME_CONCURRENCY_COMPLETION.md). See the [authoritative handoff](docs/GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md)
+  spawn and interpreter recursion/namespace fixes. Validation and remaining boundaries
+  are recorded in [the completion record](docs/RUNTIME_CONCURRENCY_COMPLETION.md). See the [historical Phase-B handoff](docs/GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md)
   and [wave-1 review](docs/RUNTIME_HARDENING_WAVE_1_REVIEW.md).
 
 - Completed the producer-neutral failure-control path: versioned result/evidence
@@ -49,6 +60,12 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
   Workcell preservation, and an offline failure/review golden path. See
   [implementation record](docs/FAILURE_GATE_IMPLEMENTATION.md) for evidence and
   explicit provider, authentication, replay and recovery boundaries.
+
+- Corrected ecosystem runtime compatibility: Workcell preservation deadlines
+  work with its pinned runtime, and Dispatch now checks and pins the source
+  runtime that supplies its directory-durability primitive. Added disposable
+  database validation and clean-host networking stress coverage; each final
+  Linux and macOS stress run passed 50 consecutive host/Docgen rounds.
 
 The September 13 reliability sweep closed the current short-term checklist:
 
@@ -66,6 +83,31 @@ The September 13 reliability sweep closed the current short-term checklist:
 
 These are continuing release gates, not one-time tasks. Their automated checks
 must stay green as the runtime changes.
+
+## Next work and remaining boundaries
+
+The integration is complete; there is no known blocker to those merges. Start
+new work from current `main`, not the old Phase-A audit or Phase-B implementation
+branches. Completed closure/upvalue and generator/async/spawn work is no longer
+an implementation backlog item.
+
+| Priority / status | Work | Completion boundary |
+| --- | --- | --- |
+| Next release preparation | Package the merged runtime and compatibility changes into a reviewed release; update affected ecosystem runtime pins and distribution channels through their normal release process. | Full release/platform gates, published archives and checksums, and ecosystem clean-install checks against the actual published runtime. Until then, Dispatch's exact source pin remains necessary; the existing 1.5.0 archive does not supply `sync_directory_beneath`. |
+| Next language maintenance | Improve optional inference for destructuring, module existence checks, struct fields, promises and callable fallback. | Add positive and negative regressions without turning the VM into a static type gate or suppressing genuine annotation errors. The collection-inference bug found during integration is already fixed. |
+| Measurement before optimization | Profile generator continuation allocation, retained captures, bounded task admission and scheduling costs. | Comparable measurements and unchanged lifecycle, capability, snapshot and cancellation contracts; no unmeasured performance promise. |
+| Unscheduled language candidates | Evaluate async generators, yield-from and struct generator methods; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
+| Owner-deferred ecosystem validation | Live Workcell provider validation. | The operator supplies the provider/profile, account, region, image and spend limit, then runs the provider's real lifecycle and preservation checks. Offline success is not remote certification. This is not a Kujo merge blocker. |
+| Open host observation | Investigate the intermittent Intel Mac loopback stall if it recurs. | Capture a reproducible host-level failure and establish its cause. Standard Rust TCP also reproduced it; host load, free disk space and network filters remain hypotheses. Clean-host stress checks passed. Keep the existing observation open without claiming a Kujo defect or a proven repair. |
+
+Workflow follow-ups belong to the ecosystem repositories: authenticated
+intervention transports, trusted effect attestations, provider-backed
+preservation/materialization and journal archival beyond the current bounded
+active journal. Unknown effects and uncertain crash recovery must keep blocking
+unsafe replay; there is no general exactly-once or automatic rollback promise.
+See [the operational boundaries](docs/FAILURE_GATE_IMPLEMENTATION.md#remaining-operational-boundaries).
+These are explicit boundaries and future candidates, not a request to add a
+provider-specific policy engine to Kujo core.
 
 ## Current direction
 
@@ -138,7 +180,9 @@ Before a release:
 
 1. Keep `Cargo.toml`, the README, this roadmap, and release notes on the same
    version.
-2. Update tests and docs with every behavior or contract change.
+2. Update tests and docs with every behavior or contract change. Regenerate
+   checked-in source inventories when source locations change, even if the
+   inventoried TODO or security marker itself is unchanged.
 3. Run the full release gate and the affected platform checks.
 4. Build from a clean tree and verify published archives and checksums.
 5. Keep claims no broader than the shipped artifacts and recorded evidence.
