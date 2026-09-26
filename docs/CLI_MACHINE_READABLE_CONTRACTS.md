@@ -195,7 +195,7 @@ Each command has a stable top-level payload kind (array/object/null as applicabl
 `kujo test` is intentionally human-readable, but these summary fields are contract-tested for operator tooling:
 
 - `Runtime strategy: <mode>` is always emitted in summary output.
-- `Fixture outcomes: passed=<N>, failed=<N>, skipped=<N>, expected_fail=<N>, runnable=<N>, discovered=<N>` is always emitted in summary output. `runnable` is the denominator used by `Passed <N>/<N> tests`; `discovered` additionally includes fixtures skipped because they declare `Run with: kujo test-run`.
+- `Fixture outcomes: passed=<N>, failed=<N>, skipped=<N>, expected_fail=<N>, runnable=<N>, discovered=<N>` is always emitted in summary output. `runnable` is the denominator used by `Passed <N>/<N> tests`; `discovered` additionally includes fixtures skipped because their first three lines declare `Run with: kujo test-run` or a `# Inventory: skip` comment. Inventory skips require their dedicated harness or explicit provider configuration; they are not executed or snapshotted by `kujo test`.
 - `--runtime dual` summary includes split counters:
   - `vm_primary=<N>`
   - `interpreter_fallback=<N>`

@@ -8,6 +8,12 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Async function calls start eagerly under bounded task admission and return a
+  reusable completion promise. Body errors are reported by await. Detached spawn
+  now executes in the VM and rejects unsupported referenced captures explicitly.
+- `spawn_task` executes its callable; repeated waits share completion and
+  cancellation requests cooperative exit without promising effect rollback.
+
 - VM closures resolve captures at their definition site and access captured
   cells by index, preserving v1 per-closure snapshots and alias identity.
   Returned and nested closures retain owned captures after scope/frame exit;
@@ -26,10 +32,19 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- `kujo test` honors explicit inventory-skip headers, keeping provider-dependent
+  probes out of ordinary fixture runs and avoiding snapshots of missing configuration.
+- Interpreter namespace imports support imported callbacks and async callback globals.
+- Hover reuses one tokenization across definition and reference lookup.
+- Docgen HTTP test fixtures remain alive until their owner shuts them down,
+  removing idle fixture expiry during concurrent test startup.
+
 - Channel send releases its shared lock while waiting for queue capacity. VM
   channel methods accept the correct arguments, and receive waits for a value.
 
 - Returned named closures can recursively call themselves in the interpreter.
+- Interpreter closures retain referenced bindings and callable dependencies,
+  avoiding retention of unrelated generator instances in supported bodies.
 
 - Concurrent promise waiters share completion; timing out one waiter no longer
   consumes the result needed by another waiter.

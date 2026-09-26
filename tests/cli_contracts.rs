@@ -383,6 +383,32 @@ fn cli_test_discovers_and_runs_expected_fixtures() {
 }
 
 #[test]
+fn cli_test_skips_provider_probes_without_executing_or_snapshotting_them() {
+    for runtime in ["vm", "dual", "interpreter"] {
+        let workspace = unique_temp_dir("cli_test_provider_skip");
+        let tests_dir = workspace.join("tests");
+        fs::create_dir_all(&tests_dir).unwrap();
+        write_fixture(&tests_dir.join("sample.kujo"), "print(\"ok\")\n");
+        write_fixture(&tests_dir.join("sample.out"), "ok\n");
+        write_fixture(
+            &tests_dir.join("provider.kujo"),
+            "# Inventory: skip (requires an explicitly configured provider)\nwrite_file(\"probe-ran\", \"unexpected\")\n",
+        );
+        let output = run_kujo_in_dir(&["test", "--runtime", runtime], &workspace);
+        assert!(output.status.success(), "{runtime}: {output:?}");
+        assert!(!workspace.join("probe-ran").exists(), "provider probe must not execute");
+        assert!(!tests_dir.join("provider.out").exists(), "skip must not create a snapshot");
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        assert!(
+            stdout.contains(
+                "passed=1, failed=0, skipped=1, expected_fail=0, runnable=1, discovered=2"
+            ),
+            "{stdout}"
+        );
+    }
+}
+
+#[test]
 fn cli_test_runtime_vm_mode_executes_vm_drift_fixture_without_snapshot_mismatch() {
     let workspace = unique_temp_dir("cli_test_runtime_vm_mode");
     let tests_dir = workspace.join("tests");
