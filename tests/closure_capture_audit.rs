@@ -155,3 +155,181 @@ fn nested_function_must_not_define_a_global_binding() {
     "#,
     );
 }
+
+#[test]
+fn captured_scalar_collection_struct_enum_and_callable_values_survive_return() {
+    characterize(
+        r#"
+        struct Record { value: int }
+        enum Outcome { Good, Bad }
+        func factory() {
+            let integer := 42
+            let fraction := 1.5
+            let flag := true
+            let text := "captured"
+            let array := [1, 2]
+            let map := {"key": 3}
+            let record := Record { value: 4 }
+            let tag := Outcome::Good(5)
+            let expected_tag := Outcome::Good(5)
+            let callable := func(value) { return value + 1 }
+            return func() {
+                return integer == 42 && fraction == 1.5 && flag && text == "captured"
+                    && array[1] == 2 && map["key"] == 3 && record.value == 4
+                    && tag == expected_tag && callable(5) == 6
+            }
+        }
+        let reader := factory()
+        audit_ok := reader()
+    "#,
+    );
+}
+
+#[test]
+fn captured_array_and_dictionary_mutations_persist_across_calls() {
+    characterize(
+        r#"
+        func factory() {
+            mut array := [0]
+            mut map := {"count": 0}
+            return func() {
+                array[0] = array[0] + 1
+                map["count"] = map["count"] + 2
+                return array[0] + map["count"]
+            }
+        }
+        let update_capture := factory()
+        let first := update_capture()
+        let second := update_capture()
+        audit_ok := first == 3 && second == 6
+    "#,
+    );
+}
+
+#[test]
+fn conditional_capture_survives_early_return_and_block_exit() {
+    characterize(
+        r#"
+        func factory(enabled) {
+            if enabled {
+                let captured := 41
+                return func() { return captured }
+            }
+            return func() { return 0 }
+        }
+        let yes := factory(true)
+        let no := factory(false)
+        audit_ok := yes() == 41 && no() == 0
+    "#,
+    );
+}
+
+#[test]
+fn v1_while_and_loop_captures_keep_iteration_snapshots() {
+    for loop_header in ["while index < 3", "loop"] {
+        characterize(&format!(
+            r#"
+            func factory() {{
+                mut callbacks := []
+                mut index := 0
+                {loop_header} {{
+                    let captured := index
+                    callbacks = push(callbacks, func() {{ return captured }})
+                    index += 1
+                    if index == 3 {{ break }}
+                }}
+                return callbacks
+            }}
+            let readers := factory()
+            audit_ok := readers[0]() == 0 && readers[1]() == 1 && readers[2]() == 2
+        "#,
+        ));
+    }
+}
+
+#[test]
+fn deterministic_nested_capture_programs_retain_grandparent_parameters() {
+    // Bounded generated programs exercise transitive capture without requiring
+    // intermediate functions to reference the parameter themselves.
+    for depth in 1..=12 {
+        let mut body = "return seed".to_string();
+        for _ in 0..depth {
+            body = format!("return func() {{ {body} }}");
+        }
+        let calls = "reader = reader()\n".repeat(depth);
+        characterize(&format!(
+            "func factory(seed) {{ {body} }}\nmut reader := factory(41)\n{calls}audit_ok := reader == 41"
+        ));
+    }
+}
+
+#[test]
+fn captured_let_and_const_reject_scalar_and_collection_writes() {
+    for binding in ["let", "const"] {
+        for (initial, write) in [
+            ("0", "captured = 1"),
+            ("[0]", "captured[0] = 1"),
+            ("{\"value\": 0}", "captured[\"value\"] = 1"),
+        ] {
+            let source = format!(
+                "func factory() {{ {binding} captured := {initial}; return func() {{ {write} }} }}\nlet callback := factory()\ncallback()"
+            );
+            let mut parser = Parser::new(tokenize(&source).unwrap());
+            let parsed = parser.parse_with_diagnostics();
+            assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+            let mut interpreter = Interpreter::new();
+            interpreter.eval_stmts(&parsed.stmts);
+            let Some(Value::Error(interpreter_error)) = interpreter.return_value else {
+                panic!("expected immutable capture error for {source}");
+            };
+            let mut vm = VM::new();
+            vm.set_globals(Arc::new(Mutex::new(Interpreter::new().env)));
+            let chunk = Compiler::new().compile(&parsed.stmts).unwrap();
+            let vm_error = vm.execute(chunk).expect_err("immutable capture must be denied");
+            let suffix = if binding == "let" {
+                "immutable let binding: captured"
+            } else {
+                "const binding: captured"
+            };
+            // Existing assignment and in-place mutation diagnostics use different
+            // verbs. Both engines must preserve the binding kind and name.
+            assert!(interpreter_error.contains(suffix), "{interpreter_error}");
+            assert!(vm_error.contains(suffix), "{vm_error}");
+        }
+    }
+}
+
+#[test]
+#[ignore = "known interpreter defect: a named closure snapshot omits its own binding"]
+fn a_recursive_named_closure_keeps_its_capture_after_parent_return() {
+    characterize(
+        r#"
+        func factory(offset) {
+            func fold_capture(n) {
+                if n == 0 { return offset }
+                return n + fold_capture(n - 1)
+            }
+            return fold_capture
+        }
+        let recursive := factory(7)
+        audit_ok := recursive(3) == 13
+    "#,
+    );
+}
+
+#[test]
+fn a_capture_escaped_before_throw_survives_defining_frame_unwind() {
+    characterize(
+        r#"
+        mut escaped := null
+        func factory() {
+            let captured := 7
+            escaped = func() { return captured }
+            throw("factory failed after publishing closure")
+        }
+        mut caught := false
+        try { factory() } except error { caught = true }
+        audit_ok := caught && escaped() == 7
+    "#,
+    );
+}
