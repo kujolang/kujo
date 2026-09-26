@@ -1,6 +1,6 @@
 # Unsafe Inventory
 
-Generated: 2026-09-25
+Generated: 2026-09-26
 Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inventory_contract.rs' '\<unsafe\>' src tests benches fuzz
 
 ## Summary
