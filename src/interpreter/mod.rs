@@ -6787,7 +6787,8 @@ impl Interpreter {
             Ok(guard) => guard,
             Err(error) => return error,
         };
-        let (sender, _) = &*chan_lock;
+        let sender = chan_lock.0.clone();
+        drop(chan_lock);
         match sender.send(value) {
             Ok(_) => Value::Bool(true),
             Err(_) => Value::Error("Failed to send to channel".to_string()),

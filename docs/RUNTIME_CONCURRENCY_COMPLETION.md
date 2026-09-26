@@ -118,3 +118,14 @@ state is written back, avoiding a new closure/self ownership cycle. The previous
 ignored returned recursive-closure test is enabled. `closure_capture_audit`
 passes all 22 tests with zero ignored. This does not claim atomic recursive or
 concurrent read-modify-write on snapshot captures.
+
+## Channel progress fix
+
+Send clones the sender before blocking, releasing the shared channel mutex so
+receivers can drain a full queue. VM method markers now remove the compiler's
+duplicate receiver argument. VM receive waits for a value as the interpreter
+already does; it no longer converts an empty queue into a spurious null value.
+The bounded full-queue/backpressure regression passes for both runtimes. Poisoned
+VM channel state returns an error rather than unwrapping. Blocking native channel
+receive is not proof of cancellation of external effects; task cancellation
+semantics are documented separately.

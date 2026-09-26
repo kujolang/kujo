@@ -6922,8 +6922,11 @@ impl VM {
                                 ));
                             }
                             let value = args.remove(0);
-                            let chan_lock = chan.lock().unwrap();
-                            let (sender, _) = &*chan_lock;
+                            let sender = chan
+                                .lock()
+                                .map_err(|_| "channel.send: shared state lock poisoned")?
+                                .0
+                                .clone();
                             match sender.send(value) {
                                 Ok(_) => Ok(Value::Bool(true)),
                                 Err(_) => Err("Failed to send to channel".to_string()),
@@ -6936,13 +6939,21 @@ impl VM {
                                     args.len()
                                 ));
                             }
-                            let chan_lock = chan.lock().unwrap();
-                            let (_, receiver) = &*chan_lock;
-                            match receiver.try_recv() {
-                                Ok(value) => Ok(value),
-                                Err(std::sync::mpsc::TryRecvError::Empty) => Ok(Value::Null),
-                                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
-                                    Err("Channel disconnected".to_string())
+                            loop {
+                                let received = {
+                                    let guard = chan.lock().map_err(|_| {
+                                        "channel.receive: shared state lock poisoned"
+                                    })?;
+                                    guard.1.try_recv()
+                                };
+                                match received {
+                                    Ok(value) => break Ok(value),
+                                    Err(std::sync::mpsc::TryRecvError::Empty) => {
+                                        std::thread::sleep(std::time::Duration::from_millis(1));
+                                    }
+                                    Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                                        break Err("Channel disconnected".to_owned());
+                                    }
                                 }
                             }
                         }
@@ -6975,6 +6986,11 @@ impl VM {
                 }
 
                 // Retrieve receiver value left on the VM stack.
+                // Method-call lowering supplies a duplicate receiver after the
+                // user arguments, matching the image/server marker paths.
+                if matches!(args.last(), Some(Value::Channel(_))) {
+                    args.pop();
+                }
                 let image = self.stack.pop().ok_or("Stack underflow getting image")?;
 
                 match Interpreter::call_image_method_impl(&image, method_name, &args) {

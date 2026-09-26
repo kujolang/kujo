@@ -26,6 +26,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Channel send releases its shared lock while waiting for queue capacity. VM
+  channel methods accept the correct arguments, and receive waits for a value.
+
 - Returned named closures can recursively call themselves in the interpreter.
 
 - Concurrent promise waiters share completion; timing out one waiter no longer
