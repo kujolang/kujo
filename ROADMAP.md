@@ -30,11 +30,13 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 - Completed explicit VM lexical captures under the existing per-closure snapshot
   contract, including nested/returned lifetime, captured mutation, mutability,
   imports and callback regressions. This does not introduce shared sibling cells
-  or complete interpreter recursion and generator restoration.
+  or atomic concurrent capture mutation.
 - Completed generator/async/spawn Phase A: source audit, 13 characterization
-  tests and an updated dependency plan. **Phase B is next**, from a new
-  `runtime/generator-async-spawn-completion` branch based on the verified
-  integration state. See the [authoritative handoff](docs/GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md)
+  tests and an updated dependency plan. Phase B implements owned generator
+  continuation, eager bounded tasks, reusable promise completion, real detached
+  spawn and interpreter recursion/namespace fixes on
+  `runtime/generator-async-spawn-completion`. Validation and remaining boundaries
+  are recorded in [the completion record](docs/RUNTIME_CONCURRENCY_COMPLETION.md). See the [authoritative handoff](docs/GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md)
   and [wave-1 review](docs/RUNTIME_HARDENING_WAVE_1_REVIEW.md).
 
 - Completed the producer-neutral failure-control path: versioned result/evidence
@@ -98,10 +100,8 @@ release promises.
 Near-term language work should close known runtime gaps before adding broad new
 syntax. The explicit candidates from the v1 scope are:
 
-- fuller generator state handling (VM lexical captures now use explicit indexed
-  resolution while preserving v1 snapshots; see the
-  [implementation evidence](docs/CLOSURE_UPVALUE_IMPLEMENTATION.md));
-- clearer spawn behavior and async parity;
+- measured generator/task allocation and scheduling optimization while preserving
+  the [concurrency contracts](docs/RUNTIME_CONCURRENCY_COMPLETION.md);
 - better optional type inference for destructuring, imports, struct fields,
   promises, and callable values;
 - compiler and VM optimizations that do not change program behavior.

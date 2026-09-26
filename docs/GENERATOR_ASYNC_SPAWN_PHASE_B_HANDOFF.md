@@ -1,6 +1,11 @@
 # Generator, async and spawn Phase-B handoff
 
-Evidence dates: 2026-09-25–26. Phase B has **not** begun.
+Phase-B implementation follow-up: [runtime completion record](RUNTIME_CONCURRENCY_COMPLETION.md).
+This document preserves the pre-implementation audit and accepted design decisions;
+its old broken-behavior descriptions are historical, not the current runtime contract.
+
+Historical evidence dates: 2026-09-25–26, before Phase B began. The following
+starting-point instructions describe that handoff, not the current branch state.
 
 ## Authoritative starting point
 

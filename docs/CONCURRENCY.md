@@ -11,7 +11,9 @@ details below, including the statement that async/await is synchronous and the
 old source line references, no longer describe Kujo 1.5.0. For current behavior,
 use [the VM/interpreter parity matrix](VM_INTERPRETER_PARITY_MATRIX.md),
 [the architecture guide](ARCHITECTURE.md), and the executable async/concurrency
-tests. Do not use this file as current API or implementation guidance.
+tests. The [Phase-B completion record](RUNTIME_CONCURRENCY_COMPLETION.md) describes
+the development branch's owned generators and bounded language tasks. Do not use
+this file as current API or implementation guidance.
 
 ---
 

@@ -65,14 +65,14 @@ own their snapshots. Nested named recursion uses a call-local self binding,
 avoiding a self-reference inside the capture environment.
 
 Captured functions bypass JIT function caches until the JIT supports this
-representation. The main VM, JIT-to-VM fallback and bounded generator dispatcher
-handle indexed capture access. Generator scheduling and spawn behavior are not
-redesigned. Legacy manually constructed chunks without capture descriptors
+representation. The main VM and JIT-to-VM fallback
+handle indexed capture access. Phase-B generators retain these cells while the
+task/spawn behavior is described below. Legacy manually constructed chunks without capture descriptors
 retain their compatibility path; the older VM-wide `Upvalue` opcodes are not the
 compiler-produced closure mechanism. Bytecode is not a persistent public format.
 
-See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for baseline evidence and known
-interpreter limitations. This mechanism does not add a tracing collector for
+See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for historical baseline evidence
+and the concurrency completion record for interpreter corrections. This mechanism does not add a tracing collector for
 arbitrary user-created cyclic value graphs.
 
 ### 3.1 `kujo run`
@@ -149,15 +149,10 @@ Runtime parity is tracked centrally in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
 Current explicit divergence examples include:
 
-- Top-level generator creation and straight-line iteration work in covered cases.
-  Full continuation remains incomplete: the VM resume dispatcher omits ordinary
-  calls/handlers and truncates loops at their first yield; eager iteration also
-  limits laziness. Interpreter continuation and alias identity have separate gaps.
-- VM `spawn` currently discards its compiled body; interpreter spawn and native
-  task callables have different limitations. The nonnegative-counter parity probe
-  does not prove execution. See the [Phase-A characterization](GENERATOR_ASYNC_SPAWN_COMPLETION_PLAN.md)
-  and [Phase-B handoff](GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md).
-- Struct generator methods remain explicitly unsupported.
+- Generators resume the ordinary VM dispatcher using owned stack/frame/handler and lexical-scope state. Interpreter generators keep explicit statement continuations. Aliases share progress and terminal errors; loops consume lazily.
+- Async functions and actual task callables use the existing Tokio blocking lane with 16 process-wide admission slots. Await owns an independent waiter on shared completion. Task globals are snapshots; explicit shared APIs coordinate tasks.
+- `SpawnDetached` executes referenced transferable snapshots with binding kinds. Unsupported captures fail before scheduling. Worker and callback contexts carry capability restrictions; cancellation does not imply effect rollback.
+- Struct generator methods and async generators remain explicitly unsupported. See [concurrency contracts and validation](RUNTIME_CONCURRENCY_COMPLETION.md).
 
 ## 7. Release Posture
 

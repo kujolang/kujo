@@ -52,13 +52,13 @@ Release/process commitments:
 The following runtime-path implementation backlogs are explicitly deferred and non-silent for `v1.0.0` scope tracking:
 
 - `src/vm.rs`:
-  - VM lexical capture completion is implemented under the v1 snapshot contract: definition-site descriptors, indexed capture access, transitive capture forwarding, mutability checks and owned capture lifetime. Separate closures keep independent snapshots; aliases of one closure share its cells. See the [implementation evidence and validation limits](CLOSURE_UPVALUE_IMPLEMENTATION.md). This closes the VM closure-capture mechanism deferral, not the separate interpreter recursion or generator restoration limitations.
-  - `GeneratorState` full restoration, async parity and spawn execution remain Phase-B work. Phase A is complete; start from the [integrated handoff](GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md) and preserve the snapshot contract. Current boundaries remain in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
+  - VM lexical capture completion is implemented under the v1 snapshot contract: definition-site descriptors, indexed capture access, transitive capture forwarding, mutability checks and owned capture lifetime. Separate closures keep independent snapshots; aliases of one closure share its cells. See the [implementation evidence and validation limits](CLOSURE_UPVALUE_IMPLEMENTATION.md). This closes the VM closure-capture mechanism deferral. Returned named interpreter recursion is also supported.
+  - Owned generator restoration, eager bounded async calls, shared promise completion and detached spawn execution are implemented. See [Phase-B evidence and boundaries](RUNTIME_CONCURRENCY_COMPLETION.md); async generators and struct generator methods remain unsupported.
 - `src/compiler.rs`:
-  - Dedicated VM `SpawnThread` opcode is deferred; current spawn lowering behavior remains explicit in compiler comments and roadmap-driven follow-up planning.
+  - `SpawnDetached` now submits referenced transferable snapshots through bounded task admission.
   - Enum and interpolated-string builder opcode optimizations are deferred as post-v1 performance/representation work (non-contract semantics).
 - `src/interpreter/native_functions/async_ops.rs`:
-  - `spawn_task` body execution with full interpreter-context evaluation is deferred; current placeholder behavior remains explicit in code and triage artifacts.
+  - `spawn_task` executes its callable; completion is reusable and cancellation is cooperative, without rollback guarantees.
 
 Deferral guardrails:
 
