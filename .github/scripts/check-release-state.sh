@@ -53,14 +53,17 @@ expected_roadmap_release="$(printf 'Stable release: [v%s](https://github.com/kuj
 expected_install_release="$(printf 'Kujo %s is the current stable native release.' "$cargo_version")"
 expected_installer_default="$(printf 'DEFAULT_RELEASE_VERSION="${KUJO_RELEASE_VERSION:-v%s}"' "$cargo_version")"
 expected_binary_example="$(printf 'KUJO_VERSION="v%s"' "$cargo_version")"
+expected_npm_install="$(printf 'npm install --global @kujolang/kujo-runtime@%s' "$cargo_version")"
 
 for check in \
 	"ROADMAP.md|$expected_roadmap_release|stable release" \
 	"INSTALLATION.md|$expected_install_release|installation release" \
+	"INSTALLATION.md|$expected_npm_install|npm installation release" \
 	"install.sh|$expected_installer_default|installer default" \
 	".github/actions/setup-kujo/action.yml|    default: v$cargo_version|setup action default" \
 	"docs/SETUP_KUJO_ACTION.md|    version: v$cargo_version|setup action example" \
 	"docs/BUILD_AN_AGENT.md|Install the stable Kujo v$cargo_version runtime|agent guide runtime" \
+	"docs/INSTALL_MATRIX.md|$expected_npm_install|npm install matrix release" \
 	"docs/RELEASE_BINARIES.md|$expected_binary_example|release binary example"; do
 	IFS='|' read -r path needle label <<<"$check"
 	if ! grep -Fq "$needle" "$path"; then
