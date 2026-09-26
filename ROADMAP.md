@@ -97,7 +97,7 @@ an implementation backlog item.
 
 | Priority / status | Work | Completion boundary |
 | --- | --- | --- |
-| Next release preparation | Package the merged runtime and compatibility changes into a reviewed release; update affected ecosystem runtime pins and distribution channels through their normal release process. | Full release/platform gates, published archives and checksums, and ecosystem clean-install checks against the actual published runtime. Until then, Dispatch's exact source pin remains necessary; the existing 1.5.0 archive does not supply `sync_directory_beneath`. |
+| Next release preparation | Package the merged runtime and compatibility changes into a reviewed release; update affected ecosystem runtime pins and distribution channels through their normal release process. | Full release/platform gates, published archives and checksums, and ecosystem clean-install checks against the actual published runtime. Until then, Dispatch's exact source pin remains necessary: tagged native and npm 1.5.0 binaries are built from `cc2d7db`, before `sync_directory_beneath`; current main and the Dispatch source pin also report crate version 1.5.0. See the [artifact/source distinction](docs/NEXT_PHASE_ARCHITECTURE.md#release-reconciliation). |
 | Next language maintenance | Improve optional inference for destructuring, module existence checks, struct fields, promises and callable fallback. | Add positive and negative regressions without turning the VM into a static type gate or suppressing genuine annotation errors. The collection-inference bug found during integration is already fixed. |
 | Measurement before optimization | Profile generator continuation allocation, retained captures, bounded task admission and scheduling costs. | Comparable measurements and unchanged lifecycle, capability, snapshot and cancellation contracts; no unmeasured performance promise. |
 | Unscheduled language candidates | Evaluate async generators, yield-from and struct generator methods; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
@@ -112,6 +112,35 @@ unsafe replay; there is no general exactly-once or automatic rollback promise.
 See [the operational boundaries](docs/FAILURE_GATE_IMPLEMENTATION.md#remaining-operational-boundaries).
 These are explicit boundaries and future candidates, not a request to add a
 provider-specific policy engine to Kujo core.
+
+## Agentic architecture lane
+
+Kujo's direction is an execution system for agentic software: a language and
+runtime for controlled, observable, reproducible execution, composed with the
+existing ecosystem. This is an architectural direction, not a next-release promise.
+The [source audit and staged plan](docs/NEXT_PHASE_ARCHITECTURE.md) records ownership,
+contract reuse, implementation evidence and open boundaries.
+
+| Wave | Current status | Ownership and completion boundary |
+| --- | --- | --- |
+| A — Observability and Measurement Foundation | Partially implemented; first implementation priority | Runtime owns bounded neutral measurements; RunLedger owns aggregation. Wire existing profiling, test behavior, measure overhead and document evidence consumption. |
+| B — Durable Agent Execution | Partially implemented in ecosystem; design required for composed boundary | Dispatch owns persisted runs/steps, journals, intervention and continuation; Workcell owns preservation/materialization. Prove stop/restart/resume in separate processes without replaying uncertain effects. |
+| C — First-Class Effect Contracts | Existing conservative effect checks; normalized extension proposed, unscheduled | Ecosystem adapters attest effects; Dispatch validates trust and replay safety. Runtime owns effect mechanisms/capabilities. Producer claims alone are not proof. |
+| D — Universal Tool and Agent Interoperability | SDK/MCP/CLI pieces implemented; universal contract proposed, unscheduled | Ecosystem-owned adapters for MCP, tool calling, agent SDKs, A2A, HTTP/OpenAPI, CLI, Python and TypeScript; provider-neutral core. |
+| E — Structured Context, Memory and Provenance | RAG/Scent/SDK pieces implemented; semantic interop design required, unscheduled | Ecosystem-owned typed information and artifact/evidence/decision provenance; no hidden model reasoning. |
+| F — Graph-Native Multi-Agent Execution | Dispatch DAG foundation implemented; universal typed nodes proposed, unscheduled | Ecosystem-owned graphs of compatible agents, programs, tools, evaluators, humans and services, with explicit inputs/outputs, capabilities, budgets, effects and failure policy. |
+
+No wave introduces exactly-once external effects, universal rollback, or automatic
+replay of unknown effects. Long-lived review must survive controller termination.
+Observability is a prerequisite wave, not a replacement for durable control.
+
+## Maintenance lane
+
+Continue optional inference for destructuring, module existence, struct recognition
+and field lookup, Promise unwraps, and callable inference/fallback. Maintain
+VM/interpreter compatibility, security, fuzzing, release reliability, compiler/VM
+optimizations and measured concurrency optimization. Generics, macros, WASM,
+FFI, async generators and yield-from remain explicitly deferred and unscheduled.
 
 ## Current direction
 
