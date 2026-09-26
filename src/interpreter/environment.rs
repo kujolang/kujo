@@ -62,12 +62,17 @@ impl BindingKind {
 pub struct Environment {
     pub scopes: Vec<HashMap<String, Value>>,
     binding_kinds: Vec<HashMap<String, BindingKind>>,
+    global_owner: std::sync::Arc<()>,
 }
 
 impl Environment {
     /// Create a new environment with a single global scope
     pub fn new() -> Self {
-        Environment { scopes: vec![HashMap::new()], binding_kinds: vec![HashMap::new()] }
+        Environment {
+            scopes: vec![HashMap::new()],
+            binding_kinds: vec![HashMap::new()],
+            global_owner: std::sync::Arc::new(()),
+        }
     }
 
     /// Push a new scope onto the stack (e.g., entering a function)
@@ -91,6 +96,7 @@ impl Environment {
         let caller = Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
+            global_owner: self.global_owner.clone(),
         };
         self.push_scope();
         caller
@@ -109,6 +115,7 @@ impl Environment {
         let previous = Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
+            global_owner: self.global_owner.clone(),
         };
         self.scopes.append(&mut owner.scopes);
         self.binding_kinds.append(&mut owner.binding_kinds);
@@ -116,7 +123,35 @@ impl Environment {
     }
 
     pub(crate) fn empty_scopes() -> Environment {
-        Environment { scopes: Vec::new(), binding_kinds: Vec::new() }
+        Environment {
+            scopes: Vec::new(),
+            binding_kinds: Vec::new(),
+            global_owner: std::sync::Arc::new(()),
+        }
+    }
+
+    pub(crate) fn global_owner(&self) -> std::sync::Arc<()> {
+        self.global_owner.clone()
+    }
+
+    /// Snapshot lexical bindings, without retaining the root environment.
+    pub(crate) fn generator_environment(&self, capture_locals: bool) -> Self {
+        let mut result = Self {
+            scopes: vec![HashMap::new()],
+            binding_kinds: vec![HashMap::new()],
+            global_owner: self.global_owner.clone(),
+        };
+        if capture_locals {
+            result.scopes.extend(self.scopes.iter().skip(1).cloned());
+            result.binding_kinds.extend(self.binding_kinds.iter().skip(1).cloned());
+        }
+        result
+    }
+
+    /// Move the live globals into/out of a continuation without cloning them.
+    pub(crate) fn swap_global_scope(&mut self, other: &mut Self) {
+        std::mem::swap(&mut self.scopes[0], &mut other.scopes[0]);
+        std::mem::swap(&mut self.binding_kinds[0], &mut other.binding_kinds[0]);
     }
 
     /// Get a variable from the environment, searching from inner to outer scopes

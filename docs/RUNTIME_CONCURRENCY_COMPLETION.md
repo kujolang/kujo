@@ -76,3 +76,19 @@ passing (the existing interpreter recursion probe remains ignored); parity 115/1
 The baseline characterization/callback/capture suites passed before source edits.
 The updated characterization suite (13/13) and imported callbacks (9/9) also pass.
 Interpreter generator and other concurrency work remain in progress.
+
+## Slice 2: interpreter generator continuation
+
+Interpreter generators now own shared continuation state instead of copying a
+statement index on each alias. Explicit block, loop, for and handler frames retain
+nested statement progress; return completes, errors are cached, and scope/capability
+state is restored on each resume. Captured lexical scopes are retained while root
+globals stay live in the owning interpreter. Generator handles do not copy root
+globals into their continuation. Different runtime ownership rejects explicitly.
+
+The initial targeted run passed 14 generator contracts and 13 characterization
+cases. Characterization assertions now require the repaired generator behavior in
+both runtimes. Collection callbacks containing `ForNext` use full VM dispatch.
+Nested yield expressions still require continuation work; this slice does not
+claim they are implemented by the interpreter. Async, spawn and recursive
+interpreter closures remain under implementation.

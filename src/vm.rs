@@ -1005,7 +1005,7 @@ impl VM {
                 | Value::PrivateSpool { .. }
                 | Value::UdpSocket { .. }
                 | Value::Channel(_)
-                | Value::GeneratorDef(_, _)
+                | Value::GeneratorDef(..)
                 | Value::Generator { .. }
                 | Value::Iterator { .. }
                 | Value::Promise { .. }
@@ -5825,11 +5825,11 @@ impl VM {
                 method_params.extend(params.iter().cloned());
                 Value::AsyncFunction(method_params, body.clone(), captured_env.clone())
             }
-            Value::GeneratorDef(params, body) => {
+            Value::GeneratorDef(params, body, captured) => {
                 let mut method_params = Vec::with_capacity(params.len() + 1);
                 method_params.push("__module_receiver".to_string());
                 method_params.extend(params.iter().cloned());
-                Value::GeneratorDef(method_params, body.clone())
+                Value::GeneratorDef(method_params, body.clone(), captured.clone())
             }
             other => other.clone(),
         }
@@ -7598,7 +7598,11 @@ impl VM {
     ) -> Result<Value, String> {
         match &function {
             Value::BytecodeFunction { chunk, captured: _, captured_binding_kinds: _ } => {
-                if chunk.instructions.iter().any(|op| matches!(op, OpCode::MakeClosure(_))) {
+                if chunk
+                    .instructions
+                    .iter()
+                    .any(|op| matches!(op, OpCode::MakeClosure(_) | OpCode::ForNext(_)))
+                {
                     // Creation needs the full VM dispatcher. Reuse the guarded
                     // bridge, including the caller's capabilities and output.
                     return self.call_interpreter_callable(&function, &args);

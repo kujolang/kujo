@@ -159,3 +159,73 @@ fn vm_generator_has_no_automatic_global_environment_ownership_cycle() {
     assert!(environment.upgrade().is_none());
     drop(generator);
 }
+
+fn interpret(interpreter: &mut Interpreter, source: &str) {
+    let mut parser = Parser::new(tokenize(source).unwrap());
+    let parsed = parser.parse_with_diagnostics();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    interpreter.eval_stmts(&parsed.stmts);
+}
+
+#[test]
+fn interpreter_generator_preserves_nested_control_flow_and_shared_progress() {
+    let mut interpreter = Interpreter::new();
+    interpret(&mut interpreter, "func twice(n) { return n * 2 } func* values() { mut n := 0 while n < 4 { n += 1 if n == 2 { continue } yield twice(n) } for n in [1, 2, 3] { if n == 3 { break } yield n } try { yield 10 missing } except err { yield 20 } return 99 } let instance := values() let alias := instance mut total := 0 for n in instance { total += n break } for n in alias { total += n } for n in instance { total += 1000 }");
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    assert_eq!(number(interpreter.env.get("total")), 49);
+    assert_eq!(interpreter.env.scopes.len(), 1);
+}
+
+#[test]
+fn interpreter_generator_caches_errors_and_restores_caller() {
+    let mut interpreter = Interpreter::new();
+    interpret(&mut interpreter, "func* values() { yield 1 missing } let instance := values() mut caught := 0 try { for n in instance { print(n) } } except err { caught += 1 } try { for n in instance { print(n) } } except err { caught += 1 } let recovered := 42");
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    assert_eq!(number(interpreter.env.get("caught")), 2);
+    assert_eq!(number(interpreter.env.get("recovered")), 42);
+    assert_eq!(interpreter.env.scopes.len(), 1);
+}
+
+#[test]
+fn interpreter_generator_retains_factory_capture_without_dynamic_resumer_scope() {
+    let mut interpreter = Interpreter::new();
+    interpret(&mut interpreter, "func factory(start) { func* values() { mut n := start yield n n += 1 yield n } return values() } let a := factory(2) let b := factory(10) func consume(g) { let start := 99 mut total := 0 for n in g { total += n } return total } let total := consume(a) + consume(b)");
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    assert_eq!(number(interpreter.env.get("total")), 26);
+    assert_eq!(interpreter.env.scopes.len(), 1);
+}
+
+#[test]
+fn interpreter_generator_never_increases_creator_or_resumer_authority() {
+    use kujo::interpreter::RuntimeCapabilityPolicy;
+    for restrict_creator in [false, true] {
+        let mut interpreter = Interpreter::new();
+        interpreter.set_capability_policy(if restrict_creator {
+            RuntimeCapabilityPolicy::restricted()
+        } else {
+            RuntimeCapabilityPolicy::trusted()
+        });
+        interpret(
+            &mut interpreter,
+            "func* values() { yield read_file(\"must-not-be-opened\") } let instance := values()",
+        );
+        assert!(interpreter.return_value.is_none());
+        interpreter.set_capability_policy(if restrict_creator {
+            RuntimeCapabilityPolicy::trusted()
+        } else {
+            RuntimeCapabilityPolicy::restricted()
+        });
+        interpret(&mut interpreter, "for n in instance { print(n) }");
+        assert!(format!("{:?}", interpreter.return_value).contains("--allow-fs-read"));
+        assert_eq!(interpreter.env.scopes.len(), 1);
+    }
+}
+
+#[test]
+fn vm_callback_for_loop_uses_full_dispatch() {
+    let (mut vm, env, _) = setup("func* values() { yield 1 } let instance := values()");
+    execute(&mut vm, "func total(n) { mut sum := 0 for item in [n, n + 1] { sum += item } return sum } let result := map([1, 2], total)").unwrap();
+    assert!(
+        matches!(env.lock().unwrap().get("result"), Some(Value::Array(values)) if matches!(values.as_slice(), [Value::Int(3), Value::Int(5)]))
+    );
+}

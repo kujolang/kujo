@@ -2385,7 +2385,7 @@ pub fn handle(
                 | func @ Value::Function(_, _, _)
                 | func @ Value::AsyncFunction(_, _, _)
                 | func @ Value::BytecodeFunction { .. }
-                | func @ Value::GeneratorDef(_, _) => func.clone(),
+                | func @ Value::GeneratorDef(..) => func.clone(),
                 _ => {
                     return Some(Value::Error(
                         "parallel_map() second argument must be a callable function; pass a function, closure, or imported callable value instead of a literal".to_string(),

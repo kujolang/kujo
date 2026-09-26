@@ -23,6 +23,7 @@ mod control_flow;
 #[cfg(feature = "runtime-db")]
 pub mod database_handle;
 mod environment;
+pub mod generator;
 pub(crate) mod native_functions;
 mod test_runner;
 mod value;
@@ -2102,32 +2103,13 @@ impl Interpreter {
                 )
                 .unwrap_or_else(Value::Error)
             }
-            Value::GeneratorDef(params, body) => {
+            Value::GeneratorDef(params, body, captured) => {
                 let arity = Self::function_arity("<anonymous generator>", params);
                 if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
                     return error;
                 }
 
-                // Calling a generator function returns a Generator instance
-                // Create a new environment for the generator
-                let mut gen_env = self.env.clone();
-                gen_env.push_scope();
-
-                // Bind parameters to arguments
-                for (i, param) in params.iter().enumerate() {
-                    if let Some(arg) = args.get(i) {
-                        gen_env.define(param.clone(), arg.clone());
-                    }
-                }
-
-                // Return a Generator instance
-                Value::Generator {
-                    params: params.clone(),
-                    body: body.clone(),
-                    env: Arc::new(Mutex::new(gen_env)),
-                    pc: 0,
-                    is_exhausted: false,
-                }
+                self.create_generator(params, body, captured, args)
             }
             Value::AsyncFunction(params, body, captured_env) => {
                 let arity = Self::function_arity("<anonymous async function>", params);
@@ -4304,15 +4286,22 @@ impl Interpreter {
                 // Named functions defined in nested scopes should capture lexical state
                 // so interpreter behavior matches compiler/VM closure semantics.
                 let captured_env = if self.env.scopes.len() > 1 {
-                    Some(Arc::new(Mutex::new(self.env.clone())))
+                    Some(Arc::new(Mutex::new(if *is_generator {
+                        self.env.generator_environment(true)
+                    } else {
+                        self.env.clone()
+                    })))
                 } else {
                     None
                 };
 
                 // If it's a generator, create a generator value instead
                 if *is_generator {
-                    let gen =
-                        Value::GeneratorDef(params.clone(), LeakyFunctionBody::new(body.clone()));
+                    let gen = Value::GeneratorDef(
+                        params.clone(),
+                        LeakyFunctionBody::new(body.clone()),
+                        captured_env,
+                    );
                     self.env.define(name.clone(), gen);
                 } else if *is_async {
                     // Async functions are marked with a flag
@@ -4524,7 +4513,7 @@ impl Interpreter {
 
                     // If we got a GeneratorDef, call it to get a Generator instance
                     // This handles cases like: for x in generator_func() { ... }
-                    if let Value::GeneratorDef(_, _) = &iterable_value {
+                    if let Value::GeneratorDef(..) = &iterable_value {
                         iterable_value = interp.call_user_function(&iterable_value, &[]);
                     }
 
@@ -4560,8 +4549,8 @@ impl Interpreter {
                                     // Generator exhausted
                                     break;
                                 }
-                                Value::Error(msg) => {
-                                    interp.return_value = Some(Value::Error(msg));
+                                error @ (Value::Error(_) | Value::ErrorObject { .. }) => {
+                                    interp.return_value = Some(error);
                                     break;
                                 }
                                 _ => {
@@ -5035,7 +5024,11 @@ impl Interpreter {
             } => {
                 // Anonymous function expression - return as a value with captured environment
                 if *is_generator {
-                    Value::GeneratorDef(params.clone(), LeakyFunctionBody::new(body.clone()))
+                    Value::GeneratorDef(
+                        params.clone(),
+                        LeakyFunctionBody::new(body.clone()),
+                        Some(Arc::new(Mutex::new(self.env.generator_environment(true)))),
+                    )
                 } else if *is_async {
                     Value::AsyncFunction(
                         params.clone(),
@@ -5912,7 +5905,7 @@ impl Interpreter {
                             task_handle: None,
                         }
                     }
-                    Value::GeneratorDef(ref params, ref body) => {
+                    Value::GeneratorDef(ref params, ref body, ref captured) => {
                         // Calling a generator function creates a Generator instance
                         let args_vec: Vec<Value> =
                             args.iter().map(|arg| self.eval_expr(arg)).collect();
@@ -5927,25 +5920,7 @@ impl Interpreter {
                             return error;
                         }
 
-                        // Create a new environment for the generator
-                        let mut gen_env = self.env.clone();
-                        gen_env.push_scope();
-
-                        // Bind parameters to arguments
-                        for (i, param) in params.iter().enumerate() {
-                            if let Some(arg) = args_vec.get(i) {
-                                gen_env.define(param.clone(), arg.clone());
-                            }
-                        }
-
-                        // Return a Generator instance
-                        Value::Generator {
-                            params: params.clone(),
-                            body: body.clone(),
-                            env: Arc::new(Mutex::new(gen_env)),
-                            pc: 0,
-                            is_exhausted: false,
-                        }
+                        self.create_generator(params, body, captured, &args_vec)
                     }
                     _ => Value::Int(0),
                 };
@@ -6095,7 +6070,7 @@ impl Interpreter {
                                 return result;
                             }
                         }
-                        Value::GeneratorDef(ref params, ref body) => {
+                        Value::GeneratorDef(ref params, ref body, ref captured) => {
                             // Calling a generator function creates a Generator instance
                             let args_vec: Vec<Value> =
                                 args.iter().map(|arg| self.eval_expr(arg)).collect();
@@ -6112,25 +6087,7 @@ impl Interpreter {
                                 return error;
                             }
 
-                            // Create a new environment for the generator
-                            let mut gen_env = self.env.clone();
-                            gen_env.push_scope();
-
-                            // Bind parameters to arguments
-                            for (i, param) in params.iter().enumerate() {
-                                if let Some(arg) = args_vec.get(i) {
-                                    gen_env.define(param.clone(), arg.clone());
-                                }
-                            }
-
-                            // Return a Generator instance
-                            return Value::Generator {
-                                params: params.clone(),
-                                body: body.clone(),
-                                env: Arc::new(Mutex::new(gen_env)),
-                                pc: 0,
-                                is_exhausted: false,
-                            };
+                            return self.create_generator(params, body, captured, &args_vec);
                         }
                         _ => {}
                     }
@@ -7249,8 +7206,8 @@ impl Interpreter {
                                     // Generator exhausted
                                     return Value::Array(Arc::new(result));
                                 }
-                                Value::Error(msg) => {
-                                    return Value::Error(msg);
+                                error @ (Value::Error(_) | Value::ErrorObject { .. }) => {
+                                    return error;
                                 }
                                 _ => {
                                     return Value::Error(
@@ -7288,75 +7245,8 @@ impl Interpreter {
         }
     }
 
-    /// Execute a generator until it yields a value or completes
-    /// Returns Some(value) if yielded, None if exhausted
     fn generator_next(&mut self, generator: &mut Value) -> Value {
-        match generator {
-            Value::Generator { params: _, body, env, pc, is_exhausted } => {
-                if *is_exhausted {
-                    return Value::Option { is_some: false, value: Box::new(Value::Null) };
-                }
-
-                // Save current interpreter state
-                let saved_env = self.env.clone();
-                let saved_return_value = self.return_value.take();
-
-                // Use the generator's environment
-                self.env = env.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
-
-                let stmts = body.get();
-                let mut yielded_value = None;
-
-                // Execute statements starting from PC until yield or end
-                while *pc < stmts.len() {
-                    let current_pc = *pc;
-
-                    self.eval_stmt(&stmts[current_pc]);
-
-                    // Check if a yield occurred (signaled by Return value)
-                    if let Some(ret_val) = &self.return_value {
-                        match ret_val {
-                            Value::Return(inner) => {
-                                // This is a yield - extract the value and suspend
-                                // Advance PC so next call continues from next statement
-                                *pc += 1;
-                                yielded_value = Some(inner.as_ref().clone());
-                                self.return_value = None;
-                                break;
-                            }
-                            _ => {
-                                // Regular return - generator is done
-                                *is_exhausted = true;
-                                break;
-                            }
-                        }
-                    } else {
-                        // Statement completed without yield - advance to next statement
-                        *pc += 1;
-                    }
-                }
-
-                // Save the generator's environment state
-                *env.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = self.env.clone();
-
-                // If we finished all statements without explicit return/yield, generator is exhausted
-                if *pc >= stmts.len() {
-                    *is_exhausted = true;
-                }
-
-                // Restore interpreter state
-                self.env = saved_env;
-                self.return_value = saved_return_value;
-
-                // Return the yielded value or None if exhausted
-                if let Some(value) = yielded_value {
-                    Value::Option { is_some: true, value: Box::new(value) }
-                } else {
-                    Value::Option { is_some: false, value: Box::new(Value::Null) }
-                }
-            }
-            _ => Value::Error("generator_next() can only be called on generators".to_string()),
-        }
+        self.resume_generator(generator)
     }
 
     /// Get the next value from an iterator
@@ -7583,11 +7473,11 @@ impl Interpreter {
                     "None".to_string()
                 }
             }
-            Value::GeneratorDef(params, _) => {
+            Value::GeneratorDef(params, ..) => {
                 format!("<generator function with {} params>", params.len())
             }
-            Value::Generator { params, is_exhausted, .. } => {
-                if *is_exhausted {
+            Value::Generator { params, state } => {
+                if state.lock().unwrap_or_else(|p| p.into_inner()).exhausted {
                     format!("<exhausted generator ({} params)>", params.len())
                 } else {
                     format!("<generator ({} params)>", params.len())

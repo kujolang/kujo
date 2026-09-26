@@ -60,19 +60,19 @@ fn straight_line_generator_state_survives_yields() {
 }
 
 #[test]
-fn loop_generator_vm_resumes_all_values_interpreter_pending() {
-    sums("mut x := 1 while x < 4 { yield x x += 1 }", 1, 6);
+fn loop_generator_resumes_all_values() {
+    sums("mut x := 1 while x < 4 { yield x x += 1 }", 6, 6);
 }
 
 #[test]
-fn explicit_return_is_currently_a_yield_only_in_interpreter() {
-    sums("yield 1 return 9", 10, 1);
+fn explicit_return_completes_without_yielding() {
+    sums("yield 1 return 9", 1, 1);
 }
 
 #[test]
-fn generator_alias_iteration_restarts_only_in_interpreter() {
+fn generator_aliases_share_progress() {
     let source = "func* values() { yield 1 yield 2 } let a := values() let b := a mut observed_total := 0 for n in a { observed_total += n } for n in b { observed_total += n }";
-    assert_eq!(integer(interpreter(source).env.get("observed_total")), 6);
+    assert_eq!(integer(interpreter(source).env.get("observed_total")), 3);
     let (result, env) = vm(source);
     result.unwrap();
     assert_eq!(integer(env.lock().unwrap().get("observed_total")), 3);
@@ -88,7 +88,7 @@ fn nested_call_in_generator_uses_normal_vm_dispatch() {
 }
 
 #[test]
-fn generator_error_is_currently_swallowed_only_by_interpreter() {
+fn generator_errors_propagate_in_both_runtimes() {
     let source =
         "func* values() { yield 1 yield missing } mut observed_total := 0 for n in values() { observed_total += n }";
     let interp = interpreter(source);
@@ -97,7 +97,7 @@ fn generator_error_is_currently_swallowed_only_by_interpreter() {
     assert!(vm(source).0.is_err());
     let source = "func* values() { yield 1 missing } mut observed_total := 0 for n in values() { observed_total += n }";
     let interp = interpreter(source);
-    assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
+    assert!(interp.return_value.is_some(), "{:?}", interp.return_value);
     assert_eq!(integer(interp.env.get("observed_total")), 1);
     assert!(vm(source).0.is_err());
 }
@@ -134,17 +134,16 @@ fn later_loop_backedge_does_not_exhaust_an_earlier_yield() {
 }
 
 #[test]
-fn nested_if_continuation_is_skipped_only_by_interpreter() {
-    sums("if true { yield 1 yield 2 } yield 3", 4, 6);
+fn nested_if_continuation_resumes() {
+    sums("if true { yield 1 yield 2 } yield 3", 6, 6);
 }
 
 #[test]
 fn vm_for_does_not_drain_generator_before_consumer_break() {
     let source = "mut produced := 0 func* values() { produced += 1 yield 1 produced += 1 yield 2 } for n in values() { break }";
     let interp = interpreter(source);
-    // Interpreter generator environment is a snapshot, so parent is unchanged.
     assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
-    assert_eq!(integer(interp.env.get("produced")), 0);
+    assert_eq!(integer(interp.env.get("produced")), 1);
     let (result, env) = vm(source);
     result.unwrap();
     assert_eq!(integer(env.lock().unwrap().get("produced")), 1);

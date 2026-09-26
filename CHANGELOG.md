@@ -26,7 +26,8 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
-- VM generators now resume normal calls, loops and exception handlers, preserve
+- Generators now retain shared progress across aliases and resume nested loops
+  and exception handlers in both runtimes. VM generators preserve
   owned continuation state, cache terminal failures and restore callers. For loops
   consume generators lazily, so breaking stops at the requested item.
 

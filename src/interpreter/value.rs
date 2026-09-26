@@ -1169,14 +1169,11 @@ pub enum Value {
     /// Option type: Some(value) or None
     Option { is_some: bool, value: Box<Value> },
     /// Generator definition (before being called)
-    GeneratorDef(Vec<String>, LeakyFunctionBody),
-    /// Generator instance with execution state
+    GeneratorDef(Vec<String>, LeakyFunctionBody, Option<Arc<Mutex<Environment>>>),
+    /// Generator aliases share an owned continuation and terminal state.
     Generator {
         params: Vec<String>,
-        body: LeakyFunctionBody,
-        env: Arc<Mutex<Environment>>,
-        pc: usize, // Program counter
-        is_exhausted: bool,
+        state: Arc<Mutex<super::generator::InterpreterGeneratorState>>,
     },
     /// Iterator instance wrapping a collection or generator
     Iterator {
@@ -1421,11 +1418,12 @@ impl std::fmt::Debug for Value {
                     write!(f, "None")
                 }
             }
-            Value::GeneratorDef(params, body) => {
+            Value::GeneratorDef(params, body, _) => {
                 write!(f, "GeneratorDef({:?}, {} stmts)", params, body.get().len())
             }
-            Value::Generator { params, is_exhausted, pc, .. } => {
-                write!(f, "Generator({:?}, pc={}, exhausted={})", params, pc, is_exhausted)
+            Value::Generator { params, state } => {
+                let state = state.lock().unwrap_or_else(|p| p.into_inner());
+                write!(f, "Generator({:?}, exhausted={})", params, state.exhausted)
             }
             Value::Iterator { source, index, .. } => {
                 write!(f, "Iterator(source={:?}, index={})", source, index)
@@ -1620,9 +1618,20 @@ impl Value {
                     && left_captured_binding_kinds == right_captured_binding_kinds
             }
             (
-                Value::GeneratorDef(left_params, left_body),
-                Value::GeneratorDef(right_params, right_body),
-            ) => left_params == right_params && left_body.same_identity(right_body),
+                Value::GeneratorDef(left_params, left_body, left_env),
+                Value::GeneratorDef(right_params, right_body, right_env),
+            ) => {
+                left_params == right_params
+                    && left_body.same_identity(right_body)
+                    && Self::optional_env_ptr_eq(left_env, right_env)
+            }
+            (Value::Generator { state: left, .. }, Value::Generator { state: right, .. }) => {
+                Arc::ptr_eq(left, right)
+            }
+            (
+                Value::BytecodeGenerator { state: left },
+                Value::BytecodeGenerator { state: right },
+            ) => Arc::ptr_eq(left, right),
             (Value::NativeFunction(left_name), Value::NativeFunction(right_name)) => {
                 left_name == right_name
             }

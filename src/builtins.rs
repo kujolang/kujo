@@ -2549,9 +2549,13 @@ pub fn format_debug_value(value: &Value) -> String {
                 "None".to_string()
             }
         }
-        Value::GeneratorDef(params, _) => format!("GeneratorDef({:?})", params),
-        Value::Generator { params, is_exhausted, .. } => {
-            format!("Generator({:?}, exhausted: {})", params, is_exhausted)
+        Value::GeneratorDef(params, ..) => format!("GeneratorDef({:?})", params),
+        Value::Generator { params, state } => {
+            format!(
+                "Generator({:?}, exhausted: {})",
+                params,
+                state.lock().unwrap_or_else(|p| p.into_inner()).exhausted
+            )
         }
         Value::Iterator { source, .. } => format!("Iterator(source: {:?})", source),
         Value::Promise { cached_result, .. } => {
