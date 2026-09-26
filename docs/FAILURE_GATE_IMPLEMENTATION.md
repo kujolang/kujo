@@ -182,3 +182,25 @@ Dispatch interpreter help now exits zero with empty stderr; no gate is suppresse
   descriptor and request artifacts, alongside the cross-repository golden path.
 - The type-checker edit shifts four generated TODO source locations. The canonical
   generator regenerated the inventory; its three freshness contracts passed.
+
+## Final completion verification
+
+The final `cargo fmt --check`, `cargo check`, and
+`cargo test --no-fail-fast -- --test-threads=2` all passed. The actual-artifact
+schema run passed 13/13, including two durable intervention request snapshots and
+all three real workspace/sink replay proofs. Dispatch's canonical
+`KUJO_BIN=<fixed-source-runtime> DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh`
+passed, including all 101 workflow tests, focused suites, quiet VM/interpreter
+commands, concurrency checks and three bounded release workloads. The final
+execution suite additionally passed 5/5, including acceptance without effect
+replay; the safety suite passed 19/19. Workcell's full source-runtime gate passed
+with its explicit version override, as recorded in the handoff.
+
+A final 100-event journal measurement using the optimized development executable
+under shared host load recorded 5,315 ms append, 134 ms recovery and 50,419 journal
+bytes. This is measured evidence, not a comparative performance guarantee.
+
+The pre-existing interpreter blocker is resolved on the review branch. Live
+provider certification, runtime snapshots and automatic recovery of uncertain
+external effects remain the explicit capability/operational boundaries above,
+not implied features. No required verification remains failing.
