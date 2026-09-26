@@ -3,6 +3,14 @@
 Starting commit: `3efa60cf2e7dc89607a9988509b16cc125375140`.
 Branch: `runtime/generator-async-spawn-completion`. Main is unchanged.
 
+Current merge disposition (2026-09-26): the owner explicitly deferred live
+Workcell provider validation and authorized normal pull-request review and merge.
+The historical Mac networking stall remains an open host observation, not a
+demonstrated Kujo defect or a merge blocker after the clean-host stress passes.
+Host load and low free disk space are possible contributors suggested by the
+owner, not established causes. Remote-provider certification is still unclaimed.
+The blocked statuses below preserve the earlier investigation chronology.
+
 This follow-up implements the user's request to fix the items retained by the
 previous completion report. It does not change closure snapshot identity or
 introduce atomic concurrent mutation, async generators or a sandbox guarantee.

@@ -2,12 +2,21 @@ name: network-stress
 
 on:
   workflow_dispatch:
-  push:
-    branches: [runtime/generator-async-spawn-completion]
+  pull_request:
     paths:
       - .github/workflows/network-stress.yml
       - scripts/network_stress_gate.sh
       - scripts/loopback_network_probe.rs
+      - src/docgen/**
+      - tests/docgen_universal.rs
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/network-stress.yml
+      - scripts/network_stress_gate.sh
+      - scripts/loopback_network_probe.rs
+      - src/docgen/**
+      - tests/docgen_universal.rs
 
 permissions:
   contents: read
