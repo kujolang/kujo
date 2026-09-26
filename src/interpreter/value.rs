@@ -118,6 +118,7 @@ pub struct HttpUploadRoute {
 /// leak-on-drop strategy with a non-recursive drop traversal.
 pub struct LeakyFunctionBody {
     id: usize,
+    pub(crate) lexical_name: Option<String>,
 }
 
 #[derive(Clone)]
@@ -217,7 +218,7 @@ impl Clone for LeakyFunctionBody {
             entry.refs += 1;
         }
 
-        LeakyFunctionBody { id: self.id }
+        LeakyFunctionBody { id: self.id, lexical_name: self.lexical_name.clone() }
     }
 }
 
@@ -242,7 +243,13 @@ impl LeakyFunctionBody {
         let mut store = function_body_store().lock().unwrap();
         store.insert(id, StoredFunctionBody { refs: 1, storage });
 
-        LeakyFunctionBody { id }
+        LeakyFunctionBody { id, lexical_name: None }
+    }
+
+    pub(crate) fn named(name: &str, body: Vec<Stmt>) -> Self {
+        let mut function = Self::new(body);
+        function.lexical_name = Some(name.to_owned());
+        function
     }
 
     pub fn get(&self) -> FunctionBodyRef {

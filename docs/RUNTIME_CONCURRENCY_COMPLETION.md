@@ -109,3 +109,12 @@ polling, timeout recovery, and duplicate handles in `promise_all`. A preceding
 combined cargo invocation stopped at the new channel backpressure test: it
 exposed an existing VM channel-method duplicate-receiver arity mismatch. That
 separate channel fix is under test; it is not a promise failure.
+
+## Interpreter recursion fix
+
+Named AST functions now carry their lexical self name and bind themselves only
+inside the invocation's parameter scope. The binding is dropped before captured
+state is written back, avoiding a new closure/self ownership cycle. The previously
+ignored returned recursive-closure test is enabled. `closure_capture_audit`
+passes all 22 tests with zero ignored. This does not claim atomic recursive or
+concurrent read-modify-write on snapshot captures.

@@ -26,6 +26,8 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Returned named closures can recursively call themselves in the interpreter.
+
 - Concurrent promise waiters share completion; timing out one waiter no longer
   consumes the result needed by another waiter.
 

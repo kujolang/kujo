@@ -2132,6 +2132,16 @@ impl Interpreter {
                 AsyncRuntime::spawn_task(async move {
                     let mut async_interpreter =
                         Interpreter::with_environment(capability_policy, base_env);
+                    if let Some(name) = &body.lexical_name {
+                        self.env.define(
+                            name.clone(),
+                            Value::Function(
+                                params.clone(),
+                                body.clone(),
+                                Some(closure_env_ref.clone()),
+                            ),
+                        );
+                    }
                     async_interpreter.vm_globals = vm_globals;
                     async_interpreter.env.push_scope();
                     for (index, param) in params.iter().enumerate() {
@@ -4300,7 +4310,7 @@ impl Interpreter {
                 if *is_generator {
                     let gen = Value::GeneratorDef(
                         params.clone(),
-                        LeakyFunctionBody::new(body.clone()),
+                        LeakyFunctionBody::named(name, body.clone()),
                         captured_env,
                     );
                     self.env.define(name.clone(), gen);
@@ -4309,14 +4319,14 @@ impl Interpreter {
                     // When called, they return a Promise and execute in background
                     let func = Value::AsyncFunction(
                         params.clone(),
-                        LeakyFunctionBody::new(body.clone()),
+                        LeakyFunctionBody::named(name, body.clone()),
                         captured_env,
                     );
                     self.env.define(name.clone(), func);
                 } else {
                     let func = Value::Function(
                         params.clone(),
-                        LeakyFunctionBody::new(body.clone()),
+                        LeakyFunctionBody::named(name, body.clone()),
                         captured_env,
                     );
                     self.env.define(name.clone(), func);
@@ -5705,6 +5715,16 @@ impl Interpreter {
                                 self.return_value = Some(res.clone());
                                 res
                             }
+                            if let Some(name) = &body.lexical_name {
+                                self.env.define(
+                                    name.clone(),
+                                    Value::Function(
+                                        params.clone(),
+                                        body.clone(),
+                                        Some(closure_env_ref.clone()),
+                                    ),
+                                );
+                            }
                             Value::Error(_) => {
                                 self.return_value = Some(res.clone());
                                 res
@@ -5869,6 +5889,16 @@ impl Interpreter {
                             // Execute the async function body
                             if let Err(error) = async_interpreter
                                 .with_function_context("<async function>", |interp| {
+                                if let Some(name) = &body.lexical_name {
+                                    self.env.define(
+                                        name.clone(),
+                                        Value::Function(
+                                            params.clone(),
+                                            body.clone(),
+                                            Some(closure_env_ref.clone()),
+                                        ),
+                                    );
+                                }
                                     interp.eval_stmts(&body.get())
                                 })
                             {
