@@ -623,6 +623,8 @@ impl Compiler {
                     self.chunk.emit(OpCode::StoreVar(iter_var.clone()));
                 }
 
+                self.chunk.emit(OpCode::Pop);
+
                 // Create index variable
                 let zero_index = self.chunk.add_constant(Constant::Int(0));
                 self.chunk.emit(OpCode::LoadConst(zero_index));
@@ -631,6 +633,8 @@ impl Compiler {
                 } else {
                     self.chunk.emit(OpCode::StoreVar(index_var.clone()));
                 }
+
+                self.chunk.emit(OpCode::Pop);
 
                 let loop_start = self.chunk.instructions.len();
                 self.loop_starts.push(loop_start);
@@ -650,32 +654,8 @@ impl Compiler {
                     self.chunk.emit(OpCode::LoadVar(index_var.clone()));
                 }
 
-                // Check if index < len(iterable) - using built-in len
-                if let Some(slot) = iter_slot {
-                    self.chunk.emit(OpCode::LoadLocal(slot));
-                } else {
-                    self.chunk.emit(OpCode::LoadVar(iter_var.clone()));
-                }
-                self.chunk.emit(OpCode::LoadGlobal("len".to_string()));
-                self.chunk.emit(OpCode::Call(1));
-                self.chunk.emit(OpCode::LessThan);
-
-                // Jump to end if done
-                let end_jump = self.chunk.emit(OpCode::JumpIfFalse(0));
-                self.chunk.emit(OpCode::Pop);
-
-                // Get current element: iterable[index]
-                if let Some(slot) = iter_slot {
-                    self.chunk.emit(OpCode::LoadLocal(slot));
-                } else {
-                    self.chunk.emit(OpCode::LoadVar(iter_var.clone()));
-                }
-                if let Some(slot) = index_slot {
-                    self.chunk.emit(OpCode::LoadLocal(slot));
-                } else {
-                    self.chunk.emit(OpCode::LoadVar(index_var.clone()));
-                }
-                self.chunk.emit(OpCode::IndexGet);
+                // A single step preserves generator laziness and ordinary array indexing.
+                let end_jump = self.chunk.emit(OpCode::ForNext(0));
 
                 // Store in loop variable
                 if let Some(slot) = loop_var_slot {
@@ -683,6 +663,8 @@ impl Compiler {
                 } else {
                     self.chunk.emit(OpCode::StoreVar(var.clone()));
                 }
+
+                self.chunk.emit(OpCode::Pop);
 
                 // Compile body
                 self.push_loop_runtime_scope();
@@ -708,12 +690,13 @@ impl Compiler {
                     self.chunk.emit(OpCode::StoreVar(index_var.clone()));
                 }
 
+                self.chunk.emit(OpCode::Pop);
+
                 // Jump back to start
                 self.chunk.emit(OpCode::JumpBack(loop_start));
 
                 // Patch end jump
                 self.chunk.patch_jump(end_jump);
-                self.chunk.emit(OpCode::Pop);
 
                 // Patch all break statements
                 if let Some(breaks) = self.loop_ends.pop() {

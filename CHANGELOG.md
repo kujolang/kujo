@@ -26,6 +26,10 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- VM generators now resume normal calls, loops and exception handlers, preserve
+  owned continuation state, cache terminal failures and restore callers. For loops
+  consume generators lazily, so breaking stops at the requested item.
+
 - Routed HTTP server shutdown uses a bounded loopback wakeup for wildcard
   listeners, avoiding a macOS connection timeout during teardown.
 

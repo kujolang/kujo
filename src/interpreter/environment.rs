@@ -103,6 +103,22 @@ impl Environment {
         self.binding_kinds.extend(caller.binding_kinds);
     }
 
+    /// Swap only non-global scopes when suspending an execution owner. Global
+    /// bindings remain live; caller scopes never leak into a resumed generator.
+    pub(crate) fn swap_local_scopes(&mut self, mut owner: Environment) -> Environment {
+        let previous = Environment {
+            scopes: self.scopes.split_off(1),
+            binding_kinds: self.binding_kinds.split_off(1),
+        };
+        self.scopes.append(&mut owner.scopes);
+        self.binding_kinds.append(&mut owner.binding_kinds);
+        previous
+    }
+
+    pub(crate) fn empty_scopes() -> Environment {
+        Environment { scopes: Vec::new(), binding_kinds: Vec::new() }
+    }
+
     /// Get a variable from the environment, searching from inner to outer scopes
     /// Returns a cloned value if found
     pub fn get(&self, name: &str) -> Option<Value> {

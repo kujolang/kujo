@@ -149,6 +149,10 @@ pub struct VM {
 
     /// Skip reset branch on the next execute() call (used for resume paths).
     skip_execute_reset_once: bool,
+
+    generator_mode: bool,
+    generator_yielded: Option<Value>,
+    generator_resume_depth: usize,
 }
 
 /// Unique identifier for a call site (location in bytecode where a Call occurs)
@@ -341,49 +345,30 @@ pub struct VmExecutionSnapshot {
     globals: Arc<Mutex<Environment>>,
 }
 
-/// Generator state for suspended execution
-/// Infrastructure for generator resume functionality
-// Deferred post-v1 runtime backlog: full generator-state restoration (see docs/V1_SCOPE.md deferred runtime execution section)
-#[allow(dead_code)] // Generator resume metadata is kept for parity with the future restoration path.
+/// Owned continuation of one generator instance. No caller frame or strong
+/// global-environment owner is retained, so storing a generator in globals does
+/// not introduce a generator -> globals -> generator ownership cycle.
 #[derive(Debug, Clone)]
-pub struct GeneratorState {
-    /// Instruction pointer where generator yielded
-    pub ip: usize,
-
-    /// Stack snapshot at yield point
-    pub stack: Vec<Value>,
-
-    /// Call frame stack at yield point (stored as separate values to avoid circular dependency)
-    pub call_frames_data: Vec<CallFrameData>,
-
-    /// Bytecode chunk being executed
-    pub chunk: BytecodeChunk,
-
-    /// Local variables at yield point
-    pub locals: HashMap<String, Value>,
-
-    /// Captured variables at yield point
-    pub captured: HashMap<String, Arc<Mutex<Value>>>,
-
-    /// Binding mutability metadata for captured variables.
-    pub captured_binding_kinds: HashMap<String, BytecodeBindingKind>,
-
-    /// Whether the generator has finished
-    pub is_exhausted: bool,
+struct GeneratorContinuation {
+    ip: usize,
+    stack: Vec<Value>,
+    frames: Vec<CallFrame>,
+    chunk: BytecodeChunk,
+    upvalues: Vec<Upvalue>,
+    handlers: Vec<ExceptionHandlerFrame>,
+    function_stack: Vec<String>,
+    scopes: Environment,
 }
 
-/// Serializable call frame data for generator state
 #[derive(Debug, Clone)]
-pub struct CallFrameData {
-    pub return_ip: usize,
-    pub stack_offset: usize,
-    pub locals: HashMap<String, Value>,
-    pub locals_binding_kinds: HashMap<String, BytecodeBindingKind>,
-    pub local_slots: Vec<Value>,
-    pub local_slot_binding_kinds: Vec<BytecodeBindingKind>,
-    pub local_slot_initialized: Vec<bool>,
-    pub captured: HashMap<String, Arc<Mutex<Value>>>,
-    pub captured_binding_kinds: HashMap<String, BytecodeBindingKind>,
+pub struct GeneratorState {
+    continuation: Option<GeneratorContinuation>,
+    pub ip: usize,
+    pub is_exhausted: bool,
+    running: bool,
+    failure: Option<String>,
+    policy: RuntimeCapabilityPolicy,
+    globals: std::sync::Weak<Mutex<Environment>>,
 }
 
 type CapturedSlot = (Arc<Mutex<Value>>, BytecodeBindingKind);
@@ -654,6 +639,9 @@ impl VM {
             next_execution_context_id: 1,
             cooperative_suspend_enabled: true,
             skip_execute_reset_once: false,
+            generator_mode: false,
+            generator_yielded: None,
+            generator_resume_depth: 0,
         };
 
         vm
@@ -3372,6 +3360,13 @@ impl VM {
                     }
                 }
 
+                OpCode::Return if self.generator_mode && self.call_frames.len() == 1 => {
+                    self.stack.pop().ok_or("Stack underflow in generator return")?;
+                    return Ok(Value::Null);
+                }
+                OpCode::ReturnNone if self.generator_mode && self.call_frames.len() == 1 => {
+                    return Ok(Value::Null);
+                }
                 OpCode::Return => {
                     let return_value = self.stack.pop().ok_or("Stack underflow in return")?;
 
@@ -5337,38 +5332,49 @@ impl VM {
 
                 // Generator operations
                 OpCode::MakeGenerator => {
-                    // Pop the function from stack and convert it to a generator
                     let function = self.stack.pop().ok_or("Stack underflow in MakeGenerator")?;
-
-                    if let Value::BytecodeFunction { chunk, captured, captured_binding_kinds } =
+                    if let Value::BytecodeFunction { mut chunk, captured, captured_binding_kinds } =
                         function
                     {
-                        // Create initial generator state (not yet started)
-                        let state = GeneratorState {
-                            ip: 0,
-                            stack: Vec::new(),
-                            call_frames_data: Vec::new(),
-                            chunk: chunk.clone(),
-                            locals: HashMap::new(),
-                            captured: captured.clone(),
-                            captured_binding_kinds: captured_binding_kinds.clone(),
-                            is_exhausted: false,
-                        };
-
-                        let generator =
-                            Value::BytecodeGenerator { state: Arc::new(Mutex::new(state)) };
-
-                        self.stack.push(generator);
+                        chunk.is_generator = true;
+                        self.call_bytecode_function(
+                            Value::BytecodeFunction { chunk, captured, captured_binding_kinds },
+                            Vec::new(),
+                            Vec::new(),
+                        )?;
                     } else {
                         return Err("MakeGenerator requires a BytecodeFunction".to_string());
                     }
                 }
-
                 OpCode::Yield => {
-                    // Yield is handled specially in generator_next() method
-                    // This opcode serves as a marker for the generator execution loop
-                    // When we reach here in normal execution, it's an error
-                    return Err("Yield can only be used inside generator functions".to_string());
+                    if !self.generator_mode || self.call_frames.len() != 1 {
+                        return Err("Yield can only be used inside generator functions".to_string());
+                    }
+                    // Expression-statement lowering pops this value after resume.
+                    self.generator_yielded =
+                        Some(self.stack.last().cloned().ok_or("Stack underflow in Yield")?);
+                    return Ok(Value::Null);
+                }
+
+                OpCode::ForNext(target) => {
+                    let index = self.stack.pop().ok_or("Stack underflow in ForNext")?;
+                    let iterable = self.stack.pop().ok_or("Stack underflow in ForNext")?;
+                    match iterable {
+                        Value::BytecodeGenerator { .. } => match self.generator_next(iterable) {
+                            Ok(Value::Option { is_some: true, value }) => self.stack.push(*value),
+                            Ok(Value::Option { is_some: false, .. }) => self.ip = target,
+                            Ok(_) => return Err("Invalid generator step result".to_owned()),
+                            Err(error) => self.throw_runtime_value(Value::Error(error))?,
+                        },
+                        Value::Array(values) => match index {
+                            Value::Int(index) if index >= 0 => match values.get(index as usize) {
+                                Some(value) => self.stack.push(value.clone()),
+                                None => self.ip = target,
+                            },
+                            _ => return Err("ForNext requires a nonnegative index".to_owned()),
+                        },
+                        _ => return Err("ForNext requires a normalized iterable".to_owned()),
+                    }
                 }
 
                 OpCode::ResumeGenerator => {
@@ -6203,37 +6209,9 @@ impl VM {
                 );
             }
 
-            if chunk.is_generator {
-                let frame_data = CallFrameData {
-                    return_ip: 0,
-                    stack_offset: 0,
-                    locals: locals.clone(),
-                    locals_binding_kinds: locals_binding_kinds.clone(),
-                    local_slots: local_slots.clone(),
-                    local_slot_binding_kinds: local_slot_binding_kinds.clone(),
-                    local_slot_initialized: local_slot_initialized.clone(),
-                    captured: captured_map.clone(),
-                    captured_binding_kinds: captured_binding_kinds_map.clone(),
-                };
-
-                let state = GeneratorState {
-                    ip: 0,
-                    stack: Vec::new(),
-                    call_frames_data: vec![frame_data],
-                    chunk,
-                    locals,
-                    captured: captured_map,
-                    captured_binding_kinds: captured_binding_kinds_map,
-                    is_exhausted: false,
-                };
-
-                self.stack.push(Value::BytecodeGenerator { state: Arc::new(Mutex::new(state)) });
-                return Ok(());
-            }
-
             let frame = CallFrame {
-                return_ip: self.ip,
-                stack_offset: self.stack.len(),
+                return_ip: if chunk.is_generator { 0 } else { self.ip },
+                stack_offset: if chunk.is_generator { 0 } else { self.stack.len() },
                 locals,
                 locals_binding_kinds,
                 local_slots,
@@ -6242,9 +6220,32 @@ impl VM {
                 captured: captured_map,
                 captured_binding_kinds: captured_binding_kinds_map,
                 captured_slots: Vec::new(),
-                prev_chunk: Some(self.chunk.clone()),
+                prev_chunk: if chunk.is_generator { None } else { Some(self.chunk.clone()) },
                 is_async: chunk.is_async,
             };
+
+            if chunk.is_generator {
+                let state = GeneratorState {
+                    continuation: Some(GeneratorContinuation {
+                        ip: 0,
+                        stack: Vec::new(),
+                        frames: vec![frame],
+                        chunk,
+                        upvalues: Vec::new(),
+                        handlers: Vec::new(),
+                        function_stack: Vec::new(),
+                        scopes: Environment::empty_scopes(),
+                    }),
+                    ip: 0,
+                    is_exhausted: false,
+                    running: false,
+                    failure: None,
+                    policy: self.interpreter.capability_policy().clone(),
+                    globals: Arc::downgrade(&self.globals),
+                };
+                self.stack.push(Value::BytecodeGenerator { state: Arc::new(Mutex::new(state)) });
+                return Ok(());
+            }
 
             self.call_frames.push(frame);
 
@@ -6897,31 +6898,11 @@ impl VM {
                 };
             }
 
-            if name == "__vm_for_iterable" {
-                if args.len() != 1 {
-                    return Err(format!(
-                        "__vm_for_iterable expects 1 argument, got {}",
-                        args.len()
-                    ));
-                }
-                if let Value::BytecodeGenerator { .. } = &args[0] {
-                    let mut values = Vec::new();
-                    let generator_value = args[0].clone();
-                    loop {
-                        let step = self.generator_next(generator_value.clone())?;
-                        match step {
-                            Value::Option { is_some: true, value } => values.push(*value),
-                            Value::Option { is_some: false, .. } => break,
-                            other => {
-                                return Err(format!(
-                                    "__vm_for_iterable expected generator step to return Option, got {:?}",
-                                    other
-                                ));
-                            }
-                        }
-                    }
-                    return Ok(Value::Array(Arc::new(values)));
-                }
+            if name == "__vm_for_iterable"
+                && args.len() == 1
+                && matches!(args[0], Value::BytecodeGenerator { .. })
+            {
+                return Ok(args.remove(0));
             }
 
             // Handle channel method calls
@@ -8828,353 +8809,99 @@ impl VM {
         }
     }
 
-    /// Execute generator until next yield or completion
-    /// Returns Some(value) if yielded, None if exhausted
+    /// Resume through the ordinary dispatcher, restoring every caller-owned
+    /// execution field on success, exhaustion and language error.
     pub fn generator_next(&mut self, generator: Value) -> Result<Value, String> {
-        if let Value::BytecodeGenerator { state } = generator {
-            let gen_state = state.lock().unwrap();
-
-            // Check if generator is exhausted
-            if gen_state.is_exhausted {
+        let Value::BytecodeGenerator { state } = generator else {
+            return Err("generator_next() requires a BytecodeGenerator".to_owned());
+        };
+        if self.generator_resume_depth >= 32 {
+            return Err("Maximum generator resume depth of 32 exceeded".to_owned());
+        }
+        let (continuation, policy) = {
+            let mut state = state.try_lock().map_err(|_| "Generator is already being resumed")?;
+            if state.running {
+                return Err("Generator is already being resumed".to_owned());
+            }
+            if let Some(error) = &state.failure {
+                return Err(error.clone());
+            }
+            if state.is_exhausted {
                 return Ok(Value::Option { is_some: false, value: Box::new(Value::Null) });
             }
-
-            // Save current VM state
-            let saved_ip = self.ip;
-            let saved_chunk = self.chunk.clone();
-            let saved_stack = self.stack.clone();
-            let saved_frames = self.call_frames.clone();
-
-            // Restore generator state
-            self.ip = gen_state.ip;
-            self.set_chunk(gen_state.chunk.clone());
-            self.stack = gen_state.stack.clone();
-
-            // Restore call frames
-            self.call_frames.clear();
-            for frame_data in &gen_state.call_frames_data {
-                self.call_frames.push(CallFrame {
-                    return_ip: frame_data.return_ip,
-                    stack_offset: frame_data.stack_offset,
-                    locals: frame_data.locals.clone(),
-                    locals_binding_kinds: frame_data.locals_binding_kinds.clone(),
-                    local_slots: frame_data.local_slots.clone(),
-                    local_slot_binding_kinds: frame_data.local_slot_binding_kinds.clone(),
-                    local_slot_initialized: frame_data.local_slot_initialized.clone(),
-                    captured: frame_data.captured.clone(),
-                    captured_binding_kinds: frame_data.captured_binding_kinds.clone(),
-                    captured_slots: Vec::new(),
-                    prev_chunk: None,
-                    is_async: false, // Generators are not async
-                });
+            if !std::sync::Weak::ptr_eq(&state.globals, &Arc::downgrade(&self.globals)) {
+                return Err("Generator belongs to a different runtime environment".to_owned());
             }
-
-            // Drop the lock before executing
-            drop(gen_state);
-
-            // Execute until yield or completion
-            let result = loop {
-                if self.ip >= self.chunk.instructions.len() {
-                    // Generator completed without explicit return
-                    break Ok(Value::Option { is_some: false, value: Box::new(Value::Null) });
-                }
-
-                let instruction = self.chunk.instructions[self.ip].clone();
-                self.ip += 1;
-
-                // Check for Yield opcode
-                if matches!(instruction, OpCode::Yield) {
-                    // Peek the yielded value but keep it on the stack.
-                    // Expression-statement lowering emits a following Pop; preserving the
-                    // value here keeps stack shape aligned for the resumed instruction stream.
-                    let yielded_value =
-                        self.stack.last().cloned().ok_or("Stack underflow in Yield")?;
-                    let has_loop_backedge =
-                        self.chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
-
-                    // Preserve current interpreter parity for loop-bodied generators:
-                    // generator state advances at statement granularity, so a yield inside
-                    // a loop body exhausts after the first yielded value.
-                    if has_loop_backedge {
-                        let mut gen_state = state.lock().unwrap();
-                        gen_state.is_exhausted = true;
-                    } else {
-                        // Save current state back to generator
-                        let mut gen_state = state.lock().unwrap();
-                        gen_state.ip = self.ip;
-                        gen_state.stack = self.stack.clone();
-
-                        // Save call frames
-                        gen_state.call_frames_data.clear();
-                        for frame in &self.call_frames {
-                            gen_state.call_frames_data.push(CallFrameData {
-                                return_ip: frame.return_ip,
-                                stack_offset: frame.stack_offset,
-                                locals: frame.locals.clone(),
-                                locals_binding_kinds: frame.locals_binding_kinds.clone(),
-                                local_slots: frame.local_slots.clone(),
-                                local_slot_binding_kinds: frame.local_slot_binding_kinds.clone(),
-                                local_slot_initialized: frame.local_slot_initialized.clone(),
-                                captured: frame.captured.clone(),
-                                captured_binding_kinds: frame.captured_binding_kinds.clone(),
-                            });
-                        }
-                    }
-
-                    // Restore original VM state
-                    self.ip = saved_ip;
-                    self.set_chunk(saved_chunk);
-                    self.stack = saved_stack;
-                    self.call_frames = saved_frames;
-
-                    // Return the yielded value
-                    break Ok(Value::Option { is_some: true, value: Box::new(yielded_value) });
-                }
-
-                // Check for Return opcodes (generator completed)
-                if matches!(instruction, OpCode::Return | OpCode::ReturnNone) {
-                    let mut gen_state = state.lock().unwrap();
-                    gen_state.is_exhausted = true;
-                    drop(gen_state);
-
-                    // Restore original VM state
-                    self.ip = saved_ip;
-                    self.set_chunk(saved_chunk);
-                    self.stack = saved_stack;
-                    self.call_frames = saved_frames;
-
-                    break Ok(Value::Option { is_some: false, value: Box::new(Value::Null) });
-                }
-
-                // Execute the instruction normally (by backing up IP and calling execute on single instruction)
-                // This is inefficient but simple - a better approach would be to extract instruction execution
-                // For now, we'll manually handle key instructions
-                match instruction {
-                    OpCode::LoadCapture(index) => self.load_capture(index)?,
-                    OpCode::StoreCapture(index) => self.store_capture(index)?,
-                    OpCode::LoadConst(index) => {
-                        let constant = &self.chunk.constants[index];
-                        let value = self.constant_to_value(constant)?;
-                        self.stack.push(value);
-                    }
-                    OpCode::LoadVar(name) => {
-                        let value = if let Some(frame) = self.call_frames.last() {
-                            frame
-                                .captured
-                                .get(&name)
-                                .map(|r| r.lock().unwrap().clone())
-                                .or_else(|| frame.locals.get(&name).cloned())
-                        } else {
-                            None
-                        };
-
-                        let value = value
-                            .or_else(|| self.globals.lock().unwrap().get(&name))
-                            .ok_or_else(|| Self::undefined_variable_message(&name))?;
-                        self.stack.push(value);
-                    }
-                    OpCode::LoadLocal(slot) => {
-                        let frame =
-                            self.call_frames.last().ok_or("LoadLocal requires call frame")?;
-                        let value = frame
-                            .local_slots
-                            .get(slot)
-                            .cloned()
-                            .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-                        self.stack.push(value);
-                    }
-                    OpCode::StoreVar(name) => {
-                        let value = self.stack.last().ok_or("Stack underflow")?.clone();
-                        let global_exists = self.globals.lock().unwrap().get(&name).is_some();
-                        let mut assign_global = false;
-                        if let Some(frame) = self.call_frames.last_mut() {
-                            if let Some(captured_ref) = frame.captured.get(&name) {
-                                if let Some(kind) = frame.captured_binding_kinds.get(&name).copied()
-                                {
-                                    if !matches!(kind, BytecodeBindingKind::Mutable) {
-                                        return Err(Self::local_reassignment_error(kind, &name));
-                                    }
-                                }
-                                *captured_ref.lock().unwrap() = value.clone();
-                            } else if frame.locals.contains_key(&name) {
-                                if let Some(kind) = frame.locals_binding_kinds.get(&name).copied() {
-                                    if !matches!(kind, BytecodeBindingKind::Mutable) {
-                                        return Err(Self::local_reassignment_error(kind, &name));
-                                    }
-                                }
-                                frame.locals.insert(name.clone(), value.clone());
-                            } else if global_exists {
-                                assign_global = true;
-                            } else {
-                                frame
-                                    .locals_binding_kinds
-                                    .entry(name.clone())
-                                    .or_insert(BytecodeBindingKind::Mutable);
-                                frame.locals.insert(name.clone(), value.clone());
-                            }
-                        } else {
-                            assign_global = true;
-                        }
-
-                        if assign_global {
-                            self.globals.lock().unwrap().assign_checked(name, value)?;
-                        }
-                    }
-                    OpCode::DefineLocal(slot) => {
-                        let value = self.stack.last().ok_or("Stack underflow")?.clone();
-                        let frame =
-                            self.call_frames.last_mut().ok_or("DefineLocal requires call frame")?;
-                        let target = frame
-                            .local_slots
-                            .get_mut(slot)
-                            .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-                        *target = value;
-                        if let Some(initialized) = frame.local_slot_initialized.get_mut(slot) {
-                            *initialized = true;
-                        }
-                    }
-
-                    OpCode::StoreLocal(slot) => {
-                        let value = self.stack.last().ok_or("Stack underflow")?.clone();
-                        let frame =
-                            self.call_frames.last_mut().ok_or("StoreLocal requires call frame")?;
-                        if let Some(target) = frame.local_slots.get_mut(slot) {
-                            let kind = frame
-                                .local_slot_binding_kinds
-                                .get(slot)
-                                .copied()
-                                .unwrap_or(BytecodeBindingKind::Mutable);
-                            let initialized =
-                                frame.local_slot_initialized.get(slot).copied().unwrap_or(false);
-                            if initialized && !matches!(kind, BytecodeBindingKind::Mutable) {
-                                return Err(Self::local_reassignment_error(
-                                    kind,
-                                    "<generator-local>",
-                                ));
-                            }
-                            *target = value;
-                            if let Some(initialized_flag) =
-                                frame.local_slot_initialized.get_mut(slot)
-                            {
-                                *initialized_flag = true;
-                            }
-                        } else {
-                            return Err(format!("Invalid local slot: {}", slot));
-                        }
-                    }
-                    OpCode::Pop => {
-                        self.stack.pop().ok_or("Stack underflow")?;
-                    }
-                    OpCode::PushScope => {
-                        self.globals.lock().unwrap().push_scope();
-                    }
-                    OpCode::PopScope => {
-                        self.globals.lock().unwrap().pop_scope();
-                    }
-
-                    // Arithmetic operations
-                    OpCode::Add => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.binary_op(&left, "+", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::Sub => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.binary_op(&left, "-", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::Mul => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.binary_op(&left, "*", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::Div => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.binary_op(&left, "/", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::Mod => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.binary_op(&left, "%", &right)?;
-                        self.stack.push(result);
-                    }
-
-                    // Comparison operations
-                    OpCode::Equal => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        self.stack.push(Value::Bool(self.values_equal(&left, &right)));
-                    }
-                    OpCode::NotEqual => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        self.stack.push(Value::Bool(!self.values_equal(&left, &right)));
-                    }
-                    OpCode::LessThan => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.compare_op(&left, "<", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::GreaterThan => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.compare_op(&left, ">", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::LessEqual => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.compare_op(&left, "<=", &right)?;
-                        self.stack.push(result);
-                    }
-                    OpCode::GreaterEqual => {
-                        let right = self.stack.pop().ok_or("Stack underflow")?;
-                        let left = self.stack.pop().ok_or("Stack underflow")?;
-                        let result = self.compare_op(&left, ">=", &right)?;
-                        self.stack.push(result);
-                    }
-
-                    // Control flow
-                    OpCode::Jump(target) => {
-                        self.ip = target;
-                    }
-                    OpCode::JumpIfFalse(target) => {
-                        let condition = self.stack.last().ok_or("Stack underflow")?;
-                        if !self.is_truthy(condition) {
-                            self.ip = target;
-                        }
-                    }
-                    OpCode::JumpIfTrue(target) => {
-                        let condition = self.stack.last().ok_or("Stack underflow")?;
-                        if self.is_truthy(condition) {
-                            self.ip = target;
-                        }
-                    }
-                    OpCode::JumpBack(target) => {
-                        self.ip = target;
-                    }
-
-                    // For now, return error for other unhandled instructions
-                    // Full implementation would need to handle all opcodes
-                    _ => {
-                        return Err(format!(
-                            "Instruction {:?} not yet handled in generator execution",
-                            instruction
-                        ));
-                    }
-                }
-            };
-
-            result
+            let continuation =
+                state.continuation.take().ok_or("Generator continuation is missing")?;
+            state.running = true;
+            (continuation, state.policy.intersection(self.interpreter.capability_policy()))
+        };
+        let caller = self.save_execution_state();
+        let caller_policy = self.interpreter.capability_policy().clone();
+        let caller_mode = self.generator_mode;
+        let caller_yield = self.generator_yielded.take();
+        let caller_cooperative = self.cooperative_suspend_enabled;
+        let caller_skip = self.skip_execute_reset_once;
+        let caller_jit = self.jit_enabled;
+        let caller_scopes = self
+            .globals
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .swap_local_scopes(continuation.scopes);
+        self.ip = continuation.ip;
+        self.stack = continuation.stack;
+        self.call_frames = continuation.frames;
+        self.chunk = continuation.chunk;
+        self.upvalues = continuation.upvalues;
+        self.exception_handlers = continuation.handlers;
+        self.function_call_stack = continuation.function_stack;
+        self.recursion_depth = self.call_frames.len();
+        self.generator_mode = true;
+        self.generator_resume_depth += 1;
+        self.cooperative_suspend_enabled = false;
+        self.skip_execute_reset_once = true;
+        self.jit_enabled = false;
+        self.interpreter.set_capability_policy(policy);
+        let result = self.execute(self.chunk.clone());
+        let yielded = self.generator_yielded.take();
+        let scopes =
+            self.globals.lock().unwrap_or_else(|p| p.into_inner()).swap_local_scopes(caller_scopes);
+        let next = if result.is_ok() && yielded.is_some() {
+            Some(GeneratorContinuation {
+                ip: self.ip,
+                stack: std::mem::take(&mut self.stack),
+                frames: std::mem::take(&mut self.call_frames),
+                chunk: std::mem::replace(&mut self.chunk, BytecodeChunk::new()),
+                upvalues: std::mem::take(&mut self.upvalues),
+                handlers: std::mem::take(&mut self.exception_handlers),
+                function_stack: std::mem::take(&mut self.function_call_stack),
+                scopes,
+            })
         } else {
-            Err("generator_next() requires a BytecodeGenerator".to_string())
+            None
+        };
+        self.restore_execution_state(caller);
+        self.interpreter.set_capability_policy(caller_policy);
+        self.generator_mode = caller_mode;
+        self.generator_yielded = caller_yield;
+        self.generator_resume_depth -= 1;
+        self.cooperative_suspend_enabled = caller_cooperative;
+        self.skip_execute_reset_once = caller_skip;
+        self.jit_enabled = caller_jit;
+        {
+            let mut state = state.lock().unwrap_or_else(|p| p.into_inner());
+            state.running = false;
+            state.ip = next.as_ref().map_or(0, |c| c.ip);
+            state.is_exhausted = next.is_none();
+            state.continuation = next;
+            state.failure = result.as_ref().err().cloned();
         }
+        result?;
+        Ok(match yielded {
+            Some(value) => Value::Option { is_some: true, value: Box::new(value) },
+            None => Value::Option { is_some: false, value: Box::new(Value::Null) },
+        })
     }
 }
 

@@ -60,8 +60,8 @@ fn straight_line_generator_state_survives_yields() {
 }
 
 #[test]
-fn loop_generator_currently_yields_only_first_loop_value() {
-    sums("mut x := 1 while x < 4 { yield x x += 1 }", 1, 1);
+fn loop_generator_vm_resumes_all_values_interpreter_pending() {
+    sums("mut x := 1 while x < 4 { yield x x += 1 }", 1, 6);
 }
 
 #[test]
@@ -79,10 +79,12 @@ fn generator_alias_iteration_restarts_only_in_interpreter() {
 }
 
 #[test]
-fn nested_call_in_generator_is_not_supported_by_vm_resume_loop() {
+fn nested_call_in_generator_uses_normal_vm_dispatch() {
     let source = "func answer() { return 42 } func* values() { yield answer() } mut observed_total := 0 for n in values() { observed_total += n }";
     assert_eq!(integer(interpreter(source).env.get("observed_total")), 42);
-    assert!(vm(source).0.unwrap_err().contains("not yet handled in generator execution"));
+    let (result, env) = vm(source);
+    result.unwrap();
+    assert_eq!(integer(env.lock().unwrap().get("observed_total")), 42);
 }
 
 #[test]
@@ -127,8 +129,8 @@ fn spawn_task_interpreter_returns_placeholder_without_executing_body() {
 }
 
 #[test]
-fn later_loop_backedge_currently_exhausts_vm_at_an_earlier_yield() {
-    sums("yield 1 while false { yield 9 } yield 2", 3, 1);
+fn later_loop_backedge_does_not_exhaust_an_earlier_yield() {
+    sums("yield 1 while false { yield 9 } yield 2", 3, 3);
 }
 
 #[test]
@@ -137,7 +139,7 @@ fn nested_if_continuation_is_skipped_only_by_interpreter() {
 }
 
 #[test]
-fn vm_for_drains_generator_before_consumer_break() {
+fn vm_for_does_not_drain_generator_before_consumer_break() {
     let source = "mut produced := 0 func* values() { produced += 1 yield 1 produced += 1 yield 2 } for n in values() { break }";
     let interp = interpreter(source);
     // Interpreter generator environment is a snapshot, so parent is unchanged.
@@ -145,7 +147,7 @@ fn vm_for_drains_generator_before_consumer_break() {
     assert_eq!(integer(interp.env.get("produced")), 0);
     let (result, env) = vm(source);
     result.unwrap();
-    assert_eq!(integer(env.lock().unwrap().get("produced")), 2);
+    assert_eq!(integer(env.lock().unwrap().get("produced")), 1);
 }
 
 #[test]

@@ -168,6 +168,10 @@ pub enum OpCode {
     /// Operand: target instruction index
     JumpIfFalse(usize),
 
+    /// Consume iterable and index; push one item or jump to exhausted target.
+    /// Generators resume once, so break never drains a remaining continuation.
+    ForNext(usize),
+
     /// Pop value, jump if true
     /// Operand: target instruction index
     JumpIfTrue(usize),
@@ -522,6 +526,7 @@ impl BytecodeChunk {
         match &mut self.instructions[jump_index] {
             OpCode::Jump(ref mut addr)
             | OpCode::JumpIfFalse(ref mut addr)
+            | OpCode::ForNext(ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr) => {
                 *addr = target;
             }
@@ -534,6 +539,7 @@ impl BytecodeChunk {
         match &mut self.instructions[jump_index] {
             OpCode::Jump(ref mut addr)
             | OpCode::JumpIfFalse(ref mut addr)
+            | OpCode::ForNext(ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr)
             | OpCode::JumpBack(ref mut addr)
             | OpCode::BeginTry(ref mut addr) => {
