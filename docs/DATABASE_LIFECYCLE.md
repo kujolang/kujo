@@ -54,3 +54,10 @@ runs `tests/mysql_lifecycle_probe.kujo` against MySQL 8.4 and MariaDB 10.11 in b
 engines, and `bash tests/postgres_tls.sh` against PostgreSQL 14 with verified TLS,
 RLS, pooling and timeout checks. Provider containers follow their maintained
 minor release tags; the Rust dependency graph remains locked.
+
+For a disposable local MariaDB installation, run `bash tests/mysql_lifecycle.sh`.
+The harness ignores ambient MySQL configuration, binds only loopback on a temporary
+port, creates its own data directory, runs the lifecycle probe in both engines,
+and removes the server and data on exit. It does not connect to an existing database.
+PostgreSQL 14 TLS, pool, RLS and negative-certificate checks use
+`bash tests/postgres_tls.sh`.
