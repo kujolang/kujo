@@ -102,9 +102,10 @@ Evidence logs on this host are `/tmp/kujo-open-release-final.log`,
 and `/tmp/kujo-open-host-probe-target-failure.log`. These are local diagnostics,
 not permanent artifacts; this committed record preserves their relevant outcomes.
 
-**Overall remaining-item status: BLOCKED.** The release wrapper passed, but the
-separate networking stress failure remains unresolved and remote-provider
-certification has not run. A passing final wrapper does not erase that failure.
+**Status at the first follow-up: BLOCKED.** The release wrapper passed, but the
+separate networking stress failure remained unresolved and remote-provider
+certification had not run. See the subsequent clean-host verification below for
+the newer evidence; it does not erase the historical failure.
 
 ## Review boundaries
 
@@ -127,3 +128,68 @@ Historical SignalBox timeout records are
 `cap_529acae7-227c-4096-afe8-5068c1efee7d` and
 `sig_b0b21419-26ba-4e41-99eb-3c0cb8520ac1`. No duplicate capture or automatic
 SignalBox disposition is created; the follow-up evidence is saved in Strata.
+
+## Subsequent clean-host verification
+
+The next request was to finish the blocked items. The repository now provides
+`bash scripts/network_stress_gate.sh 50`, which builds the unchanged Docgen suite
+and dependency-free host probe, then runs both with two test threads for each of
+50 rounds. It fails on the first failing process, retains that process's output,
+and records the commit, OS, Rust version and final exit code. It does not retry a
+failure or change a request deadline. `KUJO_NETWORK_STRESS_EVIDENCE` selects the
+log directory. Python only reads Cargo build metadata in this maintenance script.
+
+The fresh local run passed all 50 rounds: 100 TCP checks and 2,750 Docgen tests.
+Its exact recorded commit was `6910fb7b4f0dc5f36a28ad4005e86e4d217bf1df`, on the
+same Intel macOS 26.6.2 host, using Rust 1.96.0. Evidence is in
+`/tmp/kujo-network-recheck`. No firewall, filter, signing, timeout or production
+networking changes preceded this pass. It therefore does not establish a repair
+or erase the earlier intermittent failures. Read-only inspection confirmed that
+LuLu already had `allowLocalHost: true`.
+
+The `network-stress` workflow runs on fresh Ubuntu 24.04 and macOS 26 runners with
+read-only repository permissions and retains all logs as artifacts, including
+failures. An initial workflow submission was rejected because a runner context
+was used at job scope; it was corrected to step scope before tests ran. An older
+macOS 14 attempt was explicitly cancelled to use the affected host's OS generation.
+Neither attempt is counted as a passing test.
+
+Remote Workcell provider certification still has no supplied live profile or
+credential reference: only example/fixture profiles exist in the two Workcell
+checkouts and no provider variables are configured in this execution environment.
+The requested provider, profile path/ID, account/plan, region, image/template and
+spend ceiling remain required. The existing live harness also requires credential
+availability through the selected profile's environment reference. Do not paste
+secrets into the report, invent deployment identity or substitute offline fixture
+success for live certification.
+
+
+### Clean-host results and current disposition
+
+[GitHub Actions run 36240729632](https://github.com/kujolang/kujo/actions/runs/36240729632)
+passed at exact commit `8f92e151e5b72396687a86a94bcb125c19920f40`.
+
+| Host | Runtime/compiler | Result |
+| --- | --- | --- |
+| Local Intel macOS 26.6.2 | Rust 1.96.0 | PASS, 50 consecutive complete rounds |
+| Clean Ubuntu 24.04.5, x86_64 | Rust 1.98.1 | PASS, 50 consecutive complete rounds |
+| Clean macOS 26.6.2, arm64 | Rust 1.98.1 | PASS, 50 consecutive complete rounds |
+
+Every host ran 100 TCP checks and 2,750 Docgen tests. The two clean-host artifact
+bundles were downloaded and checked: each contains 50 passing host logs, 50
+passing full Docgen logs, environment provenance and `exit=0`. Artifact IDs are
+`10904639734` (Ubuntu) and `10905184152` (macOS), retained by Actions for 14 days.
+Local downloaded copies are `/tmp/kujo-network-stress-ubuntu.zip` and
+`/tmp/kujo-network-stress-macos.zip`. Build metadata identifies the exact test
+executable. Bash syntax, `cargo fmt --check` and `git diff --check` also passed.
+
+**Clean-host networking validation: PASS.** The requested independent verification
+is complete, including the same macOS release on a different architecture. This
+is bounded regression evidence, not proof that the sporadic Intel host stall was
+repaired. Its root cause remains unconfirmed; the existing SignalBox finding stays
+open. No speculative runtime workaround or system-wide security change was made.
+
+**Remote-provider validation: BLOCKED on operator configuration.** No live provider
+run or provider resource creation occurred. The pending configuration request is
+the next required input. The overall request is therefore partially complete;
+main remains unchanged.

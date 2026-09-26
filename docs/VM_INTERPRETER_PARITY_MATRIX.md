@@ -131,10 +131,10 @@ Updated evidence snapshot: 2026-09-26 compatibility follow-up
 - PostgreSQL TLS/RLS/pooling and MariaDB lifecycle probes passed through their
   disposable local harnesses in both engines. Their offline inventory skips
   remain deliberate.
-- Docgen networking stress is blocked by a host loopback stall reproduced using
-  dependency-free Rust TCP. The [follow-up record](RUNTIME_COMPATIBILITY_FOLLOWUP.md)
-  distinguishes this failure from passing runtime checks and documents the
-  unresolved remote-provider configuration.
+- Docgen networking stress now passes 50 consecutive rounds on the local Mac
+  and fresh Ubuntu/macOS 26 runners. The [follow-up record](RUNTIME_COMPATIBILITY_FOLLOWUP.md)
+  preserves the earlier intermittent host loopback failure, whose root cause
+  remains unconfirmed, and the unresolved remote-provider configuration.
 - VM-only workflows remain available through `--runtime vm`.
 
 ## VM-First Practical Recommendations
