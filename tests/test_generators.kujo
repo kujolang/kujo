@@ -1,6 +1,6 @@
 # Test: Generator Functions
 # Tests generator creation, yielding, and iteration
-# These tests use the tree-walking interpreter (VM generator support is partial)
+# Both runtimes resume loops lazily and preserve state across every yield.
 
 print("=== Test 1: Simple Generator ===")
 func* count() {
@@ -68,12 +68,12 @@ func* fibonacci() {
 }
 
 # Take first 7 fibonacci numbers
-count := 0
+mut fib_count := 0
 for fib in fibonacci() {
     print("Fib:")
     print(fib)
-    count := count + 1
-    if count >= 7 {
+    fib_count += 1
+    if fib_count >= 7 {
         break
     }
 }
