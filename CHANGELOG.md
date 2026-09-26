@@ -6,6 +6,12 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### Changed
+
+- Recorded the existing per-closure snapshot behavior and the compatibility
+  decision required before replacing it with shared lexical bindings. The full
+  VM upvalue deferral remains open; runtime behavior is unchanged.
+
 ### Added
 
 - Versioned, producer-neutral workflow-control JSON Schemas for evidence,

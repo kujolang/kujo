@@ -52,7 +52,7 @@ Release/process commitments:
 The following runtime-path implementation backlogs are explicitly deferred and non-silent for `v1.0.0` scope tracking:
 
 - `src/vm.rs`:
-  - `Upvalue` full closure-capture implementation remains deferred while current closure behavior stays contract-locked by parity suites.
+  - `Upvalue` full closure-capture implementation remains deferred while current closure behavior stays contract-locked by parity suites. The [closure audit](CLOSURE_UPVALUE_AUDIT.md) records the snapshot-versus-shared-binding compatibility decision required before completion.
   - `GeneratorState` full restoration model remains deferred while current generator boundaries stay explicitly documented in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 - `src/compiler.rs`:
   - Dedicated VM `SpawnThread` opcode is deferred; current spawn lowering behavior remains explicit in compiler comments and roadmap-driven follow-up planning.

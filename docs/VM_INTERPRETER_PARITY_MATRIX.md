@@ -20,7 +20,27 @@ unrelated historical divergences below.
 and bytes; it counts UTF-8 octets without Base64 conversion. The same test
 suite includes restricted-runtime Unicode, byte, type and arity contracts.
 
+## Closure capture identity audit (2026-09-25)
+
+`tests/closure_capture_audit.rs` characterizes existing behavior: separately
+created closures snapshot captured values, while aliases and repeated calls of
+the same closure share its state. Parent assignment does not update an existing
+capture, and transitive captures snapshot the intermediate state. Both engines
+retain captured mutation through the tested caught-throw path.
+
+These tests record the v1 compatibility baseline; they do not close the full
+upvalue deferral or promise general shared lexical cells. See
+[the audit and pending contract decision](CLOSURE_UPVALUE_AUDIT.md).
+
+Two desired-behavior regressions in that suite remain explicitly ignored:
+`closure_must_capture_the_binding_visible_at_its_definition` (a later
+shadowing slot incorrectly supplies `null`) and
+`nested_function_must_not_define_a_global_binding` (a nested function leaks
+into globals). These are unresolved VM defects, not intentional semantics or
+passing parity evidence.
+
 ## Status Labels
+
 
 - `supported`: Implemented and parity-covered by tests.
 - `unsupported (explicit)`: Rejected intentionally with deterministic errors.
