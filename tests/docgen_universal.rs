@@ -13,6 +13,10 @@ use std::fs;
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::thread;
 use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -65,6 +69,22 @@ fn run_kujo(args: &[&str], cwd: &Path) -> std::process::Output {
 
 struct TestHttpServer {
     addr: SocketAddr,
+    server: Arc<tiny_http::Server>,
+    stopped: Arc<AtomicBool>,
+    worker: Option<thread::JoinHandle<()>>,
+}
+
+impl Drop for TestHttpServer {
+    fn drop(&mut self) {
+        self.stopped.store(true, Ordering::Release);
+        self.server.unblock();
+        if let Some(worker) = self.worker.take() {
+            let result = worker.join();
+            if !thread::panicking() {
+                result.expect("HTTP fixture worker panicked");
+            }
+        }
+    }
 }
 
 impl TestHttpServer {
@@ -99,11 +119,23 @@ where
         }
     };
     let addr = server.server_addr().to_ip().expect("HTTP test server should use an IP socket");
-    thread::spawn(move || {
-        for _ in 0..expected_requests {
-            let Ok(Some(request)) = server.recv_timeout(Duration::from_secs(4)) else {
-                break;
+    let server = Arc::new(server);
+    let worker_server = server.clone();
+    let stopped = Arc::new(AtomicBool::new(false));
+    let worker_stopped = stopped.clone();
+    let worker = thread::spawn(move || {
+        let mut received = 0;
+        while received < expected_requests && !worker_stopped.load(Ordering::Acquire) {
+            let request = match worker_server.recv_timeout(Duration::from_millis(50)) {
+                Ok(Some(request)) => request,
+                Ok(None) => continue,
+                Err(error) if worker_stopped.load(Ordering::Acquire) => {
+                    let _ = error;
+                    break;
+                }
+                Err(error) => panic!("HTTP fixture receive failed: {error}"),
             };
+            received += 1;
             let raw_response = responder(request.url());
             let response_result = if raw_response.starts_with("HTTP/1.1 302") {
                 let location = raw_response
@@ -121,7 +153,7 @@ where
             response_result.expect("write test response");
         }
     });
-    Some(TestHttpServer { addr })
+    Some(TestHttpServer { addr, server, stopped, worker: Some(worker) })
 }
 
 fn http_200_response() -> String {
