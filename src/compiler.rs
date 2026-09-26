@@ -4,10 +4,10 @@
 // Compiles AST nodes into bytecode instructions for the VM.
 
 use crate::ast::{ArrayElement, DictElement, Expr, Pattern, Stmt};
-use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, Constant, OpCode};
+use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, CaptureSource, Constant, OpCode};
 use crate::errors::unsupported_struct_generator_method_message;
 use crate::optimizer::Optimizer;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 /// Compiler state for generating bytecode from AST
@@ -36,6 +36,17 @@ pub struct Compiler {
 
     /// Names of captured variables for this compiler
     upvalue_names: HashSet<String>,
+    /// Visible bindings from the definition site. Resolved lazily so unused
+    /// outer values are not retained by a closure.
+    outer_bindings: HashMap<String, LexicalCapture>,
+    capture_sources: Vec<LexicalCapture>,
+    runtime_bindings: HashSet<String>,
+    runtime_binding_scopes: Vec<HashSet<String>>,
+    imports_all: bool,
+    import_scopes: Vec<bool>,
+    outer_import_depth: Option<usize>,
+    environment_bindings: HashMap<String, BytecodeBindingKind>,
+    environment_binding_scopes: Vec<HashMap<String, BytecodeBindingKind>>,
 
     /// Variables that are read in this compiler scope
     used_locals: HashSet<String>,
@@ -61,6 +72,14 @@ pub struct Compiler {
     /// Whether this compiler instance can use local slots (function/method/lambda bodies).
     /// The root script compiler keeps declarations in the runtime environment instead.
     uses_local_slots: bool,
+}
+
+#[derive(Debug, Clone)]
+enum LexicalCapture {
+    Local(usize),
+    Parent(String),
+    Named(String),
+    Environment(String, BytecodeBindingKind),
 }
 
 #[derive(Debug, Clone)]
@@ -94,6 +113,15 @@ impl Compiler {
             locals: Vec::new(),
             next_local_slot: 0,
             upvalue_names: HashSet::new(),
+            outer_bindings: HashMap::new(),
+            capture_sources: Vec::new(),
+            runtime_bindings: HashSet::new(),
+            runtime_binding_scopes: Vec::new(),
+            imports_all: false,
+            import_scopes: Vec::new(),
+            outer_import_depth: None,
+            environment_bindings: HashMap::new(),
+            environment_binding_scopes: Vec::new(),
             used_locals: HashSet::new(),
             scope_markers: Vec::new(),
             parent: None,
@@ -222,11 +250,23 @@ impl Compiler {
     }
 
     fn enter_scope(&mut self) {
+        self.import_scopes.push(self.imports_all);
         self.scope_markers.push(self.locals.len());
+        self.runtime_binding_scopes.push(self.runtime_bindings.clone());
+        self.environment_binding_scopes.push(self.environment_bindings.clone());
         self.scope_depth += 1;
     }
 
     fn exit_scope(&mut self) {
+        if let Some(imports_all) = self.import_scopes.pop() {
+            self.imports_all = imports_all;
+        }
+        if let Some(bindings) = self.environment_binding_scopes.pop() {
+            self.environment_bindings = bindings;
+        }
+        if let Some(names) = self.runtime_binding_scopes.pop() {
+            self.runtime_bindings = names;
+        }
         if let Some(marker) = self.scope_markers.pop() {
             self.locals.truncate(marker);
         }
@@ -268,6 +308,72 @@ impl Compiler {
         for jump in jumps {
             self.chunk.patch_jump(jump);
         }
+    }
+
+    fn child_bindings(&self) -> HashMap<String, LexicalCapture> {
+        let mut visible = self
+            .outer_bindings
+            .keys()
+            .chain(self.chunk.upvalues.iter())
+            .map(|name| (name.clone(), LexicalCapture::Parent(name.clone())))
+            .collect::<HashMap<_, _>>();
+        for name in &self.runtime_bindings {
+            visible.insert(name.clone(), LexicalCapture::Named(name.clone()));
+        }
+        for (name, kind) in &self.environment_bindings {
+            visible.insert(name.clone(), LexicalCapture::Environment(name.clone(), *kind));
+        }
+        if self.uses_local_slots {
+            for local in &self.locals {
+                visible.insert(local.name.clone(), LexicalCapture::Local(local.slot));
+            }
+        }
+        visible
+    }
+
+    fn resolve_capture(&mut self, name: &str) -> Option<usize> {
+        if !self.uses_local_slots || self.runtime_bindings.contains(name) {
+            return None;
+        }
+        if let Some(index) = self.chunk.upvalues.iter().position(|n| n == name) {
+            return Some(index);
+        }
+        let source = self.outer_bindings.get(name).cloned().or_else(|| {
+            // Import-all exports are known only at runtime. Resolve only names
+            // actually used by descendants, retaining global fallback when the
+            // defining frame did not import that name.
+            self.outer_import_depth.map(|depth| {
+                if depth == 0 {
+                    LexicalCapture::Named(name.to_owned())
+                } else {
+                    LexicalCapture::Parent(name.to_owned())
+                }
+            })
+        })?;
+        let index = self.chunk.upvalues.len();
+        self.chunk.upvalues.push(name.to_owned());
+        self.upvalue_names.insert(name.to_owned());
+        self.capture_sources.push(source);
+        Some(index)
+    }
+
+    fn finish_child(&mut self, child: &mut Compiler) -> Result<(), String> {
+        let mut sources = Vec::with_capacity(child.capture_sources.len());
+        for source in &child.capture_sources {
+            sources.push(match source {
+                LexicalCapture::Local(slot) => CaptureSource::Local(*slot),
+                LexicalCapture::Named(name) => CaptureSource::Named(name.clone()),
+                LexicalCapture::Environment(name, kind) => {
+                    CaptureSource::Environment(name.clone(), *kind)
+                }
+                LexicalCapture::Parent(name) => CaptureSource::Upvalue(
+                    self.resolve_capture(name)
+                        .ok_or_else(|| format!("Unresolved lexical capture: {}", name))?,
+                ),
+            });
+        }
+        child.chunk.capture_sources = Some(sources);
+        Ok(())
     }
 
     fn is_upvalue(&self, name: &str) -> bool {
@@ -475,12 +581,6 @@ impl Compiler {
                 self.enter_scope();
                 self.push_loop_runtime_scope();
 
-                let loop_var_slot = if self.uses_local_slots && !self.is_upvalue(var) {
-                    Some(self.declare_local(var, BytecodeBindingKind::Mutable)?)
-                } else {
-                    None
-                };
-
                 let iter_var = format!("__iter_{}", self.scope_depth);
                 let index_var = format!("__index_{}", self.scope_depth);
                 let iter_slot = if self.uses_local_slots {
@@ -500,6 +600,21 @@ impl Compiler {
                 // interpreter semantics without changing generic index operation rules.
                 self.chunk.emit(OpCode::LoadGlobal("__vm_for_iterable".to_string()));
                 self.chunk.emit(OpCode::Call(1));
+
+                let loop_var_slot = if self.uses_local_slots {
+                    Some(self.declare_local(var, BytecodeBindingKind::Mutable)?)
+                } else {
+                    None
+                };
+
+                if loop_var_slot.is_none() {
+                    self.environment_bindings.insert(var.clone(), BytecodeBindingKind::Mutable);
+                    let none = self.chunk.add_constant(Constant::None);
+                    self.chunk.emit(OpCode::LoadConst(none));
+                    self.chunk
+                        .emit(OpCode::DefineGlobal(var.clone(), BytecodeBindingKind::Mutable));
+                    self.chunk.emit(OpCode::Pop);
+                }
 
                 // Store in a temporary variable for iteration
                 if let Some(slot) = iter_slot {
@@ -670,12 +785,17 @@ impl Compiler {
                     }
                     func_compiler.add_local(param, 1, BytecodeBindingKind::Mutable);
                 }
-
-                // Analyze the function body to find free variables (captures)
-                let free_vars = Self::find_free_variables(body, params, &self.locals);
-                func_compiler.chunk.upvalues = free_vars.clone();
-
-                func_compiler.upvalue_names = free_vars.iter().cloned().collect();
+                func_compiler.outer_bindings = self.child_bindings();
+                func_compiler.outer_import_depth = if self.imports_all {
+                    Some(0)
+                } else {
+                    self.outer_import_depth.map(|depth| depth + 1)
+                };
+                if self.scope_depth > 0 && func_compiler.used_locals.contains(name) {
+                    func_compiler.chunk.lexical_self = Some(name.clone());
+                    func_compiler.outer_bindings.remove(name);
+                    func_compiler.runtime_bindings.insert(name.clone());
+                }
 
                 // Compile function body
                 for stmt in body {
@@ -687,6 +807,7 @@ impl Compiler {
 
                 // Record local slot count
                 func_compiler.chunk.local_count = func_compiler.next_local_slot;
+                self.finish_child(&mut func_compiler)?;
 
                 // Add function as constant
                 let func_index =
@@ -694,12 +815,21 @@ impl Compiler {
 
                 // Create closure and store in variable
                 self.chunk.emit(OpCode::MakeClosure(func_index));
-                self.chunk.emit(OpCode::StoreGlobal(name.clone()));
+                if self.uses_local_slots {
+                    // Function definitions historically replace same-scope names.
+                    // Use a fresh lexical slot so prior snapshots keep their
+                    // original value and binding kind.
+                    let slot = self.add_local(name, self.scope_depth, BytecodeBindingKind::Mutable);
+                    self.chunk.emit(OpCode::DefineLocal(slot));
+                } else {
+                    self.chunk.emit(OpCode::StoreGlobal(name.clone()));
+                }
+                self.chunk.emit(OpCode::Pop);
 
                 Ok(())
             }
 
-            Stmt::StructDef { name, fields: _, methods } => {
+            Stmt::StructDef { name, fields, methods } => {
                 // Compile struct methods into global bytecode functions
                 for method_stmt in methods {
                     if let Stmt::FuncDef {
@@ -736,11 +866,17 @@ impl Compiler {
                             }
                             func_compiler.add_local(param, 1, BytecodeBindingKind::Mutable);
                         }
-
-                        let free_vars = Self::find_free_variables(body, params, &self.locals);
-                        func_compiler.chunk.upvalues = free_vars.clone();
-
-                        func_compiler.upvalue_names = free_vars.iter().cloned().collect();
+                        func_compiler.outer_bindings = self.child_bindings();
+                        func_compiler.outer_import_depth = if self.imports_all {
+                            Some(0)
+                        } else {
+                            self.outer_import_depth.map(|depth| depth + 1)
+                        };
+                        if params.first().map(String::as_str) != Some("self") {
+                            func_compiler
+                                .runtime_bindings
+                                .extend(fields.iter().map(|(name, _)| name.clone()));
+                        }
 
                         for stmt in body {
                             func_compiler.compile_stmt(stmt)?;
@@ -749,6 +885,7 @@ impl Compiler {
                         func_compiler.chunk.emit(OpCode::ReturnNone);
 
                         func_compiler.chunk.local_count = func_compiler.next_local_slot;
+                        self.finish_child(&mut func_compiler)?;
                         let func_index = self
                             .chunk
                             .add_constant(Constant::Function(Box::new(func_compiler.chunk)));
@@ -770,6 +907,14 @@ impl Compiler {
                 let mut end_jumps = Vec::new();
 
                 for (pattern_name, body) in cases {
+                    let previous_runtime_bindings = self.runtime_bindings.clone();
+                    if let Some((_, binding)) = pattern_name.split_once('(') {
+                        if let Some(binding) = binding.strip_suffix(')') {
+                            if !binding.trim().is_empty() {
+                                self.runtime_bindings.insert(binding.trim().to_owned());
+                            }
+                        }
+                    }
                     self.chunk.emit(OpCode::BeginCase);
 
                     // Duplicate the value for matching
@@ -801,6 +946,7 @@ impl Compiler {
                     self.chunk.emit(OpCode::Pop); // Pop match result
 
                     self.chunk.emit(OpCode::EndCase);
+                    self.runtime_bindings = previous_runtime_bindings;
                 }
 
                 // Compile default case if present
@@ -908,6 +1054,8 @@ impl Compiler {
 
                 // Begin catch and bind exception to variable
                 self.chunk.emit(OpCode::BeginCatch(except_var.clone()));
+                let previous_runtime_bindings = self.runtime_bindings.clone();
+                self.runtime_bindings.insert(except_var.clone());
 
                 // Compile catch block
                 for stmt in except_block {
@@ -916,6 +1064,7 @@ impl Compiler {
 
                 // End catch block
                 self.chunk.emit(OpCode::EndCatch);
+                self.runtime_bindings = previous_runtime_bindings;
 
                 // Patch the jump over catch block
                 self.chunk.patch_jump(end_jump);
@@ -952,6 +1101,9 @@ impl Compiler {
             Stmt::Const { name, value, .. } => {
                 self.compile_expr(value)?;
                 if !self.uses_local_slots || self.scope_depth == 0 {
+                    if self.scope_depth > 0 {
+                        self.environment_bindings.insert(name.clone(), BytecodeBindingKind::Const);
+                    }
                     self.chunk.emit(OpCode::DefineGlobal(name.clone(), BytecodeBindingKind::Const));
                 } else {
                     let slot = self.declare_local(name, BytecodeBindingKind::Const)?;
@@ -1007,6 +1159,9 @@ impl Compiler {
 
                 match symbols {
                     Some(symbol_list) => {
+                        if self.scope_depth > 0 {
+                            self.runtime_bindings.extend(symbol_list.iter().cloned());
+                        }
                         for symbol_name in symbol_list {
                             let import_symbol_const =
                                 self.chunk.add_constant(Constant::String(symbol_name.clone()));
@@ -1019,6 +1174,7 @@ impl Compiler {
                         }
                     }
                     None => {
+                        self.imports_all |= self.scope_depth > 0;
                         self.chunk.emit(OpCode::LoadConst(import_module_const));
                         self.chunk.emit(OpCode::CallNative("__vm_import_all".to_string(), 1));
                         self.chunk.emit(OpCode::Pop);
@@ -1067,10 +1223,10 @@ impl Compiler {
             }
 
             Expr::Identifier(name) => {
-                if self.is_upvalue(name) {
-                    self.chunk.emit(OpCode::LoadVar(name.clone()));
-                } else if let Some(slot) = self.resolve_local_slot(name) {
+                if let Some(slot) = self.resolve_local_slot(name) {
                     self.chunk.emit(OpCode::LoadLocal(slot));
+                } else if let Some(index) = self.resolve_capture(name) {
+                    self.chunk.emit(OpCode::LoadCapture(index));
                 } else if self.scope_depth == 0 {
                     self.chunk.emit(OpCode::LoadGlobal(name.clone()));
                 } else {
@@ -1400,13 +1556,12 @@ impl Compiler {
                     }
                     func_compiler.add_local(param, 1, BytecodeBindingKind::Mutable);
                 }
-
-                // Analyze the function body to find free variables (captures)
-                let free_vars = Self::find_free_variables(body, params, &self.locals);
-                func_compiler.chunk.upvalues = free_vars.clone();
-
-                // Captured variables are resolved from the closure's captured map at runtime
-                func_compiler.upvalue_names = free_vars.iter().cloned().collect();
+                func_compiler.outer_bindings = self.child_bindings();
+                func_compiler.outer_import_depth = if self.imports_all {
+                    Some(0)
+                } else {
+                    self.outer_import_depth.map(|depth| depth + 1)
+                };
 
                 // Compile function body
                 for stmt in body {
@@ -1416,6 +1571,7 @@ impl Compiler {
                 func_compiler.chunk.emit(OpCode::ReturnNone);
 
                 func_compiler.chunk.local_count = func_compiler.next_local_slot;
+                self.finish_child(&mut func_compiler)?;
                 let func_index =
                     self.chunk.add_constant(Constant::Function(Box::new(func_compiler.chunk)));
                 self.chunk.emit(OpCode::MakeClosure(func_index));
@@ -1634,6 +1790,41 @@ impl Compiler {
         }
     }
 
+    fn register_runtime_pattern(&mut self, pattern: &Pattern, kind: BytecodeBindingKind) {
+        match pattern {
+            Pattern::Identifier(name) => {
+                self.runtime_bindings.insert(name.clone());
+                if !self.uses_local_slots && self.scope_depth > 0 {
+                    self.environment_bindings.insert(name.clone(), kind);
+                }
+            }
+            Pattern::Array { elements, rest } => {
+                for element in elements {
+                    self.register_runtime_pattern(element, kind);
+                }
+                if let Some(name) = rest {
+                    self.runtime_bindings.insert(name.clone());
+                    if !self.uses_local_slots && self.scope_depth > 0 {
+                        self.environment_bindings.insert(name.clone(), kind);
+                    }
+                }
+            }
+            Pattern::Dict { keys, rest } => {
+                self.runtime_bindings.extend(keys.iter().cloned());
+                if !self.uses_local_slots && self.scope_depth > 0 {
+                    self.environment_bindings.extend(keys.iter().map(|name| (name.clone(), kind)));
+                }
+                if let Some(name) = rest {
+                    self.runtime_bindings.insert(name.clone());
+                    if !self.uses_local_slots && self.scope_depth > 0 {
+                        self.environment_bindings.insert(name.clone(), kind);
+                    }
+                }
+            }
+            Pattern::Ignore => {}
+        }
+    }
+
     /// Compile pattern binding (for let statements)
     fn compile_pattern_binding(
         &mut self,
@@ -1643,9 +1834,10 @@ impl Compiler {
         match pattern {
             Pattern::Identifier(name) => {
                 if !self.uses_local_slots || self.scope_depth == 0 {
+                    if self.scope_depth > 0 {
+                        self.environment_bindings.insert(name.clone(), binding_kind);
+                    }
                     self.chunk.emit(OpCode::DefineGlobal(name.clone(), binding_kind));
-                } else if self.is_upvalue(name) {
-                    self.chunk.emit(OpCode::StoreVar(name.clone()));
                 } else {
                     let slot = self.declare_local(name, binding_kind)?;
                     self.chunk.emit(OpCode::DefineLocal(slot));
@@ -1660,6 +1852,7 @@ impl Compiler {
             }
 
             Pattern::Array { elements: _, rest: _ } => {
+                self.register_runtime_pattern(pattern, binding_kind);
                 // Use MatchPattern for complex binding
                 let pattern_index = self.chunk.add_constant(Constant::Pattern(pattern.clone()));
                 self.chunk.emit(OpCode::MatchPattern(pattern_index, binding_kind));
@@ -1668,6 +1861,7 @@ impl Compiler {
             }
 
             Pattern::Dict { keys: _, rest: _ } => {
+                self.register_runtime_pattern(pattern, binding_kind);
                 // Use MatchPattern for complex binding
                 let pattern_index = self.chunk.add_constant(Constant::Pattern(pattern.clone()));
                 self.chunk.emit(OpCode::MatchPattern(pattern_index, binding_kind));
@@ -1681,11 +1875,12 @@ impl Compiler {
     fn compile_assignment(&mut self, target: &Expr) -> Result<(), String> {
         match target {
             Expr::Identifier(name) => {
-                if self.is_upvalue(name) {
-                    self.chunk.emit(OpCode::StoreVar(name.clone()));
-                } else if let Some(slot) = self.resolve_local_slot(name) {
+                if let Some(slot) = self.resolve_local_slot(name) {
                     self.chunk.emit(OpCode::StoreLocal(slot));
+                } else if let Some(index) = self.resolve_capture(name) {
+                    self.chunk.emit(OpCode::StoreCapture(index));
                 } else if self.uses_local_slots && self.scope_depth > 0 {
+                    self.runtime_bindings.insert(name.clone());
                     // Mirror interpreter semantics for `:=` assignment:
                     // assign into an existing outer binding when present;
                     // otherwise define in the current runtime scope.
@@ -1693,6 +1888,7 @@ impl Compiler {
                 } else if self.scope_depth == 0 {
                     self.chunk.emit(OpCode::StoreGlobal(name.clone()));
                 } else {
+                    self.runtime_bindings.insert(name.clone());
                     self.chunk.emit(OpCode::StoreVar(name.clone()));
                 }
                 Ok(())
@@ -1728,11 +1924,7 @@ impl Compiler {
                 // IndexSet leaves the modified object on the stack
                 // We need to store it back to the variable if object is an identifier
                 if let Expr::Identifier(name) = &**object {
-                    if self.is_upvalue(name) || self.is_local(name) {
-                        self.chunk.emit(OpCode::StoreVar(name.clone()));
-                    } else {
-                        self.chunk.emit(OpCode::StoreGlobal(name.clone()));
-                    }
+                    self.compile_assignment(&Expr::Identifier(name.clone()))?;
                 } else {
                     // For non-identifier objects (like nested access), just pop the result
                     self.chunk.emit(OpCode::Pop);
@@ -2172,267 +2364,5 @@ impl Compiler {
         }
 
         used_vars
-    }
-
-    /// Find free variables in a function body
-    /// Free variables are variables that are used but not defined locally (not params or let bindings)
-    fn find_free_variables(
-        body: &[Stmt],
-        params: &[String],
-        _parent_locals: &[Local],
-    ) -> Vec<String> {
-        use std::collections::HashSet;
-
-        let mut used_vars = HashSet::new();
-        let mut defined_vars: HashSet<String> = params.iter().cloned().collect();
-
-        // Helper function to collect variable usage from expressions
-        fn collect_expr_vars(expr: &Expr, used: &mut HashSet<String>) {
-            match expr {
-                Expr::Identifier(name) => {
-                    used.insert(name.clone());
-                }
-                Expr::BinaryOp { left, right, .. } => {
-                    collect_expr_vars(left, used);
-                    collect_expr_vars(right, used);
-                }
-                Expr::UnaryOp { operand, .. } => {
-                    collect_expr_vars(operand, used);
-                }
-                Expr::Call { function, args } => {
-                    collect_expr_vars(function, used);
-                    for arg in args {
-                        collect_expr_vars(arg, used);
-                    }
-                }
-                Expr::MethodCall { object, args, .. } => {
-                    collect_expr_vars(object, used);
-                    for arg in args {
-                        collect_expr_vars(arg, used);
-                    }
-                }
-                Expr::ArrayLiteral(elements) => {
-                    for elem in elements {
-                        match elem {
-                            ArrayElement::Single(e) | ArrayElement::Spread(e) => {
-                                collect_expr_vars(e, used);
-                            }
-                        }
-                    }
-                }
-                Expr::DictLiteral(entries) => {
-                    for entry in entries {
-                        match entry {
-                            DictElement::Pair(k, v) => {
-                                collect_expr_vars(k, used);
-                                collect_expr_vars(v, used);
-                            }
-                            DictElement::Spread(e) => {
-                                collect_expr_vars(e, used);
-                            }
-                        }
-                    }
-                }
-                Expr::IndexAccess { object, index } => {
-                    collect_expr_vars(object, used);
-                    collect_expr_vars(index, used);
-                }
-                Expr::FieldAccess { object, .. } => {
-                    collect_expr_vars(object, used);
-                }
-                Expr::Function { body, .. } => {
-                    // Don't descend into nested functions - they have their own scope
-                    for stmt in body {
-                        collect_stmt_vars(stmt, used, &mut HashSet::new());
-                    }
-                }
-                Expr::Ok(e) | Expr::Err(e) | Expr::Some(e) | Expr::Await(e) => {
-                    collect_expr_vars(e, used);
-                }
-                Expr::Yield(Some(e)) => {
-                    collect_expr_vars(e, used);
-                }
-                Expr::Try(e) => {
-                    collect_expr_vars(e, used);
-                }
-                Expr::StructInstance { fields, .. } => {
-                    for (_, expr) in fields {
-                        collect_expr_vars(expr, used);
-                    }
-                }
-                Expr::InterpolatedString(parts) => {
-                    for part in parts {
-                        if let crate::ast::InterpolatedStringPart::Expr(e) = part {
-                            collect_expr_vars(e, used);
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Helper function to collect variable definitions and usage from statements
-        fn collect_stmt_vars(
-            stmt: &Stmt,
-            used: &mut HashSet<String>,
-            defined: &mut HashSet<String>,
-        ) {
-            match stmt {
-                Stmt::Let { pattern, value, .. } => {
-                    collect_expr_vars(value, used);
-                    // Add defined variables from pattern
-                    if let Pattern::Identifier(name) = pattern {
-                        defined.insert(name.clone());
-                    }
-                }
-                Stmt::Assign { target, value } => {
-                    collect_expr_vars(value, used);
-                    match target {
-                        Expr::Identifier(name) => {
-                            // Assignment can mutate an outer captured binding.
-                            // Treat identifier targets as usage so free-variable
-                            // analysis preserves closure capture when needed.
-                            used.insert(name.clone());
-                        }
-                        Expr::IndexAccess { object, index } => {
-                            collect_expr_vars(object, used);
-                            collect_expr_vars(index, used);
-                        }
-                        Expr::FieldAccess { object, .. } => {
-                            collect_expr_vars(object, used);
-                        }
-                        _ => {
-                            collect_expr_vars(target, used);
-                        }
-                    }
-                }
-                Stmt::ExprStmt(expr) => {
-                    collect_expr_vars(expr, used);
-                }
-                Stmt::If { condition, then_branch, else_branch } => {
-                    collect_expr_vars(condition, used);
-                    for s in then_branch {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                    if let Some(else_stmts) = else_branch {
-                        for s in else_stmts {
-                            collect_stmt_vars(s, used, defined);
-                        }
-                    }
-                }
-                Stmt::While { condition, body } => {
-                    collect_expr_vars(condition, used);
-                    for s in body {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::For { var, iterable, body } => {
-                    collect_expr_vars(iterable, used);
-                    defined.insert(var.clone());
-                    for s in body {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::Return(expr) => {
-                    if let Some(e) = expr {
-                        collect_expr_vars(e, used);
-                    }
-                }
-                Stmt::Break | Stmt::Continue => {}
-                Stmt::Match { value, cases, default } => {
-                    collect_expr_vars(value, used);
-                    for (_pattern, stmts) in cases {
-                        for s in stmts {
-                            collect_stmt_vars(s, used, defined);
-                        }
-                    }
-                    if let Some(default_stmts) = default {
-                        for s in default_stmts {
-                            collect_stmt_vars(s, used, defined);
-                        }
-                    }
-                }
-                Stmt::FuncDef { name, body, .. } => {
-                    defined.insert(name.clone());
-                    // Don't descend into nested function bodies
-                    for s in body {
-                        collect_stmt_vars(s, used, &mut HashSet::new());
-                    }
-                }
-                Stmt::TryExcept { try_block, except_block, .. } => {
-                    for s in try_block {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                    for s in except_block {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::Block(stmts) => {
-                    for s in stmts {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::Const { name, value, .. } => {
-                    defined.insert(name.clone());
-                    collect_expr_vars(value, used);
-                }
-                Stmt::Export { stmt } => {
-                    collect_stmt_vars(stmt, used, defined);
-                }
-                Stmt::Spawn { body } => {
-                    for s in body {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::StructDef { name, .. } => {
-                    defined.insert(name.clone());
-                }
-                Stmt::EnumDef { name, .. } => {
-                    defined.insert(name.clone());
-                }
-                Stmt::Import { module, symbols } => {
-                    // Module itself becomes a variable
-                    defined.insert(module.clone());
-                    // Imported symbols also become variables
-                    if let Some(syms) = symbols {
-                        for sym in syms {
-                            defined.insert(sym.clone());
-                        }
-                    }
-                }
-                Stmt::Loop { condition, body } => {
-                    if let Some(cond) = condition {
-                        collect_expr_vars(cond, used);
-                    }
-                    for s in body {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::Test { body, .. }
-                | Stmt::TestSetup { body }
-                | Stmt::TestTeardown { body } => {
-                    for s in body {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-                Stmt::TestGroup { tests, .. } => {
-                    for s in tests {
-                        collect_stmt_vars(s, used, defined);
-                    }
-                }
-            }
-        }
-
-        // Collect all variable usage and definitions
-        for stmt in body {
-            collect_stmt_vars(stmt, &mut used_vars, &mut defined_vars);
-        }
-
-        // Free variables are those used but not defined locally
-        let mut free_vars: Vec<String> = used_vars.difference(&defined_vars).cloned().collect();
-
-        // Sort for deterministic output
-        free_vars.sort();
-        free_vars
     }
 }

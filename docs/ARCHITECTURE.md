@@ -1,6 +1,6 @@
 # Kujo Architecture
 
-Last updated: 2026-08-29
+Last updated: 2026-09-25
 Current stable release: `v1.5.0`
 
 This document describes the current Kujo architecture as implemented in this repository.
@@ -36,6 +36,44 @@ Notes:
 - Package bootstrap and lockfile verification are tracked as separate tooling contracts, but their nested import examples still resolve through the same package-root-aware module loader used by `kujo run`.
 
 ## 3. Runtime Path Model
+
+### VM lexical captures
+
+Function compilers inherit the bindings visible at their definition site.
+Capture discovery happens during lexical resolution, with locals taking
+precedence over inherited bindings. A nested reference can cause an intermediate
+function to forward an otherwise unused capture. Only referenced bindings are
+retained; names are not resolved by searching a completed function's slot list.
+
+`BytecodeChunk.capture_sources` describes each snapshot source: a parent local
+slot, a parent capture index, a scoped script binding, or a runtime-created named
+binding (including bare assignment, destructuring and legacy receiver fields).
+Function-local selected imports register named bindings. Import-all exports
+are discovered at runtime, so descendant references lazily request named
+captures through the intervening compiler boundaries; absent names keep global
+fallback. This does not retain the whole import environment.
+Ordinary global reads remain global lookups. `LoadCapture` and `StoreCapture` address frame-local
+capture indices. Runtime-created bindings retain the v1 rule that a bare
+assignment may target an existing global instead of creating a local.
+
+Each closure creation copies values into its own heap cells, preserving v1
+snapshot semantics. Calls and aliases share those cells. Frames lazily build an
+indexed view of the same cells used by the interpreter callback bridge; ordinary
+uncaptured locals remain plain slots. No open stack pointers need closing:
+return, scope exit and unwind release frame references while escaped closures
+own their snapshots. Nested named recursion uses a call-local self binding,
+avoiding a self-reference inside the capture environment.
+
+Captured functions bypass JIT function caches until the JIT supports this
+representation. The main VM, JIT-to-VM fallback and bounded generator dispatcher
+handle indexed capture access. Generator scheduling and spawn behavior are not
+redesigned. Legacy manually constructed chunks without capture descriptors
+retain their compatibility path; the older VM-wide `Upvalue` opcodes are not the
+compiler-produced closure mechanism. Bytecode is not a persistent public format.
+
+See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for baseline evidence and known
+interpreter limitations. This mechanism does not add a tracing collector for
+arbitrary user-created cyclic value graphs.
 
 ### 3.1 `kujo run`
 

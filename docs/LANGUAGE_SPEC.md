@@ -219,8 +219,17 @@ const build_id := "v1"
 - `if`/`else`, `while`, and `loop` bodies execute in nested lexical scopes.
 - `for ... in` introduces a loop-variable scope; the loop variable does not leak after the loop completes.
 - Duplicate declarations in the same lexical scope are rejected with `Duplicate declaration in the same scope: <name>`.
+- Named function definitions retain their existing replacement behavior;
+  replacing a function name does not change earlier values of that function.
 - Inner-scope shadowing is allowed and resolved by nearest lexical definition.
 - Closures capture the nearest visible lexical binding.
+- V1 capture identity is snapshot-based: creating separate closures copies the
+  current captured values into separate cells. Parent assignment after capture
+  does not update an existing closure. Aliases and repeat calls of the same
+  closure share its cells; separate factory calls remain independent. Nested
+  closures snapshot the intermediate closure's current captured values.
+  Binding mutability is retained: capturing `let` or `const` does not permit
+  reassignment or mutation through that binding.
 - Referencing an identifier with no visible binding is a runtime error of the form `Undefined variable: <name>`. Kujo does not convert unknown identifiers into strings; quote string literals explicitly.
 
 Example:

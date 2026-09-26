@@ -20,7 +20,42 @@ unrelated historical divergences below.
 and bytes; it counts UTF-8 octets without Base64 conversion. The same test
 suite includes restricted-runtime Unicode, byte, type and arity contracts.
 
+## Closure capture identity audit (2026-09-25)
+
+`tests/closure_capture_audit.rs` characterizes existing behavior: separately
+created closures snapshot captured values, while aliases and repeated calls of
+the same closure share its state. Parent assignment does not update an existing
+capture, and transitive captures snapshot the intermediate state. Both engines
+retain captured mutation through the tested caught-throw path.
+
+These tests retain the v1 compatibility baseline without promising shared
+parent/sibling lexical cells. The [implementation report](CLOSURE_UPVALUE_IMPLEMENTATION.md)
+records completion of explicit VM lexical capture under the resolved snapshot
+contract, alongside the remaining interpreter and release-validation limits.
+
+Two former desired-behavior regressions now pass:
+`closure_must_capture_the_binding_visible_at_its_definition` (a later
+shadowing slot incorrectly supplies `null`) and
+`nested_function_must_not_define_a_global_binding` (a nested function leaks
+into globals). Definition-site capture descriptors and lexical named-function
+locals fix these defects while retaining snapshot identity.
+
+The expanded audit also covers scalar/collection/struct/enum/callable capture,
+array/map mutation, captured let/const rejection, conditional early returns,
+while/loop snapshots, escape through an exception and deterministic closure
+chains at depths 1–12. A third ignored probe,
+`a_recursive_named_closure_keeps_its_capture_after_parent_return`, records an
+interpreter missing-self-binding error where the VM returns the expected value.
+
+`tests/closure_capture_contracts.rs` checks indexed capture sources, transitive
+forwarding, unused-local exclusion, last-owner release, invalid operands, VM
+recursive closures, JIT cache exclusion/factory fallback and VM capture retention
+across generator yields. The generator test does not establish general generator
+restoration parity. Final default-feature closure, parity and callback suites
+pass 152 tests, with the single interpreter recursion probe ignored.
+
 ## Status Labels
+
 
 - `supported`: Implemented and parity-covered by tests.
 - `unsupported (explicit)`: Rejected intentionally with deterministic errors.

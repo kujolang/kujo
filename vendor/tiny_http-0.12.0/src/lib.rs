@@ -452,7 +452,19 @@ impl Drop for Server {
         self.close.store(true, Relaxed);
         // Connect briefly to ourselves to unblock the accept thread
         let maybe_stream = match &self.listening_addr {
-            ListenAddr::IP(addr) => TcpStream::connect(addr).map(Connection::from),
+            ListenAddr::IP(addr) => {
+                // Wildcard addresses are bind targets, not portable connection
+                // destinations (connecting to 0.0.0.0 can stall on macOS).
+                let mut wake_addr = *addr;
+                if wake_addr.ip().is_unspecified() {
+                    wake_addr.set_ip(match wake_addr.ip() {
+                        std::net::IpAddr::V4(_) => std::net::Ipv4Addr::LOCALHOST.into(),
+                        std::net::IpAddr::V6(_) => std::net::Ipv6Addr::LOCALHOST.into(),
+                    });
+                }
+                TcpStream::connect_timeout(&wake_addr, Duration::from_millis(100))
+                    .map(Connection::from)
+            }
             #[cfg(unix)]
             ListenAddr::Unix(addr) => {
                 // TODO: use connect_addr when its stabilized.

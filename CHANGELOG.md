@@ -6,6 +6,13 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### Changed
+
+- VM closures resolve captures at their definition site and access captured
+  cells by index, preserving v1 per-closure snapshots and alias identity.
+  Returned and nested closures retain owned captures after scope/frame exit;
+  closure-bearing functions use the VM when the experimental JIT cannot handle them.
+
 ### Added
 
 - Versioned, producer-neutral workflow-control JSON Schemas for evidence,
@@ -15,6 +22,14 @@ This file records user-visible changes to Kujo. It follows
 - POSIX `sync_directory_beneath(root, relative_directory)` preview durability barrier, capability-gated and descriptor-confined below a trusted root. Sync failures do not imply preceding publications were rolled back.
 
 ### Fixed
+
+- Routed HTTP server shutdown uses a bounded loopback wakeup for wildcard
+  listeners, avoiding a macOS connection timeout during teardown.
+
+- Closures retain the active lexical binding when a later block reuses its name.
+  Nested named functions use lexical locals instead of leaking into globals.
+  Returned closures also retain function-local imports, including import-all
+  exports and module namespaces through intermediate closures.
 
 - Declared and documented Rust 1.89 as the source-build MSRV, added an MSRV CI
   check, made the REPL banner use the crate version, and corrected upgrade

@@ -13,6 +13,19 @@ pub enum BytecodeBindingKind {
     Const,
 }
 
+/// Definition-site source of a v1 snapshot capture. Slots identify bindings,
+/// never the last occurrence of a name in a completed function.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CaptureSource {
+    Local(usize),
+    Upvalue(usize),
+    /// Compatibility for runtime-created named bindings (bare assignments,
+    /// destructuring and legacy receiver fields). Globals are not captured.
+    Named(String),
+    /// A lexically scoped script binding, snapshotted before its scope exits.
+    Environment(String, BytecodeBindingKind),
+}
+
 /// Bytecode instruction opcodes for the Kujo VM
 /// Stack-based virtual machine with separate value and call stacks
 #[derive(Debug, Clone, PartialEq)]
@@ -26,6 +39,10 @@ pub enum OpCode {
     /// Load a variable value onto the stack
     /// Operand: variable name
     LoadVar(String),
+
+    /// Read/write an explicitly resolved, frame-owned snapshot cell.
+    LoadCapture(usize),
+    StoreCapture(usize),
 
     /// Load a local variable value onto the stack
     /// Operand: local slot index
@@ -446,6 +463,12 @@ pub struct BytecodeChunk {
     /// Upvalue names for closures (variables captured from outer scope)
     pub upvalues: Vec<String>,
 
+    /// Explicit sources for compiler-produced captures; None supports legacy chunks.
+    pub capture_sources: Option<Vec<CaptureSource>>,
+
+    /// Nested named function self-binding, installed only for an active call.
+    pub lexical_self: Option<String>,
+
     /// Whether this is a generator function
     pub is_generator: bool,
 
@@ -467,6 +490,8 @@ impl BytecodeChunk {
             local_count: 0,
             exception_handlers: Vec::new(),
             upvalues: Vec::new(),
+            capture_sources: None,
+            lexical_self: None,
             is_generator: false,
             is_async: false,
         }

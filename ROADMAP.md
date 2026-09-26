@@ -82,7 +82,9 @@ release promises.
 Near-term language work should close known runtime gaps before adding broad new
 syntax. The explicit candidates from the v1 scope are:
 
-- fuller VM closure and generator state handling;
+- fuller generator state handling (VM lexical captures now use explicit indexed
+  resolution while preserving v1 snapshots; see the
+  [implementation evidence](docs/CLOSURE_UPVALUE_IMPLEMENTATION.md));
 - clearer spawn behavior and async parity;
 - better optional type inference for destructuring, imports, struct fields,
   promises, and callable values;
