@@ -113,7 +113,7 @@ fn generator_can_await_an_ordinary_async_call() {
 
 #[test]
 fn cancellation_releases_execution_capacity_after_language_body_exits() {
-    both("shared_set(\"started\", 0) func work() { shared_add_int(\"started\", 1) loop {} } mut i := 0 while i < 40 { let h := spawn_task(work) while shared_get(\"started\") <= i {} cancel_task(h) try { await await_task(h) } except err {} i += 1 } print(shared_get(\"started\") == 40)", false);
+    both("shared_set(\"started\", 0) func work() { shared_add_int(\"started\", 1) loop {} } mut i := 0 while i < 40 { let h := spawn_task(work) while (shared_get(\"started\") <= i) {} cancel_task(h) try { await await_task(h) } except err {} i += 1 } print(shared_get(\"started\") == 40)", false);
 }
 
 #[test]

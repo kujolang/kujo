@@ -67,3 +67,9 @@ fn completed_task_cancellation_does_not_replace_its_result() {
 fn anonymous_async_functions_return_promises() {
     assert_both("let f := async func() { return 42 } let p := f() let is_promise := type(p) == \"promise\" let value := await p let ok := is_promise && value == 42");
 }
+
+#[test]
+fn lexical_capture_keeps_transitive_global_function_dependencies() {
+    assert_both("let base := 40 func helper() { return base } func factory() { let base := 100 return func() { return helper() + 2 } } let f := factory() let ok := f() == 42");
+    assert_both("func recur(n) { if n == 0 { return 42 } return recur(n - 1) } let helpers := [recur] func factory() { return func() { return helpers[0](3) } } let f := factory() let ok := f() == 42");
+}

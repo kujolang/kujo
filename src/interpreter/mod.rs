@@ -4282,7 +4282,7 @@ impl Interpreter {
                     Some(Arc::new(Mutex::new(if *is_generator {
                         self.env.generator_environment(true)
                     } else {
-                        self.env.clone()
+                        self.env.capture_for_callable(params, body, Some(name))
                     })))
                 } else {
                     None
@@ -5022,13 +5022,17 @@ impl Interpreter {
                     Value::AsyncFunction(
                         params.clone(),
                         LeakyFunctionBody::new(body.clone()),
-                        Some(Arc::new(Mutex::new(self.env.clone()))),
+                        Some(Arc::new(Mutex::new(
+                            self.env.capture_for_callable(params, body, None),
+                        ))),
                     )
                 } else {
                     Value::Function(
                         params.clone(),
                         LeakyFunctionBody::new(body.clone()),
-                        Some(Arc::new(Mutex::new(self.env.clone()))),
+                        Some(Arc::new(Mutex::new(
+                            self.env.capture_for_callable(params, body, None),
+                        ))),
                     )
                 }
             }

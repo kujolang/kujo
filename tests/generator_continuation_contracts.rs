@@ -252,3 +252,27 @@ fn async_generators_reject_instead_of_selecting_an_ambiguous_call_kind() {
         matches!(interpreter.return_value, Some(Value::Error(ref e)) if e.contains("Async generators are not supported"))
     );
 }
+
+#[test]
+fn interpreter_generator_closure_does_not_retain_unreferenced_generator_root() {
+    for body in [
+        "func local() { return 1 } yield local()",
+        "mut n := 1 func local() { n += 1 return n } yield local()",
+    ] {
+        let source = format!(
+            "func* numbers() {{ {body} }} let instance := numbers() for n in instance {{ break }}"
+        );
+        let mut parser = Parser::new(tokenize(&source).unwrap());
+        let parsed = parser.parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty());
+        let mut interpreter = Interpreter::new();
+        interpreter.eval_stmts(&parsed.stmts);
+        assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+        let weak = match interpreter.env.get("instance").unwrap() {
+            Value::Generator { state, .. } => Arc::downgrade(&state),
+            other => panic!("{other:?}"),
+        };
+        drop(interpreter);
+        assert_eq!(weak.strong_count(), 0, "unreferenced root retained: {body}");
+    }
+}

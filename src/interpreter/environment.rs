@@ -109,6 +109,115 @@ impl Environment {
         }
     }
 
+    /// Snapshot lexical free bindings, retaining the original scope/kind layout.
+    /// Top-level function values also need their global dependencies because
+    /// they execute against this snapshot when called by the closure.
+    pub(crate) fn capture_for_callable(
+        &self,
+        params: &[String],
+        body: &[crate::ast::Stmt],
+        lexical_self: Option<&str>,
+    ) -> Self {
+        let names = self
+            .scopes
+            .iter()
+            .flat_map(|scope| scope.keys())
+            .cloned()
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .filter(|name| !params.contains(name) && lexical_self != Some(name.as_str()));
+        let Ok(free) = crate::compiler::Compiler::spawn_free_bindings(body, names) else {
+            // Preserve interpreter-only syntax when the bytecode resolver cannot
+            // describe it; do not reject an otherwise valid AST callable.
+            return self.clone();
+        };
+        let mut selected = vec![HashSet::new(); self.scopes.len()];
+        let mut visited_containers = HashSet::new();
+        let mut pending = Vec::new();
+        for name in free {
+            if let Some(index) = self.scopes.iter().rposition(|scope| scope.contains_key(&name)) {
+                if selected[index].insert(name.clone()) {
+                    pending.push(self.scopes[index][&name].clone());
+                }
+            }
+        }
+        while let Some(value) = pending.pop() {
+            match value {
+                Value::Function(params, body, None)
+                | Value::AsyncFunction(params, body, None)
+                | Value::GeneratorDef(params, body, None) => {
+                    let names =
+                        self.scopes[0].keys().filter(|name| !params.contains(name)).cloned();
+                    let Ok(free) =
+                        crate::compiler::Compiler::spawn_free_bindings(&body.get(), names)
+                    else {
+                        return self.clone();
+                    };
+                    for name in free {
+                        if let Some(value) = self.scopes[0].get(&name) {
+                            if selected[0].insert(name) {
+                                pending.push(value.clone());
+                            }
+                        }
+                    }
+                }
+                Value::Array(values) | Value::DenseIntDict(values) => {
+                    if visited_containers.insert((0, std::sync::Arc::as_ptr(&values) as usize)) {
+                        pending.extend(values.iter().cloned());
+                    }
+                }
+                Value::FixedDict { values, .. } | Value::Set(values) | Value::Stack(values) => {
+                    pending.extend(values)
+                }
+                Value::Queue(values) => pending.extend(values),
+                Value::IntDict(values) => {
+                    if visited_containers.insert((1, std::sync::Arc::as_ptr(&values) as usize)) {
+                        pending.extend(values.values().cloned());
+                    }
+                }
+                Value::StructDef { methods, .. } => pending.extend(methods.into_values()),
+                Value::Dict(values) => {
+                    if visited_containers.insert((2, std::sync::Arc::as_ptr(&values) as usize)) {
+                        pending.extend(values.values().cloned());
+                    }
+                }
+                Value::Struct { fields, .. } | Value::Tagged { fields, .. } => {
+                    pending.extend(fields.into_values())
+                }
+                Value::Result { value, .. } | Value::Option { value, .. } => pending.push(*value),
+                _ => {}
+            }
+        }
+        Self {
+            scopes: self
+                .scopes
+                .iter()
+                .enumerate()
+                .map(|(index, scope)| {
+                    scope
+                        .iter()
+                        .filter(|(name, _)| selected[index].contains(*name))
+                        .map(|(name, value)| (name.clone(), value.clone()))
+                        .collect()
+                })
+                .collect(),
+            binding_kinds: self
+                .binding_kinds
+                .iter()
+                .enumerate()
+                .map(|(index, scope)| {
+                    scope
+                        .iter()
+                        .filter(|(name, _)| selected[index].contains(*name))
+                        .map(|(name, kind)| (name.clone(), *kind))
+                        .collect()
+                })
+                .collect(),
+            global_owner: self.global_owner.clone(),
+            capture_writes: None,
+        }
+    }
+
     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
         let mut visible = HashMap::new();
         for (index, scope) in self.scopes.iter().enumerate() {
