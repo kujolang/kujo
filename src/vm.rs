@@ -9008,6 +9008,10 @@ mod tests {
         let chunk = compiler.compile(&ast)?;
 
         let mut vm = VM::new();
+        // This helper returns the top-level value and has no scheduler driver.
+        // Cooperative scheduling is tested by language_task_contracts and CLI
+        // lifecycle contracts; await here must finish before returning a value.
+        vm.cooperative_suspend_enabled = false;
         vm.execute(chunk)
     }
 
