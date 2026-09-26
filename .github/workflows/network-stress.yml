@@ -23,7 +23,6 @@ jobs:
     env:
       CARGO_BUILD_JOBS: '2'
       CARGO_INCREMENTAL: '0'
-      KUJO_NETWORK_STRESS_EVIDENCE: ${{ runner.temp }}/kujo-network-stress
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -32,6 +31,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       - name: Verify 50 consecutive host and Docgen suites
+        env:
+          KUJO_NETWORK_STRESS_EVIDENCE: ${{ runner.temp }}/kujo-network-stress
         run: bash scripts/network_stress_gate.sh 50
       - name: Preserve all stress evidence, including failures
         if: always()
