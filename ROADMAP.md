@@ -27,6 +27,11 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
 ## Recently completed
 
+- Followed up the Phase-B interpreter fixture drift: corrected static-checker
+  binding/signature handling, ArgParser dispatch, VM relational overloads and
+  interpreter error-frame preservation. Exact engine-specific diagnostic
+  snapshots retain real warnings. See [the follow-up record](docs/RUNTIME_COMPATIBILITY_FOLLOWUP.md).
+
 - Completed explicit VM lexical captures under the existing per-closure snapshot
   contract, including nested/returned lifetime, captured mutation, mutability,
   imports and callback regressions. This does not introduce shared sibling cells

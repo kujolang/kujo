@@ -1,5 +1,9 @@
 # Runtime concurrency completion record
 
+Follow-up: the user subsequently requested fixing the retained interpreter,
+Docgen and provider-validation items. See [the follow-up record](RUNTIME_COMPATIBILITY_FOLLOWUP.md)
+for the new evidence. The validation table below records the earlier Phase-B delivery.
+
 Status: Phase-B implementation verified; full release gate **PASS**. Live-provider
 certification and complete legacy interpreter parity are not claimed. The
 intermittent Docgen timeout below remains unresolved despite final passing runs.
