@@ -808,23 +808,8 @@ pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Va
                 Ok(Value::Bool(true))
             }
             "process_usage" => {
-                #[cfg(unix)]
-                {
-                    let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
-                    if unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut usage) } != 0 {
-                        return Err(std::io::Error::last_os_error().to_string());
-                    }
-                    let cpu = usage.ru_utime.tv_sec as f64
-                        + usage.ru_stime.tv_sec as f64
-                        + (usage.ru_utime.tv_usec + usage.ru_stime.tv_usec) as f64 / 1_000_000.0;
-                    let rss =
-                        usage.ru_maxrss as u64 * if cfg!(target_os = "macos") { 1 } else { 1024 };
-                    decoded(json!({"cpu_seconds":cpu,"peak_rss_bytes":rss}))
-                }
-                #[cfg(not(unix))]
-                {
-                    decoded(json!({"cpu_seconds":null,"peak_rss_bytes":null}))
-                }
+                let (cpu, rss) = process_usage_snapshot()?;
+                decoded(json!({"cpu_seconds":cpu,"peak_rss_bytes":rss}))
             }
             "html_tokens" => html(text(&args[0])?, size(&args[1], 1_000_000)? as usize),
             "url_normalize" => {
@@ -1253,5 +1238,28 @@ mod url_compatibility_tests {
                 expected
             );
         }
+    }
+}
+
+/// Shared host measurement mechanism; callers choose capability admission.
+/// Unsupported platforms return unknown, never fabricated zero usage.
+pub(crate) fn process_usage_snapshot() -> Result<(Option<f64>, Option<u64>), String> {
+    #[cfg(unix)]
+    {
+        // SAFETY: rusage is a C numeric struct; getrusage writes to a valid,
+        // exclusively borrowed stack object. No pointers escape this call.
+        let mut usage: libc::rusage = unsafe { std::mem::zeroed() };
+        if unsafe { libc::getrusage(libc::RUSAGE_SELF, &mut usage) } != 0 {
+            return Err(std::io::Error::last_os_error().to_string());
+        }
+        let cpu = usage.ru_utime.tv_sec as f64
+            + usage.ru_stime.tv_sec as f64
+            + (usage.ru_utime.tv_usec + usage.ru_stime.tv_usec) as f64 / 1_000_000.0;
+        let rss = usage.ru_maxrss as u64 * if cfg!(target_os = "macos") { 1 } else { 1024 };
+        Ok((Some(cpu), Some(rss)))
+    }
+    #[cfg(not(unix))]
+    {
+        Ok((None, None))
     }
 }

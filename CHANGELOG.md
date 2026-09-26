@@ -4,6 +4,16 @@ This file records user-visible changes to Kujo. It follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Add opt-in `kujo run --measurements PATH` production VM measurements through
+  the existing profiler, using bounded numeric counters and the additive
+  `kujo.runtime-measurements/v1` summary contract. Output uses a new file without
+  changing program stdout; includes worker/promise/generator/capture/JIT boundary
+  measurements, not complete heap accounting or provider costs.
+- Reconcile release artifacts versus source-runtime pins and separate maintenance
+  from the proposed agentic architecture waves in the roadmap.
+
 ## [Unreleased]
 
 ### Changed

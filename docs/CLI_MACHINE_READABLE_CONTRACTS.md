@@ -305,3 +305,17 @@ contracts: `error_no_stack_test`, `test_undefined_var`, and
 also preserves explicit annotation and undefined-function warnings;
 `test_http_headers` preserves the static warning for its intentionally invalid
 header-key argument. Runtime output, error text, and call stacks remain exact.
+
+## Runtime measurement artifacts
+
+`kujo run --measurements new-report.json program.kujo` uses the normal VM and
+scheduler path and writes `kujo.runtime-measurements/v1` separately from stdout.
+See [the measurement contract](RUNTIME_MEASUREMENTS.md) and
+[`schemas/runtime-measurements-v1.schema.json`](../schemas/runtime-measurements-v1.schema.json).
+The flag conflicts with `--interpreter`; it does not enable JIT or add capabilities.
+The destination must not exist (including symlinks). Creation/write failure exits
+5; argument conflict exits 2. Parse failures create no artifact. Runtime failures
+retain exit 4 and existing diagnostics, and record `runtime_error` when export
+succeeds. Compile errors and runner panics record their distinct outcomes.
+Abrupt process termination need not produce a valid artifact. Never accept an
+empty/truncated report as completion or continuation authority.

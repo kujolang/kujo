@@ -1394,7 +1394,17 @@ pub fn get_args() -> Vec<String> {
         return args_str.split('\x1f').map(String::from).collect();
     }
 
-    let all_args: Vec<String> = env::args().collect();
+    // This host-only option must not become an argument visible to the program.
+    // Explicit trailing program arguments already returned above.
+    let mut raw_args = env::args();
+    let mut all_args = Vec::new();
+    while let Some(argument) = raw_args.next() {
+        if argument == "--measurements" {
+            raw_args.next();
+        } else if !argument.starts_with("--measurements=") {
+            all_args.push(argument);
+        }
+    }
 
     // Filter out the kujo executable, subcommand, and script file
     // Example: ["kujo", "run", "script.kujo", "arg1", "arg2"] -> ["arg1", "arg2"]

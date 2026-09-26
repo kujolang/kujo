@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kujolang.ai/schemas/runtime-measurements/v1.json",
+  "title": "Kujo runtime measurements v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "scope",
+    "runtime",
+    "runtime_version",
+    "outcome",
+    "wall_ns",
+    "counters",
+    "snapshot_consistency",
+    "waited_for_detached",
+    "unsupported",
+    "cpu_seconds",
+    "process_peak_rss_bytes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "kujo.runtime-measurements/v1"
+    },
+    "scope": {
+      "const": "process"
+    },
+    "runtime": {
+      "const": "vm"
+    },
+    "runtime_version": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "outcome": {
+      "enum": [
+        "success",
+        "runtime_error",
+        "compile_error",
+        "internal_error"
+      ]
+    },
+    "wall_ns": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "counters": {
+      "type": "object",
+      "maxProperties": 64,
+      "required": [
+        "vm_entries",
+        "vm_inclusive_wall_ns",
+        "vm_call_opcodes",
+        "vm_return_opcodes",
+        "vm_native_call_opcodes",
+        "scheduler_rounds",
+        "vm_closures_created",
+        "vm_capture_cells_created",
+        "vm_capture_value_shallow_bytes",
+        "vm_generator_states_created",
+        "vm_generator_state_drops",
+        "vm_generator_state_shallow_bytes",
+        "vm_generator_resume_attempts",
+        "tasks_admitted",
+        "tasks_admission_rejected",
+        "tasks_started",
+        "task_bodies_exited",
+        "task_completions_published",
+        "task_cancellations_published",
+        "task_queue_wall_ns",
+        "detached_tasks_observed",
+        "promise_polls",
+        "promise_pending_polls",
+        "promise_ready_polls",
+        "jit_compile_entries",
+        "jit_compile_inclusive_wall_ns",
+        "jit_cache_lookup_hits",
+        "jit_cache_lookup_misses",
+        "jit_type_guard_passes",
+        "jit_type_guard_failures"
+      ],
+      "properties": {
+        "vm_entries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_inclusive_wall_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_call_opcodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_return_opcodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_native_call_opcodes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "scheduler_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_closures_created": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_capture_cells_created": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_capture_value_shallow_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_generator_states_created": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_generator_state_drops": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_generator_state_shallow_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_generator_resume_attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "tasks_admitted": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "tasks_admission_rejected": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "tasks_started": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "task_bodies_exited": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "task_completions_published": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "task_cancellations_published": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "task_queue_wall_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "detached_tasks_observed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "promise_polls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "promise_pending_polls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "promise_ready_polls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "jit_compile_entries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "jit_compile_inclusive_wall_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "jit_cache_lookup_hits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "jit_cache_lookup_misses": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "jit_type_guard_passes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "jit_type_guard_failures": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        }
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 18446744073709551615
+      }
+    },
+    "snapshot_consistency": {
+      "const": "independent_counters"
+    },
+    "waited_for_detached": {
+      "const": false
+    },
+    "unsupported": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      }
+    },
+    "cpu_seconds": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "process_peak_rss_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    }
+  },
+  "maxProperties": 32
+}

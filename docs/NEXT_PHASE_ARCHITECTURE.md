@@ -149,3 +149,13 @@ The npm package's `metadata.json` identifies source `cc2d7dbb59a8dc05f00d629e100
 matching the peeled tag and signed release-build record (Actions run 35787043614).
 This session compared macOS x64 bytes; the other four platform clean-install
 claims remain the existing release CI evidence, not fresh local execution.
+
+A direct CLI probe also verified the distinction: npm's executable exits 4 with
+`Undefined variable: sync_directory_beneath`; the immutable main baseline built
+from `cd6d2ea` executes the same confined-directory sync and prints `ok`.
+
+Implementation audit refinement: `process_usage` already supplies Unix process CPU
+and peak RSS through `web_data.rs`. Its host read is shared with the profiler at
+session boundaries; no second resource-usage implementation or per-event syscall
+is needed. Non-Unix/unavailable readings remain null. The original plan's CPU
+unsupported assumption is superseded by this source finding.

@@ -603,3 +603,7 @@ mod tests {
         assert_eq!(output.lines().count(), 2);
     }
 }
+
+// Production measurements extend this profiler without collecting user labels.
+#[path = "runtime_measurements.rs"]
+pub mod runtime;

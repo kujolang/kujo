@@ -3,6 +3,7 @@
 //! The unpolled anchor retains completion even when a waiter times out or is
 //! dropped. No receiver is replaced by a closed dummy channel during an await.
 use super::Value;
+use crate::benchmarks::profiler::runtime::{self as measurement, Metric};
 use futures::future::Shared;
 use futures::FutureExt;
 use std::future::Future;
@@ -34,12 +35,18 @@ impl Future for PromiseReceiver {
     type Output = Completion;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        measurement::add(Metric::PromisePolls, 1);
         let this = self.get_mut();
         if let Some(result) = this.anchor.peek() {
+            measurement::add(Metric::PromiseReady, 1);
             return Poll::Ready(result.clone());
         }
         let waiter = this.waiter.get_or_insert_with(|| this.anchor.clone());
         let result = Pin::new(waiter).poll(cx);
+        measurement::add(
+            if result.is_ready() { Metric::PromiseReady } else { Metric::PromisePending },
+            1,
+        );
         if result.is_ready() {
             this.waiter = None;
         }

@@ -1,3 +1,4 @@
+use crate::benchmarks::profiler::runtime::{self as measurement, Metric};
 // File: src/vm.rs
 //
 // Virtual Machine for executing Kujo bytecode.
@@ -1308,6 +1309,7 @@ impl VM {
     /// Each pending context is resumed once in deterministic ID order.
     /// Completed contexts are removed automatically.
     pub fn run_scheduler_round(&mut self) -> Result<VmSchedulerRoundResult, String> {
+        measurement::add(Metric::SchedulerRounds, 1);
         let context_ids = self.list_execution_context_ids();
         let mut completed_contexts = 0;
 
@@ -1423,6 +1425,8 @@ impl VM {
 
     /// Execute a bytecode chunk
     pub fn execute(&mut self, chunk: BytecodeChunk) -> Result<Value, String> {
+        measurement::add(Metric::VmEntries, 1);
+        let _measurement = measurement::Span::new(Metric::VmWallNs);
         let _hashmap_profile_guard = HashMapProfileGuard::new();
         if self.skip_execute_reset_once {
             self.skip_execute_reset_once = false;
@@ -2834,6 +2838,7 @@ impl VM {
 
                 // Function operations
                 OpCode::Call(arg_count) => {
+                    measurement::add(Metric::Calls, 1);
                     // Create call site ID for inline cache lookup
                     // This identifies where in the bytecode this call occurs
                     let call_site_id = CallSiteId::new(self.chunk.name.as_deref(), self.ip);
@@ -3379,13 +3384,16 @@ impl VM {
                 }
 
                 OpCode::Return if self.generator_mode && self.call_frames.len() == 1 => {
+                    measurement::add(Metric::Returns, 1);
                     self.stack.pop().ok_or("Stack underflow in generator return")?;
                     return Ok(Value::Null);
                 }
                 OpCode::ReturnNone if self.generator_mode && self.call_frames.len() == 1 => {
+                    measurement::add(Metric::Returns, 1);
                     return Ok(Value::Null);
                 }
                 OpCode::Return => {
+                    measurement::add(Metric::Returns, 1);
                     let return_value = self.stack.pop().ok_or("Stack underflow in return")?;
 
                     if let Some(frame) = self.call_frames.pop() {
@@ -3414,6 +3422,7 @@ impl VM {
                 }
 
                 OpCode::ReturnNone => {
+                    measurement::add(Metric::Returns, 1);
                     if let Some(frame) = self.call_frames.pop() {
                         self.function_call_stack.pop();
                         // Decrement recursion depth
@@ -3614,6 +3623,12 @@ impl VM {
                             }
                         }
 
+                        measurement::add(Metric::Closures, 1);
+                        measurement::add(Metric::CaptureCells, captured.len() as u64);
+                        measurement::add(
+                            Metric::CaptureShallowBytes,
+                            captured.len().saturating_mul(std::mem::size_of::<Value>()) as u64,
+                        );
                         // Create a closure value with captured variables
                         let value = Value::BytecodeFunction {
                             chunk: (**chunk).clone(),
@@ -5664,6 +5679,7 @@ impl VM {
 
                 // Native function calls
                 OpCode::CallNative(name, arg_count) => {
+                    measurement::add(Metric::NativeCalls, 1);
                     // Collect arguments from stack
                     let mut args = Vec::new();
                     for _ in 0..arg_count {
@@ -6276,6 +6292,11 @@ impl VM {
             };
 
             if chunk.is_generator {
+                measurement::add(Metric::Generators, 1);
+                measurement::add(
+                    Metric::GeneratorShallowBytes,
+                    std::mem::size_of::<GeneratorState>() as u64,
+                );
                 let state = GeneratorState {
                     continuation: Some(GeneratorContinuation {
                         ip: 0,
@@ -8247,6 +8268,7 @@ impl VM {
                         }
 
                         OpCode::Return => {
+                            measurement::add(Metric::Returns, 1);
                             let return_value =
                                 self.stack.pop().ok_or("Stack underflow in return")?;
 
@@ -8269,6 +8291,7 @@ impl VM {
                         }
 
                         OpCode::ReturnNone => {
+                            measurement::add(Metric::Returns, 1);
                             if let Some(frame) = self.call_frames.pop() {
                                 self.function_call_stack.pop();
                                 self.ip = saved_ip;
@@ -8281,6 +8304,7 @@ impl VM {
                         }
 
                         OpCode::Call(arg_count) => {
+                            measurement::add(Metric::Calls, 1);
                             // Nested function call from within JIT-called function
                             // We can handle this recursively
                             let func = self.stack.pop().ok_or("Stack underflow")?;
@@ -8296,6 +8320,7 @@ impl VM {
                         }
 
                         OpCode::CallNative(name, arg_count) => {
+                            measurement::add(Metric::NativeCalls, 1);
                             let mut args = Vec::new();
                             for _ in 0..arg_count {
                                 args.push(self.stack.pop().ok_or("Stack underflow")?);
@@ -8894,6 +8919,7 @@ impl VM {
     /// Resume through the ordinary dispatcher, restoring every caller-owned
     /// execution field on success, exhaustion and language error.
     pub fn generator_next(&mut self, generator: Value) -> Result<Value, String> {
+        measurement::add(Metric::GeneratorResumes, 1);
         let Value::BytecodeGenerator { state } = generator else {
             return Err("generator_next() requires a BytecodeGenerator".to_owned());
         };
@@ -10416,5 +10442,11 @@ mod tests {
                 }
             }
         }
+    }
+}
+
+impl Drop for GeneratorState {
+    fn drop(&mut self) {
+        measurement::add(Metric::GeneratorDrops, 1);
     }
 }

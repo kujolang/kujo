@@ -189,6 +189,10 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         jit: bool,
 
+        /// Write bounded VM measurements to a new JSON file (never overwrites)
+        #[arg(long, conflicts_with = "interpreter")]
+        measurements: Option<PathBuf>,
+
         /// Cooperative scheduler timeout in milliseconds (overrides env/default)
         #[arg(long)]
         scheduler_timeout_ms: Option<u64>,
@@ -1300,6 +1304,7 @@ async fn async_main() {
             interpreter,
             jit,
             scheduler_timeout_ms,
+            measurements,
             scheduler_no_timeout,
             json_runtime_diagnostics,
             capabilities,
@@ -1340,6 +1345,23 @@ async fn async_main() {
             }
 
             let (code, filename, stmts) = parse_kujo_program(&file);
+            let mut measurement_output = measurements.map(|path| {
+                let mut options = fs::OpenOptions::new();
+                options.write(true).create_new(true);
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::OpenOptionsExt;
+                    options.mode(0o600);
+                }
+                let output = options.open(path).unwrap_or_else(|error| {
+                    report_cli_error_and_exit(
+                        format!("Cannot create measurements: {error}"),
+                        CliExitCode::IoError,
+                    )
+                });
+                benchmarks::profiler::runtime::start().expect("one CLI run per process");
+                output
+            });
 
             // Debug: print AST for inspection
             if !interpreter && std::env::var("DEBUG_AST").is_ok() {
@@ -1429,6 +1451,12 @@ async fn async_main() {
                             })
                             .join();
 
+                        let measurement_outcome = match &result {
+                            Ok((Ok(_), _)) => "success",
+                            Ok((Err(_), _)) => "runtime_error",
+                            Err(_) => "internal_error",
+                        };
+                        finish_runtime_measurements(&mut measurement_output, measurement_outcome);
                         match result {
                             Ok((Ok(_result), _)) => {
                                 // Success - program executed cooperatively to completion
@@ -1465,6 +1493,7 @@ async fn async_main() {
                         }
                     }
                     Err(e) => {
+                        finish_runtime_measurements(&mut measurement_output, "compile_error");
                         let diagnostic = errors::Diagnostic::new(
                             errors::DIAGNOSTIC_CODE_VM,
                             errors::DiagnosticSeverity::Error,
@@ -3119,5 +3148,22 @@ mod tests {
         assert!(reserved_external_alias_error("upgrade").is_some());
         assert!(reserved_external_alias_error("kujo").is_some());
         assert!(reserved_external_alias_error("acme-tools").is_none());
+    }
+}
+
+fn finish_runtime_measurements(output: &mut Option<fs::File>, outcome: &str) {
+    use std::io::Write;
+    if let Some(mut output) = output.take() {
+        let result = (|| -> std::io::Result<()> {
+            serde_json::to_writer(&mut output, &benchmarks::profiler::runtime::snapshot(outcome))?;
+            output.write_all(b"\n")?;
+            output.sync_all()
+        })();
+        if let Err(error) = result {
+            report_cli_error_and_exit(
+                format!("Cannot write measurements: {error}"),
+                CliExitCode::IoError,
+            );
+        }
     }
 }

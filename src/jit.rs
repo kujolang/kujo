@@ -3,6 +3,7 @@
 // JIT Compilation module for Kujo bytecode using Cranelift.
 // Provides just-in-time compilation of hot bytecode functions to native machine code.
 
+use crate::benchmarks::profiler::runtime::{self as measurement, Metric};
 use crate::bytecode::{BytecodeChunk, Constant, OpCode};
 use crate::interpreter::{
     DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap, IntDictMap, Value,
@@ -1927,7 +1928,7 @@ pub unsafe extern "C" fn jit_store_variable_float(ctx: *mut VMContext, name_hash
 //   and invalid inputs are handled via sentinel returns/early exits without transferring ownership.
 pub unsafe extern "C" fn jit_check_type_int(ctx: *mut VMContext, name_hash: i64) -> i64 {
     if ctx.is_null() {
-        return 0;
+        return measurement::guard_result(0);
     }
 
     let ctx = &*ctx;
@@ -1937,17 +1938,17 @@ pub unsafe extern "C" fn jit_check_type_int(ctx: *mut VMContext, name_hash: i64)
         if let Some(n) = var_names.get(&(name_hash as u64)) {
             n.as_str()
         } else {
-            return 0;
+            return measurement::guard_result(0);
         }
     } else {
-        return 0;
+        return measurement::guard_result(0);
     };
 
     // Check locals first
     if !ctx.locals_ptr.is_null() {
         let locals = &*ctx.locals_ptr;
         if let Some(value) = locals.get(name) {
-            return if matches!(value, Value::Int(_)) { 1 } else { 0 };
+            return measurement::guard_result(if matches!(value, Value::Int(_)) { 1 } else { 0 });
         }
     }
 
@@ -1955,11 +1956,11 @@ pub unsafe extern "C" fn jit_check_type_int(ctx: *mut VMContext, name_hash: i64)
     if !ctx.globals_ptr.is_null() {
         let globals = &*ctx.globals_ptr;
         if let Some(value) = globals.get(name) {
-            return if matches!(value, Value::Int(_)) { 1 } else { 0 };
+            return measurement::guard_result(if matches!(value, Value::Int(_)) { 1 } else { 0 });
         }
     }
 
-    0
+    measurement::guard_result(0)
 }
 
 /// Check if a variable is a Float (called from JIT code for guards)
@@ -1973,7 +1974,7 @@ pub unsafe extern "C" fn jit_check_type_int(ctx: *mut VMContext, name_hash: i64)
 //   and invalid inputs are handled via sentinel returns/early exits without transferring ownership.
 pub unsafe extern "C" fn jit_check_type_float(ctx: *mut VMContext, name_hash: i64) -> i64 {
     if ctx.is_null() {
-        return 0;
+        return measurement::guard_result(0);
     }
 
     let ctx = &*ctx;
@@ -1983,17 +1984,17 @@ pub unsafe extern "C" fn jit_check_type_float(ctx: *mut VMContext, name_hash: i6
         if let Some(n) = var_names.get(&(name_hash as u64)) {
             n.as_str()
         } else {
-            return 0;
+            return measurement::guard_result(0);
         }
     } else {
-        return 0;
+        return measurement::guard_result(0);
     };
 
     // Check locals first
     if !ctx.locals_ptr.is_null() {
         let locals = &*ctx.locals_ptr;
         if let Some(value) = locals.get(name) {
-            return if matches!(value, Value::Float(_)) { 1 } else { 0 };
+            return measurement::guard_result(if matches!(value, Value::Float(_)) { 1 } else { 0 });
         }
     }
 
@@ -2001,11 +2002,11 @@ pub unsafe extern "C" fn jit_check_type_float(ctx: *mut VMContext, name_hash: i6
     if !ctx.globals_ptr.is_null() {
         let globals = &*ctx.globals_ptr;
         if let Some(value) = globals.get(name) {
-            return if matches!(value, Value::Float(_)) { 1 } else { 0 };
+            return measurement::guard_result(if matches!(value, Value::Float(_)) { 1 } else { 0 });
         }
     }
 
-    0
+    measurement::guard_result(0)
 }
 
 /// Runtime helper: Push an integer value to the VM stack as Value::Int
@@ -5891,7 +5892,12 @@ impl JitCompiler {
     /// Get compiled function from cache
     #[allow(dead_code)] // Will be used when executing compiled code
     pub fn get_compiled(&self, offset: usize) -> Option<CompiledFn> {
-        self.compiled_cache.get(&offset).copied()
+        let result = self.compiled_cache.get(&offset).copied();
+        measurement::add(
+            if result.is_some() { Metric::JitCacheHits } else { Metric::JitCacheMisses },
+            1,
+        );
+        result
     }
 
     /// Compile a bytecode chunk to native code
@@ -5917,6 +5923,8 @@ impl JitCompiler {
         int_dict_slots: Option<std::collections::HashSet<usize>>,
         loop_end: Option<usize>,
     ) -> Result<CompiledFn, String> {
+        measurement::add(Metric::JitCompileEntries, 1);
+        let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Clear previous context
         self.ctx.clear();
 
@@ -6602,6 +6610,8 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFn, String> {
+        measurement::add(Metric::JitCompileEntries, 1);
+        let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // 1. Check if function is compilable
         if !self.can_compile_function(chunk) {
             return Err(format!("Function '{}' contains unsupported opcodes", name));
@@ -7242,6 +7252,8 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFnWithArg, String> {
+        measurement::add(Metric::JitCompileEntries, 1);
+        let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Validate: must have exactly one parameter
         if chunk.params.len() != 1 {
             return Err(format!(
@@ -7527,6 +7539,8 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFn, String> {
+        measurement::add(Metric::JitCompileEntries, 1);
+        let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Check if script is compilable (all opcodes supported)
         for instr in &chunk.instructions {
             if !self.is_supported_opcode(instr, &chunk.constants) {
@@ -8027,7 +8041,12 @@ impl JitCompiler {
     /// Get compiled function info for a function name
     #[allow(dead_code)] // API for external tooling and debugging
     pub fn get_fn_info(&self, name: &str) -> Option<&CompiledFnInfo> {
-        self.compiled_fn_info.get(name)
+        let result = self.compiled_fn_info.get(name);
+        measurement::add(
+            if result.is_some() { Metric::JitCacheHits } else { Metric::JitCacheMisses },
+            1,
+        );
+        result
     }
 
     /// Check if a function can be JIT-compiled

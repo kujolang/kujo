@@ -1,5 +1,6 @@
 //! Bounded language-task admission on the existing Tokio blocking lane.
 use super::{AsyncRuntime, Environment, Interpreter, RuntimeCapabilityPolicy, Value};
+use crate::benchmarks::profiler::runtime::{self as measurement, Metric};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use tokio::sync::oneshot;
@@ -9,6 +10,7 @@ static ACTIVE_TASKS: AtomicUsize = AtomicUsize::new(0);
 struct Admission;
 impl Drop for Admission {
     fn drop(&mut self) {
+        measurement::add(Metric::TasksExited, 1);
         ACTIVE_TASKS.fetch_sub(1, Ordering::AcqRel);
     }
 }
@@ -22,6 +24,7 @@ pub struct TaskState {
 impl TaskState {
     fn complete(&self, result: Result<Value, String>) {
         if let Some(sender) = self.sender.lock().unwrap_or_else(|p| p.into_inner()).take() {
+            measurement::add(Metric::TasksCompleted, 1);
             let _ = sender.send(result);
         }
     }
@@ -33,6 +36,7 @@ impl TaskState {
         let Some(sender) = sender.take() else {
             return false;
         };
+        measurement::add(Metric::TasksCancelled, 1);
         self.cancelled.store(true, Ordering::Release);
         let _ =
             sender.send(Err("Task was cancelled; external effects may have occurred".to_owned()));
@@ -68,7 +72,12 @@ pub(crate) fn submit(
         .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
             (active < MAX_LANGUAGE_TASKS).then_some(active + 1)
         })
-        .map_err(|_| format!("Language task limit of {MAX_LANGUAGE_TASKS} reached"))?;
+        .map_err(|_| {
+            measurement::add(Metric::TasksRejected, 1);
+            format!("Language task limit of {MAX_LANGUAGE_TASKS} reached")
+        })?;
+    measurement::add(Metric::TasksAdmitted, 1);
+    let queued = measurement::clock();
     let admission = Admission;
     let (sender, receiver) = oneshot::channel();
     let state = Arc::new(TaskState {
@@ -85,6 +94,8 @@ pub(crate) fn submit(
     let worker_state = state.clone();
     let worker = AsyncRuntime::runtime().spawn_blocking(move || {
         let _admission = admission;
+        measurement::add(Metric::TasksStarted, 1);
+        measurement::elapsed(Metric::TaskQueueNs, queued);
         if worker_state.is_cancelled() {
             return;
         }
@@ -184,6 +195,7 @@ impl Interpreter {
 static DETACHED_FAILURES: AtomicUsize = AtomicUsize::new(0);
 const MAX_DETACHED_REPORTS: usize = 16;
 fn observe_detached(task: Arc<TaskState>) {
+    measurement::add(Metric::Detached, 1);
     AsyncRuntime::spawn_task(async move {
         let receiver = match &task.completion {
             Value::Promise { receiver, .. } => {

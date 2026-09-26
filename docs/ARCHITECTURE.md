@@ -171,3 +171,15 @@ Kujo `v1.5.0` is the current stable release.
 - `docs/STANDARD_LIBRARY.md`
 - `docs/NATIVE_API_SECURITY_POSTURE.md`
 - `docs/RELEASE_PROCESS.md`
+
+## 9. Production measurements and next architecture
+
+`run --measurements PATH` opts the normal VM process into the existing profiler's
+fixed-cardinality summary collector. It includes selected worker, promise,
+generator, capture and JIT boundaries without adding scheduler policy. See
+[RUNTIME_MEASUREMENTS.md](RUNTIME_MEASUREMENTS.md) for exact units, unsupported
+measurements and concurrency limitations. This is source-only until released.
+
+The [next-phase audit](NEXT_PHASE_ARCHITECTURE.md) separates runtime mechanisms
+from Dispatch durable control, Workcell preservation, Eval producers, RunLedger
+aggregation and future interoperability/context/graph design.
