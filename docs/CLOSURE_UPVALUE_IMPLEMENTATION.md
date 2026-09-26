@@ -1,5 +1,9 @@
 # Snapshot-compatible VM closure completion
 
+Integration follow-up: [wave-1 review](RUNTIME_HARDENING_WAVE_1_REVIEW.md) records
+the reconciled baseline, additional fixes and fresh verification. Results below
+remain the dated branch-local evidence.
+
 Evidence date: 2026-09-25 (local session date).
 
 ## Branch

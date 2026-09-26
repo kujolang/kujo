@@ -53,7 +53,7 @@ The following runtime-path implementation backlogs are explicitly deferred and n
 
 - `src/vm.rs`:
   - VM lexical capture completion is implemented under the v1 snapshot contract: definition-site descriptors, indexed capture access, transitive capture forwarding, mutability checks and owned capture lifetime. Separate closures keep independent snapshots; aliases of one closure share its cells. See the [implementation evidence and validation limits](CLOSURE_UPVALUE_IMPLEMENTATION.md). This closes the VM closure-capture mechanism deferral, not the separate interpreter recursion or generator restoration limitations.
-  - `GeneratorState` full restoration model remains deferred while current generator boundaries stay explicitly documented in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
+  - `GeneratorState` full restoration, async parity and spawn execution remain Phase-B work. Phase A is complete; start from the [integrated handoff](GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md) and preserve the snapshot contract. Current boundaries remain in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 - `src/compiler.rs`:
   - Dedicated VM `SpawnThread` opcode is deferred; current spawn lowering behavior remains explicit in compiler comments and roadmap-driven follow-up planning.
   - Enum and interpolated-string builder opcode optimizations are deferred as post-v1 performance/representation work (non-contract semantics).

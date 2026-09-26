@@ -19,7 +19,7 @@ fn architecture_doc_matches_current_runtime_posture() {
         "### 3.5 Package workflow and lockfiles",
         "kujo package-install --frozen",
         "Supports `--runtime dual|vm|interpreter`.",
-        "Top-level generator iteration (`func*` + `yield`) is intentionally divergent",
+        "Top-level generator creation and straight-line iteration work in covered cases.",
         "docs/VM_INTERPRETER_PARITY_MATRIX.md",
         "docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md",
     ] {
@@ -31,6 +31,7 @@ fn architecture_doc_matches_current_runtime_posture() {
         "Bytecode VM** (experimental, not yet default)",
         "Version**: v0.8.0",
         "v0.9.0 modularization in progress",
+        "VM currently returns deterministic error `Yield can only be used inside generator functions`",
     ] {
         assert!(
             !content.contains(stale),

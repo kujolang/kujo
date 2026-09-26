@@ -149,9 +149,14 @@ Runtime parity is tracked centrally in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
 Current explicit divergence examples include:
 
-- Top-level generator iteration (`func*` + `yield`) is intentionally divergent:
-  - interpreter path supports covered scenarios,
-  - VM currently returns deterministic error `Yield can only be used inside generator functions`.
+- Top-level generator creation and straight-line iteration work in covered cases.
+  Full continuation remains incomplete: the VM resume dispatcher omits ordinary
+  calls/handlers and truncates loops at their first yield; eager iteration also
+  limits laziness. Interpreter continuation and alias identity have separate gaps.
+- VM `spawn` currently discards its compiled body; interpreter spawn and native
+  task callables have different limitations. The nonnegative-counter parity probe
+  does not prove execution. See the [Phase-A characterization](GENERATOR_ASYNC_SPAWN_COMPLETION_PLAN.md)
+  and [Phase-B handoff](GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md).
 - Struct generator methods remain explicitly unsupported.
 
 ## 7. Release Posture

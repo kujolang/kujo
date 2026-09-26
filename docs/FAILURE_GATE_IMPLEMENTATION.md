@@ -1,5 +1,9 @@
 # Failure-gate implementation record
 
+Integration follow-up: [wave-1 review](RUNTIME_HARDENING_WAVE_1_REVIEW.md) records
+the reconciled baseline, additional fixes and fresh verification. Results below
+remain the dated branch-local evidence.
+
 Audit date: 2026-09-25. This record supersedes the current-state claims in the
 September 24 review plan, while retaining that plan as historical rationale.
 

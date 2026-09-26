@@ -1,6 +1,6 @@
 # Kujo Roadmap
 
-Updated: 2026-09-23
+Updated: 2026-09-26
 Stable release: [v1.5.0](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
 
 > Current crate version: `1.5.0` in [Cargo.toml](Cargo.toml)
@@ -27,12 +27,21 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
 ## Recently completed
 
+- Completed explicit VM lexical captures under the existing per-closure snapshot
+  contract, including nested/returned lifetime, captured mutation, mutability,
+  imports and callback regressions. This does not introduce shared sibling cells
+  or complete interpreter recursion and generator restoration.
+- Completed generator/async/spawn Phase A: source audit, 13 characterization
+  tests and an updated dependency plan. **Phase B is next**, from a new
+  `runtime/generator-async-spawn-completion` branch based on the verified
+  integration state. See the [authoritative handoff](docs/GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md)
+  and [wave-1 review](docs/RUNTIME_HARDENING_WAVE_1_REVIEW.md).
+
 - Completed the producer-neutral failure-control path: versioned result/evidence
   contracts, Dispatch failure policies and safe intervention, pre-evaluation
   Workcell preservation, and an offline failure/review golden path. See
   [implementation record](docs/FAILURE_GATE_IMPLEMENTATION.md) for evidence and
   explicit provider, authentication, replay and recovery boundaries.
-
 
 The September 13 reliability sweep closed the current short-term checklist:
 

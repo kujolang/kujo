@@ -5,8 +5,32 @@ source). Branch: `runtime/generator-async-spawn-audit`.
 
 **Scope: audit, characterization, and implementation planning only.** No runtime,
 compiler, syntax, closure, or frame implementation changes are included. Do not
-start Phase B until Agent 1's closure/upvalue work lands, or the owner explicitly
-authorizes proceeding. This document describes this commit, not future main.
+start Phase B on the old audit branch. The integration addendum below updates
+the original audit; source anchors and the baseline validation ledger remain
+historical evidence for 719d6f7.
+
+## Wave-1 integration addendum (2026-09-26)
+
+The [Phase-B handoff](GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md) supplies the exact
+verified base and current capture API. Start `runtime/generator-async-spawn-completion`
+from that integration baseline, or main after it contains the integration. Phase A
+is complete; Phase B has not begun. The original audit below is historical where
+it describes pre-integration compiler resolution. Its generator/async/spawn gaps
+remain current unless explicitly updated here.
+
+Agent 1 preserves per-closure snapshots. New siblings and descendants copy values;
+aliases and calls of one closure share owned cells. There are no open stack captures
+to promote or close. `CallFrame.captured_slots` is a derived lazy view of saved
+capture maps and binding kinds. The VM generator dispatcher now handles indexed
+capture loads/stores, but still lacks general continuation and closure creation.
+Integration also restores function-local import captures and scoped constants.
+Agent 3 adds workflow schemas and balanced type-inference depth accounting; it does
+not change frame ownership, capability policy or task execution.
+
+D1–D6 remain proposed decisions. Shared sibling binding semantics are not one of
+those open decisions and must not be introduced under async/spawn completion.
+The updated dependency table and G11/G12/A06/X03 oracles below supersede earlier
+shared-cell or open-upvalue recommendations.
 
 ## Executive summary
 
@@ -15,7 +39,7 @@ cooperative VM await, and several async capture/callback paths already work.
 The remaining work is more specific than the historical roadmap implies:
 
 - VM generator resume is a second, partial opcode interpreter. It copies caller
-  and generator stacks/frames, omits handler/upvalue execution context, cannot
+  and generator stacks/frames, omits complete handler/caller execution context, cannot
   call functions, and exhausts on the first yield if the chunk contains any loop
   backedge. Normal VM execution already has a richer suspension snapshot.
 - Interpreter generator progress is a top-level statement index copied with the
@@ -34,8 +58,8 @@ The remaining work is more specific than the historical roadmap implies:
 
 Ready state: **NEEDS ARCHITECTURAL DECISION**. The evidence and ordered work plan
 are ready; identity/error compatibility, async start ordering, and detached
-spawn error/transfer policy need the small decisions listed below. The upvalue
-landing remains a separate Phase-B prerequisite. No request to implement these
+spawn error/transfer policy need the small decisions listed below. The integrated closure prerequisite is documented in the handoff;
+its snapshot contract remains binding on Phase B. No request to implement these
 decisions is implied by completing Phase A.
 
 ## Evidence and reading ledger
@@ -52,7 +76,7 @@ this repository; no external concurrency performance numbers are asserted.
 | `AGENTS.md`, `README.md`, `ROADMAP.md`, `CHANGELOG.md` | VM default, v1.5 scope, no broad implementation; current DB executor fixes matter |
 | `docs/LANGUAGE_SPEC.md` §§5.2, 5.3, 5.7 | lexical binding, ordinary return, await expression completion, detached spawn where supported |
 | `docs/ARCHITECTURE.md` §6 | stale blanket generator rejection conflicts with current tests/code |
-| `docs/V1_SCOPE.md` deferred runtime section | precise deferrals: upvalues, generator restoration, SpawnThread, spawn_task body |
+| `docs/V1_SCOPE.md` deferred runtime section | historical deferrals: upvalues (now completed as VM snapshots), generator restoration, SpawnThread, spawn_task body |
 | `docs/VM_INTERPRETER_PARITY_MATRIX.md` | narrow generator evidence; overly broad spawn status; callback bridge and 32-entry bound |
 | `docs/VM_INTERPRETER_MIGRATION_PLAYBOOK.md` | preserve strict VM and dual gates; no blanket interpreter migration |
 | `docs/CONCURRENCY.md` | explicitly legacy v0.9; stale-section map below |
@@ -123,7 +147,7 @@ stack operations and jumps. It does not implement ordinary Call, closure
 creation, handler operations, or the complete VM instruction set. Consequently
 nested function/generator calls and deep generator call stacks cannot be inferred
 from straight-line tests. It saves local slots and named locals but not the VM's
-upvalue vector, exception-handler stack, function-call bookkeeping, recursion
+legacy VM-wide upvalue vector, exception-handler stack, function-call bookkeeping, recursion
 accounting, global scope state, or scheduler contexts. No lexical block
 continuation exists independently of bytecode IP. A loop-backedge scan anywhere
 in the chunk forces exhaustion at its first yield, even before an unrelated
@@ -162,7 +186,8 @@ path and can propagate through consuming expressions.
   of the same exhausted VM instance return None. Interpreter behavior depends
   on which progress copy is resumed.
 - Instance state is owned by its value, not the creating VM frame. Captured cell
-  correctness after frame teardown depends on Agent 1. Neither implementation
+  lifetime is now covered by Agent 1's owned VM snapshots in the tested yield
+  paths; complete continuation remains Phase B. Neither implementation
   clears all retained data at exhaustion; environment/stack references can keep
   secrets and host handles live until last owner drops. Arc cycles are possible;
   no leak was measured here. Despite its name, `LeakyFunctionBody` uses a
@@ -172,8 +197,9 @@ path and can propagate through consuming expressions.
 
 ### Generator semantics matrix
 
-All intended entries are Phase-B proposals, not shipped claims. H = hard upvalue
-dependency, S = soft, I = independent, U = unknown until Agent 1.
+All intended entries are Phase-B proposals, not shipped claims. H/S/I/U retain
+the original audit's hard/soft/independent/unknown dependency labels; the current
+wave-1 classifications below supersede them.
 
 | Scenario | Interpreter now | VM now | Parity/evidence | Intended | Dependency |
 | --- | --- | --- | --- | --- | --- |
@@ -240,7 +266,8 @@ a scoped OS thread for a current-thread runtime, or the shared runtime directly
 outside Tokio. Do not propose replacing a nonexistent runtime-per-await design.
 VM Await (5212) uses try_recv and saves `VmExecutionSnapshot` on pending promises in
 cooperative mode, rewinding IP; scheduler resumes it. That snapshot includes
-handlers, upvalues and bookkeeping missing from GeneratorState. Blocking VM
+handlers, legacy VM-wide upvalues and bookkeeping missing from GeneratorState.
+The legacy vector is distinct from the integrated owned closure snapshots. Blocking VM
 await and interpreter await move the receiver out. Interpreter uses
 AsyncRuntime::block_on; VM uses its stored Tokio Handle::block_on directly
 (5327), without the interpreter's nested-runtime guard. VM construction takes
@@ -363,7 +390,7 @@ VM spawn currently gives neither CPU parallelism nor async concurrency.
 | host effect | cloned policy gates natives | no body | identical or narrower authority | E capability test |
 | multiple blocks | unbounded detached threads | multiple discarded closures | enforce task limit | C |
 | inside function | snapshots visible transferable values | no body | same capture rules | C |
-| inside closure | function values omitted, data copied | no body | transfer audited closures only | C/U Agent 1 |
+| inside closure | function values omitted, data copied | no body | transfer audited closures only | C; transfer policy remains open |
 | inside async | new OS thread with async context snapshot | no body | common policy and limits | C |
 | async inside spawn | locally declared async can run; parent async function omitted | no body | explicit callable transfer, same policy | C, targeted test pending |
 | exits before child finishes | no join guarantee | nothing pending from spawn | explicit detached shutdown | C |
@@ -386,24 +413,26 @@ Whole-environment clones, retained scopes, copied progress, discarded tasks and
 blocking that masks missing scheduling must not become the new design merely
 because a happy-path test passes.
 
-## Closure/upvalue dependencies
+## Closure/upvalue dependencies after wave 1
 
-| Surface | Classification | Required Agent-1 contract / recheck |
-| --- | --- | --- |
-| generator locals across yield | Soft | detached slot ownership can be independent, but slots must survive scope teardown |
-| generator closures and captures | Hard | one captured cell must survive suspend, resume, completion and parent return |
-| grandparent capture | Hard | transitive free-variable resolution and cell promotion |
-| async closure captures | Hard | retained cell identity, overlapping calls, immutable kinds; remove whole-env writeback |
-| spawn scalar snapshot | Independent | can retain filtered copy policy without shared upvalues |
-| spawn closure captures | Hard | transferable cell graph, ownership, recursion/cycles, rejection rules |
-| shared mutable lexical state | Hard | Agent-1 sharing semantics and synchronization ownership |
-| frame lifetime / local-slot lifetime | Hard | closing open upvalues before move/drop, no dangling slot indices |
-| scope teardown | Hard | shadowed bindings and captures remain distinct after suspension |
-| cross-runtime callbacks | Hard | bridge must preserve new capture representation and capability context |
-| promise terminal cache | Independent | atomic completion and consumer registration do not require closure redesign |
-| generator error cleanup | Soft | finally-style restoration can be planned now; exact snapshot fields depend on landing |
-| capture thread portability | Unknown pending Agent 1 | do not assume new cells are Send/Sync or cross-thread-safe |
-| reuse VmExecutionSnapshot | Unknown pending Agent 1 | compare ownership, handlers, scheduler IDs, globals and open-cell rebasing |
+| Surface | Classification | Current requirement |
+|---|---|---|
+| Generator locals across yield | UNCHANGED | Preserve slots/kinds/initialization and complete scope/handler continuation. |
+| Generator closure capture | SIMPLIFIED BY AGENT 1 | Reuse explicit descriptors and owned snapshot cells; add complete resume dispatch. |
+| Generator frame restoration | CHANGED BY AGENT 1 | Retain capture Arcs and lexical self; lazily rebuild captured_slots. |
+| Grandparent capture | SIMPLIFIED BY AGENT 1 | Compiler forwards descriptors through intermediate functions; each new closure snapshots. |
+| Async closure capture | SIMPLIFIED BY AGENT 1 | VM ownership is explicit; interpreter environments and overlapping invocation writeback still need work. |
+| Async mutable capture | CHANGED BY AGENT 1 | Aliases of the same closure share state; siblings remain independent. Specify concurrent mutation without inventing transaction atomicity. |
+| Spawn lexical capture | NEW DEPENDENCY DISCOVERED | Separate spawn compiler still bypasses ordinary capture setup; reuse it only with an approved transfer contract, including import behavior. |
+| Spawn shared state | UNCHANGED | Data snapshots remain isolated; shared_* and any admitted handles require explicit transfer semantics. |
+| Frame lifetime assumptions | CHANGED BY AGENT 1 | Captures already own heap cells. Moving/restoring frames must preserve owners, not close stack pointers. |
+| Scope teardown | SIMPLIFIED BY AGENT 1 | Escaped snapshot owners survive; continuation still must restore lexical scopes correctly. |
+| Cross-runtime callbacks | UNCHANGED | Retain shared callback cells, globals, policy, arity, errors and the synchronous bridge guard. |
+| Open-upvalue promotion/closing | NO LONGER NEEDED | Legacy VM-wide Upvalue opcodes are not compiler-produced closures. |
+| Promise terminal cache | UNCHANGED | Atomic completion/waiter registration is independent of lexical snapshots. |
+| Generator error cleanup | UNCHANGED | Unconditional caller restoration is still required. |
+| Capture thread portability | NEW DEPENDENCY DISCOVERED | Arc/Mutex storage does not authorize transfer of embedded host handles or imply atomic read-modify-write. |
+| Async start/error/shutdown contract | BLOCKED | Resolve D1–D6 before the dependent implementation slices; no scheduler work was authorized here. |
 
 ## Target semantics and decisions
 
@@ -432,8 +461,8 @@ than deadlocking. No yield-from or async-generator semantics are added.
 Async: preserve await on plain values and sequential result reuse; a promise has
 Pending/Resolved/Rejected terminal state and one producer with multiple safe
 waiters. Cached errors remain errors. Reuse the persistent native executor and
-existing cooperative VM scheduler; do not select a new executor architecture
-before inspecting Agent 1. Runtime mode should not change observable return/error
+existing cooperative VM scheduler and preserve the integrated capture contract;
+a replacement executor is outside this completion plan. Runtime mode should not change observable return/error
 or lexical identity. Scheduling order between independent tasks remains unspecified;
 only program-order effects before/after an awaited dependency are stable. Snapshot
 capabilities at task creation; never reopen ambient authority. Document timeout,
@@ -442,8 +471,9 @@ producer drop and shutdown separately from cancellation.
 Spawn: keep detached statement syntax and data snapshot isolation. Use bounded
 execution resources with explicit captured-value validation; do not wrap every
 Value in a new mutex. Native shared state/channels, if admitted, are deliberate
-shared resources. Do not implicitly share mutable lexical cells across OS threads
-until cell portability is established. Retain policy and error/output provenance;
+shared resources. Do not implicitly share mutable lexical siblings across OS
+threads. Any admitted handle transfer needs an explicit portability contract
+without changing snapshot identity. Retain policy and error/output provenance;
 process exit does not silently become a global wait-for-all. `spawn_task` provides
 the existing completion-oriented API, distinct from detached spawn.
 
@@ -543,8 +573,8 @@ failing or silently ignored target tests.
 | G08 | yield then uncaught error; caller catches and calls normal function | one failure; normal call returns 42; repeat follows D2 |
 | G09 | return 9 after yield 1 | only 1 yielded; completion payload not yielded |
 | G10 | two instances interleaved, plus alias | instances independent; alias shares progression |
-| G11 | returned generator captures parent and grandparent mutables | same cell identities before/after creator returns |
-| G12 | closure created inside generator escapes, called across yields and completion | correct shared mutation without stale slot access |
+| G11 | returned generator captures parent and grandparent mutables | preserve that generator's owned snapshot cells across resume/creator return; siblings remain independent |
+| G12 | closure created inside generator escapes, called across yields and completion | new closure snapshots current values; its aliases retain mutation without stale slot access |
 | G13 | generator passed to a function; iterate twice | second consume empty; no progress copy |
 | G14 | ordinary nested helper calls plus nested synchronous generator iteration | full dispatcher behavior; bounded call depth |
 | G15 | first consumer break on infinite producer | exactly one requested yield, bounded memory |
@@ -562,7 +592,7 @@ failing or silently ignored target tests.
 | A03 | body throws before first await / after native await | call gives promise; catch at await under D3 |
 | A04 | inner returns 21, outer awaits and doubles | 42, nested contexts cleaned |
 | A05 | two pending calls, controlled completion order | independent progress; no timing-based assertions |
-| A06 | captured immutable and shared mutable counter, overlap gated by channels/barriers | immutable denial; no lost update per Agent-1 contract |
+| A06 | captured immutable binding and same-closure mutable counter, overlap gated by barriers | immutable denial; explicitly specified concurrent alias mutation; sibling snapshots remain independent |
 | A07 | imported async invokes VM closure and VM invokes imported callback | return/dict normalization, globals, mutation, error, arity |
 | A08 | producer drops sender and producer panics in host fixture | terminal rejection cached; no hang |
 | A09 | SQLite lifecycle plus optional PostgreSQL/MySQL local async context | close/alias semantics, no nested-runtime panic |
@@ -591,7 +621,7 @@ failing or silently ignored target tests.
 | S12 | full channel with active consumer; empty channel receive | no mutex-held-send deadlock; approved wait/null parity; bounded subprocess |
 | X01 | ordinary generator consumed inside async | ordered generator values, awaited aggregate |
 | X02 | generator calls async helper and awaits ordinary promise | resume/caller state survives; no async generator syntax |
-| X03 | closure inside generator; generator returned by closure | same captured cells across yield and creator return |
+| X03 | closure inside generator; generator returned by closure | each created closure snapshots once; its retained cells survive yields and creator return |
 | X04 | spawn uses closure | D4 transfer policy, never silent no-op |
 | X05 | spawn declares/invokes async; async spawns work | capability and lifecycle policy unchanged across both boundaries |
 | X06 | async imported callback mutates captured state | Agent-1 cell identity retained, errors catchable |
@@ -623,7 +653,7 @@ helper tests are reserved for nonblocking bounded programs.
 
 | Slice | Work, entry dependency | Exit gate / rollback boundary |
 | --- | --- | --- |
-| 0 | rebase after Agent 1; resolve D1–D6; inspect state/ownership changes | baseline and closure/callback parity; update this plan before source edits |
+| 0 | branch from the verified integration base; resolve D1–D6; inspect current ownership | baseline and closure/callback parity; update this plan before source edits |
 | 1 | generator owned continuation + unified dispatch + unconditional caller restore | G01–G08/G14/G17; no async/spawn redesign in this commit |
 | 2 | generator identity/lifecycle, handlers, cell retention, lazy for | G09–G19 and cross-closure tests; remove loop workaround only with lazy iteration |
 | 3 | atomic promise terminal state and waiter registration | A01/A02/A08/A14; preserve native API errors, independent of scheduling change |
@@ -640,10 +670,10 @@ use a new SpawnThread opcode as a substitute for specifying task ownership.
 
 | File | Expected Phase-B work | Conflict risk |
 | --- | --- | --- |
-| `src/compiler.rs` | generator iteration, spawn lowering, capture metadata | HIGH with Agent 1 |
-| `src/vm.rs` | continuations, frame teardown, dispatch, await, spawn | HIGH with Agent 1 |
+| `src/compiler.rs` | generator iteration, spawn lowering, capture metadata | HIGH; preserve integrated captures |
+| `src/vm.rs` | continuations, frame teardown, dispatch, await, spawn | HIGH; preserve integrated captures |
 | `src/interpreter/value.rs` | generator identity, promise/task state, capture representation | HIGH |
-| `src/interpreter/environment.rs` | only adopt Agent-1 binding/cell ownership | HIGH; Agent 1 owns redesign |
+| `src/interpreter/environment.rs` | retain v1 snapshots while addressing invocation ownership | HIGH; Agent 1 did not redesign interpreter environments |
 | `src/interpreter/mod.rs` | AST continuation, async context, transfer and errors | HIGH |
 | `src/bytecode.rs` | minimal spawn/iterator opcode changes if needed | MEDIUM/HIGH metadata conflict |
 | `src/ast.rs`, `src/parser.rs` | no syntax work expected; unsupported combination diagnostics only if required | LOW; avoid incidental edits |
@@ -658,28 +688,26 @@ use a new SpawnThread opcode as a substitute for specifying task ownership.
 Phase-A ownership is the new plan, a standalone characterization test file, and
 its validation ledger. No shared implementation files are changed.
 
-## Rebase plan after Agent 1
+## Starting Phase B after integration
 
-1. Verify a clean tree and save this Phase-A tip; fetch origin. Confirm the
-   closure/upvalue work actually landed on main; do not merge its unfinished
-   branch into Phase A. Rebase onto the verified landed main commit.
-2. Inspect compiler free-variable resolution, local numbering and MakeClosure
-   metadata. Verify grandparent captures and shadowed bindings retain distinct
-   identity, and whether chunks now refer to cells or slot indices.
-3. Inspect VM frames and teardown: open-upvalue close/promotion ordering, moving
-   slots, return-chunk ownership, error unwinding, handlers and recursion state.
-4. Compare GeneratorState/CallFrameData with VmExecutionSnapshot and Agent-1 frames.
-   Establish whether a continuation may move between VMs, and whether globals,
-   policy, JIT cache state and scheduler IDs belong inside or outside it.
-5. Inspect Value/environment cloning: are cells Send/Sync, can closures form
-   cycles, are binding kinds stable, can suspended frames own open cells safely?
-6. Recheck AST async writeback, imported callback cells, 32-entry guard and
-   capability inheritance against the new representation. Do not assume old
-   sequential capture tests cover concurrent invocations.
-7. Rerun all baseline gates and characterization, plus closure/scope/callback
-   suites; record changed outcomes separately from failures introduced by rebase.
-8. Update matrices and dependencies, settle D1–D6, then implement slice 1.
-   A rebase conflict resolved by taking either whole VM file is unacceptable.
+1. Fetch and create `runtime/generator-async-spawn-completion` from the exact
+   [handoff base](GENERATOR_ASYNC_SPAWN_PHASE_B_HANDOFF.md), or verified main after
+   integration. Preserve the audit branch as Phase-A history.
+2. Read `CaptureSource`, `resolve_capture`, `finish_child`, scoped/imported binding
+   handling, `lexical_self`, `capture_slot` and `requires_closure_vm` in the new tree.
+   Do not copy obsolete `find_free_variables` or open-upvalue recommendations.
+3. Compare `GeneratorState` / `CallFrameData` with `VmExecutionSnapshot`. Preserve
+   slot/kind/initialization vectors and captured Arc identities; rebuild the derived
+   cache. Decide ownership of caller chunks, handlers, globals, policy and scheduler
+   IDs before allowing a continuation to move between execution contexts.
+4. Review interpreter async environment writeback, host-handle ownership, callback
+   policy and the 32-entry synchronous bridge guard. Sequential capture tests do
+   not prove concurrent mutation or a task recursion bound.
+5. Run the handoff's closure/import/callback, characterization, native-security and
+   workflow schema gates. Record changed characterization outcomes with their
+   intentional fixing slice. Do not weaken unrelated expectations.
+6. Resolve D1–D6 and implement the ordered slices. No whole-file ours/theirs merge,
+   tracing collector, shared-sibling capture or replacement executor is implied.
 
 ## Documentation drift and Phase-B documentation plan
 
@@ -699,10 +727,9 @@ only its introduction. These exact sections need replacement or archival links:
 | Performance / Async limitations / Generator performance (775–829) | Tokio already exists; no measured near-zero generator overhead; VM for eagerly buffers |
 | Debugging / Future Improvements (831–884) | historical future Tokio/cancellation claims; native cancel_task/timeout already exist |
 
-Also correct `ARCHITECTURE.md` §6's blanket generator failure, and narrow the
-parity matrix's spawn row to what its current test actually proves. These are
-recorded here without conflicting edits to the shared canonical files in Phase
-A. Phase B should publish `docs/RUNTIME_CONCURRENCY.md` (or fully replace the
+Wave-1 integration corrects `ARCHITECTURE.md` §6's blanket generator failure
+and narrows the parity matrix's spawn row to what its test proves. Those shared
+document changes occur in the integration history, preserving Phase-A ownership. Phase B should publish `docs/RUNTIME_CONCURRENCY.md` (or fully replace the
 legacy article with a current guide) covering ownership, syntax, task scheduling,
 await, promises, generators, spawn, channels, threading, capabilities, shutdown
 and both runtimes. Link it from LANGUAGE_SPEC, ARCHITECTURE and parity matrix;
@@ -719,7 +746,7 @@ characterization passes without runtime changes; final validation recorded;
 small commits pushed on the isolated branch with clean working tree; durable
 handoff retrievable. Failing pre-existing gates remain clearly identified.
 
-Phase B: Agent-1 landing verified; D1–D6 resolved and documented; complete owned
+Phase B: verified wave-1 baseline checked out; D1–D6 resolved and documented; complete owned
 generator continuation, lazy iteration and identity/error semantics proven;
 promises support safe repeat/concurrent await; async/task behavior and policy
 align across supported runtime paths; spawn actually executes with bounded

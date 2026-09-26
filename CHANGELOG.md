@@ -31,8 +31,8 @@ This file records user-visible changes to Kujo. It follows
 
 - Closures retain the active lexical binding when a later block reuses its name.
   Nested named functions use lexical locals instead of leaking into globals.
-  Returned closures also retain scoped constants and function-local imports, including import-all
-  exports and module namespaces through intermediate closures.
+  Returned closures also retain scoped constants and function-local imports,
+  including import-all exports and module namespaces through intermediate closures.
 
 - Type-checker depth accounting now unwinds after function-call inference, so
   large sequential workflows do not exhaust the nested-expression limit.
