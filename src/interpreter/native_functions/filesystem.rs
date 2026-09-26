@@ -1115,7 +1115,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 });
 
                 Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx)),
+                    receiver: Arc::new(Mutex::new(rx.into())),
                     is_polled: Arc::new(Mutex::new(false)),
                     cached_result: Arc::new(Mutex::new(None)),
                     task_handle: None,
@@ -1167,7 +1167,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 });
 
                 Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx)),
+                    receiver: Arc::new(Mutex::new(rx.into())),
                     is_polled: Arc::new(Mutex::new(false)),
                     cached_result: Arc::new(Mutex::new(None)),
                     task_handle: None,
@@ -1206,7 +1206,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 });
 
                 Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx)),
+                    receiver: Arc::new(Mutex::new(rx.into())),
                     is_polled: Arc::new(Mutex::new(false)),
                     cached_result: Arc::new(Mutex::new(None)),
                     task_handle: None,

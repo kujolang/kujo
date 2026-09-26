@@ -560,7 +560,7 @@ fn resolved_promise(result: Result<Value, String>) -> Value {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let _ = tx.send(result);
     Value::Promise {
-        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
         task_handle: None,
@@ -776,7 +776,7 @@ fn try_parallel_map_with_jit_bytecode(
     });
 
     Some(Value::Promise {
-        receiver: Arc::new(Mutex::new(rx)),
+        receiver: Arc::new(Mutex::new(rx.into())),
         is_polled: Arc::new(Mutex::new(false)),
         cached_result: Arc::new(Mutex::new(None)),
         task_handle: None,
@@ -848,16 +848,15 @@ pub fn handle(
                         });
                     }
                     let actual_rx = {
-                        let mut guard = match lock_or_async_error(
+                        let guard = match lock_or_async_error(
                             receiver.as_ref(),
                             "promise_wait.promise.receiver",
                         ) {
                             Ok(guard) => guard,
                             Err(error) => return Some(Value::Error(error)),
                         };
-                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                        drop(dummy_tx);
-                        std::mem::replace(&mut *guard, dummy_rx)
+
+                        guard.clone()
                     };
                     let result = AsyncRuntime::block_on(async {
                         match actual_rx.await {
@@ -914,7 +913,7 @@ pub fn handle(
 
             // Return promise immediately
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -997,7 +996,7 @@ pub fn handle(
 
                         // Extract the receiver from the mutex
                         let actual_rx = {
-                            let mut recv_guard = match lock_or_async_error(
+                            let recv_guard = match lock_or_async_error(
                                 receiver.as_ref(),
                                 "async_timeout.promise.receiver",
                             ) {
@@ -1007,9 +1006,8 @@ pub fn handle(
                                     return Value::Null;
                                 }
                             };
-                            let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                            drop(dummy_tx);
-                            std::mem::replace(&mut *recv_guard, dummy_rx)
+
+                            recv_guard.clone()
                         };
 
                         // Race the promise against the timeout
@@ -1043,7 +1041,7 @@ pub fn handle(
 
                     // Return new promise
                     Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                         task_handle: None,
@@ -1126,7 +1124,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1237,7 +1235,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1282,7 +1280,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1391,7 +1389,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1445,7 +1443,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1589,7 +1587,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1771,7 +1769,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1895,7 +1893,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -2039,7 +2037,7 @@ pub fn handle(
 
                     // Return promise
                     Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                         task_handle: None,
@@ -2144,7 +2142,7 @@ pub fn handle(
                 let (tx, rx) = tokio::sync::oneshot::channel();
                 let _ = tx.send(Ok(Value::Array(Arc::new(vec![]))));
                 return Some(Value::Promise {
-                    receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                    receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                     is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                     cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                     task_handle: None,
@@ -2222,7 +2220,7 @@ pub fn handle(
                 let mut futures = Vec::with_capacity(count);
                 for (idx, receiver_arc, is_polled, cached_result) in pending_promises {
                     let actual_rx = {
-                        let mut recv_guard = match lock_or_async_error(
+                        let recv_guard = match lock_or_async_error(
                             receiver_arc.as_ref(),
                             "Promise.all.receiver",
                         ) {
@@ -2232,9 +2230,8 @@ pub fn handle(
                                 return Value::Null;
                             }
                         };
-                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                        drop(dummy_tx);
-                        std::mem::replace(&mut *recv_guard, dummy_rx)
+
+                        recv_guard.clone()
                     };
                     futures.push((idx, actual_rx, is_polled, cached_result));
                 }
@@ -2348,7 +2345,7 @@ pub fn handle(
 
             // Return promise that resolves to array of results
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -2479,7 +2476,7 @@ pub fn handle(
                     Value::Null
                 });
                 return Some(Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx)),
+                    receiver: Arc::new(Mutex::new(rx.into())),
                     is_polled: Arc::new(Mutex::new(false)),
                     cached_result: Arc::new(Mutex::new(None)),
                     task_handle: None,
@@ -2560,7 +2557,7 @@ pub fn handle(
                 let mut futures = Vec::with_capacity(count);
                 for (idx, receiver_arc, is_polled, cached_result) in pending_receivers {
                     let actual_rx = {
-                        let mut recv_guard = match lock_or_async_error(
+                        let recv_guard = match lock_or_async_error(
                             receiver_arc.as_ref(),
                             "parallel_map.receiver",
                         ) {
@@ -2570,9 +2567,8 @@ pub fn handle(
                                 return Value::Null;
                             }
                         };
-                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                        drop(dummy_tx);
-                        std::mem::replace(&mut *recv_guard, dummy_rx)
+
+                        recv_guard.clone()
                     };
                     futures.push((idx, actual_rx, is_polled, cached_result));
                 }
@@ -2651,7 +2647,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -2683,7 +2679,7 @@ pub fn handle(
                     AsyncRuntime::spawn_task(async move {
                         let await_result = {
                             let rx = {
-                                let mut receiver_guard = match lock_or_async_error(
+                                let receiver_guard = match lock_or_async_error(
                                     receiver.as_ref(),
                                     "par_each.receiver",
                                 ) {
@@ -2693,9 +2689,8 @@ pub fn handle(
                                         return Value::Null;
                                     }
                                 };
-                                let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                                drop(dummy_tx);
-                                std::mem::replace(&mut *receiver_guard, dummy_rx)
+
+                                receiver_guard.clone()
                             };
 
                             rx.await
@@ -2719,7 +2714,7 @@ pub fn handle(
                     });
 
                     Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                         task_handle: None,
@@ -2796,10 +2791,9 @@ mod tests {
         match value {
             Value::Promise { receiver, .. } => AsyncRuntime::block_on(async {
                 let rx = {
-                    let mut receiver_guard = receiver.lock().unwrap();
-                    let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                    drop(dummy_tx);
-                    std::mem::replace(&mut *receiver_guard, dummy_rx)
+                    let receiver_guard = receiver.lock().unwrap();
+
+                    receiver_guard.clone()
                 };
 
                 match rx.await {

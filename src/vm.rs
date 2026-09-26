@@ -3396,7 +3396,7 @@ impl VM {
                                 .map_err(|_| "Failed to send to promise channel")?;
 
                             Value::Promise {
-                                receiver: Arc::new(Mutex::new(rx)),
+                                receiver: Arc::new(Mutex::new(rx.into())),
                                 is_polled: Arc::new(Mutex::new(false)),
                                 cached_result: Arc::new(Mutex::new(None)),
                                 task_handle: None,
@@ -3433,7 +3433,7 @@ impl VM {
                                 .map_err(|_| "Failed to send to promise channel")?;
 
                             Value::Promise {
-                                receiver: Arc::new(Mutex::new(rx)),
+                                receiver: Arc::new(Mutex::new(rx.into())),
                                 is_polled: Arc::new(Mutex::new(false)),
                                 cached_result: Arc::new(Mutex::new(None)),
                                 task_handle: None,
@@ -5487,11 +5487,10 @@ impl VM {
 
                             // Poll the promise using tokio runtime - blocks until result is ready
                             let result = {
-                                let mut recv_guard = receiver.lock().unwrap();
-                                // Take ownership by replacing with a dummy closed channel
-                                let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                                drop(dummy_tx); // Close immediately
-                                let actual_rx = std::mem::replace(&mut *recv_guard, dummy_rx);
+                                let recv_guard = receiver.lock().unwrap();
+                                // Clone an independent waiter; completion remains shared
+
+                                let actual_rx = recv_guard.clone();
                                 drop(recv_guard); // Release lock before blocking
 
                                 // Debug logging
@@ -5562,7 +5561,7 @@ impl VM {
 
                     // Create promise with the result already available
                     let promise = Value::Promise {
-                        receiver: Arc::new(Mutex::new(rx)),
+                        receiver: Arc::new(Mutex::new(rx.into())),
                         is_polled: Arc::new(Mutex::new(false)),
                         cached_result: Arc::new(Mutex::new(None)),
                         task_handle: None,

@@ -92,3 +92,20 @@ both runtimes. Collection callbacks containing `ForNext` use full VM dispatch.
 Nested yield expressions still require continuation work; this slice does not
 claim they are implemented by the interpreter. Async, spawn and recursive
 interpreter closures remain under implementation.
+
+## Slice 3: shared promise completion (validation in progress)
+
+Every promise receiver now anchors one shared future. Await, timeout, aggregation,
+parallel-map and cooperative VM polling obtain independent waiters. A waiter no
+longer replaces the producer channel with a closed dummy receiver. Completed
+results and producer-drop failures remain available to every alias; dropping or
+timing out a waiter leaves the original producer available. Existing value/cache
+fields remain as compatibility metadata; the producer result has one owner.
+
+Promise validation: `cargo check` passed. The compiled
+`promise_completion_contracts` test executable passed all 6 cases, including
+pending multi-waiter wakeups, repeatable rejection/producer drop, cooperative
+polling, timeout recovery, and duplicate handles in `promise_all`. A preceding
+combined cargo invocation stopped at the new channel backpressure test: it
+exposed an existing VM channel-method duplicate-receiver arity mismatch. That
+separate channel fix is under test; it is not a promise failure.

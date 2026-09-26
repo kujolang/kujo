@@ -26,6 +26,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Concurrent promise waiters share completion; timing out one waiter no longer
+  consumes the result needed by another waiter.
+
 - Generators now retain shared progress across aliases and resume nested loops
   and exception handlers in both runtimes. VM generators preserve
   owned continuation state, cache terminal failures and restore callers. For loops
