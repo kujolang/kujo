@@ -125,7 +125,6 @@ fn v1_capture_mutation_survives_a_caught_throw() {
 }
 
 #[test]
-#[ignore = "known VM defect: MakeClosure chooses a later, inactive same-named slot"]
 fn closure_must_capture_the_binding_visible_at_its_definition() {
     characterize(
         r#"
@@ -142,7 +141,6 @@ fn closure_must_capture_the_binding_visible_at_its_definition() {
 }
 
 #[test]
-#[ignore = "known VM defect: nested FuncDef uses StoreGlobal"]
 fn nested_function_must_not_define_a_global_binding() {
     characterize(
         r#"
@@ -330,6 +328,126 @@ fn a_capture_escaped_before_throw_survives_defining_frame_unwind() {
         mut caught := false
         try { factory() } except error { caught = true }
         audit_ok := caught && escaped() == 7
+    "#,
+    );
+}
+
+#[test]
+fn closures_capture_runtime_created_bindings_and_legacy_receiver_fields() {
+    for source in [
+        r#"
+        func factory() { value := 7; return func() { return value } }
+        let read := factory()
+        audit_ok := read() == 7
+        "#,
+        r#"
+        func factory() { let [value, other] := [7, 8]; return func() { return value } }
+        let read := factory()
+        audit_ok := read() == 7
+        "#,
+        r#"
+        func factory() {
+            try { throw("message") }
+            except error { return func() { return error.message } }
+        }
+        let read := factory()
+        audit_ok := read() == "message"
+        "#,
+        r#"
+        struct Test {
+            x: float,
+            func reader() { return func() { return x } }
+        }
+        let object := Test { x: 7.0 }
+        let read := object.reader()
+        audit_ok := read() == 7.0
+        "#,
+    ] {
+        characterize(source);
+    }
+}
+
+#[test]
+fn for_iteration_binding_shadows_an_already_captured_name() {
+    characterize(
+        r#"
+        func factory() {
+            let value := 9
+            return func() {
+                let before := value
+                mut readers := []
+                for value in [1, 2] { readers = push(readers, func() { return value }) }
+                return before == 9 && readers[0]() == 1 && readers[1]() == 2
+            }
+        }
+        let check := factory()
+        audit_ok := check()
+    "#,
+    );
+}
+
+#[test]
+fn captures_survive_script_block_exit_and_root_loop_shadowing() {
+    characterize(
+        r#"
+        mut escaped := null
+        let value := 99
+        if true {
+            let value := 7
+            escaped = func() { return value }
+        }
+        mut readers := []
+        for value in [1, 2] { readers = push(readers, func() { return value }) }
+        audit_ok := escaped() == 7 && value == 99 && readers[0]() == 1 && readers[1]() == 2
+    "#,
+    );
+}
+
+#[test]
+fn loop_iterable_resolves_before_the_iteration_binding() {
+    characterize(
+        r#"
+        func factory() {
+            let values := [1, 2]
+            mut readers := []
+            for values in values { readers = push(readers, func() { return values }) }
+            return readers
+        }
+        let readers := factory()
+        audit_ok := readers[0]() == 1 && readers[1]() == 2
+    "#,
+    );
+}
+
+#[test]
+fn script_block_captures_include_destructuring_and_new_bare_bindings() {
+    characterize(
+        r#"
+        mut first := null
+        mut second := null
+        if true {
+            let [value] := [7]
+            first = func() { return value }
+            created := 8
+            second = func() { created += 1; return created }
+        }
+        audit_ok := first() == 7 && second() == 9 && second() == 10
+    "#,
+    );
+}
+
+#[test]
+fn redefining_a_named_function_preserves_earlier_function_values() {
+    characterize(
+        r#"
+        func factory() {
+            func read() { return 1 }
+            let before := read
+            func read() { return 2 }
+            return [before, read]
+        }
+        let readers := factory()
+        audit_ok := readers[0]() == 1 && readers[1]() == 2
     "#,
     );
 }

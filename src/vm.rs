@@ -4,7 +4,7 @@
 // Stack-based VM with support for function calls, closures, and all Kujo features.
 
 use crate::ast::Pattern;
-use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, Constant, OpCode};
+use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, CaptureSource, Constant, OpCode};
 use crate::http_request_utils;
 use crate::interpreter::{
     BindingKind, CallableArity, DenseIntDict, DenseIntDictInt, DictMap, Environment, IntDictMap,
@@ -386,6 +386,8 @@ pub struct CallFrameData {
     pub captured_binding_kinds: HashMap<String, BytecodeBindingKind>,
 }
 
+type CapturedSlot = (Arc<Mutex<Value>>, BytecodeBindingKind);
+
 /// Call frame for function calls
 #[derive(Debug, Clone)]
 pub(crate) struct CallFrame {
@@ -416,6 +418,9 @@ pub(crate) struct CallFrame {
     /// Binding mutability metadata for captured variables.
     captured_binding_kinds: HashMap<String, BytecodeBindingKind>,
 
+    /// Indexed aliases of this frame's cells, initialized only for capture access.
+    captured_slots: Vec<Option<CapturedSlot>>,
+
     /// Previous chunk (for returning)
     prev_chunk: Option<BytecodeChunk>,
 
@@ -425,6 +430,76 @@ pub(crate) struct CallFrame {
 
 #[allow(dead_code)] // These VM helpers are retained for scheduler/JIT/debug follow-through paths.
 impl VM {
+    fn requires_closure_vm(chunk: &BytecodeChunk) -> bool {
+        !chunk.upvalues.is_empty()
+            || chunk.lexical_self.is_some()
+            || chunk.instructions.iter().any(|op| matches!(op, OpCode::MakeClosure(_)))
+    }
+
+    fn capture_slot(&mut self, index: usize) -> Result<Option<CapturedSlot>, String> {
+        if index >= self.chunk.upvalues.len() {
+            return Err(format!("Invalid capture index: {}", index));
+        }
+        let frame = self.call_frames.last_mut().ok_or("Capture access requires call frame")?;
+        if frame.captured_slots.is_empty() {
+            frame.captured_slots = self
+                .chunk
+                .upvalues
+                .iter()
+                .map(|name| {
+                    frame.captured.get(name).map(|cell| {
+                        (
+                            Arc::clone(cell),
+                            frame
+                                .captured_binding_kinds
+                                .get(name)
+                                .copied()
+                                .unwrap_or(BytecodeBindingKind::Mutable),
+                        )
+                    })
+                })
+                .collect();
+        }
+        frame
+            .captured_slots
+            .get(index)
+            .cloned()
+            .ok_or_else(|| format!("Invalid frame capture index: {}", index))
+    }
+
+    fn load_capture(&mut self, index: usize) -> Result<(), String> {
+        let value = if let Some((cell, _)) = self.capture_slot(index)? {
+            cell.lock().map_err(|_| "Poisoned capture cell")?.clone()
+        } else {
+            // A runtime-created named binding can resolve to an existing global
+            // instead; preserve that v1 assignment contract without guessing slots.
+            let name = &self.chunk.upvalues[index];
+            self.globals
+                .lock()
+                .unwrap()
+                .get(name)
+                .ok_or_else(|| Self::undefined_variable_message(name))?
+        };
+        self.stack.push(value);
+        Ok(())
+    }
+
+    fn store_capture(&mut self, index: usize) -> Result<(), String> {
+        let value = self.stack.last().ok_or("Stack underflow")?.clone();
+        if let Some((cell, kind)) = self.capture_slot(index)? {
+            if !matches!(kind, BytecodeBindingKind::Mutable) {
+                return Err(Self::local_reassignment_error(kind, &self.chunk.upvalues[index]));
+            }
+            *cell.lock().map_err(|_| "Poisoned capture cell")? = value;
+        } else {
+            self.globals
+                .lock()
+                .unwrap()
+                .assign_checked(self.chunk.upvalues[index].clone(), value)?;
+        }
+        Ok(())
+    }
+
     fn env_binding_kind(kind: BytecodeBindingKind) -> BindingKind {
         match kind {
             BytecodeBindingKind::Mutable => BindingKind::Mutable,
@@ -794,6 +869,10 @@ impl VM {
         });
 
         if std::env::var("DISABLE_FUNCTION_JIT").is_ok() || has_map_fusion_op {
+            return Ok(false);
+        }
+
+        if Self::requires_closure_vm(chunk) {
             return Ok(false);
         }
 
@@ -1837,6 +1916,9 @@ impl VM {
                     self.stack.push(value);
                 }
 
+                OpCode::LoadCapture(index) => self.load_capture(index)?,
+                OpCode::StoreCapture(index) => self.store_capture(index)?,
+
                 OpCode::LoadLocal(slot) => {
                     let frame = self.call_frames.last().ok_or("LoadLocal requires call frame")?;
                     let value = frame
@@ -2772,7 +2854,10 @@ impl VM {
                             let args = self.prepare_bytecode_call_args(chunk, args.clone())?;
 
                             // Track function calls for JIT compilation
-                            if self.jit_enabled && !chunk.is_generator {
+                            if self.jit_enabled
+                                && !chunk.is_generator
+                                && !Self::requires_closure_vm(chunk)
+                            {
                                 let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
                                 // Get VM pointer early (before any borrows)
@@ -3369,8 +3454,20 @@ impl VM {
                 }
 
                 OpCode::MakeClosure(func_index) => {
-                    let constant = &self.chunk.constants[func_index];
+                    let constant = self
+                        .chunk
+                        .constants
+                        .get(func_index)
+                        .ok_or("Invalid closure constant index")?;
                     if let Constant::Function(chunk) = constant {
+                        if let Some(sources) = &chunk.capture_sources {
+                            if sources.len() != chunk.upvalues.len() {
+                                return Err(
+                                    "Capture descriptor count does not match capture names"
+                                        .to_owned(),
+                                );
+                            }
+                        }
                         // Capture upvalues listed in the function's chunk
                         let mut captured = HashMap::new();
                         let mut captured_binding_kinds = HashMap::new();
@@ -3395,10 +3492,84 @@ impl VM {
                             }
                         }
 
-                        for upvalue_name in &chunk.upvalues {
+                        for (capture_index, upvalue_name) in chunk.upvalues.iter().enumerate() {
                             // Find the variable in current scope (locals only - NOT globals)
                             // Prefer local slots (authoritative for locals) and fall back to locals map
-                            let capture_entry = if let Some(frame) = self.call_frames.last() {
+                            let capture_entry = if let Some(sources) = &chunk.capture_sources {
+                                let source = sources
+                                    .get(capture_index)
+                                    .ok_or("Invalid capture descriptor index")?;
+                                let frame = self.call_frames.last();
+                                match source {
+                                    CaptureSource::Local(slot) => {
+                                        let frame =
+                                            frame.ok_or("Local capture requires call frame")?;
+                                        let value = frame
+                                            .local_slots
+                                            .get(*slot)
+                                            .ok_or("Invalid capture local slot")?
+                                            .clone();
+                                        let kind = *frame
+                                            .local_slot_binding_kinds
+                                            .get(*slot)
+                                            .ok_or("Invalid capture binding kind")?;
+                                        Some((value, kind))
+                                    }
+                                    CaptureSource::Upvalue(index) => {
+                                        let frame =
+                                            frame.ok_or("Upvalue capture requires call frame")?;
+                                        let name = self
+                                            .chunk
+                                            .upvalues
+                                            .get(*index)
+                                            .ok_or("Invalid parent capture index")?;
+                                        if let Some(cell) = frame.captured.get(name) {
+                                            let value = cell
+                                                .lock()
+                                                .map_err(|_| "Poisoned capture cell")?
+                                                .clone();
+                                            let kind = *frame
+                                                .captured_binding_kinds
+                                                .get(name)
+                                                .ok_or("Missing capture binding kind")?;
+                                            Some((value, kind))
+                                        } else {
+                                            // Optional named captures may resolve to globals;
+                                            // forwarding retains that distinction.
+                                            None
+                                        }
+                                    }
+                                    CaptureSource::Environment(name, kind) => {
+                                        let value =
+                                            self.globals.lock().unwrap().get(name).ok_or_else(
+                                                || Self::undefined_variable_message(name),
+                                            )?;
+                                        Some((value, *kind))
+                                    }
+                                    CaptureSource::Named(name) if frame.is_none() => self
+                                        .globals
+                                        .lock()
+                                        .unwrap()
+                                        .scopes
+                                        .iter()
+                                        .skip(1)
+                                        .rev()
+                                        .find_map(|scope| scope.get(name).cloned())
+                                        .map(|value| (value, BytecodeBindingKind::Mutable)),
+                                    CaptureSource::Named(name) => frame.and_then(|frame| {
+                                        frame.locals.get(name).cloned().map(|value| {
+                                            (
+                                                value,
+                                                frame
+                                                    .locals_binding_kinds
+                                                    .get(name)
+                                                    .copied()
+                                                    .unwrap_or(BytecodeBindingKind::Mutable),
+                                            )
+                                        })
+                                    }),
+                                }
+                            } else if let Some(frame) = self.call_frames.last() {
                                 if let Some(existing) = frame.captured.get(upvalue_name) {
                                     let value = existing.lock().unwrap().clone();
                                     let kind = frame
@@ -5936,6 +6107,20 @@ impl VM {
             let mut locals = HashMap::new();
             let mut locals_binding_kinds = HashMap::new();
 
+            // Self is frame-owned, never inserted into its captured cells. This
+            // supports escaped recursion without a strong closure/self cycle.
+            if let Some(name) = &chunk.lexical_self {
+                locals.insert(
+                    name.clone(),
+                    Value::BytecodeFunction {
+                        chunk: chunk.clone(),
+                        captured: captured.clone(),
+                        captured_binding_kinds: captured_binding_kinds.clone(),
+                    },
+                );
+                locals_binding_kinds.insert(name.clone(), BytecodeBindingKind::Mutable);
+            }
+
             // Backward-compat method support:
             // For methods compiled without explicit `self`, interpreter mode exposes
             // receiver fields as lexical names inside the method body. Mirror that
@@ -6056,6 +6241,7 @@ impl VM {
                 local_slot_initialized,
                 captured: captured_map,
                 captured_binding_kinds: captured_binding_kinds_map,
+                captured_slots: Vec::new(),
                 prev_chunk: Some(self.chunk.clone()),
                 is_async: chunk.is_async,
             };
@@ -7431,9 +7617,14 @@ impl VM {
     ) -> Result<Value, String> {
         match &function {
             Value::BytecodeFunction { chunk, captured: _, captured_binding_kinds: _ } => {
+                if chunk.instructions.iter().any(|op| matches!(op, OpCode::MakeClosure(_))) {
+                    // Creation needs the full VM dispatcher. Reuse the guarded
+                    // bridge, including the caller's capabilities and output.
+                    return self.call_interpreter_callable(&function, &args);
+                }
                 // OPTIMIZATION: Check if target function is JIT-compiled
                 // If so, make direct JIT → JIT call for maximum performance
-                if self.jit_enabled {
+                if self.jit_enabled && !Self::requires_closure_vm(chunk) {
                     let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
                     // PHASE 7 STEP 12: Check for direct-arg optimized variant first
@@ -7714,6 +7905,8 @@ impl VM {
                     // We need to handle the most common opcodes inline
                     // For complex ones, we could call back to the main run loop
                     match instruction {
+                        OpCode::LoadCapture(index) => self.load_capture(index)?,
+                        OpCode::StoreCapture(index) => self.store_capture(index)?,
                         OpCode::LoadConst(idx) => {
                             let constant = &self.chunk.constants[idx];
                             let value = self.constant_to_value(constant)?;
@@ -8670,6 +8863,7 @@ impl VM {
                     local_slot_initialized: frame_data.local_slot_initialized.clone(),
                     captured: frame_data.captured.clone(),
                     captured_binding_kinds: frame_data.captured_binding_kinds.clone(),
+                    captured_slots: Vec::new(),
                     prev_chunk: None,
                     is_async: false, // Generators are not async
                 });
@@ -8756,6 +8950,8 @@ impl VM {
                 // This is inefficient but simple - a better approach would be to extract instruction execution
                 // For now, we'll manually handle key instructions
                 match instruction {
+                    OpCode::LoadCapture(index) => self.load_capture(index)?,
+                    OpCode::StoreCapture(index) => self.store_capture(index)?,
                     OpCode::LoadConst(index) => {
                         let constant = &self.chunk.constants[index];
                         let value = self.constant_to_value(constant)?;
@@ -9217,6 +9413,7 @@ mod tests {
             local_slot_initialized: vec![true, true],
             captured: HashMap::new(),
             captured_binding_kinds: HashMap::new(),
+            captured_slots: Vec::new(),
             prev_chunk: Some(frame_chunk),
             is_async: false,
         });
