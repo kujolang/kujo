@@ -1,7 +1,8 @@
 # Phase-B compatibility follow-up
 
 Starting commit: `3efa60cf2e7dc89607a9988509b16cc125375140`.
-Branch: `runtime/generator-async-spawn-completion`. Main is unchanged.
+Branch: `runtime/generator-async-spawn-completion`. This report records the
+pre-merge branch validation; pull request #12 carries the final integration.
 
 Current merge disposition (2026-09-26): the owner explicitly deferred live
 Workcell provider validation and authorized normal pull-request review and merge.
@@ -114,6 +115,18 @@ not permanent artifacts; this committed record preserves their relevant outcomes
 separate networking stress failure remained unresolved and remote-provider
 certification had not run. See the subsequent clean-host verification below for
 the newer evidence; it does not erase the historical failure.
+
+## Pull-request compatibility correction
+
+The final Dispatch CLI smoke exposed one additional false interpreter diagnostic:
+its provider-probe dictionary mixed known strings with an unknown result, and
+collection inference incorrectly narrowed all values to strings. Collection
+inference now distinguishes an empty accumulator from an unknown element and
+uses equality/numeric promotion rather than assignment compatibility to combine
+types. Unknown and incompatible values conservatively widen to `Any`, including
+when nested collection types differ. Real known-type comparison and explicit
+annotation errors remain diagnostic. Regression coverage includes both unknown
+representations, element order and nested collections.
 
 ## Review boundaries
 

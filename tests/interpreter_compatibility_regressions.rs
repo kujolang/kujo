@@ -64,3 +64,31 @@ fn seek_and_positional_read_arities_match_runtime() {
     assert!(check("io_read_at(\"file\", 0, 1)").is_ok());
     assert!(check("io_read_at(\"file\", 0)").is_err());
 }
+
+#[test]
+fn collection_inference_keeps_unknown_values_gradual() {
+    // Dispatch's provider probe mixes known strings with an unannotated result.
+    // Neither that result nor unknown parameters may be narrowed to String.
+    let source = r#"
+        func unknown_result() { return false }
+        let probe := {"provider": "fixture", "ok": unknown_result()}
+        assert(probe["ok"] == false)
+        func inspect(unknown) {
+            let values := ["fixture", unknown]
+            assert(values[1] == false)
+            let reversed := [unknown, "fixture"]
+            assert(reversed[0] == false)
+            let nested := [["fixture"], [unknown]]
+            assert(nested[1][0] == false)
+            let record := {"provider": "fixture", "ok": unknown}
+            assert(record["ok"] == false)
+        }
+    "#;
+    assert!(check(source).is_ok(), "{:?}", check(source));
+    assert!(check(
+        r#"let probe := {"ok": "wrong"}
+        assert(probe["ok"] == false)"#
+    )
+    .is_err());
+    assert!(check(r#"let value: bool := ["wrong"][0]"#).is_err());
+}

@@ -3894,24 +3894,18 @@ impl TypeChecker {
         current: Option<TypeAnnotation>,
         next: Option<TypeAnnotation>,
     ) -> Option<TypeAnnotation> {
-        match (current, next) {
-            (None, None) => None,
-            (Some(existing), None) => Some(existing),
-            (None, Some(next)) => Some(next),
-            (Some(existing), Some(next)) => {
-                if existing.matches(&next) || next.matches(&existing) {
-                    if matches!(existing, TypeAnnotation::Float)
-                        || matches!(next, TypeAnnotation::Float)
-                    {
-                        Some(TypeAnnotation::Float)
-                    } else {
-                        Some(existing)
-                    }
-                } else {
-                    Some(TypeAnnotation::Any)
-                }
-            }
-        }
+        // `current == None` is an empty accumulator; an unknown next element
+        // is a real contribution and must widen the collection to Any.
+        let next = next.unwrap_or(TypeAnnotation::Any);
+        Some(match current {
+            None => next,
+            Some(existing) if existing == next => existing,
+            Some(TypeAnnotation::Int) if next == TypeAnnotation::Float => TypeAnnotation::Float,
+            Some(TypeAnnotation::Float) if next == TypeAnnotation::Int => TypeAnnotation::Float,
+            // Assignment compatibility is not a type join: Any matches String,
+            // but combining them must not infer String (also for nested types).
+            Some(_) => TypeAnnotation::Any,
+        })
     }
 
     fn infer_builtin_contains(&mut self, args: &[Expr]) -> Option<TypeAnnotation> {
