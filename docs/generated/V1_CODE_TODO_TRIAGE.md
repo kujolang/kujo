@@ -33,6 +33,6 @@ Source root: `src`
 | V1TODO-026 | `src/type_checker.rs` | 3627 | TODO |                 None // TODO: Return struct type when struct types are implemented | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
 | V1TODO-027 | `src/type_checker.rs` | 3633 | TODO |                 None // TODO: Look up field type from struct definition | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
 | V1TODO-028 | `src/type_checker.rs` | 3871 | TODO |                 // TODO: If we know it's a Promise<T>, return T | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
-| V1TODO-029 | `src/type_checker.rs` | 3982 | TODO |     /// TODO: This will be used when adding "Did you mean?" suggestions to interpreter | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-029 | `src/type_checker.rs` | 3976 | TODO |     /// TODO: This will be used when adding "Did you mean?" suggestions to interpreter | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
 
 Summary: `29` markers triaged, `0` unclassified.
