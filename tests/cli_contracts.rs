@@ -756,3 +756,21 @@ fn upgrade_is_a_native_reserved_command() {
         assert_eq!(output.status.code(), Some(EXIT_USAGE_ERROR));
     }
 }
+
+#[test]
+fn cli_test_interpreter_snapshots_are_exact_and_do_not_override_vm() {
+    let workspace = unique_temp_dir("interpreter_snapshot_contract");
+    let tests_dir = workspace.join("tests");
+    fs::create_dir_all(&tests_dir).unwrap();
+    write_fixture(&tests_dir.join("sample.kujo"), "print(\"actual\")\n");
+    write_fixture(&tests_dir.join("sample.out"), "wrong-vm\n");
+    write_fixture(&tests_dir.join("sample.interpreter.out"), "actual\n");
+    assert!(run_kujo_in_dir(&["test", "--runtime", "interpreter"], &workspace).status.success());
+    assert!(!run_kujo_in_dir(&["test", "--runtime", "vm"], &workspace).status.success());
+    let dual = run_kujo_in_dir(&["test", "--runtime", "dual"], &workspace);
+    assert!(dual.status.success());
+    assert!(String::from_utf8_lossy(&dual.stdout).contains("interpreter_fallback=1"));
+    write_fixture(&tests_dir.join("sample.interpreter.out"), "wrong-interpreter\n");
+    assert!(!run_kujo_in_dir(&["test", "--runtime", "interpreter"], &workspace).status.success());
+    fs::remove_dir_all(workspace).unwrap();
+}

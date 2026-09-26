@@ -13,6 +13,10 @@ m1 - m2 = $50
 m1 * 2.0 = $200
 m1 / 2.0 = $50
 m7 == m9: true
-[KUJOVM001] [vm] Runtime Error: Invalid binary operation: struct > struct
-  --> 0:0
-   = help: Use operands whose types support this operator, or convert values before applying it.
+m7 > m8: true
+m8 < m7: true
+m7 >= m9: true
+m8 <= m7: true
+p1: (10, 15)
+p1 % 3.0 = (1, 0)
+All operator overloading tests passed!

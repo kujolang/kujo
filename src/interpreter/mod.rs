@@ -374,7 +374,8 @@ pub struct Interpreter {
     pub source_file: Option<String>,
     pub source_lines: Vec<String>,
     pub module_loader: ModuleLoader,
-    call_stack: Vec<String>, // Track function calls for stack traces
+    call_stack: Vec<String>,       // Track function calls for stack traces
+    error_call_stack: Vec<String>, // Preserve the failing frames before unwinding
     async_task_pool_size: usize,
     capability_policy: RuntimeCapabilityPolicy,
     pub(crate) vm_globals: Option<Arc<Mutex<Environment>>>,
@@ -440,6 +441,7 @@ impl Interpreter {
             source_lines: Vec::new(),
             module_loader: ModuleLoader::new(),
             call_stack: Vec::new(),
+            error_call_stack: Vec::new(),
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
             capability_policy,
             vm_globals: None,
@@ -490,7 +492,11 @@ impl Interpreter {
 
     /// Get the current call stack for error reporting
     pub fn get_call_stack(&self) -> Vec<String> {
-        self.call_stack.clone()
+        if self.error_call_stack.is_empty() {
+            self.call_stack.clone()
+        } else {
+            self.error_call_stack.clone()
+        }
     }
 
     pub fn get_async_task_pool_size(&self) -> usize {
@@ -518,6 +524,11 @@ impl Interpreter {
 
         self.function_depth += 1;
         let result = body(self);
+        if self.return_value.as_ref().is_some_and(Self::is_error_value)
+            && self.error_call_stack.is_empty()
+        {
+            self.error_call_stack = self.call_stack.clone();
+        }
         self.function_depth = self.function_depth.saturating_sub(1);
         Ok(result)
     }
@@ -4082,6 +4093,9 @@ impl Interpreter {
 
     /// Evaluates a list of statements sequentially, stopping on return/error
     pub fn eval_stmts(&mut self, stmts: &[Stmt]) {
+        if self.function_depth == 0 {
+            self.error_call_stack.clear();
+        }
         if self.task_is_cancelled() {
             self.return_value = Some(Value::Error("Task was cancelled".to_owned()));
             return;
@@ -4822,6 +4836,7 @@ impl Interpreter {
                     }
 
                     // Clear error and execute except block
+                    self.error_call_stack.clear();
                     self.return_value = None;
                     self.eval_stmts(except_block);
                 }
@@ -5364,239 +5379,16 @@ impl Interpreter {
                         }
                     }
 
-                    // Handle ArgParser methods
                     if let Value::Struct { name, fields } = &obj_val {
                         if name == "ArgParser" {
-                            match field.as_str() {
-                                "add_argument" => {
-                                    // parser.add_argument(long, short, type, required, help, default)
-                                    // Extract arguments
-                                    let mut long_name = String::new();
-                                    let mut short_name: Option<String> = None;
-                                    let mut arg_type = String::from("string");
-                                    let mut required = false;
-                                    let mut help = String::new();
-                                    let mut default: Option<String> = None;
-
-                                    // First argument is always the long name
-                                    if !args.is_empty() {
-                                        if let Value::Str(s) = self.eval_expr(&args[0]) {
-                                            long_name = s.as_ref().clone();
-                                        }
-                                    }
-
-                                    // Process remaining keyword-style arguments
-                                    // In Kujo, these come as alternating key-value pairs
-                                    let mut i = 1;
-                                    while i < args.len() {
-                                        if let Value::Str(key) = self.eval_expr(&args[i]) {
-                                            if i + 1 < args.len() {
-                                                let value = self.eval_expr(&args[i + 1]);
-                                                match key.as_str() {
-                                                    "short" => {
-                                                        if let Value::Str(s) = value {
-                                                            short_name = Some(s.as_ref().clone());
-                                                        }
-                                                    }
-                                                    "type" => {
-                                                        if let Value::Str(s) = value {
-                                                            arg_type = s.as_ref().clone();
-                                                        }
-                                                    }
-                                                    "required" => {
-                                                        if let Value::Bool(b) = value {
-                                                            required = b;
-                                                        }
-                                                    }
-                                                    "help" => {
-                                                        if let Value::Str(s) = value {
-                                                            help = s.as_ref().clone();
-                                                        }
-                                                    }
-                                                    "default" => {
-                                                        if let Value::Str(s) = value {
-                                                            default = Some(s.as_ref().clone());
-                                                        }
-                                                    }
-                                                    _ => {}
-                                                }
-                                                i += 2;
-                                            } else {
-                                                i += 1;
-                                            }
-                                        } else {
-                                            i += 1;
-                                        }
-                                    }
-
-                                    // Create argument definition
-                                    let mut arg_def = DictMap::default();
-                                    arg_def.insert("long".into(), Value::Str(Arc::new(long_name)));
-                                    if let Some(short) = short_name {
-                                        arg_def.insert("short".into(), Value::Str(Arc::new(short)));
-                                    }
-                                    arg_def.insert("type".into(), Value::Str(Arc::new(arg_type)));
-                                    arg_def.insert("required".into(), Value::Bool(required));
-                                    arg_def.insert("help".into(), Value::Str(Arc::new(help)));
-                                    if let Some(def) = default {
-                                        arg_def.insert("default".into(), Value::Str(Arc::new(def)));
-                                    }
-
-                                    // Add to the parser's argument list
-                                    let mut new_fields = fields.clone();
-                                    if let Some(Value::Array(arg_list)) =
-                                        new_fields.get("_args").cloned()
-                                    {
-                                        let mut arg_list_vec = Arc::try_unwrap(arg_list)
-                                            .unwrap_or_else(|arc| (*arc).clone());
-                                        arg_list_vec.push(Value::Dict(Arc::new(arg_def)));
-                                        new_fields.insert(
-                                            "_args".to_string(),
-                                            Value::Array(Arc::new(arg_list_vec)),
-                                        );
-                                    }
-
-                                    return Value::Struct {
-                                        name: "ArgParser".to_string(),
-                                        fields: new_fields,
-                                    };
-                                }
-                                "parse" => {
-                                    // parser.parse() - parse command-line arguments
-                                    // Convert stored argument definitions to ArgumentDef structs
-                                    let mut arg_defs = Vec::new();
-
-                                    if let Some(Value::Array(arg_list)) = fields.get("_args") {
-                                        for arg_val in arg_list.iter() {
-                                            if let Value::Dict(arg_dict) = arg_val {
-                                                let long_name = match arg_dict.get("long") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => continue,
-                                                };
-
-                                                let short_name = match arg_dict.get("short") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                let arg_type = match arg_dict.get("type") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => "string".to_string(),
-                                                };
-
-                                                let required = match arg_dict.get("required") {
-                                                    Some(Value::Bool(b)) => *b,
-                                                    _ => false,
-                                                };
-
-                                                let help = match arg_dict.get("help") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => String::new(),
-                                                };
-
-                                                let default = match arg_dict.get("default") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                arg_defs.push(builtins::ArgumentDef {
-                                                    long_name,
-                                                    short_name,
-                                                    arg_type,
-                                                    required,
-                                                    help,
-                                                    default,
-                                                });
-                                            }
-                                        }
-                                    }
-
-                                    // Get command-line arguments
-                                    let cli_args = builtins::get_args();
-
-                                    // Parse arguments
-                                    match builtins::parse_arguments(&arg_defs, &cli_args) {
-                                        Ok(parsed) => return Value::Dict(Arc::new(parsed)),
-                                        Err(msg) => {
-                                            return Value::ErrorObject {
-                                                message: msg,
-                                                stack: Vec::new(),
-                                                line: None,
-                                                cause: None,
-                                            }
-                                        }
-                                    }
-                                }
-                                "help" => {
-                                    // parser.help() - generate help text
-                                    let mut arg_defs = Vec::new();
-
-                                    if let Some(Value::Array(arg_list)) = fields.get("_args") {
-                                        for arg_val in arg_list.iter() {
-                                            if let Value::Dict(arg_dict) = arg_val {
-                                                let long_name = match arg_dict.get("long") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => continue,
-                                                };
-
-                                                let short_name = match arg_dict.get("short") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                let arg_type = match arg_dict.get("type") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => "string".to_string(),
-                                                };
-
-                                                let required = match arg_dict.get("required") {
-                                                    Some(Value::Bool(b)) => *b,
-                                                    _ => false,
-                                                };
-
-                                                let help = match arg_dict.get("help") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => String::new(),
-                                                };
-
-                                                let default = match arg_dict.get("default") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                arg_defs.push(builtins::ArgumentDef {
-                                                    long_name,
-                                                    short_name,
-                                                    arg_type,
-                                                    required,
-                                                    help,
-                                                    default,
-                                                });
-                                            }
-                                        }
-                                    }
-
-                                    let app_name = match fields.get("_app_name") {
-                                        Some(Value::Str(s)) => s.as_ref().clone(),
-                                        _ => "program".to_string(),
-                                    };
-
-                                    let description = match fields.get("_description") {
-                                        Some(Value::Str(s)) => s.as_ref().clone(),
-                                        _ => String::new(),
-                                    };
-
-                                    let help_text =
-                                        builtins::generate_help(&arg_defs, &app_name, &description);
-                                    return Value::Str(Arc::new(help_text));
-                                }
-                                _ => {
-                                    return Value::Error(format!(
-                                        "ArgParser has no method '{}'",
-                                        field
-                                    ))
-                                }
+                            let values: Vec<Value> =
+                                args.iter().map(|arg| self.eval_expr(arg)).collect();
+                            if let Some(error) =
+                                values.iter().find(|value| Self::is_error_value(value))
+                            {
+                                return error.clone();
                             }
+                            return Self::call_arg_parser_method(fields, field, &values);
                         }
                     }
 
@@ -6756,7 +6548,238 @@ impl Interpreter {
     }
 
     /// Call a method on a value (used for iterator chaining and other method calls)
+    fn call_arg_parser_method(
+        fields: &HashMap<String, Value>,
+        method: &str,
+        args: &[Value],
+    ) -> Value {
+        match method {
+            "add_argument" => {
+                if args.is_empty() {
+                    return Value::Error(
+                        "add_argument requires at least a long argument name".to_string(),
+                    );
+                }
+                // parser.add_argument(long, short, type, required, help, default)
+                // Extract arguments
+                let mut long_name = String::new();
+                let mut short_name: Option<String> = None;
+                let mut arg_type = String::from("string");
+                let mut required = false;
+                let mut help = String::new();
+                let mut default: Option<String> = None;
+
+                // First argument is always the long name
+                if !args.is_empty() {
+                    if let Value::Str(s) = args[0].clone() {
+                        long_name = s.as_ref().clone();
+                    }
+                }
+
+                // Process remaining keyword-style arguments
+                // In Kujo, these come as alternating key-value pairs
+                let mut i = 1;
+                while i < args.len() {
+                    if let Value::Str(key) = args[i].clone() {
+                        if i + 1 < args.len() {
+                            let value = args[i + 1].clone();
+                            match key.as_str() {
+                                "short" => {
+                                    if let Value::Str(s) = value {
+                                        short_name = Some(s.as_ref().clone());
+                                    }
+                                }
+                                "type" => {
+                                    if let Value::Str(s) = value {
+                                        arg_type = s.as_ref().clone();
+                                    }
+                                }
+                                "required" => {
+                                    if let Value::Bool(b) = value {
+                                        required = b;
+                                    }
+                                }
+                                "help" => {
+                                    if let Value::Str(s) = value {
+                                        help = s.as_ref().clone();
+                                    }
+                                }
+                                "default" => {
+                                    if let Value::Str(s) = value {
+                                        default = Some(s.as_ref().clone());
+                                    }
+                                }
+                                _ => {}
+                            }
+                            i += 2;
+                        } else {
+                            i += 1;
+                        }
+                    } else {
+                        i += 1;
+                    }
+                }
+
+                // Create argument definition
+                let mut arg_def = DictMap::default();
+                arg_def.insert("long".into(), Value::Str(Arc::new(long_name)));
+                if let Some(short) = short_name {
+                    arg_def.insert("short".into(), Value::Str(Arc::new(short)));
+                }
+                arg_def.insert("type".into(), Value::Str(Arc::new(arg_type)));
+                arg_def.insert("required".into(), Value::Bool(required));
+                arg_def.insert("help".into(), Value::Str(Arc::new(help)));
+                if let Some(def) = default {
+                    arg_def.insert("default".into(), Value::Str(Arc::new(def)));
+                }
+
+                // Add to the parser's argument list
+                let mut new_fields = fields.clone();
+                if let Some(Value::Array(arg_list)) = new_fields.get("_args").cloned() {
+                    let mut arg_list_vec =
+                        Arc::try_unwrap(arg_list).unwrap_or_else(|arc| (*arc).clone());
+                    arg_list_vec.push(Value::Dict(Arc::new(arg_def)));
+                    new_fields.insert("_args".to_string(), Value::Array(Arc::new(arg_list_vec)));
+                }
+
+                Value::Struct { name: "ArgParser".to_string(), fields: new_fields }
+            }
+            "parse" => {
+                // parser.parse() - parse command-line arguments
+                // Convert stored argument definitions to ArgumentDef structs
+                let mut arg_defs = Vec::new();
+
+                if let Some(Value::Array(arg_list)) = fields.get("_args") {
+                    for arg_val in arg_list.iter() {
+                        if let Value::Dict(arg_dict) = arg_val {
+                            let long_name = match arg_dict.get("long") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => continue,
+                            };
+
+                            let short_name = match arg_dict.get("short") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            let arg_type = match arg_dict.get("type") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => "string".to_string(),
+                            };
+
+                            let required = match arg_dict.get("required") {
+                                Some(Value::Bool(b)) => *b,
+                                _ => false,
+                            };
+
+                            let help = match arg_dict.get("help") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => String::new(),
+                            };
+
+                            let default = match arg_dict.get("default") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            arg_defs.push(builtins::ArgumentDef {
+                                long_name,
+                                short_name,
+                                arg_type,
+                                required,
+                                help,
+                                default,
+                            });
+                        }
+                    }
+                }
+
+                // Get command-line arguments
+                let cli_args = builtins::get_args();
+
+                // Parse arguments
+                match builtins::parse_arguments(&arg_defs, &cli_args) {
+                    Ok(parsed) => Value::Dict(Arc::new(parsed)),
+                    Err(msg) => Value::ErrorObject {
+                        message: msg,
+                        stack: Vec::new(),
+                        line: None,
+                        cause: None,
+                    },
+                }
+            }
+            "help" => {
+                // parser.help() - generate help text
+                let mut arg_defs = Vec::new();
+
+                if let Some(Value::Array(arg_list)) = fields.get("_args") {
+                    for arg_val in arg_list.iter() {
+                        if let Value::Dict(arg_dict) = arg_val {
+                            let long_name = match arg_dict.get("long") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => continue,
+                            };
+
+                            let short_name = match arg_dict.get("short") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            let arg_type = match arg_dict.get("type") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => "string".to_string(),
+                            };
+
+                            let required = match arg_dict.get("required") {
+                                Some(Value::Bool(b)) => *b,
+                                _ => false,
+                            };
+
+                            let help = match arg_dict.get("help") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => String::new(),
+                            };
+
+                            let default = match arg_dict.get("default") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            arg_defs.push(builtins::ArgumentDef {
+                                long_name,
+                                short_name,
+                                arg_type,
+                                required,
+                                help,
+                                default,
+                            });
+                        }
+                    }
+                }
+
+                let app_name = match fields.get("_app_name") {
+                    Some(Value::Str(s)) => s.as_ref().clone(),
+                    _ => "program".to_string(),
+                };
+
+                let description = match fields.get("_description") {
+                    Some(Value::Str(s)) => s.as_ref().clone(),
+                    _ => String::new(),
+                };
+
+                let help_text = builtins::generate_help(&arg_defs, &app_name, &description);
+                Value::Str(Arc::new(help_text))
+            }
+            _ => Value::Error(format!("ArgParser has no method '{}'", method)),
+        }
+    }
+
     fn call_method(&mut self, obj: Value, method: &str, args: Vec<Value>) -> Value {
+        if let Value::Struct { name, fields } = &obj {
+            if name == "ArgParser" {
+                return Self::call_arg_parser_method(fields, method, &args);
+            }
+        }
         if let Value::Struct { name, fields } = &obj {
             if name.starts_with("__module_namespace_") {
                 let Some(callable) = fields.get(method).cloned() else {

@@ -163,7 +163,7 @@ struct Point {
     },
     
     func to_string() {
-        return "(" + x + ", " + y + ")";
+        return "(" + to_string(x) + ", " + to_string(y) + ")";
     }
 }
 

@@ -32,6 +32,12 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Uncaught interpreter errors retain their call frames after unwinding; caught errors do not leak stale frames into later diagnostics.
+
+- Interpreter argument-parser method calls and VM struct relational operators now reach their existing runtime implementations.
+- Static checking recognizes lexical callable bindings, runtime builtin aliases, dynamic reassignment, and the two-argument seek-read contract without spurious warnings. Explicit annotation errors remain diagnostic.
+- Runtime fixture checks support exact interpreter diagnostic snapshots alongside VM expectations.
+
 - `kujo test` honors explicit inventory-skip headers, keeping provider-dependent
   probes out of ordinary fixture runs and avoiding snapshots of missing configuration.
 - Interpreter namespace imports support imported callbacks and async callback globals.

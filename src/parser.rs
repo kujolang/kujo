@@ -2321,7 +2321,15 @@ impl Parser {
                     continue;
                 }
                 total += 1;
-                let expected_path = path.with_extension("out");
+                let shared_expected_path = path.with_extension("out");
+                let interpreter_expected_path = path.with_extension("interpreter.out");
+                let expected_path = if matches!(runtime_strategy, TestRuntimeStrategy::Interpreter)
+                    && interpreter_expected_path.exists()
+                {
+                    interpreter_expected_path.clone()
+                } else {
+                    shared_expected_path
+                };
 
                 let tokens = match crate::lexer::tokenize(&content) {
                     Ok(tokens) => tokens,
@@ -2419,6 +2427,13 @@ impl Parser {
                     continue;
                 }
 
+                let interpreter_expected = if interpreter_expected_path.exists() {
+                    Self::normalize_fixture_output(
+                        &fs::read_to_string(&interpreter_expected_path).unwrap_or_default(),
+                    )
+                } else {
+                    expected.clone()
+                };
                 let mut actual_for_report: Option<String> = None;
                 let mut fallback_for_report: Option<String> = None;
                 let mut used_interpreter_fallback = false;
@@ -2488,7 +2503,7 @@ impl Parser {
                                 };
                             let interpreter_actual =
                                 Self::normalize_fixture_output(&interpreter_actual);
-                            if interpreter_actual == expected {
+                            if interpreter_actual == interpreter_expected {
                                 dual_fallback_passed += 1;
                                 used_interpreter_fallback = true;
                                 true

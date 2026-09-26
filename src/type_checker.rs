@@ -39,6 +39,8 @@ pub struct TypeChecker {
     builtin_contains_active: bool,
     /// Stack of scopes for nested blocks
     scope_stack: Vec<HashMap<String, Option<TypeAnnotation>>>,
+    annotated_variables: HashSet<String>,
+    annotation_scopes: Vec<HashSet<String>>,
     /// Current function return type (for checking return statements)
     current_function_return: Option<TypeAnnotation>,
     /// Collect errors instead of failing immediately
@@ -62,6 +64,8 @@ impl TypeChecker {
             functions: HashMap::new(),
             builtin_contains_active: true,
             scope_stack: Vec::new(),
+            annotated_variables: HashSet::new(),
+            annotation_scopes: Vec::new(),
             current_function_return: None,
             errors: Vec::new(),
             recursion_depth: 0,
@@ -77,6 +81,17 @@ impl TypeChecker {
 
         // Register built-in functions
         checker.register_builtins();
+        // Runtime registration is authoritative for builtin availability. Unknown
+        // signatures remain gradual rather than being reported as undefined.
+        for name in crate::interpreter::Interpreter::get_builtin_names() {
+            let canonical = crate::interpreter::Interpreter::canonical_native_function_name(name);
+            let signature = checker
+                .functions
+                .get(canonical)
+                .cloned()
+                .unwrap_or(FunctionSignature { param_types: Vec::new(), return_type: None });
+            checker.functions.entry(name.to_string()).or_insert(signature);
+        }
 
         checker
     }
@@ -294,7 +309,7 @@ impl TypeChecker {
         self.functions.insert(
             "index_of".to_string(),
             FunctionSignature {
-                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
+                param_types: vec![Some(TypeAnnotation::Any), Some(TypeAnnotation::Any)],
                 return_type: Some(TypeAnnotation::Int),
             },
         );
@@ -2542,7 +2557,6 @@ impl TypeChecker {
                 param_types: vec![
                     Some(TypeAnnotation::String), // path
                     Some(TypeAnnotation::Int),    // position
-                    Some(TypeAnnotation::Int),    // count
                 ],
                 return_type: None, // bytes
             },
@@ -2579,7 +2593,7 @@ impl TypeChecker {
                     Some(TypeAnnotation::String), // source path
                     Some(TypeAnnotation::String), // dest path
                     Some(TypeAnnotation::Int),    // offset
-                    Some(TypeAnnotation::Int),    // count
+                    None,                         // optional count
                 ],
                 return_type: Some(TypeAnnotation::Bool),
             },
@@ -3034,6 +3048,7 @@ impl TypeChecker {
                 if let crate::ast::Pattern::Identifier(name) = pattern {
                     // If type annotation is provided, check compatibility
                     if let Some(annotated_type) = type_annotation {
+                        self.annotated_variables.insert(name.clone());
                         if let Some(inferred) = &inferred_type {
                             if !annotated_type.matches(inferred) {
                                 let error = KujoError::new(
@@ -3053,6 +3068,7 @@ impl TypeChecker {
                         self.variables.insert(name.clone(), Some(annotated_type.clone()));
                     } else {
                         // Store the inferred type
+                        self.annotated_variables.remove(name);
                         self.variables.insert(name.clone(), inferred_type);
                     }
                 }
@@ -3065,6 +3081,7 @@ impl TypeChecker {
 
                 // If type annotation is provided, check compatibility
                 if let Some(annotated_type) = type_annotation {
+                    self.annotated_variables.insert(name.clone());
                     if let Some(inferred) = &inferred_type {
                         if !annotated_type.matches(inferred) {
                             let error = KujoError::new(
@@ -3084,12 +3101,13 @@ impl TypeChecker {
                     self.variables.insert(name.clone(), Some(annotated_type.clone()));
                 } else {
                     // Store the inferred type
+                    self.annotated_variables.remove(name);
                     self.variables.insert(name.clone(), inferred_type);
                 }
             }
 
             Stmt::FuncDef {
-                name: _,
+                name,
                 params,
                 param_types,
                 return_type,
@@ -3097,6 +3115,14 @@ impl TypeChecker {
                 is_generator: _,
                 is_async: _,
             } => {
+                // Nested declarations belong to the current lexical scope.
+                self.variables.insert(
+                    name.clone(),
+                    Some(Self::function_signature_to_type_annotation(
+                        &Self::function_signature_from_params(params, param_types, return_type),
+                    )),
+                );
+                self.annotated_variables.remove(name);
                 // Enter function scope
                 let saved_return_type = self.current_function_return.clone();
                 self.current_function_return = return_type.clone();
@@ -3106,6 +3132,7 @@ impl TypeChecker {
                 for (i, param) in params.iter().enumerate() {
                     let param_type = param_types.get(i).and_then(|t| t.clone());
                     self.variables.insert(param.clone(), param_type);
+                    self.annotated_variables.remove(param);
                 }
 
                 // Check function body
@@ -3179,6 +3206,7 @@ impl TypeChecker {
                 self.infer_expr(iterable);
                 self.push_scope();
                 self.variables.insert(var.clone(), None); // Iterator type unknown
+                self.annotated_variables.remove(var);
                 for s in body {
                     self.check_stmt(s);
                 }
@@ -3212,10 +3240,17 @@ impl TypeChecker {
 
             Stmt::Match { value, cases, default } => {
                 self.infer_expr(value);
-                for (_, case_body) in cases {
+                for (pattern, case_body) in cases {
+                    self.push_scope();
+                    if let Some((_, binding)) = pattern.split_once('(') {
+                        let binding = binding.trim_end_matches(')').trim();
+                        self.variables.insert(binding.to_string(), None);
+                        self.annotated_variables.remove(binding);
+                    }
                     for s in case_body {
                         self.check_stmt(s);
                     }
+                    self.pop_scope();
                 }
                 if let Some(default_body) = default {
                     for s in default_body {
@@ -3224,13 +3259,17 @@ impl TypeChecker {
                 }
             }
 
-            Stmt::TryExcept { try_block, except_var: _, except_block } => {
+            Stmt::TryExcept { try_block, except_var, except_block } => {
                 for s in try_block {
                     self.check_stmt(s);
                 }
+                self.push_scope();
+                self.variables.insert(except_var.clone(), None);
+                self.annotated_variables.remove(except_var);
                 for s in except_block {
                     self.check_stmt(s);
                 }
+                self.pop_scope();
             }
 
             Stmt::ExprStmt(expr) => {
@@ -3243,8 +3282,10 @@ impl TypeChecker {
                 // Check based on assignment target
                 match target {
                     Expr::Identifier(name) => {
-                        // Check if variable exists and types are compatible
-                        if let Some(Some(expected)) = self.variables.get(name) {
+                        // Only explicit annotations constrain reassignment in gradual code.
+                        if !self.annotated_variables.contains(name) {
+                            self.variables.insert(name.clone(), inferred_type);
+                        } else if let Some(Some(expected)) = self.variables.get(name) {
                             if let Some(actual) = &inferred_type {
                                 if !expected.matches(actual) {
                                     let error = KujoError::new(
@@ -3363,9 +3404,12 @@ impl TypeChecker {
 
             Expr::Identifier(name) => {
                 // Look up variable type in symbol table
-                self.variables.get(name).cloned().flatten().or_else(|| {
-                    self.functions.get(name).map(Self::function_signature_to_type_annotation)
-                })
+                match self.variables.get(name) {
+                    Some(value) => value.clone(),
+                    None => {
+                        self.functions.get(name).map(Self::function_signature_to_type_annotation)
+                    }
+                }
             }
 
             Expr::UnaryOp { op, operand } => {
@@ -3467,8 +3511,39 @@ impl TypeChecker {
                     {
                         return self.infer_builtin_contains(args);
                     }
-                    // Clone the signature to avoid borrow conflicts
-                    let sig = self.functions.get(func_name).cloned();
+                    // Lexical values shadow global signatures, including unknown callable results.
+                    let sig = if let Some(variable) = self.variables.get(func_name).cloned() {
+                        match variable {
+                            Some(TypeAnnotation::Function { params, return_type }) => {
+                                Some(FunctionSignature {
+                                    param_types: params.into_iter().map(Some).collect(),
+                                    return_type: Some(*return_type),
+                                })
+                            }
+                            unknown @ (None | Some(TypeAnnotation::Any)) => {
+                                for arg in args {
+                                    self.infer_expr(arg);
+                                }
+                                return unknown;
+                            }
+                            Some(other) => {
+                                for arg in args {
+                                    self.infer_expr(arg);
+                                }
+                                self.errors.push(KujoError::new(
+                                    ErrorKind::TypeError,
+                                    format!(
+                                        "Cannot call '{}' with non-callable type {:?}",
+                                        func_name, other
+                                    ),
+                                    SourceLocation::unknown(),
+                                ));
+                                return None;
+                            }
+                        }
+                    } else {
+                        self.functions.get(func_name).cloned()
+                    };
 
                     if let Some(sig) = sig {
                         // Skip type checking for variadic functions (empty param_types means variadic)
@@ -3687,7 +3762,7 @@ impl TypeChecker {
             }
 
             Expr::Function {
-                params: _,
+                params,
                 param_types,
                 return_type,
                 body,
@@ -3698,12 +3773,12 @@ impl TypeChecker {
                 // Enter function scope
                 self.push_scope();
 
-                // Add parameters to scope
-                for t in param_types.iter().flatten() {
-                    // We would need the param name here, but it's not available in this context
-                    // For now, just validate the function body
-                    let _ = t;
+                for (index, param) in params.iter().enumerate() {
+                    self.variables.insert(param.clone(), param_types.get(index).cloned().flatten());
+                    self.annotated_variables.remove(param);
                 }
+                let saved_return_type = self.current_function_return.clone();
+                self.current_function_return = return_type.clone();
 
                 // Check function body
                 for stmt in body {
@@ -3713,10 +3788,10 @@ impl TypeChecker {
                 // Exit function scope
                 self.pop_scope();
 
-                // Return function type annotation if available
-                // For now, just return None since we don't have full function types yet
-                let _ = return_type;
-                None
+                self.current_function_return = saved_return_type;
+                Some(Self::function_signature_to_type_annotation(
+                    &Self::function_signature_from_params(params, param_types, return_type),
+                ))
             }
 
             Expr::Ok(value_expr) => {
@@ -3752,6 +3827,7 @@ impl TypeChecker {
                 // Try operator unwraps Result<T, E> to T
                 match expr_type {
                     Some(TypeAnnotation::Result { ok_type, .. }) => Some(*ok_type),
+                    None | Some(TypeAnnotation::Any) => None,
                     _ => {
                         // Type error: try operator on non-Result value
                         self.errors.push(KujoError::new(
@@ -3802,12 +3878,15 @@ impl TypeChecker {
     /// Push a new scope onto the scope stack
     fn push_scope(&mut self) {
         self.scope_stack.push(self.variables.clone());
+        self.annotation_scopes.push(self.annotated_variables.clone());
     }
 
     /// Pop a scope from the scope stack
     fn pop_scope(&mut self) {
         if let Some(prev_scope) = self.scope_stack.pop() {
             self.variables = prev_scope;
+            self.annotated_variables =
+                self.annotation_scopes.pop().expect("balanced checker scopes");
         }
     }
 

@@ -80,6 +80,7 @@ if [[ "${mode}" == "full" ]]; then
   fi
 
   run_cmd cargo run -- test
+  run_cmd cargo run -- test --runtime interpreter
 
   if [[ "${KUJO_RELEASE_GATE_RUN_BENCH:-0}" == "1" ]]; then
     run_cmd cargo run -- bench examples/benchmarks

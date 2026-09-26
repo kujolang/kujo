@@ -213,7 +213,7 @@ classify_mismatch_cause() {
   fi
 
   if [[ "$delta_type" == "interpreter_only_mismatch" ]]; then
-    echo "intentional-divergence|runtime-owner|P2|default VM output matches the release snapshot; legacy interpreter-only drift is documented post-v1 compatibility debt"
+    echo "runtime-parity-bug|runtime-owner|P0|interpreter output violates its explicit diagnostic snapshot or the shared runtime expectation"
     return
   fi
 
@@ -242,10 +242,6 @@ classify_mismatch_cause() {
     return
   fi
 
-  if [[ "$fixture" == *"generators_test.kujo"* ]]; then
-    echo "intentional-divergence|runtime-owner|P2|known generator-surface divergence should be documented and contract-locked"
-    return
-  fi
   echo "runtime-parity-bug|runtime-owner|P0|both runtimes diverge from snapshot and from each other, indicating runtime-path parity drift rather than stale fixture expectations"
 }
 
@@ -306,6 +302,12 @@ while IFS= read -r fixture; do
     expected="$(trim_file "$expected_path")"
   fi
 
+  interpreter_expected="$expected"
+  interpreter_expected_path="$ROOT/${fixture%.kujo}.interpreter.out"
+  if [[ -f "$interpreter_expected_path" ]]; then
+    interpreter_expected="$(trim_file "$interpreter_expected_path")"
+  fi
+
   vm_out_file="$tmp_dir/vm_${count}.txt"
   vm_status_file="$tmp_dir/vm_${count}.status"
   int_out_file="$tmp_dir/int_${count}.txt"
@@ -325,7 +327,7 @@ while IFS= read -r fixture; do
   if [[ "$vm_output" == "$expected" ]]; then
     vm_match="yes"
   fi
-  if [[ "$interpreter_output" == "$expected" ]]; then
+  if [[ "$interpreter_output" == "$interpreter_expected" ]]; then
     interpreter_match="yes"
   fi
 

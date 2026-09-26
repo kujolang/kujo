@@ -8682,7 +8682,10 @@ impl VM {
     }
 
     /// Comparison operation
-    fn compare_op(&self, left: &Value, op: &str, right: &Value) -> Result<Value, String> {
+    fn compare_op(&mut self, left: &Value, op: &str, right: &Value) -> Result<Value, String> {
+        if let Some(result) = self.try_call_vm_binary_operator_method(left, op, right) {
+            return result;
+        }
         Value::compare_order(left, op, right).map(Value::Bool)
     }
 

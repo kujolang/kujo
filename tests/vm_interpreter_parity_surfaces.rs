@@ -2341,3 +2341,29 @@ fn global_immutability_survives_function_isolation() {
         "const binding: protected",
     );
 }
+
+#[test]
+fn vm_and_interpreter_match_struct_relational_overloads() {
+    let source = r#"
+        struct Number {
+            value: int,
+            func op_lt(other) { return value < other.value },
+            func op_gt(other) { return value > other.value },
+            func op_le(other) { return value <= other.value },
+            func op_ge(other) { return value >= other.value }
+        }
+        let small := Number { value: 1 }
+        let large := Number { value: 2 }
+        comparison_ok := small < large && large > small && small <= small && large >= large
+    "#;
+    assert_interpreter_and_vm_bool(source, "comparison_ok");
+}
+
+#[test]
+fn vm_and_interpreter_match_arg_parser_method_chains() {
+    let source = r#"
+        let parser := arg_parser().add_argument("--name", "help", "user name")
+        parser_ok := contains(parser.help(), "--name") == 1
+    "#;
+    assert_interpreter_and_vm_bool(source, "parser_ok");
+}
