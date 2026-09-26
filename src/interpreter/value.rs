@@ -118,6 +118,7 @@ pub struct HttpUploadRoute {
 /// leak-on-drop strategy with a non-recursive drop traversal.
 pub struct LeakyFunctionBody {
     id: usize,
+    pub(crate) lexical_name: Option<String>,
 }
 
 #[derive(Clone)]
@@ -217,7 +218,7 @@ impl Clone for LeakyFunctionBody {
             entry.refs += 1;
         }
 
-        LeakyFunctionBody { id: self.id }
+        LeakyFunctionBody { id: self.id, lexical_name: self.lexical_name.clone() }
     }
 }
 
@@ -242,7 +243,13 @@ impl LeakyFunctionBody {
         let mut store = function_body_store().lock().unwrap();
         store.insert(id, StoredFunctionBody { refs: 1, storage });
 
-        LeakyFunctionBody { id }
+        LeakyFunctionBody { id, lexical_name: None }
+    }
+
+    pub(crate) fn named(name: &str, body: Vec<Stmt>) -> Self {
+        let mut function = Self::new(body);
+        function.lexical_name = Some(name.to_owned());
+        function
     }
 
     pub fn get(&self) -> FunctionBodyRef {
@@ -1169,14 +1176,11 @@ pub enum Value {
     /// Option type: Some(value) or None
     Option { is_some: bool, value: Box<Value> },
     /// Generator definition (before being called)
-    GeneratorDef(Vec<String>, LeakyFunctionBody),
-    /// Generator instance with execution state
+    GeneratorDef(Vec<String>, LeakyFunctionBody, Option<Arc<Mutex<Environment>>>),
+    /// Generator aliases share an owned continuation and terminal state.
     Generator {
         params: Vec<String>,
-        body: LeakyFunctionBody,
-        env: Arc<Mutex<Environment>>,
-        pc: usize, // Program counter
-        is_exhausted: bool,
+        state: Arc<Mutex<super::generator::InterpreterGeneratorState>>,
     },
     /// Iterator instance wrapping a collection or generator
     Iterator {
@@ -1188,7 +1192,7 @@ pub enum Value {
     },
     /// Promise for async computation results
     Promise {
-        receiver: Arc<Mutex<tokio::sync::oneshot::Receiver<Result<Value, String>>>>,
+        receiver: Arc<Mutex<super::promise::PromiseReceiver>>,
         is_polled: Arc<Mutex<bool>>,
         cached_result: Arc<Mutex<Option<Result<Value, String>>>>,
         /// Optional join handle for spawned async task (None for already-resolved promises)
@@ -1196,10 +1200,7 @@ pub enum Value {
         task_handle: Option<Arc<Mutex<Option<tokio::task::JoinHandle<Result<Value, String>>>>>>,
     },
     /// Task handle for spawned async tasks
-    TaskHandle {
-        handle: Arc<Mutex<Option<tokio::task::JoinHandle<Value>>>>,
-        is_cancelled: Arc<Mutex<bool>>,
-    },
+    TaskHandle { state: Arc<super::tasks::TaskState> },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1421,11 +1422,12 @@ impl std::fmt::Debug for Value {
                     write!(f, "None")
                 }
             }
-            Value::GeneratorDef(params, body) => {
+            Value::GeneratorDef(params, body, _) => {
                 write!(f, "GeneratorDef({:?}, {} stmts)", params, body.get().len())
             }
-            Value::Generator { params, is_exhausted, pc, .. } => {
-                write!(f, "Generator({:?}, pc={}, exhausted={})", params, pc, is_exhausted)
+            Value::Generator { params, state } => {
+                let state = state.lock().unwrap_or_else(|p| p.into_inner());
+                write!(f, "Generator({:?}, exhausted={})", params, state.exhausted)
             }
             Value::Iterator { source, index, .. } => {
                 write!(f, "Iterator(source={:?}, index={})", source, index)
@@ -1438,9 +1440,8 @@ impl std::fmt::Debug for Value {
                     Some(Err(err)) => write!(f, "Promise(Rejected: {})", err),
                 }
             }
-            Value::TaskHandle { is_cancelled, .. } => {
-                let cancelled = is_cancelled.lock().unwrap();
-                if *cancelled {
+            Value::TaskHandle { state } => {
+                if state.is_cancelled() {
                     write!(f, "TaskHandle(Cancelled)")
                 } else {
                     write!(f, "TaskHandle(Running)")
@@ -1620,9 +1621,20 @@ impl Value {
                     && left_captured_binding_kinds == right_captured_binding_kinds
             }
             (
-                Value::GeneratorDef(left_params, left_body),
-                Value::GeneratorDef(right_params, right_body),
-            ) => left_params == right_params && left_body.same_identity(right_body),
+                Value::GeneratorDef(left_params, left_body, left_env),
+                Value::GeneratorDef(right_params, right_body, right_env),
+            ) => {
+                left_params == right_params
+                    && left_body.same_identity(right_body)
+                    && Self::optional_env_ptr_eq(left_env, right_env)
+            }
+            (Value::Generator { state: left, .. }, Value::Generator { state: right, .. }) => {
+                Arc::ptr_eq(left, right)
+            }
+            (
+                Value::BytecodeGenerator { state: left },
+                Value::BytecodeGenerator { state: right },
+            ) => Arc::ptr_eq(left, right),
             (Value::NativeFunction(left_name), Value::NativeFunction(right_name)) => {
                 left_name == right_name
             }

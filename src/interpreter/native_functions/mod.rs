@@ -322,12 +322,7 @@ mod tests {
     fn await_native_promise(value: Value) -> Result<Value, String> {
         match value {
             Value::Promise { receiver, .. } => AsyncRuntime::block_on(async {
-                let rx = {
-                    let mut receiver_guard = receiver.lock().unwrap();
-                    let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                    drop(dummy_tx);
-                    std::mem::replace(&mut *receiver_guard, dummy_rx)
-                };
+                let rx = receiver.lock().unwrap().clone();
 
                 match rx.await {
                     Ok(result) => result,
@@ -949,7 +944,7 @@ mod tests {
 
         let spawn_bad_arg = call_native_function(&mut interpreter, "spawn_task", &[Value::Int(1)]);
         assert!(
-            matches!(spawn_bad_arg, Value::Error(message) if message.contains("requires an async function argument"))
+            matches!(spawn_bad_arg, Value::Error(message) if message.contains("Task requires an ordinary or async function"))
         );
 
         let task_handle =
@@ -964,12 +959,17 @@ mod tests {
         let await_task_consumed =
             call_native_function(&mut interpreter, "await_task", &[task_handle.clone()]);
         let await_task_consumed_result = await_native_promise(await_task_consumed);
-        assert!(
-            matches!(await_task_consumed_result, Err(message) if message.contains("already consumed"))
-        );
+        assert!(matches!(await_task_consumed_result, Ok(Value::Null)));
 
-        let cancel_target =
-            call_native_function(&mut interpreter, "spawn_task", &[noop_spawnable_function()]);
+        let never_returns = Value::Function(
+            Vec::new(),
+            crate::interpreter::LeakyFunctionBody::new(vec![crate::ast::Stmt::Loop {
+                condition: None,
+                body: Vec::new(),
+            }]),
+            None,
+        );
+        let cancel_target = call_native_function(&mut interpreter, "spawn_task", &[never_returns]);
         let cancel_result =
             call_native_function(&mut interpreter, "cancel_task", &[cancel_target.clone()]);
         assert!(matches!(cancel_result, Value::Bool(true)));
@@ -982,7 +982,7 @@ mod tests {
             call_native_function(&mut interpreter, "await_task", &[cancel_target]);
         let await_cancelled_result = await_native_promise(await_cancelled);
         assert!(
-            matches!(await_cancelled_result, Err(message) if message.contains("already consumed"))
+            matches!(await_cancelled_result, Err(message) if message.contains("Task was cancelled"))
         );
     }
 

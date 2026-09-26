@@ -298,7 +298,6 @@ fn captured_let_and_const_reject_scalar_and_collection_writes() {
 }
 
 #[test]
-#[ignore = "known interpreter defect: a named closure snapshot omits its own binding"]
 fn a_recursive_named_closure_keeps_its_capture_after_parent_return() {
     characterize(
         r#"

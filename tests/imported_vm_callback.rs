@@ -48,19 +48,7 @@ fn closures_retain_function_local_imports_after_return() {
             let source = format!(
                 "func factory() {{ {import}\n{body} }}\nlet callback := factory()\nprint({invoke})"
             );
-            for (runtime, output) in
-                run_case(&format!("local_import_{name}_{nested}"), &source, true)
-                    .into_iter()
-                    .enumerate()
-            {
-                if name == "namespace" && runtime == 1 {
-                    // The interpreter does not expose this namespace binding;
-                    // preserve its baseline diagnostic without claiming parity.
-                    assert!(!output.status.success());
-                    assert!(String::from_utf8_lossy(&output.stderr)
-                        .contains("Undefined variable: bridge"));
-                    continue;
-                }
+            for output in run_case(&format!("local_import_{name}_{nested}"), &source, true) {
                 assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
                 assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "7");
             }

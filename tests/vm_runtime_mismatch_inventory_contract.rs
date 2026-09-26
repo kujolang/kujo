@@ -144,3 +144,32 @@ fn vm_runtime_mismatch_inventory_script_is_deterministic_for_capped_scan() {
     let csv_b = fs::read_to_string(output_csv_b).expect("second csv output should exist");
     assert_eq!(csv_a, csv_b, "csv output should be deterministic");
 }
+
+#[test]
+fn interpreter_override_mismatch_is_a_parity_bug() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let relative = format!("target/inventory_override_{nonce}");
+    let dir = root.join(&relative);
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(dir.join("sample.kujo"), "print(\"actual\")\n").unwrap();
+    fs::write(dir.join("sample.out"), "actual\n").unwrap();
+    fs::write(dir.join("sample.interpreter.out"), "wrong\n").unwrap();
+    let output = Command::new("bash")
+        .arg(script_path())
+        .args(["--tests-dir", &relative, "--runner", "target/debug/kujo", "--strict"])
+        .arg("--output-csv")
+        .arg(dir.join("inventory.csv"))
+        .arg("--output-md")
+        .arg(dir.join("inventory.md"))
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let csv = fs::read_to_string(dir.join("inventory.csv")).unwrap();
+    assert!(
+        csv.contains(",yes,no,interpreter_only_mismatch,runtime-parity-bug,runtime-owner,P0,"),
+        "{csv}"
+    );
+    fs::remove_dir_all(dir).unwrap();
+}

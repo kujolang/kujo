@@ -623,6 +623,8 @@ impl Compiler {
                     self.chunk.emit(OpCode::StoreVar(iter_var.clone()));
                 }
 
+                self.chunk.emit(OpCode::Pop);
+
                 // Create index variable
                 let zero_index = self.chunk.add_constant(Constant::Int(0));
                 self.chunk.emit(OpCode::LoadConst(zero_index));
@@ -631,6 +633,8 @@ impl Compiler {
                 } else {
                     self.chunk.emit(OpCode::StoreVar(index_var.clone()));
                 }
+
+                self.chunk.emit(OpCode::Pop);
 
                 let loop_start = self.chunk.instructions.len();
                 self.loop_starts.push(loop_start);
@@ -650,32 +654,8 @@ impl Compiler {
                     self.chunk.emit(OpCode::LoadVar(index_var.clone()));
                 }
 
-                // Check if index < len(iterable) - using built-in len
-                if let Some(slot) = iter_slot {
-                    self.chunk.emit(OpCode::LoadLocal(slot));
-                } else {
-                    self.chunk.emit(OpCode::LoadVar(iter_var.clone()));
-                }
-                self.chunk.emit(OpCode::LoadGlobal("len".to_string()));
-                self.chunk.emit(OpCode::Call(1));
-                self.chunk.emit(OpCode::LessThan);
-
-                // Jump to end if done
-                let end_jump = self.chunk.emit(OpCode::JumpIfFalse(0));
-                self.chunk.emit(OpCode::Pop);
-
-                // Get current element: iterable[index]
-                if let Some(slot) = iter_slot {
-                    self.chunk.emit(OpCode::LoadLocal(slot));
-                } else {
-                    self.chunk.emit(OpCode::LoadVar(iter_var.clone()));
-                }
-                if let Some(slot) = index_slot {
-                    self.chunk.emit(OpCode::LoadLocal(slot));
-                } else {
-                    self.chunk.emit(OpCode::LoadVar(index_var.clone()));
-                }
-                self.chunk.emit(OpCode::IndexGet);
+                // A single step preserves generator laziness and ordinary array indexing.
+                let end_jump = self.chunk.emit(OpCode::ForNext(0));
 
                 // Store in loop variable
                 if let Some(slot) = loop_var_slot {
@@ -683,6 +663,8 @@ impl Compiler {
                 } else {
                     self.chunk.emit(OpCode::StoreVar(var.clone()));
                 }
+
+                self.chunk.emit(OpCode::Pop);
 
                 // Compile body
                 self.push_loop_runtime_scope();
@@ -708,12 +690,13 @@ impl Compiler {
                     self.chunk.emit(OpCode::StoreVar(index_var.clone()));
                 }
 
+                self.chunk.emit(OpCode::Pop);
+
                 // Jump back to start
                 self.chunk.emit(OpCode::JumpBack(loop_start));
 
                 // Patch end jump
                 self.chunk.patch_jump(end_jump);
-                self.chunk.emit(OpCode::Pop);
 
                 // Patch all break statements
                 if let Some(breaks) = self.loop_ends.pop() {
@@ -768,6 +751,9 @@ impl Compiler {
             }
 
             Stmt::FuncDef { name, params, body, is_async, is_generator, .. } => {
+                if *is_async && *is_generator {
+                    return Err("Async generators are not supported".to_owned());
+                }
                 // Create a new compiler for the function body
                 let mut func_compiler = Compiler::new();
                 func_compiler.used_locals = Self::collect_used_variables(body);
@@ -1126,31 +1112,15 @@ impl Compiler {
             }
 
             Stmt::Spawn { body } => {
-                // Spawn creates a background thread
-                // For now, compile as a lambda that gets executed asynchronously
-                // This is simplified - full implementation needs runtime support
-
-                // Create function for spawn body
-                let mut spawn_compiler = Compiler::new();
-                spawn_compiler.used_locals = Self::collect_used_variables(body);
-                spawn_compiler.chunk.name = Some("<spawn>".to_string());
-                spawn_compiler.scope_depth = 0;
-
-                for stmt in body {
-                    spawn_compiler.compile_stmt(stmt)?;
-                }
-
-                spawn_compiler.chunk.emit(OpCode::ReturnNone);
-
-                let func_index =
-                    self.chunk.add_constant(Constant::Function(Box::new(spawn_compiler.chunk)));
-
-                // Load function and call it (runtime will handle thread spawning)
-                self.chunk.emit(OpCode::MakeClosure(func_index));
-                // Deferred post-v1 runtime backlog: dedicated SpawnThread opcode (see docs/V1_SCOPE.md deferred runtime execution section)
-                // For now this will just create a closure
-                self.chunk.emit(OpCode::Pop); // Pop the closure for now
-
+                self.compile_expr(&Expr::Function {
+                    params: Vec::new(),
+                    param_types: Vec::new(),
+                    return_type: None,
+                    body: body.clone(),
+                    is_generator: false,
+                    is_async: false,
+                })?;
+                self.chunk.emit(OpCode::SpawnDetached);
                 Ok(())
             }
 
@@ -1540,11 +1510,16 @@ impl Compiler {
                 Ok(())
             }
 
-            Expr::Function { params, body, .. } => {
+            Expr::Function { params, body, is_generator, is_async, .. } => {
+                if *is_async && *is_generator {
+                    return Err("Async generators are not supported".to_owned());
+                }
                 // Create anonymous function
                 let mut func_compiler = Compiler::new();
                 func_compiler.used_locals = Self::collect_used_variables(body);
                 func_compiler.chunk.name = Some("<lambda>".to_string());
+                func_compiler.chunk.is_async = *is_async;
+                func_compiler.chunk.is_generator = *is_generator;
                 func_compiler.chunk.params = params.clone();
                 func_compiler.scope_depth = 1; // Functions create a new scope (not global)
                 func_compiler.uses_local_slots = true;
@@ -1741,8 +1716,8 @@ impl Compiler {
                 // This suspends execution until the promise resolves
                 self.chunk.emit(OpCode::Await);
 
-                // Mark the chunk as async
-                self.chunk.is_async = true;
+                // Await does not change the callable's declared kind. Ordinary
+                // functions and synchronous generators may await a promise.
 
                 Ok(())
             }
@@ -2154,6 +2129,27 @@ impl Compiler {
         let limit_slot = self.resolve_local_slot(limit_name)?;
 
         Some((map_slot, index_slot, limit_slot))
+    }
+
+    /// Resolve only external names used by a detached AST body. Local shadowing
+    /// and nested functions use the same lexical resolver as ordinary closures.
+    pub(crate) fn spawn_free_bindings(
+        body: &[Stmt],
+        names: impl Iterator<Item = String>,
+    ) -> Result<Vec<String>, String> {
+        let mut compiler = Compiler::new();
+        compiler.scope_depth = 1;
+        compiler.uses_local_slots = true;
+        compiler.used_locals = Self::collect_used_variables(body);
+        compiler.outer_bindings = names
+            .map(|name| {
+                (name.clone(), LexicalCapture::Environment(name, BytecodeBindingKind::Mutable))
+            })
+            .collect();
+        for statement in body {
+            compiler.compile_stmt(statement)?;
+        }
+        Ok(compiler.chunk.upvalues)
     }
 
     /// Collect variables that are read within the statement list

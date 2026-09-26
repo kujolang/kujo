@@ -560,7 +560,7 @@ fn resolved_promise(result: Result<Value, String>) -> Value {
     let (tx, rx) = tokio::sync::oneshot::channel();
     let _ = tx.send(result);
     Value::Promise {
-        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
         task_handle: None,
@@ -776,7 +776,7 @@ fn try_parallel_map_with_jit_bytecode(
     });
 
     Some(Value::Promise {
-        receiver: Arc::new(Mutex::new(rx)),
+        receiver: Arc::new(Mutex::new(rx.into())),
         is_polled: Arc::new(Mutex::new(false)),
         cached_result: Arc::new(Mutex::new(None)),
         task_handle: None,
@@ -848,16 +848,15 @@ pub fn handle(
                         });
                     }
                     let actual_rx = {
-                        let mut guard = match lock_or_async_error(
+                        let guard = match lock_or_async_error(
                             receiver.as_ref(),
                             "promise_wait.promise.receiver",
                         ) {
                             Ok(guard) => guard,
                             Err(error) => return Some(Value::Error(error)),
                         };
-                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                        drop(dummy_tx);
-                        std::mem::replace(&mut *guard, dummy_rx)
+
+                        guard.clone()
                     };
                     let result = AsyncRuntime::block_on(async {
                         match actual_rx.await {
@@ -914,7 +913,7 @@ pub fn handle(
 
             // Return promise immediately
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -997,7 +996,7 @@ pub fn handle(
 
                         // Extract the receiver from the mutex
                         let actual_rx = {
-                            let mut recv_guard = match lock_or_async_error(
+                            let recv_guard = match lock_or_async_error(
                                 receiver.as_ref(),
                                 "async_timeout.promise.receiver",
                             ) {
@@ -1007,9 +1006,8 @@ pub fn handle(
                                     return Value::Null;
                                 }
                             };
-                            let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                            drop(dummy_tx);
-                            std::mem::replace(&mut *recv_guard, dummy_rx)
+
+                            recv_guard.clone()
                         };
 
                         // Race the promise against the timeout
@@ -1043,7 +1041,7 @@ pub fn handle(
 
                     // Return new promise
                     Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                         task_handle: None,
@@ -1126,7 +1124,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1237,7 +1235,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1282,7 +1280,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1391,7 +1389,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1445,7 +1443,7 @@ pub fn handle(
 
             // Return promise
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1589,7 +1587,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1771,7 +1769,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1895,7 +1893,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -1903,191 +1901,40 @@ pub fn handle(
         }
 
         "spawn_task" => {
-            // spawn_task(async_func: AsyncFunction) -> TaskHandle
-            // Spawn a background task that runs independently
             if args.len() != 1 {
                 return Some(Value::Error(format!(
-                    "spawn_task() expects 1 argument (async function), got {}",
+                    "spawn_task() expects 1 argument (function), got {}",
                     args.len()
                 )));
             }
-
-            let func = match &args[0] {
-                Value::AsyncFunction(params, body, env) => {
-                    (params.clone(), body.clone(), env.clone())
-                }
-                Value::Function(params, body, env) => {
-                    // Allow regular functions to be spawned as tasks too
-                    (params.clone(), body.clone(), env.clone())
-                }
-                _ => {
-                    return Some(Value::Error(
-                        "spawn_task() requires an async function argument".to_string(),
-                    ));
-                }
-            };
-
-            let (_params, _body, _env) = func;
-
-            // Clone interpreter context needed for execution
-            // Note: We need to pass the interpreter or create a way to execute
-            // For now, we'll create a simple task that just returns the function
-            // In a real implementation, we'd need to execute the function body
-            // Deferred post-v1 runtime backlog: execute task bodies with full interpreter context
-            // (see docs/V1_SCOPE.md deferred runtime execution section).
-
-            // Create the task handle
-            let is_cancelled = std::sync::Arc::new(std::sync::Mutex::new(false));
-            let is_cancelled_clone = is_cancelled.clone();
-
-            // Spawn the task
-            let handle = AsyncRuntime::spawn_task(async move {
-                // Check if cancelled
-                {
-                    let cancelled = match lock_or_async_error(
-                        is_cancelled_clone.as_ref(),
-                        "spawn_task.is_cancelled",
-                    ) {
-                        Ok(guard) => guard,
-                        Err(error) => return Value::Error(error),
-                    };
-                    if *cancelled {
-                        return Value::Error("Task was cancelled".to_string());
-                    }
-                }
-
-                // For now, just sleep to simulate work
-                // Deferred post-v1 runtime backlog: execute the actual function body with interpreter.
-                AsyncRuntime::sleep(std::time::Duration::from_millis(1)).await;
-
-                // Return placeholder - in full implementation would execute function
-                Value::Null
-            });
-
-            Some(Value::TaskHandle {
-                handle: std::sync::Arc::new(std::sync::Mutex::new(Some(handle))),
-                is_cancelled,
+            Some(match _interp.submit_language_task(args[0].clone(), Vec::new()) {
+                Ok(state) => Value::TaskHandle { state },
+                Err(error) => Value::Error(error),
             })
         }
-
         "await_task" => {
-            // await_task(task_handle: TaskHandle) -> Promise<Value>
-            // Wait for a spawned task to complete and get its result
             if args.len() != 1 {
                 return Some(Value::Error(format!(
                     "await_task() expects 1 argument (task handle), got {}",
                     args.len()
                 )));
             }
-
-            match &args[0] {
-                Value::TaskHandle { handle: handle_arc, is_cancelled } => {
-                    let handle_arc = handle_arc.clone();
-                    let is_cancelled = is_cancelled.clone();
-
-                    // Create channel for result
-                    let (tx, rx) = tokio::sync::oneshot::channel();
-
-                    // Spawn task to await the handle
-                    AsyncRuntime::spawn_task(async move {
-                        // Extract the handle
-                        let handle = {
-                            let mut handle_guard =
-                                match lock_or_async_error(handle_arc.as_ref(), "await_task.handle")
-                                {
-                                    Ok(guard) => guard,
-                                    Err(error) => {
-                                        let _ = tx.send(Err(error));
-                                        return Value::Null;
-                                    }
-                                };
-                            handle_guard.take()
-                        };
-
-                        let result = if let Some(h) = handle {
-                            // Check if cancelled (drop guard before await)
-                            let is_task_cancelled = {
-                                let cancelled = match lock_or_async_error(
-                                    is_cancelled.as_ref(),
-                                    "await_task.is_cancelled",
-                                ) {
-                                    Ok(guard) => guard,
-                                    Err(error) => {
-                                        let _ = tx.send(Err(error));
-                                        return Value::Null;
-                                    }
-                                };
-                                *cancelled
-                            };
-
-                            if is_task_cancelled {
-                                Err("Task was cancelled".to_string())
-                            } else {
-                                // Await the task completion
-                                match h.await {
-                                    Ok(value) => Ok(value),
-                                    Err(e) => Err(format!("Task panicked: {}", e)),
-                                }
-                            }
-                        } else {
-                            Err("Task handle already consumed".to_string())
-                        };
-
-                        let _ = tx.send(result);
-                        Value::Null
-                    });
-
-                    // Return promise
-                    Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
-                        is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
-                        cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
-                        task_handle: None,
-                    })
-                }
-                _ => Some(Value::Error("await_task() requires a TaskHandle argument".to_string())),
-            }
+            Some(match &args[0] {
+                Value::TaskHandle { state } => state.completion.clone(),
+                _ => Value::Error("await_task() requires a TaskHandle argument".to_owned()),
+            })
         }
-
         "cancel_task" => {
-            // cancel_task(task_handle: TaskHandle) -> Bool
-            // Request cancellation of a running task
             if args.len() != 1 {
                 return Some(Value::Error(format!(
                     "cancel_task() expects 1 argument (task handle), got {}",
                     args.len()
                 )));
             }
-
-            match &args[0] {
-                Value::TaskHandle { handle: handle_arc, is_cancelled } => {
-                    // Mark as cancelled
-                    {
-                        let mut cancelled = match lock_or_async_error(
-                            is_cancelled.as_ref(),
-                            "cancel_task.is_cancelled",
-                        ) {
-                            Ok(guard) => guard,
-                            Err(error) => return Some(Value::Error(error)),
-                        };
-                        *cancelled = true;
-                    }
-
-                    // Abort the task if possible
-                    let mut handle_guard =
-                        match lock_or_async_error(handle_arc.as_ref(), "cancel_task.handle") {
-                            Ok(guard) => guard,
-                            Err(error) => return Some(Value::Error(error)),
-                        };
-                    if let Some(handle) = handle_guard.take() {
-                        handle.abort();
-                        Some(Value::Bool(true))
-                    } else {
-                        Some(Value::Bool(false)) // Already consumed
-                    }
-                }
-                _ => Some(Value::Error("cancel_task() requires a TaskHandle argument".to_string())),
-            }
+            Some(match &args[0] {
+                Value::TaskHandle { state } => Value::Bool(state.cancel()),
+                _ => Value::Error("cancel_task() requires a TaskHandle argument".to_owned()),
+            })
         }
 
         "Promise.all" | "promise_all" => {
@@ -2144,7 +1991,7 @@ pub fn handle(
                 let (tx, rx) = tokio::sync::oneshot::channel();
                 let _ = tx.send(Ok(Value::Array(Arc::new(vec![]))));
                 return Some(Value::Promise {
-                    receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                    receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                     is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                     cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                     task_handle: None,
@@ -2222,7 +2069,7 @@ pub fn handle(
                 let mut futures = Vec::with_capacity(count);
                 for (idx, receiver_arc, is_polled, cached_result) in pending_promises {
                     let actual_rx = {
-                        let mut recv_guard = match lock_or_async_error(
+                        let recv_guard = match lock_or_async_error(
                             receiver_arc.as_ref(),
                             "Promise.all.receiver",
                         ) {
@@ -2232,9 +2079,8 @@ pub fn handle(
                                 return Value::Null;
                             }
                         };
-                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                        drop(dummy_tx);
-                        std::mem::replace(&mut *recv_guard, dummy_rx)
+
+                        recv_guard.clone()
                     };
                     futures.push((idx, actual_rx, is_polled, cached_result));
                 }
@@ -2348,7 +2194,7 @@ pub fn handle(
 
             // Return promise that resolves to array of results
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -2385,7 +2231,7 @@ pub fn handle(
                 | func @ Value::Function(_, _, _)
                 | func @ Value::AsyncFunction(_, _, _)
                 | func @ Value::BytecodeFunction { .. }
-                | func @ Value::GeneratorDef(_, _) => func.clone(),
+                | func @ Value::GeneratorDef(..) => func.clone(),
                 _ => {
                     return Some(Value::Error(
                         "parallel_map() second argument must be a callable function; pass a function, closure, or imported callable value instead of a literal".to_string(),
@@ -2479,7 +2325,7 @@ pub fn handle(
                     Value::Null
                 });
                 return Some(Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx)),
+                    receiver: Arc::new(Mutex::new(rx.into())),
                     is_polled: Arc::new(Mutex::new(false)),
                     cached_result: Arc::new(Mutex::new(None)),
                     task_handle: None,
@@ -2560,7 +2406,7 @@ pub fn handle(
                 let mut futures = Vec::with_capacity(count);
                 for (idx, receiver_arc, is_polled, cached_result) in pending_receivers {
                     let actual_rx = {
-                        let mut recv_guard = match lock_or_async_error(
+                        let recv_guard = match lock_or_async_error(
                             receiver_arc.as_ref(),
                             "parallel_map.receiver",
                         ) {
@@ -2570,9 +2416,8 @@ pub fn handle(
                                 return Value::Null;
                             }
                         };
-                        let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                        drop(dummy_tx);
-                        std::mem::replace(&mut *recv_guard, dummy_rx)
+
+                        recv_guard.clone()
                     };
                     futures.push((idx, actual_rx, is_polled, cached_result));
                 }
@@ -2651,7 +2496,7 @@ pub fn handle(
             });
 
             Some(Value::Promise {
-                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                 is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                 cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                 task_handle: None,
@@ -2683,7 +2528,7 @@ pub fn handle(
                     AsyncRuntime::spawn_task(async move {
                         let await_result = {
                             let rx = {
-                                let mut receiver_guard = match lock_or_async_error(
+                                let receiver_guard = match lock_or_async_error(
                                     receiver.as_ref(),
                                     "par_each.receiver",
                                 ) {
@@ -2693,9 +2538,8 @@ pub fn handle(
                                         return Value::Null;
                                     }
                                 };
-                                let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                                drop(dummy_tx);
-                                std::mem::replace(&mut *receiver_guard, dummy_rx)
+
+                                receiver_guard.clone()
                             };
 
                             rx.await
@@ -2719,7 +2563,7 @@ pub fn handle(
                     });
 
                     Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx)),
+                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
                         is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
                         cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
                         task_handle: None,
@@ -2796,10 +2640,9 @@ mod tests {
         match value {
             Value::Promise { receiver, .. } => AsyncRuntime::block_on(async {
                 let rx = {
-                    let mut receiver_guard = receiver.lock().unwrap();
-                    let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                    drop(dummy_tx);
-                    std::mem::replace(&mut *receiver_guard, dummy_rx)
+                    let receiver_guard = receiver.lock().unwrap();
+
+                    receiver_guard.clone()
                 };
 
                 match rx.await {

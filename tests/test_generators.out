@@ -21,9 +21,25 @@ Sequence value:
 === Test 4: Generator with Parameters ===
 Message:
 hello
+Message:
+hello
+Message:
+hello
 
 === Test 5: Fibonacci Generator ===
 Fib:
 0
+Fib:
+1
+Fib:
+1
+Fib:
+2
+Fib:
+3
+Fib:
+5
+Fib:
+8
 
 === All Generator Tests Passed ===

@@ -28,8 +28,20 @@ for engine in vm interpreter; do
     fi
     "${PDFINFO}" "${KUJO_PDF_OUTPUT}" >"${TMP_ROOT}/${engine}.info"
     "${PDFTOTEXT}" "${KUJO_PDF_OUTPUT}" "${TMP_ROOT}/${engine}.txt"
-    grep -q 'Pages:.*1' "${TMP_ROOT}/${engine}.info"
-    grep -q 'Page size:.*595.*842.*A4' "${TMP_ROOT}/${engine}.info"
+    python3 - "${TMP_ROOT}/${engine}.info" <<'PY'
+import re
+import sys
+
+info = open(sys.argv[1], encoding="utf-8").read()
+pages = re.search(r"^Pages:\s+(\d+)\s*$", info, re.MULTILINE)
+size = re.search(r"^Page size:\s+([\d.]+) x ([\d.]+) pts", info, re.MULTILINE)
+assert pages and int(pages[1]) == 1, info
+assert size, info
+# Poppler versions print different decimal precision. Compare physical A4
+# dimensions (210 x 297 mm) to 0.01 pt, rather than requiring rounded '842'.
+assert abs(float(size[1]) - 210 * 72 / 25.4) < 0.01, info
+assert abs(float(size[2]) - 297 * 72 / 25.4) < 0.01, info
+PY
     grep -q 'Northstar Heating' "${TMP_ROOT}/${engine}.txt"
     grep -q '9,850.00' "${TMP_ROOT}/${engine}.txt"
     python3 -c 'import json,sys; value=json.loads(sys.argv[1].splitlines()[-1]); assert value["ok"] and value["pages"] == 1 and value["bytes"] > 1000 and len(value["output_sha256"]) == 64' "${output}"

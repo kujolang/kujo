@@ -54,6 +54,8 @@ fn latency_guardrails_for_completion_diagnostics_and_hover() {
         let _ = lsp_hover::hover(&source, 1208, 17);
     });
 
+    eprintln!("20-call mean latency: completion={completion_avg:?}, diagnostics={diagnostics_avg:?}, hover={hover_avg:?}");
+
     // Conservative guardrails to catch severe regressions while staying stable on loaded CI hosts.
     assert!(
         completion_avg.as_millis() < 120,

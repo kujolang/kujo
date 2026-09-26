@@ -27,17 +27,25 @@ pub fn find_references(
         Ok(tokens) => tokens,
         Err(_) => return Vec::new(),
     };
-    let (scope_before_token, scope_after_token) = collect_scope_paths(&tokens);
-    let declarations =
-        collect_symbol_declarations(&tokens, &scope_before_token, &scope_after_token);
+    find_references_with_tokens(&tokens, line, column, include_definition)
+}
 
-    let target_token_index = match identifier_token_index_at_cursor(&tokens, line, column) {
+pub(crate) fn find_references_with_tokens(
+    tokens: &[Token],
+    line: usize,
+    column: usize,
+    include_definition: bool,
+) -> Vec<ReferenceLocation> {
+    let (scope_before_token, scope_after_token) = collect_scope_paths(tokens);
+    let declarations = collect_symbol_declarations(tokens, &scope_before_token, &scope_after_token);
+
+    let target_token_index = match identifier_token_index_at_cursor(tokens, line, column) {
         Some(index) => index,
         None => return Vec::new(),
     };
 
     let target_definition = match resolve_declaration_for_token(
-        &tokens,
+        tokens,
         target_token_index,
         &declarations,
         &scope_before_token,
@@ -58,7 +66,7 @@ pub fn find_references(
         }
 
         let resolved_declaration = match resolve_declaration_for_token(
-            &tokens,
+            tokens,
             token_index,
             &declarations,
             &scope_before_token,

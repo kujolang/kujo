@@ -195,7 +195,8 @@ Each command has a stable top-level payload kind (array/object/null as applicabl
 `kujo test` is intentionally human-readable, but these summary fields are contract-tested for operator tooling:
 
 - `Runtime strategy: <mode>` is always emitted in summary output.
-- `Fixture outcomes: passed=<N>, failed=<N>, skipped=<N>, expected_fail=<N>, runnable=<N>, discovered=<N>` is always emitted in summary output. `runnable` is the denominator used by `Passed <N>/<N> tests`; `discovered` additionally includes fixtures skipped because they declare `Run with: kujo test-run`.
+- `Fixture outcomes: passed=<N>, failed=<N>, skipped=<N>, expected_fail=<N>, runnable=<N>, discovered=<N>` is always emitted in summary output. `runnable` is the denominator used by `Passed <N>/<N> tests`; `discovered` additionally includes fixtures skipped because their first three lines declare `Run with: kujo test-run` or a `# Inventory: skip` comment. Inventory skips require their dedicated harness or explicit provider configuration; they are not executed or snapshotted by `kujo test`.
+- A fixture may provide `<name>.interpreter.out` for exact interpreter-only diagnostics or advisory warnings. Interpreter mode and dual fallback use this file when present; VM mode continues to use `<name>.out`. No diagnostic lines are discarded by this override.
 - `--runtime dual` summary includes split counters:
   - `vm_primary=<N>`
   - `interpreter_fallback=<N>`
@@ -297,3 +298,10 @@ See [runtime upgrade](RUNTIME_UPGRADE.md) for integrity and recovery limits.
 ## Installed-tool import isolation (unreleased)
 
 `kujo run --isolated-imports FILE -- ARGS...` disables implicit `.`/`./modules` roots and automatic Kennel lockfile discovery. Imports use entry-file roots and explicit `KUJO_MODULE_PATH` roots; filesystem operations still use the caller's current directory. The mode propagates to child Kujo processes through `KUJO_ISOLATED_IMPORTS=1`. Isolated mode passes exact script arguments through a JSON array in `KUJO_SCRIPT_ARGS_JSON`, including empty argv and empty arguments. Non-isolated runs ignore this JSON override. This does not restrict program permissions and is not a sandbox. Default runs retain existing import lookup behavior.
+
+Interpreter-specific fixture expectations are limited to intentional diagnostic
+contracts: `error_no_stack_test`, `test_undefined_var`, and
+`error_call_stack_test` use the interpreter subsystem/code; `simple_error_test`
+also preserves explicit annotation and undefined-function warnings;
+`test_http_headers` preserves the static warning for its intentionally invalid
+header-key argument. Runtime output, error text, and call stacks remain exact.

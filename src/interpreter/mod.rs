@@ -23,7 +23,11 @@ mod control_flow;
 #[cfg(feature = "runtime-db")]
 pub mod database_handle;
 mod environment;
+pub mod generator;
+mod generator_lowering;
 pub(crate) mod native_functions;
+pub mod promise;
+pub mod tasks;
 mod test_runner;
 mod value;
 
@@ -185,11 +189,20 @@ mod runtime_limit_tests {
 
 impl SpawnCapturedValue {
     fn from_value(value: &Value) -> Option<Self> {
+        Self::from_value_bounded(value, 0, &mut 100_000)
+    }
+
+    fn from_value_bounded(value: &Value, depth: usize, remaining: &mut usize) -> Option<Self> {
+        if depth >= 64 || *remaining == 0 {
+            return None;
+        }
+        *remaining -= 1;
         match value {
             Value::Tagged { tag, fields } => {
                 let mut captured_fields = Vec::with_capacity(fields.len());
                 for (field_name, field_value) in fields {
-                    let captured_value = Self::from_value(field_value)?;
+                    let captured_value =
+                        Self::from_value_bounded(field_value, depth + 1, remaining)?;
                     captured_fields.push((field_name.clone(), captured_value));
                 }
                 Some(SpawnCapturedValue::Tagged { tag: tag.clone(), fields: captured_fields })
@@ -205,7 +218,8 @@ impl SpawnCapturedValue {
             Value::Struct { name, fields } => {
                 let mut captured_fields = Vec::with_capacity(fields.len());
                 for (field_name, field_value) in fields {
-                    let captured_value = Self::from_value(field_value)?;
+                    let captured_value =
+                        Self::from_value_bounded(field_value, depth + 1, remaining)?;
                     captured_fields.push((field_name.clone(), captured_value));
                 }
                 Some(SpawnCapturedValue::Struct { name: name.clone(), fields: captured_fields })
@@ -213,14 +227,21 @@ impl SpawnCapturedValue {
             Value::Array(elements) => {
                 let mut captured_elements = Vec::with_capacity(elements.len());
                 for element in elements.iter() {
-                    captured_elements.push(Self::from_value(element)?);
+                    captured_elements.push(Self::from_value_bounded(
+                        element,
+                        depth + 1,
+                        remaining,
+                    )?);
                 }
                 Some(SpawnCapturedValue::Array(captured_elements))
             }
             Value::Dict(entries) => {
                 let mut captured_entries = Vec::with_capacity(entries.len());
                 for (key, dict_value) in entries.iter() {
-                    captured_entries.push((key.to_string(), Self::from_value(dict_value)?));
+                    captured_entries.push((
+                        key.to_string(),
+                        Self::from_value_bounded(dict_value, depth + 1, remaining)?,
+                    ));
                 }
                 Some(SpawnCapturedValue::Dict(captured_entries))
             }
@@ -231,21 +252,29 @@ impl SpawnCapturedValue {
 
                 let mut captured_entries = Vec::with_capacity(keys.len());
                 for (key, dict_value) in keys.iter().zip(values.iter()) {
-                    captured_entries.push((key.to_string(), Self::from_value(dict_value)?));
+                    captured_entries.push((
+                        key.to_string(),
+                        Self::from_value_bounded(dict_value, depth + 1, remaining)?,
+                    ));
                 }
                 Some(SpawnCapturedValue::FixedDict(captured_entries))
             }
             Value::IntDict(entries) => {
                 let mut captured_entries = Vec::with_capacity(entries.len());
                 for (key, dict_value) in entries.iter() {
-                    captured_entries.push((*key, Self::from_value(dict_value)?));
+                    captured_entries
+                        .push((*key, Self::from_value_bounded(dict_value, depth + 1, remaining)?));
                 }
                 Some(SpawnCapturedValue::IntDict(captured_entries))
             }
             Value::DenseIntDict(values) => {
                 let mut captured_values = Vec::with_capacity(values.len());
                 for dict_value in values.iter() {
-                    captured_values.push(Self::from_value(dict_value)?);
+                    captured_values.push(Self::from_value_bounded(
+                        dict_value,
+                        depth + 1,
+                        remaining,
+                    )?);
                 }
                 Some(SpawnCapturedValue::DenseIntDict(captured_values))
             }
@@ -257,11 +286,11 @@ impl SpawnCapturedValue {
             }
             Value::Result { is_ok, value } => Some(SpawnCapturedValue::Result {
                 is_ok: *is_ok,
-                value: Box::new(Self::from_value(value)?),
+                value: Box::new(Self::from_value_bounded(value, depth + 1, remaining)?),
             }),
             Value::Option { is_some, value } => Some(SpawnCapturedValue::Option {
                 is_some: *is_some,
-                value: Box::new(Self::from_value(value)?),
+                value: Box::new(Self::from_value_bounded(value, depth + 1, remaining)?),
             }),
             _ => None,
         }
@@ -345,10 +374,12 @@ pub struct Interpreter {
     pub source_file: Option<String>,
     pub source_lines: Vec<String>,
     pub module_loader: ModuleLoader,
-    call_stack: Vec<String>, // Track function calls for stack traces
+    call_stack: Vec<String>,       // Track function calls for stack traces
+    error_call_stack: Vec<String>, // Preserve the failing frames before unwinding
     async_task_pool_size: usize,
     capability_policy: RuntimeCapabilityPolicy,
     pub(crate) vm_globals: Option<Arc<Mutex<Environment>>>,
+    pub(crate) task_cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
 }
 
 impl Interpreter {
@@ -410,14 +441,20 @@ impl Interpreter {
             source_lines: Vec::new(),
             module_loader: ModuleLoader::new(),
             call_stack: Vec::new(),
+            error_call_stack: Vec::new(),
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
             capability_policy,
             vm_globals: None,
+            task_cancellation: None,
         }
     }
 
     pub fn capability_policy(&self) -> &RuntimeCapabilityPolicy {
         &self.capability_policy
+    }
+
+    pub(crate) fn output_buffer(&self) -> Option<Arc<Mutex<Vec<u8>>>> {
+        self.output.clone()
     }
 
     pub fn set_capability_policy(&mut self, capability_policy: RuntimeCapabilityPolicy) {
@@ -455,7 +492,11 @@ impl Interpreter {
 
     /// Get the current call stack for error reporting
     pub fn get_call_stack(&self) -> Vec<String> {
-        self.call_stack.clone()
+        if self.error_call_stack.is_empty() {
+            self.call_stack.clone()
+        } else {
+            self.error_call_stack.clone()
+        }
     }
 
     pub fn get_async_task_pool_size(&self) -> usize {
@@ -483,6 +524,11 @@ impl Interpreter {
 
         self.function_depth += 1;
         let result = body(self);
+        if self.return_value.as_ref().is_some_and(Self::is_error_value)
+            && self.error_call_stack.is_empty()
+        {
+            self.error_call_stack = self.call_stack.clone();
+        }
         self.function_depth = self.function_depth.saturating_sub(1);
         Ok(result)
     }
@@ -492,20 +538,6 @@ impl Interpreter {
         let result = body(self);
         self.loop_depth = self.loop_depth.saturating_sub(1);
         result
-    }
-
-    fn capture_spawn_bindings(&self) -> Vec<(String, SpawnCapturedValue)> {
-        let mut merged_bindings: HashMap<String, SpawnCapturedValue> = HashMap::new();
-
-        for scope in &self.env.scopes {
-            for (name, value) in scope {
-                if let Some(captured_value) = SpawnCapturedValue::from_value(value) {
-                    merged_bindings.insert(name.clone(), captured_value);
-                }
-            }
-        }
-
-        merged_bindings.into_iter().collect()
     }
 
     /// Get all built-in function names (for VM initialization)
@@ -2099,91 +2131,22 @@ impl Interpreter {
                     globals,
                     self.capability_policy.clone(),
                     self.output.clone(),
+                    self.task_cancellation.clone(),
                 )
                 .unwrap_or_else(Value::Error)
             }
-            Value::GeneratorDef(params, body) => {
+            Value::GeneratorDef(params, body, captured) => {
                 let arity = Self::function_arity("<anonymous generator>", params);
                 if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
                     return error;
                 }
 
-                // Calling a generator function returns a Generator instance
-                // Create a new environment for the generator
-                let mut gen_env = self.env.clone();
-                gen_env.push_scope();
-
-                // Bind parameters to arguments
-                for (i, param) in params.iter().enumerate() {
-                    if let Some(arg) = args.get(i) {
-                        gen_env.define(param.clone(), arg.clone());
-                    }
-                }
-
-                // Return a Generator instance
-                Value::Generator {
-                    params: params.clone(),
-                    body: body.clone(),
-                    env: Arc::new(Mutex::new(gen_env)),
-                    pc: 0,
-                    is_exhausted: false,
-                }
+                self.create_generator(params, body, captured, args)
             }
-            Value::AsyncFunction(params, body, captured_env) => {
-                let arity = Self::function_arity("<anonymous async function>", params);
-                if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
-                    return error;
-                }
-                let params = params.clone();
-                let body = body.clone();
-                let arguments = args.to_vec();
-                let base_env = if let Some(env_ref) = captured_env {
-                    env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
-                } else {
-                    self.env.clone()
-                };
-                let closure_env_for_update = captured_env.clone();
-                let capability_policy = self.capability_policy.clone();
-                let vm_globals = self.vm_globals.clone();
-                let (tx, rx) = tokio::sync::oneshot::channel();
-                AsyncRuntime::spawn_task(async move {
-                    let mut async_interpreter =
-                        Interpreter::with_environment(capability_policy, base_env);
-                    async_interpreter.vm_globals = vm_globals;
-                    async_interpreter.env.push_scope();
-                    for (index, param) in params.iter().enumerate() {
-                        if let Some(argument) = arguments.get(index) {
-                            async_interpreter.env.define(param.clone(), argument.clone());
-                        }
-                    }
-                    if let Err(error) = async_interpreter
-                        .with_function_context("<async function>", |interp| {
-                            interp.eval_stmts(&body.get())
-                        })
-                    {
-                        async_interpreter.env.pop_scope();
-                        let _ = tx.send(Ok(error));
-                        return Value::Null;
-                    }
-                    let result = match async_interpreter.return_value.take() {
-                        Some(Value::Return(value)) => *value,
-                        Some(Value::Error(message)) => Value::Error(message),
-                        Some(value @ Value::ErrorObject { .. }) => value,
-                        _ => Value::Null,
-                    };
-                    async_interpreter.env.pop_scope();
-                    if let Some(env_ref) = closure_env_for_update {
-                        *env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                            async_interpreter.env.clone();
-                    }
-                    let _ = tx.send(Ok(result));
-                    Value::Null
-                });
-                Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx)),
-                    is_polled: Arc::new(Mutex::new(false)),
-                    cached_result: Arc::new(Mutex::new(None)),
-                    task_handle: None,
+            Value::AsyncFunction(..) => {
+                match self.submit_language_task(func.clone(), args.to_vec()) {
+                    Ok(task) => task.completion.clone(),
+                    Err(error) => Value::Error(error),
                 }
             }
             Value::Function(params, body, captured_env) => {
@@ -2201,6 +2164,16 @@ impl Interpreter {
                 if let Some(closure_env_ref) = captured_env {
                     let saved_env = self.enter_captured_environment(closure_env_ref);
                     self.env.push_scope();
+                    if let Some(name) = &body.lexical_name {
+                        self.env.define(
+                            name.clone(),
+                            Value::Function(
+                                params.clone(),
+                                body.clone(),
+                                Some(closure_env_ref.clone()),
+                            ),
+                        );
+                    }
 
                     // Bind parameters to arguments
                     for (i, param) in params.iter().enumerate() {
@@ -4120,6 +4093,13 @@ impl Interpreter {
 
     /// Evaluates a list of statements sequentially, stopping on return/error
     pub fn eval_stmts(&mut self, stmts: &[Stmt]) {
+        if self.function_depth == 0 {
+            self.error_call_stack.clear();
+        }
+        if self.task_is_cancelled() {
+            self.return_value = Some(Value::Error("Task was cancelled".to_owned()));
+            return;
+        }
         let is_hoistable = |stmt: &Stmt| match stmt {
             Stmt::FuncDef { .. } => true,
             Stmt::Export { stmt } => matches!(stmt.as_ref(), Stmt::FuncDef { .. }),
@@ -4222,6 +4202,10 @@ impl Interpreter {
 
     /// Evaluates a single statement
     fn eval_stmt(&mut self, stmt: &Stmt) {
+        if self.task_is_cancelled() {
+            self.return_value = Some(Value::Error("Task was cancelled".to_owned()));
+            return;
+        }
         match stmt {
             Stmt::If { condition, then_branch, else_branch } => {
                 let cond_val = self.eval_expr(condition);
@@ -4301,32 +4285,44 @@ impl Interpreter {
                 is_generator,
                 is_async,
             } => {
+                if *is_async && *is_generator {
+                    self.return_value =
+                        Some(Value::Error("Async generators are not supported".to_owned()));
+                    return;
+                }
                 // Named functions defined in nested scopes should capture lexical state
                 // so interpreter behavior matches compiler/VM closure semantics.
                 let captured_env = if self.env.scopes.len() > 1 {
-                    Some(Arc::new(Mutex::new(self.env.clone())))
+                    Some(Arc::new(Mutex::new(if *is_generator {
+                        self.env.generator_environment(true)
+                    } else {
+                        self.env.capture_for_callable(params, body, Some(name))
+                    })))
                 } else {
                     None
                 };
 
                 // If it's a generator, create a generator value instead
                 if *is_generator {
-                    let gen =
-                        Value::GeneratorDef(params.clone(), LeakyFunctionBody::new(body.clone()));
+                    let gen = Value::GeneratorDef(
+                        params.clone(),
+                        LeakyFunctionBody::named(name, body.clone()),
+                        captured_env,
+                    );
                     self.env.define(name.clone(), gen);
                 } else if *is_async {
                     // Async functions are marked with a flag
                     // When called, they return a Promise and execute in background
                     let func = Value::AsyncFunction(
                         params.clone(),
-                        LeakyFunctionBody::new(body.clone()),
+                        LeakyFunctionBody::named(name, body.clone()),
                         captured_env,
                     );
                     self.env.define(name.clone(), func);
                 } else {
                     let func = Value::Function(
                         params.clone(),
-                        LeakyFunctionBody::new(body.clone()),
+                        LeakyFunctionBody::named(name, body.clone()),
                         captured_env,
                     );
                     self.env.define(name.clone(), func);
@@ -4355,8 +4351,15 @@ impl Interpreter {
                         // Load all exports into the current namespace
                         match self.module_loader.get_all_exports(module) {
                             Ok(exports) => {
+                                let binding = crate::vm::VM::module_binding_name(module);
+                                let namespace = (!exports.contains_key(&binding)).then(|| {
+                                    crate::vm::VM::module_namespace_value(module, &exports)
+                                });
                                 for (name, value) in exports {
                                     self.env.define(name, value);
+                                }
+                                if let Some(namespace) = namespace {
+                                    self.env.define(binding, namespace);
                                 }
                             }
                             Err(err) => {
@@ -4524,7 +4527,7 @@ impl Interpreter {
 
                     // If we got a GeneratorDef, call it to get a Generator instance
                     // This handles cases like: for x in generator_func() { ... }
-                    if let Value::GeneratorDef(_, _) = &iterable_value {
+                    if let Value::GeneratorDef(..) = &iterable_value {
                         iterable_value = interp.call_user_function(&iterable_value, &[]);
                     }
 
@@ -4560,8 +4563,8 @@ impl Interpreter {
                                     // Generator exhausted
                                     break;
                                 }
-                                Value::Error(msg) => {
-                                    interp.return_value = Some(Value::Error(msg));
+                                error @ (Value::Error(_) | Value::ErrorObject { .. }) => {
+                                    interp.return_value = Some(error);
                                     break;
                                 }
                                 _ => {
@@ -4833,6 +4836,7 @@ impl Interpreter {
                     }
 
                     // Clear error and execute except block
+                    self.error_call_stack.clear();
                     self.return_value = None;
                     self.eval_stmts(except_block);
                 }
@@ -4922,23 +4926,9 @@ impl Interpreter {
                 }
             }
             Stmt::Spawn { body } => {
-                // Clone the body for the spawned thread
-                let body_clone = body.clone();
-                let captured_bindings = self.capture_spawn_bindings();
-                let capability_policy = self.capability_policy.clone();
-
-                // Spawn a new thread to execute the body with a transferable snapshot
-                // of parent bindings. Unsupported non-transferable values remain isolated.
-                std::thread::spawn(move || {
-                    let mut thread_interp = Interpreter::with_capability_policy(capability_policy);
-
-                    for (name, captured_value) in captured_bindings {
-                        thread_interp.env.define(name, captured_value.into_value());
-                    }
-
-                    thread_interp.eval_stmts(&body_clone);
-                });
-                // Don't wait for the thread to finish - it runs in the background
+                if let Err(error) = self.spawn_detached_body(body) {
+                    self.return_value = Some(Value::Error(error));
+                }
             }
             Stmt::Test { .. }
             | Stmt::TestSetup { .. }
@@ -5033,20 +5023,31 @@ impl Interpreter {
                 is_generator,
                 is_async,
             } => {
+                if *is_async && *is_generator {
+                    return Value::Error("Async generators are not supported".to_owned());
+                }
                 // Anonymous function expression - return as a value with captured environment
                 if *is_generator {
-                    Value::GeneratorDef(params.clone(), LeakyFunctionBody::new(body.clone()))
+                    Value::GeneratorDef(
+                        params.clone(),
+                        LeakyFunctionBody::new(body.clone()),
+                        Some(Arc::new(Mutex::new(self.env.generator_environment(true)))),
+                    )
                 } else if *is_async {
                     Value::AsyncFunction(
                         params.clone(),
                         LeakyFunctionBody::new(body.clone()),
-                        Some(Arc::new(Mutex::new(self.env.clone()))),
+                        Some(Arc::new(Mutex::new(
+                            self.env.capture_for_callable(params, body, None),
+                        ))),
                     )
                 } else {
                     Value::Function(
                         params.clone(),
                         LeakyFunctionBody::new(body.clone()),
-                        Some(Arc::new(Mutex::new(self.env.clone()))),
+                        Some(Arc::new(Mutex::new(
+                            self.env.capture_for_callable(params, body, None),
+                        ))),
                     )
                 }
             }
@@ -5201,7 +5202,29 @@ impl Interpreter {
                         return obj_val;
                     }
 
+                    if let Value::Struct { name, fields } = &obj_val {
+                        if name.starts_with("__module_namespace_") {
+                            let Some(callable) = fields.get(field).cloned() else {
+                                return Value::Error(format!("Module has no export '{field}'"));
+                            };
+                            let mut values = Vec::with_capacity(args.len() + 1);
+                            if matches!(&callable, Value::Function(params, ..) | Value::AsyncFunction(params, ..) | Value::GeneratorDef(params, ..) if params.first().is_some_and(|name| name == "__module_receiver"))
+                            {
+                                values.push(obj_val.clone());
+                            }
+                            for argument in args {
+                                let value = self.eval_expr(argument);
+                                if Self::is_error_value(&value) {
+                                    return value;
+                                }
+                                values.push(value);
+                            }
+                            return self.call_user_function(&callable, &values);
+                        }
+                    }
+
                     // Handle HttpServer methods
+
                     if let Value::HttpServer { host, port, routes, upload_routes } = &obj_val {
                         match field.as_str() {
                             "route" => {
@@ -5356,239 +5379,16 @@ impl Interpreter {
                         }
                     }
 
-                    // Handle ArgParser methods
                     if let Value::Struct { name, fields } = &obj_val {
                         if name == "ArgParser" {
-                            match field.as_str() {
-                                "add_argument" => {
-                                    // parser.add_argument(long, short, type, required, help, default)
-                                    // Extract arguments
-                                    let mut long_name = String::new();
-                                    let mut short_name: Option<String> = None;
-                                    let mut arg_type = String::from("string");
-                                    let mut required = false;
-                                    let mut help = String::new();
-                                    let mut default: Option<String> = None;
-
-                                    // First argument is always the long name
-                                    if !args.is_empty() {
-                                        if let Value::Str(s) = self.eval_expr(&args[0]) {
-                                            long_name = s.as_ref().clone();
-                                        }
-                                    }
-
-                                    // Process remaining keyword-style arguments
-                                    // In Kujo, these come as alternating key-value pairs
-                                    let mut i = 1;
-                                    while i < args.len() {
-                                        if let Value::Str(key) = self.eval_expr(&args[i]) {
-                                            if i + 1 < args.len() {
-                                                let value = self.eval_expr(&args[i + 1]);
-                                                match key.as_str() {
-                                                    "short" => {
-                                                        if let Value::Str(s) = value {
-                                                            short_name = Some(s.as_ref().clone());
-                                                        }
-                                                    }
-                                                    "type" => {
-                                                        if let Value::Str(s) = value {
-                                                            arg_type = s.as_ref().clone();
-                                                        }
-                                                    }
-                                                    "required" => {
-                                                        if let Value::Bool(b) = value {
-                                                            required = b;
-                                                        }
-                                                    }
-                                                    "help" => {
-                                                        if let Value::Str(s) = value {
-                                                            help = s.as_ref().clone();
-                                                        }
-                                                    }
-                                                    "default" => {
-                                                        if let Value::Str(s) = value {
-                                                            default = Some(s.as_ref().clone());
-                                                        }
-                                                    }
-                                                    _ => {}
-                                                }
-                                                i += 2;
-                                            } else {
-                                                i += 1;
-                                            }
-                                        } else {
-                                            i += 1;
-                                        }
-                                    }
-
-                                    // Create argument definition
-                                    let mut arg_def = DictMap::default();
-                                    arg_def.insert("long".into(), Value::Str(Arc::new(long_name)));
-                                    if let Some(short) = short_name {
-                                        arg_def.insert("short".into(), Value::Str(Arc::new(short)));
-                                    }
-                                    arg_def.insert("type".into(), Value::Str(Arc::new(arg_type)));
-                                    arg_def.insert("required".into(), Value::Bool(required));
-                                    arg_def.insert("help".into(), Value::Str(Arc::new(help)));
-                                    if let Some(def) = default {
-                                        arg_def.insert("default".into(), Value::Str(Arc::new(def)));
-                                    }
-
-                                    // Add to the parser's argument list
-                                    let mut new_fields = fields.clone();
-                                    if let Some(Value::Array(arg_list)) =
-                                        new_fields.get("_args").cloned()
-                                    {
-                                        let mut arg_list_vec = Arc::try_unwrap(arg_list)
-                                            .unwrap_or_else(|arc| (*arc).clone());
-                                        arg_list_vec.push(Value::Dict(Arc::new(arg_def)));
-                                        new_fields.insert(
-                                            "_args".to_string(),
-                                            Value::Array(Arc::new(arg_list_vec)),
-                                        );
-                                    }
-
-                                    return Value::Struct {
-                                        name: "ArgParser".to_string(),
-                                        fields: new_fields,
-                                    };
-                                }
-                                "parse" => {
-                                    // parser.parse() - parse command-line arguments
-                                    // Convert stored argument definitions to ArgumentDef structs
-                                    let mut arg_defs = Vec::new();
-
-                                    if let Some(Value::Array(arg_list)) = fields.get("_args") {
-                                        for arg_val in arg_list.iter() {
-                                            if let Value::Dict(arg_dict) = arg_val {
-                                                let long_name = match arg_dict.get("long") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => continue,
-                                                };
-
-                                                let short_name = match arg_dict.get("short") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                let arg_type = match arg_dict.get("type") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => "string".to_string(),
-                                                };
-
-                                                let required = match arg_dict.get("required") {
-                                                    Some(Value::Bool(b)) => *b,
-                                                    _ => false,
-                                                };
-
-                                                let help = match arg_dict.get("help") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => String::new(),
-                                                };
-
-                                                let default = match arg_dict.get("default") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                arg_defs.push(builtins::ArgumentDef {
-                                                    long_name,
-                                                    short_name,
-                                                    arg_type,
-                                                    required,
-                                                    help,
-                                                    default,
-                                                });
-                                            }
-                                        }
-                                    }
-
-                                    // Get command-line arguments
-                                    let cli_args = builtins::get_args();
-
-                                    // Parse arguments
-                                    match builtins::parse_arguments(&arg_defs, &cli_args) {
-                                        Ok(parsed) => return Value::Dict(Arc::new(parsed)),
-                                        Err(msg) => {
-                                            return Value::ErrorObject {
-                                                message: msg,
-                                                stack: Vec::new(),
-                                                line: None,
-                                                cause: None,
-                                            }
-                                        }
-                                    }
-                                }
-                                "help" => {
-                                    // parser.help() - generate help text
-                                    let mut arg_defs = Vec::new();
-
-                                    if let Some(Value::Array(arg_list)) = fields.get("_args") {
-                                        for arg_val in arg_list.iter() {
-                                            if let Value::Dict(arg_dict) = arg_val {
-                                                let long_name = match arg_dict.get("long") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => continue,
-                                                };
-
-                                                let short_name = match arg_dict.get("short") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                let arg_type = match arg_dict.get("type") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => "string".to_string(),
-                                                };
-
-                                                let required = match arg_dict.get("required") {
-                                                    Some(Value::Bool(b)) => *b,
-                                                    _ => false,
-                                                };
-
-                                                let help = match arg_dict.get("help") {
-                                                    Some(Value::Str(s)) => s.as_ref().clone(),
-                                                    _ => String::new(),
-                                                };
-
-                                                let default = match arg_dict.get("default") {
-                                                    Some(Value::Str(s)) => Some(s.as_ref().clone()),
-                                                    _ => None,
-                                                };
-
-                                                arg_defs.push(builtins::ArgumentDef {
-                                                    long_name,
-                                                    short_name,
-                                                    arg_type,
-                                                    required,
-                                                    help,
-                                                    default,
-                                                });
-                                            }
-                                        }
-                                    }
-
-                                    let app_name = match fields.get("_app_name") {
-                                        Some(Value::Str(s)) => s.as_ref().clone(),
-                                        _ => "program".to_string(),
-                                    };
-
-                                    let description = match fields.get("_description") {
-                                        Some(Value::Str(s)) => s.as_ref().clone(),
-                                        _ => String::new(),
-                                    };
-
-                                    let help_text =
-                                        builtins::generate_help(&arg_defs, &app_name, &description);
-                                    return Value::Str(Arc::new(help_text));
-                                }
-                                _ => {
-                                    return Value::Error(format!(
-                                        "ArgParser has no method '{}'",
-                                        field
-                                    ))
-                                }
+                            let values: Vec<Value> =
+                                args.iter().map(|arg| self.eval_expr(arg)).collect();
+                            if let Some(error) =
+                                values.iter().find(|value| Self::is_error_value(value))
+                            {
+                                return error.clone();
                             }
+                            return Self::call_arg_parser_method(fields, field, &values);
                         }
                     }
 
@@ -5744,6 +5544,16 @@ impl Interpreter {
                         if let Some(closure_env_ref) = captured_env {
                             let saved_env = self.enter_captured_environment(&closure_env_ref);
                             self.env.push_scope();
+                            if let Some(name) = &body.lexical_name {
+                                self.env.define(
+                                    name.clone(),
+                                    Value::Function(
+                                        params.clone(),
+                                        body.clone(),
+                                        Some(closure_env_ref.clone()),
+                                    ),
+                                );
+                            }
 
                             for (i, param) in params.iter().enumerate() {
                                 if let Some(arg) = evaluated_args.get(i) {
@@ -5828,91 +5638,18 @@ impl Interpreter {
                         }
                     }
                     Value::AsyncFunction(params, body, captured_env) => {
-                        // Evaluate arguments
-                        let args_vec: Vec<Value> =
+                        let values: Vec<Value> =
                             args.iter().map(|arg| self.eval_expr(arg)).collect();
-                        if let Some(error) =
-                            args_vec.iter().find(|value| Self::is_error_value(value))
+                        if let Some(error) = values.iter().find(|value| Self::is_error_value(value))
                         {
                             return error.clone();
                         }
-
-                        let arity = Self::function_arity(callable_name.clone(), &params);
-                        if let Some(error) = self.validate_callable_arity(&arity, args_vec.len()) {
-                            return error;
-                        }
-
-                        // Clone what we need for the thread
-                        let params = params.clone();
-                        let body = body.clone();
-                        let base_env = if let Some(ref env_ref) = captured_env {
-                            env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
-                        } else {
-                            self.env.clone()
-                        };
-                        let closure_env_for_update = captured_env.clone();
-                        let capability_policy = self.capability_policy.clone();
-                        let vm_globals = self.vm_globals.clone();
-
-                        // Create a tokio oneshot channel for the result
-                        let (tx, rx) = tokio::sync::oneshot::channel();
-
-                        // Spawn a tokio task to execute the async function
-                        AsyncRuntime::spawn_task(async move {
-                            let mut async_interpreter =
-                                Interpreter::with_capability_policy(capability_policy);
-                            async_interpreter.env = base_env;
-                            async_interpreter.vm_globals = vm_globals;
-                            async_interpreter.env.push_scope();
-
-                            // Bind parameters
-                            for (i, param) in params.iter().enumerate() {
-                                if let Some(arg) = args_vec.get(i) {
-                                    async_interpreter.env.define(param.clone(), arg.clone());
-                                }
-                            }
-
-                            // Execute the async function body
-                            if let Err(error) = async_interpreter
-                                .with_function_context("<async function>", |interp| {
-                                    interp.eval_stmts(&body.get())
-                                })
-                            {
-                                async_interpreter.env.pop_scope();
-                                let _ = tx.send(Ok(error));
-                                return Value::Null;
-                            }
-
-                            // Get the return value
-                            let result = match async_interpreter.return_value.clone() {
-                                Some(Value::Return(val)) => *val,
-                                Some(Value::Error(message)) => Value::Error(message),
-                                Some(value @ Value::ErrorObject { .. }) => value,
-                                _ => Value::Null,
-                            };
-
-                            async_interpreter.env.pop_scope();
-                            if let Some(env_ref) = closure_env_for_update {
-                                *env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                                    async_interpreter.env.clone();
-                            }
-
-                            // Send the result back
-                            let _ = tx.send(Ok(result));
-
-                            // Return a dummy value (task result not used, only channel matters)
-                            Value::Null
-                        });
-
-                        // Return a Promise containing the receiver
-                        Value::Promise {
-                            receiver: Arc::new(Mutex::new(rx)),
-                            is_polled: Arc::new(Mutex::new(false)),
-                            cached_result: Arc::new(Mutex::new(None)),
-                            task_handle: None,
-                        }
+                        self.call_user_function(
+                            &Value::AsyncFunction(params, body, captured_env),
+                            &values,
+                        )
                     }
-                    Value::GeneratorDef(ref params, ref body) => {
+                    Value::GeneratorDef(ref params, ref body, ref captured) => {
                         // Calling a generator function creates a Generator instance
                         let args_vec: Vec<Value> =
                             args.iter().map(|arg| self.eval_expr(arg)).collect();
@@ -5927,25 +5664,7 @@ impl Interpreter {
                             return error;
                         }
 
-                        // Create a new environment for the generator
-                        let mut gen_env = self.env.clone();
-                        gen_env.push_scope();
-
-                        // Bind parameters to arguments
-                        for (i, param) in params.iter().enumerate() {
-                            if let Some(arg) = args_vec.get(i) {
-                                gen_env.define(param.clone(), arg.clone());
-                            }
-                        }
-
-                        // Return a Generator instance
-                        Value::Generator {
-                            params: params.clone(),
-                            body: body.clone(),
-                            env: Arc::new(Mutex::new(gen_env)),
-                            pc: 0,
-                            is_exhausted: false,
-                        }
+                        self.create_generator(params, body, captured, &args_vec)
                     }
                     _ => Value::Int(0),
                 };
@@ -5999,6 +5718,16 @@ impl Interpreter {
                             if let Some(closure_env_ref) = captured_env {
                                 let saved_env = self.enter_captured_environment(&closure_env_ref);
                                 self.env.push_scope();
+                                if let Some(name) = &body.lexical_name {
+                                    self.env.define(
+                                        name.clone(),
+                                        Value::Function(
+                                            params.clone(),
+                                            body.clone(),
+                                            Some(closure_env_ref.clone()),
+                                        ),
+                                    );
+                                }
 
                                 for (i, param) in params.iter().enumerate() {
                                     if let Some(arg) = evaluated_args.get(i) {
@@ -6095,7 +5824,7 @@ impl Interpreter {
                                 return result;
                             }
                         }
-                        Value::GeneratorDef(ref params, ref body) => {
+                        Value::GeneratorDef(ref params, ref body, ref captured) => {
                             // Calling a generator function creates a Generator instance
                             let args_vec: Vec<Value> =
                                 args.iter().map(|arg| self.eval_expr(arg)).collect();
@@ -6112,25 +5841,7 @@ impl Interpreter {
                                 return error;
                             }
 
-                            // Create a new environment for the generator
-                            let mut gen_env = self.env.clone();
-                            gen_env.push_scope();
-
-                            // Bind parameters to arguments
-                            for (i, param) in params.iter().enumerate() {
-                                if let Some(arg) = args_vec.get(i) {
-                                    gen_env.define(param.clone(), arg.clone());
-                                }
-                            }
-
-                            // Return a Generator instance
-                            return Value::Generator {
-                                params: params.clone(),
-                                body: body.clone(),
-                                env: Arc::new(Mutex::new(gen_env)),
-                                pc: 0,
-                                is_exhausted: false,
-                            };
+                            return self.create_generator(params, body, captured, &args_vec);
                         }
                         _ => {}
                     }
@@ -6363,17 +6074,16 @@ impl Interpreter {
                         // Poll the promise using tokio runtime
                         // We need to take ownership of the receiver to await it
                         let result = {
-                            let mut recv_guard = match lock_or_runtime_error(
+                            let recv_guard = match lock_or_runtime_error(
                                 receiver.as_ref(),
                                 "await.promise.receiver",
                             ) {
                                 Ok(guard) => guard,
                                 Err(error) => return error,
                             };
-                            // Take ownership by replacing with a dummy closed channel
-                            let (dummy_tx, dummy_rx) = tokio::sync::oneshot::channel();
-                            drop(dummy_tx); // Close immediately
-                            let actual_rx = std::mem::replace(&mut *recv_guard, dummy_rx);
+                            // Clone an independent waiter; completion remains shared
+
+                            let actual_rx = recv_guard.clone();
                             drop(recv_guard); // Release lock before blocking
 
                             // Block on the receiver using tokio runtime
@@ -6800,7 +6510,8 @@ impl Interpreter {
             Ok(guard) => guard,
             Err(error) => return error,
         };
-        let (sender, _) = &*chan_lock;
+        let sender = chan_lock.0.clone();
+        drop(chan_lock);
         match sender.send(value) {
             Ok(_) => Value::Bool(true),
             Err(_) => Value::Error("Failed to send to channel".to_string()),
@@ -6812,6 +6523,9 @@ impl Interpreter {
         chan: &Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>,
     ) -> Value {
         loop {
+            if self.task_is_cancelled() {
+                return Value::Error("Task was cancelled".to_owned());
+            }
             let receive_result = {
                 let chan_lock = match lock_or_runtime_error(chan.as_ref(), "channel.receive") {
                     Ok(guard) => guard,
@@ -6834,7 +6548,252 @@ impl Interpreter {
     }
 
     /// Call a method on a value (used for iterator chaining and other method calls)
+    fn call_arg_parser_method(
+        fields: &HashMap<String, Value>,
+        method: &str,
+        args: &[Value],
+    ) -> Value {
+        match method {
+            "add_argument" => {
+                if args.is_empty() {
+                    return Value::Error(
+                        "add_argument requires at least a long argument name".to_string(),
+                    );
+                }
+                // parser.add_argument(long, short, type, required, help, default)
+                // Extract arguments
+                let mut long_name = String::new();
+                let mut short_name: Option<String> = None;
+                let mut arg_type = String::from("string");
+                let mut required = false;
+                let mut help = String::new();
+                let mut default: Option<String> = None;
+
+                // First argument is always the long name
+                if !args.is_empty() {
+                    if let Value::Str(s) = args[0].clone() {
+                        long_name = s.as_ref().clone();
+                    }
+                }
+
+                // Process remaining keyword-style arguments
+                // In Kujo, these come as alternating key-value pairs
+                let mut i = 1;
+                while i < args.len() {
+                    if let Value::Str(key) = args[i].clone() {
+                        if i + 1 < args.len() {
+                            let value = args[i + 1].clone();
+                            match key.as_str() {
+                                "short" => {
+                                    if let Value::Str(s) = value {
+                                        short_name = Some(s.as_ref().clone());
+                                    }
+                                }
+                                "type" => {
+                                    if let Value::Str(s) = value {
+                                        arg_type = s.as_ref().clone();
+                                    }
+                                }
+                                "required" => {
+                                    if let Value::Bool(b) = value {
+                                        required = b;
+                                    }
+                                }
+                                "help" => {
+                                    if let Value::Str(s) = value {
+                                        help = s.as_ref().clone();
+                                    }
+                                }
+                                "default" => {
+                                    if let Value::Str(s) = value {
+                                        default = Some(s.as_ref().clone());
+                                    }
+                                }
+                                _ => {}
+                            }
+                            i += 2;
+                        } else {
+                            i += 1;
+                        }
+                    } else {
+                        i += 1;
+                    }
+                }
+
+                // Create argument definition
+                let mut arg_def = DictMap::default();
+                arg_def.insert("long".into(), Value::Str(Arc::new(long_name)));
+                if let Some(short) = short_name {
+                    arg_def.insert("short".into(), Value::Str(Arc::new(short)));
+                }
+                arg_def.insert("type".into(), Value::Str(Arc::new(arg_type)));
+                arg_def.insert("required".into(), Value::Bool(required));
+                arg_def.insert("help".into(), Value::Str(Arc::new(help)));
+                if let Some(def) = default {
+                    arg_def.insert("default".into(), Value::Str(Arc::new(def)));
+                }
+
+                // Add to the parser's argument list
+                let mut new_fields = fields.clone();
+                if let Some(Value::Array(arg_list)) = new_fields.get("_args").cloned() {
+                    let mut arg_list_vec =
+                        Arc::try_unwrap(arg_list).unwrap_or_else(|arc| (*arc).clone());
+                    arg_list_vec.push(Value::Dict(Arc::new(arg_def)));
+                    new_fields.insert("_args".to_string(), Value::Array(Arc::new(arg_list_vec)));
+                }
+
+                Value::Struct { name: "ArgParser".to_string(), fields: new_fields }
+            }
+            "parse" => {
+                // parser.parse() - parse command-line arguments
+                // Convert stored argument definitions to ArgumentDef structs
+                let mut arg_defs = Vec::new();
+
+                if let Some(Value::Array(arg_list)) = fields.get("_args") {
+                    for arg_val in arg_list.iter() {
+                        if let Value::Dict(arg_dict) = arg_val {
+                            let long_name = match arg_dict.get("long") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => continue,
+                            };
+
+                            let short_name = match arg_dict.get("short") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            let arg_type = match arg_dict.get("type") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => "string".to_string(),
+                            };
+
+                            let required = match arg_dict.get("required") {
+                                Some(Value::Bool(b)) => *b,
+                                _ => false,
+                            };
+
+                            let help = match arg_dict.get("help") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => String::new(),
+                            };
+
+                            let default = match arg_dict.get("default") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            arg_defs.push(builtins::ArgumentDef {
+                                long_name,
+                                short_name,
+                                arg_type,
+                                required,
+                                help,
+                                default,
+                            });
+                        }
+                    }
+                }
+
+                // Get command-line arguments
+                let cli_args = builtins::get_args();
+
+                // Parse arguments
+                match builtins::parse_arguments(&arg_defs, &cli_args) {
+                    Ok(parsed) => Value::Dict(Arc::new(parsed)),
+                    Err(msg) => Value::ErrorObject {
+                        message: msg,
+                        stack: Vec::new(),
+                        line: None,
+                        cause: None,
+                    },
+                }
+            }
+            "help" => {
+                // parser.help() - generate help text
+                let mut arg_defs = Vec::new();
+
+                if let Some(Value::Array(arg_list)) = fields.get("_args") {
+                    for arg_val in arg_list.iter() {
+                        if let Value::Dict(arg_dict) = arg_val {
+                            let long_name = match arg_dict.get("long") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => continue,
+                            };
+
+                            let short_name = match arg_dict.get("short") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            let arg_type = match arg_dict.get("type") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => "string".to_string(),
+                            };
+
+                            let required = match arg_dict.get("required") {
+                                Some(Value::Bool(b)) => *b,
+                                _ => false,
+                            };
+
+                            let help = match arg_dict.get("help") {
+                                Some(Value::Str(s)) => s.as_ref().clone(),
+                                _ => String::new(),
+                            };
+
+                            let default = match arg_dict.get("default") {
+                                Some(Value::Str(s)) => Some(s.as_ref().clone()),
+                                _ => None,
+                            };
+
+                            arg_defs.push(builtins::ArgumentDef {
+                                long_name,
+                                short_name,
+                                arg_type,
+                                required,
+                                help,
+                                default,
+                            });
+                        }
+                    }
+                }
+
+                let app_name = match fields.get("_app_name") {
+                    Some(Value::Str(s)) => s.as_ref().clone(),
+                    _ => "program".to_string(),
+                };
+
+                let description = match fields.get("_description") {
+                    Some(Value::Str(s)) => s.as_ref().clone(),
+                    _ => String::new(),
+                };
+
+                let help_text = builtins::generate_help(&arg_defs, &app_name, &description);
+                Value::Str(Arc::new(help_text))
+            }
+            _ => Value::Error(format!("ArgParser has no method '{}'", method)),
+        }
+    }
+
     fn call_method(&mut self, obj: Value, method: &str, args: Vec<Value>) -> Value {
+        if let Value::Struct { name, fields } = &obj {
+            if name == "ArgParser" {
+                return Self::call_arg_parser_method(fields, method, &args);
+            }
+        }
+        if let Value::Struct { name, fields } = &obj {
+            if name.starts_with("__module_namespace_") {
+                let Some(callable) = fields.get(method).cloned() else {
+                    return Value::Error(format!("Module has no export '{method}'"));
+                };
+                let mut values = args;
+                if matches!(&callable, Value::Function(params, ..) | Value::AsyncFunction(params, ..) | Value::GeneratorDef(params, ..) if params.first().is_some_and(|name| name == "__module_receiver"))
+                {
+                    values.insert(0, obj.clone());
+                }
+                return self.call_user_function(&callable, &values);
+            }
+        }
+
         if method == "save" {
             #[cfg(feature = "runtime-image")]
             if matches!(&obj, Value::Image { .. }) {
@@ -7249,8 +7208,8 @@ impl Interpreter {
                                     // Generator exhausted
                                     return Value::Array(Arc::new(result));
                                 }
-                                Value::Error(msg) => {
-                                    return Value::Error(msg);
+                                error @ (Value::Error(_) | Value::ErrorObject { .. }) => {
+                                    return error;
                                 }
                                 _ => {
                                     return Value::Error(
@@ -7288,75 +7247,8 @@ impl Interpreter {
         }
     }
 
-    /// Execute a generator until it yields a value or completes
-    /// Returns Some(value) if yielded, None if exhausted
     fn generator_next(&mut self, generator: &mut Value) -> Value {
-        match generator {
-            Value::Generator { params: _, body, env, pc, is_exhausted } => {
-                if *is_exhausted {
-                    return Value::Option { is_some: false, value: Box::new(Value::Null) };
-                }
-
-                // Save current interpreter state
-                let saved_env = self.env.clone();
-                let saved_return_value = self.return_value.take();
-
-                // Use the generator's environment
-                self.env = env.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone();
-
-                let stmts = body.get();
-                let mut yielded_value = None;
-
-                // Execute statements starting from PC until yield or end
-                while *pc < stmts.len() {
-                    let current_pc = *pc;
-
-                    self.eval_stmt(&stmts[current_pc]);
-
-                    // Check if a yield occurred (signaled by Return value)
-                    if let Some(ret_val) = &self.return_value {
-                        match ret_val {
-                            Value::Return(inner) => {
-                                // This is a yield - extract the value and suspend
-                                // Advance PC so next call continues from next statement
-                                *pc += 1;
-                                yielded_value = Some(inner.as_ref().clone());
-                                self.return_value = None;
-                                break;
-                            }
-                            _ => {
-                                // Regular return - generator is done
-                                *is_exhausted = true;
-                                break;
-                            }
-                        }
-                    } else {
-                        // Statement completed without yield - advance to next statement
-                        *pc += 1;
-                    }
-                }
-
-                // Save the generator's environment state
-                *env.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = self.env.clone();
-
-                // If we finished all statements without explicit return/yield, generator is exhausted
-                if *pc >= stmts.len() {
-                    *is_exhausted = true;
-                }
-
-                // Restore interpreter state
-                self.env = saved_env;
-                self.return_value = saved_return_value;
-
-                // Return the yielded value or None if exhausted
-                if let Some(value) = yielded_value {
-                    Value::Option { is_some: true, value: Box::new(value) }
-                } else {
-                    Value::Option { is_some: false, value: Box::new(Value::Null) }
-                }
-            }
-            _ => Value::Error("generator_next() can only be called on generators".to_string()),
-        }
+        self.resume_generator(generator)
     }
 
     /// Get the next value from an iterator
@@ -7583,11 +7475,11 @@ impl Interpreter {
                     "None".to_string()
                 }
             }
-            Value::GeneratorDef(params, _) => {
+            Value::GeneratorDef(params, ..) => {
                 format!("<generator function with {} params>", params.len())
             }
-            Value::Generator { params, is_exhausted, .. } => {
-                if *is_exhausted {
+            Value::Generator { params, state } => {
+                if state.lock().unwrap_or_else(|p| p.into_inner()).exhausted {
                     format!("<exhausted generator ({} params)>", params.len())
                 } else {
                     format!("<generator ({} params)>", params.len())

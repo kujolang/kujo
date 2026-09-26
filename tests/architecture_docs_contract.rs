@@ -19,7 +19,9 @@ fn architecture_doc_matches_current_runtime_posture() {
         "### 3.5 Package workflow and lockfiles",
         "kujo package-install --frozen",
         "Supports `--runtime dual|vm|interpreter`.",
-        "Top-level generator creation and straight-line iteration work in covered cases.",
+        "Generators resume the ordinary VM dispatcher",
+        "16 process-wide admission slots",
+        "`SpawnDetached` executes referenced transferable snapshots",
         "docs/VM_INTERPRETER_PARITY_MATRIX.md",
         "docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md",
     ] {
@@ -27,6 +29,7 @@ fn architecture_doc_matches_current_runtime_posture() {
     }
 
     for stale in [
+        "VM `spawn` currently discards its compiled body",
         "Tree-walking interpreter** (current primary execution path)",
         "Bytecode VM** (experimental, not yet default)",
         "Version**: v0.8.0",

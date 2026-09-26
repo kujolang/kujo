@@ -23,7 +23,9 @@ pub fn hover(source: &str, line: usize, column: usize) -> Option<HoverInfo> {
         return None;
     }
 
-    if let Some(definition) = lsp_definition::find_definition(source, line, start_column) {
+    if let Some(definition) =
+        lsp_definition::find_definition_with_tokens(&tokens, line, start_column)
+    {
         return Some(build_user_symbol_hover(
             source,
             &definition.name,

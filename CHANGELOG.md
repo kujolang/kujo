@@ -8,6 +8,12 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
+- Async function calls start eagerly under bounded task admission and return a
+  reusable completion promise. Body errors are reported by await. Detached spawn
+  now executes in the VM and rejects unsupported referenced captures explicitly.
+- `spawn_task` executes its callable; repeated waits share completion and
+  cancellation requests cooperative exit without promising effect rollback.
+
 - VM closures resolve captures at their definition site and access captured
   cells by index, preserving v1 per-closure snapshots and alias identity.
   Returned and nested closures retain owned captures after scope/frame exit;
@@ -25,6 +31,34 @@ This file records user-visible changes to Kujo. It follows
 - POSIX `sync_directory_beneath(root, relative_directory)` preview durability barrier, capability-gated and descriptor-confined below a trusted root. Sync failures do not imply preceding publications were rolled back.
 
 ### Fixed
+
+- Uncaught interpreter errors retain their call frames after unwinding; caught errors do not leak stale frames into later diagnostics.
+
+- Interpreter argument-parser method calls and VM struct relational operators now reach their existing runtime implementations.
+- Static checking recognizes lexical callable bindings, runtime builtin aliases, dynamic reassignment, and the two-argument seek-read contract without spurious warnings. Unknown collection values stay gradual instead of inheriting another element’s concrete type. Explicit annotation errors remain diagnostic.
+- Runtime fixture checks support exact interpreter diagnostic snapshots alongside VM expectations.
+
+- `kujo test` honors explicit inventory-skip headers, keeping provider-dependent
+  probes out of ordinary fixture runs and avoiding snapshots of missing configuration.
+- Interpreter namespace imports support imported callbacks and async callback globals.
+- Hover reuses one tokenization across definition and reference lookup.
+- Docgen HTTP test fixtures remain alive until their owner shuts them down,
+  removing idle fixture expiry during concurrent test startup.
+
+- Channel send releases its shared lock while waiting for queue capacity. VM
+  channel methods accept the correct arguments, and receive waits for a value.
+
+- Returned named closures can recursively call themselves in the interpreter.
+- Interpreter closures retain referenced bindings and callable dependencies,
+  avoiding retention of unrelated generator instances in supported bodies.
+
+- Concurrent promise waiters share completion; timing out one waiter no longer
+  consumes the result needed by another waiter.
+
+- Generators now retain shared progress across aliases and resume nested loops
+  and exception handlers in both runtimes. VM generators preserve
+  owned continuation state, cache terminal failures and restore callers. For loops
+  consume generators lazily, so breaking stops at the requested item.
 
 - Routed HTTP server shutdown uses a bounded loopback wakeup for wildcard
   listeners, avoiding a macOS connection timeout during teardown.

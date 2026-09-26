@@ -2,7 +2,7 @@
 
 Status: stable v1.0.0 contract
 Spec version: 1.0.0
-Last updated: 2026-08-08
+Last updated: 2026-09-26
 
 ## 1. Scope
 
@@ -248,7 +248,7 @@ seen_outer := outer
 - Functions support positional parameters.
 - Function body fallthrough (reaching the end of the body without an explicit `return`) yields `null`.
 - Return without explicit value yields `null`.
-- `async func` values produce awaitable handles in runtime modes that support async scheduling.
+- `async func` calls eagerly submit their body and return a promise. Arity and admission failures occur at the call; body failures occur when awaited.
 
 Example:
 
@@ -328,8 +328,19 @@ items[0] := 9
 
 ### 5.7 Concurrency and await
 
-- `await` blocks expression completion on pending async values.
-- `spawn { ... }` schedules detached async work where supported by runtime mode.
+Development-branch completion of the previously deferred concurrency surfaces
+(Unreleased). Existing v1 closure snapshot identity is unchanged. Code that
+depended on inline async body completion must explicitly await its promise;
+detached spawn now performs its body and can produce effects.
+
+- `await` waits for a promise's shared completion; aliases and repeated waiters see the same value or error. A timeout does not consume the producer's result.
+- Async functions and `spawn_task` use the existing executor with at most 16 admitted language tasks per process. Admission exhaustion raises an error. A synchronous function containing `await` remains synchronous.
+- `spawn_task(f)` executes a zero-argument ordinary or async callable. `await_task(handle)` returns its reusable completion promise. `cancel_task(handle)` wins only before completion, rejects waiters, and requests cooperative termination; it cannot undo effects or interrupt every native blocking operation.
+- `spawn { ... }` executes detached work in both runtimes. It copies referenced transferable values, preserving binding mutability. Referenced channels, callables, promises, generators and host handles reject before submission; unreferenced values are ignored. Use explicit `shared_*` operations for shared state.
+- Detached work has no join and process exit does not wait for it. Detached failures go to stderr (16 messages of at most 512 characters, followed by one suppression notice per process).
+- Task globals are submission snapshots. Aliases of one captured closure retain its mutable state; separate closures retain independent snapshots. Concurrent read-modify-write is not atomic; `shared_add_int` provides the shared integer operation. Captured AST writes to different bindings do not overwrite each other.
+- Tasks inherit the submitting capability policy. Generator resume intersects creation and resumer policies. Neither mechanism grants additional host capabilities.
+- Generator aliases share progress. Yield suspends owned state, return completes without yielding, and a terminal error is cached. Iteration is lazy; `break` does not drain the generator. Async generators and struct generator methods are explicitly unsupported.
 - Current VM/interpreter parity and capability notes for `spawn`, spread/destructuring, and match-binding surfaces are tracked in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
 ### 5.8 Numeric semantics

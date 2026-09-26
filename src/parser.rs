@@ -2300,7 +2300,7 @@ impl Parser {
         let mut vm_primary_passed: usize = 0;
         let mut interpreter_primary_passed: usize = 0;
         let mut dual_fallback_passed: usize = 0;
-        let mut skipped_test_run_fixtures: usize = 0;
+        let mut skipped_fixtures: usize = 0;
         let mut had_failures = false;
 
         for entry in entries.flatten() {
@@ -2310,15 +2310,26 @@ impl Parser {
                     println!("[i] Running fixture: {}", path.display());
                 }
                 let content = fs::read_to_string(&path).unwrap_or_default();
-                if content.lines().take(3).any(|line| line.contains("Run with: kujo test-run")) {
-                    skipped_test_run_fixtures += 1;
+                if content.lines().take(3).any(|line| {
+                    line.contains("Run with: kujo test-run")
+                        || line.trim_start().starts_with("# Inventory: skip")
+                }) {
+                    skipped_fixtures += 1;
                     if verbose {
-                        println!("[i] Skipping test-run fixture: {}", path.display());
+                        println!("[i] Skipping fixture by header policy: {}", path.display());
                     }
                     continue;
                 }
                 total += 1;
-                let expected_path = path.with_extension("out");
+                let shared_expected_path = path.with_extension("out");
+                let interpreter_expected_path = path.with_extension("interpreter.out");
+                let expected_path = if matches!(runtime_strategy, TestRuntimeStrategy::Interpreter)
+                    && interpreter_expected_path.exists()
+                {
+                    interpreter_expected_path.clone()
+                } else {
+                    shared_expected_path
+                };
 
                 let tokens = match crate::lexer::tokenize(&content) {
                     Ok(tokens) => tokens,
@@ -2416,6 +2427,13 @@ impl Parser {
                     continue;
                 }
 
+                let interpreter_expected = if interpreter_expected_path.exists() {
+                    Self::normalize_fixture_output(
+                        &fs::read_to_string(&interpreter_expected_path).unwrap_or_default(),
+                    )
+                } else {
+                    expected.clone()
+                };
                 let mut actual_for_report: Option<String> = None;
                 let mut fallback_for_report: Option<String> = None;
                 let mut used_interpreter_fallback = false;
@@ -2485,7 +2503,7 @@ impl Parser {
                                 };
                             let interpreter_actual =
                                 Self::normalize_fixture_output(&interpreter_actual);
-                            if interpreter_actual == expected {
+                            if interpreter_actual == interpreter_expected {
                                 dual_fallback_passed += 1;
                                 used_interpreter_fallback = true;
                                 true
@@ -2530,11 +2548,11 @@ impl Parser {
 
         let failed = total.saturating_sub(passed);
         let expected_fail = 0usize;
-        let discovered = total + skipped_test_run_fixtures + expected_fail;
+        let discovered = total + skipped_fixtures + expected_fail;
         println!("\n[✓] Passed {}/{} tests", passed, total);
         println!(
             "[i] Fixture outcomes: passed={}, failed={}, skipped={}, expected_fail={}, runnable={}, discovered={}",
-            passed, failed, skipped_test_run_fixtures, expected_fail, total, discovered
+            passed, failed, skipped_fixtures, expected_fail, total, discovered
         );
         if matches!(runtime_strategy, TestRuntimeStrategy::Dual) {
             println!(

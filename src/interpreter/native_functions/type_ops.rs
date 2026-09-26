@@ -262,7 +262,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::Error(_) | Value::ErrorObject { .. } => "error",
                     Value::Result { .. } => "result",
                     Value::Option { .. } => "option",
-                    Value::GeneratorDef(_, _) => "generatordef",
+                    Value::GeneratorDef(..) => "generatordef",
                     Value::Generator { .. } => "generator",
                     Value::Iterator { .. } => "iterator",
                     Value::Promise { .. } => "promise",

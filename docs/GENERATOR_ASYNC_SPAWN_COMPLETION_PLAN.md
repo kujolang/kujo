@@ -1,5 +1,9 @@
 # Generator, async, and spawn completion: Phase A
 
+Phase-B implementation follow-up: [runtime completion record](RUNTIME_CONCURRENCY_COMPLETION.md).
+This document preserves the pre-implementation audit and accepted design decisions;
+its old broken-behavior descriptions are historical, not the current runtime contract.
+
 Audit date: 2026-09-25. Source baseline: `719d6f7` (Kujo 1.5.0 working
 source). Branch: `runtime/generator-async-spawn-audit`.
 

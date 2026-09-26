@@ -32,9 +32,17 @@ pub fn find_definition(source: &str, line: usize, column: usize) -> Option<Defin
     }
 
     let tokens = lexer::tokenize(source).ok()?;
-    let identifier = identifier_at_cursor(&tokens, line, column)?;
-    let definitions = collect_definitions(&tokens);
-    let resolved = lsp_references::find_references(source, line, column, true)
+    find_definition_with_tokens(&tokens, line, column)
+}
+
+pub(crate) fn find_definition_with_tokens(
+    tokens: &[Token],
+    line: usize,
+    column: usize,
+) -> Option<DefinitionLocation> {
+    let identifier = identifier_at_cursor(tokens, line, column)?;
+    let definitions = collect_definitions(tokens);
+    let resolved = lsp_references::find_references_with_tokens(tokens, line, column, true)
         .into_iter()
         .find(|reference| reference.is_definition)?;
 

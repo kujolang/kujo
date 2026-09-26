@@ -71,6 +71,25 @@ pub struct RuntimeCapabilityPolicy {
 }
 
 impl RuntimeCapabilityPolicy {
+    /// Authority for a continuation is bounded by both its creator and resumer.
+    pub fn intersection(&self, other: &Self) -> Self {
+        Self {
+            filesystem_read: self.filesystem_read && other.filesystem_read,
+            filesystem_write: self.filesystem_write && other.filesystem_write,
+            filesystem_delete: self.filesystem_delete && other.filesystem_delete,
+            process_exec: self.process_exec && other.process_exec,
+            shell_exec: self.shell_exec && other.shell_exec,
+            env_read: self.env_read && other.env_read,
+            env_write: self.env_write && other.env_write,
+            network_client: self.network_client && other.network_client,
+            network_ai: self.network_ai && other.network_ai,
+            network_server: self.network_server && other.network_server,
+            database: self.database && other.database,
+            clock: self.clock && other.clock,
+            random: self.random && other.random,
+        }
+    }
+
     pub fn trusted() -> Self {
         Self {
             filesystem_read: true,

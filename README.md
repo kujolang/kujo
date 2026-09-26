@@ -25,6 +25,11 @@ task specs, context, tests, and run records. See [Installation](INSTALLATION.md)
 for a runtime-only npm install, Windows steps, source builds, profiles, updates,
 and uninstall instructions.
 
+Concurrency behavior and validation for the current development branch are
+recorded in [the runtime completion record](docs/RUNTIME_CONCURRENCY_COMPLETION.md).
+Async tasks are bounded, generator aliases share progress, and detached work has
+no implicit process-exit join.
+
 ## Run your first program
 
 Create `hello.kujo`:

@@ -1,0 +1,14 @@
+Type checking warnings:
+  [KUJORUN001] [runtime] Type Error: Type mismatch: variable 'x' declared as Int but assigned String
+  --> 0:0
+   = help: Try removing the type annotation or converting the value to the correct type
+
+  [KUJORUN001] [runtime] Undefined Function: Undefined function 'calculat_sum'
+  --> 0:0
+   = Did you mean 'calculate_sum'?
+   = note: Function must be defined before it is called
+
+
+[KUJORUN001] [runtime] Runtime Error: Undefined variable: calculat_sum
+  --> 0:0
+   = help: Define this name before using it, check the spelling, or import the module that provides it.

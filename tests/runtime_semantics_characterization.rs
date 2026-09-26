@@ -60,33 +60,35 @@ fn straight_line_generator_state_survives_yields() {
 }
 
 #[test]
-fn loop_generator_currently_yields_only_first_loop_value() {
-    sums("mut x := 1 while x < 4 { yield x x += 1 }", 1, 1);
+fn loop_generator_resumes_all_values() {
+    sums("mut x := 1 while x < 4 { yield x x += 1 }", 6, 6);
 }
 
 #[test]
-fn explicit_return_is_currently_a_yield_only_in_interpreter() {
-    sums("yield 1 return 9", 10, 1);
+fn explicit_return_completes_without_yielding() {
+    sums("yield 1 return 9", 1, 1);
 }
 
 #[test]
-fn generator_alias_iteration_restarts_only_in_interpreter() {
+fn generator_aliases_share_progress() {
     let source = "func* values() { yield 1 yield 2 } let a := values() let b := a mut observed_total := 0 for n in a { observed_total += n } for n in b { observed_total += n }";
-    assert_eq!(integer(interpreter(source).env.get("observed_total")), 6);
+    assert_eq!(integer(interpreter(source).env.get("observed_total")), 3);
     let (result, env) = vm(source);
     result.unwrap();
     assert_eq!(integer(env.lock().unwrap().get("observed_total")), 3);
 }
 
 #[test]
-fn nested_call_in_generator_is_not_supported_by_vm_resume_loop() {
+fn nested_call_in_generator_uses_normal_vm_dispatch() {
     let source = "func answer() { return 42 } func* values() { yield answer() } mut observed_total := 0 for n in values() { observed_total += n }";
     assert_eq!(integer(interpreter(source).env.get("observed_total")), 42);
-    assert!(vm(source).0.unwrap_err().contains("not yet handled in generator execution"));
+    let (result, env) = vm(source);
+    result.unwrap();
+    assert_eq!(integer(env.lock().unwrap().get("observed_total")), 42);
 }
 
 #[test]
-fn generator_error_is_currently_swallowed_only_by_interpreter() {
+fn generator_errors_propagate_in_both_runtimes() {
     let source =
         "func* values() { yield 1 yield missing } mut observed_total := 0 for n in values() { observed_total += n }";
     let interp = interpreter(source);
@@ -95,7 +97,7 @@ fn generator_error_is_currently_swallowed_only_by_interpreter() {
     assert!(vm(source).0.is_err());
     let source = "func* values() { yield 1 missing } mut observed_total := 0 for n in values() { observed_total += n }";
     let interp = interpreter(source);
-    assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
+    assert!(interp.return_value.is_some(), "{:?}", interp.return_value);
     assert_eq!(integer(interp.env.get("observed_total")), 1);
     assert!(vm(source).0.is_err());
 }
@@ -110,52 +112,68 @@ fn promise_reawait_and_await_value_are_supported() {
 }
 
 #[test]
-fn vm_spawn_body_is_discarded() {
-    let (result, env) =
-        vm("mut marker := 0 spawn { marker = 99 missing } let observed_total := marker");
+fn spawn_mutation_is_isolated_from_parent() {
+    let (result, env) = vm("mut marker := 0 spawn { marker = 99 } let observed_total := marker");
     result.unwrap();
     assert_eq!(integer(env.lock().unwrap().get("observed_total")), 0);
 }
 
 #[test]
-fn spawn_task_interpreter_returns_placeholder_without_executing_body() {
+fn spawn_task_executes_body_in_both_runtimes() {
     let interp = interpreter("async func work() { return 42 } let handle := spawn_task(work) let result := await await_task(handle)");
     assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
-    assert!(matches!(interp.env.get("result"), Some(Value::Null)));
-    let result = vm("async func work() { return 42 } let handle := spawn_task(work)").0;
-    assert!(result.unwrap_err().contains("requires an async function"));
+    assert!(matches!(interp.env.get("result"), Some(Value::Int(42))));
+    let (result, env) = vm("async func work() { return 42 } let handle := spawn_task(work) let result := await await_task(handle)");
+    result.unwrap();
+    assert!(matches!(env.lock().unwrap().get("result"), Some(Value::Int(42))));
 }
 
 #[test]
-fn later_loop_backedge_currently_exhausts_vm_at_an_earlier_yield() {
-    sums("yield 1 while false { yield 9 } yield 2", 3, 1);
+fn later_loop_backedge_does_not_exhaust_an_earlier_yield() {
+    sums("yield 1 while false { yield 9 } yield 2", 3, 3);
 }
 
 #[test]
-fn nested_if_continuation_is_skipped_only_by_interpreter() {
-    sums("if true { yield 1 yield 2 } yield 3", 4, 6);
+fn nested_if_continuation_resumes() {
+    sums("if true { yield 1 yield 2 } yield 3", 6, 6);
 }
 
 #[test]
-fn vm_for_drains_generator_before_consumer_break() {
+fn vm_for_does_not_drain_generator_before_consumer_break() {
     let source = "mut produced := 0 func* values() { produced += 1 yield 1 produced += 1 yield 2 } for n in values() { break }";
     let interp = interpreter(source);
-    // Interpreter generator environment is a snapshot, so parent is unchanged.
     assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
-    assert_eq!(integer(interp.env.get("produced")), 0);
+    assert_eq!(integer(interp.env.get("produced")), 1);
     let (result, env) = vm(source);
     result.unwrap();
-    assert_eq!(integer(env.lock().unwrap().get("produced")), 2);
+    assert_eq!(integer(env.lock().unwrap().get("produced")), 1);
 }
 
 #[test]
-fn async_body_error_occurs_at_call_only_in_vm() {
+fn async_body_error_is_deferred_until_await_in_both_runtimes() {
     let source = "async func fail() { missing } let pending := fail() let continued := 1";
     let interp = interpreter(source);
     assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
     assert!(matches!(interp.env.get("pending"), Some(Value::Promise { .. })));
     assert_eq!(integer(interp.env.get("continued")), 1);
     let (result, env) = vm(source);
-    assert!(result.unwrap_err().contains("Undefined variable"));
-    assert!(env.lock().unwrap().get("continued").is_none());
+    result.unwrap();
+    assert_eq!(integer(env.lock().unwrap().get("continued")), 1);
+}
+
+#[test]
+fn nested_yield_expressions_resume_without_repeating_operands() {
+    sums("mut hits := 0 func hit() { hits += 1 return hits } let n := hit() + (yield 2) yield n yield hit()", 7, 7);
+    sums(
+        "let saved := 7 ?? (yield 99) let chosen := null ?? (yield 2) yield saved + chosen",
+        11,
+        11,
+    );
+    sums("let pair := [yield 2, yield 3] yield pair[0] + pair[1]", 10, 10);
+    sums("let result := (yield 2) + (yield 3) yield result", 10, 10);
+    sums(
+        "let skipped := false && (yield 99) let chosen := true && (yield 1) if chosen { yield 2 }",
+        3,
+        3,
+    );
 }
