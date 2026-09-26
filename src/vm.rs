@@ -134,6 +134,7 @@ pub struct VM {
     /// Tokio runtime handle for spawning async tasks
     /// This allows the VM to spawn truly concurrent async tasks
     runtime_handle: tokio::runtime::Handle,
+    task_async_entry: bool,
 
     /// Saved execution contexts used for cooperative VM context switching.
     execution_contexts: HashMap<VmContextId, VmExecutionSnapshot>,
@@ -408,15 +409,14 @@ pub(crate) struct CallFrame {
 
     /// Previous chunk (for returning)
     prev_chunk: Option<BytecodeChunk>,
-
-    /// Whether this function is async (for wrapping return values in Promises)
-    is_async: bool,
 }
 
 #[allow(dead_code)] // These VM helpers are retained for scheduler/JIT/debug follow-through paths.
 impl VM {
     fn requires_closure_vm(chunk: &BytecodeChunk) -> bool {
-        !chunk.upvalues.is_empty()
+        chunk.is_async
+            || chunk.is_generator
+            || !chunk.upvalues.is_empty()
             || chunk.lexical_self.is_some()
             || chunk.instructions.iter().any(|op| matches!(op, OpCode::MakeClosure(_)))
     }
@@ -634,6 +634,7 @@ impl VM {
                 // If not in a tokio runtime, create one
                 crate::interpreter::AsyncRuntime::runtime().handle().clone()
             }),
+            task_async_entry: false,
             execution_contexts: HashMap::new(),
             active_execution_context: None,
             next_execution_context_id: 1,
@@ -1574,6 +1575,9 @@ impl VM {
         });
 
         loop {
+            if self.interpreter.task_is_cancelled() {
+                return Err("Task was cancelled".to_owned());
+            }
             if self.ip >= self.chunk.instructions.len() {
                 // Reached end of program
                 return Ok(Value::Null);
@@ -1905,7 +1909,11 @@ impl VM {
                 }
 
                 OpCode::LoadCapture(index) => self.load_capture(index)?,
-                OpCode::StoreCapture(index) => self.store_capture(index)?,
+                OpCode::StoreCapture(index) => {
+                    if let Err(error) = self.store_capture(index) {
+                        self.throw_runtime_value(Value::Error(error))?;
+                    }
+                }
 
                 OpCode::LoadLocal(slot) => {
                     let frame = self.call_frames.last().ok_or("LoadLocal requires call frame")?;
@@ -2041,7 +2049,10 @@ impl VM {
                     }
 
                     if assign_global {
-                        self.globals.lock().unwrap().assign_checked(name, value)?;
+                        let result = self.globals.lock().unwrap().assign_checked(name, value);
+                        if let Err(error) = result {
+                            self.throw_runtime_value(Value::Error(error))?;
+                        }
                     }
                 }
 
@@ -2078,7 +2089,10 @@ impl VM {
                         let initialized =
                             frame.local_slot_initialized.get(slot).copied().unwrap_or(false);
                         if initialized && !matches!(kind, BytecodeBindingKind::Mutable) {
-                            return Err(Self::local_reassignment_error(kind, &binding_name));
+                            self.throw_runtime_value(Value::Error(
+                                Self::local_reassignment_error(kind, &binding_name),
+                            ))?;
+                            continue;
                         }
 
                         *target = value;
@@ -2105,7 +2119,11 @@ impl VM {
                 }
 
                 OpCode::EnsureMutableGlobalForMutation(name) => {
-                    self.globals.lock().unwrap().ensure_mutable_for_mutation(name.as_str())?;
+                    let result =
+                        self.globals.lock().unwrap().ensure_mutable_for_mutation(name.as_str());
+                    if let Err(error) = result {
+                        self.throw_runtime_value(Value::Error(error))?;
+                    }
                 }
 
                 OpCode::Pop => {
@@ -3388,25 +3406,7 @@ impl VM {
                         // Clear stack to frame offset
                         self.stack.truncate(frame.stack_offset);
 
-                        // If this was an async function, wrap the return value in a Promise
-                        let value_to_push = if frame.is_async {
-                            // Create a tokio oneshot channel with the result already available
-                            let (tx, rx) = tokio::sync::oneshot::channel();
-                            tx.send(Ok(return_value))
-                                .map_err(|_| "Failed to send to promise channel")?;
-
-                            Value::Promise {
-                                receiver: Arc::new(Mutex::new(rx.into())),
-                                is_polled: Arc::new(Mutex::new(false)),
-                                cached_result: Arc::new(Mutex::new(None)),
-                                task_handle: None,
-                            }
-                        } else {
-                            return_value
-                        };
-
-                        // Push return value (or promise)
-                        self.stack.push(value_to_push);
+                        self.stack.push(return_value);
                     } else {
                         // Top-level return
                         return Ok(return_value);
@@ -3415,6 +3415,7 @@ impl VM {
 
                 OpCode::ReturnNone => {
                     if let Some(frame) = self.call_frames.pop() {
+                        self.function_call_stack.pop();
                         // Decrement recursion depth
                         if self.recursion_depth > 0 {
                             self.recursion_depth -= 1;
@@ -3426,23 +3427,7 @@ impl VM {
                         }
                         self.stack.truncate(frame.stack_offset);
 
-                        // If this was an async function, wrap None in a Promise
-                        let value_to_push = if frame.is_async {
-                            let (tx, rx) = tokio::sync::oneshot::channel();
-                            tx.send(Ok(Value::Null))
-                                .map_err(|_| "Failed to send to promise channel")?;
-
-                            Value::Promise {
-                                receiver: Arc::new(Mutex::new(rx.into())),
-                                is_polled: Arc::new(Mutex::new(false)),
-                                cached_result: Arc::new(Mutex::new(None)),
-                                task_handle: None,
-                            }
-                        } else {
-                            Value::Null
-                        };
-
-                        self.stack.push(value_to_push);
+                        self.stack.push(Value::Null);
                     } else {
                         return Ok(Value::Null);
                     }
@@ -5551,6 +5536,19 @@ impl VM {
                     }
                 }
 
+                OpCode::SpawnDetached => {
+                    let function = self.stack.pop().ok_or("Stack underflow in SpawnDetached")?;
+                    let result = crate::interpreter::tasks::submit_detached_vm(
+                        function,
+                        &*self.globals.lock().map_err(|_| "Spawn globals lock poisoned")?,
+                        self.interpreter.capability_policy().clone(),
+                        self.interpreter.output_buffer(),
+                    );
+                    if let Err(error) = result {
+                        self.throw_runtime_value(Value::Error(error))?;
+                    }
+                }
+
                 OpCode::MakePromise => {
                     // Pop value from stack and wrap it in a resolved promise
                     let value = self.stack.pop().ok_or("Stack underflow in MakePromise")?;
@@ -5806,7 +5804,7 @@ impl VM {
         }
     }
 
-    fn module_binding_name(module_name: &str) -> String {
+    pub(crate) fn module_binding_name(module_name: &str) -> String {
         module_name.rsplit('.').next().unwrap_or(module_name).to_string()
     }
 
@@ -5834,7 +5832,10 @@ impl VM {
         }
     }
 
-    fn module_namespace_value(module_name: &str, exports: &HashMap<String, Value>) -> Value {
+    pub(crate) fn module_namespace_value(
+        module_name: &str,
+        exports: &HashMap<String, Value>,
+    ) -> Value {
         let mut module_fields = HashMap::with_capacity(exports.len());
         for (name, value) in exports {
             module_fields.insert(name.clone(), Self::wrap_module_export_for_method_call(value));
@@ -5978,9 +5979,15 @@ impl VM {
         globals: Arc<Mutex<Environment>>,
         policy: RuntimeCapabilityPolicy,
         output: Option<Arc<Mutex<Vec<u8>>>>,
+        cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
     ) -> Result<Value, String> {
         let _depth = runtime_limits::CallbackBridgeGuard::enter()?;
         let mut vm = VM::new();
+        vm.cooperative_suspend_enabled = false;
+        if cancellation.is_some() {
+            vm.jit_enabled = false;
+        }
+        vm.interpreter.task_cancellation = cancellation;
         vm.set_capability_policy(policy);
         vm.set_globals(globals);
         if let Some(output) = output {
@@ -5994,6 +6001,34 @@ impl VM {
         vm.stack.push(function);
         vm.skip_execute_reset_once = true;
         vm.execute(BytecodeChunk::new()).map(Self::normalize_value_for_interpreter)
+    }
+
+    pub(crate) fn execute_language_task(
+        function: Value,
+        args: Vec<Value>,
+        environment: Environment,
+        policy: RuntimeCapabilityPolicy,
+        output: Option<Arc<Mutex<Vec<u8>>>>,
+        cancelled: Arc<std::sync::atomic::AtomicBool>,
+    ) -> Result<Value, String> {
+        let mut vm = VM::new();
+        vm.cooperative_suspend_enabled = false;
+        vm.set_capability_policy(policy);
+        vm.set_globals(Arc::new(Mutex::new(environment)));
+        if let Some(output) = output {
+            vm.interpreter.set_output(output);
+        }
+        vm.interpreter.task_cancellation = Some(cancelled);
+        vm.task_async_entry = true;
+        vm.jit_enabled = false;
+        let mut wrapper = BytecodeChunk::new();
+        wrapper.emit(OpCode::Call(args.len()));
+        wrapper.emit(OpCode::Return);
+        vm.set_chunk(wrapper);
+        vm.stack.extend(args);
+        vm.stack.push(function);
+        vm.skip_execute_reset_once = true;
+        vm.execute(BytecodeChunk::new())
     }
 
     fn call_interpreter_callable(
@@ -6099,6 +6134,24 @@ impl VM {
         call_args: Vec<Value>,
     ) -> Result<(), String> {
         if let Value::BytecodeFunction { chunk, captured, captured_binding_kinds } = function {
+            let execute_async_body = std::mem::take(&mut self.task_async_entry);
+            if chunk.is_async && !execute_async_body {
+                let environment = self
+                    .globals
+                    .lock()
+                    .map_err(|_| "Task globals lock poisoned")?
+                    .global_snapshot();
+                let task = crate::interpreter::tasks::submit(
+                    Value::BytecodeFunction { chunk, captured, captured_binding_kinds },
+                    call_args,
+                    environment,
+                    self.interpreter.capability_policy().clone(),
+                    self.interpreter.output_buffer(),
+                )?;
+                self.stack.push(task.completion.clone());
+                return Ok(());
+            }
+
             let max_depth = runtime_limits::DEFAULT_MAX_VM_CALL_DEPTH;
             if self.call_frames.len() >= max_depth || self.recursion_depth >= max_depth {
                 let callable = chunk.name.as_deref().unwrap_or("<anonymous>");
@@ -6220,7 +6273,6 @@ impl VM {
                 captured_binding_kinds: captured_binding_kinds_map,
                 captured_slots: Vec::new(),
                 prev_chunk: if chunk.is_generator { None } else { Some(self.chunk.clone()) },
-                is_async: chunk.is_async,
             };
 
             if chunk.is_generator {
@@ -6907,6 +6959,11 @@ impl VM {
             // Handle channel method calls
             if name.starts_with("__channel_method_") {
                 let method_name = name.strip_prefix("__channel_method_").unwrap();
+                // Method-call lowering supplies a duplicate receiver after the
+                // user arguments, matching the image/server marker paths.
+                if matches!(args.last(), Some(Value::Channel(_))) {
+                    args.pop();
+                }
                 // The channel object was pushed onto the stack before the function marker
                 // So it's at the bottom of our "args" - but actually, it's still on the stack
                 // because FieldGet pushed it back. We need to pop it from the stack!
@@ -6940,6 +6997,9 @@ impl VM {
                                 ));
                             }
                             loop {
+                                if self.interpreter.task_is_cancelled() {
+                                    break Err("Task was cancelled".to_owned());
+                                }
                                 let received = {
                                     let guard = chan.lock().map_err(|_| {
                                         "channel.receive: shared state lock poisoned"
@@ -6986,11 +7046,6 @@ impl VM {
                 }
 
                 // Retrieve receiver value left on the VM stack.
-                // Method-call lowering supplies a duplicate receiver after the
-                // user arguments, matching the image/server marker paths.
-                if matches!(args.last(), Some(Value::Channel(_))) {
-                    args.pop();
-                }
                 let image = self.stack.pop().ok_or("Stack underflow getting image")?;
 
                 match Interpreter::call_image_method_impl(&image, method_name, &args) {
@@ -7613,10 +7668,15 @@ impl VM {
     ) -> Result<Value, String> {
         match &function {
             Value::BytecodeFunction { chunk, captured: _, captured_binding_kinds: _ } => {
-                if chunk
-                    .instructions
-                    .iter()
-                    .any(|op| matches!(op, OpCode::MakeClosure(_) | OpCode::ForNext(_)))
+                if Self::requires_closure_vm(chunk)
+                    || chunk.is_async
+                    || chunk.is_generator
+                    || chunk.instructions.iter().any(|op| {
+                        matches!(
+                            op,
+                            OpCode::MakeClosure(_) | OpCode::ForNext(_) | OpCode::BeginTry(_)
+                        )
+                    })
                 {
                     // Creation needs the full VM dispatcher. Reuse the guarded
                     // bridge, including the caller's capabilities and output.
@@ -9161,7 +9221,6 @@ mod tests {
             captured_binding_kinds: HashMap::new(),
             captured_slots: Vec::new(),
             prev_chunk: Some(frame_chunk),
-            is_async: false,
         });
 
         {

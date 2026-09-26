@@ -229,3 +229,26 @@ fn vm_callback_for_loop_uses_full_dispatch() {
         matches!(env.lock().unwrap().get("result"), Some(Value::Array(values)) if matches!(values.as_slice(), [Value::Int(3), Value::Int(5)]))
     );
 }
+
+#[test]
+fn vm_captured_mutability_errors_are_catchable_in_the_owning_frame() {
+    let (mut vm, env, _) = setup("func* values() { yield 1 } let instance := values()");
+    execute(&mut vm, "func factory() { let immutable := 7 return func() { try { immutable = 9 } except err { return immutable } return 0 } } let result := factory()()").unwrap();
+    assert_eq!(number(env.lock().unwrap().get("result")), 7);
+}
+
+#[test]
+fn async_generators_reject_instead_of_selecting_an_ambiguous_call_kind() {
+    let mut parser = Parser::new(tokenize("async func* unsupported() { yield 1 }").unwrap());
+    let parsed = parser.parse_with_diagnostics();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    assert!(Compiler::new()
+        .compile(&parsed.stmts)
+        .unwrap_err()
+        .contains("Async generators are not supported"));
+    let mut interpreter = Interpreter::new();
+    interpreter.eval_stmts(&parsed.stmts);
+    assert!(
+        matches!(interpreter.return_value, Some(Value::Error(ref e)) if e.contains("Async generators are not supported"))
+    );
+}

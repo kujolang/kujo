@@ -2566,9 +2566,8 @@ pub fn format_debug_value(value: &Value) -> String {
                 Some(Err(err)) => format!("Promise(Rejected: {})", err),
             }
         }
-        Value::TaskHandle { is_cancelled, .. } => {
-            let cancelled = is_cancelled.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-            if *cancelled {
+        Value::TaskHandle { state } => {
+            if state.is_cancelled() {
                 "TaskHandle(Cancelled)".to_string()
             } else {
                 "TaskHandle(Running)".to_string()

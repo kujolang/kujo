@@ -342,6 +342,9 @@ pub enum OpCode {
     /// Stack: [function] -> [generator]
     MakeGenerator,
 
+    /// Submit a detached callable after strict capture-transfer preflight.
+    SpawnDetached,
+
     // === Async/Await Operations ===
     /// Await a promise/async value
     /// Suspends execution until the promise resolves

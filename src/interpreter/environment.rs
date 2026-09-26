@@ -4,7 +4,7 @@
 // Implements a stack of scopes where inner scopes shadow outer scopes.
 
 use super::value::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BindingKind {
@@ -63,15 +63,77 @@ pub struct Environment {
     pub scopes: Vec<HashMap<String, Value>>,
     binding_kinds: Vec<HashMap<String, BindingKind>>,
     global_owner: std::sync::Arc<()>,
+    capture_writes: Option<(usize, HashSet<(usize, String)>)>,
 }
 
 impl Environment {
+    /// Track writes only for an async captured invocation. Ordinary environments
+    /// allocate no journal. Same-binding read-modify-write remains non-atomic.
+    pub(crate) fn track_capture_writes(&mut self) {
+        self.capture_writes = Some((self.scopes.len(), HashSet::new()));
+    }
+
+    pub(crate) fn merge_capture_writes(&mut self, after: &Self) {
+        let Some((_, writes)) = &after.capture_writes else {
+            return;
+        };
+        for (index, name) in writes {
+            if let (Some(target), Some(value)) = (
+                self.scopes.get_mut(*index),
+                after.scopes.get(*index).and_then(|scope| scope.get(name)),
+            ) {
+                target.insert(name.clone(), value.clone());
+            }
+        }
+    }
+
+    fn record_capture_write(
+        journal: &mut Option<(usize, HashSet<(usize, String)>)>,
+        index: usize,
+        name: &str,
+    ) {
+        if let Some((limit, writes)) = journal {
+            if index < *limit {
+                writes.insert((index, name.to_owned()));
+            }
+        }
+    }
+
     /// Create a new environment with a single global scope
     pub fn new() -> Self {
         Environment {
             scopes: vec![HashMap::new()],
             binding_kinds: vec![HashMap::new()],
             global_owner: std::sync::Arc::new(()),
+            capture_writes: None,
+        }
+    }
+
+    pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
+        let mut visible = HashMap::new();
+        for (index, scope) in self.scopes.iter().enumerate() {
+            for (name, value) in scope {
+                visible.insert(
+                    name.clone(),
+                    (
+                        value.clone(),
+                        self.binding_kinds[index]
+                            .get(name)
+                            .copied()
+                            .unwrap_or(BindingKind::Mutable),
+                    ),
+                );
+            }
+        }
+        visible
+    }
+
+    pub(crate) fn global_snapshot(&self) -> Self {
+        Self {
+            scopes: vec![self.scopes[0].clone()],
+            binding_kinds: vec![self.binding_kinds[0].clone()],
+            global_owner: std::sync::Arc::new(()),
+            capture_writes: None,
         }
     }
 
@@ -97,6 +159,7 @@ impl Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
             global_owner: self.global_owner.clone(),
+            capture_writes: None,
         };
         self.push_scope();
         caller
@@ -116,6 +179,7 @@ impl Environment {
             scopes: self.scopes.split_off(1),
             binding_kinds: self.binding_kinds.split_off(1),
             global_owner: self.global_owner.clone(),
+            capture_writes: None,
         };
         self.scopes.append(&mut owner.scopes);
         self.binding_kinds.append(&mut owner.binding_kinds);
@@ -127,6 +191,7 @@ impl Environment {
             scopes: Vec::new(),
             binding_kinds: Vec::new(),
             global_owner: std::sync::Arc::new(()),
+            capture_writes: None,
         }
     }
 
@@ -140,6 +205,7 @@ impl Environment {
             scopes: vec![HashMap::new()],
             binding_kinds: vec![HashMap::new()],
             global_owner: self.global_owner.clone(),
+            capture_writes: None,
         };
         if capture_locals {
             result.scopes.extend(self.scopes.iter().skip(1).cloned());
@@ -172,6 +238,11 @@ impl Environment {
     }
 
     pub fn define_with_kind(&mut self, name: String, value: Value, kind: BindingKind) {
+        Self::record_capture_write(
+            &mut self.capture_writes,
+            self.scopes.len().saturating_sub(1),
+            &name,
+        );
         if let Some(scope) = self.scopes.last_mut() {
             scope.insert(name.clone(), value);
         }
@@ -202,8 +273,9 @@ impl Environment {
     /// If not found, creates it in the current scope
     pub fn set(&mut self, name: String, value: Value) {
         // Try to find and update existing variable
-        for scope in self.scopes.iter_mut().rev() {
+        for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if scope.contains_key(&name) {
+                Self::record_capture_write(&mut self.capture_writes, index, &name);
                 scope.insert(name, value);
                 return;
             }
@@ -222,6 +294,7 @@ impl Environment {
                 if !kind.allows_mutation() {
                     return Err(kind.reassignment_error(&name));
                 }
+                Self::record_capture_write(&mut self.capture_writes, scope_index, &name);
                 scope.insert(name, value);
                 return Ok(());
             }
@@ -242,8 +315,9 @@ impl Environment {
         F: FnOnce(&mut Value),
     {
         // Find the scope containing this variable
-        for scope in self.scopes.iter_mut().rev() {
+        for (index, scope) in self.scopes.iter_mut().enumerate().rev() {
             if let Some(value) = scope.get_mut(name) {
+                Self::record_capture_write(&mut self.capture_writes, index, name);
                 f(value);
                 return true;
             }
@@ -265,6 +339,7 @@ impl Environment {
                     return Err(kind.mutation_error(name));
                 }
 
+                Self::record_capture_write(&mut self.capture_writes, scope_index, name);
                 f(value);
                 return Ok(());
             }

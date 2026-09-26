@@ -2015,8 +2015,13 @@ fn vm_and_interpreter_match_spawn_surface() {
         spawn {{
             shared_add_int("{spawn_key}", 1)
         }}
+        attempts := 0
+        while shared_get("{spawn_key}") == 0 && attempts < 1000 {{
+            await async_sleep(1)
+            attempts += 1
+        }}
         spawn_final := shared_get("{spawn_key}")
-        spawn_ok := spawn_final >= 0
+        spawn_ok := spawn_final == 1
         shared_delete("{spawn_key}")
     "#
     );

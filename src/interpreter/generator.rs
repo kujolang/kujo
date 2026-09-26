@@ -39,12 +39,21 @@ impl Interpreter {
             |env| env.lock().unwrap_or_else(|p| p.into_inner()).generator_environment(true),
         );
         env.push_scope();
+        if let Some(name) = &body.lexical_name {
+            env.define(
+                name.clone(),
+                Value::GeneratorDef(params.to_vec(), body.clone(), captured.clone()),
+            );
+        }
         for (name, value) in params.iter().zip(args) {
             env.define(name.clone(), value.clone());
         }
         let continuation = Continuation {
             env,
-            frames: vec![Frame::Block { body: Arc::new(super::generator_lowering::lower(&body.get())), pc: 0 }],
+            frames: vec![Frame::Block {
+                body: Arc::new(super::generator_lowering::lower(&body.get())),
+                pc: 0,
+            }],
         };
         Value::Generator {
             params: params.to_vec(),
@@ -201,6 +210,9 @@ impl Interpreter {
 
     fn run_generator_frames(&mut self, frames: &mut Vec<Frame>) -> Result<Option<Value>, Value> {
         while let Some(frame) = frames.pop() {
+            if self.task_is_cancelled() {
+                return Err(Value::Error("Task was cancelled".to_owned()));
+            }
             let step = (|| -> Result<Option<Option<Value>>, Value> {
                 match frame {
                     Frame::ScopeEnd => self.env.pop_scope(),

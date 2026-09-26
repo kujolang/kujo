@@ -1901,191 +1901,40 @@ pub fn handle(
         }
 
         "spawn_task" => {
-            // spawn_task(async_func: AsyncFunction) -> TaskHandle
-            // Spawn a background task that runs independently
             if args.len() != 1 {
                 return Some(Value::Error(format!(
-                    "spawn_task() expects 1 argument (async function), got {}",
+                    "spawn_task() expects 1 argument (function), got {}",
                     args.len()
                 )));
             }
-
-            let func = match &args[0] {
-                Value::AsyncFunction(params, body, env) => {
-                    (params.clone(), body.clone(), env.clone())
-                }
-                Value::Function(params, body, env) => {
-                    // Allow regular functions to be spawned as tasks too
-                    (params.clone(), body.clone(), env.clone())
-                }
-                _ => {
-                    return Some(Value::Error(
-                        "spawn_task() requires an async function argument".to_string(),
-                    ));
-                }
-            };
-
-            let (_params, _body, _env) = func;
-
-            // Clone interpreter context needed for execution
-            // Note: We need to pass the interpreter or create a way to execute
-            // For now, we'll create a simple task that just returns the function
-            // In a real implementation, we'd need to execute the function body
-            // Deferred post-v1 runtime backlog: execute task bodies with full interpreter context
-            // (see docs/V1_SCOPE.md deferred runtime execution section).
-
-            // Create the task handle
-            let is_cancelled = std::sync::Arc::new(std::sync::Mutex::new(false));
-            let is_cancelled_clone = is_cancelled.clone();
-
-            // Spawn the task
-            let handle = AsyncRuntime::spawn_task(async move {
-                // Check if cancelled
-                {
-                    let cancelled = match lock_or_async_error(
-                        is_cancelled_clone.as_ref(),
-                        "spawn_task.is_cancelled",
-                    ) {
-                        Ok(guard) => guard,
-                        Err(error) => return Value::Error(error),
-                    };
-                    if *cancelled {
-                        return Value::Error("Task was cancelled".to_string());
-                    }
-                }
-
-                // For now, just sleep to simulate work
-                // Deferred post-v1 runtime backlog: execute the actual function body with interpreter.
-                AsyncRuntime::sleep(std::time::Duration::from_millis(1)).await;
-
-                // Return placeholder - in full implementation would execute function
-                Value::Null
-            });
-
-            Some(Value::TaskHandle {
-                handle: std::sync::Arc::new(std::sync::Mutex::new(Some(handle))),
-                is_cancelled,
+            Some(match _interp.submit_language_task(args[0].clone(), Vec::new()) {
+                Ok(state) => Value::TaskHandle { state },
+                Err(error) => Value::Error(error),
             })
         }
-
         "await_task" => {
-            // await_task(task_handle: TaskHandle) -> Promise<Value>
-            // Wait for a spawned task to complete and get its result
             if args.len() != 1 {
                 return Some(Value::Error(format!(
                     "await_task() expects 1 argument (task handle), got {}",
                     args.len()
                 )));
             }
-
-            match &args[0] {
-                Value::TaskHandle { handle: handle_arc, is_cancelled } => {
-                    let handle_arc = handle_arc.clone();
-                    let is_cancelled = is_cancelled.clone();
-
-                    // Create channel for result
-                    let (tx, rx) = tokio::sync::oneshot::channel();
-
-                    // Spawn task to await the handle
-                    AsyncRuntime::spawn_task(async move {
-                        // Extract the handle
-                        let handle = {
-                            let mut handle_guard =
-                                match lock_or_async_error(handle_arc.as_ref(), "await_task.handle")
-                                {
-                                    Ok(guard) => guard,
-                                    Err(error) => {
-                                        let _ = tx.send(Err(error));
-                                        return Value::Null;
-                                    }
-                                };
-                            handle_guard.take()
-                        };
-
-                        let result = if let Some(h) = handle {
-                            // Check if cancelled (drop guard before await)
-                            let is_task_cancelled = {
-                                let cancelled = match lock_or_async_error(
-                                    is_cancelled.as_ref(),
-                                    "await_task.is_cancelled",
-                                ) {
-                                    Ok(guard) => guard,
-                                    Err(error) => {
-                                        let _ = tx.send(Err(error));
-                                        return Value::Null;
-                                    }
-                                };
-                                *cancelled
-                            };
-
-                            if is_task_cancelled {
-                                Err("Task was cancelled".to_string())
-                            } else {
-                                // Await the task completion
-                                match h.await {
-                                    Ok(value) => Ok(value),
-                                    Err(e) => Err(format!("Task panicked: {}", e)),
-                                }
-                            }
-                        } else {
-                            Err("Task handle already consumed".to_string())
-                        };
-
-                        let _ = tx.send(result);
-                        Value::Null
-                    });
-
-                    // Return promise
-                    Some(Value::Promise {
-                        receiver: std::sync::Arc::new(std::sync::Mutex::new(rx.into())),
-                        is_polled: std::sync::Arc::new(std::sync::Mutex::new(false)),
-                        cached_result: std::sync::Arc::new(std::sync::Mutex::new(None)),
-                        task_handle: None,
-                    })
-                }
-                _ => Some(Value::Error("await_task() requires a TaskHandle argument".to_string())),
-            }
+            Some(match &args[0] {
+                Value::TaskHandle { state } => state.completion.clone(),
+                _ => Value::Error("await_task() requires a TaskHandle argument".to_owned()),
+            })
         }
-
         "cancel_task" => {
-            // cancel_task(task_handle: TaskHandle) -> Bool
-            // Request cancellation of a running task
             if args.len() != 1 {
                 return Some(Value::Error(format!(
                     "cancel_task() expects 1 argument (task handle), got {}",
                     args.len()
                 )));
             }
-
-            match &args[0] {
-                Value::TaskHandle { handle: handle_arc, is_cancelled } => {
-                    // Mark as cancelled
-                    {
-                        let mut cancelled = match lock_or_async_error(
-                            is_cancelled.as_ref(),
-                            "cancel_task.is_cancelled",
-                        ) {
-                            Ok(guard) => guard,
-                            Err(error) => return Some(Value::Error(error)),
-                        };
-                        *cancelled = true;
-                    }
-
-                    // Abort the task if possible
-                    let mut handle_guard =
-                        match lock_or_async_error(handle_arc.as_ref(), "cancel_task.handle") {
-                            Ok(guard) => guard,
-                            Err(error) => return Some(Value::Error(error)),
-                        };
-                    if let Some(handle) = handle_guard.take() {
-                        handle.abort();
-                        Some(Value::Bool(true))
-                    } else {
-                        Some(Value::Bool(false)) // Already consumed
-                    }
-                }
-                _ => Some(Value::Error("cancel_task() requires a TaskHandle argument".to_string())),
-            }
+            Some(match &args[0] {
+                Value::TaskHandle { state } => Value::Bool(state.cancel()),
+                _ => Value::Error("cancel_task() requires a TaskHandle argument".to_owned()),
+            })
         }
 
         "Promise.all" | "promise_all" => {

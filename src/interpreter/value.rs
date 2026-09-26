@@ -1200,10 +1200,7 @@ pub enum Value {
         task_handle: Option<Arc<Mutex<Option<tokio::task::JoinHandle<Result<Value, String>>>>>>,
     },
     /// Task handle for spawned async tasks
-    TaskHandle {
-        handle: Arc<Mutex<Option<tokio::task::JoinHandle<Value>>>>,
-        is_cancelled: Arc<Mutex<bool>>,
-    },
+    TaskHandle { state: Arc<super::tasks::TaskState> },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1443,9 +1440,8 @@ impl std::fmt::Debug for Value {
                     Some(Err(err)) => write!(f, "Promise(Rejected: {})", err),
                 }
             }
-            Value::TaskHandle { is_cancelled, .. } => {
-                let cancelled = is_cancelled.lock().unwrap();
-                if *cancelled {
+            Value::TaskHandle { state } => {
+                if state.is_cancelled() {
                     write!(f, "TaskHandle(Cancelled)")
                 } else {
                     write!(f, "TaskHandle(Running)")

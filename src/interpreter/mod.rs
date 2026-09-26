@@ -27,6 +27,7 @@ pub mod generator;
 mod generator_lowering;
 pub(crate) mod native_functions;
 pub mod promise;
+pub mod tasks;
 mod test_runner;
 mod value;
 
@@ -188,11 +189,20 @@ mod runtime_limit_tests {
 
 impl SpawnCapturedValue {
     fn from_value(value: &Value) -> Option<Self> {
+        Self::from_value_bounded(value, 0, &mut 100_000)
+    }
+
+    fn from_value_bounded(value: &Value, depth: usize, remaining: &mut usize) -> Option<Self> {
+        if depth >= 64 || *remaining == 0 {
+            return None;
+        }
+        *remaining -= 1;
         match value {
             Value::Tagged { tag, fields } => {
                 let mut captured_fields = Vec::with_capacity(fields.len());
                 for (field_name, field_value) in fields {
-                    let captured_value = Self::from_value(field_value)?;
+                    let captured_value =
+                        Self::from_value_bounded(field_value, depth + 1, remaining)?;
                     captured_fields.push((field_name.clone(), captured_value));
                 }
                 Some(SpawnCapturedValue::Tagged { tag: tag.clone(), fields: captured_fields })
@@ -208,7 +218,8 @@ impl SpawnCapturedValue {
             Value::Struct { name, fields } => {
                 let mut captured_fields = Vec::with_capacity(fields.len());
                 for (field_name, field_value) in fields {
-                    let captured_value = Self::from_value(field_value)?;
+                    let captured_value =
+                        Self::from_value_bounded(field_value, depth + 1, remaining)?;
                     captured_fields.push((field_name.clone(), captured_value));
                 }
                 Some(SpawnCapturedValue::Struct { name: name.clone(), fields: captured_fields })
@@ -216,14 +227,21 @@ impl SpawnCapturedValue {
             Value::Array(elements) => {
                 let mut captured_elements = Vec::with_capacity(elements.len());
                 for element in elements.iter() {
-                    captured_elements.push(Self::from_value(element)?);
+                    captured_elements.push(Self::from_value_bounded(
+                        element,
+                        depth + 1,
+                        remaining,
+                    )?);
                 }
                 Some(SpawnCapturedValue::Array(captured_elements))
             }
             Value::Dict(entries) => {
                 let mut captured_entries = Vec::with_capacity(entries.len());
                 for (key, dict_value) in entries.iter() {
-                    captured_entries.push((key.to_string(), Self::from_value(dict_value)?));
+                    captured_entries.push((
+                        key.to_string(),
+                        Self::from_value_bounded(dict_value, depth + 1, remaining)?,
+                    ));
                 }
                 Some(SpawnCapturedValue::Dict(captured_entries))
             }
@@ -234,21 +252,29 @@ impl SpawnCapturedValue {
 
                 let mut captured_entries = Vec::with_capacity(keys.len());
                 for (key, dict_value) in keys.iter().zip(values.iter()) {
-                    captured_entries.push((key.to_string(), Self::from_value(dict_value)?));
+                    captured_entries.push((
+                        key.to_string(),
+                        Self::from_value_bounded(dict_value, depth + 1, remaining)?,
+                    ));
                 }
                 Some(SpawnCapturedValue::FixedDict(captured_entries))
             }
             Value::IntDict(entries) => {
                 let mut captured_entries = Vec::with_capacity(entries.len());
                 for (key, dict_value) in entries.iter() {
-                    captured_entries.push((*key, Self::from_value(dict_value)?));
+                    captured_entries
+                        .push((*key, Self::from_value_bounded(dict_value, depth + 1, remaining)?));
                 }
                 Some(SpawnCapturedValue::IntDict(captured_entries))
             }
             Value::DenseIntDict(values) => {
                 let mut captured_values = Vec::with_capacity(values.len());
                 for dict_value in values.iter() {
-                    captured_values.push(Self::from_value(dict_value)?);
+                    captured_values.push(Self::from_value_bounded(
+                        dict_value,
+                        depth + 1,
+                        remaining,
+                    )?);
                 }
                 Some(SpawnCapturedValue::DenseIntDict(captured_values))
             }
@@ -260,11 +286,11 @@ impl SpawnCapturedValue {
             }
             Value::Result { is_ok, value } => Some(SpawnCapturedValue::Result {
                 is_ok: *is_ok,
-                value: Box::new(Self::from_value(value)?),
+                value: Box::new(Self::from_value_bounded(value, depth + 1, remaining)?),
             }),
             Value::Option { is_some, value } => Some(SpawnCapturedValue::Option {
                 is_some: *is_some,
-                value: Box::new(Self::from_value(value)?),
+                value: Box::new(Self::from_value_bounded(value, depth + 1, remaining)?),
             }),
             _ => None,
         }
@@ -352,6 +378,7 @@ pub struct Interpreter {
     async_task_pool_size: usize,
     capability_policy: RuntimeCapabilityPolicy,
     pub(crate) vm_globals: Option<Arc<Mutex<Environment>>>,
+    pub(crate) task_cancellation: Option<Arc<std::sync::atomic::AtomicBool>>,
 }
 
 impl Interpreter {
@@ -416,11 +443,16 @@ impl Interpreter {
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
             capability_policy,
             vm_globals: None,
+            task_cancellation: None,
         }
     }
 
     pub fn capability_policy(&self) -> &RuntimeCapabilityPolicy {
         &self.capability_policy
+    }
+
+    pub(crate) fn output_buffer(&self) -> Option<Arc<Mutex<Vec<u8>>>> {
+        self.output.clone()
     }
 
     pub fn set_capability_policy(&mut self, capability_policy: RuntimeCapabilityPolicy) {
@@ -495,20 +527,6 @@ impl Interpreter {
         let result = body(self);
         self.loop_depth = self.loop_depth.saturating_sub(1);
         result
-    }
-
-    fn capture_spawn_bindings(&self) -> Vec<(String, SpawnCapturedValue)> {
-        let mut merged_bindings: HashMap<String, SpawnCapturedValue> = HashMap::new();
-
-        for scope in &self.env.scopes {
-            for (name, value) in scope {
-                if let Some(captured_value) = SpawnCapturedValue::from_value(value) {
-                    merged_bindings.insert(name.clone(), captured_value);
-                }
-            }
-        }
-
-        merged_bindings.into_iter().collect()
     }
 
     /// Get all built-in function names (for VM initialization)
@@ -2102,6 +2120,7 @@ impl Interpreter {
                     globals,
                     self.capability_policy.clone(),
                     self.output.clone(),
+                    self.task_cancellation.clone(),
                 )
                 .unwrap_or_else(Value::Error)
             }
@@ -2113,71 +2132,10 @@ impl Interpreter {
 
                 self.create_generator(params, body, captured, args)
             }
-            Value::AsyncFunction(params, body, captured_env) => {
-                let arity = Self::function_arity("<anonymous async function>", params);
-                if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
-                    return error;
-                }
-                let params = params.clone();
-                let body = body.clone();
-                let arguments = args.to_vec();
-                let base_env = if let Some(env_ref) = captured_env {
-                    env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
-                } else {
-                    self.env.clone()
-                };
-                let closure_env_for_update = captured_env.clone();
-                let capability_policy = self.capability_policy.clone();
-                let vm_globals = self.vm_globals.clone();
-                let (tx, rx) = tokio::sync::oneshot::channel();
-                AsyncRuntime::spawn_task(async move {
-                    let mut async_interpreter =
-                        Interpreter::with_environment(capability_policy, base_env);
-                    if let Some(name) = &body.lexical_name {
-                        self.env.define(
-                            name.clone(),
-                            Value::Function(
-                                params.clone(),
-                                body.clone(),
-                                Some(closure_env_ref.clone()),
-                            ),
-                        );
-                    }
-                    async_interpreter.vm_globals = vm_globals;
-                    async_interpreter.env.push_scope();
-                    for (index, param) in params.iter().enumerate() {
-                        if let Some(argument) = arguments.get(index) {
-                            async_interpreter.env.define(param.clone(), argument.clone());
-                        }
-                    }
-                    if let Err(error) = async_interpreter
-                        .with_function_context("<async function>", |interp| {
-                            interp.eval_stmts(&body.get())
-                        })
-                    {
-                        async_interpreter.env.pop_scope();
-                        let _ = tx.send(Ok(error));
-                        return Value::Null;
-                    }
-                    let result = match async_interpreter.return_value.take() {
-                        Some(Value::Return(value)) => *value,
-                        Some(Value::Error(message)) => Value::Error(message),
-                        Some(value @ Value::ErrorObject { .. }) => value,
-                        _ => Value::Null,
-                    };
-                    async_interpreter.env.pop_scope();
-                    if let Some(env_ref) = closure_env_for_update {
-                        *env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                            async_interpreter.env.clone();
-                    }
-                    let _ = tx.send(Ok(result));
-                    Value::Null
-                });
-                Value::Promise {
-                    receiver: Arc::new(Mutex::new(rx.into())),
-                    is_polled: Arc::new(Mutex::new(false)),
-                    cached_result: Arc::new(Mutex::new(None)),
-                    task_handle: None,
+            Value::AsyncFunction(..) => {
+                match self.submit_language_task(func.clone(), args.to_vec()) {
+                    Ok(task) => task.completion.clone(),
+                    Err(error) => Value::Error(error),
                 }
             }
             Value::Function(params, body, captured_env) => {
@@ -2195,6 +2153,16 @@ impl Interpreter {
                 if let Some(closure_env_ref) = captured_env {
                     let saved_env = self.enter_captured_environment(closure_env_ref);
                     self.env.push_scope();
+                    if let Some(name) = &body.lexical_name {
+                        self.env.define(
+                            name.clone(),
+                            Value::Function(
+                                params.clone(),
+                                body.clone(),
+                                Some(closure_env_ref.clone()),
+                            ),
+                        );
+                    }
 
                     // Bind parameters to arguments
                     for (i, param) in params.iter().enumerate() {
@@ -4114,6 +4082,10 @@ impl Interpreter {
 
     /// Evaluates a list of statements sequentially, stopping on return/error
     pub fn eval_stmts(&mut self, stmts: &[Stmt]) {
+        if self.task_is_cancelled() {
+            self.return_value = Some(Value::Error("Task was cancelled".to_owned()));
+            return;
+        }
         let is_hoistable = |stmt: &Stmt| match stmt {
             Stmt::FuncDef { .. } => true,
             Stmt::Export { stmt } => matches!(stmt.as_ref(), Stmt::FuncDef { .. }),
@@ -4216,6 +4188,10 @@ impl Interpreter {
 
     /// Evaluates a single statement
     fn eval_stmt(&mut self, stmt: &Stmt) {
+        if self.task_is_cancelled() {
+            self.return_value = Some(Value::Error("Task was cancelled".to_owned()));
+            return;
+        }
         match stmt {
             Stmt::If { condition, then_branch, else_branch } => {
                 let cond_val = self.eval_expr(condition);
@@ -4295,6 +4271,11 @@ impl Interpreter {
                 is_generator,
                 is_async,
             } => {
+                if *is_async && *is_generator {
+                    self.return_value =
+                        Some(Value::Error("Async generators are not supported".to_owned()));
+                    return;
+                }
                 // Named functions defined in nested scopes should capture lexical state
                 // so interpreter behavior matches compiler/VM closure semantics.
                 let captured_env = if self.env.scopes.len() > 1 {
@@ -4356,8 +4337,15 @@ impl Interpreter {
                         // Load all exports into the current namespace
                         match self.module_loader.get_all_exports(module) {
                             Ok(exports) => {
+                                let binding = crate::vm::VM::module_binding_name(module);
+                                let namespace = (!exports.contains_key(&binding)).then(|| {
+                                    crate::vm::VM::module_namespace_value(module, &exports)
+                                });
                                 for (name, value) in exports {
                                     self.env.define(name, value);
+                                }
+                                if let Some(namespace) = namespace {
+                                    self.env.define(binding, namespace);
                                 }
                             }
                             Err(err) => {
@@ -4923,23 +4911,9 @@ impl Interpreter {
                 }
             }
             Stmt::Spawn { body } => {
-                // Clone the body for the spawned thread
-                let body_clone = body.clone();
-                let captured_bindings = self.capture_spawn_bindings();
-                let capability_policy = self.capability_policy.clone();
-
-                // Spawn a new thread to execute the body with a transferable snapshot
-                // of parent bindings. Unsupported non-transferable values remain isolated.
-                std::thread::spawn(move || {
-                    let mut thread_interp = Interpreter::with_capability_policy(capability_policy);
-
-                    for (name, captured_value) in captured_bindings {
-                        thread_interp.env.define(name, captured_value.into_value());
-                    }
-
-                    thread_interp.eval_stmts(&body_clone);
-                });
-                // Don't wait for the thread to finish - it runs in the background
+                if let Err(error) = self.spawn_detached_body(body) {
+                    self.return_value = Some(Value::Error(error));
+                }
             }
             Stmt::Test { .. }
             | Stmt::TestSetup { .. }
@@ -5034,6 +5008,9 @@ impl Interpreter {
                 is_generator,
                 is_async,
             } => {
+                if *is_async && *is_generator {
+                    return Value::Error("Async generators are not supported".to_owned());
+                }
                 // Anonymous function expression - return as a value with captured environment
                 if *is_generator {
                     Value::GeneratorDef(
@@ -5206,7 +5183,29 @@ impl Interpreter {
                         return obj_val;
                     }
 
+                    if let Value::Struct { name, fields } = &obj_val {
+                        if name.starts_with("__module_namespace_") {
+                            let Some(callable) = fields.get(field).cloned() else {
+                                return Value::Error(format!("Module has no export '{field}'"));
+                            };
+                            let mut values = Vec::with_capacity(args.len() + 1);
+                            if matches!(&callable, Value::Function(params, ..) | Value::AsyncFunction(params, ..) | Value::GeneratorDef(params, ..) if params.first().is_some_and(|name| name == "__module_receiver"))
+                            {
+                                values.push(obj_val.clone());
+                            }
+                            for argument in args {
+                                let value = self.eval_expr(argument);
+                                if Self::is_error_value(&value) {
+                                    return value;
+                                }
+                                values.push(value);
+                            }
+                            return self.call_user_function(&callable, &values);
+                        }
+                    }
+
                     // Handle HttpServer methods
+
                     if let Value::HttpServer { host, port, routes, upload_routes } = &obj_val {
                         match field.as_str() {
                             "route" => {
@@ -5716,16 +5715,6 @@ impl Interpreter {
                                 self.return_value = Some(res.clone());
                                 res
                             }
-                            if let Some(name) = &body.lexical_name {
-                                self.env.define(
-                                    name.clone(),
-                                    Value::Function(
-                                        params.clone(),
-                                        body.clone(),
-                                        Some(closure_env_ref.clone()),
-                                    ),
-                                );
-                            }
                             Value::Error(_) => {
                                 self.return_value = Some(res.clone());
                                 res
@@ -5759,6 +5748,16 @@ impl Interpreter {
                         if let Some(closure_env_ref) = captured_env {
                             let saved_env = self.enter_captured_environment(&closure_env_ref);
                             self.env.push_scope();
+                            if let Some(name) = &body.lexical_name {
+                                self.env.define(
+                                    name.clone(),
+                                    Value::Function(
+                                        params.clone(),
+                                        body.clone(),
+                                        Some(closure_env_ref.clone()),
+                                    ),
+                                );
+                            }
 
                             for (i, param) in params.iter().enumerate() {
                                 if let Some(arg) = evaluated_args.get(i) {
@@ -5843,99 +5842,16 @@ impl Interpreter {
                         }
                     }
                     Value::AsyncFunction(params, body, captured_env) => {
-                        // Evaluate arguments
-                        let args_vec: Vec<Value> =
+                        let values: Vec<Value> =
                             args.iter().map(|arg| self.eval_expr(arg)).collect();
-                        if let Some(error) =
-                            args_vec.iter().find(|value| Self::is_error_value(value))
+                        if let Some(error) = values.iter().find(|value| Self::is_error_value(value))
                         {
                             return error.clone();
                         }
-
-                        let arity = Self::function_arity(callable_name.clone(), &params);
-                        if let Some(error) = self.validate_callable_arity(&arity, args_vec.len()) {
-                            return error;
-                        }
-
-                        // Clone what we need for the thread
-                        let params = params.clone();
-                        let body = body.clone();
-                        let base_env = if let Some(ref env_ref) = captured_env {
-                            env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).clone()
-                        } else {
-                            self.env.clone()
-                        };
-                        let closure_env_for_update = captured_env.clone();
-                        let capability_policy = self.capability_policy.clone();
-                        let vm_globals = self.vm_globals.clone();
-
-                        // Create a tokio oneshot channel for the result
-                        let (tx, rx) = tokio::sync::oneshot::channel();
-
-                        // Spawn a tokio task to execute the async function
-                        AsyncRuntime::spawn_task(async move {
-                            let mut async_interpreter =
-                                Interpreter::with_capability_policy(capability_policy);
-                            async_interpreter.env = base_env;
-                            async_interpreter.vm_globals = vm_globals;
-                            async_interpreter.env.push_scope();
-
-                            // Bind parameters
-                            for (i, param) in params.iter().enumerate() {
-                                if let Some(arg) = args_vec.get(i) {
-                                    async_interpreter.env.define(param.clone(), arg.clone());
-                                }
-                            }
-
-                            // Execute the async function body
-                            if let Err(error) = async_interpreter
-                                .with_function_context("<async function>", |interp| {
-                                if let Some(name) = &body.lexical_name {
-                                    self.env.define(
-                                        name.clone(),
-                                        Value::Function(
-                                            params.clone(),
-                                            body.clone(),
-                                            Some(closure_env_ref.clone()),
-                                        ),
-                                    );
-                                }
-                                    interp.eval_stmts(&body.get())
-                                })
-                            {
-                                async_interpreter.env.pop_scope();
-                                let _ = tx.send(Ok(error));
-                                return Value::Null;
-                            }
-
-                            // Get the return value
-                            let result = match async_interpreter.return_value.clone() {
-                                Some(Value::Return(val)) => *val,
-                                Some(Value::Error(message)) => Value::Error(message),
-                                Some(value @ Value::ErrorObject { .. }) => value,
-                                _ => Value::Null,
-                            };
-
-                            async_interpreter.env.pop_scope();
-                            if let Some(env_ref) = closure_env_for_update {
-                                *env_ref.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) =
-                                    async_interpreter.env.clone();
-                            }
-
-                            // Send the result back
-                            let _ = tx.send(Ok(result));
-
-                            // Return a dummy value (task result not used, only channel matters)
-                            Value::Null
-                        });
-
-                        // Return a Promise containing the receiver
-                        Value::Promise {
-                            receiver: Arc::new(Mutex::new(rx.into())),
-                            is_polled: Arc::new(Mutex::new(false)),
-                            cached_result: Arc::new(Mutex::new(None)),
-                            task_handle: None,
-                        }
+                        self.call_user_function(
+                            &Value::AsyncFunction(params, body, captured_env),
+                            &values,
+                        )
                     }
                     Value::GeneratorDef(ref params, ref body, ref captured) => {
                         // Calling a generator function creates a Generator instance
@@ -6006,6 +5922,16 @@ impl Interpreter {
                             if let Some(closure_env_ref) = captured_env {
                                 let saved_env = self.enter_captured_environment(&closure_env_ref);
                                 self.env.push_scope();
+                                if let Some(name) = &body.lexical_name {
+                                    self.env.define(
+                                        name.clone(),
+                                        Value::Function(
+                                            params.clone(),
+                                            body.clone(),
+                                            Some(closure_env_ref.clone()),
+                                        ),
+                                    );
+                                }
 
                                 for (i, param) in params.iter().enumerate() {
                                     if let Some(arg) = evaluated_args.get(i) {
@@ -6801,6 +6727,9 @@ impl Interpreter {
         chan: &Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>,
     ) -> Value {
         loop {
+            if self.task_is_cancelled() {
+                return Value::Error("Task was cancelled".to_owned());
+            }
             let receive_result = {
                 let chan_lock = match lock_or_runtime_error(chan.as_ref(), "channel.receive") {
                     Ok(guard) => guard,
@@ -6824,6 +6753,20 @@ impl Interpreter {
 
     /// Call a method on a value (used for iterator chaining and other method calls)
     fn call_method(&mut self, obj: Value, method: &str, args: Vec<Value>) -> Value {
+        if let Value::Struct { name, fields } = &obj {
+            if name.starts_with("__module_namespace_") {
+                let Some(callable) = fields.get(method).cloned() else {
+                    return Value::Error(format!("Module has no export '{method}'"));
+                };
+                let mut values = args;
+                if matches!(&callable, Value::Function(params, ..) | Value::AsyncFunction(params, ..) | Value::GeneratorDef(params, ..) if params.first().is_some_and(|name| name == "__module_receiver"))
+                {
+                    values.insert(0, obj.clone());
+                }
+                return self.call_user_function(&callable, &values);
+            }
+        }
+
         if method == "save" {
             #[cfg(feature = "runtime-image")]
             if matches!(&obj, Value::Image { .. }) {

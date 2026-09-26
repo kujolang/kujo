@@ -112,20 +112,20 @@ fn promise_reawait_and_await_value_are_supported() {
 }
 
 #[test]
-fn vm_spawn_body_is_discarded() {
-    let (result, env) =
-        vm("mut marker := 0 spawn { marker = 99 missing } let observed_total := marker");
+fn spawn_mutation_is_isolated_from_parent() {
+    let (result, env) = vm("mut marker := 0 spawn { marker = 99 } let observed_total := marker");
     result.unwrap();
     assert_eq!(integer(env.lock().unwrap().get("observed_total")), 0);
 }
 
 #[test]
-fn spawn_task_interpreter_returns_placeholder_without_executing_body() {
+fn spawn_task_executes_body_in_both_runtimes() {
     let interp = interpreter("async func work() { return 42 } let handle := spawn_task(work) let result := await await_task(handle)");
     assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
-    assert!(matches!(interp.env.get("result"), Some(Value::Null)));
-    let result = vm("async func work() { return 42 } let handle := spawn_task(work)").0;
-    assert!(result.unwrap_err().contains("requires an async function"));
+    assert!(matches!(interp.env.get("result"), Some(Value::Int(42))));
+    let (result, env) = vm("async func work() { return 42 } let handle := spawn_task(work) let result := await await_task(handle)");
+    result.unwrap();
+    assert!(matches!(env.lock().unwrap().get("result"), Some(Value::Int(42))));
 }
 
 #[test]
@@ -150,15 +150,15 @@ fn vm_for_does_not_drain_generator_before_consumer_break() {
 }
 
 #[test]
-fn async_body_error_occurs_at_call_only_in_vm() {
+fn async_body_error_is_deferred_until_await_in_both_runtimes() {
     let source = "async func fail() { missing } let pending := fail() let continued := 1";
     let interp = interpreter(source);
     assert!(interp.return_value.is_none(), "{:?}", interp.return_value);
     assert!(matches!(interp.env.get("pending"), Some(Value::Promise { .. })));
     assert_eq!(integer(interp.env.get("continued")), 1);
     let (result, env) = vm(source);
-    assert!(result.unwrap_err().contains("Undefined variable"));
-    assert!(env.lock().unwrap().get("continued").is_none());
+    result.unwrap();
+    assert_eq!(integer(env.lock().unwrap().get("continued")), 1);
 }
 
 #[test]
