@@ -150,3 +150,11 @@ Source-runtime validation uses the new explicit
 without changing the release commit or Docker pins. Default release validation
 must leave this override unset. This distinction prevents source-build test
 results from being presented as certification of the pinned release runtime.
+
+Dispatch's 101 sharded workflow tests passed. Its canonical release gate then
+rejected interpreter-mode command-surface warnings: Kujo reports type-checker
+recursion-depth exhaustion, although the command exits zero. An archived,
+unmodified Dispatch base `a01a365` reproduces the same diagnostic with the
+source-built Kujo runtime; VM-mode help/version emit no diagnostics. This is a
+pre-existing runtime validation blocker, not a new workflow test failure. The
+failure-control branch does not change the type checker or suppress the gate.
