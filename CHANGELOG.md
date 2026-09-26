@@ -8,9 +8,10 @@ This file records user-visible changes to Kujo. It follows
 
 ### Changed
 
-- Recorded the existing per-closure snapshot behavior and the compatibility
-  decision required before replacing it with shared lexical bindings. The full
-  VM upvalue deferral remains open; runtime behavior is unchanged.
+- VM closures resolve captures at their definition site and access captured
+  cells by index, preserving v1 per-closure snapshots and alias identity.
+  Returned and nested closures retain owned captures after scope/frame exit;
+  closure-bearing functions use the VM when the experimental JIT cannot handle them.
 
 ### Added
 
@@ -21,6 +22,9 @@ This file records user-visible changes to Kujo. It follows
 - POSIX `sync_directory_beneath(root, relative_directory)` preview durability barrier, capability-gated and descriptor-confined below a trusted root. Sync failures do not imply preceding publications were rolled back.
 
 ### Fixed
+
+- Closures retain the active lexical binding when a later block reuses its name.
+  Nested named functions use lexical locals instead of leaking into globals.
 
 - Declared and documented Rust 1.89 as the source-build MSRV, added an MSRV CI
   check, made the REPL banner use the crate version, and corrected upgrade

@@ -3,11 +3,13 @@
 Audit date: 2026-09-25. Base: `719d6f7`. Branch:
 `runtime/full-upvalue-closures`.
 
-Status: **implementation blocked on a capture-identity compatibility decision**.
-This is an audit and characterization checkpoint, not closure completion.
-The `Upvalue` deferral in `V1_SCOPE.md` remains open.
+Status: **snapshot-compatible VM capture mechanism implemented**. The user selected
+the non-breaking contract on 2026-09-25: preserve successful v1 snapshot behavior.
+The audit below records the pre-change implementation and baseline evidence.
+The [implementation report](CLOSURE_UPVALUE_IMPLEMENTATION.md) records final
+evidence, known validation failures and the bounded closure-deferral completion.
 
-## Decision required
+## Resolved compatibility decision
 
 The requested shared-binding design conflicts with existing successful program
 results in **both** engines. This is not just an incomplete VM implementation.
@@ -34,7 +36,7 @@ Separately created closures snapshot it again, including transitive captures.
 The assignment's stop condition forbids silently breaking stable runtime
 semantics. `docs/RELEASE_PROCESS.md` requires explicit compatibility/migration
 handling; `docs/V1_SCOPE.md` requires version gating for intentional breaking
-language/runtime changes. Choose one contract before implementing:
+language/runtime changes. The original audit offered two choices:
 
 1. Preserve v1 per-closure snapshots and complete explicit indexed lexical
    resolution under that contract. This needs an explicit exception to the
@@ -44,9 +46,40 @@ language/runtime changes. Choose one contract before implementing:
    release/version and migration plan. This expands the interpreter work and
    requires a cycle-lifetime design before promotion to shared cells.
 
-No runtime semantics or release claims have been changed at this checkpoint.
+Option 1 was selected by the user. Separate closures retain separate snapshots;
+aliases and repeat calls of the same closure share its cells. Compiler binding
+resolution and capture access may change without adopting shared sibling cells.
+The implementation must preserve this contract, fix lexical scope defects, and
+retain the separate interpreter and generator limitations explicitly.
 
-## Current source-to-runtime pipeline
+## Snapshot-compatible implementation
+
+The compiler now discovers captures during lexical resolution and records
+definition-site local slots, parent capture indices, scoped script bindings and
+runtime-created named bindings explicitly. Intermediate functions forward only
+the captures needed by descendants. `LoadCapture` / `StoreCapture` use a lazy
+frame-local indexed view of the existing callback-shared cells. Each new closure
+still snapshots values; no shared parent/sibling binding semantics were adopted.
+
+Nested named functions occupy lexical slots instead of globals. A self binding
+is installed only for calls that need it, without placing the function inside
+its own captured environment. Function replacement retains earlier function
+values. Loop captures respect shadowing and evaluate the iterable before binding
+the iteration variable. Script block captures survive environment-scope exit.
+
+`tests/closure_capture_contracts.rs` checks compiler sources, indexed access,
+transitive forwarding, non-retention of unrelated locals, capture release,
+malformed operands, VM recursion and JIT cache/fallback behavior. The differential
+audit suite retains the snapshot contracts and adds runtime-created bindings,
+script scopes, loop shadowing and named-function replacement. The two original
+VM defect probes now pass. The interpreter's pre-existing returned-recursion
+limitation remains explicitly ignored and is not claimed fixed.
+
+The implementation is described in [the architecture](ARCHITECTURE.md). The
+following pipeline and validation sections preserve the **pre-change audit**;
+final implementation validation is recorded in the linked implementation report.
+
+## Baseline source-to-runtime pipeline (`719d6f7`)
 
 1. `src/parser.rs::parse_func_with_async` and `parse_func_expr_with_async` build
    `Stmt::FuncDef` / `Expr::Function` in `src/ast.rs`; there are no capture lists.
@@ -96,11 +129,13 @@ Neither environment retention nor existing `Arc<Mutex<Value>>` proves shared
 lexical binding semantics. The latter shares state across invocation/aliasing,
 not across independent `MakeClosure` operations.
 
-## Behavioral matrix
+## Baseline behavioral matrix
 
 `existing` means a named repository test covers the row; it is not a claim that
 this audit exhaustively validated every variation. `probe` means the new
-characterization suite. Intended behavior is pending the decision above.
+characterization suite. The decision entries below preserve the original audit
+checkpoint; the user subsequently selected snapshot preservation. Current
+implementation coverage and remaining limits are in the implementation report.
 
 | Scenario | Interpreter / current VM evidence | Intended VM |
 | --- | --- | --- |
@@ -235,7 +270,7 @@ own name is bound. The ignored desired-behavior regression
 unresolved limitation. This is a third defect probe, not a passing parity case.
 No interpreter self-binding or reference-cycle policy was changed to mask it.
 
-## Validation
+## Baseline validation (before runtime changes)
 
 
 No runtime source was modified. Default-feature baseline `cargo check` passed
@@ -283,7 +318,7 @@ failed the same deadline assertion (70.74s total, versus 70.56s for its full
 suite). Host-load sensitivity and root cause remain unclassified; this is
 outside the closure assignment and was not changed or silently waived.
 
-## Handoff
+## Original audit checkpoint handoff (`447f5ad`, superseded)
 
 - Architecture implemented: none; this branch adds audit evidence and tests.
 - Files: `tests/closure_capture_audit.rs` characterizes capture identity and
