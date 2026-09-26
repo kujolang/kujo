@@ -4,13 +4,17 @@ Starting commit: `3efa60cf2e7dc89607a9988509b16cc125375140`.
 Branch: `runtime/generator-async-spawn-completion`. This report records the
 pre-merge branch validation; pull request #12 carries the final integration.
 
-Current merge disposition (2026-09-26): the owner explicitly deferred live
-Workcell provider validation and authorized normal pull-request review and merge.
+Current merge disposition (2026-09-26): Kujo [PR #12](https://github.com/kujolang/kujo/pull/12),
+Dispatch [PR #1](https://github.com/kujolang/dispatch/pull/1) and Workcell
+[PR #2](https://github.com/kujolang/workcell/pull/2) are merged; final PR and
+post-merge CI passed. The owner explicitly deferred live Workcell provider validation.
 The historical Mac networking stall remains an open host observation, not a
 demonstrated Kujo defect or a merge blocker after the clean-host stress passes.
 Host load and low free disk space are possible contributors suggested by the
 owner, not established causes. Remote-provider certification is still unclaimed.
-The blocked statuses below preserve the earlier investigation chronology.
+The blocked statuses below preserve the earlier investigation chronology; they
+are not outstanding merge gates. Current follow-ups are tracked in the
+[roadmap](../ROADMAP.md#next-work-and-remaining-boundaries).
 
 This follow-up implements the user's request to fix the items retained by the
 previous completion report. It does not change closure snapshot identity or

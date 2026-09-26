@@ -1,5 +1,9 @@
 # Generator, async and spawn Phase-B handoff
 
+Phase B is complete and merged through [PR #12](https://github.com/kujolang/kujo/pull/12).
+Start subsequent work from current `main`; use the
+[roadmap](../ROADMAP.md#next-work-and-remaining-boundaries) for open items.
+
 Phase-B implementation follow-up: [runtime completion record](RUNTIME_CONCURRENCY_COMPLETION.md).
 This document preserves the pre-implementation audit and accepted design decisions;
 its old broken-behavior descriptions are historical, not the current runtime contract.
