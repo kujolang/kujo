@@ -93,6 +93,19 @@ fn for_each_runtime(mut check: impl FnMut(bool)) {
 }
 
 #[test]
+fn wildcard_server_teardown_does_not_wait_for_a_network_connect_timeout() {
+    let server = tiny_http::Server::http("0.0.0.0:0").expect("wildcard listener");
+    let (completed, completion) = std::sync::mpsc::channel();
+    thread::spawn(move || {
+        drop(server);
+        let _ = completed.send(());
+    });
+    completion
+        .recv_timeout(Duration::from_secs(1))
+        .expect("dropping a wildcard listener must wake accept through loopback");
+}
+
+#[test]
 fn slow_handler_does_not_block_fast_handler() {
     for_each_runtime(|interpreter| {
         let Some(port) = reserve_port() else { return };

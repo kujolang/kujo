@@ -23,6 +23,9 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Routed HTTP server shutdown uses a bounded loopback wakeup for wildcard
+  listeners, avoiding a macOS connection timeout during teardown.
+
 - Closures retain the active lexical binding when a later block reuses its name.
   Nested named functions use lexical locals instead of leaking into globals.
   Returned closures also retain function-local imports, including import-all
