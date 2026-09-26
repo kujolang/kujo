@@ -109,3 +109,15 @@ The path is complete only when the evidence bundle contains:
   receives a local path/hash reference rather than being invoked, because its
   repository-scoped output contract rejects an arbitrary external root; a
   dedicated adapter should be added only when it can preserve that contract.
+
+## Failure and review path
+
+The successful path above remains unchanged. Dispatch now includes
+`examples/failure-gate/run.kujo` and its README for a separate offline failure
+proof. It invokes Workcell with pre-evaluation export, verifies evidence, runs
+a deterministic failing Eval suite, pauses Dispatch, records a typed local
+review decision, and reruns only the evaluator against unchanged evidence.
+The original action runs once and descendants remain pending. Real RunLedger
+and CaseFile commands produce correlated handoffs. Workcell uses a committed
+backend fixture, explicitly labeled `fixture`; this is not live-provider proof.
+See [implementation evidence](FAILURE_GATE_IMPLEMENTATION.md).

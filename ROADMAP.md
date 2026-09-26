@@ -27,6 +27,13 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
 ## Recently completed
 
+- Completed the producer-neutral failure-control path: versioned result/evidence
+  contracts, Dispatch failure policies and safe intervention, pre-evaluation
+  Workcell preservation, and an offline failure/review golden path. See
+  [implementation record](docs/FAILURE_GATE_IMPLEMENTATION.md) for evidence and
+  explicit provider, authentication, replay and recovery boundaries.
+
+
 The September 13 reliability sweep closed the current short-term checklist:
 
 - Rechecked VM/interpreter behavior for closures, lexical scopes, async

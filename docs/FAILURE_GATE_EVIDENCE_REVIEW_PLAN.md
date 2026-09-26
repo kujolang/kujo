@@ -2,7 +2,10 @@
 
 Review date: 2026-09-24
 
-This report is an implementation plan, not an implementation. It is based on
+Historical review: the implementation and verification follow-up is now tracked in
+[FAILURE_GATE_IMPLEMENTATION.md](FAILURE_GATE_IMPLEMENTATION.md). Its source-verified
+map supersedes the present-tense gap claims below. This document preserves the
+original plan and rationale. It is based on
 source, tests, and documentation in the Kujo ecosystem repositories listed in
 the verification record. Repository behavior takes precedence over prose.
 
