@@ -59,3 +59,7 @@ Dispatch's reference consumer bounds control documents to 1 MiB, evidence and
 effect lists to 1,000, and each active journal to 8 MiB. Control events omit raw
 producer `output`. Reference reads do not execute artifact commands or fetch
 URLs. See `docs/FAILURE_GATE_IMPLEMENTATION.md` for integration and validation.
+
+Evaluation v1 retains its additional-field compatibility policy. Schema validity
+does not grant executable authority to extension fields; control consumers reject
+or ignore producer-supplied orchestration commands at admission.

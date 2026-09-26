@@ -157,9 +157,10 @@ fn producer_neutral_evaluations_preserve_error_and_rule_facts() {
         result["rule_ids"] = serde_json::json!(["quality.fixture"]);
         assert!(compile_schema("evaluation-result-v1").is_valid(&result));
         for command in ["action", "disposition", "pause", "retry", "continue"] {
-            let mut invalid = result.clone();
-            invalid[command] = true.into();
-            assert!(!compile_schema("evaluation-result-v1").is_valid(&invalid));
+            let mut extended = result.clone();
+            extended[command] = true.into();
+            // V1 keeps its extension policy; control admission owns authority checks.
+            assert!(compile_schema("evaluation-result-v1").is_valid(&extended));
         }
     }
 }

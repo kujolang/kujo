@@ -390,35 +390,6 @@
       }
     }
   },
-  "not": {
-    "anyOf": [
-      {
-        "required": [
-          "action"
-        ]
-      },
-      {
-        "required": [
-          "disposition"
-        ]
-      },
-      {
-        "required": [
-          "pause"
-        ]
-      },
-      {
-        "required": [
-          "retry"
-        ]
-      },
-      {
-        "required": [
-          "continue"
-        ]
-      }
-    ]
-  },
   "allOf": [
     {
       "if": {
