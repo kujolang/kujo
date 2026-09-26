@@ -110,7 +110,7 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | tests/fixtures/unsafe_safety_contracts/wrong_headings.rs | 5 | executable | test_executable |     unsafe { *ptr } |
 | tests/generated_artifact_freshness_contract.rs | 150 | non_executable | test_comment_or_string |     let output_md = temp_dir.join(""unsafe.md""); |
 | tests/generated_artifact_freshness_contract.rs | 151 | non_executable | test_comment_or_string |     let output_csv = temp_dir.join(""unsafe.csv""); |
-| tests/http_route_concurrency.rs | 191 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
+| tests/http_route_concurrency.rs | 204 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
 | tests/jit_safety_contract_checker.rs | 152 | non_executable | test_comment_or_string |     assert!(stdout.contains(""Checked 0 executable unsafe boundaries"")); |
 | tests/runtime_security.rs | 323 | non_executable | test_comment_or_string |         ""expected unsafe traversal error, got: {}"", |
 | tests/unsafe_safety_gate_contract.rs | 14 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate help""); |
