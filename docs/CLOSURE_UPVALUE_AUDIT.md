@@ -106,7 +106,7 @@ characterization suite. Intended behavior is pending the decision above.
 | --- | --- | --- |
 | Read immutable / mutable capture after return | copied value survives; existing nearest-binding and counter tests | preserve values/lifetime |
 | Mutate mutable capture repeatedly | own closure state persists; probe alias test | preserve |
-| Mutate immutable capture | rejected; existing captured-let parity test | preserve |
+| Mutate immutable capture | scalar/array/map writes rejected for captured let and const; dedicated audit test | preserve |
 | Parent writes after closure creation | closure retains old value; probe parent test | snapshot vs shared decision |
 | Separately created siblings | independent snapshots; probe siblings test | snapshot vs shared decision |
 | Aliases of same closure | shared closure state; probe alias test | preserve |
@@ -114,18 +114,18 @@ characterization suite. Intended behavior is pending the decision above.
 | Nested/grandparent capture | values propagate through intermediate snapshots; probe transitive test | snapshot vs shared decision |
 | Shadowed variable | nearest-binding parity test exists; whole-chunk name search is insufficient to prove all scopes | explicit lexical identity |
 | `for` body capture | existing loop snapshot test returns 1,2,3 | preserve per-iteration observations |
-| `while` / `loop` captures | declaration tests exist; capture identity not comprehensively tested | must specify and test |
-| Conditional creation / scope exit | heap capture survives; comprehensive branch matrix pending | explicit lexical identity/lifetime |
-| Recursive local / mutual functions | named nested functions currently emit `StoreGlobal`; not a complete lexical implementation | must specify self/forward references |
+| `while` / `loop` captures | dedicated audit test retains per-iteration snapshots 0,1,2 in both engines | snapshot vs shared decision |
+| Conditional creation / scope exit | dedicated conditional/early-return test retains capture after block exit | explicit lexical identity/lifetime |
+| Recursive local / mutual functions | returned named recursion works on VM but fails in interpreter; ignored regression records missing self-binding; mutual patterns remain unaudited | must specify self/forward references |
 | Callback | existing higher-order/callable parity tests | preserve |
 | Imported callback crossing runtime | existing `imported_vm_callback` suite | preserve cell identity and policy |
-| Captured collection | existing captured-map update test; no proof for every collection alias form | preserve value semantics |
-| Captured struct / enum | not independently characterized by this checkpoint | test after contract decision |
-| Captured callable | alias probe; no exhaustive recursive graph proof | preserve callable identity |
+| Captured collection | dedicated array/map reads and repeated writes pass; alias combinations not exhaustive | preserve value semantics |
+| Captured struct / enum | dedicated factory-return test reads a struct field and compares captured enum values in both engines | preserve value semantics |
+| Captured callable | alias probe and factory-return callable invocation pass; no exhaustive recursive graph proof | preserve callable identity |
 | Throw after captured mutation, caught outside | both retain mutation; probe throw test | preserve |
-| Escape before parent error / reset | full matrix not yet executed | must define from existing behavior |
+| Escape before parent error / reset | closure published before a throw survives frame unwind in both engines; execution reset not yet probed | preserve validated escape behavior; audit reset |
 | Arity | existing closure/function/async/generator parity tests | preserve diagnostics |
-| Deep nesting | parser is bounded; no new generated lexical corpus yet | deterministic bounded coverage |
+| Deep nesting | deterministic generated anonymous closure chains at depths 1–12 retain grandparent parameter values in both engines | preserve bounded generated coverage |
 
 ## Representation and lifecycle design constraints
 
@@ -210,11 +210,33 @@ print(reader())
 
 The VM prints `null`; the interpreter prints `1`. The desired-behavior test
 `closure_must_capture_the_binding_visible_at_its_definition` is explicitly
-ignored until repaired. Neither ignored test is counted as passing evidence.
+ignored until repaired. Neither VM defect probe is counted as passing evidence.
 Both are compiler lexical-resolution defects, independent of the identity
 policy decision. No defect is claimed fixed by this audit.
 
+A returned named recursive closure also exposes an interpreter limitation:
+
+```kujo
+func factory(offset) {
+    func fold_capture(n) {
+        if n == 0 { return offset }
+        return n + fold_capture(n - 1)
+    }
+    return fold_capture
+}
+let recursive := factory(7)
+print(recursive(3))
+```
+
+The VM prints `13` (exit 0); the interpreter reports
+`Undefined variable: fold_capture` (exit 4). Its snapshot is created before its
+own name is bound. The ignored desired-behavior regression
+`a_recursive_named_closure_keeps_its_capture_after_parent_return` records this
+unresolved limitation. This is a third defect probe, not a passing parity case.
+No interpreter self-binding or reference-cycle policy was changed to mask it.
+
 ## Validation
+
 
 No runtime source was modified. Default-feature baseline `cargo check` passed
 in 8m 13s; formatting and diff whitespace checks passed. The initial full
@@ -226,15 +248,24 @@ bounded closure evidence while other repository builds were active on this
 | --- | --- |
 | `cargo fmt --check` | passed |
 | `cargo check` | passed, default features |
-| `cargo clippy --all-targets --all-features -- -D warnings` | not run; implementation stopped at compatibility decision |
-| `cargo test` | interrupted before test execution; no full-suite claim |
-| `cargo test --test vm_interpreter_parity_surfaces` | default-feature command not run; reduced-feature result below |
-| `cargo run -- test --runtime vm` | not run after audit stop |
-| `cargo run -- test --runtime dual` | not run after audit stop |
-| `bash scripts/release_gate.sh --full` | not run; branch is not a completed runtime/release candidate |
+| `cargo clippy --all-targets --all-features -- -D warnings` | passed: initial baseline 3m 58s, final expanded test source recheck 3.62s |
+| `cargo test` | default-feature continuation failed at `http_route_concurrency::process_shutdown_terminates_in_flight_handlers`: one-second shutdown deadline assertion; no runtime source changes |
+| `cargo test --test closure_capture_audit --test vm_interpreter_parity_surfaces --test imported_vm_callback` | passed with default features: 12 characterization, 115 parity, 8 callback tests; three ignored defect probes |
+| `cargo run -- test --runtime vm` | passed: 154/154 runnable fixtures, six skipped; reports `vm_primary=149` |
+| `cargo run -- test --runtime dual` | passed: 154/154 runnable fixtures, six skipped; `vm_primary=154`, `interpreter_fallback=0` |
+| `bash scripts/release_gate.sh --full` | not rerun: its full-test step has a known failing baseline, and implementation remains blocked |
 | `CARGO_BUILD_JOBS=2 cargo test --no-default-features --test closure_capture_audit --test vm_interpreter_parity_surfaces --test imported_vm_callback` | passed: 5 characterization, 115 parity, 8 callback tests; 2 explicitly ignored defect probes |
 | `CARGO_BUILD_JOBS=2 cargo test --no-default-features --test closure_capture_audit -- --ignored` | expected failure confirmed: both defect probes fail on the VM after their interpreter assertions pass |
 | `git diff --check` | passed |
+
+Continuation expanded `closure_capture_audit.rs` to 12 passing cases and three
+ignored defect probes. Direct `rustc --test` execution against the existing
+reduced-feature library passed all 12; explicitly running the ignored tests
+confirmed all three failures. This additionally covers scalar/compound values,
+captured collection mutation, conditional and early-return paths, while/loop
+snapshots, generated anonymous nesting depths 1–12, let/const mutation rejection,
+and a closure published before its parent throws. The recursive named-closure
+probe fails only on the interpreter. No runtime source changed.
 
 The reduced-feature run excludes JIT and optional database/image/PDF surfaces;
 it does not substitute for the full requested release gates. Its ordinary
@@ -242,11 +273,21 @@ pass count is 128, with the two known defects separately confirmed, not passed.
 An initial test-helper compile error (using Rust equality on `Value`) was
 corrected to variant matching before the successful run.
 
+The later default-feature run uses `CARGO_BUILD_JOBS=2`,
+`CARGO_PROFILE_DEV_DEBUG=0`, `CARGO_PROFILE_TEST_DEBUG=0`, and
+`CARGO_INCREMENTAL=0` to bound build resources on the shared host. Optional
+runtime features and debug assertions remain enabled. The explicit targeted
+run passes 135 tests; the full suite is not claimed passing.
+An isolated rerun of `process_shutdown_terminates_in_flight_handlers` also
+failed the same deadline assertion (70.74s total, versus 70.56s for its full
+suite). Host-load sensitivity and root cause remain unclassified; this is
+outside the closure assignment and was not changed or silently waived.
+
 ## Handoff
 
 - Architecture implemented: none; this branch adds audit evidence and tests.
 - Files: `tests/closure_capture_audit.rs` characterizes capture identity and
-  carries two ignored desired-behavior regressions; this document records the
+  carries three ignored desired-behavior regressions; this document records the
   pipeline, matrix, constraints and results. `V1_SCOPE.md` retains the deferral
   and links the decision; the parity matrix names the evidence and defects;
   `CHANGELOG.md` records the documentation-only impact.
@@ -256,7 +297,7 @@ corrected to variant matching before the successful run.
   no capability handling, runtime ownership, bytecode indices or unsafe blocks
   changed. Shared-cell cycle handling and JIT paths still require review when
   the runtime implementation is selected. This is not a security certification.
-- Remaining limitations: capture-identity decision, both confirmed lexical
+- Remaining limitations: capture-identity decision, three confirmed closure
   defects, full upvalue implementation and its complete validation remain open.
 - Other roadmap owners: no generator/async/spawn code changed. Any subsequent
   slot/capture model change must coordinate `CallFrameData`, `GeneratorState`

@@ -39,6 +39,13 @@ shadowing slot incorrectly supplies `null`) and
 into globals). These are unresolved VM defects, not intentional semantics or
 passing parity evidence.
 
+The expanded audit also covers scalar/collection/struct/enum/callable capture,
+array/map mutation, captured let/const rejection, conditional early returns,
+while/loop snapshots, escape through an exception and deterministic closure
+chains at depths 1–12. A third ignored probe,
+`a_recursive_named_closure_keeps_its_capture_after_parent_return`, records an
+interpreter missing-self-binding error where the VM returns the expected value.
+
 ## Status Labels
 
 
