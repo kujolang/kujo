@@ -24,6 +24,7 @@ mod control_flow;
 pub mod database_handle;
 mod environment;
 pub mod generator;
+mod generator_lowering;
 pub(crate) mod native_functions;
 pub mod promise;
 mod test_runner;

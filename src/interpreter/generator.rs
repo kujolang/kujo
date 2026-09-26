@@ -44,7 +44,7 @@ impl Interpreter {
         }
         let continuation = Continuation {
             env,
-            frames: vec![Frame::Block { body: Arc::new(body.get().to_vec()), pc: 0 }],
+            frames: vec![Frame::Block { body: Arc::new(super::generator_lowering::lower(&body.get())), pc: 0 }],
         };
         Value::Generator {
             params: params.to_vec(),

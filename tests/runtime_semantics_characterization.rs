@@ -160,3 +160,20 @@ fn async_body_error_occurs_at_call_only_in_vm() {
     assert!(result.unwrap_err().contains("Undefined variable"));
     assert!(env.lock().unwrap().get("continued").is_none());
 }
+
+#[test]
+fn nested_yield_expressions_resume_without_repeating_operands() {
+    sums("mut hits := 0 func hit() { hits += 1 return hits } let n := hit() + (yield 2) yield n yield hit()", 7, 7);
+    sums(
+        "let saved := 7 ?? (yield 99) let chosen := null ?? (yield 2) yield saved + chosen",
+        11,
+        11,
+    );
+    sums("let pair := [yield 2, yield 3] yield pair[0] + pair[1]", 10, 10);
+    sums("let result := (yield 2) + (yield 3) yield result", 10, 10);
+    sums(
+        "let skipped := false && (yield 99) let chosen := true && (yield 1) if chosen { yield 2 }",
+        3,
+        3,
+    );
+}
