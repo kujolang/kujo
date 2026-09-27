@@ -28,6 +28,9 @@ This file records user-visible changes to Kujo. It follows
 
 ## Unreleased
 
+- Roadmap records the second experimental Wave D participant: local MCP STDIO Ability evidence correlation and Dispatch-controlled restart/replay; runtime unchanged.
+
+
 - Complete the Wave A ecosystem foundation through Watchdog's existing execution
   observations and RunLedger's verified artifact notes/correlation, with offline
   HTTP/restart, integrity, privacy and null-provenance evidence. No runtime summary
