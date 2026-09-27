@@ -43,6 +43,9 @@ does not contain it. Dispatch's `release/dispatch-v1.3.0.refs` pins Kujo
 `87fae36dd331b185d29256f74d2a92f1aefc5ea5`, not tag v1.5.0. Main includes
 additional concurrency/compatibility work through PR #12 (`9d3c6ed`). All can
 report crate version 1.5.0: version text alone does not identify source behavior.
+Recent ancestry also includes merged roadmap PR #13 (`4c1d7c3`), npm publication
+record `ea7ca60`, and npm README/version guard `cd6d2ea`. Those documentation/CI
+commits do not retag or rebuild the older native release.
 
 The npm registry confirms resolver 1.5.0 and five exact native optional
 dependencies at 1.5.0 with provenance metadata. Publication of packages does
@@ -138,9 +141,15 @@ assurance states are claimed, observed, adapter-attested and independently verif
 strings alone are not trusted proof. Bind target/scope, attempt, completion,
 transaction/idempotency enforcement evidence, compensation availability and
 uncertainty to bounded evidence refs. Trust resolution belongs to authorized
-adapters/Dispatch; unknown and started effects remain unsafe. Taxonomy and migration
+adapters/Dispatch; unknown effects without validated replay safeguards remain unsafe. Taxonomy and migration
 need cross-adapter fixtures before any broad v2 effect contract. No exactly-once,
 universal rollback, pricing tables, or provider orchestration enters Kujo core.
+
+The later source review refined this statement: existing Dispatch deliberately
+permits an unknown external-idempotent completion when enforcement references are
+present, backed by an actual local deduplicating sink fixture. Reference presence
+is not independent trust verification. See the [concrete Wave C recommendation](EFFECT_CONTRACT_DIRECTION.md)
+for the exact current boundary, proposed assurance fields and migration tests.
 
 ### Artifact comparison evidence
 
@@ -253,3 +262,104 @@ fields as null. A future aggregator must consult original usage availability and
 estimate provenance rather than interpret every SDK zero as observed zero spend.
 No pricing or billing assumption is imported into the runtime. Existing untracked
 Agents SDK maintenance-agent work was observed and left untouched.
+
+## Wave B implemented slice and evidence
+
+After the full Wave A gate passed, Dispatch implemented a composed **review
+checkpoint**, not a general serialized execution engine. Its pre-coding plan is
+`dispatch/docs/audits/durable-review-checkpoint-plan.md`; contract/crash semantics
+are in `dispatch/docs/review-checkpoints.md`; detailed fixture evidence is in
+`dispatch/docs/audits/durable-review-checkpoint-evidence.md`.
+
+Dispatch `86a5f2c` closes a reproduced direct-runner bug: rejected terminal runs
+could execute pending descendants. `682f0e4` adds a content-addressed immutable
+state snapshot and `dispatch.review-checkpoint/v1` manifest, published last after
+directory synchronization. A new `checkpoint` command loads authoritative state
+under the run lock, requires a quiescent paused boundary and reconciled journal.
+Optional `resume-decision --checkpoint` validates live authority and retained
+bytes before the existing v2 claim/decision/continuation path. It does not replace
+policy, introduce a new lifecycle or serialize live closures/tasks.
+
+Real offline proof: `run-1790470206138-3990`, recorded under Dispatch
+`tests/tmp/durable-review-63009`. The first process ran Workcell fixture
+preservation and real Eval, retained the failing judgment, blocked its descendant,
+published a 932-byte manifest plus 51,892-byte snapshot, and exited. Separate
+processes rejected missing checkpoint and stale decision without changing state.
+Another CLI controller accepted an explicit review override and continued.
+Action/evaluator/descendant attempts were [1,1,1]; duplicate delivery caused no
+additional decision or execution. A final process reconciled the journal, verified
+unchanged Workcell/Eval hashes and wrote/read an actual RunLedger receipt with the
+Dispatch correlation and proof digest. Unknown cost stayed null. Existing
+single-controller failure/evaluator-only retry example also still passes.
+
+Four focused checkpoint tests pass under filesystem and SQLite authority, including
+a stale SQLite secondary state export. Schema/tampering/stale-input/in-flight-work/
+orphan/torn-journal cases reject. Existing terminal/execution tests pass (six tests,
+including all five terminal spellings). The fixture had initial harness failures
+for overwrite flags and output-root policy; final runs use the supported interfaces
+without weakening gates. A fresh review corrected character versus UTF-8 byte
+limits and rejected malformed boundary metadata before manifest publication.
+The first full Dispatch gate passed focused suites and 23 core shards, then
+caught the missed help snapshot update (18 versus 19 commands). After inspecting
+actual output, only the intended checkpoint command/flag expectations changed;
+the affected four-test shard passed. The final full gate rerun passed with exit 0:
+all smoke/concurrency/bridge checks, focused suites, all 101 core tests across 24
+shards, quiet VM/interpreter command surfaces, version consistency, and 3/3 bounded
+release workloads in 24s. The successful log is
+`/tmp/dispatch-next-release-gate-final.log`; individual logs and workload JSON
+remain under Dispatch's ignored `tests/tmp`. The final-head restart proof and
+SQLite checkpoint suite also passed. No gate was suppressed. Final Kujo
+formatting and eight architecture/README/Markdown/hygiene contract tests passed.
+
+### Deferred scope and practical risks
+
+| Priority / owner | Exact boundary |
+| --- | --- |
+| Next, Watchdog/RunLedger | Implement the documented runtime-summary ingestion and receipt-reference projection, preserving unknown usage/cost and units |
+| Next, runtime measurement maintenance | Repeat baseline/disabled/enabled measurements with identical optimized production builds; current dev observations are not a production budget |
+| Later, Dispatch/Workcell | Recover lost authoritative state from verified backups, migrate machines/environments, archive journals, and support additional safe stop boundaries |
+| Later, ecosystem trust adapters | Authenticate remote intervention and independently verify effect attestations; current producer references alone are not trust proof |
+| Provider-dependent | Certify actual preservation/materialization/transaction semantics against authorized live systems; offline fixtures do not certify them |
+| Speculative, unscheduled | Universal typed graph nodes, semantic context interoperability, provider SDK adapters, async generators and other new language syntax |
+
+Security: metrics contain no payloads, but checkpoints contain persisted application
+data and require private output storage/umask. Hashes do not authenticate a hostile
+writer. Performance: counters add measured opt-in overhead; CPU is process-wide,
+wall timings can overlap, and detached work gives a prefix observation. Persistence:
+review checkpoints require the surviving run store, evidence and journal; partial
+publication conveys no permission. Compatibility: both additions are opt-in and
+unreleased; npm/native 1.5.0 does not acquire new behavior from source commits.
+Replay: a checkpoint does not prove effect safety, and an override accepts an
+existing outcome without replay. Exactly-once/rollback guarantees remain absent.
+
+### Recommended next agent task
+
+Start from the pushed Kujo/Dispatch commits listed below. In Watchdog, implement a
+bounded importer for `kujo.runtime-measurements/v1`: reject input over 8 KiB and
+unsupported versions, validate fixed counters/units, attach the artifact digest to
+an existing caller-owned execution observation, and preserve unavailable readings
+as null. Add RunLedger receipt-note/correlation projection without changing its
+lifecycle or pricing policy. Use offline fixtures for valid/error/detached-prefix,
+tampered/oversized/unknown-version reports and unavailable usage; test that no
+payload fields enter telemetry. Re-run each modified ecosystem repository's gates.
+Do not turn inclusive VM wall time into CPU, sum overlapping sessions, trust SDK
+default zeros as observed spend, or introduce another event envelope. Separately,
+obtain optimized-runtime overhead evidence before selecting production
+instrumentation budgets. Use `EFFECT_CONTRACT_DIRECTION.md` as the later
+trust-design entry point.
+
+### Commit map
+
+| Repository | Commit | Purpose |
+| --- | --- | --- |
+| Kujo | `d9a8202` | Source/ecosystem audit, release-artifact distinction, architectural roadmap and Wave A plan |
+| Kujo | `bdf634f` | Bounded production VM/JIT/task/generator measurements, CLI/schema/tests |
+| Kujo | `a81da42` | Raw overhead evidence, full Wave A validation, consumption handoff |
+| Kujo | `6b84f61` | Concrete future effect-assurance design and existing trust exception |
+| Dispatch | `86a5f2c` | Terminal admission fix and pre-coding durable review plan |
+| Dispatch | `682f0e4` | Immutable review checkpoints, fresh-controller resume and failure fixtures |
+| Dispatch | `562f56d` | Reject malformed boundary metadata, align help snapshot and verify CLI publication |
+| Dispatch | `73e7a87` | Final-head restart evidence, full release-gate pass and persistence/privacy boundaries |
+
+Closing documentation commits retain the final gate evidence, Wave C design and
+this actionable handoff. No Workcell/Eval/RunLedger/SDK implementation was changed.
