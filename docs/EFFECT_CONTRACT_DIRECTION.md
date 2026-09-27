@@ -184,3 +184,18 @@ and single-effect. Existing alpha runs remain alpha. See Dispatch
 Next interoperability target: Agents SDK Ability gateway tool boundary, keeping
 Dispatch admission authority external to the agent. No Wave D implementation is
 part of this milestone.
+
+## First Wave D participant slice (2026-09-27)
+
+Agents SDK now offers an experimental controlled Ability tool wrapper that retains
+private receipts and transports bounded digest references. Dispatch correlates
+those references and then uses its existing persisted beta policy/live Ability
+verification to admit replay. The real offline publication fixture proves a
+business commit with failed receipt persistence, process replacement, review and
+one logical business effect after replay. Standalone SDK execution remains useful
+without synthetic Dispatch authority. See Dispatch `docs/agents-sdk-ability.md`
+and its audited rehearsal for the boundary and validation evidence.
+
+Wave C beta remains experimental opt-in/unreleased, alpha remains supported, and
+remote trust, renewal and multi-effect semantics remain deferred. This participant
+slice neither changes execution-result/v1 nor the Kujo runtime.

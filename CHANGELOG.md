@@ -559,3 +559,9 @@ This file records user-visible changes to Kujo. It follows
 ### Fixed
 
 - Repaired all remaining syntax-drifted examples, removed the expected-fail example list, and added exhaustive per-file verification coverage.
+
+## Unreleased ecosystem direction — first Wave D slice
+
+- Record Agents SDK → Ability → Dispatch controlled interoperability: bounded
+  evidence transport, uncertainty/review and fresh-controller beta admission.
+  Runtime and execution-result/v1 are unchanged; broader adapters are unscheduled.
