@@ -6,6 +6,15 @@ This file records user-visible changes to Kujo. It follows
 
 ## Unreleased
 
+- Complete the Wave A ecosystem foundation through Watchdog's existing execution
+  observations and RunLedger's verified artifact notes/correlation, with offline
+  HTTP/restart, integrity, privacy and null-provenance evidence. No runtime summary
+  or receipt schema change, workflow lifecycle, provider pricing, or Wave C
+  implementation is introduced.
+- Record optimized identical-profile baseline/disabled/enabled measurements and
+  component probes, including material short-run synced-export cost and explicit
+  limits on performance claims.
+
 - Add opt-in `kujo run --measurements PATH` production VM measurements through
   the existing profiler, using bounded numeric counters and the additive
   `kujo.runtime-measurements/v1` summary contract. Output uses a new file without

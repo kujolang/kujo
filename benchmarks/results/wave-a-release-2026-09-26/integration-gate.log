@@ -1,0 +1,2 @@
+runtime_measurements_e2e: PASS
+runtime_measurements_adapter_check: PASS (76 input cases)

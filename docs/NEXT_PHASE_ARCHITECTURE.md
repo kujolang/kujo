@@ -315,8 +315,8 @@ formatting and eight architecture/README/Markdown/hygiene contract tests passed.
 
 | Priority / owner | Exact boundary |
 | --- | --- |
-| Next, Watchdog/RunLedger | Implement the documented runtime-summary ingestion and receipt-reference projection, preserving unknown usage/cost and units |
-| Next, runtime measurement maintenance | Repeat baseline/disabled/enabled measurements with identical optimized production builds; current dev observations are not a production budget |
+| Completed, Watchdog/RunLedger | Bounded native-observation adapter, verified receipt notes and real HTTP/restart proof; see [Wave A completion](WAVE_A_ECOSYSTEM_COMPLETION.md) |
+| Completed campaign; maintenance remains | Identical optimized baseline/disabled/enabled samples and export-cost probes are recorded. Platform/JIT-specific and long-run production tuning remain open; no universal budget |
 | Later, Dispatch/Workcell | Recover lost authoritative state from verified backups, migrate machines/environments, archive journals, and support additional safe stop boundaries |
 | Later, ecosystem trust adapters | Authenticate remote intervention and independently verify effect attestations; current producer references alone are not trust proof |
 | Provider-dependent | Certify actual preservation/materialization/transaction semantics against authorized live systems; offline fixtures do not certify them |
@@ -334,19 +334,26 @@ existing outcome without replay. Exactly-once/rollback guarantees remain absent.
 
 ### Recommended next agent task
 
-Start from the pushed Kujo/Dispatch commits listed below. In Watchdog, implement a
-bounded importer for `kujo.runtime-measurements/v1`: reject input over 8 KiB and
-unsupported versions, validate fixed counters/units, attach the artifact digest to
-an existing caller-owned execution observation, and preserve unavailable readings
-as null. Add RunLedger receipt-note/correlation projection without changing its
-lifecycle or pricing policy. Use offline fixtures for valid/error/detached-prefix,
-tampered/oversized/unknown-version reports and unavailable usage; test that no
-payload fields enter telemetry. Re-run each modified ecosystem repository's gates.
-Do not turn inclusive VM wall time into CPU, sum overlapping sessions, trust SDK
-default zeros as observed spend, or introduce another event envelope. Separately,
-obtain optimized-runtime overhead evidence before selecting production
-instrumentation budgets. Use `EFFECT_CONTRACT_DIRECTION.md` as the later
-trust-design entry point.
+The original Watchdog/RunLedger and optimized-build handoff is now completed;
+see [Wave A end-to-end evidence](WAVE_A_ECOSYSTEM_COMPLETION.md). Wave A is complete
+as an unreleased foundation. Wave B remains the bounded review-checkpoint slice.
+No Wave C assurance implementation was introduced by the integration task.
+
+A next agent can begin a **scoped Wave C assurance slice** from
+[EFFECT_CONTRACT_DIRECTION.md](EFFECT_CONTRACT_DIRECTION.md), starting with
+Dispatch `src/core/intervention.kujo::retry_is_effect_safe` and the existing v1
+execution-result/evidence contracts. Specify how two real offline sink adapters
+bind run/step/attempt/effect/result digest to sink-enforced idempotency scope and
+expiry, and how Dispatch resolves trusted evidence independently of producer
+claims. Demonstrate crash-after-effect and expired/mismatched enforcement
+failures before proposing admission changes. Preserve completion-state versus
+replay-class distinctions and the current documented v1 exception; negotiate any
+additive assurance contract before broad implementation. No general machine-loss
+recovery, exactly-once effects, or universal rollback follows from Wave A.
+
+Separately, measurement maintenance should evaluate bounded buffered export while
+retaining exclusive creation, permissions and file sync. The optimized campaign
+identifies a fixed export cost; do not silently weaken durability for latency.
 
 ### Commit map
 

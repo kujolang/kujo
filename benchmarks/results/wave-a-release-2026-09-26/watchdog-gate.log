@@ -1,0 +1,90 @@
+admin_diagnostics_check: PASS
+api_auth_mode_check: PASS
+api_query_support_static_check: PASS
+api_version_contract_check: PASS
+audit_events_check: PASS
+backup_api_check: PASS
+backup_script_check: PASS
+benchmark_script_schema_check: PASS
+canonical_summary_query_benchmark: PASS {"rows":100000,"p50_ms":16.260719999999992,"p95_ms":19.985183000000006,"p99_ms":21.86496599999998,"rss_bytes":135053312}
+ci_workflow_static_check: PASS
+connected_sources_frontend_contract_check: PASS
+connected_sources_management_suite: PASS
+connected_sources_query_benchmark: PASS p95=5.22ms budget=25ms fixture=50000-legacy-rows/50-apps
+contract_manifest_check: PASS
+dashboard_api_auth_contract_check: PASS
+dashboard_dependency_pinning_check: PASS
+dashboard_local_vendor_asset_route_check: PASS
+dashboard_xss_regression_check: PASS
+direct_api_value_estimates_check: PASS
+docs_link_check: PASS (48 Markdown files)
+enterprise_architecture_doc_check: PASS
+export_jsonl_mode_check: PASS
+exporter_conformance_suite: PASS
+external_telemetry_intake_static_check: PASS
+Load failed: Error: Request to /api/admin/backups returned a non-JSON response: Not Found
+    at fetchJSON (dashboard.inline.js:202:19)
+    at async loadAll (dashboard.inline.js:316:21) {
+  status: 404,
+  cause: SyntaxError: Unexpected token 'N', "Not Found" is not valid JSON
+      at JSON.parse (<anonymous>)
+      at fetchJSON (dashboard.inline.js:199:29)
+      at async loadAll (dashboard.inline.js:316:21)
+}
+frontend_contract_suite: PASS
+governance_release_docs_check: PASS
+kennel_correlation_fields_check: PASS
+layout_defaults_check: PASS
+load_soak_suite profile=quick total=60 concurrency=6 rps=62.37 p95_ms=169 baseline_stats_ms=4 baseline_requests_ms=4 baseline_charts_ms=2 stats_ms=4 requests_ms=9 charts_ms=3 db_size=651264 growth_per_request=10786.13
+load_soak_suite: PASS (quick)
+openrouter_pricing_catalog_check: PASS
+production_startup_guard_check: PASS
+proxy_authz_mode_check: PASS
+proxy_config_visibility_check: PASS
+proxy_integration_stub_suite: passthrough start
+proxy_integration_stub_suite: json passthrough ok
+proxy_integration_stub_suite: named profile ok
+proxy_integration_stub_suite: query passthrough ok
+proxy_integration_stub_suite: sse passthrough ok
+proxy_integration_stub_suite: upstream error ok
+proxy_integration_stub_suite: malformed upstream ok
+proxy_integration_stub_suite: timeout upstream ok
+proxy_integration_stub_suite: unsafe path ok
+proxy_integration_stub_suite: passthrough done
+proxy_integration_stub_suite: override start
+proxy_integration_stub_suite: override done
+proxy_integration_stub_suite: PASS
+proxy_overhead_benchmark={"samples":30,"direct":{"nonstream":{"p50_ms":0.786657,"p95_ms":1.916372,"p99_ms":1.973272,"ttft_p50_ms":0.750855,"ttft_p95_ms":1.79024,"ttft_p99_ms":1.898938},"stream":{"p50_ms":73.156049,"p95_ms":75.843427,"p99_ms":76.744933,"ttft_p50_ms":0.737372,"ttft_p95_ms":1.405098,"ttft_p99_ms":1.497775}},"proxied":{"nonstream":{"p50_ms":41.843774,"p95_ms":49.205585,"p99_ms":53.170331,"ttft_p50_ms":41.786853,"ttft_p95_ms":49.164944,"ttft_p99_ms":53.130773},"stream":{"p50_ms":94.999635,"p95_ms":99.646406,"p99_ms":99.983497,"ttft_p50_ms":22.816597,"ttft_p95_ms":26.711571,"ttft_p99_ms":27.269651}},"exporter_outage":{"p50_ms":42.957878,"p95_ms":47.772323,"p99_ms":98.962226,"ttft_p50_ms":42.915754,"ttft_p95_ms":47.73551,"ttft_p99_ms":98.890537},"overhead":{"nonstream_p50_ms":41.057117000000005,"nonstream_p95_ms":47.289213,"nonstream_p99_ms":51.197058999999996,"stream_ttft_p95_ms":25.306473,"exporter_outage_p95_delta_ms":-1.4332619999999991},"cpu":{"before":"0:02.95","after":"0:05.93"},"rss_delta_bytes":2654208,"db_bytes_per_event":18773.333333333332,"streaming_transport":"buffered","budgets":{"nonstream_pass":false,"stream_ttft_pass":false,"exporter_isolation_pass":true}}
+proxy_overhead_benchmark: PASS (budgets are reported; strict gates are opt-in until the transport is optimized)
+proxy_route_compatibility_static_check: PASS
+proxy_stream_disconnect_suite: PASS
+proxy_stream_timing_suite: PASS
+rate_limit_bucket_eviction_check: PASS
+rate_limit_controls_check: PASS
+reprice_workflow_check: PASS
+request_body_limits_check: PASS
+retention_export_controls_static_check: PASS
+runtime_measurements_adapter_check: PASS (76 input cases)
+runtime_portability_contract_check: PASS
+schema_migration_static_check: PASS
+scout_backlog_alignment_check: PASS
+shared_module_dedupe_check: PASS
+src_layout_compatibility_check: PASS
+telemetry_delivery_check: PASS
+telemetry_envelope_benchmark={"mode":"quick","results":[{"eps":10,"seconds":1,"accepted":10,"elapsed_ms":69.707345,"achieved_eps":143.45690543801373,"dashboard_ms":5},{"eps":50,"seconds":1,"accepted":50,"elapsed_ms":351.871768,"achieved_eps":142.09721991677378,"dashboard_ms":12},{"eps":200,"seconds":1,"accepted":200,"elapsed_ms":1145.830145,"achieved_eps":174.54594022746716,"dashboard_ms":16}],"burst":{"accepted":1000,"elapsed_ms":5757.738838,"count":1000},"exporter_outage_observed":true,"retention_protection":"pending/retry rows are covered by telemetry_v2_repository retention tests","db_bytes":2748416,"db_bytes_per_event":2181.2825396825397}
+telemetry_envelope_benchmark: PASS
+telemetry_migration_restart_suite: PASS
+telemetry_native_adapter_check: PASS
+telemetry_observability_semantics_check: PASS
+telemetry_otlp_ingest_check: PASS
+telemetry_otlp_mapper_check: PASS
+telemetry_otlp_protobuf_check: PASS
+telemetry_redaction_check: PASS
+telemetry_schema_contract_check: PASS
+telemetry_v2_api_suite: PASS
+telemetry_v2_identity_conflict_suite: PASS
+telemetry_v2_module_check: PASS
+telemetry_v2_repository_check: PASS
+telemetry_v2_schema_check: PASS
+tenant_project_partitioning_check: PASS
+watchdog_api_route_suite: PASS

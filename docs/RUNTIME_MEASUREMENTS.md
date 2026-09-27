@@ -68,15 +68,25 @@ units and meanings; additive fields are allowed within declared bounds.
 
 `outcome` describes the top-level VM result, not completion of detached workers.
 
-This is a summary artifact, not another workflow event model. Watchdog already
-provides `watchdog.native-event.v1` for lifecycle observations; adapters can
-reference this artifact from an execution observation and project its numeric
-counters without copying program content. Reference it through
-existing evidence refs/control-event refs. RunLedger's existing `note` and
-`correlate --dispatch-run` commands preserve a path/digest and workflow association.
-Never convert unsupported usage/cost into zero, sum inclusive wall time as CPU
-duration, infer safe replay from measurements, or trust producer metadata as proof.
-See [the ownership/handoff plan](NEXT_PHASE_ARCHITECTURE.md#measurement-ownership-and-consumption-handoff).
+This is a summary artifact, not another workflow event model. Watchdog's
+`runtime_measurements_adapter.kujo` validates a bounded report and its exact-byte
+SHA-256 address, then attaches it to an existing caller-owned native execution
+observation. Only fixed numeric/null attributes and an artifact reference enter
+telemetry; report text/extensions and paths do not. Native normalization and
+canonical v2 intake retain existing privacy, identity and deduplication semantics.
+The caller supplies trace/span identity and observation timestamps. The consumer
+rejects integers beyond the interoperable exact range instead of rounding them.
+
+RunLedger's `runtime-measurement` command verifies bounded bytes, their digest and
+the schema marker, then adds an idempotent structured note through its existing
+receipt lock. Semantic validation belongs to Watchdog. Existing `correlate`
+commands link the canonical trace and caller execution/workflow IDs. The note
+retains a content address, not a path or duplicate counters. Preserve the original
+bytes in a trusted external artifact store; digest identity does not authenticate
+the producer or guarantee retention. Missing usage/cost stays null/unavailable.
+
+Never sum inclusive wall time as CPU duration, infer safe replay from measurements,
+or treat producer metadata as proof. See [end-to-end completion and ownership](WAVE_A_ECOSYSTEM_COMPLETION.md).
 
 ## Validation and benchmarking
 
@@ -85,3 +95,10 @@ stdout/stderr/exit status and validates real reports. Existing closure, generato
 concurrency and security gates protect behavior. Raw benchmark results and the
 fresh review are recorded in `NEXT_PHASE_ARCHITECTURE.md`; no percentage overhead
 guarantee applies across hosts, builds or workloads.
+
+The [optimized campaign](../benchmarks/results/wave-a-release-2026-09-26/README.md)
+records identical-profile baseline/disabled/enabled comparisons, raw samples,
+binary hashes and component probes. Synced export is a material fixed cost for
+short CLI runs on the measured host. Long-run production and other platform/JIT
+characterization remain open; no runtime optimization or durability weakening
+was made for these numbers.
