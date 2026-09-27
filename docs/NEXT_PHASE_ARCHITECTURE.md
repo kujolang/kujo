@@ -402,3 +402,19 @@ verifiers. This supersedes the prior compatibility-document next task. Next is
 persisted admission negotiation and mixed-version restart/rollback tests. Alpha
 remains unreleased; general ecosystem migration, remote trust and multi-effect
 admission remain incomplete. Runtime and v1 result contracts are unchanged.
+
+## Wave D non-Ability validation — 2026-09-27
+
+The controlled process → Workcell Git CAS → Dispatch slice removes Ability from
+the execution path. Existing Git marker/ref verification resolves real pre-commit
+absence and post-commit completion loss before checkpoint-bound replay. A private
+one-use ticket prevents duplicate process admission; the participant transports
+references and never owns replay policy. Kujo runtime and execution-result/v1 are
+unchanged.
+
+The four-way comparison in Dispatch `docs/audits/wave-d-git.md` supports extracting
+a small controller-subject/evidence-reference core next, while keeping participant
+identity details and effect-family evidence in separate versioned contracts.
+Ability receipts are not universal; a Git intent commitment is not an application
+transaction. No generic handoff schema, remote trust or multi-effect behavior was
+introduced. Wave D remains experimental and unreleased.

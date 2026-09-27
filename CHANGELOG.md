@@ -28,6 +28,7 @@ This file records user-visible changes to Kujo. It follows
 
 ## Unreleased
 
+- Roadmap records the non-Ability Wave D process participant: existing Workcell Git CAS, real pre/post-commit process loss, Dispatch-controlled restart/replay, and a four-way handoff comparison. No runtime or execution-result schema changes.
 - Roadmap records the third experimental Wave D participant: one local HTTP/OpenAPI Ability action with Dispatch-controlled response-loss/timeout/replay and duplicate-delivery proof.
 
 
