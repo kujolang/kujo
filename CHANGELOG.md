@@ -4,6 +4,10 @@ or execution-result/v1 change.
 
 # Changelog
 
+Unreleased architecture documentation: Wave D generic correlation core extracted
+from four participant handoffs across two effect families. Historical handoffs
+remain supported through adapters; no runtime or replay-authority change.
+
 Unreleased architecture documentation: Wave C portable commitments, owner profile
 specifications and three-family alpha/beta migration rehearsal prepare the bounded
 beta contract for opt-in adoption. Alpha retained; runtime and execution-result/v1
