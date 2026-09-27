@@ -28,6 +28,9 @@ This file records user-visible changes to Kujo. It follows
 
 ## Unreleased
 
+- Roadmap records the third experimental Wave D participant: one local HTTP/OpenAPI Ability action with Dispatch-controlled response-loss/timeout/replay and duplicate-delivery proof.
+
+
 - Roadmap records the second experimental Wave D participant: local MCP STDIO Ability evidence correlation and Dispatch-controlled restart/replay; runtime unchanged.
 
 
