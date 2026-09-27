@@ -1,0 +1,21 @@
+rustc 1.96.0 (ac68faa20 2026-05-25)
+binary: rustc
+commit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96
+commit-date: 2026-05-25
+host: x86_64-apple-darwin
+release: 1.96.0
+LLVM version: 22.1.2
+cargo 1.96.0 (30a34c682 2026-05-25)
+Darwin x86_64
+ProductName:		macOS
+ProductVersion:		26.6.2
+BuildVersion:		25G83
+Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+17179869184
+6
+12
+Apple clang version 17.0.0 (clang-1700.4.4.1)
+Target: x86_64-apple-darwin25.6.0
+Thread model: posix
+InstalledDir: /Library/Developer/CommandLineTools/usr/bin
+26.1

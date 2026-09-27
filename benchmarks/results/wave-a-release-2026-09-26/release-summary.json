@@ -1,0 +1,275 @@
+{
+  "method": "median and nearest-rank p90; same-round paired deltas; warmups excluded",
+  "workloads": [
+    {
+      "name": "calls",
+      "baseline_ms": {
+        "min": 117.550726,
+        "median": 130.063212,
+        "p90": 144.641844,
+        "max": 151.411196
+      },
+      "disabled_ms": {
+        "min": 113.926822,
+        "median": 124.060503,
+        "p90": 143.589142,
+        "max": 166.084511
+      },
+      "enabled_ms": {
+        "min": 136.876023,
+        "median": 147.326587,
+        "p90": 155.687909,
+        "max": 170.250078
+      },
+      "paired_disabled_minus_baseline_ms": {
+        "min": -21.442791,
+        "median": -5.342144,
+        "p90": 5.779583,
+        "max": 19.998289
+      },
+      "paired_enabled_minus_disabled_ms": {
+        "min": -0.766109,
+        "median": 21.038323,
+        "p90": 33.817979,
+        "max": 39.812553
+      },
+      "paired_disabled_over_baseline_pct": {
+        "min": -14.161958670480356,
+        "median": -4.21827448592389,
+        "p90": 4.83714355337832,
+        "max": 13.689373800083615
+      },
+      "paired_enabled_over_disabled_pct": {
+        "min": -0.5135077942107213,
+        "median": 16.95215353338333,
+        "p90": 29.682349078428615,
+        "max": 32.934923737640354
+      }
+    },
+    {
+      "name": "captures_generators",
+      "baseline_ms": {
+        "min": 724.848275,
+        "median": 833.033168,
+        "p90": 1246.123962,
+        "max": 1260.723502
+      },
+      "disabled_ms": {
+        "min": 722.350245,
+        "median": 855.091626,
+        "p90": 1237.430698,
+        "max": 1248.029714
+      },
+      "enabled_ms": {
+        "min": 748.039366,
+        "median": 820.920731,
+        "p90": 1272.841344,
+        "max": 1284.171753
+      },
+      "paired_disabled_minus_baseline_ms": {
+        "min": -271.250048,
+        "median": -7.373927,
+        "p90": 55.483585,
+        "max": 387.600807
+      },
+      "paired_enabled_minus_disabled_ms": {
+        "min": -331.623285,
+        "median": 24.063329,
+        "p90": 60.70373,
+        "max": 126.898258
+      },
+      "paired_disabled_over_baseline_pct": {
+        "min": -25.509439210274177,
+        "median": -0.8851900840519678,
+        "p90": 6.184378599171181,
+        "max": 51.44248768461645
+      },
+      "paired_enabled_over_disabled_pct": {
+        "min": -29.062607169602828,
+        "median": 2.8616265991487477,
+        "p90": 6.9542602134390785,
+        "max": 14.68422325854224
+      }
+    },
+    {
+      "name": "tasks",
+      "baseline_ms": {
+        "min": 238.101483,
+        "median": 262.697152,
+        "p90": 267.003835,
+        "max": 278.556821
+      },
+      "disabled_ms": {
+        "min": 252.392166,
+        "median": 262.950782,
+        "p90": 275.19021,
+        "max": 281.222238
+      },
+      "enabled_ms": {
+        "min": 271.189516,
+        "median": 282.859609,
+        "p90": 298.131128,
+        "max": 574.911378
+      },
+      "paired_disabled_minus_baseline_ms": {
+        "min": -5.450116,
+        "median": -0.013092,
+        "p90": 10.132652,
+        "max": 28.908692
+      },
+      "paired_enabled_minus_disabled_ms": {
+        "min": -1.541518,
+        "median": 22.888128,
+        "p90": 29.431701,
+        "max": 307.901203
+      },
+      "paired_disabled_over_baseline_pct": {
+        "min": -2.1137402127087923,
+        "median": -0.004775787762856254,
+        "p90": 3.8228119493955326,
+        "max": 12.141332189854515
+      },
+      "paired_enabled_over_disabled_pct": {
+        "min": -0.5652154715916957,
+        "median": 8.950163606847905,
+        "p90": 11.613441168444627,
+        "max": 115.31440814942728
+      }
+    },
+    {
+      "name": "calls_sustained",
+      "baseline_ms": {
+        "min": 2331.709296,
+        "median": 2523.367282,
+        "p90": 2724.311627,
+        "max": 2777.713878
+      },
+      "disabled_ms": {
+        "min": 2320.187962,
+        "median": 2543.194925,
+        "p90": 2717.106159,
+        "max": 2763.27951
+      },
+      "enabled_ms": {
+        "min": 2337.894792,
+        "median": 2545.349517,
+        "p90": 2733.556381,
+        "max": 2756.996081
+      },
+      "paired_disabled_minus_baseline_ms": {
+        "min": -215.212843,
+        "median": 3.06941,
+        "p90": 65.802875,
+        "max": 93.201225
+      },
+      "paired_enabled_minus_disabled_ms": {
+        "min": -102.886172,
+        "median": 16.905767,
+        "p90": 76.67492,
+        "max": 145.817166
+      },
+      "paired_disabled_over_baseline_pct": {
+        "min": -7.7557616744050595,
+        "median": 0.11405236765360538,
+        "p90": 2.815302213957005,
+        "max": 3.714966343319648
+      },
+      "paired_enabled_over_disabled_pct": {
+        "min": -3.8850836588057214,
+        "median": 0.6647452318268465,
+        "p90": 2.9955070976037224,
+        "max": 5.614408833661222
+      }
+    },
+    {
+      "name": "captures_generators_sustained",
+      "baseline_ms": {
+        "min": 9098.334307,
+        "median": 9715.654806,
+        "p90": 10516.025069,
+        "max": 10919.479384
+      },
+      "disabled_ms": {
+        "min": 9007.964182,
+        "median": 9736.327234,
+        "p90": 10585.555972,
+        "max": 11067.829913
+      },
+      "enabled_ms": {
+        "min": 8679.210372,
+        "median": 9744.393468,
+        "p90": 10187.258461,
+        "max": 11621.090035
+      },
+      "paired_disabled_minus_baseline_ms": {
+        "min": -1434.965425,
+        "median": 13.966268,
+        "p90": 805.399293,
+        "max": 1446.556504
+      },
+      "paired_enabled_minus_disabled_ms": {
+        "min": -2099.577484,
+        "median": 86.64098,
+        "p90": 668.371145,
+        "max": 869.987388
+      },
+      "paired_disabled_over_baseline_pct": {
+        "min": -13.74102363036258,
+        "median": 0.14277702009888316,
+        "p90": 8.55493537961378,
+        "max": 15.500649838583215
+      },
+      "paired_enabled_over_disabled_pct": {
+        "min": -19.47879030601083,
+        "median": 0.9199435970739911,
+        "p90": 7.419780224432504,
+        "max": 8.681915005425743
+      }
+    },
+    {
+      "name": "tasks_sustained",
+      "baseline_ms": {
+        "min": 1934.870888,
+        "median": 1994.816155,
+        "p90": 2039.979344,
+        "max": 2121.298795
+      },
+      "disabled_ms": {
+        "min": 1949.734335,
+        "median": 1991.961922,
+        "p90": 2012.024289,
+        "max": 2032.12333
+      },
+      "enabled_ms": {
+        "min": 1965.948208,
+        "median": 2016.443734,
+        "p90": 2043.454308,
+        "max": 2048.942869
+      },
+      "paired_disabled_minus_baseline_ms": {
+        "min": -163.962541,
+        "median": -1.038983,
+        "p90": 15.906059,
+        "max": 24.487066
+      },
+      "paired_enabled_minus_disabled_ms": {
+        "min": -15.749693,
+        "median": 28.364032,
+        "p90": 60.843673,
+        "max": 81.798541
+      },
+      "paired_disabled_over_baseline_pct": {
+        "min": -7.729346822167027,
+        "median": -0.052131586964832,
+        "p90": 0.8220734054478207,
+        "max": 1.2338969213927076
+      },
+      "paired_enabled_over_disabled_pct": {
+        "min": -0.7839498233821685,
+        "median": 1.4267049742254345,
+        "p90": 3.105554810174338,
+        "max": 4.175563758099443
+      }
+    }
+  ]
+}

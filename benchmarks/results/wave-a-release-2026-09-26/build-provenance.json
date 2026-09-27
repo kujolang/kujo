@@ -1,0 +1,42 @@
+{
+  "baseline_commit": "cd6d2ea93c72b1e2d09a391d853316204e095977",
+  "candidate_runtime_source_commit": "5d72aab4b99e7f8c01e4c208d6c97061934c7447",
+  "candidate_runtime_changes_in_this_task": false,
+  "package_version_both": "1.5.0 (source identity is the commit, not a new release)",
+  "cargo_lock_sha256": "057d96a6ad9306f8d215920250aa5d5533b23e775553203babc98b003eff9341",
+  "features": [
+    "runtime-db",
+    "runtime-image",
+    "runtime-pdf",
+    "runtime-archive",
+    "runtime-jit"
+  ],
+  "profile": {
+    "name": "release",
+    "opt_level": 3,
+    "lto": "thin",
+    "codegen_units": 1,
+    "strip": "symbols"
+  },
+  "rustc": "1.96.0 (ac68faa20 2026-05-25)",
+  "build_jobs": 2,
+  "baseline_source": "git archive cd6d2ea into /tmp/kujo-wave-a-release-baseline",
+  "candidate_command": "CARGO_BUILD_JOBS=2 cargo build --release --locked --bin kujo",
+  "baseline_command": "CARGO_BUILD_JOBS=2 CARGO_TARGET_DIR=<same target cache> cargo build --release --locked --bin kujo",
+  "cache": "shared dependency build cache; frozen separate executable copies before testing",
+  "path_local_cargo_configs": "none in either source ancestor chain",
+  "candidate_build_duration": "32m 09s",
+  "baseline_build_duration": "15m 38s",
+  "host": "Intel i7-9750H, 16 GiB, 6 physical/12 logical cores, macOS 26.6.2 x86_64",
+  "benchmark_conditions": "No agent build or test jobs during samples; ~57 seconds settling before start; ordinary desktop services left running; no affinity/frequency control; warmups excluded",
+  "samples": {
+    "workloads": 6,
+    "modes": 3,
+    "warmups_per_mode": 2,
+    "measured_per_mode": 21,
+    "total_processes": 414,
+    "recorded_timings": 378,
+    "enabled_reports": 126
+  },
+  "jit_scope": "default CLI behavior, no forced JIT-specific performance budget"
+}

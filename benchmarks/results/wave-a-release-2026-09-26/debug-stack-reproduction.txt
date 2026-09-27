@@ -1,0 +1,30 @@
+Pre-existing debug HTTP stack failure, local macOS x86_64, 2026-09-26.
+Runtime: immutable cd6d2ea pre-measurement dev binary from the earlier campaign.
+Watchdog API fixture, dashboard_server, watchdog_shared and telemetry_repository
+have no diff from 4e07223.
+
+Command (Watchdog cwd):
+KUJO_BIN=/tmp/kujo-next-baseline-bin node tests/telemetry_v2_api_suite.js
+
+Observed stderr excerpt:
+Starting HTTP server on 127.0.0.1:17718...
+Server listening on http://127.0.0.1:17718
+thread '<unknown>' has overflowed its stack
+fatal runtime error: stack overflow, aborting
+Error: socket hang up
+
+New Wave A HTTP/restart/receipt fixture on the dev candidate:
+RUST_MIN_STACK=16777216 KUJO_BIN=/tmp/kujo-next-candidate-bin \
+  node tests/runtime_measurements_adapter_check.js --integration
+runtime_measurements_e2e: PASS
+runtime_measurements_adapter_check: PASS (76 input cases)
+
+This isolates the overflow from the adapter change. It does not establish a
+precise recursion/frame root cause or a universal minimum worker stack. The
+canonical release-build gate is separately required; no test was disabled.
+
+The freshly built optimized candidate subsequently passed the same new complete
+HTTP/restart/receipt fixture with default worker-stack settings (no RUST_MIN_STACK
+override). Original baseline dev SHA-256:
+7f0fe29144f7653d3dd9df626fdabac0429e5f0e8c358ec264ad14df8a7fba83
+This matches the earlier committed dev campaign's baseline hash.

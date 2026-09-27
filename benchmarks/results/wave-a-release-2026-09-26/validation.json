@@ -1,0 +1,79 @@
+{
+  "date_local": "2026-09-26",
+  "kujo": {
+    "commands": [
+      "cargo fmt --check",
+      "cargo check",
+      "CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 bash scripts/release_gate.sh --full"
+    ],
+    "exit_code": 0,
+    "measurement_tests": 8,
+    "dual_fixtures": {
+      "passed": 149,
+      "failed": 0,
+      "skipped": 11
+    },
+    "interpreter_fixtures": {
+      "passed": 149,
+      "failed": 0,
+      "skipped": 11
+    },
+    "security_tests": 90,
+    "package_tests": 9,
+    "parity_tests": 117,
+    "audit": {
+      "advisories": 1271,
+      "dependencies": 652,
+      "existing_build_only_exception": "RUSTSEC-2025-0141"
+    },
+    "optional_not_run": [
+      "cargo-deny unavailable",
+      "opt-in serve socket integration",
+      "opt-in benchmark smoke (separate optimized campaign used)"
+    ]
+  },
+  "watchdog": {
+    "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin zsh -c 'for f in tests/*.js; do node \"$f\" || exit 1; done'",
+    "exit_code": 0,
+    "javascript_entrypoints": 67,
+    "adapter_input_cases": 76,
+    "additional_checks": [
+      "caller timing and identity",
+      "attribute/reference bounds and conflicts",
+      "fixed projection privacy",
+      "null and caller provenance",
+      "idempotent attachment",
+      "public HTTP deduplication",
+      "restart retrieval",
+      "separate-process receipt correlation"
+    ],
+    "proxy_latency_budgets": "existing advisory nonstream/stream flags false; strictness unchanged; not instrumentation measurements"
+  },
+  "runledger": {
+    "command": "KUJO=/tmp/kujo-wave-a-release-candidate-bin bash tests/run.sh",
+    "exit_code": 0,
+    "module_tests": 81,
+    "cli_and_concurrency": "passed",
+    "measurement_reference": "passed, includes preserving nulls and existing manual usage/cost"
+  },
+  "integration": {
+    "command": "KUJO_BIN=/tmp/kujo-wave-a-release-candidate-bin node tests/runtime_measurements_adapter_check.js --integration",
+    "exit_code": 0,
+    "default_worker_stack": true,
+    "artifacts": "integration/"
+  },
+  "logs": {
+    "kujo": {
+      "local_path": "/tmp/kujo-wave-a-kujo-gate.log",
+      "sha256": "f69beb7a25a081ef56d99421ed77fb22ab454c98bd0b200c26b9fb555377aeac"
+    },
+    "watchdog": {
+      "local_path": "/tmp/kujo-wave-a-watchdog-release-gate.log",
+      "sha256": "72c1caaa863747bc1eb07e9df3b76066f0883d166f29e1d00f2a6ed6e0b30a0e"
+    },
+    "runledger": {
+      "local_path": "/tmp/kujo-wave-a-runledger-release-gate.log",
+      "sha256": "8230c28e3f69886f263cecce98c09a791e2dfaa679759232f6d77fc9a60c25c0"
+    }
+  }
+}

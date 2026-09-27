@@ -1,0 +1,50 @@
+{
+  "actual_snapshot_including_process_usage": {
+    "min_ns": 11687.636,
+    "median_ns": 12738.109,
+    "p90_ns": 14197.26,
+    "max_ns": 14961.926
+  },
+  "empty_black_box": {
+    "min_ns": 0.334162,
+    "median_ns": 0.334266,
+    "p90_ns": 0.336019,
+    "max_ns": 0.337839
+  },
+  "exclusive_create": {
+    "min_ns": 62019.0,
+    "median_ns": 64264.0,
+    "p90_ns": 97997.0,
+    "max_ns": 133230.0
+  },
+  "monotonic_now_elapsed": {
+    "min_ns": 70.74415,
+    "median_ns": 84.12945,
+    "p90_ns": 86.97971,
+    "max_ns": 88.4011
+  },
+  "saturating_atomic_increment": {
+    "min_ns": 8.183235,
+    "median_ns": 9.476543,
+    "p90_ns": 10.597302,
+    "max_ns": 10.810918
+  },
+  "serialize_report_to_vec": {
+    "min_ns": 1815.984,
+    "median_ns": 1912.584,
+    "p90_ns": 2049.52,
+    "max_ns": 2160.21
+  },
+  "unbuffered_json_file": {
+    "min_ns": 1401967.0,
+    "median_ns": 1625446.0,
+    "p90_ns": 1759158.0,
+    "max_ns": 2570800.0
+  },
+  "unbuffered_json_file_sync": {
+    "min_ns": 20357916.0,
+    "median_ns": 22280234.0,
+    "p90_ns": 23322862.0,
+    "max_ns": 23790500.0
+  }
+}
