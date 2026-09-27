@@ -8,6 +8,8 @@
 # Kujo core runtime and agent-project local state
 /.kujo-http-upload-*.body
 /.*.kujo-agent-stage-*/
+/.runtime/
+/.local/
 /.env.local
 /.kujo-agent/
 /.dispatch-runs/
@@ -73,6 +75,7 @@
 
 # Fence
 /.fence/cache-v1.json
+/.audit-evidence/
 
 # Eval and ShipCheck evaluation output
 /eval_results/
@@ -137,6 +140,7 @@
 
 # Tribunal
 /tribunal-runs/
+/.tribunal/
 /.strata-tmp/
 
 # Local-first Kujo record tool state
@@ -209,6 +213,15 @@
 /--interpreter/tmp_test_*/
 /.kujo-post-manifest.txt
 
+# JavaScript, browser, and plugin QA local output
+/node_modules/
+/test-results/
+/playwright-report/
+/artifacts/walkthrough*/
+/artifacts/*-qa.json
+/artifacts/package-*.json
+/*.tgz
+
 # SiteProbe
 /.siteprobe/
 /.siteprobe-docgen-tmp/
@@ -243,6 +256,10 @@
 # Local test outputs commonly emitted by Kujo tool repos
 /tests/tmp/
 /tests/*.out
+/.cache/
+__pycache__/
+*.py[cod]
+.DS_Store
 *.tmp-*
 *.bak
 *.log
