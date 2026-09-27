@@ -1,5 +1,8 @@
 # Changelog
 
+Unreleased documentation: Wave C now records a validated two-adapter additive
+assurance prototype in Dispatch/Workcell. No runtime or v1 schema change.
+
 This file records user-visible changes to Kujo. It follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

@@ -370,3 +370,12 @@ identifies a fixed export cost; do not silently weaken durability for latency.
 
 Closing documentation commits retain the final gate evidence, Wave C design and
 this actionable handoff. No Workcell/Eval/RunLedger/SDK implementation was changed.
+
+### Wave C follow-up
+
+The scoped next task above is now implemented as an opt-in Dispatch assurance
+prototype validated against SQLite transactions and Workcell Git ref transactions.
+See [the updated effect direction](EFFECT_CONTRACT_DIRECTION.md).
+The default v1 replay policy and runtime are unchanged; broad migration remains
+unscheduled. The next slice is the application-owned Ability gateway with
+authenticated tenant/principal scope and replay-time enforcement, not result/v2.

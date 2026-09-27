@@ -1,6 +1,7 @@
 # Effect contracts after the review-checkpoint slice
 
-Design recommendation, unscheduled; no v2 effect contract ships with this work.
+Design validated with two local adapters; opt-in prototype implemented, unreleased.
+Broad migration remains unscheduled; no execution-result/v2 ships.
 Core remains responsible for capability enforcement and confined host operations.
 Dispatch owns admission; authorized adapters own observation and attestation.
 
@@ -25,7 +26,7 @@ and the operator-owned transport are part of the trust boundary. The new review
 checkpoint neither strengthens those assertions nor grants permission to replay.
 The golden path uses explicit acceptance without repeating the uncertain action.
 
-## Proposed compatible direction
+## Initial design (preserved context)
 
 Retain v1 unchanged until consumers negotiate a version. Prototype an additive
 effect-assurance document referenced by existing evidence refs before deciding
@@ -78,3 +79,44 @@ This composes with future typed graph nodes and context provenance: edges carry
 artifact references and assurance facts, not hidden model reasoning. Universal
 interoperability, remote authentication and hosted services remain later ecosystem
 work. No exactly-once external effects or universal rollback guarantee follows.
+
+## Validated additive prototype · 2026-09-26
+
+Dispatch `src/core/effect_assurance.kujo` now prototypes the additive
+`dispatch.effect-assurance/v1alpha1` consumer profile, with a real SQLite unique-key
+transaction adapter and Workcell `src/evidence/git_effect.kujo` atomic Git ref/CAS
+adapter. This is a local experimental schema, not a finalized ecosystem contract.
+The original v1 execution-result schema and default retry admission are unchanged.
+
+The prototype narrows the earlier proposed bounds to one effect, one opaque
+evidence digest, a closed flat document of at most 8 KiB, 128-byte ASCII IDs and
+fixed SHA-256 fields. It binds exact original result bytes and source run/step/
+attempt/effect to operation, target/account/environment/key scope, request digest,
+precondition and transaction. Request/precondition binding proved necessary:
+a key alone cannot protect a changed operation. The original reported completion
+remains distinct from live observed completion; no result history is rewritten.
+
+Trusted issuer identity comes from operator-installed resolver code and mapping,
+not producer JSON. Separate processes read live sink state and compare the
+reconstructed evidence. Half-open UTC validity intervals are bounded to one hour;
+the sink checks validity and scope again at mutation admission. No producer URL
+is fetched. Claims/observations alone do not pass this opt-in resolver.
+Independently verified here means separate sink readback, not an independent
+organization or cryptographic trust domain. Assurance labels should not become
+a total ranking: the verified predicate, method, authority and scope matter.
+
+Real SIGKILL fixtures before commit and after commit/before reply demonstrate
+verified idempotent replay for both families. Expired, mismatched and uncertain
+non-idempotent paths remain blocked. Existing evaluator-only retry, manual
+override, local sink exception and durable-review tests remain the compatibility
+authority. The initial audit/plan, test evidence and security review live in
+Dispatch `docs/audits/effect-assurance-prototype.md` and
+`docs/effect-assurance.md`; Workcell documents its narrower adapter profile in
+`docs/effect-assurance-prototype.md`.
+
+Keep additive assurance; there is no evidence yet requiring execution-result/v2.
+Next validate the existing Ability application-owned idempotency gateway with
+authenticated principal/tenant scope, replay-time enforcement, commit_failed
+receipt handling, contention/revocation and multi-effect admission. Negotiate
+compatibility before default-runner integration. No broad Wave C completion,
+remote attestation, power-loss recovery, exactly-once or rollback claim follows.
