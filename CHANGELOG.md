@@ -1,7 +1,8 @@
 # Changelog
 
-Unreleased documentation: Wave C now records a validated two-adapter additive
-assurance prototype in Dispatch/Workcell. No runtime or v1 schema change.
+Unreleased documentation: Wave C now records a validated three-family additive
+assurance prototype in Dispatch/Workcell/Ability, including separate business
+and receipt commits with authenticated application verification. No runtime or v1 schema change.
 
 This file records user-visible changes to Kujo. It follows
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and

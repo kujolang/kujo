@@ -379,3 +379,16 @@ See [the updated effect direction](EFFECT_CONTRACT_DIRECTION.md).
 The default v1 replay policy and runtime are unchanged; broad migration remains
 unscheduled. The next slice is the application-owned Ability gateway with
 authenticated tenant/principal scope and replay-time enforcement, not result/v2.
+
+### Ability application assurance follow-up
+
+The next application-owned slice is validated with a real SQLite publication
+gateway, separately durable business/receipt commits, external local session
+authentication, owner fencing, revocation, expiry and concurrent replay tests.
+Ability documents the source audit and evidence in
+`docs/audits/application-assurance.md`; Dispatch provides an opt-in profile mapping
+and a host admission callback that keeps the authoritative run lock through
+execution. This supersedes the previous next-task pointer. The next task is the
+Wave C compatibility/migration specification, not more adapters or result/v2.
+Wave C remains experimental and unreleased; no general recovery or exactly-once
+claim follows. Kujo runtime, Workcell and Wave A contracts are unchanged.

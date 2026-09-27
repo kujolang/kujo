@@ -1,6 +1,6 @@
 # Effect contracts after the review-checkpoint slice
 
-Design validated with two local adapters; opt-in prototype implemented, unreleased.
+Design validated with three local adapter families; opt-in prototype implemented, unreleased.
 Broad migration remains unscheduled; no execution-result/v2 ships.
 Core remains responsible for capability enforcement and confined host operations.
 Dispatch owns admission; authorized adapters own observation and attestation.
@@ -115,8 +115,18 @@ Dispatch `docs/audits/effect-assurance-prototype.md` and
 `docs/effect-assurance-prototype.md`.
 
 Keep additive assurance; there is no evidence yet requiring execution-result/v2.
-Next validate the existing Ability application-owned idempotency gateway with
-authenticated principal/tenant scope, replay-time enforcement, commit_failed
-receipt handling, contention/revocation and multi-effect admission. Negotiate
-compatibility before default-runner integration. No broad Wave C completion,
+The third application-owned Ability profile now validates authenticated local
+principal/tenant scope, dual business/receipt commits, commit_failed recovery,
+concurrent retries, revocation and expiry at final mutation admission. Its fixed
+application profile fits the existing digest bindings; one additive mechanism
+enum, ability_application_gateway, avoids describing dual commits as atomic.
+Dispatch retains the run lock across reload, opt-in admission and execution.
+Application authorization is checked independently inside its SQLite transaction.
+There is no cross-store atomicity guarantee.
+
+Next write the Wave C compatibility/migration specification: negotiate alpha1
+mechanisms and profiles, define unsupported-profile failure, preserve legacy v1
+opt-out behavior and the unknown external-idempotent exception, specify fresh
+admission and receipt recovery obligations, and design multi-effect admission
+without broad implementation or default-runner enablement. No broad Wave C completion,
 remote attestation, power-loss recovery, exactly-once or rollback claim follows.
