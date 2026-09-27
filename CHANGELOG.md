@@ -1,5 +1,11 @@
 # Changelog
 
+Unreleased architecture documentation: Wave C beta readiness review retains alpha
+until portable commitment vectors, completed profile specifications and migration
+rehearsal are validated. Dispatch fixes optional invalid-evidence fallback; Kujo
+runtime and execution-result/v1 remain unchanged.
+
+
 Unreleased documentation: Wave C persisted negotiation now binds Dispatch policy/configuration revisions across restart, rollback checks and controller replacement. Three real families pass required-mode integration; beta design review is next. Alpha remains opt-in/unreleased. No runtime or v1 result changes.
 
 Unreleased documentation: Wave C now records a validated three-family additive

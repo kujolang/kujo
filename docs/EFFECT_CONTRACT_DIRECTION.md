@@ -150,3 +150,13 @@ families exercise required mode after controller replacement. Legacy workflows k
 v1 semantics; Kujo runtime and execution-result/v1 are unchanged. Next: beta contract design/review, not automatic
 promotion or global enablement. Full-store/history replacement, remote trust and
 multi-effect assurance remain outside this local single-effect guarantee.
+
+## Beta readiness review (2026-09-27)
+
+Dispatch's `docs/effect-assurance-beta-review.md` and companion field inventory and
+profile template complete the contract review. Alpha remains opt-in and unreleased:
+portable commitment/preimage vectors, completed owner profile specifications and
+a three-family alpha-to-beta migration rehearsal block freezing beta. A narrow
+Dispatch fix rejects invalid selected alpha evidence before optional unsupported-
+profile fallback. No runtime, execution-result/v1, adapter, or global enablement
+change. The next slice is contract hardening/migration rehearsal, not Wave D.
