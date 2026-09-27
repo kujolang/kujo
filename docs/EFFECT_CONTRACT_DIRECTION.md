@@ -160,3 +160,15 @@ a three-family alpha-to-beta migration rehearsal block freezing beta. A narrow
 Dispatch fix rejects invalid selected alpha evidence before optional unsupported-
 profile fallback. No runtime, execution-result/v1, adapter, or global enablement
 change. The next slice is contract hardening/migration rehearsal, not Wave D.
+
+## Portable commitments and migration rehearsal (2026-09-27)
+
+Dispatch `docs/contracts/portable-commitments.md` and `docs/contracts/beta-migration.md`
+now define exact bytes, the proposed beta envelope and separate persisted authority.
+SQLite's normative profile lives in Dispatch, Git's in Workcell and the application
+gateway's in Ability. Independent Node/Python checkers reproduce 58 vectors; the
+clean-room artifact check and real three-family alpha/beta migration matrix validate
+the bounded candidate. Alpha remains supported and historical runs stay alpha.
+Proposed beta runs are explicitly required/deny, single-effect, local and unreleased.
+Adoption rehearsal is next; remote trust, optional-beta policy and evidence renewal
+remain outside this slice. Runtime and execution-result/v1 are unchanged.

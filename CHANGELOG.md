@@ -1,5 +1,11 @@
 # Changelog
 
+Unreleased architecture documentation: Wave C portable commitments, owner profile
+specifications and three-family alpha/beta migration rehearsal prepare the bounded
+beta contract for opt-in adoption. Alpha retained; runtime and execution-result/v1
+unchanged.
+
+
 Unreleased architecture documentation: Wave C beta readiness review retains alpha
 until portable commitment vectors, completed profile specifications and migration
 rehearsal are validated. Dispatch fixes optional invalid-evidence fallback; Kujo
