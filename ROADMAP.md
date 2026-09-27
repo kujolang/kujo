@@ -123,7 +123,7 @@ contract reuse, implementation evidence and open boundaries.
 
 | Wave | Current status | Ownership and completion boundary |
 | --- | --- | --- |
-| A — Observability and Measurement Foundation | Partially implemented; first implementation priority | Runtime owns bounded neutral measurements; RunLedger owns aggregation. Wire existing profiling, test behavior, measure overhead and document evidence consumption. |
+| A — Observability and Measurement Foundation | Runtime foundation implemented on main; unreleased | Bounded opt-in VM measurements, versioned summary, behavior tests and measured dev-profile overhead. Watchdog/RunLedger consumption is a documented ecosystem handoff; allocation accounting and release-profile tuning remain unscheduled. See [measurement evidence](docs/NEXT_PHASE_ARCHITECTURE.md#wave-a-measured-evidence-initial-dev-profile-campaign). |
 | B — Durable Agent Execution | Partially implemented in ecosystem; design required for composed boundary | Dispatch owns persisted runs/steps, journals, intervention and continuation; Workcell owns preservation/materialization. Prove stop/restart/resume in separate processes without replaying uncertain effects. |
 | C — First-Class Effect Contracts | Existing conservative effect checks; normalized extension proposed, unscheduled | Ecosystem adapters attest effects; Dispatch validates trust and replay safety. Runtime owns effect mechanisms/capabilities. Producer claims alone are not proof. |
 | D — Universal Tool and Agent Interoperability | SDK/MCP/CLI pieces implemented; universal contract proposed, unscheduled | Ecosystem-owned adapters for MCP, tool calling, agent SDKs, A2A, HTTP/OpenAPI, CLI, Python and TypeScript; provider-neutral core. |

@@ -66,7 +66,12 @@ An interrupted writer can leave empty/truncated output. Consumers must bound rea
 to 8 KiB, validate the schema, and hash accepted bytes. Version 1 preserves names,
 units and meanings; additive fields are allowed within declared bounds.
 
-This is a summary artifact, not another workflow event model. Reference it through
+`outcome` describes the top-level VM result, not completion of detached workers.
+
+This is a summary artifact, not another workflow event model. Watchdog already
+provides `watchdog.native-event.v1` for lifecycle observations; adapters can
+reference this artifact from an execution observation and project its numeric
+counters without copying program content. Reference it through
 existing evidence refs/control-event refs. RunLedger's existing `note` and
 `correlate --dispatch-run` commands preserve a path/digest and workflow association.
 Never convert unsupported usage/cost into zero, sum inclusive wall time as CPU

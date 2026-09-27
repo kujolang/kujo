@@ -19,6 +19,7 @@ Historical completion records are evidence, not instructions to reopen work.
 | Preservation / materialization | Available elsewhere, partially implemented | Workcell `dc2afd1`: `src/evidence/{preservation,execution_result}.kujo`, preservation/coordinator tests; pre-evaluation preservation and provider capability results | Workcell, adapters |
 | Intervention across process lifetime | Available elsewhere | Dispatch persisted boundary and v2 decisions; Leash `56c59c9`, `daemon/src/{chatops,store,policy}.rs` receipt/outbox transport | Dispatch authorization policy; Leash transport |
 | Generic durable Run/Step/Checkpoint | Partially implemented; composition/design required | Dispatch state/revisions/attempts, execution/evaluation/evidence/preservation/reexecution schemas and existing failure golden path | Ecosystem, not a second VM serializer |
+| Lifecycle telemetry | Available elsewhere, implemented | Watchdog `4e07223`: `schemas/watchdog-native-event-v1.schema.json`, `telemetry_native_adapter.kujo`; MCP `src/telemetry/watchdog.kujo` metadata-only producer | Watchdog/producer adapters |
 | Receipts, usage and costs | Available elsewhere | RunLedger `e0187ea`, `src/record.kujo`: nullable usage/cost, correlation IDs, commands/tests/notes; receipt status is not workflow state | RunLedger aggregation; providers supply costs |
 | Failure bundles | Available elsewhere | CaseFile `f26df30`, `casefile.kujo`: redacted repository evidence and reproduction | CaseFile, not continuation authority |
 | Agent/tool lifecycles | Available elsewhere, partial interoperability | Agents SDK `bb2202d`: `src/agents/ai/adapter.kujo` usage extraction and MCP lifecycle tests; MCP `0784589` local framework | SDK/MCP adapters |
@@ -130,7 +131,9 @@ or missing adapter blocks replay, even with a well-formed checkpoint.
 
 Wave C recommendation: extend existing execution-result effect entries, separating
 operation class from replay properties and assurance. Keep existing conservative
-`none/local_reversible/external_idempotent/unknown` admission meaning. Candidate
+class enum (`none`, `local_reversible`, `external_idempotent`,
+`external_non_idempotent`, `destructive`) and effect states. `unknown` is an
+effect state, not a replay-safe class; missing/invalid classes remain unsafe. Candidate
 assurance states are claimed, observed, adapter-attested and independently verified;
 strings alone are not trusted proof. Bind target/scope, attempt, completion,
 transaction/idempotency enforcement evidence, compensation availability and
@@ -159,3 +162,94 @@ and peak RSS through `web_data.rs`. Its host read is shared with the profiler at
 session boundaries; no second resource-usage implementation or per-event syscall
 is needed. Non-Unix/unavailable readings remain null. The original plan's CPU
 unsupported assumption is superseded by this source finding.
+
+## Durable-state crosswalk (audit, not a new lifecycle)
+
+| Requirement | Existing representation | Remaining design boundary |
+| --- | --- | --- |
+| Run / step / attempt identity | Dispatch `run_id`, step `id`, action `attempts` and `control_attempt`; portable result subject has run/step/attempt IDs | Do not conflate transport decision ID, evaluator attempt and action retry |
+| Parent / child | Dispatch `depends_on` DAG edges and scoped descendant barrier | Cross-run ancestry is not a universal contract yet |
+| Inputs / environment | Persisted input and workflow definition; reexecution descriptor source commit, workflow SHA, tool version/image digest, input evidence refs and secret refs | A portable safe-boundary manifest must bind these to verified bytes and adapter identity |
+| Capabilities | Runtime capability gates; workflow/tool admission and preservation capability outcomes | Persist the relevant policy identity/digest; a producer's claimed policy is not runtime enforcement evidence |
+| Results / effects / evidence | Existing execution/evaluation-result and evidence-ref contracts plus control-event refs | Preserve effect uncertainty separately from quality verdict |
+| Checkpoint / preservation | Persisted state revision and journal cursor; Workcell preservation outcome/deadline and reexecution descriptor | Generic checkpoint binding/publication needs composition, not serialization of VM stacks |
+| Evaluation / intervention | Existing boundary, policy result, v2 request/decision, evaluator-only retry | Long pauses need durable evidence and revalidation, not a living controller |
+| Eligibility / lifecycle | `status_is_terminal`: completed/failed/rejected/cancelled; `can_resume_status`: running/paused/interrupted/needs_changes; control barrier independently gates descendants | `indeterminate` belongs to a result; do not silently introduce a conflicting run enum |
+| Failure / uncertainty | Classified execution result; unknown/started effects, corrupt journal and stale decision errors | No automatic recovery converts a crash into a known-safe action |
+
+Source anchors: Dispatch `src/core/state.kujo::{create_run_state,persist_run_state,
+status_is_terminal,can_resume_status}`, `src/core/runner.kujo` locked admission;
+Kujo `schemas/workflow-control/{execution-result,reexecution-descriptor,preservation-outcome}-v1.schema.json`.
+The existing failure-gate example rebuilds a registry and retries evaluation within
+one controller. Its success alone does not prove the requested separate-process
+checkpoint/load/continue golden path.
+
+## Wave A measured evidence (initial dev-profile campaign)
+
+Raw observations and host/build provenance are in
+`benchmarks/results/next-phase-2026-09-26/`. Baseline is immutable `cd6d2ea`;
+candidate runtime is `bdf634f`. Eleven samples/mode with a discarded warmup,
+rotating order, and exact stdout/stderr/success checks:
+
+| Workload | Baseline median ms | Disabled median ms | Enabled median ms | Median paired disabled/baseline delta | Median paired enabled/disabled delta |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 10,000 calls | 372.648 | 377.330 | 435.945 | +1.26% | +6.31% |
+| 1,000 captures/generators | 1536.788 | 1567.494 | 1571.184 | -0.11% | +1.82% |
+| 100 async calls | 450.873 | 446.208 | 478.894 | -0.16% | +6.18% |
+
+These are unoptimized dev executables, process-inclusive measurements with report
+file sync in enabled samples, and substantial host timing dispersion (the JSON
+contains min/p90/max and every sample). Negative deltas are noise, not speedups.
+They establish a nonzero opt-in cost and no observed large disabled regression
+on these workloads; they do not bound production/release overhead or JIT costs.
+
+Focused CLI/schema/behavior tests: 8 passed. The initial test draft used a
+nonexistent language-level generator_next function and an unsupported JIT closure
+fixture; both were corrected to actual language iteration and a supported JIT
+surface. These were harness failures, not suppressed runtime checks. A review
+caught measurement options leaking through legacy args() fallback and added an
+argument-parity regression.
+
+Final Wave A validation: `cargo check`, eight focused measurement tests, and
+`CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 bash scripts/release_gate.sh --full` passed.
+The full gate includes formatting, strict Clippy across all targets/features,
+all Rust suites, 90 native security tests, nine package/module tests, 117 parity
+tests, and dual/interpreter sweeps (149/149 each, eleven explicit fixture skips).
+An additional explicit VM sweep passed 149/149 with the same skips. Cargo audit
+passed against 1,271 advisories and 652 dependencies; its existing documented
+build-only unmaintained-dependency exclusion was unchanged. Optional cargo-deny
+was unavailable, socket serving opt-in and the gate's benchmark smoke remained
+at their defaults; the separate measured campaign above ran in full.
+
+Fresh review checked fixed cardinality, no telemetry content, off-path clocks,
+argument forwarding, detached-work prefix semantics, inclusive timing labels,
+exclusive private report creation, outcome handling and schema bounds. No
+outstanding implementation defect was found. Production optimized overhead is
+not inferred from dev measurements; adoption can measure its own release build.
+
+### Existing observability contract decision
+
+Watchdog already owns `watchdog.native-event.v1`, normalized to
+`watchdog.telemetry.v2`: session/turn/model/agent/tool/handoff/retrieval/workflow/
+approval/execution/error/artifact/evaluation/internal observations, source-owned
+references, usage, costs and bounded scalar attributes. Its adapter explicitly
+excludes prompts, tool inputs/results and document content. MCP already produces
+this contract. Therefore **no new neutral agent lifecycle event contract is
+needed** for Wave A. Keep that event model and Kujo's control-event model distinct:
+observations are not authoritative control transitions.
+
+The runtime-measurements contract is a summary artifact because standalone VM
+execution has no caller-owned trace/event/step identity. It is not a competing
+trace envelope. A Watchdog adapter can attach the report digest as an artifact
+reference to an existing execution observation and project numeric counters into
+bounded scalar attributes, supplying actual caller-observed timestamps and trace
+identity. Adapter conformance and delivery belong to Watchdog/SDK repositories.
+RunLedger keeps receipt/correlation references rather than becoming another event
+store. This handoff needs no provider-specific core fields.
+
+An ingestion caveat from source: Agents SDK `extract_usage_metrics_impl` defaults
+missing usage/cost values to zero for its budget interface; RunLedger starts those
+fields as null. A future aggregator must consult original usage availability and
+estimate provenance rather than interpret every SDK zero as observed zero spend.
+No pricing or billing assumption is imported into the runtime. Existing untracked
+Agents SDK maintenance-agent work was observed and left untouched.
