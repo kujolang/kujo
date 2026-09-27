@@ -1,5 +1,7 @@
 # Changelog
 
+Unreleased documentation: Wave C compatibility/migration specification and shared three-family conformance are recorded; persistent negotiation is next. No runtime or v1 result changes.
+
 Unreleased documentation: Wave C now records a validated three-family additive
 assurance prototype in Dispatch/Workcell/Ability, including separate business
 and receipt commits with authenticated application verification. No runtime or v1 schema change.

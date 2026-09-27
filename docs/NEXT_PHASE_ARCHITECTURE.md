@@ -392,3 +392,13 @@ execution. This supersedes the previous next-task pointer. The next task is the
 Wave C compatibility/migration specification, not more adapters or result/v2.
 Wave C remains experimental and unreleased; no general recovery or exactly-once
 claim follows. Kujo runtime, Workcell and Wave A contracts are unchanged.
+
+### Compatibility specification follow-up (2026-09-27)
+
+The Wave C compatibility/migration specification is complete in Dispatch
+`docs/effect-assurance-compatibility.md`, with a bounded advisory capability
+catalog and opt-in reference evaluator tested through SQLite, Git and Ability
+verifiers. This supersedes the prior compatibility-document next task. Next is
+persisted admission negotiation and mixed-version restart/rollback tests. Alpha
+remains unreleased; general ecosystem migration, remote trust and multi-effect
+admission remain incomplete. Runtime and v1 result contracts are unchanged.

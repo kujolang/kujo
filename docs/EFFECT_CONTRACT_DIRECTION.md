@@ -130,3 +130,19 @@ opt-out behavior and the unknown external-idempotent exception, specify fresh
 admission and receipt recovery obligations, and design multi-effect admission
 without broad implementation or default-runner enablement. No broad Wave C completion,
 remote attestation, power-loss recovery, exactly-once or rollback claim follows.
+
+## Compatibility specification follow-up
+
+Dispatch `docs/effect-assurance-compatibility.md` is now the single normative
+compatibility/migration authority. It separates result, envelope and profile
+versions; specifies host-only exact registry selection, explicit fallback and
+required assurance; preserves v1 semantics and exact historical result bytes;
+and defines conformance plus alpha/beta/stable exit criteria. Three real adapter
+families exercise the shared reference evaluator. Alpha1 stays opt-in, experimental
+and unreleased. The reference modes are not global or persisted workflow defaults.
+
+This supersedes the earlier next-task pointer: next implement compatibility
+negotiation in persisted Dispatch admission, including operator mode/profile and
+configuration revision, restart/rollback downgrade protection and mixed-version
+consumer tests. No new adapter, result/v2, remote PKI or multi-effect execution
+belongs in that slice. Runtime and execution-result/v1 remain unchanged.
