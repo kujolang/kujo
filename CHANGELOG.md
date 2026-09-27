@@ -1,3 +1,7 @@
+Unreleased architecture documentation: independent beta consumer adoption rehearsal
+passed in the bounded required/deny domain; alpha compatibility retained. No runtime
+or execution-result/v1 change.
+
 # Changelog
 
 Unreleased architecture documentation: Wave C portable commitments, owner profile

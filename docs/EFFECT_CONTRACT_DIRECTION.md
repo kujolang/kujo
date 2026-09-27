@@ -172,3 +172,15 @@ the bounded candidate. Alpha remains supported and historical runs stay alpha.
 Proposed beta runs are explicitly required/deny, single-effect, local and unreleased.
 Adoption rehearsal is next; remote trust, optional-beta policy and evidence renewal
 remain outside this slice. Runtime and execution-result/v1 are unchanged.
+
+## Independent beta adoption rehearsal (2026-09-27)
+
+Dispatch `interop/beta-consumer` independently implements the published beta contract
+in Python from frozen specifications, schemas and vectors. All58 vectors, three
+real-family observations, fresh-process evaluation and126 negative decisions pass.
+The scoped adoption decision is YES; beta remains opt-in/unreleased, required/deny
+and single-effect. Existing alpha runs remain alpha. See Dispatch
+`docs/audits/independent-beta-adoption.md` for evidence and trust limitations.
+Next interoperability target: Agents SDK Ability gateway tool boundary, keeping
+Dispatch admission authority external to the agent. No Wave D implementation is
+part of this milestone.
