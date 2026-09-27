@@ -4,6 +4,10 @@ or execution-result/v1 change.
 
 # Changelog
 
+Unreleased architecture documentation: independent native TypeScript participant
+adoption of the generic Wave D core; real Workcell Git crash/replay and concurrent
+one-use admission evidence. Existing participants and runtime remain unchanged.
+
 Unreleased architecture documentation: Wave D generic correlation core extracted
 from four participant handoffs across two effect families. Historical handoffs
 remain supported through adapters; no runtime or replay-authority change.

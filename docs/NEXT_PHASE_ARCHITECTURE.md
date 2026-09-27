@@ -418,3 +418,21 @@ identity details and effect-family evidence in separate versioned contracts.
 Ability receipts are not universal; a Git intent commitment is not an application
 transaction. No generic handoff schema, remote trust or multi-effect behavior was
 introduced. Wave D remains experimental and unreleased.
+
+## Wave D external TypeScript adoption — 2026-09-27
+
+Dispatch `interop/typescript-participant` independently implements the published
+alpha correlation core using TypeScript and pinned generic Node dependencies. It
+produces native generic handoffs rather than adapting a historical participant.
+An operator-installed closed extension validator plugs into the existing generic
+reader; no new family-specific core reader or replay policy is introduced.
+
+Real pre/post-CAS SIGKILL paths retain unknown participant knowledge, use Workcell
+live beta verification and resume through persisted Dispatch required/deny review.
+Four concurrent contenders admit one execution, retaining one logical Git effect.
+The four existing participants retain historical bytes and their regression paths.
+This is local trusted-host interoperability, not remote authentication, machine-loss
+recovery, arbitrary effect support or stable packaging. See Dispatch
+`docs/audits/wave-d-typescript.md` for exact validation and remaining boundaries.
+The next bounded test is an independently implemented external Python participant;
+Kujo runtime and execution-result/v1 remain unchanged.
