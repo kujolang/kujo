@@ -1,6 +1,6 @@
 # Changelog
 
-Unreleased documentation: Wave C compatibility/migration specification and shared three-family conformance are recorded; persistent negotiation is next. No runtime or v1 result changes.
+Unreleased documentation: Wave C persisted negotiation now binds Dispatch policy/configuration revisions across restart, rollback checks and controller replacement. Three real families pass required-mode integration; beta design review is next. Alpha remains opt-in/unreleased. No runtime or v1 result changes.
 
 Unreleased documentation: Wave C now records a validated three-family additive
 assurance prototype in Dispatch/Workcell/Ability, including separate business

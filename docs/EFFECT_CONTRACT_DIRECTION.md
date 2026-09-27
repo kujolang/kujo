@@ -124,12 +124,9 @@ Dispatch retains the run lock across reload, opt-in admission and execution.
 Application authorization is checked independently inside its SQLite transaction.
 There is no cross-store atomicity guarantee.
 
-Next write the Wave C compatibility/migration specification: negotiate alpha1
-mechanisms and profiles, define unsupported-profile failure, preserve legacy v1
-opt-out behavior and the unknown external-idempotent exception, specify fresh
-admission and receipt recovery obligations, and design multi-effect admission
-without broad implementation or default-runner enablement. No broad Wave C completion,
-remote attestation, power-loss recovery, exactly-once or rollback claim follows.
+The compatibility/migration specification below now records the obligations derived
+from these three families. No broad Wave C completion, remote attestation,
+power-loss recovery, exactly-once or rollback claim follows.
 
 ## Compatibility specification follow-up
 
@@ -139,10 +136,17 @@ versions; specifies host-only exact registry selection, explicit fallback and
 required assurance; preserves v1 semantics and exact historical result bytes;
 and defines conformance plus alpha/beta/stable exit criteria. Three real adapter
 families exercise the shared reference evaluator. Alpha1 stays opt-in, experimental
-and unreleased. The reference modes are not global or persisted workflow defaults.
+and unreleased. The modes are not global defaults. The subsequent persisted
+negotiation slice below binds opt-in run authority to those semantics.
 
-This supersedes the earlier next-task pointer: next implement compatibility
-negotiation in persisted Dispatch admission, including operator mode/profile and
-configuration revision, restart/rollback downgrade protection and mixed-version
-consumer tests. No new adapter, result/v2, remote PKI or multi-effect execution
-belongs in that slice. Runtime and execution-result/v1 remain unchanged.
+## Persisted negotiation implemented (unreleased)
+
+Dispatch now binds opt-in assurance requirements and exact operator configuration
+revisions to authoritative run state and its existing control journal. The canonical
+[implementation contract](https://github.com/kujolang/dispatch/blob/main/docs/persisted-assurance-negotiation.md)
+documents live locked rechecks, guarded storage for old-controller refusal, immutable
+policy, pinned SQLite authority, and checkpoint/bundle limitations. All three local
+families exercise required mode after controller replacement. Legacy workflows keep
+v1 semantics; Kujo runtime and execution-result/v1 are unchanged. Next: beta contract design/review, not automatic
+promotion or global enablement. Full-store/history replacement, remote trust and
+multi-effect assurance remain outside this local single-effect guarantee.
