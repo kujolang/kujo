@@ -1,0 +1,20 @@
+$ /tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/sdk_contract_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 23 total, 23 passed, 0 failed
+Time:  763ms
+============================================================
+
+All tests passed! ✨
+$ /tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/security_redaction_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 2 total, 2 passed, 0 failed
+Time:  50ms
+============================================================
+
+All tests passed! ✨

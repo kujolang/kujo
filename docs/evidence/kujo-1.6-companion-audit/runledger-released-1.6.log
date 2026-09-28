@@ -1,0 +1,23 @@
+$ bash tests/run.sh
+
+RunLedger tests: 63 passed, 0 failed
+Added note to 2026-09-28-codex-cli-test-001
+Added note to 2026-09-28-codex-cli-test-001
+Added follow-up to 2026-09-28-codex-cli-test-001
+Updated usage for 2026-09-28-codex-cli-test-001
+Updated cost for 2026-09-28-codex-cli-test-001
+Finished run: 2026-09-28-codex-cli-test-001
+  status:       partial
+  end commit:   c3e43cc078b870a30acc6cf9caba09e3df67d99f
+  changed files: 1
+Wrote report to /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//runledger-cli-test.PlxkwV/RUNLEDGER_REPORT.md
+Wrote report to /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//runledger-cli-test.PlxkwV/nested/out/RUNLEDGER_REPORT.md
+Finished run: 2026-09-28-local-agent-no-git-001
+  status:       pass
+  end commit:   -
+  changed files: 0
+Finished run: 2026-09-28-local-agent-no-commit-repo-001
+  status:       pass
+  end commit:   -
+  changed files: 1
+CLI integration: ok

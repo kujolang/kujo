@@ -1,0 +1,12 @@
+$ bash tests/test_01_unit_harness.sh
+test_01_permission_checks: all assertions passed
+test_01_pattern_matching: all assertions passed
+test_01_schema_validation: all assertions passed
+test_04_make_safety: all assertions passed
+test_04_make_profile: all assertions passed
+test_05_make_schema_contract: all assertions passed
+test_06_make_enrich: all assertions passed
+[KUJORUN001] [runtime] Runtime Error: Module not found: ability; Check that 'ability' exists as a flat <module>.kujo file or a nested src/... path under the package root, and confirm the import name matches the on-disk layout.
+  --> 0:0
+   = help: Check that the module exists as <module>.kujo or as a dotted src/... path under the package root.
+

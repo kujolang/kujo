@@ -1,0 +1,37 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ runner completes basic non-stream agent run with mock model adapter (282ms)
+  ✓ runner returns invalid_config when ai adapter is missing (98ms)
+  ✓ runner returns failed status when model adapter returns error (197ms)
+  ✓ runner exits with cancelled status before model call when token is cancelled (132ms)
+  ✓ runner exits with cancelled status after model call when token stage matches (203ms)
+  ✓ runner stops before model when budget is already exceeded (158ms)
+  ✓ runner stops after model when token budget is exceeded (207ms)
+  ✓ runner enforces timeout before model using injected runtime clock (143ms)
+  ✓ runner enforces timeout after model independent of provider result (178ms)
+  ✓ runner returns max_iterations status when iteration limit is reached (165ms)
+  ✓ runner retries retryable model failures and succeeds within retry budget (222ms)
+  ✓ runner fails deterministically when retry budget is exhausted (180ms)
+  ✓ runner rejects unknown requested tools before model execution (130ms)
+  ✓ runner executes model-emitted tool calls using registry handlers (257ms)
+  ✓ runner fails with approval_denied when tool call is denied by approval provider (235ms)
+  ✗ runner stream run fails deterministically on guardrail_blocked event (210ms)
+    Error: Missing map key: "stream"
+  ✗ runner injects retrieval context into model messages when enabled (245ms)
+    Error: Assertion failed: expected Str("citation-doc-1"), got Str("cite-rag-1")
+  ✓ runner executes explicit handoff to configured target agent (411ms)
+  ✓ runner persists final output artifact and returns artifact references (243ms)
+  ✓ runner blocks handoff loop using visited target history (159ms)
+  ✓ runner blocks handoff when max depth is exhausted (167ms)
+  ✓ runner emits budget telemetry events during successful runs (222ms)
+  ✓ runner stream and non-stream modes produce equivalent terminal output (406ms)
+  ✓ runner fails when stream callback raises an exception (192ms)
+  ✓ guardrail stream events map to deterministic guardrail_blocked kind (79ms)
+
+Tests: 25 total, 23 passed, 2 failed
+Time:  5495ms
+============================================================
+
+2 test(s) failed

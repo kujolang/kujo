@@ -1,0 +1,35 @@
+$ /tmp/kujo16-publication/clean-installer/bin/kujo run build.kujo -- --help
+╔════════════════════════════════════════════════╗
+║        Kujo Static Site Generator              ║
+╚════════════════════════════════════════════════╝
+
+Loaded configuration from kujo-ssg.yml
+Usage: kujo run ./build.kujo [options]
+
+Site build options:
+  --output <dir>                Output directory (default: output)
+  --content <dir>               Content directory (default: content)
+  --templates <dir>             Templates directory (default: templates)
+  --assets <dir>                Assets directory (default: assets)
+  --posts-per-page <n>          Pagination size (default: 5)
+  --sort-by <date|title|author|order>
+  --fonts <comma,list>          Google fonts list
+  --site-title <text>
+  --site-tagline <text>
+  --site-url <url>
+  --robots <public|private>
+  --llms <public|private>
+  --watch                       Reserved (not implemented)
+  --minify                      Generate minified CSS/JS
+  --download-remote-images      Download remote featured images
+  --drafts                      Include draft content (preview builds)
+  --blog-slug <slug>            Blog root slug (default: blog)
+  --posts-at-root               Keep post permalinks at /<slug>/
+  --init <yml|yaml|json>        Bootstrap starter project
+  --version                     Print version and exit
+  --help                        Show this help and exit
+
+Benchmark compatibility options:
+  --no-index                    Skip index/blog listing pages
+  --no-aux                      Skip feed/sitemap/robots/llms generation
+  --no-aliases                  Skip flat .html redirect aliases (clean URLs only)

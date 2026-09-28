@@ -1,0 +1,108 @@
+$ /tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/run_basic_runner_tests.kujo -v
+
+============================================================
+Test Results
+============================================================
+  ✓ runner completes basic non-stream agent run with mock model adapter (242ms)
+  ✓ runner returns invalid_config when ai adapter is missing (74ms)
+  ✓ runner returns failed status when model adapter returns error (180ms)
+  ✓ runner exits with cancelled status before model call when token is cancelled (120ms)
+  ✓ runner exits with cancelled status after model call when token stage matches (178ms)
+  ✓ runner stops before model when budget is already exceeded (136ms)
+  ✓ runner stops after model when token budget is exceeded (204ms)
+  ✓ runner enforces timeout before model using injected runtime clock (112ms)
+  ✓ runner enforces timeout after model independent of provider result (182ms)
+  ✓ runner returns max_iterations status when iteration limit is reached (185ms)
+  ✓ runner retries retryable model failures and succeeds within retry budget (248ms)
+  ✓ runner fails deterministically when retry budget is exhausted (181ms)
+  ✓ runner rejects unknown requested tools before model execution (130ms)
+  ✓ runner executes model-emitted tool calls using registry handlers (267ms)
+  ✓ runner fails with approval_denied when tool call is denied by approval provider (221ms)
+  ✗ runner stream run fails deterministically on guardrail_blocked event (191ms)
+    Error: Missing map key: "stream"
+  ✗ runner injects retrieval context into model messages when enabled (263ms)
+    Error: Assertion failed: expected Str("citation-doc-1"), got Str("cite-rag-1")
+  ✓ runner executes explicit handoff to configured target agent (403ms)
+  ✓ runner persists final output artifact and returns artifact references (347ms)
+  ✓ runner blocks handoff loop using visited target history (309ms)
+  ✓ runner blocks handoff when max depth is exhausted (193ms)
+  ✓ runner emits budget telemetry events during successful runs (293ms)
+  ✓ runner stream and non-stream modes produce equivalent terminal output (428ms)
+  ✓ runner fails when stream callback raises an exception (206ms)
+  ✓ guardrail stream events map to deterministic guardrail_blocked kind (81ms)
+
+Tests: 25 total, 23 passed, 2 failed
+Time:  5755ms
+============================================================
+
+2 test(s) failed
+$ /tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/tool_registry_tests.kujo -v
+
+============================================================
+Test Results
+============================================================
+  ✓ tool registry registers, resolves, and lists tool metadata deterministically (31ms)
+  ✓ tool registry rejects duplicate tool names (31ms)
+  ✓ tool metadata retrieval returns immutable copies (31ms)
+  ✓ tool contract validation and missing tool lookup are deterministic (28ms)
+  ✓ tool input validation succeeds for valid schema-compliant payload (34ms)
+  ✓ tool input validation rejects missing required field (31ms)
+  ✓ registered tool input validation rejects unknown fields (36ms)
+  ✓ registered tool execution returns output on successful handler run (34ms)
+  ✓ registered tool execution persists handler emitted artifacts when artifact store is provided (49ms)
+  ✓ registered tool execution maps handler failure to tool_execution_failed (41ms)
+  ✓ registered tool execution enforces timeout with deterministic error (35ms)
+  ✓ registered tool execution returns approval_required when policy requires manual approval (42ms)
+  ✓ registered tool execution returns approval_denied when provider denies request (59ms)
+  ✓ registered tool execution proceeds when provider approves request (57ms)
+  ✓ registered tool execution applies optional output sanitizer callback (36ms)
+  ✓ registered tool execution falls back when sanitizer rejects output (32ms)
+
+Tests: 16 total, 16 passed, 0 failed
+Time:  678ms
+============================================================
+
+All tests passed! ✨
+$ /tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/security_approval_policy_tests.kujo -v
+
+============================================================
+Test Results
+============================================================
+  ✓ approval policy mode registry exposes required modes (17ms)
+  ✓ always-allow and always-deny policies produce deterministic outcomes (22ms)
+  ✓ write_tool mode requires approval for write-like permissions (24ms)
+  ✓ high-risk and permission-based modes trigger approvals as expected (22ms)
+  ✓ approval provider registries include required kind and status values (15ms)
+  ✓ approval providers resolve approved denied and pending paths (46ms)
+  ✓ guardrail stage and action registries expose required values (14ms)
+  ✓ guardrail rule returns pass when stage does not apply (16ms)
+  ✓ guardrail rule supports warn and block actions (18ms)
+  ✓ guardrail evaluation handles each stage and aggregates highest action (80ms)
+  ✓ built-in minimal guardrails return pass for safe payloads (49ms)
+  ✓ built-in final output size guardrail can warn (42ms)
+  ✓ built-in blocked term and risk guardrails block deterministically (53ms)
+  ✓ redaction policy defaults include sensitive key and value rules (12ms)
+  ✓ event payload redaction masks configured sensitive fields deterministically (18ms)
+  ✓ trace and tool io redaction masks configured keys deterministically (18ms)
+  ✓ redaction toggles can disable event trace and tool io masking (16ms)
+  ✓ memory scope and data class registries expose required values (15ms)
+  ✓ memory write policy allows and denies writes with structured errors (27ms)
+
+Tests: 19 total, 19 passed, 0 failed
+Time:  566ms
+============================================================
+
+All tests passed! ✨
+$ /tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/runner_result_event_contract_tests.kujo -v
+
+============================================================
+Test Results
+============================================================
+  ✓ runner contract shape remains stable for successful run results and lifecycle events (258ms)
+  ✓ runner contract shape remains stable for failed run results and lifecycle events (200ms)
+
+Tests: 2 total, 2 passed, 0 failed
+Time:  487ms
+============================================================
+
+All tests passed! ✨

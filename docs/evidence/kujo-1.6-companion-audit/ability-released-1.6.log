@@ -1,0 +1,7 @@
+$ bash tests/run_tests.sh
+ability contract tests: all assertions passed
+ability runtime contract tests: all assertions passed
+Kujo/TypeScript/Python Ability SDK conformance passed
+Ability registry signature, revocation, compatibility, and isolation checks passed
+Ability fixture devkit validation, approval, idempotency, and receipt checks passed
+check passed: ability.kujo

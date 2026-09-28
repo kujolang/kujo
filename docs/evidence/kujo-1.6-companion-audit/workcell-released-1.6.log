@@ -1,0 +1,253 @@
+$ /tmp/kujo16-publication/clean-installer/bin/kujo run tests/workcell_test.kujo
+PASS default definition validates
+PASS partial sections receive nested defaults
+PASS invalid network type reaches validation without resolver crash
+PASS host networking rejected
+PASS custom internal network accepted
+PASS custom network requires a name
+PASS legacy custom network receives explicit unmanaged egress
+PASS managed egress contract is accepted
+PASS managed egress requires an enforcement profile
+PASS managed egress cannot inherit DNS
+PASS unmanaged egress is explicit
+PASS artifact traversal rejected
+PASS absolute artifact rejected
+PASS non-normalized artifact declaration rejected during validation
+PASS image shell metacharacter rejected
+PASS podman backend accepted
+PASS valid image digest accepted
+PASS invalid image digest rejected
+PASS required digest fails closed without a digest
+PASS required digest accepts a valid digest
+PASS relative signature key accepted
+PASS absolute signature key rejected
+PASS required signature fails closed without a key
+PASS required signature accepts a relative key
+PASS registry allowlist accepts Docker Hub
+PASS registry allowlist rejects an unapproved registry
+PASS unknown fields rejected
+PASS invalid timeout rejected
+PASS fractional timeout rejected
+PASS overflow timeout rejected without runtime crash
+PASS multiplication overflow timeout rejected without runtime crash
+PASS repository build context is allowed
+PASS tmpfs outside /tmp rejected
+PASS custom security profiles accepted
+PASS unconfined security profile rejected
+PASS workspace mount outside /workspace rejected
+PASS secret assignment rejected
+PASS duplicate secret rejected
+PASS duplicate artifact rejected
+PASS artifact max bytes is bounded
+PASS artifact non-normalized limit paths rejected
+PASS artifact extension policy is validated
+PASS artifact secret action is validated
+PASS verification command is accepted
+PASS verification command must be non-empty
+PASS argv validation permits empty non-executable arguments
+PASS verification command names must be unique
+PASS optional integrations default disabled
+PASS optional integration command is bounded
+PASS workspace scan file limit is bounded
+PASS workspace scan depth limit is bounded
+PASS partial resource section is rejected without runtime crash
+PASS partial workspace scan is rejected without runtime crash
+PASS fixed non-root workspace identity is accepted
+PASS rootless workspace identity is accepted
+PASS root workspace identity is rejected
+PASS overflow workspace identity rejected without runtime crash
+PASS CPU limit is bounded
+PASS memory limit is bounded
+PASS overflow memory limit rejected without runtime crash
+PASS PID limit is bounded
+PASS environment names are validated
+PASS environment values are strings
+PASS host-control environment set rejected
+PASS host-control environment allow rejected
+PASS proxy environment allow rejected
+PASS lowercase proxy environment allow rejected
+PASS cloud credential environment allow rejected
+PASS runtime control environment allow rejected
+PASS null secrets with configured environment is handled without runtime crash
+PASS container environment is explicit
+PASS secret is passed by name only
+PASS rootless workspace identity maps to container root
+PASS existing workspace mount uses canonical host path
+PASS partial policy definition is rejected without runtime crash
+PASS partial policy inspection is rejected without runtime crash
+PASS partial spawn options are rejected without runtime crash
+PASS partial labels definition is rejected without runtime crash
+PASS partial definition summary is rejected without runtime crash
+PASS partial daemon security definition is rejected without runtime crash
+PASS partial verification definition is rejected without runtime crash
+PASS partial integrations definition is rejected without runtime crash
+PASS partial dry-run integrations definition is rejected without runtime crash
+PASS partial image build definition is rejected without runtime crash
+PASS partial image ensure definition is rejected without runtime crash
+PASS partial receipt definition is rejected without runtime crash
+PASS partial receipt path input is rejected without runtime crash
+PASS partial container policy is rejected without runtime crash
+PASS partial receipt state input is rejected without runtime crash
+PASS partial receipt error input is rejected without runtime crash
+PASS partial receipt finish input is rejected without runtime crash
+PASS null lines input is handled without runtime crash
+PASS null process result is handled without runtime crash
+PASS null process error is handled without runtime crash
+PASS invalid redaction secrets are handled without runtime crash
+PASS invalid environment secrets are handled without runtime crash
+PASS null first-line input is handled without runtime crash
+PASS invalid directory input is handled without runtime crash
+PASS invalid parent input is handled without runtime crash
+PASS invalid base input is handled without runtime crash
+PASS invalid join input is handled without runtime crash
+PASS invalid relative path input is handled without runtime crash
+PASS invalid boundary path input is handled without runtime crash
+PASS invalid symlink path input is handled without runtime crash
+PASS invalid mount path input is handled without runtime crash
+PASS invalid text path input is handled without runtime crash
+PASS invalid JSON path input is handled without runtime crash
+PASS invalid JSON output path is handled without runtime crash
+PASS invalid text search input is handled without runtime crash
+PASS invalid artifact export input is handled without runtime crash
+PASS malformed artifact policy input is handled without runtime crash
+PASS malformed artifact limit input is handled without runtime crash
+PASS invalid execution log input is handled without runtime crash
+PASS invalid manifest write input is handled without runtime crash
+PASS missing manifest directory is handled without runtime crash
+PASS invalid manifest verify input is handled without runtime crash
+PASS invalid image metadata input is handled without runtime crash
+PASS invalid image existence input is handled without runtime invocation
+PASS invalid image pull input is handled without runtime crash
+PASS invalid container log input is handled without runtime invocation
+PASS invalid container stop input is handled without runtime crash
+PASS invalid container removal input is handled without runtime crash
+PASS invalid resource inventory input is handled without runtime invocation
+PASS invalid resource cleanup input is handled without runtime invocation
+PASS invalid image prune input is handled without runtime invocation
+PASS invalid repository inspection input is handled without runtime crash
+PASS invalid symlink scan input is handled without runtime crash
+PASS invalid workspace creation input is handled without runtime crash
+PASS malformed change details input is handled without runtime crash
+PASS invalid change report output input is handled without runtime crash
+PASS invalid patch output input is handled without runtime crash
+PASS invalid patch secret names are handled without runtime crash
+PASS invalid patch secret action is rejected
+PASS invalid doctor input is handled without runtime crash
+PASS invalid doctor backend is rejected before runtime invocation
+PASS invalid policy construction input is handled without runtime crash
+PASS null coordinator output input is handled without runtime crash
+PASS occupied directory creation input is handled without runtime crash
+PASS occupied coordinator output input is handled without runtime crash
+PASS occupied JSON parent input is handled without runtime crash
+error: arguments must be an array
+PASS invalid CLI argument input is handled without runtime crash
+error: option --json is not valid for command version
+error: option --force is not valid for command help
+error: option --version is not valid for command help
+PASS global CLI modes reject unsupported or conflicting options
+error: arguments must contain only strings
+PASS non-string CLI argument input is handled without runtime crash
+error: arguments must contain only strings
+PASS non-string CLI value input is handled without runtime crash
+PASS invalid integration path input is handled without runtime crash
+PASS invalid image source input is handled without runtime crash
+PASS invalid image ensure options are rejected without runtime invocation
+PASS invalid image build input is handled without runtime invocation
+PASS invalid verification execution input is handled without runtime crash
+PASS invalid runtime doctor input is handled without runtime invocation
+PASS policy includes network mode
+PASS policy attaches custom network by name
+PASS none network records deny-by-default egress
+PASS unmanaged egress emits a deployment warning
+PASS managed egress records host enforcement profile
+PASS policy includes read-only root
+PASS policy drops capabilities
+PASS policy never enables privileged
+PASS policy never mounts Docker socket
+PASS policy labels ownership
+PASS policy labels product version
+PASS policy enables init and private namespaces
+PASS policy attaches selected security profiles
+PASS podman policy uses OCI engine and runtime class
+PASS invalid receipt run identifier is handled without runtime crash
+PASS invalid receipt source types are handled without runtime crash
+PASS unreadable receipt definition fails without runtime crash
+PASS receipt separates product and definition versions
+PASS receipt records egress policy and enforcement profile
+PASS empty verification plan succeeds without Docker work
+FAIL skipped verification receipt redacts command literals
+PASS relative path normalizes
+PASS parent traversal rejected
+PASS absolute path rejected
+PASS secret redaction replaces values
+PASS base64-derived secret redaction replaces values
+PASS null process output is normalized
+FAIL receipt command redacts secret literals
+FAIL receipt errors redact secret values
+PASS empty secret does not corrupt logs
+FAIL opt-in integration writes a separate redacted report
+PASS RunLedger adapter links start and finish evidence
+PASS RunLedger finish failure is explicit
+PASS all standard adapters have fixture contracts
+PASS integration timeout is explicit and bounded
+PASS integration failure is explicit and bounded
+PASS dry-run integrations are explicit skips
+FAIL base64-derived secret is redacted from execution logs
+FAIL declared secret is redacted from the persisted Git patch
+FAIL base64-derived secret is redacted from the persisted Git patch
+PASS Git patch reports post-redaction byte counts
+FAIL Git patch redaction does not depend on the artifact secret action
+FAIL Git patch secret reject hook fails the run without persisting the patch
+PASS secret-free Git patch is still persisted under reject
+PASS fixture write is readable by exporter
+PASS symlink artifact source rejected
+PASS artifact byte limit rejects oversized export
+PASS artifact exporter applies normalized per-path limits
+PASS artifact exporter rejects duplicate declarations
+PASS artifact extension policy rejects wrong content type
+FAIL artifact secret reject hook blocks declared secret
+FAIL artifact secret redaction hook changes exported content
+PASS artifact export reports post-redaction byte counts
+PASS artifact exporter rejects overlapping declarations
+FAIL binary artifact secret inspection fails closed
+FAIL binary artifact redaction fails closed
+PASS permission-denied artifact scan fails without runtime crash
+PASS integrity manifest records versioned hashes and includes receipt
+PASS integrity manifest rejects non-normalized file entries
+PASS integrity manifest detects tampering
+PASS integrity manifest rejects duplicate file entries
+PASS integrity manifest rejects omitted file entries
+PASS permission-denied manifest scan fails without runtime crash
+Passed: 200
+Failed: 13
+$ /tmp/kujo16-publication/clean-installer/bin/kujo run tests/workspace_test.kujo
+PASS partial change details workspace is rejected without runtime crash
+PASS partial changed files workspace is rejected without runtime crash
+PASS partial changed details input is rejected without runtime crash
+PASS partial change report input is rejected without runtime crash
+PASS partial patch workspace is rejected without runtime crash
+PASS partial cleanup workspace is rejected without runtime crash
+PASS partial workspace scan limits are rejected without runtime crash
+PASS permission-denied workspace scan is handled without runtime crash
+PASS fixture repository detected
+PASS disposable worktree created
+PASS invalid workspace strategy is rejected
+PASS workspace run identifier traversal is rejected
+PASS invalid cleanup strategy is rejected
+PASS workspace remains cleanable after invalid cleanup strategy
+PASS patch generated
+PASS untracked file appears in patch
+PASS structured change report generated
+PASS change report summarizes patch
+PASS change report preserves tabs and newlines in Git paths
+PASS worktree cleanup succeeded
+PASS spoofed workspace marker is not removed
+PASS symlinked ownership marker cannot authorize direct cleanup
+PASS symlinked ownership marker cannot authorize stale cleanup
+PASS workspace inventory identifies symlinked ownership markers
+PASS active workspace is preserved during cleanup
+PASS empty orphan workspace is safely recovered
+PASS permission-denied orphan cleanup is handled without runtime crash
+PASS missing workspace scan fails with a structured result
+Passed: 28
+Failed: 0

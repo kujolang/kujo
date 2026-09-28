@@ -1,0 +1,16 @@
+$ bash scripts/verify-deterministic-lockfile.sh
+[verify-deterministic-lockfile] success
+$ bash scripts/verify-stale-lockfile.sh
+[verify-stale-lockfile] init
+Kennel initialized kennel.toml
+Kennel defaults are production-oriented: deterministic lockfiles, explicit sources, and trust policy support.
+[verify-stale-lockfile] add local dependency
+Added local-fixture from /private/tmp/kujo-companion-audit/released/kennel/examples/basic-project
+Resolved local-fixture to commit 
+Installed local-fixture into kennel_packages/local-fixture
+Updated kennel.lock
+[verify-stale-lockfile] inject manifest drift
+[verify-stale-lockfile] install from lockfile
+Installed local-fixture into kennel_packages/local-fixture
+Installed dependencies from kennel.lock
+[verify-stale-lockfile] success

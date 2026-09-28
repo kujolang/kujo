@@ -1,0 +1,35 @@
+
+============================================================
+Test Results
+============================================================
+  ✓ runner completes basic non-stream agent run with mock model adapter (313ms)
+  ✓ runner returns invalid_config when ai adapter is missing (132ms)
+  ✓ runner returns failed status when model adapter returns error (222ms)
+  ✓ runner exits with cancelled status before model call when token is cancelled (174ms)
+  ✓ runner exits with cancelled status after model call when token stage matches (236ms)
+  ✓ runner stops before model when budget is already exceeded (172ms)
+  ✓ runner stops after model when token budget is exceeded (223ms)
+  ✓ runner enforces timeout before model using injected runtime clock (149ms)
+  ✓ runner enforces timeout after model independent of provider result (184ms)
+  ✓ runner returns max_iterations status when iteration limit is reached (188ms)
+  ✓ runner retries retryable model failures and succeeds within retry budget (248ms)
+  ✓ runner fails deterministically when retry budget is exhausted (224ms)
+  ✓ runner rejects unknown requested tools before model execution (166ms)
+  ✓ runner executes model-emitted tool calls using registry handlers (306ms)
+  ✓ runner fails with approval_denied when tool call is denied by approval provider (267ms)
+  ✓ runner stream run fails deterministically on guardrail_blocked event (218ms)
+  ✓ runner injects retrieval context into model messages when enabled (288ms)
+  ✓ runner executes explicit handoff to configured target agent (480ms)
+  ✓ runner persists final output artifact and returns artifact references (292ms)
+  ✓ runner blocks handoff loop using visited target history (192ms)
+  ✓ runner blocks handoff when max depth is exhausted (212ms)
+  ✓ runner emits budget telemetry events during successful runs (260ms)
+  ✓ runner stream and non-stream modes produce equivalent terminal output (453ms)
+  ✓ runner fails when stream callback raises an exception (231ms)
+  ✓ guardrail stream events map to deterministic guardrail_blocked kind (119ms)
+
+Tests: 25 total, 25 passed, 0 failed
+Time:  6373ms
+============================================================
+
+All tests passed! ✨
