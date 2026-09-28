@@ -62,17 +62,26 @@ jobs:
               printf '%s contains version %s, expected %s\n' "${package}" "${package_version}" "${EXPECTED_VERSION}" >&2
               exit 1
             fi
-            if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
-              expected_integrity="$(node -e 'const fs=require("node:fs"),c=require("node:crypto"); process.stdout.write("sha512-"+c.createHash("sha512").update(fs.readFileSync(process.argv[1])).digest("base64"))' "${package}")"
-              published_integrity="$(npm view "${package_name}@${package_version}" dist.integrity)"
-              if [[ "${published_integrity}" != "${expected_integrity}" ]]; then
-                printf '%s@%s exists with different artifact bytes; refusing substitution\n' "${package_name}" "${package_version}" >&2
-                exit 1
-              fi
-              printf '%s@%s already contains the exact reviewed bytes; skipping\n' "${package_name}" "${package_version}"
-              return
+            local expected_integrity published_integrity attempt
+            expected_integrity="$(node -e 'const fs=require("node:fs"),c=require("node:crypto"); process.stdout.write("sha512-"+c.createHash("sha512").update(fs.readFileSync(process.argv[1])).digest("base64"))' "${package}")"
+            if ! npm view "${package_name}@${package_version}" version --prefer-online >/dev/null 2>&1; then
+              npm publish "./${package}" --access public --provenance
             fi
-            npm publish "./${package}" --access public --provenance
+            # npm can accept a publish while registry processing still returns
+            # ETARGET. Require exact-byte visibility before advancing the cohort.
+            for attempt in {1..20}; do
+              if published_integrity="$(npm view "${package_name}@${package_version}" dist.integrity --prefer-online 2>/dev/null)"; then
+                if [[ "${published_integrity}" != "${expected_integrity}" ]]; then
+                  printf '%s@%s exists with different artifact bytes; refusing substitution\n' "${package_name}" "${package_version}" >&2
+                  exit 1
+                fi
+                printf '%s@%s is publicly visible with exact reviewed integrity\n' "${package_name}" "${package_version}"
+                return
+              fi
+              sleep 15
+            done
+            printf '%s@%s did not become visible within the bounded registry readback window\n' "${package_name}" "${package_version}" >&2
+            exit 1
           }
           for package in "${native_packages[@]}"; do
             publish_if_missing "${package}"
