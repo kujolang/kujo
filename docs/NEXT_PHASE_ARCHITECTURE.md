@@ -459,3 +459,19 @@ infrastructure. No remote authentication or machine-loss recovery is claimed.
 Canonical detailed evidence: Dispatch `docs/audits/wave-d-python.md`. The next task
 is generic participant SDK API design, comparing both independent external surfaces
 without publishing, freezing the API or moving replay authority out of Dispatch.
+
+## Wave D participant SDK API prototype — 2026-09-28
+
+Dispatch `docs/contracts/participant-sdk/design.md` defines an experimental,
+unreleased API/conformance version separate from `kujo.interop-handoff/v1alpha1`.
+Independent TypeScript/Python codecs remain behind idiomatic exact-byte APIs,
+closed operator-installed extension registration and host-snapshot correlation.
+Pure recording helpers support provisional unknown, usable terminal report and
+fresh recording-only finalization after host readback. They cannot execute effects,
+consume admission, fetch evidence, authenticate a principal or authorize replay.
+
+The shared 45-case SDK corpus, existing portable/parser corpus and actual Git
+pre/post-commit loss/restart/contention fixtures validate the two prototypes.
+Legacy participants and Dispatch production replay code remain unchanged.
+Packaging is the next bounded task if full gates remain green; no publication,
+API stabilization, remote trust or universal execution lifecycle is implied.

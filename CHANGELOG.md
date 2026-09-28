@@ -1,5 +1,7 @@
 Unreleased architecture documentation: independent beta consumer adoption rehearsal
 
+- Architecture docs: experimental participant SDK API prototypes preserve independent TypeScript/Python codecs and host/Dispatch authority; packaging remains a separate task. Runtime unchanged.
+
 Unreleased architecture documentation: independent Python native generic-handoff
 adoption, cross-runtime TypeScript parity, real Git crash/replay and one-use
 contention evidence. Six participant forms now inform SDK API design; runtime
