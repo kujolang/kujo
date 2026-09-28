@@ -1,0 +1,495 @@
+{
+  "id": 36463384911,
+  "head_sha": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "path": ".github/workflows/release-binaries.yml",
+  "html_url": "https://github.com/kujolang/kujo/actions/runs/36463384911",
+  "run_attempt": 1,
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 109067302991,
+      "name": "release-gate",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout AI SDK fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout Agents SDK fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout Eval fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout MCP fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout RAG fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout Dispatch fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout RunLedger fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout Watchdog fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout Relay fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Rust",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release tag and package versions",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run release gate checks",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate hardened RAG HTTP request boundary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout Relay fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout Watchdog fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout RunLedger fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout Dispatch fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout RAG fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout MCP fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout Eval fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout Agents SDK fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout AI SDK fixtures",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109073409840,
+      "name": "build-release-artifacts (windows-latest, windows-x64, win32-x64, kujo.exe, zip, zip)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Rust",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure OpenSSL for Windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify native upgrade and running executable replacement",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate binary commands",
+          "conclusion": "success"
+        },
+        {
+          "name": "Package artifact and checksum",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pack lifecycle-script-free npm platform package",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload artifact bundle",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109073409911,
+      "name": "build-release-artifacts (macos-15, macos-arm64, darwin-arm64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Rust",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure OpenSSL for Windows",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify native upgrade and running executable replacement",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate binary commands",
+          "conclusion": "success"
+        },
+        {
+          "name": "Package artifact and checksum",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pack lifecycle-script-free npm platform package",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload artifact bundle",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109073409936,
+      "name": "build-release-artifacts (macos-15-intel, macos-x64, darwin-x64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Rust",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure OpenSSL for Windows",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify native upgrade and running executable replacement",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate binary commands",
+          "conclusion": "success"
+        },
+        {
+          "name": "Package artifact and checksum",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pack lifecycle-script-free npm platform package",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload artifact bundle",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109073410011,
+      "name": "build-release-artifacts (ubuntu-24.04-arm, linux-arm64, linux-arm64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Rust",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure OpenSSL for Windows",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify native upgrade and running executable replacement",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate binary commands",
+          "conclusion": "success"
+        },
+        {
+          "name": "Package artifact and checksum",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pack lifecycle-script-free npm platform package",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload artifact bundle",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109073410180,
+      "name": "build-release-artifacts (ubuntu-22.04, linux-x64, linux-x64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Rust",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure OpenSSL for Windows",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Verify native upgrade and running executable replacement",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build release binary",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate binary commands",
+          "conclusion": "success"
+        },
+        {
+          "name": "Package artifact and checksum",
+          "conclusion": "success"
+        },
+        {
+          "name": "Pack lifecycle-script-free npm platform package",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload artifact bundle",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109094607810,
+      "name": "pack-npm-runtime",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test and pack neutral npm runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload neutral npm runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109094724113,
+      "name": "publish-release-assets",
+      "conclusion": "skipped",
+      "steps": []
+    },
+    {
+      "id": 109094724121,
+      "name": "publish-npm-runtime",
+      "conclusion": "skipped",
+      "steps": []
+    }
+  ]
+}

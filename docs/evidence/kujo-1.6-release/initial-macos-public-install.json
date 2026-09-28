@@ -1,0 +1,296 @@
+{
+  "ok": true,
+  "root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_",
+  "public_downloads": [
+    {
+      "name": "kujo-v1.6.0-macos-x64.tar.gz",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-macos-x64.tar.gz",
+      "sha256": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317"
+    },
+    {
+      "name": "kujo-v1.6.0-macos-x64.tar.gz.sha256",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-macos-x64.tar.gz.sha256",
+      "sha256": "87212726611fed2ba5448715da7a327fdff8a6a706bc723db2b4fcd53c91b897"
+    },
+    {
+      "name": "kujo-v1.6.0-source.tar.gz",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-source.tar.gz",
+      "sha256": "21379f60f63e638c4e126fe9bc2bb30c56732315ca0118be73016046d6edddd7"
+    },
+    {
+      "name": "kujo-v1.6.0-source.tar.gz.sha256",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-source.tar.gz.sha256",
+      "sha256": "a965a96eade1f700185cd5d69f179453343a209890bef566db242819f294b11f"
+    },
+    {
+      "name": "manifest.json",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/manifest.json",
+      "sha256": "613a57afb9ee8c025dd9bb177625a2b902ebb004d71586625d2d226c3df24aac"
+    },
+    {
+      "name": "manifest.json.sha256",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/manifest.json.sha256",
+      "sha256": "26e3b83b71d135c5d474e3b1508a6be962c946541cf4de27ce2d9d29bc7937e5"
+    }
+  ],
+  "minimal_environment": {
+    "PATH": "/usr/bin:/bin",
+    "HOME": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/home"
+  },
+  "checks": [
+    {
+      "argv": [
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "kujo 1.6.0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/simple.kujo"
+      ],
+      "exit": 0,
+      "stdout": "42\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/vm_closure_adder.kujo"
+      ],
+      "exit": 0,
+      "stdout": "8\n15\n15\n30\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/test_generators.kujo"
+      ],
+      "exit": 0,
+      "stdout": "=== Test 1: Simple Generator ===\nGenerator created, type:\ngenerator\n\n=== Test 2: Generator Iteration ===\nValue:\n1\nValue:\n2\nValue:\n3\n\n=== Test 3: Generator with State ===\nSequence value:\n5\nSequence value:\n10\nSequence value:\n20\n\n=== Test 4: Generator with Parameters ===\nMessage:\nhello\nMessage:\nhello\nMessage:\nhello\n\n=== Test 5: Fibonacci Generator ===\nFib:\n0\nFib:\n1\nFib:\n1\nFib:\n2\nFib:\n3\nFib:\n5\nFib:\n8\n\n=== All Generator Tests Passed ===\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/A_no_return.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n2\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/A_no_return.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n2\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/B_unconditional.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/B_unconditional.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/C_matching.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/C_matching.kujo"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/D_no_match.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/D_no_match.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/E_later_match.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/E_later_match.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/F_nested_if.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/F_nested_if.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/G_nested_loop.kujo"
+      ],
+      "exit": 0,
+      "stdout": "4\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/G_nested_loop.kujo"
+      ],
+      "exit": 0,
+      "stdout": "4\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/H_caller.kujo"
+      ],
+      "exit": 0,
+      "stdout": "11\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/H_caller.kujo"
+      ],
+      "exit": 0,
+      "stdout": "11\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/I_fold.kujo"
+      ],
+      "exit": 0,
+      "stdout": "5\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/I_fold.kujo"
+      ],
+      "exit": 0,
+      "stdout": "5\n9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/J_break_continue.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/J_break_continue.kujo"
+      ],
+      "exit": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/historical.kujo"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "--interpreter",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/kujo-v1.6.0/tests/fixtures/loop_return/historical.kujo"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "run",
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-public-suyhnu5_/async-task.kujo"
+      ],
+      "exit": 0,
+      "stdout": "9\n42\n",
+      "stderr": ""
+    }
+  ],
+  "source_tree_fallback": false
+}

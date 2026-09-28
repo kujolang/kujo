@@ -1,0 +1,41 @@
+{
+  "id": 36471922585,
+  "head_sha": "89d55c60aa1588815284e8cfacc0d71259bd7c19",
+  "path": ".github/workflows/publish-npm-runtime.yml",
+  "html_url": "https://github.com/kujolang/kujo/actions/runs/36471922585",
+  "run_attempt": 1,
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 109096043814,
+      "name": "publish",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Setup Node for trusted publishing",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download npm package artifacts",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate and publish packages",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Setup Node for trusted publishing",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

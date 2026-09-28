@@ -1,0 +1,473 @@
+{
+  "schema": "kujo.release-publication/v1",
+  "release_version": "1.6.0",
+  "status": "KUJO_1_6_RELEASED",
+  "recorded_utc": "2026-09-28T19:45:33.719766+00:00",
+  "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "tag": "v1.6.0",
+  "tag_object": "7f5ec8380e086cac44e16df64a1a65cb1eb7fc84",
+  "tag_type": "annotated, not signed",
+  "tag_target_verified": true,
+  "authorization": "Initial macOS x64 authorization was explicitly expanded by the operator to all five supported native platforms and runtime npm. Tag/source and reviewed macOS/source/runtime artifacts were preserved.",
+  "release": {
+    "id": 398497438,
+    "url": "https://github.com/kujolang/kujo/releases/tag/v1.6.0",
+    "name": "Kujo 1.6.0",
+    "published_at": "2026-09-28T18:06:23Z"
+  },
+  "rc_provenance": {
+    "path": "docs/evidence/kujo-1.6-rc/manifest.json",
+    "sha256": "613a57afb9ee8c025dd9bb177625a2b902ebb004d71586625d2d226c3df24aac",
+    "historical_record_unchanged": true
+  },
+  "cargo_lock_sha256": "26061df9462d1648acc59ce38380ab34bdc3253ad4c66008f125c7793dcdc7ac",
+  "platforms": [
+    {
+      "platform": "linux-x64",
+      "native_archive": "kujo-v1.6.0-linux-x64.tar.gz",
+      "archive_sha256": "142372a0c89f91ece2017034b71a3e800969ab2cd7b13dd2ee18eb39efac4504",
+      "binary_sha256": "6db223fde7bd971aa8a7a78e742ddc93b9138bf1cab672e32b7783c5546873dc",
+      "npm_archive": "kujolang-kujo-linux-x64-1.6.0.tgz",
+      "npm_sha256": "26298b3f72e899bf232cad919ff6264c952eeb6cb045d4cd0af3001d2020c518"
+    },
+    {
+      "platform": "linux-arm64",
+      "native_archive": "kujo-v1.6.0-linux-arm64.tar.gz",
+      "archive_sha256": "f1ab401334634e719f6f85416f400f4eacb63f6baf5f0eac30ff4cba477d7613",
+      "binary_sha256": "a4fd0c8b0e083d7aa3f20589e5aecb5f58abdea34725e848c411215fbf9a0c69",
+      "npm_archive": "kujolang-kujo-linux-arm64-1.6.0.tgz",
+      "npm_sha256": "b01c72db8388cd85e058e56fefc42de2fe047654c280a1fabc06821689ba9c1c"
+    },
+    {
+      "platform": "macos-x64",
+      "native_archive": "kujo-v1.6.0-macos-x64.tar.gz",
+      "archive_sha256": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+      "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+      "npm_archive": "kujolang-kujo-darwin-x64-1.6.0.tgz",
+      "npm_sha256": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258"
+    },
+    {
+      "platform": "macos-arm64",
+      "native_archive": "kujo-v1.6.0-macos-arm64.tar.gz",
+      "archive_sha256": "7257ab8829ba0cb7f425f0c3742b264b8706a791d04e8c87a0d8b87adf61a463",
+      "binary_sha256": "f5fb9ee735a222065e9b688998b213c8167d515b16fbf77088c7c663f52a737d",
+      "npm_archive": "kujolang-kujo-darwin-arm64-1.6.0.tgz",
+      "npm_sha256": "dc89c6bcbd45ef6da48ed55be90103bb6127a6ab9db314793d206af7f6295b4b"
+    },
+    {
+      "platform": "windows-x64",
+      "native_archive": "kujo-v1.6.0-windows-x64.zip",
+      "archive_sha256": "3ad43985ea6d99c6c1e97128009ccb0b45a2b91d4790e4f98cdad8d19dbe8370",
+      "binary_sha256": "94ccf987a3981a67ac2c71541534741251aa5ad97e86ed6aa63eb4480f2350fe",
+      "npm_archive": "kujolang-kujo-win32-x64-1.6.0.tgz",
+      "npm_sha256": "a4f8f1c51e414f7e2c44bd239c41f225f2e7b6cd2da5eda95c4fc29502971602"
+    }
+  ],
+  "toolchains": {
+    "macos-x64": "reviewed Rust/Cargo 1.96.0; original RC bytes retained",
+    "other_four_targets": "Rust 1.98.1; exact-source hosted build 36463384911"
+  },
+  "npm": {
+    "status": "published",
+    "version": "1.6.0",
+    "latest": "1.6.0",
+    "packages": [
+      {
+        "name": "@kujolang/kujo-darwin-arm64",
+        "version": "1.6.0",
+        "sha256": "dc89c6bcbd45ef6da48ed55be90103bb6127a6ab9db314793d206af7f6295b4b",
+        "dist": {
+          "shasum": "e9c331b50d237c9c87094297162c15df4bbae6db",
+          "tarball": "https://registry.npmjs.org/@kujolang/kujo-darwin-arm64/-/kujo-darwin-arm64-1.6.0.tgz",
+          "fileCount": 4,
+          "integrity": "sha512-goQ7GnUppLkPfvJDQ62FHZN3nn93qS9Eh/U5qIoo+xI8UzFAnldLPsCxVtw8HjFLGGwaxLRQcS7+z6fxNWSkqw==",
+          "signatures": [
+            {
+              "sig": "MEYCIQDzNlLpouo3EcH2WdRDylfhKxv9l/W75HZJYatiWjsoWgIhAI65YqK8R4oXlYO6CD8MHvbK+m+oSYxhMeuaIYuVZcTh",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEQCIBep+9WPX/qwKcDA4tVNiC8IQ3zSfq7bnUiQCzWmDPrAAiBR4Ol1aS9TOZULM1konQFwTQ9TCIxNjLFC5g0Z/FvHeg==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-darwin-arm64@1.6.0",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 39421499
+        }
+      },
+      {
+        "name": "@kujolang/kujo-darwin-x64",
+        "version": "1.6.0",
+        "sha256": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+        "dist": {
+          "shasum": "d17866000d1db7a03f4146104cf3d040d1152cc3",
+          "tarball": "https://registry.npmjs.org/@kujolang/kujo-darwin-x64/-/kujo-darwin-x64-1.6.0.tgz",
+          "fileCount": 4,
+          "integrity": "sha512-lzYpk8hYkZFftpFBwuuAvCvafCkhQjgbyDAMXWAECa5aCmgx6MCJ97vXcCDFV8t11C0IvDuhwflE/GBkwvH3Ww==",
+          "signatures": [
+            {
+              "sig": "MEUCIGIbdaKrlHPVav6rIRSxIv7vrggxFBEy8GflMZUoDpmAAiEAkvkqAJeQS7ME+odKhH7x0Apb21nEvt6gmUpOEiz78ZM=",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEUCIEYEYfNY5YUFq0HLZaUEqlvw3seFnUScDIH+etT54TEOAiEA7tUIBgP+wEeVmZZdyTkIfWvK4pQjFzcoFdrYrFwJuAg=",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-darwin-x64@1.6.0",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 43872785
+        }
+      },
+      {
+        "name": "@kujolang/kujo-linux-arm64",
+        "version": "1.6.0",
+        "sha256": "b01c72db8388cd85e058e56fefc42de2fe047654c280a1fabc06821689ba9c1c",
+        "dist": {
+          "shasum": "11dca30879c8d822983d4b215cc606818c8c514f",
+          "tarball": "https://registry.npmjs.org/@kujolang/kujo-linux-arm64/-/kujo-linux-arm64-1.6.0.tgz",
+          "fileCount": 4,
+          "integrity": "sha512-pBxs/mOcB4jApf60OU5I9K1eksnn0818DS9Z74GrEnqm6yU+AaPA9NkaXhKj6iYw9i7mvYO9NbVhDua2gMImDg==",
+          "signatures": [
+            {
+              "sig": "MEQCIF5d6UD/3Xu8gt3rHd5zjnV2FiBe5+NC2PIOl5Orx1/CAiA+aSBvTXojjci5LlUwQg64g5VcK5peps8FB9/I1nGqBw==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEQCIFHvNbu5hQAY/tnKv4m1GOJPSfppXlCNbCHmEjfxJoX3AiBLdYtTq9r/2h8jlRv1WUeXIRVUguDJ9U3Q6iQXuf1lhA==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-linux-arm64@1.6.0",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 44041517
+        }
+      },
+      {
+        "name": "@kujolang/kujo-linux-x64",
+        "version": "1.6.0",
+        "sha256": "26298b3f72e899bf232cad919ff6264c952eeb6cb045d4cd0af3001d2020c518",
+        "dist": {
+          "shasum": "0d1942e9b1083af3e514af6956bec41201264184",
+          "tarball": "https://registry.npmjs.org/@kujolang/kujo-linux-x64/-/kujo-linux-x64-1.6.0.tgz",
+          "fileCount": 4,
+          "integrity": "sha512-dxJNsl9wlRLBihShCMli2ic3EhT47+cNyUBiHpsbTjVTackYlhwW1prBbXH9OcrWu8azvBIMBNMfdbK52H6Ccw==",
+          "signatures": [
+            {
+              "sig": "MEUCIQD717K1dqzexIvPO7zr05xxGS+VUnfNN270O2hP3IGj5AIgAParZk63bYsU7in3Y2GQeduLs6GMr5HCWzLO7IXDsyU=",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEYCIQCJDu+H73p8NkLhejmcHstyfc1tTFbPrx0lJsgZNsKvnAIhAIUebIjw/vp975OCx+epyZXZZ0gyl2SZNx8APolruODH",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-linux-x64@1.6.0",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 50230169
+        }
+      },
+      {
+        "name": "@kujolang/kujo-runtime",
+        "version": "1.6.0",
+        "sha256": "b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc",
+        "dist": {
+          "shasum": "890d87d84f33a71de18790421b0823c78372c22d",
+          "tarball": "https://registry.npmjs.org/@kujolang/kujo-runtime/-/kujo-runtime-1.6.0.tgz",
+          "fileCount": 5,
+          "integrity": "sha512-sIaspgj/RXowiADemg7J1X8WFG35DY9jPjgiRYDIY9tn1uaW211aJKnLt7eYus0PDQ23CIXZuAty4JuAYAC4CQ==",
+          "signatures": [
+            {
+              "sig": "MEQCIC9jiu1mlPuSuA/ymnyNUmppKlxBmxCJnIM4EBS7OOeAAiAlXIRRARtfYCGTwH/ijqsIlZE0gzFOcVERC/fjymdykg==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEQCIHF9xKAXyk6j1K2eGEiJxDtxhPZWvUbR0vUhlkp3saaLAiA8BoiXcqoR/di/p8Ajfqzw+kI+B/XOmXMobKMVv5pDGQ==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-runtime@1.6.0",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 7581
+        }
+      },
+      {
+        "name": "@kujolang/kujo-win32-x64",
+        "version": "1.6.0",
+        "sha256": "a4f8f1c51e414f7e2c44bd239c41f225f2e7b6cd2da5eda95c4fc29502971602",
+        "dist": {
+          "shasum": "bca3c02bac20dc668d31b6ff6b84f8c1cfd36f16",
+          "tarball": "https://registry.npmjs.org/@kujolang/kujo-win32-x64/-/kujo-win32-x64-1.6.0.tgz",
+          "fileCount": 4,
+          "integrity": "sha512-actlSlEoi93oImJ/VSs7MR6ujLPOooSASDvFONOsYzAcEBTDP7+6uH8+Ms3nZibDQBsPOB0levY616EsaCYs5w==",
+          "signatures": [
+            {
+              "sig": "MEQCIFVI5uAuDu2sc/GkWBHz/Ivxy4uj5v8GyuQLZFnYaLDDAiBr4kWKzfjh83mIknLerltoGDjNj4U2pZoEjtQw2AjzJA==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "sig": "MEQCIEK/gAThTB2l+9d391CmJzfg8ALWsT+1qMOVjkTeaunmAiAp2GtgmJIC9fEpHHCl//yxheABJqF5p2hLHg7HucGLbQ==",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            }
+          ],
+          "attestations": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-win32-x64@1.6.0",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "unpackedSize": 49421980
+        }
+      }
+    ],
+    "lifecycle_scripts_disabled_in_install_tests": true,
+    "local_signature_audit": "2 installed packages: registry signatures and attestations verified"
+  },
+  "crate": {
+    "status": "not published",
+    "scope": "not an established current distribution channel; no separate crate-publication authorization"
+  },
+  "participant_sdks": {
+    "status": "private/unpublished",
+    "publication_performed": false
+  },
+  "release_assets_before_this_receipt": [
+    {
+      "name": "checksums.txt",
+      "size": 1254,
+      "digest": "sha256:0827dd82e73681ee8a40467bbdfe8b7bf2e092a4333bc6b5acb6aba580a01201",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/checksums.txt"
+    },
+    {
+      "name": "kujo-v1.6.0-linux-arm64.tar.gz",
+      "size": 20165292,
+      "digest": "sha256:f1ab401334634e719f6f85416f400f4eacb63f6baf5f0eac30ff4cba477d7613",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-linux-arm64.tar.gz"
+    },
+    {
+      "name": "kujo-v1.6.0-linux-arm64.tar.gz.sha256",
+      "size": 97,
+      "digest": "sha256:ba18dfb40d4df0cd044a801956e016dcea4e617496f34347f68580c3c4afb07f",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-linux-arm64.tar.gz.sha256"
+    },
+    {
+      "name": "kujo-v1.6.0-linux-x64.tar.gz",
+      "size": 20951526,
+      "digest": "sha256:142372a0c89f91ece2017034b71a3e800969ab2cd7b13dd2ee18eb39efac4504",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-linux-x64.tar.gz"
+    },
+    {
+      "name": "kujo-v1.6.0-linux-x64.tar.gz.sha256",
+      "size": 95,
+      "digest": "sha256:be07241ce6554ec8a54edb5399606a79d307e8ab4b73673fa4439511ba2bbc04",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-linux-x64.tar.gz.sha256"
+    },
+    {
+      "name": "kujo-v1.6.0-macos-arm64.tar.gz",
+      "size": 18480840,
+      "digest": "sha256:7257ab8829ba0cb7f425f0c3742b264b8706a791d04e8c87a0d8b87adf61a463",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-macos-arm64.tar.gz"
+    },
+    {
+      "name": "kujo-v1.6.0-macos-arm64.tar.gz.sha256",
+      "size": 97,
+      "digest": "sha256:cf73dc31c844592b4cc95f582490e3793b6f55aff3aa662f2575d42c8de4b4d2",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-macos-arm64.tar.gz.sha256"
+    },
+    {
+      "name": "kujo-v1.6.0-macos-x64.tar.gz",
+      "size": 19449047,
+      "digest": "sha256:ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-macos-x64.tar.gz"
+    },
+    {
+      "name": "kujo-v1.6.0-macos-x64.tar.gz.sha256",
+      "size": 95,
+      "digest": "sha256:87212726611fed2ba5448715da7a327fdff8a6a706bc723db2b4fcd53c91b897",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-macos-x64.tar.gz.sha256"
+    },
+    {
+      "name": "kujo-v1.6.0-source.tar.gz",
+      "size": 3827797,
+      "digest": "sha256:21379f60f63e638c4e126fe9bc2bb30c56732315ca0118be73016046d6edddd7",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-source.tar.gz"
+    },
+    {
+      "name": "kujo-v1.6.0-source.tar.gz.sha256",
+      "size": 92,
+      "digest": "sha256:a965a96eade1f700185cd5d69f179453343a209890bef566db242819f294b11f",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-source.tar.gz.sha256"
+    },
+    {
+      "name": "kujo-v1.6.0-windows-x64.zip",
+      "size": 20320872,
+      "digest": "sha256:3ad43985ea6d99c6c1e97128009ccb0b45a2b91d4790e4f98cdad8d19dbe8370",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-windows-x64.zip"
+    },
+    {
+      "name": "kujo-v1.6.0-windows-x64.zip.sha256",
+      "size": 94,
+      "digest": "sha256:9bd5dbcb03c8ddce6a30cbf914293c3f03df34dc1f5d03f20fc6dface671ed71",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujo-v1.6.0-windows-x64.zip.sha256"
+    },
+    {
+      "name": "kujolang-kujo-darwin-arm64-1.6.0.tgz",
+      "size": 19005323,
+      "digest": "sha256:dc89c6bcbd45ef6da48ed55be90103bb6127a6ab9db314793d206af7f6295b4b",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujolang-kujo-darwin-arm64-1.6.0.tgz"
+    },
+    {
+      "name": "kujolang-kujo-darwin-x64-1.6.0.tgz",
+      "size": 19364609,
+      "digest": "sha256:2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujolang-kujo-darwin-x64-1.6.0.tgz"
+    },
+    {
+      "name": "kujolang-kujo-linux-arm64-1.6.0.tgz",
+      "size": 20753965,
+      "digest": "sha256:b01c72db8388cd85e058e56fefc42de2fe047654c280a1fabc06821689ba9c1c",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujolang-kujo-linux-arm64-1.6.0.tgz"
+    },
+    {
+      "name": "kujolang-kujo-linux-x64-1.6.0.tgz",
+      "size": 21249370,
+      "digest": "sha256:26298b3f72e899bf232cad919ff6264c952eeb6cb045d4cd0af3001d2020c518",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujolang-kujo-linux-x64-1.6.0.tgz"
+    },
+    {
+      "name": "kujolang-kujo-runtime-1.6.0.tgz",
+      "size": 2591,
+      "digest": "sha256:b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujolang-kujo-runtime-1.6.0.tgz"
+    },
+    {
+      "name": "kujolang-kujo-win32-x64-1.6.0.tgz",
+      "size": 20156186,
+      "digest": "sha256:a4f8f1c51e414f7e2c44bd239c41f225f2e7b6cd2da5eda95c4fc29502971602",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/kujolang-kujo-win32-x64-1.6.0.tgz"
+    },
+    {
+      "name": "manifest.json",
+      "size": 36033,
+      "digest": "sha256:613a57afb9ee8c025dd9bb177625a2b902ebb004d71586625d2d226c3df24aac",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/manifest.json"
+    },
+    {
+      "name": "manifest.json.sha256",
+      "size": 80,
+      "digest": "sha256:26e3b83b71d135c5d474e3b1508a6be962c946541cf4de27ce2d9d29bc7937e5",
+      "url": "https://github.com/kujolang/kujo/releases/download/v1.6.0/manifest.json.sha256"
+    }
+  ],
+  "gates": {
+    "source_release_build": 36463384911,
+    "artifact_regressions": 36471655629,
+    "checks_per_platform": 27,
+    "total_artifact_checks": 135,
+    "npm_reconciliation": 36471655728,
+    "npm_publication": 36471922585,
+    "public_native_install_and_upgrade": 36472191643,
+    "public_npm_install": 36472190906,
+    "registry_readback": 36473408849,
+    "release_state_guard": 36472842558,
+    "website_deployment": 36472708083
+  },
+  "observations": {
+    "initial_npm_smoke": "ETARGET while npm processed accepted publication; attempt 2 passed all five targets without changing artifacts",
+    "initial_windows_public_smoke": "GitHub anonymous API denial/rate limit after successful binary install/execution; fresh attempt 2 passed unchanged artifacts",
+    "optional_hosted_audits": "cargo-audit and cargo-deny unavailable; not claimed as run",
+    "full_source_gate_log_sha256": "195ac9b55c076e429f3097bd15edb981404e7a54f1d3c572172755d6acd48c8c"
+  },
+  "installers": {
+    "ok": true,
+    "public_url": "https://kujolang.ai/install.sh",
+    "public_sha256": "ac2f554ec020b1c8f1f781d59cf39f0ad976bc3d3a1727f8d0a0acf809f1519b",
+    "canonical_sha256": "ac2f554ec020b1c8f1f781d59cf39f0ad976bc3d3a1727f8d0a0acf809f1519b",
+    "kujo_defaults_commit": "9ecfe6044103aa4964c34570a88c40ded8f838fd",
+    "website_commit": "57a22cf4a236bede37b667ed113c53b6228fb46d",
+    "website_run": 36472708083,
+    "clean_install_exit": 0,
+    "version": "kujo 1.6.0",
+    "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "source_fallback": false,
+    "command": "bash public-install.sh --core --prefix <disposable-root> --bin-dir <disposable-bin>",
+    "setup_action_targets": [
+      "linux-x64",
+      "linux-arm64",
+      "macos-x64",
+      "macos-arm64",
+      "windows-x64"
+    ],
+    "source_checkout_usage": "The ecosystem installer separately fetches selected Kujo sources for shared modules; the executable is downloaded and checksum-verified, never source-built in this test."
+  },
+  "experimental_contracts": {
+    "wave_c": "dispatch.effect-assurance/v1beta1; experimental opt-in required/deny bounded single-effect; alpha retained",
+    "wave_d": "kujo.interop-handoff/v1alpha1 and participant SDK conformance v1alpha1; experimental trusted-local-host; SDKs unpublished"
+  },
+  "post_release": [
+    "Human adopter usability remains unperformed/post-release validation",
+    "Remote participant trust",
+    "Multi-effect assurance",
+    "A2A",
+    "Participant SDK stability/publication"
+  ],
+  "non_claims": [
+    "exactly-once",
+    "universal rollback",
+    "general machine-loss recovery",
+    "hostile total-store rollback protection",
+    "human adopter usability validated"
+  ],
+  "evidence_files": {
+    "cohort.json": "ff124a8db183b60c26b8c143ad149dee03de9dc7377b2626f4726a0c40be4ca6",
+    "final-docs-tests.log": "8c4989347fb62d78cc07a9a154ec86264f71966c435f7e556ea4d59e5790128c",
+    "final-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hosted-gate-summary.log": "a453044faf2900bdaed190b58ec72cb1889e6d8212c49aee704de7bb9c1eef7b",
+    "initial-macos-public-install.json": "422b41f21ad7bd7c4a1ba77c5092d3e4bd88c31214c1651f93808ec8dc8a6b8a",
+    "local-npm-install.json": "a801496eb8efdc115c449e3b8fdf2f8c01445a34c2355513aa306735013ea80e",
+    "npm-pack-dry-run.log": "4e784ad35a882e7c2b7fe3d0787dcdbff9ea8073bf41d168c72d36396bc2c6ee",
+    "npm-reviewed.json": "a9a9e02bb29e35abd450d3b62ba2d1d8dab13d0bb63d5023df1437d337f7223d",
+    "npm-signatures.log": "5de8cf0b31442a701c8aa6568a5a46eba8a904a86abc004f774a6494488a4964",
+    "npm-source-tests.log": "206c42bfbf5ec80bf3868b188351e833a056451f8a73fc17bc810e24fbc9290f",
+    "preflight.json": "f4643ebce2659ee4e6daef4abc68fd6dc89839a35babea10f1efce1009b9815f",
+    "public-installer.json": "43347a3c641ae3c3f2d59c7117fd961f8e234121602bd5bd68bd161dafd84da3",
+    "public-native.json": "6c93a9bf2e6d5fc06d7485f9373b6ebbe08ae88cd32007fad518f7d3107b4f5e",
+    "public-npm.json": "46cbf6011712af14ac04da60505a4dea56a4379052dde2636b5dedd328c72af2",
+    "verification-linux-arm64.json": "30ca01c68515ab87bea1934f8984a2616ba6c88f8656b40eced0e8946ad21f06",
+    "verification-linux-x64.json": "bb6efd16a78d7453fa7b282a0d601794c0d816815f8ff1232f3bfc02281bb8b8",
+    "verification-macos-arm64.json": "deb476232428d08c8a0cce0feed689e16ee1d486b8fbfe64b06bd81102a45401",
+    "verification-macos-x64.json": "9f0b1ffc4af27bfc7d1e2af596249b6caf10615a8d1724cf58f7d881806dc327",
+    "verification-windows-x64.json": "e5c83772d47561d4407a389a69bcfc85c7e01313221fda704c13ce93831c5360",
+    "workflow-36463384911.json": "8881757aef2072be4fe274476eae4661b59e331588b1f78e6fff01bfb9d299fe",
+    "workflow-36471655629.json": "c718d9851ff5eb627fd874ec9d2112f8f221c63be8700ae88b30e3f7938292f4",
+    "workflow-36471655728.json": "e7784dd182273cd7fd8d97dee2a5d9f41cf9c0cf72b3a8f4970703afa1e3585d",
+    "workflow-36471922585.json": "33053520fe9c7116413c66eb3e88bd5887bfc11c87f8b5b37a8f0139d6af272e",
+    "workflow-36472190906.json": "a23170f2c787330fd789f76083e170258521cda55d5f23d1aae2bd9fe5948b6f",
+    "workflow-36472191643.json": "224ec0db70a3d59c7d5fd82ae23f12e7f45f0d62bb87f212ed87f05a53d3079d",
+    "workflow-36472708083.json": "8ce7279910b78096c5a77af9049eeaad7c17107deb79485ae5f1025c10cd0d0e",
+    "workflow-36472842558.json": "476033753d04df5d30fab712df4bca18adc0da0dbb3153efe26484baeb4460cc",
+    "workflow-36473408849.json": "ee8ab42abd1f4e0427ab146bca23d1da2a5944c36f4bbba3b14a0788b69a0eec"
+  },
+  "receipt_note": "This later release-only receipt commit is not the runtime source or tag target. The receipt does not rewrite RC evidence."
+}

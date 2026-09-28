@@ -1,0 +1,264 @@
+{
+  "ok": true,
+  "platform": "macos-x64",
+  "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "archive": "kujo-v1.6.0-macos-x64.tar.gz",
+  "archive_sha256": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+  "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+  "source_tree_fallback": false,
+  "results": [
+    {
+      "args": [
+        "--version"
+      ],
+      "status": 0,
+      "stdout": "kujo 1.6.0\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/A_no_return.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/A_no_return.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/B_unconditional.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/B_unconditional.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/C_matching.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/C_matching.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/D_no_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/D_no_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/E_later_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/E_later_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/F_nested_if.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/F_nested_if.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/G_nested_loop.kujo"
+      ],
+      "status": 0,
+      "stdout": "4\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/G_nested_loop.kujo"
+      ],
+      "status": 0,
+      "stdout": "4\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/H_caller.kujo"
+      ],
+      "status": 0,
+      "stdout": "11\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/H_caller.kujo"
+      ],
+      "status": 0,
+      "stdout": "11\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/I_fold.kujo"
+      ],
+      "status": 0,
+      "stdout": "5\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/I_fold.kujo"
+      ],
+      "status": 0,
+      "stdout": "5\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/J_break_continue.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/J_break_continue.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/historical.kujo"
+      ],
+      "status": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/historical.kujo"
+      ],
+      "status": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/vm_closure_adder.kujo"
+      ],
+      "status": 0,
+      "stdout": "8\n15\n15\n30\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/test_generators.kujo"
+      ],
+      "status": 0,
+      "stdout": "=== Test 1: Simple Generator ===\nGenerator created, type:\ngenerator\n\n=== Test 2: Generator Iteration ===\nValue:\n1\nValue:\n2\nValue:\n3\n\n=== Test 3: Generator with State ===\nSequence value:\n5\nSequence value:\n10\nSequence value:\n20\n\n=== Test 4: Generator with Parameters ===\nMessage:\nhello\nMessage:\nhello\nMessage:\nhello\n\n=== Test 5: Fibonacci Generator ===\nFib:\n0\nFib:\n1\nFib:\n1\nFib:\n2\nFib:\n3\nFib:\n5\nFib:\n8\n\n=== All Generator Tests Passed ===\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/hello.kujo"
+      ],
+      "status": 0,
+      "stdout": "42\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "/Users/runner/work/kujo/kujo/isolated-AH3Uoc/async-task.kujo"
+      ],
+      "status": 0,
+      "stdout": "9\n42\n",
+      "stderr": ""
+    }
+  ]
+}

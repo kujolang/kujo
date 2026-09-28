@@ -1,0 +1,205 @@
+{
+  "id": 36472191643,
+  "head_sha": "89d55c60aa1588815284e8cfacc0d71259bd7c19",
+  "path": ".github/workflows/release-published-artifact-smoke.yml",
+  "html_url": "https://github.com/kujolang/kujo/actions/runs/36472191643",
+  "run_attempt": 2,
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 109097774838,
+      "name": "validate-published-artifact-install (windows-latest, windows-x64, kujo.exe, zip, zip)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify published artifact",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify upgrade from a previous published runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109097776035,
+      "name": "validate-published-artifact-install (ubuntu-latest, linux-x64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify published artifact",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify upgrade from a previous published runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109097776483,
+      "name": "validate-published-artifact-install (macos-15, macos-arm64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify published artifact",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify upgrade from a previous published runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109097776710,
+      "name": "validate-published-artifact-install (ubuntu-24.04-arm, linux-arm64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify published artifact",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify upgrade from a previous published runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109097776903,
+      "name": "validate-published-artifact-install (macos-15-intel, macos-x64, kujo, tar.gz, tar)",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Download and verify published artifact",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify upgrade from a previous published runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Exercise checksum-verified setup action",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout installer only (does not build runtime)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

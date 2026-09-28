@@ -28,7 +28,8 @@ artifact source or tag target.
 
 The [RC provenance](evidence/kujo-1.6-rc/manifest.json) remains unchanged and retains
 its historical unpublished/authorization state. It records the original local
-runtime and full Dispatch/Workcell validation. The publication receipt is separate.
+runtime and full Dispatch/Workcell validation. The [publication receipt](evidence/kujo-1.6-release/publication.json) is separate
+(schema `kujo.release-publication/v1`; adjacent SHA-256 file).
 
 ## Hosted verification
 
@@ -58,8 +59,12 @@ macOS builds used macOS 15 runners; Windows used `windows-latest`.
 
 The repository installer, setup action and current installation instructions now
 select 1.6.0. The setup action includes Linux arm64. The website installer is
-synchronized separately and its deployment/public-byte result is recorded in the
-final publication receipt. Historical release references remain historical.
+synchronized and deployed at website commit `57a22cf4a236bede37b667ed113c53b6228fb46d`.
+The public script SHA-256 is
+`ac2f554ec020b1c8f1f781d59cf39f0ad976bc3d3a1727f8d0a0acf809f1519b`;
+a disposable full core installation reported `kujo 1.6.0` and the original
+reviewed macOS x64 binary hash, without a source-build fallback. The installer
+separately fetches shared Kujo modules under its existing source-selection policy. Historical release references remain historical.
 
 ## Experimental boundaries
 
@@ -72,3 +77,9 @@ No exactly-once, universal rollback, general machine-loss recovery, remote
 participant trust, multi-effect assurance or stable participant SDK is claimed.
 Source-blind agent adopter rehearsal passed. Human adopter usability remains
 post-release validation and has not been claimed as performed.
+
+The npm publisher now waits for registry visibility and compares exact SHA-512
+integrity before advancing. The unchanged six published packages passed that
+readback gate in [36473408849](https://github.com/kujolang/kujo/actions/runs/36473408849).
+A fresh local npm installation also verified both installed packages’ registry
+signatures and attestations.

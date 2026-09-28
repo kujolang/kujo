@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "info": {
+    "platform": "darwin",
+    "arch": "x64",
+    "packageName": "@kujolang/kujo-darwin-x64",
+    "packageVersion": "1.6.0",
+    "runtimeVersion": "1.6.0",
+    "binaryName": "kujo",
+    "binaryPath": "/private/tmp/kujo16-publication/npm-clean-consumer/node_modules/@kujolang/kujo-darwin-x64/bin/kujo",
+    "source": "bundled"
+  },
+  "version": "kujo 1.6.0",
+  "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+  "lifecycle_scripts": false
+}

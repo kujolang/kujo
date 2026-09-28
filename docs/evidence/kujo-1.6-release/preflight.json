@@ -1,0 +1,16 @@
+{
+  "target": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "clean_head": "8e0a5d3497d7478e72e45285bd91268cb7080bae",
+  "artifact_root": "/Users/robertdevore/2026/Kujolang/release-candidates/kujo-1.6.0-44af277",
+  "hashes": {
+    "native/kujo": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "kujo-v1.6.0-macos-x64.tar.gz": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+    "kujo-v1.6.0-source.tar.gz": "21379f60f63e638c4e126fe9bc2bb30c56732315ca0118be73016046d6edddd7",
+    "npm/kujolang-kujo-darwin-x64-1.6.0.tgz": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+    "npm/kujolang-kujo-runtime-1.6.0.tgz": "b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc"
+  },
+  "rc_manifest_sha256": "613a57afb9ee8c025dd9bb177625a2b902ebb004d71586625d2d226c3df24aac",
+  "notes_source_sha256": "708a43bc140f16f9ebcafe05f02c3d04940e4b973169b8fc73d1d3773c9297f3",
+  "source_archive_exact": true,
+  "version": "kujo 1.6.0"
+}

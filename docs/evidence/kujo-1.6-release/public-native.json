@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "assets": [
+    {
+      "name": "kujo-v1.6.0-linux-x64.tar.gz",
+      "sha256": "142372a0c89f91ece2017034b71a3e800969ab2cd7b13dd2ee18eb39efac4504",
+      "anonymous_download": true
+    },
+    {
+      "name": "kujo-v1.6.0-linux-arm64.tar.gz",
+      "sha256": "f1ab401334634e719f6f85416f400f4eacb63f6baf5f0eac30ff4cba477d7613",
+      "anonymous_download": true
+    },
+    {
+      "name": "kujo-v1.6.0-macos-x64.tar.gz",
+      "sha256": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+      "anonymous_download": true
+    },
+    {
+      "name": "kujo-v1.6.0-macos-arm64.tar.gz",
+      "sha256": "7257ab8829ba0cb7f425f0c3742b264b8706a791d04e8c87a0d8b87adf61a463",
+      "anonymous_download": true
+    },
+    {
+      "name": "kujo-v1.6.0-windows-x64.zip",
+      "sha256": "3ad43985ea6d99c6c1e97128009ccb0b45a2b91d4790e4f98cdad8d19dbe8370",
+      "anonymous_download": true
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "platforms": [
+    {
+      "platform": "linux-x64",
+      "native_archive": "kujo-v1.6.0-linux-x64.tar.gz",
+      "archive_sha256": "142372a0c89f91ece2017034b71a3e800969ab2cd7b13dd2ee18eb39efac4504",
+      "binary_sha256": "6db223fde7bd971aa8a7a78e742ddc93b9138bf1cab672e32b7783c5546873dc",
+      "npm_archive": "kujolang-kujo-linux-x64-1.6.0.tgz",
+      "npm_sha256": "26298b3f72e899bf232cad919ff6264c952eeb6cb045d4cd0af3001d2020c518"
+    },
+    {
+      "platform": "linux-arm64",
+      "native_archive": "kujo-v1.6.0-linux-arm64.tar.gz",
+      "archive_sha256": "f1ab401334634e719f6f85416f400f4eacb63f6baf5f0eac30ff4cba477d7613",
+      "binary_sha256": "a4fd0c8b0e083d7aa3f20589e5aecb5f58abdea34725e848c411215fbf9a0c69",
+      "npm_archive": "kujolang-kujo-linux-arm64-1.6.0.tgz",
+      "npm_sha256": "b01c72db8388cd85e058e56fefc42de2fe047654c280a1fabc06821689ba9c1c"
+    },
+    {
+      "platform": "macos-x64",
+      "native_archive": "kujo-v1.6.0-macos-x64.tar.gz",
+      "archive_sha256": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+      "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+      "npm_archive": "kujolang-kujo-darwin-x64-1.6.0.tgz",
+      "npm_sha256": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258"
+    },
+    {
+      "platform": "macos-arm64",
+      "native_archive": "kujo-v1.6.0-macos-arm64.tar.gz",
+      "archive_sha256": "7257ab8829ba0cb7f425f0c3742b264b8706a791d04e8c87a0d8b87adf61a463",
+      "binary_sha256": "f5fb9ee735a222065e9b688998b213c8167d515b16fbf77088c7c663f52a737d",
+      "npm_archive": "kujolang-kujo-darwin-arm64-1.6.0.tgz",
+      "npm_sha256": "dc89c6bcbd45ef6da48ed55be90103bb6127a6ab9db314793d206af7f6295b4b"
+    },
+    {
+      "platform": "windows-x64",
+      "native_archive": "kujo-v1.6.0-windows-x64.zip",
+      "archive_sha256": "3ad43985ea6d99c6c1e97128009ccb0b45a2b91d4790e4f98cdad8d19dbe8370",
+      "binary_sha256": "94ccf987a3981a67ac2c71541534741251aa5ad97e86ed6aa63eb4480f2350fe",
+      "npm_archive": "kujolang-kujo-win32-x64-1.6.0.tgz",
+      "npm_sha256": "a4f8f1c51e414f7e2c44bd239c41f225f2e7b6cd2da5eda95c4fc29502971602"
+    }
+  ]
+}

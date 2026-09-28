@@ -1,0 +1,264 @@
+{
+  "ok": true,
+  "platform": "windows-x64",
+  "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "archive": "kujo-v1.6.0-windows-x64.zip",
+  "archive_sha256": "3ad43985ea6d99c6c1e97128009ccb0b45a2b91d4790e4f98cdad8d19dbe8370",
+  "binary_sha256": "94ccf987a3981a67ac2c71541534741251aa5ad97e86ed6aa63eb4480f2350fe",
+  "source_tree_fallback": false,
+  "results": [
+    {
+      "args": [
+        "--version"
+      ],
+      "status": 0,
+      "stdout": "kujo 1.6.0\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\A_no_return.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\A_no_return.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\B_unconditional.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\B_unconditional.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\C_matching.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\C_matching.kujo"
+      ],
+      "status": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\D_no_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\D_no_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\E_later_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\E_later_match.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\F_nested_if.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\F_nested_if.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\G_nested_loop.kujo"
+      ],
+      "status": 0,
+      "stdout": "4\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\G_nested_loop.kujo"
+      ],
+      "status": 0,
+      "stdout": "4\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\historical.kujo"
+      ],
+      "status": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\historical.kujo"
+      ],
+      "status": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\H_caller.kujo"
+      ],
+      "status": 0,
+      "stdout": "11\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\H_caller.kujo"
+      ],
+      "status": 0,
+      "stdout": "11\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\I_fold.kujo"
+      ],
+      "status": 0,
+      "stdout": "5\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\I_fold.kujo"
+      ],
+      "status": 0,
+      "stdout": "5\n9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\J_break_continue.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "--interpreter",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\J_break_continue.kujo"
+      ],
+      "status": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\vm_closure_adder.kujo"
+      ],
+      "status": 0,
+      "stdout": "8\n15\n15\n30\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\test_generators.kujo"
+      ],
+      "status": 0,
+      "stdout": "=== Test 1: Simple Generator ===\nGenerator created, type:\ngenerator\n\n=== Test 2: Generator Iteration ===\nValue:\n1\nValue:\n2\nValue:\n3\n\n=== Test 3: Generator with State ===\nSequence value:\n5\nSequence value:\n10\nSequence value:\n20\n\n=== Test 4: Generator with Parameters ===\nMessage:\nhello\nMessage:\nhello\nMessage:\nhello\n\n=== Test 5: Fibonacci Generator ===\nFib:\n0\nFib:\n1\nFib:\n1\nFib:\n2\nFib:\n3\nFib:\n5\nFib:\n8\n\n=== All Generator Tests Passed ===\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\hello.kujo"
+      ],
+      "status": 0,
+      "stdout": "42\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "run",
+        "D:\\a\\kujo\\kujo\\isolated-aZGl7s\\async-task.kujo"
+      ],
+      "status": 0,
+      "stdout": "9\n42\n",
+      "stderr": ""
+    }
+  ]
+}

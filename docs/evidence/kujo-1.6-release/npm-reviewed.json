@@ -1,0 +1,70 @@
+{
+  "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "packages": [
+    {
+      "file": "kujolang-kujo-darwin-arm64-1.6.0.tgz",
+      "sha256": "dc89c6bcbd45ef6da48ed55be90103bb6127a6ab9db314793d206af7f6295b4b",
+      "package": "@kujolang/kujo-darwin-arm64",
+      "metadata": {
+        "runtimeVersion": "1.6.0",
+        "gitCommit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+        "target": "darwin-arm64",
+        "sha256": "f5fb9ee735a222065e9b688998b213c8167d515b16fbf77088c7c663f52a737d"
+      }
+    },
+    {
+      "file": "kujolang-kujo-darwin-x64-1.6.0.tgz",
+      "sha256": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+      "package": "@kujolang/kujo-darwin-x64",
+      "metadata": {
+        "runtimeVersion": "1.6.0",
+        "gitCommit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+        "target": "darwin-x64",
+        "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+      }
+    },
+    {
+      "file": "kujolang-kujo-linux-arm64-1.6.0.tgz",
+      "sha256": "b01c72db8388cd85e058e56fefc42de2fe047654c280a1fabc06821689ba9c1c",
+      "package": "@kujolang/kujo-linux-arm64",
+      "metadata": {
+        "runtimeVersion": "1.6.0",
+        "gitCommit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+        "target": "linux-arm64",
+        "sha256": "a4fd0c8b0e083d7aa3f20589e5aecb5f58abdea34725e848c411215fbf9a0c69"
+      }
+    },
+    {
+      "file": "kujolang-kujo-linux-x64-1.6.0.tgz",
+      "sha256": "26298b3f72e899bf232cad919ff6264c952eeb6cb045d4cd0af3001d2020c518",
+      "package": "@kujolang/kujo-linux-x64",
+      "metadata": {
+        "runtimeVersion": "1.6.0",
+        "gitCommit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+        "target": "linux-x64",
+        "sha256": "6db223fde7bd971aa8a7a78e742ddc93b9138bf1cab672e32b7783c5546873dc"
+      }
+    },
+    {
+      "file": "kujolang-kujo-runtime-1.6.0.tgz",
+      "sha256": "b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc",
+      "package": "@kujolang/kujo-runtime",
+      "metadata": null
+    },
+    {
+      "file": "kujolang-kujo-win32-x64-1.6.0.tgz",
+      "sha256": "a4f8f1c51e414f7e2c44bd239c41f225f2e7b6cd2da5eda95c4fc29502971602",
+      "package": "@kujolang/kujo-win32-x64",
+      "metadata": {
+        "runtimeVersion": "1.6.0",
+        "gitCommit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+        "target": "win32-x64",
+        "sha256": "94ccf987a3981a67ac2c71541534741251aa5ad97e86ed6aa63eb4480f2350fe"
+      }
+    }
+  ],
+  "reviewed_bytes_retained": {
+    "kujolang-kujo-darwin-x64-1.6.0.tgz": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+    "kujolang-kujo-runtime-1.6.0.tgz": "b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc"
+  }
+}

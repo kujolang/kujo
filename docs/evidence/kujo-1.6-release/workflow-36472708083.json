@@ -1,0 +1,92 @@
+{
+  "id": 36472708083,
+  "head_sha": "57a22cf4a236bede37b667ed113c53b6228fb46d",
+  "html_url": "https://github.com/kujolang/kujolang.ai/actions/runs/36472708083",
+  "path": ".github/workflows/pages.yml",
+  "run_attempt": 1,
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 109098673179,
+      "name": "build",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check out site",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure GitHub Pages",
+          "conclusion": "success"
+        },
+        {
+          "name": "Configure Node.js",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install image tooling",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run Node.js tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Restore Kujo build cache",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build pinned Kujo runtime",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build and verify site",
+          "conclusion": "success"
+        },
+        {
+          "name": "Upload Pages artifact",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Restore Kujo build cache",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Configure Node.js",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Check out site",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 109103380909,
+      "name": "deploy",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Deploy to GitHub Pages",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}

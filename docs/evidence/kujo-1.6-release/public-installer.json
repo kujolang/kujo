@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "public_url": "https://kujolang.ai/install.sh",
+  "public_sha256": "ac2f554ec020b1c8f1f781d59cf39f0ad976bc3d3a1727f8d0a0acf809f1519b",
+  "canonical_sha256": "ac2f554ec020b1c8f1f781d59cf39f0ad976bc3d3a1727f8d0a0acf809f1519b",
+  "kujo_defaults_commit": "9ecfe6044103aa4964c34570a88c40ded8f838fd",
+  "website_commit": "57a22cf4a236bede37b667ed113c53b6228fb46d",
+  "website_run": 36472708083,
+  "clean_install_exit": 0,
+  "version": "kujo 1.6.0",
+  "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+  "source_fallback": false,
+  "command": "bash public-install.sh --core --prefix <disposable-root> --bin-dir <disposable-bin>",
+  "setup_action_targets": [
+    "linux-x64",
+    "linux-arm64",
+    "macos-x64",
+    "macos-arm64",
+    "windows-x64"
+  ],
+  "source_checkout_usage": "The ecosystem installer separately fetches selected Kujo sources for shared modules; the executable is downloaded and checksum-verified, never source-built in this test."
+}

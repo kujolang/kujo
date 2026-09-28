@@ -1,0 +1,173 @@
+{
+  "ok": true,
+  "packages": [
+    {
+      "name": "@kujolang/kujo-darwin-arm64",
+      "version": "1.6.0",
+      "sha256": "dc89c6bcbd45ef6da48ed55be90103bb6127a6ab9db314793d206af7f6295b4b",
+      "dist": {
+        "shasum": "e9c331b50d237c9c87094297162c15df4bbae6db",
+        "tarball": "https://registry.npmjs.org/@kujolang/kujo-darwin-arm64/-/kujo-darwin-arm64-1.6.0.tgz",
+        "fileCount": 4,
+        "integrity": "sha512-goQ7GnUppLkPfvJDQ62FHZN3nn93qS9Eh/U5qIoo+xI8UzFAnldLPsCxVtw8HjFLGGwaxLRQcS7+z6fxNWSkqw==",
+        "signatures": [
+          {
+            "sig": "MEYCIQDzNlLpouo3EcH2WdRDylfhKxv9l/W75HZJYatiWjsoWgIhAI65YqK8R4oXlYO6CD8MHvbK+m+oSYxhMeuaIYuVZcTh",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIBep+9WPX/qwKcDA4tVNiC8IQ3zSfq7bnUiQCzWmDPrAAiBR4Ol1aS9TOZULM1konQFwTQ9TCIxNjLFC5g0Z/FvHeg==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-darwin-arm64@1.6.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 39421499
+      }
+    },
+    {
+      "name": "@kujolang/kujo-darwin-x64",
+      "version": "1.6.0",
+      "sha256": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+      "dist": {
+        "shasum": "d17866000d1db7a03f4146104cf3d040d1152cc3",
+        "tarball": "https://registry.npmjs.org/@kujolang/kujo-darwin-x64/-/kujo-darwin-x64-1.6.0.tgz",
+        "fileCount": 4,
+        "integrity": "sha512-lzYpk8hYkZFftpFBwuuAvCvafCkhQjgbyDAMXWAECa5aCmgx6MCJ97vXcCDFV8t11C0IvDuhwflE/GBkwvH3Ww==",
+        "signatures": [
+          {
+            "sig": "MEUCIGIbdaKrlHPVav6rIRSxIv7vrggxFBEy8GflMZUoDpmAAiEAkvkqAJeQS7ME+odKhH7x0Apb21nEvt6gmUpOEiz78ZM=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIEYEYfNY5YUFq0HLZaUEqlvw3seFnUScDIH+etT54TEOAiEA7tUIBgP+wEeVmZZdyTkIfWvK4pQjFzcoFdrYrFwJuAg=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-darwin-x64@1.6.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 43872785
+      }
+    },
+    {
+      "name": "@kujolang/kujo-linux-arm64",
+      "version": "1.6.0",
+      "sha256": "b01c72db8388cd85e058e56fefc42de2fe047654c280a1fabc06821689ba9c1c",
+      "dist": {
+        "shasum": "11dca30879c8d822983d4b215cc606818c8c514f",
+        "tarball": "https://registry.npmjs.org/@kujolang/kujo-linux-arm64/-/kujo-linux-arm64-1.6.0.tgz",
+        "fileCount": 4,
+        "integrity": "sha512-pBxs/mOcB4jApf60OU5I9K1eksnn0818DS9Z74GrEnqm6yU+AaPA9NkaXhKj6iYw9i7mvYO9NbVhDua2gMImDg==",
+        "signatures": [
+          {
+            "sig": "MEQCIF5d6UD/3Xu8gt3rHd5zjnV2FiBe5+NC2PIOl5Orx1/CAiA+aSBvTXojjci5LlUwQg64g5VcK5peps8FB9/I1nGqBw==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIFHvNbu5hQAY/tnKv4m1GOJPSfppXlCNbCHmEjfxJoX3AiBLdYtTq9r/2h8jlRv1WUeXIRVUguDJ9U3Q6iQXuf1lhA==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-linux-arm64@1.6.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 44041517
+      }
+    },
+    {
+      "name": "@kujolang/kujo-linux-x64",
+      "version": "1.6.0",
+      "sha256": "26298b3f72e899bf232cad919ff6264c952eeb6cb045d4cd0af3001d2020c518",
+      "dist": {
+        "shasum": "0d1942e9b1083af3e514af6956bec41201264184",
+        "tarball": "https://registry.npmjs.org/@kujolang/kujo-linux-x64/-/kujo-linux-x64-1.6.0.tgz",
+        "fileCount": 4,
+        "integrity": "sha512-dxJNsl9wlRLBihShCMli2ic3EhT47+cNyUBiHpsbTjVTackYlhwW1prBbXH9OcrWu8azvBIMBNMfdbK52H6Ccw==",
+        "signatures": [
+          {
+            "sig": "MEUCIQD717K1dqzexIvPO7zr05xxGS+VUnfNN270O2hP3IGj5AIgAParZk63bYsU7in3Y2GQeduLs6GMr5HCWzLO7IXDsyU=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEYCIQCJDu+H73p8NkLhejmcHstyfc1tTFbPrx0lJsgZNsKvnAIhAIUebIjw/vp975OCx+epyZXZZ0gyl2SZNx8APolruODH",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-linux-x64@1.6.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 50230169
+      }
+    },
+    {
+      "name": "@kujolang/kujo-runtime",
+      "version": "1.6.0",
+      "sha256": "b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc",
+      "dist": {
+        "shasum": "890d87d84f33a71de18790421b0823c78372c22d",
+        "tarball": "https://registry.npmjs.org/@kujolang/kujo-runtime/-/kujo-runtime-1.6.0.tgz",
+        "fileCount": 5,
+        "integrity": "sha512-sIaspgj/RXowiADemg7J1X8WFG35DY9jPjgiRYDIY9tn1uaW211aJKnLt7eYus0PDQ23CIXZuAty4JuAYAC4CQ==",
+        "signatures": [
+          {
+            "sig": "MEQCIC9jiu1mlPuSuA/ymnyNUmppKlxBmxCJnIM4EBS7OOeAAiAlXIRRARtfYCGTwH/ijqsIlZE0gzFOcVERC/fjymdykg==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIHF9xKAXyk6j1K2eGEiJxDtxhPZWvUbR0vUhlkp3saaLAiA8BoiXcqoR/di/p8Ajfqzw+kI+B/XOmXMobKMVv5pDGQ==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-runtime@1.6.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 7581
+      }
+    },
+    {
+      "name": "@kujolang/kujo-win32-x64",
+      "version": "1.6.0",
+      "sha256": "a4f8f1c51e414f7e2c44bd239c41f225f2e7b6cd2da5eda95c4fc29502971602",
+      "dist": {
+        "shasum": "bca3c02bac20dc668d31b6ff6b84f8c1cfd36f16",
+        "tarball": "https://registry.npmjs.org/@kujolang/kujo-win32-x64/-/kujo-win32-x64-1.6.0.tgz",
+        "fileCount": 4,
+        "integrity": "sha512-actlSlEoi93oImJ/VSs7MR6ujLPOooSASDvFONOsYzAcEBTDP7+6uH8+Ms3nZibDQBsPOB0levY616EsaCYs5w==",
+        "signatures": [
+          {
+            "sig": "MEQCIFVI5uAuDu2sc/GkWBHz/Ivxy4uj5v8GyuQLZFnYaLDDAiBr4kWKzfjh83mIknLerltoGDjNj4U2pZoEjtQw2AjzJA==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEQCIEK/gAThTB2l+9d391CmJzfg8ALWsT+1qMOVjkTeaunmAiAp2GtgmJIC9fEpHHCl//yxheABJqF5p2hLHg7HucGLbQ==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@kujolang%2fkujo-win32-x64@1.6.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 49421980
+      }
+    }
+  ]
+}

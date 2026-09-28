@@ -1,0 +1,41 @@
+{
+  "id": 36472842558,
+  "head_sha": "9ecfe6044103aa4964c34570a88c40ded8f838fd",
+  "html_url": "https://github.com/kujolang/kujo/actions/runs/36472842558",
+  "path": ".github/workflows/release-state-guard.yml",
+  "run_attempt": 1,
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 109099125035,
+      "name": "release-state",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate Cargo and release-status docs consistency",
+          "conclusion": "success"
+        },
+        {
+          "name": "Validate CLI/LSP/language contract metadata sync",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Checkout",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ]
+}
