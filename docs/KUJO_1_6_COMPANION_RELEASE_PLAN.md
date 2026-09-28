@@ -90,6 +90,20 @@ After these checks pass, merge/tag the tested sources, create official GitHub
 Releases, run the central Kennel reconciliation and verify public fresh installs.
 Do not stop again at candidate preparation or request release permission again.
 
+### First official release published
+
+[Agents SDK 1.1.0](https://github.com/kujolang/agents-sdk/releases/tag/v1.1.0)
+is now an official, non-draft GitHub Release (ID 398678883), tagged at the exact
+tested source `eaae7c4feea7c2a7f7988f01340363547e01bfa7`. Its hosted gate passed
+and its public source archive matches the tested manifest. Kennel reconciliation
+run 36493279767 is queued; public registry delivery is not yet certified.
+
+RunLedger's final hosted Linux/macOS gate remains queued (fresh manual run
+36493688172). AI SDK's hosted contracts pass; a missing SBOM output directory
+was fixed and full release workflow 36493540693 was dispatched with provider
+skipping disabled. The provider credential remains required. These are ongoing
+official-release tasks, not requests for another general release approval.
+
 ## What was actually tested
 
 Tests used isolated exports of the official release tags and the published

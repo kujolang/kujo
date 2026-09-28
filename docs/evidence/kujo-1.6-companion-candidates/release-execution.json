@@ -1,7 +1,7 @@
 {
-  "status": "official release execution authorized; publication blocked pending hosted gates and AI provider secret",
+  "status": "Agents SDK official GitHub release published; remaining gates and registry delivery pending",
   "source": {
-    "ai-sdk": "7b11e1979a1c839dc5717d1710b5ec27b74872ad",
+    "ai-sdk": "47e2c29fd6ce8b060389a34163f77dc0b73912f1",
     "agents-sdk": "eaae7c4feea7c2a7f7988f01340363547e01bfa7",
     "runledger": "88fb37c81567bb94e1e341037514fe37cbafa76f"
   },
@@ -12,24 +12,42 @@
     "agents-installed-ready.log": "4d5ba1ce2d1521b88da4904fbbe87556e5ee2a2b7a1d818d9e129c06c4c70a97",
     "agents-consumer.log": "a21f63395958fc1afc1d4e7f5cab0c38633072222a5e54013670a84a7b0a08f6",
     "runledger-final.log": "2010ec63cc7dd386915b553f563f11a0b1f34ee73129ce4cc0821cc32c4d38b1",
-    "runledger-installed.log": "598638e78af075902f48cee8c9c01fcc1a56fb306e1b98fd67e489789698babf"
+    "runledger-installed.log": "598638e78af075902f48cee8c9c01fcc1a56fb306e1b98fd67e489789698babf",
+    "agents-hosted.log": "e47f7e226bb3761896db0dd1affcb0d8f384fe21b0159c70eb916b6ca188a8b8"
   },
   "hosted": {
     "agents-sdk": {
       "run": 36491820353,
       "attempt": 2,
-      "status": "queued, no assigned runner"
+      "status": "success: offline 41/41; context contracts, 20 paired repetitions, 14 VM/interpreter source executions; token ratchet"
     },
     "runledger": {
       "run": 36491823817,
       "attempt": 2,
-      "status": "queued, no assigned runner"
+      "status": "queued, no assigned runner",
+      "manual_fresh_run": 36493688172
     },
     "ai-sdk": {
-      "run": 36492987193,
-      "status": "queued; manual full release workflow, provider skip false"
+      "run": 36493540693,
+      "status": "queued; skip disabled; preceding contract gate passed, SBOM output-directory failure fixed in source"
     }
   },
-  "publication": "No tags, GitHub releases or registry versions created. Pull requests are ready, not draft.",
+  "publication": {
+    "agents-sdk": {
+      "version": "1.1.0",
+      "tag": "v1.1.0",
+      "tag_target": "eaae7c4feea7c2a7f7988f01340363547e01bfa7",
+      "release_id": 398678883,
+      "url": "https://github.com/kujolang/agents-sdk/releases/tag/v1.1.0",
+      "draft": false,
+      "prerelease": false,
+      "public_source_archive_sha256": "6e8e7d60bfb6bb7ca859aa9603e458faadf0603d12dd2548d948cc0393706b62",
+      "archive_manifest_matches_tested_source": true,
+      "kennel_reconciliation_run": 36493279767,
+      "kennel_status": "queued"
+    },
+    "ai-sdk": "not published; provider secret missing and repaired supply-chain job awaiting rerun",
+    "runledger": "not published; hosted Linux/macOS gates awaiting runners"
+  },
   "installation_notes": "Released Kennel 1.1.0 installed source commits with Ability pinned unchanged. Fresh consumer imports pass VM/interpreter. To run SDK repository tests inside an installed package, install that package's own locked test dependency first. Initial test setup lacked this and generated ignored snapshots; those were discarded before the proper clean gate. No production source workaround or fixture weakening."
 }
