@@ -11,6 +11,7 @@ install_dir="${2:?Install directory is required}"
 
 case "$(uname -s):$(uname -m)" in
   Linux:x86_64) platform="linux-x64" ;;
+  Linux:aarch64|Linux:arm64) platform="linux-arm64" ;;
   Darwin:x86_64) platform="macos-x64" ;;
   Darwin:arm64) platform="macos-arm64" ;;
   *) echo "setup-kujo: unsupported POSIX runner $(uname -s) $(uname -m)" >&2; exit 2 ;;

@@ -11,6 +11,7 @@ grep -F "actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830" "${action_dir}/
 grep -F 'curl --proto' "${action_dir}/install.sh" >/dev/null
 grep -F 'sha256sum' "${action_dir}/install.sh" >/dev/null
 grep -F 'Get-FileHash -Algorithm SHA256' "${action_dir}/install.ps1" >/dev/null
+grep -F 'Linux:aarch64|Linux:arm64) platform="linux-arm64"' "${action_dir}/install.sh" >/dev/null
 grep -F 'windows-x64' "${action_dir}/install.ps1" >/dev/null
 grep -F 'provenance-url' "${action_dir}/action.yml" >/dev/null
 grep -F 'x64-windows-static-md' docs/SETUP_KUJO_ACTION.md >/dev/null

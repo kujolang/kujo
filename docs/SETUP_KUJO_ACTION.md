@@ -12,7 +12,7 @@ The repository publishes a composite action at `.github/actions/setup-kujo`. Pin
 - run: kujo test
 ```
 
-The action supports Linux x64, macOS x64, macOS arm64, and Windows x64 GitHub-hosted runners. It downloads the release archive and its release-provided SHA-256, verifies the archive before extraction, caches by version/OS/architecture, adds the binary to `PATH`, verifies the reported version, and exposes the executable path, version, checksum, asset name, and release URL as outputs.
+The action supports Linux x64/arm64, macOS x64, macOS arm64, and Windows x64 GitHub-hosted runners. It downloads the release archive and its release-provided SHA-256, verifies the archive before extraction, caches by version/OS/architecture, adds the binary to `PATH`, verifies the reported version, and exposes the executable path, version, checksum, asset name, and release URL as outputs.
 
 POSIX runners need `bash`, `curl`, `tar`, and either `sha256sum` or `shasum`; these are present on supported GitHub-hosted images. Windows uses PowerShell, `Invoke-WebRequest`, `Get-FileHash`, and `Expand-Archive`.
 

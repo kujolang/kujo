@@ -51,6 +51,14 @@ jobs:
             archive_kind: zip
 
     steps:
+      - name: Checkout installer only (does not build runtime)
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Exercise checksum-verified setup action
+        uses: ./.github/actions/setup-kujo
+        with:
+          version: ${{ github.event.release.tag_name || inputs.tag_name }}
+
       - name: Download and verify published artifact
         shell: bash
         env:
