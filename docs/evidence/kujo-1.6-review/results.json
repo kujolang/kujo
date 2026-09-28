@@ -1,0 +1,23 @@
+{
+  "source_commit": "c1cc06ff67e6b8dc1419e5b91adc259891090aad",
+  "runtime_version": "kujo 1.5.0",
+  "runtime_binary_sha256": "29ea1fd65a2aadb160b7ae215c4baf6403db66d8972808cbe885005b3b6c82cf",
+  "host": "Darwin x86_64",
+  "rustc": "1.96.0 (ac68faa20 2026-05-25)",
+  "cargo": "1.96.0 (30a34c682 2026-05-25)",
+  "commands": [
+    {"command":"cargo fmt --check", "exit":0,"log":"fmt.log"},
+    {"command":"cargo check", "exit":0,"log":"check.log"},
+    {"command":"cargo test", "exit":0,"log":"test.log"},
+    {"command":"cargo run -- test --runtime vm", "exit":0,"passed":149,"failed":0,"skipped":11,"log":"vm.log"},
+    {"command":"cargo run -- test --runtime dual", "exit":0,"passed":149,"failed":0,"skipped":11,"interpreter_fallback":0,"log":"dual.log"},
+    {"command":"cargo run -- test --runtime interpreter", "exit":0,"passed":149,"failed":0,"skipped":11,"log":"interpreter.log"},
+    {"command":"cargo test --test docs_examples --test readme_contracts --test cli_contracts --test cli_json_contracts --test diagnostics_golden", "exit":0,"passed":60,"log":"targeted-contracts.log"},
+    {"command":"target/debug/kujo run runtime-return-probe.kujo", "exit":4,"diagnostic":"Stack underflow in return","log":"return-current-vm.log"},
+    {"command":"target/debug/kujo run --interpreter runtime-return-probe.kujo", "exit":0,"stdout":"{\"ok\":true}","log":"return-current-interpreter.log"}
+  ],
+  "recommendation":"READY_AFTER_BOUNDED_FIXES",
+  "blocker":"Existing valid-program VM loop/return defect remains reproduced at current source; canonical existing tests do not cover this reproducer.",
+  "not_run":"Full release wrapper/clippy/audit/platform/public-artifact/hosted-CI validation; separate adopter and ecosystem integration are root-owned.",
+  "working_tree":"Clean at review start; root concurrently edited ROADMAP.md; src, Cargo.toml and Cargo.lock unchanged during gates. Reviewer made no repository edits."
+}

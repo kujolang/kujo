@@ -1,0 +1,13 @@
+17e6eec45730da7ab28202120f78cc833cc0b32e48d50b258e36649af83e6c29  /tmp/kujo-1.6-source-review-c1cc06f/check.log
+acfa431c41f9958136a3f8de50424a18e66d652268981b70586a406fb9b1000b  /tmp/kujo-1.6-source-review-c1cc06f/dual.log
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /tmp/kujo-1.6-source-review-c1cc06f/fmt.log
+8a7a66eec89b095385595e676177a6300712c63b99f54178bac937e2f70a680f  /tmp/kujo-1.6-source-review-c1cc06f/interpreter.log
+e5f1eb4d806641698a35efe20e098efd20d7d57a9b90ee69079d5bb650920726  /tmp/kujo-1.6-source-review-c1cc06f/return-current-interpreter.log
+07b75fcdff66cbb025ac4a23d37e4c5311f408735826b5ef953bedb2dd88c95b  /tmp/kujo-1.6-source-review-c1cc06f/return-current-vm.log
+e5f1eb4d806641698a35efe20e098efd20d7d57a9b90ee69079d5bb650920726  /tmp/kujo-1.6-source-review-c1cc06f/return-existing-interpreter.log
+07b75fcdff66cbb025ac4a23d37e4c5311f408735826b5ef953bedb2dd88c95b  /tmp/kujo-1.6-source-review-c1cc06f/return-existing-vm.log
+1c44b32be3fa61c838106dee0dfd29d58187df99a24cff4b6ad9796c1febedef  /tmp/kujo-1.6-source-review-c1cc06f/targeted-contracts.log
+6808d05a7585bd806d4d3a76ec90167445ac22d9c766e4046d521c2b89c4c3ce  /tmp/kujo-1.6-source-review-c1cc06f/test.log
+b481af0686fc1fc39d74d25d94503efac4d899fbbbff28cad1d516d3f90c0336  /tmp/kujo-1.6-source-review-c1cc06f/vm.log
+f3c8b11f377201fdac8a51b7f06aede43e724a0aa0efdccf8482d575f87df646  /tmp/kujo-1.6-source-review-c1cc06f/runtime-return-probe.kujo
+9b80a5850dc59aee1a93c5795875c5655b76d0eecba386eca08ffab302dde0dc  /tmp/kujo-1.6-source-review-c1cc06f/results.json

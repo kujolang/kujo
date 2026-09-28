@@ -1,0 +1,4 @@
+057d96a6ad9306f8d215920250aa5d5533b23e775553203babc98b003eff9341  Cargo.lock
+be1fa7205a2d1e0e08c32aaa9b35b06463699c9bbd8b445dbedd29be42710f14  src/compiler.rs
+213a9dbabb179ebdf3aaed61fbd02da6c0a76716b255b3593c9f10c8b0d2b234  src/optimizer.rs
+c974a9e5b5372274bdc5d3b0dc80a8fe836aa2608bccafe4ec354dee51ffbaaa  src/vm.rs
