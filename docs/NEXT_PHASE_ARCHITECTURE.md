@@ -436,3 +436,26 @@ recovery, arbitrary effect support or stable packaging. See Dispatch
 `docs/audits/wave-d-typescript.md` for exact validation and remaining boundaries.
 The next bounded test is an independently implemented external Python participant;
 Kujo runtime and execution-result/v1 remain unchanged.
+
+## Wave D external Python adoption — 2026-09-27/28
+
+Dispatch `interop/python-participant` independently implements the published alpha
+core with Python stdlib and hash-pinned jsonschema dependencies. It emits native
+generic handoffs, owns a closed two-field participant extension and reuses the
+existing Workcell Git correlation extension. No prior participant codec is imported
+or translated, and no new production Dispatch correlation reader is needed.
+
+Twenty published commitment vectors and28 runtime-neutral TypeScript/Python parity
+cases agree. Canonical UTF-8, duplicate-key rejection, integer/Unicode limits and
+exact content references do not depend on Node behavior. A copied standalone package
+runs offline outside ecosystem checkouts after wheel installation.
+
+Real Python SIGKILL before/after CAS preserves unknown participant knowledge while
+Workcell separately observes not_started/committed. Fresh controllers preserve
+required/deny beta policy through review and complete a descendant; four contenders
+admit one and deny three, with one logical Git effect. The host remains trusted local
+infrastructure. No remote authentication or machine-loss recovery is claimed.
+
+Canonical detailed evidence: Dispatch `docs/audits/wave-d-python.md`. The next task
+is generic participant SDK API design, comparing both independent external surfaces
+without publishing, freezing the API or moving replay authority out of Dispatch.

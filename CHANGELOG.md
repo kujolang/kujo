@@ -1,4 +1,10 @@
 Unreleased architecture documentation: independent beta consumer adoption rehearsal
+
+Unreleased architecture documentation: independent Python native generic-handoff
+adoption, cross-runtime TypeScript parity, real Git crash/replay and one-use
+contention evidence. Six participant forms now inform SDK API design; runtime
+and effect-assurance contracts remain unchanged.
+
 passed in the bounded required/deny domain; alpha compatibility retained. No runtime
 or execution-result/v1 change.
 
