@@ -1,0 +1,41 @@
+
+RunLedger tests: 81 passed, 0 failed
+Wrote report to /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//runledger-cli-test.4qY9eo/page-report.md
+Added note to 2026-09-28-codex-cli-test-001
+Added note to 2026-09-28-codex-cli-test-001
+Added note to 2026-09-28-codex-cli-test-001
+Added follow-up to 2026-09-28-codex-cli-test-001
+Recorded command for 2026-09-28-codex-cli-test-001
+Recorded test for 2026-09-28-codex-cli-test-001
+Recorded test for 2026-09-28-codex-cli-test-001
+Updated usage for 2026-09-28-codex-cli-test-001
+Updated cost for 2026-09-28-codex-cli-test-001
+Updated correlation for 2026-09-28-codex-cli-test-001
+Finished run: 2026-09-28-codex-cli-test-001
+  status:       partial
+  end commit:   fc8864b2bc8e8e24de96e83750a94fb2e0c088cf
+  changed files: 1
+Wrote report to /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//runledger-cli-test.4qY9eo/RUNLEDGER_REPORT.md
+Wrote report to /var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T//runledger-cli-test.4qY9eo/nested/out/RUNLEDGER_REPORT.md
+Finished run: 2026-09-28-local-agent-committed-work-001
+  status:       pass
+  end commit:   f8d2f0c388b1260dbd24c7c56e947eaa19e83b9e
+  changed files: 1
+Finished run: 2026-09-28-local-agent-no-git-001
+  status:       pass
+  end commit:   -
+  changed files: 0
+Finished run: 2026-09-28-local-agent-no-commit-repo-001
+  status:       pass
+  end commit:   -
+  changed files: 1
+Finished run: 2026-09-28-local-agent-repo-override-001
+  status:       partial
+  end commit:   2ee21bec7403f960d188dfa38c580232f5623ca9
+  changed files: 1
+Finished run: 2026-09-28-local-agent-sha256-001
+  status:       pass
+  end commit:   6462ee49333bd015da8290447cf709c7f6951f210ab56ca4de4596e7ce8af08e
+  changed files: 1
+CLI integration: ok
+runtime_measurement_reference: PASS

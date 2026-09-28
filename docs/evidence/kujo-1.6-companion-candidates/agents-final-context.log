@@ -1,0 +1,2 @@
+Context contracts, 20 paired repetitions, and 14 VM/interpreter source executions passed.
+{"ok":true,"regressions":[],"serialization_version":"kujo.context-ratchet/v1","warnings":[]}

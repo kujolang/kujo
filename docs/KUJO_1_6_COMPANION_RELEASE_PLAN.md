@@ -66,6 +66,30 @@ package/dependency installation still require release review.
 retain this preparation evidence. Historical audit findings below describe the
 original main revisions and are not overwritten by candidate results.
 
+## Official release execution authorized
+
+The user explicitly requested official releases for AI SDK, Agents SDK and
+RunLedger, rather than stopping at candidate preparation. All three PRs are
+now ready for review (not draft). Release documentation/install instructions are
+updated, RunLedger has a native Kennel manifest, and the supported full-release
+runtime is Kujo 1.6.0. Agents SDK's manifest now uses the canonical `[kujo]` table.
+AI SDK CI uses published checksum-verified runtimes rather than rebuilding them.
+
+Local final and installed-package gates pass. AI SDK and RunLedger ShipCheck
+metadata gates pass 16/16; Agents SDK passes with two lint/format-command
+advisories. RunLedger lint has one advisory for parsing a fixed JSON NUL literal.
+No affected runtime implementation was changed in this release pass.
+
+Publication is still pending, not declined or awaiting general permission:
+GitHub runners remain unassigned on the final jobs despite bounded retries,
+and AI SDK's release policy requires a provider secret that is not configured.
+Its full release workflow was dispatched with skipping disabled. The current
+sources, logs and workflow IDs are in
+[the execution record](evidence/kujo-1.6-companion-candidates/release-execution.json).
+After these checks pass, merge/tag the tested sources, create official GitHub
+Releases, run the central Kennel reconciliation and verify public fresh installs.
+Do not stop again at candidate preparation or request release permission again.
+
 ## What was actually tested
 
 Tests used isolated exports of the official release tags and the published

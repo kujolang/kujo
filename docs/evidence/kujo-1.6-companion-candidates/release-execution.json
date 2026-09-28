@@ -1,0 +1,35 @@
+{
+  "status": "official release execution authorized; publication blocked pending hosted gates and AI provider secret",
+  "source": {
+    "ai-sdk": "7b11e1979a1c839dc5717d1710b5ec27b74872ad",
+    "agents-sdk": "eaae7c4feea7c2a7f7988f01340363547e01bfa7",
+    "runledger": "88fb37c81567bb94e1e341037514fe37cbafa76f"
+  },
+  "logs": {
+    "ai-final.log": "364c298e62c3fa58ffc38ffab211f86ab6b5d2d3f00d3c09bb9d89ec86080cd8",
+    "agents-final.log": "42ce7ca193e70886e6903612a0d37b8916db9c062816b1b1043f7af20c466892",
+    "agents-final-context.log": "998ede0a264e4ff8b131ca36df2ed149c3f9dc23b582d5615f72bd901caad814",
+    "agents-installed-ready.log": "4d5ba1ce2d1521b88da4904fbbe87556e5ee2a2b7a1d818d9e129c06c4c70a97",
+    "agents-consumer.log": "a21f63395958fc1afc1d4e7f5cab0c38633072222a5e54013670a84a7b0a08f6",
+    "runledger-final.log": "2010ec63cc7dd386915b553f563f11a0b1f34ee73129ce4cc0821cc32c4d38b1",
+    "runledger-installed.log": "598638e78af075902f48cee8c9c01fcc1a56fb306e1b98fd67e489789698babf"
+  },
+  "hosted": {
+    "agents-sdk": {
+      "run": 36491820353,
+      "attempt": 2,
+      "status": "queued, no assigned runner"
+    },
+    "runledger": {
+      "run": 36491823817,
+      "attempt": 2,
+      "status": "queued, no assigned runner"
+    },
+    "ai-sdk": {
+      "run": 36492987193,
+      "status": "queued; manual full release workflow, provider skip false"
+    }
+  },
+  "publication": "No tags, GitHub releases or registry versions created. Pull requests are ready, not draft.",
+  "installation_notes": "Released Kennel 1.1.0 installed source commits with Ability pinned unchanged. Fresh consumer imports pass VM/interpreter. To run SDK repository tests inside an installed package, install that package's own locked test dependency first. Initial test setup lacked this and generated ignored snapshots; those were discarded before the proper clean gate. No production source workaround or fixture weakening."
+}
