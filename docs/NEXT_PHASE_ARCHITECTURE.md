@@ -475,3 +475,21 @@ pre/post-commit loss/restart/contention fixtures validate the two prototypes.
 Legacy participants and Dispatch production replay code remain unchanged.
 Packaging is the next bounded task if full gates remain green; no publication,
 API stabilization, remote trust or universal execution lifecycle is implied.
+
+## Wave D experimental participant SDK packaging — 2026-09-28
+
+Dispatch `packages/participant-sdk-ts` and `packages/participant-sdk-python`
+prepare `@kujolang/participant-sdk@0.1.0-alpha.1` and
+`kujo-participant-sdk==0.1.0a1` as local, unpublished artifacts. Only pure
+codec/correlation and recording helpers ship, alongside pinned local assets
+and conformance metadata. Admission, effects, trust configuration, reference
+lookup, assurance and replay remain host/Dispatch responsibilities.
+
+Clean external installs exercise the same 45-case corpus and real Workcell Git
+pre/post-commit process loss, four-process contention and fresh-controller
+review/replay. The fixture pins installed package inventories using the existing
+configuration commitment; production algorithms and runtime are unchanged.
+Npm and wheel builds are reproducibility-checked; sdist timestamps are documented.
+See Dispatch `docs/audits/participant-sdk-packaging.md` for final gate results and
+artifact provenance. Next: private distribution rehearsal, not automatic publication,
+API stabilization, remote trust or an effect/Dispatch client SDK.
