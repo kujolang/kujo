@@ -1,11 +1,13 @@
 # Kujo Architecture
 
-Source candidate: **1.6.0, unpublished**. Published stable remains **1.5.0**.
+Current stable runtime: **1.6.0**, with native and npm artifacts for Linux
+x64/arm64, macOS x64/arm64 and Windows x64. Wave C beta and Wave D alpha remain
+experimental; participant SDKs remain unpublished.
 See [1.6 release notes](RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
 
 
 Last updated: 2026-09-25
-Current stable release: `v1.5.0`
+Current stable release: `v1.6.0`
 
 This document describes the current Kujo architecture as implemented in this repository.
 It is intentionally execution-path and release-readiness oriented.
@@ -160,7 +162,7 @@ Current runtime behavior and explicit unsupported domains include:
 
 ## 7. Release Posture
 
-Kujo `v1.5.0` is the current stable release.
+Kujo `v1.6.0` is the current stable release.
 
 - `ROADMAP.md` tracks historical v1 work and post-1.0 planning.
 - `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` preserves historical pre-launch closure evidence.

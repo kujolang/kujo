@@ -1,9 +1,8 @@
-# Kujo 1.6.0 release candidate
+# Kujo 1.6.0
 
-Status: **candidate, unpublished**. Intended tag: `v1.6.0`; no tag or publication
-is authorized by this preparation. Published native/npm 1.5.0 remains the public
-install default until separately authorized publication. Source and npm manifests
-in this candidate are 1.6.0; their presence is not evidence of registry publication.
+Released 2026-09-28. Native archives and runtime npm packages cover Linux
+x64/arm64, macOS x64/arm64 and Windows x64. Source/tag:
+`44af277848173664f72ca85f2a1b3b98d634ecdd`.
 
 ## Runtime release scope
 
@@ -49,18 +48,13 @@ remote authenticated participant trust, multi-effect assurance, generic remote
 attestation, hostile total-store rollback protection or stable participant SDK is
 introduced. A process exit or timeout does not establish effect truth.
 
-## Candidate evidence and release authorization
+## Release provenance
 
-`release/kujo-1.6.0-rc.json` defines source/package identity and archive names.
-`docs/evidence/kujo-1.6-rc/manifest.json` is the subsequent receipt identifying the
-exact tested source commit, artifact hashes and downstream revisions. The receipt
-commit is not the artifact source or tag target: this avoids a self-referential
-commit hash. Tag only the manifest's tested source, never an untested later HEAD.
+The [release receipt](KUJO_1_6_RELEASE.md) records exact archive/package hashes,
+hosted platform verification and public installation checks. Historical RC
+provenance is unchanged; it records the original macOS x64 candidate and downstream
+gates. The release expansion verified the other four targets separately against
+the same source. Later receipt/tooling commits are not the `v1.6.0` tag target.
 
-Only macos-x64 is built/tested locally. Linux x64/arm64, macOS arm64 and Windows
-x64 require their normal platform gates before a full multi-platform publication
-claim. No hosted CI or other-platform certification is inferred from local success.
-
-Authorization remains required to create/push v1.6.0, create the GitHub release,
-upload reviewed native/source archives and checksums, or publish runtime npm or
-crate artifacts. Participant SDK publication is separate and remains unauthorized.
+Participant SDK packages remain alpha, private and unpublished. No crate
+publication or participant SDK publication is implied by this runtime release.

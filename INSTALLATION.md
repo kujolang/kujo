@@ -1,6 +1,6 @@
 # Install Kujo
 
-Kujo 1.5.0 is the current stable native release. Choose the install that matches what
+Kujo 1.6.0 is the current stable native release. Choose the install that matches what
 you need.
 
 ## Kujo and the core toolset
@@ -33,27 +33,28 @@ for profile contents and pinned multi-repository installs.
 ## Runtime only
 
 Download the checksum file and matching archive from the
-[v1.5.0 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.5.0).
+[v1.6.0 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.6.0).
 Release assets use these names:
 
 ```text
-kujo-v1.5.0-linux-x64.tar.gz
-kujo-v1.5.0-linux-arm64.tar.gz
-kujo-v1.5.0-macos-x64.tar.gz
-kujo-v1.5.0-macos-arm64.tar.gz
-kujo-v1.5.0-windows-x64.zip
+kujo-v1.6.0-linux-x64.tar.gz
+kujo-v1.6.0-linux-arm64.tar.gz
+kujo-v1.6.0-macos-x64.tar.gz
+kujo-v1.6.0-macos-arm64.tar.gz
+kujo-v1.6.0-windows-x64.zip
 ```
 
 Each archive has a matching `.sha256` file, and `checksums.txt` lists them all.
-The signed release tag also binds these archive digests.
+Verify the published checksums and release provenance. The annotated release tag
+identifies source; it is not a signed assertion over archive digests.
 Read [release binaries](docs/RELEASE_BINARIES.md) for manual verification steps.
 
-The lifecycle-script-free npm channel publishes Kujo **1.5.0** for Linux x64
+The lifecycle-script-free npm channel publishes Kujo **1.6.0** for Linux x64
 and arm64, macOS x64 and arm64, and Windows x64. Node.js 18 or newer can install
 the current runtime package:
 
 ```bash
-npm install --global @kujolang/kujo-runtime@1.5.0
+npm install --global @kujolang/kujo-runtime@1.6.0
 kujo --version
 ```
 
@@ -148,14 +149,14 @@ kujo upgrade --check
 kujo upgrade
 ```
 
-Select an exact version with `kujo upgrade 1.5.0`. Downgrades require
+Select an exact version with `kujo upgrade 1.6.0`. Downgrades require
 `--allow-downgrade`. The command verifies the release checksum and keeps a backup
 of the previous executable.
 
 Use the original manager for managed installs:
 
 ```bash
-npm install --global @kujolang/kujo-runtime@1.5.0
+npm install --global @kujolang/kujo-runtime@1.6.0
 cargo install --path . --locked --force
 ```
 

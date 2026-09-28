@@ -1,5 +1,10 @@
 # Next-phase architecture audit and implementation plan
 
+Release update (2026-09-28): Kujo 1.6.0 now publishes the reviewed source
+`44af277848173664f72ca85f2a1b3b98d634ecdd` on all five native/npm targets.
+The 1.5/source comparisons below are historical audit evidence, not current
+installation instructions. See [release receipt](KUJO_1_6_RELEASE.md).
+
 Audit: 2026-09-26, clean `main` at `cd6d2ea` (equal to fetched origin/main).
 This record distinguishes source capability, released capability, and proposals.
 Historical completion records are evidence, not instructions to reopen work.

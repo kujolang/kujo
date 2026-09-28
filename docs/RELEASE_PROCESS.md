@@ -1,7 +1,7 @@
 # Kujo Release Process
 
-Current source candidate: `1.6.0` (unpublished); published stable line: `1.5.x`
-Current release state: `v1.5.0` is the stable public release, and the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
+Current published stable runtime: `1.6.0` (five native platforms and npm).
+Current release state: `v1.6.0` is the stable public release, and the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.

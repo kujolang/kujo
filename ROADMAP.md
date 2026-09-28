@@ -1,22 +1,19 @@
 # Kujo Roadmap
 
 Updated: 2026-09-28
-Stable release: [v1.5.0](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
+Stable release: [v1.6.0](https://github.com/kujolang/kujo/releases/tag/v1.6.0)
 
 > Current crate version: `1.6.0` in [Cargo.toml](Cargo.toml)
 
-Kujo 1.0 shipped on August 8, 2026. The current 1.5 line is stable and adds
-bounded, descriptor-confined artifact I/O on top of the package-installer
-runtime primitives introduced in 1.4.
-This page now tracks what comes next instead of repeating the closed 1.0 plan.
-
-Kujo 1.6 candidate status: **KUJO_1_6_RC_READY** for the locally built/tested
-macos-x64 artifact. Source/package metadata is 1.6.0; no tag or publication exists.
-The VM loop/early-return fix remains verified. Exact source/artifact hashes,
-full Kujo/Dispatch/Workcell results and remaining platform/authorization work are
-in the [RC review](docs/KUJO_1_6_RC_REVIEW.md). The artifact source/tag target is
-recorded separately from the subsequent evidence receipt; never tag an untested
-later HEAD. Wave C beta and Wave D alpha remain experimental.
+Kujo **1.6.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
+with matching lifecycle-script-free runtime npm packages. The exact source/tag
+target is `44af277848173664f72ca85f2a1b3b98d634ecdd`.
+See [publication evidence](docs/KUJO_1_6_RELEASE.md) for hashes and hosted native/npm
+install checks. The unchanged [RC review](docs/KUJO_1_6_RC_REVIEW.md) retains the
+original local/downstream validation. Later release-engineering commits are not
+the runtime artifact source. Wave C beta and Wave D alpha remain experimental;
+participant SDK packages remain unpublished. Human adopter usability remains
+post-release validation.
 
 ## Where Kujo stands
 
@@ -25,7 +22,7 @@ later HEAD. Wave C beta and Wave D alpha remain experimental.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The public npm 1.5.0 runtime package covers the same targets
+  SHA-256 checksums. The public npm 1.6.0 runtime package covers the same targets
   with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
@@ -36,7 +33,7 @@ later HEAD. Wave C beta and Wave D alpha remain experimental.
 ## Recently completed
 
 - Published `@kujolang/kujo-runtime` and all five native platform packages at
-  1.5.0 through npm trusted publishing, with signed provenance and clean-install
+  1.6.0 through npm trusted publishing, with signed provenance and clean-install
   verification across the supported runtime matrix.
 
 - Merged the runtime-hardening baseline into Kujo `main` at
@@ -45,8 +42,7 @@ later HEAD. Wave C beta and Wave D alpha remain experimental.
   [Dispatch #1](https://github.com/kujolang/dispatch/pull/1) and
   [Workcell #2](https://github.com/kujolang/workcell/pull/2) merged into their
   respective `main` branches. Final PR and post-merge CI checks passed in all
-  three repositories. These are merged source changes, not a new published
-  runtime release; the latest stable release remains 1.5.0.
+  three repositories. These runtime changes are included in the published 1.6.0 release.
 
 - Followed up the Phase-B interpreter fixture drift: corrected static-checker
   binding/signature handling, ArgParser dispatch, VM relational overloads and
@@ -105,7 +101,7 @@ an implementation backlog item.
 
 | Priority / status | Work | Completion boundary |
 | --- | --- | --- |
-| Next release preparation | Package the merged runtime and compatibility changes into a reviewed release; update affected ecosystem runtime pins and distribution channels through their normal release process. | Full release/platform gates, published archives and checksums, and ecosystem clean-install checks against the actual published runtime. Until then, Dispatch's exact source pin remains necessary: tagged native and npm 1.5.0 binaries are built from `cc2d7db`, before `sync_directory_beneath`; current main and the Dispatch source pin also report crate version 1.5.0. See the [artifact/source distinction](docs/NEXT_PHASE_ARCHITECTURE.md#release-reconciliation). |
+| Completed — 1.6 release reconciliation | Publish one reviewed source identity through native archives and runtime npm packages. | Completed for all five supported targets. Exact hashes and public-install gates are in [the release receipt](docs/KUJO_1_6_RELEASE.md). Historical 1.5 artifacts remain unchanged; source pins and runtime versions are distinct provenance fields. |
 | Next language maintenance | Improve optional inference for destructuring, module existence checks, struct fields, promises and callable fallback. | Add positive and negative regressions without turning the VM into a static type gate or suppressing genuine annotation errors. The collection-inference bug found during integration is already fixed. |
 | Measurement before optimization | Profile generator continuation allocation, retained captures, bounded task admission and scheduling costs. | Comparable measurements and unchanged lifecycle, capability, snapshot and cancellation contracts; no unmeasured performance promise. |
 | Unscheduled language candidates | Evaluate async generators, yield-from and struct generator methods; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |

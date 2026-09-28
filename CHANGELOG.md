@@ -6,9 +6,13 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
-No additional release scope beyond the 1.6.0 candidate is included here.
+No additional runtime changes since 1.6.0 are recorded here.
 
-## [1.6.0] - Candidate (unpublished)
+## [1.6.0] - 2026-09-28
+
+Native archives and runtime npm packages cover Linux x64/arm64, macOS x64/arm64
+and Windows x64. Source/tag: `44af277848173664f72ca85f2a1b3b98d634ecdd`.
+See [publication evidence](docs/KUJO_1_6_RELEASE.md).
 
 ### Runtime and tooling
 

@@ -1,6 +1,8 @@
 # Kujo Agent Guide
 
-Source candidate: **1.6.0, unpublished**. Published stable remains **1.5.0**.
+Current stable runtime: **1.6.0**, with native and npm artifacts for Linux
+x64/arm64, macOS x64/arm64 and Windows x64. Wave C beta and Wave D alpha remain
+experimental; participant SDKs remain unpublished.
 See [1.6 release notes](docs/RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
 
 
@@ -32,7 +34,7 @@ Core principles:
 8. `examples/README_examples.md`: current examples, showcases, and legacy/expected-fail examples.
 9. `tests/docs_examples.rs`: executable policy for which examples should run, parse, skip, or fail.
 
-For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.5.0` is the current stable release, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
+For release state, read `ROADMAP.md`, `docs/V1_0_OFFICIAL_RELEASE_CHECKLIST.md`, and `docs/RELEASE_ARTIFACT_CHECKLIST_V1_0_0.md`. Kujo `v1.6.0` is the current stable release, and `docs/PRE_V1_MASTER_UNFINISHED_CHECKLIST.md` is retained as historical launch evidence.
 
 ## Repository Map
 
