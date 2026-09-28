@@ -1,0 +1,245 @@
+﻿2026-09-28T22:51:17.7075294Z Current runner version: '2.337.0'
+2026-09-28T22:51:17.7099350Z ##[group]Runner Image Provisioner
+2026-09-28T22:51:17.7100342Z Hosted Compute Agent
+2026-09-28T22:51:17.7100914Z Version: 20260828.587
+2026-09-28T22:51:17.7101493Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-28T22:51:17.7102180Z Build Date: 2026-08-28T16:44:25Z
+2026-09-28T22:51:17.7102807Z Worker ID: {8d6249bf-6220-4e11-b391-d44ca56e46a6}
+2026-09-28T22:51:17.7103470Z Azure Region: westus3
+2026-09-28T22:51:17.7103957Z ##[endgroup]
+2026-09-28T22:51:17.7105447Z ##[group]Operating System
+2026-09-28T22:51:17.7106014Z Ubuntu
+2026-09-28T22:51:17.7106543Z 24.04.5
+2026-09-28T22:51:17.7107023Z LTS
+2026-09-28T22:51:17.7107463Z ##[endgroup]
+2026-09-28T22:51:17.7107982Z ##[group]Runner Image
+2026-09-28T22:51:17.7108509Z Image: ubuntu-24.04
+2026-09-28T22:51:17.7109021Z Version: 20260920.314.1
+2026-09-28T22:51:17.7110520Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-28T22:51:17.7111939Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+2026-09-28T22:51:17.7112786Z ##[endgroup]
+2026-09-28T22:51:17.7113905Z ##[group]GITHUB_TOKEN Permissions
+2026-09-28T22:51:17.7115997Z Contents: read
+2026-09-28T22:51:17.7116564Z Metadata: read
+2026-09-28T22:51:17.7117114Z Packages: read
+2026-09-28T22:51:17.7117616Z ##[endgroup]
+2026-09-28T22:51:17.7120287Z Secret source: Actions
+2026-09-28T22:51:17.7121142Z Cache mode: write
+2026-09-28T22:51:17.7121999Z Prepare workflow directory
+2026-09-28T22:51:17.7443146Z Prepare all required actions
+2026-09-28T22:51:17.7492172Z Getting action download info
+2026-09-28T22:51:18.0975553Z Download action repository 'actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-09-28T22:51:18.1795060Z Download action repository 'kujolang/kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c' (SHA:fc53093f35e4236682bbbf5ab1ccc8d2b4df990c)
+2026-09-28T22:51:19.5492808Z Getting action download info
+2026-09-28T22:51:19.6845966Z Download action repository 'actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-09-28T22:51:19.8342656Z Complete job name: test (ubuntu-latest)
+2026-09-28T22:51:19.9092276Z ##[group]Run actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+2026-09-28T22:51:19.9093544Z with:
+2026-09-28T22:51:19.9094092Z   repository: kujolang/runledger
+2026-09-28T22:51:19.9098881Z   token: ***
+2026-09-28T22:51:19.9099432Z   ssh-strict: true
+2026-09-28T22:51:19.9100110Z   ssh-user: git
+2026-09-28T22:51:19.9100657Z   persist-credentials: true
+2026-09-28T22:51:19.9101244Z   clean: true
+2026-09-28T22:51:19.9101788Z   sparse-checkout-cone-mode: true
+2026-09-28T22:51:19.9102442Z   fetch-depth: 1
+2026-09-28T22:51:19.9103026Z   fetch-tags: false
+2026-09-28T22:51:19.9103582Z   show-progress: true
+2026-09-28T22:51:19.9104140Z   lfs: false
+2026-09-28T22:51:19.9104650Z   submodules: false
+2026-09-28T22:51:19.9105206Z   set-safe-directory: true
+2026-09-28T22:51:19.9106137Z ##[endgroup]
+2026-09-28T22:51:20.0196964Z Syncing repository: kujolang/runledger
+2026-09-28T22:51:20.0201030Z ##[group]Getting Git version info
+2026-09-28T22:51:20.0202765Z Working directory is '/home/runner/work/runledger/runledger'
+2026-09-28T22:51:20.0205136Z [command]/usr/bin/git version
+2026-09-28T22:51:20.0206250Z git version 2.55.0
+2026-09-28T22:51:20.0225828Z ##[endgroup]
+2026-09-28T22:51:20.0245957Z Temporarily overriding HOME='/home/runner/work/_temp/fb3b0d8a-f962-46ec-bfb4-fb7322831623' before making global git config changes
+2026-09-28T22:51:20.0247786Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-28T22:51:20.0249146Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/runledger/runledger
+2026-09-28T22:51:20.0307420Z Deleting the contents of '/home/runner/work/runledger/runledger'
+2026-09-28T22:51:20.0318488Z ##[group]Initializing the repository
+2026-09-28T22:51:20.0327799Z [command]/usr/bin/git init /home/runner/work/runledger/runledger
+2026-09-28T22:51:20.0434535Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-28T22:51:20.0436480Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-28T22:51:20.0437830Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-28T22:51:20.0439068Z hint: call:
+2026-09-28T22:51:20.0440142Z hint:
+2026-09-28T22:51:20.0441244Z hint: 	git config --global init.defaultBranch <name>
+2026-09-28T22:51:20.0442189Z hint:
+2026-09-28T22:51:20.0443367Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-28T22:51:20.0444594Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-28T22:51:20.0445846Z hint:
+2026-09-28T22:51:20.0446637Z hint: 	git branch -m <name>
+2026-09-28T22:51:20.0447426Z hint:
+2026-09-28T22:51:20.0448379Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-28T22:51:20.0450157Z Initialized empty Git repository in /home/runner/work/runledger/runledger/.git/
+2026-09-28T22:51:20.0453197Z [command]/usr/bin/git remote add origin https://github.com/kujolang/runledger
+2026-09-28T22:51:20.0498070Z ##[endgroup]
+2026-09-28T22:51:20.0499416Z ##[group]Disabling automatic garbage collection
+2026-09-28T22:51:20.0503403Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-28T22:51:20.0535848Z ##[endgroup]
+2026-09-28T22:51:20.0537501Z ##[group]Setting up auth
+2026-09-28T22:51:20.0544933Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-28T22:51:20.0578914Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-28T22:51:20.0951300Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-28T22:51:20.0989134Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-28T22:51:20.1208453Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-28T22:51:20.1242148Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-28T22:51:20.1437187Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-28T22:51:20.1473570Z ##[endgroup]
+2026-09-28T22:51:20.1474615Z ##[group]Fetching the repository
+2026-09-28T22:51:20.1483486Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +88fb37c81567bb94e1e341037514fe37cbafa76f:refs/remotes/origin/release/kujo16-companion
+2026-09-28T22:51:20.7433307Z From https://github.com/kujolang/runledger
+2026-09-28T22:51:20.7436051Z  * [new ref]         88fb37c81567bb94e1e341037514fe37cbafa76f -> origin/release/kujo16-companion
+2026-09-28T22:51:20.7443186Z ##[endgroup]
+2026-09-28T22:51:20.7445819Z ##[group]Determining the checkout info
+2026-09-28T22:51:20.7448472Z ##[endgroup]
+2026-09-28T22:51:20.7449596Z [command]/usr/bin/git sparse-checkout disable
+2026-09-28T22:51:20.7497435Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-28T22:51:20.7527643Z ##[group]Checking out the ref
+2026-09-28T22:51:20.7533052Z [command]/usr/bin/git checkout --progress --force -B release/kujo16-companion refs/remotes/origin/release/kujo16-companion
+2026-09-28T22:51:20.7627971Z Switched to a new branch 'release/kujo16-companion'
+2026-09-28T22:51:20.7634361Z branch 'release/kujo16-companion' set up to track 'origin/release/kujo16-companion'.
+2026-09-28T22:51:20.7640646Z ##[endgroup]
+2026-09-28T22:51:20.7679461Z [command]/usr/bin/git log -1 --format=%H
+2026-09-28T22:51:20.7711854Z 88fb37c81567bb94e1e341037514fe37cbafa76f
+2026-09-28T22:51:20.8387517Z ##[group]Run kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+2026-09-28T22:51:20.8389322Z with:
+2026-09-28T22:51:20.8390581Z   version: v1.6.0
+2026-09-28T22:51:20.8391552Z ##[endgroup]
+2026-09-28T22:51:20.8468619Z ##[start-action display=Cache Kujo runtime;id=__kujolang_kujo.__actions_cache]
+2026-09-28T22:51:20.8612362Z ##[group]Run actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+2026-09-28T22:51:20.8613728Z with:
+2026-09-28T22:51:20.8614648Z   path: /opt/hostedtoolcache/kujo/v1.6.0/Linux-X64
+2026-09-28T22:51:20.8615850Z   key: setup-kujo-v1.6.0-Linux-X64-v1
+2026-09-28T22:51:20.8616975Z   enableCrossOsArchive: false
+2026-09-28T22:51:20.8618033Z   fail-on-cache-miss: false
+2026-09-28T22:51:20.8618995Z   lookup-only: false
+2026-09-28T22:51:20.8620109Z   save-always: false
+2026-09-28T22:51:20.8621105Z ##[endgroup]
+2026-09-28T22:51:20.9815013Z (node:2171) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-28T22:51:20.9818948Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-28T22:51:21.1877390Z Cache hit for: setup-kujo-v1.6.0-Linux-X64-v1
+2026-09-28T22:51:21.1987008Z (node:2171) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-28T22:51:22.4164623Z Received 15893725 of 20088029 (79.1%), 15.1 MBs/sec
+2026-09-28T22:51:22.4481691Z Received 20088029 of 20088029 (100.0%), 18.5 MBs/sec
+2026-09-28T22:51:22.4482316Z Cache Size: ~19 MB (20088029 B)
+2026-09-28T22:51:22.4507438Z [command]/usr/bin/tar -xf /home/runner/work/_temp/90230838-1662-4dfe-8c8c-32f10179c1b3/cache.tzst -P -C /home/runner/work/runledger/runledger --use-compress-program unzstd
+2026-09-28T22:51:22.5319558Z Cache restored successfully
+2026-09-28T22:51:22.5412694Z Cache restored from key: setup-kujo-v1.6.0-Linux-X64-v1
+2026-09-28T22:51:22.5470558Z ##[end-action id=__kujolang_kujo.__actions_cache;outcome=success;conclusion=success;duration_ms=1699]
+2026-09-28T22:51:22.5481145Z ##[start-action display=Install Kujo on POSIX;id=__kujolang_kujo.install-posix]
+2026-09-28T22:51:22.5524714Z ##[group]Run bash "$GITHUB_ACTION_PATH/install.sh" "$KUJO_SETUP_VERSION" "$KUJO_SETUP_DIRECTORY"
+2026-09-28T22:51:22.5525541Z [36;1mbash "$GITHUB_ACTION_PATH/install.sh" "$KUJO_SETUP_VERSION" "$KUJO_SETUP_DIRECTORY"[0m
+2026-09-28T22:51:22.5723392Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-28T22:51:22.5723836Z env:
+2026-09-28T22:51:22.5724064Z   KUJO_SETUP_VERSION: v1.6.0
+2026-09-28T22:51:22.5724461Z   KUJO_SETUP_DIRECTORY: /opt/hostedtoolcache/kujo/v1.6.0/Linux-X64
+2026-09-28T22:51:22.5724890Z ##[endgroup]
+2026-09-28T22:51:22.5920906Z ##[end-action id=__kujolang_kujo.install-posix;outcome=success;conclusion=success;duration_ms=43]
+2026-09-28T22:51:22.5927899Z ##[start-action display=Install Kujo on Windows;id=__kujolang_kujo.install-windows]
+2026-09-28T22:51:22.5936669Z ##[end-action id=__kujolang_kujo.install-windows;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-09-28T22:51:22.5944418Z ##[start-action display=Publish setup outputs;id=__kujolang_kujo.install]
+2026-09-28T22:51:22.5959718Z ##[group]Run set -euo pipefail
+2026-09-28T22:51:22.5960353Z [36;1mset -euo pipefail[0m
+2026-09-28T22:51:22.5960833Z [36;1mprintf 'kujo-path=%s\n' "${POSIX_PATH:-${WINDOWS_PATH}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:51:22.5961327Z [36;1mprintf 'version=%s\n' "$KUJO_SETUP_VERSION" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:51:22.5961809Z [36;1mprintf 'checksum=%s\n' "${POSIX_CHECKSUM:-${WINDOWS_CHECKSUM}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:51:22.5962331Z [36;1mprintf 'asset=%s\n' "${POSIX_ASSET:-${WINDOWS_ASSET}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:51:22.5962875Z [36;1mprintf 'provenance-url=%s\n' "${POSIX_PROVENANCE:-${WINDOWS_PROVENANCE}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:51:22.6004979Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-28T22:51:22.6005478Z env:
+2026-09-28T22:51:22.6005761Z   POSIX_PATH: /opt/hostedtoolcache/kujo/v1.6.0/Linux-X64/kujo
+2026-09-28T22:51:22.6006248Z   POSIX_CHECKSUM: 142372a0c89f91ece2017034b71a3e800969ab2cd7b13dd2ee18eb39efac4504
+2026-09-28T22:51:22.6006733Z   POSIX_ASSET: kujo-v1.6.0-linux-x64.tar.gz
+2026-09-28T22:51:22.6007145Z   POSIX_PROVENANCE: https://github.com/kujolang/kujo/releases/tag/v1.6.0
+2026-09-28T22:51:22.6007520Z   WINDOWS_PATH: 
+2026-09-28T22:51:22.6007734Z   WINDOWS_CHECKSUM: 
+2026-09-28T22:51:22.6007956Z   WINDOWS_ASSET: 
+2026-09-28T22:51:22.6008184Z   WINDOWS_PROVENANCE: 
+2026-09-28T22:51:22.6008412Z   KUJO_SETUP_VERSION: v1.6.0
+2026-09-28T22:51:22.6008650Z ##[endgroup]
+2026-09-28T22:51:22.6077342Z ##[end-action id=__kujolang_kujo.install;outcome=success;conclusion=success;duration_ms=13]
+2026-09-28T22:51:22.6079564Z ##[start-action display=Verify installed runtime;id=__kujolang_kujo.__run]
+2026-09-28T22:51:22.6094574Z ##[group]Run set -euo pipefail
+2026-09-28T22:51:22.6094907Z [36;1mset -euo pipefail[0m
+2026-09-28T22:51:22.6095165Z [36;1mkujo --version[0m
+2026-09-28T22:51:22.6135527Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-28T22:51:22.6135872Z ##[endgroup]
+2026-09-28T22:51:22.6226402Z kujo 1.6.0
+2026-09-28T22:51:22.6237679Z ##[end-action id=__kujolang_kujo.__run;outcome=success;conclusion=success;duration_ms=15]
+2026-09-28T22:51:22.6295878Z ##[group]Run kujo --version
+2026-09-28T22:51:22.6296179Z [36;1mkujo --version[0m
+2026-09-28T22:51:22.6337454Z shell: /usr/bin/bash -e {0}
+2026-09-28T22:51:22.6337750Z ##[endgroup]
+2026-09-28T22:51:22.6427372Z kujo 1.6.0
+2026-09-28T22:51:22.6459593Z ##[group]Run bash tests/run.sh
+2026-09-28T22:51:22.6460119Z [36;1mbash tests/run.sh[0m
+2026-09-28T22:51:22.6500735Z shell: /usr/bin/bash -e {0}
+2026-09-28T22:51:22.6501023Z ##[endgroup]
+2026-09-28T22:51:23.2414218Z 
+2026-09-28T22:51:23.2423532Z RunLedger tests: 81 passed, 0 failed
+2026-09-28T22:51:24.3523041Z Wrote report to /tmp/runledger-cli-test.qPPTKV/page-report.md
+2026-09-28T22:51:24.4623443Z Added note to 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.4856241Z Added note to 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.5092530Z Added note to 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.7462238Z Added follow-up to 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.7697021Z Recorded command for 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.7931624Z Recorded test for 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.8178896Z Recorded test for 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.8423803Z Updated usage for 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.8664920Z Updated cost for 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.8912974Z Updated correlation for 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.9731427Z Finished run: 2026-09-28-codex-cli-test-001
+2026-09-28T22:51:24.9732082Z   status:       partial
+2026-09-28T22:51:24.9732524Z   end commit:   72adbeecb7472c25b860147d3fbea3d006137661
+2026-09-28T22:51:24.9732993Z   changed files: 1
+2026-09-28T22:51:25.1316153Z Wrote report to /tmp/runledger-cli-test.qPPTKV/RUNLEDGER_REPORT.md
+2026-09-28T22:51:25.1604702Z Wrote report to /tmp/runledger-cli-test.qPPTKV/nested/out/RUNLEDGER_REPORT.md
+2026-09-28T22:51:25.4526536Z Finished run: 2026-09-28-local-agent-committed-work-001
+2026-09-28T22:51:25.4526966Z   status:       pass
+2026-09-28T22:51:25.4527268Z   end commit:   87f037904f26275cb309b4ef848b4812096e6c0f
+2026-09-28T22:51:25.4527564Z   changed files: 1
+2026-09-28T22:51:25.5447882Z Finished run: 2026-09-28-local-agent-no-git-001
+2026-09-28T22:51:25.5448449Z   status:       pass
+2026-09-28T22:51:25.5448840Z   end commit:   -
+2026-09-28T22:51:25.5449161Z   changed files: 0
+2026-09-28T22:51:25.7094741Z Finished run: 2026-09-28-local-agent-no-commit-repo-001
+2026-09-28T22:51:25.7095358Z   status:       pass
+2026-09-28T22:51:25.7095728Z   end commit:   -
+2026-09-28T22:51:25.7096085Z   changed files: 1
+2026-09-28T22:51:25.8898349Z Finished run: 2026-09-28-local-agent-repo-override-001
+2026-09-28T22:51:25.8899220Z   status:       partial
+2026-09-28T22:51:25.8899671Z   end commit:   8fdace6bac179deca2a8c8e7795db8f6fa181e1d
+2026-09-28T22:51:25.8900481Z   changed files: 1
+2026-09-28T22:51:26.0763862Z Finished run: 2026-09-28-local-agent-sha256-001
+2026-09-28T22:51:26.0764363Z   status:       pass
+2026-09-28T22:51:26.0764886Z   end commit:   f3aa8c945ea1ca46aba42b6135df623601f2a72c13168c119b33b82516501839
+2026-09-28T22:51:26.0765456Z   changed files: 1
+2026-09-28T22:51:26.6511473Z CLI integration: ok
+2026-09-28T22:51:28.5813721Z runtime_measurement_reference: PASS
+2026-09-28T22:51:28.7038980Z Post job cleanup.
+2026-09-28T22:51:28.7044536Z ##[start-action display=Cache Kujo runtime;id=__2ccf6d0d-8a7f-483a-be8f-0730b123b6c9.__actions_cache]
+2026-09-28T22:51:28.7161840Z Post job cleanup.
+2026-09-28T22:51:28.8249399Z Cache hit occurred on the primary key setup-kujo-v1.6.0-Linux-X64-v1, not saving cache.
+2026-09-28T22:51:28.8251639Z (node:4185) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-28T22:51:28.8252619Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-28T22:51:28.8293732Z ##[end-action id=__2ccf6d0d-8a7f-483a-be8f-0730b123b6c9.__actions_cache;outcome=success;conclusion=success;duration_ms=124]
+2026-09-28T22:51:28.8374271Z Post job cleanup.
+2026-09-28T22:51:28.9202212Z [command]/usr/bin/git version
+2026-09-28T22:51:28.9241546Z git version 2.55.0
+2026-09-28T22:51:28.9277632Z Temporarily overriding HOME='/home/runner/work/_temp/9a8638ce-cdfa-4479-b5cb-6101cadd9147' before making global git config changes
+2026-09-28T22:51:28.9278931Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-28T22:51:28.9284132Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/runledger/runledger
+2026-09-28T22:51:28.9322611Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-28T22:51:28.9355715Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-28T22:51:28.9563024Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-28T22:51:28.9590680Z http.https://github.com/.extraheader
+2026-09-28T22:51:28.9602557Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-28T22:51:28.9635012Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-28T22:51:28.9854385Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-28T22:51:28.9888468Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-28T22:51:29.0335463Z Cleaning up orphan processes
+2026-09-28T22:51:29.0606733Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830, actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

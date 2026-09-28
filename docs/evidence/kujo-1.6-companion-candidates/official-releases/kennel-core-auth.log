@@ -1,0 +1,50 @@
+[verify-all] running scripts/verify-atomic-persistence.sh
+[verify-atomic-persistence] success
+[verify-all] running scripts/verify-cli-messages.sh
+[verify-cli-messages] success
+[verify-all] running scripts/verify-git-diagnostics.sh
+[verify-git-diagnostics] success
+[verify-all] running scripts/verify-pinned-refs.sh
+[verify-pinned-refs] install
+Installed commit-pin into kennel_packages/commit-pin
+Installed tag-pin into kennel_packages/tag-pin
+Installed version-pin into kennel_packages/version-pin
+Updated kennel.lock
+[verify-pinned-refs] update
+[verify-pinned-refs] success
+[verify-all] running scripts/verify-stale-lockfile.sh
+[verify-stale-lockfile] init
+Kennel initialized kennel.toml
+Kennel defaults are production-oriented: deterministic lockfiles, explicit sources, and trust policy support.
+[verify-stale-lockfile] add local dependency
+Added local-fixture from /private/tmp/kujo-companion-releases/kennel/examples/basic-project
+Resolved local-fixture to commit 
+Installed local-fixture into kennel_packages/local-fixture
+Updated kennel.lock
+[verify-stale-lockfile] inject manifest drift
+[verify-stale-lockfile] install from lockfile
+Installed local-fixture into kennel_packages/local-fixture
+Installed dependencies from kennel.lock
+[verify-stale-lockfile] success
+[verify-all] running scripts/verify-deterministic-lockfile.sh
+[verify-deterministic-lockfile] success
+[verify-all] running scripts/verify-transitive-resolution.sh
+[verify-transitive-resolution] success
+[verify-all] running scripts/verify-semver-range-resolution.sh
+[verify-semver-range-resolution] success
+[verify-all] running scripts/verify-multi-registry-fallback.sh
+[verify-multi-registry-fallback] success
+[verify-all] running scripts/verify-enterprise-docs.sh
+[verify-enterprise-docs] success
+[verify-all] running scripts/verify-architecture-flow-maps.sh
+[verify-architecture-flow-maps] success
+[verify-all] running scripts/verify-ci-quality-report-workflow.sh
+[verify-ci-quality-report-workflow] success
+[verify-all] running scripts/verify-kujo-native-direction.sh
+[verify-kujo-native-direction] success
+[verify-all] running scripts/verify-benchmark-harness.sh
+[benchmark-harness] dry-run complete -> /private/tmp/kujo-companion-releases/kennel/.kennel_tmp/benchmarks/verify-dry-run.json
+[verify-benchmark-harness] success
+[verify-all] running scripts/verify-release-sbom-attestation-workflow.sh
+[verify-release-sbom-attestation-workflow] success
+[verify-all] success (core)

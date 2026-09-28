@@ -1,0 +1,257 @@
+﻿2026-09-28T22:46:50.3800180Z Current runner version: '2.337.0'
+2026-09-28T22:46:50.3815130Z ##[group]Runner Image Provisioner
+2026-09-28T22:46:50.3815690Z Hosted Compute Agent
+2026-09-28T22:46:50.3816070Z Version: 20260828.587
+2026-09-28T22:46:50.3816470Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-28T22:46:50.3816930Z Build Date: 2026-08-28T16:44:25Z
+2026-09-28T22:46:50.3817360Z Worker ID: {1bfd7081-9e1f-4a5b-9ecb-b34595468657}
+2026-09-28T22:46:50.3817830Z Azure Region: westus
+2026-09-28T22:46:50.3818220Z ##[endgroup]
+2026-09-28T22:46:50.3819260Z ##[group]Operating System
+2026-09-28T22:46:50.3819670Z macOS
+2026-09-28T22:46:50.3820040Z 26.6.2
+2026-09-28T22:46:50.3820390Z 25G83
+2026-09-28T22:46:50.3820720Z ##[endgroup]
+2026-09-28T22:46:50.3821080Z ##[group]Runner Image
+2026-09-28T22:46:50.3821490Z Image: macos-26-arm64
+2026-09-28T22:46:50.3821870Z Version: 20260907.0351.1
+2026-09-28T22:46:50.3822690Z Included Software: https://github.com/actions/runner-images/blob/macos-26-arm64/20260907.0351/images/macos/macos-26-arm64-Readme.md
+2026-09-28T22:46:50.3823760Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-26-arm64%2F20260907.0351
+2026-09-28T22:46:50.3824420Z ##[endgroup]
+2026-09-28T22:46:50.3825220Z ##[group]GITHUB_TOKEN Permissions
+2026-09-28T22:46:50.3826540Z Contents: read
+2026-09-28T22:46:50.3826950Z Metadata: read
+2026-09-28T22:46:50.3827310Z Packages: read
+2026-09-28T22:46:50.3827690Z ##[endgroup]
+2026-09-28T22:46:50.3829090Z Secret source: Actions
+2026-09-28T22:46:50.3829660Z Cache mode: write
+2026-09-28T22:46:50.3830120Z Prepare workflow directory
+2026-09-28T22:46:50.4075170Z Prepare all required actions
+2026-09-28T22:46:50.4111920Z Getting action download info
+2026-09-28T22:46:50.5786960Z Download action repository 'actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-09-28T22:46:50.8484980Z Download action repository 'kujolang/kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c' (SHA:fc53093f35e4236682bbbf5ab1ccc8d2b4df990c)
+2026-09-28T22:46:52.6737920Z Getting action download info
+2026-09-28T22:46:52.7599600Z Download action repository 'actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-09-28T22:46:52.9513070Z Complete job name: test (macos-latest)
+2026-09-28T22:46:53.0207060Z ##[group]Run actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+2026-09-28T22:46:53.0208450Z with:
+2026-09-28T22:46:53.0209120Z   repository: kujolang/runledger
+2026-09-28T22:46:53.0215880Z   token: ***
+2026-09-28T22:46:53.0216530Z   ssh-strict: true
+2026-09-28T22:46:53.0217190Z   ssh-user: git
+2026-09-28T22:46:53.0217860Z   persist-credentials: true
+2026-09-28T22:46:53.0218620Z   clean: true
+2026-09-28T22:46:53.0219320Z   sparse-checkout-cone-mode: true
+2026-09-28T22:46:53.0220120Z   fetch-depth: 1
+2026-09-28T22:46:53.0220790Z   fetch-tags: false
+2026-09-28T22:46:53.0221480Z   show-progress: true
+2026-09-28T22:46:53.0222350Z   lfs: false
+2026-09-28T22:46:53.0222990Z   submodules: false
+2026-09-28T22:46:53.0223730Z   set-safe-directory: true
+2026-09-28T22:46:53.0224890Z ##[endgroup]
+2026-09-28T22:46:53.4901440Z Syncing repository: kujolang/runledger
+2026-09-28T22:46:53.4902920Z ##[group]Getting Git version info
+2026-09-28T22:46:53.4903390Z Working directory is '/Users/runner/work/runledger/runledger'
+2026-09-28T22:46:53.4904020Z [command]/opt/homebrew/bin/git version
+2026-09-28T22:46:53.5498470Z git version 2.55.0
+2026-09-28T22:46:53.5715410Z ##[endgroup]
+2026-09-28T22:46:53.5718860Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/7b0b297b-6cb3-4787-9f24-6fe59fbcc4c2/.gitconfig'
+2026-09-28T22:46:53.5719770Z Temporarily overriding HOME='/Users/runner/work/_temp/7b0b297b-6cb3-4787-9f24-6fe59fbcc4c2' before making global git config changes
+2026-09-28T22:46:53.5720640Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-28T22:46:53.5721340Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/runledger/runledger
+2026-09-28T22:46:53.5800860Z Deleting the contents of '/Users/runner/work/runledger/runledger'
+2026-09-28T22:46:53.5804340Z ##[group]Initializing the repository
+2026-09-28T22:46:53.5807730Z [command]/opt/homebrew/bin/git init /Users/runner/work/runledger/runledger
+2026-09-28T22:46:53.6099580Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-28T22:46:53.6107320Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-28T22:46:53.6108980Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-28T22:46:53.6110430Z hint: call:
+2026-09-28T22:46:53.6111210Z hint:
+2026-09-28T22:46:53.6112230Z hint: 	git config --global init.defaultBranch <name>
+2026-09-28T22:46:53.6113290Z hint:
+2026-09-28T22:46:53.6114280Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-28T22:46:53.6115710Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-28T22:46:53.6116900Z hint:
+2026-09-28T22:46:53.6117870Z hint: 	git branch -m <name>
+2026-09-28T22:46:53.6123650Z hint:
+2026-09-28T22:46:53.6124920Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-28T22:46:53.6250350Z Initialized empty Git repository in /Users/runner/work/runledger/runledger/.git/
+2026-09-28T22:46:53.6323980Z [command]/opt/homebrew/bin/git remote add origin https://github.com/kujolang/runledger
+2026-09-28T22:46:53.6326070Z ##[endgroup]
+2026-09-28T22:46:53.6326640Z ##[group]Disabling automatic garbage collection
+2026-09-28T22:46:53.6327150Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-09-28T22:46:53.6404820Z ##[endgroup]
+2026-09-28T22:46:53.6406040Z ##[group]Setting up auth
+2026-09-28T22:46:53.6417510Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-28T22:46:53.6570120Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-28T22:46:53.8828570Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-28T22:46:53.9011010Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-28T22:46:54.0514340Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-28T22:46:54.0516740Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-28T22:46:54.1942960Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-28T22:46:54.2032740Z ##[endgroup]
+2026-09-28T22:46:54.2034270Z ##[group]Fetching the repository
+2026-09-28T22:46:54.2059480Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +88fb37c81567bb94e1e341037514fe37cbafa76f:refs/remotes/origin/release/kujo16-companion
+2026-09-28T22:46:55.0861850Z From https://github.com/kujolang/runledger
+2026-09-28T22:46:55.0863490Z  * [new ref]         88fb37c81567bb94e1e341037514fe37cbafa76f -> origin/release/kujo16-companion
+2026-09-28T22:46:55.0878330Z ##[endgroup]
+2026-09-28T22:46:55.0880180Z ##[group]Determining the checkout info
+2026-09-28T22:46:55.0885770Z ##[endgroup]
+2026-09-28T22:46:55.0886550Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-09-28T22:46:55.0999820Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-28T22:46:55.1090370Z ##[group]Checking out the ref
+2026-09-28T22:46:55.1123860Z [command]/opt/homebrew/bin/git checkout --progress --force -B release/kujo16-companion refs/remotes/origin/release/kujo16-companion
+2026-09-28T22:46:55.1492240Z Switched to a new branch 'release/kujo16-companion'
+2026-09-28T22:46:55.1501020Z branch 'release/kujo16-companion' set up to track 'origin/release/kujo16-companion'.
+2026-09-28T22:46:55.1642680Z ##[endgroup]
+2026-09-28T22:46:55.1849370Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-09-28T22:46:55.1922710Z 88fb37c81567bb94e1e341037514fe37cbafa76f
+2026-09-28T22:46:55.2326220Z ##[group]Run kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+2026-09-28T22:46:55.2326770Z with:
+2026-09-28T22:46:55.2326950Z   version: v1.6.0
+2026-09-28T22:46:55.2327230Z ##[endgroup]
+2026-09-28T22:46:55.2406320Z ##[start-action display=Cache Kujo runtime;id=__kujolang_kujo.__actions_cache]
+2026-09-28T22:46:55.2484160Z ##[group]Run actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+2026-09-28T22:46:55.2484530Z with:
+2026-09-28T22:46:55.2484810Z   path: /Users/runner/hostedtoolcache/kujo/v1.6.0/macOS-ARM64
+2026-09-28T22:46:55.2485250Z   key: setup-kujo-v1.6.0-macOS-ARM64-v1
+2026-09-28T22:46:55.2485520Z   enableCrossOsArchive: false
+2026-09-28T22:46:55.2485800Z   fail-on-cache-miss: false
+2026-09-28T22:46:55.2486090Z   lookup-only: false
+2026-09-28T22:46:55.2486310Z   save-always: false
+2026-09-28T22:46:55.2486510Z ##[endgroup]
+2026-09-28T22:46:55.3882790Z (node:1169) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-28T22:46:55.3885230Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-28T22:46:55.5045850Z Cache not found for input keys: setup-kujo-v1.6.0-macOS-ARM64-v1
+2026-09-28T22:46:55.5078630Z ##[end-action id=__kujolang_kujo.__actions_cache;outcome=success;conclusion=success;duration_ms=266]
+2026-09-28T22:46:55.5085120Z ##[start-action display=Install Kujo on POSIX;id=__kujolang_kujo.install-posix]
+2026-09-28T22:46:55.5148870Z ##[group]Run bash "$GITHUB_ACTION_PATH/install.sh" "$KUJO_SETUP_VERSION" "$KUJO_SETUP_DIRECTORY"
+2026-09-28T22:46:55.5149520Z [36;1mbash "$GITHUB_ACTION_PATH/install.sh" "$KUJO_SETUP_VERSION" "$KUJO_SETUP_DIRECTORY"[0m
+2026-09-28T22:46:55.5197940Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-28T22:46:55.5198210Z env:
+2026-09-28T22:46:55.5198370Z   KUJO_SETUP_VERSION: v1.6.0
+2026-09-28T22:46:55.5198660Z   KUJO_SETUP_DIRECTORY: /Users/runner/hostedtoolcache/kujo/v1.6.0/macOS-ARM64
+2026-09-28T22:46:55.5198980Z ##[endgroup]
+2026-09-28T22:46:55.6098330Z   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+2026-09-28T22:46:55.6099880Z                                  Dload  Upload   Total   Spent    Left  Speed
+2026-09-28T22:46:55.6100190Z 
+2026-09-28T22:46:55.9242400Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-09-28T22:46:55.9264110Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-09-28T22:46:56.1067440Z 
+2026-09-28T22:46:56.1167930Z 100 17.6M  100 17.6M    0     0  35.6M      0 --:--:-- --:--:-- --:--:-- 35.6M
+2026-09-28T22:46:56.1411990Z   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+2026-09-28T22:46:56.1447280Z                                  Dload  Upload   Total   Spent    Left  Speed
+2026-09-28T22:46:56.1512170Z 
+2026-09-28T22:46:56.4256800Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-09-28T22:46:56.4257580Z   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+2026-09-28T22:46:56.4478690Z 
+2026-09-28T22:46:56.4481750Z 100    97  100    97    0     0    313      0 --:--:-- --:--:-- --:--:--   313
+2026-09-28T22:46:56.7338830Z ##[end-action id=__kujolang_kujo.install-posix;outcome=success;conclusion=success;duration_ms=1224]
+2026-09-28T22:46:56.7345450Z ##[start-action display=Install Kujo on Windows;id=__kujolang_kujo.install-windows]
+2026-09-28T22:46:56.7353710Z ##[end-action id=__kujolang_kujo.install-windows;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-09-28T22:46:56.7360340Z ##[start-action display=Publish setup outputs;id=__kujolang_kujo.install]
+2026-09-28T22:46:56.7380220Z ##[group]Run set -euo pipefail
+2026-09-28T22:46:56.7380930Z [36;1mset -euo pipefail[0m
+2026-09-28T22:46:56.7381270Z [36;1mprintf 'kujo-path=%s\n' "${POSIX_PATH:-${WINDOWS_PATH}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:46:56.7381790Z [36;1mprintf 'version=%s\n' "$KUJO_SETUP_VERSION" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:46:56.7382730Z [36;1mprintf 'checksum=%s\n' "${POSIX_CHECKSUM:-${WINDOWS_CHECKSUM}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:46:56.7383210Z [36;1mprintf 'asset=%s\n' "${POSIX_ASSET:-${WINDOWS_ASSET}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:46:56.7383800Z [36;1mprintf 'provenance-url=%s\n' "${POSIX_PROVENANCE:-${WINDOWS_PROVENANCE}}" >> "$GITHUB_OUTPUT"[0m
+2026-09-28T22:46:56.7421120Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-28T22:46:56.7421410Z env:
+2026-09-28T22:46:56.7421680Z   POSIX_PATH: /Users/runner/hostedtoolcache/kujo/v1.6.0/macOS-ARM64/kujo
+2026-09-28T22:46:56.7422180Z   POSIX_CHECKSUM: 7257ab8829ba0cb7f425f0c3742b264b8706a791d04e8c87a0d8b87adf61a463
+2026-09-28T22:46:56.7422550Z   POSIX_ASSET: kujo-v1.6.0-macos-arm64.tar.gz
+2026-09-28T22:46:56.7422910Z   POSIX_PROVENANCE: https://github.com/kujolang/kujo/releases/tag/v1.6.0
+2026-09-28T22:46:56.7423220Z   WINDOWS_PATH: 
+2026-09-28T22:46:56.7423410Z   WINDOWS_CHECKSUM: 
+2026-09-28T22:46:56.7423640Z   WINDOWS_ASSET: 
+2026-09-28T22:46:56.7423820Z   WINDOWS_PROVENANCE: 
+2026-09-28T22:46:56.7424020Z   KUJO_SETUP_VERSION: v1.6.0
+2026-09-28T22:46:56.7424260Z ##[endgroup]
+2026-09-28T22:46:56.7858040Z ##[end-action id=__kujolang_kujo.install;outcome=success;conclusion=success;duration_ms=49]
+2026-09-28T22:46:56.7860340Z ##[start-action display=Verify installed runtime;id=__kujolang_kujo.__run]
+2026-09-28T22:46:56.7891200Z ##[group]Run set -euo pipefail
+2026-09-28T22:46:56.7891440Z [36;1mset -euo pipefail[0m
+2026-09-28T22:46:56.7891630Z [36;1mkujo --version[0m
+2026-09-28T22:46:56.7924940Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-28T22:46:56.7925240Z ##[endgroup]
+2026-09-28T22:46:56.8458640Z kujo 1.6.0
+2026-09-28T22:46:56.8470360Z ##[end-action id=__kujolang_kujo.__run;outcome=success;conclusion=success;duration_ms=60]
+2026-09-28T22:46:56.8528840Z ##[group]Run kujo --version
+2026-09-28T22:46:56.8529270Z [36;1mkujo --version[0m
+2026-09-28T22:46:56.8564720Z shell: /bin/bash -e {0}
+2026-09-28T22:46:56.8565010Z ##[endgroup]
+2026-09-28T22:46:56.8856720Z kujo 1.6.0
+2026-09-28T22:46:56.8889080Z ##[group]Run bash tests/run.sh
+2026-09-28T22:46:56.8889430Z [36;1mbash tests/run.sh[0m
+2026-09-28T22:46:56.8999430Z shell: /bin/bash -e {0}
+2026-09-28T22:46:56.8999730Z ##[endgroup]
+2026-09-28T22:46:59.0673230Z 
+2026-09-28T22:46:59.0678200Z RunLedger tests: 81 passed, 0 failed
+2026-09-28T22:47:01.3734780Z Wrote report to /var/folders/36/tjdph2t965j8snz9_vkdnw0r0000gn/T//runledger-cli-test.nsKi0V/page-report.md
+2026-09-28T22:47:01.5388020Z Added note to 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:01.5677610Z Added note to 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:01.5957260Z Added note to 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.1552630Z Added follow-up to 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.1865330Z Recorded command for 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.2167020Z Recorded test for 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.2639330Z Recorded test for 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.3213920Z Updated usage for 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.3644100Z Updated cost for 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.3895900Z Updated correlation for 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.5963270Z Finished run: 2026-09-28-codex-cli-test-001
+2026-09-28T22:47:02.5963760Z   status:       partial
+2026-09-28T22:47:02.5964780Z   end commit:   9bf120dc5cba5992b7335d9312db0111f0a2b281
+2026-09-28T22:47:02.5965180Z   changed files: 1
+2026-09-28T22:47:02.8223560Z Wrote report to /var/folders/36/tjdph2t965j8snz9_vkdnw0r0000gn/T//runledger-cli-test.nsKi0V/RUNLEDGER_REPORT.md
+2026-09-28T22:47:02.8594250Z Wrote report to /var/folders/36/tjdph2t965j8snz9_vkdnw0r0000gn/T//runledger-cli-test.nsKi0V/nested/out/RUNLEDGER_REPORT.md
+2026-09-28T22:47:03.6825580Z Finished run: 2026-09-28-local-agent-committed-work-001
+2026-09-28T22:47:03.6826330Z   status:       pass
+2026-09-28T22:47:03.6826770Z   end commit:   af61471bf63b79ec6b7ad3c1af335c318d329a5c
+2026-09-28T22:47:03.6827130Z   changed files: 1
+2026-09-28T22:47:03.8679390Z Finished run: 2026-09-28-local-agent-no-git-001
+2026-09-28T22:47:03.8691490Z   status:       pass
+2026-09-28T22:47:03.8692120Z   end commit:   -
+2026-09-28T22:47:03.8692840Z   changed files: 0
+2026-09-28T22:47:04.4394190Z Finished run: 2026-09-28-local-agent-no-commit-repo-001
+2026-09-28T22:47:04.4394570Z   status:       pass
+2026-09-28T22:47:04.4394750Z   end commit:   -
+2026-09-28T22:47:04.4394950Z   changed files: 1
+2026-09-28T22:47:05.0174070Z Finished run: 2026-09-28-local-agent-repo-override-001
+2026-09-28T22:47:05.0175500Z   status:       partial
+2026-09-28T22:47:05.0176580Z   end commit:   c566cd0b1c4fb6fb7087135784a420e2e46956c2
+2026-09-28T22:47:05.0177080Z   changed files: 1
+2026-09-28T22:47:05.7940660Z Finished run: 2026-09-28-local-agent-sha256-001
+2026-09-28T22:47:05.7976860Z   status:       pass
+2026-09-28T22:47:05.8006130Z   end commit:   6cb10a40f1bc92acc35f3c768e2806317250fe64face7c53ee44e7d12ad4381a
+2026-09-28T22:47:05.8008120Z   changed files: 1
+2026-09-28T22:47:06.6070820Z CLI integration: ok
+2026-09-28T22:47:07.4768700Z runtime_measurement_reference: PASS
+2026-09-28T22:47:07.5121440Z Post job cleanup.
+2026-09-28T22:47:07.5128830Z ##[start-action display=Cache Kujo runtime;id=__d3328c89-b61c-4f73-9dd3-dfe64d07f9ef.__actions_cache]
+2026-09-28T22:47:07.5187880Z Post job cleanup.
+2026-09-28T22:47:07.8356530Z (node:2025) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-28T22:47:07.8357850Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-28T22:47:07.8546550Z [command]/opt/homebrew/bin/gtar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/runner/work/runledger/runledger --files-from manifest.txt --delay-directory-restore --use-compress-program zstdmt
+2026-09-28T22:47:08.3627250Z (node:2025) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-28T22:47:08.8286000Z Sent 17900337 of 17900337 (100.0%), 57.3 MBs/sec
+2026-09-28T22:47:08.9216860Z Cache saved with key: setup-kujo-v1.6.0-macOS-ARM64-v1
+2026-09-28T22:47:08.9246710Z ##[end-action id=__d3328c89-b61c-4f73-9dd3-dfe64d07f9ef.__actions_cache;outcome=success;conclusion=success;duration_ms=1410]
+2026-09-28T22:47:08.9324850Z Post job cleanup.
+2026-09-28T22:47:09.0276820Z [command]/opt/homebrew/bin/git version
+2026-09-28T22:47:09.0354010Z git version 2.55.0
+2026-09-28T22:47:09.0385190Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/f43818fd-f816-4c26-a9df-cfd2e88e00b0/.gitconfig'
+2026-09-28T22:47:09.0386190Z Temporarily overriding HOME='/Users/runner/work/_temp/f43818fd-f816-4c26-a9df-cfd2e88e00b0' before making global git config changes
+2026-09-28T22:47:09.0387740Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-28T22:47:09.0389770Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/runledger/runledger
+2026-09-28T22:47:09.0480860Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-28T22:47:09.0553750Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-28T22:47:09.1596730Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-28T22:47:09.1674530Z http.https://github.com/.extraheader
+2026-09-28T22:47:09.1681210Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-28T22:47:09.1756340Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-28T22:47:09.2613560Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-28T22:47:09.2678070Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-28T22:47:09.3979980Z Cleaning up orphan processes
+2026-09-28T22:47:09.6648190Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830, actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

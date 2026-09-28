@@ -1,0 +1,20 @@
+test_corrupt_header_and_duplicate_paths (test_registry_packages.RegistryTests) ... ok
+test_deterministic_release_excludes_working_tree_and_secrets (test_registry_packages.RegistryTests) ... ok
+test_git_commit_projection_records_provenance_without_released_dependency (test_registry_packages.RegistryTests) ... ok
+test_immutable_retry_and_mutation (test_registry_packages.RegistryTests) ... ok
+test_locked_replay_preserves_manifest_null_and_cache_integrity (test_registry_packages.RegistryTests) ... ok
+test_manifest_projection_does_not_retarget_dependency_commits (test_registry_packages.RegistryTests) ... ok
+test_metadata_tampering_is_rejected (test_registry_packages.RegistryTests) ... ok
+test_prerelease_precedence_is_numeric (test_registry_packages.RegistryTests) ... ok
+test_release_symlink_is_rejected_by_builder (test_registry_packages.RegistryTests) ... ok
+test_reviewed_git_pins_preserve_commit_and_tag_identity (test_registry_packages.RegistryTests) ... ok
+test_reviewed_manifest_projection_is_commit_and_digest_bound (test_registry_packages.RegistryTests) ... ok
+test_source_artifact_module_survives_generated_artifact_filter (test_registry_packages.RegistryTests) ... ok
+test_traversal_absolute_links_modes_invalid_gzip (test_registry_packages.RegistryTests) ... ok
+test_unauthorized_repository_and_fake_release_fail (test_registry_packages.RegistryTests) ... ok
+test_ustar_terminator_can_cross_a_record_boundary (test_registry_packages.RegistryTests) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 7.312s
+
+OK
