@@ -19,7 +19,7 @@ if(run(['--version']).trim()!=='kujo 1.6.0')throw Error('version mismatch');
 const source=path.resolve('source');
 function copied(name,text){const f=path.join(isolated,name);fs.writeFileSync(f,text);return f;}
 for(const name of fs.readdirSync(path.join(source,'tests/fixtures/loop_return')).filter(n=>n.endsWith('.kujo'))){const f=copied(name,fs.readFileSync(path.join(source,'tests/fixtures/loop_return',name)));const vm=run(['run',f]), interpreter=run(['run','--interpreter',f]);if(vm!==interpreter)throw Error('loop parity mismatch '+name);if(name==='historical.kujo'&&vm!=='{"ok":true}\n')throw Error('historical regression');}
-for(const name of ['vm_closure_adder','test_generators']){const f=copied(name+'.kujo',fs.readFileSync(path.join(source,'tests',name+'.kujo')));const expected=fs.readFileSync(path.join(source,'tests',name+'.out'),'utf8').trimEnd()+'\n';if(run(['run',f])!==expected)throw Error(name+' mismatch');}
+for(const name of ['vm_closure_adder','test_generators']){const f=copied(name+'.kujo',fs.readFileSync(path.join(source,'tests',name+'.kujo')));const expected=fs.readFileSync(path.join(source,'tests',name+'.out'),'utf8').replaceAll('\r\n','\n').trimEnd()+'\n';if(run(['run',f])!==expected)throw Error(name+' mismatch');}
 if(run(['run',copied('hello.kujo','print(42)\n')])!=='42\n')throw Error('hello mismatch');
 const task='async func add(a,b) { return a+b } print(await add(4,5)) func work() { return 21 } let h := spawn_task(work) let a := await await_task(h) let b := await await_task(h) print(a+b)\n';
 if(run(['run',copied('async-task.kujo',task)])!=='9\n42\n')throw Error('task mismatch');
