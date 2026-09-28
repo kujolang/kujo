@@ -1,0 +1,29 @@
+{
+  "source": "646fc9b94abec1071e93ea54648fa75f56c0c55b",
+  "binary_sha256": "29ea1fd65a2aadb160b7ae215c4baf6403db66d8972808cbe885005b3b6c82cf",
+  "runs": [
+    {
+      "mode": "vm",
+      "command": [
+        "target/debug/kujo",
+        "run",
+        "/tmp/kujo-loop-fix-baseline/probe.kujo"
+      ],
+      "exit": 4,
+      "stdout": "",
+      "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n[KUJOVM001] [vm] Runtime Error: Stack underflow in return\n  --> 0:0\n\nCall stack:\n  0 at verify_subject\n\n"
+    },
+    {
+      "mode": "interpreter",
+      "command": [
+        "target/debug/kujo",
+        "run",
+        "--interpreter",
+        "/tmp/kujo-loop-fix-baseline/probe.kujo"
+      ],
+      "exit": 0,
+      "stdout": "{\"ok\":true}\n",
+      "stderr": ""
+    }
+  ]
+}

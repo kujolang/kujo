@@ -1,0 +1,277 @@
+[
+  {
+    "source": "tests/fixtures/loop_return/A_no_return.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/A_no_return.kujo"
+    ],
+    "exit": 0,
+    "stdout": "1\n2\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/A_no_return.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/A_no_return.kujo"
+    ],
+    "exit": 0,
+    "stdout": "1\n2\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/B_unconditional.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/B_unconditional.kujo"
+    ],
+    "exit": 0,
+    "stdout": "1\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/B_unconditional.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/B_unconditional.kujo"
+    ],
+    "exit": 0,
+    "stdout": "1\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/C_matching.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/C_matching.kujo"
+    ],
+    "exit": 0,
+    "stdout": "1\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/C_matching.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/C_matching.kujo"
+    ],
+    "exit": 0,
+    "stdout": "1\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/D_no_match.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/D_no_match.kujo"
+    ],
+    "exit": 0,
+    "stdout": "9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/D_no_match.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/D_no_match.kujo"
+    ],
+    "exit": 0,
+    "stdout": "9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/E_later_match.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/E_later_match.kujo"
+    ],
+    "exit": 0,
+    "stdout": "2\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/E_later_match.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/E_later_match.kujo"
+    ],
+    "exit": 0,
+    "stdout": "2\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/F_nested_if.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/F_nested_if.kujo"
+    ],
+    "exit": 0,
+    "stdout": "2\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/F_nested_if.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/F_nested_if.kujo"
+    ],
+    "exit": 0,
+    "stdout": "2\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/G_nested_loop.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/G_nested_loop.kujo"
+    ],
+    "exit": 0,
+    "stdout": "4\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/G_nested_loop.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/G_nested_loop.kujo"
+    ],
+    "exit": 0,
+    "stdout": "4\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/H_caller.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/H_caller.kujo"
+    ],
+    "exit": 0,
+    "stdout": "11\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/H_caller.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/H_caller.kujo"
+    ],
+    "exit": 0,
+    "stdout": "11\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/I_fold.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/I_fold.kujo"
+    ],
+    "exit": 0,
+    "stdout": "5\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/I_fold.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/I_fold.kujo"
+    ],
+    "exit": 0,
+    "stdout": "5\n9\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/J_break_continue.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/J_break_continue.kujo"
+    ],
+    "exit": 0,
+    "stdout": "2\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/J_break_continue.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/J_break_continue.kujo"
+    ],
+    "exit": 0,
+    "stdout": "2\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/historical.kujo",
+    "mode": "vm",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/historical.kujo"
+    ],
+    "exit": 0,
+    "stdout": "{\"ok\":true}\n",
+    "stderr": ""
+  },
+  {
+    "source": "tests/fixtures/loop_return/historical.kujo",
+    "mode": "interpreter",
+    "command": [
+      "/tmp/kujo-1.6-loop-fixed-bin",
+      "run",
+      "--interpreter",
+      "/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/tests/fixtures/loop_return/historical.kujo"
+    ],
+    "exit": 0,
+    "stdout": "{\"ok\":true}\n",
+    "stderr": ""
+  }
+]

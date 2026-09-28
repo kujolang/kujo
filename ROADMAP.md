@@ -10,6 +10,13 @@ bounded, descriptor-confined artifact I/O on top of the package-installer
 runtime primitives introduced in 1.4.
 This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
+Kujo 1.6 technical status: **READY_FOR_1_6_RELEASE_PREP**. The VM loop/early-return
+optimizer defect is [fixed and regression-tested](docs/VM_LOOP_RETURN_FIX.md),
+including the full Dispatch gate against the exact optimized candidate. Remaining
+work is release-source/version/changelog/artifact reconciliation; see the
+[readiness review](docs/KUJO_1_6_READINESS_REVIEW.md). No release or version bump
+is implied.
+
 ## Where Kujo stands
 
 - `kujo run` uses the bytecode VM by default. The interpreter remains a fallback

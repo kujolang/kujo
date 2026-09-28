@@ -1,0 +1,245 @@
+{
+  "schema": "kujo.runtime-fix-evidence/v1",
+  "recorded_utc": "2026-09-28T16:15:11.125968+00:00",
+  "baseline_source": "646fc9b94abec1071e93ea54648fa75f56c0c55b",
+  "regression_commit": "2fe6ed306e0ade589b0ac39013c24f1de2d4c5db",
+  "candidate": {
+    "source": "db4608c1df59668ff9c89956ae4ef1ab18e86f14",
+    "binary_sha256": "74f42acdf3470ea73cd770f3ac2eae281c1bfe3609c3db5e2cfa8c197e523685",
+    "binary_path": "/tmp/kujo-1.6-loop-fixed-bin",
+    "build_command": "cargo build --release --locked",
+    "cargo_lock_sha256": "057d96a6ad9306f8d215920250aa5d5533b23e775553203babc98b003eff9341",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)"
+  },
+  "repositories": {
+    "kujo": "db4608c1df59668ff9c89956ae4ef1ab18e86f14",
+    "dispatch": "f5bbca46098f542ecee5e193c78fa8008706454d",
+    "workcell": "1940da0639b70b702c1b1077dda51ca39b065216",
+    "ability": "d6c970785f8d8bea04de0dce37920c2d0ca1c067",
+    "mcp": "a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a",
+    "agents-sdk": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+    "ai-sdk": "71bad1468fbc97eab830a27c185c032f07fd76cf"
+  },
+  "gates": {
+    "fmt": {
+      "command": "cargo fmt --check",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "check": {
+      "command": "cargo check",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "test": {
+      "command": "cargo test",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "vm": {
+      "command": "cargo run -- test --runtime vm",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "interpreter": {
+      "command": "cargo run -- test --runtime interpreter",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "dual": {
+      "command": "cargo run -- test --runtime dual",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "targeted": {
+      "command": "cargo test --test loop_return_contracts --test closure_capture_contracts --test closure_capture_audit --test generator_continuation_contracts --test vm_interpreter_parity_surfaces --test docs_examples --test readme_contracts --test cli_contracts --test cli_json_contracts --test diagnostics_golden",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "release-build": {
+      "command": "cargo build --release --locked",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "dispatch": {
+      "command": "KUJO_BIN=/tmp/kujo-1.6-loop-fixed-bin DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+      "exit": 0,
+      "cwd": "dispatch"
+    },
+    "workcell": {
+      "command": "KUJO_BIN=/tmp/kujo-1.6-loop-fixed-bin DISPATCH_OFFLINE_FIXTURE=true bash tests/effect_assurance.sh",
+      "exit": 0,
+      "cwd": "workcell"
+    },
+    "adopter": {
+      "command": "KUJO_BIN=/tmp/kujo-1.6-loop-fixed-bin DISPATCH_OFFLINE_FIXTURE=true python3 tests/adopter_pilot_integration.py",
+      "exit": 0,
+      "cwd": "dispatch"
+    },
+    "final-fmt": {
+      "command": "cargo fmt --check",
+      "exit": 0,
+      "cwd": "kujo"
+    },
+    "final-docs": {
+      "command": "cargo test --test readme_contracts --test docs_examples",
+      "exit": 0,
+      "cwd": "kujo"
+    }
+  },
+  "summary": {
+    "cargo_test_passed": 2856,
+    "cargo_test_ignored": 17,
+    "targeted_passed": 232,
+    "fixtures_per_runtime_passed": 150,
+    "fixtures_skipped": 11,
+    "dual_interpreter_fallback": 0,
+    "release_probe_executions": 22,
+    "dispatch_source_tests": 101,
+    "dispatch_shards": 24,
+    "dispatch_workloads_passed": 3,
+    "dispatch_suite_logs": 69,
+    "adopter_human_validation": false
+  },
+  "artifacts": {
+    "adopter.log.gz": {
+      "sha256": "8d0ed456a44ecc974b83d41de7890f8ac9403bd4784516d64aed195e517f7caf",
+      "bytes": 347,
+      "uncompressed_sha256": "1933d8993cf20de5aa68b0b4aa7523c2e3e1cc648451763f85862b34344e6e45",
+      "uncompressed_bytes": 777
+    },
+    "after-contracts.log.gz": {
+      "sha256": "8dc196cd76ed5ca0ac2e9e3fd190024383ccd5f740d8aeb717b9733787542138",
+      "bytes": 2797,
+      "uncompressed_sha256": "525bfc82a25e620afa823336276705b68db1ee0bb8d54684cf06eff6d1599462",
+      "uncompressed_bytes": 20744
+    },
+    "baseline.json": {
+      "sha256": "58d51527740b4d2319651677d405669eabf9e0d040fded769819fd5b99cf15f0",
+      "bytes": 839
+    },
+    "before-contracts.log.gz": {
+      "sha256": "6e8b9f686d9a86d16b0110d95ab28e9cd948aef065982450b91d86597725780f",
+      "bytes": 3130,
+      "uncompressed_sha256": "7b37feb878bcaf429364ce8f108adf8abf60ca33c26caae32c3550a4fa877a46",
+      "uncompressed_bytes": 21926
+    },
+    "before-sweep-dual.log.gz": {
+      "sha256": "0c88d76a11ac30bed2239c7012f4bf867ff04024146e8c415185df1d2d12b7d2",
+      "bytes": 205,
+      "uncompressed_sha256": "b0e71c53beb84e659196851517bc75673ea1ded2b2af3e6f1ba425e74889a5be",
+      "uncompressed_bytes": 252
+    },
+    "before-sweep-interpreter.log.gz": {
+      "sha256": "63991031398adb557bdc4cceb2dbae6579267df53fdddf7f2cd9318d0ce51cee",
+      "bytes": 184,
+      "uncompressed_sha256": "72eb25eac91a1ca94303f8f6cf0cf6b14c0e5a54d0abbed9732b66613b01440d",
+      "uncompressed_bytes": 215
+    },
+    "before-sweep-vm.log.gz": {
+      "sha256": "6efacdc213da79b26388208b0b82fd11c6d6cb6e6a68de9c94b2cba6f3f0012a",
+      "bytes": 269,
+      "uncompressed_sha256": "ad1565e34006563c1b92556fff22193ebe8a05297b05ce1f4048f4aace2d787b",
+      "uncompressed_bytes": 322
+    },
+    "candidate.json": {
+      "sha256": "81622b37011c12faca5265d9419374c9c3f55b27b3c72961afb55513f6b1bd70",
+      "bytes": 439
+    },
+    "commands.json": {
+      "sha256": "4520c31d62d0132c2eb52bea0fba1f83bf0af89f29c916b5fad3d748377a794b",
+      "bytes": 1071
+    },
+    "dispatch-suites.json.gz": {
+      "sha256": "baae78ffb57a622b6d354402072859f166bfa83aaa6dbbea30096c67ee0dfffe",
+      "bytes": 17238,
+      "uncompressed_sha256": "425f8a2d8f1e7db2b3deffa26e47a3ef1865740acf5a879cb468d2e9553d3f51",
+      "uncompressed_bytes": 79201
+    },
+    "dispatch.log.gz": {
+      "sha256": "c20f673df79ad142495a0412ce9e29635e342be21cf31b30345418f8ab5804a8",
+      "bytes": 1475,
+      "uncompressed_sha256": "15bdb0db16d5e0263b9aa80d59eac6cf8db129ac8bb610b526d4501650627ee8",
+      "uncompressed_bytes": 10090
+    },
+    "kujo-check.log.gz": {
+      "sha256": "f8e55252fd1dce8d904e77041ef948e8fbee2e18dcb8045fccb75d01131716f5",
+      "bytes": 393,
+      "uncompressed_sha256": "58e5fac4963bbaf0065d6511ce143c18ef16cfb6a564af18fc324a08b199b6d2",
+      "uncompressed_bytes": 740
+    },
+    "kujo-dual.log.gz": {
+      "sha256": "033fd88b7a797bd6d8507c45a6178aa8f185254c9b9839a895c7752510e5568c",
+      "bytes": 2224,
+      "uncompressed_sha256": "d334c95fb2268efb1fce40e3a4d58af2384c1fec0074b248bc31fee53187914b",
+      "uncompressed_bytes": 7785
+    },
+    "kujo-fmt.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    "kujo-interpreter.log.gz": {
+      "sha256": "67c3d025633e0166c2621fc417b7c1b8f217848b47a75e525ea6f5e118c94393",
+      "bytes": 2155,
+      "uncompressed_sha256": "6d9b8f5af9de1a66dfd83516417b6c82deedd78434aec9061dd23d9e2135adbd",
+      "uncompressed_bytes": 7781
+    },
+    "kujo-targeted.log.gz": {
+      "sha256": "010ba7fe94bf243693504f1c794c2633a57292901c0f3f08e0f3eefced41765e",
+      "bytes": 4640,
+      "uncompressed_sha256": "38207a19c23aa1bf17b69d0f91b132d9643926f5e21cc6da7906ed671cf04881",
+      "uncompressed_bytes": 18682
+    },
+    "kujo-test.log.gz": {
+      "sha256": "b75197014e4050162fd9ecb7f911b62de1afd68a80fbca27cf4ec04e8545b422",
+      "bytes": 47291,
+      "uncompressed_sha256": "0ac29b4470397ca3424997f54d6ee8b3b094c91761929d98ffc2b95bf4e42381",
+      "uncompressed_bytes": 261706
+    },
+    "kujo-vm.log.gz": {
+      "sha256": "dedad1abbd3e3e92c9fdbf568efb6e0be93c2bc2bdce81c8500e3241a808b68a",
+      "bytes": 2270,
+      "uncompressed_sha256": "1cfe57e5edd912f69b368a36173f8a8f45f5f0cfd1d83698b09092aa54e62b69",
+      "uncompressed_bytes": 7839
+    },
+    "minimized.json": {
+      "sha256": "cc9a19f61d830afd082481b4aa1146327f208636c70184e5c4006ce1794f5584",
+      "bytes": 3824
+    },
+    "release-build.log.gz": {
+      "sha256": "41a032829272cff4d5615464fb44405c78f335dbffea4abb2a05b25f25d53a11",
+      "bytes": 4609,
+      "uncompressed_sha256": "47b66e9f0087600d6910af906c585840d93c958233bf4c1816e9efa1e23631ff",
+      "uncompressed_bytes": 16213
+    },
+    "release-probes.json": {
+      "sha256": "e44ab1c5030221ea11b9a5886efb0a7a337856cc6d40d0a99a834a6a5a4b9bdf",
+      "bytes": 7415
+    },
+    "repositories.json": {
+      "sha256": "fbf69fec1a36479d09d250b57883c984a0eef2a4a5daf9787a41a816b9d78c59",
+      "bytes": 399
+    },
+    "workcell.log.gz": {
+      "sha256": "f67b197f66900d0a5c20ec08ccd13c352ce9fe0a5c8bdf9c0adacd0efbfba2d8",
+      "bytes": 165,
+      "uncompressed_sha256": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d",
+      "uncompressed_bytes": 184
+    },
+    "final-docs.log.gz": {
+      "sha256": "60dff60a14a358d210363d5c2393931a4a38ccbaa6b685e6411237f644c5cfa5",
+      "bytes": 701,
+      "uncompressed_sha256": "908d7e6c7a273225f96e1bd572f688275c357c2ff55549b1999c133f11a736d9",
+      "uncompressed_bytes": 1537
+    },
+    "final-fmt.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    }
+  }
+}

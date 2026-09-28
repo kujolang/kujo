@@ -1,0 +1,9 @@
+{
+  "source": "db4608c1df59668ff9c89956ae4ef1ab18e86f14",
+  "binary_sha256": "74f42acdf3470ea73cd770f3ac2eae281c1bfe3609c3db5e2cfa8c197e523685",
+  "binary_path": "/tmp/kujo-1.6-loop-fixed-bin",
+  "build_command": "cargo build --release --locked",
+  "cargo_lock_sha256": "057d96a6ad9306f8d215920250aa5d5533b23e775553203babc98b003eff9341",
+  "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)"
+}

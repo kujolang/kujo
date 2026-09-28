@@ -1,0 +1,172 @@
+[
+  {
+    "case": "A_no_return",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "1\n2\n",
+        "stderr": ""
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n2\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "B_unconditional",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "Compiler optimization: 0 constants folded, 9 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n9\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "C_matching",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "D_no_match",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "",
+        "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "9\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "E_later_match",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "F_nested_if",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "2\n9\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "G_nested_loop",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "4\n",
+        "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "4\n9\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "H_caller",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "",
+        "stderr": "Compiler optimization: 0 constants folded, 3 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "11\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "I_fold",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 4,
+        "stdout": "",
+        "stderr": "Compiler optimization: 1 constants folded, 5 dead instructions removed, 0 peephole optimizations\n[KUJOVM001] [vm] Runtime Error: Invalid binary operation: bool + int\n  --> 0:0\n   = help: Use operands whose types support this operator, or convert values before applying it.\n\nCall stack:\n  0 at f\n\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "5\n9\n",
+        "stderr": ""
+      }
+    ]
+  },
+  {
+    "case": "J_break_continue",
+    "runs": [
+      {
+        "mode": "vm",
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": "Compiler optimization: 0 constants folded, 5 dead instructions removed, 0 peephole optimizations\n"
+      },
+      {
+        "mode": "interpreter",
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": ""
+      }
+    ]
+  }
+]

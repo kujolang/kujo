@@ -1,0 +1,15 @@
+{
+  "fmt": "cargo fmt --check",
+  "check": "cargo check",
+  "test": "cargo test",
+  "vm": "cargo run -- test --runtime vm",
+  "interpreter": "cargo run -- test --runtime interpreter",
+  "dual": "cargo run -- test --runtime dual",
+  "targeted": "cargo test --test loop_return_contracts --test closure_capture_contracts --test closure_capture_audit --test generator_continuation_contracts --test vm_interpreter_parity_surfaces --test docs_examples --test readme_contracts --test cli_contracts --test cli_json_contracts --test diagnostics_golden",
+  "release-build": "cargo build --release --locked",
+  "dispatch": "KUJO_BIN=/tmp/kujo-1.6-loop-fixed-bin DISPATCH_OFFLINE_FIXTURE=true bash scripts/run_release_gate.sh",
+  "workcell": "KUJO_BIN=/tmp/kujo-1.6-loop-fixed-bin DISPATCH_OFFLINE_FIXTURE=true bash tests/effect_assurance.sh",
+  "adopter": "KUJO_BIN=/tmp/kujo-1.6-loop-fixed-bin DISPATCH_OFFLINE_FIXTURE=true python3 tests/adopter_pilot_integration.py",
+  "final-fmt": "cargo fmt --check",
+  "final-docs": "cargo test --test readme_contracts --test docs_examples"
+}
