@@ -1,0 +1,954 @@
+{
+  "schema": "kujo.companion-release-triage/v1",
+  "asOf": "2026-09-28",
+  "scope": "Release prioritization, not release certification or publication authorization",
+  "runtime": {
+    "version": "1.6.0",
+    "source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "platform": "macOS x64",
+    "sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "repositories": [
+    {
+      "name": "dispatch",
+      "tag": "v1.2.0",
+      "released": "2026-08-27T12:34:37Z",
+      "url": "https://github.com/kujolang/dispatch/releases/tag/v1.2.0",
+      "releaseSha": "662417c264bd55f8d802eef3fc21f9f372590753",
+      "main": "955996b83a5e3cf416eb6fbacc05788faffdbc29",
+      "ancestor": true,
+      "commits": 111,
+      "firstParentCommits": "106"
+    },
+    {
+      "name": "workcell",
+      "tag": "v1.1.0",
+      "released": "2026-09-04T20:29:42Z",
+      "url": "https://github.com/kujolang/workcell/releases/tag/v1.1.0",
+      "releaseSha": "074d7262ef6c565e3dabd22ee046228c7329e5c1",
+      "main": "1940da0639b70b702c1b1077dda51ca39b065216",
+      "ancestor": true,
+      "commits": 17,
+      "firstParentCommits": "12"
+    },
+    {
+      "name": "ability",
+      "tag": "v1.1.0",
+      "released": "2026-09-04T22:43:43Z",
+      "url": "https://github.com/kujolang/ability/releases/tag/v1.1.0",
+      "releaseSha": "e5a74803c822de79e934d2bea82d615d8be3bbee",
+      "main": "d6c970785f8d8bea04de0dce37920c2d0ca1c067",
+      "ancestor": true,
+      "commits": 12,
+      "firstParentCommits": "12"
+    },
+    {
+      "name": "agents-sdk",
+      "tag": "v1.0.0",
+      "released": "2026-08-08T07:01:44Z",
+      "url": "https://github.com/kujolang/agents-sdk/releases/tag/v1.0.0",
+      "releaseSha": "e92a61ec1df21c89ae26f411838b4669405a0765",
+      "main": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+      "ancestor": true,
+      "commits": 51,
+      "firstParentCommits": "51"
+    },
+    {
+      "name": "mcp",
+      "tag": "v1.1.1",
+      "released": "2026-09-04T12:43:30Z",
+      "url": "https://github.com/kujolang/mcp/releases/tag/v1.1.1",
+      "releaseSha": "7c938d765702b07cb7051a50c7bf206cffe1d78e",
+      "main": "a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a",
+      "ancestor": true,
+      "commits": 17,
+      "firstParentCommits": "17"
+    },
+    {
+      "name": "watchdog",
+      "tag": "v1.1.0",
+      "released": "2026-09-26T06:03:48Z",
+      "url": "https://github.com/kujolang/watchdog/releases/tag/v1.1.0",
+      "releaseSha": "11efe7c702ff76d33e40c1066a0f99e0fcb29028",
+      "main": "e18e437afb221a597d48295b432b0ff356931158",
+      "ancestor": true,
+      "commits": 10,
+      "firstParentCommits": "10"
+    },
+    {
+      "name": "runledger",
+      "tag": "v1.1.0",
+      "released": "2026-08-31T00:49:32Z",
+      "url": "https://github.com/kujolang/runledger/releases/tag/v1.1.0",
+      "releaseSha": "ca60031f8b3e5349efe9637a908fc1fde79a7764",
+      "main": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+      "ancestor": true,
+      "commits": 12,
+      "firstParentCommits": "12"
+    },
+    {
+      "name": "kennel",
+      "tag": "v1.1.0",
+      "released": "2026-09-13T20:46:36Z",
+      "url": "https://github.com/kujolang/kennel/releases/tag/v1.1.0",
+      "releaseSha": "093d44dddcebebd99bd8987e3efcb7e044dc45a7",
+      "main": "66c3ecb91fecbb8d5dc71ee0553fae7218626eec",
+      "ancestor": true,
+      "commits": 14,
+      "firstParentCommits": "14"
+    },
+    {
+      "name": "ai-sdk",
+      "tag": "v1.0.0",
+      "released": "2026-08-08T06:59:24Z",
+      "url": "https://github.com/kujolang/ai-sdk/releases/tag/v1.0.0",
+      "releaseSha": "c7ed65a7fccc2186b6ec12ec369891c1c2e49a7f",
+      "main": "71bad1468fbc97eab830a27c185c032f07fd76cf",
+      "ancestor": true,
+      "commits": 44,
+      "firstParentCommits": "42"
+    },
+    {
+      "name": "ssg",
+      "tag": "v1.0.0",
+      "released": "2026-08-08T07:25:05Z",
+      "url": "https://github.com/kujolang/ssg/releases/tag/v1.0.0",
+      "releaseSha": "0020115a007efa4c99ea07704d796d2e6cafb6da",
+      "main": "7d3439c32aecf58a845ff5335380d2af93a3cdb0",
+      "ancestor": true,
+      "commits": 23,
+      "firstParentCommits": "23"
+    }
+  ],
+  "releasedSourceProbes": [
+    {
+      "repo": "dispatch",
+      "results": [
+        {
+          "command": "bash scripts/run_release_gate.sh",
+          "exit": null,
+          "status": "timeout",
+          "seconds": 240.01
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/dispatch-released-1.6.log"
+    },
+    {
+      "repo": "workcell",
+      "results": [
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo run tests/workcell_test.kujo",
+          "exit": 1,
+          "status": "fail",
+          "seconds": 8.7
+        },
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo run tests/workspace_test.kujo",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 4.33
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/workcell-released-1.6.log"
+    },
+    {
+      "repo": "ability",
+      "results": [
+        {
+          "command": "bash tests/run_tests.sh",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 1.65
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/ability-released-1.6.log"
+    },
+    {
+      "repo": "agents-sdk",
+      "results": [
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/run_basic_runner_tests.kujo -v",
+          "exit": 1,
+          "status": "fail",
+          "seconds": 5.85
+        },
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/tool_registry_tests.kujo -v",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 0.77
+        },
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/security_approval_policy_tests.kujo -v",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 0.63
+        },
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/runner_result_event_contract_tests.kujo -v",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 0.55
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/agents-sdk-released-1.6.log"
+    },
+    {
+      "repo": "mcp",
+      "results": [
+        {
+          "command": "bash tests/test_01_unit_harness.sh",
+          "exit": 4,
+          "status": "fail",
+          "seconds": 0.77
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/mcp-released-1.6.log"
+    },
+    {
+      "repo": "runledger",
+      "results": [
+        {
+          "command": "bash tests/run.sh",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 13.8
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/runledger-released-1.6.log"
+    },
+    {
+      "repo": "kennel",
+      "results": [
+        {
+          "command": "bash scripts/verify-deterministic-lockfile.sh",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 2.92
+        },
+        {
+          "command": "bash scripts/verify-stale-lockfile.sh",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 1.23
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/kennel-released-1.6.log"
+    },
+    {
+      "repo": "ai-sdk",
+      "results": [
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/sdk_contract_tests.kujo",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 0.83
+        },
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/security_redaction_tests.kujo",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 0.13
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/ai-sdk-released-1.6.log"
+    },
+    {
+      "repo": "ssg",
+      "results": [
+        {
+          "command": "/tmp/kujo16-publication/clean-installer/bin/kujo run build.kujo -- --help",
+          "exit": 0,
+          "status": "pass",
+          "seconds": 0.41
+        }
+      ],
+      "log": "/tmp/kujo-companion-audit/ssg-released-1.6.log"
+    }
+  ],
+  "followups": [
+    {
+      "name": "workcell-with-canonical-env",
+      "command": "/tmp/kujo16-publication/clean-installer/bin/kujo run tests/workcell_test.kujo",
+      "exit": 0,
+      "status": "pass",
+      "seconds": 7.99,
+      "environmentOverrides": {
+        "EMPTY_SECRET": "",
+        "LONG_SECRET": "longsecret",
+        "AUDIT_SECRET": "artifact-secret"
+      },
+      "log": "workcell-with-canonical-env.log"
+    },
+    {
+      "name": "mcp-with-pinned-ability",
+      "command": "bash tests/test_01_unit_harness.sh",
+      "exit": 0,
+      "status": "pass",
+      "seconds": 3.42,
+      "environmentOverrides": {},
+      "log": "mcp-with-pinned-ability.log"
+    },
+    {
+      "name": "agents-sdk-released-on-1.5",
+      "command": "/Users/robertdevore/.local/bin/kujo test-run tests/run_basic_runner_tests.kujo -v",
+      "exit": 1,
+      "status": "fail",
+      "seconds": 5.61,
+      "environmentOverrides": {},
+      "log": "agents-sdk-released-on-1.5.log"
+    },
+    {
+      "name": "agents-sdk-current-core",
+      "command": "/tmp/kujo16-publication/clean-installer/bin/kujo test-run tests/run_basic_runner_tests.kujo -v",
+      "exit": 0,
+      "status": "pass",
+      "seconds": 6.43,
+      "environmentOverrides": {},
+      "log": "agents-sdk-current-core.log"
+    },
+    {
+      "name": "watchdog-released-api",
+      "command": "node tests/watchdog_api_route_suite.js",
+      "exit": 0,
+      "status": "pass",
+      "seconds": 3.3,
+      "environmentOverrides": {},
+      "log": "watchdog-released-api.log"
+    }
+  ],
+  "hostedTipRuns": [
+    {
+      "repo": "dispatch",
+      "head": "955996b83a5e3cf416eb6fbacc05788faffdbc29",
+      "runs": [
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/dispatch/actions/runs/36461672946"
+        },
+        {
+          "name": "CI Gate",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/dispatch/actions/runs/36461672966"
+        }
+      ]
+    },
+    {
+      "repo": "workcell",
+      "head": "1940da0639b70b702c1b1077dda51ca39b065216",
+      "runs": [
+        {
+          "name": "Adapter drift",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/workcell/actions/runs/36459625607"
+        },
+        {
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/workcell/actions/runs/36347229665"
+        },
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/workcell/actions/runs/36347229687"
+        }
+      ]
+    },
+    {
+      "repo": "ability",
+      "head": "d6c970785f8d8bea04de0dce37920c2d0ca1c067",
+      "runs": [
+        {
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/ability/actions/runs/36345280038"
+        }
+      ]
+    },
+    {
+      "repo": "agents-sdk",
+      "head": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+      "runs": [
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/agents-sdk/actions/runs/36337338886"
+        },
+        {
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/agents-sdk/actions/runs/36337338964"
+        }
+      ]
+    },
+    {
+      "repo": "mcp",
+      "head": "a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a",
+      "runs": [
+        {
+          "name": "Ability plugin specification drift",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/mcp/actions/runs/36477604248"
+        },
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/mcp/actions/runs/36340590343"
+        },
+        {
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/mcp/actions/runs/36340590342"
+        }
+      ]
+    },
+    {
+      "repo": "watchdog",
+      "head": "e18e437afb221a597d48295b432b0ff356931158",
+      "runs": [
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/watchdog/actions/runs/36308276580"
+        },
+        {
+          "name": "Watchdog CI",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/watchdog/actions/runs/36308276628"
+        }
+      ]
+    },
+    {
+      "repo": "runledger",
+      "head": "97cb607a062efeecc7fcdc4e4a4e0308f90d45fe",
+      "runs": [
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/runledger/actions/runs/36286824224"
+        }
+      ]
+    },
+    {
+      "repo": "kennel",
+      "head": "66c3ecb91fecbb8d5dc71ee0553fae7218626eec",
+      "runs": [
+        {
+          "name": "stage1-verification",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/kennel/actions/runs/36481168033"
+        }
+      ]
+    },
+    {
+      "repo": "ai-sdk",
+      "head": "71bad1468fbc97eab830a27c185c032f07fd76cf",
+      "runs": [
+        {
+          "name": "ci",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/ai-sdk/actions/runs/33941820537"
+        },
+        {
+          "name": "compatibility-matrix",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/ai-sdk/actions/runs/33941820545"
+        },
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/ai-sdk/actions/runs/33941820534"
+        }
+      ]
+    },
+    {
+      "repo": "ssg",
+      "head": "7d3439c32aecf58a845ff5335380d2af93a3cdb0",
+      "runs": [
+        {
+          "name": "kujo-tool-artifacts-guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/kujolang/ssg/actions/runs/35783948203"
+        },
+        {
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "failure",
+          "url": "https://github.com/kujolang/ssg/actions/runs/35783948149"
+        }
+      ]
+    }
+  ],
+  "hostedFailureDetails": [
+    {
+      "repo": "dispatch",
+      "jobs": [
+        {
+          "name": "Dispatch CI Gate (ubuntu-latest)",
+          "conclusion": "failure",
+          "started_at": "2026-09-28T17:56:54Z",
+          "completed_at": "2026-09-28T17:57:16Z",
+          "html_url": "https://github.com/kujolang/dispatch/actions/runs/36461672966/job/109061479313",
+          "check_run_url": "https://api.github.com/repos/kujolang/dispatch/check-runs/109061479313",
+          "failedSteps": [
+            {
+              "name": "Verify immutable dependency closure and installer parser",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 13,
+              "started_at": "2026-09-28T17:57:12Z",
+              "completed_at": "2026-09-28T17:57:13Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/dispatch/blob/955996b83a5e3cf416eb6fbacc05788faffdbc29/.github",
+              "start_line": 21,
+              "start_column": null,
+              "end_line": 21,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 1.",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/dispatch/blob/955996b83a5e3cf416eb6fbacc05788faffdbc29/.github",
+              "start_line": 1,
+              "start_column": null,
+              "end_line": 1,
+              "end_column": null,
+              "annotation_level": "notice",
+              "title": "",
+              "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+              "raw_details": ""
+            }
+          ]
+        },
+        {
+          "name": "Dispatch CI Gate (macos-14)",
+          "conclusion": "failure",
+          "started_at": "2026-09-28T18:05:16Z",
+          "completed_at": "2026-09-28T18:05:50Z",
+          "html_url": "https://github.com/kujolang/dispatch/actions/runs/36461672966/job/109061479459",
+          "check_run_url": "https://api.github.com/repos/kujolang/dispatch/check-runs/109061479459",
+          "failedSteps": [
+            {
+              "name": "Verify immutable dependency closure and installer parser",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 13,
+              "started_at": "2026-09-28T18:05:42Z",
+              "completed_at": "2026-09-28T18:05:42Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/dispatch/blob/955996b83a5e3cf416eb6fbacc05788faffdbc29/.github",
+              "start_line": 21,
+              "start_column": null,
+              "end_line": 21,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 1.",
+              "raw_details": ""
+            }
+          ]
+        }
+      ],
+      "failureExcerpt": [
+        "2026-09-28T17:57:13.1243413Z ##[error]Process completed with exit code 1."
+      ]
+    },
+    {
+      "repo": "workcell",
+      "jobs": [
+        {
+          "name": "offline-smoke",
+          "conclusion": "failure",
+          "started_at": "2026-09-28T17:39:05Z",
+          "completed_at": "2026-09-28T17:39:59Z",
+          "html_url": "https://github.com/kujolang/workcell/actions/runs/36459625607/job/109054624313",
+          "check_run_url": "https://api.github.com/repos/kujolang/workcell/check-runs/109054624313",
+          "failedSteps": [
+            {
+              "name": "Run offline protocol fixtures",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 5,
+              "started_at": "2026-09-28T17:39:18Z",
+              "completed_at": "2026-09-28T17:39:57Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/workcell/blob/1940da0639b70b702c1b1077dda51ca39b065216/.github",
+              "start_line": 2,
+              "start_column": null,
+              "end_line": 2,
+              "end_column": null,
+              "annotation_level": "warning",
+              "title": "",
+              "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/workcell/blob/1940da0639b70b702c1b1077dda51ca39b065216/.github",
+              "start_line": 18,
+              "start_column": null,
+              "end_line": 18,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 1.",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/workcell/blob/1940da0639b70b702c1b1077dda51ca39b065216/.github",
+              "start_line": 1,
+              "start_column": null,
+              "end_line": 1,
+              "end_column": null,
+              "annotation_level": "notice",
+              "title": "",
+              "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+              "raw_details": ""
+            }
+          ]
+        }
+      ],
+      "failureExcerpt": [
+        "2026-09-28T17:39:57.4442399Z Error: stale dependency integrity metadata",
+        "2026-09-28T17:39:57.4582378Z ##[error]Process completed with exit code 1."
+      ]
+    },
+    {
+      "repo": "ai-sdk",
+      "jobs": [
+        {
+          "name": "sdk-contracts",
+          "conclusion": "failure",
+          "started_at": "2026-09-05T03:25:43Z",
+          "completed_at": "2026-09-05T03:25:57Z",
+          "html_url": "https://github.com/kujolang/ai-sdk/actions/runs/33941820537/job/101240622472",
+          "check_run_url": "https://api.github.com/repos/kujolang/ai-sdk/check-runs/101240622472",
+          "failedSteps": [
+            {
+              "name": "Build Kujo runtime",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 4,
+              "started_at": "2026-09-05T03:25:55Z",
+              "completed_at": "2026-09-05T03:25:55Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ai-sdk/blob/71bad1468fbc97eab830a27c185c032f07fd76cf/.github",
+              "start_line": 2,
+              "start_column": null,
+              "end_line": 2,
+              "end_column": null,
+              "annotation_level": "warning",
+              "title": "",
+              "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ai-sdk/blob/71bad1468fbc97eab830a27c185c032f07fd76cf/.github",
+              "start_line": 32,
+              "start_column": null,
+              "end_line": 32,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 128.",
+              "raw_details": ""
+            }
+          ]
+        }
+      ],
+      "failureExcerpt": [
+        "2026-09-05T03:25:55.3505764Z fatal: remote error: upload-pack: not our ref 7819d1475e909ec88f510c9927445791ea928836",
+        "2026-09-05T03:25:55.3546751Z ##[error]Process completed with exit code 128."
+      ]
+    },
+    {
+      "repo": "agents-sdk",
+      "jobs": [
+        {
+          "name": "offline-contracts",
+          "conclusion": "failure",
+          "started_at": "2026-09-27T17:32:47Z",
+          "completed_at": "2026-09-27T17:33:03Z",
+          "html_url": "https://github.com/kujolang/agents-sdk/actions/runs/36337338964/job/108670593239",
+          "check_run_url": "https://api.github.com/repos/kujolang/agents-sdk/check-runs/108670593239",
+          "failedSteps": [
+            {
+              "name": "Verify offline examples and contracts",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 7,
+              "started_at": "2026-09-27T17:32:54Z",
+              "completed_at": "2026-09-27T17:33:01Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/agents-sdk/blob/af0aa28f5960232cbafa7cf528a32db8cb36c7a9/.github",
+              "start_line": 2,
+              "start_column": null,
+              "end_line": 2,
+              "end_column": null,
+              "annotation_level": "warning",
+              "title": "",
+              "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830, actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/agents-sdk/blob/af0aa28f5960232cbafa7cf528a32db8cb36c7a9/.github",
+              "start_line": 17,
+              "start_column": null,
+              "end_line": 17,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 1.",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/agents-sdk/blob/af0aa28f5960232cbafa7cf528a32db8cb36c7a9/.github",
+              "start_line": 1,
+              "start_column": null,
+              "end_line": 1,
+              "end_column": null,
+              "annotation_level": "notice",
+              "title": "",
+              "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+              "raw_details": ""
+            }
+          ]
+        }
+      ],
+      "failureExcerpt": [
+        "2026-09-27T17:32:54.9351025Z FAIL context_corpus_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_corpus_tests.kujo.log",
+        "2026-09-27T17:32:54.9977668Z FAIL context_ledger_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_ledger_tests.kujo.log",
+        "2026-09-27T17:32:55.0241083Z FAIL context_manifest_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_manifest_tests.kujo.log",
+        "2026-09-27T17:32:55.0364398Z FAIL context_ratchet_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_ratchet_tests.kujo.log",
+        "2026-09-27T17:32:55.3170728Z FAIL context_runner_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_runner_tests.kujo.log",
+        "2026-09-27T17:32:55.3309815Z FAIL context_skills_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_skills_tests.kujo.log",
+        "2026-09-27T17:32:55.3636236Z FAIL context_state_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_state_tests.kujo.log",
+        "2026-09-27T17:32:55.3952247Z FAIL context_views_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/context_views_tests.kujo.log",
+        "2026-09-27T17:32:55.4989992Z FAIL controlled_ability_tests.kujo (exit 1): /home/runner/work/agents-sdk/agents-sdk/.tmp/offline-checks.iFEXGi/controlled_ability_tests.kujo.log",
+        "2026-09-27T17:33:01.4206835Z ##[error]Process completed with exit code 1."
+      ]
+    },
+    {
+      "repo": "ability",
+      "jobs": [
+        {
+          "name": "application-assurance",
+          "conclusion": "success",
+          "started_at": "2026-09-27T19:41:32Z",
+          "completed_at": "2026-09-27T19:54:55Z",
+          "html_url": "https://github.com/kujolang/ability/actions/runs/36345280038/job/108693092210",
+          "check_run_url": "https://api.github.com/repos/kujolang/ability/check-runs/108693092210",
+          "failedSteps": []
+        },
+        {
+          "name": "verify",
+          "conclusion": "failure",
+          "started_at": "2026-09-27T19:41:32Z",
+          "completed_at": "2026-09-27T19:41:49Z",
+          "html_url": "https://github.com/kujolang/ability/actions/runs/36345280038/job/108693092300",
+          "check_run_url": "https://api.github.com/repos/kujolang/ability/check-runs/108693092300",
+          "failedSteps": [
+            {
+              "name": "Verify package",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 7,
+              "started_at": "2026-09-27T19:41:47Z",
+              "completed_at": "2026-09-27T19:41:47Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ability/blob/d6c970785f8d8bea04de0dce37920c2d0ca1c067/.github",
+              "start_line": 2,
+              "start_column": null,
+              "end_line": 2,
+              "end_column": null,
+              "annotation_level": "warning",
+              "title": "",
+              "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ability/blob/d6c970785f8d8bea04de0dce37920c2d0ca1c067/.github",
+              "start_line": 11,
+              "start_column": null,
+              "end_line": 11,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 4.",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ability/blob/d6c970785f8d8bea04de0dce37920c2d0ca1c067/.github",
+              "start_line": 1,
+              "start_column": null,
+              "end_line": 1,
+              "end_column": null,
+              "annotation_level": "notice",
+              "title": "",
+              "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+              "raw_details": ""
+            }
+          ]
+        }
+      ],
+      "failureExcerpt": [
+        "2026-09-27T19:41:47.8681452Z [KUJOVM001] [vm] Runtime Error: definition",
+        "2026-09-27T19:41:47.8705773Z ##[error]Process completed with exit code 4."
+      ]
+    },
+    {
+      "repo": "ssg",
+      "jobs": [
+        {
+          "name": "validate",
+          "conclusion": "failure",
+          "started_at": "2026-09-22T21:00:49Z",
+          "completed_at": "2026-09-22T21:18:31Z",
+          "html_url": "https://github.com/kujolang/ssg/actions/runs/35783948149/job/106936039066",
+          "check_run_url": "https://api.github.com/repos/kujolang/ssg/check-runs/106936039066",
+          "failedSteps": [
+            {
+              "name": "Run repo CI checks",
+              "status": "completed",
+              "conclusion": "failure",
+              "number": 7,
+              "started_at": "2026-09-22T21:01:06Z",
+              "completed_at": "2026-09-22T21:18:28Z"
+            }
+          ],
+          "annotations": [
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ssg/blob/7d3439c32aecf58a845ff5335380d2af93a3cdb0/.github",
+              "start_line": 2,
+              "start_column": null,
+              "end_line": 2,
+              "end_column": null,
+              "annotation_level": "warning",
+              "title": "",
+              "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ssg/blob/7d3439c32aecf58a845ff5335380d2af93a3cdb0/.github",
+              "start_line": 1167,
+              "start_column": null,
+              "end_line": 1167,
+              "end_column": null,
+              "annotation_level": "failure",
+              "title": "",
+              "message": "Process completed with exit code 1.",
+              "raw_details": ""
+            },
+            {
+              "path": ".github",
+              "blob_href": "https://github.com/kujolang/ssg/blob/7d3439c32aecf58a845ff5335380d2af93a3cdb0/.github",
+              "start_line": 1,
+              "start_column": null,
+              "end_line": 1,
+              "end_column": null,
+              "annotation_level": "notice",
+              "title": "",
+              "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+              "raw_details": ""
+            }
+          ]
+        }
+      ],
+      "failureExcerpt": [
+        "2026-09-22T21:18:28.0172230Z ##[error]Process completed with exit code 1."
+      ]
+    }
+  ],
+  "logSha256": {
+    "mcp-released-1.6.log": "fd9645993090c22a1014ca44f6538107fadb89e1f5eb1ae13832441f06da47fb",
+    "dispatch-released-1.6.log": "9f25d3185d671975685e69ee5d2563cffe76ff0b715307739b6a766655925106",
+    "agents-sdk-released-1.6.log": "d4c718f1dace4a9eb593531a3301f02e2f5e0552401568781c2b2aaead37ba0a",
+    "ability-released-1.6.log": "81c8fb19bffee238e8dd64cd6720a9496dcc161cce56a91b9344599c85e1c2cd",
+    "runledger-released-1.6.log": "936605f47cc89d0afb25121cf3279bb0d8fb61e2b3504d8295febc4dbe4e7fcf",
+    "kennel-released-1.6.log": "a3865b0321542e4e25e18ac6f5eee61026ed96384acf31a28c38bffc41a1af7d",
+    "ai-sdk-released-1.6.log": "19272845db7718b84e4b8912df4d31ac4016fc3d9fad6b0f59c09ce4e1fbccc4",
+    "ssg-released-1.6.log": "fe36622066eb3d0305c552bad81939027ee6993da7413ee5f9f5069ed7c0d674",
+    "workcell-released-1.6.log": "283ae5db591596a363aec696f1163163f0f973fde982494304a5b591d1b82a7b",
+    "workcell-with-canonical-env.log": "6ecf29ad6d62d86eb1f28a447dce63b8f59563758c6e3fb515c6061bf55b2bfd",
+    "mcp-with-pinned-ability.log": "325147bee9e994c578d66d357207240db2e61f90003609bb19bb8d840d3adfdf",
+    "agents-sdk-released-on-1.5.log": "50441760ad4ff02879c72749774a36c04546d44e67f24a0e4361d9b20c67171e",
+    "agents-sdk-current-core.log": "0b36f8548a5142489107fedba5f720abdcd9a7eb845934f48b3dab05db26e6da",
+    "watchdog-released-api.log": "ce770bb7b9a28514934a1f82c5f337f0133df2769cf9b8d42e80791412ea13a9"
+  },
+  "limitations": [
+    "Source snapshots from official release tags; not clean-install archive certification.",
+    "Dispatch released aggregate exceeded 240-second audit budget after five focused suites and shard one passed; remaining shards and smoke not certified.",
+    "Workcell initial invocation omitted canonical secret fixture env; corrected invocation passed.",
+    "MCP initial source-only invocation lacked pinned Ability dependency; exact locked commit installed in isolated tree and rerun passed.",
+    "AI SDK v1.1.0 tag exists but no GitHub Release; eight commits after that tag, versus44 since latest official GitHub Release v1.0.0.",
+    "SSG compatibility check is help smoke only; full build gate deferred.",
+    "No live providers, container backend certification, new packages, tags or releases."
+  ],
+  "currentDispatchRuntimeContract": {
+    "kujo1_6": "pass",
+    "kujo1_5": "fails: Undefined variable sync_directory_beneath"
+  },
+  "shipcheck": {
+    "command": "kujo run shipcheck.kujo gate --dir <dispatch> --format json",
+    "exit": 0,
+    "checks": 16,
+    "failedErrors": 0,
+    "warnings": 0,
+    "scope": "Repository metadata only; cannot override failing CI or release checklist."
+  }
+}
