@@ -1,5 +1,9 @@
 # Kujo Language Specification
 
+Source candidate: **1.6.0, unpublished**. Published stable remains **1.5.0**.
+See [1.6 release notes](RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
+
+
 Status: stable v1.0.0 contract
 Spec version: 1.0.0
 Last updated: 2026-09-26

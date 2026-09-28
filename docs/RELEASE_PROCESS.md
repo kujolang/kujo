@@ -1,6 +1,6 @@
 # Kujo Release Process
 
-Current active line: `1.5.x`
+Current source candidate: `1.6.0` (unpublished); published stable line: `1.5.x`
 Current release state: `v1.5.0` is the stable public release, and the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
 
 This document is the canonical release and compatibility policy for Kujo.
@@ -125,7 +125,7 @@ KUJO_RELEASE_GATE_RUN_BENCH=1 bash scripts/release_gate.sh --full
 
 ## 4. Release Candidate (RC) Process
 
-Before tagging `1.0.0-rc` or `1.0.0`:
+Before tagging a release candidate or final release:
 
 1. Confirm all P0 and P1 roadmap items are complete in `ROADMAP.md`.
 2. Confirm every deferred P2 item is explicitly documented.

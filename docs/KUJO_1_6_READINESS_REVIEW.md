@@ -8,8 +8,11 @@ remote trust, API stability and public participant-package publication are not
 prerequisites for its explicitly experimental claims.
 
 This is a source readiness review, not a release authorization or verification of
-published 1.6 artifacts. Crate/package versions remain unchanged. No tag, npm
-package, PyPI package or release was published.
+published 1.6 artifacts. Source crate/npm metadata now identifies the unpublished
+1.6.0 candidate; 1.5.0 remains the latest published stable release. See the
+[1.6 candidate notes](RELEASE_NOTES_1_6.md) and
+[version truth audit](RELEASE_1_6_TRUTH_AUDIT.md). No tag, npm package, PyPI package
+or release was published.
 
 ## Agent evidence and its limits
 

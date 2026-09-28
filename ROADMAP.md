@@ -1,6 +1,6 @@
 # Kujo Roadmap
 
-Updated: 2026-09-26
+Updated: 2026-09-28
 Stable release: [v1.5.0](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
 
 > Current crate version: `1.6.0` in [Cargo.toml](Cargo.toml)
@@ -12,8 +12,7 @@ This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
 Kujo 1.6 technical status: **READY_FOR_1_6_RELEASE_PREP**. The VM loop/early-return
 optimizer defect is [fixed and regression-tested](docs/VM_LOOP_RETURN_FIX.md),
-including the full Dispatch gate against the exact optimized candidate. Remaining
-work is release-source/version/changelog/artifact reconciliation; see the
+including the full Dispatch gate against the exact optimized candidate. The 1.6.0 candidate is undergoing release-source/version/artifact validation; see the
 [readiness review](docs/KUJO_1_6_READINESS_REVIEW.md). No release or version bump
 is implied.
 

@@ -1,5 +1,9 @@
 # Kujo Architecture
 
+Source candidate: **1.6.0, unpublished**. Published stable remains **1.5.0**.
+See [1.6 release notes](RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
+
+
 Last updated: 2026-09-25
 Current stable release: `v1.5.0`
 
@@ -147,7 +151,7 @@ Kujo is not a sandbox.
 
 Runtime parity is tracked centrally in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
-Current explicit divergence examples include:
+Current runtime behavior and explicit unsupported domains include:
 
 - Generators resume the ordinary VM dispatcher using owned stack/frame/handler and lexical-scope state. Interpreter generators keep explicit statement continuations. Aliases share progress and terminal errors; loops consume lazily.
 - Async functions and actual task callables use the existing Tokio blocking lane with 16 process-wide admission slots. Await owns an independent waiter on shared completion. Task globals are snapshots; explicit shared APIs coordinate tasks.
@@ -182,4 +186,6 @@ measurements and concurrency limitations. This is source-only until released.
 
 The [next-phase audit](NEXT_PHASE_ARCHITECTURE.md) separates runtime mechanisms
 from Dispatch durable control, Workcell preservation, Eval producers, RunLedger
-aggregation and future interoperability/context/graph design.
+aggregation and experimental interoperability. Local Wave C beta assurance and
+Wave D alpha correlation/participant SDK adoption are completed companion evidence,
+not stable runtime APIs; remote trust and broader context/graph work remain deferred.

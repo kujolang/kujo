@@ -12,7 +12,7 @@ Modes:
   --roadmap-only  Only validate roadmap readiness preconditions.
 
 Notes:
-  - This script is for v1.0 release-candidate readiness checks.
+  - This script retains the historical v1.0 roadmap preconditions and runs the current release gates.
   - `--full` delegates core verification to scripts/release_gate.sh --full.
 USAGE
 }

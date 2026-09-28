@@ -1,5 +1,9 @@
 # Kujo v1.0.0 Scope Definition
 
+Source candidate: **1.6.0, unpublished**. Published stable remains **1.5.0**.
+See [1.6 release notes](RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
+
+
 Status: stable v1.0.0 scope baseline
 
 This document defines what is in-scope for Kujo `v1.0.0`, what is explicitly out-of-scope, and what compatibility commitments apply.

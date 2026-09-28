@@ -8,7 +8,7 @@ This document describes Kujo's concurrency primitives and their internal impleme
 
 This file preserves the original concurrency implementation narrative. Several
 details below, including the statement that async/await is synchronous and the
-old source line references, no longer describe Kujo 1.5.0. For current behavior,
+old source line references, no longer describe the Kujo 1.6.0 source candidate. For current behavior,
 use [the VM/interpreter parity matrix](VM_INTERPRETER_PARITY_MATRIX.md),
 [the architecture guide](ARCHITECTURE.md), and the executable async/concurrency
 tests. The [Phase-B completion record](RUNTIME_CONCURRENCY_COMPLETION.md) describes

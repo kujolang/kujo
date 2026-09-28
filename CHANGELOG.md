@@ -1,85 +1,41 @@
-Unreleased architecture documentation: independent beta consumer adoption rehearsal
-
-- Architecture docs: experimental participant SDK API prototypes preserve independent TypeScript/Python codecs and host/Dispatch authority; packaging remains a separate task. Runtime unchanged.
-
-Unreleased architecture documentation: independent Python native generic-handoff
-adoption, cross-runtime TypeScript parity, real Git crash/replay and one-use
-contention evidence. Six participant forms now inform SDK API design; runtime
-and effect-assurance contracts remain unchanged.
-
-passed in the bounded required/deny domain; alpha compatibility retained. No runtime
-or execution-result/v1 change.
-
 # Changelog
 
-Unreleased architecture documentation: independent native TypeScript participant
-adoption of the generic Wave D core; real Workcell Git crash/replay and concurrent
-one-use admission evidence. Existing participants and runtime remain unchanged.
-
-Unreleased architecture documentation: Wave D generic correlation core extracted
-from four participant handoffs across two effect families. Historical handoffs
-remain supported through adapters; no runtime or replay-authority change.
-
-Unreleased architecture documentation: Wave C portable commitments, owner profile
-specifications and three-family alpha/beta migration rehearsal prepare the bounded
-beta contract for opt-in adoption. Alpha retained; runtime and execution-result/v1
-unchanged.
-
-
-Unreleased architecture documentation: Wave C beta readiness review retains alpha
-until portable commitment vectors, completed profile specifications and migration
-rehearsal are validated. Dispatch fixes optional invalid-evidence fallback; Kujo
-runtime and execution-result/v1 remain unchanged.
-
-
-Unreleased documentation: Wave C persisted negotiation now binds Dispatch policy/configuration revisions across restart, rollback checks and controller replacement. Three real families pass required-mode integration; beta design review is next. Alpha remains opt-in/unreleased. No runtime or v1 result changes.
-
-Unreleased documentation: Wave C now records a validated three-family additive
-assurance prototype in Dispatch/Workcell/Ability, including separate business
-and receipt commits with authenticated application verification. No runtime or v1 schema change.
-
-This file records user-visible changes to Kujo. It follows
+This file records user-visible changes to Kujo, following
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-- Fixed VM loop/early-return control-flow corruption: optimizer passes now retain
-  iterator exhaustion edges and relocate instruction addresses after deletion,
-  without folding across alternate entry points. Return stack checks and language
-  semantics are unchanged; permanent VM/interpreter regressions cover exhaustion,
-  nested returns, caller values, and surrounding branch transformations.
-
-- Roadmap records the non-Ability Wave D process participant: existing Workcell Git CAS, real pre/post-commit process loss, Dispatch-controlled restart/replay, and a four-way handoff comparison. No runtime or execution-result schema changes.
-- Roadmap records the third experimental Wave D participant: one local HTTP/OpenAPI Ability action with Dispatch-controlled response-loss/timeout/replay and duplicate-delivery proof.
-
-
-- Roadmap records the second experimental Wave D participant: local MCP STDIO Ability evidence correlation and Dispatch-controlled restart/replay; runtime unchanged.
-
-
-- Complete the Wave A ecosystem foundation through Watchdog's existing execution
-  observations and RunLedger's verified artifact notes/correlation, with offline
-  HTTP/restart, integrity, privacy and null-provenance evidence. No runtime summary
-  or receipt schema change, workflow lifecycle, provider pricing, or Wave C
-  implementation is introduced.
-- Record optimized identical-profile baseline/disabled/enabled measurements and
-  component probes, including material short-run synced-export cost and explicit
-  limits on performance claims.
-
-- Add opt-in `kujo run --measurements PATH` production VM measurements through
-  the existing profiler, using bounded numeric counters and the additive
-  `kujo.runtime-measurements/v1` summary contract. Output uses a new file without
-  changing program stdout; includes worker/promise/generator/capture/JIT boundary
-  measurements, not complete heap accounting or provider costs.
-- Reconcile release artifacts versus source-runtime pins and separate maintenance
-  from the proposed agentic architecture waves in the roadmap.
-
 ## [Unreleased]
 
-### Changed
+No additional release scope beyond the 1.6.0 candidate is included here.
 
-- Published the npm runtime resolver and all five native platform packages at
-  1.5.0 through trusted publishing with signed provenance.
+## [1.6.0] - Candidate (unpublished)
+
+### Runtime and tooling
+
+- Fix VM loop/early-return optimizer corruption: retain iterator exhaustion edges,
+  relocate instruction targets after every shrinking pass, and preserve alternate
+  entries. Valid programs retain interpreter semantics; stack checks remain intact.
+- Add opt-in `kujo run --measurements PATH` numeric VM measurements and the additive
+  `kujo.runtime-measurements/v1` summary. This is not complete heap accounting or
+  provider billing; short-run synced-export overhead remains documented.
+
+### Experimental ecosystem companions (not stabilized by this runtime release)
+
+- Dispatch adds producer-neutral failure control, durable review checkpoints,
+  immutable policy/configuration revisions and fresh-controller review/replay.
+  Dispatch remains the only replay/admission authority.
+- Watchdog observes runtime activity and RunLedger correlates evidence; neither
+  becomes workflow authority.
+- Wave C beta effect assurance covers SQLite, Workcell Git CAS and Ability within
+  the opt-in local single-effect required/deny domain. Alpha remains supported.
+- Wave D alpha generic correlation spans six participant forms across two effect
+  families, independent TypeScript/Python codecs, experimental SDK APIs and private
+  package distribution. Participant packages remain alpha and unpublished.
+- Source-blind agent adopter rehearsal passed. Human adopter usability remains
+  post-release validation. No exactly-once, universal rollback, general machine-loss
+  recovery, multi-effect assurance or remote authenticated participant trust is claimed.
+
+### Changed
 
 - Async function calls start eagerly under bounded task admission and return a
   reusable completion promise. Body errors are reported by await. Detached spawn
@@ -588,9 +544,3 @@ This file records user-visible changes to Kujo. It follows
 ### Fixed
 
 - Repaired all remaining syntax-drifted examples, removed the expected-fail example list, and added exhaustive per-file verification coverage.
-
-## Unreleased ecosystem direction — first Wave D slice
-
-- Record Agents SDK → Ability → Dispatch controlled interoperability: bounded
-  evidence transport, uncertainty/review and fresh-controller beta admission.
-  Runtime and execution-result/v1 are unchanged; broader adapters are unscheduled.

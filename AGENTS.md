@@ -1,5 +1,9 @@
 # Kujo Agent Guide
 
+Source candidate: **1.6.0, unpublished**. Published stable remains **1.5.0**.
+See [1.6 release notes](docs/RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
+
+
 Use this file as the first stop for agents working in this repository or building projects in the Kujo programming language. It is intentionally compact, operational, and opinionated. Prefer the linked canonical docs over guessing.
 
 ## Mission And Philosophy
