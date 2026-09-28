@@ -63,7 +63,13 @@ jobs:
               exit 1
             fi
             if npm view "${package_name}@${package_version}" version >/dev/null 2>&1; then
-              printf '%s@%s is already published; skipping\n' "${package_name}" "${package_version}"
+              expected_integrity="$(node -e 'const fs=require("node:fs"),c=require("node:crypto"); process.stdout.write("sha512-"+c.createHash("sha512").update(fs.readFileSync(process.argv[1])).digest("base64"))' "${package}")"
+              published_integrity="$(npm view "${package_name}@${package_version}" dist.integrity)"
+              if [[ "${published_integrity}" != "${expected_integrity}" ]]; then
+                printf '%s@%s exists with different artifact bytes; refusing substitution\n' "${package_name}" "${package_version}" >&2
+                exit 1
+              fi
+              printf '%s@%s already contains the exact reviewed bytes; skipping\n' "${package_name}" "${package_version}"
               return
             fi
             npm publish "./${package}" --access public --provenance
