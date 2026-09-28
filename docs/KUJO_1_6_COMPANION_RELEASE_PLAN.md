@@ -47,6 +47,25 @@ A safe short delay for a blocked candidate is preferable to publishing a failing
 one. Reassess priority when a deployed-user issue or dependency requires it;
 commit count is neither severity nor proof of readiness.
 
+## First batch started
+
+The user approved starting AI SDK, Agents SDK and RunLedger candidate preparation.
+Draft candidates are pushed separately:
+
+- [AI SDK 1.1.1](https://github.com/kujolang/ai-sdk/pull/2): immutable published runtime source pins replace inaccessible CI revisions. Local release gate passes 150 aggregate tests. The required real-provider release smoke remains blocked by missing configured credentials; no skip has been authorized.
+- [Agents SDK 1.1.0](https://github.com/kujolang/agents-sdk/pull/2): CI now uses Kujo 1.6.0. Offline gate passes 41/41; context contracts, 20 paired repetitions, 14 VM/interpreter executions and token ratchet pass. The existing Ability dependency is preserved.
+- [RunLedger 1.2.0](https://github.com/kujolang/runledger/pull/1): canonical suite passes 81 module tests, CLI integration and measurement references. Explicit CommonJS test encoding removes dependence on parent Node metadata; Linux/macOS functional CI is added.
+
+All three local source-archive gates passed outside Git checkouts. This is not
+Kennel registry installation certification. Hosted checks were still queued or
+running at this snapshot; inspect their final results before release. Candidates
+remain drafts, without tags or publication. Runtime minimum claims and final
+package/dependency installation still require release review.
+
+[Candidate commits and hashed verification logs](evidence/kujo-1.6-companion-candidates/candidates.json)
+retain this preparation evidence. Historical audit findings below describe the
+original main revisions and are not overwritten by candidate results.
+
 ## What was actually tested
 
 Tests used isolated exports of the official release tags and the published

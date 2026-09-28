@@ -1,0 +1,41 @@
+{
+  "scope": "candidate preparation only; no tag or publication",
+  "runtime_version": "1.6.0",
+  "runtime_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+  "candidates": {
+    "ai-sdk": {
+      "version": "1.1.1",
+      "source": "2d730678f92d3286d951950cfec39d46af98549d",
+      "pull_request": "https://github.com/kujolang/ai-sdk/pull/2",
+      "hosted_checks": "in progress/queued at preparation snapshot; not certified",
+      "source_archive_local_gate": "passed"
+    },
+    "agents-sdk": {
+      "version": "1.1.0",
+      "source": "e03bfc672484aac1156c1a39bda9a02882c97dee",
+      "pull_request": "https://github.com/kujolang/agents-sdk/pull/2",
+      "hosted_checks": "in progress/queued at preparation snapshot; not certified",
+      "source_archive_local_gate": "passed"
+    },
+    "runledger": {
+      "version": "1.2.0",
+      "source": "83577a7554a0df4a16d9365a5678e523680c0957",
+      "pull_request": "https://github.com/kujolang/runledger/pull/1",
+      "hosted_checks": "in progress/queued at preparation snapshot; not certified",
+      "source_archive_local_gate": "passed"
+    }
+  },
+  "logs": {
+    "ai-sdk-archive.log": "5f22cbd332038f07268b0c1ff044045999813aa6b515e6ac96ae1ff3609ca64c",
+    "agents-sdk-archive.log": "dfb071d0ca503b94c5429128e7f92c42faa542388c33cdaf6bff153f3146cc40",
+    "runledger-archive.log": "0328d209453ee738ab50919ee0c35559407a48950dc9491349e13083f045cc65",
+    "agents-context.log": "c54f165e34c57a6145f08dfdee4a3f26ab489a7f5e45101366649a04c71d5017",
+    "agents-ratchet.log": "56a464ef6957b1816d736d5a15bcfac39d6f7d83dfee864a178842f49e6b8152"
+  },
+  "remaining": [
+    "AI SDK mandatory live-provider release smoke: no configured local or repository provider secret; no skip authorized.",
+    "Inspect exact final hosted candidate checks.",
+    "Reconcile supported runtime minimum and package/dependency install claims before final release review.",
+    "Versioned registry delivery/tag/publication remain a separate final release step."
+  ]
+}
