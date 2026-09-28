@@ -1,0 +1,2 @@
+func f(xs) { for x in xs { if x == 2 { return x } }; return 9 }
+print(f([1,2]))

@@ -1,0 +1,2 @@
+func f() { for x in [1,2] { print(x) } }
+f()

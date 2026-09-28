@@ -1,0 +1,8 @@
+func verify_subject(configuration, subject) {
+    for field in ["operation", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256"] {
+        if subject[field] != configuration["intent"][field] {return {"ok": false}}
+    }
+    return {"ok": true}
+}
+config := {"intent": {"operation":"create","target_sha256":"a","scope_sha256":"b","key_sha256":"c","request_sha256":"d","precondition_sha256":"e"}}
+print(to_json(verify_subject(config, config["intent"])))

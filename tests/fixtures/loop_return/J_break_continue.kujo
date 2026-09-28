@@ -1,0 +1,2 @@
+func f(xs) { mut n := 0; for x in xs { if x == 1 { continue }; if x == 3 { break }; n += x }; return n }
+print(f([1,2,3]))
