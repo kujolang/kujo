@@ -1,0 +1,97 @@
+{
+  "schema": "kujo.companion-release-receipt/v1",
+  "date": "2026-09-28",
+  "status": "official releases published; public Kennel installs verified",
+  "runtime": {
+    "version": "1.6.0",
+    "platform": "macos-x64",
+    "source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "releases": {
+    "runledger": {
+      "version": "1.2.0",
+      "source_commit": "88fb37c81567bb94e1e341037514fe37cbafa76f",
+      "release_id": 398688758,
+      "archive_sha256": "a560a0a844b54f29b7e4909b264351fae4daea6aa3d5c04eba2ed6f33bcbcf16",
+      "provenance_sha256": "be161351e202a5278198a9df8baed7c05b014b62bc725743d2c2b762272a6291",
+      "archive_url": "https://kennel.kujolang.ai/packages/runledger/1.2.0/package.tar.gz",
+      "provenance_url": "https://kennel.kujolang.ai/packages/runledger/1.2.0/provenance.json",
+      "github_release": "https://github.com/kujolang/runledger/releases/tag/v1.2.0",
+      "tag_target_verified": true,
+      "downloaded_hashes_verified": true
+    },
+    "ai-sdk": {
+      "version": "1.1.1",
+      "source_commit": "5184a122590dd5698770b50d99b69ed11c7ec84a",
+      "release_id": 398691342,
+      "archive_sha256": "7382ccde5352fb001a2ce34043bc9b0b1907ebb38d09d41e183f9501bc70be9e",
+      "provenance_sha256": "73f188653daaba58a104425b373cf59d95876e85d5b1de6f356a79097be10e07",
+      "archive_url": "https://kennel.kujolang.ai/packages/ai-sdk/1.1.1/package.tar.gz",
+      "provenance_url": "https://kennel.kujolang.ai/packages/ai-sdk/1.1.1/provenance.json",
+      "github_release": "https://github.com/kujolang/ai-sdk/releases/tag/v1.1.1",
+      "tag_target_verified": true,
+      "downloaded_hashes_verified": true
+    },
+    "agents-sdk": {
+      "version": "1.1.2",
+      "source_commit": "5a9d5525e511a293b743b1c44d9ef270fd491f9f",
+      "release_id": 398695088,
+      "archive_sha256": "a03136b9a27ba4ecc307ca8344018a7f004f064cd08b36e532a5fa6d6f04ae95",
+      "provenance_sha256": "55b8492b0665b96e9dafc5e07c5d283d70b3bed20a2628b1a37cc5711debcdcc",
+      "archive_url": "https://kennel.kujolang.ai/packages/agents-sdk/1.1.2/package.tar.gz",
+      "provenance_url": "https://kennel.kujolang.ai/packages/agents-sdk/1.1.2/provenance.json",
+      "github_release": "https://github.com/kujolang/agents-sdk/releases/tag/v1.1.2",
+      "tag_target_verified": true,
+      "downloaded_hashes_verified": true
+    }
+  },
+  "validation": {
+    "runledger": "81 module tests, CLI integration, concurrency and measurement reference; hosted Linux/macOS and fresh public install pass",
+    "ai-sdk": "150 aggregate release tests and benchmarks; hosted supply-chain gate and fresh public install pass",
+    "agents-sdk": "41/41 offline tests from public registry install; consumer VM/interpreter import; exact patch hosted offline/context/ratchet pass"
+  },
+  "live_provider": {
+    "status": "SKIPPED_BY_EXPLICIT_USER_AUTHORIZATION",
+    "scope": "AI SDK v1.1.1 only",
+    "real_provider_validated": false,
+    "future_release_default": "required",
+    "followup": "user will run next pass"
+  },
+  "publisher_correction": {
+    "kennel_filter_fix": "211b337cb038f9f1ff46e9fa9a49c0430c9a834d",
+    "kennel_workflow_source_pin": "59789c9e6304769b6ea125b9a469c99355214256",
+    "registry_workflow_pin": "30dd26c61a6235dbedeb929890d0931dddb21fc7",
+    "agents_1_1_0_and_1_1_1_registry_archives": "incomplete ArtifactStore module; unchanged; GitHub notices direct to 1.1.2",
+    "cause": "publisher excluded all artifacts path components; first correction also required updating reusable workflow internal source checkout",
+    "prepublication_and_public_archive_match": true
+  },
+  "hosted_runs": {
+    "runledger": 36493688172,
+    "ai-sdk": 36495260598,
+    "agents-sdk": 36496334516,
+    "registry_agents_final": 36496474675,
+    "registry_ai": 36495796224,
+    "registry_runledger": 36495277905
+  },
+  "boundary": "Wave C beta and Wave D alpha remain experimental; separate participant SDKs remain private/unpublished; no npm/PyPI publication",
+  "files": {
+    "agents-sdk-manifest.json": "51e34259f7cdb82e1bf6da5553f0e70a9bf77f554ed833066de323fc0c2bb1e2",
+    "agents-sdk-provenance.json": "55b8492b0665b96e9dafc5e07c5d283d70b3bed20a2628b1a37cc5711debcdcc",
+    "agents112-candidate-verification.json": "60cb67d783411f6a198d1183e1c81b8be54f25cdb6b50230e040eefa270d0bfa",
+    "agents112-hosted.log": "f40491f7642deec6ac459c363e4e80e8d32549bdcac3921107621fc094765193",
+    "agents112-public-final.log": "3fa60ec329d6a61327205426d79ef07836423bb2c978a1f70dedf7bc02d58d22",
+    "ai-public-final.log": "5a056c76ad256d6c2c41ec4c03e4ee6462f3b2435423a6605aff4b2663211bea",
+    "ai-release-final.log": "98579d862c20d564931b720d3cc7aa623af6748f8973b358144b584c8d306b1b",
+    "ai-sdk-manifest.json": "3528d0b7cd28d80f45f7328e3f46f020688985245b7c01e9207c6bd282b97f1b",
+    "ai-sdk-provenance.json": "73f188653daaba58a104425b373cf59d95876e85d5b1de6f356a79097be10e07",
+    "ai-waiver-hosted.log": "b887bd6c0d28913ee38aea10dfd93d452f55d0198117ab8cb0ede136fd1b6bb7",
+    "kennel-core-auth.log": "bc52293c0a7e75a85d37b687d9c4991ce8fd28bad261450d2b140fa4c57aff3b",
+    "kennel-publisher-fix.log": "f601a194c8f7c1a751154a7bae7e0f7ec0852c612c6327d3a7532c870bf6ad63",
+    "runledger-linux-hosted-final.log": "53ec193f774a082d2bda08361f42d9e2a366c67f361c44addcfd2164adf50296",
+    "runledger-macos-hosted-final.log": "ed03b0ed868bad4aefea02dee8219fe4f70c1be8ef78bf0519010debc5d8a94f",
+    "runledger-manifest.json": "da4126d0dcaa90823be4ff124169034a3d2690896392852924edc5c6a479af4e",
+    "runledger-provenance.json": "be161351e202a5278198a9df8baed7c05b014b62bc725743d2c2b762272a6291",
+    "runledger-public-gate.log": "c5bca6e481d0e2168fe429e22721eacc9b97aeacdfb9eea26acc9eb484524dff"
+  }
+}

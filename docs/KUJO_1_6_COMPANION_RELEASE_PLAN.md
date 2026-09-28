@@ -1,7 +1,7 @@
 # Kujo 1.6 companion release triage
 
-Reviewed September 28, 2026. This is a release queue, **not authorization to tag
-or publish**. Kujo 1.6 itself remains released. No companion is a prerequisite
+Original triage reviewed September 28, 2026; the historical queue below was not
+publication authorization. The user subsequently authorized official releases. Kujo 1.6 itself remains released. No companion is a prerequisite
 for running ordinary Kujo programs. The new companion features do require
 separate distributions before normal version-based installation can use them.
 
@@ -9,7 +9,33 @@ separate distributions before normal version-based installation can use them.
 retain official-release identities, current fetched main commits, scoped tests,
 hosted job evidence, and hashed local logs.
 
-## Decision and release order
+## First batch completed — official releases
+
+The user authorized official publication and explicitly waived the AI SDK live-provider
+check for **1.1.1 only**, to run on their next pass. This is not live-provider
+validation or a waiver for later releases.
+
+| Release | Public delivery and final verification |
+| --- | --- |
+| [RunLedger 1.2.0](https://github.com/kujolang/runledger/releases/tag/v1.2.0) | GitHub and Kennel published. Hosted Linux/macOS gates pass; fresh public tool install passes 81 module tests, CLI/concurrency and measurement-reference tests. |
+| [AI SDK 1.1.1](https://github.com/kujolang/ai-sdk/releases/tag/v1.1.1) | GitHub and Kennel published. Full 150-test offline release gate and benchmarks pass from the public package; hosted supply-chain gate passes. Real-provider check explicitly skipped. |
+| [Agents SDK 1.1.2](https://github.com/kujolang/agents-sdk/releases/tag/v1.1.2) | GitHub and Kennel published. Exact-source hosted offline/context/ratchet gate passes; fresh public install passes 41/41 and VM/interpreter consumer imports. |
+
+Public installation exposed a Kennel publisher filter that removed the legitimate
+`src/agents/artifacts/store.kujo` module. The first corrective publication also
+exposed a stale source checkout pin inside the reusable publisher workflow. Both
+pins and the filter are corrected. The **1.1.2** public archive matches the
+pre-publication archive exactly and contains the module. Incomplete 1.1.0/1.1.1
+registry archives remain immutable; their GitHub release notices direct users to
+1.1.2. The released Kennel 1.1.0 client works with the corrected packages.
+
+[Final receipt, exact source/tag identities, public archive hashes and retained logs](evidence/kujo-1.6-companion-candidates/official-releases/receipt.json)
+supersede the pending statuses in the historical preparation/execution snapshots
+below. Wave C beta and Wave D alpha stay experimental. Separate participant SDK
+packages remain private and unpublished. Other tools in the original queue are
+not certified or released by this first batch.
+
+## Historical decision and release order
 
 “Prepare now” means finish the listed gates, then review an exact candidate. It
 never means release the current tip merely because it has many commits.
@@ -47,7 +73,7 @@ A safe short delay for a blocked candidate is preferable to publishing a failing
 one. Reassess priority when a deployed-user issue or dependency requires it;
 commit count is neither severity nor proof of readiness.
 
-## First batch started
+## Historical first-batch preparation snapshot
 
 The user approved starting AI SDK, Agents SDK and RunLedger candidate preparation.
 Draft candidates are pushed separately:
@@ -66,7 +92,7 @@ package/dependency installation still require release review.
 retain this preparation evidence. Historical audit findings below describe the
 original main revisions and are not overwritten by candidate results.
 
-## Official release execution authorized
+## Historical execution snapshot before runner completion
 
 The user explicitly requested official releases for AI SDK, Agents SDK and
 RunLedger, rather than stopping at candidate preparation. All three PRs are
@@ -90,7 +116,7 @@ After these checks pass, merge/tag the tested sources, create official GitHub
 Releases, run the central Kennel reconciliation and verify public fresh installs.
 Do not stop again at candidate preparation or request release permission again.
 
-### First official release published
+### Historical first publication snapshot
 
 [Agents SDK 1.1.0](https://github.com/kujolang/agents-sdk/releases/tag/v1.1.0)
 is now an official, non-draft GitHub Release (ID 398678883), tagged at the exact
