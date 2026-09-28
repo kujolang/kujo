@@ -3,7 +3,7 @@
 Updated: 2026-09-26
 Stable release: [v1.5.0](https://github.com/kujolang/kujo/releases/tag/v1.5.0)
 
-> Current crate version: `1.5.0` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.6.0` in [Cargo.toml](Cargo.toml)
 
 Kujo 1.0 shipped on August 8, 2026. The current 1.5 line is stable and adds
 bounded, descriptor-confined artifact I/O on top of the package-installer

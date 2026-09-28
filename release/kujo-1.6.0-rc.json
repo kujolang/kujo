@@ -1,0 +1,16 @@
+{
+  "schema": "kujo.release-candidate/v1",
+  "version": "1.6.0",
+  "status": "candidate-unpublished",
+  "intended_tag": "v1.6.0",
+  "published_stable": "1.5.0",
+  "native_archive": "kujo-v1.6.0-{platform}.tar.gz",
+  "source_archive": "kujo-v1.6.0-source.tar.gz",
+  "locally_tested_platform": "macos-x64",
+  "experimental_contracts": {
+    "effect_assurance": "dispatch.effect-assurance/v1beta1",
+    "interop": "kujo.interop-handoff/v1alpha1",
+    "participant_sdk": "kujo.participant-sdk-conformance/v1alpha1"
+  },
+  "publication_authorized": false
+}
