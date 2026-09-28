@@ -10,11 +10,13 @@ bounded, descriptor-confined artifact I/O on top of the package-installer
 runtime primitives introduced in 1.4.
 This page now tracks what comes next instead of repeating the closed 1.0 plan.
 
-Kujo 1.6 technical status: **READY_FOR_1_6_RELEASE_PREP**. The VM loop/early-return
-optimizer defect is [fixed and regression-tested](docs/VM_LOOP_RETURN_FIX.md),
-including the full Dispatch gate against the exact optimized candidate. The 1.6.0 candidate is undergoing release-source/version/artifact validation; see the
-[readiness review](docs/KUJO_1_6_READINESS_REVIEW.md). No release or version bump
-is implied.
+Kujo 1.6 candidate status: **KUJO_1_6_RC_READY** for the locally built/tested
+macos-x64 artifact. Source/package metadata is 1.6.0; no tag or publication exists.
+The VM loop/early-return fix remains verified. Exact source/artifact hashes,
+full Kujo/Dispatch/Workcell results and remaining platform/authorization work are
+in the [RC review](docs/KUJO_1_6_RC_REVIEW.md). The artifact source/tag target is
+recorded separately from the subsequent evidence receipt; never tag an untested
+later HEAD. Wave C beta and Wave D alpha remain experimental.
 
 ## Where Kujo stands
 

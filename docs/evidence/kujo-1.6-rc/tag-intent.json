@@ -1,0 +1,7 @@
+{
+  "tag": "v1.6.0",
+  "target": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "annotation": "Kujo 1.6.0: runtime correctness and controlled execution foundations. Wave C beta and Wave D alpha remain experimental. See RELEASE_NOTES_1_6.md and the separate RC provenance receipt.",
+  "created": false,
+  "authorization_required": true
+}

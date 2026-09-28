@@ -1,0 +1,932 @@
+{
+  "schema": "kujo.release-candidate-provenance/v1",
+  "release_version": "1.6.0",
+  "status": "KUJO_1_6_RC_READY",
+  "recorded_utc": "2026-09-28T17:53:25.908470+00:00",
+  "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "source_clean_at_build": true,
+  "intended_tag": "v1.6.0",
+  "intended_tag_target": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "tag_created": false,
+  "publication_authorized": false,
+  "receipt_note": "This later evidence commit is not the tested artifact source/tag target. Source archive is exact git archive of source_commit.",
+  "baseline": "50d68997ec7cbd93440776ff6ba7d12d802d991d",
+  "artifacts": {
+    "schema": "kujo.local-rc-artifacts/v1",
+    "version": "1.6.0",
+    "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "platform": "macos-x64",
+    "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "cargo_lock_sha256": "26061df9462d1648acc59ce38380ab34bdc3253ad4c66008f125c7793dcdc7ac",
+    "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "archives": {
+      "kujo-v1.6.0-macos-x64.tar.gz": "ee8aad0b389256f0d841891b97f6aa0826027f2f70894bb240f82599a678d317",
+      "kujo-v1.6.0-source.tar.gz": "21379f60f63e638c4e126fe9bc2bb30c56732315ca0118be73016046d6edddd7"
+    },
+    "publication_authorized": false
+  },
+  "source_metadata_sha256": {
+    "Cargo.toml": "bfa7be20eb2038885a86c0af20ead81794256ce451d1094f7c6f51a3c95141a1",
+    "Cargo.lock": "26061df9462d1648acc59ce38380ab34bdc3253ad4c66008f125c7793dcdc7ac",
+    "release/kujo-1.6.0-rc.json": "3d8bebff8fbec025d481580fe61f80945d7fb227f2f7617ffc99622f86b6f250",
+    "README.md": "b09eb5fcb21d3716dc505ec436583c3b26a6d23be3b789e26a9d1532d16cc3dd",
+    "CHANGELOG.md": "50c5a0882e527b9a9acace161c90688efb6771adb0d0b076aeca94c00e2a9cf8",
+    "docs/RELEASE_NOTES_1_6.md": "708a43bc140f16f9ebcafe05f02c3d04940e4b973169b8fc73d1d3773c9297f3"
+  },
+  "artifact_directory": "/Users/robertdevore/2026/Kujolang/release-candidates/kujo-1.6.0-44af277",
+  "npm_artifacts": {
+    "ok": true,
+    "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "archives": {
+      "kujolang-kujo-darwin-x64-1.6.0.tgz": "2375c8a644047821a5137a03a5a05cadb0f7b56c88001a8c4cd6ce89b232c258",
+      "kujolang-kujo-runtime-1.6.0.tgz": "b62ea8a8e0f2e113f721a25eb873cd5f224b4ad86128e25b09d3a1b21fc551bc"
+    },
+    "consumer": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-npm-consumer-d5uiu7on",
+    "lock_sha256": "1dbcdf60a3c2302bedc63f3e18c7a744b11888382f7874726474879fd48d2fc3",
+    "node": "v26.7.0",
+    "npm": "11.19.0",
+    "commands": [
+      [
+        "node",
+        "npm/scripts/pack-platform.js",
+        "--target",
+        "darwin-x64",
+        "--binary",
+        "/tmp/kujo-1.6.0-rc-44af277/native/kujo",
+        "--version",
+        "1.6.0",
+        "--git-commit",
+        "44af277848173664f72ca85f2a1b3b98d634ecdd",
+        "--output",
+        "/tmp/kujo-1.6.0-rc-44af277/npm"
+      ],
+      [
+        "node",
+        "npm/scripts/pack-runtime.js",
+        "--version",
+        "1.6.0",
+        "--output",
+        "/tmp/kujo-1.6.0-rc-44af277/npm"
+      ],
+      [
+        "npm",
+        "install",
+        "--offline",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--omit=optional",
+        "/tmp/kujo-1.6.0-rc-44af277/npm/kujolang-kujo-darwin-x64-1.6.0.tgz",
+        "/tmp/kujo-1.6.0-rc-44af277/npm/kujolang-kujo-runtime-1.6.0.tgz"
+      ],
+      [
+        "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-npm-consumer-d5uiu7on/node_modules/.bin/kujo",
+        "--version"
+      ],
+      [
+        "node",
+        "--version"
+      ],
+      [
+        "npm",
+        "--version"
+      ]
+    ]
+  },
+  "host": "Darwin MacBook-Pro 25.6.0 Darwin Kernel Version 25.6.0: Fri Jul 31 19:11:49 PDT 2026; root:xnu-12377.161.14~5/RELEASE_X86_64 x86_64",
+  "platforms_built_tested": [
+    "macos-x64"
+  ],
+  "platforms_not_built": [
+    "linux-x64",
+    "linux-arm64",
+    "macos-arm64",
+    "windows-x64"
+  ],
+  "gates": {
+    "release-candidate": {
+      "exit": 0,
+      "evidence": {
+        "path": "release-candidate.log.gz",
+        "raw_sha256": "cfae7a09c55d0f46cc5e94981bee422695fe86cfaf7df520f3c42b84793cde85",
+        "compressed_sha256": "59884e11bc0e909b7fb13d8169b3a8412998b20549a4d919985170fc0791daa9"
+      }
+    },
+    "final-source-release-candidate": {
+      "exit": 0,
+      "evidence": {
+        "path": "final-source-release-candidate.log.gz",
+        "raw_sha256": "cfae7a09c55d0f46cc5e94981bee422695fe86cfaf7df520f3c42b84793cde85",
+        "compressed_sha256": "59884e11bc0e909b7fb13d8169b3a8412998b20549a4d919985170fc0791daa9"
+      }
+    },
+    "check": {
+      "exit": 0,
+      "evidence": {
+        "path": "check.log.gz",
+        "raw_sha256": "0ca59c522117e2e8a49848aebd6a2d25adafad41019154867663f4b817c03f5c",
+        "compressed_sha256": "7024892d580265f6f4205ee18ecab2e39c4213e28bba162bafdce4daa9dc7bd9"
+      }
+    },
+    "vm": {
+      "exit": 0,
+      "evidence": {
+        "path": "vm.log.gz",
+        "raw_sha256": "ad48718e8ab1a3c54dfca11fe60111e5f52df7d2252661d536305fd2708e4518",
+        "compressed_sha256": "eba6efcdc7ec4dc6e8975a753a2642d53667319a777910227b80c2e60b8bdb1a"
+      }
+    },
+    "interpreter": {
+      "exit": 0,
+      "evidence": {
+        "path": "interpreter.log.gz",
+        "raw_sha256": "64297caeed54b1cbf5052b5a776392e07438d6e3575323b9f2d87a72feb04283",
+        "compressed_sha256": "62f9ddb38367fa9b73118c8afd077fa01b32cdd46efd675bdf1c17372a398a84"
+      }
+    },
+    "dual": {
+      "exit": 0,
+      "evidence": {
+        "path": "dual.log.gz",
+        "raw_sha256": "25b256bc0bc6290b3484d78fb691f67a383add50d3db9a1e38f8c7756e20da00",
+        "compressed_sha256": "c9115ffb3a12790f9018cc25c6f6a2bf2ec4d9d8ef2c868f4381e3a074638d43"
+      }
+    },
+    "targeted": {
+      "exit": 0,
+      "evidence": {
+        "path": "targeted.log.gz",
+        "raw_sha256": "14f98cf08492d052c944cca6e316fb2eaf0816005ddbaca2f9b9a4a12a06ca84",
+        "compressed_sha256": "226f6f0ddfe79cd21bcb9d3f3713de73b43787076ff59aa0d40d13d81f72dbb8"
+      }
+    },
+    "build": {
+      "exit": 0,
+      "evidence": {
+        "path": "build.log.gz",
+        "raw_sha256": "591ed0278b6eb25e8184294a833f11ab7ce941a341cef94e13108e047c58afc4",
+        "compressed_sha256": "a2ef1bd07681967ace521e0ff4abcd25c63c39b4f2b8b5d6943cb44091b805b3"
+      }
+    },
+    "clean-install": {
+      "exit": 0,
+      "evidence": {
+        "path": "clean-install.log.gz",
+        "raw_sha256": "475751b6693289ca91c4a8f670b1cca70178e88460e77287755f37527ca7806b",
+        "compressed_sha256": "320095d907d011d952a592eb07bc4b53693d4dabb44c0488daf045696da119a4"
+      }
+    },
+    "npm-artifacts": {
+      "exit": 0,
+      "evidence": {
+        "path": "npm-artifacts.log.gz",
+        "raw_sha256": "d7a9d1bdb9a3a2dd5eaf515fc8472afd35a420040ea4779487a77f73a706d28c",
+        "compressed_sha256": "8a1909bc05119804a25753f8d314c405004ff1484f51f56983e46e2b74cb3386"
+      }
+    },
+    "dispatch": {
+      "exit": 0,
+      "evidence": {
+        "path": "dispatch.log.gz",
+        "raw_sha256": "1f7bc225e6384d5351901fd78ba294e720353afb16dcf2aeb03bc6dd1ed59169",
+        "compressed_sha256": "4e1d464ad3cf880cef8aa5511c676bbe5c7ea7a70eb3f888bd6ee236196d834e"
+      }
+    },
+    "adopter": {
+      "exit": 0,
+      "evidence": {
+        "path": "adopter.log.gz",
+        "raw_sha256": "b50353404778ff2a6d22475c1c8510a2269b640b81791c9604391734d7e33b3b",
+        "compressed_sha256": "ce2f94b41137fb927365c015a04e5dd607e429d08886516a34c2ee4aabcd720c"
+      }
+    },
+    "workcell": {
+      "exit": 0,
+      "evidence": {
+        "path": "workcell.log.gz",
+        "raw_sha256": "08add7261b923013963837997cdb2b1bca7c5d486c4aba994d2eada23ee37f87",
+        "compressed_sha256": "690e742da45efd831c48be750488fdea4072825cbc177f7f4143458ef07779d3"
+      }
+    },
+    "workcell-assurance": {
+      "exit": 0,
+      "evidence": {
+        "path": "workcell-assurance.log.gz",
+        "raw_sha256": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d",
+        "compressed_sha256": "f67b197f66900d0a5c20ec08ccd13c352ce9fe0a5c8bdf9c0adacd0efbfba2d8"
+      }
+    },
+    "version-checks": {
+      "exit": 0,
+      "evidence": {
+        "path": "version-checks.log.gz",
+        "raw_sha256": "9efb795c35a4951e0eb85e4eda279c502e6d2d2ad140ab2a5a27e4ded2fb76f6",
+        "compressed_sha256": "1cce3b416807cfe6bac04eb696ee12a7f22a036002f4b63f9475274072a4d14a"
+      }
+    },
+    "npm-source": {
+      "exit": 0,
+      "evidence": {
+        "path": "npm-source.log.gz",
+        "raw_sha256": "5ef6f312e0871402fdc89bddd9c3d4195b832e5e24034fc1e002311a76404a07",
+        "compressed_sha256": "0e66917a67733b8ea1e56d9f1a0b83dbc968dd7330ebfef46539c04e22fc50db"
+      }
+    }
+  },
+  "runtime_counts": {
+    "cargo_test_passed": 2857,
+    "cargo_test_ignored": 17,
+    "rust_test_suites": 95,
+    "targeted_passed": 233,
+    "vm": {
+      "passed": 150,
+      "skipped": 11
+    },
+    "interpreter": {
+      "passed": 150,
+      "skipped": 11
+    },
+    "dual": {
+      "passed": 150,
+      "skipped": 11,
+      "interpreter_fallback": 0
+    }
+  },
+  "clean_install": {
+    "ok": true,
+    "install_root": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa",
+    "binary": "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/bin/kujo",
+    "source_archive_exact_git_archive_match": true,
+    "source_commit": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "binary_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "programs": 15,
+    "vm_interpreter_executions": 30,
+    "dual_fallback": 0,
+    "results": [
+      {
+        "args": [
+          "--version"
+        ],
+        "exit": 0,
+        "stdout": "kujo 1.6.0\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/A_no_return.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n2\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/A_no_return.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n2\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/B_unconditional.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/B_unconditional.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/C_matching.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/C_matching.kujo"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/D_no_match.kujo"
+        ],
+        "exit": 0,
+        "stdout": "9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/D_no_match.kujo"
+        ],
+        "exit": 0,
+        "stdout": "9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/E_later_match.kujo"
+        ],
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/E_later_match.kujo"
+        ],
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/F_nested_if.kujo"
+        ],
+        "exit": 0,
+        "stdout": "2\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/F_nested_if.kujo"
+        ],
+        "exit": 0,
+        "stdout": "2\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/G_nested_loop.kujo"
+        ],
+        "exit": 0,
+        "stdout": "4\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/G_nested_loop.kujo"
+        ],
+        "exit": 0,
+        "stdout": "4\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/H_caller.kujo"
+        ],
+        "exit": 0,
+        "stdout": "11\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/H_caller.kujo"
+        ],
+        "exit": 0,
+        "stdout": "11\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/I_fold.kujo"
+        ],
+        "exit": 0,
+        "stdout": "5\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/I_fold.kujo"
+        ],
+        "exit": 0,
+        "stdout": "5\n9\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/J_break_continue.kujo"
+        ],
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/J_break_continue.kujo"
+        ],
+        "exit": 0,
+        "stdout": "2\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/async_task.kujo"
+        ],
+        "exit": 0,
+        "stdout": "9\n42\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/async_task.kujo"
+        ],
+        "exit": 0,
+        "stdout": "9\n42\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/historical.kujo"
+        ],
+        "exit": 0,
+        "stdout": "{\"ok\":true}\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/historical.kujo"
+        ],
+        "exit": 0,
+        "stdout": "{\"ok\":true}\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/simple.kujo"
+        ],
+        "exit": 0,
+        "stdout": "42\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/simple.kujo"
+        ],
+        "exit": 0,
+        "stdout": "42\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/test_generators.kujo"
+        ],
+        "exit": 0,
+        "stdout": "=== Test 1: Simple Generator ===\nGenerator created, type:\ngenerator\n\n=== Test 2: Generator Iteration ===\nValue:\n1\nValue:\n2\nValue:\n3\n\n=== Test 3: Generator with State ===\nSequence value:\n5\nSequence value:\n10\nSequence value:\n20\n\n=== Test 4: Generator with Parameters ===\nMessage:\nhello\nMessage:\nhello\nMessage:\nhello\n\n=== Test 5: Fibonacci Generator ===\nFib:\n0\nFib:\n1\nFib:\n1\nFib:\n2\nFib:\n3\nFib:\n5\nFib:\n8\n\n=== All Generator Tests Passed ===\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/test_generators.kujo"
+        ],
+        "exit": 0,
+        "stdout": "=== Test 1: Simple Generator ===\nGenerator created, type:\ngenerator\n\n=== Test 2: Generator Iteration ===\nValue:\n1\nValue:\n2\nValue:\n3\n\n=== Test 3: Generator with State ===\nSequence value:\n5\nSequence value:\n10\nSequence value:\n20\n\n=== Test 4: Generator with Parameters ===\nMessage:\nhello\nMessage:\nhello\nMessage:\nhello\n\n=== Test 5: Fibonacci Generator ===\nFib:\n0\nFib:\n1\nFib:\n1\nFib:\n2\nFib:\n3\nFib:\n5\nFib:\n8\n\n=== All Generator Tests Passed ===\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/vm_closure_adder.kujo"
+        ],
+        "exit": 0,
+        "stdout": "8\n15\n15\n30\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "run",
+          "--interpreter",
+          "/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/kujo16-clean-2jrbf4xa/tests/vm_closure_adder.kujo"
+        ],
+        "exit": 0,
+        "stdout": "8\n15\n15\n30\n",
+        "stderr": ""
+      },
+      {
+        "args": [
+          "test",
+          "--runtime",
+          "dual"
+        ],
+        "exit": 0,
+        "stdout": "[\u2713] tests/D_no_match.kujo (21.37ms)\n[\u2713] tests/H_caller.kujo (22.22ms)\n[\u2713] tests/C_matching.kujo (21.00ms)\n[\u2713] tests/simple.kujo (21.75ms)\n[\u2713] tests/historical.kujo (25.16ms)\n[\u2713] tests/G_nested_loop.kujo (21.57ms)\n[\u2713] tests/F_nested_if.kujo (24.96ms)\n[\u2713] tests/E_later_match.kujo (21.37ms)\n[\u2713] tests/J_break_continue.kujo (21.44ms)\n[\u2713] tests/async_task.kujo (27.90ms)\n[\u2713] tests/A_no_return.kujo (20.38ms)\n[\u2713] tests/B_unconditional.kujo (23.23ms)\n[\u2713] tests/test_generators.kujo (29.58ms)\n[\u2713] tests/vm_closure_adder.kujo (21.32ms)\n[\u2713] tests/I_fold.kujo (25.23ms)\n\n[\u2713] Passed 15/15 tests\n[i] Fixture outcomes: passed=15, failed=0, skipped=0, expected_fail=0, runnable=15, discovered=15\n[i] Runtime strategy: dual (vm_primary=15, interpreter_fallback=0)\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "ecosystem_pins": {
+    "dispatch": "955996b83a5e3cf416eb6fbacc05788faffdbc29",
+    "workcell": "1940da0639b70b702c1b1077dda51ca39b065216",
+    "ability": "d6c970785f8d8bea04de0dce37920c2d0ca1c067",
+    "mcp": "a7ec0dd8e6bcae303ab1431b4586dfe3e91f3a5a",
+    "agents-sdk": "af0aa28f5960232cbafa7cf528a32db8cb36c7a9",
+    "ai-sdk": "71bad1468fbc97eab830a27c185c032f07fd76cf"
+  },
+  "ecosystem_worktree_status": {
+    "dispatch": "",
+    "workcell": "",
+    "ability": "",
+    "mcp": "",
+    "agents-sdk": "?? docs/MAINTENANCE_AGENT.md\n?? maintenance_agent.kujo\n?? src/maintenance/\n?? tests/maintenance_agent_tests.kujo",
+    "ai-sdk": ""
+  },
+  "dispatch_suite_log_count": 69,
+  "evidence": {
+    "adopter.exit": {
+      "path": "adopter.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "adopter.log": {
+      "path": "adopter.log.gz",
+      "raw_sha256": "b50353404778ff2a6d22475c1c8510a2269b640b81791c9604391734d7e33b3b",
+      "compressed_sha256": "ce2f94b41137fb927365c015a04e5dd607e429d08886516a34c2ee4aabcd720c"
+    },
+    "build-environment.json": {
+      "path": "build-environment.json.gz",
+      "raw_sha256": "1d6d4795370c39735fe8ed9d0c9765abc8b23b346ec6df9f3d46d494c80cf36a",
+      "compressed_sha256": "2c463c7ed8efda640ef45f393c79d8630a67057fda9260f9bba1df9aa9ddae11"
+    },
+    "build.exit": {
+      "path": "build.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "build.log": {
+      "path": "build.log.gz",
+      "raw_sha256": "591ed0278b6eb25e8184294a833f11ab7ce941a341cef94e13108e047c58afc4",
+      "compressed_sha256": "a2ef1bd07681967ace521e0ff4abcd25c63c39b4f2b8b5d6943cb44091b805b3"
+    },
+    "check.exit": {
+      "path": "check.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "check.log": {
+      "path": "check.log.gz",
+      "raw_sha256": "0ca59c522117e2e8a49848aebd6a2d25adafad41019154867663f4b817c03f5c",
+      "compressed_sha256": "7024892d580265f6f4205ee18ecab2e39c4213e28bba162bafdce4daa9dc7bd9"
+    },
+    "clean-install-initial-newline.exit": {
+      "path": "clean-install-initial-newline.exit.gz",
+      "raw_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "compressed_sha256": "c28cc69d141393e44a931229323624ef7b8c5bde3ee047ca9b87332daef23c82"
+    },
+    "clean-install-initial-newline.log": {
+      "path": "clean-install-initial-newline.log.gz",
+      "raw_sha256": "617201f33eb18a126485ddbf0c163a54395a28d480f6d52bdb06afc524d12af0",
+      "compressed_sha256": "547142900977ecf7d7e57fa46c707557f369f6cd147ffab200ff5c3751876457"
+    },
+    "clean-install.exit": {
+      "path": "clean-install.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "clean-install.json": {
+      "path": "clean-install.json.gz",
+      "raw_sha256": "26a2e12a97cb4c832950d71fd0a02f871edbbce8e74ab7daf3f7e003a7e4a672",
+      "compressed_sha256": "f2c0882f007f4f74001fb73dde6ad0ff22b24170bfd3e93c4f5588753ad36ae5"
+    },
+    "clean-install.log": {
+      "path": "clean-install.log.gz",
+      "raw_sha256": "475751b6693289ca91c4a8f670b1cca70178e88460e77287755f37527ca7806b",
+      "compressed_sha256": "320095d907d011d952a592eb07bc4b53693d4dabb44c0488daf045696da119a4"
+    },
+    "commands.json": {
+      "path": "commands.json.gz",
+      "raw_sha256": "33370a6230a45718823e90146f885146fb94ba8843e90b48bfc897e024cac43a",
+      "compressed_sha256": "1495f144f793dbdf901b9d76f176eaab1b610d97886d6399ad1fc1543f89d915"
+    },
+    "dispatch-workloads.json": {
+      "path": "dispatch-workloads.json.gz",
+      "raw_sha256": "863c05da9211a77705c3c8d52e21716e2a4a337ff432aca3873670cff3bcca98",
+      "compressed_sha256": "e387b45a482bbaa31562e7e161a2942370098a248da3ce18853e7056f92630d9"
+    },
+    "dispatch.exit": {
+      "path": "dispatch.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "dispatch.log": {
+      "path": "dispatch.log.gz",
+      "raw_sha256": "1f7bc225e6384d5351901fd78ba294e720353afb16dcf2aeb03bc6dd1ed59169",
+      "compressed_sha256": "4e1d464ad3cf880cef8aa5511c676bbe5c7ea7a70eb3f888bd6ee236196d834e"
+    },
+    "downstream-commands.json": {
+      "path": "downstream-commands.json.gz",
+      "raw_sha256": "cdd1337572b207cb24354eb664620e11a8a5ff0f798b15a3b075f683724ce607",
+      "compressed_sha256": "109c164634a2df067b09dc06dc6c8ec7983ea2ed0a057c21f2be01b6f5fc006f"
+    },
+    "dual.exit": {
+      "path": "dual.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "dual.log": {
+      "path": "dual.log.gz",
+      "raw_sha256": "25b256bc0bc6290b3484d78fb691f67a383add50d3db9a1e38f8c7756e20da00",
+      "compressed_sha256": "c9115ffb3a12790f9018cc25c6f6a2bf2ec4d9d8ef2c868f4381e3a074638d43"
+    },
+    "final-refresh.exit": {
+      "path": "final-refresh.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "final-source-release-candidate.exit": {
+      "path": "final-source-release-candidate.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "final-source-release-candidate.log": {
+      "path": "final-source-release-candidate.log.gz",
+      "raw_sha256": "cfae7a09c55d0f46cc5e94981bee422695fe86cfaf7df520f3c42b84793cde85",
+      "compressed_sha256": "59884e11bc0e909b7fb13d8169b3a8412998b20549a4d919985170fc0791daa9"
+    },
+    "harness-correction.json": {
+      "path": "harness-correction.json.gz",
+      "raw_sha256": "abdab577b8144742f461457c9b2c32a9124e912001d785b7c0c23353159909c3",
+      "compressed_sha256": "f375144972e6c4afc5b54fb30baf02302b75d0c1f2f8056373fcadb26cf834f6"
+    },
+    "interpreter.exit": {
+      "path": "interpreter.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "interpreter.log": {
+      "path": "interpreter.log.gz",
+      "raw_sha256": "64297caeed54b1cbf5052b5a776392e07438d6e3575323b9f2d87a72feb04283",
+      "compressed_sha256": "62f9ddb38367fa9b73118c8afd077fa01b32cdd46efd675bdf1c17372a398a84"
+    },
+    "native-libraries.log": {
+      "path": "native-libraries.log.gz",
+      "raw_sha256": "5ba6bcc0513f360e7893fe6389065a0bfdc87c90aedb5b150b94d964354b98fa",
+      "compressed_sha256": "2b57efd5128eb109a29016fab110557e5d104b04ae258ddeee9ca686a69c39fe"
+    },
+    "native-lsp.exit": {
+      "path": "native-lsp.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "native-lsp.log": {
+      "path": "native-lsp.log.gz",
+      "raw_sha256": "0dc348d45eed1bab5d0738fd6fbaa9af9f0a8811b495dd717ba14ca9f0fe6e6b",
+      "compressed_sha256": "68d52e1f5dbf1c00aeac1b0d5d81c6b4acef5508380dd87f5f65fbdeacccd41b"
+    },
+    "npm-artifacts.exit": {
+      "path": "npm-artifacts.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "npm-artifacts.json": {
+      "path": "npm-artifacts.json.gz",
+      "raw_sha256": "6544c1884cdeb7fbe119fdc445b0d31d58235f6a44e1fb07da301f3745d5fcf3",
+      "compressed_sha256": "a9039874338b527d7f8a8512a302e5cb95e57efdb101f0f264aaa87a3b483a1c"
+    },
+    "npm-artifacts.log": {
+      "path": "npm-artifacts.log.gz",
+      "raw_sha256": "d7a9d1bdb9a3a2dd5eaf515fc8472afd35a420040ea4779487a77f73a706d28c",
+      "compressed_sha256": "8a1909bc05119804a25753f8d314c405004ff1484f51f56983e46e2b74cb3386"
+    },
+    "npm-source.exit": {
+      "path": "npm-source.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "npm-source.log": {
+      "path": "npm-source.log.gz",
+      "raw_sha256": "5ef6f312e0871402fdc89bddd9c3d4195b832e5e24034fc1e002311a76404a07",
+      "compressed_sha256": "0e66917a67733b8ea1e56d9f1a0b83dbc968dd7330ebfef46539c04e22fc50db"
+    },
+    "release-candidate.exit": {
+      "path": "release-candidate.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "release-candidate.log": {
+      "path": "release-candidate.log.gz",
+      "raw_sha256": "cfae7a09c55d0f46cc5e94981bee422695fe86cfaf7df520f3c42b84793cde85",
+      "compressed_sha256": "59884e11bc0e909b7fb13d8169b3a8412998b20549a4d919985170fc0791daa9"
+    },
+    "rust-toolchain.log": {
+      "path": "rust-toolchain.log.gz",
+      "raw_sha256": "4d8ef7a4d2fe91e2e73066fdff851a6b49773a97b60cf751f81045606a502281",
+      "compressed_sha256": "738910aa3ed7b519f5243b77e2fc8b647b7b5050c6e6cb9296134ac6b1f81227"
+    },
+    "source-integrity.json": {
+      "path": "source-integrity.json.gz",
+      "raw_sha256": "e49611272e31893cd2a467b387766c13ec232993010d291d77e9897360e72ce3",
+      "compressed_sha256": "a05078d8f9dece10f5717a734ccc42e49ad118775a54eb090f8cd8a0429a44ad"
+    },
+    "targeted.exit": {
+      "path": "targeted.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "targeted.log": {
+      "path": "targeted.log.gz",
+      "raw_sha256": "14f98cf08492d052c944cca6e316fb2eaf0816005ddbaca2f9b9a4a12a06ca84",
+      "compressed_sha256": "226f6f0ddfe79cd21bcb9d3f3713de73b43787076ff59aa0d40d13d81f72dbb8"
+    },
+    "version-checks.exit": {
+      "path": "version-checks.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "version-checks.log": {
+      "path": "version-checks.log.gz",
+      "raw_sha256": "9efb795c35a4951e0eb85e4eda279c502e6d2d2ad140ab2a5a27e4ded2fb76f6",
+      "compressed_sha256": "1cce3b416807cfe6bac04eb696ee12a7f22a036002f4b63f9475274072a4d14a"
+    },
+    "version-inventory.json": {
+      "path": "version-inventory.json.gz",
+      "raw_sha256": "9225ca37d2b760ba78c46a2b06af597cfcb70ffe230071a481225834d9883a58",
+      "compressed_sha256": "fdbafbc7bd18f50a93318664860828125be7407d5e90cea247d19932276836da"
+    },
+    "vm.exit": {
+      "path": "vm.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "vm.log": {
+      "path": "vm.log.gz",
+      "raw_sha256": "ad48718e8ab1a3c54dfca11fe60111e5f52df7d2252661d536305fd2708e4518",
+      "compressed_sha256": "eba6efcdc7ec4dc6e8975a753a2642d53667319a777910227b80c2e60b8bdb1a"
+    },
+    "workcell-assurance.exit": {
+      "path": "workcell-assurance.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "workcell-assurance.log": {
+      "path": "workcell-assurance.log.gz",
+      "raw_sha256": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d",
+      "compressed_sha256": "f67b197f66900d0a5c20ec08ccd13c352ce9fe0a5c8bdf9c0adacd0efbfba2d8"
+    },
+    "workcell.exit": {
+      "path": "workcell.exit.gz",
+      "raw_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "compressed_sha256": "89ed3b723e0e40d8957a2df55fcb04d57b6d95fa665c5fe67b098df7f29694ae"
+    },
+    "workcell.log": {
+      "path": "workcell.log.gz",
+      "raw_sha256": "08add7261b923013963837997cdb2b1bca7c5d486c4aba994d2eada23ee37f87",
+      "compressed_sha256": "690e742da45efd831c48be750488fdea4072825cbc177f7f4143458ef07779d3"
+    }
+  },
+  "experimental_contracts": {
+    "wave_c": "dispatch.effect-assurance/v1beta1; experimental opt-in required/deny single-effect; alpha retained",
+    "wave_d": "kujo.interop-handoff/v1alpha1",
+    "participant_sdk": "kujo.participant-sdk-conformance/v1alpha1; alpha/unpublished"
+  },
+  "limitations": [
+    "Only local macos-x64 artifact certified; no hosted CI observed.",
+    "cargo-deny unavailable; optional check skipped. cargo-audit passed with existing RUSTSEC-2025-0141 build-only exception.",
+    "Benchmark smoke not enabled; no new performance claim. Full gate runs socket serve tests separately.",
+    "Native tarball includes filesystem timestamps; no native byte-reproducibility claim. Exact produced bytes retained.",
+    "Source-blind agent adoption passed; human adopter usability remains unperformed post-release validation."
+  ],
+  "post_1_6": [
+    "human adopter usability",
+    "remote authenticated participants",
+    "A2A",
+    "stable participant SDK",
+    "multi-effect assurance",
+    "assurance renewal/broader beta policy",
+    "broader performance characterization"
+  ],
+  "release_authorization_required": [
+    "Create/push intended tag at tested source only",
+    "Complete other platform gates before claiming multi-platform release",
+    "Create GitHub release/upload reviewed archives and checksums",
+    "Separately authorize runtime npm/crate publication and update published defaults; participant SDK publication remains separate"
+  ],
+  "receipt_docs_validation": {
+    "exit": 0,
+    "passed": 8,
+    "command": [
+      "cargo",
+      "test",
+      "--test",
+      "readme_contracts",
+      "--test",
+      "docs_examples",
+      "--test",
+      "release_1_6_identity"
+    ],
+    "fmt_check_exit": 0,
+    "log": "receipt-docs.log.gz",
+    "raw_sha256": "007c2a01a6030a06a5bb8472c993ada9768438358c83894cd57843102f6b54c9"
+  },
+  "downstream_counts": {
+    "focused_suites": 45,
+    "contract_shards": 24,
+    "source_contracts": 101,
+    "release_workloads": {
+      "schema_version": "1.0",
+      "dispatch_commit": "955996b83a5e3cf416eb6fbacc05788faffdbc29",
+      "fixture": true,
+      "requested_runs": 3,
+      "completed_runs": 3,
+      "duration_seconds": 11,
+      "generated_at_epoch": 1790617449
+    },
+    "adopter": {
+      "ok": true,
+      "root": "/Users/robertdevore/2026/Kujolang/kujo-repos/dispatch/tests/tmp/adopter-pilot-1790617451178014000",
+      "proofs": [
+        {
+          "case": "before_commit",
+          "termination": {
+            "completion_knowledge": "unknown",
+            "observed_state": "not_started",
+            "phase": "before_commit",
+            "returncode": -9,
+            "signal": "SIGKILL"
+          },
+          "required_revision_preserved": true,
+          "fresh_controller": true,
+          "logical_effects": 1
+        },
+        {
+          "case": "after_commit",
+          "termination": {
+            "completion_knowledge": "unknown",
+            "observed_state": "committed",
+            "phase": "after_commit",
+            "returncode": -9,
+            "signal": "SIGKILL"
+          },
+          "required_revision_preserved": true,
+          "fresh_controller": true,
+          "logical_effects": 1
+        },
+        {
+          "case": "concurrency",
+          "admitted": 1,
+          "denied": 3,
+          "logical_effects": 1
+        }
+      ],
+      "input_denials": 12,
+      "installed_package": true
+    },
+    "workcell_full_exit": 0,
+    "workcell_assurance_exit": 0
+  },
+  "source_vs_receipt": "The tested source contains the then-in-progress readiness/roadmap snapshot. This later receipt updates those status descriptions; executable/configuration source is unchanged. Tag target remains the tested source, not receipt HEAD."
+}

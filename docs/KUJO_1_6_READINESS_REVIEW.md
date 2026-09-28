@@ -1,6 +1,9 @@
 # Kujo 1.6 technical readiness review
 
-**READY_FOR_1_6_RELEASE_PREP.** The source-blind agent adopter rehearsal passed.
+**KUJO_1_6_RC_READY** for the locally built/tested macos-x64 candidate. See the
+[release-candidate review](KUJO_1_6_RC_REVIEW.md) for exact source, artifacts,
+downstream pins and authorization boundaries. The earlier technical readiness
+decision was READY_FOR_1_6_RELEASE_PREP. The source-blind agent adopter rehearsal passed.
 The valid-program VM loop/return blocker is now fixed and verified against the
 exact optimized runtime and the full Dispatch release gate.
 The completed runtime/control and ecosystem work forms a coherent 1.6 scope;
@@ -65,9 +68,9 @@ Wave D alpha retain their own compatibility/status labels.
 
 | Classification | Exact item | Required disposition |
 |---|---|---|
-| MUST_FIX_FOR_1_6 | Release-source/version/artifact reconciliation before actual release | Reviewed clean candidate, version/changelog alignment, full/platform candidate gates, built archives/checksums and downstream pins/clean installs against that exact runtime |
-| SHOULD_FIX_FOR_1_6 | Duplicate Unreleased sections / leading architecture prose in changelog; superseded chronological next-step language | Consolidate during release prep without rewriting historical evidence |
-| SHOULD_FIX_FOR_1_6 | Bounded feature/performance claims | Preserve opt-in status, actual measured overhead, local authority assumptions and human-validation limitation in release notes |
+| COMPLETED_LOCAL_RC | Release-source/version/artifact reconciliation | 1.6.0 source, exact optimized macos-x64 archives/checksums, clean installs and full Kujo/Dispatch/Workcell gates; see RC receipt. Other platform builds remain explicit release work |
+| COMPLETED_LOCAL_RC | Changelog and release-note truth | One Unreleased section; explicit unpublished 1.6 section; historical evidence and experimental status retained |
+| COMPLETED_LOCAL_RC | Bounded feature/performance claims | Release notes retain opt-in status, measured limits, local authority and unperformed human validation |
 | POST_1_6 | Human adopter usability and additional selected adopters | Collect independent human evidence; never relabel this agent result |
 | POST_1_6 | Host framing boilerplate and concrete malformed-wire corpus convenience | Optional ergonomic improvements; no missing normative behavior was required |
 | POST_1_6 | Allocator/retained-graph attribution, broader platform/JIT/long-run characterization, optional inference | Separate measured runtime work, no unmeasured guarantee |
@@ -95,18 +98,19 @@ installed-package adopter integration passed against the exact optimized fix.
 
 See [causal analysis, commit map and full evidence](VM_LOOP_RETURN_FIX.md) and
 [gate/provenance manifest](evidence/vm-loop-return-fix/results.json). No known
-technical MUST item remains from this blocker. The remaining MUST work is release
-source/version/artifact reconciliation and final candidate/platform verification.
+technical MUST item remains from this blocker. That milestone left release
+source/version/artifact reconciliation, now completed for the local RC. Other
+platform verification and publication remain separately scoped release actions.
 
-## Next bounded prompt
+## Next bounded release action
 
-**Kujo 1.6 release-source/version/changelog/artifact reconciliation.** Reconcile
-source and runtime pins, consolidate roadmap/changelog and documentation truth,
-bump the reviewed release candidate from 1.5 to 1.6, run complete
-candidate/platform/artifact gates, record artifact provenance and clean downstream
-installs, and prepare reviewable release/tag/package pins. Keep Wave C beta and
-Wave D SDK alpha opt-in and experimental. Publication remains a separate explicit
-action. Human adopter usability remains unperformed post-release validation.
+Review the [RC provenance and checklist](KUJO_1_6_RC_REVIEW.md). Authorize the
+intended release scope, complete remaining platform builds/gates, and separately
+authorize tag/release/upload/publication at the recorded tested source. Do not tag
+the subsequent evidence-receipt commit. Published install defaults should advance
+only when actual 1.6 publication exists. Participant SDK publication is separate;
+Wave C beta and Wave D alpha remain experimental. Human usability is unperformed
+post-release validation, not an engineering blocker.
 
 ## Historical local validation record
 
