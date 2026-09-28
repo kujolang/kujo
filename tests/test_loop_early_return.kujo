@@ -1,3 +1,44 @@
+# A_no_return
+func f_A_no_return() { for x in [1,2] { print(x) } }
+f_A_no_return()
+
+# B_unconditional
+func f_B_unconditional(xs) { for x in xs { return x }; return 9 }
+print(f_B_unconditional([1,2])); print(f_B_unconditional([]))
+
+# C_matching
+func f_C_matching(xs) { for x in xs { if x == 1 { return x } }; return 9 }
+print(f_C_matching([1,2]))
+
+# D_no_match
+func f_D_no_match(xs) { for x in xs { if x == 3 { return x } }; return 9 }
+print(f_D_no_match([1,2]))
+
+# E_later_match
+func f_E_later_match(xs) { for x in xs { if x == 2 { return x } }; return 9 }
+print(f_E_later_match([1,2]))
+
+# F_nested_if
+func f_F_nested_if(xs) { for x in xs { if x > 0 { if x == 2 { return x } } }; return 9 }
+print(f_F_nested_if([1,2])); print(f_F_nested_if([]))
+
+# G_nested_loop
+func f_G_nested_loop(xs) { for x in xs { for y in [1,2] { if x == y { return x+y } } }; return 9 }
+print(f_G_nested_loop([2])); print(f_G_nested_loop([]))
+
+# H_caller
+func f_H_caller(xs) { for x in xs { if x == 2 { return x } }; return 9 }
+print(f_H_caller([1,2])+f_H_caller([]))
+
+# I_fold
+func f_I_fold(xs) { for x in xs { if x == 2 { return 2+3 } }; return 9 }
+print(f_I_fold([1,2])); print(f_I_fold([]))
+
+# J_break_continue
+func f_J_break_continue(xs) { mut n := 0; for x in xs { if x == 1 { continue }; if x == 3 { break }; n += x }; return n }
+print(f_J_break_continue([1,2,3]))
+
+# historical
 func verify_subject(configuration, subject) {
     for field in ["operation", "target_sha256", "scope_sha256", "key_sha256", "request_sha256", "precondition_sha256"] {
         if subject[field] != configuration["intent"][field] {return {"ok": false}}

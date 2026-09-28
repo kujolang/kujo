@@ -5,7 +5,6 @@
 // and other performance improvements.
 
 use crate::bytecode::{BytecodeChunk, Constant, OpCode};
-use std::collections::HashMap;
 
 /// Main optimizer for bytecode chunks
 pub struct Optimizer {
@@ -26,6 +25,72 @@ pub struct OptimizationStats {
 impl Optimizer {
     pub fn new() -> Self {
         Self { stats: OptimizationStats::default() }
+    }
+
+    // Every instruction-address operand in this bytecode format. Constant/local
+    // indices and match-pattern payloads are deliberately not addresses.
+    fn target(instruction: &mut OpCode) -> Option<&mut usize> {
+        match instruction {
+            OpCode::Jump(t)
+            | OpCode::JumpIfFalse(t)
+            | OpCode::JumpIfTrue(t)
+            | OpCode::JumpBack(t)
+            | OpCode::ForNext(t)
+            | OpCode::BeginTry(t) => Some(t),
+            _ => None,
+        }
+    }
+
+    fn entry_points(chunk: &BytecodeChunk) -> Vec<bool> {
+        let mut entries = vec![false; chunk.instructions.len() + 1];
+        for mut op in chunk.instructions.iter().cloned() {
+            if let Some(target) = Self::target(&mut op) {
+                if let Some(entry) = entries.get_mut(*target) {
+                    *entry = true;
+                }
+            }
+        }
+        for handler in &chunk.exception_handlers {
+            for target in [handler.try_start, handler.try_end, handler.catch_start] {
+                if let Some(entry) = entries.get_mut(target) {
+                    *entry = true;
+                }
+            }
+        }
+        entries
+    }
+
+    // map[i] is the output boundary corresponding to input boundary i. Include
+    // the end sentinel so exclusive handler ranges and end targets relocate too.
+    fn install_rewrite(chunk: &mut BytecodeChunk, mut instructions: Vec<OpCode>, map: &[usize]) {
+        for op in &mut instructions {
+            if let Some(target) = Self::target(op) {
+                if let Some(new_target) = map.get(*target) {
+                    *target = *new_target;
+                }
+            }
+        }
+        for handler in &mut chunk.exception_handlers {
+            for target in [&mut handler.try_start, &mut handler.try_end, &mut handler.catch_start] {
+                if let Some(new_target) = map.get(*target) {
+                    *target = *new_target;
+                }
+            }
+        }
+        chunk.source_map = chunk
+            .source_map
+            .iter()
+            .filter_map(|(&old, &location)| {
+                // Only emitting boundaries own an output instruction. Removed
+                // locations must not overwrite the next surviving instruction.
+                if old < map.len() - 1 && map[old] < map[old + 1] {
+                    Some((map[old], location))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        chunk.instructions = instructions;
     }
 
     /// Run all optimization passes on a bytecode chunk
@@ -56,10 +121,13 @@ impl Optimizer {
     fn constant_folding_pass(&mut self, chunk: &mut BytecodeChunk) {
         let mut new_instructions = Vec::new();
         let mut i = 0;
+        let entries = Self::entry_points(chunk);
+        let mut map = vec![0; chunk.instructions.len() + 1];
 
         while i < chunk.instructions.len() {
+            map[i] = new_instructions.len();
             // Look for pattern: LoadConst, LoadConst, BinaryOp
-            if i + 2 < chunk.instructions.len() {
+            if i + 2 < chunk.instructions.len() && !entries[i + 1] && !entries[i + 2] {
                 if let (OpCode::LoadConst(idx1), OpCode::LoadConst(idx2), binary_op) =
                     (&chunk.instructions[i], &chunk.instructions[i + 1], &chunk.instructions[i + 2])
                 {
@@ -74,6 +142,8 @@ impl Optimizer {
                         new_instructions.push(OpCode::LoadConst(new_idx));
 
                         self.stats.constants_folded += 1;
+                        map[i + 1] = new_instructions.len();
+                        map[i + 2] = new_instructions.len();
                         i += 3; // Skip the three instructions we just folded
                         continue;
                     }
@@ -81,7 +151,7 @@ impl Optimizer {
             }
 
             // Look for pattern: LoadConst, UnaryOp (like Negate, Not)
-            if i + 1 < chunk.instructions.len() {
+            if i + 1 < chunk.instructions.len() && !entries[i + 1] {
                 if let (OpCode::LoadConst(idx), unary_op) =
                     (&chunk.instructions[i], &chunk.instructions[i + 1])
                 {
@@ -90,6 +160,7 @@ impl Optimizer {
                         new_instructions.push(OpCode::LoadConst(new_idx));
 
                         self.stats.constants_folded += 1;
+                        map[i + 1] = new_instructions.len();
                         i += 2;
                         continue;
                     }
@@ -101,7 +172,8 @@ impl Optimizer {
             i += 1;
         }
 
-        chunk.instructions = new_instructions;
+        map[chunk.instructions.len()] = new_instructions.len();
+        Self::install_rewrite(chunk, new_instructions, &map);
     }
 
     /// Try to fold a binary operation on two constants
@@ -246,51 +318,18 @@ impl Optimizer {
             self.mark_reachable(chunk, &mut reachable, handler.catch_start);
         }
 
-        // Build a mapping from old instruction indices to new ones
-        let mut index_map = HashMap::new();
-        let mut new_instructions = Vec::new();
-        let mut new_index = 0;
-
-        for (old_index, instruction) in chunk.instructions.iter().enumerate() {
-            if reachable[old_index] {
-                index_map.insert(old_index, new_index);
-                new_instructions.push(instruction.clone());
-                new_index += 1;
+        let mut map = vec![0; chunk.instructions.len() + 1];
+        let mut instructions = Vec::new();
+        for (i, instruction) in chunk.instructions.iter().enumerate() {
+            map[i] = instructions.len();
+            if reachable[i] {
+                instructions.push(instruction.clone());
             } else {
                 self.stats.dead_instructions_removed += 1;
             }
         }
-
-        // Update all jump targets to use new indices
-        for instruction in &mut new_instructions {
-            match instruction {
-                OpCode::Jump(ref mut target)
-                | OpCode::JumpIfFalse(ref mut target)
-                | OpCode::JumpIfTrue(ref mut target)
-                | OpCode::JumpBack(ref mut target)
-                | OpCode::BeginTry(ref mut target) => {
-                    if let Some(&new_target) = index_map.get(target) {
-                        *target = new_target;
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        // Update exception handler indices
-        for handler in &mut chunk.exception_handlers {
-            if let Some(&new_start) = index_map.get(&handler.try_start) {
-                handler.try_start = new_start;
-            }
-            if let Some(&new_end) = index_map.get(&handler.try_end) {
-                handler.try_end = new_end;
-            }
-            if let Some(&new_catch) = index_map.get(&handler.catch_start) {
-                handler.catch_start = new_catch;
-            }
-        }
-
-        chunk.instructions = new_instructions;
+        map[chunk.instructions.len()] = instructions.len();
+        Self::install_rewrite(chunk, instructions, &map);
     }
 
     /// Mark all reachable instructions starting from a given index
@@ -309,21 +348,17 @@ impl Optimizer {
 
             match &chunk.instructions[i] {
                 // Unconditional jump - follow it, stop current path
-                OpCode::Jump(target) => {
+                OpCode::Jump(target) | OpCode::JumpBack(target) => {
                     self.mark_reachable(chunk, reachable, *target);
                     break;
                 }
 
                 // Conditional jumps - follow both paths
-                OpCode::JumpIfFalse(target) | OpCode::JumpIfTrue(target) => {
+                OpCode::JumpIfFalse(target)
+                | OpCode::JumpIfTrue(target)
+                | OpCode::ForNext(target) => {
                     self.mark_reachable(chunk, reachable, *target);
                     // Continue with next instruction (fall-through)
-                }
-
-                // Backward jump - follow it
-                OpCode::JumpBack(target) => {
-                    self.mark_reachable(chunk, reachable, *target);
-                    // Continue with next instruction
                 }
 
                 // Try block - mark catch block as reachable
@@ -351,24 +386,28 @@ impl Optimizer {
     fn peephole_optimization_pass(&mut self, chunk: &mut BytecodeChunk) {
         let mut new_instructions = Vec::new();
         let mut i = 0;
+        let entries = Self::entry_points(chunk);
+        let mut map = vec![0; chunk.instructions.len() + 1];
 
         while i < chunk.instructions.len() {
+            map[i] = new_instructions.len();
             let mut optimized = false;
 
             // Pattern 1: LoadConst followed by Pop (useless load)
-            if i + 1 < chunk.instructions.len() {
+            if i + 1 < chunk.instructions.len() && !entries[i + 1] {
                 if matches!(chunk.instructions[i], OpCode::LoadConst(_))
                     && matches!(chunk.instructions[i + 1], OpCode::Pop)
                 {
                     // Skip both instructions
                     self.stats.peephole_optimizations += 1;
+                    map[i + 1] = new_instructions.len();
                     i += 2;
                     optimized = true;
                 }
             }
 
             // Pattern 2: StoreVar followed by LoadVar of same variable
-            if !optimized && i + 1 < chunk.instructions.len() {
+            if !optimized && i + 1 < chunk.instructions.len() && !entries[i + 1] {
                 if let (OpCode::StoreVar(var1), OpCode::LoadVar(var2)) =
                     (&chunk.instructions[i], &chunk.instructions[i + 1])
                 {
@@ -381,6 +420,7 @@ impl Optimizer {
                         new_instructions.push(OpCode::Dup);
                         new_instructions.push(chunk.instructions[i].clone());
                         self.stats.peephole_optimizations += 1;
+                        map[i + 1] = new_instructions.len() - 1;
                         i += 2;
                         optimized = true;
                     }
@@ -415,7 +455,8 @@ impl Optimizer {
             }
         }
 
-        chunk.instructions = new_instructions;
+        map[chunk.instructions.len()] = new_instructions.len();
+        Self::install_rewrite(chunk, new_instructions, &map);
     }
 
     /// Get a summary of optimization results

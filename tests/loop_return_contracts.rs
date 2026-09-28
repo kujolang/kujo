@@ -154,3 +154,50 @@ fn invalid_return_still_errors() {
     chunk.instructions.push(OpCode::Return);
     assert!(VM::new().execute(chunk).unwrap_err().contains("Stack underflow in return"));
 }
+
+#[test]
+fn every_address_operand_and_metadata_relocates() {
+    for branch in [
+        OpCode::Jump(6),
+        OpCode::JumpBack(6),
+        OpCode::JumpIfFalse(6),
+        OpCode::JumpIfTrue(6),
+        OpCode::ForNext(6),
+        OpCode::BeginTry(6),
+    ] {
+        let mut chunk = BytecodeChunk::new();
+        chunk.constants = vec![Constant::Int(1), Constant::Int(2)];
+        chunk.instructions = vec![
+            OpCode::LoadConst(0),
+            OpCode::LoadConst(1),
+            OpCode::Add,
+            OpCode::Pop,
+            branch,
+            OpCode::ReturnNone,
+            OpCode::LoadConst(1),
+            OpCode::Return,
+        ];
+        chunk.source_map.insert(6, (77, 4));
+        chunk.exception_handlers.push(kujo::bytecode::ExceptionHandler {
+            try_start: 4,
+            try_end: 6,
+            catch_start: 6,
+            exception_var: "error".into(),
+        });
+        Optimizer::new().optimize(&mut chunk);
+        let target = match chunk.instructions[0] {
+            OpCode::Jump(t)
+            | OpCode::JumpBack(t)
+            | OpCode::JumpIfFalse(t)
+            | OpCode::JumpIfTrue(t)
+            | OpCode::ForNext(t)
+            | OpCode::BeginTry(t) => t,
+            ref other => panic!("expected relocated branch, got {other:?}"),
+        };
+        assert_eq!(chunk.instructions[target], OpCode::LoadConst(1));
+        assert_eq!(chunk.source_map.get(&target), Some(&(77, 4)));
+        assert_eq!(chunk.exception_handlers[0].try_start, 0);
+        assert_eq!(chunk.exception_handlers[0].try_end, target);
+        assert_eq!(chunk.exception_handlers[0].catch_start, target);
+    }
+}

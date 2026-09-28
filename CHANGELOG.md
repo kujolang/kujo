@@ -44,6 +44,12 @@ This file records user-visible changes to Kujo. It follows
 
 ## Unreleased
 
+- Fixed VM loop/early-return control-flow corruption: optimizer passes now retain
+  iterator exhaustion edges and relocate instruction addresses after deletion,
+  without folding across alternate entry points. Return stack checks and language
+  semantics are unchanged; permanent VM/interpreter regressions cover exhaustion,
+  nested returns, caller values, and surrounding branch transformations.
+
 - Roadmap records the non-Ability Wave D process participant: existing Workcell Git CAS, real pre/post-commit process loss, Dispatch-controlled restart/replay, and a four-way handoff comparison. No runtime or execution-result schema changes.
 - Roadmap records the third experimental Wave D participant: one local HTTP/OpenAPI Ability action with Dispatch-controlled response-loss/timeout/replay and duplicate-delivery proof.
 
