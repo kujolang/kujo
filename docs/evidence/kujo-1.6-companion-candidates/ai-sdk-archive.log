@@ -1,0 +1,235 @@
+Documentation command checks passed.
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.302s
+
+OK
+Running quality gate suite: tests/model_catalog_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 10 total, 10 passed, 0 failed
+Time:  122ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/hardening_regression_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 2 total, 2 passed, 0 failed
+Time:  94ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/provider_driver_contract_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 5 total, 5 passed, 0 failed
+Time:  244ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/openai_compatible_driver_regression_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 4 total, 4 passed, 0 failed
+Time:  195ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/external_driver_fixture_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 5 total, 5 passed, 0 failed
+Time:  222ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/provider_driver_security_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 8 total, 8 passed, 0 failed
+Time:  433ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/sdk_contract_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 31 total, 31 passed, 0 failed
+Time:  1549ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/sdk_contract_resilience_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 40 total, 40 passed, 0 failed
+Time:  2526ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/sdk_contract_embeddings_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 14 total, 14 passed, 0 failed
+Time:  938ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/security_redaction_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 3 total, 3 passed, 0 failed
+Time:  173ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/reliability_failure_modes_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 9 total, 9 passed, 0 failed
+Time:  956ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/parser_fuzz_smoke_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 3 total, 3 passed, 0 failed
+Time:  164ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/feature_smoke_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 3 total, 3 passed, 0 failed
+Time:  183ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/bugfix_regression_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 10 total, 10 passed, 0 failed
+Time:  530ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/live_provider_smoke_tests.kujo
+No live provider keys configured. Skipping release live-provider smoke test.
+
+============================================================
+Test Results
+============================================================
+Tests: 1 total, 1 passed, 0 failed
+Time:  54ms
+============================================================
+
+All tests passed! ✨
+Running quality gate suite: tests/watchdog_telemetry_contract_tests.kujo
+
+============================================================
+Test Results
+============================================================
+Tests: 2 total, 2 passed, 0 failed
+Time:  104ms
+============================================================
+
+All tests passed! ✨
+Running feature smoke command: run examples/main.kujo
+AI SDK Example App
+-----------------------
+No OPENAI_API_KEY found. Running fixture mode so this project works offline.
+
+Mode: fixture
+OK: true
+Provider: openai
+Status: 200
+Model: gpt-4.1-mini
+Output: Standardized AI SDK responses reduce integration complexity and speed up development.
+Finish reason: stop
+Usage: {"input_tokens": 12, "output_tokens": 8, "total_tokens": 20}
+
+Normalized JSON:
+{"contract_version":"1.0.0","finish_reason":"stop","model":"gpt-4.1-mini","normalized_at":1790633605704,"ok":true,"output_text":"Standardized AI SDK responses reduce integration complexity and speed up development.","provider":"openai","raw":{"id":"chatcmpl-kujo-fixture-1","model":"gpt-4.1-mini"},"request_id":"chatcmpl-kujo-fixture-1","status_code":200,"tool_calls":[],"usage":{"input_tokens":12,"output_tokens":8,"total_tokens":20}}
+Running feature smoke command: run examples/production_profile.kujo
+AI SDK Production Profile Example
+--------------------------------------
+Result ok: true
+Provider: openai
+Contract version: 1.0.0
+Output: Standardized AI SDK responses reduce integration complexity and speed up development.
+Observability: {}
+Running contract schema verification: scripts/verify_contract_schemas.sh
+Contract schemas verified: chat_success.schema.json, embeddings_success.schema.json, error.schema.json
+Contract schema verification passed for schemas/contracts/1.0.0.
+Running benchmark quality gate: run scripts/benchmark_quality_gate.kujo
+AI SDK Benchmark Quality Gate
+----------------------------------
+
+Case: chat_normalization_path
+Iterations: 300
+Elapsed ms: 606
+Average latency ms: 2.02 (threshold <= 30)
+Throughput rps: 495.0495049504951 (threshold >= 33)
+
+Case: embeddings_normalization_path
+Iterations: 300
+Elapsed ms: 554
+Average latency ms: 1.8466666666666667 (threshold <= 25)
+Throughput rps: 541.5162454873646 (threshold >= 30)
+
+Case: chat_parse_normalization_path
+Iterations: 300
+Elapsed ms: 815
+Average latency ms: 2.716666666666667 (threshold <= 25)
+Throughput rps: 368.09815950920245 (threshold >= 30)
+
+Case: stream_parse_normalization_path
+Iterations: 300
+Elapsed ms: 1238
+Average latency ms: 4.126666666666667 (threshold <= 40)
+Throughput rps: 242.32633279483036 (threshold >= 25)
+
+Case: chat_retry_path
+Iterations: 200
+Elapsed ms: 419
+Average latency ms: 2.095 (threshold <= 50)
+Throughput rps: 477.326968973747 (threshold >= 20)
+
+Case: embeddings_retry_path
+Iterations: 200
+Elapsed ms: 397
+Average latency ms: 1.985 (threshold <= 50)
+Throughput rps: 503.77833753148616 (threshold >= 20)
+Benchmark quality gate passed.
+Release quality gates passed with aggregate test count: 150.
