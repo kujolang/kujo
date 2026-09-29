@@ -1,0 +1,23 @@
+generated_at = "2026-09-29 12:41:42"
+generated_by = "kennel"
+version = 1
+
+[[package]]
+checksum = "sha256:17e4a0c84f7ac8e7aa3fc5219609ed41f1c355ec1cc1ad1c7a2f00a86af6531a"
+install_path = "kennel_packages/ability"
+kind = "registry"
+name = "ability"
+package_identity = "ability"
+path = ""
+provenance_status = "registry-statement-verified"
+registry = "https://kennel.kujolang.ai/api/v1/index.json"
+registry_manifest = '{"archive_sha256":"17e4a0c84f7ac8e7aa3fc5219609ed41f1c355ec1cc1ad1c7a2f00a86af6531a","archive_size":85741,"archive_url":"https://kennel.kujolang.ai/packages/ability/1.2.0/package.tar.gz","checksum_url":"https://kennel.kujolang.ai/packages/ability/1.2.0/checksums.txt","dependencies":{},"description":"Portable semantic operation contracts for the Kujo ecosystem.","file_count":72,"license":"MIT","minimum_kujo_version":"1.6.0","official":true,"owner":{"id":"kujolang","type":"organization"},"package":"ability","provenance_sha256":"0a124358d05d8d9e753e5c5a09747674e7ecee83923467d6bae5dcad265e8772","provenance_url":"https://kennel.kujolang.ai/packages/ability/1.2.0/provenance.json","release_id":399102198,"released_at":"2026-09-29T11:58:09Z","repository":"kujolang/ability","repository_id":1353984444,"schema_version":1,"scope":null,"source_commit":"2dc7d4e9eb25e987544ac48793cd11d1999c45e0","source_tag":"v1.2.0","version":"1.2.0"}'
+repository = "https://kennel.kujolang.ai/api/v1/packages/ability/1.2.0.json"
+requested = "1.2.0"
+requested_kind = "version"
+resolved_commit = "2dc7d4e9eb25e987544ac48793cd11d1999c45e0"
+resolved_ref = "1.2.0"
+signature = ""
+signing_key = ""
+source = "registry:https://kennel.kujolang.ai/api/v1/packages/ability/1.2.0.json"
+version = "1.2.0"

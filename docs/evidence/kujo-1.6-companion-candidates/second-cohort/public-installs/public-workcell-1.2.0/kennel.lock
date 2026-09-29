@@ -1,0 +1,23 @@
+generated_at = "2026-09-29 12:41:42"
+generated_by = "kennel"
+version = 1
+
+[[package]]
+checksum = "sha256:387ea399866de38a0457f8833dbcc050e55f01fba8806a484a32524d778c528e"
+install_path = "kennel_packages/workcell"
+kind = "registry"
+name = "workcell"
+package_identity = "workcell"
+path = ""
+provenance_status = "registry-statement-verified"
+registry = "https://kennel.kujolang.ai/api/v1/index.json"
+registry_manifest = '{"archive_sha256":"387ea399866de38a0457f8833dbcc050e55f01fba8806a484a32524d778c528e","archive_size":489487,"archive_url":"https://kennel.kujolang.ai/packages/workcell/1.2.0/package.tar.gz","checksum_url":"https://kennel.kujolang.ai/packages/workcell/1.2.0/checksums.txt","dependencies":{},"description":"Kujo-native Docker-backed disposable execution sandbox for AI agents and workflows.","file_count":244,"license":"MIT","minimum_kujo_version":"1.6.0","official":true,"owner":{"id":"kujolang","type":"organization"},"package":"workcell","provenance_sha256":"b5e31a6dac3143bbac9d4dd8c52823454635822d65334312f110735fee1a16e3","provenance_url":"https://kennel.kujolang.ai/packages/workcell/1.2.0/provenance.json","release_id":399128393,"released_at":"2026-09-29T12:32:12Z","repository":"kujolang/workcell","repository_id":1297065619,"schema_version":1,"scope":null,"source_commit":"4ec4227f8190e05a329c2ee2975d77fce7872313","source_tag":"v1.2.0","version":"1.2.0"}'
+repository = "https://kennel.kujolang.ai/api/v1/packages/workcell/1.2.0.json"
+requested = "1.2.0"
+requested_kind = "version"
+resolved_commit = "4ec4227f8190e05a329c2ee2975d77fce7872313"
+resolved_ref = "1.2.0"
+signature = ""
+signing_key = ""
+source = "registry:https://kennel.kujolang.ai/api/v1/packages/workcell/1.2.0.json"
+version = "1.2.0"
