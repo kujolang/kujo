@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [workcell, ability, mcp, dispatch]
+        package: [workcell, ability, mcp, dispatch, watchdog, kennel]
     steps:
       - name: Install reviewed runtime
         id: kujo
@@ -40,6 +40,8 @@ jobs:
             ability) expected=2dc7d4e9eb25e987544ac48793cd11d1999c45e0 ;;
             mcp) expected=427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54 ;;
             dispatch) expected=7558d0b2157449a484646d9a4b0d069a70c36f85; version=1.3.0 ;;
+            watchdog) expected=fafea3abb594638e442127496ca6ac4c9bcd5390 ;;
+            kennel) expected=92326c4bc11377ffa9fedf51d8c3ad3e7575e02b; version=1.1.1 ;;
             *) exit 2 ;;
           esac
           project="$RUNNER_TEMP/public-$PACKAGE"
@@ -83,6 +85,18 @@ jobs:
                   --workflow-file examples/workflows/routed-review.json --yes --non-interactive \
                   --output-root "tests/tmp/public-$backend"
               done
+              ;;
+            watchdog)
+              test "$(cat VERSION)" = '1.2.0'
+              node tests/release_metadata_check.js
+              node tests/api_version_contract_check.js
+              node tests/runtime_measurements_adapter_check.js
+              ;;
+            kennel)
+              test "$(sed -n 's/^version = "\(.*\)"/\1/p' kennel.toml | head -1)" = '1.1.1'
+              "$KUJO_BIN" run kennel.kujo --interpreter -- validate --project-dir "$CONSUMER"
+              bash scripts/verify-deterministic-lockfile.sh
+              bash scripts/verify-stale-lockfile.sh
               ;;
             ability) bash tests/run_tests.sh ;;
             workcell)
