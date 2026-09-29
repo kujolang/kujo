@@ -1,0 +1,2 @@
+c6fb94d5bf411cbb592636bff7152885de344c3ed3246e92da8de1c9b9fcb9de  kennel-v1.1.1-source.tar.gz
+1e0b5f40e6875a9d77a5f66f5b61b0e269cb11fe3408acd9065727c6387f5485  kennel-v1.1.1-provenance.json

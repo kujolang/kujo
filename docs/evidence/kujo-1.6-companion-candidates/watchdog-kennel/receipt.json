@@ -1,0 +1,450 @@
+{
+  "schema": "kujo.companion-release-receipt/v1",
+  "recorded_at": "2026-09-29T18:43:17.161319+00:00",
+  "status": "officially_released",
+  "releases": [
+    {
+      "name": "watchdog",
+      "version": "1.2.0",
+      "source": "fafea3abb594638e442127496ca6ac4c9bcd5390",
+      "tag": "v1.2.0",
+      "release_url": "https://github.com/kujolang/watchdog/releases/tag/v1.2.0",
+      "release_id": 399410299,
+      "github_assets": [
+        {
+          "name": "watchdog-v1.2.0-checksums.txt",
+          "url": "https://github.com/kujolang/watchdog/releases/download/v1.2.0/watchdog-v1.2.0-checksums.txt",
+          "digest": "sha256:3e3b28e2dd856ad79bbb4ec626eb003d908e05043c99b75436d2a67f6da6b3ea",
+          "size": 194
+        },
+        {
+          "name": "watchdog-v1.2.0-provenance.json",
+          "url": "https://github.com/kujolang/watchdog/releases/download/v1.2.0/watchdog-v1.2.0-provenance.json",
+          "digest": "sha256:ab921c2a06fc15ada5a4872cee0ac54f0328ff0529b1e67cb5534d5f44c9886b",
+          "size": 1162
+        },
+        {
+          "name": "watchdog-v1.2.0-source.tar.gz",
+          "url": "https://github.com/kujolang/watchdog/releases/download/v1.2.0/watchdog-v1.2.0-source.tar.gz",
+          "digest": "sha256:b9a6571e08f094c2dbeda12f2888a08b9113c460419e42425b1954b35470a71e",
+          "size": 733871
+        }
+      ],
+      "source_archive_sha256": "b9a6571e08f094c2dbeda12f2888a08b9113c460419e42425b1954b35470a71e",
+      "source_files": 262,
+      "registry": {
+        "archive_sha256": "9686b591ec30366fcb5853d73e58d1e0adf4b3b83531ee09eeefb6fd11bb7ede",
+        "archive_size": 732521,
+        "archive_url": "https://kennel.kujolang.ai/packages/watchdog/1.2.0/package.tar.gz",
+        "checksum_url": "https://kennel.kujolang.ai/packages/watchdog/1.2.0/checksums.txt",
+        "dependencies": {},
+        "description": "Local observability, proxy telemetry and verified Kujo runtime measurement references.",
+        "file_count": 261,
+        "license": "MIT",
+        "minimum_kujo_version": "1.6.0",
+        "official": true,
+        "owner": {
+          "id": "kujolang",
+          "type": "organization"
+        },
+        "package": "watchdog",
+        "provenance_sha256": "da474cdda4b1de9f091479ca4449d0dcdf48855d3a96b8bb0bc9d6537f502f59",
+        "provenance_url": "https://kennel.kujolang.ai/packages/watchdog/1.2.0/provenance.json",
+        "release_id": 399410299,
+        "released_at": "2026-09-29T18:18:45Z",
+        "repository": "kujolang/watchdog",
+        "repository_id": 1264528352,
+        "schema_version": 1,
+        "scope": null,
+        "source_commit": "fafea3abb594638e442127496ca6ac4c9bcd5390",
+        "source_tag": "v1.2.0",
+        "version": "1.2.0"
+      }
+    },
+    {
+      "name": "kennel",
+      "version": "1.1.1",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+      "tag": "v1.1.1",
+      "release_url": "https://github.com/kujolang/kennel/releases/tag/v1.1.1",
+      "release_id": 399416548,
+      "github_assets": [
+        {
+          "name": "kennel-v1.1.1-checksums.txt",
+          "url": "https://github.com/kujolang/kennel/releases/download/v1.1.1/kennel-v1.1.1-checksums.txt",
+          "digest": "sha256:667b44858ec5636ba56126f9dc6e577162de0bc21a745f4bf932e4676ed89058",
+          "size": 190
+        },
+        {
+          "name": "kennel-v1.1.1-provenance.json",
+          "url": "https://github.com/kujolang/kennel/releases/download/v1.1.1/kennel-v1.1.1-provenance.json",
+          "digest": "sha256:1e0b5f40e6875a9d77a5f66f5b61b0e269cb11fe3408acd9065727c6387f5485",
+          "size": 1099
+        },
+        {
+          "name": "kennel-v1.1.1-source.tar.gz",
+          "url": "https://github.com/kujolang/kennel/releases/download/v1.1.1/kennel-v1.1.1-source.tar.gz",
+          "digest": "sha256:c6fb94d5bf411cbb592636bff7152885de344c3ed3246e92da8de1c9b9fcb9de",
+          "size": 879256
+        }
+      ],
+      "source_archive_sha256": "c6fb94d5bf411cbb592636bff7152885de344c3ed3246e92da8de1c9b9fcb9de",
+      "source_files": 254,
+      "registry": {
+        "archive_sha256": "3da63cc0a8fbd35d7f1eb3f1f60c57122a15b63693a4c08492f6ea1e7f5c3e16",
+        "archive_size": 878068,
+        "archive_url": "https://kennel.kujolang.ai/packages/kennel/1.1.1/package.tar.gz",
+        "checksum_url": "https://kennel.kujolang.ai/packages/kennel/1.1.1/checksums.txt",
+        "dependencies": {},
+        "description": "Production-focused package manager for Kujo projects with deterministic dependency operations and hosted-registry workflows.",
+        "file_count": 254,
+        "license": "MIT",
+        "minimum_kujo_version": "1.4.0",
+        "official": true,
+        "owner": {
+          "id": "kujolang",
+          "type": "organization"
+        },
+        "package": "kennel",
+        "provenance_sha256": "67d54eb48147176a81a06a8fb34cd76743e5ab518a973e75ee81ce5532dc27b5",
+        "provenance_url": "https://kennel.kujolang.ai/packages/kennel/1.1.1/provenance.json",
+        "release_id": 399416548,
+        "released_at": "2026-09-29T18:27:52Z",
+        "repository": "kujolang/kennel",
+        "repository_id": 1264528549,
+        "schema_version": 1,
+        "scope": null,
+        "source_commit": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+        "source_tag": "v1.1.1",
+        "version": "1.1.1"
+      }
+    }
+  ],
+  "hosted_gates": [
+    {
+      "repository": "watchdog",
+      "id": 36609388579,
+      "url": "https://github.com/kujolang/watchdog/actions/runs/36609388579",
+      "source": "fafea3abb594638e442127496ca6ac4c9bcd5390",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel",
+      "id": 36610670843,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36610670843",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel",
+      "id": 36610670930,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36610670930",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel",
+      "id": 36612232824,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36612232824",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel",
+      "id": 36612235896,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36612235896",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel",
+      "id": 36612511507,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36612511507",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kujo",
+      "id": 36612516361,
+      "url": "https://github.com/kujolang/kujo/actions/runs/36612516361",
+      "source": "6f8b00ff7551160fd6d8c9550e3f39639d76a027",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel-registry",
+      "id": 36611197525,
+      "url": "https://github.com/kujolang/kennel-registry/actions/runs/36611197525",
+      "source": "a9a2790547fddeb841ace2d9c7b09312d430405f",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kennel-registry",
+      "id": 36612294647,
+      "url": "https://github.com/kujolang/kennel-registry/actions/runs/36612294647",
+      "source": "2e96d84a48fa5ec891ba99597c80960439272870",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kujolang.ai",
+      "id": 36612647338,
+      "url": "https://github.com/kujolang/kujolang.ai/actions/runs/36612647338",
+      "source": "8218b948765c63d37e3a582dd9d7566e68f98a25",
+      "conclusion": "success"
+    },
+    {
+      "repository": "docs.kujolang.ai",
+      "id": 36612380651,
+      "url": "https://github.com/kujolang/docs.kujolang.ai/actions/runs/36612380651",
+      "source": "83812218029de98af35d4244159b8e9db0f8c70b",
+      "conclusion": "success"
+    },
+    {
+      "repository": "docs.kujolang.ai",
+      "id": 36612385610,
+      "url": "https://github.com/kujolang/docs.kujolang.ai/actions/runs/36612385610",
+      "source": "4252ed8c19f882c783a616fb0fe87c2870a38a01",
+      "conclusion": "success"
+    },
+    {
+      "repository": "kujolang-mcp",
+      "id": 36612676169,
+      "url": "https://github.com/kujolang/kujolang-mcp/actions/runs/36612676169",
+      "source": "72d60f4aefa4710d414dd1f442022670a1dc7e72",
+      "conclusion": "success"
+    }
+  ],
+  "local_validation": {
+    "watchdog": "68 JavaScript entrypoints (including runtime helper), all pass; 76 measurement cases and real HTTP/restart/RunLedger 1.2 integration pass",
+    "kennel": "full scripts/verify-all.sh, 62 top-level verification scripts, pass",
+    "runtime": "Kujo 1.6.0 macOS x64 930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "site": "242 HTML files, site contracts, 1140 responsive images, 3 Node tests; production npm audit 0 findings",
+    "docs": "103 routes / 104 HTML files; site contracts pass",
+    "root": "cargo fmt --check, README 1/1, repository hygiene 5/5",
+    "mcp": "20 Kujo assertions, native HTTP and generated Worker contracts, production 230 items / 6 profiles"
+  },
+  "public_install": "All six matrix packages pass using released Kennel 1.1.0; public Kennel 1.1.1 bootstrap passes on Ubuntu and macOS",
+  "log_sha256": {
+    "watchdog-final.log": "92a5c8176ade7bccb145f2953b91fa7cb5ed22a082404401660eaffbec24c53f",
+    "watchdog-integration.log": "ed5d98eb1adb6cb9521956a2acd7d9635b1345fabf826ef3824e3454d7a7ca89",
+    "kennel-final.log": "09ae86c0ea638de8cb87de50ea8a0524930c986c46012ed5f9fad8e9d1f70ff1",
+    "docs-build.log": "4d6e3c90ced606aee69779caf257bf239af9ca636917cde21d019da52dcf20da",
+    "site-build.log": "656faa9fb85f1caddc702084f0fcf6f4edfdcddc0263829d67f2da34ecb9064a",
+    "root-docs-contracts.log": "96b485ebd7b63ccf71c6475556598d94ef5ce622d807f3410fbcc9576a25f194"
+  },
+  "corrections": [
+    "Git diagnostics test no longer depends on GitHub authentication or a personal repository; production resolver semantics unchanged.",
+    "Minimum Kujo 1.4 compatibility stays covered; latest production tools are exercised on 1.6 because RunLedger 1.2 correctly rejects 1.4.",
+    "Kennel kujo.toml version aligned with actual client release."
+  ],
+  "deployment": {
+    "website_source": "8218b948765c63d37e3a582dd9d7566e68f98a25",
+    "docs_source": "8381221",
+    "docs_pages": "4252ed8c19f882c783a616fb0fe87c2870a38a01",
+    "catalog_source": "72d60f4",
+    "cloudflare_version": "ec21e0d3-6a94-4136-a0e2-557445cc5af9",
+    "mcp_receipt": {
+      "checked_at": "2026-09-29T18:32:17.647Z",
+      "endpoint": "https://mcp.kujolang.ai/mcp",
+      "result": "passed",
+      "catalog_revision": "1d9fbdcc0765cee651dd7baeb90f6fa28474433c8ab22072ed2406c66a27bf61",
+      "catalog_content_digest": "dab798f0463ee1064d67ad52afc259d1450041b4f611c83c419eaa1db8587886",
+      "worker_sha256": "04de647bd4fffe037782e253cb30538f4e386ba5ffe3bda661bb268262242eb3",
+      "runtime_version": "1.6.0",
+      "items_compared": 230,
+      "installer_profiles_compared": 6,
+      "health": {
+        "status": "ok",
+        "service": "kujolang-mcp",
+        "server": "kujolang-mcp",
+        "version": "0.1.0",
+        "catalog_revision": "1d9fbdcc0765cee651dd7baeb90f6fa28474433c8ab22072ed2406c66a27bf61",
+        "protocol_versions": [
+          "2026-07-28",
+          "2025-06-18"
+        ]
+      },
+      "checks": [
+        {
+          "method": "tools/list",
+          "params": {},
+          "response_sha256": "77c3eb52728f31a8072d86753d459273cf39d34fe45be6fbc97cc83c5b52c206"
+        },
+        {
+          "method": "resources/list",
+          "params": {},
+          "response_sha256": "8e559c5f5b48a3cf5dc94a2d87eeb373486f7da6a207da010af19f990268edb1"
+        },
+        {
+          "method": "prompts/list",
+          "params": {},
+          "response_sha256": "682f1015ce1a79433557003756b09f473126dd4c5a0557a59d752d510673dba7"
+        },
+        {
+          "method": "resources/read",
+          "params": {
+            "uri": "kujolang://catalog/projects"
+          },
+          "response_sha256": "2dc0d984821a88b407254f565be6a0a037e236c11550b0b0e898ad901539efc1"
+        },
+        {
+          "method": "resources/read",
+          "params": {
+            "uri": "kujolang://catalog/skills"
+          },
+          "response_sha256": "7c79a453cd6be598fc9defeafcd1b16dc5356e4fb089d1ecc963504f92095578"
+        },
+        {
+          "method": "resources/read",
+          "params": {
+            "uri": "kujolang://catalog/workflows"
+          },
+          "response_sha256": "bc3dbc68dbbd427882e430cd6a8d6ea41ef97c115a39d62dc512ca2b23cf32bc"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_kujo_overview",
+            "arguments": {}
+          },
+          "response_sha256": "8ab99ea61dceb995b5f1248baf348415dff9b3b23e743c30f54a14920e7a239e"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_installation",
+            "arguments": {
+              "profile": "agent"
+            }
+          },
+          "response_sha256": "5b3f86e484f0aca2e45eeba54fc93360a5f19a8d20620ce23803023bc8d9a299"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_installation",
+            "arguments": {
+              "profile": "ai"
+            }
+          },
+          "response_sha256": "feffa491120032403fe8bed739ef1ff2dc70219eb5a41f865876f493ba7ddaf7"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_installation",
+            "arguments": {
+              "profile": "core"
+            }
+          },
+          "response_sha256": "89b384bae69c0d14b1581f5ee2a546d0a9772fdd92c1c132d189ffd2eaab1eb4"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_installation",
+            "arguments": {
+              "profile": "operating"
+            }
+          },
+          "response_sha256": "fdd6fed8ceb218ac0150deb6c096478b6eac85550a093e747eaf992e541e50d6"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_installation",
+            "arguments": {
+              "profile": "quality"
+            }
+          },
+          "response_sha256": "0de3fd1730144bc97233061968515ee0530748427f7d623ec306e8fa5fa8a892"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_installation",
+            "arguments": {
+              "profile": "showcases"
+            }
+          },
+          "response_sha256": "e0b1bb674d9dbb3f606de96ab3492041021aab3bfeb1bfe6cf3a19399e6e1b14"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "kujo"
+            }
+          },
+          "response_sha256": "c9ac4fb017b2254f2ed1b72ca9afcbaa93c0ef2691bbcb4b681b75a85336c1ae"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "kennel"
+            }
+          },
+          "response_sha256": "caffc701ccf4f9d3a86f2282372fe045784e612963c996155737b87e328b0279"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "commerce"
+            }
+          },
+          "response_sha256": "2badbdc913a54d50ed1be435ab4ce363a1105ca18fe6fa9e29b769ee47f25b99"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "kujo-pi"
+            }
+          },
+          "response_sha256": "aae921bac3dd5dfe46ba94f2e8a2ec9323ce211d66694ca88add829a72fbdbad"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "watchdog"
+            }
+          },
+          "response_sha256": "fd864294a1f7b215dfe8b527108d4184fe382d51688b9b92adf0a848d16ac859"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "ssg"
+            }
+          },
+          "response_sha256": "fbf9bef21366a4b403a129888a19d0ff859e481681d67ad821ca54a77540bec4"
+        },
+        {
+          "method": "tools/call",
+          "params": {
+            "name": "get_catalog_item",
+            "arguments": {
+              "slug": "videoops-quality-review"
+            }
+          },
+          "response_sha256": "088ec06e589b0b3fa1a85ab8e5725ad22f78d11bbbfda363909fbff8c5f11ba0"
+        }
+      ]
+    }
+  },
+  "scope": [
+    "Watchdog remains observational, never replay authority.",
+    "Kennel minimum runtime remains 1.4.0; macOS/Linux bootstrap, Windows via Linux environment.",
+    "No participant SDK publication or experimental-contract stabilization."
+  ],
+  "note": "Superseded candidate and identical post-merge CI reruns were cancelled; only completed successful exact-source gates are cited as passing."
+}

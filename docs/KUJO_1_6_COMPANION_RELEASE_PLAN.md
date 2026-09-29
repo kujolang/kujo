@@ -86,6 +86,24 @@ validation, and localhost transport tests are not remote-provider certification.
 supersede Dispatch's pending status in the historical audit. No runtime or companion
 version was changed by this post-publication evidence update.
 
+## Watchdog and Kennel releases completed
+
+[Watchdog 1.2.0](https://github.com/kujolang/watchdog/releases/tag/v1.2.0)
+and [Kennel 1.1.1](https://github.com/kujolang/kennel/releases/tag/v1.1.1)
+are official GitHub releases and immutable Kennel registry packages. Watchdog
+ships verified Kujo 1.6 runtime measurement observations and RunLedger correlation;
+Kennel ships binary-safe bootstrap and registry/source preservation fixes.
+
+Both full local and hosted gates pass. Kennel retains Kujo 1.4 compatibility,
+while current companion production installs run on 1.6. Fresh public installs
+pass for all six packages in the companion matrix, and Kennel bootstrap passes
+on macOS and Linux. Source archives, registry archives and provenance match the
+tagged sources. Website, documentation and MCP discovery metadata are updated.
+Watchdog remains observational; experimental Wave C/D status is unchanged.
+
+[Release identities, public hashes, gate URLs and deployment receipt](evidence/kujo-1.6-companion-candidates/watchdog-kennel/receipt.json)
+supersede the pending Watchdog/Kennel entries in the historical triage below.
+
 ## Historical decision and release order
 
 “Prepare now” means finish the listed gates, then review an exact candidate. It

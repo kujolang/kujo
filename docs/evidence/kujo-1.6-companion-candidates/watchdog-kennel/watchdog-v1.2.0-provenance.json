@@ -1,0 +1,31 @@
+{
+  "schema": "kujo.companion-release-provenance/v1",
+  "repository": "kujolang/watchdog",
+  "version": "1.2.0",
+  "source_commit": "fafea3abb594638e442127496ca6ac4c9bcd5390",
+  "tag": "v1.2.0",
+  "archive": "watchdog-v1.2.0-source.tar.gz",
+  "archive_sha256": "b9a6571e08f094c2dbeda12f2888a08b9113c460419e42425b1954b35470a71e",
+  "exact_source_files": 262,
+  "runtime": {
+    "version": "1.6.0",
+    "source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "macos_x64_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "hosted_gates": [
+    {
+      "id": 36609388579,
+      "url": "https://github.com/kujolang/watchdog/actions/runs/36609388579",
+      "conclusion": "success",
+      "source": "fafea3abb594638e442127496ca6ac4c9bcd5390"
+    },
+    {
+      "id": 36609388460,
+      "url": "https://github.com/kujolang/watchdog/actions/runs/36609388460",
+      "conclusion": "success",
+      "source": "fafea3abb594638e442127496ca6ac4c9bcd5390"
+    }
+  ],
+  "local_gate": "all JavaScript entries and 76-case HTTP/restart/RunLedger measurement integration",
+  "distribution": "Kujo source package; no participant SDK publication"
+}

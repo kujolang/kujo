@@ -1,0 +1,31 @@
+{
+  "schema": "kujo.companion-release-provenance/v1",
+  "repository": "kujolang/kennel",
+  "version": "1.1.1",
+  "source_commit": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b",
+  "tag": "v1.1.1",
+  "archive": "kennel-v1.1.1-source.tar.gz",
+  "archive_sha256": "c6fb94d5bf411cbb592636bff7152885de344c3ed3246e92da8de1c9b9fcb9de",
+  "exact_source_files": 254,
+  "runtime": {
+    "version": "1.6.0",
+    "source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "macos_x64_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47"
+  },
+  "hosted_gates": [
+    {
+      "id": 36610670843,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36610670843",
+      "conclusion": "success",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b"
+    },
+    {
+      "id": 36610670930,
+      "url": "https://github.com/kujolang/kennel/actions/runs/36610670930",
+      "conclusion": "success",
+      "source": "92326c4bc11377ffa9fedf51d8c3ad3e7575e02b"
+    }
+  ],
+  "local_gate": "scripts/verify-all.sh: all",
+  "distribution": "Kujo source package; no participant SDK publication"
+}

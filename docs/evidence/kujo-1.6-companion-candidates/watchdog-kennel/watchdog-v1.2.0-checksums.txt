@@ -1,0 +1,2 @@
+b9a6571e08f094c2dbeda12f2888a08b9113c460419e42425b1954b35470a71e  watchdog-v1.2.0-source.tar.gz
+ab921c2a06fc15ada5a4872cee0ac54f0328ff0529b1e67cb5534d5f44c9886b  watchdog-v1.2.0-provenance.json
