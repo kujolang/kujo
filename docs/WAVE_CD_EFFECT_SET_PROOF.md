@@ -75,6 +75,9 @@ tricked into treating the parent as a single-effect result.
 | First unstarted after complete prefix | Prefix complete; next not_started | Later eligibility unresolved | Current facts plus original not_started | Identify candidate for future locked admission | Treat assessment label as a ticket |
 | Torn journal after retained checkpoint | History preserved but unreconciled | Authority continuity | Existing reconciler rejects | Operator reconciliation | Automatic resume |
 
+Scenario E uses the existing alpha/beta migration participants. The new Go proof
+has no production resume adapter and does not claim execution of historical runs.
+
 Changed-ref/credential/remote-expiry cases are deterministic contract negatives,
 not live remote-service tests. Git/Ability's existing real-family suites are also
 rerun by the canonical Dispatch gate. A timestamp injection exercises boundary
@@ -94,6 +97,21 @@ stable/public participant SDKs, protocol freeze, A2A and machine-loss recovery
 remain unsolved. Rust participation is evaluated, not implemented. MCP is a local
 recording transport, not remote certification. No exactly-once, universal rollback
 or automatic compensation is promised.
+
+## Test evidence
+
+Dispatch implementation `78eba76` is identified by its full commit in the
+[validation receipt](https://github.com/kujolang/dispatch/blob/8fbc5fa930ff5d1ffdc833bc07f9766192711b36/docs/evidence/effect-set/validation.json).
+Retained evidence is at Dispatch `8fbc5fa930ff5d1ffdc833bc07f9766192711b36`.
+The full canonical Dispatch gate passed: historical adapter/migration suites,
+24 workflow shards, command smoke and three release workloads. Final focused
+checks passed 29 effect-set assessments, 115 Go compatibility checks, five MCP
+response checks, nine malformed/initialization checks and seven Kujo vectors.
+The final new-suite refinements were rerun separately after the broad gate began;
+the receipt states this explicitly. Kujo `cargo fmt --check`, affected docs/example
+contracts and the locked optimized build passed. Exact commands, source pins,
+initial cwd invocation failures, vendor warnings and scoped omissions are retained
+in the receipt and hashed transcripts. No failing assertion was suppressed.
 
 ## Exact next-agent prompt
 
