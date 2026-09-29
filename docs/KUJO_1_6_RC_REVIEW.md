@@ -141,14 +141,15 @@ Complete locally:
 - [x] Workcell compatibility/effect assurance and automated adopter replay.
 - [x] Stable/experimental and human/agent evidence boundaries explicit.
 
-Requires separate release authorization/work:
+Outstanding at the time of this historical RC review (see the current
+[1.6 release notes](RELEASE_NOTES_1_6.md) for shipped status):
 
-- [ ] Run remaining platform builds/gates before claiming multi-platform support.
-- [ ] Create/push `v1.6.0` at the exact tested source above (never receipt HEAD).
-- [ ] Create GitHub release and upload reviewed archives/checksums/provenance.
-- [ ] Authorize runtime npm/crate publication if desired; participant SDKs remain
+- Run remaining platform builds/gates before claiming multi-platform support.
+- Create/push `v1.6.0` at the exact tested source above (never receipt HEAD).
+- Create GitHub release and upload reviewed archives/checksums/provenance.
+- Authorize runtime npm/crate publication if desired; participant SDKs remain
       a separate unpublished experimental distribution decision.
-- [ ] Reconcile public install defaults and latest-published statements only when
+- Reconcile public install defaults and latest-published statements only when
       publication actually exists; verify downloaded artifacts afterward.
 
 Post-1.6: human adopter usability; remote trust threat model; A2A; stable SDK;
