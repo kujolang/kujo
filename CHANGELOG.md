@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo, following
 
 No additional runtime changes since 1.6.0 are recorded here.
 
+- Document ecosystem-owned compatible preservation binding, bounded parent
+  finalization and the minimum Wave F composition/provenance crosswalk.
+
 ## [1.6.0] - 2026-09-28
 
 Native archives and runtime npm packages cover Linux x64/arm64, macOS x64/arm64

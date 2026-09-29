@@ -217,3 +217,12 @@ control ledger, not `execution-result/v1`. Immutable selection and attempt ident
 survive evidence rebinding; cancellation is limited to unconsumed selections;
 completion of C requires a new assessment and separate admission for D. Sink truth
 remains SQLite/Workcell-owned. Participant recording APIs gain no lifecycle authority.
+
+## Parent terminal authority (2026-09-29)
+
+The [bounded parent-finalization slice](PARENT_FINALIZATION.md) binds independently
+complete effects to exact required outputs, Eval inputs/configuration, preservation
+and explicit operator review. Selection, admission and finalization remain separate.
+An additive preservation binding supports Workcell v1 `$ref` evidence while keeping
+historical portable-json/v1 and participant bytes unchanged. One profile per run
+and unsupported legacy selected-state migration remain explicit boundaries.

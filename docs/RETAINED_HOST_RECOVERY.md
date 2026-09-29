@@ -54,3 +54,12 @@ works with the unmodified document; richer Workcell preservation plus sequential
 selection is not claimed. The next parent-lifecycle architecture slice must first
 specify a compatible preservation binding with portable vectors, rather than
 changing historical codec bytes or discarding owner evidence.
+
+## Subsequent parent-lifecycle slice
+
+The historical limitations above describe this recovery tranche's original scope.
+[Parent finalization](PARENT_FINALIZATION.md) subsequently adds compatible Workcell
+`$ref` preservation binding and an explicit locked terminal decision. Recovery can
+reconstruct that exact durable event from its predecessor; prerequisites alone still
+do not authorize terminal state. General parent/descendant graph composition remains
+outside the bounded last-unresolved-parent API.

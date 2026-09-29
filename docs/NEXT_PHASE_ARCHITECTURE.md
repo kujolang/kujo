@@ -514,9 +514,9 @@ The completed tranche is [bounded sequential continuation](WAVE_CD_SEQUENTIAL_CO
 append-only unconsumed evidence rebinding and abandonment, independent next-effect
 selection, and the same Dispatch authority over SQLite and Workcell Git. It retains
 one negotiated family per run and does not add a scheduler or participant authority.
-The linked receipt records the complete verified gate. The next architecture
-phase is retained-host durable recovery and operator reconciliation, not an
-automatic move to remote trust.
+The linked receipt records the complete verified gate. Retained-host durable
+recovery and operator reconciliation subsequently completed at their bounded local
+scope; neither tranche implies remote trust.
 
 ## Retained-host reconciliation follow-up
 
@@ -524,6 +524,9 @@ automatic move to remote trust.
 operator inventory/plan/locked-apply path over surviving trusted local authority.
 It reconstructs supported lifecycle publication gaps while retaining consumed
 claims and unresolved uncertainty. It does not restore arbitrary missing state or
-resume work. Parent finalization is the recommended next architecture phase:
-connect independently completed effects to required outputs, evaluation,
-publication and a terminal policy decision before broader graph execution.
+resume work. The subsequent [parent finalization slice](PARENT_FINALIZATION.md)
+binds completed effects, exact outputs, evaluation, preservation and explicit review
+to a separate locked terminal decision. Its narrow scope is the last unresolved
+protected parent, not general graph scheduling. The next major phase is a bounded
+Wave F producer/consumer composition proof with explicit Wave E provenance links.
+Scheduling dependencies and parent completion obligations need distinct semantics.
