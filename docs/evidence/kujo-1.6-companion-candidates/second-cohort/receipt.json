@@ -1,0 +1,151 @@
+{
+  "schema": "kujo.companion-release-receipt/v1",
+  "date": "2026-09-29",
+  "releases": {
+    "workcell": {
+      "version": "1.2.0",
+      "tag": "v1.2.0",
+      "source_commit": "4ec4227f8190e05a329c2ee2975d77fce7872313",
+      "release_url": "https://github.com/kujolang/workcell/releases/tag/v1.2.0",
+      "release_id": 399128393,
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "workcell-1.2.0-checksums.txt",
+          "url": "https://github.com/kujolang/workcell/releases/download/v1.2.0/workcell-1.2.0-checksums.txt",
+          "sha256": "sha256:760a759af1a2ade944ebdbf24653c04a05e66de638ae6b5af2d8b553aab65f7a",
+          "size": 293
+        },
+        {
+          "name": "workcell-1.2.0-provenance.json",
+          "url": "https://github.com/kujolang/workcell/releases/download/v1.2.0/workcell-1.2.0-provenance.json",
+          "sha256": "sha256:a2a70184738d962374ceb10b0ed4190cac7f8d5224e50072ba532a9c57197dd0",
+          "size": 548
+        },
+        {
+          "name": "workcell-1.2.0-release-report.json",
+          "url": "https://github.com/kujolang/workcell/releases/download/v1.2.0/workcell-1.2.0-release-report.json",
+          "sha256": "sha256:139321d293a62e449160342b10390a0bbd4953c3571d80f377ca4b50522c10bf",
+          "size": 925
+        },
+        {
+          "name": "workcell-1.2.0-source.tar.gz",
+          "url": "https://github.com/kujolang/workcell/releases/download/v1.2.0/workcell-1.2.0-source.tar.gz",
+          "sha256": "sha256:cfac92558f5f171fff09540aa3aa3a65ba6a1852c6593a5f07143acbd51ce6f4",
+          "size": 493905
+        }
+      ],
+      "kennel_archive_sha256": "387ea399866de38a0457f8833dbcc050e55f01fba8806a484a32524d778c528e",
+      "kennel_provenance_sha256": "b5e31a6dac3143bbac9d4dd8c52823454635822d65334312f110735fee1a16e3",
+      "source_file_count": 244
+    },
+    "ability": {
+      "version": "1.2.0",
+      "tag": "v1.2.0",
+      "source_commit": "2dc7d4e9eb25e987544ac48793cd11d1999c45e0",
+      "release_url": "https://github.com/kujolang/ability/releases/tag/v1.2.0",
+      "release_id": 399102198,
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "ability-v1.2.0.sbom.spdx.json",
+          "url": "https://github.com/kujolang/ability/releases/download/v1.2.0/ability-v1.2.0.sbom.spdx.json",
+          "sha256": "sha256:9cbe36a9571d63d4f12a8c4c5938190205d1487816f4b2330b8dadd9f83b7010",
+          "size": 16400
+        },
+        {
+          "name": "ability-v1.2.0.tar.gz",
+          "url": "https://github.com/kujolang/ability/releases/download/v1.2.0/ability-v1.2.0.tar.gz",
+          "sha256": "sha256:cafa5b5b068d99a5bc090178ab7f4edf8984fd69f3cdfb548baa3a3d5da34d1b",
+          "size": 86518
+        },
+        {
+          "name": "SHA256SUMS",
+          "url": "https://github.com/kujolang/ability/releases/download/v1.2.0/SHA256SUMS",
+          "sha256": "sha256:6f795ddc7c817e0c9a2e6ce269c455610ce69c86d300b4399a42cc118481e9b1",
+          "size": 184
+        }
+      ],
+      "kennel_archive_sha256": "17e4a0c84f7ac8e7aa3fc5219609ed41f1c355ec1cc1ad1c7a2f00a86af6531a",
+      "kennel_provenance_sha256": "0a124358d05d8d9e753e5c5a09747674e7ecee83923467d6bae5dcad265e8772",
+      "source_file_count": 72
+    },
+    "mcp": {
+      "version": "1.2.0",
+      "tag": "v1.2.0",
+      "source_commit": "427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54",
+      "release_url": "https://github.com/kujolang/mcp/releases/tag/v1.2.0",
+      "release_id": 399118593,
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "mcp-v1.2.0-local-host-evidence.json",
+          "url": "https://github.com/kujolang/mcp/releases/download/v1.2.0/mcp-v1.2.0-local-host-evidence.json",
+          "sha256": "sha256:a9fb24eb9f7a7ff4f9b110d147e41c3884427b6e24e2bd7ff1c20b3a06798d69",
+          "size": 5834
+        },
+        {
+          "name": "mcp-v1.2.0-provenance.json",
+          "url": "https://github.com/kujolang/mcp/releases/download/v1.2.0/mcp-v1.2.0-provenance.json",
+          "sha256": "sha256:9d33b78a698bef88046dc52731d99b797064a6195aa81a049f4f98716c8b7e05",
+          "size": 853
+        },
+        {
+          "name": "mcp-v1.2.0-source.tar.gz",
+          "url": "https://github.com/kujolang/mcp/releases/download/v1.2.0/mcp-v1.2.0-source.tar.gz",
+          "sha256": "sha256:600f65aee44d870bb241f9fff8adfa6e5fe16b2d4dd2e27ff9882b9438b940e4",
+          "size": 166323
+        },
+        {
+          "name": "SHA256SUMS",
+          "url": "https://github.com/kujolang/mcp/releases/download/v1.2.0/SHA256SUMS",
+          "sha256": "sha256:878e25bb5304cd3db3d27f32db4150ba5f09d9607445faacf0dc8b09d16594e9",
+          "size": 286
+        }
+      ],
+      "kennel_archive_sha256": "906adc9863a11e2231fea0c5c5b5c43dbc95c563ecdd110bb25689930fa46c6f",
+      "kennel_provenance_sha256": "650f1573143a9a87e896894455a7ce0c048001aa1c88912e265c763a4e579ad2",
+      "source_file_count": 158
+    }
+  },
+  "runtime": {
+    "version": "1.6.0",
+    "source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "local_macos_x64_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "hosted_linux_x64_sha256": "6db223fde7bd971aa8a7a78e742ddc93b9138bf1cab672e32b7783c5546873dc"
+  },
+  "gates": {
+    "workcell_full": "https://github.com/kujolang/workcell/actions/runs/36566686292",
+    "ability_full": "https://github.com/kujolang/ability/actions/runs/36564999157",
+    "mcp_full": "https://github.com/kujolang/mcp/actions/runs/36567111090",
+    "fresh_public_install_matrix": "https://github.com/kujolang/kujo/actions/runs/36569808526",
+    "fresh_public_install_status": "success",
+    "released_kennel_client": "093d44dddcebebd99bd8987e3efcb7e044dc45a7",
+    "local_logs": "local-verification-log-hashes.json"
+  },
+  "web": {
+    "docs": "docs-live-receipt.json",
+    "mcp_catalog": "catalog-live-receipt.json",
+    "ecosystem_site": "site-live-receipt.json"
+  },
+  "scope": {
+    "wave_c": "experimental beta, opt-in required/deny single effect; alpha retained",
+    "wave_d": "experimental alpha; trusted local host",
+    "participant_sdks": "private/unpublished",
+    "mcp_npm_bridge": "preview; not published by this release",
+    "dispatch": "release deferred for separate review"
+  },
+  "verification_notes": [
+    "All public Kennel archive files matched their exact tagged sources.",
+    "Workcell final upstream E2B 2.50.0 dependency closure passes adapter tests, SBOM generation and npm audit (zero vulnerabilities).",
+    "MCP fresh local host evidence does not renew historical managed remote/editor certification.",
+    "Initial public MCP installation harness used the package directory instead of consumer root. Corrected harness passed using only installed dependencies.",
+    "Local macOS native HTTP resolution to Kennel failed; hosted released-client public installs passed for all three. No TLS bypass or runtime change.",
+    "Local Docker daemon unavailable; hosted supported Docker/Podman gates passed.",
+    "Unrelated runtime matrices triggered by workflow-only change were canceled, not claimed as passes.",
+    "Workcell locally regenerated gzip bytes differ by compression tooling; decompressed source tar exactly matches public artifact."
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "uncompressed_git_archive_equal": true,
+  "source_commit": "4ec4227f8190e05a329c2ee2975d77fce7872313",
+  "files": 244,
+  "published_archive_sha256": "cfac92558f5f171fff09540aa3aa3a65ba6a1852c6593a5f07143acbd51ce6f4",
+  "note": "Linux and macOS gzip streams differ; uncompressed git archives agree byte for byte."
+}

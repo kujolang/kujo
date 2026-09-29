@@ -1,0 +1,9 @@
+{
+  "package": "mcp",
+  "version": "1.2.0",
+  "source_commit": "427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54",
+  "archive_sha256": "906adc9863a11e2231fea0c5c5b5c43dbc95c563ecdd110bb25689930fa46c6f",
+  "provenance_sha256": "650f1573143a9a87e896894455a7ce0c048001aa1c88912e265c763a4e579ad2",
+  "files_equal_to_tagged_source": 158,
+  "mismatches": []
+}

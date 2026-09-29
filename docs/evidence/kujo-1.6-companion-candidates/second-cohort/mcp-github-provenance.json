@@ -1,0 +1,16 @@
+{
+  "schema": "kujo.companion-release-provenance/v1",
+  "repository": "kujolang/mcp",
+  "version": "1.2.0",
+  "tag": "v1.2.0",
+  "source_commit": "427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54",
+  "kujo_version": "1.6.0",
+  "kujo_source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+  "ability_source": "2dc7d4e9eb25e987544ac48793cd11d1999c45e0",
+  "hosted_gate": "https://github.com/kujolang/mcp/actions/runs/36567111090",
+  "scope": "Guarded MCP framework stable; controlled STDIO alpha. Local host evidence retains exact tiers and separate historical managed-host certificate. No npm publication or remote trust promotion.",
+  "assets": {
+    "mcp-v1.2.0-source.tar.gz": "600f65aee44d870bb241f9fff8adfa6e5fe16b2d4dd2e27ff9882b9438b940e4",
+    "mcp-v1.2.0-local-host-evidence.json": "a9fb24eb9f7a7ff4f9b110d147e41c3884427b6e24e2bd7ff1c20b3a06798d69"
+  }
+}

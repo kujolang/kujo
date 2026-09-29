@@ -1,0 +1,23 @@
+{
+  "source_commit": "fbc59b9bf030293ffc9b94a56174754f4491cdd0",
+  "pages_commit": "53eab298c9bf880a2e9f60fee4bc3d54b1a0af8b",
+  "verification_run": 36567179648,
+  "deployment_run": 36568828003,
+  "checks": {
+    "ability": {
+      "url": "https://docs.kujolang.ai/tools/ability/",
+      "release_link": "v1.2.0",
+      "body_sha256": "48bed491a96e0b46f29d49ee2cdcdd32bee8e0093603e7529974d3de5b62ebb0"
+    },
+    "workcell": {
+      "url": "https://docs.kujolang.ai/tools/workcell/",
+      "release_link": "v1.2.0",
+      "body_sha256": "a1bea55c460fa27472fa296ec6da479767114cc9349f3624dac50f7499962c5c"
+    },
+    "mcp": {
+      "url": "https://docs.kujolang.ai/tools/mcp/",
+      "release_link": "v1.2.0",
+      "body_sha256": "2a17879d9ef8ba15108600b8eb9ef17689e6a17ccbabbbe455b8674f93178809"
+    }
+  }
+}

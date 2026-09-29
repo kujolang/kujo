@@ -1,0 +1,35 @@
+{
+  "source_commit": "b1cbd20fcf778573a0844257ad020bf9f803ded3",
+  "deployment_run": 36568825997,
+  "deployment_status": "success",
+  "note": "Release URL/version metadata pinned in content frontmatter; live checks assert rendered release scope. Ability product copy intentionally remains evergreen.",
+  "checks": {
+    "workcell": {
+      "url": "https://kujolang.ai/ecosystem/workcell/",
+      "verified_terms": [
+        "Version 1.2.0",
+        "preservation",
+        "Dispatch decides replay"
+      ],
+      "body_sha256": "8876ee550f4cc7f7d0a2bf69c3cb8d4a85c5678a9a9b6f4694369c33c7b310d0"
+    },
+    "ability": {
+      "url": "https://kujolang.ai/ecosystem/ability/",
+      "verified_terms": [
+        "application",
+        "experimental",
+        "Dispatch"
+      ],
+      "body_sha256": "0f638b4aef4023a28572ced1349fc38ac7d9f75a5decd9dcc8d51b83feb3553f"
+    },
+    "mcp": {
+      "url": "https://kujolang.ai/ecosystem/mcp/",
+      "verified_terms": [
+        "1.2.0",
+        "STDIO",
+        "experimental"
+      ],
+      "body_sha256": "258dc11b22c0feee45640bdd645d44c20af4f916b4d0273c3ab384c7db7c68ca"
+    }
+  }
+}

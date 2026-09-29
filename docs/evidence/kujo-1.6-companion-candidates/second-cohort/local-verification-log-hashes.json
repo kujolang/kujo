@@ -1,0 +1,46 @@
+{
+  "ability-final.log": {
+    "sha256": "6a89965373932023cb5f61d73961bc95d42da3e6bfb1fe86f4f8ddd4431feb4f",
+    "bytes": 1943
+  },
+  "ability-public-final.log": {
+    "sha256": "a6e34a11ed879ea971041db71fddf408af52682d72e808dcf649f02997ee1f95",
+    "bytes": 1753
+  },
+  "workcell-upstream-full.log": {
+    "sha256": "d337e1f430f71b825f4bb5e433dbc988b9f99b7aa6657eab49540a44ee0b108a",
+    "bytes": 31355
+  },
+  "workcell-upstream-tests.log": {
+    "sha256": "c4ebf317e664ab73f455fa88bc3c689e77675d44a1f994e232bf7914cc1f8536",
+    "bytes": 2120
+  },
+  "workcell-git.log": {
+    "sha256": "9808ca96e3edb3721eeccecd523c6695404a6e15db504cb2fdbe4123039e941d",
+    "bytes": 184
+  },
+  "workcell-audit-final.log": {
+    "sha256": "27f25c80936b860c29523c446ef4d6c6759eace22d1b06b656e7070de8348b1f",
+    "bytes": 171
+  },
+  "mcp-final-green.log": {
+    "sha256": "88a3245e7d09a163753275215f2237680bf52e263d6e712f63583f65e67732ee",
+    "bytes": 2960
+  },
+  "mcp-public-final.log": {
+    "sha256": "027499c6c12d104a219287fb4caa7baf7a4c845c5a052a5aeace7870cdb96939",
+    "bytes": 416
+  },
+  "mcp-recertification-final.log": {
+    "sha256": "8d9121455b339ad826fb2b3cb6bb0bf64aa76b8932e28c932a561a959ca252d7",
+    "bytes": 313
+  },
+  "catalog-publish-gate.log": {
+    "sha256": "062615c8baec5a95091a3c6b38b12cd03df123c66bdbd3c9f51347e02cf08600",
+    "bytes": 3063
+  },
+  "catalog-live.log": {
+    "sha256": "e482c9c1d2abe90d348d13a1c52b88abba736f6ed12bbdb65a1ce4ff3a2bbba1",
+    "bytes": 166
+  }
+}

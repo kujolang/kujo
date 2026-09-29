@@ -1,0 +1,9 @@
+{
+  "package": "ability",
+  "version": "1.2.0",
+  "source_commit": "2dc7d4e9eb25e987544ac48793cd11d1999c45e0",
+  "archive_sha256": "17e4a0c84f7ac8e7aa3fc5219609ed41f1c355ec1cc1ad1c7a2f00a86af6531a",
+  "provenance_sha256": "0a124358d05d8d9e753e5c5a09747674e7ecee83923467d6bae5dcad265e8772",
+  "files_equal_to_tagged_source": 72,
+  "mismatches": []
+}

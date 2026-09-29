@@ -1,0 +1,49 @@
+{
+  "deployment_gates": {
+    "docker_integration": "skipped",
+    "ecosystem_tools": "skipped",
+    "podman_matrix": "skipped"
+  },
+  "ok": true,
+  "schema_version": "workcell-report/v1",
+  "suites": [
+    {
+      "elapsed_ms": 2000,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "policy-artifact-verification",
+      "ok": true,
+      "passed": 214
+    },
+    {
+      "elapsed_ms": 1000,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "workspace-change-report",
+      "ok": true,
+      "passed": 28
+    },
+    {
+      "elapsed_ms": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "performance",
+      "ok": true,
+      "passed": 0
+    },
+    {
+      "elapsed_ms": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "name": "stress-limits",
+      "ok": true,
+      "passed": 7
+    }
+  ],
+  "totals": {
+    "elapsed_ms": 3000,
+    "failed": 0,
+    "passed": 249
+  },
+  "workcell_version": "1.2.0"
+}

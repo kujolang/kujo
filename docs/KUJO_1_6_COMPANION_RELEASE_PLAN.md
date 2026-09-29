@@ -35,6 +35,30 @@ below. Wave C beta and Wave D alpha stay experimental. Separate participant SDK
 packages remain private and unpublished. Other tools in the original queue are
 not certified or released by this first batch.
 
+## Second batch completed — Workcell, Ability and MCP 1.2.0
+
+All three are official, non-draft GitHub releases and published Kennel packages:
+
+| Release | Reviewed source | Final verification |
+| --- | --- | --- |
+| [Workcell 1.2.0](https://github.com/kujolang/workcell/releases/tag/v1.2.0) | `4ec4227f8190e05a329c2ee2975d77fce7872313` | Full Linux/macOS release gates, supported Docker/Podman lifecycle, real Git/process assurance, dependency audit and public installation pass. |
+| [Ability 1.2.0](https://github.com/kujolang/ability/releases/tag/v1.2.0) | `2dc7d4e9eb25e987544ac48793cd11d1999c45e0` | Full release/package and application-gateway assurance gates, public archive and fresh Kennel installation pass. |
+| [MCP 1.2.0](https://github.com/kujolang/mcp/releases/tag/v1.2.0) | `427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54` | Full framework, controlled STDIO, framing/host bridge and fresh public installation pass; Ability dependency pins its released source. |
+
+The release scope uses Kujo 1.6.0. Workcell's reviewed upstream E2B dependency
+update resolves its audit/SBOM issue. MCP's fresh local host evidence does not
+promote remote authentication or renew historical remote/editor certification.
+All registry archive files match the exact tagged sources. The public install
+matrix uses the released Kennel client and fresh consumer lockfiles.
+
+The ecosystem website, documentation and read-only MCP catalog now describe
+these releases. Wave C beta and Wave D alpha remain experimental; separate
+participant SDKs remain unpublished. No Dispatch release was performed: review
+its final dependency closure and controller release separately next.
+
+[Final second-batch receipt and retained verification evidence](evidence/kujo-1.6-companion-candidates/second-cohort/receipt.json)
+supersede the pending statuses for these three tools in the historical audit.
+
 ## Historical decision and release order
 
 “Prepare now” means finish the listed gates, then review an exact candidate. It
