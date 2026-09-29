@@ -540,7 +540,13 @@ authority; graph progression records successful node decisions without invoking 
 consumer from producer finalization. The original parent-finalization contract and
 all historical participant/result bytes remain unchanged.
 
-The next major architecture direction is heterogeneous node terminal contracts and
-graph-level outcome policy, not a new scheduler. Human approvals and evaluation-only
-units need explicit evidence and authority semantics before becoming interchangeable
-graph nodes. Remote trust and machine migration remain separate boundaries.
+The subsequent [heterogeneous terminal slice](WAVE_F_HETEROGENEOUS_TERMINALS.md)
+adds graph-local Eval and authorized human review terminals alongside existing
+program parent receipts. Kind remains descriptive; closed configured contracts own
+completion requirements. Required/optional membership remains anchored independently
+of scheduling/data edges. A separate locked graph decision binds exact node outcomes;
+all facts without that event stay nonterminal, including after retained recovery.
+
+The next major direction is graph failure strategy and bounded conditional branches
+or subgraphs with explicit outcome/budget policy. Dynamic topology is not implied.
+Remote trust and machine migration remain separate boundaries.

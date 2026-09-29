@@ -62,7 +62,10 @@ all those node types or make the participant SDK stable/public.
 
 ## Next architecture direction
 
-Continue **Wave F heterogeneous node contracts and graph-level terminal policy**.
+The follow-on [heterogeneous terminal tranche](WAVE_F_HETEROGENEOUS_TERMINALS.md)
+now implements bounded Eval/human terminals and separate graph outcome authority.
+The original tranche identified this direction: **heterogeneous node contracts and
+graph-level terminal policy**.
 Static composition retains enough provenance for this bounded family. The next
 substantial gap is expressing evaluation-only and human-decision units, their
 failure/completion predicates, and required graph outcomes without treating every
