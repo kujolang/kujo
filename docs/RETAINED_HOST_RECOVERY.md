@@ -46,3 +46,11 @@ stable/public participant SDKs. The published Kujo 1.6 runtime is unchanged.
 Recovery is not replay. Repair is not truth. Reconciliation is not admission.
 Preservation is not execution authority. Consumed work stays consumed.
 Uncertainty survives until independent evidence resolves it.
+
+One real integration limit was discovered: Workcell v1 preservation evidence uses
+`$ref` keys that the existing sequential-selection preservation commitment's
+`portable-json/v1` key grammar rejects. Recovery through the review/checkpoint path
+works with the unmodified document; richer Workcell preservation plus sequential
+selection is not claimed. The next parent-lifecycle architecture slice must first
+specify a compatible preservation binding with portable vectors, rather than
+changing historical codec bytes or discarding owner evidence.
