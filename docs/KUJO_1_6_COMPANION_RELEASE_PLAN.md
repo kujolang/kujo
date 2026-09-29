@@ -53,11 +53,38 @@ matrix uses the released Kennel client and fresh consumer lockfiles.
 
 The ecosystem website, documentation and read-only MCP catalog now describe
 these releases. Wave C beta and Wave D alpha remain experimental; separate
-participant SDKs remain unpublished. No Dispatch release was performed: review
-its final dependency closure and controller release separately next.
+participant SDKs remain unpublished. Dispatch was not part of this second batch;
+its subsequent official release is recorded below.
 
 [Final second-batch receipt and retained verification evidence](evidence/kujo-1.6-companion-candidates/second-cohort/receipt.json)
 supersede the pending statuses for these three tools in the historical audit.
+
+## Controller release completed — Dispatch 1.3.0
+
+[Dispatch 1.3.0](https://github.com/kujolang/dispatch/releases/tag/v1.3.0) is an
+official GitHub release and Kennel package at
+`7558d0b2157449a484646d9a4b0d069a70c36f85`. The final Linux/macOS candidate and
+tagged-release pipelines passed, including upgrade/backup rollback and fresh
+installed workflows. Both public archives match all 885 tagged source files.
+The released Kennel client installs the exact package and pinned AI SDK dependency;
+its filesystem and SQLite workflow probes pass without source-checkout fallback.
+
+This completes the requested controller cohort with Kujo 1.6.0, AI SDK 1.1.1,
+Agents SDK 1.1.2 and the Workcell/Ability/MCP 1.2.0 adapter family. The user also
+authorized including concurrently developed selected-effect work after checking
+that it did not interfere; the combined candidate passed focused tests, scoped
+security review and the full gates. Review callback hardening preserves configured
+tool policy, scopes approval to its step and serializes duplicate legacy decisions.
+
+The website, docs release inventory, MCP discovery catalog and Kennel now identify
+Dispatch 1.3.0. Wave C beta and Wave D alpha remain experimental. The separate
+selected-effect operator API does not grant parent replay or automatic remainder
+execution. Participant SDKs stay unpublished; agent rehearsal is not human usability
+validation, and localhost transport tests are not remote-provider certification.
+
+[Final controller receipt, public hashes, pinned install lockfile and live-site evidence](evidence/kujo-1.6-companion-candidates/dispatch/receipt.json)
+supersede Dispatch's pending status in the historical audit. No runtime or companion
+version was changed by this post-publication evidence update.
 
 ## Historical decision and release order
 

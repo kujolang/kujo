@@ -1,0 +1,321 @@
+{
+  "schema": "kujo.companion-release-receipt/v1",
+  "date": "2026-09-29",
+  "release": {
+    "package": "dispatch",
+    "version": "1.3.0",
+    "tag": "v1.3.0",
+    "source_commit": "7558d0b2157449a484646d9a4b0d069a70c36f85",
+    "tag_object": "ba3849941c95510fc17f86bf92687cb6058876d1",
+    "release_url": "https://github.com/kujolang/dispatch/releases/tag/v1.3.0",
+    "release_id": 399282309,
+    "draft": false,
+    "prerelease": false,
+    "assets": [
+      {
+        "name": "dispatch-v1.3.0-provenance.json",
+        "sha256": "sha256:185742a139cfcbef155ea2d36c00776159d7ee44b9dc90e17f107529c86d00ec",
+        "size": 275,
+        "url": "https://github.com/kujolang/dispatch/releases/download/v1.3.0/dispatch-v1.3.0-provenance.json"
+      },
+      {
+        "name": "dispatch-v1.3.0.tar.gz",
+        "sha256": "sha256:11f2337a96f894d289c03c796ac814f4149b5b0fb3f7f102af391ed6c23adc03",
+        "size": 968004,
+        "url": "https://github.com/kujolang/dispatch/releases/download/v1.3.0/dispatch-v1.3.0.tar.gz"
+      },
+      {
+        "name": "dispatch-v1.3.0.tar.gz.sha256",
+        "sha256": "sha256:4ec9f37d248d5e89241526486462f6cd782f814f9653de29d86c9e61944247c2",
+        "size": 89,
+        "url": "https://github.com/kujolang/dispatch/releases/download/v1.3.0/dispatch-v1.3.0.tar.gz.sha256"
+      }
+    ],
+    "kennel_archive_sha256": "e329d5a2d23c4d9026ae89a2f50469052c00061b5d2a89911de5faa784d59e79",
+    "kennel_provenance_sha256": "5a0621a15e0368feedd729c936d3520d32c4d77da393e5500d5f62ee9219ce33",
+    "source_file_count": 885,
+    "post_publication_evidence_commit": "9c3a90a57d1fa7e16b95d523daa255df223b6514"
+  },
+  "runtime": {
+    "version": "1.6.0",
+    "source": "44af277848173664f72ca85f2a1b3b98d634ecdd",
+    "macos_x64_sha256": "930e0da1fec2562f6990d1226a479330640c8c78eb4c36c148cee3f950b29a47",
+    "hosted_linux_x64_sha256": "6db223fde7bd971aa8a7a78e742ddc93b9138bf1cab672e32b7783c5546873dc",
+    "installer_source": "fc53093f35e4236682bbbf5ab1ccc8d2b4df990c"
+  },
+  "companions": {
+    "ai-sdk": {
+      "version": "1.1.1",
+      "commit": "5184a122590dd5698770b50d99b69ed11c7ec84a"
+    },
+    "agents-sdk": {
+      "version": "1.1.2",
+      "commit": "5a9d5525e511a293b743b1c44d9ef270fd491f9f"
+    },
+    "workcell": {
+      "version": "1.2.0",
+      "commit": "4ec4227f8190e05a329c2ee2975d77fce7872313"
+    },
+    "ability": {
+      "version": "1.2.0",
+      "commit": "2dc7d4e9eb25e987544ac48793cd11d1999c45e0"
+    },
+    "mcp": {
+      "version": "1.2.0",
+      "commit": "427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54"
+    }
+  },
+  "gates": {
+    "candidate": {
+      "url": "https://github.com/kujolang/dispatch/actions/runs/36585296407",
+      "jobs": [
+        {
+          "name": "Dispatch CI Gate (macos-14)",
+          "id": 109464196331,
+          "conclusion": "success"
+        },
+        {
+          "name": "Dispatch CI Gate (ubuntu-latest)",
+          "id": 109464196553,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "tagged_release": {
+      "url": "https://github.com/kujolang/dispatch/actions/runs/36589227758",
+      "jobs": [
+        {
+          "name": "verify (macos-14)",
+          "id": 109477629405,
+          "conclusion": "success"
+        },
+        {
+          "name": "verify (ubuntu-latest)",
+          "id": 109477629834,
+          "conclusion": "success"
+        },
+        {
+          "name": "package",
+          "id": 109481450605,
+          "conclusion": "success"
+        },
+        {
+          "name": "clean-install (ubuntu-latest)",
+          "id": 109481530110,
+          "conclusion": "success"
+        },
+        {
+          "name": "clean-install (macos-14)",
+          "id": 109481530181,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "public_kennel_install": {
+      "url": "https://github.com/kujolang/kujo/actions/runs/36591579051",
+      "jobs": [
+        {
+          "name": "public-install (dispatch)",
+          "id": 109485739280,
+          "conclusion": "success"
+        },
+        {
+          "name": "public-install (ability)",
+          "id": 109485739334,
+          "conclusion": "success"
+        },
+        {
+          "name": "public-install (mcp)",
+          "id": 109485739423,
+          "conclusion": "success"
+        },
+        {
+          "name": "public-install (workcell)",
+          "id": 109485739446,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "registry": {
+      "url": "https://github.com/kujolang/kennel-registry/actions/runs/36590518939",
+      "jobs": [
+        {
+          "name": "publish / publish",
+          "id": 109482104894,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "website": {
+      "url": "https://github.com/kujolang/kujolang.ai/actions/runs/36590433483",
+      "jobs": [
+        {
+          "name": "build",
+          "id": 109481799076,
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "id": 109485722425,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "docs": {
+      "url": "https://github.com/kujolang/docs.kujolang.ai/actions/runs/36590914797",
+      "jobs": [
+        {
+          "name": "verify",
+          "id": 109483449440,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "docs_pages": {
+      "url": "https://github.com/kujolang/docs.kujolang.ai/actions/runs/36590918075",
+      "jobs": [
+        {
+          "name": "build",
+          "id": 109483467906,
+          "conclusion": "success"
+        },
+        {
+          "name": "report-build-status",
+          "id": 109483771480,
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "id": 109483771718,
+          "conclusion": "success"
+        }
+      ]
+    },
+    "catalog": {
+      "url": "https://github.com/kujolang/kujolang-mcp/actions/runs/36590466948",
+      "jobs": [
+        {
+          "name": "validate",
+          "id": 109481911153,
+          "conclusion": "success"
+        }
+      ]
+    }
+  },
+  "local_gate": {
+    "source": "7558d0b2157449a484646d9a4b0d069a70c36f85",
+    "runtime": "1.6.0",
+    "status": "passed",
+    "named_suites": 76,
+    "kujo_registered_tests": {
+      "total": 210,
+      "passed": 210,
+      "failed": 0
+    },
+    "workflow_contract_tests": 101,
+    "workflow_shards": 24,
+    "selected_effect_scenarios": 39,
+    "workload_runs": 3,
+    "log_sha256": "8baffeabd346bd5968c126ed6bdf1b8e2aef2045d6dce815f8e3923aa230d819"
+  },
+  "private_sdk_validation": {
+    "conformance": {
+      "typescript": 45,
+      "python": 45,
+      "exact_parity": true
+    },
+    "distribution_substitution_cases": 15,
+    "offline_after_feed_removal": true,
+    "adopter": {
+      "ok": true,
+      "proofs": [
+        {
+          "case": "before_commit",
+          "termination": {
+            "completion_knowledge": "unknown",
+            "observed_state": "not_started",
+            "phase": "before_commit",
+            "returncode": -9,
+            "signal": "SIGKILL"
+          },
+          "required_revision_preserved": true,
+          "fresh_controller": true,
+          "logical_effects": 1
+        },
+        {
+          "case": "after_commit",
+          "termination": {
+            "completion_knowledge": "unknown",
+            "observed_state": "committed",
+            "phase": "after_commit",
+            "returncode": -9,
+            "signal": "SIGKILL"
+          },
+          "required_revision_preserved": true,
+          "fresh_controller": true,
+          "logical_effects": 1
+        },
+        {
+          "case": "concurrency",
+          "admitted": 1,
+          "denied": 3,
+          "logical_effects": 1
+        }
+      ],
+      "input_denials": 12,
+      "installed_package": true
+    },
+    "published": false
+  },
+  "security": {
+    "remediation_commit": "a0641defa64a1843c08ac11029512113bc3f718c",
+    "resolved_baseline_findings": [
+      "csf_7685f6636f4b6dceb28d1eea",
+      "csf_dc6e91dd40256fb3e0512415",
+      "csf_fb3ed3da37c059cb31bc950e"
+    ],
+    "sealed_candidate_scan": "d259d724-b425-4b83-963d-e12f98ccddd4",
+    "sealed_combined_diff_scan": "b060d6b7-d73e-46a5-9cc7-fb45d84af499",
+    "combined_reviewed_head": "1fd71bee517a3790f8290b32bc54bae0783095b3",
+    "remaining_changes": "documentation only through released source",
+    "new_reportable_findings": 0,
+    "shipcheck": {
+      "passed": 16,
+      "warnings": 0
+    },
+    "scope": "Candidate/diff review, not exhaustive whole-repository security certification."
+  },
+  "web": {
+    "website_commit": "43e2d032922ab168f79ed04900e395484831ec37",
+    "docs_commit": "307259d097c718558923027c46550bb12f499ae9",
+    "docs_deployment": "d55847b35bf162565ac7fe2920fa5b28c0ec64e6",
+    "catalog_commit": "bca5ef35ff25a838dbccfb9bf7957bd6ef41b502",
+    "cloudflare_version": "558a4241-43ab-4094-b4a8-df630539541a",
+    "receipts": [
+      "site-live-receipt.json",
+      "docs-live-receipt.json",
+      "catalog-live-receipt.json"
+    ]
+  },
+  "scope": {
+    "platforms": [
+      "Linux",
+      "macOS"
+    ],
+    "wave_c": "experimental beta; opt-in required/deny single-effect domain; alpha retained",
+    "wave_d": "experimental alpha; trusted local host",
+    "selected_effect_admission": "separate experimental local operator API for one explicitly selected not-started SQLite effect; no parent replay or automatic remainder execution",
+    "participant_sdks": "private/unpublished",
+    "human_usability": "not validated",
+    "remote_provider_certification": false
+  },
+  "verification_notes": [
+    "Concurrent selected-effect commits were included with explicit user authorization, independent security review and exact combined gates.",
+    "All 885 files in both public source archives match the exact tagged commit.",
+    "The first additional Kennel smoke harness used unsupported backend name json; corrected to documented filesystem at Kujo 92b24a8756d265783a162447090a0a2bc2ea001e, then the complete four-package matrix passed. Release bytes unchanged.",
+    "An earlier pre-release Ubuntu HTTP timeout fixture initialization failure was not reproduced after redacted test diagnostics; subsequent full candidate/tag gates passed. Underlying intermittent cause remains unconfirmed.",
+    "Unrelated Kujo runtime matrices triggered by workflow/help-only commits were cancelled. Targeted YAML, shell, installer manifest, cargo fmt and README contracts passed.",
+    "Public GitHub attestation metadata binds the archive digest to the exact source and release workflow; no independent offline cryptographic attestation verification is claimed."
+  ],
+  "public_install_workflow_source": "92b24a8756d265783a162447090a0a2bc2ea001e"
+}

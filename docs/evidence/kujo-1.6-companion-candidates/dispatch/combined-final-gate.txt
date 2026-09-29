@@ -1,0 +1,125 @@
+Runtime directory durability contract passed.
+Dispatch release gate
+Runtime: /tmp/kujo-companions-cohort2/runtime/kujo
+Shards: 24
+Source tests: 101
+
+Running smoke-gate regression checks...
+Source layout passed.
+Smoke gate tests passed (success, silent failure, diagnostics).
+Run locking, at-least-once crash replay, and external idempotency passed.
+Webhook JSONL validated: 150 unique events.
+Pinned installer bridge path resolved.
+Isolated bridge package smoke passed.
+{"status":"passed","route":"operator-approved localhost SDK/bridge HTTP route","model":"local-release-probe","requests":[{"method":"POST","path":"/v1/chat/completions","model":"local-release-probe"}],"remote_provider_certification":false}
+First workflow and scoped plugin walkthrough passed.
+Running focused integration suites...
+typescript_build passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_build.log
+effect_set passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_set.log
+effect_continuation passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_continuation.log
+effect_selection_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_selection_vectors.log
+effect_set_vectors passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_set_vectors.log
+go_participant passed.  Evidence: tests/tmp/dispatch-test-shards/logs/go_participant.log
+typescript_package passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_package.log
+python_package passed.  Evidence: tests/tmp/dispatch-test-shards/logs/python_package.log
+python_parity passed.  Evidence: tests/tmp/dispatch-test-shards/logs/python_parity.log
+participant_sdk_parity passed.  Evidence: tests/tmp/dispatch-test-shards/logs/participant_sdk_parity.log
+python_isolation passed.  Evidence: tests/tmp/dispatch-test-shards/logs/python_isolation.log
+python_integration passed.  Evidence: tests/tmp/dispatch-test-shards/logs/python_integration.log
+typescript_after passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_after.log
+typescript_before passed.  Evidence: tests/tmp/dispatch-test-shards/logs/typescript_before.log
+control_boundary passed. Tests: 14 total, 14 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/control_boundary.log
+failure_gate_safety passed. Tests: 20 total, 20 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/failure_gate_safety.log
+failure_gate_execution passed. Tests: 6 total, 6 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/failure_gate_execution.log
+review_checkpoint passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/review_checkpoint.log
+persisted_negotiation_legacy passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_legacy.log
+persisted_negotiation_schemas passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_schemas.log
+persisted_negotiation_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_contracts.log
+persisted_negotiation passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation.log
+persisted_negotiation_adapters passed.  Evidence: tests/tmp/dispatch-test-shards/logs/persisted_negotiation_adapters.log
+beta_contracts passed.  Evidence: tests/tmp/dispatch-test-shards/logs/beta_contracts.log
+portable_commitments passed.  Evidence: tests/tmp/dispatch-test-shards/logs/portable_commitments.log
+portable_clean_room passed.  Evidence: tests/tmp/dispatch-test-shards/logs/portable_clean_room.log
+interop_oracles passed.  Evidence: tests/tmp/dispatch-test-shards/logs/interop_oracles.log
+interop_history passed.  Evidence: tests/tmp/dispatch-test-shards/logs/interop_history.log
+git_participant_after passed.  Evidence: tests/tmp/dispatch-test-shards/logs/git_participant_after.log
+git_participant_before passed.  Evidence: tests/tmp/dispatch-test-shards/logs/git_participant_before.log
+http_response_loss passed.  Evidence: tests/tmp/dispatch-test-shards/logs/http_response_loss.log
+http_timeout_before passed.  Evidence: tests/tmp/dispatch-test-shards/logs/http_timeout_before.log
+http_application_error passed.  Evidence: tests/tmp/dispatch-test-shards/logs/http_application_error.log
+mcp_ability passed.  Evidence: tests/tmp/dispatch-test-shards/logs/mcp_ability.log
+mcp_stdio_loss passed.  Evidence: tests/tmp/dispatch-test-shards/logs/mcp_stdio_loss.log
+sdk_ability passed.  Evidence: tests/tmp/dispatch-test-shards/logs/sdk_ability.log
+beta_migration passed.  Evidence: tests/tmp/dispatch-test-shards/logs/beta_migration.log
+assurance_compatibility passed.  Evidence: tests/tmp/dispatch-test-shards/logs/assurance_compatibility.log
+assurance_capabilities passed.  Evidence: tests/tmp/dispatch-test-shards/logs/assurance_capabilities.log
+effect_assurance_schema passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_assurance_schema.log
+effect_assurance passed.  Evidence: tests/tmp/dispatch-test-shards/logs/effect_assurance.log
+ability_assurance passed.  Evidence: tests/tmp/dispatch-test-shards/logs/ability_assurance.log
+reexecution_lifecycle passed.  Evidence: tests/tmp/dispatch-test-shards/logs/reexecution_lifecycle.log
+resume_policy passed.  Evidence: tests/tmp/dispatch-test-shards/logs/resume_policy.log
+decision_claim passed.  Evidence: tests/tmp/dispatch-test-shards/logs/decision_claim.log
+sdk_adapter passed. Tests: 10 total, 10 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/sdk_adapter.log
+policy_precedence passed. Tests: 3 total, 3 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/policy_precedence.log
+retrieval_preferences passed. Tests: 3 total, 3 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/retrieval_preferences.log
+routing passed. Tests: 31 total, 31 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/routing.log
+state_store_sqlite passed. Tests: 1 total, 1 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/state_store_sqlite.log
+operational_controls passed. Tests: 9 total, 9 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/operational_controls.log
+hardening passed. Tests: 8 total, 8 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/hardening.log
+
+Running sharded Dispatch contract suite...
+Shard 1/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_1.kujo
+dispatch-1 passed. Tests: 5 total, 5 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-1.log
+Shard 2/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_2.kujo
+dispatch-2 passed. Tests: 5 total, 5 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-2.log
+Shard 3/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_3.kujo
+dispatch-3 passed. Tests: 5 total, 5 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-3.log
+Shard 4/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_4.kujo
+dispatch-4 passed. Tests: 5 total, 5 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-4.log
+Shard 5/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_5.kujo
+dispatch-5 passed. Tests: 5 total, 5 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-5.log
+Shard 6/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_6.kujo
+dispatch-6 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-6.log
+Shard 7/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_7.kujo
+dispatch-7 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-7.log
+Shard 8/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_8.kujo
+dispatch-8 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-8.log
+Shard 9/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_9.kujo
+dispatch-9 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-9.log
+Shard 10/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_10.kujo
+dispatch-10 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-10.log
+Shard 11/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_11.kujo
+dispatch-11 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-11.log
+Shard 12/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_12.kujo
+dispatch-12 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-12.log
+Shard 13/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_13.kujo
+dispatch-13 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-13.log
+Shard 14/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_14.kujo
+dispatch-14 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-14.log
+Shard 15/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_15.kujo
+dispatch-15 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-15.log
+Shard 16/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_16.kujo
+dispatch-16 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-16.log
+Shard 17/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_17.kujo
+dispatch-17 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-17.log
+Shard 18/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_18.kujo
+dispatch-18 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-18.log
+Shard 19/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_19.kujo
+dispatch-19 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-19.log
+Shard 20/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_20.kujo
+dispatch-20 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-20.log
+Shard 21/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_21.kujo
+dispatch-21 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-21.log
+Shard 22/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_22.kujo
+dispatch-22 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-22.log
+Shard 23/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_23.kujo
+dispatch-23 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-23.log
+Shard 24/24: tests/tmp/dispatch-test-shards/dispatch_tests_shard_24.kujo
+dispatch-24 passed. Tests: 4 total, 4 passed, 0 failed Evidence: tests/tmp/dispatch-test-shards/logs/dispatch-24.log
+
+Running command-surface smoke...
+
+Running bounded release workload evidence...
+Dispatch v1.1 evidence passed: 3/3 runs in 13s
+Evidence: tests/tmp/v1.1-evidence/evidence.json
+Dispatch release gate passed.

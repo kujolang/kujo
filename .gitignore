@@ -364,3 +364,19 @@ benchmark_output.txt
 /.dispatch-runs/
 /workcell-image/agents-sdk/
 /workcell-image/.agents-sdk-stage-*/
+
+# Remaining canonical local artifact rules
+/.runtime/
+/.local/
+/.audit-evidence/
+/.tribunal/
+/node_modules/
+/test-results/
+/playwright-report/
+/artifacts/walkthrough*/
+/artifacts/*-qa.json
+/artifacts/package-*.json
+/*.tgz
+/.cache/
+__pycache__/
+*.py[cod]

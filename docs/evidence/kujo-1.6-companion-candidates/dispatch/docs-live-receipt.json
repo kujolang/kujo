@@ -1,0 +1,17 @@
+{
+  "checked_at": "2026-09-29T15:35:53.605122+00:00",
+  "source": "307259d097c718558923027c46550bb12f499ae9",
+  "deployment": "d55847b35bf162565ac7fe2920fa5b28c0ec64e6",
+  "pages": [
+    {
+      "url": "https://docs.kujolang.ai/tools/dispatch/",
+      "sha256": "0af71eaedfe5e2b9b986174ea16dd7d07cb8e150418964b2054e79a015b0980d",
+      "status": "passed"
+    },
+    {
+      "url": "https://docs.kujolang.ai/ecosystem/releases/",
+      "sha256": "722e16852605d7494556f69ead57dbdf883ae8efa9303dbc9a9503a698a4d6cc",
+      "status": "passed"
+    }
+  ]
+}
