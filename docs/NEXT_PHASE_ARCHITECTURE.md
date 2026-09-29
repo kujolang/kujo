@@ -527,6 +527,20 @@ claims and unresolved uncertainty. It does not restore arbitrary missing state o
 resume work. The subsequent [parent finalization slice](PARENT_FINALIZATION.md)
 binds completed effects, exact outputs, evaluation, preservation and explicit review
 to a separate locked terminal decision. Its narrow scope is the last unresolved
-protected parent, not general graph scheduling. The next major phase is a bounded
-Wave F producer/consumer composition proof with explicit Wave E provenance links.
-Scheduling dependencies and parent completion obligations need distinct semantics.
+protected parent, not general graph scheduling. The subsequent bounded Wave F
+composition below preserves distinct scheduling dependencies and parent completion
+obligations while adding explicit artifact provenance.
+
+## Wave F bounded static composition
+
+[Producer/consumer composition](WAVE_F_NODE_COMPOSITION.md) extends Dispatch's
+existing DAG runner with exact run-backed nodes. Scheduling dependencies and typed
+data inputs are distinct. Nodes retain independent effects, evaluation and terminal
+authority; graph progression records successful node decisions without invoking a
+consumer from producer finalization. The original parent-finalization contract and
+all historical participant/result bytes remain unchanged.
+
+The next major architecture direction is heterogeneous node terminal contracts and
+graph-level outcome policy, not a new scheduler. Human approvals and evaluation-only
+units need explicit evidence and authority semantics before becoming interchangeable
+graph nodes. Remote trust and machine migration remain separate boundaries.
