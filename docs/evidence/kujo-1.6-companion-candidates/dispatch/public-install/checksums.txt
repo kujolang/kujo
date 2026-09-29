@@ -1,0 +1,2 @@
+9f9de5af2ddbef5f62ed894f911c9b3bf227bc20b1b388be36dc3568767cd053  kennel.lock
+6db223fde7bd971aa8a7a78e742ddc93b9138bf1cab672e32b7783c5546873dc  /opt/hostedtoolcache/kujo/v1.6.0/Linux-X64/kujo
