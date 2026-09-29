@@ -258,3 +258,12 @@ See [the sequential continuation record](docs/WAVE_CD_SEQUENTIAL_CONTINUATION.md
 for append-only rebinding/cancellation, independent next-effect admission, two real
 sink families, validation status, and remaining architecture boundaries. This is
 additive experimental Dispatch control; Kujo stable runtime scope is unchanged.
+
+### Retained-host operator reconciliation
+
+[The recovery tranche](docs/RETAINED_HOST_RECOVERY.md) connects surviving local
+Dispatch authority to bounded inventory, explicit repair planning and locked
+mechanical reconciliation. Workcell retention remains separate from replay
+permission. Machine migration, remote trust and hostile-storage recovery remain
+unsolved. The next architecture slice is parent lifecycle finalization with
+explicit output/evaluation/publication requirements, before general graph execution.

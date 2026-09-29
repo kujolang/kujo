@@ -517,3 +517,13 @@ one negotiated family per run and does not add a scheduler or participant author
 The linked receipt records the complete verified gate. The next architecture
 phase is retained-host durable recovery and operator reconciliation, not an
 automatic move to remote trust.
+
+## Retained-host reconciliation follow-up
+
+[Retained-host recovery](RETAINED_HOST_RECOVERY.md) adds a bounded Dispatch
+operator inventory/plan/locked-apply path over surviving trusted local authority.
+It reconstructs supported lifecycle publication gaps while retaining consumed
+claims and unresolved uncertainty. It does not restore arbitrary missing state or
+resume work. Parent finalization is the recommended next architecture phase:
+connect independently completed effects to required outputs, evaluation,
+publication and a terminal policy decision before broader graph execution.
