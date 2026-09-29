@@ -78,7 +78,7 @@ jobs:
               "$KUJO_BIN" run dispatch.kujo validate --workflow-file examples/workflows/routed-review.json --json
               "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
               "$KUJO_BIN" test-run tests/failure_gate_safety_tests.kujo -v
-              for backend in json sqlite; do
+              for backend in filesystem sqlite; do
                 DISPATCH_STATE_BACKEND="$backend" "$KUJO_BIN" run dispatch.kujo demo "Public package $backend" \
                   --workflow-file examples/workflows/routed-review.json --yes --non-interactive \
                   --output-root "tests/tmp/public-$backend"
