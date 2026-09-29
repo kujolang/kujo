@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [workcell, ability, mcp]
+        package: [workcell, ability, mcp, dispatch]
     steps:
       - name: Install reviewed runtime
         id: kujo
@@ -34,10 +34,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          version=1.2.0
           case "$PACKAGE" in
             workcell) expected=4ec4227f8190e05a329c2ee2975d77fce7872313 ;;
             ability) expected=2dc7d4e9eb25e987544ac48793cd11d1999c45e0 ;;
             mcp) expected=427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54 ;;
+            dispatch) expected=7558d0b2157449a484646d9a4b0d069a70c36f85; version=1.3.0 ;;
             *) exit 2 ;;
           esac
           project="$RUNNER_TEMP/public-$PACKAGE"
@@ -47,14 +49,15 @@ jobs:
           cd "$project"
           client="$GITHUB_WORKSPACE/released-client/kennel.kujo"
           "$KUJO_BIN" run "$client" --interpreter -- init --name public-release-consumer
-          "$KUJO_BIN" run "$client" --interpreter -- add "$PACKAGE@1.2.0"
+          "$KUJO_BIN" run "$client" --interpreter -- add "$PACKAGE@$version"
           cp kennel.lock "$RUNNER_TEMP/receipt/kennel.lock"
           "$KUJO_BIN" run "$client" --interpreter -- install
           cmp kennel.lock "$RUNNER_TEMP/receipt/kennel.lock"
-          curl --fail --silent --show-error "https://kennel.kujolang.ai/api/v1/packages/$PACKAGE/1.2.0.json" -o "$RUNNER_TEMP/receipt/manifest.json"
-          jq -e --arg expected "$expected" '.version == "1.2.0" and .source_commit == $expected and .source_tag == "v1.2.0"' "$RUNNER_TEMP/receipt/manifest.json"
+          curl --fail --silent --show-error "https://kennel.kujolang.ai/api/v1/packages/$PACKAGE/$version.json" -o "$RUNNER_TEMP/receipt/manifest.json"
+          jq -e --arg expected "$expected" --arg version "$version" '.version == $version and .source_commit == $expected and .source_tag == ("v" + $version)' "$RUNNER_TEMP/receipt/manifest.json"
           grep -q registry-statement-verified kennel.lock
           sha256sum kennel.lock "$KUJO_BIN" > "$RUNNER_TEMP/receipt/checksums.txt"
+          echo "PACKAGE_VERSION=$version" >> "$GITHUB_ENV"
           echo "CONSUMER=$project" >> "$GITHUB_ENV"
           echo "KUJO_BIN=$KUJO_BIN" >> "$GITHUB_ENV"
           echo "KUJO=$KUJO_BIN" >> "$GITHUB_ENV"
@@ -67,6 +70,20 @@ jobs:
           unset KUJO_MODULE_PATH
           cd "$CONSUMER/kennel_packages/$PACKAGE"
           case "$PACKAGE" in
+            dispatch)
+              export DISPATCH_ROOT="$PWD"
+              export AI_SDK_PATH="$CONSUMER/kennel_packages/ai-sdk"
+              export DISPATCH_OFFLINE_FIXTURE=true
+              test "$("$KUJO_BIN" run dispatch.kujo version)" = 'Dispatch 1.3.0'
+              "$KUJO_BIN" run dispatch.kujo validate --workflow-file examples/workflows/routed-review.json --json
+              "$KUJO_BIN" test-run tests/sdk_adapter_tests.kujo -v
+              "$KUJO_BIN" test-run tests/failure_gate_safety_tests.kujo -v
+              for backend in json sqlite; do
+                DISPATCH_STATE_BACKEND="$backend" "$KUJO_BIN" run dispatch.kujo demo "Public package $backend" \
+                  --workflow-file examples/workflows/routed-review.json --yes --non-interactive \
+                  --output-root "tests/tmp/public-$backend"
+              done
+              ;;
             ability) bash tests/run_tests.sh ;;
             workcell)
               test "$(bash bin/workcell --version)" = 'Workcell 1.2.0'
@@ -91,6 +108,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: public-${{ matrix.package }}-1.2.0
+          name: public-${{ matrix.package }}-${{ env.PACKAGE_VERSION }}
           path: ${{ runner.temp }}/receipt/
           if-no-files-found: error
