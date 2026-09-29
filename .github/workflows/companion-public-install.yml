@@ -1,0 +1,90 @@
+name: Verify released companion packages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [workcell, ability, mcp]
+    steps:
+      - name: Install reviewed runtime
+        id: kujo
+        uses: kujolang/kujo/.github/actions/setup-kujo@fc53093f35e4236682bbbf5ab1ccc8d2b4df990c
+        with:
+          version: v1.6.0
+      - name: Checkout released Kennel client only
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          repository: kujolang/kennel
+          ref: 093d44dddcebebd99bd8987e3efcb7e044dc45a7
+          path: released-client
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install exact public package and retain pins
+        env:
+          PACKAGE: ${{ matrix.package }}
+          KUJO_BIN: ${{ steps.kujo.outputs.kujo-path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$PACKAGE" in
+            workcell) expected=4ec4227f8190e05a329c2ee2975d77fce7872313 ;;
+            ability) expected=2dc7d4e9eb25e987544ac48793cd11d1999c45e0 ;;
+            mcp) expected=427a8b9ecfaee97cd66c6b35137bd1dc5fb16b54 ;;
+            *) exit 2 ;;
+          esac
+          project="$RUNNER_TEMP/public-$PACKAGE"
+          mkdir -p "$project" "$RUNNER_TEMP/receipt"
+          export KENNEL_HOME="$RUNNER_TEMP/kennel-home-$PACKAGE"
+          unset KUJO_MODULE_PATH
+          cd "$project"
+          client="$GITHUB_WORKSPACE/released-client/kennel.kujo"
+          "$KUJO_BIN" run "$client" --interpreter -- init --name public-release-consumer
+          "$KUJO_BIN" run "$client" --interpreter -- add "$PACKAGE@1.2.0"
+          cp kennel.lock "$RUNNER_TEMP/receipt/kennel.lock"
+          "$KUJO_BIN" run "$client" --interpreter -- install
+          cmp kennel.lock "$RUNNER_TEMP/receipt/kennel.lock"
+          curl --fail --silent --show-error "https://kennel.kujolang.ai/api/v1/packages/$PACKAGE/1.2.0.json" -o "$RUNNER_TEMP/receipt/manifest.json"
+          jq -e --arg expected "$expected" '.version == "1.2.0" and .source_commit == $expected and .source_tag == "v1.2.0"' "$RUNNER_TEMP/receipt/manifest.json"
+          grep -q registry-statement-verified kennel.lock
+          sha256sum kennel.lock "$KUJO_BIN" > "$RUNNER_TEMP/receipt/checksums.txt"
+          echo "CONSUMER=$project" >> "$GITHUB_ENV"
+          echo "KUJO_BIN=$KUJO_BIN" >> "$GITHUB_ENV"
+          echo "KUJO=$KUJO_BIN" >> "$GITHUB_ENV"
+      - name: Verify installed public code without source checkout fallback
+        env:
+          PACKAGE: ${{ matrix.package }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          unset KUJO_MODULE_PATH
+          cd "$CONSUMER/kennel_packages/$PACKAGE"
+          case "$PACKAGE" in
+            ability) bash tests/run_tests.sh ;;
+            workcell)
+              test "$(bash bin/workcell --version)" = 'Workcell 1.2.0'
+              EMPTY_SECRET='' LONG_SECRET=longsecret AUDIT_SECRET=artifact-secret "$KUJO_BIN" run tests/workcell_test.kujo
+              "$KUJO_BIN" run tests/git_commitment_vectors.kujo
+              ;;
+            mcp)
+              "$KUJO_BIN" run tests/test_07_ability_projection.kujo --interpreter
+              "$KUJO_BIN" run tests/test_09_ability_gateway.kujo --interpreter
+              "$KUJO_BIN" run tests/test_11_mcp_core_ability_pack.kujo --interpreter
+              node tests/controlled_ability_test.mjs
+              node tests/ability_host_bridge_test.mjs
+              ;;
+          esac
+      - name: Retain public installation receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: public-${{ matrix.package }}-1.2.0
+          path: ${{ runner.temp }}/receipt/
+          if-no-files-found: error
