@@ -251,3 +251,10 @@ The v1.0 checklist is complete and kept only as launch evidence. See:
 
 Git history preserves the former 2,000-line implementation ledger. It should not
 be used as the current product roadmap.
+
+### Completed bounded sequential continuation tranche (2026-09-29)
+
+See [the sequential continuation record](docs/WAVE_CD_SEQUENTIAL_CONTINUATION.md)
+for append-only rebinding/cancellation, independent next-effect admission, two real
+sink families, validation status, and remaining architecture boundaries. This is
+additive experimental Dispatch control; Kujo stable runtime scope is unchanged.

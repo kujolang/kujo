@@ -509,3 +509,11 @@ completion records above retain their original scope.
 A subsequent [one-effect admission proof](WAVE_CD_ONE_EFFECT_ADMISSION.md) connects
 one explicit candidate to Dispatch authority and final SQLite mutation checks.
 The assessor remains informational, and no runtime policy moved into Kujo core.
+
+The completed tranche is [bounded sequential continuation](WAVE_CD_SEQUENTIAL_CONTINUATION.md):
+append-only unconsumed evidence rebinding and abandonment, independent next-effect
+selection, and the same Dispatch authority over SQLite and Workcell Git. It retains
+one negotiated family per run and does not add a scheduler or participant authority.
+The linked receipt records the complete verified gate. The next architecture
+phase is retained-host durable recovery and operator reconciliation, not an
+automatic move to remote trust.

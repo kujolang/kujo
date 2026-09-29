@@ -209,3 +209,11 @@ unchanged. The subsequent [one-effect admission proof](WAVE_CD_ONE_EFFECT_ADMISS
 adds locked selection and one-use admission for one SQLite effect. Generalized
 production partial-effect scheduling remains deferred; no execution-result/v2 or
 broad multi-effect guarantee is introduced.
+
+## Bounded sequential continuation (2026-09-29)
+
+[Sequential continuation](WAVE_CD_SEQUENTIAL_CONTINUATION.md) extends Dispatch's
+control ledger, not `execution-result/v1`. Immutable selection and attempt identity
+survive evidence rebinding; cancellation is limited to unconsumed selections;
+completion of C requires a new assessment and separate admission for D. Sink truth
+remains SQLite/Workcell-owned. Participant recording APIs gain no lifecycle authority.

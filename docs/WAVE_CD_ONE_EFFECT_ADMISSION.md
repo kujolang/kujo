@@ -33,15 +33,16 @@ for exact source commits, commands, counts, warnings and retained transcripts.
 
 The scope is one selected attempt per surviving local run, using the SQLite
 family. It does not execute all remaining effects. Evidence renewal does not
-silently rebind an existing immutable selection. Explicit reconciliation for a
-stale selected attempt is the next narrow policy question, before any scheduler.
+silently rebind an existing immutable selection. At this historical milestone, explicit reconciliation for a stale selected
+attempt was the next policy question; the subsequent lifecycle tranche below
+proves that operation within its separately feature-gated API.
 
 Generalized production scheduling, remote authenticated trust, malicious
 participant verification, remote renewal, multi-host authority, compensation,
 cross-sink atomicity, stable/public SDKs, protocol freeze, A2A, machine-loss
 recovery, exactly-once and universal rollback remain unsolved.
 
-## Next smallest agent task
+## Historical next task — addressed by the sequential lifecycle tranche
 
 Start from current Dispatch and Kujo main. Read the one-effect admission contract
 and validation receipt. Design and prove an explicit reconciliation operation for
@@ -52,3 +53,8 @@ Never clear a consumed claim, admit an unknown prefix, replay the parent or gran
 the remainder. Race renewal against admission in fresh processes, kill between
 publication stages, preserve old readers' fail-closed behavior and verify the
 existing complete canonical gate. Do not expand into generalized scheduling.
+
+Subsequent work: [bounded sequential continuation](WAVE_CD_SEQUENTIAL_CONTINUATION.md)
+adds the verified separate lifecycle API. This document retains the original
+one-effect proof's scope and evidence; use the follow-up for current architecture
+state and the next durable-recovery phase.
