@@ -138,6 +138,14 @@ No wave introduces exactly-once external effects, universal rollback, or automat
 replay of unknown effects. Long-lived review must survive controller termination.
 Observability is a prerequisite wave, not a replacement for durable control.
 
+## Coordinated Wave C/D bounded proof · 2026-09-29
+
+Dispatch now has an additive, read-only eight-effect assessment and append-only
+freshness/crash proof, plus an independent Go recording participant over CLI/MCP.
+Original alpha/beta single-effect admission and historical wire are unchanged.
+This is not production partial-action continuation or remote trust. See
+[the audit, failure matrix and next proof](docs/WAVE_CD_EFFECT_SET_PROOF.md).
+
 ## Maintenance lane
 
 Continue optional inference for destructuring, module existence, struct recognition
