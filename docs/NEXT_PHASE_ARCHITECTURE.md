@@ -498,3 +498,10 @@ Npm and wheel builds are reproducibility-checked; sdist timestamps are documente
 See Dispatch `docs/audits/participant-sdk-packaging.md` for final gate results and
 artifact provenance. Next: private distribution rehearsal, not automatic publication,
 API stabilization, remote trust or an effect/Dispatch client SDK.
+
+## Coordinated Wave C/D follow-up (2026-09-29)
+
+See [the bounded effect-set proof](WAVE_CD_EFFECT_SET_PROOF.md) for the current
+source audit, additive ownership decision, minimum participant protocol, Go
+CLI/MCP proof, freshness/crash matrix and remote threat model. Historical wave
+completion records above retain their original scope.

@@ -199,3 +199,11 @@ and its audited rehearsal for the boundary and validation evidence.
 Wave C beta remains experimental opt-in/unreleased, alpha remains supported, and
 remote trust, renewal and multi-effect semantics remain deferred. This participant
 slice neither changes execution-result/v1 nor the Kujo runtime.
+
+## Bounded effect-set composition proof (2026-09-29)
+
+[Coordinated Wave C/D evidence](WAVE_CD_EFFECT_SET_PROOF.md) now adds a separate
+read-only multi-effect sidecar/assessment, explicit freshness and append-only
+renewal proof in Dispatch. Existing single-effect alpha/beta consumers remain
+unchanged. Production partial-effect admission is still the next bounded proof;
+no execution-result/v2 or broad multi-effect guarantee is introduced.
