@@ -131,3 +131,9 @@ in the receipt and hashed transcripts. No failing assertion was suppressed.
 > Do not create execution-result/v2, remote PKI, compensation or a public SDK.
 > Keep the read-only assessor distinct from tickets. Record exact commits and
 > canonical gates; commit/push clean changes and consolidate the new Strata delta.
+
+## Subsequent bounded admission proof
+
+The historical next-agent prompt above is addressed by
+[one selected local effect](WAVE_CD_ONE_EFFECT_ADMISSION.md). The assessor itself
+remains unchanged and read-only; the new operator admission path is separate.

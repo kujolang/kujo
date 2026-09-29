@@ -505,3 +505,7 @@ See [the bounded effect-set proof](WAVE_CD_EFFECT_SET_PROOF.md) for the current
 source audit, additive ownership decision, minimum participant protocol, Go
 CLI/MCP proof, freshness/crash matrix and remote threat model. Historical wave
 completion records above retain their original scope.
+
+A subsequent [one-effect admission proof](WAVE_CD_ONE_EFFECT_ADMISSION.md) connects
+one explicit candidate to Dispatch authority and final SQLite mutation checks.
+The assessor remains informational, and no runtime policy moved into Kujo core.

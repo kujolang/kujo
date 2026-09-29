@@ -205,5 +205,7 @@ slice neither changes execution-result/v1 nor the Kujo runtime.
 [Coordinated Wave C/D evidence](WAVE_CD_EFFECT_SET_PROOF.md) now adds a separate
 read-only multi-effect sidecar/assessment, explicit freshness and append-only
 renewal proof in Dispatch. Existing single-effect alpha/beta consumers remain
-unchanged. Production partial-effect admission is still the next bounded proof;
-no execution-result/v2 or broad multi-effect guarantee is introduced.
+unchanged. The subsequent [one-effect admission proof](WAVE_CD_ONE_EFFECT_ADMISSION.md)
+adds locked selection and one-use admission for one SQLite effect. Generalized
+production partial-effect scheduling remains deferred; no execution-result/v2 or
+broad multi-effect guarantee is introduced.

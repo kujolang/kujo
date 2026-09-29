@@ -143,8 +143,10 @@ Observability is a prerequisite wave, not a replacement for durable control.
 Dispatch now has an additive, read-only eight-effect assessment and append-only
 freshness/crash proof, plus an independent Go recording participant over CLI/MCP.
 Original alpha/beta single-effect admission and historical wire are unchanged.
-This is not production partial-action continuation or remote trust. See
-[the audit, failure matrix and next proof](docs/WAVE_CD_EFFECT_SET_PROOF.md).
+The next bounded [one-effect admission proof](docs/WAVE_CD_ONE_EFFECT_ADMISSION.md)
+now binds one selected SQLite effect to durable authority and a one-use claim.
+This is not generalized partial-action scheduling or remote trust. The earlier
+[read-only proof](docs/WAVE_CD_EFFECT_SET_PROOF.md) retains its historical scope.
 
 ## Maintenance lane
 
