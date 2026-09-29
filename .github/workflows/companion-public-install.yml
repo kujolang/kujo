@@ -74,9 +74,15 @@ jobs:
               "$KUJO_BIN" run tests/git_commitment_vectors.kujo
               ;;
             mcp)
-              "$KUJO_BIN" run tests/test_07_ability_projection.kujo --interpreter
-              "$KUJO_BIN" run tests/test_09_ability_gateway.kujo --interpreter
-              "$KUJO_BIN" run tests/test_11_mcp_core_ability_pack.kujo --interpreter
+              # Consumers run from their project so its lockfile supplies transitive roots.
+              cd "$CONSUMER"
+              "$KUJO_BIN" run kennel_packages/mcp/tests/test_07_ability_projection.kujo --interpreter
+              "$KUJO_BIN" run kennel_packages/mcp/tests/test_09_ability_gateway.kujo --interpreter
+              # The repository-profile fixture needs the package cwd; restrict its
+              # explicit roots to these installed packages, never a source checkout.
+              cd kennel_packages/mcp
+              KUJO_MODULE_PATH="$CONSUMER/kennel_packages/mcp:$CONSUMER/kennel_packages/ability" \
+                "$KUJO_BIN" run tests/test_11_mcp_core_ability_pack.kujo --interpreter
               node tests/controlled_ability_test.mjs
               node tests/ability_host_bridge_test.mjs
               ;;
