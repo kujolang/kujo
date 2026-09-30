@@ -6,7 +6,20 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
-No additional runtime changes since 1.6.0 are recorded here.
+Additional runtime changes recorded below.
+
+### Added
+
+- First-party `kujo mcp` command group with `kujo mcp make [REPO] [OPTIONS]`,
+  delegating to the canonical Kujo MCP package. The command resolves the
+  package from `KUJO_MCP_PATH`, walk-up `kennel.toml` identity, the analyzed
+  repository's Kennel lockfile, or the ecosystem install root
+  (`$KUJO_INSTALL_ROOT/sources/mcp`, default `~/.kujo/sources/mcp`), and runs
+  the generator VM-first with inherited output. Default repository is the
+  current directory; relative and absolute repository paths are validated
+  before delegation. The `mcp` top-level command name is recognized as a
+  first-party runtime command, and the ecosystem installer's core profile now
+  provisions the MCP package source locally.
 
 - Document ecosystem-owned compatible preservation binding, bounded parent
   finalization and the minimum Wave F composition/provenance crosswalk.

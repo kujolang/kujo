@@ -110,6 +110,7 @@ kujo lint app.kujo                # find common problems
 kujo test                         # run snapshot fixtures
 kujo test-run tests.kujo          # run test declarations
 kujo doctor --json                # inspect the environment
+kujo mcp make [dir]               # generate a repo-specific MCP server
 kujo serve [dir]                  # preview a static directory
 kujo lsp                          # start the language server
 ```
