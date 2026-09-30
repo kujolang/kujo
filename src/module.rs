@@ -606,6 +606,51 @@ pub fn automatic_kennel_package_search_paths(start: &Path) -> Vec<PathBuf> {
     entries.into_iter().map(|(_, path)| path).collect()
 }
 
+/// Returns the locked Kennel install path for one package name, resolved from
+/// the nearest Kennel project. Kennel's lockfile remains the authority: an
+/// `mcp` directory that merely exists below `kennel_packages` without a locked
+/// `[[package]]` entry is never selected. The resolved path is canonicalized
+/// and verified to stay inside the project's `kennel_packages` root.
+pub fn locked_kennel_package_path(start: &Path, package_name: &str) -> Option<PathBuf> {
+    let Some(project_root) = nearest_kennel_project_root(start) else {
+        return None;
+    };
+    let lockfile_path = project_root.join("kennel.lock");
+    let lockfile_source = fs::read_to_string(&lockfile_path).ok()?;
+    let lockfile = lockfile_source.parse::<toml::Value>().ok()?;
+    let packages = lockfile.get("package").and_then(toml::Value::as_array)?;
+
+    let install_path = packages
+        .iter()
+        .filter(|entry| entry.get("name").and_then(toml::Value::as_str) == Some(package_name))
+        .find_map(|entry| entry.get("install_path").and_then(toml::Value::as_str))?;
+
+    let packages_root = project_root.join("kennel_packages");
+    let canonical_packages_root =
+        path_security::canonicalize_root(&packages_root, "Kennel package root").ok()?;
+    let relative = install_path.strip_prefix("kennel_packages/")?;
+    if relative.is_empty()
+        || relative.contains('/')
+        || relative.contains('\\')
+        || relative == "."
+        || relative == ".."
+    {
+        return None;
+    }
+    let candidate = packages_root.join(relative);
+    if !candidate.is_dir() {
+        return None;
+    }
+    let canonical = fs::canonicalize(&candidate).ok()?;
+    path_security::ensure_path_within_root(
+        &canonical,
+        &canonical_packages_root,
+        "Kennel package path",
+    )
+    .ok()?;
+    Some(canonical)
+}
+
 fn nearest_kennel_project_root(start: &Path) -> Option<PathBuf> {
     let start = if start.is_file() { start.parent()? } else { start };
     let absolute = if start.is_absolute() {
