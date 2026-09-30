@@ -66,7 +66,7 @@ EOF
 
 profile_catalog() {
 	cat <<'EOF'
-core       kujo kennel spec eval scout scent packwrite runledger casefile patchbrief changebucket muzzle kujo-skills kujo-agents kujo-workflows
+core       kujo kennel spec eval scout scent packwrite runledger casefile patchbrief changebucket muzzle mcp kujo-skills kujo-agents kujo-workflows
 ai         ai-sdk agents-sdk dispatch watchdog mcp rag relay
 agent      eval runledger kujo-skills kujo-agents kujo-workflows ai-sdk agents-sdk dispatch watchdog mcp rag relay workcell
 quality    concord shipcheck fence redact lens tribunal workcell howl
@@ -629,6 +629,7 @@ core|casefile|kujo|casefile.kujo|casefile|
 core|patchbrief|kujo|patchbrief.kujo|patchbrief|
 core|changebucket|shell|bin/changebucket|changebucket|
 core|muzzle|kujo|muzzle.kujo|muzzle|
+core|mcp|none|||
 operating|kujo-skills|none|||
 operating|kujo-agents|none|||
 operating|kujo-workflows|none|||
