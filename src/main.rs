@@ -34,6 +34,7 @@ mod lsp_hover;
 mod lsp_references;
 mod lsp_rename;
 mod lsp_server;
+mod mcp_make;
 mod module;
 mod network_policy;
 mod optimizer;
@@ -171,6 +172,11 @@ enum Commands {
     Agent {
         #[command(subcommand)]
         command: agent_project::AgentCommands,
+    },
+    /// Analyze repositories and generate repo-specific Kujo MCP servers
+    Mcp {
+        #[command(subcommand)]
+        command: mcp_make::McpCommands,
     },
     /// Run a Kujo script file
     Run {
@@ -1152,6 +1158,7 @@ fn is_known_cli_subcommand(name: &str) -> bool {
         name,
         "run"
             | "upgrade"
+            | "mcp"
             | "check"
             | "serve"
             | "repl"
@@ -2114,6 +2121,15 @@ async fn async_main() {
             if let Err(err) = agent_project::execute(command) {
                 eprintln!("{}", err.message);
                 std::process::exit(err.exit_code);
+            }
+        }
+
+        Commands::Mcp { command } => {
+            if let Err((code, message)) = mcp_make::execute(command) {
+                if !message.is_empty() {
+                    eprintln!("Error: {}", message);
+                }
+                std::process::exit(code);
             }
         }
 
@@ -3135,6 +3151,7 @@ mod tests {
     #[test]
     fn known_cli_subcommand_list_includes_pack_and_run() {
         assert!(is_known_cli_subcommand("run"));
+        assert!(is_known_cli_subcommand("mcp"));
         assert!(is_known_cli_subcommand("pack"));
         assert!(is_known_cli_subcommand("ecosystem"));
         assert!(is_known_cli_subcommand("doctor"));
