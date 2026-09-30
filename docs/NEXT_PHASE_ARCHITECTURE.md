@@ -547,6 +547,9 @@ completion requirements. Required/optional membership remains anchored independe
 of scheduling/data edges. A separate locked graph decision binds exact node outcomes;
 all facts without that event stay nonterminal, including after retained recovery.
 
-The next major direction is graph failure strategy and bounded conditional branches
-or subgraphs with explicit outcome/budget policy. Dynamic topology is not implied.
+The subsequent [static graph policy slice](WAVE_F_STATIC_GRAPH_POLICY.md) adds
+closed failure strategies, predeclared branches, conditional joins, one-level subgraph
+terminal decisions and a dispatch-reservation ceiling. Same-node retries and nested or
+conditional groups remain separate boundaries. Next work should connect explicit
+attempt/budget accounting to concrete static group use cases; dynamic topology is not implied.
 Remote trust and machine migration remain separate boundaries.
