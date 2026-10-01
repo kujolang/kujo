@@ -1,6 +1,6 @@
 # Kujo Language Specification
 
-Current stable runtime: **1.6.0**, with native and npm artifacts for Linux
+Current stable runtime: **1.7.0**, with native and npm artifacts for Linux
 x64/arm64, macOS x64/arm64 and Windows x64. Wave C beta and Wave D alpha remain
 experimental; participant SDKs remain unpublished.
 See [1.6 release notes](RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
