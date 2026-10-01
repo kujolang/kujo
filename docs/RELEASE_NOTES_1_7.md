@@ -1,8 +1,8 @@
-# Kujo 1.7 release candidate
+# Kujo 1.7 release
 
-Status: unpublished preparation. The stable release and default installer remain
-1.6.0. This document does not authorize publication or establish a tested 1.7.0
-artifact cohort.
+Status: published native and npm release for Linux x64/arm64, macOS x64/arm64
+and Windows x64. Signed source: `813072040a1ac643312f5163fcfa4f26474c9095`.
+Crates.io is a separate, currently blocked distribution channel.
 
 ## Runtime additions
 
@@ -40,13 +40,21 @@ with install scripts disabled, three canonical Ability tools, and exact receipt
 lookups on each platform. These were unpublished rehearsal artifacts labeled
 1.6.0; they must never replace the existing registry release.
 
-The versioned 1.7.0 commit still needs its own gates, artifact provenance checks,
-publication authorization, and published-install verification. OpenAI public
-local-plugin distribution support is a separate host requirement.
+The tagged [publication workflow](https://github.com/kujolang/kujo/actions/runs/36850604536)
+passed the full release gate and published native/npm artifacts. Both
+[native installation smoke](https://github.com/kujolang/kujo/actions/runs/36857820990)
+and [npm installation smoke](https://github.com/kujolang/kujo/actions/runs/36866507729)
+passed on all five platforms. The initial Windows native smoke hit GitHub rate
+limiting; its retry passed without changing artifacts. OpenAI public local-plugin
+distribution support remains a separate host requirement.
 
 ## Publication boundary
 
-Follow [RELEASE_PROCESS.md](RELEASE_PROCESS.md), including the explicit
-`UNBLOCK_V1_RELEASE` directive. No tag, crate, npm package, GitHub release or
-stable installer update is authorized by this preparation. Retain 1.6.0 stable
-references until the new release and published-artifact checks succeed.
+The owner supplied `UNBLOCK_V1_RELEASE` before publication. The signed tag is
+verified by GitHub. Stable installer references now select the tested 1.7.0 release.
+
+`cargo publish --dry-run --locked` from the signed source fails because Cargo
+normalization drops the local tiny_http patch, removing the required
+`http_with_read_timeout` API. No crate was published. Release policy permits the
+independently tested native release with this exception. A registry-compatible
+fork is being prepared separately; HTTP deadlines must remain enforced.

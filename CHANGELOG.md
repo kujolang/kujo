@@ -6,9 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
-## [1.7.0] - Unreleased candidate
+## [1.7.0] - 2026-10-01
 
-This candidate is not published. The current stable runtime remains 1.6.0.
+Native archives and npm packages are published for all five supported targets.
+Crates.io publication remains blocked by a separately tracked dependency patch.
 
 ### Added
 
