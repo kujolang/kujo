@@ -2975,6 +2975,10 @@ pub struct JitCompiler {
 struct BytecodeTranslator {
     /// Stack simulation - maps stack depth to Cranelift values
     value_stack: Vec<cranelift::prelude::Value>,
+    /// Most recently emitted integer constant and its SSA value. This lets
+    /// arithmetic lowering recognize constant divisors without changing the
+    /// bytecode stack representation.
+    last_int_constant: Option<(cranelift::prelude::Value, i64)>,
     /// Variable storage - maps variable names to Cranelift values
     /// TODO: Future optimization - keep frequently used variables in registers
     #[allow(dead_code)]
@@ -3059,6 +3063,10 @@ struct BytecodeTranslator {
     /// Instead of calling runtime functions for every LoadVar/StoreVar,
     /// we use direct memory access via Cranelift stack slots
     local_slots: HashMap<String, StackSlot>,
+    /// SSA variables for integer locals. Cranelift inserts block parameters at
+    /// control-flow joins, keeping hot loop state in registers instead of
+    /// repeatedly loading and storing explicit stack slots.
+    local_variables: HashMap<String, Variable>,
     /// Local variables that may hold non-integer values (e.g., dicts)
     non_int_locals: std::collections::HashSet<String>,
     /// Local slot indices eligible for unique int-dict fast path
@@ -3104,6 +3112,7 @@ impl BytecodeTranslator {
     fn new() -> Self {
         Self {
             value_stack: Vec::new(),
+            last_int_constant: None,
             variables: HashMap::new(),
             blocks: HashMap::new(),
             block_entry_stack_depth: HashMap::new(),
@@ -3125,6 +3134,7 @@ impl BytecodeTranslator {
             specialization: None,
             function_end: 0,
             local_slots: HashMap::new(),
+            local_variables: HashMap::new(),
             non_int_locals: std::collections::HashSet::new(),
             use_local_slots: false,
             local_names: Vec::new(),
@@ -3368,6 +3378,7 @@ impl BytecodeTranslator {
 
         // Enable local slot optimization if we have any locals
         self.use_local_slots = !self.local_slots.is_empty();
+        self.allocate_ssa_locals(builder);
 
         if std::env::var("DEBUG_JIT").is_ok() {
             eprintln!(
@@ -3440,6 +3451,7 @@ impl BytecodeTranslator {
         }
 
         self.use_local_slots = !self.local_slots.is_empty();
+        self.allocate_ssa_locals(builder);
     }
 
     /// Allocate stack slots for function parameters
@@ -3470,6 +3482,21 @@ impl BytecodeTranslator {
         // Re-enable local slots optimization if we have any
         if !self.local_slots.is_empty() {
             self.use_local_slots = true;
+        }
+        self.allocate_ssa_locals(builder);
+    }
+
+    fn allocate_ssa_locals(&mut self, builder: &mut FunctionBuilder) {
+        let names: Vec<String> = self.local_slots.keys().cloned().collect();
+        for name in names {
+            if self.local_variables.contains_key(&name) {
+                continue;
+            }
+            let variable = Variable::new(self.local_variables.len());
+            builder.declare_var(variable, types::I64);
+            let zero = builder.ins().iconst(types::I64, 0);
+            builder.def_var(variable, zero);
+            self.local_variables.insert(name, variable);
         }
     }
 
@@ -3523,7 +3550,7 @@ impl BytecodeTranslator {
         let use_fast_args = get_arg_func.is_some() && params.len() <= 4;
 
         for (i, param_name) in params.iter().enumerate() {
-            if let Some(&slot) = self.local_slots.get(param_name) {
+            if let Some(&variable) = self.local_variables.get(param_name) {
                 let param_value = if use_fast_args {
                     // FAST PATH: Load parameter directly from VMContext.argN
                     let get_arg = get_arg_func.unwrap();
@@ -3541,13 +3568,12 @@ impl BytecodeTranslator {
                     builder.inst_results(call)[0]
                 };
 
-                // Store the parameter value into the stack slot
-                builder.ins().stack_store(param_value, slot, 0);
+                builder.def_var(variable, param_value);
 
                 if std::env::var("DEBUG_JIT").is_ok() {
                     eprintln!(
-                        "JIT: Initialized parameter '{}' in stack slot {:?} (fast={})",
-                        param_name, slot, use_fast_args
+                        "JIT: Initialized parameter '{}' in SSA variable {:?} (fast={})",
+                        param_name, variable, use_fast_args
                     );
                 }
             }
@@ -3572,10 +3598,10 @@ impl BytecodeTranslator {
             None => return,
         };
 
-        let local_slots: Vec<(String, StackSlot)> =
-            self.local_slots.iter().map(|(name, slot)| (name.clone(), *slot)).collect();
+        let local_variables: Vec<(String, Variable)> =
+            self.local_variables.iter().map(|(name, variable)| (name.clone(), *variable)).collect();
 
-        for (name, slot) in local_slots {
+        for (name, variable) in local_variables {
             let value = match self.local_names.iter().position(|local| local == &name) {
                 Some(index) => {
                     let slot_index_value = builder.ins().iconst(types::I64, index as i64);
@@ -3590,7 +3616,7 @@ impl BytecodeTranslator {
                     builder.inst_results(call)[0]
                 }
             };
-            builder.ins().stack_store(value, slot, 0);
+            builder.def_var(variable, value);
         }
     }
 
@@ -3654,11 +3680,11 @@ impl BytecodeTranslator {
             None => return,
         };
 
-        for (name, slot) in &self.local_slots {
+        for (name, variable) in &self.local_variables {
             if !self.dirty_local_names.contains(name) {
                 continue;
             }
-            let value = builder.ins().stack_load(types::I64, *slot, 0);
+            let value = builder.use_var(*variable);
             if let (Some(slot_index), Some(store_func)) = (
                 self.local_names.iter().position(|local| local == name),
                 self.vm_local_slot_set_func,
@@ -4018,7 +4044,12 @@ impl BytecodeTranslator {
             OpCode::Mod => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let result = builder.ins().srem(a, b);
+                let result = match self.last_int_constant {
+                    Some((constant_value, divisor)) if constant_value == b => self
+                        .translate_mersenne_remainder(builder, a, divisor)
+                        .unwrap_or_else(|| builder.ins().srem(a, b)),
+                    _ => builder.ins().srem(a, b),
+                };
                 self.push_value(result);
             }
 
@@ -4118,10 +4149,12 @@ impl BytecodeTranslator {
                     match constant {
                         Constant::Int(i) => {
                             let val = builder.ins().iconst(types::I64, *i);
+                            self.last_int_constant = Some((val, *i));
                             self.push_value(val);
                         }
                         Constant::Bool(b) => {
                             let val = builder.ins().iconst(types::I64, if *b { 1 } else { 0 });
+                            self.last_int_constant = None;
                             self.push_value(val);
                         }
                         // Other constant types (strings, floats, etc.) - push placeholder
@@ -4129,6 +4162,7 @@ impl BytecodeTranslator {
                         // Push 0 as placeholder to maintain stack balance
                         _ => {
                             let zero = builder.ins().iconst(types::I64, 0);
+                            self.last_int_constant = None;
                             self.push_value(zero);
                         }
                     }
@@ -5080,14 +5114,12 @@ impl BytecodeTranslator {
                 // OPTIMIZATION: Use stack slots for local variables (register-based locals)
                 // This avoids C function calls and HashMap lookups for every variable access
                 if self.use_local_slots {
-                    if let Some(&slot) = self.local_slots.get(name) {
-                        // Fast path: Direct stack slot load
-                        // Load the i64 value directly from the stack slot
-                        let value = builder.ins().stack_load(types::I64, slot, 0);
+                    if let Some(&variable) = self.local_variables.get(name) {
+                        let value = builder.use_var(variable);
                         self.push_value(value);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
-                            eprintln!("JIT: LoadVar '{}' using fast stack slot {:?}", name, slot);
+                            eprintln!("JIT: LoadVar '{}' using SSA variable {:?}", name, variable);
                         }
                     } else {
                         // Variable not in local slots - fall back to runtime call
@@ -5142,8 +5174,8 @@ impl BytecodeTranslator {
                         }
                     }
                     if self.use_local_slots {
-                        if let Some(&stack_slot) = self.local_slots.get(name) {
-                            let value = builder.ins().stack_load(types::I64, stack_slot, 0);
+                        if let Some(&variable) = self.local_variables.get(name) {
+                            let value = builder.use_var(variable);
                             self.push_value(value);
                             return Ok(false);
                         }
@@ -5199,14 +5231,12 @@ impl BytecodeTranslator {
 
                 // OPTIMIZATION: Use stack slots for local variables (register-based locals)
                 if self.use_local_slots {
-                    if let Some(&slot) = self.local_slots.get(name) {
+                    if let Some(&variable) = self.local_variables.get(name) {
                         self.dirty_local_names.insert(name.clone());
-                        // Fast path: Direct stack slot store
-                        // Store the i64 value directly to the stack slot
-                        builder.ins().stack_store(value, slot, 0);
+                        builder.def_var(variable, value);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
-                            eprintln!("JIT: StoreVar '{}' using fast stack slot {:?}", name, slot);
+                            eprintln!("JIT: StoreVar '{}' using SSA variable {:?}", name, variable);
                         }
                         // Value stays on stack - do NOT pop
                     } else {
@@ -5273,9 +5303,9 @@ impl BytecodeTranslator {
                         }
                     }
                     if self.use_local_slots {
-                        if let Some(&stack_slot) = self.local_slots.get(name) {
+                        if let Some(&variable) = self.local_variables.get(name) {
                             self.dirty_local_names.insert(name.clone());
-                            builder.ins().stack_store(value, stack_slot, 0);
+                            builder.def_var(variable, value);
                             if self.int_dict_slots.contains(slot) {
                                 if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                     let zero = builder.ins().iconst(types::I64, 0);
@@ -5366,8 +5396,8 @@ impl BytecodeTranslator {
         match instruction {
             OpCode::LoadLocal(slot) => {
                 if let Some(name) = self.local_names.get(*slot) {
-                    if let Some(&stack_slot) = self.local_slots.get(name) {
-                        let value = builder.ins().stack_load(types::I64, stack_slot, 0);
+                    if let Some(&variable) = self.local_variables.get(name) {
+                        let value = builder.use_var(variable);
                         self.push_value(value);
                         return Ok(false);
                     }
@@ -5426,8 +5456,8 @@ impl BytecodeTranslator {
                             return Ok(false);
                         }
                     }
-                    if let Some(&stack_slot) = self.local_slots.get(name) {
-                        builder.ins().stack_store(value, stack_slot, 0);
+                    if let Some(&variable) = self.local_variables.get(name) {
+                        builder.def_var(variable, value);
                         if self.int_dict_slots.contains(slot) {
                             if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                 let zero = builder.ins().iconst(types::I64, 0);
@@ -5467,9 +5497,8 @@ impl BytecodeTranslator {
                         let marker = builder.ins().iconst(types::I64, -1);
                         self.push_value(marker);
                         self.self_recursion_pending = true;
-                    } else if let Some(&slot) = self.local_slots.get(name) {
-                        // Load from stack slot (other local variable)
-                        let value = builder.ins().stack_load(types::I64, slot, 0);
+                    } else if let Some(&variable) = self.local_variables.get(name) {
+                        let value = builder.use_var(variable);
                         self.push_value(value);
                     } else if let (Some(ctx), Some(load_func)) =
                         (self.ctx_param, self.load_var_func)
@@ -5485,8 +5514,8 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         self.push_value(zero);
                     }
-                } else if let Some(&slot) = self.local_slots.get(name) {
-                    let value = builder.ins().stack_load(types::I64, slot, 0);
+                } else if let Some(&variable) = self.local_variables.get(name) {
+                    let value = builder.use_var(variable);
                     self.push_value(value);
                 } else {
                     // Fall back to runtime call
@@ -5752,6 +5781,65 @@ impl BytecodeTranslator {
 
     fn push_value(&mut self, val: cranelift::prelude::Value) {
         self.value_stack.push(val);
+    }
+
+    /// Emit signed remainder by a positive Mersenne constant (`2^k - 1`).
+    ///
+    /// Cranelift currently leaves these `srem` operations as hardware integer
+    /// division on the supported targets. Folding the unsigned magnitude by
+    /// `k`-bit limbs removes that division while preserving signed remainder
+    /// semantics, including `i64::MIN`.
+    fn translate_mersenne_remainder(
+        &self,
+        builder: &mut FunctionBuilder,
+        dividend: cranelift::prelude::Value,
+        divisor: i64,
+    ) -> Option<cranelift::prelude::Value> {
+        if divisor <= 0 {
+            return None;
+        }
+
+        let modulus = divisor as u64;
+        let next_power = modulus.checked_add(1)?;
+        if !next_power.is_power_of_two() {
+            return None;
+        }
+
+        let shift = next_power.trailing_zeros();
+        // Small moduli need too many folds to beat division. `% 1` is always 0.
+        if shift == 0 {
+            return Some(builder.ins().iconst(types::I64, 0));
+        }
+        if shift < 8 || shift >= 63 {
+            return None;
+        }
+
+        let sign = builder.ins().sshr_imm(dividend, 63);
+        let sign_flipped = builder.ins().bxor(dividend, sign);
+        let mut reduced = builder.ins().isub(sign_flipped, sign);
+
+        // Each fold replaces the high limbs with their sum because 2^k == 1
+        // (mod 2^k - 1). Compute the minimum number of folds whose conservative
+        // upper bound is below twice the modulus, where one final subtraction
+        // is sufficient. For the common 2^31-1 modulus this is two folds.
+        let mut folds = 0;
+        let mut upper_bound = u64::MAX;
+        while upper_bound >= modulus * 2 {
+            upper_bound = modulus + (upper_bound >> shift);
+            folds += 1;
+        }
+        for _ in 0..folds {
+            let low = builder.ins().band_imm(reduced, divisor);
+            let high = builder.ins().ushr_imm(reduced, i64::from(shift));
+            reduced = builder.ins().iadd(low, high);
+        }
+
+        let needs_subtract =
+            builder.ins().icmp_imm(IntCC::UnsignedGreaterThanOrEqual, reduced, divisor);
+        let subtracted = builder.ins().iadd_imm(reduced, -divisor);
+        let magnitude = builder.ins().select(needs_subtract, subtracted, reduced);
+        let signed = builder.ins().bxor(magnitude, sign);
+        Some(builder.ins().isub(signed, sign))
     }
 
     fn pop_value(&mut self) -> Result<cranelift::prelude::Value, String> {
@@ -8423,6 +8511,38 @@ mod tests {
         let result = compiler.compile(&chunk, 0);
         // Compilation should succeed for simple arithmetic
         assert!(result.is_ok(), "Should compile simple arithmetic: {:?}", result.err());
+    }
+
+    #[test]
+    fn test_mersenne_remainder_matches_signed_semantics() {
+        let cases = [
+            (0, 0),
+            (2_147_483_647, 0),
+            (2_147_483_648, 1),
+            (i64::MAX, 1),
+            (-2_147_483_648, -1),
+            (i64::MIN, -2),
+        ];
+
+        for (case_index, (dividend, expected)) in cases.into_iter().enumerate() {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            let dividend_constant = chunk.add_constant(Constant::Int(dividend));
+            let divisor_constant = chunk.add_constant(Constant::Int(2_147_483_647));
+            chunk.emit(OpCode::LoadConst(dividend_constant));
+            chunk.emit(OpCode::LoadConst(divisor_constant));
+            chunk.emit(OpCode::Mod);
+            chunk.emit(OpCode::Return);
+
+            let compiled = compiler
+                .compile_function(&chunk, &format!("mersenne_remainder_case_{case_index}"))
+                .expect("Mersenne remainder function should compile");
+            let mut context =
+                VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+            assert_eq!(invoke_compiled_fn(compiled, &mut context), 0);
+            assert!(context.has_return_value);
+            assert_eq!(context.return_value, expected, "dividend: {dividend}");
+        }
     }
 
     #[test]
