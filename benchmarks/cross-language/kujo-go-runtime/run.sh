@@ -182,12 +182,13 @@ for workload in prime_count integer_mix; do
     for mode in vm jit; do
         for ((run_index = 1; run_index <= PHASE_RUNS; run_index++)); do
             phase_report="$RESULTS_DIR/.phase-$workload-$mode-$run_index.json"
-            jit_args=()
             if [[ "$mode" == "jit" ]]; then
-                jit_args=(--jit)
+                "$KUJO_BIN" run --jit --measurements "$phase_report" \
+                    "$SUITE_DIR/$workload.kujo" >/dev/null 2>/dev/null
+            else
+                "$KUJO_BIN" run --measurements "$phase_report" \
+                    "$SUITE_DIR/$workload.kujo" >/dev/null 2>/dev/null
             fi
-            "$KUJO_BIN" run "${jit_args[@]}" --measurements "$phase_report" \
-                "$SUITE_DIR/$workload.kujo" >/dev/null 2>/dev/null
             jq \
                 --arg workload "$workload" \
                 --arg mode "$mode" \
