@@ -84,10 +84,11 @@ for workload in "${workloads[@]}"; do
 done
 
 hyperfine \
+    --shell=none \
     --warmup "$STARTUP_WARMUP" \
     --runs "$STARTUP_RUNS" \
     --command-name "Kujo startup" "$KUJO_BIN run $SUITE_DIR/startup.kujo" \
-    --command-name "Kujo JIT startup" "$KUJO_BIN run --jit $SUITE_DIR/startup.kujo 2>/dev/null" \
+    --command-name "Kujo JIT startup" "$KUJO_BIN run --jit $SUITE_DIR/startup.kujo" \
     --command-name "Go startup" "$BIN_DIR/startup-go" \
     --export-json "$RESULTS_DIR/startup.json" \
     --export-markdown "$RESULTS_DIR/startup.md"
@@ -96,6 +97,7 @@ for workload in prime_count integer_mix; do
     compile_output="$BIN_DIR/$workload-compile-go"
 
     hyperfine \
+        --shell=none \
         --warmup "$BENCH_WARMUP" \
         --runs "$BENCH_RUNS" \
         --command-name "Kujo bytecode compile: $workload" \
@@ -104,6 +106,7 @@ for workload in prime_count integer_mix; do
         --export-markdown "$RESULTS_DIR/$workload-kujo-compile.md"
 
     hyperfine \
+        --shell=none \
         --warmup "$BENCH_WARMUP" \
         --runs "$BENCH_RUNS" \
         --prepare "rm -f $compile_output" \
@@ -113,12 +116,13 @@ for workload in prime_count integer_mix; do
         --export-markdown "$RESULTS_DIR/$workload-go-compile.md"
 
     hyperfine \
+        --shell=none \
         --warmup "$BENCH_WARMUP" \
         --runs "$BENCH_RUNS" \
         --command-name "Kujo run: $workload" \
             "$KUJO_BIN run $SUITE_DIR/$workload.kujo" \
         --command-name "Kujo JIT run: $workload" \
-            "$KUJO_BIN run --jit $SUITE_DIR/$workload.kujo 2>/dev/null" \
+            "$KUJO_BIN run --jit $SUITE_DIR/$workload.kujo" \
         --command-name "Go run: $workload" \
             "$BIN_DIR/$workload-go" \
         --export-json "$RESULTS_DIR/$workload-run.json" \
@@ -175,6 +179,7 @@ jq -n \
         hyperfine: $hyperfine_version,
         host: {os_version: $os_version, arch: $arch, cpu: $cpu},
         sampling: {
+            shell: "none",
             benchmark_warmups: $benchmark_warmups,
             benchmark_runs: $benchmark_runs,
             startup_warmups: $startup_warmups,

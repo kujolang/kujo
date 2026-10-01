@@ -134,7 +134,7 @@ pub struct VM {
 
     /// Tokio runtime handle for spawning async tasks
     /// This allows the VM to spawn truly concurrent async tasks
-    runtime_handle: tokio::runtime::Handle,
+    runtime_handle: Option<tokio::runtime::Handle>,
     task_async_entry: bool,
 
     /// Saved execution contexts used for cooperative VM context switching.
@@ -627,10 +627,7 @@ impl VM {
             inline_cache: HashMap::new(),
             int_key_cache: HashMap::new(),
             jit_obj_stack: Vec::new(),
-            runtime_handle: tokio::runtime::Handle::try_current().unwrap_or_else(|_| {
-                // If not in a tokio runtime, create one
-                crate::interpreter::AsyncRuntime::runtime().handle().clone()
-            }),
+            runtime_handle: tokio::runtime::Handle::try_current().ok(),
             task_async_entry: false,
             execution_contexts: HashMap::new(),
             active_execution_context: None,
@@ -5570,7 +5567,11 @@ impl VM {
 
                                 // Use the runtime handle to block on the receiver
                                 // This works even when we're already inside a tokio runtime
-                                let result = self.runtime_handle.block_on(actual_rx);
+                                let result = match self.runtime_handle.as_ref() {
+                                    Some(handle) => handle.block_on(actual_rx),
+                                    None => crate::interpreter::AsyncRuntime::runtime()
+                                        .block_on(actual_rx),
+                                };
 
                                 if std::env::var("DEBUG_ASYNC").is_ok() {
                                     eprintln!(
