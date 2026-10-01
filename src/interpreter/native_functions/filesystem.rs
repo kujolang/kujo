@@ -2445,6 +2445,19 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             }
         }
 
+        // Pure host-native syntax check: no filesystem access or canonicalization.
+        "path_is_absolute" => {
+            if arg_values.len() != 1 {
+                return Some(Value::Error("path_is_absolute expects one string argument".into()));
+            }
+            match &arg_values[0] {
+                Value::Str(path) => {
+                    Value::Bool(!path.contains('\0') && Path::new(path.as_ref()).is_absolute())
+                }
+                _ => Value::Error("path_is_absolute expects one string argument".into()),
+            }
+        }
+
         "path_exists" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error(format!(
