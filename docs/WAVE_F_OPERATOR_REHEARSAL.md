@@ -11,8 +11,8 @@ Program and Eval dispatch budgets remain distinct. A local OS-user decision is
 revision-bound; output existence, approval and budget availability grant no effect
 authority. Unknown provider usage/cost remain unknown.
 
-The Dispatch [operator walkthrough](https://github.com/kujolang/dispatch/blob/codex/operator-readiness/docs/operator-rehearsal.md)
-and [first-hour findings](https://github.com/kujolang/dispatch/blob/codex/operator-readiness/docs/OPERATOR_FIRST_HOUR.md)
+The Dispatch [operator walkthrough](https://github.com/kujolang/dispatch/blob/5c8da03b59cf40ba9bd8fe5055813e8fb3caacb6/docs/operator-rehearsal.md)
+and [first-hour findings](https://github.com/kujolang/dispatch/blob/5c8da03b59cf40ba9bd8fe5055813e8fb3caacb6/docs/OPERATOR_FIRST_HOUR.md)
 record installation prerequisites and the tested interface. The black-box rehearsal
 uses an installed package in a fresh HOME, real Workcell Git retention, a SQLite
 receipt sink, a separate Eval process and actual SIGKILL timing. It exercises
