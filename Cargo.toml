@@ -19,6 +19,10 @@ path = "src/lib.rs"
 name = "kujo"
 path = "src/main.rs"
 
+[[bin]]
+name = "kujo-run"
+path = "src/bin/kujo-run.rs"
+
 [features]
 default = ["runtime-db", "runtime-image", "runtime-pdf", "runtime-archive", "runtime-jit"]
 runtime-db = ["dep:rusqlite", "dep:postgres", "dep:postgres-openssl", "dep:mysql_async"]

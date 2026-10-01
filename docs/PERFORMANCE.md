@@ -25,6 +25,22 @@ The JIT is experimental and opt-in on JIT-compatible bytecode surfaces:
 kujo run --jit script.kujo
 ```
 
+### Low-latency trusted launcher
+
+`kujo-run` is a smaller launcher for latency-sensitive trusted VM/JIT programs:
+
+```bash
+cargo build --release --locked --no-default-features --features runtime-jit --bin kujo-run
+target/release/kujo-run --jit program.kujo
+```
+
+It uses the same lexer, parser, bytecode compiler, VM, builtins, module search,
+cooperative scheduler, and regional JIT as `kujo run`, but avoids the general
+CLI command router and can omit optional database, image, PDF, and archive
+features. It accepts only `kujo-run [--jit] FILE`; use the full CLI whenever a
+program needs capability flags, script arguments, runtime measurements,
+interpreter fallback, process-lifetime controls, or scheduler deadlines.
+
 `--jit` is not the default runtime mode. When `--jit` is requested for a program
 that contains an unsupported bytecode surface, Kujo emits deterministic fallback
 messaging and executes the program on the VM without JIT. The CLI contract is
