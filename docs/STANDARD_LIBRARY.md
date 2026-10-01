@@ -356,7 +356,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `basename` | `basename(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := basename(...)` |
 | `path_exists` | `path_exists(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_exists(...)` |
 | `path_join` | `path_join(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_join(...)` |
-| `path_is_absolute` | `path_is_absolute(path)` | 1 string | bool | Value::Error on invalid arity/type. | none (pure native path syntax) | `path_is_absolute("/tmp/file")` |
+| `path_is_absolute` | `path_is_absolute(path)` | handler-defined | bool | Value::Error on invalid arity/type. | `none` | `path_is_absolute("/tmp/file")` |
 | `path_absolute` | `path_absolute(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_absolute(...)` |
 | `path_is_dir` | `path_is_dir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_is_dir(...)` |
 | `path_is_file` | `path_is_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_is_file(...)` |
