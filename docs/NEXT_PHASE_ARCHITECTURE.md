@@ -556,3 +556,14 @@ an explicitly authorized second child run for the same node with exact original 
 Consumed or uncertain work cannot use that path. Nested/conditional groups and general
 retries remain deferred. The subsequent [resource-accounting slice](WAVE_F_RESOURCE_ACCOUNTING.md) adds bounded Eval dispatch budgets, active-path reservation plans and exact runtime/SDK measurement references. Observed, provider-reported, estimated and unknown values remain distinct. Hard token/time/currency ceilings remain deferred; dynamic topology is not implied.
 Remote trust and machine migration remain separate boundaries.
+
+## Operator-readiness rehearsal and architecture freeze
+
+The [operator-readiness exercise](WAVE_F_OPERATOR_REHEARSAL.md) uses the implemented
+static graph architecture through one installed batch-summary host. Dispatch owns
+the CLI integration; Kujo runtime, Workcell and Eval ownership do not change.
+Concrete installation and explanation gaps are fixed without another scheduler,
+protocol or lifecycle. After the operator proof and canonical gates pass, freeze
+this local architecture lane and prioritize product/release usability. Remote
+trust, machine migration and further graph/resource constructs require separate
+adoption evidence and prioritization.
