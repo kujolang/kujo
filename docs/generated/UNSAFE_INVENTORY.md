@@ -5,8 +5,8 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 
 ## Summary
 
-- Total matches: 102
-- Executable matches: 77
+- Total matches: 109
+- Executable matches: 84
 - Non-executable matches: 25
 - Unknown classifications: 0
 
@@ -92,6 +92,10 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/jit.rs | 8209 | executable | jit_executable |     unsafe extern ""C"" fn dummy_compiled_fn_with_arg(_ctx: *mut VMContext, arg: i64) -> i64 { |
 | src/jit.rs | 9273 | executable | jit_executable |         unsafe { |
 | src/module.rs | 893 | non_executable | src_comment_or_string |             ""expected unsafe traversal error, got: {}"", |
+| src/process_lifetime.rs | 29 | executable | src_executable_other |     let job = unsafe { CreateJobObjectW(ptr::null(), ptr::null()) }; |
+| src/process_lifetime.rs | 37 | executable | src_executable_other |     let configured = unsafe { |
+| src/process_lifetime.rs | 47 | executable | src_executable_other |     if configured == 0 \|\| unsafe { AssignProcessToJobObject(job, GetCurrentProcess()) } == 0 { |
+| src/process_lifetime.rs | 51 | executable | src_executable_other |         unsafe { CloseHandle(job) }; |
 | src/upgrade.rs | 266 | non_executable | src_comment_or_string |             return Err(""unsafe ZIP entry"".into()); |
 | src/upgrade.rs | 285 | non_executable | src_comment_or_string |                 return Err(""unsafe, duplicate, or oversized TAR entry"".into()); |
 | src/upgrade.rs | 501 | non_executable | src_comment_or_string |         return Err(""unsafe upgrade lock path"".into()); |
@@ -112,6 +116,9 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | tests/generated_artifact_freshness_contract.rs | 151 | non_executable | test_comment_or_string |     let output_csv = temp_dir.join(""unsafe.csv""); |
 | tests/http_route_concurrency.rs | 204 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
 | tests/jit_safety_contract_checker.rs | 152 | non_executable | test_comment_or_string |     assert!(stdout.contains(""Checked 0 executable unsafe boundaries"")); |
+| tests/process_lifetime_contracts.rs | 66 | executable | test_executable |             unsafe { |
+| tests/process_lifetime_contracts.rs | 80 | executable | test_executable |                         unsafe { OpenProcess(PROCESS_SYNCHRONIZE \| PROCESS_TERMINATE, 0, pid) }; |
+| tests/process_lifetime_contracts.rs | 136 | executable | test_executable |                     unsafe { WaitForSingleObject(process.0, 5000) }, |
 | tests/runtime_security.rs | 323 | non_executable | test_comment_or_string |         ""expected unsafe traversal error, got: {}"", |
 | tests/unsafe_safety_gate_contract.rs | 14 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate help""); |
 | tests/unsafe_safety_gate_contract.rs | 29 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate dry-run""); |

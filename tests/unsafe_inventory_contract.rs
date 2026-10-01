@@ -140,10 +140,14 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // Routed HTTP graceful shutdown adds one reviewed libc::signal registration,
     // and its integration test adds one reviewed libc::kill call against its
     // owned live child process.
+    // Windows opt-in lifetime ownership adds four reviewed job API sites:
+    // fresh non-inheritable handle creation, typed limits, current-process
+    // assignment, and error-path owned-handle close. Three test-only sites
+    // retain, wait for and clean up owned fixture processes.
     // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 77,
-        "executable unsafe budget changed: expected 77, got {executable_count}"
+        executable_count, 84,
+        "executable unsafe budget changed: expected 84, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -178,6 +182,16 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         })
         .count();
     assert_eq!(confined_write_count, 6, "review any new confined-write FFI site");
+    for (path, expected) in
+        [("src/process_lifetime.rs", 4), ("tests/process_lifetime_contracts.rs", 3)]
+    {
+        let count = csv
+            .lines()
+            .skip(1)
+            .filter(|line| line.contains(&format!("\"{path}\"")) && line.contains("\"executable\""))
+            .count();
+        assert_eq!(count, expected, "review any new process-lifetime FFI site in {path}");
+    }
     let jit_executable_count = csv
         .lines()
         .skip(1)
