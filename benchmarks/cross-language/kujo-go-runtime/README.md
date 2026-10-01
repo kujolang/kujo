@@ -24,6 +24,17 @@ From the repository root:
 bash benchmarks/cross-language/kujo-go-runtime/run.sh
 ```
 
+For the focused four-language latency comparison using the lean trusted
+`kujo-run` launcher:
+
+```bash
+bash benchmarks/cross-language/kujo-go-runtime/run-four-language.sh
+```
+
+That runner compares the three runtime workloads across Kujo JIT, Go, Python,
+and PHP. It builds `kujo-run` with only `runtime-jit`, records exact-output
+checks before timing, and stores raw distributions plus pinned build metadata.
+
 The default campaign uses one warmup and five measured runs for compile and
 compute tests, five instrumented Kujo phase runs, plus three warmups and fifteen
 measured startup runs. Override them when iterating locally:

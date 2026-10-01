@@ -87,6 +87,7 @@ fn kujo_runtime_matrix_preserves_fairness_and_evidence_contracts() {
     let suite = "benchmarks/cross-language/kujo-go-runtime";
     let readme = read(&format!("{suite}/README.md"));
     let runner = read(&format!("{suite}/run.sh"));
+    let focused_runner = read(&format!("{suite}/run-four-language.sh"));
 
     for marker in [
         "function-local workloads",
@@ -130,6 +131,32 @@ fn kujo_runtime_matrix_preserves_fairness_and_evidence_contracts() {
     ] {
         assert!(runner.contains(marker), "runtime suite runner should contain {marker:?}");
     }
+
+    for marker in [
+        "cargo build --release --locked --no-default-features",
+        "--features runtime-jit --bin kujo-run",
+        "go build -trimpath",
+        "python3 -B",
+        "php",
+        "correctness.tsv",
+        "--shell=none",
+        "--warmup",
+        "--runs",
+        "--export-json",
+        "--export-markdown",
+        "metadata.json",
+        "summary.md",
+    ] {
+        assert!(
+            focused_runner.contains(marker),
+            "focused runtime runner should contain {marker:?}"
+        );
+    }
+
+    assert!(
+        readme.contains("run-four-language.sh") && readme.contains("kujo-run"),
+        "runtime suite README should document the focused four-language runner"
+    );
 }
 
 #[test]
