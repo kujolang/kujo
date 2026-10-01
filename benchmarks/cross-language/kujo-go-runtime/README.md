@@ -25,11 +25,11 @@ bash benchmarks/cross-language/kujo-go-runtime/run.sh
 ```
 
 The default campaign uses one warmup and five measured runs for compile and
-compute tests, plus three warmups and fifteen measured startup runs. Override
-them when iterating locally:
+compute tests, five instrumented Kujo phase runs, plus three warmups and fifteen
+measured startup runs. Override them when iterating locally:
 
 ```bash
-BENCH_WARMUP=1 BENCH_RUNS=3 STARTUP_RUNS=10 \
+BENCH_WARMUP=1 BENCH_RUNS=3 PHASE_RUNS=3 STARTUP_RUNS=10 \
   bash benchmarks/cross-language/kujo-go-runtime/run.sh
 ```
 
@@ -45,7 +45,7 @@ host data, commands, and raw Hyperfine JSON/Markdown.
 
 ## Measurement boundaries
 
-- Startup measures equivalent no-work programs in all five languages/runtimes.
+- Startup measures equivalent no-work programs in all six languages/runtimes.
 - Compile/check measures `kujo check --quiet`, fresh optimized Go and Rust
   native builds, Python bytecode compilation, and PHP syntax checking. These
   operations produce different artifacts and are reported side by side for
@@ -56,6 +56,10 @@ host data, commands, and raw Hyperfine JSON/Markdown.
   also includes native compilation of hot regions. Use the startup and compile
   distributions to understand those fixed costs; do not subtract medians and
   present the result as a precise execution-only measurement.
+- Kujo internal phases use the bounded runtime-measurement collector to report
+  repeated source parse, bytecode compile, VM setup, VM execution, and nested
+  JIT compilation distributions without subtracting unrelated medians. These
+  phases intentionally exclude process and CLI startup.
 
 Every computational fixture keeps its state inside one function and uses the
 same loop bounds, constants, integer operations, output, and expected-result

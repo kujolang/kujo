@@ -95,6 +95,7 @@ fn kujo_runtime_matrix_preserves_fairness_and_evidence_contracts() {
         "Startup measures",
         "Compile/check measures",
         "Run measures",
+        "Kujo internal phases",
         "BENCHMARK_PUBLICATION_POLICY.md",
     ] {
         assert!(readme.contains(marker), "runtime suite README should contain {marker:?}");
@@ -118,6 +119,8 @@ fn kujo_runtime_matrix_preserves_fairness_and_evidence_contracts() {
         "python3 -B",
         "php -l",
         "correctness.tsv",
+        "kujo-phases.json",
+        "source_parse_wall_ns",
         "--warmup",
         "--runs",
         "--export-json",

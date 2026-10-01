@@ -12,6 +12,7 @@ BENCH_WARMUP="${BENCH_WARMUP:-1}"
 BENCH_RUNS="${BENCH_RUNS:-5}"
 STARTUP_WARMUP="${STARTUP_WARMUP:-3}"
 STARTUP_RUNS="${STARTUP_RUNS:-15}"
+PHASE_RUNS="${PHASE_RUNS:-$BENCH_RUNS}"
 
 for command_name in cargo go hyperfine jq git python3 php rustc; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
@@ -41,6 +42,15 @@ milliseconds() {
 
 ratio() {
     jq -n --argjson numerator "$1" --argjson denominator "$2" '$numerator / $denominator'
+}
+
+phase_median_ns() {
+    jq \
+        --arg workload "$2" \
+        --arg mode "$3" \
+        --arg counter "$4" \
+        '[.[] | select(.workload == $workload and .mode == $mode) | .counters[$counter]] | sort as $values | ($values | length) as $count | if $count % 2 == 1 then $values[$count / 2 | floor] else (($values[$count / 2 - 1] + $values[$count / 2]) / 2) end' \
+        "$1"
 }
 
 mkdir -p "$BIN_DIR"
@@ -165,6 +175,32 @@ for workload in prime_count integer_mix; do
         --export-markdown "$RESULTS_DIR/$workload-run.md"
 done
 
+PHASES_JSONL="$RESULTS_DIR/kujo-phases.jsonl"
+PHASES_JSON="$RESULTS_DIR/kujo-phases.json"
+: >"$PHASES_JSONL"
+for workload in prime_count integer_mix; do
+    for mode in vm jit; do
+        for ((run_index = 1; run_index <= PHASE_RUNS; run_index++)); do
+            phase_report="$RESULTS_DIR/.phase-$workload-$mode-$run_index.json"
+            jit_args=()
+            if [[ "$mode" == "jit" ]]; then
+                jit_args=(--jit)
+            fi
+            "$KUJO_BIN" run "${jit_args[@]}" --measurements "$phase_report" \
+                "$SUITE_DIR/$workload.kujo" >/dev/null 2>/dev/null
+            jq \
+                --arg workload "$workload" \
+                --arg mode "$mode" \
+                --argjson run "$run_index" \
+                '. + {workload: $workload, mode: $mode, run: $run}' \
+                "$phase_report" >>"$PHASES_JSONL"
+            rm "$phase_report"
+        done
+    done
+done
+jq -s '.' "$PHASES_JSONL" >"$PHASES_JSON"
+rm "$PHASES_JSONL"
+
 KUJO_VERSION="$($KUJO_BIN --version)"
 GO_VERSION="$(go version)"
 RUST_VERSION="$(rustc --version)"
@@ -210,6 +246,7 @@ jq -n \
     --argjson benchmark_runs "$BENCH_RUNS" \
     --argjson startup_warmups "$STARTUP_WARMUP" \
     --argjson startup_runs "$STARTUP_RUNS" \
+    --argjson phase_runs "$PHASE_RUNS" \
     '{
         run_id: $run_id,
         recorded_at: $recorded_at,
@@ -239,7 +276,8 @@ jq -n \
             benchmark_warmups: $benchmark_warmups,
             benchmark_runs: $benchmark_runs,
             startup_warmups: $startup_warmups,
-            startup_runs: $startup_runs
+            startup_runs: $startup_runs,
+            phase_runs: $phase_runs
         }
     }' >"$RESULTS_DIR/metadata.json"
 
@@ -286,6 +324,26 @@ SUMMARY="$RESULTS_DIR/summary.md"
             "$workload" "$(milliseconds "$kujo_vm_run")" "$(milliseconds "$kujo_jit_run")" \
             "$(milliseconds "$go_run")" "$(milliseconds "$rust_run")" \
             "$(milliseconds "$python_run")" "$(milliseconds "$php_run")"
+    done
+
+    echo
+    echo "## Kujo internal phase medians"
+    echo
+    echo "These instrumented phase measurements exclude process and CLI startup. JIT compilation is"
+    echo "included within VM execution and shown separately as a subset."
+    echo
+    echo "| Workload | Mode | Source parse | Bytecode compile | VM setup | VM execution | JIT compile |"
+    echo "|---|---|---:|---:|---:|---:|---:|"
+    for workload in prime_count integer_mix; do
+        for mode in vm jit; do
+            printf '| %s | %s | %.3f ms | %.3f ms | %.3f ms | %.3f ms | %.3f ms |\n' \
+                "$workload" "$mode" \
+                "$(jq -n --argjson value "$(phase_median_ns "$PHASES_JSON" "$workload" "$mode" source_parse_wall_ns)" '$value / 1000000')" \
+                "$(jq -n --argjson value "$(phase_median_ns "$PHASES_JSON" "$workload" "$mode" bytecode_compile_wall_ns)" '$value / 1000000')" \
+                "$(jq -n --argjson value "$(phase_median_ns "$PHASES_JSON" "$workload" "$mode" vm_setup_wall_ns)" '$value / 1000000')" \
+                "$(jq -n --argjson value "$(phase_median_ns "$PHASES_JSON" "$workload" "$mode" vm_inclusive_wall_ns)" '$value / 1000000')" \
+                "$(jq -n --argjson value "$(phase_median_ns "$PHASES_JSON" "$workload" "$mode" jit_compile_inclusive_wall_ns)" '$value / 1000000')"
+        done
     done
 
     echo
