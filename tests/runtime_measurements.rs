@@ -54,6 +54,9 @@ fn run(source: &str, extra: &[&str]) -> (Output, Value) {
     for count in value["counters"].as_object().unwrap().values() {
         assert!(count.is_u64());
     }
+    assert!(value["counters"]["source_parse_wall_ns"].as_u64().unwrap() > 0);
+    assert!(value["counters"]["bytecode_compile_wall_ns"].as_u64().unwrap() > 0);
+    assert!(value["counters"]["vm_setup_wall_ns"].as_u64().unwrap() > 0);
     (measured, value)
 }
 

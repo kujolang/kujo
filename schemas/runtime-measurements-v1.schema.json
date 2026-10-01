@@ -80,6 +80,21 @@
         "jit_type_guard_failures"
       ],
       "properties": {
+        "source_parse_wall_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "bytecode_compile_wall_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "vm_setup_wall_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
         "vm_entries": {
           "type": "integer",
           "minimum": 0,

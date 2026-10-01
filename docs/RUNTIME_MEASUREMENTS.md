@@ -26,6 +26,7 @@ does not read clocks or allocate per event.
 | Fields | Exact interpretation |
 | --- | --- |
 | `wall_ns` | Wall time from collector admission after parsing/output creation through snapshot; includes compile, VM setup and teardown, excludes export |
+| `source_parse_wall_ns`, `bytecode_compile_wall_ns`, `vm_setup_wall_ns` | Mutually ordered phase wall times for source read/lex/parse, bytecode compilation, and VM/JIT/global initialization. Source parsing is timed before collector admission and recorded immediately after admission; phase totals exclude process and CLI startup |
 | `cpu_seconds`, `process_peak_rss_bytes` | CPU delta for this process (all threads, excluding children) and process-lifetime peak RSS from the existing Unix getrusage mechanism; null when unsupported or unavailable; RSS is not a session delta |
 | `vm_entries`, `vm_inclusive_wall_ns` | Entries/time in VM execute, including resumes and nested/callback execution; inclusive totals can exceed wall time |
 | `vm_call_opcodes`, `vm_return_opcodes`, `vm_native_call_opcodes` | Dispatched opcodes, not unique functions, successful calls or calls executed wholly in generated machine code |

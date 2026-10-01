@@ -15,6 +15,9 @@ macro_rules! metrics {
 }
 
 metrics! {
+    SourceParseWallNs => "source_parse_wall_ns",
+    BytecodeCompileWallNs => "bytecode_compile_wall_ns",
+    VmSetupWallNs => "vm_setup_wall_ns",
     VmEntries => "vm_entries",
     VmWallNs => "vm_inclusive_wall_ns",
     Calls => "vm_call_opcodes",

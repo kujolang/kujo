@@ -1392,7 +1392,9 @@ async fn async_main(cli: Option<Cli>) {
                 // Use unit separator
             }
 
+            let source_parse_started = std::time::Instant::now();
             let (code, filename, stmts) = parse_kujo_program(&file);
+            let source_parse_wall_ns = source_parse_started.elapsed().as_nanos();
             let mut measurement_output = measurements.map(|path| {
                 let mut options = fs::OpenOptions::new();
                 options.write(true).create_new(true);
@@ -1410,6 +1412,12 @@ async fn async_main(cli: Option<Cli>) {
                 benchmarks::profiler::runtime::start().expect("one CLI run per process");
                 output
             });
+            if measurement_output.is_some() {
+                benchmarks::profiler::runtime::add(
+                    benchmarks::profiler::runtime::Metric::SourceParseWallNs,
+                    source_parse_wall_ns.min(u64::MAX as u128) as u64,
+                );
+            }
 
             // Debug: print AST for inspection
             if !interpreter && std::env::var("DEBUG_AST").is_ok() {
@@ -1421,7 +1429,13 @@ async fn async_main(cli: Option<Cli>) {
                 use std::sync::{Arc, Mutex};
 
                 let mut compiler = compiler::Compiler::new();
-                match compiler.compile(&stmts) {
+                let compile_started = benchmarks::profiler::runtime::clock();
+                let compile_result = compiler.compile(&stmts);
+                benchmarks::profiler::runtime::elapsed(
+                    benchmarks::profiler::runtime::Metric::BytecodeCompileWallNs,
+                    compile_started,
+                );
+                match compile_result {
                     Ok(chunk) => {
                         // Run the VM on a dedicated large-stack thread so deep
                         // value operations do not inherit tokio's smaller default stack.
@@ -1429,6 +1443,7 @@ async fn async_main(cli: Option<Cli>) {
                             .name("kujo-vm-runner".to_string())
                             .stack_size(VM_EXECUTION_STACK_SIZE)
                             .spawn(move || {
+                                let setup_started = benchmarks::profiler::runtime::clock();
                                 let mut vm = vm::VM::new();
                                 for search_path in entry_script_search_paths(&file) {
                                     vm.add_module_search_path(search_path);
@@ -1436,7 +1451,8 @@ async fn async_main(cli: Option<Cli>) {
                                 let jit_requested = jit && std::env::var("DISABLE_JIT").is_err();
                                 vm.set_jit_enabled(jit_requested);
                                 if jit_requested {
-                                    if let Err(reason) = vm.validate_jit_supported_surfaces(&chunk) {
+                                    if let Err(reason) = vm.validate_jit_supported_surfaces(&chunk)
+                                    {
                                         eprintln!(
                                             "JIT opt-in requested; unsupported bytecode regions will use the VM ({}).",
                                             reason
@@ -1472,6 +1488,10 @@ async fn async_main(cli: Option<Cli>) {
                                 }
 
                                 vm.set_globals(env);
+                                benchmarks::profiler::runtime::elapsed(
+                                    benchmarks::profiler::runtime::Metric::VmSetupWallNs,
+                                    setup_started,
+                                );
 
                                 // Execute using cooperative suspend/resume for true concurrency
                                 // Initial execution
