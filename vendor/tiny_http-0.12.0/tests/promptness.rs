@@ -51,10 +51,7 @@ mod prompt_pipelining {
         timeout: Duration,
         req_writer: impl FnOnce(&mut dyn Write) + Send + 'static,
     ) {
-        let resp_body = SlowByteSrc {
-            val: 42,
-            len: 1000_000,
-        }; // very slow response body
+        let resp_body = SlowByteSrc { val: 42, len: 1000_000 }; // very slow response body
 
         let server = Server::http("0.0.0.0:0").unwrap();
         let mut client = TcpStream::connect(server.server_addr().to_ip().unwrap()).unwrap();
@@ -159,14 +156,15 @@ mod prompt_responses {
         // response should arrive quickly (before timeout expires)
         client.set_read_timeout(Some(timeout)).unwrap();
         let resp = client.deref().read(&mut [0u8; 4096]);
-        client.shutdown(Shutdown::Both).unwrap();
-        assert!(resp.is_ok(), "Server response was not sent promptly");
+        // macOS reports NotConnected when the peer has already closed after
+        // replying. Cleanup must not obscure the response/timing assertion.
+        if let Err(error) = client.shutdown(Shutdown::Both) {
+            assert_eq!(error.kind(), std::io::ErrorKind::NotConnected);
+        }
+        assert!(matches!(resp, Ok(count) if count > 0), "Server response was not sent promptly");
     }
 
-    static SLOW_BODY: SlowByteSrc = SlowByteSrc {
-        val: 65,
-        len: 1000_000,
-    };
+    static SLOW_BODY: SlowByteSrc = SlowByteSrc { val: 65, len: 1000_000 };
 
     #[test]
     fn content_length_http11() {

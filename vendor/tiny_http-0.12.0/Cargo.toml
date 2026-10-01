@@ -11,13 +11,13 @@
 
 [package]
 edition = "2018"
-name = "tiny_http"
-version = "0.12.0"
+name = "kujolang-tiny-http"
+version = "0.12.0-kujo.1"
 authors = [
     "pierre.krieger1708@gmail.com",
     "Corey Farwell <coreyf@rwell.org>",
 ]
-description = "Low level HTTP server library"
+description = "Kujo-maintained tiny_http fork with bounded pre-header socket reads"
 documentation = "https://tiny-http.github.io/tiny-http/tiny_http/index.html"
 readme = "README.md"
 keywords = [
@@ -26,7 +26,10 @@ keywords = [
     "web",
 ]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/tiny-http/tiny-http"
+repository = "https://github.com/kujolang/kujo"
+
+[lib]
+name = "tiny_http"
 
 [package.metadata.docs.rs]
 features = ["ssl-openssl"]

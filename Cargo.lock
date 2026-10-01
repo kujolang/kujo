@@ -2943,6 +2943,7 @@ dependencies = [
  "jsonschema",
  "jsonwebtoken",
  "keyring",
+ "kujolang-tiny-http",
  "libc",
  "lopdf",
  "md-5 0.10.6",
@@ -2972,7 +2973,6 @@ dependencies = [
  "tar",
  "target-lexicon",
  "tempfile",
- "tiny_http",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -2981,6 +2981,18 @@ dependencies = [
  "uuid",
  "windows-sys 0.61.2",
  "zip",
+]
+
+[[package]]
+name = "kujolang-tiny-http"
+version = "0.12.0-kujo.1"
+dependencies = [
+ "ascii",
+ "chunked_transfer",
+ "httpdate",
+ "log",
+ "openssl",
+ "zeroize",
 ]
 
 [[package]]
@@ -5243,18 +5255,6 @@ checksum = "7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85"
 dependencies = [
  "num-conv",
  "time-core",
-]
-
-[[package]]
-name = "tiny_http"
-version = "0.12.0"
-dependencies = [
- "ascii",
- "chunked_transfer",
- "httpdate",
- "log",
- "openssl",
- "zeroize",
 ]
 
 [[package]]

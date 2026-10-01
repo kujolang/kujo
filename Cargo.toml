@@ -48,7 +48,7 @@ chrono-tz = "0.10"
 uuid = { version = "1.10", features = ["v4"] }
 regex = "1"
 rustyline = "14.0"
-tiny_http = { version = "0.12", features = ["ssl-openssl"] }
+tiny_http = { package = "kujolang-tiny-http", version = "=0.12.0-kujo.1", path = "vendor/tiny_http-0.12.0", features = ["ssl-openssl"] }
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 socket2 = "0.6"
 tokio-util = { version = "0.7", features = ["io"] }
@@ -126,7 +126,6 @@ windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Stor
 # implementation sources are unchanged; see their README.kujo.md files.
 pulp = { path = "vendor/pulp-0.22.3" }
 rav1e = { path = "vendor/rav1e-0.8.1" }
-tiny_http = { path = "vendor/tiny_http-0.12.0" }
 
 [dev-dependencies]
 criterion = "0.5"
