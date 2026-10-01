@@ -285,3 +285,11 @@ explicit output/evaluation/publication requirements, before general graph execut
 [Static Wave F graph policy](docs/WAVE_F_STATIC_GRAPH_POLICY.md) adds declared branch
 activation, conditional joins, explicit subgraph terminal decisions and a durable
 program-dispatch ceiling. The subsequent [attempt-accounting slice](docs/WAVE_F_GRAPH_ATTEMPT_ACCOUNTING.md) separates reservations, consumption and release and adds explicitly authorized retry after a sealed pre-admission refusal. The subsequent [sourced-resource slice](docs/WAVE_F_RESOURCE_ACCOUNTING.md) adds distinct Eval reservations/consumption, exact runtime and provider-usage evidence, and bounded active-path reservation plans. Nested/conditional groups and general retries remain deferred.
+
+### Operator-readiness stop condition
+
+The [Wave F operator rehearsal](docs/WAVE_F_OPERATOR_REHEARSAL.md) moves the existing
+static local control model through installed setup, inspection, review, budget
+exhaustion and retained recovery. Once its operator and canonical gates pass,
+freeze further local Wave F architecture expansion and return to product/release
+work. This does not promote experimental graph/control contracts to stable APIs.
