@@ -1,0 +1,13 @@
+{
+  "schema": "kujo.runtime-publication/v1",
+  "version": "1.7.0",
+  "tag": "v1.7.0",
+  "commit": "813072040a1ac643312f5163fcfa4f26474c9095",
+  "tag_signature_verified": true,
+  "native_and_npm": "published",
+  "publication_workflow": 36850604536,
+  "native_install_smoke": 36857820990,
+  "npm_install_smoke": 36866507729,
+  "all_five_targets_verified": true,
+  "crates_io": "not published: normalized dependency loses patched HTTP API"
+}

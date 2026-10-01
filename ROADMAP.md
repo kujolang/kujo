@@ -1,11 +1,11 @@
 # Kujo Roadmap
 
 Updated: 2026-09-29
-Stable release: [v1.6.0](https://github.com/kujolang/kujo/releases/tag/v1.6.0)
+Stable release: [v1.7.0](https://github.com/kujolang/kujo/releases/tag/v1.7.0)
 
 > Current crate version: `1.7.0` in [Cargo.toml](Cargo.toml)
 
-Kujo **1.6.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
+Kujo **1.7.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free runtime npm packages. The exact source/tag
 target is `44af277848173664f72ca85f2a1b3b98d634ecdd`.
 See [publication evidence](docs/KUJO_1_6_RELEASE.md) for hashes and hosted native/npm
@@ -22,7 +22,7 @@ post-release validation.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The public npm 1.6.0 runtime package covers the same targets
+  SHA-256 checksums. The public npm 1.7.0 runtime package covers the same targets
   with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project

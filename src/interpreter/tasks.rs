@@ -47,6 +47,8 @@ impl TaskState {
     }
 }
 
+// Keep fetch_update for the Rust 1.89 MSRV; newer Rust renames it to try_update.
+#[allow(deprecated)]
 pub(crate) fn submit(
     function: Value,
     args: Vec<Value>,
