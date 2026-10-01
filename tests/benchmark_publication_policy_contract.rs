@@ -83,6 +83,49 @@ fn built_in_cross_language_benchmark_inputs_are_documented_and_present() {
 }
 
 #[test]
+fn kujo_go_runtime_suite_preserves_fairness_and_evidence_contracts() {
+    let suite = "benchmarks/cross-language/kujo-go-runtime";
+    let readme = read(&format!("{suite}/README.md"));
+    let runner = read(&format!("{suite}/run.sh"));
+
+    for marker in [
+        "function-local workloads",
+        "checks exact output before accepting timings",
+        "Startup measures",
+        "Compile measures",
+        "Run measures",
+        "BENCHMARK_PUBLICATION_POLICY.md",
+    ] {
+        assert!(readme.contains(marker), "runtime suite README should contain {marker:?}");
+    }
+
+    for workload in ["startup", "prime_count", "integer_mix"] {
+        for extension in ["kujo", "go"] {
+            let path = format!("{suite}/{workload}.{extension}");
+            assert!(repo_root().join(&path).is_file(), "runtime suite input is missing: {path}");
+        }
+        let expected = format!("{suite}/expected/{workload}.txt");
+        assert!(
+            repo_root().join(&expected).is_file(),
+            "runtime suite expected output is missing: {expected}"
+        );
+    }
+
+    for marker in [
+        "cargo build --release --locked --bin kujo",
+        "correctness.tsv",
+        "--warmup",
+        "--runs",
+        "--export-json",
+        "--export-markdown",
+        "metadata.json",
+        "summary.md",
+    ] {
+        assert!(runner.contains(marker), "runtime suite runner should contain {marker:?}");
+    }
+}
+
+#[test]
 fn future_ssg_and_host_benchmark_docs_are_not_launch_evidence() {
     let ssg = read("docs/SSG_BENCHMARK_NEXT_STEPS.md");
     let hetzner = read("docs/HETZNER_BENCHMARK_SETUP_AND_PRICING.md");

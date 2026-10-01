@@ -1,8 +1,14 @@
 # Cross-Language Benchmark Inputs
 
-This directory contains only the four source inputs used by Kujo's built-in
-benchmark commands. They are maintained as local regression and profiling
-tools, not as published v1.0 performance claims.
+The four top-level source inputs are used by Kujo's built-in benchmark
+commands. They are maintained as local regression and profiling tools, not as
+published v1.0 performance claims.
+
+The [`kujo-go-runtime/`](kujo-go-runtime/) subdirectory contains a separate,
+reviewable Kujo-versus-Go microbenchmark suite. It uses equivalent
+function-local workloads, pins the tested binaries and source revision in each
+result bundle, validates exact output before timing, and reports startup,
+compile, and end-to-end run distributions separately.
 
 Run from the repository root with an optimized build:
 

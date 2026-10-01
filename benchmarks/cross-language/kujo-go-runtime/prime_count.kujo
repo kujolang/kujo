@@ -1,0 +1,27 @@
+func count_primes(limit) {
+    mut count := 0
+    mut n := 2
+
+    while n < limit {
+        mut is_prime := true
+        mut divisor := 2
+
+        while divisor * divisor <= n {
+            if n % divisor == 0 {
+                is_prime = false
+                break
+            }
+            divisor += 1
+        }
+
+        if is_prime {
+            count += 1
+        }
+        n += 1
+    }
+
+    return count
+}
+
+let result := count_primes(50000)
+print("prime_count=" + to_string(result))
