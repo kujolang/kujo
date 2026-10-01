@@ -1423,18 +1423,18 @@ async fn async_main() {
                                 // Get the complete list from the interpreter
                                 let builtins = interpreter::Interpreter::get_builtin_names();
 
-                                for builtin_name in builtins {
-                                    env.lock().unwrap().set(
-                                        builtin_name.to_string(),
-                                        interpreter::Value::NativeFunction(
-                                            builtin_name.to_string(),
-                                        ),
-                                    );
-                                }
-
-                                // Register constant globals that are not callable native functions.
                                 {
                                     let mut env_lock = env.lock().unwrap();
+                                    for builtin_name in builtins {
+                                        env_lock.set(
+                                            builtin_name.to_string(),
+                                            interpreter::Value::NativeFunction(
+                                                builtin_name.to_string(),
+                                            ),
+                                        );
+                                    }
+
+                                    // Register constant globals that are not callable native functions.
                                     for (name, value) in crate::builtins::get_builtins() {
                                         env_lock.set(name, value);
                                     }

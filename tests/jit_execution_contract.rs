@@ -148,5 +148,5 @@ assert(sum_odds(10000) == 25000000, "hot-loop JIT result mismatch")
     let stderr = String::from_utf8(output.stderr).expect("stderr should be utf-8");
     assert!(stderr.contains("unsupported bytecode regions will use the VM"));
     assert!(stderr.contains("Successfully compiled function 'sum_odds'"));
-    assert!(stderr.contains("Successfully compiled hot loop"));
+    assert!(stderr.contains("Retrying current call to 'sum_odds' with native code"));
 }
