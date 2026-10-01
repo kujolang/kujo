@@ -91,7 +91,7 @@ pub struct VM {
     exception_handlers: Vec<ExceptionHandlerFrame>,
 
     /// JIT compiler for hot code paths
-    jit_compiler: JitCompiler,
+    jit_compiler: Option<JitCompiler>,
 
     /// JIT enabled flag (can be disabled for debugging)
     jit_enabled: bool,
@@ -612,14 +612,10 @@ impl VM {
             globals: Arc::new(Mutex::new(Environment::new())),
             ip: 0,
             chunk: BytecodeChunk::new(),
-            interpreter: Interpreter::new(),
+            interpreter: Interpreter::new_for_vm(),
             upvalues: Vec::new(),
             exception_handlers: Vec::new(),
-            jit_compiler: JitCompiler::new().unwrap_or_else(|e| {
-                eprintln!("Warning: Failed to initialize JIT compiler: {}", e);
-                eprintln!("Falling back to interpreter-only mode");
-                JitCompiler::default()
-            }),
+            jit_compiler: None,
             jit_enabled: false,
             function_call_stack: Vec::new(),
             function_call_counts: HashMap::new(),
@@ -806,8 +802,22 @@ impl VM {
 
     /// Enable or disable JIT compilation
     pub fn set_jit_enabled(&mut self, enabled: bool) {
+        if enabled && self.jit_compiler.is_none() {
+            match JitCompiler::new() {
+                Ok(compiler) => self.jit_compiler = Some(compiler),
+                Err(error) => {
+                    eprintln!("Warning: Failed to initialize JIT compiler: {}", error);
+                    eprintln!("Falling back to interpreter-only mode");
+                    self.jit_enabled = false;
+                    return;
+                }
+            }
+        }
+
         self.jit_enabled = enabled;
-        self.jit_compiler.set_enabled(enabled);
+        if let Some(compiler) = self.jit_compiler.as_mut() {
+            compiler.set_enabled(enabled);
+        }
     }
 
     /// Returns whether JIT is currently enabled for this VM.
@@ -817,7 +827,10 @@ impl VM {
 
     /// Get JIT compilation statistics
     pub fn jit_stats(&self) -> crate::jit::JitStats {
-        self.jit_compiler.stats()
+        self.jit_compiler.as_ref().map_or(
+            crate::jit::JitStats { total_functions: 0, compiled_functions: 0, enabled: false },
+            JitCompiler::stats,
+        )
     }
 
     /// Validate whether a bytecode chunk (including nested function chunks) is JIT-compatible.
@@ -830,7 +843,11 @@ impl VM {
         &self,
         chunk: &BytecodeChunk,
     ) -> Option<UnsupportedJitSurface> {
-        self.jit_compiler.first_unsupported_surface(chunk)
+        if let Some(compiler) = self.jit_compiler.as_ref() {
+            compiler.first_unsupported_surface(chunk)
+        } else {
+            JitCompiler::new().ok().and_then(|compiler| compiler.first_unsupported_surface(chunk))
+        }
     }
 
     /// Attempt to JIT-compile a bytecode function immediately.
@@ -872,6 +889,8 @@ impl VM {
 
         let info = self
             .jit_compiler
+            .as_mut()
+            .expect("JIT compiler initialized when JIT is enabled")
             .compile_function_with_info(chunk, func_name.as_str())
             .map_err(|e| format!("Failed to JIT-compile function '{}': {}", func_name, e))?;
 
@@ -1480,7 +1499,12 @@ impl VM {
 
             // Attempt to compile the entire script
             if script_jit_safe {
-                match self.jit_compiler.compile_script(&self.chunk, "__main__") {
+                match self
+                    .jit_compiler
+                    .as_mut()
+                    .expect("JIT compiler initialized when JIT is enabled")
+                    .compile_script(&self.chunk, "__main__")
+                {
                     Ok(compiled_fn) => {
                         if std::env::var("DEBUG_JIT").is_ok() {
                             eprintln!("JIT: Successfully compiled top-level script - EXECUTING!");
@@ -1591,9 +1615,19 @@ impl VM {
             if self.jit_enabled && !contains_map_fusion_op {
                 // For loops (backward jumps), check if we should compile
                 if let Some(OpCode::JumpBack(jump_target)) = self.chunk.instructions.get(self.ip) {
-                    if self.jit_compiler.is_loop_jit_blocked(*jump_target) {
+                    if self
+                        .jit_compiler
+                        .as_ref()
+                        .expect("JIT compiler initialized when JIT is enabled")
+                        .is_loop_jit_blocked(*jump_target)
+                    {
                         // Loop is known to be incompatible with JIT
-                    } else if self.jit_compiler.should_compile(*jump_target) {
+                    } else if self
+                        .jit_compiler
+                        .as_mut()
+                        .expect("JIT compiler initialized when JIT is enabled")
+                        .should_compile(*jump_target)
+                    {
                         // PRE-SCAN: Check if loop contains only supported opcodes
                         // This prevents compilation failures and maintains correctness
                         let mut int_dict_slots = std::collections::HashSet::new();
@@ -1689,13 +1723,15 @@ impl VM {
 
                         let can_compile_loop = if int_dict_loop_valid && !int_dict_slots.is_empty()
                         {
-                            self.jit_compiler.can_compile_loop_with_int_dicts(
-                                &self.chunk,
-                                *jump_target,
-                                self.ip,
-                            )
+                            self.jit_compiler
+                                .as_ref()
+                                .expect("JIT compiler initialized when JIT is enabled")
+                                .can_compile_loop_with_int_dicts(&self.chunk, *jump_target, self.ip)
                         } else {
-                            self.jit_compiler.can_compile_loop(&self.chunk, *jump_target, self.ip)
+                            self.jit_compiler
+                                .as_ref()
+                                .expect("JIT compiler initialized when JIT is enabled")
+                                .can_compile_loop(&self.chunk, *jump_target, self.ip)
                         };
 
                         if can_compile_loop {
@@ -1714,21 +1750,30 @@ impl VM {
                             if store_vars.len() > 2 {
                                 // Skip loop JIT for complex update patterns to preserve correctness
                                 // (e.g., multiple dependent variable updates per iteration)
-                                self.jit_compiler.mark_loop_jit_blocked(*jump_target);
+                                self.jit_compiler
+                                    .as_mut()
+                                    .expect("JIT compiler initialized when JIT is enabled")
+                                    .mark_loop_jit_blocked(*jump_target);
                             } else {
                                 // Try to compile this hot loop
                                 // IMPORTANT: Compile from the loop START (jump_target), not from the JumpBack!
                                 // The JumpBack just marks the end of the loop
                                 let compile_result =
                                     if int_dict_loop_valid && !int_dict_slots.is_empty() {
-                                        self.jit_compiler.compile_loop_with_int_dicts(
-                                            &self.chunk,
-                                            *jump_target,
-                                            self.ip,
-                                            int_dict_slots,
-                                        )
+                                        self.jit_compiler
+                                            .as_mut()
+                                            .expect("JIT compiler initialized when JIT is enabled")
+                                            .compile_loop_with_int_dicts(
+                                                &self.chunk,
+                                                *jump_target,
+                                                self.ip,
+                                                int_dict_slots,
+                                            )
                                     } else {
-                                        self.jit_compiler.compile(&self.chunk, *jump_target)
+                                        self.jit_compiler
+                                            .as_mut()
+                                            .expect("JIT compiler initialized when JIT is enabled")
+                                            .compile(&self.chunk, *jump_target)
                                     };
 
                                 match compile_result {
@@ -1883,7 +1928,10 @@ impl VM {
                                                 jump_target, e
                                             );
                                         }
-                                        self.jit_compiler.mark_loop_jit_blocked(*jump_target);
+                                        self.jit_compiler
+                                            .as_mut()
+                                            .expect("JIT compiler initialized when JIT is enabled")
+                                            .mark_loop_jit_blocked(*jump_target);
                                     }
                                 }
                             }
@@ -1896,7 +1944,10 @@ impl VM {
                                     jump_target
                                 );
                             }
-                            self.jit_compiler.mark_loop_jit_blocked(*jump_target);
+                            self.jit_compiler
+                                .as_mut()
+                                .expect("JIT compiler initialized when JIT is enabled")
+                                .mark_loop_jit_blocked(*jump_target);
                         }
                     }
                 }
@@ -3330,6 +3381,8 @@ impl VM {
                                     // This creates both standard and direct-arg variants for recursion
                                     match self
                                         .jit_compiler
+                                        .as_mut()
+                                        .expect("JIT compiler initialized when JIT is enabled")
                                         .compile_function_with_info(chunk, func_name)
                                     {
                                         Ok(info) => {
@@ -3344,6 +3397,23 @@ impl VM {
                                                 .insert(func_name.to_string(), info.fn_ptr);
                                             self.compiled_fn_info
                                                 .insert(func_name.to_string(), info);
+
+                                            // The current call already paid the compilation cost.
+                                            // Restore its operands and retry the Call opcode so it
+                                            // executes native code immediately instead of spending
+                                            // the first invocation in the VM.
+                                            if std::env::var("DEBUG_JIT").is_ok() {
+                                                eprintln!(
+                                                    "JIT: Retrying current call to '{}' with native code",
+                                                    func_name
+                                                );
+                                            }
+                                            for arg in &raw_args {
+                                                self.stack.push(arg.clone());
+                                            }
+                                            self.stack.push(function.clone());
+                                            self.ip = self.ip.saturating_sub(1);
+                                            continue;
                                         }
                                         Err(e) => {
                                             if std::env::var("DEBUG_JIT").is_ok() {

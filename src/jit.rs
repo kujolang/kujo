@@ -617,6 +617,57 @@ pub unsafe extern "C" fn jit_load_variable(
     0
 }
 
+/// Load an integer-compatible value from the active VM call frame's local slots.
+#[no_mangle]
+// SAFETY:
+// - `ctx` must point to a live VMContext for the duration of the call.
+// - The helper only reads a bounds-checked slot through the VM-owned vector pointer.
+pub unsafe extern "C" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> i64 {
+    if ctx.is_null() || slot < 0 {
+        return 0;
+    }
+
+    let ctx_ref = &*ctx;
+    if ctx_ref.local_slots_ptr.is_null() {
+        return 0;
+    }
+
+    match (&*ctx_ref.local_slots_ptr).get(slot as usize) {
+        Some(Value::Int(value)) => *value,
+        Some(Value::Bool(value)) => i64::from(*value),
+        _ => 0,
+    }
+}
+
+/// Persist an integer-compatible value into the active VM call frame's local slots.
+#[no_mangle]
+// SAFETY:
+// - `ctx` must point to a live, exclusively borrowed VMContext for the call.
+// - The helper only updates a bounds-checked scalar slot through the VM-owned vector pointer.
+pub unsafe extern "C" fn jit_store_local_slot(ctx: *mut VMContext, slot: i64, value: i64) -> i64 {
+    if ctx.is_null() || slot < 0 {
+        return 0;
+    }
+
+    let ctx_ref = &mut *ctx;
+    if ctx_ref.local_slots_ptr.is_null() {
+        return 0;
+    }
+
+    let local_slots = &mut *ctx_ref.local_slots_ptr;
+    let target = match local_slots.get_mut(slot as usize) {
+        Some(target) => target,
+        None => return 0,
+    };
+
+    *target = match target {
+        Value::Bool(_) => Value::Bool(value != 0),
+        Value::Int(_) => Value::Int(value),
+        _ => return 0,
+    };
+    1
+}
+
 /// Store a variable to locals (called from JIT code)
 /// name_hash: hash of the variable name
 #[no_mangle]
@@ -2981,6 +3032,8 @@ struct BytecodeTranslator {
     local_slot_int_dict_get_func: Option<FuncRef>,
     /// Local slot IntDict set helper (loop JIT fast path)
     local_slot_int_dict_set_func: Option<FuncRef>,
+    /// Active VM frame local-slot helpers (loop JIT scalar state)
+    vm_local_slot_set_func: Option<FuncRef>,
     /// Unique int-dict pointer helper (loop JIT fast path)
     int_dict_unique_ptr_func: Option<FuncRef>,
     /// Int-dict get via pointer helper (loop JIT fast path)
@@ -3089,6 +3142,7 @@ impl BytecodeTranslator {
             local_slot_dict_set_func: None,
             local_slot_int_dict_get_func: None,
             local_slot_int_dict_set_func: None,
+            vm_local_slot_set_func: None,
             int_dict_unique_ptr_func: None,
             int_dict_get_ptr_func: None,
             int_dict_get_ptr_dense_int_func: None,
@@ -3504,6 +3558,7 @@ impl BytecodeTranslator {
     fn initialize_local_slots_from_vm(
         &mut self,
         builder: &mut FunctionBuilder,
+        load_local_slot_func: FuncRef,
         load_var_func: FuncRef,
     ) {
         if !self.use_local_slots {
@@ -3521,12 +3576,20 @@ impl BytecodeTranslator {
             self.local_slots.iter().map(|(name, slot)| (name.clone(), *slot)).collect();
 
         for (name, slot) in local_slots {
-            let name_hash = Self::hash_var_name(&name) as i64;
-            let name_hash_val = builder.ins().iconst(types::I64, name_hash);
-            let zero = builder.ins().iconst(types::I64, 0);
-
-            let call = builder.ins().call(load_var_func, &[ctx, name_hash_val, zero]);
-            let value = builder.inst_results(call)[0];
+            let value = match self.local_names.iter().position(|local| local == &name) {
+                Some(index) => {
+                    let slot_index_value = builder.ins().iconst(types::I64, index as i64);
+                    let call = builder.ins().call(load_local_slot_func, &[ctx, slot_index_value]);
+                    builder.inst_results(call)[0]
+                }
+                None => {
+                    let name_hash = Self::hash_var_name(&name) as i64;
+                    let name_hash_value = builder.ins().iconst(types::I64, name_hash);
+                    let zero = builder.ins().iconst(types::I64, 0);
+                    let call = builder.ins().call(load_var_func, &[ctx, name_hash_value, zero]);
+                    builder.inst_results(call)[0]
+                }
+            };
             builder.ins().stack_store(value, slot, 0);
         }
     }
@@ -3591,20 +3654,23 @@ impl BytecodeTranslator {
             None => return,
         };
 
-        let store_func = match self.store_var_func {
-            Some(func) => func,
-            None => return,
-        };
-
         for (name, slot) in &self.local_slots {
             if !self.dirty_local_names.contains(name) {
                 continue;
             }
-            let name_hash = Self::hash_var_name(name) as i64;
-            let name_hash_val = builder.ins().iconst(types::I64, name_hash);
-            let zero = builder.ins().iconst(types::I64, 0);
             let value = builder.ins().stack_load(types::I64, *slot, 0);
-            builder.ins().call(store_func, &[ctx, name_hash_val, zero, value]);
+            if let (Some(slot_index), Some(store_func)) = (
+                self.local_names.iter().position(|local| local == name),
+                self.vm_local_slot_set_func,
+            ) {
+                let slot_index_value = builder.ins().iconst(types::I64, slot_index as i64);
+                builder.ins().call(store_func, &[ctx, slot_index_value, value]);
+            } else if let Some(store_func) = self.store_var_func {
+                let name_hash = Self::hash_var_name(name) as i64;
+                let name_hash_value = builder.ins().iconst(types::I64, name_hash);
+                let zero = builder.ins().iconst(types::I64, 0);
+                builder.ins().call(store_func, &[ctx, name_hash_value, zero, value]);
+            }
         }
     }
 
@@ -3775,6 +3841,10 @@ impl BytecodeTranslator {
     fn set_local_slot_int_dict_functions(&mut self, get_func: FuncRef, set_func: FuncRef) {
         self.local_slot_int_dict_get_func = Some(get_func);
         self.local_slot_int_dict_set_func = Some(set_func);
+    }
+
+    fn set_vm_local_slot_store_function(&mut self, set_func: FuncRef) {
+        self.vm_local_slot_set_func = Some(set_func);
     }
 
     fn set_int_dict_ptr_functions(
@@ -5711,6 +5781,8 @@ impl JitCompiler {
         // Register runtime helper symbols so JIT can find them
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
+        builder.symbol("jit_load_local_slot", jit_load_local_slot as *const u8);
+        builder.symbol("jit_store_local_slot", jit_store_local_slot as *const u8);
         builder.symbol("jit_store_variable_from_stack", jit_store_variable_from_stack as *const u8);
         builder.symbol("jit_stack_push", jit_stack_push as *const u8);
         builder.symbol("jit_stack_pop", jit_stack_pop as *const u8);
@@ -5965,6 +6037,25 @@ impl JitCompiler {
             .module
             .declare_function("jit_store_variable", Linkage::Import, &store_var_sig)
             .map_err(|e| format!("Failed to declare jit_store_variable: {}", e))?;
+
+        let mut load_local_slot_sig = self.module.make_signature();
+        load_local_slot_sig.params.push(AbiParam::new(types::I64));
+        load_local_slot_sig.params.push(AbiParam::new(types::I64));
+        load_local_slot_sig.returns.push(AbiParam::new(types::I64));
+        let load_local_slot_func_id = self
+            .module
+            .declare_function("jit_load_local_slot", Linkage::Import, &load_local_slot_sig)
+            .map_err(|e| format!("Failed to declare jit_load_local_slot: {}", e))?;
+
+        let mut store_local_slot_sig = self.module.make_signature();
+        store_local_slot_sig.params.push(AbiParam::new(types::I64));
+        store_local_slot_sig.params.push(AbiParam::new(types::I64));
+        store_local_slot_sig.params.push(AbiParam::new(types::I64));
+        store_local_slot_sig.returns.push(AbiParam::new(types::I64));
+        let store_local_slot_func_id = self
+            .module
+            .declare_function("jit_store_local_slot", Linkage::Import, &store_local_slot_sig)
+            .map_err(|e| format!("Failed to declare jit_store_local_slot: {}", e))?;
 
         // jit_store_variable_from_stack: fn(*mut VMContext, i64) -> i64
         let mut store_from_stack_sig = self.module.make_signature();
@@ -6229,6 +6320,10 @@ impl JitCompiler {
                 self.module.declare_func_in_func(load_var_func_id, builder.func);
             let store_var_func_ref =
                 self.module.declare_func_in_func(store_var_func_id, builder.func);
+            let load_local_slot_func_ref =
+                self.module.declare_func_in_func(load_local_slot_func_id, builder.func);
+            let store_local_slot_func_ref =
+                self.module.declare_func_in_func(store_local_slot_func_id, builder.func);
             let store_from_stack_func_ref =
                 self.module.declare_func_in_func(store_from_stack_func_id, builder.func);
             let local_dict_get_func_ref =
@@ -6291,6 +6386,7 @@ impl JitCompiler {
                 store_var_func_ref,
                 store_from_stack_func_ref,
             );
+            translator.set_vm_local_slot_store_function(store_local_slot_func_ref);
             translator
                 .set_local_slot_dict_functions(local_dict_get_func_ref, local_dict_set_func_ref);
             translator.set_local_slot_int_dict_functions(
@@ -6394,6 +6490,8 @@ impl JitCompiler {
                 }
             }
 
+            let presealed_current_block = (current_block != entry_block).then_some(current_block);
+
             // Create blocks for jump targets (loop JIT)
             translator.create_blocks(&mut builder, &chunk.instructions)?;
             let function_end = if let Some(loop_end) = loop_end {
@@ -6424,7 +6522,11 @@ impl JitCompiler {
             };
             translator.function_end = function_end;
             translator.allocate_local_slots(&mut builder, &chunk.instructions, function_end);
-            translator.initialize_local_slots_from_vm(&mut builder, load_var_func_ref);
+            translator.initialize_local_slots_from_vm(
+                &mut builder,
+                load_local_slot_func_ref,
+                load_var_func_ref,
+            );
 
             if let Some(int_dict_slots) = int_dict_slots {
                 translator.set_int_dict_slots(int_dict_slots);
@@ -6439,8 +6541,10 @@ impl JitCompiler {
 
             if offset != 0 && start_block != entry_block {
                 builder.ins().jump(start_block, &[]);
-                builder.seal_block(entry_block);
-                entry_block_sealed = true;
+                if !entry_block_sealed {
+                    builder.seal_block(entry_block);
+                    entry_block_sealed = true;
+                }
                 builder.switch_to_block(start_block);
                 current_block = start_block;
             }
@@ -6461,8 +6565,8 @@ impl JitCompiler {
 
             let mut sealed_blocks = std::collections::HashSet::new();
             sealed_blocks.insert(entry_block);
-            if current_block != entry_block {
-                sealed_blocks.insert(current_block);
+            if let Some(block) = presealed_current_block {
+                sealed_blocks.insert(block);
             }
             let mut block_terminated = false;
 
@@ -6559,6 +6663,7 @@ impl JitCompiler {
 
             // If the last block is not terminated, add a return
             if !block_terminated {
+                translator.persist_local_slots_to_vm(&mut builder);
                 let zero = builder.ins().iconst(types::I64, 0);
                 builder.ins().return_(&[zero]);
                 if !sealed_blocks.contains(&current_block) {
@@ -7126,8 +7231,13 @@ impl JitCompiler {
                             builder.ins().jump(block, &args);
                         }
 
-                        // Seal previous block
-                        if !sealed_blocks.contains(&current_block) {
+                        // Loop headers must stay open until every back-edge has
+                        // been added to Cranelift's SSA graph.
+                        if !sealed_blocks.contains(&current_block)
+                            && !translator.loop_header_pcs.iter().any(|&header_pc| {
+                                translator.blocks.get(&header_pc) == Some(&current_block)
+                            })
+                        {
                             builder.seal_block(current_block);
                             sealed_blocks.insert(current_block);
                         }
@@ -7180,7 +7290,11 @@ impl JitCompiler {
                             );
                         }
                         if terminates_block {
-                            if !sealed_blocks.contains(&current_block) {
+                            if !sealed_blocks.contains(&current_block)
+                                && !translator.loop_header_pcs.iter().any(|&header_pc| {
+                                    translator.blocks.get(&header_pc) == Some(&current_block)
+                                })
+                            {
                                 builder.seal_block(current_block);
                                 sealed_blocks.insert(current_block);
                             }
@@ -7208,6 +7322,17 @@ impl JitCompiler {
                 builder.ins().return_(&[zero]);
                 if !sealed_blocks.contains(&current_block) {
                     builder.seal_block(current_block);
+                    sealed_blocks.insert(current_block);
+                }
+            }
+
+            for (&pc, &block) in &translator.blocks {
+                if !sealed_blocks.contains(&block) {
+                    builder.seal_block(block);
+                    sealed_blocks.insert(block);
+                    if std::env::var("DEBUG_JIT").is_ok() {
+                        eprintln!("JIT: Late-sealing function block at PC {}", pc);
+                    }
                 }
             }
 

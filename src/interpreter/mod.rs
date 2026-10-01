@@ -423,6 +423,15 @@ impl Interpreter {
         Self::with_capability_policy(RuntimeCapabilityPolicy::trusted())
     }
 
+    /// Create the interpreter bridge used by the bytecode VM.
+    ///
+    /// The VM replaces this interpreter's environment with its shared globals before
+    /// execution, so registering a second copy of every builtin here only adds startup
+    /// work that is immediately discarded.
+    pub(crate) fn new_for_vm() -> Self {
+        Self::with_environment(RuntimeCapabilityPolicy::trusted(), Environment::default())
+    }
+
     pub fn with_capability_policy(capability_policy: RuntimeCapabilityPolicy) -> Self {
         let mut interpreter = Self::with_environment(capability_policy, Environment::default());
         interpreter.register_builtins();

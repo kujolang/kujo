@@ -1408,10 +1408,9 @@ async fn async_main() {
                                 if jit_requested {
                                     if let Err(reason) = vm.validate_jit_supported_surfaces(&chunk) {
                                         eprintln!(
-                                            "JIT opt-in requested, but this program is not JIT-compatible ({}). Falling back to VM bytecode execution without JIT.",
+                                            "JIT opt-in requested; unsupported bytecode regions will use the VM ({}).",
                                             reason
                                         );
-                                        vm.set_jit_enabled(false);
                                     }
                                 }
                                 vm.set_capability_policy(capability_policy.clone());
@@ -1424,18 +1423,18 @@ async fn async_main() {
                                 // Get the complete list from the interpreter
                                 let builtins = interpreter::Interpreter::get_builtin_names();
 
-                                for builtin_name in builtins {
-                                    env.lock().unwrap().set(
-                                        builtin_name.to_string(),
-                                        interpreter::Value::NativeFunction(
-                                            builtin_name.to_string(),
-                                        ),
-                                    );
-                                }
-
-                                // Register constant globals that are not callable native functions.
                                 {
                                     let mut env_lock = env.lock().unwrap();
+                                    for builtin_name in builtins {
+                                        env_lock.set(
+                                            builtin_name.to_string(),
+                                            interpreter::Value::NativeFunction(
+                                                builtin_name.to_string(),
+                                            ),
+                                        );
+                                    }
+
+                                    // Register constant globals that are not callable native functions.
                                     for (name, value) in crate::builtins::get_builtins() {
                                         env_lock.set(name, value);
                                     }
