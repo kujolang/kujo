@@ -83,7 +83,7 @@ fn built_in_cross_language_benchmark_inputs_are_documented_and_present() {
 }
 
 #[test]
-fn kujo_go_runtime_suite_preserves_fairness_and_evidence_contracts() {
+fn kujo_runtime_matrix_preserves_fairness_and_evidence_contracts() {
     let suite = "benchmarks/cross-language/kujo-go-runtime";
     let readme = read(&format!("{suite}/README.md"));
     let runner = read(&format!("{suite}/run.sh"));
@@ -91,8 +91,9 @@ fn kujo_go_runtime_suite_preserves_fairness_and_evidence_contracts() {
     for marker in [
         "function-local workloads",
         "checks exact output before accepting timings",
+        "Go, optimized Rust, Python, and PHP",
         "Startup measures",
-        "Compile measures",
+        "Compile/check measures",
         "Run measures",
         "BENCHMARK_PUBLICATION_POLICY.md",
     ] {
@@ -100,7 +101,7 @@ fn kujo_go_runtime_suite_preserves_fairness_and_evidence_contracts() {
     }
 
     for workload in ["startup", "prime_count", "integer_mix"] {
-        for extension in ["kujo", "go"] {
+        for extension in ["kujo", "go", "rs", "py", "php"] {
             let path = format!("{suite}/{workload}.{extension}");
             assert!(repo_root().join(&path).is_file(), "runtime suite input is missing: {path}");
         }
@@ -113,6 +114,9 @@ fn kujo_go_runtime_suite_preserves_fairness_and_evidence_contracts() {
 
     for marker in [
         "cargo build --release --locked --bin kujo",
+        "rustc --edition=2021 -C opt-level=3",
+        "python3 -B",
+        "php -l",
         "correctness.tsv",
         "--warmup",
         "--runs",

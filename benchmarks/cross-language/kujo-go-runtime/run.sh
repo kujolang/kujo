@@ -4,7 +4,7 @@ set -euo pipefail
 SUITE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KUJO_REPO="$(cd "$SUITE_DIR/../../.." && pwd)"
 RESULTS_ROOT="$KUJO_REPO/benchmarks/cross-language/results"
-RUN_ID="kujo-go-runtime-$(date -u +%Y%m%dT%H%M%SZ)"
+RUN_ID="${RUN_ID:-kujo-runtime-matrix-$(date -u +%Y%m%dT%H%M%SZ)}"
 RESULTS_DIR="${RESULTS_DIR:-$RESULTS_ROOT/$RUN_ID}"
 BIN_DIR="$RESULTS_DIR/bin"
 
@@ -13,7 +13,7 @@ BENCH_RUNS="${BENCH_RUNS:-5}"
 STARTUP_WARMUP="${STARTUP_WARMUP:-3}"
 STARTUP_RUNS="${STARTUP_RUNS:-15}"
 
-for command_name in cargo go hyperfine jq git; do
+for command_name in cargo go hyperfine jq git python3 php rustc; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
         echo "missing required command: $command_name" >&2
         exit 1
@@ -29,6 +29,18 @@ sha256_file() {
         echo "missing required command: shasum or sha256sum" >&2
         return 1
     fi
+}
+
+median_seconds() {
+    jq ".results[$2].median" "$1"
+}
+
+milliseconds() {
+    jq -n --argjson value "$1" '$value * 1000'
+}
+
+ratio() {
+    jq -n --argjson numerator "$1" --argjson denominator "$2" '$numerator / $denominator'
 }
 
 mkdir -p "$BIN_DIR"
@@ -54,27 +66,34 @@ cp "$KUJO_REPO/target/release/kujo" "$BIN_DIR/kujo"
 KUJO_BIN="$BIN_DIR/kujo"
 
 workloads=(startup prime_count integer_mix)
+RUST_FLAGS=(--edition=2021 -C opt-level=3 -C debuginfo=0 -C strip=symbols -C codegen-units=1)
 for workload in "${workloads[@]}"; do
     go build -trimpath -o "$BIN_DIR/$workload-go" "$SUITE_DIR/$workload.go"
+    rustc "${RUST_FLAGS[@]}" -o "$BIN_DIR/$workload-rust" "$SUITE_DIR/$workload.rs"
 done
 
 CORRECTNESS_TSV="$RESULTS_DIR/correctness.tsv"
-printf 'workload\tkujo_vm_output\tkujo_jit_output\tgo_output\texpected\tstatus\n' >"$CORRECTNESS_TSV"
+printf 'workload\tkujo_vm_output\tkujo_jit_output\tgo_output\trust_output\tpython_output\tphp_output\texpected\tstatus\n' >"$CORRECTNESS_TSV"
 
 for workload in "${workloads[@]}"; do
     kujo_vm_output="$($KUJO_BIN run "$SUITE_DIR/$workload.kujo")"
     kujo_jit_output="$($KUJO_BIN run --jit "$SUITE_DIR/$workload.kujo" 2>/dev/null)"
     go_output="$($BIN_DIR/$workload-go)"
-
+    rust_output="$($BIN_DIR/$workload-rust)"
+    python_output="$(python3 -B "$SUITE_DIR/$workload.py")"
+    php_output="$(php "$SUITE_DIR/$workload.php")"
     expected="$(<"$SUITE_DIR/expected/$workload.txt")"
 
     status="pass"
-    if [[ "$kujo_vm_output" != "$expected" || "$kujo_jit_output" != "$expected" || "$go_output" != "$expected" ]]; then
+    if [[ "$kujo_vm_output" != "$expected" || "$kujo_jit_output" != "$expected" \
+        || "$go_output" != "$expected" || "$rust_output" != "$expected" \
+        || "$python_output" != "$expected" || "$php_output" != "$expected" ]]; then
         status="fail"
     fi
 
-    printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-        "$workload" "$kujo_vm_output" "$kujo_jit_output" "$go_output" "$expected" "$status" \
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$workload" "$kujo_vm_output" "$kujo_jit_output" "$go_output" \
+        "$rust_output" "$python_output" "$php_output" "$expected" "$status" \
         >>"$CORRECTNESS_TSV"
 
     if [[ "$status" != "pass" ]]; then
@@ -90,11 +109,16 @@ hyperfine \
     --command-name "Kujo startup" "$KUJO_BIN run $SUITE_DIR/startup.kujo" \
     --command-name "Kujo JIT startup" "$KUJO_BIN run --jit $SUITE_DIR/startup.kujo" \
     --command-name "Go startup" "$BIN_DIR/startup-go" \
+    --command-name "Rust startup" "$BIN_DIR/startup-rust" \
+    --command-name "Python startup" "python3 -B $SUITE_DIR/startup.py" \
+    --command-name "PHP startup" "php $SUITE_DIR/startup.php" \
     --export-json "$RESULTS_DIR/startup.json" \
     --export-markdown "$RESULTS_DIR/startup.md"
 
 for workload in prime_count integer_mix; do
-    compile_output="$BIN_DIR/$workload-compile-go"
+    go_compile_output="$BIN_DIR/$workload-compile-go"
+    rust_compile_output="$BIN_DIR/$workload-compile-rust"
+    python_compile_output="$BIN_DIR/$workload.pyc"
 
     hyperfine \
         --shell=none \
@@ -109,11 +133,17 @@ for workload in prime_count integer_mix; do
         --shell=none \
         --warmup "$BENCH_WARMUP" \
         --runs "$BENCH_RUNS" \
-        --prepare "rm -f $compile_output" \
+        --prepare "/bin/rm -f $go_compile_output $rust_compile_output $python_compile_output" \
         --command-name "Go native compile: $workload" \
-            "go build -trimpath -o $compile_output $SUITE_DIR/$workload.go" \
-        --export-json "$RESULTS_DIR/$workload-go-compile.json" \
-        --export-markdown "$RESULTS_DIR/$workload-go-compile.md"
+            "go build -trimpath -o $go_compile_output $SUITE_DIR/$workload.go" \
+        --command-name "Rust native compile: $workload" \
+            "rustc --edition=2021 -C opt-level=3 -C debuginfo=0 -C strip=symbols -C codegen-units=1 -o $rust_compile_output $SUITE_DIR/$workload.rs" \
+        --command-name "Python bytecode compile: $workload" \
+            "python3 -B $SUITE_DIR/python_compile.py $SUITE_DIR/$workload.py $python_compile_output" \
+        --command-name "PHP syntax check: $workload" \
+            "php -l $SUITE_DIR/$workload.php" \
+        --export-json "$RESULTS_DIR/$workload-other-compile.json" \
+        --export-markdown "$RESULTS_DIR/$workload-other-compile.md"
 
     hyperfine \
         --shell=none \
@@ -125,12 +155,21 @@ for workload in prime_count integer_mix; do
             "$KUJO_BIN run --jit $SUITE_DIR/$workload.kujo" \
         --command-name "Go run: $workload" \
             "$BIN_DIR/$workload-go" \
+        --command-name "Rust run: $workload" \
+            "$BIN_DIR/$workload-rust" \
+        --command-name "Python run: $workload" \
+            "python3 -B $SUITE_DIR/$workload.py" \
+        --command-name "PHP run: $workload" \
+            "php $SUITE_DIR/$workload.php" \
         --export-json "$RESULTS_DIR/$workload-run.json" \
         --export-markdown "$RESULTS_DIR/$workload-run.md"
 done
 
 KUJO_VERSION="$($KUJO_BIN --version)"
 GO_VERSION="$(go version)"
+RUST_VERSION="$(rustc --version)"
+PYTHON_VERSION="$(python3 --version)"
+PHP_VERSION="$(php --version | head -n 1)"
 HYPERFINE_VERSION="$(hyperfine --version)"
 if command -v sw_vers >/dev/null 2>&1; then
     OS_VERSION="macOS $(sw_vers -productVersion)"
@@ -154,6 +193,15 @@ jq -n \
     --arg kujo_version "$KUJO_VERSION" \
     --arg kujo_sha256 "$(sha256_file "$KUJO_BIN")" \
     --arg go_version "$GO_VERSION" \
+    --arg go_prime_sha256 "$(sha256_file "$BIN_DIR/prime_count-go")" \
+    --arg go_integer_sha256 "$(sha256_file "$BIN_DIR/integer_mix-go")" \
+    --arg rust_version "$RUST_VERSION" \
+    --arg rust_prime_sha256 "$(sha256_file "$BIN_DIR/prime_count-rust")" \
+    --arg rust_integer_sha256 "$(sha256_file "$BIN_DIR/integer_mix-rust")" \
+    --arg python_version "$PYTHON_VERSION" \
+    --arg python_executable "$(command -v python3)" \
+    --arg php_version "$PHP_VERSION" \
+    --arg php_executable "$(command -v php)" \
     --arg hyperfine_version "$HYPERFINE_VERSION" \
     --arg os_version "$OS_VERSION" \
     --arg arch "$ARCH" \
@@ -174,8 +222,16 @@ jq -n \
         },
         go: {
             version: $go_version,
-            build: "go build -trimpath"
+            build: "go build -trimpath",
+            binary_sha256: {prime_count: $go_prime_sha256, integer_mix: $go_integer_sha256}
         },
+        rust: {
+            version: $rust_version,
+            build: "rustc --edition=2021 -C opt-level=3 -C debuginfo=0 -C strip=symbols -C codegen-units=1",
+            binary_sha256: {prime_count: $rust_prime_sha256, integer_mix: $rust_integer_sha256}
+        },
+        python: {version: $python_version, executable: $python_executable, flags: "-B"},
+        php: {version: $php_version, executable: $php_executable},
         hyperfine: $hyperfine_version,
         host: {os_version: $os_version, arch: $arch, cpu: $cpu},
         sampling: {
@@ -189,50 +245,77 @@ jq -n \
 
 SUMMARY="$RESULTS_DIR/summary.md"
 {
-    echo "# Kujo and Go runtime benchmark"
+    echo "# Kujo cross-language runtime benchmark"
     echo
     echo "Run: \`$RUN_ID\`"
     echo
     echo "All correctness checks passed. Times below are Hyperfine medians."
     echo
-    echo "| Phase | Workload | Kujo VM | Kujo JIT | Go | Kujo JIT / Go |"
-    echo "|---|---:|---:|---:|---:|---:|"
+    echo "| Phase | Workload | Kujo VM | Kujo JIT | Go | Rust | Python | PHP |"
+    echo "|---|---|---:|---:|---:|---:|---:|---:|"
 
-    startup_vm="$(jq '.results[0].median' "$RESULTS_DIR/startup.json")"
-    startup_jit="$(jq '.results[1].median' "$RESULTS_DIR/startup.json")"
-    startup_go="$(jq '.results[2].median' "$RESULTS_DIR/startup.json")"
-    startup_ratio="$(jq -n --argjson jit "$startup_jit" --argjson go "$startup_go" '$jit / $go')"
-    printf '| Startup | trivial | %.3f ms | %.3f ms | %.3f ms | %.2fx |\n' \
-        "$(jq -n --argjson value "$startup_vm" '$value * 1000')" \
-        "$(jq -n --argjson value "$startup_jit" '$value * 1000')" \
-        "$(jq -n --argjson value "$startup_go" '$value * 1000')" \
-        "$startup_ratio"
+    startup_vm="$(median_seconds "$RESULTS_DIR/startup.json" 0)"
+    startup_jit="$(median_seconds "$RESULTS_DIR/startup.json" 1)"
+    startup_go="$(median_seconds "$RESULTS_DIR/startup.json" 2)"
+    startup_rust="$(median_seconds "$RESULTS_DIR/startup.json" 3)"
+    startup_python="$(median_seconds "$RESULTS_DIR/startup.json" 4)"
+    startup_php="$(median_seconds "$RESULTS_DIR/startup.json" 5)"
+    printf '| Startup | trivial | %.3f ms | %.3f ms | %.3f ms | %.3f ms | %.3f ms | %.3f ms |\n' \
+        "$(milliseconds "$startup_vm")" "$(milliseconds "$startup_jit")" \
+        "$(milliseconds "$startup_go")" "$(milliseconds "$startup_rust")" \
+        "$(milliseconds "$startup_python")" "$(milliseconds "$startup_php")"
 
     for workload in prime_count integer_mix; do
-        kujo_compile="$(jq '.results[0].median' "$RESULTS_DIR/$workload-kujo-compile.json")"
-        go_compile="$(jq '.results[0].median' "$RESULTS_DIR/$workload-go-compile.json")"
-        printf '| Compile | %s | %.3f ms | n/a | %.3f ms | n/a |\n' \
-            "$workload" \
-            "$(jq -n --argjson value "$kujo_compile" '$value * 1000')" \
-            "$(jq -n --argjson value "$go_compile" '$value * 1000')"
+        kujo_compile="$(median_seconds "$RESULTS_DIR/$workload-kujo-compile.json" 0)"
+        go_compile="$(median_seconds "$RESULTS_DIR/$workload-other-compile.json" 0)"
+        rust_compile="$(median_seconds "$RESULTS_DIR/$workload-other-compile.json" 1)"
+        python_compile="$(median_seconds "$RESULTS_DIR/$workload-other-compile.json" 2)"
+        php_compile="$(median_seconds "$RESULTS_DIR/$workload-other-compile.json" 3)"
+        printf '| Compile/check | %s | %.3f ms | n/a | %.3f ms | %.3f ms | %.3f ms | %.3f ms |\n' \
+            "$workload" "$(milliseconds "$kujo_compile")" "$(milliseconds "$go_compile")" \
+            "$(milliseconds "$rust_compile")" "$(milliseconds "$python_compile")" \
+            "$(milliseconds "$php_compile")"
 
-        kujo_vm_run="$(jq '.results[0].median' "$RESULTS_DIR/$workload-run.json")"
-        kujo_jit_run="$(jq '.results[1].median' "$RESULTS_DIR/$workload-run.json")"
-        go_run="$(jq '.results[2].median' "$RESULTS_DIR/$workload-run.json")"
-        run_ratio="$(jq -n --argjson jit "$kujo_jit_run" --argjson go "$go_run" '$jit / $go')"
-        printf '| End-to-end run | %s | %.3f ms | %.3f ms | %.3f ms | %.2fx |\n' \
-            "$workload" \
-            "$(jq -n --argjson value "$kujo_vm_run" '$value * 1000')" \
-            "$(jq -n --argjson value "$kujo_jit_run" '$value * 1000')" \
-            "$(jq -n --argjson value "$go_run" '$value * 1000')" \
-            "$run_ratio"
+        kujo_vm_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 0)"
+        kujo_jit_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 1)"
+        go_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 2)"
+        rust_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 3)"
+        python_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 4)"
+        php_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 5)"
+        printf '| End-to-end run | %s | %.3f ms | %.3f ms | %.3f ms | %.3f ms | %.3f ms | %.3f ms |\n' \
+            "$workload" "$(milliseconds "$kujo_vm_run")" "$(milliseconds "$kujo_jit_run")" \
+            "$(milliseconds "$go_run")" "$(milliseconds "$rust_run")" \
+            "$(milliseconds "$python_run")" "$(milliseconds "$php_run")"
     done
 
     echo
-    echo "Compile rows are not equivalent artifacts: Kujo checks and compiles to"
-    echo "in-memory bytecode, while Go emits a reusable native binary. Kujo VM and"
-    echo "JIT run rows still include startup and source compilation. See the raw Markdown"
-    echo "and JSON files for means, standard deviations, ranges, and commands."
+    echo "## Kujo JIT run ratios"
+    echo
+    echo "Values below 1.00x mean Kujo JIT was faster; values above 1.00x mean the comparison language was faster."
+    echo
+    echo "| Workload | vs Go | vs Rust | vs Python | vs PHP |"
+    echo "|---|---:|---:|---:|---:|"
+    printf '| Startup | %.2fx | %.2fx | %.2fx | %.2fx |\n' \
+        "$(ratio "$startup_jit" "$startup_go")" "$(ratio "$startup_jit" "$startup_rust")" \
+        "$(ratio "$startup_jit" "$startup_python")" "$(ratio "$startup_jit" "$startup_php")"
+    for workload in prime_count integer_mix; do
+        kujo_jit_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 1)"
+        go_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 2)"
+        rust_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 3)"
+        python_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 4)"
+        php_run="$(median_seconds "$RESULTS_DIR/$workload-run.json" 5)"
+        printf '| %s | %.2fx | %.2fx | %.2fx | %.2fx |\n' \
+            "$workload" "$(ratio "$kujo_jit_run" "$go_run")" \
+            "$(ratio "$kujo_jit_run" "$rust_run")" "$(ratio "$kujo_jit_run" "$python_run")" \
+            "$(ratio "$kujo_jit_run" "$php_run")"
+    done
+
+    echo
+    echo "Compile/check rows are intentionally not treated as equivalent artifacts: Kujo checks and"
+    echo "compiles to in-memory bytecode, Go and Rust emit optimized reusable native binaries, Python"
+    echo "emits interpreter bytecode, and PHP performs a syntax check. Kujo VM and JIT run rows include"
+    echo "startup and source compilation; Python and PHP likewise include interpreter startup and source"
+    echo "loading. See the raw Markdown and JSON files for distributions and exact commands."
 } >"$SUMMARY"
 
 echo "$RESULTS_DIR"

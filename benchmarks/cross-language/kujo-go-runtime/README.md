@@ -1,4 +1,4 @@
-# Kujo and Go Runtime Microbenchmarks
+# Kujo Cross-Language Runtime Microbenchmarks
 
 This suite replaces the ad hoc single-file prime comparison with equivalent
 function-local workloads that provide three narrow signals:
@@ -10,13 +10,13 @@ function-local workloads that provide three narrow signals:
 
 These are local regression and profiling inputs, not broad language rankings.
 The runner checks exact output before accepting timings for the Kujo VM,
-opt-in Kujo JIT, and Go, and keeps raw results in the repository's ignored
-`benchmarks/cross-language/results/` directory.
+opt-in Kujo JIT, Go, optimized Rust, Python, and PHP, and keeps raw results in
+the repository's ignored `benchmarks/cross-language/results/` directory.
 
 ## Run
 
-Requirements: Rust/Cargo, Go, Hyperfine, `jq`, and either `shasum` or
-`sha256sum`.
+Requirements: Rust/Cargo, Go, Python 3, PHP, Hyperfine, `jq`, and either
+`shasum` or `sha256sum`.
 
 From the repository root:
 
@@ -37,23 +37,30 @@ Hyperfine launches benchmark commands directly with `--shell=none`, avoiding
 shell-startup noise that can materially distort these short-lived processes.
 
 The runner builds Kujo with `cargo build --release --locked`, copies that exact
-binary into the result bundle, builds optimized Go binaries with `-trimpath`,
-and records versions, the Kujo commit, dirty state, artifact hashes, host data,
-commands, and raw Hyperfine JSON/Markdown.
+binary into the result bundle, builds Go binaries with the standard optimized
+compiler defaults and `-trimpath`, and builds Rust binaries with `rustc -C
+opt-level=3`, stripped debug data, and one codegen unit. It records all runtime
+and compiler versions, the Kujo commit and dirty state, native artifact hashes,
+host data, commands, and raw Hyperfine JSON/Markdown.
 
 ## Measurement boundaries
 
-- Startup measures a no-work program in the Kujo VM, opt-in Kujo JIT, and Go.
-- Compile measures `kujo check --quiet` (parse plus bytecode compilation) and a
-  fresh `go build` into the result bundle. Go produces a reusable native binary;
-  Kujo currently does not emit a reusable bytecode artifact, so the operations
-  are reported separately rather than treated as equivalent.
-- Run measures `kujo run`, `kujo run --jit`, and an already-built Go binary.
-  Both Kujo commands still include process startup and source-to-bytecode
-  compilation; the JIT command also includes native compilation of hot regions.
-  Use the startup and compile distributions to understand those fixed costs; do
-  not subtract medians and present the result as a precise execution-only
-  measurement.
+- Startup measures equivalent no-work programs in all five languages/runtimes.
+- Compile/check measures `kujo check --quiet`, fresh optimized Go and Rust
+  native builds, Python bytecode compilation, and PHP syntax checking. These
+  operations produce different artifacts and are reported side by side for
+  transparency, not as directly equivalent compiler throughput.
+- Run measures `kujo run`, `kujo run --jit`, already-built Go and Rust binaries,
+  Python with bytecode-cache writes disabled, and PHP CLI. Kujo, Python, and PHP
+  rows include process startup and source loading/compilation; the Kujo JIT row
+  also includes native compilation of hot regions. Use the startup and compile
+  distributions to understand those fixed costs; do not subtract medians and
+  present the result as a precise execution-only measurement.
+
+Every computational fixture keeps its state inside one function and uses the
+same loop bounds, constants, integer operations, output, and expected-result
+check. This controls obvious source-level differences without claiming that
+the language implementations or compilation models are identical.
 
 Any public performance claim must also satisfy
 [`docs/BENCHMARK_PUBLICATION_POLICY.md`](../../../docs/BENCHMARK_PUBLICATION_POLICY.md).
