@@ -1,0 +1,15 @@
+{
+  "schema": "kujo.release-candidate/v1",
+  "version": "1.7.0",
+  "status": "candidate-unpublished",
+  "intended_tag": "v1.7.0",
+  "published_stable": "1.6.0",
+  "native_archive": "kujo-v1.7.0-{platform}.tar.gz",
+  "source_archive": "kujo-v1.7.0-source.tar.gz",
+  "experimental_contracts": {
+    "effect_assurance": "dispatch.effect-assurance/v1beta1",
+    "interop": "kujo.interop-handoff/v1alpha1",
+    "participant_sdk": "kujo.participant-sdk-conformance/v1alpha1"
+  },
+  "publication_authorized": false
+}

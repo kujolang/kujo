@@ -6,12 +6,13 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
-- Add opt-in Windows `run --kill-children-on-exit` lifetime ownership for externally supervised runtimes; unsupported platforms or job admission failures reject before script execution.
+## [1.7.0] - Unreleased candidate
 
-
-Additional runtime changes recorded below.
+This candidate is not published. The current stable runtime remains 1.6.0.
 
 ### Added
+
+- Add opt-in Windows `run --kill-children-on-exit` lifetime ownership for externally supervised runtimes; unsupported platforms or job admission failures reject before script execution. This bounds subprocess lifetime; it does not grant capabilities or sandbox untrusted code.
 
 - Add pure `path_is_absolute` native syntax validation for portable process bindings; no filesystem capability or access required.
 
