@@ -10,6 +10,8 @@ Additional runtime changes recorded below.
 
 ### Added
 
+- Add pure `path_is_absolute` native syntax validation for portable process bindings; no filesystem capability or access required.
+
 - First-party `kujo mcp` command group with `kujo mcp make [REPO] [OPTIONS]`,
   delegating to the canonical Kujo MCP package. The command resolves the
   package from `KUJO_MCP_PATH`, walk-up `kennel.toml` identity, the analyzed

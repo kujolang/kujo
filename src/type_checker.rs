@@ -1219,6 +1219,14 @@ impl TypeChecker {
             },
         );
 
+        self.functions.insert(
+            "path_is_absolute".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::Bool),
+            },
+        );
+
         // File I/O functions
         self.functions.insert(
             "read_file".to_string(),

@@ -356,6 +356,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `basename` | `basename(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := basename(...)` |
 | `path_exists` | `path_exists(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_exists(...)` |
 | `path_join` | `path_join(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_join(...)` |
+| `path_is_absolute` | `path_is_absolute(path)` | 1 string | bool | Value::Error on invalid arity/type. | none (pure native path syntax) | `path_is_absolute("/tmp/file")` |
 | `path_absolute` | `path_absolute(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_absolute(...)` |
 | `path_is_dir` | `path_is_dir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_is_dir(...)` |
 | `path_is_file` | `path_is_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_is_file(...)` |
@@ -683,3 +684,14 @@ publishing its targets and persist those targets before deleting the journal.
 A later successful sync can confirm preceding namespace changes. These guarantees
 are subject to operating system, filesystem and storage hardware honoring sync;
 this is not an assurance against hardware failure or a multi-tenant sandbox.
+
+
+### Native absolute path syntax
+
+`path_is_absolute(path)` is a pure check using the runtime operating system's
+path rules. It does not read the filesystem, resolve symlinks, require existence,
+or establish authority. NUL-containing strings return false. On Windows,
+drive-relative paths (`C:relative`) and root-relative paths (`\relative`) are
+not absolute; drive-qualified and UNC paths follow native rules. On POSIX,
+Windows drive syntax is relative. Available in the development runtime; not in
+the released 1.6.0 binaries.

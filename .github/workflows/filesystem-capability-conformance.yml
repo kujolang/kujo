@@ -40,3 +40,6 @@ jobs:
 
       - name: Run bounded process stdin conformance
         run: cargo test --locked test_process_stdin --lib
+
+      - name: Run pure native path validation in both runtimes
+        run: cargo test --locked --test path_absolute_contracts

@@ -729,6 +729,7 @@ mod tests {
             "dirname",
             "basename",
             "path_exists",
+            "path_is_absolute",
             "path_absolute",
             "path_is_dir",
             "path_is_file",

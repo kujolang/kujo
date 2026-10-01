@@ -849,6 +849,7 @@ impl Interpreter {
             "dirname",
             "basename",
             "path_exists",
+            "path_is_absolute",
             "path_join",
             "path_absolute",
             "path_is_dir",
@@ -1578,6 +1579,10 @@ impl Interpreter {
         self.env.define("os_environ".to_string(), Value::NativeFunction("os_environ".to_string()));
 
         // Path operation functions
+        self.env.define(
+            "path_is_absolute".to_string(),
+            Value::NativeFunction("path_is_absolute".to_string()),
+        );
         self.env.define("join_path".to_string(), Value::NativeFunction("join_path".to_string()));
         self.env.define("dirname".to_string(), Value::NativeFunction("dirname".to_string()));
         self.env.define("basename".to_string(), Value::NativeFunction("basename".to_string()));
