@@ -59,21 +59,22 @@ for workload in "${workloads[@]}"; do
 done
 
 CORRECTNESS_TSV="$RESULTS_DIR/correctness.tsv"
-printf 'workload\tkujo_output\tgo_output\texpected\tstatus\n' >"$CORRECTNESS_TSV"
+printf 'workload\tkujo_vm_output\tkujo_jit_output\tgo_output\texpected\tstatus\n' >"$CORRECTNESS_TSV"
 
 for workload in "${workloads[@]}"; do
-    kujo_output="$($KUJO_BIN run "$SUITE_DIR/$workload.kujo")"
+    kujo_vm_output="$($KUJO_BIN run "$SUITE_DIR/$workload.kujo")"
+    kujo_jit_output="$($KUJO_BIN run --jit "$SUITE_DIR/$workload.kujo" 2>/dev/null)"
     go_output="$($BIN_DIR/$workload-go)"
 
     expected="$(<"$SUITE_DIR/expected/$workload.txt")"
 
     status="pass"
-    if [[ "$kujo_output" != "$expected" || "$go_output" != "$expected" ]]; then
+    if [[ "$kujo_vm_output" != "$expected" || "$kujo_jit_output" != "$expected" || "$go_output" != "$expected" ]]; then
         status="fail"
     fi
 
-    printf '%s\t%s\t%s\t%s\t%s\n' \
-        "$workload" "$kujo_output" "$go_output" "$expected" "$status" \
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$workload" "$kujo_vm_output" "$kujo_jit_output" "$go_output" "$expected" "$status" \
         >>"$CORRECTNESS_TSV"
 
     if [[ "$status" != "pass" ]]; then
@@ -86,6 +87,7 @@ hyperfine \
     --warmup "$STARTUP_WARMUP" \
     --runs "$STARTUP_RUNS" \
     --command-name "Kujo startup" "$KUJO_BIN run $SUITE_DIR/startup.kujo" \
+    --command-name "Kujo JIT startup" "$KUJO_BIN run --jit $SUITE_DIR/startup.kujo 2>/dev/null" \
     --command-name "Go startup" "$BIN_DIR/startup-go" \
     --export-json "$RESULTS_DIR/startup.json" \
     --export-markdown "$RESULTS_DIR/startup.md"
@@ -115,6 +117,8 @@ for workload in prime_count integer_mix; do
         --runs "$BENCH_RUNS" \
         --command-name "Kujo run: $workload" \
             "$KUJO_BIN run $SUITE_DIR/$workload.kujo" \
+        --command-name "Kujo JIT run: $workload" \
+            "$KUJO_BIN run --jit $SUITE_DIR/$workload.kujo 2>/dev/null" \
         --command-name "Go run: $workload" \
             "$BIN_DIR/$workload-go" \
         --export-json "$RESULTS_DIR/$workload-run.json" \
@@ -186,39 +190,43 @@ SUMMARY="$RESULTS_DIR/summary.md"
     echo
     echo "All correctness checks passed. Times below are Hyperfine medians."
     echo
-    echo "| Phase | Workload | Kujo | Go | Go speedup |"
-    echo "|---|---:|---:|---:|---:|"
+    echo "| Phase | Workload | Kujo VM | Kujo JIT | Go | Kujo JIT / Go |"
+    echo "|---|---:|---:|---:|---:|---:|"
 
-    startup_kujo="$(jq '.results[0].median' "$RESULTS_DIR/startup.json")"
-    startup_go="$(jq '.results[1].median' "$RESULTS_DIR/startup.json")"
-    startup_ratio="$(jq -n --argjson kujo "$startup_kujo" --argjson go "$startup_go" '$kujo / $go')"
-    printf '| Startup | trivial | %.3f ms | %.3f ms | %.2fx |\n' \
-        "$(jq -n --argjson value "$startup_kujo" '$value * 1000')" \
+    startup_vm="$(jq '.results[0].median' "$RESULTS_DIR/startup.json")"
+    startup_jit="$(jq '.results[1].median' "$RESULTS_DIR/startup.json")"
+    startup_go="$(jq '.results[2].median' "$RESULTS_DIR/startup.json")"
+    startup_ratio="$(jq -n --argjson jit "$startup_jit" --argjson go "$startup_go" '$jit / $go')"
+    printf '| Startup | trivial | %.3f ms | %.3f ms | %.3f ms | %.2fx |\n' \
+        "$(jq -n --argjson value "$startup_vm" '$value * 1000')" \
+        "$(jq -n --argjson value "$startup_jit" '$value * 1000')" \
         "$(jq -n --argjson value "$startup_go" '$value * 1000')" \
         "$startup_ratio"
 
     for workload in prime_count integer_mix; do
         kujo_compile="$(jq '.results[0].median' "$RESULTS_DIR/$workload-kujo-compile.json")"
         go_compile="$(jq '.results[0].median' "$RESULTS_DIR/$workload-go-compile.json")"
-        printf '| Compile | %s | %.3f ms | %.3f ms | n/a |\n' \
+        printf '| Compile | %s | %.3f ms | n/a | %.3f ms | n/a |\n' \
             "$workload" \
             "$(jq -n --argjson value "$kujo_compile" '$value * 1000')" \
             "$(jq -n --argjson value "$go_compile" '$value * 1000')"
 
-        kujo_run="$(jq '.results[0].median' "$RESULTS_DIR/$workload-run.json")"
-        go_run="$(jq '.results[1].median' "$RESULTS_DIR/$workload-run.json")"
-        run_ratio="$(jq -n --argjson kujo "$kujo_run" --argjson go "$go_run" '$kujo / $go')"
-        printf '| End-to-end run | %s | %.3f ms | %.3f ms | %.2fx |\n' \
+        kujo_vm_run="$(jq '.results[0].median' "$RESULTS_DIR/$workload-run.json")"
+        kujo_jit_run="$(jq '.results[1].median' "$RESULTS_DIR/$workload-run.json")"
+        go_run="$(jq '.results[2].median' "$RESULTS_DIR/$workload-run.json")"
+        run_ratio="$(jq -n --argjson jit "$kujo_jit_run" --argjson go "$go_run" '$jit / $go')"
+        printf '| End-to-end run | %s | %.3f ms | %.3f ms | %.3f ms | %.2fx |\n' \
             "$workload" \
-            "$(jq -n --argjson value "$kujo_run" '$value * 1000')" \
+            "$(jq -n --argjson value "$kujo_vm_run" '$value * 1000')" \
+            "$(jq -n --argjson value "$kujo_jit_run" '$value * 1000')" \
             "$(jq -n --argjson value "$go_run" '$value * 1000')" \
             "$run_ratio"
     done
 
     echo
     echo "Compile rows are not equivalent artifacts: Kujo checks and compiles to"
-    echo "in-memory bytecode, while Go emits a reusable native binary. Kujo run"
-    echo "rows still include startup and source compilation. See the raw Markdown"
+    echo "in-memory bytecode, while Go emits a reusable native binary. Kujo VM and"
+    echo "JIT run rows still include startup and source compilation. See the raw Markdown"
     echo "and JSON files for means, standard deviations, ranges, and commands."
 } >"$SUMMARY"
 

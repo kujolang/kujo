@@ -1408,10 +1408,9 @@ async fn async_main() {
                                 if jit_requested {
                                     if let Err(reason) = vm.validate_jit_supported_surfaces(&chunk) {
                                         eprintln!(
-                                            "JIT opt-in requested, but this program is not JIT-compatible ({}). Falling back to VM bytecode execution without JIT.",
+                                            "JIT opt-in requested; unsupported bytecode regions will use the VM ({}).",
                                             reason
                                         );
-                                        vm.set_jit_enabled(false);
                                     }
                                 }
                                 vm.set_capability_policy(capability_policy.clone());

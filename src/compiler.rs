@@ -285,13 +285,13 @@ impl Compiler {
 
     // Function-local slots already encode lexical identity. Adding environment
     // operations there would unnecessarily exclude otherwise JIT-safe loops.
-    fn push_loop_runtime_scope(&mut self) {
+    fn push_local_aware_runtime_scope(&mut self) {
         if !self.uses_local_slots {
             self.push_runtime_scope();
         }
     }
 
-    fn pop_loop_runtime_scope(&mut self) {
+    fn pop_local_aware_runtime_scope(&mut self) {
         if !self.uses_local_slots {
             self.pop_runtime_scope();
         }
@@ -469,13 +469,13 @@ impl Compiler {
                 self.chunk.emit(OpCode::Pop); // Pop condition
 
                 // Compile then block
-                self.push_runtime_scope();
+                self.push_local_aware_runtime_scope();
                 self.enter_scope();
                 for stmt in then_branch {
                     self.compile_stmt(stmt)?;
                 }
                 self.exit_scope();
-                self.pop_runtime_scope();
+                self.pop_local_aware_runtime_scope();
 
                 // Jump over else block
                 let end_jump = self.chunk.emit(OpCode::Jump(0));
@@ -486,13 +486,13 @@ impl Compiler {
 
                 // Compile else block if present
                 if let Some(else_stmts) = else_branch {
-                    self.push_runtime_scope();
+                    self.push_local_aware_runtime_scope();
                     self.enter_scope();
                     for stmt in else_stmts {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
-                    self.pop_runtime_scope();
+                    self.pop_local_aware_runtime_scope();
                 }
 
                 // Patch end jump
@@ -547,12 +547,12 @@ impl Compiler {
 
                 // Compile body
                 self.enter_scope();
-                self.push_loop_runtime_scope();
+                self.push_local_aware_runtime_scope();
                 for stmt in body {
                     self.compile_stmt(stmt)?;
                 }
                 self.exit_scope();
-                self.pop_loop_runtime_scope();
+                self.pop_local_aware_runtime_scope();
                 self.patch_loop_continues();
 
                 // Jump back to condition
@@ -579,7 +579,7 @@ impl Compiler {
                 // For now, compile as a while loop with an iterator
                 // This is a simplified implementation
                 self.enter_scope();
-                self.push_loop_runtime_scope();
+                self.push_local_aware_runtime_scope();
 
                 let iter_var = format!("__iter_{}", self.scope_depth);
                 let index_var = format!("__index_{}", self.scope_depth);
@@ -667,12 +667,12 @@ impl Compiler {
                 self.chunk.emit(OpCode::Pop);
 
                 // Compile body
-                self.push_loop_runtime_scope();
+                self.push_local_aware_runtime_scope();
                 for stmt in body {
                     self.compile_stmt(stmt)?;
                 }
 
-                self.pop_loop_runtime_scope();
+                self.pop_local_aware_runtime_scope();
                 self.patch_loop_continues();
 
                 // Increment index
@@ -708,7 +708,7 @@ impl Compiler {
                 self.loop_continues.pop();
                 self.loop_runtime_depths.pop();
                 self.exit_scope();
-                self.pop_loop_runtime_scope();
+                self.pop_local_aware_runtime_scope();
 
                 Ok(())
             }
@@ -971,12 +971,12 @@ impl Compiler {
 
                     // Compile body
                     self.enter_scope();
-                    self.push_loop_runtime_scope();
+                    self.push_local_aware_runtime_scope();
                     for stmt in body {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
-                    self.pop_loop_runtime_scope();
+                    self.pop_local_aware_runtime_scope();
                     self.patch_loop_continues();
 
                     // Jump back to start
@@ -988,12 +988,12 @@ impl Compiler {
                 } else {
                     // Unconditional loop
                     self.enter_scope();
-                    self.push_loop_runtime_scope();
+                    self.push_local_aware_runtime_scope();
                     for stmt in body {
                         self.compile_stmt(stmt)?;
                     }
                     self.exit_scope();
-                    self.pop_loop_runtime_scope();
+                    self.pop_local_aware_runtime_scope();
                     self.patch_loop_continues();
 
                     // Jump back to start
@@ -1068,8 +1068,9 @@ impl Compiler {
             }
 
             Stmt::Block(statements) => {
-                // Enter new scope
-                self.push_runtime_scope();
+                // Function-local slots already preserve lexical identity, so
+                // only environment-backed code needs a runtime scope here.
+                self.push_local_aware_runtime_scope();
                 self.enter_scope();
 
                 // Compile block statements
@@ -1079,7 +1080,7 @@ impl Compiler {
 
                 // Exit scope
                 self.exit_scope();
-                self.pop_runtime_scope();
+                self.pop_local_aware_runtime_scope();
 
                 Ok(())
             }

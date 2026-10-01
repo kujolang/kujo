@@ -9,8 +9,9 @@ function-local workloads that provide three narrow signals:
   state.
 
 These are local regression and profiling inputs, not broad language rankings.
-The runner checks exact output before accepting timings and keeps raw results in
-the repository's ignored `benchmarks/cross-language/results/` directory.
+The runner checks exact output before accepting timings for the Kujo VM,
+opt-in Kujo JIT, and Go, and keeps raw results in the repository's ignored
+`benchmarks/cross-language/results/` directory.
 
 ## Run
 
@@ -39,15 +40,17 @@ commands, and raw Hyperfine JSON/Markdown.
 
 ## Measurement boundaries
 
-- Startup measures a no-work program in each runtime.
+- Startup measures a no-work program in the Kujo VM, opt-in Kujo JIT, and Go.
 - Compile measures `kujo check --quiet` (parse plus bytecode compilation) and a
   fresh `go build` into the result bundle. Go produces a reusable native binary;
   Kujo currently does not emit a reusable bytecode artifact, so the operations
   are reported separately rather than treated as equivalent.
-- Run measures `kujo run` and an already-built Go binary. The Kujo command still
-  includes process startup and source-to-bytecode compilation. Use the startup
-  and compile distributions to understand those fixed costs; do not subtract
-  medians and present the result as a precise execution-only measurement.
+- Run measures `kujo run`, `kujo run --jit`, and an already-built Go binary.
+  Both Kujo commands still include process startup and source-to-bytecode
+  compilation; the JIT command also includes native compilation of hot regions.
+  Use the startup and compile distributions to understand those fixed costs; do
+  not subtract medians and present the result as a precise execution-only
+  measurement.
 
 Any public performance claim must also satisfy
 [`docs/BENCHMARK_PUBLICATION_POLICY.md`](../../../docs/BENCHMARK_PUBLICATION_POLICY.md).
