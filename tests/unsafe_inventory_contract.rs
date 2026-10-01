@@ -144,10 +144,14 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // fresh non-inheritable handle creation, typed limits, current-process
     // assignment, and error-path owned-handle close. Three test-only sites
     // retain, wait for and clean up owned fixture processes.
+    // Merged regional JIT execution adds two reviewed local-slot helpers:
+    // VM-owned context/vector pointers remain live for the synchronous call;
+    // null/negative/out-of-range slots reject, get/get_mut bound access, and
+    // only Int/Bool scalars are read or updated without resizing the vector.
     // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 84,
-        "executable unsafe budget changed: expected 84, got {executable_count}"
+        executable_count, 86,
+        "executable unsafe budget changed: expected 86, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -199,7 +203,7 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         .count();
 
     assert!(
-        jit_executable_count <= 45,
-        "jit executable unsafe budget regression: expected <= 45, got {jit_executable_count}"
+        jit_executable_count <= 47,
+        "jit executable unsafe budget regression: expected <= 47, got {jit_executable_count}"
     );
 }

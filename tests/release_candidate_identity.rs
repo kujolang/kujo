@@ -33,7 +33,15 @@ fn candidate_identity_matches_cli_lock_packages_and_public_docs() {
     }
     let readme = fs::read_to_string(root.join("README.md")).unwrap();
     assert!(readme.contains(&format!("The source tree is currently at `{version}`")));
-    let stable = metadata["published_stable"].as_str().unwrap();
+    let publication_path = root.join(format!("release/kujo-{version}-publication.json"));
+    let publication = publication_path.exists().then(|| {
+        serde_json::from_str::<serde_json::Value>(&fs::read_to_string(publication_path).unwrap())
+            .unwrap()
+    });
+    let stable = publication.as_ref().map_or_else(
+        || metadata["published_stable"].as_str().unwrap(),
+        |published| published["version"].as_str().unwrap(),
+    );
     assert!(readme.contains(&format!(
         "{stable} is released for Linux x64/arm64, macOS x64/arm64 and Windows x64"
     )));

@@ -554,6 +554,5 @@ terminal decisions and a dispatch-reservation ceiling. The subsequent
 and released units from durable history. A sealed refusal before admission can support
 an explicitly authorized second child run for the same node with exact original inputs.
 Consumed or uncertain work cannot use that path. Nested/conditional groups and general
-retries remain deferred. Next work should investigate sourced resource and Eval budgets
-and bounded reservation planning; dynamic topology is not implied.
+retries remain deferred. The subsequent [resource-accounting slice](WAVE_F_RESOURCE_ACCOUNTING.md) adds bounded Eval dispatch budgets, active-path reservation plans and exact runtime/SDK measurement references. Observed, provider-reported, estimated and unknown values remain distinct. Hard token/time/currency ceilings remain deferred; dynamic topology is not implied.
 Remote trust and machine migration remain separate boundaries.
