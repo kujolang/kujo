@@ -430,6 +430,44 @@ fn make_resolves_locked_kennel_package_in_analyzed_repository() {
 }
 
 #[test]
+fn make_resolves_ecosystem_installed_package_without_override() {
+    let root = temp("ecosystem-installed");
+    let repo = root.join("consumer");
+    temp_repo(&repo);
+    let install_root = root.join("install-root");
+    let package_root = stub_mcp_package(&install_root.join("sources"));
+    let log = root.join("records.json");
+
+    let output = make_command(&["mcp", "make"], &repo)
+        .env_remove("KUJO_MCP_PATH")
+        .env("KUJO_MCP_CONTRACT_LOG", &log)
+        .env("KUJO_INSTALL_ROOT", &install_root)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", output_text(&output));
+
+    let records = stub_records(&log);
+    assert_eq!(records.first().map(String::as_str), Some("make"));
+    assert!(package_root.join("mcp.kujo").is_file());
+    fs::remove_dir_all(&root).ok();
+}
+
+#[test]
+fn core_installer_profile_provisions_mcp_source() {
+    let installer = fs::read_to_string(env!("CARGO_MANIFEST_DIR").to_string() + "/install.sh")
+        .expect("install.sh should be readable");
+
+    assert!(
+        installer.contains("core       kujo kennel spec eval scout scent packwrite runledger casefile patchbrief changebucket muzzle mcp "),
+        "the default core profile should include the canonical MCP source"
+    );
+    assert!(
+        installer.contains("core|mcp|none|||"),
+        "the core installer catalog should provision MCP without adding a conflicting shim"
+    );
+}
+
+#[test]
 fn legacy_primitive_invocation_still_works() {
     let root = temp("legacy");
     let package_root = stub_mcp_package(&root);
