@@ -2,6 +2,7 @@ use crate::docgen::model::{DocGap, DocGapKind, DocProject, DocSymbol, DocVisibil
 #[cfg(test)]
 use std::cell::Cell;
 use std::collections::{BTreeMap, BTreeSet};
+#[cfg(feature = "runtime-network")]
 use std::net::{IpAddr, ToSocketAddrs};
 use std::path::{Path, PathBuf};
 #[cfg(test)]
@@ -82,12 +83,12 @@ fn increment_local_anchor_file_read_count() {
 #[cfg(not(test))]
 fn increment_local_anchor_file_read_count() {}
 
-#[cfg(test)]
+#[cfg(all(test, feature = "runtime-network"))]
 fn increment_external_http_client_build_count() {
     EXTERNAL_HTTP_CLIENT_BUILD_COUNT.fetch_add(1, Ordering::Relaxed);
 }
 
-#[cfg(not(test))]
+#[cfg(all(not(test), feature = "runtime-network"))]
 fn increment_external_http_client_build_count() {}
 
 #[cfg(test)]
@@ -552,6 +553,7 @@ fn markdown_anchor_slug(heading: &str) -> String {
     out.trim_matches('-').to_string()
 }
 
+#[cfg(feature = "runtime-network")]
 fn external_link_in_allowlist(link: &str, allowlist: &BTreeSet<String>) -> bool {
     let Ok(url) = reqwest::Url::parse(link) else {
         return false;
@@ -562,6 +564,12 @@ fn external_link_in_allowlist(link: &str, allowlist: &BTreeSet<String>) -> bool 
     allowlist.contains(&host.to_ascii_lowercase())
 }
 
+#[cfg(not(feature = "runtime-network"))]
+fn external_link_in_allowlist(_link: &str, _allowlist: &BTreeSet<String>) -> bool {
+    false
+}
+
+#[cfg_attr(not(feature = "runtime-network"), allow(dead_code))]
 enum ExternalLinkCheck {
     Reachable,
     Unreachable,
@@ -569,7 +577,14 @@ enum ExternalLinkCheck {
     PrivateAddressBlocked { url: String, host: String, blocked_addresses: Vec<String> },
 }
 
-fn build_external_link_client(timeout_ms: u64) -> Option<reqwest::blocking::Client> {
+#[cfg(feature = "runtime-network")]
+type ExternalLinkClient = reqwest::blocking::Client;
+
+#[cfg(not(feature = "runtime-network"))]
+struct ExternalLinkClient;
+
+#[cfg(feature = "runtime-network")]
+fn build_external_link_client(timeout_ms: u64) -> Option<ExternalLinkClient> {
     increment_external_http_client_build_count();
     reqwest::blocking::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -578,8 +593,14 @@ fn build_external_link_client(timeout_ms: u64) -> Option<reqwest::blocking::Clie
         .ok()
 }
 
+#[cfg(not(feature = "runtime-network"))]
+fn build_external_link_client(_timeout_ms: u64) -> Option<ExternalLinkClient> {
+    None
+}
+
+#[cfg(feature = "runtime-network")]
 fn external_link_check(
-    client: Option<&reqwest::blocking::Client>,
+    client: Option<&ExternalLinkClient>,
     link: &str,
     allowlist: &BTreeSet<String>,
     allow_private_network_links: bool,
@@ -646,6 +667,17 @@ fn external_link_check(
     ExternalLinkCheck::Unreachable
 }
 
+#[cfg(not(feature = "runtime-network"))]
+fn external_link_check(
+    _client: Option<&ExternalLinkClient>,
+    _link: &str,
+    _allowlist: &BTreeSet<String>,
+    _allow_private_network_links: bool,
+) -> ExternalLinkCheck {
+    ExternalLinkCheck::Unreachable
+}
+
+#[cfg(feature = "runtime-network")]
 fn blocked_private_addresses_for_url(url: &reqwest::Url) -> Result<Vec<String>, ()> {
     let Some(host) = url.host_str() else {
         return Err(());
@@ -670,6 +702,7 @@ fn blocked_private_addresses_for_url(url: &reqwest::Url) -> Result<Vec<String>, 
     Ok(blocked.into_iter().collect())
 }
 
+#[cfg(feature = "runtime-network")]
 fn is_blocked_external_ip(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(ipv4) => {

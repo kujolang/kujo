@@ -177,7 +177,7 @@ SUMMARY="$RESULTS_DIR/summary.md"
     echo
     echo "Kujo uses the lean trusted launcher with the same parser, bytecode compiler, VM,"
     echo "regional JIT, builtins, imports, and scheduler as \`kujo run\`. It intentionally omits"
-    echo "the general-purpose command router and optional DB/image/PDF/archive features."
+    echo "the general-purpose command router and optional DB/image/PDF/archive/network features."
 } >"$SUMMARY"
 
 echo "$RESULTS_DIR"

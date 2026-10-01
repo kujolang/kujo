@@ -34,6 +34,8 @@ bash benchmarks/cross-language/kujo-go-runtime/run-four-language.sh
 That runner compares the three runtime workloads across Kujo JIT, Go, Python,
 and PHP. It builds `kujo-run` with only `runtime-jit`, records exact-output
 checks before timing, and stores raw distributions plus pinned build metadata.
+That latency-focused build excludes network transports and the OS credential
+store in addition to the database, image, PDF, and archive feature families.
 
 The default campaign uses one warmup and five measured runs for compile and
 compute tests, five instrumented Kujo phase runs, plus three warmups and fifteen

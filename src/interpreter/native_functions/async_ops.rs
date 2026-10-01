@@ -5,6 +5,7 @@
 
 use crate::bytecode::{BytecodeChunk, OpCode};
 use crate::interpreter::{AsyncRuntime, DictMap, Environment, Value};
+#[cfg(feature = "runtime-network")]
 use crate::network_policy;
 use crate::vm::{VmExecutionResult, VM};
 use futures::stream::{FuturesUnordered, StreamExt};
@@ -1053,6 +1054,7 @@ pub fn handle(
             }
         }
 
+        #[cfg(feature = "runtime-network")]
         "async_http_get" => {
             // async_http_get(url: String) -> Promise<Dict>
             // Non-blocking HTTP GET request
@@ -1131,6 +1133,7 @@ pub fn handle(
             })
         }
 
+        #[cfg(feature = "runtime-network")]
         "async_http_post" => {
             // async_http_post(url: String, body: String, headers?: Dict) -> Promise<Dict>
             // Non-blocking HTTP POST request
@@ -1241,6 +1244,12 @@ pub fn handle(
                 task_handle: None,
             })
         }
+
+        #[cfg(not(feature = "runtime-network"))]
+        "async_http_get" | "async_http_post" => Some(Value::Error(
+            "Network native APIs are disabled in this build (enable the 'runtime-network' feature)"
+                .to_string(),
+        )),
 
         "async_read_file" => {
             // async_read_file(path: String) -> Promise<String>

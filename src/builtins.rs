@@ -5,6 +5,7 @@
 // core functionality for math, strings, arrays, I/O operations, and JSON.
 
 use crate::interpreter::{DictMap, Value};
+#[cfg(feature = "runtime-network")]
 use crate::network_policy;
 use crate::runtime_limits;
 use base64::{engine::general_purpose, Engine as _};
@@ -14,12 +15,17 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "runtime-network")]
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::env;
-use std::fs::{self, File, OpenOptions};
+use std::fs;
+#[cfg(feature = "runtime-network")]
+use std::fs::{File, OpenOptions};
+#[cfg(feature = "runtime-network")]
 use std::io::{Read, Write};
 #[cfg(unix)]
+#[cfg(feature = "runtime-network")]
 use std::os::unix::fs::OpenOptionsExt;
 #[cfg(all(unix, test))]
 use std::os::unix::fs::PermissionsExt;
@@ -1772,6 +1778,7 @@ pub fn dict_invert(dict: &DictMap) -> DictMap {
 /// Returns a dictionary with status, body, and headers
 /// Infrastructure for http.get() builtin
 #[allow(dead_code)]
+#[cfg(feature = "runtime-network")]
 pub fn http_get(url: &str) -> Result<DictMap, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP GET")?;
     let url = url.to_string();
@@ -1782,6 +1789,7 @@ pub fn http_get(url: &str) -> Result<DictMap, String> {
     })
 }
 
+#[cfg(feature = "runtime-network")]
 fn http_response_to_dict(
     surface: &str,
     response: reqwest::blocking::Response,
@@ -1801,6 +1809,7 @@ fn http_response_to_dict(
 /// body_json should be a stringified JSON
 /// Infrastructure for http.post() builtin
 #[allow(dead_code)]
+#[cfg(feature = "runtime-network")]
 pub fn http_post(url: &str, body_json: &str) -> Result<DictMap, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP POST")?;
     let url = url.to_string();
@@ -1820,6 +1829,7 @@ pub fn http_post(url: &str, body_json: &str) -> Result<DictMap, String> {
 /// Make an HTTP PUT request with JSON body
 /// Infrastructure for http.put() builtin
 #[allow(dead_code)]
+#[cfg(feature = "runtime-network")]
 pub fn http_put(url: &str, body_json: &str) -> Result<DictMap, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP PUT")?;
     let url = url.to_string();
@@ -1839,6 +1849,7 @@ pub fn http_put(url: &str, body_json: &str) -> Result<DictMap, String> {
 /// Make an HTTP DELETE request
 /// Infrastructure for http.delete() builtin
 #[allow(dead_code)]
+#[cfg(feature = "runtime-network")]
 pub fn http_delete(url: &str) -> Result<DictMap, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP DELETE")?;
     let url = url.to_string();
@@ -1853,6 +1864,7 @@ pub fn http_delete(url: &str) -> Result<DictMap, String> {
 /// Make an HTTP GET request and return binary data
 /// Infrastructure for http.getBinary() builtin
 #[allow(dead_code)]
+#[cfg(feature = "runtime-network")]
 pub fn http_get_binary(url: &str) -> Result<Vec<u8>, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP GET request")?;
     let url = url.to_string();
@@ -2107,6 +2119,7 @@ pub fn oauth2_auth_url(client_id: &str, redirect_uri: &str, auth_url: &str, scop
 
 /// Exchange OAuth2 authorization code for access token
 /// oauth2_get_token(code, client_id, client_secret, token_url, redirect_uri) -> token info dict
+#[cfg(feature = "runtime-network")]
 pub fn oauth2_get_token(
     code: &str,
     client_id: &str,
@@ -2175,6 +2188,7 @@ pub struct HttpStream {
 /// http_get_stream(url) -> stream handle (as dictionary with internal state)
 /// Infrastructure for http.getStream() builtin
 #[allow(dead_code)]
+#[cfg(feature = "runtime-network")]
 pub fn http_get_stream(url: &str) -> Result<Vec<u8>, String> {
     // For now, we'll fetch the entire response but allow chunked reading
     // In a real implementation, this would use async streaming
@@ -2195,6 +2209,7 @@ pub fn http_get_stream(url: &str) -> Result<Vec<u8>, String> {
     })
 }
 
+#[cfg(feature = "runtime-network")]
 fn apply_http_headers(
     mut request: reqwest::blocking::RequestBuilder,
     headers: &[(String, String)],
@@ -2213,6 +2228,7 @@ fn apply_http_headers(
 /// Stream an HTTP response body directly to a file with a strict byte limit.
 /// The destination is published by same-directory atomic rename only after the
 /// response is complete and durable, so failures never expose partial output.
+#[cfg(feature = "runtime-network")]
 pub fn http_download_file(
     url: &str,
     output_path: &str,
@@ -2328,6 +2344,7 @@ pub fn http_download_file(
 
 /// Stream a file as an HTTP request body without materializing or base64
 /// encoding it. The response is bounded independently from the upload size.
+#[cfg(feature = "runtime-network")]
 pub fn http_upload_file(
     url: &str,
     input_path: &str,

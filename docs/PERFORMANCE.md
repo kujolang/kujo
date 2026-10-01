@@ -37,8 +37,11 @@ target/release/kujo-run --jit program.kujo
 It uses the same lexer, parser, bytecode compiler, VM, builtins, module search,
 cooperative scheduler, and regional JIT as `kujo run`, but avoids the general
 CLI command router and can omit optional database, image, PDF, and archive
-features. It accepts only `kujo-run [--jit] FILE`; use the full CLI whenever a
-program needs capability flags, script arguments, runtime measurements,
+features. The reduced build above also omits network transports and the OS
+credential-store adapter; network natives fail with an explicit feature-disabled
+error, while local URL parsing helpers remain available. It accepts only
+`kujo-run [--jit] FILE`; use the full CLI whenever a program needs network or
+credential APIs, capability flags, script arguments, runtime measurements,
 interpreter fallback, process-lifetime controls, or scheduler deadlines.
 
 `--jit` is not the default runtime mode. When `--jit` is requested for a program
@@ -49,7 +52,9 @@ covered by `tests/jit_execution_contract.rs`.
 The crate feature `runtime-jit` controls whether the JIT implementation is
 compiled into the binary. It is enabled by the default feature set, and
 `cargo check --no-default-features --features runtime-jit` is the reduced build
-that checks JIT-only feature wiring.
+that checks JIT-only feature wiring. The default feature set includes
+`runtime-network`; add that feature explicitly to a reduced build that needs
+HTTP, DNS, sockets, TLS, external-link validation, or OS credential storage.
 
 ## Current Benchmark Evidence
 

@@ -13,6 +13,7 @@ mod confined_write_windows;
 pub mod crypto;
 #[cfg(feature = "runtime-db")]
 pub mod database;
+#[cfg(feature = "runtime-network")]
 pub mod dns;
 #[cfg(not(feature = "runtime-db"))]
 pub mod database {
@@ -46,10 +47,38 @@ pub mod database {
 }
 mod file_stream;
 pub mod filesystem;
+#[cfg(feature = "runtime-network")]
 pub mod http;
+#[cfg(not(feature = "runtime-network"))]
+pub mod http {
+    use super::{Interpreter, Value};
+
+    const ERROR: &str =
+        "Network native APIs are disabled in this build (enable the 'runtime-network' feature)";
+
+    pub fn handle_with_interpreter(
+        _interp: &mut Interpreter,
+        name: &str,
+        _args: &[Value],
+    ) -> Option<Value> {
+        (name.starts_with("http_") || name.starts_with("ai_") || name == "parallel_http")
+            .then(|| Value::Error(ERROR.to_string()))
+    }
+
+    pub(crate) fn handle_ai_stream_chat_with_callback_invoker<F>(
+        _args: &[Value],
+        _invoke: F,
+    ) -> Option<Value>
+    where
+        F: FnMut(&str, &Value) -> Result<bool, Value>,
+    {
+        Some(Value::Error(ERROR.to_string()))
+    }
+}
 pub mod io;
 pub mod json;
 pub mod math;
+#[cfg(feature = "runtime-network")]
 pub mod network;
 #[cfg(feature = "runtime-pdf")]
 pub mod pdf;
@@ -71,11 +100,50 @@ pub mod pdf {
 pub mod schema;
 pub mod strings;
 pub mod system;
+#[cfg(feature = "runtime-network")]
 pub mod tls;
 pub mod token;
 pub mod type_ops;
 pub mod vector;
 pub mod web_data;
+
+#[cfg(not(feature = "runtime-network"))]
+mod network_disabled {
+    use super::{Interpreter, Value};
+
+    const ERROR: &str =
+        "Network native APIs are disabled in this build (enable the 'runtime-network' feature)";
+
+    pub fn handle_with_interpreter(
+        _interp: &mut Interpreter,
+        name: &str,
+        _args: &[Value],
+    ) -> Option<Value> {
+        is_network_native(name).then(|| Value::Error(ERROR.to_string()))
+    }
+
+    pub fn handle(_interp: &mut Interpreter, name: &str, _args: &[Value]) -> Option<Value> {
+        is_network_native(name).then(|| Value::Error(ERROR.to_string()))
+    }
+
+    fn is_network_native(name: &str) -> bool {
+        name.starts_with("http_")
+            || name.starts_with("ai_")
+            || name.starts_with("dns_")
+            || name.starts_with("tls_")
+            || name.starts_with("tcp_")
+            || name.starts_with("udp_")
+            || matches!(
+                name,
+                "url_parse"
+                    | "url_join"
+                    | "html_events"
+                    | "xml_projection"
+                    | "json_files"
+                    | "external_sort"
+            )
+    }
+}
 pub mod xml;
 
 use super::{Interpreter, Value};
@@ -221,7 +289,14 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
     if let Some(result) = filesystem::handle(interp, canonical_name, arg_values) {
         return result;
     }
+    #[cfg(feature = "runtime-network")]
     if let Some(result) = http::handle_with_interpreter(interp, canonical_name, arg_values) {
+        return result;
+    }
+    #[cfg(not(feature = "runtime-network"))]
+    if let Some(result) =
+        network_disabled::handle_with_interpreter(interp, canonical_name, arg_values)
+    {
         return result;
     }
     if let Some(result) = json::handle(canonical_name, arg_values) {
@@ -254,13 +329,20 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
     if let Some(result) = database::handle(canonical_name, arg_values) {
         return result;
     }
+    #[cfg(feature = "runtime-network")]
     if let Some(result) = dns::handle(interp, canonical_name, arg_values) {
         return result;
     }
+    #[cfg(feature = "runtime-network")]
     if let Some(result) = tls::handle(interp, canonical_name, arg_values) {
         return result;
     }
+    #[cfg(feature = "runtime-network")]
     if let Some(result) = network::handle(interp, canonical_name, arg_values) {
+        return result;
+    }
+    #[cfg(not(feature = "runtime-network"))]
+    if let Some(result) = network_disabled::handle(interp, canonical_name, arg_values) {
         return result;
     }
 
@@ -6635,4 +6717,5 @@ mod tests {
             && matches!(&values[0], Value::Str(ch) if ch.as_ref() == "a")
             && matches!(&values[1], Value::Str(ch) if ch.as_ref() == "b")));
     }
+
 }

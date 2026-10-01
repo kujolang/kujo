@@ -33,7 +33,9 @@ use std::ops::Deref;
 #[cfg(feature = "runtime-db")]
 use std::ops::DerefMut;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+#[cfg(feature = "runtime-db")]
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::Receiver;
 use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};

@@ -1,6 +1,7 @@
 use super::*;
 use std::io::{self, IsTerminal, Read, Write};
 
+#[cfg(feature = "runtime-network")]
 const KEYRING_SERVICE: &str = "ai.kujo.agent";
 const TEST_STORE_ENV: &str = "KUJO_AGENT_TEST_CREDENTIAL_STORE";
 const PROJECT_ENV_FILE: &str = ".env.local";
@@ -315,11 +316,13 @@ fn current_project_root() -> Result<PathBuf, AgentError> {
     discover(&cwd)
 }
 
+#[cfg(feature = "runtime-network")]
 fn keyring_entry(credential_name: &str) -> Result<keyring::Entry, AgentError> {
     keyring::Entry::new(KEYRING_SERVICE, credential_name)
         .map_err(|e| fail(format!("OS credential store is unavailable: {e}")))
 }
 
+#[cfg(feature = "runtime-network")]
 fn keyring_set(credential_name: &str, value: &str) -> Result<(), AgentError> {
     if let Some(path) = test_store_path() {
         return update_test_store(&path, credential_name, Some(value));
@@ -329,6 +332,7 @@ fn keyring_set(credential_name: &str, value: &str) -> Result<(), AgentError> {
         .map_err(|e| fail(format!("Could not save credential in the OS credential store: {e}")))
 }
 
+#[cfg(feature = "runtime-network")]
 fn keyring_get(credential_name: &str) -> Result<Option<String>, AgentError> {
     if let Some(path) = test_store_path() {
         return Ok(read_test_store(&path)?.remove(credential_name));
@@ -340,6 +344,7 @@ fn keyring_get(credential_name: &str) -> Result<Option<String>, AgentError> {
     }
 }
 
+#[cfg(feature = "runtime-network")]
 fn keyring_remove(credential_name: &str) -> Result<bool, AgentError> {
     if let Some(path) = test_store_path() {
         let existed = read_test_store(&path)?.contains_key(credential_name);
@@ -351,6 +356,38 @@ fn keyring_remove(credential_name: &str) -> Result<bool, AgentError> {
         Err(keyring::Error::NoEntry) => Ok(false),
         Err(error) => Err(fail(format!("Could not remove credential: {error}"))),
     }
+}
+
+#[cfg(not(feature = "runtime-network"))]
+fn keyring_set(credential_name: &str, value: &str) -> Result<(), AgentError> {
+    if let Some(path) = test_store_path() {
+        return update_test_store(&path, credential_name, Some(value));
+    }
+    Err(fail(
+        "OS credential store is disabled in this build (enable the 'runtime-network' feature)",
+    ))
+}
+
+#[cfg(not(feature = "runtime-network"))]
+fn keyring_get(credential_name: &str) -> Result<Option<String>, AgentError> {
+    if let Some(path) = test_store_path() {
+        return Ok(read_test_store(&path)?.remove(credential_name));
+    }
+    Err(fail(
+        "OS credential store is disabled in this build (enable the 'runtime-network' feature)",
+    ))
+}
+
+#[cfg(not(feature = "runtime-network"))]
+fn keyring_remove(credential_name: &str) -> Result<bool, AgentError> {
+    if let Some(path) = test_store_path() {
+        let existed = read_test_store(&path)?.contains_key(credential_name);
+        update_test_store(&path, credential_name, None)?;
+        return Ok(existed);
+    }
+    Err(fail(
+        "OS credential store is disabled in this build (enable the 'runtime-network' feature)",
+    ))
 }
 
 fn test_store_path() -> Option<PathBuf> {

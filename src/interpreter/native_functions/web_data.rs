@@ -194,9 +194,9 @@ fn normalize(input: &str, base: &str, opts: Json) -> Result<Value, String> {
         return Ok(Value::Str(Arc::new(String::new())));
     }
     let parsed = if base.is_empty() {
-        reqwest::Url::parse(input.trim())
+        url::Url::parse(input.trim())
     } else {
-        reqwest::Url::parse(base).and_then(|b| b.join(input.trim()))
+        url::Url::parse(base).and_then(|b| b.join(input.trim()))
     };
     let mut u = match parsed {
         Ok(u) => u,
@@ -411,6 +411,7 @@ fn publish_dir(source: &Path, dest: &Path) -> Result<(), String> {
     }
     Ok(())
 }
+#[cfg(feature = "runtime-network")]
 fn http_file(url: String, destination: String, options: Json) -> Result<Value, String> {
     let opts = match json_to_kujo_value(options.clone()) {
         Value::Dict(d) => d,
@@ -745,29 +746,45 @@ pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Va
                 )
             }
             "http_get_file_response" => {
-                interp
-                    .require_capability(NativeCapability::FilesystemWrite, name)
-                    .map_err(|e| format!("{e:?}"))?;
-                http_file(
-                    text(&args[0])?.to_string(),
-                    text(&args[1])?.to_string(),
-                    kujo_value_to_json(&args[2])?,
-                )
+                #[cfg(not(feature = "runtime-network"))]
+                return Err(
+                    "Network native APIs are disabled in this build (enable the 'runtime-network' feature)"
+                        .into(),
+                );
+                #[cfg(feature = "runtime-network")]
+                {
+                    interp
+                        .require_capability(NativeCapability::FilesystemWrite, name)
+                        .map_err(|e| format!("{e:?}"))?;
+                    http_file(
+                        text(&args[0])?.to_string(),
+                        text(&args[1])?.to_string(),
+                        kujo_value_to_json(&args[2])?,
+                    )
+                }
             }
             "xml_file_select" => {
                 xml_file_select(Path::new(text(&args[0])?), kujo_value_to_json(&args[1])?)
             }
             "http_destination_check" => {
-                match crate::network_policy::build_policy_http_client(
-                    text(&args[0])?,
-                    std::time::Duration::from_secs(15),
-                    true,
-                    true,
-                    false,
-                    "HTTP destination check",
-                ) {
-                    Ok(_) => decoded(json!({"ok":true,"error":""})),
-                    Err(e) => decoded(json!({"ok":false,"error":e})),
+                #[cfg(not(feature = "runtime-network"))]
+                return Err(
+                    "Network native APIs are disabled in this build (enable the 'runtime-network' feature)"
+                        .into(),
+                );
+                #[cfg(feature = "runtime-network")]
+                {
+                    match crate::network_policy::build_policy_http_client(
+                        text(&args[0])?,
+                        std::time::Duration::from_secs(15),
+                        true,
+                        true,
+                        false,
+                        "HTTP destination check",
+                    ) {
+                        Ok(_) => decoded(json!({"ok":true,"error":""})),
+                        Err(e) => decoded(json!({"ok":false,"error":e})),
+                    }
                 }
             }
             "rate_limit_wait" => {
@@ -816,7 +833,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Va
                 normalize(text(&args[0])?, text(&args[1])?, kujo_value_to_json(&args[2])?)
             }
             "url_components" => {
-                let u = reqwest::Url::parse(text(&args[0])?).map_err(|e| e.to_string())?;
+                let u = url::Url::parse(text(&args[0])?).map_err(|e| e.to_string())?;
                 decoded(
                     json!({"scheme":u.scheme(),"host":u.host_str(),"port":u.port_or_known_default(),"origin":u.origin().ascii_serialization(),"path":u.path(),"query":u.query().unwrap_or("")}),
                 )
