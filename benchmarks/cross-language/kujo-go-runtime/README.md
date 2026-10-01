@@ -33,6 +33,9 @@ BENCH_WARMUP=1 BENCH_RUNS=3 STARTUP_RUNS=10 \
   bash benchmarks/cross-language/kujo-go-runtime/run.sh
 ```
 
+Hyperfine launches benchmark commands directly with `--shell=none`, avoiding
+shell-startup noise that can materially distort these short-lived processes.
+
 The runner builds Kujo with `cargo build --release --locked`, copies that exact
 binary into the result bundle, builds optimized Go binaries with `-trimpath`,
 and records versions, the Kujo commit, dirty state, artifact hashes, host data,
