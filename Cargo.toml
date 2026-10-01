@@ -118,7 +118,7 @@ cranelift-native = { version = "0.113.1", optional = true }
 target-lexicon = { version = "0.12", optional = true }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading"] }
 
 [patch.crates-io]
 # Preserve the current image/EXR feature surface while replacing the

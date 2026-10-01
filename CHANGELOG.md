@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add opt-in Windows `run --kill-children-on-exit` lifetime ownership for externally supervised runtimes; unsupported platforms or job admission failures reject before script execution.
+
+
 Additional runtime changes recorded below.
 
 ### Added

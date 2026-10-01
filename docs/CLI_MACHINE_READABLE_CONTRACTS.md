@@ -319,3 +319,25 @@ retain exit 4 and existing diagnostics, and record `runtime_error` when export
 succeeds. Compile errors and runner panics record their distinct outcomes.
 Abrupt process termination need not produce a valid artifact. Never accept an
 empty/truncated report as completion or continuation authority.
+
+## Opt-in Windows descendant lifetime
+
+`kujo run <file> --kill-children-on-exit` establishes an unnamed, non-inheritable
+Windows job handle before parsing or executing the script. The job uses
+`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` without either breakaway flag. The runtime
+keeps the sole handle until Windows closes it at process termination, including
+forced termination by an external host. Descendants inherit job membership;
+they do not inherit ownership of the job handle. Normal `run` behavior is
+unchanged when the flag is omitted.
+
+Failure to establish or join the job exits with runtime error code 4 before
+script effects. Non-Windows platforms explicitly reject the flag. Nested-job
+restrictions imposed by the parent host may prevent admission; they are not
+silently bypassed. This flag neither grants effects nor supplies a filesystem,
+network, credential, adversarial-code or multi-tenant sandbox. It does not roll
+back effects already performed. External hosts must still preserve uncertain
+completion after timeout or cancellation.
+
+Implementation reference (accessed 2026-09-30):
+https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects
+and https://learn.microsoft.com/en-us/windows/win32/procthread/nested-jobs.

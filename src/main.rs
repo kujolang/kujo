@@ -41,6 +41,7 @@ mod optimizer;
 mod package_workflow;
 mod parser;
 mod path_security;
+mod process_lifetime;
 mod repl;
 mod reserved_names;
 mod runtime_limits;
@@ -186,6 +187,10 @@ enum Commands {
         /// Resolve imports only from entry-file roots and KUJO_MODULE_PATH, not the caller project
         #[arg(long)]
         isolated_imports: bool,
+
+        /// Windows only: terminate descendants when this runtime process exits
+        #[arg(long, default_value_t = false)]
+        kill_children_on_exit: bool,
 
         /// Use tree-walking interpreter instead of bytecode VM (default: VM)
         #[arg(long)]
@@ -1308,6 +1313,7 @@ async fn async_main() {
         Commands::Run {
             file,
             isolated_imports,
+            kill_children_on_exit,
             interpreter,
             jit,
             scheduler_timeout_ms,
@@ -1317,6 +1323,11 @@ async fn async_main() {
             capabilities,
             script_args,
         } => {
+            if kill_children_on_exit {
+                if let Err(error) = process_lifetime::own_descendants() {
+                    report_cli_error_and_exit(error.to_string(), CliExitCode::RuntimeError);
+                }
+            }
             if isolated_imports {
                 std::env::set_var("KUJO_ISOLATED_IMPORTS", "1");
             }
