@@ -549,7 +549,11 @@ all facts without that event stay nonterminal, including after retained recovery
 
 The subsequent [static graph policy slice](WAVE_F_STATIC_GRAPH_POLICY.md) adds
 closed failure strategies, predeclared branches, conditional joins, one-level subgraph
-terminal decisions and a dispatch-reservation ceiling. Same-node retries and nested or
-conditional groups remain separate boundaries. Next work should connect explicit
-attempt/budget accounting to concrete static group use cases; dynamic topology is not implied.
+terminal decisions and a dispatch-reservation ceiling. The subsequent
+[attempt-accounting slice](WAVE_F_GRAPH_ATTEMPT_ACCOUNTING.md) derives held, consumed
+and released units from durable history. A sealed refusal before admission can support
+an explicitly authorized second child run for the same node with exact original inputs.
+Consumed or uncertain work cannot use that path. Nested/conditional groups and general
+retries remain deferred. Next work should investigate sourced resource and Eval budgets
+and bounded reservation planning; dynamic topology is not implied.
 Remote trust and machine migration remain separate boundaries.
