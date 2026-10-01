@@ -67,6 +67,8 @@ pub fn start() -> Result<(), &'static str> {
         .map_err(|_| "runtime measurements already started in this process")
 }
 
+// Keep fetch_update for the Rust 1.89 MSRV; newer Rust renames it to try_update.
+#[allow(deprecated)]
 #[inline]
 pub(crate) fn add(metric: Metric, amount: u64) {
     if let Some(collector) = COLLECTOR.get() {

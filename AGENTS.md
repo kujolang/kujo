@@ -3,7 +3,7 @@
 Current stable runtime: **1.7.0**, with native and npm artifacts for Linux
 x64/arm64, macOS x64/arm64 and Windows x64. Wave C beta and Wave D alpha remain
 experimental; participant SDKs remain unpublished.
-See [1.6 release notes](docs/RELEASE_NOTES_1_7.md) for runtime versus experimental ecosystem scope.
+See [1.7 release notes](docs/RELEASE_NOTES_1_7.md) for runtime versus experimental ecosystem scope.
 
 
 Use this file as the first stop for agents working in this repository or building projects in the Kujo programming language. It is intentionally compact, operational, and opinionated. Prefer the linked canonical docs over guessing.
