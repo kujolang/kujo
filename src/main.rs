@@ -156,6 +156,63 @@ enum TestRuntimeMode {
     Dual,
 }
 
+#[derive(Args)]
+struct RunCommandArgs {
+    /// Path to the .kujo file
+    file: PathBuf,
+
+    /// Resolve imports only from entry-file roots and KUJO_MODULE_PATH, not the caller project
+    #[arg(long)]
+    isolated_imports: bool,
+
+    /// Windows only: terminate descendants when this runtime process exits
+    #[arg(long, default_value_t = false)]
+    kill_children_on_exit: bool,
+
+    /// Use tree-walking interpreter instead of bytecode VM (default: VM)
+    #[arg(long)]
+    interpreter: bool,
+
+    /// Opt in to experimental JIT compilation for JIT-compatible bytecode surfaces.
+    #[arg(long, default_value_t = false)]
+    jit: bool,
+
+    /// Write bounded VM measurements to a new JSON file (never overwrites)
+    #[arg(long, conflicts_with = "interpreter")]
+    measurements: Option<PathBuf>,
+
+    /// Cooperative scheduler timeout in milliseconds (overrides env/default)
+    #[arg(long)]
+    scheduler_timeout_ms: Option<u64>,
+
+    /// Disable the top-level cooperative scheduler deadline for an externally supervised long-lived service
+    #[arg(long, default_value_t = false, conflicts_with = "scheduler_timeout_ms")]
+    scheduler_no_timeout: bool,
+
+    /// Emit runtime failures for `kujo run` as machine-readable JSON on stdout.
+    #[arg(long, default_value_t = false)]
+    json_runtime_diagnostics: bool,
+
+    #[command(flatten)]
+    capabilities: CapabilityArgs,
+
+    /// Arguments to pass to the script
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    script_args: Vec<String>,
+}
+
+#[derive(ClapParser)]
+#[command(
+    name = "kujo",
+    bin_name = "kujo run",
+    about = "Run a Kujo script file",
+    version = env!("CARGO_PKG_VERSION")
+)]
+struct FastRunCli {
+    #[command(flatten)]
+    args: RunCommandArgs,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Upgrade the standalone runtime from official stable GitHub releases
@@ -180,49 +237,7 @@ enum Commands {
         command: mcp_make::McpCommands,
     },
     /// Run a Kujo script file
-    Run {
-        /// Path to the .kujo file
-        file: PathBuf,
-
-        /// Resolve imports only from entry-file roots and KUJO_MODULE_PATH, not the caller project
-        #[arg(long)]
-        isolated_imports: bool,
-
-        /// Windows only: terminate descendants when this runtime process exits
-        #[arg(long, default_value_t = false)]
-        kill_children_on_exit: bool,
-
-        /// Use tree-walking interpreter instead of bytecode VM (default: VM)
-        #[arg(long)]
-        interpreter: bool,
-
-        /// Opt in to experimental JIT compilation for JIT-compatible bytecode surfaces.
-        #[arg(long, default_value_t = false)]
-        jit: bool,
-
-        /// Write bounded VM measurements to a new JSON file (never overwrites)
-        #[arg(long, conflicts_with = "interpreter")]
-        measurements: Option<PathBuf>,
-
-        /// Cooperative scheduler timeout in milliseconds (overrides env/default)
-        #[arg(long)]
-        scheduler_timeout_ms: Option<u64>,
-
-        /// Disable the top-level cooperative scheduler deadline for an externally supervised long-lived service
-        #[arg(long, default_value_t = false, conflicts_with = "scheduler_timeout_ms")]
-        scheduler_no_timeout: bool,
-
-        /// Emit runtime failures for `kujo run` as machine-readable JSON on stdout.
-        #[arg(long, default_value_t = false)]
-        json_runtime_diagnostics: bool,
-
-        #[command(flatten)]
-        capabilities: CapabilityArgs,
-
-        /// Arguments to pass to the script
-        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
-        script_args: Vec<String>,
-    },
+    Run(RunCommandArgs),
 
     /// Validate Kujo source (lex/parse/compile) without executing the program
     Check {
@@ -1206,7 +1221,7 @@ fn reserved_external_alias_error(name: &str) -> Option<String> {
     None
 }
 
-fn run_cli() {
+fn run_cli(cli: Option<Cli>) {
     let runtime = Builder::new_multi_thread()
         .thread_stack_size(8 * 1024 * 1024)
         .enable_all()
@@ -1216,14 +1231,29 @@ fn run_cli() {
             std::process::exit(1);
         });
 
-    runtime.block_on(async_main());
+    runtime.block_on(async_main(cli));
+}
+
+fn parse_fast_run_cli() -> Option<Cli> {
+    let mut raw_args = std::env::args_os();
+    let executable = raw_args.next()?;
+    if raw_args.next().as_deref() != Some(std::ffi::OsStr::new("run")) {
+        return None;
+    }
+
+    let fast = FastRunCli::parse_from(std::iter::once(executable).chain(raw_args));
+    Some(Cli { command: Some(Commands::Run(fast.args)) })
 }
 
 fn main() {
+    let fast_run_cli = parse_fast_run_cli();
     let runner = std::thread::Builder::new()
         .name("kujo-cli-runner".to_string())
         .stack_size(VM_EXECUTION_STACK_SIZE)
-        .spawn(run_cli)
+        .spawn(move || match fast_run_cli {
+            Some(cli) => futures::executor::block_on(async_main(Some(cli))),
+            None => run_cli(None),
+        })
         .unwrap_or_else(|error| {
             eprintln!("Error: failed to initialize CLI runner: {}", error);
             std::process::exit(1);
@@ -1234,8 +1264,8 @@ fn main() {
     }
 }
 
-async fn async_main() {
-    let cli = Cli::parse();
+async fn async_main(cli: Option<Cli>) {
+    let cli = cli.unwrap_or_else(Cli::parse);
 
     // Handle workflow pack commands via external subcommand routing.
     // When the user runs `kujo acme doctor`, clap sees "acme" as an unknown
@@ -1310,7 +1340,7 @@ async fn async_main() {
                 }
             }
         }
-        Commands::Run {
+        Commands::Run(RunCommandArgs {
             file,
             isolated_imports,
             kill_children_on_exit,
@@ -1322,7 +1352,7 @@ async fn async_main() {
             json_runtime_diagnostics,
             capabilities,
             script_args,
-        } => {
+        }) => {
             if kill_children_on_exit {
                 if let Err(error) = process_lifetime::own_descendants() {
                     report_cli_error_and_exit(error.to_string(), CliExitCode::RuntimeError);
