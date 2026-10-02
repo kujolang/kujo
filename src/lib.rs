@@ -33,6 +33,7 @@ pub mod lsp_references;
 pub mod lsp_rename;
 pub mod lsp_server;
 pub mod module;
+pub mod native_aot;
 #[cfg(feature = "runtime-network")]
 pub mod network_policy;
 pub mod optimizer;
