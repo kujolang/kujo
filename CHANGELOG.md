@@ -6,6 +6,29 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Added
+
+- Extend advisory optional inference across nested destructuring, known struct
+  fields, async completion values, callable aliases and analyzed module exports,
+  with positive, negative, dynamic-fallback and VM/interpreter parity regressions.
+- Expand the reproducible runtime-measurement workload corpus for collections,
+  structs, retained closures, nested generators, reusable promises, channels and
+  bounded task admission/cancellation, plus offline AI-native request hashing.
+- Add a process-inclusive startup, project-check and LSP-diagnostics comparison
+  harness for static-analysis performance regressions.
+
+### Changed
+
+- Cache parsed imported-module ASTs across function, value and struct export
+  analysis, avoiding repeated lexer/parser work while preserving dynamic import
+  fallback.
+- Add concise advisory diagnostics for known missing modules, impossible
+  destructuring, struct annotation mismatches, missing fields and non-callable
+  values. VM execution remains dynamically typed.
+- Restore `cargo run -- ...` to the primary `kujo` binary now that the package
+  also contains the lean `kujo-run` binary, keeping documented release commands
+  and the canonical release gate executable.
+
 ## [1.7.0] - 2026-10-01
 
 Native archives and npm packages are published for all five supported targets.

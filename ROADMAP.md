@@ -1,6 +1,6 @@
 # Kujo Roadmap
 
-Updated: 2026-09-29
+Updated: 2026-10-02
 Stable release: [v1.7.0](https://github.com/kujolang/kujo/releases/tag/v1.7.0)
 
 > Current crate version: `1.7.0` in [Cargo.toml](Cargo.toml)
@@ -75,6 +75,14 @@ post-release validation.
   database validation and clean-host networking stress coverage; each final
   Linux and macOS stress run passed 50 consecutive host/Docgen rounds.
 
+- Completed the first Kujo 1.8 core-quality tranche: optional inference now
+  follows destructured collection values, known module exports, struct fields,
+  promises and callable aliases while retaining dynamic `Any` fallback. Parsed
+  module ASTs are shared across export analyses, and the expanded runtime
+  measurement corpus covers language, continuation, capture, task, scheduler
+  and offline AI-native workloads. See the
+  [implementation and measurement record](docs/KUJO_1_8_CORE_QUALITY_TRANCHE.md).
+
 The September 13 reliability sweep closed the current short-term checklist:
 
 - Rechecked VM/interpreter behavior for closures, lexical scopes, async
@@ -102,8 +110,9 @@ an implementation backlog item.
 | Priority / status | Work | Completion boundary |
 | --- | --- | --- |
 | Completed — 1.6 release reconciliation | Publish one reviewed source identity through native archives and runtime npm packages. | Completed for all five supported targets. Exact hashes and public-install gates are in [the release receipt](docs/KUJO_1_6_RELEASE.md). Historical 1.5 artifacts remain unchanged; source pins and runtime versions are distinct provenance fields. |
-| Next language maintenance | Improve optional inference for destructuring, module existence checks, struct fields, promises and callable fallback. | Add positive and negative regressions without turning the VM into a static type gate or suppressing genuine annotation errors. The collection-inference bug found during integration is already fixed. |
-| Measurement before optimization | Profile generator continuation allocation, retained captures, bounded task admission and scheduling costs. | Comparable measurements and unchanged lifecycle, capability, snapshot and cancellation contracts; no unmeasured performance promise. |
+| Completed — 1.8 optional inference | Improve optional inference for destructuring, module existence checks, struct fields, promises and callable fallback. | Positive, negative and unknown/dynamic regressions now cover the stable grammar without turning the VM into a static type gate or suppressing genuine annotation errors. See the [1.8 tranche record](docs/KUJO_1_8_CORE_QUALITY_TRANCHE.md). |
+| Completed — measured core characterization | Profile generator continuation allocation, retained captures, bounded task admission and scheduling costs. | The reproducible release-mode corpus records timing variance and runtime counters while preserving lifecycle, capability, snapshot and cancellation contracts. Only the measured analyzed-module parse-cache optimization was retained. |
+| Next developer-experience tranche | Share analyzed-program facts with the LSP and characterize project-check latency. | Reuse one checker model for CLI diagnostics, hover, completion, struct fields, imported symbols and callable signatures; preserve bounded recovery and dynamic fallback, with startup/file/project latency gates. |
 | Unscheduled language candidates | Evaluate async generators, yield-from and struct generator methods; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
 | Owner-deferred ecosystem validation | Live Workcell provider validation. | The operator supplies the provider/profile, account, region, image and spend limit, then runs the provider's real lifecycle and preservation checks. Offline success is not remote certification. This is not a Kujo merge blocker. |
 | Open host observation | Investigate the intermittent Intel Mac loopback stall if it recurs. | Capture a reproducible host-level failure and establish its cause. Standard Rust TCP also reproduced it; host load, free disk space and network filters remain hypotheses. Clean-host stress checks passed. Keep the existing observation open without claiming a Kujo defect or a proven repair. |
@@ -164,11 +173,14 @@ execution remains incomplete.
 
 ## Maintenance lane
 
-Continue optional inference for destructuring, module existence, struct recognition
-and field lookup, Promise unwraps, and callable inference/fallback. Maintain
-VM/interpreter compatibility, security, fuzzing, release reliability, compiler/VM
-optimizations and measured concurrency optimization. Generics, macros, WASM,
-FFI, async generators and yield-from remain explicitly deferred and unscheduled.
+Maintain the completed optional-inference surfaces for destructuring, module
+existence, structs, promises and callable values. The next high-leverage 1.8 work
+is a shared analyzed-program model for CLI/LSP facts plus project-check latency
+measurement. Continue VM/interpreter compatibility, security, fuzzing, release
+reliability and evidence-led compiler/runtime optimization. Generics, macros,
+WASM, broad FFI, async generators and yield-from remain explicitly deferred and
+unscheduled; struct generator methods are the best bounded language candidate
+after the developer-experience tranche.
 
 ## Current direction
 
@@ -208,10 +220,10 @@ release promises.
 Near-term language work should close known runtime gaps before adding broad new
 syntax. The explicit candidates from the v1 scope are:
 
-- measured generator/task allocation and scheduling optimization while preserving
+- ongoing generator/task allocation and scheduling measurement while preserving
   the [concurrency contracts](docs/RUNTIME_CONCURRENCY_COMPLETION.md);
-- better optional type inference for destructuring, imports, struct fields,
-  promises, and callable values;
+- surfacing completed optional inference in the LSP through a shared analyzed
+  program model, with project-check performance gates;
 - compiler and VM optimizations that do not change program behavior.
 
 Generics, FFI, a WASM target, and macros remain possible post-v1 projects. None is
