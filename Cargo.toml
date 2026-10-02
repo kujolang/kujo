@@ -8,6 +8,7 @@ description = "Kujo — A lean, expressive programming language"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/kujolang/kujo"
+default-run = "kujo"
 
 # Keep the public Rust library and installed CLI names stable while using the
 # unambiguous `kujolang` package identity on crates.io.
