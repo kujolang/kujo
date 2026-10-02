@@ -3815,6 +3815,19 @@ impl TypeChecker {
         }
     }
 
+    fn overloaded_binary_result(
+        &self,
+        op: &str,
+        left_type: &Option<TypeAnnotation>,
+    ) -> Option<TypeAnnotation> {
+        let TypeAnnotation::Struct(name) = left_type.as_ref()? else {
+            return None;
+        };
+        let method_name = crate::ast::operator_methods::binary_op_method(op)?;
+        let signature = self.structs.get(name)?.methods.get(method_name)?;
+        Some(signature.return_type.clone().unwrap_or(TypeAnnotation::Any))
+    }
+
     // Keep early returns in expression inference inside the balanced depth guard.
     fn infer_expr_inner(&mut self, expr: &Expr) -> Option<TypeAnnotation> {
         match expr {
@@ -3873,6 +3886,14 @@ impl TypeChecker {
             Expr::BinaryOp { op, left, right } => {
                 let left_type = self.infer_expr(left);
                 let right_type = self.infer_expr(right);
+
+                if let Some(result) = self.overloaded_binary_result(op, &left_type) {
+                    return if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") {
+                        Some(TypeAnnotation::Bool)
+                    } else {
+                        Some(result)
+                    };
+                }
 
                 match op.as_str() {
                     "==" | "!=" | "<" | ">" | "<=" | ">=" => {
@@ -5537,5 +5558,22 @@ mod tests {
         assert!(missing.check(&missing_parser.parse()).is_err());
         assert!(missing.errors.iter().any(|error| error.to_string().contains("Unknown module")));
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn struct_operator_overloads_do_not_emit_primitive_type_mismatches() {
+        let checked = check_source(
+            r#"
+                struct Vector {
+                    x: float,
+                    func op_mul(scale) { return Vector { x: x * scale } },
+                    func op_eq(other) { return x == other.x }
+                }
+                let vector := Vector { x: 3.0 }
+                let scaled := vector * 2.0
+                let equal: bool := vector == scaled
+            "#,
+        );
+        assert!(checked.errors.is_empty(), "{:?}", checked.errors);
     }
 }
