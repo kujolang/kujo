@@ -6717,5 +6717,4 @@ mod tests {
             && matches!(&values[0], Value::Str(ch) if ch.as_ref() == "a")
             && matches!(&values[1], Value::Str(ch) if ch.as_ref() == "b")));
     }
-
 }
