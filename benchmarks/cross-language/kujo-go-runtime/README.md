@@ -9,7 +9,7 @@ function-local workloads that provide three narrow signals:
   state.
 
 These are local regression and profiling inputs, not broad language rankings.
-The runners check exact output before accepting timings and keep raw results in
+Each runner checks exact output before accepting timings and keeps raw results in
 the repository's ignored `benchmarks/cross-language/results/` directory.
 
 ## Run
