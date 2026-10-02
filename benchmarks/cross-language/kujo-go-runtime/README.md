@@ -11,6 +11,8 @@ function-local workloads that provide three narrow signals:
 These are local regression and profiling inputs, not broad language rankings.
 Each runner checks exact output before accepting timings and keeps raw results in
 the repository's ignored `benchmarks/cross-language/results/` directory.
+The original matrix covers Kujo VM/JIT, Go, optimized Rust, Python, and PHP;
+the leaderboard runner adds Zero and Bend without replacing that baseline.
 
 ## Run
 

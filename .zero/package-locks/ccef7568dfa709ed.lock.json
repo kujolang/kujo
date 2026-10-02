@@ -1,7 +1,0 @@
-{
-  "schemaVersion": 1,
-  "format": "zero-lock-v1",
-  "package": {"name": "prime_count", "version": "0.1.0"},
-  "dependencyGraphHash": "ccef7568dfa709ed",
-  "dependencies": []
-}

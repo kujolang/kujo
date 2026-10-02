@@ -25,6 +25,7 @@ rust-toolchain.toml
 /dist/
 /out/
 /bin/
+/.zero/
 /debug/
 /release/
 /kujo
