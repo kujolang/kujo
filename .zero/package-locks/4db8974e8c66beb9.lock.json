@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "format": "zero-lock-v1",
+  "package": {"name": "startup", "version": "0.1.0"},
+  "dependencyGraphHash": "4db8974e8c66beb9",
+  "dependencies": []
+}

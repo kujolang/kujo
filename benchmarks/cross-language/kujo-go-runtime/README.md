@@ -9,8 +9,7 @@ function-local workloads that provide three narrow signals:
   state.
 
 These are local regression and profiling inputs, not broad language rankings.
-The runner checks exact output before accepting timings for the Kujo VM,
-opt-in Kujo JIT, Go, optimized Rust, Python, and PHP, and keeps raw results in
+The runners check exact output before accepting timings and keep raw results in
 the repository's ignored `benchmarks/cross-language/results/` directory.
 
 ## Run
@@ -23,6 +22,20 @@ From the repository root:
 ```bash
 bash benchmarks/cross-language/kujo-go-runtime/run.sh
 ```
+
+For the seven-language leaderboard, install Zero 0.3.4 and Bend 2.0.34, then
+run:
+
+```bash
+bash benchmarks/cross-language/kujo-go-runtime/run-seven-language.sh
+```
+
+That runner compares Kujo's lean JIT launcher against optimized native Go,
+Rust, Zero, and Bend executables plus Python and PHP. It uses five startup
+warmups with 25 measured runs and three compute warmups with 15 measured runs
+by default. `BENCH_WARMUP`, `BENCH_RUNS`, `STARTUP_WARMUP`, and `STARTUP_RUNS`
+override those sample counts. The generated summary includes the median matrix,
+Kujo-to-language ratios, and a ranked leaderboard for every workload.
 
 For the focused four-language latency comparison using the lean trusted
 `kujo-run` launcher:
@@ -78,6 +91,12 @@ Every computational fixture keeps its state inside one function and uses the
 same loop bounds, constants, integer operations, output, and expected-result
 check. This controls obvious source-level differences without claiming that
 the language implementations or compilation models are identical.
+
+Bend 2 currently exposes a native `U32` but no native 64-bit integer type. Its
+`integer_mix` fixture therefore uses overflow-safe modular multiplication to
+evaluate the same recurrence and exact result. That fixture is semantically
+equivalent but performs more primitive operations than the other versions, so
+interpret its Bend timing with that limitation in mind.
 
 Any public performance claim must also satisfy
 [`docs/BENCHMARK_PUBLICATION_POLICY.md`](../../../docs/BENCHMARK_PUBLICATION_POLICY.md).

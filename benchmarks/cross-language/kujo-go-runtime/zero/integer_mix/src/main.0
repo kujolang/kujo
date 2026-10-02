@@ -1,0 +1,22 @@
+fn integer_mix(iterations: i64) -> i64 {
+    var accumulator: i64 = 1
+    var i: i64 = 1
+
+    while i <= iterations {
+        accumulator = (accumulator * 1664525 + i + 1013904223) % 2147483647
+        i = i + 1
+    }
+
+    return accumulator
+}
+
+pub fn main(world: World) -> Void raises {
+    let result: i64 = integer_mix(250000)
+    var storage: [12]u8 = [0_u8; 12]
+    let formatted: Maybe<Span<u8>> = std.fmt.u32(storage, result as u32)
+    if formatted.has {
+        check world.out.write("integer_mix=")
+        check world.out.write(formatted.value)
+        check world.out.write("\n")
+    }
+}

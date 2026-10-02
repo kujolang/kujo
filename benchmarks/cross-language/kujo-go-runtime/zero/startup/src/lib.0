@@ -1,0 +1,3 @@
+pub fn greeting_code() -> i32 {
+    return 42
+}

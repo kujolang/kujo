@@ -1,0 +1,35 @@
+fn count_primes(limit: i64) -> i64 {
+    var count: i64 = 0
+    var n: i64 = 2
+
+    while n < limit {
+        var is_prime: Bool = true
+        var divisor: i64 = 2
+
+        while divisor * divisor <= n {
+            if n % divisor == 0 {
+                is_prime = false
+                break
+            }
+            divisor = divisor + 1
+        }
+
+        if is_prime {
+            count = count + 1
+        }
+        n = n + 1
+    }
+
+    return count
+}
+
+pub fn main(world: World) -> Void raises {
+    let result: i64 = count_primes(50000)
+    var storage: [12]u8 = [0_u8; 12]
+    let formatted: Maybe<Span<u8>> = std.fmt.u32(storage, result as u32)
+    if formatted.has {
+        check world.out.write("prime_count=")
+        check world.out.write(formatted.value)
+        check world.out.write("\n")
+    }
+}
