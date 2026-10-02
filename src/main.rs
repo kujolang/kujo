@@ -1462,24 +1462,12 @@ async fn async_main(cli: Option<Cli>) {
                                 vm.set_capability_policy(capability_policy.clone());
 
                                 // Set up global environment with built-in functions
-                                // We need to populate it with NativeFunction values for all built-ins
+                                // Native functions resolve lazily in the VM; only constants need
+                                // concrete global bindings at startup.
                                 let env = Arc::new(Mutex::new(interpreter::Environment::new()));
-
-                                // Register all built-in functions as NativeFunction values
-                                // Get the complete list from the interpreter
-                                let builtins = interpreter::Interpreter::get_builtin_names();
 
                                 {
                                     let mut env_lock = env.lock().unwrap();
-                                    for builtin_name in builtins {
-                                        env_lock.set(
-                                            builtin_name.to_string(),
-                                            interpreter::Value::NativeFunction(
-                                                builtin_name.to_string(),
-                                            ),
-                                        );
-                                    }
-
                                     // Register constant globals that are not callable native functions.
                                     for (name, value) in crate::builtins::get_builtins() {
                                         env_lock.set(name, value);

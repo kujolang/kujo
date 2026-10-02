@@ -88,7 +88,7 @@ use rusqlite::Connection as SqliteConnection;
 #[allow(unused_imports)]
 use sha2::{Digest as Sha2Digest, Sha256};
 #[allow(unused_imports)]
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 #[allow(unused_imports)]
 use std::fs::File;
 #[allow(unused_imports)]
@@ -97,7 +97,7 @@ use std::io::Write;
 #[allow(unused_imports)]
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 #[cfg(feature = "runtime-archive")]
 #[allow(unused_imports)]
 use zip::{write::FileOptions, ZipArchive, ZipWriter};
@@ -1057,6 +1057,13 @@ impl Interpreter {
             "tls_close",
             "tls_info",
         ]
+    }
+
+    /// Return whether a name resolves to a native builtin without allocating
+    /// hundreds of `Value::NativeFunction` globals during VM startup.
+    pub fn is_builtin_name(name: &str) -> bool {
+        static NAMES: OnceLock<HashSet<&'static str>> = OnceLock::new();
+        NAMES.get_or_init(|| Self::get_builtin_names().into_iter().collect()).contains(name)
     }
 
     /// Registers all built-in functions and constants

@@ -4,6 +4,7 @@ use crate::interpreter::{Environment, Interpreter, Value};
 use crate::lexer::tokenize_with_file;
 use crate::parser::Parser;
 use crate::path_security;
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -75,9 +76,11 @@ pub struct ModuleLoader {
     loading_stack_index: HashMap<ModuleCacheKey, usize>,
     /// Search paths for module resolution.
     search_paths: Vec<PathBuf>,
-    /// Lockfile-derived package roots discovered when the loader is created or
-    /// when the CLI adds an entry-file search path.
-    automatic_search_paths: Vec<PathBuf>,
+    /// Locations used to discover lockfile-derived package roots. Discovery is
+    /// deferred until the first import so scripts without imports do no
+    /// filesystem traversal or lockfile parsing during startup.
+    automatic_search_starts: Vec<PathBuf>,
+    automatic_search_paths: RefCell<Option<Vec<PathBuf>>>,
 }
 
 impl ModuleLoader {
@@ -197,14 +200,13 @@ impl ModuleLoader {
     /// Creates a new module loader with default search paths.
     pub fn new() -> Self {
         let search_paths = initial_module_search_paths();
-        let automatic_search_paths =
-            automatic_kennel_package_search_paths(&current_working_directory());
         ModuleLoader {
             loaded_modules: HashMap::new(),
             loading_stack: Vec::new(),
             loading_stack_index: HashMap::new(),
             search_paths,
-            automatic_search_paths,
+            automatic_search_starts: vec![current_working_directory()],
+            automatic_search_paths: RefCell::new(None),
         }
     }
 
@@ -213,7 +215,8 @@ impl ModuleLoader {
     pub fn add_search_path<P: AsRef<Path>>(&mut self, path: P) {
         let path = path.as_ref().to_path_buf();
         self.search_paths.push(path.clone());
-        self.automatic_search_paths.extend(automatic_kennel_package_search_paths(&path));
+        self.automatic_search_starts.push(path);
+        *self.automatic_search_paths.borrow_mut() = None;
     }
 
     fn module_search_roots(&self) -> Vec<PathBuf> {
@@ -224,7 +227,14 @@ impl ModuleLoader {
         }
 
         roots.extend(self.search_paths.iter().cloned());
-        roots.extend(self.automatic_search_paths.iter().cloned());
+        let mut automatic_search_paths = self.automatic_search_paths.borrow_mut();
+        let automatic_search_paths = automatic_search_paths.get_or_insert_with(|| {
+            self.automatic_search_starts
+                .iter()
+                .flat_map(|path| automatic_kennel_package_search_paths(path))
+                .collect()
+        });
+        roots.extend(automatic_search_paths.iter().cloned());
         roots
     }
 

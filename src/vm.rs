@@ -460,11 +460,7 @@ impl VM {
             // A runtime-created named binding can resolve to an existing global
             // instead; preserve that v1 assignment contract without guessing slots.
             let name = &self.chunk.upvalues[index];
-            self.globals
-                .lock()
-                .unwrap()
-                .get(name)
-                .ok_or_else(|| Self::undefined_variable_message(name))?
+            self.resolve_global_value(name).ok_or_else(|| Self::undefined_variable_message(name))?
         };
         self.stack.push(value);
         Ok(())
@@ -516,6 +512,13 @@ impl VM {
 
     fn undefined_variable_message(name: &str) -> String {
         format!("Undefined variable: {}", name)
+    }
+
+    fn resolve_global_value(&self, name: &str) -> Option<Value> {
+        if let Some(value) = self.globals.lock().unwrap().get(name) {
+            return Some(value);
+        }
+        Interpreter::is_builtin_name(name).then(|| Value::NativeFunction(name.to_owned()))
     }
 
     fn value_error_message(value: &Value) -> Option<String> {
@@ -799,21 +802,35 @@ impl VM {
 
     /// Enable or disable JIT compilation
     pub fn set_jit_enabled(&mut self, enabled: bool) {
-        if enabled && self.jit_compiler.is_none() {
-            match JitCompiler::new() {
-                Ok(compiler) => self.jit_compiler = Some(compiler),
-                Err(error) => {
-                    eprintln!("Warning: Failed to initialize JIT compiler: {}", error);
-                    eprintln!("Falling back to interpreter-only mode");
-                    self.jit_enabled = false;
-                    return;
-                }
-            }
-        }
-
         self.jit_enabled = enabled;
         if let Some(compiler) = self.jit_compiler.as_mut() {
             compiler.set_enabled(enabled);
+        }
+    }
+
+    /// Initialize Cranelift only when execution first reaches a JIT candidate.
+    ///
+    /// Most short scripts never execute hot, supported bytecode. Deferring this
+    /// setup keeps opting into JIT effectively free for those programs while
+    /// preserving the same compiler and fallback behavior for hot code.
+    fn ensure_jit_compiler(&mut self) -> bool {
+        if !self.jit_enabled {
+            return false;
+        }
+        if self.jit_compiler.is_some() {
+            return true;
+        }
+        match JitCompiler::new() {
+            Ok(compiler) => {
+                self.jit_compiler = Some(compiler);
+                true
+            }
+            Err(error) => {
+                eprintln!("Warning: Failed to initialize JIT compiler: {}", error);
+                eprintln!("Falling back to VM mode");
+                self.jit_enabled = false;
+                false
+            }
         }
     }
 
@@ -825,7 +842,11 @@ impl VM {
     /// Get JIT compilation statistics
     pub fn jit_stats(&self) -> crate::jit::JitStats {
         self.jit_compiler.as_ref().map_or(
-            crate::jit::JitStats { total_functions: 0, compiled_functions: 0, enabled: false },
+            crate::jit::JitStats {
+                total_functions: 0,
+                compiled_functions: 0,
+                enabled: self.jit_enabled,
+            },
             JitCompiler::stats,
         )
     }
@@ -882,6 +903,10 @@ impl VM {
 
         if self.compiled_functions.contains_key(func_name.as_str()) {
             return Ok(true);
+        }
+
+        if !self.ensure_jit_compiler() {
+            return Ok(false);
         }
 
         let info = self
@@ -1495,7 +1520,7 @@ impl VM {
             }
 
             // Attempt to compile the entire script
-            if script_jit_safe {
+            if script_jit_safe && self.ensure_jit_compiler() {
                 match self
                     .jit_compiler
                     .as_mut()
@@ -1611,19 +1636,26 @@ impl VM {
             // Check if we should JIT compile this hot path
             if self.jit_enabled && !contains_map_fusion_op {
                 // For loops (backward jumps), check if we should compile
-                if let Some(OpCode::JumpBack(jump_target)) = self.chunk.instructions.get(self.ip) {
+                let jump_target = match self.chunk.instructions.get(self.ip) {
+                    Some(OpCode::JumpBack(target)) => Some(*target),
+                    _ => None,
+                };
+                if let Some(jump_target) = jump_target {
+                    if !self.ensure_jit_compiler() {
+                        continue;
+                    }
                     if self
                         .jit_compiler
                         .as_ref()
                         .expect("JIT compiler initialized when JIT is enabled")
-                        .is_loop_jit_blocked(*jump_target)
+                        .is_loop_jit_blocked(jump_target)
                     {
                         // Loop is known to be incompatible with JIT
                     } else if self
                         .jit_compiler
                         .as_mut()
                         .expect("JIT compiler initialized when JIT is enabled")
-                        .should_compile(*jump_target)
+                        .should_compile(jump_target)
                     {
                         // PRE-SCAN: Check if loop contains only supported opcodes
                         // This prevents compilation failures and maintains correctness
@@ -1633,7 +1665,7 @@ impl VM {
 
                         if int_dict_loop_valid {
                             for instr in
-                                self.chunk.instructions.iter().take(self.ip + 1).skip(*jump_target)
+                                self.chunk.instructions.iter().take(self.ip + 1).skip(jump_target)
                             {
                                 match instr {
                                     OpCode::IndexGetInPlace(slot)
@@ -1650,7 +1682,7 @@ impl VM {
                                     .instructions
                                     .iter()
                                     .take(self.ip + 1)
-                                    .skip(*jump_target)
+                                    .skip(jump_target)
                                 {
                                     match instr {
                                         OpCode::LoadLocal(slot) | OpCode::StoreLocal(slot) => {
@@ -1723,18 +1755,18 @@ impl VM {
                             self.jit_compiler
                                 .as_ref()
                                 .expect("JIT compiler initialized when JIT is enabled")
-                                .can_compile_loop_with_int_dicts(&self.chunk, *jump_target, self.ip)
+                                .can_compile_loop_with_int_dicts(&self.chunk, jump_target, self.ip)
                         } else {
                             self.jit_compiler
                                 .as_ref()
                                 .expect("JIT compiler initialized when JIT is enabled")
-                                .can_compile_loop(&self.chunk, *jump_target, self.ip)
+                                .can_compile_loop(&self.chunk, jump_target, self.ip)
                         };
 
                         if can_compile_loop {
                             let mut store_vars = std::collections::HashSet::new();
                             for instr in
-                                self.chunk.instructions.iter().take(self.ip + 1).skip(*jump_target)
+                                self.chunk.instructions.iter().take(self.ip + 1).skip(jump_target)
                             {
                                 match instr {
                                     OpCode::StoreVar(name) | OpCode::StoreGlobal(name) => {
@@ -1750,7 +1782,7 @@ impl VM {
                                 self.jit_compiler
                                     .as_mut()
                                     .expect("JIT compiler initialized when JIT is enabled")
-                                    .mark_loop_jit_blocked(*jump_target);
+                                    .mark_loop_jit_blocked(jump_target);
                             } else {
                                 // Try to compile this hot loop
                                 // IMPORTANT: Compile from the loop START (jump_target), not from the JumpBack!
@@ -1762,7 +1794,7 @@ impl VM {
                                             .expect("JIT compiler initialized when JIT is enabled")
                                             .compile_loop_with_int_dicts(
                                                 &self.chunk,
-                                                *jump_target,
+                                                jump_target,
                                                 self.ip,
                                                 int_dict_slots,
                                             )
@@ -1770,7 +1802,7 @@ impl VM {
                                         self.jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
-                                            .compile(&self.chunk, *jump_target)
+                                            .compile(&self.chunk, jump_target)
                                     };
 
                                 match compile_result {
@@ -1781,7 +1813,6 @@ impl VM {
                                                 jump_target, self.ip
                                             );
                                         }
-                                        let jump_target = *jump_target;
                                         let loop_exit_ip;
                                         let mut max_target = self.ip;
 
@@ -1928,7 +1959,7 @@ impl VM {
                                         self.jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
-                                            .mark_loop_jit_blocked(*jump_target);
+                                            .mark_loop_jit_blocked(jump_target);
                                     }
                                 }
                             }
@@ -1944,7 +1975,7 @@ impl VM {
                             self.jit_compiler
                                 .as_mut()
                                 .expect("JIT compiler initialized when JIT is enabled")
-                                .mark_loop_jit_blocked(*jump_target);
+                                .mark_loop_jit_blocked(jump_target);
                         }
                     }
                 }
@@ -2004,7 +2035,7 @@ impl VM {
 
                     let value = value
                         .or_else(|| {
-                            let global_val = self.globals.lock().unwrap().get(&name);
+                            let global_val = self.resolve_global_value(&name);
                             if std::env::var("DEBUG_VM").is_ok() {
                                 eprintln!(
                                     "LoadVar('{}'): checking globals -> {:?}",
@@ -2041,17 +2072,15 @@ impl VM {
 
                 OpCode::LoadGlobal(name) => {
                     let value = self
-                        .globals
-                        .lock()
-                        .unwrap()
-                        .get(&name)
+                        .resolve_global_value(&name)
                         .ok_or_else(|| Self::undefined_variable_message(&name))?;
                     self.stack.push(value);
                 }
 
                 OpCode::StoreVar(name) => {
                     let value = self.stack.last().ok_or("Stack underflow")?.clone();
-                    let global_exists = self.globals.lock().unwrap().get(&name).is_some();
+                    let global_exists = self.globals.lock().unwrap().get(&name).is_some()
+                        || Interpreter::is_builtin_name(&name);
                     let mut assign_global = false;
 
                     if let Some(frame) = self.call_frames.last_mut() {
@@ -3331,6 +3360,7 @@ impl VM {
                                     .entry(func_name.to_string())
                                     .or_insert(0);
                                 *count += 1;
+                                let call_count = *count;
 
                                 // Check if we should JIT-compile this function
                                 let has_loop = chunk
@@ -3354,8 +3384,9 @@ impl VM {
                                     .is_err()
                                     && !has_map_fusion_op;
                                 if allow_function_jit
-                                    && (*count == JIT_FUNCTION_THRESHOLD
-                                        || (has_loop && *count == 1))
+                                    && (call_count == JIT_FUNCTION_THRESHOLD
+                                        || (has_loop && call_count == 1))
+                                    && self.ensure_jit_compiler()
                                 {
                                     if std::env::var("DEBUG_JIT").is_ok() {
                                         eprintln!(
@@ -8083,9 +8114,8 @@ impl VM {
                                 } else if let Some(value_ref) = frame.captured.get(&name) {
                                     let value = value_ref.lock().unwrap().clone();
                                     self.stack.push(value);
-                                } else if let Some(value) = self.globals.lock().unwrap().get(&name)
-                                {
-                                    self.stack.push(value.clone());
+                                } else if let Some(value) = self.resolve_global_value(&name) {
+                                    self.stack.push(value);
                                 } else {
                                     return Err(Self::undefined_variable_message(&name));
                                 }
@@ -8096,17 +8126,15 @@ impl VM {
 
                         OpCode::LoadGlobal(name) => {
                             let value = self
-                                .globals
-                                .lock()
-                                .unwrap()
-                                .get(&name)
+                                .resolve_global_value(&name)
                                 .ok_or_else(|| Self::undefined_variable_message(&name))?;
                             self.stack.push(value);
                         }
 
                         OpCode::StoreVar(name) => {
                             let value = self.stack.pop().ok_or("Stack underflow")?;
-                            let global_exists = self.globals.lock().unwrap().get(&name).is_some();
+                            let global_exists = self.globals.lock().unwrap().get(&name).is_some()
+                                || Interpreter::is_builtin_name(&name);
                             let mut assign_global = false;
 
                             if let Some(frame) = self.call_frames.last_mut() {
@@ -9148,6 +9176,29 @@ mod tests {
         let ast = parser.parse();
         let mut compiler = Compiler::new();
         compiler.compile(&ast).expect("compile should succeed")
+    }
+
+    #[test]
+    fn test_vm_resolves_builtin_functions_lazily() {
+        let result = run_vm_code(r#"return len("abc")"#)
+            .expect("VM should resolve builtins without eagerly populated globals");
+        assert!(matches!(result, Value::Int(3)));
+    }
+
+    #[test]
+    fn test_vm_builtin_assignment_preserves_global_binding_semantics() {
+        let result = run_vm_code(
+            r#"
+            func replace_builtin() {
+                len = 7
+                return len
+            }
+
+            return replace_builtin()
+            "#,
+        )
+        .expect("assignment to a builtin name should retain its global semantics");
+        assert!(matches!(result, Value::Int(7)));
     }
 
     #[test]

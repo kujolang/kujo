@@ -6,7 +6,7 @@
 //! used by `kujo run`.
 
 use kujo::compiler::Compiler;
-use kujo::interpreter::{Environment, Interpreter, Value};
+use kujo::interpreter::{Environment, Value};
 use kujo::parser::Parser;
 use kujo::vm::{VmExecutionResult, VM};
 use std::ffi::OsStr;
@@ -94,9 +94,6 @@ fn run(args: RunArgs) -> Result<(), String> {
             let env = Arc::new(Mutex::new(Environment::new()));
             {
                 let mut globals = env.lock().map_err(|error| error.to_string())?;
-                for builtin in Interpreter::get_builtin_names() {
-                    globals.set(builtin.to_string(), Value::NativeFunction(builtin.to_string()));
-                }
                 for (name, value) in kujo::builtins::get_builtins() {
                     globals.set(name, value);
                 }
