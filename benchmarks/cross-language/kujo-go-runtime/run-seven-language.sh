@@ -59,18 +59,15 @@ fi
 
 (
     cd "$KUJO_REPO"
-    /usr/bin/time -p cargo build --release --locked --no-default-features --bin kujo-aot
-) 2>"$RESULTS_DIR/kujo-aot-release-build.time"
-cp "$KUJO_REPO/target/release/kujo-aot" "$BIN_DIR/kujo-aot"
-KUJO_COMPILER="$BIN_DIR/kujo-aot"
+    /usr/bin/time -p cargo build --release --locked --no-default-features \
+        --features runtime-jit --bin kujo-run
+) 2>"$RESULTS_DIR/kujo-run-release-build.time"
+cp "$KUJO_REPO/target/release/kujo-run" "$BIN_DIR/kujo-run"
+KUJO_BIN="$BIN_DIR/kujo-run"
 
 workloads=(startup prime_count integer_mix)
 RUST_FLAGS=(--edition=2021 -C opt-level=3 -C debuginfo=0 -C strip=symbols -C codegen-units=1)
 for workload in "${workloads[@]}"; do
-    /usr/bin/time -p "$KUJO_COMPILER" "$SUITE_DIR/$workload.kujo" \
-        -o "$BIN_DIR/$workload-kujo" \
-        >"$RESULTS_DIR/$workload-kujo-compile.stdout" \
-        2>"$RESULTS_DIR/$workload-kujo-compile.time"
     go build -trimpath -ldflags='-s -w' -o "$BIN_DIR/$workload-go" "$SUITE_DIR/$workload.go"
     rustc "${RUST_FLAGS[@]}" -o "$BIN_DIR/$workload-rust" "$SUITE_DIR/$workload.rs"
     (
@@ -85,7 +82,7 @@ CORRECTNESS_TSV="$RESULTS_DIR/correctness.tsv"
 printf 'workload\tkujo_output\tgo_output\trust_output\tpython_output\tphp_output\tzero_output\tbend_output\texpected\tstatus\n' \
     >"$CORRECTNESS_TSV"
 for workload in "${workloads[@]}"; do
-    kujo_output="$($BIN_DIR/$workload-kujo)"
+    kujo_output="$($KUJO_BIN --jit "$SUITE_DIR/$workload.kujo")"
     go_output="$($BIN_DIR/$workload-go)"
     rust_output="$($BIN_DIR/$workload-rust)"
     python_output="$(python3 -B "$SUITE_DIR/$workload.py")"
@@ -121,7 +118,7 @@ for workload in "${workloads[@]}"; do
         --shell=none \
         --warmup "$warmups" \
         --runs "$runs" \
-        --command-name "Kujo" "$BIN_DIR/$workload-kujo" \
+        --command-name "Kujo" "$KUJO_BIN --jit $SUITE_DIR/$workload.kujo" \
         --command-name "Go" "$BIN_DIR/$workload-go" \
         --command-name "Rust" "$BIN_DIR/$workload-rust" \
         --command-name "Python" "python3 -B $SUITE_DIR/$workload.py" \
@@ -139,7 +136,7 @@ jq -n \
     --arg recorded_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg kujo_commit "$KUJO_COMMIT" \
     --argjson kujo_dirty "$KUJO_DIRTY" \
-    --arg kujo_version "$($KUJO_COMPILER --version)" \
+    --arg kujo_version "$($KUJO_BIN --version)" \
     --arg go_version "$(go version)" \
     --arg rust_version "$(rustc --version)" \
     --arg python_version "$(python3 --version)" \
@@ -157,8 +154,7 @@ jq -n \
         run_id: $run_id,
         recorded_at: $recorded_at,
         kujo: {commit: $kujo_commit, dirty: $kujo_dirty, version: $kujo_version,
-            build: "cargo build --release --locked --no-default-features --bin kujo-aot",
-            execution: "precompiled freestanding native scalar-core executable"},
+            build: "cargo build --release --locked --no-default-features --features runtime-jit --bin kujo-run"},
         go: {version: $go_version, build: "go build -trimpath -ldflags=-s\\ -w"},
         rust: {version: $rust_version,
             build: "rustc --edition=2021 -C opt-level=3 -C debuginfo=0 -C strip=symbols -C codegen-units=1"},
@@ -230,10 +226,8 @@ SUMMARY="$RESULTS_DIR/summary.md"
     done
 
     echo
-    echo "Kujo uses its allocation-free scalar-core AOT backend; unsupported language features are"
-    echo "rejected rather than silently falling back. Go, Rust, Zero, and Bend run prebuilt native"
-    echo "executables; Python and PHP include interpreter startup. Kujo compilation is recorded"
-    echo "separately and excluded from execution timings. Bend lacks a 64-bit integer type,"
+    echo "Kujo uses its lean trusted VM/JIT launcher. Go, Rust, Zero, and Bend run prebuilt native"
+    echo "executables; Python and PHP include interpreter startup. Bend lacks a 64-bit integer type,"
     echo "so its integer-mix version uses overflow-safe U32 modular multiplication to preserve the"
     echo "same recurrence and exact result; that workload is semantically equivalent but not operation-for-operation identical."
 } >"$SUMMARY"

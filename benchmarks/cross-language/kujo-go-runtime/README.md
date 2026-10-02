@@ -32,10 +32,8 @@ run:
 bash benchmarks/cross-language/kujo-go-runtime/run-seven-language.sh
 ```
 
-That runner compiles the Kujo fixtures with `kujo-aot` and compares the pinned
-native executables against optimized native Go, Rust, Zero, and Bend
-executables plus Python and PHP. Kujo compilation is recorded separately and
-excluded from execution timing. It uses five startup
+That runner compares Kujo's lean JIT launcher against optimized native Go,
+Rust, Zero, and Bend executables plus Python and PHP. It uses five startup
 warmups with 25 measured runs and three compute warmups with 15 measured runs
 by default. `BENCH_WARMUP`, `BENCH_RUNS`, `STARTUP_WARMUP`, and `STARTUP_RUNS`
 override those sample counts. The generated summary includes the median matrix,
@@ -66,20 +64,6 @@ BENCH_WARMUP=1 BENCH_RUNS=3 PHASE_RUNS=3 STARTUP_RUNS=10 \
 Hyperfine launches benchmark commands directly with `--shell=none`, avoiding
 shell-startup noise that can materially distort these short-lived processes.
 
-## Kujo native AOT scope
-
-`kujo-aot` is a production command for allocation-free scalar programs. It
-supports integer and boolean locals, direct scalar function calls, branches,
-loops, checked integer arithmetic, and `print`/`to_string` output. It emits a
-freestanding optimized executable on macOS or Linux for arm64 and x86_64.
-Heap values, imports, async/generator functions, indirect calls, and other
-unsupported syntax fail compilation with an explicit error; there is no silent
-VM fallback. Compile a supported program with:
-
-```bash
-cargo run --release --no-default-features --bin kujo-aot -- program.kujo -o program
-```
-
 The runner builds Kujo with `cargo build --release --locked`, copies that exact
 binary into the result bundle, builds Go binaries with the standard optimized
 compiler defaults and `-trimpath`, and builds Rust binaries with `rustc -C
@@ -89,7 +73,7 @@ host data, commands, and raw Hyperfine JSON/Markdown.
 
 ## Measurement boundaries
 
-- Startup measures equivalent no-work programs in all languages/runtimes.
+- Startup measures equivalent no-work programs in all six languages/runtimes.
 - Compile/check measures `kujo check --quiet`, fresh optimized Go and Rust
   native builds, Python bytecode compilation, and PHP syntax checking. These
   operations produce different artifacts and are reported side by side for

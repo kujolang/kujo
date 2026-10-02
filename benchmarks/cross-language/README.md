@@ -5,10 +5,8 @@ commands. They are maintained as local regression and profiling tools, not as
 published v1.0 performance claims.
 
 The historically named [`kujo-go-runtime/`](kujo-go-runtime/) subdirectory
-contains a separate, reviewable Kujo, Go, Rust, Python, PHP, Zero, and Bend
-microbenchmark suite. Its seven-language runner compiles Kujo's supported
-allocation-free scalar core to a freestanding native executable. It uses
-equivalent function-local workloads, pins native binaries,
+contains a separate, reviewable Kujo, Go, Rust, Python, and PHP microbenchmark
+suite. It uses equivalent function-local workloads, pins native binaries,
 toolchain versions, and the source revision in each result bundle, validates
 exact output before timing, and reports startup, compile/check, and end-to-end
 run distributions separately.
