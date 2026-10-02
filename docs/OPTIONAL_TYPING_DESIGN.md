@@ -128,28 +128,35 @@ Compatibility note:
     - `kujo run --interpreter` forwards the entry script's search roots into the checker so imported callables do not show up as false `Undefined function` warnings.
     - When a module cannot be analyzed safely, the checker still falls back to permissive imported-callable placeholders instead of rejecting dynamic code.
     - Dotted module names resolve the same way runtime module loading does (`from src.foo import bar` and `from foo.bar import baz` both use the search-path-based module lookup).
-- Await/generator/struct-field inference remains conservative in v1 and may return `Any` or unknown where full static shape information is not yet modeled.
+- Generator yield inference remains conservative. Post-1.7 maintenance now models
+  known struct fields and `Promise<T>`/await shapes internally, while unresolved
+  dynamic values still widen to `Any`.
 - These boundaries are deliberate for additive, non-breaking typing behavior and are tracked in generated TODO triage artifacts under `docs/generated/V1_CODE_TODO_TRIAGE.*`.
 
 ### Post-v1 Type-Checker Follow-Up Cluster (V1RR-P1-002)
 
-The following checker precision items are explicit post-v1 work and are not
-release blockers for `v1.0.0`:
+The original post-v1 cluster is complete for the stable grammar's currently
+representable shapes:
 
-- Destructuring inference: destructuring patterns remain conservative in v1;
-  unsupported static shapes may resolve to `Any` instead of blocking execution.
-- Module existence checks: unresolved modules remain diagnostics/lookup
-  concerns, not a mandatory static gate before dynamic runtime loading.
-- Struct field type lookup: field reads remain conservative when full struct
-  shape information is unavailable.
-- Promise unwrap typing: `Promise<T>`/await result inference may return `Any`
-  until async value shapes are modeled end to end.
-- Permissive callable fallback: imported or dynamic callables that cannot be
-  analyzed safely continue to use permissive placeholders in v1 so optional
-  typing does not reject compatible dynamic code.
+This closes the tracked **destructuring inference**, **module existence checks**,
+**struct field type lookup**, **Promise unwrap typing**, and
+**permissive callable fallback** items within the bounded rules below.
 
-Future closure of this cluster must update checker tests, docs, and generated
-TODO triage evidence together.
+- Array/dictionary destructuring propagates known literal positions, nested array
+  patterns, homogeneous collection types and rest values. Unknown shapes widen.
+- Entry-script analysis reports missing modules without making checker warnings a
+  runtime gate. Function-local imports and unresolved imported values remain
+  permissive.
+- Known struct construction and field access use declared shapes, including
+  imported definitions and values carried through inferred function returns.
+- Async functions and closures produce internal `Promise<T>` shapes and await
+  unwraps them through aliases and collections.
+- Known functions, closures, imported namespace members and aliases retain
+  callable signatures; genuinely dynamic values keep the permissive fallback.
+
+Kujo still has no tuple, destructured-parameter, aliased-import or optional-import
+syntax. Contextual callback inference is bounded to collection callbacks whose
+element type is known. Broader flow typing would require a separate design.
 
 ## Typed-JIT Optimization Boundaries (Deferred)
 

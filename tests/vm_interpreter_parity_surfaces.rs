@@ -1056,6 +1056,48 @@ fn vm_and_interpreter_match_callable_arity_success_paths() {
 }
 
 #[test]
+fn vm_and_interpreter_match_inference_regression_runtime_surfaces() {
+    let script = r#"
+        struct Profile {
+            name: string,
+            score: int
+        }
+        func make_profile() {
+            return Profile { name: "Ada", score: 40 }
+        }
+        async func bonus() {
+            return 2
+        }
+        let callback := func(value) { return value + 1 }
+        let alias := callback
+        let [first, [second], ...remaining] := [1, [2], 3, 4]
+        let {label, ...metadata} := {"label": "ready", "count": 2}
+        let promise := bonus()
+        let profile := make_profile()
+        let first_bonus := await promise
+        let second_bonus := await promise
+        inference_runtime_ok := profile.score == 40
+            && first_bonus == 2
+            && second_bonus == 2
+            && alias(first) == 2
+            && second == 2
+            && remaining[1] == 4
+            && label == "ready"
+            && metadata["count"] == 2
+    "#;
+
+    assert_interpreter_and_vm_bool(script, "inference_runtime_ok");
+}
+
+#[test]
+fn vm_and_interpreter_keep_missing_struct_fields_as_runtime_errors() {
+    assert_interpreter_and_vm_error_contains(
+        "struct Profile { name: string } let p := Profile { name: \"Ada\" } print(p.missing)",
+        "Field not found: missing",
+    );
+}
+
+#[test]
 fn vm_and_interpreter_preserve_variadic_native_contracts() {
     let script = r#"
         debug("single")

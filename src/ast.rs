@@ -98,13 +98,30 @@ pub enum TypeAnnotation {
     String,
     Bool,
     Array(Box<TypeAnnotation>),
-    Dict { key: Box<TypeAnnotation>, value: Box<TypeAnnotation> },
-    Function { params: Vec<TypeAnnotation>, return_type: Box<TypeAnnotation> },
+    Dict {
+        key: Box<TypeAnnotation>,
+        value: Box<TypeAnnotation>,
+    },
+    Function {
+        params: Vec<TypeAnnotation>,
+        return_type: Box<TypeAnnotation>,
+    },
+    /// Internal gradual-analysis shape for a known struct value.
+    Struct(String),
+    /// Internal gradual-analysis shape for an async completion value.
+    Promise(Box<TypeAnnotation>),
+    /// Internal gradual-analysis shape for an imported namespace.
+    Module(String),
     Enum(String),
     Union(Vec<TypeAnnotation>),
     Any, // For gradual typing - no type checking
-    Result { ok_type: Box<TypeAnnotation>, err_type: Box<TypeAnnotation> }, // Result<T, E>
-    Option { inner_type: Box<TypeAnnotation> }, // Option<T>
+    Result {
+        ok_type: Box<TypeAnnotation>,
+        err_type: Box<TypeAnnotation>,
+    }, // Result<T, E>
+    Option {
+        inner_type: Box<TypeAnnotation>,
+    }, // Option<T>
 }
 
 impl TypeAnnotation {
@@ -125,6 +142,9 @@ impl TypeAnnotation {
                 TypeAnnotation::Dict { key: right_key, value: right_value },
             ) => left_key.matches(right_key) && left_value.matches(right_value),
             (TypeAnnotation::Enum(a), TypeAnnotation::Enum(b)) => a == b,
+            (TypeAnnotation::Struct(a), TypeAnnotation::Struct(b)) => a == b,
+            (TypeAnnotation::Promise(left), TypeAnnotation::Promise(right)) => left.matches(right),
+            (TypeAnnotation::Module(a), TypeAnnotation::Module(b)) => a == b,
             (TypeAnnotation::Union(types), other) | (other, TypeAnnotation::Union(types)) => {
                 types.iter().any(|t| t.matches(other))
             }
