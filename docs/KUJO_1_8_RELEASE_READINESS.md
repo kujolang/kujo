@@ -53,6 +53,26 @@ variance notes are in
 - Capability, cancellation, async lifecycle, snapshot and effect ordering:
   unchanged.
 
+## Final local validation
+
+- `scripts/release_candidate_gate.sh --full`: passed, including formatting,
+  Clippy, the complete Rust suite (977 library tests passed, 7 ignored, plus all
+  integration suites), native security boundaries, package workflows, and 123
+  VM/interpreter parity cases.
+- Canonical Kujo fixtures: 150/150 passed in dual mode and 150/150 passed with
+  the interpreter as primary; 11 provider or environment fixtures were skipped
+  by their declared policy in each run.
+- Socket-bound serve integration: 31/31 passed in the release-candidate wrapper.
+- Supply chain: `cargo audit --deny warnings --ignore RUSTSEC-2025-0141` passed;
+  `cargo-deny` was not installed locally and remains covered by hosted CI.
+- Fuzz smoke: lexer, parser, bounded XML, bounded gzip, bounded single-entry ZIP,
+  and PDF HTML-profile targets each ran for 10 seconds without a crash.
+- The bounded loop-engineering verification passed formatting, locked checking,
+  parity, optimizer, LSP reliability, and diff-integrity gates.
+
+Hosted pull-request checks remain the authority for Linux, Windows, ARM64, and
+the additional macOS configurations that this Intel macOS host cannot execute.
+
 ## Release boundary
 
 The branch is feature-frozen. Async generators, `yield from`, ownership cycles,
