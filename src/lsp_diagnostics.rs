@@ -1,21 +1,62 @@
+use crate::analyzed_program::AnalyzedProgram;
 use crate::errors::{Diagnostic, DiagnosticSeverity, DiagnosticSubsystem, DIAGNOSTIC_CODE_LSP};
-use crate::lexer::{self, LexerDiagnostic, LexerDiagnosticKind, Token, TokenKind};
+use crate::lexer::{LexerDiagnostic, LexerDiagnosticKind, Token, TokenKind};
 use crate::parser;
+use crate::type_checker::ModuleAnalysisCache;
+use std::sync::Arc;
 
 pub fn diagnose(source: &str) -> Vec<Diagnostic> {
-    let lexed = lexer::tokenize_with_diagnostics(source);
-    let tokens = lexed.tokens;
-    let mut parser = parser::Parser::new(tokens.clone());
-    let parse_output = parser.parse_with_diagnostics();
+    let analysis = AnalyzedProgram::analyze(source, None, Arc::new(ModuleAnalysisCache::default()));
+    diagnose_with_analysis(&analysis)
+}
+
+pub fn diagnose_with_analysis(analysis: &AnalyzedProgram) -> Vec<Diagnostic> {
+    let tokens = &analysis.tokens;
     let mut diagnostics = Vec::new();
 
-    diagnostics.extend(lexed.diagnostics.iter().map(to_lsp_diagnostic));
-    diagnostics.extend(parse_output.diagnostics.iter().map(to_lsp_parse_diagnostic));
+    diagnostics.extend(analysis.lexer_diagnostics.iter().map(to_lsp_diagnostic));
+    diagnostics.extend(analysis.parser_diagnostics.iter().map(to_lsp_parse_diagnostic));
     diagnostics.extend(check_delimiter_balance(&tokens));
     diagnostics.extend(check_type_annotation_syntax(&tokens));
+    diagnostics.extend(analysis.semantic_diagnostics.iter().map(|error| {
+        let (line, column) = semantic_location(error, tokens);
+        let mut diagnostic = Diagnostic::new(
+            "KUJOLSP002",
+            DiagnosticSeverity::Warning,
+            DiagnosticSubsystem::Lsp,
+            error.message.clone(),
+        )
+        .with_location(error.location.file.clone(), line, column);
+        if let Some(help) = &error.help {
+            diagnostic = diagnostic.with_help(help.clone());
+        }
+        diagnostic
+    }));
 
     diagnostics.sort_by_key(|diagnostic| (diagnostic.line, diagnostic.column));
     diagnostics
+}
+
+fn semantic_location(error: &crate::errors::KujoError, tokens: &[Token]) -> (usize, usize) {
+    if error.location.line > 0 && error.location.column > 0 {
+        return (error.location.line, error.location.column);
+    }
+    let quoted = error
+        .message
+        .split('\'')
+        .enumerate()
+        .filter_map(|(index, value)| (index % 2 == 1).then_some(value))
+        .collect::<Vec<_>>();
+    for name in quoted.into_iter().rev() {
+        if let Some(token) = tokens
+            .iter()
+            .rev()
+            .find(|token| matches!(&token.kind, TokenKind::Identifier(value) if value == name))
+        {
+            return (token.line.max(1), token.column.saturating_sub(name.chars().count()).max(1));
+        }
+    }
+    (1, 1)
 }
 
 fn to_lsp_diagnostic(diagnostic: &LexerDiagnostic) -> Diagnostic {
@@ -252,6 +293,19 @@ mod tests {
             DiagnosticSeverity::Error == diagnostic.severity
                 && diagnostic.message.contains("Expected ')'")
                 && diagnostic.code == "KUJOPARSE001"
+        }));
+    }
+
+    #[test]
+    fn semantic_failures_are_non_blocking_editor_warnings() {
+        let diagnostics = diagnose(
+            "struct Profile { name: string }\nlet profile := Profile { name: \"Ada\" }\nprint(profile.missing)\n",
+        );
+        assert!(diagnostics.iter().any(|diagnostic| {
+            DiagnosticSeverity::Warning == diagnostic.severity
+                && diagnostic.message.contains("missing")
+                && diagnostic.code == "KUJOLSP002"
+                && diagnostic.line == 3
         }));
     }
 }

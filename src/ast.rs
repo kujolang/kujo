@@ -8,6 +8,7 @@
 // represent actions and control flow.
 
 use crate::errors::{SourceLocation, SourceSpan};
+use std::fmt;
 
 /// Shared AST span type used across parser, runtime diagnostics, and LSP diagnostics.
 pub type AstSpan = SourceSpan;
@@ -157,6 +158,33 @@ impl TypeAnnotation {
                 TypeAnnotation::Option { inner_type: t2 },
             ) => t1.matches(t2),
             _ => false,
+        }
+    }
+}
+
+impl fmt::Display for TypeAnnotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Int => write!(f, "Int"),
+            Self::Float => write!(f, "Float"),
+            Self::String => write!(f, "String"),
+            Self::Bool => write!(f, "Bool"),
+            Self::Array(inner) => write!(f, "Array<{}>", inner),
+            Self::Dict { key, value } => write!(f, "Dict<{}, {}>", key, value),
+            Self::Function { params, return_type } => {
+                let params = params.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
+                write!(f, "func({}) -> {}", params, return_type)
+            }
+            Self::Struct(name) | Self::Enum(name) => write!(f, "{}", name),
+            Self::Promise(inner) => write!(f, "Promise<{}>", inner),
+            Self::Module(name) => write!(f, "module {}", name),
+            Self::Union(types) => {
+                let types = types.iter().map(ToString::to_string).collect::<Vec<_>>().join(" | ");
+                write!(f, "{}", types)
+            }
+            Self::Any => write!(f, "Any"),
+            Self::Result { ok_type, err_type } => write!(f, "Result<{}, {}>", ok_type, err_type),
+            Self::Option { inner_type } => write!(f, "Option<{}>", inner_type),
         }
     }
 }

@@ -18,10 +18,12 @@ use crate::errors::{ErrorKind, KujoError, SourceLocation};
 use crate::lexer::tokenize_with_file;
 use crate::parser::Parser;
 use crate::path_security;
-use std::collections::{HashMap, HashSet};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 /// Represents a function signature with parameter and return types
 #[derive(Debug, Clone)]
@@ -34,6 +36,119 @@ struct FunctionSignature {
 struct StructShape {
     fields: HashMap<String, Option<TypeAnnotation>>,
     methods: HashMap<String, FunctionSignature>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AnalyzedFunction {
+    pub params: Vec<TypeAnnotation>,
+    pub return_type: TypeAnnotation,
+}
+
+impl AnalyzedFunction {
+    pub fn display_signature(&self, name: &str) -> String {
+        let params = self.params.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
+        format!("func {}({}) -> {}", name, params, self.return_type)
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnalyzedStruct {
+    pub fields: BTreeMap<String, TypeAnnotation>,
+    pub methods: BTreeMap<String, AnalyzedFunction>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnalysisSnapshot {
+    pub variables: BTreeMap<String, TypeAnnotation>,
+    pub functions: BTreeMap<String, AnalyzedFunction>,
+    pub structs: BTreeMap<String, AnalyzedStruct>,
+    pub modules: BTreeMap<String, AnalyzedModule>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnalyzedModule {
+    pub values: BTreeMap<String, TypeAnnotation>,
+    pub functions: BTreeMap<String, AnalyzedFunction>,
+    pub structs: BTreeMap<String, AnalyzedStruct>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ModuleCacheStats {
+    pub hits: usize,
+    pub misses: usize,
+    pub entries: usize,
+}
+
+#[derive(Debug, Clone)]
+struct CachedModule {
+    source_hash: u64,
+    stmts: Arc<Vec<Stmt>>,
+    last_used: u64,
+}
+
+#[derive(Debug, Default)]
+struct ModuleCacheState {
+    entries: HashMap<PathBuf, CachedModule>,
+    hits: usize,
+    misses: usize,
+    clock: u64,
+}
+
+/// Reusable parsed-module cache with content-based invalidation and bounded growth.
+#[derive(Debug)]
+pub struct ModuleAnalysisCache {
+    state: Mutex<ModuleCacheState>,
+    capacity: usize,
+}
+
+impl Default for ModuleAnalysisCache {
+    fn default() -> Self {
+        Self::new(128)
+    }
+}
+
+impl ModuleAnalysisCache {
+    pub fn new(capacity: usize) -> Self {
+        Self { state: Mutex::new(ModuleCacheState::default()), capacity: capacity.max(1) }
+    }
+
+    pub fn stats(&self) -> ModuleCacheStats {
+        let state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        ModuleCacheStats { hits: state.hits, misses: state.misses, entries: state.entries.len() }
+    }
+
+    fn lookup(&self, path: &Path, source_hash: u64) -> Option<Arc<Vec<Stmt>>> {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.clock = state.clock.saturating_add(1);
+        let clock = state.clock;
+        if let Some(entry) = state.entries.get_mut(path) {
+            if entry.source_hash == source_hash {
+                entry.last_used = clock;
+                let stmts = Arc::clone(&entry.stmts);
+                state.hits = state.hits.saturating_add(1);
+                return Some(stmts);
+            }
+        }
+        state.misses = state.misses.saturating_add(1);
+        None
+    }
+
+    fn insert(&self, path: PathBuf, source_hash: u64, stmts: Arc<Vec<Stmt>>) {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.clock = state.clock.saturating_add(1);
+        let clock = state.clock;
+        state.entries.insert(path, CachedModule { source_hash, stmts, last_used: clock });
+        if state.entries.len() > self.capacity {
+            if let Some(oldest) = state
+                .entries
+                .iter()
+                .min_by_key(|(_, value)| value.last_used)
+                .map(|(path, _)| path.clone())
+            {
+                state.entries.remove(&oldest);
+            }
+        }
+    }
 }
 
 /// Type checker maintains symbol tables for variables and functions
@@ -60,7 +175,8 @@ pub struct TypeChecker {
     module_export_signatures: HashMap<PathBuf, HashMap<String, FunctionSignature>>,
     module_export_structs: HashMap<PathBuf, HashMap<String, StructShape>>,
     module_export_values: HashMap<PathBuf, HashMap<String, TypeAnnotation>>,
-    module_ast_cache: HashMap<PathBuf, Arc<Vec<Stmt>>>,
+    module_namespaces: HashMap<String, AnalyzedModule>,
+    module_ast_cache: Arc<ModuleAnalysisCache>,
     #[cfg(test)]
     module_parse_count: usize,
     structs: HashMap<String, StructShape>,
@@ -95,7 +211,8 @@ impl TypeChecker {
             module_export_signatures: HashMap::new(),
             module_export_structs: HashMap::new(),
             module_export_values: HashMap::new(),
-            module_ast_cache: HashMap::new(),
+            module_namespaces: HashMap::new(),
+            module_ast_cache: Arc::new(ModuleAnalysisCache::default()),
             #[cfg(test)]
             module_parse_count: 0,
             structs: HashMap::new(),
@@ -128,6 +245,162 @@ impl TypeChecker {
         self.module_search_paths
             .extend(crate::module::automatic_kennel_package_search_paths(&path));
         self.validate_module_existence = true;
+    }
+
+    pub fn with_module_cache(cache: Arc<ModuleAnalysisCache>) -> Self {
+        let mut checker = Self::new();
+        checker.module_ast_cache = cache;
+        checker
+    }
+
+    pub fn analysis_snapshot(&self) -> AnalysisSnapshot {
+        let functions = self
+            .functions
+            .iter()
+            .map(|(name, signature)| {
+                (
+                    name.clone(),
+                    AnalyzedFunction {
+                        params: signature
+                            .param_types
+                            .iter()
+                            .map(|value| value.clone().unwrap_or(TypeAnnotation::Any))
+                            .collect(),
+                        return_type: signature.return_type.clone().unwrap_or(TypeAnnotation::Any),
+                    },
+                )
+            })
+            .collect();
+        let variables = self
+            .variables
+            .iter()
+            .map(|(name, value)| (name.clone(), value.clone().unwrap_or(TypeAnnotation::Any)))
+            .collect();
+        let structs = self
+            .structs
+            .iter()
+            .map(|(name, shape)| {
+                let fields = shape
+                    .fields
+                    .iter()
+                    .map(|(field, value)| {
+                        (field.clone(), value.clone().unwrap_or(TypeAnnotation::Any))
+                    })
+                    .collect();
+                let methods = shape
+                    .methods
+                    .iter()
+                    .map(|(method, signature)| {
+                        (
+                            method.clone(),
+                            AnalyzedFunction {
+                                params: signature
+                                    .param_types
+                                    .iter()
+                                    .map(|value| value.clone().unwrap_or(TypeAnnotation::Any))
+                                    .collect(),
+                                return_type: signature
+                                    .return_type
+                                    .clone()
+                                    .unwrap_or(TypeAnnotation::Any),
+                            },
+                        )
+                    })
+                    .collect();
+                (name.clone(), AnalyzedStruct { fields, methods })
+            })
+            .collect();
+        let modules = self
+            .module_namespaces
+            .iter()
+            .map(|(name, module)| (name.clone(), module.clone()))
+            .collect();
+        AnalysisSnapshot { variables, functions, structs, modules }
+    }
+
+    fn analyzed_module(
+        values: Option<&HashMap<String, TypeAnnotation>>,
+        functions: Option<&HashMap<String, FunctionSignature>>,
+        structs: Option<&HashMap<String, StructShape>>,
+    ) -> AnalyzedModule {
+        AnalyzedModule {
+            values: values
+                .map(|values| {
+                    values.iter().map(|(name, value)| (name.clone(), value.clone())).collect()
+                })
+                .unwrap_or_default(),
+            functions: functions
+                .map(|functions| {
+                    functions
+                        .iter()
+                        .map(|(name, signature)| {
+                            (
+                                name.clone(),
+                                AnalyzedFunction {
+                                    params: signature
+                                        .param_types
+                                        .iter()
+                                        .map(|value| value.clone().unwrap_or(TypeAnnotation::Any))
+                                        .collect(),
+                                    return_type: signature
+                                        .return_type
+                                        .clone()
+                                        .unwrap_or(TypeAnnotation::Any),
+                                },
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
+            structs: structs
+                .map(|structs| {
+                    structs
+                        .iter()
+                        .map(|(name, shape)| {
+                            (
+                                name.clone(),
+                                AnalyzedStruct {
+                                    fields: shape
+                                        .fields
+                                        .iter()
+                                        .map(|(field, value)| {
+                                            (
+                                                field.clone(),
+                                                value.clone().unwrap_or(TypeAnnotation::Any),
+                                            )
+                                        })
+                                        .collect(),
+                                    methods: shape
+                                        .methods
+                                        .iter()
+                                        .map(|(method, signature)| {
+                                            (
+                                                method.clone(),
+                                                AnalyzedFunction {
+                                                    params: signature
+                                                        .param_types
+                                                        .iter()
+                                                        .map(|value| {
+                                                            value
+                                                                .clone()
+                                                                .unwrap_or(TypeAnnotation::Any)
+                                                        })
+                                                        .collect(),
+                                                    return_type: signature
+                                                        .return_type
+                                                        .clone()
+                                                        .unwrap_or(TypeAnnotation::Any),
+                                                },
+                                            )
+                                        })
+                                        .collect(),
+                                },
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
+        }
     }
 
     /// Registers all built-in function signatures
@@ -2972,10 +3245,13 @@ impl TypeChecker {
 
     fn parsed_module(&mut self, module_name: &str) -> Option<(PathBuf, Arc<Vec<Stmt>>)> {
         let module_path = self.resolve_module_import_path(module_name)?;
-        if let Some(cached) = self.module_ast_cache.get(&module_path) {
-            return Some((module_path, cached.clone()));
-        }
         let source = fs::read_to_string(&module_path).ok()?;
+        let mut hasher = DefaultHasher::new();
+        source.hash(&mut hasher);
+        let source_hash = hasher.finish();
+        if let Some(cached) = self.module_ast_cache.lookup(&module_path, source_hash) {
+            return Some((module_path, cached));
+        }
         let tokens = tokenize_with_file(&source, Some(&module_path.to_string_lossy())).ok()?;
         let mut parser = Parser::new(tokens);
         let parsed = parser.parse_with_diagnostics();
@@ -2987,7 +3263,7 @@ impl TypeChecker {
             self.module_parse_count += 1;
         }
         let stmts = Arc::new(parsed.stmts);
-        self.module_ast_cache.insert(module_path.clone(), Arc::clone(&stmts));
+        self.module_ast_cache.insert(module_path.clone(), source_hash, Arc::clone(&stmts));
         Some((module_path, stmts))
     }
 
@@ -3684,6 +3960,11 @@ impl TypeChecker {
                         }
                     }
                 } else {
+                    let analyzed_module = Self::analyzed_module(
+                        module_values.as_ref(),
+                        module_signatures.as_ref(),
+                        module_structs.as_ref(),
+                    );
                     if let Some(signatures) = &module_signatures {
                         for (name, signature) in signatures {
                             self.register_imported_symbol(name, Some(signature.clone()), false);
@@ -3698,6 +3979,7 @@ impl TypeChecker {
                         }
                     }
                     let binding = crate::vm::VM::module_binding_name(module);
+                    self.module_namespaces.insert(binding.clone(), analyzed_module);
                     self.variables.insert(binding, Some(TypeAnnotation::Module(module.clone())));
                 }
             }
