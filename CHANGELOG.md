@@ -6,6 +6,39 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Added
+
+- Share one immutable analyzed-program model between advisory CLI checking and
+  the LSP, exposing inferred variable types, callable signatures, struct fields,
+  methods and imported namespace members to hover and completion.
+- Add bounded, content-hashed imported-module analysis caching plus explicit
+  full-file and repeated-request latency gates.
+- Extend advisory optional inference across nested destructuring, known struct
+  fields, async completion values, callable aliases and analyzed module exports,
+  with positive, negative, dynamic-fallback and VM/interpreter parity regressions.
+- Expand the reproducible runtime-measurement workload corpus for collections,
+  structs, retained closures, nested generators, reusable promises, channels and
+  bounded task admission/cancellation, plus offline AI-native request hashing.
+- Add a process-inclusive startup, project-check and LSP-diagnostics comparison
+  harness for static-analysis performance regressions.
+
+### Changed
+
+- Analyze open LSP documents once per content revision and reuse that result for
+  diagnostics, hover and completion; `didChange` invalidates exactly once and
+  `didClose` releases the document snapshot.
+- Publish optional checker findings as non-blocking LSP warnings while preserving
+  lexer/parser errors and gradual fallback for genuinely dynamic values.
+- Cache parsed imported-module ASTs across function, value and struct export
+  analysis, avoiding repeated lexer/parser work while preserving dynamic import
+  fallback.
+- Add concise advisory diagnostics for known missing modules, impossible
+  destructuring, struct annotation mismatches, missing fields and non-callable
+  values. VM execution remains dynamically typed.
+- Restore `cargo run -- ...` to the primary `kujo` binary now that the package
+  also contains the lean `kujo-run` binary, keeping documented release commands
+  and the canonical release gate executable.
+
 ## [1.7.0] - 2026-10-01
 
 Native archives and npm packages are published for all five supported targets.

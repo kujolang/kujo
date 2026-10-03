@@ -6,6 +6,7 @@
 #![allow(clippy::all)]
 
 mod agent_project;
+mod analyzed_program;
 mod ast;
 mod benchmarks;
 mod builtins;
@@ -1565,11 +1566,13 @@ async fn async_main(cli: Option<Cli>) {
             } else {
                 // Use tree-walking interpreter (fallback mode)
                 // Type checking phase (optional - won't stop execution even if errors found)
-                let mut type_checker = type_checker::TypeChecker::new();
-                for search_path in entry_script_search_paths(&file) {
-                    type_checker.add_search_path(search_path);
-                }
-                if let Err(errors) = type_checker.check(&stmts) {
+                let search_paths = entry_script_search_paths(&file);
+                let (_, errors) = analyzed_program::analyze_statements(
+                    &stmts,
+                    search_paths.iter(),
+                    std::sync::Arc::new(type_checker::ModuleAnalysisCache::default()),
+                );
+                if !errors.is_empty() {
                     eprintln!("Type checking warnings:");
                     for error in &errors {
                         eprintln!("  {}", error);

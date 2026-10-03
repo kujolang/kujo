@@ -1,3 +1,4 @@
+use crate::analyzed_program::AnalyzedProgram;
 use crate::formatter::{self, FormatterOptions};
 use crate::lexer::{self, Token, TokenKind};
 use crate::lsp_code_actions;
@@ -7,11 +8,13 @@ use crate::lsp_diagnostics;
 use crate::lsp_hover;
 use crate::lsp_references;
 use crate::lsp_rename;
+use crate::type_checker::ModuleAnalysisCache;
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Instant;
 
 const MAX_LSP_MESSAGE_BYTES: usize = 8 * 1024 * 1024;
@@ -29,7 +32,9 @@ impl Default for LspServerConfig {
 }
 
 pub struct LspServer {
-    documents: HashMap<String, String>,
+    documents: HashMap<String, DocumentState>,
+    module_cache: Arc<ModuleAnalysisCache>,
+    analysis_count: usize,
     shutdown_requested: bool,
     exit_requested: bool,
     deterministic_logging: bool,
@@ -38,10 +43,17 @@ pub struct LspServer {
     cancelled_requests: HashSet<String>,
 }
 
+#[derive(Clone)]
+struct DocumentState {
+    analysis: Arc<AnalyzedProgram>,
+}
+
 impl LspServer {
     pub fn new(config: LspServerConfig) -> Self {
         Self {
             documents: HashMap::new(),
+            module_cache: Arc::new(ModuleAnalysisCache::default()),
+            analysis_count: 0,
             shutdown_requested: false,
             exit_requested: false,
             deterministic_logging: config.deterministic_logging,
@@ -98,6 +110,16 @@ impl LspServer {
     #[allow(dead_code)] // Exposed for integration reliability tests that assert bounded lifecycle state.
     pub fn open_document_count(&self) -> usize {
         self.documents.len()
+    }
+
+    #[allow(dead_code)]
+    pub fn analysis_count(&self) -> usize {
+        self.analysis_count
+    }
+
+    #[allow(dead_code)]
+    pub fn module_cache_stats(&self) -> crate::type_checker::ModuleCacheStats {
+        self.module_cache.stats()
     }
 
     fn handle_request(&mut self, method: &str, id: Value, params: Option<&Value>) -> Value {
@@ -179,12 +201,13 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let source = match self.resolve_document_source(&uri) {
+                let analysis = match self.resolve_document_analysis(&uri) {
                     Ok(content) => content,
                     Err(message) => {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let source = analysis.source.to_string();
                 let (line, column) = match request_position(params, &source) {
                     Some(value) => value,
                     None => {
@@ -192,13 +215,17 @@ impl LspServer {
                     }
                 };
 
-                let items = lsp_completion::complete(&source, line, column)
+                let items = lsp_completion::complete_with_analysis(&analysis, line, column)
                     .into_iter()
                     .map(|item| {
-                        json!({
+                        let mut value = json!({
                             "label": item.label,
                             "kind": completion_item_kind_to_lsp(item.kind),
-                        })
+                        });
+                        if let Some(detail) = item.detail {
+                            value["detail"] = Value::String(detail);
+                        }
+                        value
                     })
                     .collect::<Vec<Value>>();
 
@@ -218,12 +245,13 @@ impl LspServer {
                         return invalid_params_response(id, "Missing textDocument.uri");
                     }
                 };
-                let source = match self.resolve_document_source(&uri) {
+                let analysis = match self.resolve_document_analysis(&uri) {
                     Ok(content) => content,
                     Err(message) => {
                         return invalid_params_response(id, &message);
                     }
                 };
+                let source = analysis.source.to_string();
                 let (line, column) = match request_position(params, &source) {
                     Some(value) => value,
                     None => {
@@ -232,7 +260,7 @@ impl LspServer {
                 };
                 let line_index = Utf16LineIndex::new(&source);
 
-                let result = lsp_hover::hover(&source, line, column).map(|info| {
+                let result = lsp_hover::hover_with_analysis(&analysis, line, column).map(|info| {
                     let start_character = line_index.column(info.line, info.column);
                     let end_character =
                         line_index.column(info.line, info.column + info.symbol.chars().count());
@@ -720,7 +748,7 @@ impl LspServer {
 
                 for uri in uris.into_iter() {
                     let source = match self.documents.get(&uri) {
-                        Some(content) => content,
+                        Some(content) => &content.analysis.source,
                         None => continue,
                     };
                     let line_index = Utf16LineIndex::new(source);
@@ -790,7 +818,7 @@ impl LspServer {
 
                 match (uri, text) {
                     (Some(uri_value), Some(text_value)) => {
-                        self.documents.insert(uri_value.clone(), text_value);
+                        self.store_document(&uri_value, text_value);
                         vec![self.publish_diagnostics_notification(&uri_value)]
                     }
                     _ => Vec::new(),
@@ -812,7 +840,7 @@ impl LspServer {
 
                 match (uri, new_text) {
                     (Some(uri_value), Some(text_value)) => {
-                        self.documents.insert(uri_value.clone(), text_value);
+                        self.store_document(&uri_value, text_value);
                         vec![self.publish_diagnostics_notification(&uri_value)]
                     }
                     _ => Vec::new(),
@@ -842,9 +870,12 @@ impl LspServer {
     }
 
     fn publish_diagnostics_notification(&self, uri: &str) -> Value {
-        let source = self.documents.get(uri).cloned().unwrap_or_else(String::new);
+        let state = self.documents.get(uri);
+        let source = state.map(|state| state.analysis.source.to_string()).unwrap_or_default();
         let line_index = Utf16LineIndex::new(&source);
-        let diagnostics = lsp_diagnostics::diagnose(&source)
+        let diagnostics = state
+            .map(|state| lsp_diagnostics::diagnose_with_analysis(&state.analysis))
+            .unwrap_or_default()
             .into_iter()
             .map(|diagnostic| {
                 let start_character = line_index.column(diagnostic.line, diagnostic.column);
@@ -860,7 +891,10 @@ impl LspServer {
                             "character": end_character,
                         }
                     },
-                    "severity": 1,
+                    "severity": match diagnostic.severity {
+                        crate::errors::DiagnosticSeverity::Error => 1,
+                        crate::errors::DiagnosticSeverity::Warning => 2,
+                    },
                     "source": "kujo",
                     "message": diagnostic.message,
                 })
@@ -879,7 +913,7 @@ impl LspServer {
 
     fn resolve_document_source(&self, uri: &str) -> Result<String, String> {
         if let Some(existing) = self.documents.get(uri) {
-            return Ok(existing.clone());
+            return Ok(existing.analysis.source.to_string());
         }
 
         let path = file_uri_to_path(uri)
@@ -887,6 +921,28 @@ impl LspServer {
 
         fs::read_to_string(&path)
             .map_err(|error| format!("Failed to read '{}': {}", path.display(), error))
+    }
+
+    fn resolve_document_analysis(&self, uri: &str) -> Result<Arc<AnalyzedProgram>, String> {
+        if let Some(existing) = self.documents.get(uri) {
+            return Ok(Arc::clone(&existing.analysis));
+        }
+        let path = file_uri_to_path(uri)
+            .ok_or_else(|| format!("Unable to resolve URI '{}' to a local file", uri))?;
+        let source = fs::read_to_string(&path)
+            .map_err(|error| format!("Failed to read '{}': {}", path.display(), error))?;
+        Ok(Arc::new(AnalyzedProgram::analyze(source, Some(&path), Arc::clone(&self.module_cache))))
+    }
+
+    fn store_document(&mut self, uri: &str, source: String) {
+        let path = file_uri_to_path(uri);
+        let analysis = Arc::new(AnalyzedProgram::analyze(
+            source,
+            path.as_deref(),
+            Arc::clone(&self.module_cache),
+        ));
+        self.analysis_count = self.analysis_count.saturating_add(1);
+        self.documents.insert(uri.to_string(), DocumentState { analysis });
     }
 
     fn log_json(&mut self, direction: &str, value: &Value) {
@@ -1148,6 +1204,10 @@ fn completion_item_kind_to_lsp(kind: CompletionItemKind) -> u8 {
         CompletionItemKind::Builtin => 3,
         CompletionItemKind::Function => 3,
         CompletionItemKind::Variable => 6,
+        CompletionItemKind::Struct => 22,
+        CompletionItemKind::Field => 5,
+        CompletionItemKind::Method => 2,
+        CompletionItemKind::Module => 9,
     }
 }
 
@@ -1600,6 +1660,31 @@ mod tests {
         assert!(response.is_empty());
         assert!(server.is_exit_requested());
         assert_eq!(server.exit_code(), 1);
+    }
+
+    #[test]
+    fn open_analysis_is_reused_until_document_changes() {
+        let mut server = LspServer::new(LspServerConfig::default());
+        let uri = "file:///tmp/cache-reuse.kujo";
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didOpen",
+            "params": { "textDocument": { "uri": uri, "text": "let value := 1\nprint(value)\n" } }
+        }));
+        assert_eq!(server.analysis_count(), 1);
+
+        for (id, method) in [(1, "textDocument/hover"), (2, "textDocument/completion")] {
+            let _ = server.process_message(&json!({
+                "jsonrpc": "2.0", "id": id, "method": method,
+                "params": { "textDocument": { "uri": uri }, "position": { "line": 1, "character": 7 } }
+            }));
+        }
+        assert_eq!(server.analysis_count(), 1);
+
+        let _ = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didChange",
+            "params": { "textDocument": { "uri": uri }, "contentChanges": [{ "text": "let value := 2\nprint(value)\n" }] }
+        }));
+        assert_eq!(server.analysis_count(), 2);
     }
 
     #[test]

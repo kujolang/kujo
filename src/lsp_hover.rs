@@ -1,6 +1,9 @@
+use crate::analyzed_program::AnalyzedProgram;
 use crate::interpreter::Interpreter;
-use crate::lexer::{self, Token, TokenKind};
+use crate::lexer::{Token, TokenKind};
 use crate::lsp_definition::{self, DefinitionKind};
+use crate::type_checker::ModuleAnalysisCache;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HoverInfo {
@@ -12,7 +15,17 @@ pub struct HoverInfo {
 }
 
 pub fn hover(source: &str, line: usize, column: usize) -> Option<HoverInfo> {
-    let tokens = lexer::tokenize(source).ok()?;
+    let analysis = AnalyzedProgram::analyze(source, None, Arc::new(ModuleAnalysisCache::default()));
+    hover_with_analysis(&analysis, line, column)
+}
+
+pub fn hover_with_analysis(
+    analysis: &AnalyzedProgram,
+    line: usize,
+    column: usize,
+) -> Option<HoverInfo> {
+    let source = &analysis.source;
+    let tokens = &analysis.tokens;
     let token = identifier_token_at_cursor(&tokens, line, column)?;
     let symbol = match &token.kind {
         TokenKind::Identifier(name) => name.clone(),
@@ -23,16 +36,69 @@ pub fn hover(source: &str, line: usize, column: usize) -> Option<HoverInfo> {
         return None;
     }
 
+    if let Some(receiver) = member_receiver(source, line, start_column) {
+        if let Some(crate::ast::TypeAnnotation::Struct(struct_name)) =
+            analysis.facts.variables.get(&receiver)
+        {
+            if let Some(shape) = analysis.facts.structs.get(struct_name) {
+                if let Some(ty) = shape.fields.get(&symbol) {
+                    return Some(HoverInfo {
+                        symbol,
+                        kind: "field".into(),
+                        detail: format!("{}: {}", token_name(token), ty),
+                        line,
+                        column: start_column,
+                    });
+                }
+                if let Some(signature) = shape.methods.get(&symbol) {
+                    return Some(HoverInfo {
+                        symbol: symbol.clone(),
+                        kind: "method".into(),
+                        detail: signature.display_signature(&symbol),
+                        line,
+                        column: start_column,
+                    });
+                }
+            }
+        } else if let Some(module) = analysis.facts.modules.get(&receiver) {
+            if let Some(signature) = module.functions.get(&symbol) {
+                return Some(HoverInfo {
+                    symbol: symbol.clone(),
+                    kind: "function".into(),
+                    detail: signature.display_signature(&symbol),
+                    line,
+                    column: start_column,
+                });
+            }
+            if let Some(ty) = module.values.get(&symbol) {
+                return Some(HoverInfo {
+                    symbol: symbol.clone(),
+                    kind: "variable".into(),
+                    detail: format!("{}: {}", symbol, ty),
+                    line,
+                    column: start_column,
+                });
+            }
+        }
+    }
+
     if let Some(definition) =
         lsp_definition::find_definition_with_tokens(&tokens, line, start_column)
     {
-        return Some(build_user_symbol_hover(
+        let is_function = definition.kind == DefinitionKind::Function;
+        let mut info = build_user_symbol_hover(
             source,
             &definition.name,
             definition.kind,
             definition.line,
             definition.column,
-        ));
+        );
+        if !is_function {
+            if let Some(ty) = analysis.facts.variables.get(&symbol) {
+                info.detail = format!("{}: {}", symbol, ty);
+            }
+        }
+        return Some(info);
     }
 
     if Interpreter::get_builtin_names().iter().any(|name| *name == symbol) {
@@ -45,7 +111,48 @@ pub fn hover(source: &str, line: usize, column: usize) -> Option<HoverInfo> {
         });
     }
 
+    if let Some(signature) = analysis.facts.functions.get(&symbol) {
+        return Some(HoverInfo {
+            symbol: symbol.clone(),
+            kind: "function".into(),
+            detail: signature.display_signature(&symbol),
+            line,
+            column: start_column,
+        });
+    }
+    if let Some(ty) = analysis.facts.variables.get(&symbol) {
+        return Some(HoverInfo {
+            symbol: symbol.clone(),
+            kind: "variable".into(),
+            detail: format!("{}: {}", symbol, ty),
+            line,
+            column: start_column,
+        });
+    }
+
     None
+}
+
+fn token_name(token: &Token) -> &str {
+    match &token.kind {
+        TokenKind::Identifier(name) => name,
+        _ => "",
+    }
+}
+
+fn member_receiver(source: &str, line: usize, member_column: usize) -> Option<String> {
+    let selected_line = source.lines().nth(line.checked_sub(1)?)?;
+    let prefix: String = selected_line.chars().take(member_column.saturating_sub(1)).collect();
+    let before_member = prefix.strip_suffix('.')?.trim_end();
+    let receiver = before_member
+        .chars()
+        .rev()
+        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_')
+        .collect::<String>()
+        .chars()
+        .rev()
+        .collect::<String>();
+    (!receiver.is_empty()).then_some(receiver)
 }
 
 fn build_user_symbol_hover(
@@ -145,5 +252,14 @@ mod tests {
         let source = "let value := 1\n";
         assert!(hover(source, 1, 10).is_none());
         assert!(hover(source, 1, 11).is_none());
+    }
+
+    #[test]
+    fn hover_reports_inferred_struct_field_type() {
+        let source =
+            "struct User { name: string }\nlet user := User { name: \"Ada\" }\nprint(user.name)\n";
+        let info = hover(source, 3, 12).expect("field hover");
+        assert_eq!(info.kind, "field");
+        assert_eq!(info.detail, "name: String");
     }
 }

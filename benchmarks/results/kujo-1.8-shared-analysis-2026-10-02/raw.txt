@@ -1,0 +1,43 @@
+source_sha=bae94d204707749a20eb1de092d124a96039d287
+rustc=1.96.0 (ac68faa20 2026-05-25)
+llvm=22.1.2
+host=x86_64-apple-darwin
+platform=macOS 26.6.2 (25G83)
+cpu=Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
+profile=test (debug, unoptimized + debuginfo)
+warmup_iterations=0
+
+run=1
+full_file_analysis_mean=19.199738ms iterations=10
+uncached_completion_mean=25.948193ms iterations=10
+cached_completion_mean=8.171753ms iterations=20
+cached_diagnostics_mean=0.227226ms iterations=20
+cached_hover_mean=4.998397ms iterations=20
+
+run=2
+full_file_analysis_mean=18.810867ms iterations=10
+uncached_completion_mean=25.184812ms iterations=10
+cached_completion_mean=6.706100ms iterations=20
+cached_diagnostics_mean=0.211951ms iterations=20
+cached_hover_mean=4.710359ms iterations=20
+
+run=3
+full_file_analysis_mean=25.613061ms iterations=10
+uncached_completion_mean=33.978608ms iterations=10
+cached_completion_mean=7.225630ms iterations=20
+cached_diagnostics_mean=0.252293ms iterations=20
+cached_hover_mean=4.753676ms iterations=20
+
+run=4
+full_file_analysis_mean=20.669511ms iterations=10
+uncached_completion_mean=27.634578ms iterations=10
+cached_completion_mean=7.296557ms iterations=20
+cached_diagnostics_mean=0.214791ms iterations=20
+cached_hover_mean=5.007742ms iterations=20
+
+run=5
+full_file_analysis_mean=20.572456ms iterations=10
+uncached_completion_mean=27.167670ms iterations=10
+cached_completion_mean=7.703436ms iterations=20
+cached_diagnostics_mean=0.258466ms iterations=20
+cached_hover_mean=5.423302ms iterations=20

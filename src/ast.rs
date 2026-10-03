@@ -8,6 +8,7 @@
 // represent actions and control flow.
 
 use crate::errors::{SourceLocation, SourceSpan};
+use std::fmt;
 
 /// Shared AST span type used across parser, runtime diagnostics, and LSP diagnostics.
 pub type AstSpan = SourceSpan;
@@ -98,13 +99,30 @@ pub enum TypeAnnotation {
     String,
     Bool,
     Array(Box<TypeAnnotation>),
-    Dict { key: Box<TypeAnnotation>, value: Box<TypeAnnotation> },
-    Function { params: Vec<TypeAnnotation>, return_type: Box<TypeAnnotation> },
+    Dict {
+        key: Box<TypeAnnotation>,
+        value: Box<TypeAnnotation>,
+    },
+    Function {
+        params: Vec<TypeAnnotation>,
+        return_type: Box<TypeAnnotation>,
+    },
+    /// Internal gradual-analysis shape for a known struct value.
+    Struct(String),
+    /// Internal gradual-analysis shape for an async completion value.
+    Promise(Box<TypeAnnotation>),
+    /// Internal gradual-analysis shape for an imported namespace.
+    Module(String),
     Enum(String),
     Union(Vec<TypeAnnotation>),
     Any, // For gradual typing - no type checking
-    Result { ok_type: Box<TypeAnnotation>, err_type: Box<TypeAnnotation> }, // Result<T, E>
-    Option { inner_type: Box<TypeAnnotation> }, // Option<T>
+    Result {
+        ok_type: Box<TypeAnnotation>,
+        err_type: Box<TypeAnnotation>,
+    }, // Result<T, E>
+    Option {
+        inner_type: Box<TypeAnnotation>,
+    }, // Option<T>
 }
 
 impl TypeAnnotation {
@@ -125,6 +143,9 @@ impl TypeAnnotation {
                 TypeAnnotation::Dict { key: right_key, value: right_value },
             ) => left_key.matches(right_key) && left_value.matches(right_value),
             (TypeAnnotation::Enum(a), TypeAnnotation::Enum(b)) => a == b,
+            (TypeAnnotation::Struct(a), TypeAnnotation::Struct(b)) => a == b,
+            (TypeAnnotation::Promise(left), TypeAnnotation::Promise(right)) => left.matches(right),
+            (TypeAnnotation::Module(a), TypeAnnotation::Module(b)) => a == b,
             (TypeAnnotation::Union(types), other) | (other, TypeAnnotation::Union(types)) => {
                 types.iter().any(|t| t.matches(other))
             }
@@ -137,6 +158,33 @@ impl TypeAnnotation {
                 TypeAnnotation::Option { inner_type: t2 },
             ) => t1.matches(t2),
             _ => false,
+        }
+    }
+}
+
+impl fmt::Display for TypeAnnotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Int => write!(f, "Int"),
+            Self::Float => write!(f, "Float"),
+            Self::String => write!(f, "String"),
+            Self::Bool => write!(f, "Bool"),
+            Self::Array(inner) => write!(f, "Array<{}>", inner),
+            Self::Dict { key, value } => write!(f, "Dict<{}, {}>", key, value),
+            Self::Function { params, return_type } => {
+                let params = params.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
+                write!(f, "func({}) -> {}", params, return_type)
+            }
+            Self::Struct(name) | Self::Enum(name) => write!(f, "{}", name),
+            Self::Promise(inner) => write!(f, "Promise<{}>", inner),
+            Self::Module(name) => write!(f, "module {}", name),
+            Self::Union(types) => {
+                let types = types.iter().map(ToString::to_string).collect::<Vec<_>>().join(" | ");
+                write!(f, "{}", types)
+            }
+            Self::Any => write!(f, "Any"),
+            Self::Result { ok_type, err_type } => write!(f, "Result<{}, {}>", ok_type, err_type),
+            Self::Option { inner_type } => write!(f, "Option<{}>", inner_type),
         }
     }
 }

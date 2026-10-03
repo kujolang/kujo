@@ -30,6 +30,13 @@ Validation source:
 
 The reliability contract uses `LspServer::open_document_count()` to assert document-state bounds under high iteration count loops.
 
+Each open document owns one immutable analyzed-program snapshot. Diagnostics,
+hover and completion reuse it until `didChange` replaces it; `didClose` evicts
+it. Imported-module parse results use a 128-entry content-hashed cache, so source
+changes invalidate safely even when file size and timestamp granularity collide.
+`LspServer::analysis_count()` and module cache statistics provide deterministic
+regression assertions for reuse and invalidation.
+
 The stdio transport rejects payloads larger than 8 MiB before allocating the message buffer.
 
 ## Position Encoding Contract
@@ -46,5 +53,9 @@ Reliability guardrails track startup and first-response latency using conservati
 Validation source:
 
 - `tests/lsp_reliability_track.rs` (`startup_and_first_response_latency_stay_within_guardrails`)
+- `tests/lsp_latency_guardrails.rs` (full-file analysis and repeated cached
+  completion/diagnostic/hover guardrails)
+- `src/analyzed_program.rs` (project-import cache reuse and content-change
+  invalidation)
 
 These thresholds are intended to detect severe regressions while staying stable on shared CI hosts.

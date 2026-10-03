@@ -210,12 +210,14 @@ pub fn runtime_help_for_message(message: &str) -> Option<String> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiagnosticSeverity {
     Error,
+    Warning,
 }
 
 impl DiagnosticSeverity {
     pub fn as_str(&self) -> &'static str {
         match self {
             DiagnosticSeverity::Error => "error",
+            DiagnosticSeverity::Warning => "warning",
         }
     }
 }

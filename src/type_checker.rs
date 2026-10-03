@@ -18,15 +18,137 @@ use crate::errors::{ErrorKind, KujoError, SourceLocation};
 use crate::lexer::tokenize_with_file;
 use crate::parser::Parser;
 use crate::path_security;
-use std::collections::{HashMap, HashSet};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 
 /// Represents a function signature with parameter and return types
 #[derive(Debug, Clone)]
 struct FunctionSignature {
     param_types: Vec<Option<TypeAnnotation>>,
     return_type: Option<TypeAnnotation>,
+}
+
+#[derive(Debug, Clone, Default)]
+struct StructShape {
+    fields: HashMap<String, Option<TypeAnnotation>>,
+    methods: HashMap<String, FunctionSignature>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AnalyzedFunction {
+    pub params: Vec<TypeAnnotation>,
+    pub return_type: TypeAnnotation,
+}
+
+impl AnalyzedFunction {
+    pub fn display_signature(&self, name: &str) -> String {
+        let params = self.params.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
+        format!("func {}({}) -> {}", name, params, self.return_type)
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnalyzedStruct {
+    pub fields: BTreeMap<String, TypeAnnotation>,
+    pub methods: BTreeMap<String, AnalyzedFunction>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnalysisSnapshot {
+    pub variables: BTreeMap<String, TypeAnnotation>,
+    pub functions: BTreeMap<String, AnalyzedFunction>,
+    pub structs: BTreeMap<String, AnalyzedStruct>,
+    pub modules: BTreeMap<String, AnalyzedModule>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct AnalyzedModule {
+    pub values: BTreeMap<String, TypeAnnotation>,
+    pub functions: BTreeMap<String, AnalyzedFunction>,
+    pub structs: BTreeMap<String, AnalyzedStruct>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct ModuleCacheStats {
+    pub hits: usize,
+    pub misses: usize,
+    pub entries: usize,
+}
+
+#[derive(Debug, Clone)]
+struct CachedModule {
+    source_hash: u64,
+    stmts: Arc<Vec<Stmt>>,
+    last_used: u64,
+}
+
+#[derive(Debug, Default)]
+struct ModuleCacheState {
+    entries: HashMap<PathBuf, CachedModule>,
+    hits: usize,
+    misses: usize,
+    clock: u64,
+}
+
+/// Reusable parsed-module cache with content-based invalidation and bounded growth.
+#[derive(Debug)]
+pub struct ModuleAnalysisCache {
+    state: Mutex<ModuleCacheState>,
+    capacity: usize,
+}
+
+impl Default for ModuleAnalysisCache {
+    fn default() -> Self {
+        Self::new(128)
+    }
+}
+
+impl ModuleAnalysisCache {
+    pub fn new(capacity: usize) -> Self {
+        Self { state: Mutex::new(ModuleCacheState::default()), capacity: capacity.max(1) }
+    }
+
+    pub fn stats(&self) -> ModuleCacheStats {
+        let state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        ModuleCacheStats { hits: state.hits, misses: state.misses, entries: state.entries.len() }
+    }
+
+    fn lookup(&self, path: &Path, source_hash: u64) -> Option<Arc<Vec<Stmt>>> {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.clock = state.clock.saturating_add(1);
+        let clock = state.clock;
+        if let Some(entry) = state.entries.get_mut(path) {
+            if entry.source_hash == source_hash {
+                entry.last_used = clock;
+                let stmts = Arc::clone(&entry.stmts);
+                state.hits = state.hits.saturating_add(1);
+                return Some(stmts);
+            }
+        }
+        state.misses = state.misses.saturating_add(1);
+        None
+    }
+
+    fn insert(&self, path: PathBuf, source_hash: u64, stmts: Arc<Vec<Stmt>>) {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.clock = state.clock.saturating_add(1);
+        let clock = state.clock;
+        state.entries.insert(path, CachedModule { source_hash, stmts, last_used: clock });
+        if state.entries.len() > self.capacity {
+            if let Some(oldest) = state
+                .entries
+                .iter()
+                .min_by_key(|(_, value)| value.last_used)
+                .map(|(path, _)| path.clone())
+            {
+                state.entries.remove(&oldest);
+            }
+        }
+    }
 }
 
 /// Type checker maintains symbol tables for variables and functions
@@ -51,6 +173,16 @@ pub struct TypeChecker {
     module_search_paths: Vec<PathBuf>,
     /// Cache of parsed module export signatures keyed by canonical module path.
     module_export_signatures: HashMap<PathBuf, HashMap<String, FunctionSignature>>,
+    module_export_structs: HashMap<PathBuf, HashMap<String, StructShape>>,
+    module_export_values: HashMap<PathBuf, HashMap<String, TypeAnnotation>>,
+    module_namespaces: HashMap<String, AnalyzedModule>,
+    module_ast_cache: Arc<ModuleAnalysisCache>,
+    #[cfg(test)]
+    module_parse_count: usize,
+    structs: HashMap<String, StructShape>,
+    validate_module_existence: bool,
+    inferred_return_stack: Vec<Option<TypeAnnotation>>,
+    current_struct: Option<String>,
 }
 
 /// Maximum recursion depth for type checking to prevent infinite loops
@@ -77,6 +209,16 @@ impl TypeChecker {
                 paths
             },
             module_export_signatures: HashMap::new(),
+            module_export_structs: HashMap::new(),
+            module_export_values: HashMap::new(),
+            module_namespaces: HashMap::new(),
+            module_ast_cache: Arc::new(ModuleAnalysisCache::default()),
+            #[cfg(test)]
+            module_parse_count: 0,
+            structs: HashMap::new(),
+            validate_module_existence: false,
+            inferred_return_stack: Vec::new(),
+            current_struct: None,
         };
 
         // Register built-in functions
@@ -102,6 +244,163 @@ impl TypeChecker {
         self.module_search_paths.push(path.clone());
         self.module_search_paths
             .extend(crate::module::automatic_kennel_package_search_paths(&path));
+        self.validate_module_existence = true;
+    }
+
+    pub fn with_module_cache(cache: Arc<ModuleAnalysisCache>) -> Self {
+        let mut checker = Self::new();
+        checker.module_ast_cache = cache;
+        checker
+    }
+
+    pub fn analysis_snapshot(&self) -> AnalysisSnapshot {
+        let functions = self
+            .functions
+            .iter()
+            .map(|(name, signature)| {
+                (
+                    name.clone(),
+                    AnalyzedFunction {
+                        params: signature
+                            .param_types
+                            .iter()
+                            .map(|value| value.clone().unwrap_or(TypeAnnotation::Any))
+                            .collect(),
+                        return_type: signature.return_type.clone().unwrap_or(TypeAnnotation::Any),
+                    },
+                )
+            })
+            .collect();
+        let variables = self
+            .variables
+            .iter()
+            .map(|(name, value)| (name.clone(), value.clone().unwrap_or(TypeAnnotation::Any)))
+            .collect();
+        let structs = self
+            .structs
+            .iter()
+            .map(|(name, shape)| {
+                let fields = shape
+                    .fields
+                    .iter()
+                    .map(|(field, value)| {
+                        (field.clone(), value.clone().unwrap_or(TypeAnnotation::Any))
+                    })
+                    .collect();
+                let methods = shape
+                    .methods
+                    .iter()
+                    .map(|(method, signature)| {
+                        (
+                            method.clone(),
+                            AnalyzedFunction {
+                                params: signature
+                                    .param_types
+                                    .iter()
+                                    .map(|value| value.clone().unwrap_or(TypeAnnotation::Any))
+                                    .collect(),
+                                return_type: signature
+                                    .return_type
+                                    .clone()
+                                    .unwrap_or(TypeAnnotation::Any),
+                            },
+                        )
+                    })
+                    .collect();
+                (name.clone(), AnalyzedStruct { fields, methods })
+            })
+            .collect();
+        let modules = self
+            .module_namespaces
+            .iter()
+            .map(|(name, module)| (name.clone(), module.clone()))
+            .collect();
+        AnalysisSnapshot { variables, functions, structs, modules }
+    }
+
+    fn analyzed_module(
+        values: Option<&HashMap<String, TypeAnnotation>>,
+        functions: Option<&HashMap<String, FunctionSignature>>,
+        structs: Option<&HashMap<String, StructShape>>,
+    ) -> AnalyzedModule {
+        AnalyzedModule {
+            values: values
+                .map(|values| {
+                    values.iter().map(|(name, value)| (name.clone(), value.clone())).collect()
+                })
+                .unwrap_or_default(),
+            functions: functions
+                .map(|functions| {
+                    functions
+                        .iter()
+                        .map(|(name, signature)| {
+                            (
+                                name.clone(),
+                                AnalyzedFunction {
+                                    params: signature
+                                        .param_types
+                                        .iter()
+                                        .map(|value| value.clone().unwrap_or(TypeAnnotation::Any))
+                                        .collect(),
+                                    return_type: signature
+                                        .return_type
+                                        .clone()
+                                        .unwrap_or(TypeAnnotation::Any),
+                                },
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
+            structs: structs
+                .map(|structs| {
+                    structs
+                        .iter()
+                        .map(|(name, shape)| {
+                            (
+                                name.clone(),
+                                AnalyzedStruct {
+                                    fields: shape
+                                        .fields
+                                        .iter()
+                                        .map(|(field, value)| {
+                                            (
+                                                field.clone(),
+                                                value.clone().unwrap_or(TypeAnnotation::Any),
+                                            )
+                                        })
+                                        .collect(),
+                                    methods: shape
+                                        .methods
+                                        .iter()
+                                        .map(|(method, signature)| {
+                                            (
+                                                method.clone(),
+                                                AnalyzedFunction {
+                                                    params: signature
+                                                        .param_types
+                                                        .iter()
+                                                        .map(|value| {
+                                                            value
+                                                                .clone()
+                                                                .unwrap_or(TypeAnnotation::Any)
+                                                        })
+                                                        .collect(),
+                                                    return_type: signature
+                                                        .return_type
+                                                        .clone()
+                                                        .unwrap_or(TypeAnnotation::Any),
+                                                },
+                                            )
+                                        })
+                                        .collect(),
+                                },
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default(),
+        }
     }
 
     /// Registers all built-in function signatures
@@ -2609,6 +2908,39 @@ impl TypeChecker {
 
         // Concurrency functions
         self.functions.insert(
+            "async_sleep".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::Int)],
+                return_type: Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Any))),
+            },
+        );
+
+        for name in ["await_task"] {
+            self.functions.insert(
+                name.to_string(),
+                FunctionSignature {
+                    param_types: vec![Some(TypeAnnotation::Any)],
+                    return_type: Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Any))),
+                },
+            );
+        }
+
+        for name in ["promise_all", "await_all"] {
+            self.functions.insert(
+                name.to_string(),
+                FunctionSignature {
+                    param_types: vec![
+                        Some(TypeAnnotation::Array(Box::new(TypeAnnotation::Any))),
+                        None,
+                    ],
+                    return_type: Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Array(
+                        Box::new(TypeAnnotation::Any),
+                    )))),
+                },
+            );
+        }
+
+        self.functions.insert(
             "channel".to_string(),
             FunctionSignature {
                 param_types: vec![],
@@ -2632,24 +2964,40 @@ impl TypeChecker {
         self.functions.insert(
             "parallel_map".to_string(),
             FunctionSignature {
-                param_types: vec![None, None, Some(TypeAnnotation::Int)],
-                return_type: None,
+                param_types: vec![
+                    Some(TypeAnnotation::Array(Box::new(TypeAnnotation::Any))),
+                    Some(TypeAnnotation::Any),
+                    None,
+                ],
+                return_type: Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Array(
+                    Box::new(TypeAnnotation::Any),
+                )))),
             },
         );
 
         self.functions.insert(
             "par_map".to_string(),
             FunctionSignature {
-                param_types: vec![None, None, Some(TypeAnnotation::Int)], // array, mapper, optional limit
-                return_type: None,
+                param_types: vec![
+                    Some(TypeAnnotation::Array(Box::new(TypeAnnotation::Any))),
+                    Some(TypeAnnotation::Any),
+                    None,
+                ], // array, mapper, optional limit
+                return_type: Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Array(
+                    Box::new(TypeAnnotation::Any),
+                )))),
             },
         );
 
         self.functions.insert(
             "par_each".to_string(),
             FunctionSignature {
-                param_types: vec![None, None, Some(TypeAnnotation::Int)], // array, mapper, optional limit
-                return_type: None,
+                param_types: vec![
+                    Some(TypeAnnotation::Array(Box::new(TypeAnnotation::Any))),
+                    Some(TypeAnnotation::Any),
+                    None,
+                ], // array, mapper, optional limit
+                return_type: Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Any))),
             },
         );
 
@@ -2794,15 +3142,24 @@ impl TypeChecker {
         params: &[String],
         param_types: &[Option<TypeAnnotation>],
         return_type: &Option<TypeAnnotation>,
+        is_async: bool,
     ) -> FunctionSignature {
+        let return_type = if is_async {
+            Some(TypeAnnotation::Promise(Box::new(
+                return_type.clone().unwrap_or(TypeAnnotation::Any),
+            )))
+        } else {
+            return_type.clone()
+        };
         FunctionSignature {
             param_types: param_types
                 .iter()
                 .cloned()
                 .chain(std::iter::repeat(None))
                 .take(params.len())
+                .map(|param_type| Some(param_type.unwrap_or(TypeAnnotation::Any)))
                 .collect(),
-            return_type: return_type.clone(),
+            return_type,
         }
     }
 
@@ -2812,9 +3169,9 @@ impl TypeChecker {
     ) -> Option<FunctionSignature> {
         match value {
             Expr::Identifier(name) => known_functions.get(name).cloned(),
-            Expr::Function { params, param_types, return_type, .. } => {
-                Some(Self::function_signature_from_params(params, param_types, return_type))
-            }
+            Expr::Function { params, param_types, return_type, is_async, .. } => Some(
+                Self::function_signature_from_params(params, param_types, return_type, *is_async),
+            ),
             _ => None,
         }
     }
@@ -2826,10 +3183,15 @@ impl TypeChecker {
         active_modules: &mut Vec<PathBuf>,
     ) {
         match stmt {
-            Stmt::FuncDef { name, params, param_types, return_type, .. } => {
+            Stmt::FuncDef { name, params, param_types, return_type, is_async, .. } => {
                 binding_signatures.insert(
                     name.clone(),
-                    Self::function_signature_from_params(params, param_types, return_type),
+                    Self::function_signature_from_params(
+                        params,
+                        param_types,
+                        return_type,
+                        *is_async,
+                    ),
                 );
             }
             Stmt::Import { module, symbols: Some(symbols) } => {
@@ -2881,6 +3243,30 @@ impl TypeChecker {
         }
     }
 
+    fn parsed_module(&mut self, module_name: &str) -> Option<(PathBuf, Arc<Vec<Stmt>>)> {
+        let module_path = self.resolve_module_import_path(module_name)?;
+        let source = fs::read_to_string(&module_path).ok()?;
+        let mut hasher = DefaultHasher::new();
+        source.hash(&mut hasher);
+        let source_hash = hasher.finish();
+        if let Some(cached) = self.module_ast_cache.lookup(&module_path, source_hash) {
+            return Some((module_path, cached));
+        }
+        let tokens = tokenize_with_file(&source, Some(&module_path.to_string_lossy())).ok()?;
+        let mut parser = Parser::new(tokens);
+        let parsed = parser.parse_with_diagnostics();
+        if !parsed.diagnostics.is_empty() {
+            return None;
+        }
+        #[cfg(test)]
+        {
+            self.module_parse_count += 1;
+        }
+        let stmts = Arc::new(parsed.stmts);
+        self.module_ast_cache.insert(module_path.clone(), source_hash, Arc::clone(&stmts));
+        Some((module_path, stmts))
+    }
+
     fn module_export_signatures(
         &mut self,
         module_name: &str,
@@ -2895,20 +3281,13 @@ impl TypeChecker {
         if active_modules.contains(&module_path) {
             return None;
         }
-
-        let source = fs::read_to_string(&module_path).ok()?;
-        let tokens = tokenize_with_file(&source, Some(&module_path.to_string_lossy())).ok()?;
-        let mut parser = Parser::new(tokens);
-        let parse_output = parser.parse_with_diagnostics();
-        if !parse_output.diagnostics.is_empty() {
-            return None;
-        }
+        let (_, module_stmts) = self.parsed_module(module_name)?;
 
         active_modules.push(module_path.clone());
 
         let mut binding_signatures = HashMap::new();
         let mut export_signatures = HashMap::new();
-        for stmt in &parse_output.stmts {
+        for stmt in module_stmts.iter() {
             self.collect_binding_signatures_from_stmt(
                 stmt,
                 &mut binding_signatures,
@@ -2930,6 +3309,127 @@ impl TypeChecker {
         Some(export_signatures)
     }
 
+    fn struct_shape(fields: &[(String, Option<TypeAnnotation>)], methods: &[Stmt]) -> StructShape {
+        let fields = fields.iter().cloned().collect();
+        let mut method_signatures = HashMap::new();
+        for method in methods {
+            if let Stmt::FuncDef { name, params, param_types, return_type, is_async, .. } = method {
+                let mut signature = Self::function_signature_from_params(
+                    params,
+                    param_types,
+                    return_type,
+                    *is_async,
+                );
+                if params.first().is_some_and(|param| param == "self")
+                    && !signature.param_types.is_empty()
+                {
+                    signature.param_types.remove(0);
+                }
+                method_signatures.insert(name.clone(), signature);
+            }
+        }
+        StructShape { fields, methods: method_signatures }
+    }
+
+    fn module_export_structs(&mut self, module_name: &str) -> Option<HashMap<String, StructShape>> {
+        let module_path = self.resolve_module_import_path(module_name)?;
+        if let Some(cached) = self.module_export_structs.get(&module_path) {
+            return Some(cached.clone());
+        }
+        let (_, module_stmts) = self.parsed_module(module_name)?;
+        let mut structs = HashMap::new();
+        for stmt in module_stmts.iter() {
+            let Stmt::Export { stmt } = stmt else { continue };
+            if let Stmt::StructDef { name, fields, methods } = stmt.as_ref() {
+                structs.insert(name.clone(), Self::struct_shape(fields, methods));
+            }
+        }
+        self.module_export_structs.insert(module_path, structs.clone());
+        Some(structs)
+    }
+
+    fn static_expr_type(expr: &Expr) -> Option<TypeAnnotation> {
+        match expr {
+            Expr::Int(_) => Some(TypeAnnotation::Int),
+            Expr::Float(_) => Some(TypeAnnotation::Float),
+            Expr::String(_) | Expr::InterpolatedString(_) => Some(TypeAnnotation::String),
+            Expr::Bool(_) => Some(TypeAnnotation::Bool),
+            Expr::ArrayLiteral(values) => {
+                let mut item = None;
+                for value in values {
+                    let next = match value {
+                        crate::ast::ArrayElement::Single(value) => Self::static_expr_type(value),
+                        crate::ast::ArrayElement::Spread(_) => Some(TypeAnnotation::Any),
+                    };
+                    item = Self::merge_inferred_types(item, next);
+                }
+                Some(TypeAnnotation::Array(Box::new(item.unwrap_or(TypeAnnotation::Any))))
+            }
+            Expr::DictLiteral(values) => {
+                let mut key = None;
+                let mut value_type = None;
+                for value in values {
+                    match value {
+                        crate::ast::DictElement::Pair(entry_key, entry_value) => {
+                            key =
+                                Self::merge_inferred_types(key, Self::static_expr_type(entry_key));
+                            value_type = Self::merge_inferred_types(
+                                value_type,
+                                Self::static_expr_type(entry_value),
+                            );
+                        }
+                        crate::ast::DictElement::Spread(_) => {
+                            key = Some(TypeAnnotation::Any);
+                            value_type = Some(TypeAnnotation::Any);
+                        }
+                    }
+                }
+                Some(TypeAnnotation::Dict {
+                    key: Box::new(key.unwrap_or(TypeAnnotation::Any)),
+                    value: Box::new(value_type.unwrap_or(TypeAnnotation::Any)),
+                })
+            }
+            Expr::StructInstance { name, .. } => Some(TypeAnnotation::Struct(name.clone())),
+            _ => None,
+        }
+    }
+
+    fn module_export_values(
+        &mut self,
+        module_name: &str,
+    ) -> Option<HashMap<String, TypeAnnotation>> {
+        let module_path = self.resolve_module_import_path(module_name)?;
+        if let Some(cached) = self.module_export_values.get(&module_path) {
+            return Some(cached.clone());
+        }
+        let (_, module_stmts) = self.parsed_module(module_name)?;
+        let mut values = HashMap::new();
+        for stmt in module_stmts.iter() {
+            let Stmt::Export { stmt } = stmt else { continue };
+            match stmt.as_ref() {
+                Stmt::Const { name, value, type_annotation } => {
+                    if let Some(value_type) =
+                        type_annotation.clone().or_else(|| Self::static_expr_type(value))
+                    {
+                        values.insert(name.clone(), value_type);
+                    }
+                }
+                Stmt::Let {
+                    pattern: Pattern::Identifier(name), value, type_annotation, ..
+                } => {
+                    if let Some(value_type) =
+                        type_annotation.clone().or_else(|| Self::static_expr_type(value))
+                    {
+                        values.insert(name.clone(), value_type);
+                    }
+                }
+                _ => {}
+            }
+        }
+        self.module_export_values.insert(module_path, values.clone());
+        Some(values)
+    }
+
     fn collect_export_signatures_from_stmt(
         &mut self,
         stmt: &Stmt,
@@ -2938,10 +3438,15 @@ impl TypeChecker {
         active_modules: &mut Vec<PathBuf>,
     ) {
         match stmt {
-            Stmt::FuncDef { name, params, param_types, return_type, .. } => {
+            Stmt::FuncDef { name, params, param_types, return_type, is_async, .. } => {
                 export_signatures.insert(
                     name.clone(),
-                    Self::function_signature_from_params(params, param_types, return_type),
+                    Self::function_signature_from_params(
+                        params,
+                        param_types,
+                        return_type,
+                        *is_async,
+                    ),
                 );
             }
             Stmt::Const { name, value, .. } => {
@@ -3008,17 +3513,25 @@ impl TypeChecker {
                 Stmt::Export { stmt } => stmt.as_ref(),
                 other => other,
             };
-            if let Stmt::FuncDef { name, param_types, return_type, .. } = stmt {
-                if name == "contains" {
-                    self.builtin_contains_active = false;
+            match stmt {
+                Stmt::FuncDef { name, params, param_types, return_type, is_async, .. } => {
+                    if name == "contains" {
+                        self.builtin_contains_active = false;
+                    }
+                    self.functions.insert(
+                        name.clone(),
+                        Self::function_signature_from_params(
+                            params,
+                            param_types,
+                            return_type,
+                            *is_async,
+                        ),
+                    );
                 }
-                self.functions.insert(
-                    name.clone(),
-                    FunctionSignature {
-                        param_types: param_types.clone(),
-                        return_type: return_type.clone(),
-                    },
-                );
+                Stmt::StructDef { name, fields, methods } => {
+                    self.structs.insert(name.clone(), Self::struct_shape(fields, methods));
+                }
+                _ => {}
             }
         }
 
@@ -3079,9 +3592,27 @@ impl TypeChecker {
                         self.annotated_variables.remove(name);
                         self.variables.insert(name.clone(), inferred_type);
                     }
+                } else {
+                    if let (Some(annotated), Some(inferred)) = (type_annotation, &inferred_type) {
+                        if !annotated.matches(inferred) {
+                            self.errors.push(
+                                KujoError::new(
+                                    ErrorKind::TypeError,
+                                    format!(
+                                        "Destructuring annotation expects {:?} but the value is {:?}",
+                                        annotated, inferred
+                                    ),
+                                    SourceLocation::unknown(),
+                                )
+                                .with_help(
+                                    "Match the annotation to the collection shape or remove it"
+                                        .to_string(),
+                                ),
+                            );
+                        }
+                    }
+                    self.bind_pattern_from_expr(pattern, value, inferred_type);
                 }
-                // For destructuring patterns, we skip type checking for now
-                // TODO: Implement proper type checking for destructuring patterns
             }
 
             Stmt::Const { name, value, type_annotation } => {
@@ -3121,13 +3652,18 @@ impl TypeChecker {
                 return_type,
                 body,
                 is_generator: _,
-                is_async: _,
+                is_async,
             } => {
                 // Nested declarations belong to the current lexical scope.
                 self.variables.insert(
                     name.clone(),
                     Some(Self::function_signature_to_type_annotation(
-                        &Self::function_signature_from_params(params, param_types, return_type),
+                        &Self::function_signature_from_params(
+                            params,
+                            param_types,
+                            return_type,
+                            *is_async,
+                        ),
                     )),
                 );
                 self.annotated_variables.remove(name);
@@ -3135,10 +3671,15 @@ impl TypeChecker {
                 let saved_return_type = self.current_function_return.clone();
                 self.current_function_return = return_type.clone();
                 self.push_scope();
+                self.inferred_return_stack.push(None);
 
                 // Add parameters to scope
                 for (i, param) in params.iter().enumerate() {
-                    let param_type = param_types.get(i).and_then(|t| t.clone());
+                    let param_type = param_types.get(i).and_then(|t| t.clone()).or_else(|| {
+                        (param == "self")
+                            .then(|| self.current_struct.clone().map(TypeAnnotation::Struct))
+                            .flatten()
+                    });
                     self.variables.insert(param.clone(), param_type);
                     self.annotated_variables.remove(param);
                 }
@@ -3147,14 +3688,46 @@ impl TypeChecker {
                 for stmt in body {
                     self.check_stmt(stmt);
                 }
+                let inferred_return =
+                    self.inferred_return_stack.pop().flatten().unwrap_or(TypeAnnotation::Any);
 
                 // Exit function scope
                 self.pop_scope();
                 self.current_function_return = saved_return_type;
+                if return_type.is_none() {
+                    let call_result = if *is_async {
+                        TypeAnnotation::Promise(Box::new(inferred_return))
+                    } else {
+                        inferred_return
+                    };
+                    if let Some(signature) = self.functions.get_mut(name) {
+                        signature.return_type = Some(call_result.clone());
+                    }
+                    self.variables.insert(
+                        name.clone(),
+                        Some(TypeAnnotation::Function {
+                            params: params
+                                .iter()
+                                .enumerate()
+                                .map(|(index, _)| {
+                                    param_types
+                                        .get(index)
+                                        .cloned()
+                                        .flatten()
+                                        .unwrap_or(TypeAnnotation::Any)
+                                })
+                                .collect(),
+                            return_type: Box::new(call_result),
+                        }),
+                    );
+                }
             }
 
             Stmt::Return(expr) => {
                 let return_type = expr.as_ref().and_then(|e| self.infer_expr(e));
+                if let Some(slot) = self.inferred_return_stack.last_mut() {
+                    *slot = Self::merge_inferred_types(slot.take(), return_type.clone());
+                }
 
                 // Check if return type matches function signature
                 if let Some(expected) = &self.current_function_return {
@@ -3211,9 +3784,15 @@ impl TypeChecker {
             }
 
             Stmt::For { var, iterable, body } => {
-                self.infer_expr(iterable);
+                let iterable_type = self.infer_expr(iterable);
+                let item_type = match iterable_type {
+                    Some(TypeAnnotation::Array(inner)) => Some(*inner),
+                    Some(TypeAnnotation::String) => Some(TypeAnnotation::String),
+                    Some(TypeAnnotation::Dict { key, .. }) => Some(*key),
+                    _ => None,
+                };
                 self.push_scope();
-                self.variables.insert(var.clone(), None); // Iterator type unknown
+                self.variables.insert(var.clone(), item_type);
                 self.annotated_variables.remove(var);
                 for s in body {
                     self.check_stmt(s);
@@ -3335,21 +3914,73 @@ impl TypeChecker {
             Stmt::Import { module, symbols } => {
                 let mut active_modules = Vec::new();
                 let module_signatures = self.module_export_signatures(module, &mut active_modules);
+                let module_structs = self.module_export_structs(module);
+                let module_values = self.module_export_values(module);
+                let module_exists = self.resolve_module_import_path(module).is_some();
+                if !module_exists && self.validate_module_existence {
+                    self.errors.push(
+                        KujoError::new(
+                            ErrorKind::TypeError,
+                            format!("Unknown module '{}'", module),
+                            SourceLocation::unknown(),
+                        )
+                        .with_help(
+                            "Check the module name or add its root to the module search path"
+                                .to_string(),
+                        )
+                        .with_note(
+                            "Static analysis will keep imported values dynamic so optional typing does not block runtime resolution"
+                                .to_string(),
+                        ),
+                    );
+                }
 
                 if let Some(symbols) = symbols {
                     for symbol in symbols {
+                        if let Some(shape) =
+                            module_structs.as_ref().and_then(|structs| structs.get(symbol)).cloned()
+                        {
+                            self.structs.insert(symbol.clone(), shape);
+                        }
+                        if let Some(value_type) =
+                            module_values.as_ref().and_then(|values| values.get(symbol)).cloned()
+                        {
+                            self.variables.insert(symbol.clone(), Some(value_type));
+                        }
                         let signature = module_signatures
                             .as_ref()
                             .and_then(|signatures| signatures.get(symbol))
                             .cloned();
-                        self.register_imported_symbol(
-                            symbol,
-                            signature,
-                            module_signatures.is_none(),
-                        );
+                        if signature.is_some() || !self.variables.contains_key(symbol) {
+                            self.register_imported_symbol(
+                                symbol,
+                                signature,
+                                module_signatures.is_none(),
+                            );
+                        }
                     }
                 } else {
-                    self.variables.insert(module.clone(), Some(TypeAnnotation::Any));
+                    let analyzed_module = Self::analyzed_module(
+                        module_values.as_ref(),
+                        module_signatures.as_ref(),
+                        module_structs.as_ref(),
+                    );
+                    if let Some(signatures) = &module_signatures {
+                        for (name, signature) in signatures {
+                            self.register_imported_symbol(name, Some(signature.clone()), false);
+                        }
+                    }
+                    if let Some(structs) = &module_structs {
+                        self.structs.extend(structs.clone());
+                    }
+                    if let Some(values) = &module_values {
+                        for (name, value_type) in values {
+                            self.variables.insert(name.clone(), Some(value_type.clone()));
+                        }
+                    }
+                    let binding = crate::vm::VM::module_binding_name(module);
+                    self.module_namespaces.insert(binding.clone(), analyzed_module);
+                    self.variables.insert(binding, Some(TypeAnnotation::Module(module.clone())));
                 }
             }
 
@@ -3358,10 +3989,39 @@ impl TypeChecker {
                 self.check_stmt(stmt);
             }
 
-            Stmt::StructDef { name: _, fields: _, methods } => {
+            Stmt::StructDef { name, fields, methods } => {
+                self.structs.insert(name.clone(), Self::struct_shape(fields, methods));
                 // Type check methods
                 for method in methods {
+                    self.push_scope();
+                    let saved_struct = self.current_struct.replace(name.clone());
+                    self.variables
+                        .insert("self".to_string(), Some(TypeAnnotation::Struct(name.clone())));
+                    for (field, field_type) in fields {
+                        self.variables.insert(
+                            field.clone(),
+                            Some(field_type.clone().unwrap_or(TypeAnnotation::Any)),
+                        );
+                    }
                     self.check_stmt(method);
+                    if let Stmt::FuncDef { name: method_name, .. } = method {
+                        let inferred_return = match self.variables.get(method_name) {
+                            Some(Some(TypeAnnotation::Function { return_type, .. })) => {
+                                Some((**return_type).clone())
+                            }
+                            _ => None,
+                        };
+                        if let (Some(inferred_return), Some(signature)) = (
+                            inferred_return,
+                            self.structs
+                                .get_mut(name)
+                                .and_then(|shape| shape.methods.get_mut(method_name)),
+                        ) {
+                            signature.return_type = Some(inferred_return);
+                        }
+                    }
+                    self.current_struct = saved_struct;
+                    self.pop_scope();
                 }
             }
         }
@@ -3386,6 +4046,68 @@ impl TypeChecker {
         let result = self.infer_expr_inner(expr);
         self.recursion_depth -= 1;
         result
+    }
+
+    fn infer_function_expression(
+        &mut self,
+        params: &[String],
+        param_types: &[Option<TypeAnnotation>],
+        return_type: &Option<TypeAnnotation>,
+        body: &[Stmt],
+        is_async: bool,
+        contextual_first_param: Option<TypeAnnotation>,
+    ) -> TypeAnnotation {
+        self.push_scope();
+        for (index, param) in params.iter().enumerate() {
+            let param_type = param_types
+                .get(index)
+                .cloned()
+                .flatten()
+                .or_else(|| (index == 0).then(|| contextual_first_param.clone()).flatten());
+            self.variables.insert(param.clone(), param_type);
+            self.annotated_variables.remove(param);
+        }
+        let saved_return_type = self.current_function_return.clone();
+        self.current_function_return = return_type.clone();
+        self.inferred_return_stack.push(None);
+        for stmt in body {
+            self.check_stmt(stmt);
+        }
+        let inferred_return =
+            self.inferred_return_stack.pop().flatten().unwrap_or(TypeAnnotation::Any);
+        self.pop_scope();
+        self.current_function_return = saved_return_type;
+        let call_result = return_type.clone().unwrap_or(inferred_return);
+        let call_result =
+            if is_async { TypeAnnotation::Promise(Box::new(call_result)) } else { call_result };
+        TypeAnnotation::Function {
+            params: params
+                .iter()
+                .enumerate()
+                .map(|(index, _)| {
+                    param_types
+                        .get(index)
+                        .cloned()
+                        .flatten()
+                        .or_else(|| (index == 0).then(|| contextual_first_param.clone()).flatten())
+                        .unwrap_or(TypeAnnotation::Any)
+                })
+                .collect(),
+            return_type: Box::new(call_result),
+        }
+    }
+
+    fn overloaded_binary_result(
+        &self,
+        op: &str,
+        left_type: &Option<TypeAnnotation>,
+    ) -> Option<TypeAnnotation> {
+        let TypeAnnotation::Struct(name) = left_type.as_ref()? else {
+            return None;
+        };
+        let method_name = crate::ast::operator_methods::binary_op_method(op)?;
+        let signature = self.structs.get(name)?.methods.get(method_name)?;
+        Some(signature.return_type.clone().unwrap_or(TypeAnnotation::Any))
     }
 
     // Keep early returns in expression inference inside the balanced depth guard.
@@ -3446,6 +4168,14 @@ impl TypeChecker {
             Expr::BinaryOp { op, left, right } => {
                 let left_type = self.infer_expr(left);
                 let right_type = self.infer_expr(right);
+
+                if let Some(result) = self.overloaded_binary_result(op, &left_type) {
+                    return if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") {
+                        Some(TypeAnnotation::Bool)
+                    } else {
+                        Some(result)
+                    };
+                }
 
                 match op.as_str() {
                     "==" | "!=" | "<" | ">" | "<=" | ">=" => {
@@ -3513,6 +4243,44 @@ impl TypeChecker {
             Expr::Call { function, args } => {
                 // Look up function signature
                 if let Expr::Identifier(func_name) = &**function {
+                    if matches!(func_name.as_str(), "parallel_map" | "par_map") && args.len() >= 2 {
+                        let collection_type = self.infer_expr(&args[0]);
+                        let item_type = match collection_type {
+                            Some(TypeAnnotation::Array(item)) => Some(*item),
+                            _ => None,
+                        };
+                        if let (
+                            Some(item_type),
+                            Expr::Function {
+                                params, param_types, return_type, body, is_async, ..
+                            },
+                        ) = (item_type, &args[1])
+                        {
+                            let callback_type = self.infer_function_expression(
+                                params,
+                                param_types,
+                                return_type,
+                                body,
+                                *is_async,
+                                Some(item_type),
+                            );
+                            for argument in args.iter().skip(2) {
+                                self.infer_expr(argument);
+                            }
+                            let callback_result = match callback_type {
+                                TypeAnnotation::Function { return_type, .. } => {
+                                    match *return_type {
+                                        TypeAnnotation::Promise(inner) => *inner,
+                                        value => value,
+                                    }
+                                }
+                                _ => TypeAnnotation::Any,
+                            };
+                            return Some(TypeAnnotation::Promise(Box::new(TypeAnnotation::Array(
+                                Box::new(callback_result),
+                            ))));
+                        }
+                    }
                     if func_name == "contains"
                         && self.builtin_contains_active
                         && !self.variables.contains_key(func_name)
@@ -3621,25 +4389,184 @@ impl TypeChecker {
 
                         self.errors.push(error);
                     }
+                } else {
+                    let callable_type = self.infer_expr(function);
+                    let arg_types: Vec<_> =
+                        args.iter().map(|argument| self.infer_expr(argument)).collect();
+                    match callable_type {
+                        Some(TypeAnnotation::Function { params, return_type }) => {
+                            if args.len() != params.len() {
+                                self.errors.push(KujoError::new(
+                                    ErrorKind::TypeError,
+                                    format!(
+                                        "Callable expects {} arguments but got {}",
+                                        params.len(),
+                                        args.len()
+                                    ),
+                                    SourceLocation::unknown(),
+                                ));
+                            }
+                            for (index, (expected, actual)) in
+                                params.iter().zip(arg_types.iter()).enumerate()
+                            {
+                                if let Some(actual) = actual {
+                                    if !expected.matches(actual) {
+                                        self.errors.push(KujoError::new(
+                                            ErrorKind::TypeError,
+                                            format!(
+                                                "Callable parameter {} expects {:?} but got {:?}",
+                                                index + 1,
+                                                expected,
+                                                actual
+                                            ),
+                                            SourceLocation::unknown(),
+                                        ));
+                                    }
+                                }
+                            }
+                            return Some(*return_type);
+                        }
+                        None | Some(TypeAnnotation::Any) => return Some(TypeAnnotation::Any),
+                        Some(other) => {
+                            self.errors.push(
+                                KujoError::new(
+                                    ErrorKind::TypeError,
+                                    format!("Cannot call value with non-callable type {:?}", other),
+                                    SourceLocation::unknown(),
+                                )
+                                .with_help(
+                                    "Call a function or keep the value dynamic until runtime"
+                                        .to_string(),
+                                ),
+                            );
+                        }
+                    }
                 }
                 None
             }
 
             Expr::Tag(_, _) => None, // Enum types not yet supported
 
-            Expr::StructInstance { name: _, fields } => {
-                // Type check struct field initializers
-                for (_field_name, field_expr) in fields {
-                    self.infer_expr(field_expr);
+            Expr::StructInstance { name, fields } => {
+                let shape = self.structs.get(name).cloned();
+                for (field_name, field_expr) in fields {
+                    let actual = self.infer_expr(field_expr);
+                    if let Some(shape) = &shape {
+                        match shape.fields.get(field_name) {
+                            Some(Some(expected)) => {
+                                if let Some(actual) = &actual {
+                                    if !expected.matches(actual) {
+                                        self.errors.push(
+                                            KujoError::new(
+                                                ErrorKind::TypeError,
+                                                format!(
+                                                    "Struct '{}.{}' expects {:?} but got {:?}",
+                                                    name, field_name, expected, actual
+                                                ),
+                                                SourceLocation::unknown(),
+                                            )
+                                            .with_help(
+                                                "Convert the field value or correct the struct annotation"
+                                                    .to_string(),
+                                            ),
+                                        );
+                                    }
+                                }
+                            }
+                            Some(None) => {}
+                            None => self.errors.push(
+                                KujoError::new(
+                                    ErrorKind::TypeError,
+                                    format!(
+                                        "Struct '{}' has no declared field '{}'",
+                                        name, field_name
+                                    ),
+                                    SourceLocation::unknown(),
+                                )
+                                .with_help(
+                                    "Use a declared field name or update the struct definition"
+                                        .to_string(),
+                                ),
+                            ),
+                        }
+                    }
                 }
-                None // TODO: Return struct type when struct types are implemented
+                if shape.is_none() {
+                    self.errors.push(
+                        KujoError::new(
+                            ErrorKind::TypeError,
+                            format!("Unknown struct '{}'", name),
+                            SourceLocation::unknown(),
+                        )
+                        .with_help(
+                            "Define or import the struct before constructing it".to_string(),
+                        ),
+                    );
+                    Some(TypeAnnotation::Any)
+                } else {
+                    Some(TypeAnnotation::Struct(name.clone()))
+                }
             }
 
-            Expr::FieldAccess { object, field: _ } => {
-                // Type check the object expression
-                self.infer_expr(object);
-                None // TODO: Look up field type from struct definition
-            }
+            Expr::FieldAccess { object, field } => match self.infer_expr(object) {
+                Some(TypeAnnotation::Struct(name)) => {
+                    let shape = self.structs.get(&name).cloned();
+                    if let Some(shape) = shape {
+                        if let Some(field_type) = shape.fields.get(field) {
+                            return Some(field_type.clone().unwrap_or(TypeAnnotation::Any));
+                        }
+                        if let Some(signature) = shape.methods.get(field) {
+                            return Some(Self::function_signature_to_type_annotation(signature));
+                        }
+                        self.errors.push(
+                            KujoError::new(
+                                ErrorKind::TypeError,
+                                format!("Struct '{}' has no field or method '{}'", name, field),
+                                SourceLocation::unknown(),
+                            )
+                            .with_help(
+                                "Check the field name against the struct definition".to_string(),
+                            ),
+                        );
+                        Some(TypeAnnotation::Any)
+                    } else {
+                        Some(TypeAnnotation::Any)
+                    }
+                }
+                Some(TypeAnnotation::Module(module)) => {
+                    let mut active_modules = Vec::new();
+                    let functions = self.module_export_signatures(&module, &mut active_modules);
+                    let values = self.module_export_values(&module);
+                    let structs = self.module_export_structs(&module);
+                    if let Some(signature) =
+                        functions.as_ref().and_then(|exports| exports.get(field)).cloned()
+                    {
+                        Some(Self::function_signature_to_type_annotation(&signature))
+                    } else if let Some(value_type) =
+                        values.as_ref().and_then(|exports| exports.get(field)).cloned()
+                    {
+                        Some(value_type)
+                    } else if functions.is_some()
+                        && values.is_some()
+                        && structs.is_some()
+                        && !structs.as_ref().is_some_and(|exports| exports.contains_key(field))
+                    {
+                        self.errors.push(
+                            KujoError::new(
+                                ErrorKind::TypeError,
+                                format!("Module '{}' has no exported member '{}'", module, field),
+                                SourceLocation::unknown(),
+                            )
+                            .with_help("Check the export name in the imported module".to_string()),
+                        );
+                        Some(TypeAnnotation::Any)
+                    } else {
+                        Some(TypeAnnotation::Any)
+                    }
+                }
+                None | Some(TypeAnnotation::Any) => Some(TypeAnnotation::Any),
+                Some(_) => Some(TypeAnnotation::Any),
+            },
 
             Expr::ArrayLiteral(elements) => {
                 use crate::ast::ArrayElement;
@@ -3775,32 +4702,15 @@ impl TypeChecker {
                 return_type,
                 body,
                 is_generator: _,
-                is_async: _,
-            } => {
-                // Type check function expression (anonymous function)
-                // Enter function scope
-                self.push_scope();
-
-                for (index, param) in params.iter().enumerate() {
-                    self.variables.insert(param.clone(), param_types.get(index).cloned().flatten());
-                    self.annotated_variables.remove(param);
-                }
-                let saved_return_type = self.current_function_return.clone();
-                self.current_function_return = return_type.clone();
-
-                // Check function body
-                for stmt in body {
-                    self.check_stmt(stmt);
-                }
-
-                // Exit function scope
-                self.pop_scope();
-
-                self.current_function_return = saved_return_type;
-                Some(Self::function_signature_to_type_annotation(
-                    &Self::function_signature_from_params(params, param_types, return_type),
-                ))
-            }
+                is_async,
+            } => Some(self.infer_function_expression(
+                params,
+                param_types,
+                return_type,
+                body,
+                *is_async,
+                None,
+            )),
 
             Expr::Ok(value_expr) => {
                 let value_type = self.infer_expr(value_expr);
@@ -3860,8 +4770,78 @@ impl TypeChecker {
             Expr::MethodCall { object, method, args } => {
                 // Type check the object and arguments
                 let object_type = self.infer_expr(object);
-                for arg in args {
-                    self.infer_expr(arg);
+                if let (
+                    Some(TypeAnnotation::Array(item)),
+                    Some(Expr::Function {
+                        params, param_types, return_type, body, is_async, ..
+                    }),
+                ) = (&object_type, args.first())
+                {
+                    if matches!(method.as_str(), "map" | "filter") {
+                        let callback_type = self.infer_function_expression(
+                            params,
+                            param_types,
+                            return_type,
+                            body,
+                            *is_async,
+                            Some((**item).clone()),
+                        );
+                        let mapped = match (method.as_str(), callback_type) {
+                            ("filter", _) => (**item).clone(),
+                            (_, TypeAnnotation::Function { return_type, .. }) => match *return_type
+                            {
+                                TypeAnnotation::Promise(inner) => *inner,
+                                value => value,
+                            },
+                            _ => TypeAnnotation::Any,
+                        };
+                        for argument in args.iter().skip(1) {
+                            self.infer_expr(argument);
+                        }
+                        return Some(TypeAnnotation::Array(Box::new(mapped)));
+                    }
+                }
+                let arg_types: Vec<_> = args.iter().map(|arg| self.infer_expr(arg)).collect();
+                if let Some(TypeAnnotation::Struct(name)) = &object_type {
+                    if let Some(signature) =
+                        self.structs.get(name).and_then(|shape| shape.methods.get(method)).cloned()
+                    {
+                        let params = &signature.param_types[..];
+                        if !params.is_empty() && args.len() != params.len() {
+                            self.errors.push(KujoError::new(
+                                ErrorKind::TypeError,
+                                format!(
+                                    "Method '{}.{}' expects {} arguments but got {}",
+                                    name,
+                                    method,
+                                    params.len(),
+                                    args.len()
+                                ),
+                                SourceLocation::unknown(),
+                            ));
+                        }
+                        for (index, (expected, actual)) in
+                            params.iter().zip(arg_types.iter()).enumerate()
+                        {
+                            if let (Some(expected), Some(actual)) = (expected, actual) {
+                                if !expected.matches(actual) {
+                                    self.errors.push(KujoError::new(
+                                        ErrorKind::TypeError,
+                                        format!(
+                                            "Method '{}.{}' parameter {} expects {:?} but got {:?}",
+                                            name,
+                                            method,
+                                            index + 1,
+                                            expected,
+                                            actual
+                                        ),
+                                        SourceLocation::unknown(),
+                                    ));
+                                }
+                            }
+                        }
+                        return signature.return_type;
+                    }
                 }
                 Self::infer_known_method_return_type(object_type.as_ref(), method)
                     .or(Some(TypeAnnotation::Any))
@@ -3874,11 +4854,168 @@ impl TypeChecker {
             }
 
             Expr::Await(promise_expr) => {
-                // Type check the promise expression
-                self.infer_expr(promise_expr);
-                // TODO: If we know it's a Promise<T>, return T
-                // For now, return Any
-                Some(TypeAnnotation::Any)
+                match self.infer_expr(promise_expr) {
+                    Some(TypeAnnotation::Promise(inner)) => Some(*inner),
+                    None | Some(TypeAnnotation::Any) => Some(TypeAnnotation::Any),
+                    // Kujo deliberately permits `await` on an already-complete value.
+                    known => known,
+                }
+            }
+        }
+    }
+
+    fn bind_pattern_from_expr(
+        &mut self,
+        pattern: &Pattern,
+        value: &Expr,
+        inferred_type: Option<TypeAnnotation>,
+    ) {
+        match (pattern, value) {
+            (Pattern::Array { elements, rest }, Expr::ArrayLiteral(values)) => {
+                for (index, child) in elements.iter().enumerate() {
+                    let value = values.get(index);
+                    match value {
+                        Some(crate::ast::ArrayElement::Single(expr)) => {
+                            let child_type = self.infer_expr(expr);
+                            self.bind_pattern_from_expr(child, expr, child_type);
+                        }
+                        _ => self.bind_pattern_type(child, Some(TypeAnnotation::Any)),
+                    }
+                }
+                if let Some(rest) = rest {
+                    let mut rest_type = None;
+                    for value in values.iter().skip(elements.len()) {
+                        let value_type = match value {
+                            crate::ast::ArrayElement::Single(expr) => self.infer_expr(expr),
+                            crate::ast::ArrayElement::Spread(expr) => match self.infer_expr(expr) {
+                                Some(TypeAnnotation::Array(inner)) => Some(*inner),
+                                _ => Some(TypeAnnotation::Any),
+                            },
+                        };
+                        rest_type = Self::merge_inferred_types(rest_type, value_type);
+                    }
+                    self.variables.insert(
+                        rest.clone(),
+                        Some(TypeAnnotation::Array(Box::new(
+                            rest_type.unwrap_or(TypeAnnotation::Any),
+                        ))),
+                    );
+                    self.annotated_variables.remove(rest);
+                }
+            }
+            (Pattern::Dict { keys, rest }, Expr::DictLiteral(values)) => {
+                for key in keys {
+                    let value = values.iter().find_map(|entry| match entry {
+                        crate::ast::DictElement::Pair(Expr::String(candidate), value)
+                            if candidate == key =>
+                        {
+                            Some(value)
+                        }
+                        _ => None,
+                    });
+                    let value_type = value.and_then(|value| self.infer_expr(value));
+                    self.variables
+                        .insert(key.clone(), Some(value_type.unwrap_or(TypeAnnotation::Any)));
+                    self.annotated_variables.remove(key);
+                }
+                if let Some(rest) = rest {
+                    let rest_type = match inferred_type {
+                        Some(TypeAnnotation::Dict { key, value }) => {
+                            TypeAnnotation::Dict { key, value }
+                        }
+                        _ => TypeAnnotation::Dict {
+                            key: Box::new(TypeAnnotation::Any),
+                            value: Box::new(TypeAnnotation::Any),
+                        },
+                    };
+                    self.variables.insert(rest.clone(), Some(rest_type));
+                    self.annotated_variables.remove(rest);
+                }
+            }
+            _ => self.bind_pattern_type(pattern, inferred_type),
+        }
+    }
+
+    fn bind_pattern_type(&mut self, pattern: &Pattern, inferred_type: Option<TypeAnnotation>) {
+        match pattern {
+            Pattern::Identifier(name) => {
+                self.variables.insert(name.clone(), inferred_type);
+                self.annotated_variables.remove(name);
+            }
+            Pattern::Ignore => {}
+            Pattern::Array { elements, rest } => {
+                let element_type = match inferred_type {
+                    Some(TypeAnnotation::Array(inner)) => Some(*inner),
+                    None | Some(TypeAnnotation::Any) => Some(TypeAnnotation::Any),
+                    Some(other) => {
+                        self.errors.push(
+                            KujoError::new(
+                                ErrorKind::TypeError,
+                                format!(
+                                    "Array destructuring expects an Array value, inferred {:?}",
+                                    other
+                                ),
+                                SourceLocation::unknown(),
+                            )
+                            .with_help(
+                                "Use an array value or bind the value without destructuring"
+                                    .to_string(),
+                            ),
+                        );
+                        Some(TypeAnnotation::Any)
+                    }
+                };
+                for child in elements {
+                    self.bind_pattern_type(child, element_type.clone());
+                }
+                if let Some(rest) = rest {
+                    self.variables.insert(
+                        rest.clone(),
+                        Some(TypeAnnotation::Array(Box::new(
+                            element_type.unwrap_or(TypeAnnotation::Any),
+                        ))),
+                    );
+                    self.annotated_variables.remove(rest);
+                }
+            }
+            Pattern::Dict { keys, rest } => {
+                let (key_type, value_type) = match inferred_type {
+                    Some(TypeAnnotation::Dict { key, value }) => (Some(*key), Some(*value)),
+                    None | Some(TypeAnnotation::Any) => {
+                        (Some(TypeAnnotation::Any), Some(TypeAnnotation::Any))
+                    }
+                    Some(other) => {
+                        self.errors.push(
+                            KujoError::new(
+                                ErrorKind::TypeError,
+                                format!(
+                                    "Dictionary destructuring expects a Dict value, inferred {:?}",
+                                    other
+                                ),
+                                SourceLocation::unknown(),
+                            )
+                            .with_help(
+                                "Use a dictionary value or bind the value without destructuring"
+                                    .to_string(),
+                            ),
+                        );
+                        (Some(TypeAnnotation::Any), Some(TypeAnnotation::Any))
+                    }
+                };
+                for key in keys {
+                    self.variables.insert(key.clone(), value_type.clone());
+                    self.annotated_variables.remove(key);
+                }
+                if let Some(rest) = rest {
+                    self.variables.insert(
+                        rest.clone(),
+                        Some(TypeAnnotation::Dict {
+                            key: Box::new(key_type.unwrap_or(TypeAnnotation::Any)),
+                            value: Box::new(value_type.unwrap_or(TypeAnnotation::Any)),
+                        }),
+                    );
+                    self.annotated_variables.remove(rest);
+                }
             }
         }
     }
@@ -4513,5 +5650,212 @@ mod tests {
 
         std::fs::remove_file(&module_path).expect("failed to remove temp module");
         std::fs::remove_dir_all(&temp_root).expect("failed to clean up temp module dir");
+    }
+
+    fn check_source(source: &str) -> TypeChecker {
+        let mut parser = Parser::new(crate::lexer::tokenize(source).unwrap());
+        let parsed = parser.parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+        let mut checker = TypeChecker::new();
+        let _ = checker.check(&parsed.stmts);
+        checker
+    }
+
+    #[test]
+    fn destructuring_infers_literal_positions_nested_values_and_rest() {
+        let checker = check_source(
+            r#"
+                let [count, [label, enabled], ...remaining] := [1, ["ready", true], 2, 3]
+                let {name, active, ...metadata} := {"name": "Kujo", "active": true, "score": 10}
+                let exact_count: int := count
+                let exact_label: string := label
+                let exact_enabled: bool := enabled
+                let exact_name: string := name
+                let exact_active: bool := active
+            "#,
+        );
+        assert!(checker.errors.is_empty(), "{:?}", checker.errors);
+        assert_eq!(checker.variables.get("count"), Some(&Some(TypeAnnotation::Int)));
+        assert_eq!(checker.variables.get("label"), Some(&Some(TypeAnnotation::String)));
+        assert_eq!(checker.variables.get("enabled"), Some(&Some(TypeAnnotation::Bool)));
+        assert!(matches!(checker.variables.get("remaining"), Some(Some(TypeAnnotation::Array(_)))));
+        assert!(matches!(
+            checker.variables.get("metadata"),
+            Some(Some(TypeAnnotation::Dict { .. }))
+        ));
+    }
+
+    #[test]
+    fn destructuring_rejects_known_impossible_shapes_but_keeps_unknown_gradual() {
+        let wrong = check_source("let [value] := 1");
+        assert!(wrong.errors.iter().any(|error| error.to_string().contains("Array destructuring")));
+
+        let dynamic = check_source(
+            "func source(value) { return value }\nlet [value] := source([1])\nprint(value)",
+        );
+        assert!(dynamic.errors.is_empty(), "{:?}", dynamic.errors);
+    }
+
+    #[test]
+    fn struct_fields_flow_through_returns_and_report_real_field_errors() {
+        let good = check_source(
+            r#"
+                struct Profile { name: string, score: int }
+                func make_profile() { return Profile { name: "Ada", score: 42 } }
+                let profile := make_profile()
+                let name: string := profile.name
+                let score: int := profile.score
+                let names := await parallel_map([profile], func(value) { return value.name }, 1)
+                let first_name: string := names[0]
+            "#,
+        );
+        assert!(good.errors.is_empty(), "{:?}", good.errors);
+
+        let missing = check_source(
+            "struct Profile { name: string }\nlet profile := Profile { name: \"Ada\" }\nprint(profile.missing)",
+        );
+        assert!(missing.errors.iter().any(|error| error.to_string().contains("no field")));
+
+        let mismatch = check_source(
+            "struct Profile { score: int }\nlet profile := Profile { score: \"wrong\" }",
+        );
+        assert!(mismatch.errors.iter().any(|error| error.to_string().contains("expects Int")));
+    }
+
+    #[test]
+    fn async_calls_aliases_and_reusable_promises_unwrap_precisely() {
+        let checker = check_source(
+            r#"
+                async func answer() { return 42 }
+                let alias := answer
+                let promise := alias()
+                let first: int := await promise
+                let second: int := await promise
+                let promises := [answer(), alias()]
+                let one: int := await promises[0]
+                let closure := async func() { return "ready" }
+                let status: string := await closure()
+            "#,
+        );
+        assert!(checker.errors.is_empty(), "{:?}", checker.errors);
+
+        let mismatch =
+            check_source("async func answer() { return 42 }\nlet wrong: string := await answer()");
+        assert!(mismatch.errors.iter().any(|error| error.to_string().contains("Type mismatch")));
+    }
+
+    #[test]
+    fn callable_aliases_are_checked_while_dynamic_reassignment_falls_back() {
+        let checked = check_source(
+            r#"
+                let callback := func(value: int) -> int { return value + 1 }
+                let alias := callback
+                let result: int := alias(41)
+            "#,
+        );
+        assert!(checked.errors.is_empty(), "{:?}", checked.errors);
+
+        let wrong = check_source(
+            "let callback := func(value: int) -> int { return value }\ncallback(\"wrong\")",
+        );
+        assert!(wrong.errors.iter().any(|error| error.to_string().contains("expects Int")));
+
+        let dynamic = check_source(
+            "func select(value) { return value }\nmut callback := select(func(value) { return value })\ncallback = select(callback)\ncallback(1)",
+        );
+        assert!(dynamic.errors.is_empty(), "{:?}", dynamic.errors);
+    }
+
+    #[test]
+    fn unannotated_callable_parameters_are_required_and_builtin_optionals_stay_optional() {
+        let missing = check_source("func pair(left, right) { return left }\npair(1)");
+        assert!(
+            missing
+                .errors
+                .iter()
+                .any(|error| error.to_string().contains("expects 2-2 arguments but got 1")),
+            "{:?}",
+            missing.errors
+        );
+
+        let builtins = check_source(
+            r#"
+                async func value() { return 1 }
+                let values := await promise_all([value()])
+                let mapped := await parallel_map([1], func(item) { return item })
+            "#,
+        );
+        assert!(builtins.errors.is_empty(), "{:?}", builtins.errors);
+
+        for source in ["await_task()", "promise_all()", "parallel_map([1])"] {
+            let invalid = check_source(source);
+            assert!(!invalid.errors.is_empty(), "{source}");
+        }
+    }
+
+    #[test]
+    fn module_namespaces_exported_values_structs_and_missing_modules_are_analyzed() {
+        let root = std::env::temp_dir().join(format!(
+            "kujo_inference_module_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(
+            root.join("helper.kujo"),
+            r#"
+                export const label: string := "ready"
+                export func add(value: int) -> int { return value + 1 }
+                export struct Profile { name: string }
+            "#,
+        )
+        .unwrap();
+        let mut parser = Parser::new(
+            crate::lexer::tokenize(
+                "import helper\nlet n: int := helper.add(41)\nlet label: string := helper.label\nfrom helper import Profile\nlet p := Profile { name: \"Ada\" }\nlet name: string := p.name",
+            )
+            .unwrap(),
+        );
+        let parsed = parser.parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+        let mut checker = TypeChecker::new();
+        checker.add_search_path(&root);
+        assert!(checker.check(&parsed.stmts).is_ok(), "{:?}", checker.errors);
+        assert_eq!(checker.module_parse_count, 1, "module AST should be shared by export analyses");
+
+        let mut missing_member_parser =
+            Parser::new(crate::lexer::tokenize("import helper\nprint(helper.missing)").unwrap());
+        let mut missing_member = TypeChecker::new();
+        missing_member.add_search_path(&root);
+        assert!(missing_member.check(&missing_member_parser.parse()).is_err());
+        assert!(missing_member
+            .errors
+            .iter()
+            .any(|error| error.to_string().contains("no exported member")));
+
+        let mut missing_parser =
+            Parser::new(crate::lexer::tokenize("import definitely_missing_module").unwrap());
+        let mut missing = TypeChecker::new();
+        missing.add_search_path(&root);
+        assert!(missing.check(&missing_parser.parse()).is_err());
+        assert!(missing.errors.iter().any(|error| error.to_string().contains("Unknown module")));
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn struct_operator_overloads_do_not_emit_primitive_type_mismatches() {
+        let checked = check_source(
+            r#"
+                struct Vector {
+                    x: float,
+                    func op_mul(scale) { return Vector { x: x * scale } },
+                    func op_eq(other) { return x == other.x }
+                }
+                let vector := Vector { x: 3.0 }
+                let scaled := vector * 2.0
+                let equal: bool := vector == scaled
+            "#,
+        );
+        assert!(checked.errors.is_empty(), "{:?}", checked.errors);
     }
 }

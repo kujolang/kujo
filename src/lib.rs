@@ -5,6 +5,7 @@
 #![allow(clippy::all)]
 
 pub mod agent_project;
+pub mod analyzed_program;
 pub mod ast;
 pub mod benchmarks;
 pub mod builtins;
