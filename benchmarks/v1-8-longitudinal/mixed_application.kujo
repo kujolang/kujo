@@ -1,0 +1,32 @@
+struct Reading {
+    name: string,
+    value: int
+
+    func scaled(self, factor) {
+        return self.value * factor
+    }
+
+    func* samples(self, count) {
+        mut index := 0
+        while index < count {
+            yield self.value + index
+            index += 1
+        }
+    }
+}
+
+func formatter(prefix) {
+    func format(value) {
+        return prefix + to_string(value)
+    }
+    return format
+}
+
+let reading := Reading { name: "cpu", value: 7 }
+let label := formatter(reading.name + ":")
+mut total := reading.scaled(3)
+for sample in reading.samples(5) {
+    total += sample
+}
+
+print(label(total))
