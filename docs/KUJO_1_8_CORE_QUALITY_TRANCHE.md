@@ -163,7 +163,7 @@ guardrail measurements, not release-build or cross-machine performance claims.
 | --- | --- | --- | --- |
 | Async generators | Natural streamed async producers | New suspended async lifetime and cancellation contract in both engines | Defer pending a design; high value, high semantic risk |
 | `yield from` | Less boilerplate for generator composition | New delegation/error/return rules and continuation nesting | Consider only with the async-generator design, not alone |
-| Struct generator methods | Completes an existing explicit unsupported corner | Must reconcile receiver capture with generator ownership in both engines | Best bounded follow-up candidate after this tranche |
+| Struct generator methods | Completes an existing explicit unsupported corner | Receiver capture and generator ownership must agree in both engines | Completed by the [struct generator methods tranche](KUJO_1_8_STRUCT_GENERATOR_METHODS.md) |
 | Intentional ownership cycles | Enables cyclic object graphs | Requires a collection/lifetime policy and changes current drop reasoning | Defer; risk exceeds current everyday value |
 | Atomic shared-state operations | Safer explicit concurrent counters/state | New memory-ordering and cross-runtime behavioral contract | Design for a later 1.8 tranche only if concrete workloads justify it |
 

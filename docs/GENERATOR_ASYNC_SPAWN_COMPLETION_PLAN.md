@@ -127,8 +127,9 @@ Anchors: parser `parse_func_with_async`/`parse_func_expr_with_async` (917/1004),
 compiler FuncDef (655), Yield (1561); bytecode generator opcodes (310);
 VM call dispatch (6034), MakeGenerator (5176), `generator_next` (8640).
 `ResumeGenerator` delegates to `generator_next`; ordinary `Yield` execution
-outside that helper errors. Struct generator methods are explicitly rejected
-by both runtimes and stay unsupported.
+outside that helper errors. The original Phase-B scope rejected struct generator
+methods; the Kujo 1.8 follow-up now routes them through the same owned
+continuation contract in both runtimes.
 
 `GeneratorState` (VM 349) contains IP, operand stack, serialized frames, chunk,
 locals, captured cells and binding kinds, exhausted flag. Each `CallFrameData`
@@ -481,8 +482,9 @@ without changing snapshot identity. Retain policy and error/output provenance;
 process exit does not silently become a global wait-for-all. `spawn_task` provides
 the existing completion-oriented API, distinct from detached spawn.
 
-Unsupported: struct generator methods remain rejected; async generators, yield
-from, new join/task/capture syntax remain outside scope. Parser acceptance of
+Unsupported: async generators, yield from, new join/task/capture syntax remain
+outside scope. Struct generator methods were completed as a bounded Kujo 1.8
+follow-up without changing this task/spawn scope. Parser acceptance of
 combined flags is not a commitment to async generators. Generator-inside-async
 and async-called-from-generator tests mean ordinary synchronous generators and
 ordinary promises only; do not introduce async iteration.
@@ -585,7 +587,7 @@ failing or silently ignored target tests.
 | G16 | reentrant/concurrent host resume using barriers | one active resume, other deterministic busy error |
 | G17 | invalid slot/state unit fixture, error in resume | no panic, caller restored, no out-of-bounds access |
 | G18 | scope teardown and dropped generator with captured handle sentinel | prompt release unless escaping closure retains cell |
-| G19 | struct generator method | deterministic existing unsupported error |
+| G19 | struct generator method | receiver snapshot, shared alias progress, completion/error parity |
 
 ### Async cases
 
@@ -632,7 +634,7 @@ failing or silently ignored target tests.
 
 Cross-feature tests are conditional on the approved transfer/suspension contract;
 unsupported combinations must reject explicitly. No test should accidentally
-commit Kujo to async generators or struct generator methods.
+commit Kujo to async generators.
 
 ### Differential harness
 

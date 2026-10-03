@@ -63,9 +63,10 @@ record.
 - Channel send releases the common channel mutex before blocking on capacity.
   Receive waits for a value in both runtimes and observes task cancellation.
 
-Async generators, yield-from, struct generator methods, arbitrary ownership-cycle
+Struct generator methods now reuse this owned continuation model and snapshot the
+receiver when invoked. Async generators, yield-from, arbitrary ownership-cycle
 collection, new syntax, implicit shared sibling cells and a replacement executor
-are outside this completion. Unsupported async generators reject explicitly.
+remain outside this completion. Unsupported async generators reject explicitly.
 
 ## Interpreter and reliability corrections
 

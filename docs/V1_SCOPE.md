@@ -59,7 +59,7 @@ The following runtime-path implementation backlogs are explicitly deferred and n
 
 - `src/vm.rs`:
   - VM lexical capture completion is implemented under the v1 snapshot contract: definition-site descriptors, indexed capture access, transitive capture forwarding, mutability checks and owned capture lifetime. Separate closures keep independent snapshots; aliases of one closure share its cells. See the [implementation evidence and validation limits](CLOSURE_UPVALUE_IMPLEMENTATION.md). This closes the VM closure-capture mechanism deferral. Returned named interpreter recursion is also supported.
-  - Owned generator restoration, eager bounded async calls, shared promise completion and detached spawn execution are implemented. See [Phase-B evidence and boundaries](RUNTIME_CONCURRENCY_COMPLETION.md); async generators and struct generator methods remain unsupported.
+  - Owned generator restoration, struct generator methods, eager bounded async calls, shared promise completion and detached spawn execution are implemented. See [Phase-B evidence and boundaries](RUNTIME_CONCURRENCY_COMPLETION.md); async generators remain unsupported.
 - `src/compiler.rs`:
   - `SpawnDetached` now submits referenced transferable snapshots through bounded task admission.
   - Enum and interpolated-string builder opcode optimizations are deferred as post-v1 performance/representation work (non-contract semantics).
