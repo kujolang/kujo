@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo, following
 
 ### Added
 
+- Support generator methods declared with `func*` inside structs in both the VM
+  and interpreter, including explicit `self`, legacy direct-field bindings,
+  receiver snapshots, shared alias progress and cached terminal failures.
 - Share one immutable analyzed-program model between advisory CLI checking and
   the LSP, exposing inferred variable types, callable signatures, struct fields,
   methods and imported namespace members to hover and completion.

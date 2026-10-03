@@ -62,7 +62,7 @@ use control_flow::ControlFlow;
 
 use crate::ast::{Expr, Stmt};
 use crate::builtins;
-use crate::errors::{unsupported_struct_generator_method_message, KujoError};
+use crate::errors::KujoError;
 use crate::http_request_utils;
 use crate::module::ModuleLoader;
 use crate::runtime_limits;
@@ -3487,6 +3487,49 @@ impl Interpreter {
         CallableArity::exact(format!("{}.{}", struct_name, method_name), external_params)
     }
 
+    fn create_struct_generator_method(
+        &self,
+        receiver: Value,
+        struct_name: &str,
+        fields: &HashMap<String, Value>,
+        method_name: &str,
+        params: &[String],
+        body: &LeakyFunctionBody,
+        captured: &Option<Arc<Mutex<Environment>>>,
+        args: &[Value],
+    ) -> Value {
+        let arity = Self::struct_method_arity(struct_name, method_name, params);
+        if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
+            return error;
+        }
+
+        if params.first().is_some_and(|param| param == "self") {
+            let mut bound_args = Vec::with_capacity(args.len() + 1);
+            bound_args.push(receiver);
+            bound_args.extend(args.iter().cloned());
+            return self.create_generator(params, body, captured, &bound_args);
+        }
+
+        // Legacy methods without an explicit `self` parameter see receiver fields
+        // as lexical bindings. Snapshot them into the owned continuation at method
+        // invocation so later resumer scopes cannot affect generator behavior.
+        let mut method_environment = captured.as_ref().map_or_else(
+            || self.env.generator_environment(false),
+            |environment| {
+                environment
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner())
+                    .generator_environment(true)
+            },
+        );
+        method_environment.push_scope();
+        for (field_name, field_value) in fields {
+            method_environment.define(field_name.clone(), field_value.clone());
+        }
+        let method_capture = Some(Arc::new(Mutex::new(method_environment)));
+        self.create_generator(params, body, &method_capture, args)
+    }
+
     pub(crate) fn native_callable_arity(name: &str) -> Option<CallableArity> {
         if let Some((_, n)) = native_functions::web_data::BUILTINS
             .iter()
@@ -4974,16 +5017,23 @@ impl Interpreter {
                         return_type: _,
                         body,
                         is_generator,
-                        is_async: _,
+                        is_async,
                     } = method_stmt
                     {
-                        if *is_generator {
-                            let error = Value::Error(unsupported_struct_generator_method_message(
-                                name,
-                                method_name,
-                            ));
-                            self.set_return_if_error(&error);
+                        if *is_async && *is_generator {
+                            self.return_value =
+                                Some(Value::Error("Async generators are not supported".to_owned()));
                             return;
+                        }
+
+                        if *is_generator {
+                            let qualified_name = format!("{}.{}", name, method_name);
+                            let generator = Value::GeneratorDef(
+                                params.clone(),
+                                LeakyFunctionBody::named(&qualified_name, body.clone()),
+                                Some(Arc::new(Mutex::new(self.env.generator_environment(true)))),
+                            );
+                            method_map.insert(method_name.clone(), generator);
                         } else {
                             let func = Value::Function(
                                 params.clone(),
@@ -5494,6 +5544,29 @@ impl Interpreter {
                                 self.env.pop_scope();
 
                                 return result;
+                            }
+
+                            if let Some(Value::GeneratorDef(params, body, captured)) =
+                                methods.get(field)
+                            {
+                                let evaluated_args: Vec<Value> =
+                                    args.iter().map(|arg| self.eval_expr(arg)).collect();
+                                if let Some(error) =
+                                    evaluated_args.iter().find(|value| Self::is_error_value(value))
+                                {
+                                    return error.clone();
+                                }
+
+                                return self.create_struct_generator_method(
+                                    obj_val.clone(),
+                                    name,
+                                    fields,
+                                    field,
+                                    params,
+                                    body,
+                                    captured,
+                                    &evaluated_args,
+                                );
                             }
                         }
                     }
@@ -7116,6 +7189,16 @@ impl Interpreter {
                                 self.env.pop_scope();
 
                                 return result;
+                            }
+
+                            if let Some(Value::GeneratorDef(params, body, captured)) =
+                                methods.get(method)
+                            {
+                                let receiver =
+                                    Value::Struct { name: name.clone(), fields: fields.clone() };
+                                return self.create_struct_generator_method(
+                                    receiver, &name, &fields, method, params, body, captured, &args,
+                                );
                             }
                         }
 

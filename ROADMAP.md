@@ -113,8 +113,9 @@ an implementation backlog item.
 | Completed — 1.8 optional inference | Improve optional inference for destructuring, module existence checks, struct fields, promises and callable fallback. | Positive, negative and unknown/dynamic regressions now cover the stable grammar without turning the VM into a static type gate or suppressing genuine annotation errors. See the [1.8 tranche record](docs/KUJO_1_8_CORE_QUALITY_TRANCHE.md). |
 | Completed — measured core characterization | Profile generator continuation allocation, retained captures, bounded task admission and scheduling costs. | The reproducible release-mode corpus records timing variance and runtime counters while preserving lifecycle, capability, snapshot and cancellation contracts. Only the measured analyzed-module parse-cache optimization was retained. |
 | Completed — shared analysis and editor latency | Share analyzed-program facts with the LSP and characterize project-check latency. | CLI advisory checks and the LSP now consume one immutable checker snapshot. Open-document analysis is reused by diagnostics, hover and completion; content-hashed imported-module ASTs are shared across analyses with bounded storage and safe invalidation. Startup, full-file and repeated-request latency gates cover the new path. |
-| Next bounded language tranche | Complete struct generator methods without reopening generator ownership. | Reconcile receiver capture and continuation lifetime in both engines; require VM/interpreter parity, early-return/error/cancellation coverage and no change to ordinary struct methods or generator snapshot semantics. |
-| Unscheduled language candidates | Evaluate async generators, yield-from and struct generator methods; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
+| Completed — struct generator methods | Support `func*` methods with explicit `self` and legacy field bindings in both engines. | Receiver state is snapshotted when the generator is created; aliases share continuation progress, return completes without yielding and terminal errors remain cached. Cross-runtime arity, lifetime and continuation regressions preserve ordinary method and generator semantics. See the [completion record](docs/KUJO_1_8_STRUCT_GENERATOR_METHODS.md). |
+| Next measured compiler/runtime tranche | Continue evidence-led optimizer and runtime work without changing v1 semantics. | Select only a repeatable hotspot from the existing benchmark corpus, retain changes only with before/after evidence, and cover control-flow relocation plus VM/interpreter parity when affected. |
+| Unscheduled language candidates | Evaluate async generators and yield-from; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
 | Owner-deferred ecosystem validation | Live Workcell provider validation. | The operator supplies the provider/profile, account, region, image and spend limit, then runs the provider's real lifecycle and preservation checks. Offline success is not remote certification. This is not a Kujo merge blocker. |
 | Open host observation | Investigate the intermittent Intel Mac loopback stall if it recurs. | Capture a reproducible host-level failure and establish its cause. Standard Rust TCP also reproduced it; host load, free disk space and network filters remain hypotheses. Clean-host stress checks passed. Keep the existing observation open without claiming a Kujo defect or a proven repair. |
 
@@ -174,14 +175,12 @@ execution remains incomplete.
 
 ## Maintenance lane
 
-Maintain the completed optional-inference and shared CLI/LSP analysis surfaces.
-The next bounded 1.8 language candidate is struct generator methods, subject to
-cross-runtime receiver-capture and continuation-lifetime proof. Continue
-VM/interpreter compatibility, security, fuzzing, release
-reliability and evidence-led compiler/runtime optimization. Generics, macros,
-WASM, broad FFI, async generators and yield-from remain explicitly deferred and
-unscheduled; struct generator methods are the best bounded language candidate
-after the developer-experience tranche.
+Maintain the completed optional-inference, shared CLI/LSP analysis and struct
+generator method surfaces. The next bounded 1.8 work is evidence-led
+compiler/runtime optimization selected from the existing benchmark corpus.
+Continue VM/interpreter compatibility, security, fuzzing and release reliability.
+Generics, macros, WASM, broad FFI, async generators and yield-from remain
+explicitly deferred and unscheduled.
 
 ## Current direction
 

@@ -158,7 +158,7 @@ Current runtime behavior and explicit unsupported domains include:
 - Generators resume the ordinary VM dispatcher using owned stack/frame/handler and lexical-scope state. Interpreter generators keep explicit statement continuations. Aliases share progress and terminal errors; loops consume lazily.
 - Async functions and actual task callables use the existing Tokio blocking lane with 16 process-wide admission slots. Await owns an independent waiter on shared completion. Task globals are snapshots; explicit shared APIs coordinate tasks.
 - `SpawnDetached` executes referenced transferable snapshots with binding kinds. Unsupported captures fail before scheduling. Worker and callback contexts carry capability restrictions; cancellation does not imply effect rollback.
-- Struct generator methods and async generators remain explicitly unsupported. See [concurrency contracts and validation](RUNTIME_CONCURRENCY_COMPLETION.md).
+- Struct generator methods use the ordinary owned generator continuation in both runtimes. Explicit `self` and legacy direct-field bindings snapshot the receiver at invocation; aliases share progress and cached terminal state. Async generators remain explicitly unsupported. See [concurrency contracts and validation](RUNTIME_CONCURRENCY_COMPLETION.md).
 
 ## 7. Release Posture
 

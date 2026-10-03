@@ -772,12 +772,66 @@ fn vm_and_interpreter_error_on_unknown_method_member() {
 }
 
 #[test]
-fn vm_and_interpreter_error_on_unsupported_struct_generator_method() {
+fn vm_and_interpreter_support_struct_generator_methods() {
     let script = r#"
         struct Counter {
             value: int,
 
-            func* emit(self) {
+            func* emit(self, count) {
+                mut current := self.value
+                while current < self.value + count {
+                    yield current
+                    current += 1
+                }
+            }
+        }
+
+        counter := Counter { value: 7 }
+        generator := counter.emit(3)
+        mut total := 0
+        for value in generator {
+            total += value
+        }
+        struct_generator_ok := total == 24
+    "#;
+
+    assert_interpreter_and_vm_bool(script, "struct_generator_ok");
+}
+
+#[test]
+fn vm_and_interpreter_support_legacy_struct_generator_field_bindings() {
+    let script = r#"
+        struct Counter {
+            value: int,
+
+            func* emit(count) {
+                mut offset := 0
+                while offset < count {
+                    yield value + offset
+                    offset += 1
+                }
+            }
+        }
+
+        counter := Counter { value: 4 }
+        generator := counter.emit(3)
+        mut total := 0
+        for value in generator {
+            total += value
+        }
+        legacy_struct_generator_ok := total == 15
+    "#;
+
+    assert_interpreter_and_vm_bool(script, "legacy_struct_generator_ok");
+}
+
+#[test]
+fn vm_and_interpreter_error_on_struct_generator_method_arity_mismatch() {
+    let script = r#"
+        struct Counter {
+            value: int,
+
+            func* emit(self, count) {
                 yield self.value
             }
         }
@@ -786,10 +840,7 @@ fn vm_and_interpreter_error_on_unsupported_struct_generator_method() {
         return counter.emit()
     "#;
 
-    assert_interpreter_and_vm_error_contains(
-        script,
-        "Generator methods are not supported for structs: Counter.emit",
-    );
+    assert_interpreter_and_vm_error_contains(script, "Counter.emit expects 1 arguments, got 0");
 }
 
 #[test]

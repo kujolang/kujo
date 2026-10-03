@@ -88,6 +88,30 @@ fn vm_generator_yields_null_and_return_only_completes() {
 }
 
 #[test]
+fn vm_struct_generator_method_snapshots_receiver_and_aliases_share_progress() {
+    let (mut vm, env, generator) = setup("struct Counter { value: int, func* emit(self, count) { mut offset := 0 while offset < count { yield self.value + offset offset += 1 } return 99 } } mut counter := Counter { value: 5 } let instance := counter.emit(3) let alias := instance counter = Counter { value: 50 }");
+    let alias = env.lock().unwrap().get("alias").unwrap();
+    assert_eq!(number(step(&mut vm, &generator)), 5);
+    assert_eq!(number(step(&mut vm, &alias)), 6);
+    assert_eq!(number(step(&mut vm, &generator)), 7);
+    assert!(step(&mut vm, &alias).is_none());
+    assert!(step(&mut vm, &generator).is_none());
+}
+
+#[test]
+fn vm_struct_generator_method_caches_failure_and_restores_caller() {
+    let (mut vm, env, generator) = setup(
+        "struct Counter { value: int, func* emit(self) { yield self.value missing } } let counter := Counter { value: 3 } let instance := counter.emit()",
+    );
+    assert_eq!(number(step(&mut vm, &generator)), 3);
+    let first = vm.generator_next(generator.clone()).unwrap_err();
+    assert!(first.contains("Undefined variable"), "{first}");
+    assert_eq!(vm.generator_next(generator).unwrap_err(), first);
+    execute(&mut vm, "let recovered := 42").unwrap();
+    assert_eq!(number(env.lock().unwrap().get("recovered")), 42);
+}
+
+#[test]
 fn vm_generator_reentry_is_an_error_without_deadlock() {
     let (mut vm, _, generator) =
         setup("func* values() { for item in instance { yield item } } let instance := values()");
@@ -196,6 +220,15 @@ fn interpreter_generator_retains_factory_capture_without_dynamic_resumer_scope()
 }
 
 #[test]
+fn interpreter_struct_generator_method_snapshots_receiver_and_aliases_share_progress() {
+    let mut interpreter = Interpreter::new();
+    interpret(&mut interpreter, "struct Counter { value: int, func* emit(self, count) { mut offset := 0 while offset < count { yield self.value + offset offset += 1 } return 99 } } mut counter := Counter { value: 5 } let instance := counter.emit(3) let alias := instance counter = Counter { value: 50 } mut total := 0 for n in instance { total += n break } for n in alias { total += n } for n in instance { total += 1000 }");
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    assert_eq!(number(interpreter.env.get("total")), 18);
+    assert_eq!(interpreter.env.scopes.len(), 1);
+}
+
+#[test]
 fn interpreter_generator_never_increases_creator_or_resumer_authority() {
     use kujo::interpreter::RuntimeCapabilityPolicy;
     for restrict_creator in [false, true] {
@@ -240,6 +273,25 @@ fn vm_captured_mutability_errors_are_catchable_in_the_owning_frame() {
 #[test]
 fn async_generators_reject_instead_of_selecting_an_ambiguous_call_kind() {
     let mut parser = Parser::new(tokenize("async func* unsupported() { yield 1 }").unwrap());
+    let parsed = parser.parse_with_diagnostics();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    assert!(Compiler::new()
+        .compile(&parsed.stmts)
+        .unwrap_err()
+        .contains("Async generators are not supported"));
+    let mut interpreter = Interpreter::new();
+    interpreter.eval_stmts(&parsed.stmts);
+    assert!(
+        matches!(interpreter.return_value, Some(Value::Error(ref e)) if e.contains("Async generators are not supported"))
+    );
+}
+
+#[test]
+fn async_struct_generators_remain_explicitly_unsupported() {
+    let mut parser = Parser::new(
+        tokenize("struct Counter { value: int, async func* emit(self) { yield self.value } }")
+            .unwrap(),
+    );
     let parsed = parser.parse_with_diagnostics();
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     assert!(Compiler::new()
