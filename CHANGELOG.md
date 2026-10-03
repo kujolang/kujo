@@ -8,6 +8,11 @@ This file records user-visible changes to Kujo, following
 
 ### Added
 
+- Share one immutable analyzed-program model between advisory CLI checking and
+  the LSP, exposing inferred variable types, callable signatures, struct fields,
+  methods and imported namespace members to hover and completion.
+- Add bounded, content-hashed imported-module analysis caching plus explicit
+  full-file and repeated-request latency gates.
 - Extend advisory optional inference across nested destructuring, known struct
   fields, async completion values, callable aliases and analyzed module exports,
   with positive, negative, dynamic-fallback and VM/interpreter parity regressions.
@@ -19,6 +24,11 @@ This file records user-visible changes to Kujo, following
 
 ### Changed
 
+- Analyze open LSP documents once per content revision and reuse that result for
+  diagnostics, hover and completion; `didChange` invalidates exactly once and
+  `didClose` releases the document snapshot.
+- Publish optional checker findings as non-blocking LSP warnings while preserving
+  lexer/parser errors and gradual fallback for genuinely dynamic values.
 - Cache parsed imported-module ASTs across function, value and struct export
   analysis, avoiding repeated lexer/parser work while preserving dynamic import
   fallback.

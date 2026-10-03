@@ -29,6 +29,6 @@ Source root: `src`
 | V1TODO-022 | `src/jit.rs` | 8343 | TODO |     /// TODO: Call from JIT-compiled code guard checks | low | jit-owner | post-v1 | production | experimental JIT backlog outside default release-critical runtime path |
 | V1TODO-023 | `src/jit.rs` | 8352 | TODO |     /// TODO: Call from JIT-compiled code when guard checks fail | low | jit-owner | post-v1 | production | experimental JIT backlog outside default release-critical runtime path |
 | V1TODO-024 | `src/jit.rs` | 8370 | TODO |     /// TODO: Use for adaptive recompilation decisions | low | jit-owner | post-v1 | production | experimental JIT backlog outside default release-critical runtime path |
-| V1TODO-025 | `src/type_checker.rs` | 4839 | TODO |     /// TODO: This will be used when adding "Did you mean?" suggestions to interpreter | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
+| V1TODO-025 | `src/type_checker.rs` | 5121 | TODO |     /// TODO: This will be used when adding "Did you mean?" suggestions to interpreter | medium | typing-owner | post-v1 | production | optional typing/type-inference backlog outside runtime enforcement path |
 
 Summary: `25` markers triaged, `0` unclassified.

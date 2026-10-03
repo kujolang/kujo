@@ -69,15 +69,20 @@ local index and in-place arithmetic/string/map operations. The remaining disable
 optimizer surfaces are disabled for stack-shape reasons; this tranche does not
 broaden them without evidence.
 
-## Diagnostics and editor boundary
+## Shared analysis and editor integration
 
-The CLI checker now supplies bounded help for known module, destructuring, struct
-field and callable mistakes and widens recovery values after the primary finding.
-The current LSP hover/completion implementation is token- and syntax-index based;
-it does not consume `TypeChecker` state. Existing literal hover, imported-symbol
-indexing and diagnostic tests therefore remain the supported editor surface. A
-new parallel semantic model was not introduced merely to mirror advisory CLI
-inference; connecting a shared analyzed-program model remains separate LSP work.
+The CLI checker and LSP now consume the same immutable analyzed-program facts.
+Hover and completion surface inferred values, callable signatures, struct fields
+and methods, imported symbols and namespace members. Optional checker findings
+are editor warnings rather than execution gates; lexer and parser failures remain
+errors, and unknown dynamic values retain gradual fallback.
+
+Open LSP documents are analyzed once per content revision. Diagnostics, hover and
+completion reuse that snapshot; a full-content change invalidates it once and a
+close releases it. Across document revisions, imported module ASTs are reused in
+a bounded 128-entry cache keyed by canonical path and source-content hash. This
+avoids repeated parsing without trusting coarse filesystem timestamps or caching
+dependency-derived export facts beyond their safe lifetime.
 
 ## Measurements
 
@@ -94,6 +99,7 @@ twenty-one samples per static-analysis binary.
 | Bounded tasks | 1573.989 | 1552.204 | -0.2% |
 | Scheduler/channels | 1613.035 | 1591.823 | -0.3% |
 | Project static check | 33.981 | 34.094 | +0.3% (independent medians) |
+| Repeated LSP completion | 27.168 | 7.297 | -73.1% |
 
 No runtime optimization was retained because the measured long-running deltas
 were within 0.6%. The retained analyzed-module AST cache reduces the enriched
@@ -103,6 +109,12 @@ Runtime shallow counters characterize creation, suspension/resume, termination,
 retained captures, task admission/completion/rejection, scheduling, observers and
 cancellation. Allocator totals and retained graph bytes are unsupported by the
 host instrumentation and are not estimated.
+
+The shared-analysis editor follow-up has a separate
+[latency receipt](../benchmarks/results/kujo-1.8-shared-analysis-2026-10-02/README.md).
+Five debug-profile batches also measured full-file analysis at 20.572 ms median,
+cached diagnostics at 0.227 ms and cached hover at 4.998 ms. These are local
+guardrail measurements, not release-build or cross-machine performance claims.
 
 ## Validation
 
@@ -119,6 +131,16 @@ host instrumentation and are not estimated.
 - Dispatch downstream release gate: passed against the candidate release binary
   with offline fixtures and the repository-pinned Workcell/Eval dependencies;
   the downstream working tree remained clean.
+- Shared-analysis follow-up canonical `scripts/release_gate.sh --full`: passed,
+  including 975 library tests, 150/150 dual fixtures, 150/150 interpreter
+  fixtures, LSP latency/reliability coverage, security boundaries and advisory
+  audit; the gate's documented socket, benchmark and `cargo-deny` optionals were
+  not enabled or available for this run.
+- Dispatch compatibility against the shared-analysis candidate: the 101-test
+  core suite passed. The broader downstream gate passed every suite reached
+  before one transient Ability assurance contention failure; that exact suite
+  then passed twice without source changes. This is compatibility evidence, not
+  a claim that the interrupted broader gate completed.
 
 ## Compatibility
 
