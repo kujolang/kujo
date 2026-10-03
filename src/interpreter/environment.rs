@@ -372,7 +372,19 @@ impl Environment {
         kind: BindingKind,
     ) -> Result<(), String> {
         if self.current_scope_contains(name.as_str()) {
-            return Err(format!("Duplicate declaration in the same scope: {}", name));
+            // Native functions are preloaded into the interpreter's global scope,
+            // while the VM resolves them only when no lexical binding exists.
+            // Let source declarations shadow that preload so both engines apply
+            // the same lexical-name rules. A second source declaration still
+            // sees the non-native replacement and remains an error.
+            let shadows_preloaded_native = self
+                .scopes
+                .last()
+                .and_then(|scope| scope.get(&name))
+                .is_some_and(|existing| matches!(existing, Value::NativeFunction(_)));
+            if !shadows_preloaded_native {
+                return Err(format!("Duplicate declaration in the same scope: {}", name));
+            }
         }
 
         self.define_with_kind(name, value, kind);

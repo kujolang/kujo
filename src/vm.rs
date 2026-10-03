@@ -9070,7 +9070,11 @@ impl VM {
         self.skip_execute_reset_once = true;
         self.jit_enabled = false;
         self.interpreter.set_capability_policy(policy);
-        let result = self.execute(self.chunk.clone());
+        // The continuation already owns the active chunk and the one-shot reset
+        // guard tells `execute` to resume that loaded state. Passing another copy
+        // cloned the complete instruction and constant vectors on every yield,
+        // even though `execute` intentionally ignored the argument in this path.
+        let result = self.execute(BytecodeChunk::new());
         let yielded = self.generator_yielded.take();
         let scopes =
             self.globals.lock().unwrap_or_else(|p| p.into_inner()).swap_local_scopes(caller_scopes);

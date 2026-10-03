@@ -2460,3 +2460,24 @@ fn vm_and_interpreter_match_arg_parser_method_chains() {
     "#;
     assert_interpreter_and_vm_bool(source, "parser_ok");
 }
+
+#[test]
+fn vm_and_interpreter_allow_lexical_bindings_to_shadow_native_names() {
+    let source = r#"
+        let values := [2, 4, 8]
+        let sum := 14
+        shadow_ok := len(values) == 3 && sum == 14
+    "#;
+    assert_interpreter_and_vm_bool(source, "shadow_ok");
+}
+
+#[test]
+fn vm_and_interpreter_still_reject_duplicate_source_declarations() {
+    assert_interpreter_and_vm_error_contains(
+        r#"
+            let values := [1]
+            let values := [2]
+        "#,
+        "Duplicate declaration in the same scope: values",
+    );
+}
