@@ -5,10 +5,14 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 temp_root="$(mktemp -d "${TMPDIR:-/tmp}/kujo-installer-test.XXXXXX")"
 trap 'rm -rf "$temp_root"' EXIT
 
-# The public bootstrap must install the current package version by default.
+# An unpublished candidate must not move the public bootstrap ahead of the latest
+# stable tag. The candidate remains testable through the documented override.
 version="$(awk -F '"' '/^version = / { print $2; exit }' "$repo_root/Cargo.toml")"
+stable_tag="$(git -C "$repo_root" tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)"
 default_output="$(env -u KUJO_RELEASE_VERSION -u KUJO_ECOSYSTEM_REF bash "$repo_root/install.sh" --dry-run --prefix "$temp_root/default" --bin-dir "$temp_root/default-bin")"
-grep -F "would download and verify Kujo release v$version" <<<"$default_output" >/dev/null
+grep -F "would download and verify Kujo release $stable_tag" <<<"$default_output" >/dev/null
+candidate_output="$(KUJO_RELEASE_VERSION="v$version" bash "$repo_root/install.sh" --dry-run --prefix "$temp_root/candidate" --bin-dir "$temp_root/candidate-bin")"
+grep -F "would download and verify Kujo release v$version" <<<"$candidate_output" >/dev/null
 
 manifest="$temp_root/dispatch.refs"
 cat > "$manifest" <<'EOF'
