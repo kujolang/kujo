@@ -19,6 +19,7 @@ path = "src/lib.rs"
 [[bin]]
 name = "kujo"
 path = "src/main.rs"
+required-features = ["runtime-network"]
 
 [[bin]]
 name = "kujo-run"
