@@ -1,0 +1,15 @@
+PASS examples/00-hello.kujo
+PASS examples/01-variables.kujo
+PASS examples/02-functions.kujo
+PASS examples/03-control-flow.kujo
+PASS examples/04-data.kujo
+PASS examples/arrays.kujo
+PASS examples/collections.kujo
+PASS examples/closures_counter.kujo
+PASS examples/destructuring_demo.kujo
+PASS examples/generators_test.kujo
+PASS examples/struct_basic.kujo
+PASS examples/struct_methods.kujo
+PASS examples/minimal_async.kujo
+PASS examples/simple_async_test.kujo
+PASS all=14 tag=v1.7.0 candidate_sha256=ebfced0b6730234860257772d9e0562ba9d6d16ef7405114f130f047395e1cb0
