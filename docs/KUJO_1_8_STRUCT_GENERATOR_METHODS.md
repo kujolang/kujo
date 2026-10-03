@@ -64,3 +64,21 @@ Focused coverage includes:
 Async generators and `yield from` remain deferred. Struct generator methods do
 not reopen generator ownership, task scheduling or the v1 closure snapshot
 contract.
+
+## Verification
+
+Verified on source `b3d24f8cfa22727f47bd27b21fe4e939a95f9c8a` using Rust/Cargo
+1.96.0 on macOS 26.6.2 (`x86_64-apple-darwin`):
+
+- focused struct-generator parity: 3 passed;
+- generator continuation contracts: 22 passed;
+- full canonical `bash scripts/release_gate.sh --full`: passed, including
+  formatting, Clippy with warnings denied, Rust/unit/integration tests, 150/150
+  dual-runtime fixtures, 150/150 interpreter fixtures, capability/security
+  regressions and VM/interpreter parity;
+- `cargo audit --deny warnings --ignore RUSTSEC-2025-0141`: passed.
+
+The canonical gate intentionally skipped socket-bound serve tests and benchmark
+smoke because their opt-in environment flags were not set. `cargo-deny` was not
+installed on this host, so that optional duplicate-license/source check was not
+run.
