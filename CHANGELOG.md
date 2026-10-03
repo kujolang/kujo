@@ -4,7 +4,7 @@ This file records user-visible changes to Kujo, following
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.8.0] - 2026-10-03
 
 ### Added
 
@@ -41,6 +41,23 @@ This file records user-visible changes to Kujo, following
 - Restore `cargo run -- ...` to the primary `kujo` binary now that the package
   also contains the lean `kujo-run` binary, keeping documented release commands
   and the canonical release gate executable.
+- Refresh open LSP documents that transitively depend on an edited imported
+  module, using unsaved editor buffers during analysis and returning to disk
+  state when the buffer closes.
+
+### Fixed
+
+- Align interpreter name shadowing with the VM so lexical declarations may
+  shadow preloaded native function names while duplicate source declarations
+  remain errors.
+
+### Performance
+
+- Avoid cloning a generator's complete bytecode instruction and constant vectors
+  on every resume. The continuation already owns the active chunk; measured
+  nested-generator alias work improved by 6.7% at the paired median, with the
+  focused longitudinal workload showing a 20.0% mean reduction under noisy host
+  conditions.
 
 ## [1.7.0] - 2026-10-01
 

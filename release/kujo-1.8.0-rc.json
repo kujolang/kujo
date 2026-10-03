@@ -1,0 +1,11 @@
+{
+  "schema": "kujo.release-candidate/v1",
+  "version": "1.8.0",
+  "status": "candidate-unpublished",
+  "intended_tag": "v1.8.0",
+  "published_stable": "1.7.0",
+  "native_archive": "kujo-v1.8.0-{platform}.tar.gz",
+  "source_archive": "kujo-v1.8.0-source.tar.gz",
+  "release_theme": "Smarter. Faster. Tighter.",
+  "publication_authorized": false
+}
