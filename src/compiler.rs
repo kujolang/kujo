@@ -5,7 +5,6 @@
 
 use crate::ast::{ArrayElement, DictElement, Expr, Pattern, Stmt};
 use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, CaptureSource, Constant, OpCode};
-use crate::errors::unsupported_struct_generator_method_message;
 use crate::optimizer::Optimizer;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -827,11 +826,8 @@ impl Compiler {
                         ..
                     } = method_stmt
                     {
-                        if *is_generator {
-                            return Err(unsupported_struct_generator_method_message(
-                                name,
-                                method_name,
-                            ));
+                        if *is_async && *is_generator {
+                            return Err("Async generators are not supported".to_owned());
                         }
 
                         let mut func_compiler = Compiler::new();
