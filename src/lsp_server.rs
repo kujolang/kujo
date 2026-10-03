@@ -46,6 +46,7 @@ pub struct LspServer {
 #[derive(Clone)]
 struct DocumentState {
     analysis: Arc<AnalyzedProgram>,
+    path: Option<PathBuf>,
 }
 
 impl LspServer {
@@ -818,8 +819,8 @@ impl LspServer {
 
                 match (uri, text) {
                     (Some(uri_value), Some(text_value)) => {
-                        self.store_document(&uri_value, text_value);
-                        vec![self.publish_diagnostics_notification(&uri_value)]
+                        let affected = self.store_document(&uri_value, text_value);
+                        self.publish_diagnostics_for(&affected)
                     }
                     _ => Vec::new(),
                 }
@@ -840,8 +841,8 @@ impl LspServer {
 
                 match (uri, new_text) {
                     (Some(uri_value), Some(text_value)) => {
-                        self.store_document(&uri_value, text_value);
-                        vec![self.publish_diagnostics_notification(&uri_value)]
+                        let affected = self.store_document(&uri_value, text_value);
+                        self.publish_diagnostics_for(&affected)
                     }
                     _ => Vec::new(),
                 }
@@ -852,8 +853,8 @@ impl LspServer {
                     .and_then(|value| value.get("uri"))
                     .and_then(Value::as_str)
                 {
-                    self.documents.remove(uri);
-                    return vec![json!({
+                    let closed_path = self.documents.remove(uri).and_then(|state| state.path);
+                    let mut notifications = vec![json!({
                         "jsonrpc": "2.0",
                         "method": "textDocument/publishDiagnostics",
                         "params": {
@@ -861,6 +862,12 @@ impl LspServer {
                             "diagnostics": [],
                         }
                     })];
+                    if let Some(path) = closed_path {
+                        self.module_cache.clear_source_override(&path);
+                        let affected = self.refresh_dependents(&path, None);
+                        notifications.extend(self.publish_diagnostics_for(&affected));
+                    }
+                    return notifications;
                 }
 
                 Vec::new()
@@ -934,15 +941,80 @@ impl LspServer {
         Ok(Arc::new(AnalyzedProgram::analyze(source, Some(&path), Arc::clone(&self.module_cache))))
     }
 
-    fn store_document(&mut self, uri: &str, source: String) {
-        let path = file_uri_to_path(uri);
+    fn store_document(&mut self, uri: &str, source: String) -> Vec<String> {
+        let path = file_uri_to_path(uri).map(|path| fs::canonicalize(&path).unwrap_or(path));
+        if let Some(path) = path.as_ref() {
+            self.module_cache.set_source_override(path.clone(), Arc::<str>::from(source.clone()));
+        }
         let analysis = Arc::new(AnalyzedProgram::analyze(
             source,
             path.as_deref(),
             Arc::clone(&self.module_cache),
         ));
         self.analysis_count = self.analysis_count.saturating_add(1);
-        self.documents.insert(uri.to_string(), DocumentState { analysis });
+        self.documents.insert(uri.to_string(), DocumentState { analysis, path: path.clone() });
+
+        let mut affected = vec![uri.to_string()];
+        if let Some(path) = path.as_ref() {
+            affected.extend(self.refresh_dependents(path, Some(uri)));
+        }
+        affected
+    }
+
+    fn refresh_dependents(
+        &mut self,
+        changed_path: &PathBuf,
+        excluded_uri: Option<&str>,
+    ) -> Vec<String> {
+        let mut changed_paths = HashSet::from([changed_path.clone()]);
+        let mut refreshed = HashSet::<String>::new();
+
+        loop {
+            let mut next = self
+                .documents
+                .iter()
+                .filter(|(uri, state)| {
+                    excluded_uri != Some(uri.as_str())
+                        && !refreshed.contains(uri.as_str())
+                        && state
+                            .analysis
+                            .facts
+                            .module_dependencies
+                            .iter()
+                            .any(|dependency| changed_paths.contains(dependency))
+                })
+                .map(|(uri, _)| uri.clone())
+                .collect::<Vec<_>>();
+            next.sort();
+            if next.is_empty() {
+                break;
+            }
+
+            for uri in next {
+                let Some(state) = self.documents.get(&uri).cloned() else {
+                    continue;
+                };
+                let analysis = Arc::new(AnalyzedProgram::analyze(
+                    Arc::clone(&state.analysis.source),
+                    state.path.as_deref(),
+                    Arc::clone(&self.module_cache),
+                ));
+                self.analysis_count = self.analysis_count.saturating_add(1);
+                if let Some(path) = state.path.as_ref() {
+                    changed_paths.insert(path.clone());
+                }
+                self.documents.insert(uri.clone(), DocumentState { analysis, path: state.path });
+                refreshed.insert(uri);
+            }
+        }
+
+        let mut dependent_uris = refreshed.into_iter().collect::<Vec<_>>();
+        dependent_uris.sort();
+        dependent_uris
+    }
+
+    fn publish_diagnostics_for(&self, uris: &[String]) -> Vec<Value> {
+        uris.iter().map(|uri| self.publish_diagnostics_notification(uri)).collect()
     }
 
     fn log_json(&mut self, direction: &str, value: &Value) {
@@ -1609,6 +1681,8 @@ mod tests {
     };
     use rand::Rng;
     use serde_json::{json, Value};
+    use std::collections::HashSet;
+    use std::fs;
     use std::io::Cursor;
 
     #[test]
@@ -1685,6 +1759,114 @@ mod tests {
             "params": { "textDocument": { "uri": uri }, "contentChanges": [{ "text": "let value := 2\nprint(value)\n" }] }
         }));
         assert_eq!(server.analysis_count(), 2);
+    }
+
+    #[test]
+    fn unsaved_module_edits_refresh_open_dependents_without_stale_types() {
+        let temp = tempfile::tempdir().unwrap();
+        let module_path = temp.path().join("helpers.kujo");
+        let main_path = temp.path().join("main.kujo");
+        fs::write(&module_path, "export const answer := 1\n").unwrap();
+        fs::write(&main_path, "").unwrap();
+
+        let module_uri = format!("file://{}", module_path.display());
+        let main_uri = format!("file://{}", main_path.display());
+        let main_source = "import helpers\nprint(helpers.answer)\n";
+        let mut server = LspServer::new(LspServerConfig::default());
+
+        let initial = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didOpen",
+            "params": { "textDocument": { "uri": main_uri, "text": main_source } }
+        }));
+        assert_eq!(initial.len(), 1);
+        assert!(initial[0]["params"]["diagnostics"].as_array().unwrap().is_empty());
+
+        let refreshed = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didOpen",
+            "params": { "textDocument": {
+                "uri": module_uri,
+                "text": "export const result := 1\n"
+            } }
+        }));
+        assert_eq!(refreshed.len(), 2, "module and its open dependent should be refreshed");
+        let main_diagnostics = refreshed
+            .iter()
+            .find(|notification| notification["params"]["uri"] == json!(main_uri))
+            .unwrap();
+        assert!(!main_diagnostics["params"]["diagnostics"].as_array().unwrap().is_empty());
+        assert_eq!(server.analysis_count(), 3);
+
+        let changed_back = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didChange",
+            "params": {
+                "textDocument": { "uri": module_uri },
+                "contentChanges": [{
+                    "text": "export const answer := 2\n"
+                }]
+            }
+        }));
+        let main_diagnostics = changed_back
+            .iter()
+            .find(|notification| notification["params"]["uri"] == json!(main_uri))
+            .unwrap();
+        assert!(main_diagnostics["params"]["diagnostics"].as_array().unwrap().is_empty());
+
+        fs::remove_file(&module_path).unwrap();
+        let closed = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didClose",
+            "params": { "textDocument": { "uri": module_uri } }
+        }));
+        assert_eq!(closed.len(), 2, "closing an imported buffer should refresh its dependent");
+        let main_diagnostics = closed
+            .iter()
+            .find(|notification| notification["params"]["uri"] == json!(main_uri))
+            .unwrap();
+        assert!(
+            !main_diagnostics["params"]["diagnostics"].as_array().unwrap().is_empty(),
+            "deleting a referenced file must not leave stale analysis behind"
+        );
+    }
+
+    #[test]
+    fn unsaved_module_edits_refresh_transitive_open_dependents() {
+        let temp = tempfile::tempdir().unwrap();
+        let leaf_path = temp.path().join("leaf.kujo");
+        let middle_path = temp.path().join("middle.kujo");
+        let root_path = temp.path().join("root.kujo");
+        fs::write(&leaf_path, "export const answer := 1\n").unwrap();
+        fs::write(&middle_path, "import leaf\nexport const answer := leaf.answer\n").unwrap();
+        fs::write(&root_path, "import middle\nprint(middle.answer)\n").unwrap();
+
+        let leaf_uri = format!("file://{}", leaf_path.display());
+        let middle_uri = format!("file://{}", middle_path.display());
+        let root_uri = format!("file://{}", root_path.display());
+        let mut server = LspServer::new(LspServerConfig::default());
+
+        for (uri, text) in [
+            (&root_uri, "import middle\nprint(middle.answer)\n"),
+            (&middle_uri, "import leaf\nexport const answer := leaf.answer\n"),
+        ] {
+            server.process_message(&json!({
+                "jsonrpc": "2.0", "method": "textDocument/didOpen",
+                "params": { "textDocument": { "uri": uri, "text": text } }
+            }));
+        }
+
+        let notifications = server.process_message(&json!({
+            "jsonrpc": "2.0", "method": "textDocument/didOpen",
+            "params": { "textDocument": {
+                "uri": &leaf_uri,
+                "text": "export const result := 1\n"
+            } }
+        }));
+        let notified = notifications
+            .iter()
+            .filter_map(|value| value["params"]["uri"].as_str())
+            .collect::<HashSet<_>>();
+        assert_eq!(
+            notified,
+            HashSet::from([leaf_uri.as_str(), middle_uri.as_str(), root_uri.as_str()])
+        );
     }
 
     #[test]

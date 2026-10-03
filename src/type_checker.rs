@@ -19,7 +19,7 @@ use crate::lexer::tokenize_with_file;
 use crate::parser::Parser;
 use crate::path_security;
 use std::collections::hash_map::DefaultHasher;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
@@ -63,6 +63,8 @@ pub struct AnalysisSnapshot {
     pub functions: BTreeMap<String, AnalyzedFunction>,
     pub structs: BTreeMap<String, AnalyzedStruct>,
     pub modules: BTreeMap<String, AnalyzedModule>,
+    /// Canonical Kujo module files consulted while producing this snapshot.
+    pub module_dependencies: BTreeSet<PathBuf>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -89,6 +91,7 @@ struct CachedModule {
 #[derive(Debug, Default)]
 struct ModuleCacheState {
     entries: HashMap<PathBuf, CachedModule>,
+    source_overrides: HashMap<PathBuf, Arc<str>>,
     hits: usize,
     misses: usize,
     clock: u64,
@@ -115,6 +118,24 @@ impl ModuleAnalysisCache {
     pub fn stats(&self) -> ModuleCacheStats {
         let state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         ModuleCacheStats { hits: state.hits, misses: state.misses, entries: state.entries.len() }
+    }
+
+    /// Install the latest editor buffer for a module file. Static analysis uses
+    /// this source in preference to disk so dependent open documents never see
+    /// stale exported declarations while an edit is unsaved.
+    pub fn set_source_override(&self, path: PathBuf, source: Arc<str>) {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.source_overrides.insert(path, source);
+    }
+
+    pub fn clear_source_override(&self, path: &Path) {
+        let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.source_overrides.remove(path);
+    }
+
+    fn source_override(&self, path: &Path) -> Option<Arc<str>> {
+        let state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        state.source_overrides.get(path).cloned()
     }
 
     fn lookup(&self, path: &Path, source_hash: u64) -> Option<Arc<Vec<Stmt>>> {
@@ -176,6 +197,7 @@ pub struct TypeChecker {
     module_export_structs: HashMap<PathBuf, HashMap<String, StructShape>>,
     module_export_values: HashMap<PathBuf, HashMap<String, TypeAnnotation>>,
     module_namespaces: HashMap<String, AnalyzedModule>,
+    module_dependencies: BTreeSet<PathBuf>,
     module_ast_cache: Arc<ModuleAnalysisCache>,
     #[cfg(test)]
     module_parse_count: usize,
@@ -212,6 +234,7 @@ impl TypeChecker {
             module_export_structs: HashMap::new(),
             module_export_values: HashMap::new(),
             module_namespaces: HashMap::new(),
+            module_dependencies: BTreeSet::new(),
             module_ast_cache: Arc::new(ModuleAnalysisCache::default()),
             #[cfg(test)]
             module_parse_count: 0,
@@ -315,7 +338,13 @@ impl TypeChecker {
             .iter()
             .map(|(name, module)| (name.clone(), module.clone()))
             .collect();
-        AnalysisSnapshot { variables, functions, structs, modules }
+        AnalysisSnapshot {
+            variables,
+            functions,
+            structs,
+            modules,
+            module_dependencies: self.module_dependencies.clone(),
+        }
     }
 
     fn analyzed_module(
@@ -3245,7 +3274,11 @@ impl TypeChecker {
 
     fn parsed_module(&mut self, module_name: &str) -> Option<(PathBuf, Arc<Vec<Stmt>>)> {
         let module_path = self.resolve_module_import_path(module_name)?;
-        let source = fs::read_to_string(&module_path).ok()?;
+        self.module_dependencies.insert(module_path.clone());
+        let source = self
+            .module_ast_cache
+            .source_override(&module_path)
+            .or_else(|| fs::read_to_string(&module_path).ok().map(Arc::<str>::from))?;
         let mut hasher = DefaultHasher::new();
         source.hash(&mut hasher);
         let source_hash = hasher.finish();
