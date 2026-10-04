@@ -1,7 +1,10 @@
 # Kujo Release Process
 
 Current published stable runtime: `1.7.0` (five native platforms and npm).
-Current release state: `v1.7.0` is the stable public release, and the v1.0.0 launch evidence remains recorded in its artifact checklist and launch note.
+Current release state: `v1.7.0` is the stable public release from
+`813072040a1ac643312f5163fcfa4f26474c9095`; its five-target native/npm evidence
+is recorded in `release/kujo-1.7.0-publication.json` and the corresponding field
+note.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.
@@ -282,6 +285,10 @@ git push origin vX.Y.Z
 
 3. Publish crate (when applicable):
 
+Crates.io is optional and is not part of the canonical native/npm release path.
+A Kujo release may be complete without a crate publication when the release
+evidence records that disposition explicitly.
+
 The registry package is named `kujolang`; it installs the `kujo` executable and
 keeps `kujo` as the Rust library crate name. A registry publication must come
 from the exact signed release commit and use the same version as its tag.
@@ -298,7 +305,10 @@ cargo publish --dry-run --locked
 cargo publish --locked
 ```
 
-4. Publish GitHub release artifacts (Linux/macOS/Windows binaries + checksums) via release workflows.
+4. Publish GitHub release artifacts (Linux/macOS/Windows binaries, deterministic
+   source archive, and checksums) via release workflows. The published-artifact
+   smoke must verify the source checksum and its embedded version contract in
+   addition to installing each native target.
 
    The binary matrix also creates npm platform-package tarballs from those same
    tested executables. Before any npm publication, run:

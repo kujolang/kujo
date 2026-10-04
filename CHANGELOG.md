@@ -44,6 +44,9 @@ This file records user-visible changes to Kujo, following
 - Refresh open LSP documents that transitively depend on an edited imported
   module, using unsaved editor buffers during analysis and returning to disk
   state when the buffer closes.
+- Publish and post-publication verify a deterministic source archive alongside
+  the supported native release archives; keep all six npm packages aligned with
+  the runtime version and free of lifecycle download scripts.
 
 ### Fixed
 

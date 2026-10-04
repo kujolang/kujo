@@ -49,6 +49,10 @@ syntax or a new concurrency model.
   invalidates dependents back to disk state instead of serving stale exports.
 - Imported-module parsing remains content-hashed and bounded, with explicit cold,
   warm and invalidation regression coverage.
+- Release automation now produces a deterministic source archive alongside the
+  five native archives and verifies its checksum and embedded version contract
+  after GitHub publication. All six npm runtime packages remain lifecycle-script
+  free and version-aligned.
 
 ## Compatibility
 

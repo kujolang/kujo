@@ -45,6 +45,23 @@ fn candidate_identity_matches_cli_lock_packages_and_public_docs() {
     assert!(readme.contains(&format!(
         "{stable} is released for Linux x64/arm64, macOS x64/arm64 and Windows x64"
     )));
+    let stable_publication = publication.unwrap_or_else(|| {
+        serde_json::from_str::<serde_json::Value>(
+            &fs::read_to_string(root.join(format!(
+                "release/kujo-{}-publication.json",
+                metadata["published_stable"].as_str().unwrap()
+            )))
+            .unwrap(),
+        )
+        .unwrap()
+    });
+    let stable_commit = stable_publication["commit"].as_str().unwrap();
+    for path in ["ROADMAP.md", "docs/RELEASE_PROCESS.md"] {
+        assert!(
+            fs::read_to_string(root.join(path)).unwrap().contains(stable_commit),
+            "{path} must identify the exact published stable source commit"
+        );
+    }
     let output = Command::new(env!("CARGO_BIN_EXE_kujo")).arg("--version").output().unwrap();
     assert!(output.status.success());
     assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), format!("kujo {version}"));
