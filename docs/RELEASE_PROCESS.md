@@ -249,6 +249,22 @@ bytes and a fresh installation in a disposable prefix. Updating prose alone does
 not update the installer's pinned runtime. Preserve explicit release-manifest and
 environment overrides, and do not rewrite an existing release tag.
 
+Reconcile the two public release consumers before closing publication:
+
+- refresh `kujolang/kujolang-mcp` from the reviewed website and framework pins,
+  deploy the generated Worker, then compare the live
+  `https://mcp.kujolang.ai/health` catalog revision and exact Kujo item with the
+  committed catalog; a successful validation workflow is not deployment proof;
+- reverify `robertdevore/kujo.robertdevore.com` with the official release binary,
+  update its current course/evidence metadata, deploy the built site, and run its
+  production DNS, TLS, route, installation, and exact-version checks against
+  `https://kujo.robertdevore.com`.
+
+Record the source commit, deployment result, live version/revision, and production
+verification result for each consumer. If either consumer is intentionally
+deferred, leave publication open with an explicit owner and blocker instead of
+describing the ecosystem as fully promoted.
+
 ## 8. Tagging And Publication Order
 
 ### 8.0 Explicit Release Directive
