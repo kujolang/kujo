@@ -1,0 +1,24 @@
+func* sequence(start, count) {
+    mut index := 0
+    while index < count {
+        yield start + index
+        index += 1
+    }
+}
+
+func* doubled(start, count) {
+    for value in sequence(start, count) {
+        yield value * 2
+    }
+}
+
+mut total := 0
+for round in 2000 {
+    let values := doubled(round, 20)
+    let alias := values
+    for value in alias {
+        total += value
+    }
+}
+
+print(total)

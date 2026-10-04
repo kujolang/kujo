@@ -3,21 +3,45 @@
 //! kujo-static-bench BASELINE CANDIDATE > static-analysis.json
 use std::{env, fs, process::Command, time::Instant};
 
-fn samples(binary: &str, arguments: &[&str]) -> (Vec<u128>, Vec<u128>) {
-    let mut warmups = Vec::new();
-    let mut measured = Vec::new();
+fn run(binary: &str, arguments: &[&str]) -> u128 {
+    let start = Instant::now();
+    let output = Command::new(binary).args(arguments).output().unwrap();
+    let elapsed = start.elapsed().as_nanos();
+    assert!(output.status.success(), "{:?}", output);
+    elapsed
+}
+
+fn samples(
+    baseline: &str,
+    candidate: &str,
+    arguments: &[&str],
+) -> (Vec<u128>, Vec<u128>, Vec<u128>, Vec<u128>) {
+    let mut baseline_warmups = Vec::new();
+    let mut candidate_warmups = Vec::new();
+    let mut baseline_measured = Vec::new();
+    let mut candidate_measured = Vec::new();
     for round in 0..23 {
-        let start = Instant::now();
-        let output = Command::new(binary).args(arguments).output().unwrap();
-        let elapsed = start.elapsed().as_nanos();
-        assert!(output.status.success(), "{:?}", output);
-        if round < 2 {
-            warmups.push(elapsed);
+        let (baseline_elapsed, candidate_elapsed) = if round % 2 == 0 {
+            (run(baseline, arguments), run(candidate, arguments))
         } else {
-            measured.push(elapsed);
+            let candidate_elapsed = run(candidate, arguments);
+            let baseline_elapsed = run(baseline, arguments);
+            (baseline_elapsed, candidate_elapsed)
+        };
+        if round < 2 {
+            baseline_warmups.push(baseline_elapsed);
+            candidate_warmups.push(candidate_elapsed);
+        } else {
+            baseline_measured.push(baseline_elapsed);
+            candidate_measured.push(candidate_elapsed);
         }
     }
-    (warmups, measured)
+    (
+        baseline_warmups,
+        candidate_warmups,
+        baseline_measured,
+        candidate_measured,
+    )
 }
 
 fn main() {
@@ -49,8 +73,8 @@ fn main() {
         "{{\"schema\":\"kujo.static-analysis-benchmark/v1\",\"samples_per_binary\":21,\"discarded_warmups_per_binary\":2,\"process_inclusive\":true,\"workloads\":["
     );
     for (index, (name, arguments)) in workloads.iter().enumerate() {
-        let (baseline_warmups, baseline) = samples(&args[1], arguments);
-        let (candidate_warmups, candidate) = samples(&args[2], arguments);
+        let (baseline_warmups, candidate_warmups, baseline, candidate) =
+            samples(&args[1], &args[2], arguments);
         if index > 0 {
             println!(",");
         }

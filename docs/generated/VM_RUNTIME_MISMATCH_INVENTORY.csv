@@ -72,6 +72,7 @@ tests/test_json_edge_cases.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snap
 tests/test_json_parse.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_json_serialize.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_loop_correct.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
+tests/test_loop_early_return.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_method_array.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_method_chaining.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes
 tests/test_method_features.kujo,0,0,yes,yes,both_match_snapshot,none,n/a,P4,snapshot matches in both runtimes

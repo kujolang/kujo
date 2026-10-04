@@ -1,0 +1,5 @@
+export func weighted(value: int, factor: int) -> int {
+    return value * factor
+}
+
+export const default_factor := 4

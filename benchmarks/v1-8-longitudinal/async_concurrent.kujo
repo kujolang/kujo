@@ -1,0 +1,17 @@
+let queue := channel()
+
+async func round_trip(value) {
+    queue.send(value + 1)
+    return queue.receive()
+}
+
+mut index := 0
+mut total := 0
+while index < 500 {
+    let completion := round_trip(index)
+    total += await completion
+    total += await completion
+    index += 1
+}
+
+print(total)

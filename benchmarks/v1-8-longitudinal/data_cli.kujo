@@ -1,0 +1,13 @@
+let values := [3, 8, 13, 21, 34, 55, 89, 144]
+mut selected := []
+mut total := 0
+
+for value in values {
+    if value % 2 == 0 {
+        let transformed := value * 3
+        selected = push(selected, transformed)
+        total += transformed
+    }
+}
+
+print(to_json({"count": len(selected), "total": total, "values": selected}))

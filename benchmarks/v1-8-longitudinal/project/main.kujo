@@ -1,0 +1,9 @@
+import math_tools
+
+let values := [2, 5, 8, 11, 14]
+mut total := 0
+for value in values {
+    total += math_tools.weighted(value, math_tools.default_factor)
+}
+
+print(total)

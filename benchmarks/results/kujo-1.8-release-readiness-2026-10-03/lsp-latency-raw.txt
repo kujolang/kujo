@@ -1,0 +1,146 @@
+=== batch 1 ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+   Compiling kujolang v1.8.0 (/Users/robertdevore/2026/Kujolang/kujo-repos/kujo-v1-8-release-readiness)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 31s
+     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-d41512aabaa98a93)
+
+running 2 tests
+10-call mean full-file analysis latency: 19.803576ms
+test full_file_analysis_latency_guardrail ... ok
+mean latency: uncached_completion=25.35128ms, cached_completion=6.17488ms, cached_diagnostics=168.762µs, cached_hover=3.803932ms
+test latency_guardrails_for_completion_diagnostics_and_hover ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+=== batch 2 ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.68s
+     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-d41512aabaa98a93)
+
+running 2 tests
+10-call mean full-file analysis latency: 16.807316ms
+test full_file_analysis_latency_guardrail ... ok
+mean latency: uncached_completion=23.289413ms, cached_completion=5.851879ms, cached_diagnostics=178.37µs, cached_hover=3.841291ms
+test latency_guardrails_for_completion_diagnostics_and_hover ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+=== batch 3 ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-d41512aabaa98a93)
+
+running 2 tests
+10-call mean full-file analysis latency: 19.736376ms
+test full_file_analysis_latency_guardrail ... ok
+mean latency: uncached_completion=26.6511ms, cached_completion=6.136146ms, cached_diagnostics=175.532µs, cached_hover=3.804496ms
+test latency_guardrails_for_completion_diagnostics_and_hover ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+
+=== batch 4 ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.83s
+     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-d41512aabaa98a93)
+
+running 2 tests
+10-call mean full-file analysis latency: 17.41951ms
+test full_file_analysis_latency_guardrail ... ok
+mean latency: uncached_completion=23.505824ms, cached_completion=6.435409ms, cached_diagnostics=173.052µs, cached_hover=4.192419ms
+test latency_guardrails_for_completion_diagnostics_and_hover ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+=== batch 5 ===
+warning: unused import: `SequentialWriter`
+ --> vendor/tiny_http-0.12.0/src/util/mod.rs:7:28
+  |
+7 | pub use self::sequential::{SequentialWriter, SequentialWriterBuilder};
+  |                            ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: trait `MustBeShareDummy` is never used
+   --> vendor/tiny_http-0.12.0/src/lib.rs:164:7
+    |
+164 | trait MustBeShareDummy: Sync + Send {}
+    |       ^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tiny_http` (lib) generated 2 warnings (run `cargo fix --lib -p tiny_http` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.81s
+     Running tests/lsp_latency_guardrails.rs (target/debug/deps/lsp_latency_guardrails-d41512aabaa98a93)
+
+running 2 tests
+10-call mean full-file analysis latency: 19.233631ms
+test full_file_analysis_latency_guardrail ... ok
+mean latency: uncached_completion=25.5952ms, cached_completion=6.131478ms, cached_diagnostics=171.576µs, cached_hover=3.973674ms
+test latency_guardrails_for_completion_diagnostics_and_hover ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+
