@@ -6,6 +6,7 @@
   "published_stable": "1.7.0",
   "native_archive": "kujo-v1.8.0-{platform}.tar.gz",
   "source_archive": "kujo-v1.8.0-source.tar.gz",
+  "evidence_note": "notes/2026-10-04_10-30_kujo-1-8-candidate-preparation.md",
   "release_theme": "Smarter. Faster. Tighter.",
   "publication_authorized": false
 }

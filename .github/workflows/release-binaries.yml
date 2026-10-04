@@ -243,6 +243,34 @@ jobs:
             kujo-*.zip.sha256
             npm-dist/*.tgz
 
+  pack-source-archive:
+    needs: release-gate
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || github.event.inputs.version || format('manual-{0}', github.run_number) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Package deterministic source archive and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive_name="kujo-${RELEASE_NAME}-source.tar.gz"
+          git archive --format=tar --prefix="kujo-${RELEASE_NAME}/" "${GITHUB_SHA}" | gzip -n > "${archive_name}"
+          sha256sum "${archive_name}" > "${archive_name}.sha256"
+
+      - name: Upload source artifact bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-source
+          path: |
+            kujo-*-source.tar.gz
+            kujo-*-source.tar.gz.sha256
+
   pack-npm-runtime:
     needs: build-release-artifacts
     runs-on: ubuntu-latest
@@ -272,7 +300,7 @@ jobs:
           path: npm-dist/*.tgz
 
   publish-release-assets:
-    needs: [build-release-artifacts, pack-npm-runtime]
+    needs: [build-release-artifacts, pack-source-archive, pack-npm-runtime]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

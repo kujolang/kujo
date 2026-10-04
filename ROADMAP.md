@@ -1,17 +1,17 @@
 # Kujo Roadmap
 
-Updated: 2026-10-02
+Updated: 2026-10-04
 Stable release: [v1.7.0](https://github.com/kujolang/kujo/releases/tag/v1.7.0)
 
 > Current crate version: `1.8.0` in [Cargo.toml](Cargo.toml)
 
 Kujo **1.7.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free runtime npm packages. The exact source/tag
-target is `44af277848173664f72ca85f2a1b3b98d634ecdd`.
-See [publication evidence](docs/KUJO_1_6_RELEASE.md) for hashes and hosted native/npm
-install checks. The unchanged [RC review](docs/KUJO_1_6_RC_REVIEW.md) retains the
-original local/downstream validation. Later release-engineering commits are not
-the runtime artifact source. Wave C beta and Wave D alpha remain experimental;
+target is `813072040a1ac643312f5163fcfa4f26474c9095`.
+See the [publication record](release/kujo-1.7.0-publication.json) and
+[published-install evidence](notes/2026-10-01_09-10_published-1-7-installation.md)
+for the five-target native/npm validation. Wave C beta and Wave D alpha remain
+experimental;
 participant SDK packages remain unpublished. Human adopter usability remains
 post-release validation.
 
@@ -33,7 +33,7 @@ post-release validation.
 ## Recently completed
 
 - Published `@kujolang/kujo-runtime` and all five native platform packages at
-  1.6.0 through npm trusted publishing, with signed provenance and clean-install
+  1.7.0 through npm trusted publishing, with signed provenance and clean-install
   verification across the supported runtime matrix.
 
 - Merged the runtime-hardening baseline into Kujo `main` at
