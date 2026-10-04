@@ -18,6 +18,32 @@ permissions:
   contents: read
 
 jobs:
+  validate-published-source:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download, verify and inspect published source archive
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag_name }}
+        run: |
+          set -euo pipefail
+          tag_name="${RELEASE_TAG}"
+          [[ "${tag_name}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          archive_name="kujo-${tag_name}-source.tar.gz"
+          base_url="https://github.com/${{ github.repository }}/releases/download/${tag_name}"
+          curl -sSfL "${base_url}/${archive_name}" -o "${archive_name}"
+          curl -sSfL "${base_url}/${archive_name}.sha256" -o "${archive_name}.sha256"
+          sha256sum -c "${archive_name}.sha256"
+          mkdir source
+          tar -xzf "${archive_name}" -C source
+          source_root="source/kujo-${tag_name}"
+          [[ -f "${source_root}/Cargo.toml" ]]
+          (
+            cd "${source_root}"
+            KUJO_RELEASE_TAG="${tag_name}" bash .github/scripts/check-tag-version.sh
+          )
+
   validate-published-artifact-install:
     runs-on: ${{ matrix.os }}
     strategy:

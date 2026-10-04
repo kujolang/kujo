@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 [[ -z "$(git status --porcelain)" ]] || { echo 'RC source must be clean' >&2; exit 1; }
 [[ ! -e "$1" ]] || { echo 'Output must be a new directory' >&2; exit 1; }
 version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -1)"
-[[ "$version" == 1.6.0 ]]
+[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Invalid Cargo package version: $version" >&2; exit 1; }
 case "$(uname -s)-$(uname -m)" in
   Darwin-x86_64) platform=macos-x64 ;;
   *) echo 'This local rehearsal currently supports macos-x64 only; use the platform release matrix elsewhere.' >&2; exit 1 ;;
