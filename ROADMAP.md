@@ -1,15 +1,15 @@
 # Kujo Roadmap
 
 Updated: 2026-10-04
-Stable release: [v1.7.0](https://github.com/kujolang/kujo/releases/tag/v1.7.0)
+Stable release: [v1.8.0](https://github.com/kujolang/kujo/releases/tag/v1.8.0)
 
 > Current crate version: `1.8.0` in [Cargo.toml](Cargo.toml)
 
-Kujo **1.7.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
+Kujo **1.8.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free runtime npm packages. The exact source/tag
-target is `813072040a1ac643312f5163fcfa4f26474c9095`.
-See the [publication record](release/kujo-1.7.0-publication.json) and
-[published-install evidence](notes/2026-10-01_09-10_published-1-7-installation.md)
+target is `1acf4924fb96a8a660e86cdc35e4c4bf5933a304`.
+See the [publication record](release/kujo-1.8.0-publication.json) and
+[published-install evidence](notes/2026-10-04_14-20_published-1-8-installation.md)
 for the five-target native/npm validation. Wave C beta and Wave D alpha remain
 experimental;
 participant SDK packages remain unpublished. Human adopter usability remains
@@ -22,7 +22,7 @@ post-release validation.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The public npm 1.7.0 runtime package covers the same targets
+  SHA-256 checksums. The public npm 1.8.0 runtime package covers the same targets
   with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
@@ -33,8 +33,9 @@ post-release validation.
 ## Recently completed
 
 - Published `@kujolang/kujo-runtime` and all five native platform packages at
-  1.7.0 through npm trusted publishing, with signed provenance and clean-install
-  verification across the supported runtime matrix.
+  1.8.0 through npm trusted publishing, with signed provenance and clean-install
+  verification across the supported runtime matrix. The signed GitHub release
+  includes all five native archives, deterministic source, and checksums.
 
 - Merged the runtime-hardening baseline into Kujo `main` at
   `9d3c6edeba2b20cb22216816b1a95ee5f24a61b1`
@@ -115,7 +116,7 @@ an implementation backlog item.
 | Completed — shared analysis and editor latency | Share analyzed-program facts with the LSP and characterize project-check latency. | CLI advisory checks and the LSP now consume one immutable checker snapshot. Open-document analysis is reused by diagnostics, hover and completion; content-hashed imported-module ASTs are shared across analyses with bounded storage and safe invalidation. Startup, full-file and repeated-request latency gates cover the new path. |
 | Completed — struct generator methods | Support `func*` methods with explicit `self` and legacy field bindings in both engines. | Receiver state is snapshotted when the generator is created; aliases share continuation progress, return completes without yielding and terminal errors remain cached. Cross-runtime arity, lifetime and continuation regressions preserve ordinary method and generator semantics. See the [completion record](docs/KUJO_1_8_STRUCT_GENERATOR_METHODS.md). |
 | Completed — measured compiler/runtime tranche | Continue evidence-led optimizer and runtime work without changing v1 semantics. | Generator resume no longer clones the already-owned bytecode chunk; paired nested-generator alias measurements improved 6.7% at the median. Compiler control-flow passes were audited and left unchanged because no additional safe candidate exceeded measurement noise. Longitudinal VM/interpreter workloads and optimizer regressions guard the retained change. |
-| Release-candidate preparation | Freeze v1.8 feature scope and validate the candidate on supported release builders. | Local full gates, version/package alignment, compatibility workloads and release notes are complete. Tagging and publication remain separate owner-authorized actions; the release workflow must produce and verify all five native/npm targets from the final commit. |
+| Completed — v1.8 publication | Publish the verified candidate on supported release builders. | Signed tag `v1.8.0`, all five native archives, deterministic source, checksums, and six npm packages are published. Native/source and npm clean-install matrices passed across all supported targets. |
 | Unscheduled language candidates | Evaluate async generators and yield-from; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
 | Owner-deferred ecosystem validation | Live Workcell provider validation. | The operator supplies the provider/profile, account, region, image and spend limit, then runs the provider's real lifecycle and preservation checks. Offline success is not remote certification. This is not a Kujo merge blocker. |
 | Open host observation | Investigate the intermittent Intel Mac loopback stall if it recurs. | Capture a reproducible host-level failure and establish its cause. Standard Rust TCP also reproduced it; host load, free disk space and network filters remain hypotheses. Clean-host stress checks passed. Keep the existing observation open without claiming a Kujo defect or a proven repair. |

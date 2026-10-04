@@ -1,0 +1,14 @@
+{
+  "schema": "kujo.runtime-publication/v1",
+  "version": "1.8.0",
+  "tag": "v1.8.0",
+  "commit": "1acf4924fb96a8a660e86cdc35e4c4bf5933a304",
+  "tag_signature_verified": true,
+  "native_and_npm": "published",
+  "publication_workflow": 37219738234,
+  "native_install_smoke": 37223624965,
+  "npm_install_smoke": 37223833441,
+  "all_five_targets_verified": true,
+  "source_archive_verified": true,
+  "crates_io": "not published: optional and outside the canonical native/npm distribution"
+}

@@ -1,9 +1,9 @@
 # Kujo Release Process
 
-Current published stable runtime: `1.7.0` (five native platforms and npm).
-Current release state: `v1.7.0` is the stable public release from
-`813072040a1ac643312f5163fcfa4f26474c9095`; its five-target native/npm evidence
-is recorded in `release/kujo-1.7.0-publication.json` and the corresponding field
+Current published stable runtime: `1.8.0` (five native platforms and npm).
+Current release state: `v1.8.0` is the stable public release from
+`1acf4924fb96a8a660e86cdc35e4c4bf5933a304`; its five-target native/npm evidence
+is recorded in `release/kujo-1.8.0-publication.json` and the corresponding field
 note.
 
 This document is the canonical release and compatibility policy for Kujo.
