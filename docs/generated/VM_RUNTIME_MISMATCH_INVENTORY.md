@@ -1,7 +1,7 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-09-26
-Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
+Generated: 2026-10-03
+Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo-v1-8-release-readiness/target/debug/kujo`
 Fixture root: `tests`
 
 | Fixture | VM Exit | Interpreter Exit | VM Matches Snapshot | Interpreter Matches Snapshot | Delta Type | Mismatch Bucket | Owner | Priority | Rationale |
@@ -79,6 +79,7 @@ Fixture root: `tests`
 | `tests/test_json_parse.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_json_serialize.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_loop_correct.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
+| `tests/test_loop_early_return.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_method_array.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_method_chaining.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/test_method_features.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
@@ -156,8 +157,8 @@ Fixture root: `tests`
 | `tests/vm_closure_simple.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 | `tests/vm_native_functions_test.kujo` | 0 | 0 | yes | yes | `both_match_snapshot` | `none` | n/a | `P4` | snapshot matches in both runtimes |
 
-Summary: `149` fixtures scanned
-- both match snapshot: `149`
+Summary: `150` fixtures scanned
+- both match snapshot: `150`
 - VM-only mismatch: `0`
 - interpreter-only mismatch: `0`
 - both mismatch: `0`
@@ -171,6 +172,6 @@ Mismatch classification totals (priority order):
 
 VM coverage gate:
 - metric: `vm_matches_snapshot / fixtures_scanned`
-- vm_matches_snapshot: `149/149` (`100.0%`)
+- vm_matches_snapshot: `150/150` (`100.0%`)
 - target threshold: `70.0%`
 - gate status: `PASS`
