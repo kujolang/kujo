@@ -70,6 +70,35 @@ variance notes are in
 - The bounded loop-engineering verification passed formatting, locked checking,
   parity, optimizer, LSP reliability, and diff-integrity gates.
 
+## Final packaging preparation
+
+The 2026-10-04 preparation pass started from clean, synchronized `main` at
+`06923afa141995fb6d4f2940a820515583676e16` and repaired the only failing
+post-merge workflow: the root artifact-ignore contract now includes the
+canonical `/var/` entry. Release automation now creates the source archive
+declared by the 1.8 candidate metadata and the published-artifact smoke verifies
+its checksum and embedded version contract.
+
+The local macOS x64 rehearsal at
+`59ca3e106baad2373cc336bf7cfa721474e165dd` produced a `kujo 1.8.0` binary and
+both declared archives. The binary SHA-256 was
+`99ff38f3d8c97f9fc89da76f72273c4eef14a01d41dcfbfc2eaccce327f82856`; the
+native archive was
+`bf4bbfcb71a053ae29fa2b2df457ffc68bbfdd409219cb7dcbf46644e178aa91`; and the
+source archive was
+`86bdaaf83596eb9212279a0e8e508b6cb1dcdc9daa4c9793fa68c0fc00b7ddab`.
+The raw rehearsal receipt is retained at
+[`docs/evidence/kujo-1.8-rc/local-rc-macos-x64.json`](evidence/kujo-1.8-rc/local-rc-macos-x64.json).
+
+The full release-candidate gate passed again: 977 library tests passed with 7
+ignored, all integration suites passed, 123 parity cases passed, both fixture
+sweeps passed 150/150 with 11 declared skips, the 31-case serve suite passed,
+and RustSec reported no unignored advisory or maintenance warning. npm tests
+passed 12/12, all six 1.8.0 packages completed the dry-run pack, and the VS Code
+extension static check passed. ShipCheck's generic gate passed 12/16 with four
+documented non-blocking Cargo/runtime-repository detector warnings. `cargo-deny`
+was not installed locally and remains a hosted-CI gate.
+
 Hosted pull-request checks remain the authority for Linux, Windows, ARM64, and
 the additional macOS configurations that this Intel macOS host cannot execute.
 
@@ -79,6 +108,8 @@ The branch is feature-frozen. Async generators, `yield from`, ownership cycles,
 atomic shared state, generics, macros, broad FFI, distributed execution and a
 major WASM target remain future roadmap items, not 1.8 blockers.
 
-Final tagging, GitHub/native/npm publication, public installer promotion and the
-five-target hosted artifact matrix remain owner-authorized release-execution
-steps. Crates.io is not required for the canonical native/npm distribution.
+Final tagging, GitHub/native/npm publication, public installer and documentation
+promotion, and the five-target hosted artifact matrix remain owner-authorized
+release-execution steps. Crates.io is not required for the canonical native/npm
+distribution. Exact commands and the publication boundary are recorded in the
+[candidate preparation evidence](../notes/2026-10-04_10-30_kujo-1-8-candidate-preparation.md).

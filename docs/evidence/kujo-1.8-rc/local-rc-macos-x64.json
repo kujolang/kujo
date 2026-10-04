@@ -1,0 +1,15 @@
+{
+  "schema": "kujo.local-rc-artifacts/v1",
+  "version": "1.8.0",
+  "source_commit": "59ca3e106baad2373cc336bf7cfa721474e165dd",
+  "platform": "macos-x64",
+  "rust": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+  "cargo_lock_sha256": "9bcf56385450b3d27abcf8a836104c43c1c3492a3d854f8237ce51b41208950f",
+  "binary_sha256": "99ff38f3d8c97f9fc89da76f72273c4eef14a01d41dcfbfc2eaccce327f82856",
+  "archives": {
+    "kujo-v1.8.0-macos-x64.tar.gz": "bf4bbfcb71a053ae29fa2b2df457ffc68bbfdd409219cb7dcbf46644e178aa91",
+    "kujo-v1.8.0-source.tar.gz": "86bdaaf83596eb9212279a0e8e508b6cb1dcdc9daa4c9793fa68c0fc00b7ddab"
+  },
+  "publication_authorized": false
+}
