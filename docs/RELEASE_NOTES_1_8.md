@@ -1,7 +1,7 @@
-# Kujo 1.8 release candidate notes
+# Kujo 1.8 release notes
 
-Status: candidate preparation; not yet tagged or published. Kujo 1.7.0 remains
-the current stable release.
+Status: released 2026-10-04. Kujo 1.8.0 is the current stable release for all
+five native platforms and the six-package npm runtime distribution.
 
 Kujo 1.8 is a **Smarter. Faster. Tighter.** release. It expands useful gradual
 analysis, makes editor results safer and more reusable, removes measured runtime
@@ -65,5 +65,7 @@ syntax or a new concurrency model.
 - Async generators, `yield from`, ownership cycles, atomic shared-state
   primitives, generics, macros, broad FFI and a major WASM target remain deferred.
 
-Tagging, native/npm publication and public installer promotion are intentionally
-not performed by candidate preparation.
+The signed `v1.8.0` tag resolves to
+`1acf4924fb96a8a660e86cdc35e4c4bf5933a304`. GitHub native/source artifacts and
+all six npm packages passed their published-install matrices. Crates.io was not
+published because it is not part of the canonical native/npm distribution.

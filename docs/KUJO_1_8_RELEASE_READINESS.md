@@ -4,8 +4,8 @@ Date: 2026-10-03
 
 Starting source: `656c03c3c916e5fd25508438b9a6808e88263ba9`
 
-This tranche closes feature development for Kujo 1.8 and moves the branch to
-release-candidate preparation. Publication is not authorized or performed here.
+This record began as the release-candidate readiness assessment. Kujo 1.8.0 was
+subsequently published from the verified candidate on 2026-10-04.
 
 ## Completed work
 
@@ -28,9 +28,9 @@ release-candidate preparation. Publication is not authorized or performed here.
   on the candidate in both VM and interpreter with identical output. Dispatch's
   complete offline release gate also passed against the candidate (101 source
   tests, 24 Dispatch shards and focused integration suites).
-- **Release maintenance:** source and npm metadata are aligned at 1.8.0; candidate
-  metadata, changelog, roadmap and release notes are synchronized. Kujo 1.7.0
-  remains the latest published stable release.
+- **Release maintenance:** source and npm metadata are aligned at 1.8.0;
+  changelog, roadmap and release notes are synchronized. Kujo 1.8.0 is the
+  latest published stable release.
 
 ## Performance disposition
 
@@ -108,8 +108,8 @@ The branch is feature-frozen. Async generators, `yield from`, ownership cycles,
 atomic shared state, generics, macros, broad FFI, distributed execution and a
 major WASM target remain future roadmap items, not 1.8 blockers.
 
-Final tagging, GitHub/native/npm publication, public installer and documentation
-promotion, and the five-target hosted artifact matrix remain owner-authorized
-release-execution steps. Crates.io is not required for the canonical native/npm
-distribution. Exact commands and the publication boundary are recorded in the
-[candidate preparation evidence](../notes/2026-10-04_10-30_kujo-1-8-candidate-preparation.md).
+The owner supplied the required release directive on 2026-10-04. The signed
+`v1.8.0` tag, GitHub native/source assets, six npm packages, and both five-target
+published-install matrices completed successfully. Crates.io was not required
+for the canonical native/npm distribution. Final evidence is recorded in the
+[publication note](../notes/2026-10-04_14-20_published-1-8-installation.md).
