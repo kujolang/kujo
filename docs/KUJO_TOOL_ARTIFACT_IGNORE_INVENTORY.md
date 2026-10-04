@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-09-27
+Last updated: 2026-10-04
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -43,6 +43,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Concord | `.loop-engineering/`, `.dogfood/` | Reports are stdout unless redirected by caller. |
 | Relay | `.relay/`, `.relay/runs/<mission>/`, `agent/`, `ledger/`, `workspace/`, `packet-manifest.json`, `tool-results.json`, `state.json`, `report.json`, `relay-contract-*/` contract-test roots when `RELAY_TEST_TMP_ROOT` points at the repo | Existing local repo has user changes outside this inventory. |
 | WorkCell | `.workcell/runs/`, `.runledger/`, `.casefile/`, `.loop-engineering/`, generated `src/artifacts/` and `src/output/` during some flows | Keep source `src/artifacts` only if intentionally authored. |
+| Kujo VideoOps | `var/videoops.db`, `var/jobs/`, `var/exports/`, `var/backups/`, `var/trash/`, `var/npm-cache/`, `var/toolchain/`, `var/production-proof-30s/`, and other local runtime workspaces under `var/` | Runtime policy, deployment docs, CLI defaults, bootstrap scripts, and production-proof scripts all use `var/` for operator-local state, caches, exports, backups, and rendered media. Checked-in `evidence/*.json`, fixture workspaces, configs, policies, and security docs are source-worthy and intentionally not covered by this rule. |
 | Tribunal | `tribunal-runs/`, `.tribunal/` artifact store and telemetry files, `.strata-tmp/`, per-run `artifact-manifest.json`, `checkpoint.json`, `context.md`, `docket.md`, `decision-packet.md`, `events.jsonl`, `receipt.json`, `record.json`, `ruling.md`, `prompts/`, `testimony/` | Run archives are local evidence unless deliberately published. Default config points local artifact-store and telemetry destinations under `.tribunal/`; release-audit bundles observed there are local verification evidence. |
 | AssetWorks | `.assetworks/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected export files such as `assetworks-export.json` | Default state is `.assetworks/`; `--state` and `--output` are caller-selected, so reviewed exported records should be tracked only when intentionally published. |
 | BluePencil | `.bluepencil/` with `metadata.json`, immutable `records/*.json`, append-only `history/*.json`, and per-record `locks/*.lock`; caller-selected export files | Default state is `.bluepencil/`; calibration fixtures under `fixtures/calibration/` are source-worthy and should remain tracked. |
@@ -105,6 +106,7 @@ serve multiple rows in the inventory:
 - `/.cinch/pack/` covers generated Cinch wrapper packs beside `/.cinch/artifacts/`.
 - `/.runs/` covers timestamped Kujo workflow-runner packets; `/.work/` covers disposable workflow workspaces such as `agency-verified-fix-loop/.work/<timestamp>/`.
 - `/.kujo/runs/` covers Agency Runner proof packets; `/.kujo/feature-cards/` covers Feature Card workflow task, spec, context, proof, brief, ledger, handoff, and log packets; `/.kujo/agency/auth/` covers saved browser-session state and login evidence; `/.kujo/pi/` covers Kujo Pi local setup plus default MCP and Dispatch output roots while leaving caller-authored `.kujo/agency/sites/*.yml` profiles and shared packs such as `.kujo/packs/email/` to repo policy.
+- `/bundles/` covers exported Dispatch bundles beside `/outputs/`, `/.dispatch-run-index.json`, and `/run-*/`.
 - `/sdk/rust/target/` covers SearchBridge generated-SDK Cargo build output while leaving generated SDK source under `sdk/` available for repository-specific tracking.
 - `/.fence/cache-v1.json` covers Fence's optional import-extraction cache without blanket-ignoring caller-selected `.fence/**` report roots; `/.audit-evidence/` covers raw local hardening, benchmark, and qualification evidence referenced by Fence and StoryDesk docs.
 - `/.muzzle/state/` and `/.muzzle/.kujo_cache/` cover Muzzle execution state and cache files beside the existing log/report ignores.
@@ -123,6 +125,7 @@ serve multiple rows in the inventory:
 - `/.siteprobe/` covers caller-selected SiteProbe crawl roots used by docs and examples; `/.siteprobe-docgen-tmp/` covers the temporary Kujo docgen root used before copying reviewed API docs into `docs/generated/`.
 - `/.kujo-commerce/` covers Kujo Commerce's prepared content/assets workspace; `/.kujo-bin/` covers downloaded Kujo release binaries used by clean-clone scripts; `/.wrangler/` covers Cloudflare Pages local deploy state.
 - `/.webops/`, `/.cleanup-runs/`, and `/.suites/` cover WebOps dashboard state, Codebase Cleanup reports/plans, and aggregate benchmark-suite evidence beside existing workflow runner roots.
+- `/var/` covers Kujo VideoOps operator-local runtime databases, job workspaces, exports, backups, trash, npm/toolchain caches, and production-proof render workspaces while leaving reviewed evidence summaries and repository fixtures to repo policy.
 - `/.benchmark-cache/`, `/.eval-results/`, `/.model-build/`, `/.model-candidates/`, and `/truthlens-extension.zip` cover TruthLens local model conversion, benchmark cache, Eval output, and extension packaging artifacts.
 - `/artifacts/coverage/` covers TotalRecall's local coverage-report artifact without adding a blanket `/artifacts/` ignore.
 - `*.log` covers Leash local audit sinks such as `audit.log` and `daemon/audit.log` while leaving config examples tracked.

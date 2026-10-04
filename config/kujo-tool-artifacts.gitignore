@@ -138,6 +138,9 @@
 # WorkCell
 /.workcell/
 
+# Kujo VideoOps
+/var/
+
 # Tribunal
 /tribunal-runs/
 /.tribunal/
