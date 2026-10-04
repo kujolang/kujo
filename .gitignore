@@ -367,6 +367,7 @@ benchmark_output.txt
 /workcell-image/.agents-sdk-stage-*/
 
 # Remaining canonical local artifact rules
+/var/
 /.runtime/
 /.local/
 /.audit-evidence/
