@@ -1,7 +1,7 @@
 # Kujo Install & Distribution Matrix
 
-Status: stable v1.7.0 install matrix
-Last updated: 2026-09-26
+Status: stable v1.8.0 install matrix
+Last updated: 2026-10-04
 
 This document defines supported installation paths and known platform caveats for Kujo operators.
 
@@ -13,7 +13,7 @@ This document defines supported installation paths and known platform caveats fo
 | Local production-like build | `cargo build --release` | `./target/release/kujo` | Performance verification, smoke checks | Preferred for realistic runtime/perf behavior. |
 | Install on current machine via Cargo | `cargo install --path .` | `kujo` on `PATH` | Operator/dev host install without package manager | Re-run after local upgrades to refresh binary. |
 | Install from crates.io | Not currently available | n/a | Future registry distribution | The reserved source package identity is `kujolang`, but no crate is published. Use a source or GitHub archive install. |
-| Install from npm | `npm install --global @kujolang/kujo-runtime@1.7.0` | `kujo` on `PATH` | Node.js 18+ environments on a supported binary target | Publishes signed trusted-publisher provenance and uses no lifecycle scripts. |
+| Install from npm | `npm install --global @kujolang/kujo-runtime@1.8.0` | `kujo` on `PATH` | Node.js 18+ environments on a supported binary target | Publishes signed trusted-publisher provenance and uses no lifecycle scripts. |
 | Pinned commit install | `cargo install --git https://github.com/kujolang/kujo --rev <sha>` | `kujo` on `PATH` | Reproducible deployment from known commit | Use immutable commit SHA, not floating branches. |
 | Prebuilt release binary | Download `kujo-<TAG>-<PLATFORM>.<EXT>` from GitHub Releases | Standalone `kujo`/`kujo.exe` | End users and onboarding without Rust/Cargo | See `docs/RELEASE_BINARIES.md` for asset names and checksum verification. |
 | CI reproducible build artifact | `cargo build --locked --release` | Deterministic release binary (lockfile pinned) | CI pipelines and artifact promotion | Fails fast if lockfile drift occurs. |
