@@ -7,7 +7,7 @@ Dispatch. It is not a general scheduler or a production-ready graph platform.
 Kujo 1.8.0 is released; that does not stabilize ecosystem alpha/beta contracts.
 This audit starts from fetched main, not historical implementation worktrees.
 Source inspection and historical evidence are distinguished from this session's
-executed verification in the companion evidence report.
+executed verification in the [companion evidence report](WAVE_F_EXECUTION_EVIDENCE_2026_10.md).
 
 The smallest candidate correction is **subgraph-local settlement checks**:
 `scoped_outcome_facts` filters node facts by group membership but checks held
@@ -16,6 +16,10 @@ independent group can therefore become blocked by unrelated work. Reproduce this
 before implementation. Keep graph-wide settlement strict. No dynamic topology,
 new cancellation authority, distributed orchestration or runtime change is justified
 by that correction.
+
+The companion evidence report records the completed correction and verification.
+The baseline gaps and pre-implementation criteria below retain their original
+scope; the selected settlement gap is now closed by Dispatch `93b747a`.
 
 The roadmap's operator stop condition is real: do not infer permission for another
 architecture expansion from an older tranche's “next phase.” The present user
@@ -35,6 +39,7 @@ boundary is narrower than implementing a new architecture phase.
 | ability `bcbecb4` | Effect declarations, validated invocations/receipts, installed handlers, application authorization/idempotency and assurance profiles; `src/{contract,contracts,runtime}.kujo`. |
 | agents-sdk `978354a` | Agent/tool implementation, context ledger and usage, Watchdog adapters. Inspected fetched main in a detached audit worktree because the primary checkout contains unrelated maintenance files. Participant SDK prototypes live in Dispatch and are a different product. |
 | spec `1211f37` | Task/check contracts (`src/validate.kujo`); no graph admission or lifecycle authority. |
+| mcp `83e4d62` | Controlled Ability transport and correlation, not admission policy or replay authority. `integrations/kujo-ability/bin/controlled-ability.mjs`, `examples/controlled-ability/`, `src/telemetry/watchdog.kujo`. |
 
 Additional existing seams: Dispatch's TypeScript/Python/Go interop participants,
 SQLite sink adapter, Workcell Git and Ability application sink profiles; Scent/RAG
@@ -112,11 +117,33 @@ Recovery reconstructs supported exact transitions, never missing actions.
 | Program refusal | binding → preflight refusal before claim → sealed old child → explicit retry reservation for distinct declared child; old fact and consumed graph unit remain |
 | Reservation | held → consumed dispatch OR explicit released before dispatch/claim/result/refusal; released reservation remains historical |
 | Eval | exact input binding → held → consumed dispatch → worker claim → retained response/resolution → policy-mapped node terminal; infrastructure retry gets a new identity |
-| Human | exact binding → revision-bound review request → authenticated/authorized approve, abort or cancel → real node terminal |
+| Human | exact binding → revision-bound review request → installed-policy-authorized approve, abort or cancel → real node terminal |
 | Branch | exact source terminal → separate locked activation; immutable chosen path |
 | Subgraph | explicit entry and member facts → assessed outcome → separate authorized locked receipt; internal completion alone cannot open downstream group barrier |
 | Graph | running/paused → informational candidate → authorized revalidation under lock → completed/failed/cancelled receipt; node readiness alone cannot seal it |
 | Repair | inspect → exact source-bound plan → authorized locked apply → journal/projection repair → separate future continuation decision |
+
+The graph-native event inventory is closed by `graph_event`, `apply_node_transition` and their
+projection validators; legacy runner statuses are not substitutes for these facts:
+
+| Immutable event(s) | Projection consequence |
+| --- | --- |
+| `node_inputs_bound`, `node_execution_refused`, `node_execution_admitted` | Bind a pending child once; refusal and admission exclude each other. Refusal pauses the child. |
+| `node_start_requested`, `node_terminal_observed` | Record one dispatch and one observed terminal for the current declared child. A pending/paused graph node becomes `completed`, `failed`, `rejected` or `cancelled` only with matching terminal authority. |
+| `graph_attempt_reserved`, `graph_reservation_released`, `graph_attempt_retried` | Append reservation history; release only an unconsumed row. Safe retry selects a distinct declared child, resets the logical node's current projection to pending and removes only its current dispatch/completion projection. Historical rows/events remain. |
+| `graph_resources_reserved` | Atomically publish the bounded reservation plan in the graph journal; fold program reservations and exact Eval bindings/rows under the graph lock. This is not atomic with a participant's effects. |
+| `graph_eval_released`, `graph_eval_dispatched`, `graph_eval_resolved` | Held → released or consumed → resolved. Resolution is `completed` or `infrastructure_failed`; `completed` delivery is separate from the Eval verdict. No transition from unknown consumption to refunded capacity. |
+| `graph_resource_observed` | Append exact sourced measurement evidence without inventing execution or completing the graph. |
+| `graph_node_bound`, `graph_review_requested` | Bind graph-local terminal inputs once; retain a revision-bound request. These operations pause the graph, not complete the node. |
+| `graph_branch_activated`, `graph_subgraph_finalized` | Retain one selected path or group receipt; neither executes a child. |
+| `graph_finalized` | Set graph `completed`, `failed` or `cancelled` from a current authorized candidate; later graph transitions and node dispatch/terminal events are rejected. |
+
+Before graph finalization, validated heterogeneous graph projections permit
+`running`, `paused`, `interrupted` or `needs_changes`. `blocked` is an assessment,
+and `not_selected` is derived branch membership, not a manufactured success or
+cancellation terminal. A bare persisted terminal status without its matching
+journal fact is invalid. Parent/effect state machines remain independently owned
+by the existing finalization and Wave C lifecycle contracts.
 
 `cancel_requested` on a heterogeneous runner causes a pause requiring a graph
 decision. `optional-cancel` is limited to an unadmitted, undispatched optional
@@ -205,7 +232,7 @@ Wave C alpha/beta negotiation, one-profile-per-run and required controller featu
 checks must remain intact. Generalized services still need installed adapters;
 closed executable/Eval/human variants are not arbitrary participant extensibility.
 
-## Ranked gaps and bounded implementation plan
+## Ranked baseline gaps and bounded implementation plan
 
 | Priority | Gap / prerequisite | Next bounded action |
 | --- | --- | --- |
@@ -214,6 +241,7 @@ closed executable/Eval/human variants are not arbitrary participant extensibilit
 | P1 selected candidate | Global resource settlement leaks into group outcome assessment | Reproduce independent group blockage, restrict settlement blockers to group members, retain global accounting validation and strict whole-graph sealing. |
 | P1 | No true nested lifecycle or independent group ceilings | Define child graph identity, parent ownership, explicit boundary inputs/outputs and scope-local settlement before nesting. Preserve group receipt as mandatory barrier. |
 | P1 | Graph stop policy distinct from required failure and review denial | Specify whether unrelated ready nodes may proceed; do not silently convert declared failure policy into fail-fast cancellation. |
+| P1 | Incomplete cross-participant capability and inner-attempt attribution | Bind owner-produced authority and inner execution observations to existing attempt/effect IDs; explicitly retain missing evidence as unknown. |
 | P2 | No complete read-only execution lineage export through existing observers | Compose Dispatch receipts with Watchdog/RunLedger correlation; distinguish unavailable evidence from absent events. |
 | P2 | Operational qualification | User adoption, expiry/retention handling, journal archival, power-loss/platform tests, bounded latency profiling and clear unsupported recovery diagnostics. |
 | P3 | Dynamic admission | Versioned immutable proposal/admission epochs with deterministic parent/proposal/ordinal identity, capability/effect validation, capacity reservation and duplicate/conflict rejection. Requires closed cancellation/settlement and recovery semantics first. |
@@ -323,3 +351,70 @@ verification-maintenance item, not evidence of a graph admission defect. Fix the
 test against the normative required set while retaining explicit optional-counter
 acceptance and privacy negatives; do not make optional fields mandatory to satisfy
 the test. This session does not alter Watchdog or its existing local config edit.
+
+### Authority provenance completeness
+
+The current chain identifies the result producer, installed host/profile/configuration,
+review actor and effect verifier. It does **not** provide one universal per-attempt
+snapshot of the actual Kujo process capability mask, arbitrary service credentials
+or every external participant permission. `execution-result/v1` names producer,
+subject, effects and evidence; graph input/terminal bindings retain authority
+references rather than defining such a snapshot. Workcell's producer conservatively
+marks network-enabled external effects unknown. Ability separately binds principals,
+definitions, policy, approvals and idempotency. These are complementary contracts.
+
+Rank a composable authority-evidence crosswalk as P1 before claiming that the
+substrate can answer “under exactly which capabilities” for every heterogeneous
+participant. Bind an owner-produced bounded capability/registration observation to
+an attempt and installed policy digest where available; explicitly report absent
+observations. Do not infer a real human identity from a free-form actor name, a
+capability grant from an artifact edge, or complete external effect enumeration
+from a successful Workcell exit. Remote authentication and arbitrary participant
+attestation remain unimplemented.
+
+A concrete cancellation prerequisite is separating *new admission* from *truthful
+settlement* in authority checks. `validate_bound_node_inputs` is documented as
+used before initial/effect admission and finalization, and rejects an active child
+when the graph has `cancel_requested`. Simply persisting that flag as a stop fence
+would also obstruct existing finalization paths for already-consumed work. A new
+stop protocol must retain identity/evidence validation for settlement while denying
+new execution; do not implement cancellation by weakening all authority checks or
+by rewriting completed child states. This source-level coupling is why a general
+cancellation tranche is not selected here.
+
+The direct installed Wave F host imports Workcell workspace/preservation/retained
+observation and Eval control-result builders; its effect adapters reuse Workcell
+Git and local SQLite. AI SDK is an adjacent execution dependency, not graph control:
+fetched main `1f4c7678506d2ce76e26e67e4697e08ceca108c2`,
+`src/ai_sdk.kujo` contains bounded transport retry loops governed by `retry_budget`.
+A single graph program dispatch may contain several tool/model/transport actions.
+The graph program ceiling therefore does not bound all provider requests, and a
+graph attempt ID is not a complete ledger of those inner attempts. Before claiming
+universal action attribution, bind owner-produced inner attempt and effect evidence
+to the existing child run; do not promote dispatch count to request count. The
+current offline graph proof does not require a live AI provider, Scent/RAG, Leash
+or a new MCP server. Those remain producer/transport seams, not hidden schedulers.
+The primary AI SDK checkout remains at `71bad146`; its `src/` tree is identical
+to fetched main. It was not advanced while canonical tests were using it.
+
+The canonical MCP compatibility fixtures use the primary checkout at
+`e02905d4d587a099529b4f4e1ade61060a0c7f94`. Fetched MCP main is
+`83e4d62b0a04477f3208756a77671da765964753`; the controlled handoff, host example,
+Ability projection and telemetry source are unchanged. The used STDIO bridge's
+only difference is its advertised server version, 1.2.0 → 1.3.0. Current main's
+other runtime/generator changes are outside that fixture's control path. A detached
+current-main checkout supports separate fresh verification without changing the
+dependencies of running gates. The handoff retains RPC/request/invocation/session,
+Ability/receipt and Dispatch run/step/attempt/effect IDs; observer failure cannot
+change admission authority. General MCP service generation is not graph scheduling.
+
+Independent work advanced Workcell to `a276a92c6bac9279a8cb36ace9687ade34d5128f`
+and Watchdog to `8c512624782878cc607794add7b71f46781a45bf` during verification.
+These are not commits authored by this tranche. Workcell's changes preserve native
+process cancellation in Docker results and update provider dependencies;
+`src/evidence/` and `src/workspace/` are byte-identical to the audit baseline.
+Watchdog's change isolates canonical batch transactions by connection; its runtime
+measurement adapter and corresponding test are unchanged. The installed operator
+continued using its explicit Workcell/Eval pins. These owner improvements do not
+introduce graph cancellation propagation or turn observer state into control
+authority. Initial audit pins and final observed heads are both retained.
