@@ -240,3 +240,86 @@ closed executable/Eval/human variants are not arbitrary participant extensibilit
 
 If the reproducer or compatibility evidence does not support this correction,
 stop implementation and publish the audit/plan with the unresolved evidence.
+
+## Design boundaries for subsequent work (not implemented)
+
+**Bounded dynamic admission:** the current immutable workflow digest is bound into
+input, policy, authority and terminal candidates. In-place definition replacement
+would invalidate historical truth. A future proposal should name a base graph
+revision, parent scope, installed template digest, explicit typed input references,
+declared effect/capability requirements, bounded node count and requested capacity.
+Derive its identity from canonical proposal bytes plus parent admission identity
+and ordinal. Admission must append an epoch referencing the old immutable topology,
+not rewrite it. Under the existing graph lock, validate duplicate/conflicting
+identity, acyclicity, parent openness, installed policy, capabilities and capacity
+before committing an admission record. Recovery folds only admitted epochs; an
+unaccepted proposal never runs. Replay must reproduce identical IDs and reject
+changed proposal bytes. The missing prerequisite is a defined closure/stop boundary
+that prevents late admissions after parent settlement, with feature negotiation
+for topology epochs. Neither a model suggestion nor spare budget is authority.
+
+**Nested lifecycle:** keep today's disjoint group receipts unchanged. A later
+child-graph contract needs a distinct child instance and parent admission reference,
+immutable membership, explicit boundary inputs/outputs and delegated capacity that
+cannot be counted twice. Parent required/optional child membership must be declared
+at admission. Closing the child requires its own recorded terminal decision after
+settlement, then an independently validated parent observation. A child effect or
+successful leaf cannot substitute for that decision. Cross-scope failure and stop
+policy needs explicit mapping; do not reuse `depends_on` to mean both “starts after”
+and “parent waits for child.” One-level groups do not already implement this model.
+
+**Cancellation:** a candidate bounded next protocol would append a versioned,
+authorized stop intent identifying graph/scope, exact revision and reason, then
+close admission for that immutable membership. Pending unclaimed work can be
+recorded as never started; held reservations may be released only through existing
+proofs. Consumed work remains consumed and must settle through existing result,
+Eval and effect evidence. A request is not an acknowledgement or terminal outcome.
+A descendant may finish after the stop request; its completed effects stay complete.
+Unknown effects leave settlement blocked and require independent evidence/review.
+After controller death, restore the fence from its actual immutable event; never
+invent acknowledgements. Graph/child lock order and callback revalidation must be
+proven against a concurrently starting child before implementing this protocol.
+The present admission callbacks read graph facts without acquiring the graph lock;
+an added fence cannot be claimed race-free merely because its writer holds that lock.
+
+**Recovery/observation:** expand supported projections only with source-bound
+transition proofs. Additive report fields should expose uncertain dispatch,
+missing result, retained-but-unindexed decision and missing authority separately.
+Keep original artifacts available by digest, use existing RunLedger note and
+Watchdog reference seams, and leave control decisions in Dispatch. A journal
+export without installed authority or surviving claims must remain read-only.
+
+**Adversarial coverage selection:** existing node policy tests cover duplicate IDs,
+input corruption/provenance and unsupported topology; graph attempt authority and
+binding safety cover stale authority, duplicate/retry and downstream lineage;
+heterogeneous policy/recovery cover required/optional terminals, review and terminal
+races; static policy edges/subgraph tests cover joins, branch selection and rejected
+nested/conditional definitions; resource recovery covers last-unit contention,
+duplicate worker invocation and response loss. Unsupported nested failure/cancel
+and dynamic admission are rejection boundaries, not functioning capabilities.
+The selected new regression adds a missing cross-scope combination to those tests;
+it does not substitute for their canonical rerun.
+
+### Observer storage and fresh compatibility finding
+
+RunLedger `src/storage.kujo` uses per-record locks and atomic receipt files; its
+notes are reporting extensions. Watchdog `src/watchdog_shared.kujo` and
+`src/dashboard_server.kujo` use SQLite telemetry tables/store identity. These
+stores are independently persistent, not a transaction participant in Dispatch
+admission. Eval writes reports/evaluation-result evidence; Workcell retains
+workspace/Git and preservation artifacts. Loss of an observer store does not
+justify re-executing a Dispatch action, and a surviving observer record cannot
+repair missing Dispatch authority.
+
+Fresh verification found a Watchdog **test compatibility defect** at
+`tests/runtime_measurements_adapter_check.js:52`: it treats every counter emitted
+by the runtime as mandatory when generating deletion negatives. The v1 schema's
+required list and Watchdog `measurement_keys()` exclude the additive
+`bytecode_compile_wall_ns` counter. With the checksum-verified released Kujo 1.8.0,
+the test fails at `missing-counter-bytecode_compile_wall_ns`; with its documented
+1.6.0 runtime the 76-case integration proof passes. The adapter intentionally
+accepts additional numeric counters and accepts their absence. This is an open
+verification-maintenance item, not evidence of a graph admission defect. Fix the
+test against the normative required set while retaining explicit optional-counter
+acceptance and privacy negatives; do not make optional fields mandatory to satisfy
+the test. This session does not alter Watchdog or its existing local config edit.

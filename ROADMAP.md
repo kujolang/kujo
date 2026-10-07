@@ -175,6 +175,11 @@ Eval and authorized human decisions without fake execution results, plus a separ
 locked graph outcome over immutable required/optional membership. General graph
 execution remains incomplete.
 
+The [October source audit](docs/WAVE_F_EXECUTION_AUDIT_2026_10.md) maps current
+ownership, durable transitions, crash recovery and remaining cancellation/nesting
+boundaries. Its bounded correction targets subgraph settlement scope; it does not
+introduce dynamic topology or promote Wave F to production-ready status.
+
 ## Maintenance lane
 
 Maintain the completed optional-inference, shared CLI/LSP analysis, struct
