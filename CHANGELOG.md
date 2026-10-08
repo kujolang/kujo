@@ -4,6 +4,15 @@ This file records user-visible changes to Kujo, following
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Account for queued connections when allocating HTTP connection workers, so
+  concurrent keep-alive clients cannot strand a new request behind occupied
+  workers until another connection closes. Includes a bounded reservation-race
+  regression; no language or telemetry schema changes.
+
 ## [1.8.0] - 2026-10-03
 
 ### Added

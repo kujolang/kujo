@@ -69,7 +69,9 @@ impl TaskPool {
     pub fn spawn(&self, code: Box<dyn FnMut() + Send>) {
         let mut queue = self.sharing.todo.lock().unwrap();
 
-        if self.sharing.waiting_tasks.load(Ordering::Acquire) == 0 {
+        // Queued tasks already reserve idle workers that have not yet woken.
+        // Otherwise persistent connections can strand a newly queued connection.
+        if self.sharing.waiting_tasks.load(Ordering::Acquire) <= queue.len() {
             self.add_thread(Some(code));
         } else {
             queue.push_back(code);
@@ -129,9 +131,54 @@ impl TaskPool {
 
 impl Drop for TaskPool {
     fn drop(&mut self) {
-        self.sharing
-            .active_tasks
-            .store(999_999_999, Ordering::Release);
+        self.sharing.active_tasks.store(999_999_999, Ordering::Release);
         self.sharing.condvar.notify_all();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::mpsc;
+    use std::time::Instant;
+
+    #[test]
+    fn queued_connections_reserve_idle_workers() {
+        let pool = TaskPool::new();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while pool.sharing.waiting_tasks.load(Ordering::Acquire) < MIN_THREADS {
+            assert!(Instant::now() < deadline, "idle workers did not start");
+            thread::sleep(Duration::from_millis(1));
+        }
+        let release = Arc::new((Mutex::new(false), Condvar::new()));
+        {
+            // Model the reachable window after enqueueing connections but before
+            // notified workers reacquire the queue lock. All idle workers are
+            // already reserved by queued, potentially long-lived connections.
+            let mut queue = pool.sharing.todo.lock().unwrap();
+            for _ in 0..MIN_THREADS {
+                let release = release.clone();
+                queue.push_back(Box::new(move || {
+                    let (lock, wake) = &*release;
+                    let mut done = lock.lock().unwrap();
+                    while !*done {
+                        done = wake.wait(done).unwrap();
+                    }
+                }));
+            }
+        }
+        let (send, receive) = mpsc::channel();
+        pool.spawn(Box::new(move || {
+            send.send(()).unwrap();
+        }));
+        pool.sharing.condvar.notify_all();
+        let progressed = receive.recv_timeout(Duration::from_secs(2)).is_ok();
+        // Always release owned tasks, including when testing the broken code.
+        *release.0.lock().unwrap() = true;
+        release.1.notify_all();
+        if !progressed {
+            receive.recv_timeout(Duration::from_secs(2)).unwrap();
+        }
+        assert!(progressed, "a new connection waited behind occupied workers");
     }
 }
