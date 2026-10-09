@@ -88,3 +88,12 @@ major so local and CI evidence is comparable. Install PostgreSQL 14 client and
 server tools on `PATH`, or set `POSTGRES_TEST_MAJOR` explicitly when qualifying
 a deliberate future-major upgrade. OpenSSL is required only to generate the
 ephemeral test CA and hostile certificate fixtures.
+
+### Admission under contention
+
+Acquisition uses a FIFO queue shared by clones of the pool. New callers cannot
+overtake queued callers when a lease returns. Waiters are notified when capacity
+returns or the pool closes; acquisition no longer polls every 20 milliseconds.
+Timeouts and connection failures remove their admission ticket so later callers
+can proceed. This bounds admission by the configured deadline; it does not
+guarantee application latency or replace workload capacity testing.

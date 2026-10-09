@@ -8,6 +8,11 @@ This file records user-visible changes to Kujo, following
 
 ### Fixed
 
+- Admit database pool waiters in FIFO order and notify them when capacity returns,
+  replacing polling that allowed repeated acquisitions to starve older callers.
+  Keep connection setup and health checks outside the admission queue; timed-out
+  requests and failed connections cannot strand subsequent waiters.
+
 - Update Hickory DNS crates to 0.26.3 for upstream DNSSEC, retry-loop and
   CNAME security fixes, including the 0.26.2 regression corrections.
 

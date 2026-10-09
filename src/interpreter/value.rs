@@ -288,6 +288,152 @@ mod tests {
         current
     }
 
+    #[cfg(feature = "runtime-db")]
+    fn queued_pool(timeout: i64) -> ConnectionPool {
+        let mut config = HashMap::new();
+        config.insert("min_connections".into(), Value::Int(1));
+        config.insert("max_connections".into(), Value::Int(1));
+        config.insert("acquisition_timeout_ms".into(), Value::Int(timeout));
+        ConnectionPool::new("sqlite".into(), ":memory:".into(), config).unwrap()
+    }
+
+    #[cfg(feature = "runtime-db")]
+    fn await_waiters(pool: &ConnectionPool, count: usize) {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        while pool.state.lock().unwrap().waiters.len() != count {
+            assert!(std::time::Instant::now() < deadline, "waiter did not enqueue");
+            std::thread::yield_now();
+        }
+    }
+
+    #[cfg(feature = "runtime-db")]
+    #[test]
+    fn database_pool_serves_queued_callers_before_reacquisition() {
+        let pool = Arc::new(queued_pool(2000));
+        let held = pool.acquire().unwrap();
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut workers = Vec::new();
+        for index in 0..8 {
+            let p = Arc::clone(&pool);
+            let tx = tx.clone();
+            workers.push(std::thread::spawn(move || {
+                let connection = p.acquire().unwrap();
+                tx.send(index).unwrap();
+                p.release(connection).unwrap();
+            }));
+            await_waiters(&pool, index + 1);
+        }
+        pool.release(held).unwrap();
+        // A releasing thread must not repeatedly barge ahead of older waiters.
+        let again = pool.acquire().unwrap();
+        assert_eq!(rx.try_iter().collect::<Vec<_>>(), (0..8).collect::<Vec<_>>());
+        pool.release(again).unwrap();
+        for worker in workers {
+            worker.join().unwrap();
+        }
+        assert_eq!(pool.stats()["acquire_timeouts"], 0);
+        assert!(pool.state.lock().unwrap().waiters.is_empty());
+    }
+
+    #[cfg(feature = "runtime-db")]
+    #[test]
+    fn database_pool_slow_health_check_does_not_block_other_slots() {
+        let mut config = HashMap::new();
+        config.insert("min_connections".into(), Value::Int(2));
+        config.insert("max_connections".into(), Value::Int(2));
+        config.insert("health_check".into(), Value::Bool(true));
+        config.insert("acquisition_timeout_ms".into(), Value::Int(2000));
+        let pool =
+            Arc::new(ConnectionPool::new("sqlite".into(), ":memory:".into(), config).unwrap());
+        pool.warm_minimum().unwrap();
+        let handle = match pool.state.lock().unwrap().available.front().unwrap().connection.clone()
+        {
+            super::DatabaseConnection::Sqlite(handle) => handle,
+            _ => unreachable!(),
+        };
+        let native_lock = handle.lock().unwrap();
+        let p = Arc::clone(&pool);
+        let first = std::thread::spawn(move || {
+            let c = p.acquire().unwrap();
+            p.release(c).unwrap();
+        });
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+        while pool.state.lock().unwrap().available.len() != 1 {
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::yield_now();
+        }
+        let p = Arc::clone(&pool);
+        let (tx, rx) = std::sync::mpsc::channel();
+        let second = std::thread::spawn(move || {
+            let result = p.acquire();
+            tx.send(result.is_ok()).unwrap();
+            if let Ok(c) = result {
+                p.release(c).unwrap();
+            }
+        });
+        let independent = rx.recv_timeout(std::time::Duration::from_secs(1));
+        drop(native_lock);
+        first.join().unwrap();
+        second.join().unwrap();
+        assert_eq!(independent.unwrap(), true);
+        assert_eq!(pool.stats()["available"], 2);
+    }
+
+    #[cfg(feature = "runtime-db")]
+    #[test]
+    fn database_pool_failed_connect_removes_admission_ticket() {
+        let path = std::env::temp_dir()
+            .join(format!(
+                "kujo-missing-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ))
+            .join("database.sqlite");
+        let mut config = HashMap::new();
+        config.insert("min_connections".into(), Value::Int(0));
+        config.insert("max_connections".into(), Value::Int(1));
+        let pool =
+            ConnectionPool::new("sqlite".into(), path.to_string_lossy().into(), config).unwrap();
+        for _ in 0..2 {
+            assert!(pool.acquire().err().unwrap().contains("Failed to create SQLite"));
+            assert!(pool.state.lock().unwrap().waiters.is_empty());
+            assert_eq!(pool.stats()["total"], 0);
+        }
+        assert_eq!(pool.stats()["connection_errors"], 2);
+    }
+
+    #[cfg(feature = "runtime-db")]
+    #[test]
+    fn database_pool_timeout_removes_ticket_and_close_wakes_waiter() {
+        let pool = Arc::new(queued_pool(100));
+        let held = pool.acquire().unwrap();
+        assert!(pool.acquire().err().unwrap().contains("deadline exceeded"));
+        assert!(pool.state.lock().unwrap().waiters.is_empty());
+        pool.release(held).unwrap();
+        let held = pool.acquire().unwrap();
+        pool.release(held).unwrap();
+        let pool = Arc::new(queued_pool(5000));
+        let held = pool.acquire().unwrap();
+        let p = Arc::clone(&pool);
+        let (tx, rx) = std::sync::mpsc::channel();
+        let worker = std::thread::spawn(move || {
+            tx.send(p.acquire().err()).unwrap();
+        });
+        await_waiters(&pool, 1);
+        pool.close();
+        assert_eq!(
+            rx.recv_timeout(std::time::Duration::from_secs(1)).unwrap().as_deref(),
+            Some("database pool is closed")
+        );
+        worker.join().unwrap();
+        pool.release(held).unwrap();
+        assert_eq!(pool.stats()["total"], 0);
+        assert!(pool.state.lock().unwrap().waiters.is_empty());
+    }
+
     #[test]
     fn function_body_retains_statements() {
         let body = LeakyFunctionBody::new(vec![Stmt::Break, Stmt::Continue]);
@@ -561,10 +707,28 @@ struct PoolMetrics {
 #[cfg(feature = "runtime-db")]
 #[derive(Default)]
 struct PoolState {
+    waiters: std::collections::VecDeque<Arc<()>>,
     available: std::collections::VecDeque<AvailableConnection>,
     checked_out: HashMap<usize, std::time::Instant>,
     total: usize,
     metrics: PoolMetrics,
+}
+
+// Remove admission tickets on every exit path, including failed connects and
+// timeouts. The next caller must not be stranded behind an abandoned ticket.
+#[cfg(feature = "runtime-db")]
+struct PoolWaiter<'a> {
+    pool: &'a ConnectionPool,
+    ticket: Arc<()>,
+}
+
+#[cfg(feature = "runtime-db")]
+impl Drop for PoolWaiter<'_> {
+    fn drop(&mut self) {
+        let mut state = self.pool.state.lock().unwrap_or_else(|e| e.into_inner());
+        state.waiters.retain(|ticket| !Arc::ptr_eq(ticket, &self.ticket));
+        self.pool.changed.notify_all();
+    }
 }
 
 /// Bounded database connection pool with verified-TLS PostgreSQL support.
@@ -583,6 +747,7 @@ pub struct ConnectionPool {
     health_check: bool,
     transport: PoolTransport,
     state: Arc<Mutex<PoolState>>,
+    changed: Arc<std::sync::Condvar>,
     closed: Arc<AtomicBool>,
 }
 
@@ -696,6 +861,7 @@ impl ConnectionPool {
             health_check,
             transport,
             state: Arc::new(Mutex::new(PoolState::default())),
+            changed: Arc::new(std::sync::Condvar::new()),
             closed: Arc::new(AtomicBool::new(false)),
         })
     }
@@ -717,14 +883,46 @@ impl ConnectionPool {
 
     pub fn acquire(&self) -> Result<DatabaseConnection, String> {
         let deadline = std::time::Instant::now() + self.acquisition_timeout;
-
         loop {
-            if self.closed.load(Ordering::Acquire) {
-                return Err("database pool is closed".to_string());
-            }
-            let candidate = {
-                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
-                state.available.pop_front()
+            // Admission is FIFO, but connection setup/health checks run outside
+            // the queue so one slow socket cannot block other available slots.
+            let (candidate, reserved) = {
+                let waiter = PoolWaiter { pool: self, ticket: Arc::new(()) };
+                self.state
+                    .lock()
+                    .map_err(|_| "database pool lock poisoned")?
+                    .waiters
+                    .push_back(Arc::clone(&waiter.ticket));
+
+                loop {
+                    let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
+                    if self.closed.load(Ordering::Acquire) {
+                        return Err("database pool is closed".to_string());
+                    }
+                    let now = std::time::Instant::now();
+                    if now >= deadline {
+                        state.metrics.acquire_timeout_count += 1;
+                        return Err("database pool acquisition deadline exceeded".to_string());
+                    }
+                    let first =
+                        state.waiters.front().is_some_and(|t| Arc::ptr_eq(t, &waiter.ticket));
+                    if !first || (state.available.is_empty() && state.total >= self.max_connections)
+                    {
+                        let (state, _) = self
+                            .changed
+                            .wait_timeout(state, deadline - now)
+                            .map_err(|_| "database pool lock poisoned")?;
+                        drop(state);
+                        continue;
+                    }
+                    let candidate = state.available.pop_front();
+                    let reserved = candidate.is_none();
+                    if reserved {
+                        state.total += 1;
+                    }
+                    drop(state);
+                    break (candidate, reserved);
+                }
             };
             if let Some(candidate) = candidate {
                 let now = std::time::Instant::now();
@@ -744,15 +942,6 @@ impl ConnectionPool {
                 return self.checkout(candidate.connection, candidate.created_at);
             }
 
-            let reserved = {
-                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
-                if state.total < self.max_connections {
-                    state.total += 1;
-                    true
-                } else {
-                    false
-                }
-            };
             if reserved {
                 match self.create_connection() {
                     Ok(connection) => return self.checkout(connection, std::time::Instant::now()),
@@ -761,16 +950,11 @@ impl ConnectionPool {
                             self.state.lock().map_err(|_| "database pool lock poisoned")?;
                         state.total = state.total.saturating_sub(1);
                         state.metrics.connection_error_count += 1;
+                        self.changed.notify_all();
                         return Err(error);
                     }
                 }
             }
-            if std::time::Instant::now() >= deadline {
-                let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
-                state.metrics.acquire_timeout_count += 1;
-                return Err("database pool acquisition deadline exceeded".to_string());
-            }
-            std::thread::sleep(std::time::Duration::from_millis(20));
         }
     }
 
@@ -804,17 +988,20 @@ impl ConnectionPool {
             result => {
                 let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
                 state.total = state.total.saturating_sub(1);
+                self.changed.notify_all();
                 return result.map(|_| ());
             }
         };
         if self.closed.load(Ordering::Acquire) {
             let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
             state.total = state.total.saturating_sub(1);
+            self.changed.notify_all();
             return Ok(());
         }
         if let Err(error) = self.reset_connection(&connection) {
             let mut state = self.state.lock().map_err(|_| "database pool lock poisoned")?;
             state.total = state.total.saturating_sub(1);
+            self.changed.notify_all();
             state.metrics.reset_failure_count += 1;
             return Err(error);
         }
@@ -837,6 +1024,7 @@ impl ConnectionPool {
                 idle_since: std::time::Instant::now(),
             });
         }
+        self.changed.notify_all();
         Ok(())
     }
 
@@ -863,6 +1051,7 @@ impl ConnectionPool {
         let drained = state.available.len();
         state.available.clear();
         state.total = state.total.saturating_sub(drained);
+        self.changed.notify_all();
     }
 
     fn create_connection(&self) -> Result<DatabaseConnection, String> {
@@ -950,6 +1139,7 @@ impl ConnectionPool {
         let mut state = self.state.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         state.total = state.total.saturating_sub(1);
         state.metrics.eviction_count += 1;
+        self.changed.notify_all();
     }
 }
 
