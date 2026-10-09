@@ -67,7 +67,8 @@ Baseline reproductions on the starting-tree debug binary:
 | H06 | P1 | Context fitting | Repeated cloning/recounting and vector removal made pruning quadratic | Same-source isolated benchmark; estimator implementation | Estimate once, prune in one ordered pass, share strings | Fixed; exhaustive small-input equivalence and maximum-size regression |
 | H07 | P1 | Process lifecycle | Deadline stopped after direct child exit, before output drain | 100 ms timeout returned after 2.15 s | Keep deadline/cancellation through output drain; Unix group cleanup | Fixed for ordinary Unix descendants; platform limits below |
 | H08 | P2 | Agent/release docs | Agent guide advertised stale 1.7 while source/tag/docs identify 1.8 | `AGENTS.md`, Cargo manifest, release guard | Correct version references; extend existing release gate | Fixed |
-| H09 | P2 | External process bounds | `gif_to_webp` still uses raw `Command::output`; Windows process-tree cleanup incomplete | `filesystem.rs` converter and `system.rs::terminate_process_tree` | Record bounded-lifecycle follow-up; capability corrected now | Open; needs platform/tool fixtures |
+| H09 | P2 | External process bounds | GIF capture/deadline and Windows descendant cleanup were unbounded/incomplete | Original converter and `terminate_process_tree`; follow-up below | Shared bounded converter; per-command Windows jobs; regression fixtures | Implemented in `050a0cd`; see follow-up verification |
+| H10 | P1 | Dependency security | Three GitHub advisories affect locked Hickory resolver 0.26.1 | Dependabot alerts 7–9, vulnerable ranges and upstream release notes | Require and lock 0.26.3 security/regression fixes | Implemented in `8e41c54`; verification below |
 
 P0 is remediation priority for boundary/data-integrity defects, not a CVSS severity
 claim. Network exploitation requires an application granting network access and
@@ -221,11 +222,11 @@ no necessary model context or observability is removed. Dependency count remains
 ## Remaining work and cross-repository follow-ups
 
 - P0: no known introduced regression; no further validated P0 fix deferred.
-- P1: Windows descendant cleanup and processes deliberately escaping Unix groups
-  need platform-specific isolation/cancellable-pipe design; current code does not
-  promise a sandbox. No Windows validation was available on this host.
-- P2: move GIF conversion to a bounded process helper with real converter fixtures;
-  the capability bypass is fixed, but raw output/time resource limits remain.
+- P1: processes deliberately escaping Unix groups still require external isolation;
+  current code does not promise a sandbox. Windows/GIF H09 was implemented in the
+  follow-up below, with platform verification recorded separately.
+- P2: no remaining GIF capture/deadline implementation work. Converter heap use and
+  output-file size are outside these process capture limits.
 - Needs more evidence: RSS and end-to-end agent workloads; optional remote database
   behavior; release-platform integration; whole-repository exhaustive source coverage.
 - P3 / not worth changing: cosmetic rewrites, redundant report generation, removing
@@ -278,3 +279,138 @@ the sealed scan intentionally retains the original snapshot. Its reported rollou
 usage is 22,185,269 total tokens (22,114,650 input, including 21,477,760 cached input;
 70,619 output) across three threads. This is audit-tool accounting, not runtime
 model token consumption or a token-efficiency improvement claim.
+
+
+## H09 follow-up — Windows descendants and GIF conversion
+
+Requested explicitly after the original audit. Starting branch `main`, clean SHA
+`4a2663a77690315761ec55712fb9cf43136aa20c`; process implementation SHA
+`050a0cdda759e57ddab7606359497241dddf4fd5` (initial implementation `9fa3a88`).
+The DNS dependency follow-up is `8e41c54`; the subsequent documentation commit
+records the final receipt; obtain its SHA with the report's `git log` command above.
+No sibling implementation changes or new packages. The existing windows-sys
+dependency enables its ToolHelp feature; three Hickory crate versions change below.
+
+### Changes and compatibility
+
+- **Windows ownership:** `src/interpreter/native_functions/process_job_windows.rs` now creates a per-command,
+  non-inheritable kill-on-close job, starts the command suspended, assigns it,
+  and resumes its initial thread only after admission. Handle ownership uses
+  `OwnedHandle`; failed admission/resume kills and reaps the suspended child.
+  The shared native runner in `system.rs` terminates the whole job on timeout or
+  cancellation even after the original parent exits. Closing the job on return
+  also cleans up surviving background descendants. Existing runtime-wide jobs
+  nest with command jobs; incompatible job restrictions fail closed.
+- **GIF bounds:** `filesystem.rs` delegates to the same runner, preserving the
+  boolean success value, argv execution, EOF stdin, and exact missing-tool and
+  ordinary failure messages. Defaults are 30,000 ms and 1,048,576 captured bytes
+  per stream. Failed stderr explicitly marks truncation; excess incidental output
+  does not turn a successful conversion into a failure. Timeout and cancellation
+  are errors rather than indefinite waits. No public arguments, ProcessResult
+  keys, CLI flags, file formats, schemas, config or environment variables changed.
+- **Real converter correctness:** the installed gif2webp 1.6.0 rejected the existing
+  `-lossless` flag. Omitting it selects the converter's documented lossless default.
+  An explicit final `--` input separator prevents filenames beginning with `-`
+  from becoming options. A generated 2×2 GIF with such a name now converts with
+  identical decoded RGBA pixels through both VM and interpreter. See the
+  [gif2webp option reference](https://developers.google.com/speed/webp/docs/gif2webp).
+- **Verification isolation:** the first full rerun failed the filesystem contract
+  at `write_file_atomic_beneath`; it passed alone. Code-supported cause: the existing
+  env/OS/path contract changes process-wide cwd while other tests derive temporary
+  paths from cwd, then deletes that directory. Run the cwd-changing
+  contract in its own test subprocess, preserving every assertion and eliminating
+  its effect on concurrent tests. No production filesystem behavior changed.
+
+The first native Windows CI compile caught a binary-only module reference that
+an isolated helper cross-check could not detect. The helper now lives under the
+shared native-functions module, so library, CLI and kujo-run resolve the same code.
+CI logs also confirmed Cargo already compiles vendored OpenSSL (the manifest enables
+that feature unconditionally). Removed the preceding vcpkg OpenSSL build, whose
+copy was unused by openssl-sys's vendored path. The first run spent 7m 28s in that
+redundant setup step; no end-to-end build speed percentage is claimed.
+
+### Regression coverage and measured bounds
+
+`system.rs` has hermetic converter fixtures for success, missing executable,
+ordinary/empty failure, excess output, deadline and cancellation. A failed fixture
+writes 65,536 bytes to each stream; with a 1,024-byte test capture limit the returned
+stderr contains exactly 1,024 payload bytes plus an explicit truncation marker.
+A public-CLI fixture emits exactly 2,097,152 stderr bytes; each runtime reports
+exactly 1,048,576 payload bytes plus the truncation marker and diagnostic framing.
+This fixture sets PATH only on the Kujo subprocess and requires no installed codec.
+A 100 ms deadline stops a finite 3-second fixture with a less-than-2-second outer
+assertion. These demonstrate bounds, not a general throughput or RSS improvement.
+Previously the converter had neither deadline nor capture limit.
+
+`tests/process_lifetime_contracts.rs` adds Windows parent-exit/inherited-pipe tests
+for timeout and cancellation in both runtimes, retaining actual descendant process
+handles and asserting termination. Existing forced-runtime-exit/nested ownership
+coverage remains. The filesystem conformance workflow runs these plus fake GIF
+fixtures on Linux, macOS and Windows. Linux installs WebP and explicitly runs the
+otherwise opt-in real-codec test; ordinary local suites do not require that tool.
+Generated unsafe inventory was regenerated with zero unclassified entries.
+The exact executable-site gate increases from 86 to 99 after review of twelve
+new lifetime-module sites (checked handle adoption, sized buffers, suspended-child
+assignment/resume and job termination) and one test wait on an owned process handle.
+Module counts remain exact at 4 runtime-lifetime, 12 command-job and 4 lifetime-test
+sites; other module
+ratchets are unchanged. The initial full run correctly rejected the old budget;
+all three inventory tests passed after this explicit reviewed baseline update.
+
+### Remaining limits
+
+Kujo remains a trusted-code runtime rather than a sandbox. A Unix descendant can
+escape its process group. On Windows, stable Rust requires suspended spawn followed
+by job assignment: forced runtime termination in that narrow interval may orphan a
+suspended child, although application code has not run. The existing
+`--kill-children-on-exit` outer job covers this interval as well. Whole-runtime
+external supervision remains appropriate for hostile code. GIF wall-time/capture limits do
+not cap converter heap usage or output-file size, and conversion failures retain
+the existing converter-owned partial-output semantics. No cross-repository change
+is required. Windows background descendants intentionally cannot outlive a native
+command call; consumers relying on that behavior must use an external supervisor.
+
+### Follow-up verification receipt
+
+Local logs: `.audit-evidence/process-followup-*.log`, `gif-followup-tests.log`,
+`gif-real-tests.log`, and `windows-process-check.log` (ignored, concise evidence here).
+
+| Command/check | Result |
+| --- | --- |
+| `CARGO_PROFILE_TEST_DEBUG=0 cargo test --locked --test process_lifetime_contracts` before edits | Passed on host; [baseline CI 37944723166](https://github.com/kujolang/kujo/actions/runs/37944723166) at starting SHA subsequently passed Windows, Linux and macOS |
+| `CARGO_PROFILE_TEST_DEBUG=0 cargo test --locked gif_converter --lib` | 4 passed |
+| `CARGO_PROFILE_TEST_DEBUG=0 cargo test --locked --test gif_conversion_contracts` | Public output-bound test passed in both runtimes; real-codec test intentionally opt-in |
+| `CARGO_PROFILE_TEST_DEBUG=0 cargo test --locked --test unsafe_inventory_contract` | 3 passed after reviewed Windows FFI baseline update |
+| `CARGO_PROFILE_TEST_DEBUG=0 cargo test --locked --test gif_conversion_contracts -- --ignored` | Passed, real WebP 1.6.0, both runtimes; initially exposed and then verified the lossless flag fix |
+| `CARGO_PROFILE_DEV_DEBUG=0 cargo check --locked` | Passed |
+| `CARGO_PROFILE_DEV_DEBUG=0 cargo clippy --locked --all-targets --all-features -- -D warnings` | Passed; existing vendored tiny_http warnings only |
+| `cargo fmt --check`; `git diff --check` | Passed |
+| `bash scripts/generate_unsafe_inventory.sh --strict` | Passed |
+| `cargo check --manifest-path .audit-evidence/windows-process-check/Cargo.toml --target x86_64-pc-windows-msvc` | Passed; source-including probe type-checks the actual Windows lifetime module, not a native execution claim |
+| `CARGO_PROFILE_TEST_DEBUG=0 KUJO_ENABLE_SOCKET_TESTS=1 cargo test --locked --no-fail-fast` | Passed on final `8e41c54` code/dependencies: 2,980 tests across 104 test/doctest receipts (947 library and 990 binary unit tests), zero failures; opt-in real codec tested separately. Intermediate runs exposed the cwd race, docs arity mismatch and reviewed FFI budget update; all are corrected. |
+| `CARGO_PROFILE_DEV_DEBUG=0 cargo run --locked -- test --runtime vm` and `--runtime dual` | Each passed 150/150; 11 policy skips, dual used zero interpreter fallbacks |
+| Native platform CI | [Conformance run 37950125629](https://github.com/kujolang/kujo/actions/runs/37950125629) at `050a0cd` passed Linux, macOS and Windows, including 4 Windows GIF unit fixtures and 5 Windows lifecycle tests (10.24 s), with both runtime modes. The initial `9fa3a88` run caught the CLI-only module reference. Final code/dependency [conformance run 37950698454](https://github.com/kujolang/kujo/actions/runs/37950698454) at `8e41c54` also passed all three platforms; Windows lifecycle tests passed in 10.23 s. |
+
+
+### Newly surfaced dependency advisory follow-up
+
+The push surfaced Dependabot alerts 7–9 on `hickory-resolver` 0.26.1:
+[DNSSEC validation failures](https://github.com/advisories/GHSA-5j98-2g5x-46v6)
+and [unbounded truncated-response retry](https://github.com/advisories/GHSA-6w6g-hm98-mhgm)
+are rated high; [irrelevant CNAME following](https://github.com/advisories/GHSA-6f2x-v7q7-m7m5)
+is rated medium. These are upstream dependency findings, not newly claimed Kujo
+exploit reproductions. The manifest enables the resolver in the default network
+feature; the locked version matches all three advisory ranges.
+
+Updated the manifest minimum and lockfile to 0.26.3 for resolver/net/proto, retaining
+all other package versions and the package count. The upstream
+[0.26.3 release](https://github.com/hickory-dns/hickory-dns/releases/tag/v0.26.3)
+also corrects DNSSEC and other regressions in the first patched 0.26.2 release.
+Resolver minimum Rust remains 1.88, below Kujo's 1.89 floor. No Kujo API/schema
+changed; upstream malicious/invalid DNS failure behavior is intentionally corrected.
+Six existing DNS/options/negative-answer/DNSSEC/private-destination contract tests
+passed under 0.26.3. Full post-update tests and Clippy are recorded in the final receipt.
+`cargo audit --deny warnings --ignore RUSTSEC-2025-0141 --json` passed with zero
+vulnerabilities and no remaining policy warnings. After the update push, GitHub
+reported zero open Dependabot alerts; the three vulnerable-version alerts closed. No new suppression was added; the existing
+build-only unmaintained bincode exception remains the original policy.
