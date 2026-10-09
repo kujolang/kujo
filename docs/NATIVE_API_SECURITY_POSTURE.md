@@ -492,4 +492,5 @@ These are wall-time and capture bounds, not converter memory or output-file quot
 Processes escaping Unix groups still require external process isolation. Windows
 admission uses stable Rust's suspended spawn then job assignment; forced runtime
 termination in that narrow admission interval can leave a suspended child, although
-no child application code has run. Kujo is not a sandbox.
+no child application code has run. The existing `--kill-children-on-exit` outer
+job covers this admission interval too. Kujo is not a sandbox.

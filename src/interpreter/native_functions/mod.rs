@@ -3166,6 +3166,30 @@ mod tests {
 
     #[test]
     fn test_release_hardening_env_os_path_and_assert_contracts() {
+        // chdir affects the entire test process. Run this contract alone in a
+        // child so parallel filesystem tests cannot create paths inside the
+        // temporary cwd that this test subsequently removes.
+        const ISOLATED: &str = "KUJO_ISOLATED_ENV_OS_PATH_CONTRACT";
+        if std::env::var_os(ISOLATED).is_none() {
+            let test_name = format!(
+                "{}::test_release_hardening_env_os_path_and_assert_contracts",
+                module_path!().split_once("::").unwrap().1
+            );
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", &test_name, "--nocapture"])
+                .env(ISOLATED, "1")
+                .current_dir(env!("CARGO_MANIFEST_DIR"))
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "isolated cwd contract failed: {}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed"));
+            return;
+        }
         let _cwd_guard = cwd_test_lock().lock().expect("cwd test lock should not be poisoned");
         let mut interpreter = Interpreter::new();
 

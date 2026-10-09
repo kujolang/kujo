@@ -1,3 +1,7 @@
+#[cfg(windows)]
+#[path = "process_job_windows.rs"]
+mod command_job;
+
 // File: src/interpreter/native_functions/system.rs
 //
 // System-related native functions (env vars, time, etc.)
@@ -728,8 +732,7 @@ fn run_command_with_spawn_error(
     }
 
     #[cfg(windows)]
-    let (mut child, job) = crate::process_lifetime::command_job::CommandJob::spawn(&mut command)
-        .map_err(spawn_error)?;
+    let (mut child, job) = command_job::CommandJob::spawn(&mut command).map_err(spawn_error)?;
     #[cfg(not(windows))]
     let mut child = command.spawn().map_err(spawn_error)?;
 

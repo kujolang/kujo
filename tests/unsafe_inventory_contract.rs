@@ -148,10 +148,16 @@ fn unsafe_inventory_enforces_current_executable_budget() {
     // VM-owned context/vector pointers remain live for the synchronous call;
     // null/negative/out-of-range slots reject, get/get_mut bound access, and
     // only Int/Bool scalars are read or updated without resizing the vector.
+    // Per-command Windows ownership adds twelve reviewed sites: fresh job,
+    // snapshot and thread handles are checked before single OwnedHandle adoption;
+    // job limits and THREADENTRY32 use live, correctly sized buffers; assignment
+    // precedes resuming the owned suspended child's initial thread. Termination
+    // uses the retained job handle. One test site waits on an owned descendant
+    // process handle. No raw handle is inherited or adopted more than once.
     // Preserve exact total and module counts so new FFI requires explicit review.
     assert_eq!(
-        executable_count, 86,
-        "executable unsafe budget changed: expected 86, got {executable_count}"
+        executable_count, 99,
+        "executable unsafe budget changed: expected 99, got {executable_count}"
     );
 
     let csv = fs::read_to_string(&output_csv).expect("unsafe inventory csv should exist");
@@ -186,9 +192,11 @@ fn unsafe_inventory_enforces_current_executable_budget() {
         })
         .count();
     assert_eq!(confined_write_count, 6, "review any new confined-write FFI site");
-    for (path, expected) in
-        [("src/process_lifetime.rs", 4), ("tests/process_lifetime_contracts.rs", 3)]
-    {
+    for (path, expected) in [
+        ("src/process_lifetime.rs", 4),
+        ("src/interpreter/native_functions/process_job_windows.rs", 12),
+        ("tests/process_lifetime_contracts.rs", 4),
+    ] {
         let count = csv
             .lines()
             .skip(1)
