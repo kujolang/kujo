@@ -12,7 +12,7 @@ use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender};
@@ -1319,17 +1319,21 @@ fn store_ai_cassette(
     let serialized = serde_json::to_string_pretty(&cassette)
         .map_err(|error| format!("{} failed: cassette serialization error: {}", surface, error))?;
     let path = cassette_path(dir, key);
-    let temp_path = dir.join(format!(".{}.{}.tmp", key, std::process::id()));
-    fs::write(&temp_path, serialized).map_err(|error| {
+    let mut temporary = tempfile::Builder::new()
+        .prefix(".kujo-ai-cassette-")
+        .tempfile_in(dir)
+        .map_err(|error| {
+            format!("{} failed: could not create AI cassette staging file: {}", surface, error)
+        })?;
+    temporary.write_all(serialized.as_bytes()).map_err(|error| {
         format!(
             "{} failed: could not write AI cassette '{}': {}",
             surface,
-            temp_path.display(),
+            temporary.path().display(),
             error
         )
     })?;
-    fs::rename(&temp_path, &path).map_err(|error| {
-        let _ = fs::remove_file(&temp_path);
+    temporary.persist(&path).map(|_| ()).map_err(|error| {
         format!(
             "{} failed: could not finalize AI cassette '{}': {}",
             surface,
@@ -1376,7 +1380,10 @@ fn run_ai_request(
     let surface_for_task = surface.to_string();
 
     let request_result = network_policy::run_blocking_http_task(surface, move || {
-        let client = network_policy::build_http_client(Duration::from_secs_f64(timeout_seconds))?;
+        let client = network_policy::build_http_client_for_url(
+            &endpoint,
+            Duration::from_secs_f64(timeout_seconds),
+        )?;
         let mut request = client.post(&endpoint);
         request = request.header("Content-Type", "application/json");
         if surface_for_task == "ai_stream_chat" {
@@ -1955,7 +1962,8 @@ pub fn handle_with_interpreter(
                 for url in url_strings {
                     let handle = std::thread::spawn(move || -> Result<(u16, String), String> {
                         network_policy::enforce_http_url_destination_policy(&url, "HTTP GET")?;
-                        let client = network_policy::build_http_client(
+                        let client = network_policy::build_http_client_for_url(
+                            &url,
                             network_policy::default_http_timeout(),
                         )?;
                         let response = client
@@ -4502,6 +4510,89 @@ mod tests {
         assert!(
             matches!(invalid.get("kind"), Some(Value::Str(kind)) if kind.as_ref() == "invalid_response")
         );
+    }
+
+    #[test]
+    fn cassette_concurrent_publication_is_complete_private_and_redacted() {
+        let dir = tempfile::tempdir().unwrap();
+        let barrier = std::sync::Barrier::new(8);
+        std::thread::scope(|scope| {
+            for index in 0..8 {
+                let dir = dir.path();
+                let barrier = &barrier;
+                scope.spawn(move || {
+                    let config = AiRequestConfig {
+                        endpoint: "https://example.test/v1/chat".into(),
+                        model: "test".into(),
+                        api_key: Some("synthetic-secret".into()),
+                        timeout_seconds: 1.0,
+                        headers: Vec::new(),
+                        cassette: AiCassetteMode::Off,
+                        structured_errors: false,
+                        provider: String::new(),
+                    };
+                    let body = format!("{index}:{} synthetic-secret", "x".repeat(1000 + index));
+                    barrier.wait();
+                    store_ai_cassette(
+                        "ai_chat",
+                        dir,
+                        "shared",
+                        &Value::Null,
+                        &config,
+                        200,
+                        &DictMap::default(),
+                        &body,
+                    )
+                    .unwrap();
+                });
+            }
+        });
+        let path = cassette_path(dir.path(), "shared");
+        let bytes = fs::read(&path).unwrap();
+        let stored: StoredAiCassette = serde_json::from_slice(&bytes).unwrap();
+        assert!(!stored.response.body.contains("synthetic-secret"));
+        let index: usize = stored.response.body.split(':').next().unwrap().parse().unwrap();
+        assert!(index < 8);
+        assert!(stored
+            .response
+            .body
+            .starts_with(&format!("{index}:{} ", "x".repeat(1000 + index))));
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(fs::metadata(path).unwrap().permissions().mode() & 0o777, 0o600);
+        }
+    }
+
+    #[test]
+    fn cassette_failed_publication_cleans_staging_and_preserves_target() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = cassette_path(dir.path(), "blocked");
+        fs::create_dir(&path).unwrap();
+        let config = AiRequestConfig {
+            endpoint: "https://example.test".into(),
+            model: "test".into(),
+            api_key: None,
+            timeout_seconds: 1.0,
+            headers: Vec::new(),
+            cassette: AiCassetteMode::Off,
+            structured_errors: false,
+            provider: String::new(),
+        };
+        assert!(store_ai_cassette(
+            "ai_chat",
+            dir.path(),
+            "blocked",
+            &Value::Null,
+            &config,
+            200,
+            &DictMap::default(),
+            "body"
+        )
+        .is_err());
+        assert!(path.is_dir());
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
     }
 
     #[test]

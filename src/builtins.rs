@@ -1783,7 +1783,10 @@ pub fn http_get(url: &str) -> Result<DictMap, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP GET")?;
     let url = url.to_string();
     network_policy::run_blocking_http_task("HTTP GET", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &url,
+            network_policy::default_http_timeout(),
+        )?;
         let response = client.get(&url).send().map_err(|e| format!("HTTP GET failed: {}", e))?;
         http_response_to_dict("HTTP GET", response)
     })
@@ -1815,7 +1818,10 @@ pub fn http_post(url: &str, body_json: &str) -> Result<DictMap, String> {
     let url = url.to_string();
     let body_json = body_json.to_string();
     network_policy::run_blocking_http_task("HTTP POST", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &url,
+            network_policy::default_http_timeout(),
+        )?;
         let response = client
             .post(&url)
             .header("Content-Type", "application/json")
@@ -1835,7 +1841,10 @@ pub fn http_put(url: &str, body_json: &str) -> Result<DictMap, String> {
     let url = url.to_string();
     let body_json = body_json.to_string();
     network_policy::run_blocking_http_task("HTTP PUT", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &url,
+            network_policy::default_http_timeout(),
+        )?;
         let response = client
             .put(&url)
             .header("Content-Type", "application/json")
@@ -1854,7 +1863,10 @@ pub fn http_delete(url: &str) -> Result<DictMap, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP DELETE")?;
     let url = url.to_string();
     network_policy::run_blocking_http_task("HTTP DELETE", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &url,
+            network_policy::default_http_timeout(),
+        )?;
         let response =
             client.delete(&url).send().map_err(|e| format!("HTTP DELETE failed: {}", e))?;
         http_response_to_dict("HTTP DELETE", response)
@@ -1869,7 +1881,10 @@ pub fn http_get_binary(url: &str) -> Result<Vec<u8>, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP GET request")?;
     let url = url.to_string();
     network_policy::run_blocking_http_task("HTTP GET request", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &url,
+            network_policy::default_http_timeout(),
+        )?;
         let response =
             client.get(&url).send().map_err(|e| format!("HTTP GET request failed: {}", e))?;
         if !response.status().is_success() {
@@ -2135,7 +2150,10 @@ pub fn oauth2_get_token(
     let redirect_uri = redirect_uri.to_string();
 
     network_policy::run_blocking_http_task("OAuth2 token request", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &token_url,
+            network_policy::default_http_timeout(),
+        )?;
         let params = [
             ("grant_type", "authorization_code"),
             ("code", code.as_str()),
@@ -2195,7 +2213,10 @@ pub fn http_get_stream(url: &str) -> Result<Vec<u8>, String> {
     network_policy::enforce_http_url_destination_policy(url, "HTTP GET stream")?;
     let url = url.to_string();
     network_policy::run_blocking_http_task("HTTP GET stream", move || {
-        let client = network_policy::build_http_client(network_policy::default_http_timeout())?;
+        let client = network_policy::build_http_client_for_url(
+            &url,
+            network_policy::default_http_timeout(),
+        )?;
         let response = client
             .get(&url)
             .send()

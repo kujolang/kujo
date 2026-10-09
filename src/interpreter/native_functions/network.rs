@@ -918,19 +918,12 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                     Some(Value::Str(host)),
                     Some(Value::Int(port)),
                 ) => {
-                    if let Err(error) = network_policy::enforce_host_port_destination_policy(
-                        host.as_ref(),
-                        *port,
-                        "udp_send_to",
-                    ) {
-                        return Some(Value::ErrorObject {
-                            message: error,
-                            stack: Vec::new(),
-                            line: None,
-                            cause: None,
-                        });
-                    }
-                    let address = format!("{}:{}", host.as_ref(), port);
+                    let address = match network_policy::udp_destination(host.as_ref(), *port) {
+                        Ok(address) => address,
+                        Err(error) => return Some(Value::ErrorObject {
+                            message: error, stack: Vec::new(), line: None, cause: None,
+                        }),
+                    };
                     let socket_guard = match lock_or_network_error(socket, "udp_send") {
                         Ok(guard) => guard,
                         Err(error) => return Some(error),
@@ -954,19 +947,12 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                     Some(Value::Str(host)),
                     Some(Value::Int(port)),
                 ) => {
-                    if let Err(error) = network_policy::enforce_host_port_destination_policy(
-                        host.as_ref(),
-                        *port,
-                        "udp_send_to",
-                    ) {
-                        return Some(Value::ErrorObject {
-                            message: error,
-                            stack: Vec::new(),
-                            line: None,
-                            cause: None,
-                        });
-                    }
-                    let address = format!("{}:{}", host.as_ref(), port);
+                    let address = match network_policy::udp_destination(host.as_ref(), *port) {
+                        Ok(address) => address,
+                        Err(error) => return Some(Value::ErrorObject {
+                            message: error, stack: Vec::new(), line: None, cause: None,
+                        }),
+                    };
                     let socket_guard = match lock_or_network_error(socket, "udp_receive") {
                         Ok(guard) => guard,
                         Err(error) => return Some(error),

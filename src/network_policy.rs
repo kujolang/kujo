@@ -3,6 +3,7 @@ use reqwest::blocking::{Client, Response as BlockingResponse};
 use socket2::{Domain, Protocol, SockAddr, Socket, Type};
 use std::io::Read;
 use std::net::{IpAddr, SocketAddr, TcpStream, ToSocketAddrs, UdpSocket};
+use std::sync::Arc;
 use std::time::Duration;
 
 pub const DEFAULT_NETWORK_CONNECT_TIMEOUT_MS: u64 = 10_000;
@@ -65,6 +66,9 @@ fn is_blocked_destination(ip: IpAddr) -> bool {
                 || ipv4.is_unspecified()
         }
         IpAddr::V6(ipv6) => {
+            if let Some(ipv4) = ipv6.to_ipv4_mapped() {
+                return is_blocked_destination(IpAddr::V4(ipv4));
+            }
             ipv6.is_loopback()
                 || ipv6.is_unspecified()
                 || ipv6.is_multicast()
@@ -72,6 +76,103 @@ fn is_blocked_destination(ip: IpAddr) -> bool {
                 || ipv6.is_unicast_link_local()
         }
     }
+}
+
+fn deny_private_destinations() -> Result<bool, String> {
+    Ok(parse_policy_mode()? == OutboundDestinationPolicy::DenyPrivate
+        && !private_destination_override_enabled())
+}
+
+fn check_destination_addresses(addresses: &[SocketAddr], surface: &str) -> Result<(), String> {
+    let mut blocked: Vec<_> =
+        addresses.iter().map(SocketAddr::ip).filter(|ip| is_blocked_destination(*ip)).collect();
+    blocked.sort_unstable();
+    blocked.dedup();
+    if blocked.is_empty() {
+        return Ok(());
+    }
+    Err(format!(
+        "{} blocked by outbound destination policy 'deny_private' (resolved to blocked addresses: {}). Set {}=1 to allow trusted local/private destinations.",
+        surface, blocked.iter().map(IpAddr::to_string).collect::<Vec<_>>().join(", "),
+        ALLOW_PRIVATE_DESTINATIONS_ENV
+    ))
+}
+
+fn checked_socket_addresses(
+    address: impl ToSocketAddrs,
+    surface: &str,
+) -> Result<Vec<SocketAddr>, String> {
+    let strict = deny_private_destinations()?;
+    let addresses: Vec<_> = address
+        .to_socket_addrs()
+        .map_err(|error| format!("{} failed to resolve network destination: {}", surface, error))?
+        .collect();
+    if strict {
+        check_destination_addresses(&addresses, surface)?;
+    }
+    Ok(addresses)
+}
+
+pub(crate) fn udp_destination(host: &str, port: i64) -> Result<SocketAddr, String> {
+    if !(1..=65535).contains(&port) {
+        return Err("udp_send_to failed: destination port must be 1-65535".to_owned());
+    }
+    checked_socket_addresses((host, port as u16), "udp_send_to")?
+        .into_iter()
+        .next()
+        .ok_or_else(|| "udp_send_to failed: no socket addresses resolved".to_owned())
+}
+
+// Validate the address set returned to reqwest's connector, rather than a
+// separate DNS lookup whose answer can change before the socket opens.
+struct StrictDnsResolver;
+
+impl reqwest::dns::Resolve for StrictDnsResolver {
+    fn resolve(&self, name: reqwest::dns::Name) -> reqwest::dns::Resolving {
+        let host = name.as_str().to_owned();
+        Box::pin(async move {
+            let addresses = tokio::task::spawn_blocking(move || {
+                let addresses: Vec<_> = (host.as_str(), 0).to_socket_addrs()?.collect();
+                check_destination_addresses(&addresses, "HTTP DNS").map_err(|error| {
+                    std::io::Error::new(std::io::ErrorKind::PermissionDenied, error)
+                })?;
+                Ok::<_, std::io::Error>(addresses)
+            })
+            .await??;
+            Ok(Box::new(addresses.into_iter()) as reqwest::dns::Addrs)
+        })
+    }
+}
+
+fn strict_redirect_policy() -> reqwest::redirect::Policy {
+    reqwest::redirect::Policy::custom(|attempt| {
+        if blocked_http_literal(attempt.url()) {
+            attempt.error("HTTP redirect blocked by outbound destination policy 'deny_private'")
+        } else {
+            // Domain names are checked by StrictDnsResolver at connection time.
+            reqwest::redirect::Policy::default().redirect(attempt)
+        }
+    })
+}
+
+fn blocked_http_literal(url: &reqwest::Url) -> bool {
+    match url.host() {
+        Some(url::Host::Ipv4(ip)) => is_blocked_destination(IpAddr::V4(ip)),
+        Some(url::Host::Ipv6(ip)) => is_blocked_destination(IpAddr::V6(ip)),
+        _ => false,
+    }
+}
+
+fn check_initial_http_literal(url: Option<&str>) -> Result<(), String> {
+    if let Some(url) = url {
+        let parsed = http_url_for_policy(url, "HTTP request")?;
+        if blocked_http_literal(&parsed) {
+            return Err(
+                "HTTP request blocked by outbound destination policy 'deny_private'".to_owned()
+            );
+        }
+    }
+    Ok(())
 }
 
 fn blocked_addresses_for_host_port(host: &str, port: u16) -> Result<Vec<IpAddr>, String> {
@@ -132,12 +233,16 @@ pub fn enforce_http_url_destination_policy(url: &str, surface: &str) -> Result<(
         ));
     }
 
-    let host = parsed.host_str().ok_or_else(|| {
+    let host = parsed.host().ok_or_else(|| {
         format!(
             "{} failed: URL '{}' is missing a host for destination policy evaluation",
             surface, url
         )
     })?;
+    let host = match host {
+        url::Host::Ipv6(ip) => ip.to_string(),
+        other => other.to_string(),
+    };
     let port = parsed.port_or_known_default().ok_or_else(|| {
         format!(
             "{} failed: URL '{}' has unsupported scheme/port for destination policy evaluation",
@@ -145,7 +250,7 @@ pub fn enforce_http_url_destination_policy(url: &str, surface: &str) -> Result<(
         )
     })? as i64;
 
-    enforce_host_port_destination_policy(host, port, surface)
+    enforce_host_port_destination_policy(&host, port, surface)
 }
 
 fn resolved_http_destination(
@@ -163,9 +268,12 @@ fn resolved_http_destination(
     }
 
     let host = parsed
-        .host_str()
-        .ok_or_else(|| format!("{} failed: URL '{}' is missing a host", surface, url))?
-        .to_string();
+        .host()
+        .ok_or_else(|| format!("{} failed: URL '{}' is missing a host", surface, url))?;
+    let host = match host {
+        url::Host::Ipv6(ip) => ip.to_string(),
+        other => other.to_string(),
+    };
     let port = parsed.port_or_known_default().ok_or_else(|| {
         format!(
             "{} failed: URL '{}' has unsupported scheme/port for destination resolution",
@@ -206,6 +314,7 @@ pub fn build_policy_http_client(
     follow_redirects: bool,
     surface: &str,
 ) -> Result<Client, String> {
+    let strict = force_deny_private || deny_private_destinations()?;
     let (_parsed, host, addresses) = resolved_http_destination(url, surface)?;
 
     if force_deny_private && follow_redirects {
@@ -230,15 +339,20 @@ pub fn build_policy_http_client(
                 blocked.iter().map(IpAddr::to_string).collect::<Vec<_>>().join(", ")
             ));
         }
-    } else {
-        enforce_http_url_destination_policy(url, surface)?;
+    } else if strict {
+        check_destination_addresses(&addresses, surface)?;
     }
 
     let mut builder = Client::builder().timeout(timeout);
     if !follow_redirects {
         builder = builder.redirect(reqwest::redirect::Policy::none());
+    } else if strict {
+        builder = builder.redirect(strict_redirect_policy());
     }
-    if pin_dns || force_deny_private {
+    if strict {
+        builder = builder.dns_resolver(Arc::new(StrictDnsResolver));
+    }
+    if pin_dns || strict {
         // A proxy can resolve the hostname again and bypass the pinned answer set.
         // Explicit pinning/strict destination policy therefore requires direct transport.
         builder = builder.no_proxy().resolve_to_addrs(&host, &addresses);
@@ -358,18 +472,54 @@ pub fn default_http_timeout() -> Duration {
     Duration::from_millis(DEFAULT_HTTP_TIMEOUT_MS)
 }
 
+// Retained for Rust consumers; native dispatch uses the URL-aware entrypoint.
+#[allow(dead_code)]
 pub fn build_http_client(timeout: Duration) -> Result<Client, String> {
-    Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|error| format!("Failed to create HTTP client: {}", error))
+    build_http_client_inner(timeout, None)
 }
 
+pub(crate) fn build_http_client_for_url(url: &str, timeout: Duration) -> Result<Client, String> {
+    build_http_client_inner(timeout, Some(url))
+}
+
+fn build_http_client_inner(timeout: Duration, url: Option<&str>) -> Result<Client, String> {
+    let mut builder = Client::builder().timeout(timeout);
+    if deny_private_destinations()? {
+        check_initial_http_literal(url)?;
+        builder = builder
+            .no_proxy()
+            .dns_resolver(Arc::new(StrictDnsResolver))
+            .redirect(strict_redirect_policy());
+    }
+    builder.build().map_err(|error| format!("Failed to create HTTP client: {}", error))
+}
+
+// Retained for Rust consumers; native dispatch uses the URL-aware entrypoint.
+#[allow(dead_code)]
 pub fn build_async_http_client(timeout: Duration) -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
-        .timeout(timeout)
-        .build()
-        .map_err(|error| format!("Failed to create async HTTP client: {}", error))
+    build_async_http_client_inner(timeout, None)
+}
+
+pub(crate) fn build_async_http_client_for_url(
+    url: &str,
+    timeout: Duration,
+) -> Result<reqwest::Client, String> {
+    build_async_http_client_inner(timeout, Some(url))
+}
+
+fn build_async_http_client_inner(
+    timeout: Duration,
+    url: Option<&str>,
+) -> Result<reqwest::Client, String> {
+    let mut builder = reqwest::Client::builder().timeout(timeout);
+    if deny_private_destinations()? {
+        check_initial_http_literal(url)?;
+        builder = builder
+            .no_proxy()
+            .dns_resolver(Arc::new(StrictDnsResolver))
+            .redirect(strict_redirect_policy());
+    }
+    builder.build().map_err(|error| format!("Failed to create async HTTP client: {}", error))
 }
 
 pub fn read_http_response_bytes(
@@ -482,9 +632,7 @@ pub fn apply_udp_socket_timeouts(socket: &UdpSocket, surface: &str) -> Result<()
 
 pub fn connect_tcp_stream(address: &str, surface: &str) -> Result<TcpStream, String> {
     let timeout = connect_timeout();
-    let addresses = address
-        .to_socket_addrs()
-        .map_err(|error| format!("{} failed to resolve '{}': {}", surface, address, error))?;
+    let addresses = checked_socket_addresses(address, surface)?;
 
     let mut last_error = None;
     for candidate in addresses {
@@ -518,9 +666,8 @@ pub fn connect_tcp_stream_bound(
         return Err(format!("{} failed: source_ip must be a unicast local address", surface));
     }
 
-    let mut candidates = (host, port)
-        .to_socket_addrs()
-        .map_err(|error| format!("{} failed to resolve '{}:{}': {}", surface, host, port, error))?
+    let mut candidates = checked_socket_addresses((host, port), surface)?
+        .into_iter()
         .filter(|candidate| candidate.is_ipv4() == source.is_ipv4())
         .collect::<Vec<_>>();
     candidates.sort_unstable();
@@ -648,6 +795,151 @@ mod tests {
             enforce_host_port_destination_policy("127.0.0.1", 8080, "tcp_connect")
                 .expect("default policy should keep backward-compatible permissive behavior");
         });
+    }
+
+    #[test]
+    fn mapped_ipv4_preserves_underlying_destination_policy() {
+        for address in [
+            "127.0.0.1",
+            "10.0.0.1",
+            "172.16.0.1",
+            "192.168.1.1",
+            "169.254.169.254",
+            "224.0.0.1",
+            "0.0.0.0",
+            "93.184.216.34",
+        ] {
+            let ip: std::net::Ipv4Addr = address.parse().unwrap();
+            assert_eq!(
+                is_blocked_destination(IpAddr::V6(ip.to_ipv6_mapped())),
+                is_blocked_destination(IpAddr::V4(ip)),
+                "{address}"
+            );
+        }
+    }
+
+    #[test]
+    fn strict_policy_checks_actual_socket_and_http_dns_addresses() {
+        with_policy_env(Some("deny_private"), None, || {
+            assert!(connect_tcp_stream("127.0.0.1:1", "tcp_connect")
+                .unwrap_err()
+                .contains("blocked by outbound"));
+            assert!(connect_tcp_stream_bound("::ffff:127.0.0.1", 1, "::1", "tcp_connect_bound")
+                .unwrap_err()
+                .contains("blocked by outbound"));
+            assert!(udp_destination("::ffff:127.0.0.1", 1)
+                .unwrap_err()
+                .contains("blocked by outbound"));
+            for url in ["http://127.0.0.1:1/", "http://[::1]:1/", "http://[::ffff:127.0.0.1]:1/"] {
+                assert!(build_http_client_for_url(url, default_http_timeout())
+                    .unwrap_err()
+                    .contains("blocked by outbound"));
+                assert!(build_async_http_client_for_url(url, default_http_timeout())
+                    .unwrap_err()
+                    .contains("blocked by outbound"));
+                assert!(enforce_http_url_destination_policy(url, "test")
+                    .unwrap_err()
+                    .contains("blocked by outbound"));
+            }
+            use reqwest::dns::Resolve;
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            let result = runtime.block_on(StrictDnsResolver.resolve("localhost".parse().unwrap()));
+            assert!(result.err().unwrap().to_string().contains("blocked by outbound"));
+            let mixed = ["93.184.216.34:80".parse().unwrap(), "127.0.0.1:80".parse().unwrap()];
+            assert!(check_destination_addresses(&mixed, "mixed DNS").is_err());
+        });
+    }
+
+    #[test]
+    fn strict_http_transports_reject_private_redirect_hops() {
+        with_policy_env(Some("deny_private"), None, || {
+            for asynchronous in [false, true] {
+                for destination in
+                    ["http://127.0.0.1:1/private", "http://[::ffff:127.0.0.1]:1/private"]
+                {
+                    let server = tiny_http::Server::http("127.0.0.1:0").unwrap();
+                    let start = format!("http://{}/start", server.server_addr());
+                    let worker = std::thread::spawn(move || {
+                        let request = server
+                            .recv_timeout(Duration::from_secs(5))
+                            .unwrap()
+                            .expect("initial request");
+                        request
+                            .respond(tiny_http::Response::empty(302).with_header(
+                                tiny_http::Header::from_bytes("Location", destination).unwrap(),
+                            ))
+                            .unwrap();
+                    });
+                    // This low-level builder deliberately bypasses initial URL
+                    // preflight to simulate a public server using local sockets.
+                    let error = if asynchronous {
+                        tokio::runtime::Runtime::new().unwrap().block_on(async {
+                            build_async_http_client(default_http_timeout())
+                                .unwrap()
+                                .get(&start)
+                                .send()
+                                .await
+                                .unwrap_err()
+                        })
+                    } else {
+                        build_http_client(default_http_timeout())
+                            .unwrap()
+                            .get(&start)
+                            .send()
+                            .unwrap_err()
+                    };
+                    worker.join().unwrap();
+                    assert!(error.is_redirect(), "{error:?}");
+                    assert!(format!("{error:?}").contains("deny_private"));
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn strict_redirect_policy_preserves_public_hops_and_default_loop_bound() {
+        let server = tiny_http::Server::http("127.0.0.1:0").unwrap();
+        let address = server.server_addr().to_ip().unwrap();
+        let worker = std::thread::spawn(move || {
+            for _ in 0..14 {
+                let Some(request) = server.recv_timeout(Duration::from_secs(5)).unwrap() else {
+                    break;
+                };
+                let response = if request.url() == "/done" {
+                    tiny_http::Response::empty(200)
+                } else {
+                    let path = if request.url() == "/start" { "done" } else { "loop" };
+                    tiny_http::Response::empty(302).with_header(
+                        tiny_http::Header::from_bytes(
+                            "Location",
+                            format!("http://public.test:{}/{path}", address.port()),
+                        )
+                        .unwrap(),
+                    )
+                };
+                request.respond(response).unwrap();
+            }
+        });
+        // DNS override is test-only; production validates all pinned addresses.
+        let client = Client::builder()
+            .no_proxy()
+            .timeout(Duration::from_secs(5))
+            .resolve("public.test", address)
+            .redirect(strict_redirect_policy())
+            .build()
+            .unwrap();
+        assert_eq!(
+            client
+                .get(format!("http://public.test:{}/start", address.port()))
+                .send()
+                .unwrap()
+                .status(),
+            200
+        );
+        let error =
+            client.get(format!("http://public.test:{}/loop", address.port())).send().unwrap_err();
+        assert!(error.is_redirect());
+        worker.join().unwrap();
     }
 
     #[test]

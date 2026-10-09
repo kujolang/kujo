@@ -1086,7 +1086,8 @@ pub fn handle(
             // Spawn async HTTP request
             AsyncRuntime::spawn_task(async move {
                 let result = async {
-                    let client = network_policy::build_async_http_client(
+                    let client = network_policy::build_async_http_client_for_url(
+                        url.as_ref(),
                         network_policy::default_http_timeout(),
                     )?;
                     let response = client
@@ -1188,7 +1189,8 @@ pub fn handle(
             // Spawn async HTTP request
             AsyncRuntime::spawn_task(async move {
                 let result = async {
-                    let client = network_policy::build_async_http_client(
+                    let client = network_policy::build_async_http_client_for_url(
+                        url.as_ref(),
                         network_policy::default_http_timeout(),
                     )?;
                     let mut request = client.post(url.as_ref()).body(body.as_ref().clone());
