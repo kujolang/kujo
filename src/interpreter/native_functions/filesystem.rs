@@ -1071,12 +1071,70 @@ fn extract_zip_archive_with_limits(
 
         reject_symlink_target_path(&output_path, &entry_name)?;
 
-        let mut output_file = File::create(&output_path).map_err(|error| {
-            format!("Failed to create output file '{}': {}", output_path.display(), error)
-        })?;
+        // Stage each entry until both the decoder and the declared length validate.
+        // Header sizes alone do not bound a malicious compressed stream.
+        let existing_permissions = match std::fs::metadata(&output_path) {
+            Ok(metadata) => Some(metadata.permissions()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => {
+                return Err(format!(
+                    "Failed to inspect output file '{}': {}",
+                    output_path.display(),
+                    error
+                ))
+            }
+        };
+        if existing_permissions.as_ref().is_some_and(|p| p.readonly()) {
+            return Err(format!(
+                "Failed to create output file '{}': target is read-only",
+                output_path.display()
+            ));
+        }
+        // Probe the normal creation mode with a separate empty inode. Never put
+        // payload bytes into it: chmod would not revoke a reader's open handle.
+        let final_permissions = match existing_permissions {
+            Some(permissions) => permissions,
+            None => {
+                let mut probe = tempfile::Builder::new();
+                probe.prefix(".kujo-unzip-mode-");
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    probe.permissions(std::fs::Permissions::from_mode(0o666));
+                }
+                let probe = probe.tempfile_in(output_path.parent().unwrap()).map_err(|error| {
+                    format!("Failed to create extraction mode probe: {}", error)
+                })?;
+                probe
+                    .as_file()
+                    .metadata()
+                    .map_err(|error| format!("Failed to inspect extraction mode probe: {}", error))?
+                    .permissions()
+            }
+        };
+        // NamedTempFile starts private; keep this distinct inode private until
+        // validation is complete and final permissions are applied below.
+        let mut output_file = tempfile::Builder::new()
+            .prefix(".kujo-unzip-")
+            .tempfile_in(output_path.parent().unwrap())
+            .map_err(|error| {
+                format!("Failed to create output file '{}': {}", output_path.display(), error)
+            })?;
 
-        std::io::copy(&mut archive_file, &mut output_file)
+        let copied = std::io::copy(&mut (&mut archive_file).take(entry_size + 1), &mut output_file)
             .map_err(|error| format!("Failed to extract file '{}': {}", entry_name, error))?;
+        if copied != entry_size {
+            return Err(format!(
+                "Archive entry '{}' decoded size does not match declared size ({} != {})",
+                entry_name, copied, entry_size
+            ));
+        }
+        output_file.as_file().set_permissions(final_permissions).map_err(|error| {
+            format!("Failed to preserve permissions for '{}': {}", entry_name, error)
+        })?;
+        output_file.persist(&output_path).map_err(|error| {
+            format!("Failed to publish extracted file '{}': {}", entry_name, error)
+        })?;
 
         ensure_canonical_path_within_root(&output_path, &canonical_output_root, &entry_name)?;
         extracted_files.push(Value::Str(Arc::new(output_path.to_string_lossy().to_string())));

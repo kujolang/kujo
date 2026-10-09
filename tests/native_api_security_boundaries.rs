@@ -13,6 +13,137 @@ use zip::write::SimpleFileOptions;
 use zip::{CompressionMethod, ZipWriter};
 
 static TEMP_DIR_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg(unix)]
+#[test]
+fn process_deadline_covers_descendant_pipes_after_parent_exit() {
+    let dir = tempfile::tempdir().unwrap();
+    let script = dir.path().join("descendant.kujo");
+    fs::write(
+        &script,
+        r#"
+        let result := spawn_process(["sh", "-c", "sleep 2 & exit 0"], {"timeout_ms": 100})
+        print(result.timed_out && !result.success)
+    "#,
+    )
+    .unwrap();
+    for interpreter in [false, true] {
+        let mut command = Command::new(kujo_binary());
+        command.arg("run").arg(&script);
+        if interpreter {
+            command.arg("--interpreter");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", stderr_text(&output));
+        assert_eq!(stdout_text(&output).trim(), "true");
+    }
+}
+
+#[test]
+fn environment_enumeration_requires_environment_permission_in_both_runtimes() {
+    let dir = tempfile::tempdir().unwrap();
+    let script = dir.path().join("env.kujo");
+    fs::write(&script, "print(os_environ()[\"KUJO_PERMISSION_PROBE\"] == \"synthetic\")").unwrap();
+    for interpreter in [false, true] {
+        for (permission, allowed) in [("--allow-fs-read", false), ("--allow-env-read", true)] {
+            let mut command = Command::new(kujo_binary());
+            command
+                .args(["run", "--untrusted", permission])
+                .arg(&script)
+                .env("KUJO_PERMISSION_PROBE", "synthetic");
+            if interpreter {
+                command.arg("--interpreter");
+            }
+            let output = command.output().unwrap();
+            assert_eq!(
+                output.status.code(),
+                Some(if allowed { 0 } else { 4 }),
+                "{}",
+                stderr_text(&output)
+            );
+            if allowed {
+                assert_eq!(stdout_text(&output).trim(), "true");
+            } else {
+                assert!(stderr_text(&output).contains("env-read"), "{}", stderr_text(&output));
+            }
+        }
+    }
+}
+
+#[test]
+fn compound_file_operations_deny_missing_effects_before_access() {
+    let dir = tempfile::tempdir().unwrap();
+    let script = dir.path().join("compound.kujo");
+    for interpreter in [false, true] {
+        for name in [
+            "copy_file",
+            "io_copy_range",
+            "zip_add_file",
+            "zip_add_dir",
+            "unzip",
+            "gif_to_webp",
+            "ssg_read_render_and_write_pages",
+        ] {
+            fs::write(&script, format!("{name}()\n")).unwrap();
+            let mut command = Command::new(kujo_binary());
+            command.args(["run", "--untrusted", "--allow-fs-write"]).arg(&script);
+            if interpreter {
+                command.arg("--interpreter");
+            }
+            let output = command.output().unwrap();
+            assert_eq!(output.status.code(), Some(4), "{name}: {}", stderr_text(&output));
+            assert!(stderr_text(&output).contains("fs-read"), "{name}: {}", stderr_text(&output));
+        }
+        fs::write(&script, "gif_to_webp()\n").unwrap();
+        let mut command = Command::new(kujo_binary());
+        command.args(["run", "--untrusted", "--allow-fs-read", "--allow-fs-write"]).arg(&script);
+        if interpreter {
+            command.arg("--interpreter");
+        }
+        let output = command.output().unwrap();
+        assert!(stderr_text(&output).contains("process-exec"), "{}", stderr_text(&output));
+    }
+}
+
+#[test]
+fn unzip_bounds_actual_decoding_and_preserves_existing_target_on_failure() {
+    for interpreter in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let zip_path = dir.path().join("payload.zip");
+        let mut zip = ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        zip.start_file(
+            "payload.txt",
+            SimpleFileOptions::default().compression_method(CompressionMethod::Deflated),
+        )
+        .unwrap();
+        zip.write_all(&[b'x'; 4096]).unwrap();
+        let mut bytes = zip.finish().unwrap().into_inner();
+        // Controlled one-entry fixture: EOCD points to its central directory.
+        let eocd = bytes.len() - 22;
+        assert_eq!(&bytes[eocd..eocd + 4], b"PK\x05\x06");
+        let central = u32::from_le_bytes(bytes[eocd + 16..eocd + 20].try_into().unwrap()) as usize;
+        assert_eq!(&bytes[central..central + 4], b"PK\x01\x02");
+        assert_eq!(&bytes[..4], b"PK\x03\x04");
+        bytes[22..26].copy_from_slice(&1_u32.to_le_bytes());
+        bytes[central + 24..central + 28].copy_from_slice(&1_u32.to_le_bytes());
+        fs::write(&zip_path, bytes).unwrap();
+        let output_dir = dir.path().join("out");
+        fs::create_dir(&output_dir).unwrap();
+        let target = output_dir.join("payload.txt");
+        fs::write(&target, "preserve").unwrap();
+        let script = dir.path().join("unzip.kujo");
+        fs::write(&script, "unzip(\"payload.zip\", \"out\")").unwrap();
+        let mut command = Command::new(kujo_binary());
+        command.current_dir(dir.path()).arg("run").arg(&script);
+        if interpreter {
+            command.arg("--interpreter");
+        }
+        let output = command.output().unwrap();
+        assert_unzip_failure(&output, "decoded size does not match declared size");
+        assert_eq!(fs::read_to_string(target).unwrap(), "preserve");
+        assert_eq!(fs::read_dir(output_dir).unwrap().count(), 1);
+    }
+}
 const FS_MAX_READ_BYTES_FOR_TEST: usize = runtime_limits::MAX_FILE_IO_BYTES;
 const FS_MAX_WRITE_BYTES_FOR_TEST: usize = runtime_limits::MAX_FILE_IO_BYTES;
 const NETWORK_MAX_BODY_BYTES_FOR_TEST: usize = runtime_limits::MAX_NETWORK_BODY_BYTES;

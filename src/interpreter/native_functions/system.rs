@@ -779,8 +779,12 @@ fn run_command_with_options(
 
     let status = loop {
         match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) => {
+            // A child can exit while descendants still own its pipe writers.
+            // Keep cancellation and the deadline active until output is drained.
+            Ok(Some(status)) if stdout_handle.is_finished() && stderr_handle.is_finished() => {
+                break status;
+            }
+            Ok(_) => {
                 let cancel_file_requested = options
                     .cancel_file
                     .as_ref()
@@ -858,7 +862,7 @@ fn run_command_with_options(
     };
     Ok(ProcessExecutionResult {
         exitcode: status.code().unwrap_or(-1) as i64,
-        success: status.success() && !timed_out,
+        success: status.success() && !timed_out && !cancelled,
         timed_out,
         stdout,
         stderr,

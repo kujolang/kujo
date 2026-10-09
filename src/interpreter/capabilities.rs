@@ -169,7 +169,6 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "join_path"
         | "path_join"
         | "os_getcwd"
-        | "os_environ"
         | "io_read_bytes"
         | "io_read_at"
         | "io_seek_read"
@@ -245,9 +244,8 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         "execute" | "execute_status" => Some(NativeCapability::ShellExec),
 
         // Environment read/write
-        "env" | "env_or" | "env_int" | "env_float" | "env_bool" | "env_required" | "env_list" => {
-            Some(NativeCapability::EnvRead)
-        }
+        "os_environ" | "env" | "env_or" | "env_int" | "env_float" | "env_bool" | "env_required"
+        | "env_list" => Some(NativeCapability::EnvRead),
         "env_set" => Some(NativeCapability::EnvWrite),
 
         // Network client/server
@@ -338,10 +336,17 @@ pub fn additional_capabilities_for_native_function(name: &str) -> &'static [Nati
         "publish_directory_noreplace" | "publish_file_noreplace" | "symlink_atomic" => {
             &[NativeCapability::FilesystemDelete]
         }
-        "jsonl_sort" | "jsonl_wrap_array" | "io_private_spool_write_file_range" => {
-            &[NativeCapability::FilesystemRead]
-        }
+        "copy_file"
+        | "io_copy_range"
+        | "zip_add_file"
+        | "zip_add_dir"
+        | "unzip"
+        | "ssg_read_render_and_write_pages"
+        | "jsonl_sort"
+        | "jsonl_wrap_array"
+        | "io_private_spool_write_file_range" => &[NativeCapability::FilesystemRead],
         "http_get_file_response" | "http_download_file" => &[NativeCapability::FilesystemWrite],
+        "gif_to_webp" => &[NativeCapability::FilesystemRead, NativeCapability::ProcessExec],
         "http_upload_file" => &[NativeCapability::FilesystemRead],
         "tcp_send_file_range" | "tls_send_file_range" => &[NativeCapability::FilesystemRead],
         "aes_encrypt_file_stream" | "aes_decrypt_file_stream" => {
