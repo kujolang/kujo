@@ -1777,7 +1777,6 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
 
             let mut command = Command::new("gif2webp");
             command
-                .arg(&input_path)
                 .arg("-o")
                 .arg(&output_path)
                 .arg("-q")
@@ -1786,33 +1785,14 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 .arg(method.to_string())
                 .arg("-mt");
 
-            if lossless {
-                command.arg("-lossless");
-            } else {
+            // gif2webp defaults to lossless; unlike cwebp it has no -lossless flag.
+            if !lossless {
                 command.arg("-lossy");
             }
+            // The converter requires its explicit input marker to be last.
+            command.arg("--").arg(&input_path);
 
-            match command.output() {
-                Ok(output) => {
-                    if output.status.success() {
-                        Value::Bool(true)
-                    } else {
-                        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-                        if stderr.is_empty() {
-                            Value::Error("gif_to_webp failed with unknown error".to_string())
-                        } else {
-                            Value::Error(format!("gif_to_webp failed: {}", stderr))
-                        }
-                    }
-                }
-                Err(error) => {
-                    if std::io::ErrorKind::NotFound == error.kind() {
-                        Value::Error("gif_to_webp requires the 'gif2webp' CLI tool to be installed and available in PATH".to_string())
-                    } else {
-                        Value::Error(format!("gif_to_webp command failed: {}", error))
-                    }
-                }
-            }
+            super::system::run_gif_converter(command)
         }
 
         #[cfg(feature = "runtime-archive")]

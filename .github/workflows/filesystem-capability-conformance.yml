@@ -41,5 +41,16 @@ jobs:
       - name: Run bounded process stdin conformance
         run: cargo test --locked test_process_stdin --lib
 
+      - name: Run bounded GIF converter contracts
+        run: cargo test --locked gif_converter --lib
+
+      - name: Install GIF converter for interoperability checks
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y webp
+
+      - name: Run real GIF conversion in both runtimes
+        if: runner.os == 'Linux'
+        run: cargo test --locked --test gif_conversion_contracts -- --ignored
+
       - name: Run pure native path validation in both runtimes
         run: cargo test --locked --test path_absolute_contracts --test process_lifetime_contracts

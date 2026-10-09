@@ -475,5 +475,21 @@ storage or permit sharing the directory with hostile local writers.
 
 Process deadlines remain active while draining inherited stdout/stderr after the
 initial child exits. Unix timeout/cancellation terminates its process group.
-Processes escaping that group and Windows descendant termination still require
-external process isolation; Kujo is not a sandbox.
+Windows native commands start suspended, enter a non-breakaway, kill-on-close job,
+and resume only after admission. Timeout/cancellation terminates that job, including
+descendants retaining output pipes after the direct child exits. Closing the command
+job also cleans up remaining descendants when the command returns; background
+processes must not rely on outliving the call. Admission failures return errors,
+including incompatible enclosing job restrictions. The optional runtime-wide
+`--kill-children-on-exit` job remains supported through nested jobs.
+
+`gif_to_webp` uses the same process runner: a 30,000 ms deadline, cancellation,
+and at most 1,048,576 captured bytes per output stream. Excess output is drained
+without retaining it; failed converter diagnostics explicitly mark truncated stderr.
+Successful conversion still returns true even when incidental output is truncated.
+These are wall-time and capture bounds, not converter memory or output-file quotas.
+
+Processes escaping Unix groups still require external process isolation. Windows
+admission uses stable Rust's suspended spawn then job assignment; forced runtime
+termination in that narrow admission interval can leave a suspended child, although
+no child application code has run. Kujo is not a sandbox.

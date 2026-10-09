@@ -8,6 +8,14 @@ This file records user-visible changes to Kujo, following
 
 ### Fixed
 
+- Own Windows native-command descendants with per-command jobs before execution;
+  terminate the job on timeout/cancellation and close it on return. Incompatible
+  job admission fails closed; background descendants cannot outlive the call.
+- Run `gif_to_webp` through the shared 30-second deadline and 1 MiB-per-stream
+  capture limits, preserving successful results and missing-tool diagnostics.
+  Timeout, cancellation and truncated failure diagnostics are explicit. Fix
+  lossless conversion by using gif2webp's default instead of an unsupported flag.
+
 - Enforce private-network policy on actual connections and redirect hops, including
   IPv4-mapped IPv6; strict HTTP clients disable ambient proxies.
 - Require environment-read for `os_environ`, source-read permission for compound

@@ -5,8 +5,8 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 
 ## Summary
 
-- Total matches: 111
-- Executable matches: 86
+- Total matches: 124
+- Executable matches: 99
 - Non-executable matches: 25
 - Unknown classifications: 0
 
@@ -23,7 +23,7 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/interpreter/native_functions/confined_write_windows.rs | 134 | executable | src_executable_other |     let result = unsafe { |
 | src/interpreter/native_functions/confined_write_windows.rs | 153 | executable | src_executable_other |     status_result(unsafe { |
 | src/interpreter/native_functions/crypto.rs | 2368 | non_executable | src_comment_or_string |         fs::write(&invalid_path, b""unsafe \r\n"").unwrap(); |
-| src/interpreter/native_functions/filesystem.rs | 3026 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
+| src/interpreter/native_functions/filesystem.rs | 3006 | executable | src_executable_other |         assert_eq!(unsafe { libc::mkfifo(fifo_c.as_ptr(), 0o600) }, 0); |
 | src/interpreter/native_functions/io.rs | 759 | non_executable | src_comment_or_string |                                     ""Refusing unsafe private spool directory '{}' (must be a directory without group/other write permission)"", |
 | src/interpreter/native_functions/io.rs | 1571 | non_executable | src_comment_or_string |             matches!(refused, Value::Error(message) if message.contains(""unsafe private spool directory"")) |
 | src/interpreter/native_functions/pdf.rs | 658 | non_executable | src_comment_or_string |                         ""unsupported or unsafe pdf HTML attribute '{key}' on '{name}'"" |
@@ -35,9 +35,9 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/interpreter/native_functions/platform.rs | 73 | executable | src_executable_other |                     let uid = unsafe { libc::geteuid() }; |
 | src/interpreter/native_functions/system.rs | 90 | executable | src_executable_other |         unsafe { |
 | src/interpreter/native_functions/system.rs | 601 | executable | src_executable_other |     unsafe { |
-| src/interpreter/native_functions/system.rs | 618 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
-| src/interpreter/native_functions/system.rs | 650 | executable | src_executable_other |     let handle = unsafe { |
-| src/interpreter/native_functions/system.rs | 663 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
+| src/interpreter/native_functions/system.rs | 619 | executable | src_executable_other |         if unsafe { libc::kill(process_group, libc::SIGKILL) } == 0 { |
+| src/interpreter/native_functions/system.rs | 651 | executable | src_executable_other |     let handle = unsafe { |
+| src/interpreter/native_functions/system.rs | 664 | executable | src_executable_other |     Ok(unsafe { File::from_raw_handle(handle) }) |
 | src/interpreter/native_functions/tls.rs | 691 | non_executable | src_comment_or_string |             &[plain, string_value(""unsafe"")], |
 | src/interpreter/native_functions/web_data.rs | 372 | executable | src_executable_other |         let result = unsafe { libc::renamex_np(src.as_ptr(), dst.as_ptr(), libc::RENAME_EXCL) }; |
 | src/interpreter/native_functions/web_data.rs | 374 | executable | src_executable_other |         let result = unsafe { |
@@ -98,6 +98,18 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | src/process_lifetime.rs | 37 | executable | src_executable_other |     let configured = unsafe { |
 | src/process_lifetime.rs | 47 | executable | src_executable_other |     if configured == 0 \|\| unsafe { AssignProcessToJobObject(job, GetCurrentProcess()) } == 0 { |
 | src/process_lifetime.rs | 51 | executable | src_executable_other |         unsafe { CloseHandle(job) }; |
+| src/process_lifetime.rs | 94 | executable | src_executable_other |             let raw = unsafe { CreateJobObjectW(ptr::null(), ptr::null()) }; |
+| src/process_lifetime.rs | 99 | executable | src_executable_other |             let job = Self(unsafe { OwnedHandle::from_raw_handle(raw) }); |
+| src/process_lifetime.rs | 103 | executable | src_executable_other |             if unsafe { |
+| src/process_lifetime.rs | 122 | executable | src_executable_other |                 unsafe { AssignProcessToJobObject(job.0.as_raw_handle(), child.as_raw_handle()) }; |
+| src/process_lifetime.rs | 140 | executable | src_executable_other |             if unsafe { TerminateJobObject(self.0.as_raw_handle(), 1) } == 0 { |
+| src/process_lifetime.rs | 150 | executable | src_executable_other |         let raw = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0) }; |
+| src/process_lifetime.rs | 155 | executable | src_executable_other |         let snapshot = unsafe { OwnedHandle::from_raw_handle(raw) }; |
+| src/process_lifetime.rs | 159 | executable | src_executable_other |         let mut found = unsafe { Thread32First(snapshot.as_raw_handle(), &mut entry) }; |
+| src/process_lifetime.rs | 163 | executable | src_executable_other |                 let raw = unsafe { OpenThread(THREAD_SUSPEND_RESUME, 0, entry.th32ThreadID) }; |
+| src/process_lifetime.rs | 168 | executable | src_executable_other |                 let thread = unsafe { OwnedHandle::from_raw_handle(raw) }; |
+| src/process_lifetime.rs | 171 | executable | src_executable_other |                 if unsafe { ResumeThread(thread.as_raw_handle()) } == u32::MAX { |
+| src/process_lifetime.rs | 178 | executable | src_executable_other |             found = unsafe { Thread32Next(snapshot.as_raw_handle(), &mut entry) }; |
 | src/upgrade.rs | 266 | non_executable | src_comment_or_string |             return Err(""unsafe ZIP entry"".into()); |
 | src/upgrade.rs | 285 | non_executable | src_comment_or_string |                 return Err(""unsafe, duplicate, or oversized TAR entry"".into()); |
 | src/upgrade.rs | 501 | non_executable | src_comment_or_string |         return Err(""unsafe upgrade lock path"".into()); |
@@ -118,9 +130,10 @@ Command: grep -RInE --include='*.rs' --exclude-dir=target --exclude='unsafe_inve
 | tests/generated_artifact_freshness_contract.rs | 151 | non_executable | test_comment_or_string |     let output_csv = temp_dir.join(""unsafe.csv""); |
 | tests/http_route_concurrency.rs | 204 | executable | test_executable |         let signal_result = unsafe { libc::kill(child.id() as libc::pid_t, libc::SIGTERM) }; |
 | tests/jit_safety_contract_checker.rs | 152 | non_executable | test_comment_or_string |     assert!(stdout.contains(""Checked 0 executable unsafe boundaries"")); |
-| tests/process_lifetime_contracts.rs | 66 | executable | test_executable |             unsafe { |
-| tests/process_lifetime_contracts.rs | 80 | executable | test_executable |                         unsafe { OpenProcess(PROCESS_SYNCHRONIZE \| PROCESS_TERMINATE, 0, pid) }; |
-| tests/process_lifetime_contracts.rs | 136 | executable | test_executable |                     unsafe { WaitForSingleObject(process.0, 5000) }, |
+| tests/process_lifetime_contracts.rs | 125 | executable | test_executable |                     unsafe { WaitForSingleObject(grandchild.0, 5000) }, |
+| tests/process_lifetime_contracts.rs | 145 | executable | test_executable |             unsafe { |
+| tests/process_lifetime_contracts.rs | 159 | executable | test_executable |                         unsafe { OpenProcess(PROCESS_SYNCHRONIZE \| PROCESS_TERMINATE, 0, pid) }; |
+| tests/process_lifetime_contracts.rs | 215 | executable | test_executable |                     unsafe { WaitForSingleObject(process.0, 5000) }, |
 | tests/runtime_security.rs | 323 | non_executable | test_comment_or_string |         ""expected unsafe traversal error, got: {}"", |
 | tests/unsafe_safety_gate_contract.rs | 14 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate help""); |
 | tests/unsafe_safety_gate_contract.rs | 29 | non_executable | test_comment_or_string |         .expect(""failed to run unsafe safety gate dry-run""); |

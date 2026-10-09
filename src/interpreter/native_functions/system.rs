@@ -611,6 +611,7 @@ fn start_process_group(command: &mut Command) {
 #[cfg(not(unix))]
 fn start_process_group(_command: &mut Command) {}
 
+#[cfg(not(windows))]
 fn terminate_process_tree(child: &mut Child) {
     #[cfg(unix)]
     {
@@ -672,10 +673,23 @@ fn reopen_stdin_spool_read_only(_spool: &tempfile::NamedTempFile) -> std::io::Re
 }
 
 fn run_command_with_options(
+    command: Command,
+    options: &ProcessExecOptions,
+    stdin_input: Option<Vec<u8>>,
+    command_label: &str,
+) -> Result<ProcessExecutionResult, Value> {
+    run_command_with_spawn_error(command, options, stdin_input, command_label, |error| {
+        error_object(format!("Failed to spawn process '{}': {}", command_label, error))
+    })
+}
+
+// Keep native callers' established spawn-error contracts without parsing text.
+fn run_command_with_spawn_error(
     mut command: Command,
     options: &ProcessExecOptions,
     stdin_input: Option<Vec<u8>>,
     command_label: &str,
+    spawn_error: impl FnOnce(std::io::Error) -> Value,
 ) -> Result<ProcessExecutionResult, Value> {
     install_process_signal_handler();
     apply_env_policy(&mut command, options);
@@ -713,14 +727,26 @@ fn run_command_with_options(
         command.stdin(Stdio::from(reader));
     }
 
-    let mut child = match command.spawn() {
-        Ok(child) => child,
-        Err(error) => {
-            return Err(error_object(format!(
-                "Failed to spawn process '{}': {}",
-                command_label, error
-            )));
+    #[cfg(windows)]
+    let (mut child, job) = crate::process_lifetime::command_job::CommandJob::spawn(&mut command)
+        .map_err(spawn_error)?;
+    #[cfg(not(windows))]
+    let mut child = command.spawn().map_err(spawn_error)?;
+
+    let terminate = |child: &mut Child| -> Result<(), Value> {
+        #[cfg(windows)]
+        {
+            let _ = child;
+            job.terminate().map_err(|error| {
+                error_object(format!(
+                    "Failed to terminate process descendants '{}': {}",
+                    command_label, error
+                ))
+            })?;
         }
+        #[cfg(not(windows))]
+        terminate_process_tree(child);
+        Ok(())
     };
 
     let Some(stdout_reader) = child.stdout.take() else {
@@ -792,7 +818,7 @@ fn run_command_with_options(
                 if PROCESS_CANCEL_REQUESTED.load(Ordering::SeqCst) || cancel_file_requested {
                     cancelled = true;
                     cancel_flag.store(true, Ordering::SeqCst);
-                    terminate_process_tree(&mut child);
+                    terminate(&mut child)?;
                     match child.wait() {
                         Ok(status) => break status,
                         Err(error) => {
@@ -806,7 +832,7 @@ fn run_command_with_options(
                 if start.elapsed() >= timeout {
                     timed_out = true;
                     cancel_flag.store(true, Ordering::SeqCst);
-                    terminate_process_tree(&mut child);
+                    terminate(&mut child)?;
                     match child.wait() {
                         Ok(status) => break status,
                         Err(error) => {
@@ -870,6 +896,48 @@ fn run_command_with_options(
         stderr_truncated,
         cancelled,
     })
+}
+
+/// GIF conversion shares process ownership, cancellation and bounded capture.
+pub(super) fn run_gif_converter(command: Command) -> Value {
+    run_gif_converter_with_options(command, &ProcessExecOptions::default())
+}
+
+fn run_gif_converter_with_options(mut command: Command, options: &ProcessExecOptions) -> Value {
+    // Command::output previously supplied EOF rather than inherited interactive input.
+    command.stdin(Stdio::null());
+    let result = run_command_with_spawn_error(command, options, None, "gif2webp", |error| {
+        if error.kind() == std::io::ErrorKind::NotFound {
+            Value::Error("gif_to_webp requires the 'gif2webp' CLI tool to be installed and available in PATH".to_string())
+        } else {
+            Value::Error(format!("gif_to_webp command failed: {}", error))
+        }
+    });
+    match result {
+        Ok(output) if output.timed_out => {
+            Value::Error(format!("gif_to_webp timed out after {}ms", options.timeout_ms))
+        }
+        Ok(output) if output.cancelled => Value::Error("gif_to_webp cancelled".to_string()),
+        Ok(output) if output.success => Value::Bool(true),
+        Ok(output) => {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stderr = stderr.trim();
+            if output.stderr_truncated {
+                Value::Error(format!(
+                    "gif_to_webp failed: {} [stderr truncated at {} bytes]",
+                    stderr, options.max_output_bytes
+                ))
+            } else if stderr.is_empty() {
+                Value::Error("gif_to_webp failed with unknown error".to_string())
+            } else {
+                Value::Error(format!("gif_to_webp failed: {}", stderr))
+            }
+        }
+        Err(Value::ErrorObject { message, .. }) => {
+            Value::Error(format!("gif_to_webp command failed: {}", message))
+        }
+        Err(error) => error,
+    }
 }
 
 fn process_result_to_value(result: ProcessExecutionResult) -> Value {
@@ -1873,6 +1941,80 @@ mod tests {
 
     fn string_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
+    }
+
+    #[test]
+    fn gif_converter_fixture() {
+        let Ok(mode) = std::env::var("KUJO_GIF_CONVERTER_FIXTURE") else { return };
+        use std::io::Write;
+        match mode.as_str() {
+            "success" => {}
+            "failure" => {
+                eprint!("converter rejected input");
+                std::process::exit(7);
+            }
+            "empty_failure" => std::process::exit(7),
+            "large_failure" => {
+                std::io::stdout().write_all(&vec![b'o'; 65536]).unwrap();
+                std::io::stderr().write_all(&vec![b'e'; 65536]).unwrap();
+                std::process::exit(7);
+            }
+            "timeout" => std::thread::sleep(Duration::from_secs(3)),
+            _ => panic!("unknown fixture mode"),
+        }
+    }
+
+    fn gif_fixture(mode: &str) -> std::process::Command {
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command.args([
+            "--exact",
+            &format!("{}::gif_converter_fixture", module_path!().split_once("::").unwrap().1),
+            "--nocapture",
+        ]);
+        command.env("KUJO_GIF_CONVERTER_FIXTURE", mode);
+        command
+    }
+
+    #[test]
+    fn gif_converter_preserves_success_and_errors() {
+        assert!(matches!(super::run_gif_converter(gif_fixture("success")), Value::Bool(true)));
+        for (mode, expected) in [
+            ("failure", "gif_to_webp failed: converter rejected input"),
+            ("empty_failure", "gif_to_webp failed with unknown error"),
+        ] {
+            assert!(
+                matches!(super::run_gif_converter(gif_fixture(mode)), Value::Error(message) if message == expected)
+            );
+        }
+        let directory = tempfile::tempdir().unwrap();
+        let missing = std::process::Command::new(directory.path().join("missing-gif2webp"));
+        assert!(
+            matches!(super::run_gif_converter(missing), Value::Error(message) if message.contains("requires the 'gif2webp' CLI tool"))
+        );
+    }
+
+    #[test]
+    fn gif_converter_bounds_capture_and_reports_truncation() {
+        let options = super::ProcessExecOptions { max_output_bytes: 1024, ..Default::default() };
+        let result = super::run_gif_converter_with_options(gif_fixture("large_failure"), &options);
+        assert!(
+            matches!(result, Value::Error(message) if message == format!("gif_to_webp failed: {} [stderr truncated at 1024 bytes]", "e".repeat(1024)))
+        );
+    }
+
+    #[test]
+    fn gif_converter_honors_timeout_and_cancellation() {
+        let mut options = super::ProcessExecOptions { timeout_ms: 100, ..Default::default() };
+        let started = Instant::now();
+        let result = super::run_gif_converter_with_options(gif_fixture("timeout"), &options);
+        assert!(
+            matches!(result, Value::Error(message) if message == "gif_to_webp timed out after 100ms")
+        );
+        assert!(started.elapsed() < Duration::from_secs(2), "deadline did not stop converter");
+        let cancel = tempfile::NamedTempFile::new().unwrap();
+        options.cancel_file = Some(cancel.path().to_string_lossy().into_owned());
+        let result = super::run_gif_converter_with_options(gif_fixture("timeout"), &options);
+        assert!(matches!(result, Value::Error(message) if message == "gif_to_webp cancelled"));
     }
 
     #[test]
