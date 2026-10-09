@@ -34,6 +34,8 @@ const MAX_CONCURRENT_RENDERS: usize = 4;
 
 static ACTIVE_RENDERS: AtomicUsize = AtomicUsize::new(0);
 
+// Keep fetch_update for the Rust 1.89 MSRV; newer Rust renames it to try_update.
+#[allow(deprecated)]
 fn reserve_render_slot(counter: &AtomicUsize, limit: usize) -> Result<(), String> {
     counter
         .fetch_update(Ordering::AcqRel, Ordering::Acquire, |current| {

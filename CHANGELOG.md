@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve the supported Rust MSRV PDF concurrency atomic operation while allowing its newer-toolchain deprecation, matching upstream 5c7c031.
+
+
 ### Changed
 
 - Added bounded, in-process `pdf_render_html` and atomic
