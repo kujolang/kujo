@@ -3,6 +3,27 @@ use std::fs::{self, File};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
+#[test]
+fn shared_integer_overflow_is_catchable_and_preserves_store() {
+    both(
+        r#"
+        let maximum := 9223372036854775807
+        let minimum := -9223372036854775807 - 1
+        shared_set("upper", maximum)
+        shared_set("lower", minimum)
+        mut caught := 0
+        try { shared_add_int("upper", 1) } except err { caught += 1 }
+        try { shared_add_int("lower", -1) } except err { caught += 1 }
+        let preserved := shared_get("upper") == maximum && shared_get("lower") == minimum
+        shared_add_int("upper", -1)
+        shared_add_int("lower", 1)
+        shared_set("usable", 42)
+        print(caught == 2 && preserved && shared_get("upper") == maximum - 1 && shared_get("lower") == minimum + 1 && shared_get("usable") == 42)
+    "#,
+        false,
+    );
+}
+
 fn both(source: &str, restricted: bool) {
     for interpreter in [false, true] {
         let directory = tempfile::tempdir().unwrap();

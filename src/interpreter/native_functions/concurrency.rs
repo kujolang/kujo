@@ -155,10 +155,13 @@ pub fn handle(_interp: &mut Interpreter, name: &str, _arg_values: &[Value]) -> O
                     Err(error) => return Some(error),
                 };
                 match &mut *value {
-                    Value::Int(current) => {
-                        *current += delta;
-                        Value::Int(*current)
-                    }
+                    Value::Int(current) => match current.checked_add(delta) {
+                        Some(next) => {
+                            *current = next;
+                            Value::Int(next)
+                        }
+                        None => Value::Error("shared_add_int integer overflow".to_string()),
+                    },
                     _ => Value::Error(format!(
                         "shared_add_int requires key '{}' to reference an int",
                         key
