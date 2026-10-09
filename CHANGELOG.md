@@ -8,6 +8,18 @@ This file records user-visible changes to Kujo, following
 
 ### Fixed
 
+- Enforce private-network policy on actual connections and redirect hops, including
+  IPv4-mapped IPv6; strict HTTP clients disable ambient proxies.
+- Require environment-read for `os_environ`, source-read permission for compound
+  file operations, and process-exec for `gif_to_webp`. Restricted callers must
+  grant these effects explicitly; trusted defaults remain unchanged.
+- Bound ZIP decoding and publish validated entries atomically; preserve existing
+  contents on invalid entries. Publish AI cassettes through unique private staging.
+- Return catchable shared-integer overflow errors without modifying shared state.
+  Keep subprocess deadlines active until inherited output pipes finish draining.
+- Fit AI context in one ordered pass without changing token estimates, retained
+  message order, validation, or result keys.
+
 - Account for queued connections when allocating HTTP connection workers, so
   concurrent keep-alive clients cannot strand a new request behind occupied
   workers until another connection closes. Includes a bounded reservation-race

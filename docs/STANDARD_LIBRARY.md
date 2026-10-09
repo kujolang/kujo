@@ -162,7 +162,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `ssg_render_pages` | `ssg_render_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := ssg_render_pages(...)` |
 | `ssg_build_output_paths` | `ssg_build_output_paths(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation or when the requested count exceeds the generated-sequence limit; capability-denied when gated. | `none` | `result := ssg_build_output_paths(...)` |
 | `ssg_render_and_write_pages` | `ssg_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := ssg_render_and_write_pages(...)` |
-| `ssg_read_render_and_write_pages` | `ssg_read_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := ssg_read_render_and_write_pages(...)` |
+| `ssg_read_render_and_write_pages` | `ssg_read_render_and_write_pages(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read` | `result := ssg_read_render_and_write_pages(...)` |
 | `starts_with` | `starts_with(value, prefix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := starts_with(...)` |
 | `ends_with` | `ends_with(value, suffix)` | exact 2 | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := ends_with(...)` |
 | `pad_left` | `pad_left(value: string, width: number, pad_char: string) -> string` | exact 3 | string | Value::Error on non-string arguments, negative/non-finite width, or generated-output limit. Empty `pad_char` uses a space; only its first character is used. | `none` | `result := pad_left("kujo", 6, "0")` |
@@ -272,7 +272,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `delete_file` | `delete_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-delete` | `result := delete_file(...)` |
 | `rename_file` | `rename_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := rename_file(...)` |
 | `publish_file_noreplace` | `publish_file_noreplace(source_path, destination_path)` | exact 2 | dictionary receipt | Atomically hard-links a regular single-link source at an absent same-filesystem destination, removes the source, syncs affected directories, and verifies retained identity. It never replaces an existing destination. A returned receipt always has `published=true`; callers must require `verified=true` and reconcile any false durability fact. | `filesystem-write`, `filesystem-delete` | `receipt := publish_file_noreplace("private-spool/body", "blobs/message.body")` |
-| `copy_file` | `copy_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := copy_file(...)` |
+| `copy_file` | `copy_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read` | `result := copy_file(...)` |
 | `read_binary_file` | `read_binary_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := read_binary_file(...)` |
 | `write_binary_file` | `write_binary_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := write_binary_file(...)` |
 | `io_read_bytes` | `io_read_bytes(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := io_read_bytes(...)` |
@@ -290,7 +290,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `io_private_spool_finish` | `io_private_spool_finish(spool)` | exact 1 | dictionary | Syncs and verifies the retained handle, publishes without overwriting an existing destination, and returns path, mode, byte count, incremental SHA-256, and explicit `published`, `temporary_removed`, `directory_synced`, and aggregate `verified` facts. Once `published` is true, post-publication cleanup/durability failure is reported in the receipt rather than as an ambiguous error. The handle is then closed. | `filesystem-write` | `receipt := io_private_spool_finish(spool)` |
 | `io_private_spool_abort` | `io_private_spool_abort(spool)` | exact 1 | bool | Closes and removes an unpublished spool. Dropping the last unfinished handle also removes its temporary file during normal shutdown. | `filesystem-write` | `removed := io_private_spool_abort(spool)` |
 | `io_truncate` | `io_truncate(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_truncate(...)` |
-| `io_copy_range` | `io_copy_range(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := io_copy_range(...)` |
+| `io_copy_range` | `io_copy_range(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read` | `result := io_copy_range(...)` |
 | `parse_json` | `parse_json(json_string)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, oversized input (>8,388,608 bytes), excessive nesting (>64), invalid JSON parse, or capability-denied when gated. | `none` | `result := parse_json("{\"ok\":true}")` |
 | `parse_xml_bounded` | `parse_xml_bounded(xml, options)` | exact 2 | dictionary | Value::Error on invalid args/types/options, malformed or unsupported XML, denied DTD/non-predefined entity content, namespace errors, duplicate expanded attributes, or resource-limit violations. | `none` | `result := parse_xml_bounded("<root/>", {})` |
 | `to_json` | `to_json(value)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation, unsupported value conversion, non-finite float serialization, or capability-denied when gated. | `none` | `result := to_json({"ok": true})` |
@@ -350,7 +350,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `os_getcwd` | `os_getcwd(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := os_getcwd(...)` |
 | `os_chdir` | `os_chdir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := os_chdir(...)` |
 | `os_rmdir` | `os_rmdir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-delete` | `result := os_rmdir(...)` |
-| `os_environ` | `os_environ(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := os_environ(...)` |
+| `os_environ` | `os_environ(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `env-read` | `result := os_environ(...)` |
 | `join_path` | `join_path(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := join_path(...)` |
 | `dirname` | `dirname(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := dirname(...)` |
 | `basename` | `basename(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := basename(...)` |
@@ -466,12 +466,12 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `assert_false` | `assert_false(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := assert_false(...)` |
 | `assert_contains` | `assert_contains(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := assert_contains(...)` |
 | `load_image` | `load_image(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := load_image(...)` |
-| `gif_to_webp` | `gif_to_webp(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := gif_to_webp(...)` |
+| `gif_to_webp` | `gif_to_webp(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read`, `process-exec` | `result := gif_to_webp(...)` |
 | `zip_create` | `zip_create(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := zip_create(...)` |
-| `zip_add_file` | `zip_add_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := zip_add_file(...)` |
-| `zip_add_dir` | `zip_add_dir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := zip_add_dir(...)` |
+| `zip_add_file` | `zip_add_file(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read` | `result := zip_add_file(...)` |
+| `zip_add_dir` | `zip_add_dir(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read` | `result := zip_add_dir(...)` |
 | `zip_close` | `zip_close(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := zip_close(...)` |
-| `unzip` | `unzip(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write` | `result := unzip(...)` |
+| `unzip` | `unzip(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-write`, `filesystem-read` | `result := unzip(...)` |
 | `gzip_compress` | `gzip_compress(bytes_data)` | exact 1 | bytes | Compresses up to 64 MiB of raw bytes as a gzip stream using the default compression level. | `none` | `compressed := gzip_compress(payload)` |
 | `gzip_decompress` | `gzip_decompress(bytes_data, max_output_bytes)` | exact 2 | bytes | Decompresses all gzip members in memory and fails before returning more than the caller-provided limit (maximum 64 MiB). | `none` | `plain := gzip_decompress(compressed, 4194304)` |
 | `zip_single_file_read` | `zip_single_file_read(bytes_data, max_output_bytes)` | exact 2 | dictionary | Reads exactly one safe regular ZIP entry in memory, rejects traversal/symlink/multi-entry archives, and enforces the caller-provided output limit (maximum 64 MiB). | `none` | `entry := zip_single_file_read(archive, 4194304)` |
@@ -695,3 +695,15 @@ drive-relative paths (`C:relative`) and root-relative paths (`\relative`) are
 not absolute; drive-qualified and UNC paths follow native rules. On POSIX,
 Windows drive syntax is relative. Available in the development runtime; not in
 the released 1.6.0 binaries.
+
+### Compound capabilities and shared arithmetic
+
+The inventory lists every required capability. `copy_file`,
+`io_copy_range`, `zip_add_file`, `zip_add_dir`, `unzip`,
+`ssg_read_render_and_write_pages`, and `gif_to_webp` require filesystem read as
+well as write. `gif_to_webp` also requires process execution. `os_environ` requires
+environment read. See the security posture's hardening corrections for migration.
+
+`shared_add_int` uses checked signed 64-bit addition. Overflow is a catchable
+runtime error and leaves the shared integer unchanged; it does not poison the
+shared store or wrap in optimized builds.

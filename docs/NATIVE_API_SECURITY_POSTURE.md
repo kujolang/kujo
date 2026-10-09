@@ -444,3 +444,36 @@ and cwd. Environment overrides/removals do not create a sandbox. Untrusted code
 must not receive process-exec unless arbitrary host process invocation is
 intended. POSIX-only APIs fail closed on Windows rather than emulating unsafe
 shell operations.
+
+### Hardening corrections after 1.8.0
+
+Restricted execution now checks all effects of the following operations:
+`os_environ` requires `--allow-env-read` (previously misclassified as filesystem
+read). `copy_file`, `io_copy_range`, `zip_add_file`, `zip_add_dir`, `unzip`, and
+`ssg_read_render_and_write_pages` require both filesystem read and write.
+`gif_to_webp` additionally requires process execution. Trusted defaults are
+unchanged; restricted callers must explicitly grant these effects.
+
+Global deny-private networking checks the addresses actually used by HTTP DNS,
+TCP/TLS connections and UDP sends, including IPv4-mapped IPv6. HTTP redirects
+validate literal destinations and resolve hostnames through the same policy;
+public redirects retain the usual redirect limit. Strict clients disable ambient
+proxies to prevent delegated DNS from bypassing local destination validation.
+The explicit private-network override still opts out of the global restriction.
+
+ZIP extraction limits actual decoded bytes as well as declared sizes. Each file
+is staged and validated before atomic publication; invalid entries leave an
+existing target intact. Previously published entries remain on a later-entry
+failure (this is not an archive-wide transaction). Read-only targets are rejected. Ordinary file permissions are
+preserved; replacement changes inode/hard-link identity. Extraction roots must
+remain trusted against concurrent hostile filesystem mutation.
+
+AI cassette writes use unique private staging files and atomic last-writer-wins
+publication. On Unix, new/replaced cassettes are owner-readable/writable only.
+This preserves cassette schemas and redaction; it does not promise crash-durable
+storage or permit sharing the directory with hostile local writers.
+
+Process deadlines remain active while draining inherited stdout/stderr after the
+initial child exits. Unix timeout/cancellation terminates its process group.
+Processes escaping that group and Windows descendant termination still require
+external process isolation; Kujo is not a sandbox.

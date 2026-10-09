@@ -58,6 +58,7 @@ expected_npm_install="$(printf 'npm install --global @kujolang/kujo-runtime@%s' 
 
 for check in \
 	"ROADMAP.md|$expected_roadmap_release|stable release" \
+	"AGENTS.md|Current stable runtime: **$stable_version**|agent guide stable runtime" \
 	"INSTALLATION.md|$expected_install_release|installation release" \
 	"INSTALLATION.md|$expected_npm_install|npm installation release" \
 	"install.sh|$expected_installer_default|installer default" \
