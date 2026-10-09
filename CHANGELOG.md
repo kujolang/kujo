@@ -28,6 +28,11 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Admit database pool waiters in FIFO order and notify them when capacity returns,
+  replacing polling that allowed repeated acquisitions to starve older callers.
+  Connection setup and health checks run outside admission; expired tickets and
+  failed connections cannot strand later waiters.
+
 - VM routed HTTP dispatch now invokes closures created by imported modules,
   allowing modular route registrars to capture application context with the
   same behavior as interpreter mode.
