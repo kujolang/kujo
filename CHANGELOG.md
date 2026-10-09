@@ -6,11 +6,6 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
-### Fixed
-
-- Preserve the supported Rust MSRV PDF concurrency atomic operation while allowing its newer-toolchain deprecation, matching upstream 5c7c031.
-
-
 ### Changed
 
 - Added bounded, in-process `pdf_render_html` and atomic
@@ -33,6 +28,8 @@ This file records user-visible changes to Kujo. It follows
 
 ### Fixed
 
+- Preserve the supported Rust MSRV PDF concurrency atomic operation while allowing
+  its newer-toolchain deprecation, matching upstream 5c7c031.
 - Admit database pool waiters in FIFO order and notify them when capacity returns,
   replacing polling that allowed repeated acquisitions to starve older callers.
   Connection setup and health checks run outside admission; expired tickets and

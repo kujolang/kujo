@@ -1,7 +1,7 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-09-13
-Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
+Generated: 2026-10-09
+Runner: `/Users/robertdevore/Documents/Codex/2026-10-03-for-the-quoteflow-project-what-s/quoteflow/.toolchain/kujo-target/release/kujo`
 Fixture root: `tests`
 
 | Fixture | VM Exit | Interpreter Exit | VM Matches Snapshot | Interpreter Matches Snapshot | Delta Type | Mismatch Bucket | Owner | Priority | Rationale |
