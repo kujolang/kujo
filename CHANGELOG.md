@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo, following
 
 ### Fixed
 
+- Update Hickory DNS crates to 0.26.3 for upstream DNSSEC, retry-loop and
+  CNAME security fixes, including the 0.26.2 regression corrections.
+
 - Own Windows native-command descendants with per-command jobs before execution;
   terminate the job on timeout/cancellation and close it on return. Incompatible
   job admission fails closed; background descendants cannot outlive the call.
