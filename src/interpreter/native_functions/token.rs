@@ -30,9 +30,9 @@ impl TokenHeuristic {
 
 #[derive(Clone, Debug)]
 struct AiMessage {
-    role: String,
-    content: String,
-    name: Option<String>,
+    role: Arc<String>,
+    content: Arc<String>,
+    name: Option<Arc<String>>,
     value: Value,
 }
 
@@ -171,7 +171,7 @@ fn parse_messages(value: &Value, surface: &str) -> Result<Vec<AiMessage>, Value>
 
 fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage, Value> {
     let role = match get_key(value, "role") {
-        Some(Value::Str(role)) if !role.is_empty() => role.as_ref().clone(),
+        Some(Value::Str(role)) if !role.is_empty() => role.clone(),
         _ => {
             return Err(Value::Error(format!(
                 "{surface}() requires messages[{index}].role to be a non-empty string"
@@ -179,7 +179,7 @@ fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage
         }
     };
     let content = match get_key(value, "content") {
-        Some(Value::Str(content)) => content.as_ref().clone(),
+        Some(Value::Str(content)) => content.clone(),
         _ => {
             return Err(Value::Error(format!(
                 "{surface}() requires messages[{index}].content to be a string"
@@ -187,7 +187,7 @@ fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage
         }
     };
     let name = match get_key(value, "name") {
-        Some(Value::Str(name)) if !name.is_empty() => Some(name.as_ref().clone()),
+        Some(Value::Str(name)) if !name.is_empty() => Some(name.clone()),
         Some(Value::Str(_)) | None => None,
         Some(_) => {
             return Err(Value::Error(format!(
@@ -243,47 +243,32 @@ fn fit_context(
     max_tokens: i64,
     heuristic: TokenHeuristic,
 ) -> Result<(Vec<Value>, i64, i64, bool), Value> {
-    let original_len = messages.len();
     let last_user_index =
         messages.iter().rposition(|message| message.role.eq_ignore_ascii_case("user"));
-    let mut kept: Vec<Option<AiMessage>> = messages.into_iter().map(Some).collect();
-
-    loop {
-        let current_messages: Vec<AiMessage> = kept.iter().filter_map(Clone::clone).collect();
-        let est_tokens = estimate_messages_tokens(&current_messages, heuristic, "ai_fit_context")?;
-        if est_tokens <= max_tokens {
-            return Ok((
-                current_messages.into_iter().map(|message| message.value).collect(),
-                (original_len - kept.iter().filter(|message| message.is_some()).count()) as i64,
-                est_tokens,
-                true,
-            ));
-        }
-
-        let Some(drop_index) = oldest_droppable_index(&kept, last_user_index) else {
-            return Ok((
-                current_messages.into_iter().map(|message| message.value).collect(),
-                (original_len - kept.iter().filter(|message| message.is_some()).count()) as i64,
-                est_tokens,
-                false,
-            ));
-        };
-        kept[drop_index] = None;
+    // Validate and estimate every message before dropping any, including messages
+    // that cannot fit. Costs are additive and cannot change during this call.
+    let mut est_tokens = 0;
+    let mut costs = Vec::with_capacity(messages.len());
+    for message in &messages {
+        let cost = estimate_message_tokens(message, heuristic, "ai_fit_context")?;
+        est_tokens = checked_add(est_tokens, cost, "ai_fit_context")?;
+        costs.push(cost);
     }
-}
 
-fn oldest_droppable_index(
-    messages: &[Option<AiMessage>],
-    last_user_index: Option<usize>,
-) -> Option<usize> {
-    messages.iter().enumerate().find_map(|(index, message)| {
-        let message = message.as_ref()?;
-        if message.role.eq_ignore_ascii_case("system") || Some(index) == last_user_index {
-            None
+    let mut kept = Vec::new();
+    let mut dropped = 0;
+    for (index, (message, cost)) in messages.into_iter().zip(costs).enumerate() {
+        if est_tokens > max_tokens
+            && !message.role.eq_ignore_ascii_case("system")
+            && Some(index) != last_user_index
+        {
+            est_tokens -= cost;
+            dropped += 1;
         } else {
-            Some(index)
+            kept.push(message.value);
         }
-    })
+    }
+    Ok((kept, dropped, est_tokens, est_tokens <= max_tokens))
 }
 
 fn estimate_messages_tokens(
@@ -293,18 +278,23 @@ fn estimate_messages_tokens(
 ) -> Result<i64, Value> {
     let mut total = 0_i64;
     for message in messages {
-        total = checked_add(total, heuristic.message_overhead, surface)?;
-        total =
-            checked_add(total, estimate_text_tokens(&message.role, heuristic, surface)?, surface)?;
-        total = checked_add(
-            total,
-            estimate_text_tokens(&message.content, heuristic, surface)?,
-            surface,
-        )?;
-        if let Some(name) = &message.name {
-            total = checked_add(total, heuristic.name_overhead, surface)?;
-            total = checked_add(total, estimate_text_tokens(name, heuristic, surface)?, surface)?;
-        }
+        total = checked_add(total, estimate_message_tokens(message, heuristic, surface)?, surface)?;
+    }
+    Ok(total)
+}
+
+fn estimate_message_tokens(
+    message: &AiMessage,
+    heuristic: TokenHeuristic,
+    surface: &str,
+) -> Result<i64, Value> {
+    let mut total = heuristic.message_overhead;
+    total = checked_add(total, estimate_text_tokens(&message.role, heuristic, surface)?, surface)?;
+    total =
+        checked_add(total, estimate_text_tokens(&message.content, heuristic, surface)?, surface)?;
+    if let Some(name) = &message.name {
+        total = checked_add(total, heuristic.name_overhead, surface)?;
+        total = checked_add(total, estimate_text_tokens(name, heuristic, surface)?, surface)?;
     }
     Ok(total)
 }
@@ -450,5 +440,119 @@ mod tests {
 
         let invalid_budget = handle("ai_fit_context", &[a(vec![]), Value::Int(-1)]).unwrap();
         assert!(matches!(invalid_budget, Value::Error(message) if message.contains("max_tokens")));
+    }
+
+    #[test]
+    fn fit_context_matches_recounting_reference_for_roles_models_and_budgets() {
+        // Independent, deliberately simple oracle: remove one eligible message
+        // and recount via the public estimator. Exhaust all short role sequences.
+        for model in ["", "GPT-4o", "text-embedding-3-small"] {
+            let options = d(vec![("model", s(model))]);
+            for length in 0..=4_u32 {
+                for mut roles in 0..3_usize.pow(length) {
+                    let mut messages = Vec::new();
+                    for index in 0..length {
+                        let role = ["SyStEm", "UsEr", "assistant"][roles % 3];
+                        roles /= 3;
+                        let content = format!("{index}: café 世界");
+                        let entries = vec![
+                            ("role", s(role)),
+                            ("content", s(&content)),
+                            ("name", s(if index % 2 == 0 { "" } else { "名前" })),
+                        ];
+                        messages.push(if index % 2 == 0 {
+                            Value::FixedDict {
+                                keys: Arc::new(
+                                    entries.iter().map(|(key, _)| Arc::from(*key)).collect(),
+                                ),
+                                values: entries.into_iter().map(|(_, value)| value).collect(),
+                            }
+                        } else {
+                            d(entries)
+                        });
+                    }
+                    let original = a(messages.clone());
+                    let total = count(original.clone(), options.clone());
+                    for budget in [0, 1, total / 2, total.saturating_sub(1).max(0), total, i64::MAX]
+                    {
+                        let mut expected = messages.clone();
+                        while count(a(expected.clone()), options.clone()) > budget {
+                            fn role(message: &Value) -> &str {
+                                match super::get_key(message, "role").unwrap() {
+                                    Value::Str(value) => value.as_str(),
+                                    _ => unreachable!(),
+                                }
+                            }
+                            let last_user =
+                                expected.iter().rposition(|m| role(m).eq_ignore_ascii_case("user"));
+                            let Some(index) = expected.iter().enumerate().position(|(i, m)| {
+                                !role(m).eq_ignore_ascii_case("system") && Some(i) != last_user
+                            }) else {
+                                break;
+                            };
+                            expected.remove(index);
+                        }
+                        let estimate = count(a(expected.clone()), options.clone());
+                        let expected_result = d(vec![
+                            (
+                                "messages",
+                                a(expected.iter().map(super::normalized_message_value).collect()),
+                            ),
+                            ("dropped", Value::Int((messages.len() - expected.len()) as i64)),
+                            ("est_tokens", Value::Int(estimate)),
+                            ("fits", Value::Bool(estimate <= budget)),
+                        ]);
+                        let actual = handle(
+                            "ai_fit_context",
+                            &[original.clone(), Value::Int(budget), options.clone()],
+                        )
+                        .unwrap();
+                        assert!(
+                            Value::equals(&actual, &expected_result),
+                            "model={model} budget={budget}: {actual:?} != {expected_result:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn fit_context_validates_even_messages_it_would_drop() {
+        let oversized = "x".repeat(super::MAX_TOKEN_TEXT_CHARS + 1);
+        for field in ["role", "content", "name"] {
+            let mut message =
+                vec![("role", s("assistant")), ("content", s("old")), ("name", s("name"))];
+            message.iter_mut().find(|(key, _)| *key == field).unwrap().1 = s(&oversized);
+            let actual = handle(
+                "ai_fit_context",
+                &[
+                    a(vec![d(message), d(vec![("role", s("user")), ("content", s("last"))])]),
+                    Value::Int(0),
+                ],
+            )
+            .unwrap();
+            assert!(
+                matches!(actual, Value::Error(message) if message == "ai_fit_context() text exceeds character limit (2000000)")
+            );
+        }
+    }
+
+    #[test]
+    fn fit_context_handles_the_message_limit_without_changing_the_policy() {
+        let message = d(vec![("role", s("user")), ("content", s("x"))]);
+        let messages = a(vec![message.clone(); super::MAX_TOKEN_MESSAGES]);
+        let actual = handle("ai_fit_context", &[messages, Value::Int(0)]).unwrap();
+        let expected = d(vec![
+            ("messages", a(vec![message])),
+            ("dropped", Value::Int(99999)),
+            ("est_tokens", Value::Int(5)),
+            ("fits", Value::Bool(false)),
+        ]);
+        assert!(Value::equals(&actual, &expected));
+        let too_many = a(vec![d(vec![]); super::MAX_TOKEN_MESSAGES + 1]);
+        assert!(
+            matches!(handle("ai_fit_context", &[too_many, Value::Int(0)]), Some(Value::Error(message)) if message.contains("message limit"))
+        );
     }
 }
