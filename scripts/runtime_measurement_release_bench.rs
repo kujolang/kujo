@@ -43,6 +43,13 @@ fn main() {
         ("task_admission_rejection", 100, "async func recurse(n) { if n == 0 { return 0 } return await recurse(n - 1) } mut caught := false try { await recurse(LIMIT) } except err { caught = true } print(caught)"),
         ("task_cancellation", 40, "shared_set(\"started\", 0) func work() { shared_add_int(\"started\", 1) loop {} } mut i := 0 while i < LIMIT { let handle := spawn_task(work) while (shared_get(\"started\") <= i) {} cancel_task(handle) try { await await_task(handle) } except err {} i += 1 } print(shared_get(\"started\"))"),
         ("ai_native_hash", 100, "let messages := [ai_message(\"user\", \"offline benchmark\")] let options := {\"endpoint\": \"https://example.test/v1/chat\", \"model\": \"fixture\"} mut i := 0 mut latest := \"\" while i < LIMIT { latest = ai_request_hash(messages, options) i += 1 } print(len(latest))"),
+        ("collection_serialization", 200, "mut d := {} for i in range(100) { d[i] = i } mut total := 0 for i in range(LIMIT) { let decoded := parse_json(to_json(d)) total += len(decoded) } print(total)"),
+        ("sparse_dictionary", 5000, "mut d := {} for i in range(LIMIT) { d[i * 100000] = i } print(len(d)) print(get(d, 100000, 9999))"),
+        ("schema_regex", 100, "mut values := [] for i in range(100) { values = push(values, \"kujo\") } let schema := {\"items\":{\"type\":\"string\",\"pattern\":\"^[a-z]+$\"}} mut total := 0 for i in range(LIMIT) { let result := json_schema_validate(values, schema) if result[\"valid\"] { total += 1 } } print(total)"),
+        ("schema_integer_dictionary", 2000, "mut d := {} for i in range(10) { d[i] = i } let schema := {\"type\":\"object\",\"required\":[\"0\",\"9\"],\"additionalProperties\":{\"type\":\"integer\"}} mut total := 0 for i in range(LIMIT) { let result := json_schema_validate(d, schema) if result[\"valid\"] { total += 1 } } print(total)"),
+        ("ai_context_fitting", 100, "mut messages := [{\"role\":\"system\",\"content\":\"stay\"}] for i in range(100) { messages = push(messages, {\"role\":\"user\",\"content\":\"abcd\"}) } mut dropped := 0 for i in range(LIMIT) { let fit := ai_fit_context(messages,16) dropped += fit[\"dropped\"] } print(dropped)"),
+        ("token_text_ascii", 100, "mut text := \"abcd\" for i in range(16) { text = text + text } mut count := 0 for i in range(LIMIT) { count = ai_count_tokens(text) } print(count)"),
+        ("token_text_unicode", 100, "mut text := \"a界\" for i in range(16) { text = text + text } mut count := 0 for i in range(LIMIT) { count = ai_count_tokens(text) } print(count)"),
     ];
     println!("{{\"schema\":\"kujo.measurement-benchmark/v1\",\"samples_per_mode\":11,\"discarded_warmups_per_mode\":2,\"process_inclusive\":true,\"mode_order\":\"(round + offset) % 3, round 0..12\",\"workloads\":[");
     for (index, (name, limit, template)) in workloads.iter().enumerate() {
@@ -67,6 +74,38 @@ fn main() {
                 let output = command.output().unwrap();
                 let elapsed = start.elapsed().as_nanos();
                 assert!(output.status.success(), "{}: {:?}", name, output);
+                let expected_stdout = match *name {
+                    "calls"
+                    | "calls_sustained"
+                    | "tasks"
+                    | "tasks_sustained"
+                    | "task_cancellation"
+                    | "schema_regex"
+                    | "schema_integer_dictionary" => format!("{limit}\n"),
+                    "captures_generators" | "captures_generators_sustained" => {
+                        format!("{}\n", limit * (limit - 1) / 2 + 3 * limit)
+                    }
+                    "language_collections_structs" | "generator_nested_alias" => {
+                        format!("{}\n", limit * limit)
+                    }
+                    "closures_retained" => format!("{}\n", limit - 1),
+                    "promise_observers" => format!("{}\n", limit * (limit + 1)),
+                    "scheduler_channels" => format!("{}\n", limit * (limit - 1) / 2),
+                    "task_admission_rejection" => "true\n".to_string(),
+                    "ai_native_hash" => "64\n".to_string(),
+                    "collection_serialization" => format!("{}\n", limit * 100),
+                    "sparse_dictionary" => format!("{limit}\n1\n"),
+                    "ai_context_fitting" => format!("{}\n", limit * 98),
+                    "token_text_ascii" => "65536\n".to_string(),
+                    "token_text_unicode" => "49152\n".to_string(),
+                    _ => unreachable!("every workload has an independent correctness oracle"),
+                };
+                assert_eq!(
+                    String::from_utf8_lossy(&output.stdout).replace("\r\n", "\n"),
+                    expected_stdout,
+                    "{name}"
+                );
+                assert!(output.stderr.is_empty(), "{name}: {:?}", output.stderr);
                 let observed = (output.stdout, output.stderr);
                 match &expected {
                     Some(expected) => assert_eq!(&observed, expected),
