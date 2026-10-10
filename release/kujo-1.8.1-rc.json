@@ -1,0 +1,12 @@
+{
+  "schema": "kujo.release-candidate/v1",
+  "version": "1.8.1",
+  "status": "candidate-unpublished",
+  "intended_tag": "v1.8.1",
+  "published_stable": "1.8.0",
+  "native_archive": "kujo-v1.8.1-{platform}.tar.gz",
+  "source_archive": "kujo-v1.8.1-source.tar.gz",
+  "evidence_note": "notes/2026-10-10_12-15_kujo-1-8-1-candidate.md",
+  "release_theme": "Correctness, bounded resources and runtime efficiency.",
+  "publication_authorized": false
+}
