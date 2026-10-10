@@ -1,0 +1,12 @@
+Final candidate library (empty-enum compatibility included).
+Three alternating original/updated trials; two warmups and five samples per size/trial.
+macOS x86_64 debug native runtime; development host with concurrent verification activity.
+items=100 median_ns=2070477 samples_ns=[2038868, 2068890, 2070477, 2137944, 2454911]
+items=1000 median_ns=12609370 samples_ns=[11295427, 12531237, 12609370, 13309686, 14727968]
+items=5000 median_ns=57677854 samples_ns=[55437352, 56116084, 57677854, 59292735, 59898629]
+items=100 median_ns=1840699 samples_ns=[1538732, 1574841, 1840699, 2020396, 2319472]
+items=1000 median_ns=12497091 samples_ns=[11373133, 12109199, 12497091, 12671721, 12761736]
+items=5000 median_ns=58557025 samples_ns=[56331737, 58319447, 58557025, 58782605, 59197931]
+items=100 median_ns=1602284 samples_ns=[1565558, 1581655, 1602284, 1624567, 1626199]
+items=1000 median_ns=12469959 samples_ns=[11663359, 11730619, 12469959, 12743645, 12761535]
+items=5000 median_ns=119129972 samples_ns=[74663744, 106414907, 119129972, 121834486, 122194839]

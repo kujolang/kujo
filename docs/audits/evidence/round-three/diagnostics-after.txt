@@ -1,0 +1,5 @@
+surface=parse_int input_bytes=8192 error_bytes=176 estimated_tokens=44
+surface=parse_float input_bytes=8192 error_bytes=174 estimated_tokens=44
+surface=to_int input_bytes=8192 error_bytes=174 estimated_tokens=44
+surface=to_float input_bytes=8192 error_bytes=176 estimated_tokens=44
+surface=parse_toml input_bytes=8197 error_bytes=64 estimated_tokens=16

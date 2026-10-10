@@ -4,12 +4,16 @@ use std::sync::Arc;
 
 fn main() {
     let mut runtime = Interpreter::new();
-    for name in ["parse_int", "parse_float", "to_int", "to_float"] {
-        let input = "x".repeat(8192);
+    for name in ["parse_int", "parse_float", "to_int", "to_float", "parse_toml"] {
+        let input = if name == "parse_toml" {
+            format!("a = {}!", "x".repeat(8192))
+        } else {
+            "x".repeat(8192)
+        };
         let Value::Error(message) =
             runtime.call_native_function_impl(name, &[Value::Str(Arc::new(input.clone()))])
         else {
-            panic!("expected rejected numeric input")
+            panic!("expected rejected input")
         };
         let bytes = message.len();
         let Value::Int(estimate) =

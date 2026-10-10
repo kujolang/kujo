@@ -1,0 +1,20 @@
+Final focused suite: 14 tests, including original reproductions and added compatibility coverage.
+running 14 tests
+TOML error bytes=64
+test toml_diagnostics_do_not_echo_whole_long_lines ... ok
+test csv_columns_are_deterministic ... ok
+test csv_accepts_fixed_dictionary_rows ... ok
+test csv_rejects_duplicate_headers_instead_of_overwriting_cells ... ok
+test csv_rejects_unrepresentable_rows_instead_of_dropping_data ... ok
+test toml_short_diagnostics_are_unchanged_and_long_unicode_locations_survive ... ok
+test csv_preserves_scalars_escaping_missing_cells_and_redaction ... ok
+test empty_enum_remains_a_valid_schema_that_matches_nothing ... ok
+test unused_schema_depth_is_bounded_but_annotations_are_not_schemas ... ok
+test schema_rejects_empty_constraint_arrays ... ok
+test schema_rejects_invalid_unvisited_children ... ok
+test schema_preflight_does_not_apply_constraints_to_other_types ... ok
+test schema_rejects_malformed_keywords_even_for_other_instance_types ... ok
+test literal_csv_rows_work_in_vm_and_interpreter ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+

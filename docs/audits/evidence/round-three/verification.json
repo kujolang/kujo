@@ -1,0 +1,14 @@
+{
+  "baseline.log": {
+    "receipts": 107,
+    "passed": 3001,
+    "failed": 0,
+    "ignored": 18
+  },
+  "final-verified.log": {
+    "receipts": 108,
+    "passed": 3017,
+    "failed": 0,
+    "ignored": 18
+  }
+}

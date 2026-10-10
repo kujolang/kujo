@@ -1,0 +1,86 @@
+Starting SHA: 711d834153cfe79b9187aa421f0691d0b3dcebfd
+Command: CARGO_INCREMENTAL=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test --locked --test serialization_schema_hardening
+
+running 8 tests
+test csv_accepts_fixed_dictionary_rows ... FAILED
+test csv_rejects_unrepresentable_rows_instead_of_dropping_data ... FAILED
+test csv_columns_are_deterministic ... FAILED
+test csv_rejects_duplicate_headers_instead_of_overwriting_cells ... FAILED
+test toml_diagnostics_do_not_echo_whole_long_lines ... FAILED
+test schema_rejects_empty_constraint_arrays ... FAILED
+test schema_rejects_malformed_keywords_even_for_other_instance_types ... FAILED
+test schema_rejects_invalid_unvisited_children ... FAILED
+
+failures:
+
+---- csv_accepts_fixed_dictionary_rows stdout ----
+
+thread 'csv_accepts_fixed_dictionary_rows' (3861065) panicked at tests/serialization_schema_hardening.rs:13:54:
+called `Result::unwrap()` on an `Err` value: "CSV requires array of dictionaries"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- csv_rejects_unrepresentable_rows_instead_of_dropping_data stdout ----
+
+thread 'csv_rejects_unrepresentable_rows_instead_of_dropping_data' (3861069) panicked at tests/serialization_schema_hardening.rs:26:9:
+[{"a":1},{"a":2,"b":3}]
+
+---- csv_columns_are_deterministic stdout ----
+
+thread 'csv_columns_are_deterministic' (3861066) panicked at tests/serialization_schema_hardening.rs:59:5:
+assertion `left == right` failed
+  left: "a,z,m\n2,1,3\n"
+ right: "a,m,z\n2,3,1\n"
+
+---- csv_rejects_duplicate_headers_instead_of_overwriting_cells stdout ----
+
+thread 'csv_rejects_duplicate_headers_instead_of_overwriting_cells' (3861068) panicked at tests/serialization_schema_hardening.rs:19:5:
+assertion failed: builtins::parse_csv("name,name\na,b\n").is_err()
+
+---- toml_diagnostics_do_not_echo_whole_long_lines stdout ----
+TOML error bytes=8304
+
+thread 'toml_diagnostics_do_not_echo_whole_long_lines' (3861073) panicked at tests/serialization_schema_hardening.rs:67:5:
+error bytes=8304
+
+---- schema_rejects_empty_constraint_arrays stdout ----
+
+thread 'schema_rejects_empty_constraint_arrays' (3861070) panicked at tests/serialization_schema_hardening.rs:52:9:
+type: Dict{2 keys}
+
+---- schema_rejects_malformed_keywords_even_for_other_instance_types stdout ----
+
+thread 'schema_rejects_malformed_keywords_even_for_other_instance_types' (3861072) panicked at tests/serialization_schema_hardening.rs:36:9:
+{"minimum":"bad"}: Dict{2 keys}
+
+---- schema_rejects_invalid_unvisited_children stdout ----
+
+thread 'schema_rejects_invalid_unvisited_children' (3861071) panicked at tests/serialization_schema_hardening.rs:44:9:
+{"properties":{"absent":{"unknown":1}}}: Dict{2 keys}
+
+
+failures:
+    csv_accepts_fixed_dictionary_rows
+    csv_columns_are_deterministic
+    csv_rejects_duplicate_headers_instead_of_overwriting_cells
+    csv_rejects_unrepresentable_rows_instead_of_dropping_data
+    schema_rejects_empty_constraint_arrays
+    schema_rejects_invalid_unvisited_children
+    schema_rejects_malformed_keywords_even_for_other_instance_types
+    toml_diagnostics_do_not_echo_whole_long_lines
+
+test result: FAILED. 0 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test serialization_schema_hardening`
+
+Independent repeat:
+    csv_accepts_fixed_dictionary_rows
+    csv_columns_are_deterministic
+    csv_rejects_duplicate_headers_instead_of_overwriting_cells
+    csv_rejects_unrepresentable_rows_instead_of_dropping_data
+    schema_rejects_empty_constraint_arrays
+    schema_rejects_invalid_unvisited_children
+    schema_rejects_malformed_keywords_even_for_other_instance_types
+    toml_diagnostics_do_not_echo_whole_long_lines
+
+test result: FAILED. 0 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
