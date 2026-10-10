@@ -508,6 +508,27 @@ fn dict_like_from_value(value: &Value) -> Option<DictMap> {
     }
 }
 
+/// Borrow either runtime representation of a string-key dictionary. Message
+/// validation must not depend on whether the VM specialized a literal.
+struct AiDictRef<'a>(&'a Value);
+
+impl<'a> AiDictRef<'a> {
+    fn new(value: &'a Value) -> Option<Self> {
+        matches!(value, Value::Dict(_) | Value::FixedDict { .. }).then_some(Self(value))
+    }
+
+    fn get(&self, key: &str) -> Option<&'a Value> {
+        match self.0 {
+            Value::Dict(map) => map.get(key),
+            Value::FixedDict { keys, values } => keys
+                .iter()
+                .position(|candidate| candidate.as_ref() == key)
+                .and_then(|index| values.get(index)),
+            _ => None,
+        }
+    }
+}
+
 fn header_pairs_from_value(value: &Value) -> Option<Vec<(String, String)>> {
     let dict = dict_like_from_value(value)?;
     Some(
@@ -641,11 +662,15 @@ fn parse_ai_request_config_inner(
     })
 }
 
-fn ai_message_value(role: &str, content: Value) -> Value {
+fn ai_message_fields(role: &str, content: Value) -> DictMap {
     let mut message = DictMap::default();
     message.insert("role".into(), Value::Str(Arc::new(role.to_string())));
     message.insert("content".into(), content);
-    Value::Dict(Arc::new(message))
+    message
+}
+
+fn ai_message_value(role: &str, content: Value) -> Value {
+    Value::Dict(Arc::new(ai_message_fields(role, content)))
 }
 
 fn ai_text_message_value(role: &str, content: impl Into<String>) -> Value {
@@ -673,9 +698,9 @@ fn ai_image_url_block(url: impl Into<String>, detail: Option<String>) -> Value {
 }
 
 fn validate_ai_content_block(block: &Value, surface: &str, path: &str) -> Result<Value, Value> {
-    let dict = match block {
-        Value::Dict(dict) => dict,
-        _ => {
+    let dict = match AiDictRef::new(block) {
+        Some(dict) => dict,
+        None => {
             return Err(Value::Error(format!(
                 "{}() requires {} to be a content block dictionary",
                 surface, path
@@ -701,9 +726,9 @@ fn validate_ai_content_block(block: &Value, surface: &str, path: &str) -> Result
             ))),
         },
         "image_url" => {
-            let image_url = match dict.get("image_url") {
-                Some(Value::Dict(image_url)) => image_url,
-                _ => {
+            let image_url = match dict.get("image_url").and_then(AiDictRef::new) {
+                Some(image_url) => image_url,
+                None => {
                     return Err(Value::Error(format!(
                         "{}() requires {}.image_url to be a dictionary",
                         surface, path
@@ -765,9 +790,9 @@ fn parse_ai_messages(input: &Value, surface: &str) -> Result<Vec<Value>, Value> 
         Value::Array(messages) => {
             let mut normalized = Vec::new();
             for (index, message) in messages.iter().enumerate() {
-                let dict = match message {
-                    Value::Dict(dict) => dict,
-                    _ => {
+                let dict = match AiDictRef::new(message) {
+                    Some(dict) => dict,
+                    None => {
                         return Err(Value::Error(format!(
                             "{}() requires messages[{}] to be a dictionary with role/content fields",
                             surface, index
@@ -785,7 +810,14 @@ fn parse_ai_messages(input: &Value, surface: &str) -> Result<Vec<Value>, Value> 
                     }
                 };
 
+                let calls = match dict.get("tool_calls") {
+                    Some(calls) => validated_tool_calls(calls, surface).map_err(Value::Error)?,
+                    None => Vec::new(),
+                };
                 let content = match dict.get("content") {
+                    None | Some(Value::Null) if role == "assistant" && !calls.is_empty() => {
+                        Value::Null
+                    }
                     Some(content) => normalize_ai_message_content(
                         content,
                         surface,
@@ -799,7 +831,21 @@ fn parse_ai_messages(input: &Value, surface: &str) -> Result<Vec<Value>, Value> 
                     }
                 };
 
-                normalized.push(ai_message_value(&role, content));
+                let mut message = ai_message_fields(&role, content);
+                for key in ["name", "tool_call_id"] {
+                    if let Some(value) = dict.get(key) {
+                        if !matches!(value, Value::Str(_)) {
+                            return Err(Value::Error(format!(
+                                "{surface}() requires messages[{index}].{key} to be a string"
+                            )));
+                        }
+                        message.insert(key.into(), value.clone());
+                    }
+                }
+                if let Some(calls) = dict.get("tool_calls") {
+                    message.insert("tool_calls".into(), calls.clone());
+                }
+                normalized.push(Value::Dict(Arc::new(message)));
             }
             Ok(normalized)
         }
@@ -1622,43 +1668,63 @@ fn extract_embedding_vector(response_json: &Value) -> Option<Vec<Value>> {
     Some(vector)
 }
 
-fn extract_tool_call_names(response_json: &Value) -> Vec<String> {
-    let mut names = Vec::new();
-    let root = match response_json {
-        Value::Dict(root) => root,
-        _ => return names,
+fn response_message(response_json: &Value) -> Option<&DictMap> {
+    let Value::Dict(root) = response_json else {
+        return None;
     };
-    let choices = match root.get("choices") {
-        Some(Value::Array(choices)) => choices,
-        _ => return names,
+    let Value::Array(choices) = root.get("choices")? else {
+        return None;
     };
-    let first_choice = match choices.first() {
-        Some(Value::Dict(choice)) => choice,
-        _ => return names,
+    let Value::Dict(choice) = choices.first()? else {
+        return None;
     };
-    let message = match first_choice.get("message") {
-        Some(Value::Dict(message)) => message,
-        _ => return names,
+    let Value::Dict(message) = choice.get("message")? else {
+        return None;
     };
-    let tool_calls = match message.get("tool_calls") {
-        Some(Value::Array(tool_calls)) => tool_calls,
-        _ => return names,
-    };
+    Some(message)
+}
 
-    for tool_call in tool_calls.iter() {
-        let Value::Dict(call_dict) = tool_call else {
-            continue;
+// Retain IDs even when several calls use the same function name. Malformed
+// calls must not silently turn an unfinished tool turn into a successful answer.
+fn validated_tool_calls(
+    value: &Value,
+    surface: &str,
+) -> Result<Vec<(Arc<String>, Arc<String>)>, String> {
+    let Value::Array(calls) = value else {
+        return Err(format!("{surface}() requires tool_calls to be an array"));
+    };
+    let mut ids = std::collections::HashSet::new();
+    let mut result = Vec::with_capacity(calls.len());
+    for (index, call) in calls.iter().enumerate() {
+        let invalid = || {
+            format!("{surface}() invalid tool_calls[{index}]: expected a unique non-empty id and function name/arguments strings")
         };
-        let Some(Value::Dict(function_dict)) = call_dict.get("function") else {
-            continue;
+        let Some(call) = AiDictRef::new(call) else {
+            return Err(invalid());
         };
-        let Some(Value::Str(name)) = function_dict.get("name") else {
-            continue;
+        let Some(Value::Str(id)) = call.get("id") else {
+            return Err(invalid());
         };
-        names.push(name.as_ref().clone());
+        if id.is_empty() || !ids.insert(id.as_str()) {
+            return Err(invalid());
+        }
+        if let Some(kind) = call.get("type") {
+            if !matches!(kind, Value::Str(kind) if kind.as_str() == "function") {
+                return Err(invalid());
+            }
+        }
+        let Some(function) = call.get("function").and_then(AiDictRef::new) else {
+            return Err(invalid());
+        };
+        let Some(Value::Str(name)) = function.get("name") else {
+            return Err(invalid());
+        };
+        if name.is_empty() || !matches!(function.get("arguments"), Some(Value::Str(_))) {
+            return Err(invalid());
+        }
+        result.push((id.clone(), name.clone()));
     }
-
-    names
+    Ok(result)
 }
 
 fn extract_usage(response_json: &Value) -> Option<Value> {
@@ -2795,12 +2861,32 @@ pub fn handle_with_interpreter(
                 final_headers = response.headers;
                 final_json = response_json.clone();
                 last_message = extract_chat_content(&response_json).unwrap_or_default();
-                messages.push(ai_text_message_value("assistant", last_message.clone()));
-
-                let tool_call_names = extract_tool_call_names(&response_json);
-                if tool_call_names.is_empty() {
+                let raw_calls =
+                    response_message(&response_json).and_then(|message| message.get("tool_calls"));
+                let tool_calls = match raw_calls {
+                    Some(calls) => match validated_tool_calls(calls, "ai_tool_loop") {
+                        Ok(calls) => calls,
+                        Err(message) => {
+                            return Some(ai_invalid_response_error(
+                                "ai_tool_loop",
+                                &config,
+                                message,
+                            ))
+                        }
+                    },
+                    None => Vec::new(),
+                };
+                if tool_calls.is_empty() {
+                    messages.push(ai_text_message_value("assistant", last_message.clone()));
                     break;
                 }
+                let content = response_message(&response_json)
+                    .and_then(|message| message.get("content"))
+                    .cloned()
+                    .unwrap_or(Value::Null);
+                let mut assistant = ai_message_fields("assistant", content);
+                assistant.insert("tool_calls".into(), raw_calls.expect("validated calls").clone());
+                messages.push(Value::Dict(Arc::new(assistant)));
 
                 let Some(tool_results) = &tool_results else {
                     return Some(ai_invalid_response_error(
@@ -2811,9 +2897,9 @@ pub fn handle_with_interpreter(
                     ));
                 };
 
-                for tool_name in tool_call_names {
+                for (call_id, tool_name) in tool_calls {
                     let tool_output = match tool_results.get(tool_name.as_str()) {
-                        Some(Value::Str(output)) => output.as_ref().clone(),
+                        Some(Value::Str(output)) => output.clone(),
                         Some(_) => {
                             return Some(ai_invalid_response_error(
                                 "ai_tool_loop",
@@ -2835,8 +2921,9 @@ pub fn handle_with_interpreter(
 
                     let mut tool_message = DictMap::default();
                     tool_message.insert("role".into(), Value::Str(Arc::new("tool".to_string())));
-                    tool_message.insert("name".into(), Value::Str(Arc::new(tool_name.to_string())));
-                    tool_message.insert("content".into(), Value::Str(Arc::new(tool_output)));
+                    tool_message.insert("name".into(), Value::Str(tool_name));
+                    tool_message.insert("tool_call_id".into(), Value::Str(call_id));
+                    tool_message.insert("content".into(), Value::Str(tool_output));
                     messages.push(Value::Dict(Arc::new(tool_message)));
                 }
             }

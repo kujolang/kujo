@@ -96,6 +96,25 @@ messages := [
 
 `ai_text(content)` returns `{type:"text", text:content}`. `ai_image_url(url, detail?)` returns `{type:"image_url", image_url:{url, detail?}}`. `ai_message(role, content_or_blocks)` returns `{role, content}` where content is either a string or an array of content blocks. The AI helpers accept these messages unchanged; the builders perform no I/O and have no capability gate.
 
+Message dictionaries may also carry string `name`, string `tool_call_id`, and
+function `tool_calls`; normalization preserves these fields for requests and
+hashes. Assistant messages with non-empty `tool_calls` may omit content or use
+`null`. Calls require unique non-empty IDs, non-empty function names, and string
+arguments; a supplied call type must be `function`. Malformed calls are rejected.
+Ordinary dictionaries and VM-specialized dictionary literals have the same
+validation behavior, including nested text/image content and function calls.
+
+`ai_tool_loop` retains the assistant's call records and attaches the matching
+`tool_call_id` to each tool reply, including repeated calls to the same function.
+`options.tool_results` continues to map function names to caller-provided strings;
+Kujo does not execute model-supplied code or invent tool results. The step limit
+and success/error envelopes are unchanged.
+
+Plain-text request hashes and cassette serialization versions remain unchanged.
+Histories containing names or tool metadata now hash and transmit the preserved
+fields. Re-record old cassettes for those corrected request bodies; replay never
+falls back to a cassette for a different body.
+
 ## Egress Controls
 
 The high-level AI helpers use the `network-ai` capability. In `--untrusted` mode, grant them with `--allow-ai`; `--allow-net-client` grants general HTTP/TCP/UDP client APIs but does not unlock AI helpers.
