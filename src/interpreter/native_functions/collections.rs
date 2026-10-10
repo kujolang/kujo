@@ -4,7 +4,7 @@
 
 use crate::builtins;
 use crate::interpreter::{DictMap, IntDictMap, Interpreter, Value};
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 
 fn strict_arity_error(function_name: &str, expected: usize, got: usize) -> Value {
@@ -590,11 +590,11 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                         x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal)
                     }
                     (Value::Int(x), Value::Float(y)) => {
-                        (*x as f64).partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal)
+                        Value::compare_int_float(*x, *y).unwrap_or(std::cmp::Ordering::Equal)
                     }
-                    (Value::Float(x), Value::Int(y)) => {
-                        x.partial_cmp(&(*y as f64)).unwrap_or(std::cmp::Ordering::Equal)
-                    }
+                    (Value::Float(x), Value::Int(y)) => Value::compare_int_float(*y, *x)
+                        .map(std::cmp::Ordering::reverse)
+                        .unwrap_or(std::cmp::Ordering::Equal),
                     (Value::Str(x), Value::Str(y)) => x.as_ref().cmp(y.as_ref()),
                     _ => std::cmp::Ordering::Equal,
                 });
@@ -620,14 +620,24 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             if 1 != arg_values.len() {
                 strict_arity_error("unique", 1, arg_values.len())
             } else if let Some(Value::Array(arr)) = arg_values.first() {
-                let mut seen = HashSet::new();
+                let mut seen: HashMap<String, &Value> = HashMap::new();
                 let mut result = Vec::new();
 
                 for element in arr.iter() {
                     let key = format!("{:?}", element);
-                    if seen.insert(key) {
-                        result.push(element.clone());
+                    // Debug strings can collide (notably redacted secrets and
+                    // opaque values). Keep the ordinary one-hash lookup path;
+                    // only ambiguous collisions need semantic comparisons.
+                    if let Some(prior) = seen.get(&key) {
+                        if Value::equals(prior, element)
+                            || result.iter().any(|prior| Value::equals(prior, element))
+                        {
+                            continue;
+                        }
+                    } else {
+                        seen.insert(key, element);
                     }
+                    result.push(element.clone());
                 }
                 Value::Array(Arc::new(result))
             } else {
@@ -649,7 +659,12 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                             if has_float {
                                 float_sum += *n as f64;
                             } else {
-                                int_sum += n;
+                                let Some(next) = int_sum.checked_add(*n) else {
+                                    return Some(Value::Error(
+                                        "sum() integer overflow".to_string(),
+                                    ));
+                                };
+                                int_sum = next;
                             }
                         }
                         Value::Float(n) => {
@@ -1179,20 +1194,19 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 Value::Dict(Arc::new(builtins::dict_invert(&**dict)))
             } else if let Some(Value::FixedDict { keys, values }) = arg_values.first() {
                 let dict = fixed_dict_to_dict(keys.as_ref(), values.as_ref());
-                let inverted = builtins::dict_invert(&dict);
-                Value::Dict(Arc::new(inverted))
+                Value::Dict(Arc::new(builtins::dict_invert(&dict)))
             } else if let Some(Value::IntDict(dict)) = arg_values.first() {
                 let mut inverted = DictMap::default();
                 for (k, v) in dict.iter() {
                     inverted.insert(k.to_string().into(), v.clone());
                 }
-                Value::Dict(Arc::new(inverted))
+                Value::Dict(Arc::new(builtins::dict_invert(&inverted)))
             } else if let Some(Value::DenseIntDict(values)) = arg_values.first() {
                 let mut inverted = DictMap::default();
                 for (index, value) in values.iter().enumerate() {
                     inverted.insert(index.to_string().into(), value.clone());
                 }
-                Value::Dict(Arc::new(inverted))
+                Value::Dict(Arc::new(builtins::dict_invert(&inverted)))
             } else if let Some(Value::DenseIntDictInt(values)) = arg_values.first() {
                 let mut inverted = DictMap::default();
                 for (index, value) in values.iter().enumerate() {
@@ -1201,13 +1215,13 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                         (*value).map(Value::Int).unwrap_or(Value::Null),
                     );
                 }
-                Value::Dict(Arc::new(inverted))
+                Value::Dict(Arc::new(builtins::dict_invert(&inverted)))
             } else if let Some(Value::DenseIntDictIntFull(values)) = arg_values.first() {
                 let mut inverted = DictMap::default();
                 for (index, value) in values.iter().enumerate() {
                     inverted.insert(index.to_string().into(), Value::Int(*value));
                 }
-                Value::Dict(Arc::new(inverted))
+                Value::Dict(Arc::new(builtins::dict_invert(&inverted)))
             } else {
                 Value::Error("invert() requires a dict argument".to_string())
             }

@@ -2059,6 +2059,26 @@ impl Value {
         }
     }
 
+    /// Order an integer against a float without rounding the integer through f64.
+    /// NaN remains unordered; infinities and the i64 boundary are handled before casting.
+    pub(crate) fn compare_int_float(integer: i64, float: f64) -> Option<std::cmp::Ordering> {
+        use std::cmp::Ordering;
+        if float.is_nan() {
+            return None;
+        }
+        if float >= 9_223_372_036_854_775_808.0 {
+            return Some(Ordering::Less);
+        }
+        if float < -9_223_372_036_854_775_808.0 {
+            return Some(Ordering::Greater);
+        }
+        Some(match integer.cmp(&(float.trunc() as i64)) {
+            Ordering::Equal if float.fract() > 0.0 => Ordering::Less,
+            Ordering::Equal if float.fract() < 0.0 => Ordering::Greater,
+            ordering => ordering,
+        })
+    }
+
     /// Float equality semantics:
     /// - NaN is never equal to any value (including itself)
     /// - infinities compare by exact IEEE sign/value
