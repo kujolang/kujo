@@ -1,16 +1,16 @@
 # Kujo v1.0.0 Scope Definition
 
-Current stable runtime: **1.8.0**, with native and npm artifacts for Linux
+Current stable runtime: **1.8.1**, with native and npm artifacts for Linux
 x64/arm64, macOS x64/arm64 and Windows x64. Wave C beta and Wave D alpha remain
 experimental; participant SDKs remain unpublished.
-See [1.6 release notes](RELEASE_NOTES_1_6.md) for runtime versus experimental ecosystem scope.
+See [1.8.1 maintenance notes](RELEASE_NOTES_1_8_1.md) for runtime versus experimental ecosystem scope.
 
 
 Status: stable v1.0.0 scope baseline
 
 This document defines what is in-scope for Kujo `v1.0.0`, what is explicitly out-of-scope, and what compatibility commitments apply.
 
-Release boundary: Kujo `v1.8.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.8.1` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 ## In-Scope For v1.0.0
 

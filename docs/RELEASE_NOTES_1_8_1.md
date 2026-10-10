@@ -1,7 +1,8 @@
 # Kujo 1.8.1 maintenance release
 
-Status: candidate preparation. Stable installation defaults remain on 1.8.0 until
-1.8.1 native/source and npm published-install validation succeeds.
+Status: released on 2026-10-10. Native/source and npm published-install checks
+passed across all five supported platforms. See the
+[publication receipt](../release/kujo-1.8.1-publication.json).
 
 This release contains the accumulated post-1.8.0 correctness, security,
 reliability and efficiency fixes. It introduces no new language syntax.
@@ -60,10 +61,10 @@ remains a local-code runtime, not a security sandbox.
 
 ## Distribution and next work
 
-The intended distribution is five native platforms (Linux x64/arm64, macOS
+The published distribution covers five native platforms (Linux x64/arm64, macOS
 x64/arm64, Windows x64), deterministic source/checksums and six npm packages.
 Crates.io is optional and is not part of this publication.
 
-After publication, follow [roadmap items 2–6](../ROADMAP.md#2-native-api-representation-and-runtime-parity)
+Follow [roadmap items 2–6](../ROADMAP.md#2-native-api-representation-and-runtime-parity)
 for 1.9. Wave C/D contracts and participant SDKs remain experimental; their
 promotion is not implied by this maintenance release.

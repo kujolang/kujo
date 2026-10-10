@@ -1,15 +1,15 @@
 # Kujo Roadmap
 
 Updated: 2026-10-10
-Stable release: [v1.8.0](https://github.com/kujolang/kujo/releases/tag/v1.8.0)
+Stable release: [v1.8.1](https://github.com/kujolang/kujo/releases/tag/v1.8.1)
 
 > Current crate version: `1.8.1` in [Cargo.toml](Cargo.toml)
 
-Kujo **1.8.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
+Kujo **1.8.1 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free runtime npm packages. The exact source/tag
-target is `1acf4924fb96a8a660e86cdc35e4c4bf5933a304`.
-See the [publication record](release/kujo-1.8.0-publication.json) and
-[published-install evidence](notes/2026-10-04_14-20_published-1-8-installation.md)
+target is `357796a1a868f2c80bc8f7b8edcc7d6aff384f04`.
+See the [publication record](release/kujo-1.8.1-publication.json) and
+[published-install evidence](notes/2026-10-10_13-31_published-1-8-1-maintenance.md)
 for the five-target native/npm validation. Wave C beta and Wave D alpha remain
 experimental;
 participant SDK packages remain unpublished. Human adopter usability remains
@@ -22,7 +22,7 @@ post-release validation.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The public npm 1.8.0 runtime package covers the same targets
+  SHA-256 checksums. The public npm 1.8.1 runtime package covers the same targets
   with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
@@ -32,10 +32,11 @@ post-release validation.
 
 ## 1.8.1 maintenance release, then the 1.9 work sequence
 
-The maintenance release is the prerequisite, not an unfinished feature in the
-1.9 backlog. Prepare and verify **1.8.1** from the accumulated post-1.8.0 fixes,
-then begin items **2–6** below. Public stable defaults stay on the last verified
-published release until native/source and npm installation checks pass.
+The **1.8.1 maintenance baseline is published and verified**. Begin items
+**2–6** below, starting with native API representation and runtime parity.
+The maintenance release is complete for core native/npm distribution; separate
+website/catalog promotion remains explicit cross-repository work in the
+[publication receipt](release/kujo-1.8.1-publication.json).
 
 This plan makes 1.9 a runtime consistency, efficiency, and developer-experience
 release. It permits at most one bounded language addition after a design gate;
@@ -44,8 +45,9 @@ There is no calendar deadline that overrides compatibility or verification.
 
 ### 1. Publish the 1.8.1 maintenance baseline
 
-**Status: release preparation in progress.** Scope is the existing hardening and
-reliability fixes, with no new language syntax. The
+**Status: completed — signed tag, five native targets, source/checksums and six
+npm packages published; both published-install matrices passed.** Scope is the
+existing hardening and reliability fixes, with no new language syntax. The
 [maintenance notes](docs/RELEASE_NOTES_1_8_1.md) describe corrected CSV behavior,
 AI history/hash compatibility, resource bounds, capabilities and diagnostics.
 
@@ -58,7 +60,7 @@ successful runtime publication alone. Crates.io remains optional.
 
 ### 2. Native API representation and runtime parity
 
-**Status: planned after 1.8.1; first implementation task. Owner: Kujo core.**
+**Status: ready — first implementation task after 1.8.1. Owner: Kujo core.**
 
 - Inventory supported native APIs and their accepted value representations:
   ordinary/fixed dictionaries, specialized integer dictionaries, arrays, bytes,
@@ -132,7 +134,7 @@ remain separate unscheduled designs.
 
 ### 6. First-hour adopter validation and developer experience
 
-**Status: planned after 1.8.1; can run alongside items 2–5. Owner: Kujo docs/tools,
+**Status: ready after 1.8.1; can run alongside items 2–5. Owner: Kujo docs/tools,
 with explicitly coordinated ecosystem follow-ups.**
 
 - Have a human new to the current workflow use only published instructions to
@@ -309,9 +311,9 @@ introduce dynamic topology or promote Wave F to production-ready status.
 ## Maintenance lane
 
 Maintain the completed optional-inference, shared CLI/LSP analysis, struct
-generator methods and measured generator-resume optimization. Kujo 1.8.0 is published; 1.8.1 carries the accumulated maintenance fixes.
-After verified 1.8.1 publication, use the numbered 1.9 sequence above. Continue
-VM/interpreter compatibility, security, fuzzing and release reliability as
+generator methods and measured generator-resume optimization. Kujo 1.8.1 is
+published with the accumulated maintenance fixes. Use the numbered 1.9 sequence
+above. Continue VM/interpreter compatibility, security, fuzzing and release reliability as
 ongoing gates rather than reopening completed 1.8 implementation work.
 Generics, macros, WASM, broad FFI and async generators remain deferred and
 unscheduled. `yield from` is now the conditional design candidate in item 5,

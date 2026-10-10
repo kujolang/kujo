@@ -1,0 +1,38 @@
+{
+  "schema": "kujo.runtime-publication/v1",
+  "version": "1.8.1",
+  "tag": "v1.8.1",
+  "commit": "357796a1a868f2c80bc8f7b8edcc7d6aff384f04",
+  "tag_signature_verified": true,
+  "native_and_npm": "published",
+  "publication_workflow": 38067801088,
+  "native_install_smoke": 38071979374,
+  "native_upgrade_from": "v1.8.0",
+  "npm_install_smoke": 38071766773,
+  "npm_install_smoke_attempt": 2,
+  "all_five_targets_verified": true,
+  "source_archive_verified": true,
+  "evidence_note": "notes/2026-10-10_13-31_published-1-8-1-maintenance.md",
+  "crates_io": "not published: optional and outside the canonical native/npm distribution",
+  "ecosystem_promotion": {
+    "status": "open; core runtime publication is complete",
+    "blocker": "External deployments are outside this task's current-repository write scope; each requires a separately scoped repository task.",
+    "follow_ups": [
+      {
+        "repository": "kujolang/kujolang.ai",
+        "owner": "website maintainers",
+        "action": "Synchronize public/install.sh and the site contract to 1.8.1; deploy and verify public installer bytes and a disposable-prefix installation."
+      },
+      {
+        "repository": "kujolang/kujolang-mcp",
+        "owner": "MCP catalog maintainers",
+        "action": "After the website update, refresh reviewed website/framework pins, deploy the Worker, and verify live health revision and the exact Kujo catalog item."
+      },
+      {
+        "repository": "robertdevore/kujo.robertdevore.com",
+        "owner": "course site maintainers",
+        "action": "Reverify with the official 1.8.1 binary, update course/evidence metadata, deploy, and verify production DNS, TLS, routes, installation and exact runtime version."
+      }
+    ]
+  }
+}
