@@ -104,10 +104,18 @@ The new token tests compare an independent weighted-scalar oracle across ASCII,
 control characters, multibyte text, combining marks, model families and string
 lengths. Exact-limit and over-limit cases retain character-based bounds and
 exact errors, including messages context fitting would otherwise discard.
-Seven Node tests cover statistics, missing/corrupt/failed reports, unsupported
+Eight Node tests cover statistics, missing/corrupt/failed reports, unsupported
 resources, driver failures/deadlines, provenance validation and evidence-directory
 preservation. Clippy initially found one unnecessary clone in a new test; the
 test now borrows that input, with no assertion change.
+
+The first Windows campaign failed in the baseline's vendored OpenSSL dependency:
+Git Bash selected its Perl, which lacked `Locale::Maketext::Simple`. The build
+driver now runs under the runner's native shell environment, verifies Perl's
+`IPC::Cmd` import and records the executable before invoking Cargo. The source,
+locked dependencies and release profile are unchanged. A platform selector permits
+a Windows-only retry while preserving completed Linux/macOS work; the failed
+build log is evidence of the harness correction, not a runtime result.
 
 No hosted-runner time budget is promoted to a regression assertion from one
 campaign. Future corpus changes require reviewed expected results and a new

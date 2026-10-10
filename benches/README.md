@@ -78,6 +78,9 @@ Linux x64, macOS arm64 and Windows x64. Supply an optional candidate SHA to buil
 and compare a second commit on each host; omit it for an A/A-only campaign.
 Comparisons retain a baseline A/A run for resource and noise context. It keeps evidence
 for 90 days; preserve reviewed results in a durable audit artifact before expiry.
+The optional platform selector limits a retry to Linux, macOS or Windows.
+Build orchestration uses the runner's native shell environment so Windows uses
+native Perl for vendored OpenSSL, with a recorded Perl preflight before Cargo.
 Its targeted push/pull-request job verifies statistics and evidence rejection
 semantics, including failed runs and timeout cleanup. The runner has a twenty-minute
 deadline and terminates its owned process tree on timeout; partial evidence is

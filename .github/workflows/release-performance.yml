@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/*release_bench.rs'
       - 'scripts/release_performance_campaign.js'
+      - 'scripts/build_release_comparison.js'
       - 'tests/release_performance_campaign.test.js'
       - '.github/workflows/release-performance.yml'
   workflow_dispatch:
@@ -14,6 +15,12 @@ on:
         description: 'Exact 40-character runtime baseline commit'
         required: true
         type: string
+      platform:
+        description: 'Platform subset for a focused rerun'
+        required: true
+        default: all
+        type: choice
+        options: [all, linux, macos, windows]
       candidate_sha:
         description: 'Optional candidate commit; omit for an A/A control'
         required: false
@@ -22,6 +29,7 @@ on:
     paths:
       - 'scripts/*release_bench.rs'
       - 'scripts/release_performance_campaign.js'
+      - 'scripts/build_release_comparison.js'
       - 'tests/release_performance_campaign.test.js'
       - '.github/workflows/release-performance.yml'
 
@@ -45,13 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-22.04
-            binary: kujo
-          - os: macos-15
-            binary: kujo
-          - os: windows-latest
-            binary: kujo.exe
+        os: ${{ fromJSON(inputs.platform == 'windows' && '["windows-latest"]' || inputs.platform == 'macos' && '["macos-15"]' || inputs.platform == 'linux' && '["ubuntu-22.04"]' || '["ubuntu-22.04","macos-15","windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     env:
       SOURCE_SHA: ${{ inputs.source_sha }}
@@ -83,21 +85,11 @@ jobs:
           "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
           "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Build locked release binaries
-        shell: bash
-        env:
-          BINARY_NAME: ${{ matrix.binary }}
-        run: |
-          set -euo pipefail
-          cargo build --manifest-path "$RUNNER_TEMP/perf-runtime/Cargo.toml" --release --locked --bin kujo > baseline-build.log 2>&1
-          cp "$RUNNER_TEMP/perf-runtime/target/release/$BINARY_NAME" "$RUNNER_TEMP/baseline-$BINARY_NAME"
-          if [ -n "$CANDIDATE_SHA" ] && [ "$CANDIDATE_SHA" != "$SOURCE_SHA" ]; then
-            git -C "$RUNNER_TEMP/perf-runtime" checkout --detach "$CANDIDATE_SHA"
-            cargo build --manifest-path "$RUNNER_TEMP/perf-runtime/Cargo.toml" --release --locked --bin kujo > candidate-build.log 2>&1
-          fi
+        run: node scripts/build_release_comparison.js
       - name: Measure and verify release corpus
         shell: bash
         env:
-          BINARY_NAME: ${{ matrix.binary }}
+          BINARY_NAME: ${{ runner.os == 'Windows' && 'kujo.exe' || 'kujo' }}
         run: |
           set -euo pipefail
           binary="$RUNNER_TEMP/perf-runtime/target/release/$BINARY_NAME"
@@ -115,5 +107,7 @@ jobs:
             baseline-evidence/
             baseline-build.log
             candidate-build.log
+            candidate-checkout.log
+            windows-perl.log
           if-no-files-found: error
           retention-days: 90

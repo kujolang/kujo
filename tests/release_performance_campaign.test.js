@@ -69,3 +69,13 @@ test('an existing evidence directory is never overwritten', async t => {
     assert.equal(fs.readFileSync(sentinel, 'utf8'), 'preserve');
     assert.deepEqual(fs.readdirSync(dir), ['sentinel']);
 });
+
+test('release build helper rejects invalid provenance before invoking a compiler', () => {
+    const path = require('node:path');
+    const { spawnSync } = require('node:child_process');
+    const result = spawnSync(process.execPath, [path.join(__dirname, '../scripts/build_release_comparison.js')], {
+        encoding: 'utf8', env: { ...process.env, SOURCE_SHA: 'invalid', CANDIDATE_SHA: '', RUNNER_TEMP: 'unused' },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /exact source SHAs and RUNNER_TEMP are required/);
+});
