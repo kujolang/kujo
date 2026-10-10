@@ -227,8 +227,8 @@ evidence, not classified as a pre-existing failure. All baseline ignored tests
 remain unchanged. Remote CI and native Windows/Linux execution are not claimed
 by this local verification receipt.
 
-Final complete-suite result: **3,016 passed, 0 failed, 18 unchanged ignored**,
-across 108 result receipts. This adds 14 integration tests and one unit test to
-the 3,001-test baseline. Formatting, diff checks, Clippy, cargo check and both
+Final complete-suite result: **3,017 passed, 0 failed, 18 unchanged ignored**,
+across 108 result receipts. This adds 14 integration tests and one unit test (executed in both the library
+and binary harnesses) to the 3,001-test baseline. Formatting, diff checks, Clippy, cargo check and both
 150-test runtime modes passed. No known regression introduced by this round
 remains.
