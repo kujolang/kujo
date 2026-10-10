@@ -8,6 +8,24 @@ This file records user-visible changes to Kujo, following
 
 ### Fixed
 
+- Return a runtime error for integer `sum` overflow; preserve distinct compound,
+  byte, and secret values in `unique`; invert specialized integer dictionaries;
+  and compare mixed integer/float sort keys without rounding large integers.
+- Use scaled vector norms for finite values whose squares overflow or underflow,
+  and reuse the query norm across `vec_top_k` rows.
+- Compare JSON Schema `const`/`enum` numbers exactly, including nested values,
+  within validation budgets; support local JSON pointers into schema arrays.
+- Preserve AI history `name`, `tool_calls`, and `tool_call_id` fields. Tool loops
+  retain assistant calls, correlate replies by ID, and reject malformed calls.
+  Accept VM-specialized dictionary literals throughout messages and multimodal
+  content, matching interpreter behavior without copying dictionaries to validate them.
+  Plain-text request hashes remain unchanged; corrected tool histories require
+  cassettes matching their corrected request bodies.
+- Bound numeric conversion error input previews to 128 Unicode characters with
+  the original byte count; retain existing diagnostics for short inputs.
+- Avoid normalizing discarded/count-only token messages and cloning token-helper
+  options. Token estimates, pruning policy, limits, and result fields are unchanged.
+
 - Admit database pool waiters in FIFO order and notify them when capacity returns,
   replacing polling that allowed repeated acquisitions to starve older callers.
   Keep connection setup and health checks outside the admission queue; timed-out

@@ -1,0 +1,108 @@
+running 12 tests
+test numeric_conversion_errors_bound_model_visible_input_echoes ... FAILED
+test schema_const_and_enum_use_exact_json_numeric_equality ... FAILED
+test sum_overflow_is_a_runtime_error_instead_of_a_panic_or_wrap ... FAILED
+test schema_local_json_pointers_can_address_array_elements ... FAILED
+test unique_does_not_treat_redacted_debug_output_as_value_identity ... FAILED
+test sort_does_not_round_large_integers_before_comparing_floats ... FAILED
+test vectors_preserve_direction_at_large_and_small_finite_scales ... FAILED
+test ai_request_hash_preserves_tool_call_linkage ... FAILED
+test ai_history_accepts_null_tool_turns_and_rejects_malformed_calls ... FAILED
+test invert_supports_every_integer_dictionary_representation ... FAILED
+test ai_tool_loop_replays_a_protocol_valid_two_step_conversation ... FAILED
+test corrected_native_behaviors_are_visible_in_both_runtimes ... FAILED
+
+failures:
+
+---- numeric_conversion_errors_bound_model_visible_input_echoes stdout ----
+
+thread 'numeric_conversion_errors_bound_model_visible_input_echoes' (3603632) panicked at tests/hardening_round_two.rs:147:13:
+parse_int: 8218 error bytes
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- schema_const_and_enum_use_exact_json_numeric_equality stdout ----
+
+thread 'schema_const_and_enum_use_exact_json_numeric_equality' (3603633) panicked at tests/hardening_round_two.rs:118:13:
+Dict{2 keys}
+
+---- sum_overflow_is_a_runtime_error_instead_of_a_panic_or_wrap stdout ----
+
+thread 'sum_overflow_is_a_runtime_error_instead_of_a_panic_or_wrap' (3603636) panicked at src/interpreter/native_functions/collections.rs:652:33:
+attempt to add with overflow
+
+---- schema_local_json_pointers_can_address_array_elements stdout ----
+
+thread 'schema_local_json_pointers_can_address_array_elements' (3603634) panicked at tests/hardening_round_two.rs:134:5:
+Error(json_schema_validate() could not resolve local $ref '#/allOf/0')
+
+---- unique_does_not_treat_redacted_debug_output_as_value_identity stdout ----
+
+thread 'unique_does_not_treat_redacted_debug_output_as_value_identity' (3603637) panicked at tests/hardening_round_two.rs:67:9:
+assertion `left == right` failed
+  left: 1
+ right: 2
+
+---- sort_does_not_round_large_integers_before_comparing_floats stdout ----
+
+thread 'sort_does_not_round_large_integers_before_comparing_floats' (3603635) panicked at tests/hardening_round_two.rs:49:9:
+assertion `left == right` failed: [Int(9007199254740993), Float(9007199254740992)]
+  left: true
+ right: false
+
+---- vectors_preserve_direction_at_large_and_small_finite_scales stdout ----
+
+thread 'vectors_preserve_direction_at_large_and_small_finite_scales' (3603638) panicked at tests/hardening_round_two.rs:93:9:
+Error(vec_norm() result is not finite; reduce input magnitude)
+
+---- ai_request_hash_preserves_tool_call_linkage stdout ----
+
+thread 'ai_request_hash_preserves_tool_call_linkage' (3603628) panicked at tests/hardening_round_two.rs:164:5:
+different tool replies collided: Str("46d391c7c1519de8f80990dfe436b845c2bb76bd01fbac556212d8bcf9c1ec22")
+
+---- ai_history_accepts_null_tool_turns_and_rejects_malformed_calls stdout ----
+
+thread 'ai_history_accepts_null_tool_turns_and_rejects_malformed_calls' (3603627) panicked at tests/hardening_round_two.rs:171:5:
+assertion failed: matches!(call("ai_request_hash", &[good, options.clone()]), Value::Str(_))
+
+---- invert_supports_every_integer_dictionary_representation stdout ----
+
+thread 'invert_supports_every_integer_dictionary_representation' (3603631) panicked at tests/hardening_round_two.rs:84:9:
+Dict{2 keys}
+
+---- ai_tool_loop_replays_a_protocol_valid_two_step_conversation stdout ----
+
+thread 'ai_tool_loop_replays_a_protocol_valid_two_step_conversation' (3603629) panicked at tests/hardening_round_two.rs:209:62:
+Err(Str("ai_tool_loop failed: kind:\"replay_miss\" cassette '/var/folders/wb/0cck3lgd08n55g_8ly9qmf_00000gn/T/.tmppOrj1j/2f6a9a82937bf7ec5611a51019b00aeb252c2e1af457fde174b1cdec11c8021f.json' was not found; strict replay does not use the network"))
+
+---- corrected_native_behaviors_are_visible_in_both_runtimes stdout ----
+
+thread 'corrected_native_behaviors_are_visible_in_both_runtimes' (3603630) panicked at tests/hardening_round_two.rs:242:13:
+assertion `left == right` failed: case 0, interpreter=false:
+thread 'kujo-vm-runner' (3603650) panicked at src/interpreter/native_functions/collections.rs:652:33:
+attempt to add with overflow
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+[KUJOVM001] [vm] error: VM execution panicked in dedicated VM thread
+
+  left: Some(6)
+ right: Some(4)
+
+
+failures:
+    ai_history_accepts_null_tool_turns_and_rejects_malformed_calls
+    ai_request_hash_preserves_tool_call_linkage
+    ai_tool_loop_replays_a_protocol_valid_two_step_conversation
+    corrected_native_behaviors_are_visible_in_both_runtimes
+    invert_supports_every_integer_dictionary_representation
+    numeric_conversion_errors_bound_model_visible_input_echoes
+    schema_const_and_enum_use_exact_json_numeric_equality
+    schema_local_json_pointers_can_address_array_elements
+    sort_does_not_round_large_integers_before_comparing_floats
+    sum_overflow_is_a_runtime_error_instead_of_a_panic_or_wrap
+    unique_does_not_treat_redacted_debug_output_as_value_identity
+    vectors_preserve_direction_at_large_and_small_finite_scales
+
+test result: FAILED. 0 passed; 12 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.19s
+
+error: test failed, to rerun pass `--test hardening_round_two`
+
+Independent repeat: test result: FAILED. 0 passed; 12 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
