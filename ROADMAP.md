@@ -32,8 +32,9 @@ post-release validation.
 
 ## 1.8.1 maintenance release, then the 1.9 work sequence
 
-The **1.8.1 maintenance baseline is published and verified**. Begin items
-**2–6** below, starting with native API representation and runtime parity.
+The **1.8.1 maintenance baseline is published and verified**. Item **2** is
+complete on main for the recorded native representation contracts. Begin item
+**3**, the release-build performance and resource campaign, then items **4–6**.
 The maintenance release is complete for core native/npm distribution; separate
 website/catalog promotion remains explicit cross-repository work in the
 [publication receipt](release/kujo-1.8.1-publication.json).
@@ -60,7 +61,15 @@ successful runtime publication alone. Crates.io remains optional.
 
 ### 2. Native API representation and runtime parity
 
-**Status: ready — first implementation task after 1.8.1. Owner: Kujo core.**
+**Status: completed on main — post-1.8.1 development, not a new published release.
+Owner: Kujo core.**
+
+The [campaign inventory and verification receipt](docs/audits/native-api-representation-parity.md)
+records eleven reproduced and fixed discrepancy categories, six dictionary
+representations, all 36 merge/update pairings, and 24 new tests. The full release
+gate and VM, dual and interpreter fixtures pass; the existing parity CI job now
+also runs the new suites with default features and without JIT. Deliberate
+representation limits and platform coverage boundaries remain explicit.
 
 - Inventory supported native APIs and their accepted value representations:
   ordinary/fixed dictionaries, specialized integer dictionaries, arrays, bytes,
@@ -79,7 +88,7 @@ implementations or weaken representation-specific behavior merely for parity.
 
 ### 3. Release-build performance and resource campaign
 
-**Status: planned after item 2 establishes the behavioral baseline. Owner: Kujo core.**
+**Status: ready — item 2 established the behavioral baseline. Owner: Kujo core.**
 
 - Extend the existing reproducible workload corpus for CLI/data processing,
   collections/serialization, AI context fitting and request hashing, schema

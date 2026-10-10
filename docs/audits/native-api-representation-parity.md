@@ -8,6 +8,10 @@ every possible program. Canonical native names, aliases, arity, and capabilities
 remain in `Interpreter::get_builtin_names`, `native_function_arity`, and
 `docs/STANDARD_LIBRARY.md`.
 
+Ending implementation SHA: `ae4e1056365326af1cb06da31eaf5f10ce1287e1` on `main`. The following
+documentation commit records roadmap completion; no additional runtime changes
+are included in that receipt. All results below apply to this implementation.
+
 ## Inventory and executable evidence
 
 | Surface | Accepted representations / limits | Executable evidence |
