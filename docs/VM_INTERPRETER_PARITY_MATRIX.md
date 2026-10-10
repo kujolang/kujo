@@ -1,6 +1,6 @@
 # VM/Interpreter/Compiler Parity Matrix
 
-Last updated: 2026-09-26
+Last updated: 2026-10-10
 
 This matrix is the release-facing record for VM, interpreter, and compiler
 parity. New runtime work must update the table and its named test evidence.
@@ -64,6 +64,15 @@ callbacks; all nine imported callback contracts require both runtimes to work. S
 the defining scope exits. See the [integration review](RUNTIME_HARDENING_WAVE_1_REVIEW.md).
 
 ## Status Labels
+
+The post-1.8.1 [native representation inventory](audits/native-api-representation-parity.md)
+links covered contracts, deliberate limits, reproductions and results.
+`tests/native_representation_matrix.rs` exercises six dictionary storage forms
+directly. `tests/native_representation_parity.rs` runs shared source through both
+CLI entrypoints against independent expectations, with restricted capabilities.
+The existing parity CI job runs both suites with and without JIT. This expands
+native parity evidence beyond arity checks; it does not assert exhaustive
+equivalence for every native and input combination.
 
 
 - `supported`: Implemented and parity-covered by tests.

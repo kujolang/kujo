@@ -6,6 +6,26 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve sparse integer dictionary keys in global/local assignments and fused
+  fill loops without allocating dense storage up to the key. Keep explicit null
+  entries readable and included in equality. Preserve distinct numeric-looking
+  string keys such as `"00"` and `"+0"`.
+- Accept all dictionary representations in native length, membership, clearing,
+  merging, JSON/TOML/YAML serialization, and schema instance validation. Share
+  merge/update handling; mixed representations no longer silently lose entries.
+  Deduplicate equal dictionary values regardless of their internal storage.
+- Accept integer keys consistently in dictionary get/get_default/has_key/remove
+  helpers; use precise string-or-integer type-checker signatures.
+
+### Tests
+
+- Add a native representation matrix and shared VM/interpreter behavior tests
+  to the existing parity CI job, including the build without JIT. Cover all six
+  dictionary representations and their 36 merge/update pairings, nested data,
+  bytes, secrets, numeric boundaries, AI messages/context, mutation and errors.
+
 ## [1.8.1] - 2026-10-10
 
 ### Fixed

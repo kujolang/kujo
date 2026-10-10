@@ -546,7 +546,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Value::IntDict(dict) => {
                     let int_key = match item {
                         Value::Int(i) => Some(*i),
-                        Value::Str(key) => key.parse::<i64>().ok(),
+                        Value::Str(key) => Value::dict_index(key).ok(),
                         _ => None,
                     };
                     int_key.map(|key| dict.contains_key(&key)).unwrap_or(false)
@@ -554,7 +554,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Value::DenseIntDict(values) => {
                     let int_key = match item {
                         Value::Int(i) => Some(*i),
-                        Value::Str(key) => key.parse::<i64>().ok(),
+                        Value::Str(key) => Value::dict_index(key).ok(),
                         _ => None,
                     };
                     int_key.map(|key| key >= 0 && (key as usize) < values.len()).unwrap_or(false)
@@ -562,7 +562,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Value::DenseIntDictInt(values) => {
                     let int_key = match item {
                         Value::Int(i) => Some(*i),
-                        Value::Str(key) => key.parse::<i64>().ok(),
+                        Value::Str(key) => Value::dict_index(key).ok(),
                         _ => None,
                     };
                     int_key.map(|key| key >= 0 && (key as usize) < values.len()).unwrap_or(false)
@@ -570,7 +570,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                 Value::DenseIntDictIntFull(values) => {
                     let int_key = match item {
                         Value::Int(i) => Some(*i),
-                        Value::Str(key) => key.parse::<i64>().ok(),
+                        Value::Str(key) => Value::dict_index(key).ok(),
                         _ => None,
                     };
                     int_key.map(|key| key >= 0 && (key as usize) < values.len()).unwrap_or(false)

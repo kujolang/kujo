@@ -981,7 +981,10 @@ impl TypeChecker {
         self.functions.insert(
             "has_key".to_string(),
             FunctionSignature {
-                param_types: vec![None, Some(TypeAnnotation::String)], // Dict, key
+                param_types: vec![
+                    None,
+                    Some(TypeAnnotation::Union(vec![TypeAnnotation::String, TypeAnnotation::Int])),
+                ], // Dict, key
                 return_type: Some(TypeAnnotation::Int),
             },
         );
@@ -989,7 +992,11 @@ impl TypeChecker {
         self.functions.insert(
             "get".to_string(),
             FunctionSignature {
-                param_types: vec![None, Some(TypeAnnotation::String), None], // Dict, key, default (optional)
+                param_types: vec![
+                    None,
+                    Some(TypeAnnotation::Union(vec![TypeAnnotation::String, TypeAnnotation::Int])),
+                    None,
+                ], // Dict, key, default (optional)
                 return_type: None, // Returns value or default
             },
         );
@@ -1022,7 +1029,11 @@ impl TypeChecker {
         self.functions.insert(
             "get_default".to_string(),
             FunctionSignature {
-                param_types: vec![None, Some(TypeAnnotation::String), None], // Dict, key, default value
+                param_types: vec![
+                    None,
+                    Some(TypeAnnotation::Union(vec![TypeAnnotation::String, TypeAnnotation::Int])),
+                    None,
+                ], // Dict, key, default value
                 return_type: None, // Returns value or default
             },
         );

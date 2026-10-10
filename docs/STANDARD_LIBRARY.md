@@ -19,6 +19,11 @@ Capability key:
 
 Collection and numeric diagnostic contracts:
 
+- Representation coverage and deliberate limits are mapped to executable tests in the [native API parity inventory](audits/native-api-representation-parity.md).
+- Internal dictionary specialization must not change entry presence: sparse writes create only assigned keys, and explicit null entries remain present and readable. Only canonical decimal strings alias integer keys; strings such as `"00"` and `"+0"` remain distinct keys.
+- `len`, `contains`, `clear`, `merge`, and `update` accept every dictionary representation. Merging different representations retains all entries with right-hand override. These operations preserve their inputs; `unique` deduplicates equal dictionaries across representations.
+- `get`, `get_default`, `has_key`, and dictionary `remove` accept string or integer keys across all representations. Integer keys use canonical decimal spelling. Dictionary `contains` retains its string-key-only contract.
+
 - `sum` reports integer accumulator overflow as a runtime error rather than wrapping or panicking. Existing float promotion and non-numeric-element behavior are unchanged.
 - `sort` compares integer/float pairs without rounding the integer first. Language-wide float equality is unchanged.
 - `unique` preserves first occurrences and verifies equality when debug summaries collide, including compound values, secrets, and byte buffers. `invert` swaps keys and primitive values for all supported dictionary representations; unsupported values are skipped consistently.
@@ -35,6 +40,8 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 
 CSV and TOML conversion contracts:
 
+- Specialized integer dictionaries (including null slots) are accepted by JSON, TOML and YAML serializers, including nested values. JSON Schema treats them as objects and compares their nested numeric values exactly.
+
 - `to_csv` accepts arrays of ordinary or VM fixed dictionaries. Columns are the first row's keys in lexicographic order; later missing cells and nulls remain empty, and secrets remain redacted as `***`.
 - Duplicate CSV headers, later rows with extra columns, and compound/unsupported cells return errors instead of silently overwriting or dropping data. Callers should explicitly project heterogeneous rows onto their desired columns and serialize compound cells before export. CSV escaping and numeric parsing are unchanged.
 - `parse_toml` retains its existing detailed diagnostic for inputs up to 512 bytes. Longer invalid inputs report the parser's byte span and an error-message preview capped at 128 Unicode characters (with total message bytes when shortened), without echoing the source document. The caller retains the full input for inspection.
@@ -49,6 +56,7 @@ Bounded XML parsing contract (`parse_xml_bounded`):
 JSON Schema subset contract (`json_schema_validate`):
 
 - `json_schema_validate(value, schema)` returns `{"valid": bool, "errors": [...]}` and never performs network, filesystem, clock, random, or process I/O.
+- Dynamically constructed integer-keyed `properties`/definition maps and empty specialized schemas are accepted; local references traverse their canonical string keys.
 - Supported validation keywords are `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`, `anyOf`, `oneOf`, `allOf`, and local `$ref`.
 - `$ref` supports local JSON pointers such as `#`, `#/$defs/name`, `#/definitions/name`, and array traversal such as `#/allOf/0`; remote references are rejected. Array indices use canonical non-negative decimal notation (no leading zeroes except `0`).
 - `const` and `enum` compare JSON numbers exactly, including nested containers: `1` equals `1.0`, but large integers are not rounded to floats and nearby floats are not treated as equal. Structural comparisons share the 64-level depth and 100,000-node validation budgets.

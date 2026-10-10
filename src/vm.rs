@@ -1150,7 +1150,7 @@ impl VM {
                     Err(Self::missing_map_key_error(index))
                 } else {
                     match values.get(*i as usize) {
-                        Some(Some(value)) => Ok(Value::Int(*value)),
+                        Some(value) => Ok(value.map(Value::Int).unwrap_or(Value::Null)),
                         _ => Err(Self::missing_map_key_error(index)),
                     }
                 }
@@ -1166,35 +1166,35 @@ impl VM {
                         .ok_or_else(|| Self::missing_map_key_error(index))
                 }
             }
-            (Value::IntDict(dict), Value::Str(key)) => match key.parse::<i64>() {
+            (Value::IntDict(dict), Value::Str(key)) => match Value::dict_index(key) {
                 Ok(int_key) => {
                     dict.get(&int_key).cloned().ok_or_else(|| Self::missing_map_key_error(index))
                 }
-                Err(_) => Err("Invalid index operation".to_string()),
+                Err(_) => Err(Self::missing_map_key_error(index)),
             },
-            (Value::DenseIntDict(values), Value::Str(key)) => match key.parse::<i64>() {
+            (Value::DenseIntDict(values), Value::Str(key)) => match Value::dict_index(key) {
                 Ok(int_key) if int_key >= 0 => values
                     .get(int_key as usize)
                     .cloned()
                     .ok_or_else(|| Self::missing_map_key_error(index)),
                 Ok(_) => Err(Self::missing_map_key_error(index)),
-                Err(_) => Err("Invalid index operation".to_string()),
+                Err(_) => Err(Self::missing_map_key_error(index)),
             },
-            (Value::DenseIntDictInt(values), Value::Str(key)) => match key.parse::<i64>() {
+            (Value::DenseIntDictInt(values), Value::Str(key)) => match Value::dict_index(key) {
                 Ok(int_key) if int_key >= 0 => match values.get(int_key as usize) {
-                    Some(Some(value)) => Ok(Value::Int(*value)),
+                    Some(value) => Ok(value.map(Value::Int).unwrap_or(Value::Null)),
                     _ => Err(Self::missing_map_key_error(index)),
                 },
                 Ok(_) => Err(Self::missing_map_key_error(index)),
-                Err(_) => Err("Invalid index operation".to_string()),
+                Err(_) => Err(Self::missing_map_key_error(index)),
             },
-            (Value::DenseIntDictIntFull(values), Value::Str(key)) => match key.parse::<i64>() {
+            (Value::DenseIntDictIntFull(values), Value::Str(key)) => match Value::dict_index(key) {
                 Ok(int_key) if int_key >= 0 => values
                     .get(int_key as usize)
                     .map(|value| Value::Int(*value))
                     .ok_or_else(|| Self::missing_map_key_error(index)),
                 Ok(_) => Err(Self::missing_map_key_error(index)),
-                Err(_) => Err("Invalid index operation".to_string()),
+                Err(_) => Err(Self::missing_map_key_error(index)),
             },
             _ => Err("Invalid index operation".to_string()),
         }
@@ -1225,6 +1225,35 @@ impl VM {
             dict.insert(index as i64, Value::Int(*value));
         }
         dict
+    }
+
+    // Dense storage is valid only for contiguous keys. Preserve sparse writes
+    // (including huge keys) in a map before any resize or fused loop executes.
+    fn prepare_dictionary_write(object: &mut Value, index: &Value) {
+        let key = match index {
+            Value::Int(key) => *key,
+            Value::Str(key) => match Value::dict_index(key) {
+                Ok(key) => key,
+                Err(_) => return,
+            },
+            _ => return,
+        };
+        let len = match object {
+            Value::Dict(map) if map.is_empty() && matches!(index, Value::Int(_)) => 0,
+            Value::FixedDict { keys, .. } if keys.is_empty() && matches!(index, Value::Int(_)) => 0,
+            Value::DenseIntDict(values) => values.len(),
+            Value::DenseIntDictInt(values) => values.len(),
+            Value::DenseIntDictIntFull(values) => values.len(),
+            _ => return,
+        };
+        if key < 0 || usize::try_from(key).map_or(true, |key| key > len) {
+            let entries = Value::map_entries(object).expect("dictionary checked");
+            let map = entries
+                .into_iter()
+                .map(|(key, value)| (Value::dict_index(&key).expect("dense key"), value))
+                .collect();
+            *object = Value::IntDict(Arc::new(map));
+        }
     }
 
     fn dense_int_dict_int_full_to_sparse(values: &[i64]) -> DenseIntDictInt {
@@ -2447,6 +2476,7 @@ impl VM {
                             .get_mut(map_slot)
                             .ok_or_else(|| format!("Invalid local slot: {}", map_slot))?;
 
+                        Self::prepare_dictionary_write(target, &Value::Int(current_index));
                         match target {
                             Value::DenseIntDictIntFull(values) => {
                                 let values_mut = Arc::make_mut(values);
@@ -3889,8 +3919,9 @@ impl VM {
 
                 OpCode::IndexSet => {
                     let index = self.stack.pop().ok_or("Stack underflow")?;
-                    let object = self.stack.pop().ok_or("Stack underflow")?;
+                    let mut object = self.stack.pop().ok_or("Stack underflow")?;
                     let value = self.stack.pop().ok_or("Stack underflow")?;
+                    Self::prepare_dictionary_write(&mut object, &index);
 
                     match (object, index) {
                         (Value::Array(arr), Value::Int(i)) => {
@@ -4303,7 +4334,7 @@ impl VM {
                             }
                         }
                         (Value::DenseIntDict(values), Value::Str(key)) => {
-                            match key.parse::<i64>() {
+                            match Value::dict_index(&key) {
                                 Ok(int_key) => {
                                     if int_key < 0 {
                                         let mut int_dict =
@@ -4344,7 +4375,7 @@ impl VM {
                             }
                         }
                         (Value::DenseIntDictInt(values), Value::Str(key)) => {
-                            match key.parse::<i64>() {
+                            match Value::dict_index(&key) {
                                 Ok(int_key) => {
                                     if int_key < 0 {
                                         let mut int_dict =
@@ -4429,7 +4460,7 @@ impl VM {
                             }
                         }
                         (Value::DenseIntDictIntFull(values), Value::Str(key)) => {
-                            match key.parse::<i64>() {
+                            match Value::dict_index(&key) {
                                 Ok(int_key) => {
                                     if int_key < 0 {
                                         let mut int_dict =
@@ -4581,6 +4612,7 @@ impl VM {
                             .get_mut(slot)
                             .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
 
+                        Self::prepare_dictionary_write(object, &index);
                         match index {
                             Value::Int(i) => match object {
                                 Value::Array(arr) => {
@@ -4857,7 +4889,7 @@ impl VM {
                                     dict_clone.insert(Arc::from(key.as_str()), value);
                                     *object = Value::Dict(Arc::new(dict_clone));
                                 }
-                                Value::DenseIntDict(values) => match key.parse::<i64>() {
+                                Value::DenseIntDict(values) => match Value::dict_index(&key) {
                                     Ok(int_key) => {
                                         if int_key < 0 {
                                             let mut int_dict =
@@ -4879,7 +4911,7 @@ impl VM {
                                         *object = Value::Dict(Arc::new(dict));
                                     }
                                 },
-                                Value::DenseIntDictInt(values) => match key.parse::<i64>() {
+                                Value::DenseIntDictInt(values) => match Value::dict_index(&key) {
                                     Ok(int_key) => {
                                         if int_key < 0 {
                                             let mut int_dict =
@@ -4924,74 +4956,81 @@ impl VM {
                                         *object = Value::Dict(Arc::new(dict));
                                     }
                                 },
-                                Value::DenseIntDictIntFull(values) => match key.parse::<i64>() {
-                                    Ok(int_key) => {
-                                        if int_key < 0 {
-                                            let mut int_dict =
-                                                Self::dense_int_dict_int_full_to_int_dict(values);
-                                            int_dict.insert(int_key, value);
-                                            *object = Value::IntDict(Arc::new(int_dict));
-                                        } else {
-                                            let index = int_key as usize;
-                                            match value {
-                                                Value::Int(int_value) => {
-                                                    let values_mut = Arc::make_mut(values);
-                                                    let len = values_mut.len();
-                                                    if index == len {
-                                                        values_mut.push(int_value);
-                                                    } else if index < len {
-                                                        values_mut[index] = int_value;
-                                                    } else {
+                                Value::DenseIntDictIntFull(values) => {
+                                    match Value::dict_index(&key) {
+                                        Ok(int_key) => {
+                                            if int_key < 0 {
+                                                let mut int_dict =
+                                                    Self::dense_int_dict_int_full_to_int_dict(
+                                                        values,
+                                                    );
+                                                int_dict.insert(int_key, value);
+                                                *object = Value::IntDict(Arc::new(int_dict));
+                                            } else {
+                                                let index = int_key as usize;
+                                                match value {
+                                                    Value::Int(int_value) => {
+                                                        let values_mut = Arc::make_mut(values);
+                                                        let len = values_mut.len();
+                                                        if index == len {
+                                                            values_mut.push(int_value);
+                                                        } else if index < len {
+                                                            values_mut[index] = int_value;
+                                                        } else {
+                                                            let mut sparse =
+                                                            Self::dense_int_dict_int_full_to_sparse(
+                                                                values,
+                                                            );
+                                                            sparse.resize(index + 1, None);
+                                                            sparse[index] = Some(int_value);
+                                                            *object = Value::DenseIntDictInt(
+                                                                Arc::new(sparse),
+                                                            );
+                                                        }
+                                                    }
+                                                    Value::Null => {
                                                         let mut sparse =
                                                             Self::dense_int_dict_int_full_to_sparse(
                                                                 values,
                                                             );
-                                                        sparse.resize(index + 1, None);
-                                                        sparse[index] = Some(int_value);
+                                                        if index >= sparse.len() {
+                                                            sparse.resize(index + 1, None);
+                                                        }
+                                                        sparse[index] = None;
                                                         *object = Value::DenseIntDictInt(Arc::new(
                                                             sparse,
                                                         ));
                                                     }
-                                                }
-                                                Value::Null => {
-                                                    let mut sparse =
-                                                        Self::dense_int_dict_int_full_to_sparse(
-                                                            values,
-                                                        );
-                                                    if index >= sparse.len() {
-                                                        sparse.resize(index + 1, None);
+                                                    other => {
+                                                        let mut dense_values =
+                                                            Self::dense_int_dict_int_full_to_dense(
+                                                                values,
+                                                            );
+                                                        if index >= dense_values.len() {
+                                                            dense_values
+                                                                .resize(index + 1, Value::Null);
+                                                        }
+                                                        dense_values[index] = other;
+                                                        *object = Value::DenseIntDict(Arc::new(
+                                                            dense_values,
+                                                        ));
                                                     }
-                                                    sparse[index] = None;
-                                                    *object =
-                                                        Value::DenseIntDictInt(Arc::new(sparse));
-                                                }
-                                                other => {
-                                                    let mut dense_values =
-                                                        Self::dense_int_dict_int_full_to_dense(
-                                                            values,
-                                                        );
-                                                    if index >= dense_values.len() {
-                                                        dense_values.resize(index + 1, Value::Null);
-                                                    }
-                                                    dense_values[index] = other;
-                                                    *object =
-                                                        Value::DenseIntDict(Arc::new(dense_values));
                                                 }
                                             }
                                         }
-                                    }
-                                    Err(_) => {
-                                        let mut dict = DictMap::default();
-                                        for (index, value) in values.iter().enumerate() {
-                                            dict.insert(
-                                                Arc::from(index.to_string().as_str()),
-                                                Value::Int(*value),
-                                            );
+                                        Err(_) => {
+                                            let mut dict = DictMap::default();
+                                            for (index, value) in values.iter().enumerate() {
+                                                dict.insert(
+                                                    Arc::from(index.to_string().as_str()),
+                                                    Value::Int(*value),
+                                                );
+                                            }
+                                            dict.insert(Arc::from(key.as_str()), value);
+                                            *object = Value::Dict(Arc::new(dict));
                                         }
-                                        dict.insert(Arc::from(key.as_str()), value);
-                                        *object = Value::Dict(Arc::new(dict));
                                     }
-                                },
+                                }
                                 _ => return Err("Invalid index assignment".to_string()),
                             },
                             _ => return Err("Invalid index assignment".to_string()),

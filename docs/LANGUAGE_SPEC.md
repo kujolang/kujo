@@ -316,6 +316,7 @@ let or_value := false || 5
 - Dictionaries preserve key/value associations; merge/spread behavior is right-biased for duplicate keys.
 - Dictionary indexing with a missing key is a runtime error. Programs that need fallback behavior should use explicit dictionary helpers such as `has_key`, `get`, or `get_default`.
 - Dictionary indexing accepts string keys and integer keys. Other key types are invalid index operations.
+- Integer keys alias their canonical decimal string (`0` aliases `"0"`, but not `"00"`, `"+0"`, or `"-0"`). Assigning a sparse key creates only that entry; intermediate keys do not appear. An explicitly assigned `null` remains a present, readable entry and participates in dictionary equality.
 - Array/string indexing outside bounds is a runtime error (`Index out of bounds: <index>`), not a sentinel-value fallback.
 - Invalid index assignment targets (for example assigning through index access on non-indexable values) are runtime errors.
 - Unsupported unary/binary operations are runtime errors; Kujo does not silently coerce invalid operations to `Int(0)` or empty-string values.

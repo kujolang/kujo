@@ -253,6 +253,8 @@ fn validate_schema(
         return Err(format!("exceeded validation node limit ({MAX_VALIDATION_NODES})"));
     }
 
+    let normalized = value.integer_dictionary_as_dict();
+    let value = normalized.as_ref().unwrap_or(value);
     let Some(schema_entries) = object_entries(schema) else {
         return Err("requires schema to be a dictionary".to_string());
     };
@@ -788,6 +790,16 @@ fn object_entries(value: &Value) -> Option<Vec<(String, &Value)>> {
                 .map(|(key, value)| (key.as_ref().to_string(), value))
                 .collect(),
         ),
+        Value::IntDict(map) => {
+            Some(map.iter().map(|(key, value)| (key.to_string(), value)).collect())
+        }
+        Value::DenseIntDict(values) => {
+            Some(values.iter().enumerate().map(|(key, value)| (key.to_string(), value)).collect())
+        }
+        // Nonempty integer-only maps cannot contain dictionary subschemas or
+        // recognized keyword names. Empty maps are valid empty schemas/maps.
+        Value::DenseIntDictInt(values) if values.is_empty() => Some(Vec::new()),
+        Value::DenseIntDictIntFull(values) if values.is_empty() => Some(Vec::new()),
         _ => None,
     }
 }
@@ -799,12 +811,24 @@ fn get_key<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
             .iter()
             .position(|candidate| candidate.as_ref() == key)
             .and_then(|index| values.get(index)),
+        Value::IntDict(map) => Value::dict_index(key).ok().and_then(|key| map.get(&key)),
+        Value::DenseIntDict(values) => Value::dict_index(key)
+            .ok()
+            .and_then(|key| usize::try_from(key).ok())
+            .and_then(|key| values.get(key)),
         _ => None,
     }
 }
 
 fn is_object_like(value: &Value) -> bool {
-    matches!(value, Value::Dict(_) | Value::FixedDict { .. })
+    match value {
+        Value::Dict(_) | Value::FixedDict { .. } | Value::IntDict(_) | Value::DenseIntDict(_) => {
+            true
+        }
+        Value::DenseIntDictInt(values) => values.is_empty(),
+        Value::DenseIntDictIntFull(values) => values.is_empty(),
+        _ => false,
+    }
 }
 
 fn value_matches_type(value: &Value, expected: &str) -> bool {
@@ -857,10 +881,34 @@ fn json_values_equal(
     right: &Value,
     state: &mut ValidationState,
 ) -> Result<bool, String> {
-    let mut pending = vec![(left, right, 0)];
+    json_values_equal_at_depth(left, right, state, 0, 0)
+}
+
+fn json_values_equal_at_depth(
+    left: &Value,
+    right: &Value,
+    state: &mut ValidationState,
+    initial_depth: usize,
+    ancestor_pending: usize,
+) -> Result<bool, String> {
+    let mut pending = vec![(left, right, initial_depth)];
     while let Some((left, right, depth)) = pending.pop() {
         if depth > MAX_SCHEMA_DEPTH {
             return Err(format!("exceeded schema recursion depth limit ({MAX_SCHEMA_DEPTH})"));
+        }
+        let normalized_left = left.integer_dictionary_as_dict();
+        let normalized_right = right.integer_dictionary_as_dict();
+        if normalized_left.is_some() || normalized_right.is_some() {
+            if !json_values_equal_at_depth(
+                normalized_left.as_ref().unwrap_or(left),
+                normalized_right.as_ref().unwrap_or(right),
+                state,
+                depth,
+                ancestor_pending + pending.len(),
+            )? {
+                return Ok(false);
+            }
+            continue;
         }
         state.visited_nodes += 1;
         if state.visited_nodes > MAX_VALIDATION_NODES {
@@ -878,7 +926,8 @@ fn json_values_equal(
                     return Ok(false);
                 }
                 if a.len()
-                    > MAX_VALIDATION_NODES.saturating_sub(state.visited_nodes + pending.len())
+                    > MAX_VALIDATION_NODES
+                        .saturating_sub(state.visited_nodes + pending.len() + ancestor_pending)
                 {
                     return Err(format!("exceeded validation node limit ({MAX_VALIDATION_NODES})"));
                 }
@@ -895,7 +944,8 @@ fn json_values_equal(
                     return Ok(false);
                 }
                 if entries.len()
-                    > MAX_VALIDATION_NODES.saturating_sub(state.visited_nodes + pending.len())
+                    > MAX_VALIDATION_NODES
+                        .saturating_sub(state.visited_nodes + pending.len() + ancestor_pending)
                 {
                     return Err(format!("exceeded validation node limit ({MAX_VALIDATION_NODES})"));
                 }

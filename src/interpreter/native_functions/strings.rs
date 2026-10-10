@@ -890,6 +890,34 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             // Polymorphic: strings handled here, arrays delegated to collections.rs
             match args.first() {
                 Some(Value::Array(_)) => return None,
+                Some(
+                    value @ (Value::IntDict(_)
+                    | Value::DenseIntDict(_)
+                    | Value::DenseIntDictInt(_)
+                    | Value::DenseIntDictIntFull(_)),
+                ) => match args.get(1) {
+                    Some(Value::Str(key)) => {
+                        let key = Value::dict_index(key).ok();
+                        let present = match (value, key) {
+                            (Value::IntDict(map), Some(key)) => map.contains_key(&key),
+                            (Value::DenseIntDict(values), Some(key)) => {
+                                key >= 0 && (key as usize) < values.len()
+                            }
+                            (Value::DenseIntDictInt(values), Some(key)) => {
+                                key >= 0 && (key as usize) < values.len()
+                            }
+                            (Value::DenseIntDictIntFull(values), Some(key)) => {
+                                key >= 0 && (key as usize) < values.len()
+                            }
+                            _ => false,
+                        };
+                        Value::Bool(present)
+                    }
+                    _ => Value::Error(
+                        "contains() requires two arguments: string/array and substring/item"
+                            .to_string(),
+                    ),
+                },
                 Some(Value::Dict(dict)) => match args.get(1) {
                     Some(Value::Str(key)) => Value::Bool(dict.contains_key(key.as_str())),
                     _ => Value::Error(

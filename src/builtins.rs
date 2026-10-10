@@ -732,6 +732,10 @@ fn kujo_value_to_json_with_depth(value: &Value, depth: usize) -> Result<serde_js
             }
             Ok(serde_json::Value::Object(json_obj))
         }
+        Value::DenseIntDictInt(_) | Value::DenseIntDictIntFull(_) => {
+            let dictionary = value.integer_dictionary_as_dict().expect("integer dictionary");
+            kujo_value_to_json_with_depth(&dictionary, depth)
+        }
         _ => Err(format!("Cannot convert {:?} to JSON", value)),
     }
 }
@@ -865,6 +869,10 @@ fn kujo_value_to_toml(value: &Value) -> Result<toml::Value, String> {
             }
             Ok(toml::Value::Table(toml_table))
         }
+        Value::DenseIntDictInt(_) | Value::DenseIntDictIntFull(_) => {
+            let dictionary = value.integer_dictionary_as_dict().expect("integer dictionary");
+            kujo_value_to_toml(&dictionary)
+        }
         _ => Err(format!("Cannot convert {:?} to TOML", value)),
     }
 }
@@ -980,6 +988,10 @@ fn kujo_value_to_yaml(value: &Value) -> Result<serde_yaml::Value, String> {
                     .insert(serde_yaml::Value::String(index.to_string()), kujo_value_to_yaml(val)?);
             }
             Ok(serde_yaml::Value::Mapping(yaml_map))
+        }
+        Value::DenseIntDictInt(_) | Value::DenseIntDictIntFull(_) => {
+            let dictionary = value.integer_dictionary_as_dict().expect("integer dictionary");
+            kujo_value_to_yaml(&dictionary)
         }
         _ => Err(format!("Cannot convert {:?} to YAML", value)),
     }

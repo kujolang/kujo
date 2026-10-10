@@ -1911,7 +1911,45 @@ impl Value {
         })
     }
 
-    fn map_entries(value: &Value) -> Option<Vec<(String, Value)>> {
+    pub(crate) fn dictionary_len(&self) -> Option<usize> {
+        match self {
+            Self::Dict(map) => Some(map.len()),
+            Self::FixedDict { keys, .. } => Some(keys.len()),
+            Self::IntDict(map) => Some(map.len()),
+            Self::DenseIntDict(values) => Some(values.len()),
+            Self::DenseIntDictInt(values) => Some(values.len()),
+            Self::DenseIntDictIntFull(values) => Some(values.len()),
+            _ => None,
+        }
+    }
+
+    /// Only canonical decimal strings alias integer dictionary keys.
+    pub(crate) fn dict_index(key: &str) -> Result<i64, ()> {
+        if key.starts_with('+') || key.starts_with("-0") || (key.len() > 1 && key.starts_with('0'))
+        {
+            return Err(());
+        }
+        key.parse::<i64>().map_err(|_| ())
+    }
+
+    /// Materialize only a specialized integer dictionary for consumers whose
+    /// contracts operate on string-key objects. None is a present null slot;
+    /// sparse writes must use IntDict rather than manufacture dense gaps.
+    pub(crate) fn integer_dictionary_as_dict(&self) -> Option<Value> {
+        if !matches!(
+            self,
+            Self::IntDict(_)
+                | Self::DenseIntDict(_)
+                | Self::DenseIntDictInt(_)
+                | Self::DenseIntDictIntFull(_)
+        ) {
+            return None;
+        }
+        let entries = Self::map_entries(self)?;
+        Some(Self::Dict(Arc::new(entries.into_iter().map(|(k, v)| (Arc::from(k), v)).collect())))
+    }
+
+    pub(crate) fn map_entries(value: &Value) -> Option<Vec<(String, Value)>> {
         match value {
             Value::Dict(map) => Some(
                 map.iter().map(|(key, value)| (key.as_ref().to_string(), value.clone())).collect(),
@@ -1936,8 +1974,8 @@ impl Value {
                 values
                     .iter()
                     .enumerate()
-                    .filter_map(|(index, value)| {
-                        value.map(|int_value| (index.to_string(), Value::Int(int_value)))
+                    .map(|(index, value)| {
+                        (index.to_string(), value.map(Value::Int).unwrap_or(Value::Null))
                     })
                     .collect(),
             ),
