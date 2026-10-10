@@ -1,9 +1,9 @@
 # Kujo Roadmap
 
-Updated: 2026-10-04
+Updated: 2026-10-10
 Stable release: [v1.8.0](https://github.com/kujolang/kujo/releases/tag/v1.8.0)
 
-> Current crate version: `1.8.0` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.8.1` in [Cargo.toml](Cargo.toml)
 
 Kujo **1.8.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free runtime npm packages. The exact source/tag
@@ -29,6 +29,132 @@ post-release validation.
   packages and global tools on macOS and Linux.
 - Kujo's built-in `kujo.toml` / `kujo.lock` commands remain separate from
   Kennel's `kennel.toml` / `kennel.lock` workflow.
+
+## 1.8.1 maintenance release, then the 1.9 work sequence
+
+The maintenance release is the prerequisite, not an unfinished feature in the
+1.9 backlog. Prepare and verify **1.8.1** from the accumulated post-1.8.0 fixes,
+then begin items **2–6** below. Public stable defaults stay on the last verified
+published release until native/source and npm installation checks pass.
+
+This plan makes 1.9 a runtime consistency, efficiency, and developer-experience
+release. It permits at most one bounded language addition after a design gate;
+it does not promise async generators, new ownership semantics, or broad syntax.
+There is no calendar deadline that overrides compatibility or verification.
+
+### 1. Publish the 1.8.1 maintenance baseline
+
+**Status: release preparation in progress.** Scope is the existing hardening and
+reliability fixes, with no new language syntax. The
+[maintenance notes](docs/RELEASE_NOTES_1_8_1.md) describe corrected CSV behavior,
+AI history/hash compatibility, resource bounds, capabilities and diagnostics.
+
+Completion requires a clean, reviewed source commit, full release gates, a signed
+version tag, five native archives, deterministic source/checksums, six exact npm
+packages, and successful published-install checks across all five targets. Only
+then promote stable installer/docs defaults. Record any separate website/catalog
+promotion as explicit cross-repository work; do not imply it happened from a
+successful runtime publication alone. Crates.io remains optional.
+
+### 2. Native API representation and runtime parity
+
+**Status: planned after 1.8.1; first implementation task. Owner: Kujo core.**
+
+- Inventory supported native APIs and their accepted value representations:
+  ordinary/fixed dictionaries, specialized integer dictionaries, arrays, bytes,
+  secrets and numeric boundaries. Start with collections, serialization, schema
+  validation and AI message construction, where recent regressions occurred.
+- Build shared behavior-based fixtures that exercise equivalent values through
+  both VM and interpreter entrypoints. Include nested values, invalid inputs,
+  mutability, exact errors/exit classes, redaction and capability denial.
+- Classify deliberate limitations before changing them. Reproduce every claimed
+  defect on the 1.8.1 baseline, then fix it with a permanent regression.
+
+**Done when:** the inventory maps covered contracts to executable tests, all
+confirmed in-scope discrepancies are resolved, and both runtime modes plus the
+full release gate pass. Add the matrix to existing CI; do not duplicate native
+implementations or weaken representation-specific behavior merely for parity.
+
+### 3. Release-build performance and resource campaign
+
+**Status: planned after item 2 establishes the behavioral baseline. Owner: Kujo core.**
+
+- Extend the existing reproducible workload corpus for CLI/data processing,
+  collections/serialization, AI context fitting and request hashing, schema
+  validation, imports/LSP analysis, generators and bounded task scheduling.
+- Measure optimized builds: startup and steady-state latency, allocation or peak
+  memory where supported, retained memory and relevant I/O/process counts.
+  Record exact source, compiler, platform, workload, warmup and sample variance.
+- Recheck representative results on supported Linux, macOS and Windows builders.
+  Keep debug microbenchmarks separate from release and end-to-end claims.
+- Retain only improvements supported by paired measurements and behavior tests.
+  Add stable budgets only where variance permits; document baseline updates.
+
+**Done when:** comparable before/after artifacts explain each retained change,
+regression gates cover its contracts, and no unsupported universal speed or
+memory claim is made. A measured no-change result is acceptable.
+
+### 4. Token, payload and command-output efficiency
+
+**Status: planned after measurement setup; independent fixes may overlap item 3.
+Owner: Kujo core mechanisms; SDK/agent policy stays in ecosystem packages.**
+
+- Audit repeated parsing/serialization, full-buffer reads, cloned model payloads,
+  context selection, tool/schema payloads and oversized errors or command output.
+- Prefer borrowed data, bounded streaming where applicable, and concise receipts
+  with retrievable evidence. Preserve necessary context, diagnostics and safety.
+- Preserve existing result shapes. Where detail levels are useful, design explicit
+  opt-in compact/detail contracts with compatibility tests before implementation.
+- Measure bytes and deterministic token estimates separately from actual provider
+  billing. Provider-exact claims require provider evidence.
+
+**Done when:** reproduced waste has measured before/after receipts, retained
+results and error semantics are tested, and stable output/context budgets have a
+clear update mechanism. No provider-specific control plane enters the runtime.
+
+### 5. One bounded language enhancement: design `yield from` first
+
+**Status: design candidate after the maintenance/parity work; implementation is
+conditional on the design and compatibility evidence. Owner: Kujo core.**
+
+- Specify delegation, yielded values, return/completion behavior, error propagation,
+  cancellation, ownership/lifetime and alias behavior before changing grammar.
+- Evaluate it against existing owned generator continuations and snapshot captures.
+  Require VM/interpreter, nested delegation, terminal-error and capability tests.
+- Assess async generators separately: scheduling, backpressure and cancellation
+  add a distinct lifecycle problem and are not implied by `yield from`.
+
+**Done when:** a reviewed decision either approves a bounded implementation with
+cross-runtime tests and documentation, or explicitly defers it with evidence.
+1.9 is not blocked on forcing a language feature through. Ownership-cycle
+collection, implicit sibling capture sharing and atomic captured read-modify-write
+remain separate unscheduled designs.
+
+### 6. First-hour adopter validation and developer experience
+
+**Status: planned after 1.8.1; can run alongside items 2–5. Owner: Kujo docs/tools,
+with explicitly coordinated ecosystem follow-ups.**
+
+- Have a human new to the current workflow use only published instructions to
+  install Kujo, run a small default-VM program, use Kennel packages, diagnose a
+  failure and apply restricted capabilities.
+- Capture reproducible friction, time-to-first-working-program and misleading
+  instructions. An agent-only rehearsal does not substitute for human evidence.
+- Fix demonstrated local issues; assign package, website, SDK and catalog changes
+  to their owning repositories rather than silently expanding core scope.
+
+**Done when:** the human walkthrough and clean-install evidence are recorded,
+confirmed blockers are fixed and retested, and public guidance agrees with the
+shipped runtime. Participant SDK usability and promotion remain separate from
+stable Kujo language/runtime guarantees.
+
+### 1.9 release decision
+
+Items 2–4 establish the technical evidence; item 6 establishes usability evidence.
+Item 5 may finish with a documented deferral. Before freezing 1.9, review the
+remaining findings, compatibility notes, workload budgets and external follow-ups,
+then run the full release and published-artifact matrices. Experimental ecosystem
+waves are not automatic 1.9 requirements and must not expand this scope silently.
 
 ## Recently completed
 
@@ -117,7 +243,7 @@ an implementation backlog item.
 | Completed — struct generator methods | Support `func*` methods with explicit `self` and legacy field bindings in both engines. | Receiver state is snapshotted when the generator is created; aliases share continuation progress, return completes without yielding and terminal errors remain cached. Cross-runtime arity, lifetime and continuation regressions preserve ordinary method and generator semantics. See the [completion record](docs/KUJO_1_8_STRUCT_GENERATOR_METHODS.md). |
 | Completed — measured compiler/runtime tranche | Continue evidence-led optimizer and runtime work without changing v1 semantics. | Generator resume no longer clones the already-owned bytecode chunk; paired nested-generator alias measurements improved 6.7% at the median. Compiler control-flow passes were audited and left unchanged because no additional safe candidate exceeded measurement noise. Longitudinal VM/interpreter workloads and optimizer regressions guard the retained change. |
 | Completed — v1.8 publication | Publish the verified candidate on supported release builders. | Signed tag `v1.8.0`, all five native archives, deterministic source, checksums, and six npm packages are published. Native/source and npm clean-install matrices passed across all supported targets. |
-| Unscheduled language candidates | Evaluate async generators and yield-from; separately assess intentional ownership cycles and explicit atomic shared-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
+| Conditional 1.9 design / otherwise unscheduled | Evaluate `yield from` under item 5; separately assess async generators, intentional ownership cycles and explicit atomic captured-state operations. | Design and compatibility review before implementation, followed by cross-runtime, lifetime, capability and concurrency tests. Implicit sibling capture sharing, arbitrary cycle collection, effect rollback and atomic captured read-modify-write are not current guarantees. |
 | Owner-deferred ecosystem validation | Live Workcell provider validation. | The operator supplies the provider/profile, account, region, image and spend limit, then runs the provider's real lifecycle and preservation checks. Offline success is not remote certification. This is not a Kujo merge blocker. |
 | Open host observation | Investigate the intermittent Intel Mac loopback stall if it recurs. | Capture a reproducible host-level failure and establish its cause. Standard Rust TCP also reproduced it; host load, free disk space and network filters remain hypotheses. Clean-host stress checks passed. Keep the existing observation open without claiming a Kujo defect or a proven repair. |
 
@@ -183,11 +309,13 @@ introduce dynamic topology or promote Wave F to production-ready status.
 ## Maintenance lane
 
 Maintain the completed optional-inference, shared CLI/LSP analysis, struct
-generator methods and measured generator-resume optimization. Kujo 1.8 is now
-feature-frozen: continue VM/interpreter compatibility, security, fuzzing and
-release reliability, and accept only release-blocking fixes before publication.
-Generics, macros, WASM, broad FFI, async generators and yield-from remain
-explicitly deferred and unscheduled.
+generator methods and measured generator-resume optimization. Kujo 1.8.0 is published; 1.8.1 carries the accumulated maintenance fixes.
+After verified 1.8.1 publication, use the numbered 1.9 sequence above. Continue
+VM/interpreter compatibility, security, fuzzing and release reliability as
+ongoing gates rather than reopening completed 1.8 implementation work.
+Generics, macros, WASM, broad FFI and async generators remain deferred and
+unscheduled. `yield from` is now the conditional design candidate in item 5,
+not a committed syntax change.
 
 ## Current direction
 
@@ -298,8 +426,9 @@ additive experimental Dispatch control; Kujo stable runtime scope is unchanged.
 Dispatch authority to bounded inventory, explicit repair planning and locked
 mechanical reconciliation. Workcell retention remains separate from replay
 permission. Machine migration, remote trust and hostile-storage recovery remain
-unsolved. The next architecture slice is parent lifecycle finalization with
-explicit output/evaluation/publication requirements, before general graph execution.
+unsolved. Parent lifecycle finalization and bounded static composition are now recorded
+above. Further graph expansion remains subject to the operator-readiness stop
+condition and is not part of the core 1.9 commitment.
 
 [Static Wave F graph policy](docs/WAVE_F_STATIC_GRAPH_POLICY.md) adds declared branch
 activation, conditional joins, explicit subgraph terminal decisions and a durable
