@@ -73,10 +73,15 @@ RSS is not retained heap, and shallow counters are not total allocations. The
 campaign does not claim syscall, network-request or descendant-process counts.
 No providers or external services are called by these workloads.
 
-The manual `release-performance` workflow builds a pinned runtime commit on
-Linux x64, macOS arm64 and Windows x64 and runs an A/A campaign. It keeps evidence
+The manual `release-performance` workflow builds a pinned baseline commit on
+Linux x64, macOS arm64 and Windows x64. Supply an optional candidate SHA to build
+and compare a second commit on each host; omit it for an A/A-only campaign.
+Comparisons retain a baseline A/A run for resource and noise context. It keeps evidence
 for 90 days; preserve reviewed results in a durable audit artifact before expiry.
-Its pull-request job verifies statistics and evidence rejection semantics. To
+Its targeted push/pull-request job verifies statistics and evidence rejection
+semantics, including failed runs and timeout cleanup. The runner has a twenty-minute
+deadline and terminates its owned process tree on timeout; partial evidence is
+retained and no successful receipt is emitted. To
 change the corpus, review the workload's expected output, update this inventory
 and the campaign report, and start a new checksum-identified measurement series.
 Timing changes alone never justify updating an expected result.

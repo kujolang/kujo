@@ -6,6 +6,15 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Performance
+
+- Reuse the validated character count when estimating ASCII token weights.
+  Unicode weighting, character limits, errors and context-fitting policy remain
+  unchanged. The release performance campaign records paired measurements and
+  platform-specific resource evidence; no provider-token accuracy claim changes.
+- Extend the release benchmark corpus and add a pinned Linux/macOS/Windows
+  comparison workflow with correctness checks, raw evidence and noise controls.
+
 ### Fixed
 
 - Preserve sparse integer dictionary keys in global/local assignments and fused

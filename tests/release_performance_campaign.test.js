@@ -1,7 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { stats, samples, summarize, main } = require('../scripts/release_performance_campaign');
+const { stats, samples, summarize, main, runBenchmark } = require('../scripts/release_performance_campaign');
 
 function fixture() {
     const timings = Array(11).fill(1000000);
@@ -48,7 +48,24 @@ test('failed outcomes, corrupted counters and incomplete series cannot produce a
         const f = fixture(); mutate(f); assert.throws(() => summarize(...f));
     }
 });
-test('CLI rejects incomplete provenance before creating output', () => {
-    assert.throws(() => main([]), /usage/);
-    assert.throws(() => main(['base', 'candidate', 'main', 'main', 'output']), /usage/);
+test('CLI rejects incomplete provenance before creating output', async () => {
+    await assert.rejects(() => main([]), /usage/);
+    await assert.rejects(() => main(['base', 'candidate', 'main', 'main', 'output']), /usage/);
+});
+
+test('benchmark driver propagates failures and enforces its deadline', async () => {
+    await runBenchmark(process.execPath, ['-e', 'process.exit(0)'], 'ignore');
+    await assert.rejects(runBenchmark(process.execPath, ['-e', 'process.exit(7)'], 'ignore'), /exit 7/);
+    await assert.rejects(runBenchmark(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], 'ignore', 250), /timed out/);
+});
+
+test('an existing evidence directory is never overwritten', async t => {
+    const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kujo-perf-evidence-'));
+    t.after(() => fs.rmSync(dir, { recursive: true }));
+    const sentinel = path.join(dir, 'sentinel');
+    fs.writeFileSync(sentinel, 'preserve');
+    await assert.rejects(main([process.execPath, process.execPath, 'a'.repeat(40), 'a'.repeat(40), dir]), /EEXIST/);
+    assert.equal(fs.readFileSync(sentinel, 'utf8'), 'preserve');
+    assert.deepEqual(fs.readdirSync(dir), ['sentinel']);
 });

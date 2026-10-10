@@ -1,11 +1,22 @@
 name: release-performance
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/*release_bench.rs'
+      - 'scripts/release_performance_campaign.js'
+      - 'tests/release_performance_campaign.test.js'
+      - '.github/workflows/release-performance.yml'
   workflow_dispatch:
     inputs:
       source_sha:
-        description: 'Exact 40-character runtime commit for the A/A release baseline'
+        description: 'Exact 40-character runtime baseline commit'
         required: true
+        type: string
+      candidate_sha:
+        description: 'Optional candidate commit; omit for an A/A control'
+        required: false
         type: string
   pull_request:
     paths:
@@ -44,6 +55,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       SOURCE_SHA: ${{ inputs.source_sha }}
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
       CARGO_INCREMENTAL: '0'
       CARGO_BUILD_JOBS: '2'
     steps:
@@ -58,7 +70,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node -e 'if (!/^[a-f0-9]{40}$/.test(process.env.SOURCE_SHA)) process.exit(1)'
+          node -e 'if (![process.env.SOURCE_SHA, process.env.CANDIDATE_SHA || process.env.SOURCE_SHA].every(s => /^[a-f0-9]{40}$/.test(s))) process.exit(1)'
           git worktree add --detach "$RUNNER_TEMP/perf-runtime" "$SOURCE_SHA"
       - name: Configure OpenSSL for Windows
         if: runner.os == 'Windows'
@@ -70,11 +82,18 @@ jobs:
           "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
           "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
           "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
-      - name: Build locked release binary
+      - name: Build locked release binaries
         shell: bash
+        env:
+          BINARY_NAME: ${{ matrix.binary }}
         run: |
           set -euo pipefail
-          cargo build --manifest-path "$RUNNER_TEMP/perf-runtime/Cargo.toml" --release --locked --bin kujo > release-build.log 2>&1
+          cargo build --manifest-path "$RUNNER_TEMP/perf-runtime/Cargo.toml" --release --locked --bin kujo > baseline-build.log 2>&1
+          cp "$RUNNER_TEMP/perf-runtime/target/release/$BINARY_NAME" "$RUNNER_TEMP/baseline-$BINARY_NAME"
+          if [ -n "$CANDIDATE_SHA" ] && [ "$CANDIDATE_SHA" != "$SOURCE_SHA" ]; then
+            git -C "$RUNNER_TEMP/perf-runtime" checkout --detach "$CANDIDATE_SHA"
+            cargo build --manifest-path "$RUNNER_TEMP/perf-runtime/Cargo.toml" --release --locked --bin kujo > candidate-build.log 2>&1
+          fi
       - name: Measure and verify release corpus
         shell: bash
         env:
@@ -82,7 +101,10 @@ jobs:
         run: |
           set -euo pipefail
           binary="$RUNNER_TEMP/perf-runtime/target/release/$BINARY_NAME"
-          node scripts/release_performance_campaign.js "$binary" "$binary" "$SOURCE_SHA" "$SOURCE_SHA" performance-evidence
+          if [ -n "$CANDIDATE_SHA" ] && [ "$CANDIDATE_SHA" != "$SOURCE_SHA" ]; then
+            node scripts/release_performance_campaign.js "$RUNNER_TEMP/baseline-$BINARY_NAME" "$RUNNER_TEMP/baseline-$BINARY_NAME" "$SOURCE_SHA" "$SOURCE_SHA" baseline-evidence
+          fi
+          node scripts/release_performance_campaign.js "$RUNNER_TEMP/baseline-$BINARY_NAME" "$binary" "$SOURCE_SHA" "${CANDIDATE_SHA:-$SOURCE_SHA}" performance-evidence
       - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -90,6 +112,8 @@ jobs:
           name: release-performance-${{ matrix.os }}
           path: |
             performance-evidence/
-            release-build.log
+            baseline-evidence/
+            baseline-build.log
+            candidate-build.log
           if-no-files-found: error
           retention-days: 90

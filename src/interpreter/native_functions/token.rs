@@ -309,7 +309,13 @@ fn estimate_text_tokens(
         return Ok(0);
     }
 
-    let weighted_chars: usize = text.chars().map(|ch| if ch.is_ascii() { 1 } else { 2 }).sum();
+    // Every ASCII scalar has weight one, so reuse the validated character count.
+    // Keep the existing Unicode weighting and character-limit semantics.
+    let weighted_chars: usize = if text.is_ascii() {
+        char_count
+    } else {
+        text.chars().map(|ch| if ch.is_ascii() { 1 } else { 2 }).sum()
+    };
     Ok(weighted_chars.div_ceil(heuristic.chars_per_token) as i64)
 }
 

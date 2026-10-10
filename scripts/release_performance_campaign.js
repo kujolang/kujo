@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { spawnSync } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 function stats(values) {
     if (!values.length || values.some(v => !Number.isFinite(v))) throw Error('invalid samples');
@@ -62,7 +62,31 @@ function run(command, args, options = {}) {
     if (r.error || r.status !== 0) throw Error(`${path.basename(command)} failed: ${r.error?.message || `exit ${r.status}`}\n${(r.stderr || '').slice(-4000)}`);
     return r.stdout;
 }
-function main(args) {
+function runBenchmark(command, args, stdio, timeoutMs = 1200000) {
+    return new Promise((resolve, reject) => {
+        const child = spawn(command, args, { stdio, detached: process.platform !== 'win32' });
+        let expired = false;
+        const timer = setTimeout(() => {
+            expired = true;
+            // Kill the owned tree while its parent is still present on Windows;
+            // on Unix the detached runner owns the entire benchmark process group.
+            if (process.platform === 'win32') {
+                const cleanup = spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { encoding: 'utf8', timeout: 10000 });
+                if (cleanup.error || cleanup.status !== 0) reject(Error('benchmark timeout; process-tree cleanup failed'));
+            } else {
+                try { process.kill(-child.pid, 'SIGKILL'); }
+                catch (error) { if (error.code !== 'ESRCH') reject(error); }
+            }
+        }, timeoutMs);
+        child.once('error', error => { clearTimeout(timer); reject(error); });
+        child.once('close', code => {
+            clearTimeout(timer);
+            if (expired || code !== 0) reject(Error(`benchmark ${expired ? 'timed out' : `failed with exit ${code}`}; inspect preserved stderr log`));
+            else resolve();
+        });
+    });
+}
+async function main(args) {
     if (args.length !== 5 || args.slice(2, 4).some(s => !/^[a-f0-9]{40}$/.test(s))) throw Error('usage: node scripts/release_performance_campaign.js BASELINE CANDIDATE BASELINE_SHA CANDIDATE_SHA NEW_OUTPUT_DIR');
     const [baseArg, candidateArg, baselineSha, candidateSha, outArg] = args;
     const baseline = path.resolve(baseArg), candidate = path.resolve(candidateArg), out = path.resolve(outArg);
@@ -72,6 +96,7 @@ function main(args) {
         baseline: { source_sha: baselineSha, binary_sha256: sha256(baseline), bytes: fs.statSync(baseline).size },
         candidate: { source_sha: candidateSha, binary_sha256: sha256(candidate), bytes: fs.statSync(candidate).size },
         corpus_sha: run('git', ['rev-parse', 'HEAD']).trim(), corpus_dirty: run('git', ['status', '--porcelain']).trim() !== '',
+        driver_sha256: sha256('scripts/release_performance_campaign.js'),
         runtime_runner_sha256: sha256('scripts/runtime_measurement_release_bench.rs'),
         static_runner_sha256: sha256('scripts/static_analysis_release_bench.rs'),
         rustc: run('rustc', ['-Vv']).trim(), node: process.version,
@@ -86,11 +111,13 @@ function main(args) {
     const extension = process.platform === 'win32' ? '.exe' : '';
     for (const [label, source] of [['runtime', 'runtime_measurement_release_bench'], ['static', 'static_analysis_release_bench']]) {
         const runner = path.join(out, label + '-runner' + extension);
-        run('rustc', ['-O', `scripts/${source}.rs`, '-o', runner]);
+        const compilerLog = fs.openSync(path.join(out, label + '.compiler.log'), 'wx');
+        try { run('rustc', ['-O', `scripts/${source}.rs`, '-o', runner], { stdio: ['ignore', compilerLog, compilerLog] }); }
+        finally { fs.closeSync(compilerLog); }
         fs.copyFileSync(`scripts/${source}.rs`, path.join(out, source + '.rs'));
         const stdout = fs.openSync(path.join(out, label + '.json'), 'wx');
         const stderr = fs.openSync(path.join(out, label + '.stderr.log'), 'wx');
-        try { run(runner, [baseline, candidate], { stdio: ['ignore', stdout, stderr] }); }
+        try { await runBenchmark(runner, [baseline, candidate], ['ignore', stdout, stderr]); }
         finally { fs.closeSync(stdout); fs.closeSync(stderr); }
         fs.unlinkSync(runner);
     }
@@ -102,8 +129,7 @@ function main(args) {
     fs.writeFileSync(path.join(out, 'sha256.json'), JSON.stringify(hashes, null, 2) + '\n');
     console.log(JSON.stringify({ status: 'passed', runtime_workloads: summary.workloads.length, static_workloads: summary.static_workloads.length, evidence: out }));
 }
-module.exports = { stats, samples, summarize, main };
+module.exports = { stats, samples, summarize, main, runBenchmark };
 if (require.main === module) {
-    try { main(process.argv.slice(2)); }
-    catch (error) { console.error(error.message); process.exitCode = 1; }
+    main(process.argv.slice(2)).catch(error => { console.error(error.message); process.exitCode = 1; });
 }
