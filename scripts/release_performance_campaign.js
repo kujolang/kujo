@@ -86,6 +86,12 @@ function runBenchmark(command, args, stdio, timeoutMs = 2700000) {
         });
     });
 }
+function cleanupRunner(runner) {
+    fs.unlinkSync(runner);
+    // MSVC rustc emits a sibling PDB even for these optimized throwaway runners.
+    // Preserve it on failure; successful evidence needs neither executable nor symbols.
+    if (path.extname(runner) === '.exe') fs.rmSync(runner.slice(0, -4) + '.pdb', { force: true });
+}
 async function main(args) {
     if (args.length !== 5 || args.slice(2, 4).some(s => !/^[a-f0-9]{40}$/.test(s))) throw Error('usage: node scripts/release_performance_campaign.js BASELINE CANDIDATE BASELINE_SHA CANDIDATE_SHA NEW_OUTPUT_DIR');
     const [baseArg, candidateArg, baselineSha, candidateSha, outArg] = args;
@@ -119,7 +125,7 @@ async function main(args) {
         const stderr = fs.openSync(path.join(out, label + '.stderr.log'), 'wx');
         try { await runBenchmark(runner, [baseline, candidate], ['ignore', stdout, stderr]); }
         finally { fs.closeSync(stdout); fs.closeSync(stderr); }
-        fs.unlinkSync(runner);
+        cleanupRunner(runner);
     }
     const raw = file => JSON.parse(fs.readFileSync(path.join(out, file), 'utf8'));
     const summary = summarize(raw('runtime.json'), raw('static.json'));
@@ -129,7 +135,7 @@ async function main(args) {
     fs.writeFileSync(path.join(out, 'sha256.json'), JSON.stringify(hashes, null, 2) + '\n');
     console.log(JSON.stringify({ status: 'passed', runtime_workloads: summary.workloads.length, static_workloads: summary.static_workloads.length, evidence: out }));
 }
-module.exports = { stats, samples, summarize, main, runBenchmark };
+module.exports = { stats, samples, summarize, main, runBenchmark, cleanupRunner };
 if (require.main === module) {
     main(process.argv.slice(2)).catch(error => { console.error(error.message); process.exitCode = 1; });
 }

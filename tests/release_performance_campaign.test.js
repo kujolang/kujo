@@ -1,7 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { stats, samples, summarize, main, runBenchmark } = require('../scripts/release_performance_campaign');
+const { stats, samples, summarize, main, runBenchmark, cleanupRunner } = require('../scripts/release_performance_campaign');
 
 function fixture() {
     const timings = Array(11).fill(1000000);
@@ -78,4 +78,17 @@ test('release build helper rejects invalid provenance before invoking a compiler
     });
     assert.equal(result.status, 1);
     assert.match(result.stderr, /exact source SHAs and RUNNER_TEMP are required/);
+});
+
+test('successful runner cleanup removes only its executable and Windows symbols', t => {
+    const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kujo-perf-cleanup-'));
+    t.after(() => fs.rmSync(dir, { recursive: true }));
+    for (const name of ['runtime-runner.exe', 'runtime-runner.pdb', 'static-runner', 'static-runner.pdb', 'runtime.json']) fs.writeFileSync(path.join(dir, name), 'preserve evidence');
+    cleanupRunner(path.join(dir, 'runtime-runner.exe'));
+    cleanupRunner(path.join(dir, 'static-runner'));
+    assert.deepEqual(fs.readdirSync(dir).sort(), ['runtime.json', 'static-runner.pdb']);
+    fs.writeFileSync(path.join(dir, 'runtime-runner.exe'), 'runner without symbols');
+    cleanupRunner(path.join(dir, 'runtime-runner.exe'));
+    assert.deepEqual(fs.readdirSync(dir).sort(), ['runtime.json', 'static-runner.pdb']);
 });
