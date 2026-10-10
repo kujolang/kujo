@@ -82,7 +82,7 @@ The optional platform selector limits a retry to Linux, macOS or Windows.
 Build orchestration uses the runner's native shell environment so Windows uses
 native Perl for vendored OpenSSL, with a recorded Perl preflight before Cargo.
 Its targeted push/pull-request job verifies statistics and evidence rejection
-semantics, including failed runs and timeout cleanup. The runner has a twenty-minute
+semantics, including failed runs and timeout cleanup. The runner has a forty-five-minute
 deadline and terminates its owned process tree on timeout; partial evidence is
 retained and no successful receipt is emitted. To
 change the corpus, review the workload's expected output, update this inventory

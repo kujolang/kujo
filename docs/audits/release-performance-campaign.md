@@ -57,18 +57,28 @@ budget. For example, the pilot's sustained calls and generator cases took about
 2.5 and 1.6 seconds per sample, respectively, before the remaining workload
 families. The driver timed out, terminated its owned process tree, preserved
 partial evidence, and emitted no successful receipt. The campaign budget was
-corrected to twenty minutes for the complete 819-process runtime series;
+initially corrected to twenty minutes for the complete 819-process runtime series;
 workloads, sample counts and correctness assertions were not reduced. Pilot
 samples are calibration evidence only and are excluded from final comparisons.
 
-## Candidate under verification
+## Retained implementation and compatibility
 
 The token estimator already counts characters to enforce its text limit, then
 scans them again to assign ASCII weight 1 and non-ASCII weight 2. An exploratory
 optimized probe compared that path with an ASCII-only shortcut using the first
-count. This identifies a candidate; only full-runtime paired release measurements
-and contract tests can justify retaining it. Unicode estimation, model overhead,
-character limits, error text and fitting policy must remain unchanged.
+count. The implementation reuses the validated character count only when
+`text.is_ascii()` is true; all other text retains the existing scalar weighting.
+Paired release measurements and the independent oracle tests evaluate that change.
+Unicode estimation, model overhead, character limits, error text and fitting
+policy remain unchanged.
+
+Runtime source is pinned to candidate
+`f4abf5dd265d5b866a2cfc99d82344c3a8ebbd5f`; subsequent changes affect tests,
+CI and evidence only. No public API, CLI flag/exit code, configuration, environment
+variable, serialization format, tool schema or dependency changed. Token counts
+and context-selection results are identical; this is less estimator work, not
+a reduction in model context or provider billing. No sibling repository change
+is required.
 
 ## Regression policy
 
@@ -122,3 +132,76 @@ campaign. Future corpus changes require reviewed expected results and a new
 checksum-identified series; no timing result permits weakening correctness.
 Raw workflow artifacts have 90-day retention, so reviewed evidence must also be
 preserved in the repository's audit artifacts before expiry.
+
+## Findings and disposition
+
+| ID | Priority | Finding and evidence | Action | Status |
+| --- | --- | --- | --- | --- |
+| P01 | P2 | ASCII estimation repeats weighted scalar work after validation | Reuse the validated count for ASCII; preserve Unicode and bounds | Implemented; paired release evidence required |
+| P02 | P1 | Prior no-JIT CLI command omits the binary’s required network feature; fresh build rejects it | Explicitly build the intended configuration before CLI parity tests | Fixed; 149 tests pass |
+| P03 | P2 | Existing release runners lack a combined provenance/resource receipt and coverage for new native paths | Extend runtime corpus, preserve samples/checksums, add cross-platform driver and contract gate | Implemented |
+| P04 | P2 | Initial Windows benchmark build selects incomplete Git Bash Perl | Native-shell build helper and Perl import preflight | Fixed in harness; Windows retry pending |
+
+## Verification receipt
+
+All local Cargo commands below use `CARGO_BUILD_JOBS=2 CARGO_INCREMENTAL=0`.
+Debug/test commands additionally use `CARGO_PROFILE_DEV_DEBUG=0
+CARGO_PROFILE_TEST_DEBUG=0`. Logs live in ignored `.audit-evidence/release-performance/`;
+reviewed measurement archives below are durable repository evidence.
+
+| Command | Outcome |
+| --- | --- |
+| `cargo build --release --locked --bin kujo` at baseline SHA | Passed; dependency rebuild 36m04s, not a comparable build-time measurement |
+| `cargo test --test native_representation_matrix --test native_representation_parity --test token_estimation_release_contract` | Passed, 26 tests |
+| `KUJO_ENABLE_SOCKET_TESTS=1 bash scripts/release_gate.sh --full` | Passed after removing one unnecessary clone in a new test; 3,043 passing receipts |
+| `cargo run -- test --runtime vm` | Passed, 150 fixtures / 11 explicit skips |
+| `CARGO_TARGET_DIR=.audit-evidence/release-performance/no-jit-feature-probe cargo build --locked --no-default-features --features runtime-archive,runtime-image --bin kujo` | Expected reproduction: exit 101, required `runtime-network` missing |
+| `cargo build --no-default-features --features runtime-network,runtime-archive,runtime-image --bin kujo` | Passed; actually rebuilds no-JIT CLI |
+| `cargo test --no-default-features --features runtime-network,runtime-archive,runtime-image --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity --test token_estimation_release_contract` | Passed, 149 tests |
+| `cargo build --bin kujo` | Passed; default debug configuration restored |
+| `node --test tests/release_performance_campaign.test.js` | Passed, 8 tests |
+| `cargo fmt --check` and `rustfmt --check scripts/runtime_measurement_release_bench.rs` | Passed; unchanged static runner’s pre-existing standalone formatting difference was left untouched |
+| `git diff --check` | Passed |
+
+## Provenance notes
+
+Ending implementation/verification SHA:
+`5a2521cf39b9bcecdc097c3ee13b2c2b58187b9a`. Runtime source matches measured
+candidate `f4abf5dd265d5b866a2cfc99d82344c3a8ebbd5f`; the final evidence/roadmap
+commit is identifiable in Git history. Initial branch and ending branch are `main`.
+
+A hosted paired run can report `corpus_dirty: true` because the preceding A/A
+run creates untracked evidence directories. Local final runs also see the audit
+write-up in progress. The runner/driver hashes identify the exact apparatus;
+no runtime or workload source changed between paired measurements. This flag is
+retained rather than rewritten to imply a clean checkout. Empty compiler/stderr
+files may be omitted by artifact upload; their original manifest hashes still
+identify empty content. All present evidence hashes and reconstructed summaries
+are checked before admitting an archive.
+
+## Security and resource boundaries
+
+The estimator still validates the two-million-character ceiling before its
+shortcut, including text that fitting would drop. No capability gate, secret
+handling or error contract is relaxed. Regression tests cover exact-limit and
+over-limit ASCII and multibyte input.
+
+Campaign inputs are trusted executables and authenticated workflow source SHAs;
+this harness is not a sandbox. SHAs are validated, subprocesses use argument
+arrays, evidence directories are exclusively created, binary hashes are checked
+again after sampling, and failed/expired runs cannot produce success receipts.
+Timeout cleanup targets the runner's owned process group/tree. The corpus uses
+fixed work bounds and no live provider. Retained evidence must still be reviewed
+before publication when future workloads contain private inputs.
+
+The hosted macOS arm64 A/A run then provided a second concrete calibration:
+its first ten workload families completed correctly in 847.58 seconds, including
+375.0 seconds for sustained tasks and 376.5 seconds for promise observers.
+It reached the similarly sized scheduler/channel workload when the twenty-minute
+whole-corpus deadline expired. Baseline sustained-task samples were about
+9.45 seconds each, so this deadline could not accommodate all three scheduling
+families plus the rest of the fixed corpus. The final whole-corpus budget is
+forty-five minutes, with a two-hour job budget for two builds and two full series.
+This is a measured campaign-duration correction; no runtime timeout, task wait,
+workload, sample count or assertion changed. The partial arm64 control remains
+failed calibration evidence, excluded from accepted performance tables.

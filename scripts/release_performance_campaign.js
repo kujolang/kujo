@@ -62,7 +62,7 @@ function run(command, args, options = {}) {
     if (r.error || r.status !== 0) throw Error(`${path.basename(command)} failed: ${r.error?.message || `exit ${r.status}`}\n${(r.stderr || '').slice(-4000)}`);
     return r.stdout;
 }
-function runBenchmark(command, args, stdio, timeoutMs = 1200000) {
+function runBenchmark(command, args, stdio, timeoutMs = 2700000) {
     return new Promise((resolve, reject) => {
         const child = spawn(command, args, { stdio, detached: process.platform !== 'win32' });
         let expired = false;

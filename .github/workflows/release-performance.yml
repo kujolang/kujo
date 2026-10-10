@@ -49,7 +49,7 @@ jobs:
   measure:
     if: github.event_name == 'workflow_dispatch'
     needs: evidence-contract
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
