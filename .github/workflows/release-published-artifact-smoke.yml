@@ -208,3 +208,16 @@ jobs:
           assert subprocess.check_output([str(binary), "--version"], text=True).strip() == "kujo " + target[1:]
           print(json.dumps(outcome, indent=2))
           PYTHON
+
+      - name: Diagnose GitHub API access after a failed smoke
+        if: failure()
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag_name }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: |
+          # Preserve the original failure. Headers distinguish shared-runner
+          # rate limits from artifact/runtime failures without logging bodies.
+          curl --silent --show-error --max-time 30 --dump-header - --output /dev/null \
+            --user-agent "kujo-upgrade/${RELEASE_TAG#v}" \
+            "https://api.github.com/repos/${RELEASE_REPOSITORY}/releases/tags/${RELEASE_TAG}"

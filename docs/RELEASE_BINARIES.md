@@ -177,6 +177,11 @@ That workflow downloads each published archive/checksum pair from the release,
 verifies the checksum, extracts the binary, and runs the same command smoke
 checks used during packaging.
 
+On failure, the native-install job records GitHub API response headers using the
+upgrader's user agent. Inspect the status and rate-limit headers before retrying
+shared-runner API failures. This diagnostic does not suppress the failed check
+or print response bodies or credentials.
+
 ## Notes For Maintainers
 
 - Keep asset names stable. Onboarding bundles, install docs, and downstream
