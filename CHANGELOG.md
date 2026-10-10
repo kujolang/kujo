@@ -8,6 +8,18 @@ This file records user-visible changes to Kujo, following
 
 ### Fixed
 
+- Accept VM dictionary rows in CSV export and stabilize column order. Reject
+  duplicate headers, extra row columns, and compound cells that previously lost
+  data silently; missing cells, escaping, and secret redaction are preserved.
+- Validate JSON Schema structure independently of instance shape, including
+  unvisited child schemas and malformed empty constraint arrays. Preserve empty
+  `enum` semantics; bound structural traversal and per-call regex reuse, and use
+  direct property lookup for additional-property checks.
+- Bound large TOML parse diagnostics while preserving parser byte locations and
+  reusing the Unicode-safe numeric-error preview helper. Short-input diagnostics
+  remain unchanged.
+
+
 - Return a runtime error for integer `sum` overflow; preserve distinct compound,
   byte, and secret values in `unique`; invert specialized integer dictionaries;
   and compare mixed integer/float sort keys without rounding large integers.

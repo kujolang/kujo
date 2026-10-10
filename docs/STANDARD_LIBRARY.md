@@ -33,6 +33,12 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
 - `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `8,388,608` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
 
+CSV and TOML conversion contracts:
+
+- `to_csv` accepts arrays of ordinary or VM fixed dictionaries. Columns are the first row's keys in lexicographic order; later missing cells and nulls remain empty, and secrets remain redacted as `***`.
+- Duplicate CSV headers, later rows with extra columns, and compound/unsupported cells return errors instead of silently overwriting or dropping data. Callers should explicitly project heterogeneous rows onto their desired columns and serialize compound cells before export. CSV escaping and numeric parsing are unchanged.
+- `parse_toml` retains its existing detailed diagnostic for inputs up to 512 bytes. Longer invalid inputs report the parser's byte span and an error-message preview capped at 128 Unicode characters (with total message bytes when shortened), without echoing the source document. The caller retains the full input for inspection.
+
 Bounded XML parsing contract (`parse_xml_bounded`):
 
 - `parse_xml_bounded(xml, options)` parses an in-memory UTF-8 XML 1.0 document into a deterministic namespace-aware tree without filesystem, network, process, clock, or random access.
@@ -48,6 +54,8 @@ JSON Schema subset contract (`json_schema_validate`):
 - `const` and `enum` compare JSON numbers exactly, including nested containers: `1` equals `1.0`, but large integers are not rounded to floats and nearby floats are not treated as equal. Structural comparisons share the 64-level depth and 100,000-node validation budgets.
 - Error entries are dictionaries with `path`, `message`, and `keyword`. Paths are JSON-pointer-like instance paths such as `/items/0/name`; the root path is an empty string.
 - Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
+- Schema structure is checked independently of the instance, including absent properties, empty-array item schemas, and unused definitions. Type-inapplicable **valid** constraints remain no-ops. Empty `type`, `allOf`, `anyOf`, and `oneOf` arrays are malformed; an empty `enum` is valid and matches nothing.
+- Structural inspection has a separate 100,000-schema-node budget and the same 64-level depth ceiling. At most 32 compiled patterns are retained per validation call; further patterns are still validated and executed without caching. No cache survives the call.
 - Draft 2020-12 identification and annotation keywords `$schema`, `$id`, `$comment`, `title`, `description`, `default`, `examples`, `format`, `deprecated`, `readOnly`, and `writeOnly` are accepted as no-op metadata. `format` follows the draft's annotation-default behavior; it is not an assertion vocabulary.
 
 Process result contract (`spawn_process` / `execute_status`):

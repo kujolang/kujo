@@ -3,17 +3,9 @@
 // Type checking and conversion functions
 
 use crate::builtins;
+use crate::errors::diagnostic_input_preview;
 use crate::interpreter::{Interpreter, Value};
 use std::sync::Arc;
-
-// Keep normal diagnostics byte-for-byte compatible without echoing an entire
-// file or model response for one invalid scalar. The caller retains the input.
-fn conversion_input_preview(input: &str) -> String {
-    match input.char_indices().nth(128) {
-        Some((end, _)) => format!("{}… [{} bytes total]", &input[..end], input.len()),
-        None => input.to_string(),
-    }
-}
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
@@ -28,7 +20,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Ok(n) => Value::Int(n),
                     Err(_) => Value::Error(format!(
                         "Cannot parse '{}' as integer",
-                        conversion_input_preview(s)
+                        diagnostic_input_preview(s)
                     )),
                 }
             } else {
@@ -46,7 +38,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Ok(n) => Value::Float(n),
                     Err(_) => Value::Error(format!(
                         "Cannot parse '{}' as float",
-                        conversion_input_preview(s)
+                        diagnostic_input_preview(s)
                     )),
                 }
             } else {
@@ -67,7 +59,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         Ok(n) => Value::Int(n),
                         Err(_) => Value::Error(format!(
                             "Cannot convert '{}' to int",
-                            conversion_input_preview(s)
+                            diagnostic_input_preview(s)
                         )),
                     },
                     Value::Bool(b) => Value::Int(if *b { 1 } else { 0 }),
@@ -99,7 +91,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         Ok(n) => Value::Float(n),
                         Err(_) => Value::Error(format!(
                             "Cannot convert '{}' to float",
-                            conversion_input_preview(s)
+                            diagnostic_input_preview(s)
                         )),
                     },
                     Value::Bool(b) => Value::Float(if *b { 1.0 } else { 0.0 }),

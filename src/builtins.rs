@@ -772,6 +772,16 @@ pub(crate) fn validate_json_nesting_depth(
 pub fn parse_toml(toml_str: &str) -> Result<Value, String> {
     match toml::from_str::<toml::Value>(toml_str) {
         Ok(toml_value) => Ok(toml_to_kujo_value(toml_value)),
+        Err(e) if toml_str.len() > 512 => {
+            let location = e
+                .span()
+                .map(|span| format!(" at bytes {}..{}", span.start, span.end))
+                .unwrap_or_default();
+            Err(format!(
+                "TOML parse error{location}: {}",
+                crate::errors::diagnostic_input_preview(e.message())
+            ))
+        }
         Err(e) => Err(format!("TOML parse error: {}", e)),
     }
 }
@@ -989,6 +999,11 @@ pub fn parse_csv(csv_str: &str) -> Result<Value, String> {
         Err(e) => return Err(format!("CSV header error: {}", e)),
     };
 
+    let mut seen_headers = std::collections::HashSet::new();
+    if headers.iter().any(|header| !seen_headers.insert(header)) {
+        return Err("CSV header error: duplicate column names are not representable".to_string());
+    }
+
     let mut rows = Vec::new();
 
     for result in reader.records() {
@@ -1020,53 +1035,47 @@ pub fn parse_csv(csv_str: &str) -> Result<Value, String> {
 /// Infrastructure for csv.stringify() builtin
 #[allow(dead_code)]
 pub fn to_csv(value: &Value) -> Result<String, String> {
-    match value {
-        Value::Array(rows) if !rows.is_empty() => {
-            let mut wtr = csv::Writer::from_writer(vec![]);
-
-            // Get headers from first row
-            if let Some(Value::Dict(first_row)) = rows.first() {
-                let headers: Vec<String> = first_row.keys().map(|key| key.to_string()).collect();
-
-                if let Err(e) = wtr.write_record(&headers) {
-                    return Err(format!("CSV write error: {}", e));
-                }
-
-                // Write each row
-                for row_val in rows.iter() {
-                    if let Value::Dict(row) = row_val {
-                        let mut record = Vec::new();
-                        for header in &headers {
-                            let value_str = match row.get(header.as_str()) {
-                                Some(Value::Int(n)) => n.to_string(),
-                                Some(Value::Float(n)) => n.to_string(),
-                                Some(Value::Str(s)) => s.as_ref().clone(),
-                                Some(Value::Secret(_)) => "***".to_string(),
-                                Some(Value::Bool(b)) => b.to_string(),
-                                Some(Value::Null) => String::new(),
-                                _ => String::new(),
-                            };
-                            record.push(value_str);
-                        }
-                        if let Err(e) = wtr.write_record(&record) {
-                            return Err(format!("CSV write error: {}", e));
-                        }
-                    } else {
-                        return Err("CSV requires array of dictionaries".to_string());
-                    }
-                }
-
-                match wtr.into_inner() {
-                    Ok(bytes) => {
-                        String::from_utf8(bytes).map_err(|e| format!("CSV encoding error: {}", e))
-                    }
-                    Err(e) => Err(format!("CSV write error: {}", e)),
-                }
-            } else {
-                Err("CSV requires array of dictionaries".to_string())
-            }
+    let Value::Array(rows) = value else {
+        return Err("CSV requires array of dictionaries".to_string());
+    };
+    let Some(first) = rows.first() else {
+        return Err("CSV requires non-empty array".to_string());
+    };
+    let first = csv_row_fields(first)?;
+    let headers: Vec<&str> = first.keys().copied().collect();
+    let mut writer = csv::Writer::from_writer(vec![]);
+    writer.write_record(&headers).map_err(|e| format!("CSV write error: {e}"))?;
+    for row in rows.iter() {
+        let fields = csv_row_fields(row)?;
+        if fields.keys().any(|key| !first.contains_key(key)) {
+            return Err("CSV row contains a column absent from the first row".to_string());
         }
-        Value::Array(_) => Err("CSV requires non-empty array".to_string()),
+        let record: Result<Vec<String>, String> = headers
+            .iter()
+            .map(|header| match fields.get(header).copied() {
+                Some(Value::Int(n)) => Ok(n.to_string()),
+                Some(Value::Float(n)) => Ok(n.to_string()),
+                Some(Value::Str(s)) => Ok(s.as_ref().clone()),
+                Some(Value::Secret(_)) => Ok("***".to_string()),
+                Some(Value::Bool(b)) => Ok(b.to_string()),
+                Some(Value::Null) | None => Ok(String::new()),
+                _ => Err("CSV cells must be scalar values".to_string()),
+            })
+            .collect();
+        writer.write_record(record?).map_err(|e| format!("CSV write error: {e}"))?;
+    }
+    let bytes = writer.into_inner().map_err(|e| format!("CSV write error: {e}"))?;
+    String::from_utf8(bytes).map_err(|e| format!("CSV encoding error: {e}"))
+}
+
+// Borrow cells across both runtime object representations and establish one
+// deterministic column order without copying the dictionaries or their values.
+fn csv_row_fields(value: &Value) -> Result<std::collections::BTreeMap<&str, &Value>, String> {
+    match value {
+        Value::Dict(fields) => Ok(fields.iter().map(|(k, v)| (k.as_ref(), v)).collect()),
+        Value::FixedDict { keys, values } => {
+            Ok(keys.iter().zip(values).map(|(k, v)| (k.as_ref(), v)).collect())
+        }
         _ => Err("CSV requires array of dictionaries".to_string()),
     }
 }

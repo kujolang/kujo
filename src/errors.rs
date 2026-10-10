@@ -8,6 +8,14 @@ use colored::Colorize;
 use serde_json::json;
 use std::fmt;
 
+/// Bound invalid-input echoes while retaining short diagnostics unchanged.
+pub(crate) fn diagnostic_input_preview(input: &str) -> String {
+    match input.char_indices().nth(128) {
+        Some((end, _)) => format!("{}… [{} bytes total]", &input[..end], input.len()),
+        None => input.to_string(),
+    }
+}
+
 /// Source location information for tracking where code appears in a file
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceLocation {

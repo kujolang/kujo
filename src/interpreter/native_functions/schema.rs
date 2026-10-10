@@ -5,6 +5,7 @@
 use crate::interpreter::{DictMap, Value};
 use regex::Regex;
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 const MAX_SCHEMA_DEPTH: usize = 64;
@@ -74,6 +75,8 @@ impl std::fmt::Display for NumericValue {
 struct ValidationState {
     visited_nodes: usize,
     ref_stack: Vec<String>,
+    schema_nodes: usize,
+    patterns: HashMap<String, Arc<Regex>>,
 }
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
@@ -99,9 +102,120 @@ fn handle_json_schema_validate(arg_values: &[Value]) -> Value {
 
 fn json_schema_validate(value: &Value, schema: &Value) -> Result<Vec<ValidationError>, String> {
     let mut state = ValidationState::default();
+    check_schema(schema, schema, 0, &mut state)?;
     let mut errors = Vec::new();
     validate_schema(value, schema, schema, "", 0, &mut state, &mut errors)?;
     Ok(errors)
+}
+
+// Validate the schema independently of the instance. Otherwise malformed
+// keywords and absent property/item schemas can silently bypass validation.
+fn check_schema(
+    schema: &Value,
+    root: &Value,
+    depth: usize,
+    state: &mut ValidationState,
+) -> Result<(), String> {
+    if depth > MAX_SCHEMA_DEPTH {
+        return Err(format!("exceeded schema recursion depth limit ({MAX_SCHEMA_DEPTH})"));
+    }
+    state.schema_nodes += 1;
+    if state.schema_nodes > MAX_VALIDATION_NODES {
+        return Err(format!("exceeded schema node limit ({MAX_VALIDATION_NODES})"));
+    }
+    let entries =
+        object_entries(schema).ok_or_else(|| "requires schema to be a dictionary".to_string())?;
+    reject_unknown_keywords(&entries)?;
+    for (key, value) in entries {
+        match key.as_str() {
+            "type" => {
+                schema_types(value)?;
+            }
+            "enum" => {
+                if !matches!(value, Value::Array(_)) {
+                    return Err("requires 'enum' to be an array".to_string());
+                }
+            }
+            "minimum" | "maximum" | "exclusiveMinimum" | "exclusiveMaximum" => {
+                numeric_schema_value(value, &key)?;
+            }
+            "minLength" | "maxLength" | "minItems" | "maxItems" => {
+                non_negative_i64_schema_value(value, &key)?;
+            }
+            "pattern" => {
+                schema_pattern(value, state)?;
+            }
+            "required" => {
+                let Value::Array(names) = value else {
+                    return Err("requires 'required' to be an array of strings".to_string());
+                };
+                for name in names.iter() {
+                    string_schema_value(name, "required")?;
+                }
+            }
+            "properties" | "$defs" | "definitions" => {
+                let children = object_entries(value)
+                    .ok_or_else(|| format!("requires '{key}' to be a dictionary"))?;
+                for (_, child) in children {
+                    check_schema(child, root, depth + 1, state)?;
+                }
+            }
+            "items" => {
+                if !is_object_like(value) {
+                    return Err("requires 'items' to be a dictionary schema".to_string());
+                }
+                check_schema(value, root, depth + 1, state)?;
+            }
+            "additionalProperties" => {
+                if !matches!(value, Value::Bool(_)) {
+                    if !is_object_like(value) {
+                        return Err(
+                            "requires 'additionalProperties' to be boolean or a dictionary schema"
+                                .to_string(),
+                        );
+                    }
+                    check_schema(value, root, depth + 1, state)?;
+                }
+            }
+            "allOf" | "anyOf" | "oneOf" => {
+                for child in schema_array(value, &key)? {
+                    check_schema(child, root, depth + 1, state)?;
+                }
+            }
+            "$ref" => {
+                let reference = string_schema_value(value, "$ref")?;
+                if !reference.starts_with('#') {
+                    return Err(format!("unsupported remote $ref '{reference}'"));
+                }
+                let target = resolve_local_ref(root, reference)
+                    .ok_or_else(|| format!("could not resolve local $ref '{reference}'"))?;
+                if !is_object_like(target) {
+                    return Err("requires schema to be a dictionary".to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
+// Per-call bounded reuse: no global cache, stale schemas, or unbounded retained
+// regexes. Uncached patterns still receive the same validation and execution.
+fn schema_pattern(value: &Value, state: &mut ValidationState) -> Result<Arc<Regex>, String> {
+    let pattern = string_schema_value(value, "pattern")?;
+    if pattern.len() > MAX_PATTERN_BYTES {
+        return Err(format!("pattern exceeds {MAX_PATTERN_BYTES} bytes"));
+    }
+    if let Some(regex) = state.patterns.get(pattern) {
+        return Ok(regex.clone());
+    }
+    let regex =
+        Regex::new(pattern).map_err(|error| format!("invalid pattern for 'pattern': {error}"))?;
+    let regex = Arc::new(regex);
+    if state.patterns.len() < 32 {
+        state.patterns.insert(pattern.to_string(), regex.clone());
+    }
+    Ok(regex)
 }
 
 fn validation_result(errors: Vec<ValidationError>) -> Value {
@@ -165,7 +279,7 @@ fn validate_schema(
     }
 
     validate_number_keywords(value, schema, instance_path, errors)?;
-    validate_string_keywords(value, schema, instance_path, errors)?;
+    validate_string_keywords(value, schema, instance_path, state, errors)?;
     validate_array_keywords(value, schema, root_schema, instance_path, depth, state, errors)?;
     validate_object_keywords(value, schema, root_schema, instance_path, depth, state, errors)?;
     validate_combinators(value, schema, root_schema, instance_path, depth, state, errors)?;
@@ -206,29 +320,39 @@ fn validate_ref(
     result
 }
 
-fn validate_type_keyword(
-    value: &Value,
-    type_schema: &Value,
-    instance_path: &str,
-    errors: &mut Vec<ValidationError>,
-) -> Result<(), String> {
+fn schema_types(type_schema: &Value) -> Result<Vec<&str>, String> {
     let accepted_types = match type_schema {
-        Value::Str(expected) => vec![expected.as_ref().clone()],
+        Value::Str(expected) => vec![expected.as_str()],
         Value::Array(values) => {
             let mut types = Vec::with_capacity(values.len());
             for item in values.iter() {
-                types.push(string_schema_value(item, "type")?.to_string());
+                types.push(string_schema_value(item, "type")?);
             }
             types
         }
         _ => return Err("requires 'type' to be a string or array of strings".to_string()),
     };
 
+    if accepted_types.is_empty() {
+        return Err("requires 'type' to be non-empty".to_string());
+    }
+
     for expected in &accepted_types {
         if !is_supported_type_name(expected) {
             return Err(format!("unsupported type '{expected}'"));
         }
     }
+
+    Ok(accepted_types)
+}
+
+fn validate_type_keyword(
+    value: &Value,
+    type_schema: &Value,
+    instance_path: &str,
+    errors: &mut Vec<ValidationError>,
+) -> Result<(), String> {
+    let accepted_types = schema_types(type_schema)?;
 
     if !accepted_types.iter().any(|expected| value_matches_type(value, expected)) {
         push_error(
@@ -322,6 +446,7 @@ fn validate_string_keywords(
     value: &Value,
     schema: &Value,
     instance_path: &str,
+    state: &mut ValidationState,
     errors: &mut Vec<ValidationError>,
 ) -> Result<(), String> {
     let Value::Str(text) = value else {
@@ -354,12 +479,7 @@ fn validate_string_keywords(
     }
 
     if let Some(pattern) = get_key(schema, "pattern") {
-        let pattern = string_schema_value(pattern, "pattern")?;
-        if pattern.len() > MAX_PATTERN_BYTES {
-            return Err(format!("pattern exceeds {MAX_PATTERN_BYTES} bytes"));
-        }
-        let regex = Regex::new(pattern)
-            .map_err(|error| format!("invalid pattern for 'pattern': {error}"))?;
+        let regex = schema_pattern(pattern, state)?;
         if !regex.is_match(text.as_ref()) {
             push_error(errors, instance_path, "pattern", "string does not match pattern");
         }
@@ -489,9 +609,8 @@ fn validate_object_keywords(
         match additional {
             Value::Bool(true) => {}
             Value::Bool(false) => {
-                let property_names = properties.map(object_property_names).unwrap_or_default();
                 for (key, _) in value_entries {
-                    if !property_names.iter().any(|known| known == &key) {
+                    if properties.and_then(|properties| get_key(properties, &key)).is_none() {
                         push_error(
                             errors,
                             &join_path(instance_path, &key),
@@ -502,9 +621,8 @@ fn validate_object_keywords(
                 }
             }
             schema if is_object_like(schema) => {
-                let property_names = properties.map(object_property_names).unwrap_or_default();
                 for (key, child_value) in value_entries {
-                    if !property_names.iter().any(|known| known == &key) {
+                    if properties.and_then(|properties| get_key(properties, &key)).is_none() {
                         let child_path = join_path(instance_path, &key);
                         validate_schema(
                             child_value,
@@ -618,6 +736,9 @@ fn reject_unknown_keywords(schema_entries: &[(String, &Value)]) -> Result<(), St
 fn schema_array<'a>(schema: &'a Value, keyword: &str) -> Result<&'a [Value], String> {
     match schema {
         Value::Array(items) => {
+            if items.is_empty() {
+                return Err(format!("requires '{keyword}' to be a non-empty array"));
+            }
             for item in items.iter() {
                 if !is_object_like(item) {
                     return Err(format!("requires '{keyword}' entries to be dictionary schemas"));
@@ -669,10 +790,6 @@ fn object_entries(value: &Value) -> Option<Vec<(String, &Value)>> {
         ),
         _ => None,
     }
-}
-
-fn object_property_names(value: &Value) -> Vec<String> {
-    object_entries(value).unwrap_or_default().into_iter().map(|(key, _)| key).collect()
 }
 
 fn get_key<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
@@ -841,6 +958,21 @@ mod tests {
     use super::{handle, json_schema_validate};
     use crate::interpreter::{DictMap, Value};
     use std::sync::Arc;
+
+    #[test]
+    fn pattern_reuse_is_per_call_bounded_and_checks_uncached_patterns() {
+        let mut state = super::ValidationState::default();
+        let first = super::schema_pattern(&s("^first$"), &mut state).unwrap();
+        let same = super::schema_pattern(&s("^first$"), &mut state).unwrap();
+        assert!(Arc::ptr_eq(&first, &same));
+        for i in 0..40 {
+            let regex = super::schema_pattern(&s(&format!("^value{i}$")), &mut state).unwrap();
+            assert!(regex.is_match(&format!("value{i}")));
+        }
+        assert_eq!(state.patterns.len(), 32);
+        assert!(super::schema_pattern(&s("["), &mut state).is_err());
+        assert!(super::ValidationState::default().patterns.is_empty());
+    }
 
     fn s(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
