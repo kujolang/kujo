@@ -73,10 +73,12 @@ jobs:
         run: bash scripts/repo_hygiene_audit.sh
 
       - name: Run VM/interpreter parity suite
-        run: cargo test --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity
+        run: cargo test --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity --test token_estimation_release_contract
 
       - name: Run parity without JIT
-        run: cargo test --no-default-features --features runtime-archive,runtime-image --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity
+        run: |
+          cargo build --no-default-features --features runtime-network,runtime-archive,runtime-image --bin kujo
+          cargo test --no-default-features --features runtime-network,runtime-archive,runtime-image --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity --test token_estimation_release_contract
 
   release-gate:
     needs: [release-gate-minimal-smoke, fmt-check, clippy, msrv, vm-interpreter-parity]

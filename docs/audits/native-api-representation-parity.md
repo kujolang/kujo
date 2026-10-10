@@ -108,7 +108,7 @@ Final-source receipts (also use `CARGO_BUILD_JOBS=2` for Cargo builds):
 | `cargo test --test native_representation_matrix --test native_representation_parity --no-fail-fast` | Passed: 6 direct native tests and 18 CLI parity tests | `matrix-receipt.log` |
 | `KUJO_ENABLE_SOCKET_TESTS=1 bash scripts/release_gate.sh --full` | Passed: hygiene, formatting, all-target/all-feature Clippy, full tests, focused security/package/parity/socket suites, dual/interpreter fixtures and dependency audit | `full-final.log` |
 | `target/debug/kujo test --runtime vm` | Passed: 150 fixtures, 11 explicit skips | `vm-fixtures.log` |
-| `cargo test --no-default-features --features runtime-archive,runtime-image --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity` | Passed: 123 existing parity tests, 6 native matrix tests and 17 CLI matrix tests; the network-feature AI construction test is excluded in this build | `no-default-parity.log` |
+| `cargo test --no-default-features --features runtime-archive,runtime-image --test vm_interpreter_parity_surfaces --test native_representation_matrix --test native_representation_parity` | Historical receipt: 123 existing parity tests, 6 native matrix tests and 17 CLI tests passed, but the CLI tests could reuse the preceding default-feature executable; this command does not establish CLI build parity | `no-default-parity.log` |
 | `cargo build` | Passed; restored the default-feature development binary | `default-build.log` |
 | `cargo test --test readme_contracts --test architecture_docs_contract --test docs_policy_consistency_contract` | Passed: 3 documentation contract tests after roadmap updates | `final-doc-contracts.log` |
 | `bash scripts/release_candidate_gate.sh --roadmap-only` | Passed after marking item 2 complete and item 3 ready | `roadmap-gate.log` |
@@ -123,6 +123,15 @@ fallbacks. Optional `cargo-deny` remains unavailable, as on the baseline.
 existing documented exception for the unmaintained build-only bincode dependency.
 Benchmark smoke is not enabled: optimized performance measurement is roadmap
 item 3, and this campaign makes no speed claim.
+
+Item 3 subsequently reproduced a verification gap in the historical no-JIT
+command: `kujo` requires `runtime-network`, so omitting that feature skips its
+build and can leave an older CLI at the test executable path. CI now explicitly
+builds `kujo` with `runtime-network,runtime-archive,runtime-image` and no default
+features before testing that configuration. The corrected verification receipt
+is in [the release performance campaign](release-performance-campaign.md).
+The default-feature parity results and all eleven behavior fixes above remain
+valid; the historical command is preserved here with its evidence limit.
 
 One final-source gate attempt stopped in the large-repository docgen test with
 `No space left on device (os error 28)`. This was an environmental failure:

@@ -38,7 +38,7 @@ fn token_text_limits_remain_character_based_and_keep_exact_errors() {
         let allowed = unit.repeat(2_000_000);
         assert!(Value::equals(&call("ai_count_tokens", &[text(allowed)]), &Value::Int(expected)));
         let oversized = text(unit.repeat(2_000_001));
-        let result = call("ai_count_tokens", &[oversized.clone()]);
+        let result = call("ai_count_tokens", std::slice::from_ref(&oversized));
         assert!(
             matches!(result, Value::Error(e) if e == "ai_count_tokens() text exceeds character limit (2000000)")
         );

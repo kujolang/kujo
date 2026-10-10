@@ -78,6 +78,37 @@ same toolchain and profile, retain both binary hashes, run a baseline A/A contro
 and then run the paired comparison. The contract job rejects failed/corrupt
 measurement input and tests the statistics without timing thresholds.
 
+The campaign also found a pre-existing no-JIT verification gap: `kujo` declares
+`runtime-network` as a required Cargo feature, while the previous parity command
+omitted it. A fresh target-directory build reproduced Cargo's required-feature
+error. In a reused target directory, CLI tests could instead execute the earlier
+default-feature binary. CI now explicitly builds the CLI with
+`--no-default-features --features runtime-network,runtime-archive,runtime-image`
+before running parity and token contracts. That configuration passed 149 tests
+(123 existing parity, 6 direct native, 18 CLI and 2 token boundary tests).
+The earlier audit is corrected to distinguish its valid native/in-process
+results from the insufficient evidence for its CLI build configuration.
+
+## Functional verification
+
+The default-feature full release gate passed: formatting, all-target/all-feature
+Clippy, 3,043 passing test receipts, zero failures and 18 existing ignores,
+focused security/package/parity/socket suites, dual/interpreter fixtures and
+dependency audit. The test total includes one nested subprocess receipt, as in
+the 3,041-receipt starting baseline. A separate VM-only sweep passed 150 fixtures;
+dual and interpreter also passed 150 each, with 11 explicit skips per sweep and
+zero dual fallback. Optional cargo-deny remains unavailable; the existing
+documented build-only bincode audit exception is unchanged.
+
+The new token tests compare an independent weighted-scalar oracle across ASCII,
+control characters, multibyte text, combining marks, model families and string
+lengths. Exact-limit and over-limit cases retain character-based bounds and
+exact errors, including messages context fitting would otherwise discard.
+Seven Node tests cover statistics, missing/corrupt/failed reports, unsupported
+resources, driver failures/deadlines, provenance validation and evidence-directory
+preservation. Clippy initially found one unnecessary clone in a new test; the
+test now borrows that input, with no assertion change.
+
 No hosted-runner time budget is promoted to a regression assertion from one
 campaign. Future corpus changes require reviewed expected results and a new
 checksum-identified series; no timing result permits weakening correctness.
