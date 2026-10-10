@@ -6,6 +6,15 @@ use crate::builtins;
 use crate::interpreter::{Interpreter, Value};
 use std::sync::Arc;
 
+// Keep normal diagnostics byte-for-byte compatible without echoing an entire
+// file or model response for one invalid scalar. The caller retains the input.
+fn conversion_input_preview(input: &str) -> String {
+    match input.char_indices().nth(128) {
+        Some((end, _)) => format!("{}… [{} bytes total]", &input[..end], input.len()),
+        None => input.to_string(),
+    }
+}
+
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
         // Type conversion functions
@@ -17,7 +26,10 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Str(s)) = arg_values.first() {
                 match s.trim().parse::<i64>() {
                     Ok(n) => Value::Int(n),
-                    Err(_) => Value::Error(format!("Cannot parse '{}' as integer", s)),
+                    Err(_) => Value::Error(format!(
+                        "Cannot parse '{}' as integer",
+                        conversion_input_preview(s)
+                    )),
                 }
             } else {
                 Value::Error("parse_int requires a string argument".to_string())
@@ -32,7 +44,10 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             if let Some(Value::Str(s)) = arg_values.first() {
                 match s.trim().parse::<f64>() {
                     Ok(n) => Value::Float(n),
-                    Err(_) => Value::Error(format!("Cannot parse '{}' as float", s)),
+                    Err(_) => Value::Error(format!(
+                        "Cannot parse '{}' as float",
+                        conversion_input_preview(s)
+                    )),
                 }
             } else {
                 Value::Error("parse_float requires a string argument".to_string())
@@ -50,7 +65,10 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::Float(f) => Value::Int(f.trunc() as i64),
                     Value::Str(s) => match s.trim().parse::<i64>() {
                         Ok(n) => Value::Int(n),
-                        Err(_) => Value::Error(format!("Cannot convert '{}' to int", s)),
+                        Err(_) => Value::Error(format!(
+                            "Cannot convert '{}' to int",
+                            conversion_input_preview(s)
+                        )),
                     },
                     Value::Bool(b) => Value::Int(if *b { 1 } else { 0 }),
                     _ => Value::Error(format!(
@@ -79,7 +97,10 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                     Value::Float(f) => Value::Float(*f),
                     Value::Str(s) => match s.trim().parse::<f64>() {
                         Ok(n) => Value::Float(n),
-                        Err(_) => Value::Error(format!("Cannot convert '{}' to float", s)),
+                        Err(_) => Value::Error(format!(
+                            "Cannot convert '{}' to float",
+                            conversion_input_preview(s)
+                        )),
                     },
                     Value::Bool(b) => Value::Float(if *b { 1.0 } else { 0.0 }),
                     _ => Value::Error(format!(

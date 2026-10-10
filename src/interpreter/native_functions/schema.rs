@@ -155,11 +155,11 @@ fn validate_schema(
     }
 
     if let Some(enum_schema) = get_key(schema, "enum") {
-        validate_enum_keyword(value, enum_schema, instance_path, errors)?;
+        validate_enum_keyword(value, enum_schema, instance_path, state, errors)?;
     }
 
     if let Some(const_schema) = get_key(schema, "const") {
-        if !Value::equals(value, const_schema) {
+        if !json_values_equal(value, const_schema, state)? {
             push_error(errors, instance_path, "const", "value does not match const");
         }
     }
@@ -246,16 +246,19 @@ fn validate_enum_keyword(
     value: &Value,
     enum_schema: &Value,
     instance_path: &str,
+    state: &mut ValidationState,
     errors: &mut Vec<ValidationError>,
 ) -> Result<(), String> {
     let Value::Array(cases) = enum_schema else {
         return Err("requires 'enum' to be an array".to_string());
     };
 
-    if !cases.iter().any(|case| Value::equals(value, case)) {
-        push_error(errors, instance_path, "enum", "value is not one of the allowed enum cases");
+    for case in cases.iter() {
+        if json_values_equal(value, case, state)? {
+            return Ok(());
+        }
     }
-
+    push_error(errors, instance_path, "enum", "value is not one of the allowed enum cases");
     Ok(())
 }
 
@@ -635,7 +638,16 @@ fn resolve_local_ref<'a>(root: &'a Value, reference: &str) -> Option<&'a Value> 
     let mut current = root;
     for raw_segment in pointer.split('/') {
         let segment = unescape_json_pointer_segment(raw_segment);
-        current = get_key(current, &segment)?;
+        current = match current {
+            Value::Array(items) => {
+                let index = segment.parse::<usize>().ok()?;
+                if index.to_string() != segment {
+                    return None;
+                }
+                items.get(index)?
+            }
+            _ => get_key(current, &segment)?,
+        };
     }
     Some(current)
 }
@@ -706,35 +718,82 @@ fn numeric_value(value: &Value) -> Option<NumericValue> {
     }
 }
 
-fn compare_int_float(integer: i64, float: f64) -> Ordering {
-    const I64_UPPER_EXCLUSIVE_AS_F64: f64 = 9_223_372_036_854_775_808.0;
-    const I64_MIN_AS_F64: f64 = -9_223_372_036_854_775_808.0;
-    if float >= I64_UPPER_EXCLUSIVE_AS_F64 {
-        return Ordering::Less;
-    }
-    if float < I64_MIN_AS_F64 {
-        return Ordering::Greater;
-    }
-
-    let truncated = float.trunc() as i64;
-    match integer.cmp(&truncated) {
-        Ordering::Equal if float.fract() > 0.0 => Ordering::Less,
-        Ordering::Equal if float.fract() < 0.0 => Ordering::Greater,
-        ordering => ordering,
-    }
-}
-
 fn compare_numeric(left: NumericValue, right: NumericValue) -> Ordering {
     match (left, right) {
         (NumericValue::Int(left), NumericValue::Int(right)) => left.cmp(&right),
         (NumericValue::Float(left), NumericValue::Float(right)) => {
             left.partial_cmp(&right).expect("numeric values are finite")
         }
-        (NumericValue::Int(left), NumericValue::Float(right)) => compare_int_float(left, right),
+        (NumericValue::Int(left), NumericValue::Float(right)) => {
+            Value::compare_int_float(left, right).expect("numeric values are finite")
+        }
         (NumericValue::Float(left), NumericValue::Int(right)) => {
-            compare_int_float(right, left).reverse()
+            Value::compare_int_float(right, left).expect("numeric values are finite").reverse()
         }
     }
+}
+
+// JSON numbers compare mathematically, not with the language's legacy epsilon
+// equality. Walk containers explicitly and charge the existing validation budget.
+fn json_values_equal(
+    left: &Value,
+    right: &Value,
+    state: &mut ValidationState,
+) -> Result<bool, String> {
+    let mut pending = vec![(left, right, 0)];
+    while let Some((left, right, depth)) = pending.pop() {
+        if depth > MAX_SCHEMA_DEPTH {
+            return Err(format!("exceeded schema recursion depth limit ({MAX_SCHEMA_DEPTH})"));
+        }
+        state.visited_nodes += 1;
+        if state.visited_nodes > MAX_VALIDATION_NODES {
+            return Err(format!("exceeded validation node limit ({MAX_VALIDATION_NODES})"));
+        }
+        if let (Some(a), Some(b)) = (numeric_value(left), numeric_value(right)) {
+            if compare_numeric(a, b) != Ordering::Equal {
+                return Ok(false);
+            }
+            continue;
+        }
+        match (left, right) {
+            (Value::Array(a), Value::Array(b)) => {
+                if a.len() != b.len() {
+                    return Ok(false);
+                }
+                if a.len()
+                    > MAX_VALIDATION_NODES.saturating_sub(state.visited_nodes + pending.len())
+                {
+                    return Err(format!("exceeded validation node limit ({MAX_VALIDATION_NODES})"));
+                }
+                pending.extend(a.iter().zip(b.iter()).map(|(a, b)| (a, b, depth + 1)));
+            }
+            (a, b) if is_object_like(a) && is_object_like(b) => {
+                let entries = object_entries(a).expect("object checked");
+                let other_len = match b {
+                    Value::Dict(map) => map.len(),
+                    Value::FixedDict { keys, .. } => keys.len(),
+                    _ => unreachable!(),
+                };
+                if entries.len() != other_len {
+                    return Ok(false);
+                }
+                if entries.len()
+                    > MAX_VALIDATION_NODES.saturating_sub(state.visited_nodes + pending.len())
+                {
+                    return Err(format!("exceeded validation node limit ({MAX_VALIDATION_NODES})"));
+                }
+                for (key, value) in entries {
+                    let Some(other) = get_key(b, &key) else {
+                        return Ok(false);
+                    };
+                    pending.push((value, other, depth + 1));
+                }
+            }
+            _ if !Value::equals(left, right) => return Ok(false),
+            _ => {}
+        }
+    }
+    Ok(true)
 }
 
 fn numeric_schema_value(value: &Value, keyword: &str) -> Result<NumericValue, String> {

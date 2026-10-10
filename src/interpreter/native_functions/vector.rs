@@ -73,17 +73,15 @@ fn handle_vec_normalize(arg_values: &[Value]) -> Value {
         Err(error) => return error,
     };
 
-    let norm = match norm_checked("vec_normalize", &vector) {
-        Ok(result) => result,
-        Err(error) => return error,
-    };
-
-    if norm == 0.0 {
+    let norm = ScaledNorm::new(&vector);
+    if let Err(error) = ensure_finite("vec_normalize", norm.magnitude()) {
+        return error;
+    }
+    if norm.scale == 0.0 {
         return Value::Array(Arc::new(vector.into_iter().map(|_| Value::Float(0.0)).collect()));
     }
-
     let normalized: Vec<Value> =
-        vector.into_iter().map(|value| Value::Float(value / norm)).collect();
+        vector.into_iter().map(|value| Value::Float((value / norm.scale) / norm.length)).collect();
     Value::Array(Arc::new(normalized))
 }
 
@@ -141,10 +139,15 @@ fn handle_vec_top_k(arg_values: &[Value]) -> Value {
 }
 
 fn top_k_scores(query: &[f64], matrix: &[Vec<f64>]) -> Vec<(usize, f64)> {
+    // The query norm is invariant across all rows, including the parallel path.
+    let query_norm = ScaledNorm::new(query);
+    let score = |(index, row): (usize, &Vec<f64>)| {
+        (index, cosine_with_norms(query, row, query_norm, ScaledNorm::new(row)))
+    };
     if matrix.len() >= VEC_TOP_K_PARALLEL_THRESHOLD {
-        matrix.par_iter().enumerate().map(|(index, row)| (index, cosine_raw(query, row))).collect()
+        matrix.par_iter().enumerate().map(score).collect()
     } else {
-        matrix.iter().enumerate().map(|(index, row)| (index, cosine_raw(query, row))).collect()
+        matrix.iter().enumerate().map(score).collect()
     }
 }
 
@@ -248,9 +251,7 @@ fn dot_checked(function: &str, left: &[f64], right: &[f64]) -> Result<f64, Value
 }
 
 fn norm_checked(function: &str, vector: &[f64]) -> Result<f64, Value> {
-    let squared = dot_raw(vector, vector);
-    let result = squared.sqrt();
-    ensure_finite(function, result)
+    ensure_finite(function, ScaledNorm::new(vector).magnitude())
 }
 
 fn cosine_checked(function: &str, left: &[f64], right: &[f64]) -> Result<f64, Value> {
@@ -268,13 +269,39 @@ fn dot_raw(left: &[f64], right: &[f64]) -> f64 {
     left.iter().zip(right.iter()).map(|(a, b)| a * b).sum()
 }
 
+#[derive(Clone, Copy)]
+struct ScaledNorm {
+    scale: f64,
+    length: f64,
+}
+
+impl ScaledNorm {
+    fn new(vector: &[f64]) -> Self {
+        let scale = vector.iter().fold(0.0_f64, |maximum, value| maximum.max(value.abs()));
+        let length = if scale == 0.0 {
+            0.0
+        } else {
+            vector.iter().map(|value| (value / scale).powi(2)).sum::<f64>().sqrt()
+        };
+        Self { scale, length }
+    }
+
+    fn magnitude(self) -> f64 {
+        self.scale * self.length
+    }
+}
+
 fn cosine_raw(left: &[f64], right: &[f64]) -> f64 {
-    let left_norm = dot_raw(left, left).sqrt();
-    let right_norm = dot_raw(right, right).sqrt();
-    if left_norm == 0.0 || right_norm == 0.0 {
+    cosine_with_norms(left, right, ScaledNorm::new(left), ScaledNorm::new(right))
+}
+
+fn cosine_with_norms(left: &[f64], right: &[f64], a: ScaledNorm, b: ScaledNorm) -> f64 {
+    if a.scale == 0.0 || b.scale == 0.0 {
         return 0.0;
     }
-    (dot_raw(left, right) / (left_norm * right_norm)).clamp(-1.0, 1.0)
+    let scaled_dot: f64 =
+        left.iter().zip(right).map(|(left, right)| (left / a.scale) * (right / b.scale)).sum();
+    (scaled_dot / (a.length * b.length)).clamp(-1.0, 1.0)
 }
 
 fn ensure_finite(function: &str, value: f64) -> Result<f64, Value> {
@@ -441,10 +468,8 @@ mod tests {
         );
 
         let top_k_non_finite =
-            handle("vec_top_k", &[arr(&[f64::MAX]), matrix(vec![arr(&[f64::MAX])]), Value::Int(1)])
+            handle("vec_top_k", &[arr(&[f64::INFINITY]), matrix(vec![arr(&[1.0])]), Value::Int(1)])
                 .unwrap();
-        assert!(
-            matches!(top_k_non_finite, Value::Error(message) if message.contains("not finite"))
-        );
+        assert!(matches!(top_k_non_finite, Value::Error(message) if message.contains("finite")));
     }
 }

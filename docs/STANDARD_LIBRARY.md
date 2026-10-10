@@ -17,6 +17,13 @@ Capability key:
 - `none`: no capability gate
 - other values map to `NativeCapability::as_str()` and require explicit allow flags in restricted mode
 
+Collection and numeric diagnostic contracts:
+
+- `sum` reports integer accumulator overflow as a runtime error rather than wrapping or panicking. Existing float promotion and non-numeric-element behavior are unchanged.
+- `sort` compares integer/float pairs without rounding the integer first. Language-wide float equality is unchanged.
+- `unique` preserves first occurrences and verifies equality when debug summaries collide, including compound values, secrets, and byte buffers. `invert` swaps keys and primitive values for all supported dictionary representations; unsupported values are skipped consistently.
+- Failed string inputs to `parse_int`, `parse_float`, `to_int`, and `to_float` retain their original diagnostic when at most 128 Unicode characters long. Longer inputs show the first 128 characters and total input byte count; the input itself is unchanged.
+
 JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 
 - `parse_json` enforces a maximum input size of `8,388,608` bytes, aligned with file I/O, and a maximum nesting depth of `64`.
@@ -37,7 +44,8 @@ JSON Schema subset contract (`json_schema_validate`):
 
 - `json_schema_validate(value, schema)` returns `{"valid": bool, "errors": [...]}` and never performs network, filesystem, clock, random, or process I/O.
 - Supported validation keywords are `type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `const`, `minimum`, `maximum`, `exclusiveMinimum`, `exclusiveMaximum`, `minLength`, `maxLength`, `pattern`, `minItems`, `maxItems`, `anyOf`, `oneOf`, `allOf`, and local `$ref`.
-- `$ref` supports local JSON pointers such as `#`, `#/$defs/name`, and `#/definitions/name`; remote references are rejected.
+- `$ref` supports local JSON pointers such as `#`, `#/$defs/name`, `#/definitions/name`, and array traversal such as `#/allOf/0`; remote references are rejected. Array indices use canonical non-negative decimal notation (no leading zeroes except `0`).
+- `const` and `enum` compare JSON numbers exactly, including nested containers: `1` equals `1.0`, but large integers are not rounded to floats and nearby floats are not treated as equal. Structural comparisons share the 64-level depth and 100,000-node validation budgets.
 - Error entries are dictionaries with `path`, `message`, and `keyword`. Paths are JSON-pointer-like instance paths such as `/items/0/name`; the root path is an empty string.
 - Unsupported schema keywords, malformed schemas, invalid regex patterns, remote or cyclic `$ref`, excessive schema recursion, excessive validation nodes, patterns larger than `1,024` bytes, and arrays larger than `100,000` items return `Value::Error`.
 - Draft 2020-12 identification and annotation keywords `$schema`, `$id`, `$comment`, `title`, `description`, `default`, `examples`, `format`, `deprecated`, `readOnly`, and `writeOnly` are accepted as no-op metadata. `format` follows the draft's annotation-default behavior; it is not an assertion vocabulary.
@@ -80,6 +88,7 @@ Vector math contract (`vec_dot` / `vec_norm` / `vec_normalize` / `vec_cosine` / 
 - `vec_dot(a, b)`, `vec_cosine(a, b)`, and `vec_top_k(query, matrix, k)` require equal dimensions.
 - `vec_cosine` returns `0.0` for zero vectors and clamps finite cosine scores to `[-1.0, 1.0]`.
 - `vec_normalize` returns a zero-filled vector for a zero vector.
+- Norms and cosine scores use scaling to avoid intermediate square overflow and underflow. A norm whose actual magnitude is not representable still returns an error; normalization retains that norm-error contract.
 - `vec_top_k` scores rows by cosine similarity, returns dictionaries `{index, score}`, sorts by descending score with stable ascending-index tie-breaks, and returns all rows when `k` exceeds row count.
 - Vectors are capped at `100,000` dimensions; matrices are capped at `100,000` rows and `5,000,000` cells. Non-finite inputs or non-finite results return `Value::Error`.
 - `vec_top_k` uses Rayon parallel iteration for large matrices; vector helpers have no capability gate and do not store or index vectors.
