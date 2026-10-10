@@ -17,11 +17,10 @@ struct TokenHeuristic {
 
 impl TokenHeuristic {
     fn for_model(model: &str) -> Self {
-        let lower = model.to_ascii_lowercase();
-        if lower.starts_with("gpt") {
+        if model.get(..3).is_some_and(|prefix| prefix.eq_ignore_ascii_case("gpt")) {
             return Self { chars_per_token: 4, message_overhead: 4, name_overhead: 1 };
         }
-        if lower.starts_with("text-embedding") {
+        if model.get(..14).is_some_and(|prefix| prefix.eq_ignore_ascii_case("text-embedding")) {
             return Self { chars_per_token: 4, message_overhead: 0, name_overhead: 0 };
         }
         Self { chars_per_token: 4, message_overhead: 3, name_overhead: 1 }
@@ -29,11 +28,11 @@ impl TokenHeuristic {
 }
 
 #[derive(Clone, Debug)]
-struct AiMessage {
-    role: Arc<String>,
-    content: Arc<String>,
-    name: Option<Arc<String>>,
-    value: Value,
+struct AiMessage<'a> {
+    role: &'a str,
+    content: &'a str,
+    name: Option<&'a str>,
+    value: &'a Value,
 }
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
@@ -58,11 +57,11 @@ fn handle_ai_count_tokens(arg_values: &[Value]) -> Value {
         Ok(options) => options,
         Err(error) => return error,
     };
-    let model = match model_from_options(&options, "ai_count_tokens") {
+    let model = match model_from_options(options, "ai_count_tokens") {
         Ok(model) => model,
         Err(error) => return error,
     };
-    let heuristic = TokenHeuristic::for_model(&model);
+    let heuristic = TokenHeuristic::for_model(model);
 
     match estimate_value_tokens(&arg_values[0], heuristic, "ai_count_tokens") {
         Ok(count) => Value::Int(count),
@@ -90,11 +89,11 @@ fn handle_ai_fit_context(arg_values: &[Value]) -> Value {
         Ok(options) => options,
         Err(error) => return error,
     };
-    let model = match model_from_options(&options, "ai_fit_context") {
+    let model = match model_from_options(options, "ai_fit_context") {
         Ok(model) => model,
         Err(error) => return error,
     };
-    let heuristic = TokenHeuristic::for_model(&model);
+    let heuristic = TokenHeuristic::for_model(model);
 
     match fit_context(messages, max_tokens, heuristic) {
         Ok((messages, dropped, est_tokens, fits)) => {
@@ -109,28 +108,20 @@ fn handle_ai_fit_context(arg_values: &[Value]) -> Value {
     }
 }
 
-fn parse_options(value: Option<&Value>, surface: &str) -> Result<DictMap, Value> {
+fn parse_options<'a>(value: Option<&'a Value>, surface: &str) -> Result<Option<&'a Value>, Value> {
     match value {
-        None => Ok(DictMap::default()),
-        Some(Value::Dict(options)) => Ok((**options).clone()),
-        Some(Value::FixedDict { keys, values }) => {
-            let mut options = DictMap::default();
-            for (key, value) in keys.iter().zip(values.iter()) {
-                options.insert(key.clone(), value.clone());
-            }
-            Ok(options)
-        }
+        None | Some(Value::Dict(_) | Value::FixedDict { .. }) => Ok(value),
         Some(_) => Err(Value::Error(format!("{surface}() requires options to be a dictionary"))),
     }
 }
 
-fn model_from_options(options: &DictMap, surface: &str) -> Result<String, Value> {
-    match options.get("model") {
-        Some(Value::Str(model)) => Ok(model.as_ref().clone()),
+fn model_from_options<'a>(options: Option<&'a Value>, surface: &str) -> Result<&'a str, Value> {
+    match options.and_then(|options| get_key(options, "model")) {
+        Some(Value::Str(model)) => Ok(model.as_str()),
         Some(_) => Err(Value::Error(format!(
             "{surface}() requires options.model to be a string when provided"
         ))),
-        None => Ok(String::new()),
+        None => Ok(""),
     }
 }
 
@@ -151,7 +142,7 @@ fn estimate_value_tokens(
     }
 }
 
-fn parse_messages(value: &Value, surface: &str) -> Result<Vec<AiMessage>, Value> {
+fn parse_messages<'a>(value: &'a Value, surface: &str) -> Result<Vec<AiMessage<'a>>, Value> {
     let Value::Array(messages) = value else {
         return Err(Value::Error(format!("{surface}() requires messages to be an array")));
     };
@@ -169,9 +160,13 @@ fn parse_messages(value: &Value, surface: &str) -> Result<Vec<AiMessage>, Value>
         .collect()
 }
 
-fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage, Value> {
+fn parse_message<'a>(
+    value: &'a Value,
+    index: usize,
+    surface: &str,
+) -> Result<AiMessage<'a>, Value> {
     let role = match get_key(value, "role") {
-        Some(Value::Str(role)) if !role.is_empty() => role.clone(),
+        Some(Value::Str(role)) if !role.is_empty() => role.as_str(),
         _ => {
             return Err(Value::Error(format!(
                 "{surface}() requires messages[{index}].role to be a non-empty string"
@@ -179,7 +174,7 @@ fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage
         }
     };
     let content = match get_key(value, "content") {
-        Some(Value::Str(content)) => content.clone(),
+        Some(Value::Str(content)) => content.as_str(),
         _ => {
             return Err(Value::Error(format!(
                 "{surface}() requires messages[{index}].content to be a string"
@@ -187,7 +182,7 @@ fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage
         }
     };
     let name = match get_key(value, "name") {
-        Some(Value::Str(name)) if !name.is_empty() => Some(name.clone()),
+        Some(Value::Str(name)) if !name.is_empty() => Some(name.as_str()),
         Some(Value::Str(_)) | None => None,
         Some(_) => {
             return Err(Value::Error(format!(
@@ -196,7 +191,7 @@ fn parse_message(value: &Value, index: usize, surface: &str) -> Result<AiMessage
         }
     };
 
-    Ok(AiMessage { role, content, name, value: normalized_message_value(value) })
+    Ok(AiMessage { role, content, name, value })
 }
 
 fn normalized_message_value(value: &Value) -> Value {
@@ -239,7 +234,7 @@ fn parse_max_tokens(value: &Value) -> Result<i64, Value> {
 }
 
 fn fit_context(
-    messages: Vec<AiMessage>,
+    messages: Vec<AiMessage<'_>>,
     max_tokens: i64,
     heuristic: TokenHeuristic,
 ) -> Result<(Vec<Value>, i64, i64, bool), Value> {
@@ -265,14 +260,14 @@ fn fit_context(
             est_tokens -= cost;
             dropped += 1;
         } else {
-            kept.push(message.value);
+            kept.push(normalized_message_value(message.value));
         }
     }
     Ok((kept, dropped, est_tokens, est_tokens <= max_tokens))
 }
 
 fn estimate_messages_tokens(
-    messages: &[AiMessage],
+    messages: &[AiMessage<'_>],
     heuristic: TokenHeuristic,
     surface: &str,
 ) -> Result<i64, Value> {
@@ -284,14 +279,14 @@ fn estimate_messages_tokens(
 }
 
 fn estimate_message_tokens(
-    message: &AiMessage,
+    message: &AiMessage<'_>,
     heuristic: TokenHeuristic,
     surface: &str,
 ) -> Result<i64, Value> {
     let mut total = heuristic.message_overhead;
-    total = checked_add(total, estimate_text_tokens(&message.role, heuristic, surface)?, surface)?;
+    total = checked_add(total, estimate_text_tokens(message.role, heuristic, surface)?, surface)?;
     total =
-        checked_add(total, estimate_text_tokens(&message.content, heuristic, surface)?, surface)?;
+        checked_add(total, estimate_text_tokens(message.content, heuristic, surface)?, surface)?;
     if let Some(name) = &message.name {
         total = checked_add(total, heuristic.name_overhead, surface)?;
         total = checked_add(total, estimate_text_tokens(name, heuristic, surface)?, surface)?;
