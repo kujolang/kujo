@@ -9,10 +9,14 @@ On macOS or Linux, this installs the current Kujo runtime, Kennel, and the core
 Kujo tools without `sudo`:
 
 ```bash
-curl -fsSL https://kujolang.ai/install.sh | bash
+curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.8.1 bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```
+
+The version override above pins the runtime to 1.8.1 even while the public
+installer deployment catches up. It does not pin the separate ecosystem source
+snapshots; use a reviewed release manifest when those must be reproducible.
 
 The installer downloads a prebuilt Kujo release, verifies its SHA-256 checksum,
 and stores source snapshots and tools under `~/.kujo`. Commands go in
@@ -23,7 +27,7 @@ Inspect the available profiles before installing more:
 ```bash
 curl -fsSL https://kujolang.ai/install.sh -o install.sh
 bash install.sh --list
-bash install.sh --group ai
+KUJO_RELEASE_VERSION=v1.8.1 bash install.sh --group ai
 ```
 
 `--all` installs every profile. `--source` builds Kujo from source instead of

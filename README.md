@@ -15,7 +15,7 @@ On macOS or Linux, the Kujo installer sets up the current runtime and the core
 Kujo toolset in user-owned directories:
 
 ```bash
-curl -fsSL https://kujolang.ai/install.sh | bash
+curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.8.1 bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```

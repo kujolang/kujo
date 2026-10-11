@@ -52,3 +52,18 @@ fn readme_covers_v1_status_cli_security_and_core_reference_links() {
         assert!(content.contains(marker), "expected README to include marker {marker:?}");
     }
 }
+
+#[test]
+fn stable_install_examples_pin_the_advertised_runtime_version() {
+    let version = env!("CARGO_PKG_VERSION");
+    let pinned =
+        format!("curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v{version} bash");
+    for file in ["README.md", "INSTALLATION.md", "docs/ECOSYSTEM_INSTALL.md"] {
+        let content = fs::read_to_string(repo_root().join(file)).unwrap();
+        assert!(content.contains(&pinned), "{file} must pin the advertised stable runtime");
+        assert!(
+            !content.contains("curl -fsSL https://kujolang.ai/install.sh | bash"),
+            "{file} must not silently inherit a stale public deployment's runtime default"
+        );
+    }
+}
