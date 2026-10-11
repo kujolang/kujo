@@ -141,6 +141,17 @@
 # Kujo VideoOps
 /var/
 
+# HyperFrames / Kujo video project generated media
+/video-*/work-*-*/
+/video-*/snapshots/
+/video-*/proof/
+/video-*/audio/*.wav
+/video-*/captions.ass
+/video-*/*.mp4
+/the-great-delete/snapshots/
+/the-great-delete/proof/
+/the-great-delete/*.mp4
+
 # Tribunal
 /tribunal-runs/
 /.tribunal/
