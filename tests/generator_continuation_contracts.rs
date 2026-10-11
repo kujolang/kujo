@@ -328,3 +328,138 @@ fn interpreter_generator_closure_does_not_retain_unreferenced_generator_root() {
         assert_eq!(weak.strong_count(), 0, "unreferenced root retained: {body}");
     }
 }
+
+// Item-5 design evidence: characterize the supported explicit delegation idiom,
+// without adding or pretending to support `yield from` syntax.
+fn delegation_contract(source: &str) {
+    let env = Arc::new(Mutex::new(Interpreter::new().env));
+    let mut vm = VM::new();
+    vm.set_globals(env.clone());
+    execute(&mut vm, source).unwrap();
+    assert!(matches!(env.lock().unwrap().get("verified"), Some(Value::Bool(true))), "VM: {source}");
+    let mut interpreter = Interpreter::new();
+    interpret(&mut interpreter, source);
+    assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+    assert!(
+        matches!(interpreter.env.get("verified"), Some(Value::Bool(true))),
+        "interpreter: {source}"
+    );
+}
+
+#[test]
+fn explicit_delegation_is_lazy_evaluates_source_once_and_preserves_alias_progress() {
+    delegation_contract(
+        r#"
+        mut factories := 0
+        mut produced := 0
+        func* leaf() { produced += 1 yield null produced += 1 yield 2 return 99 }
+        let child := leaf()
+        func source() { factories += 1 return child }
+        func* middle() { for item in source() { yield item } yield 3 }
+        func* outer() { for item in middle() { yield item } yield 4 }
+        let parent := outer()
+        let alias := parent
+        let lazy := factories == 0 && produced == 0
+        mut saw_null := false
+        for item in parent { saw_null = item == null break }
+        let paused := factories == 1 && produced == 1
+        mut child_value := 0
+        for item in child { child_value = item break }
+        mut total := 0
+        for item in alias { total += item }
+        for item in parent { total += 1000 }
+        let verified := lazy && saw_null && paused && child_value == 2 && total == 7 && factories == 1 && produced == 2
+    "#,
+    );
+}
+
+#[test]
+fn explicit_delegation_caches_terminal_errors_and_parent_can_handle_child_failure() {
+    delegation_contract(
+        r#"
+        mut attempts := 0
+        func* fail() { yield 1 attempts += 1 throw("delegate failure") }
+        func* forward(g) { for item in g { yield item } yield 1000 }
+        let child := fail()
+        let parent := forward(child)
+        mut caught := 0
+        mut total := 0
+        try { for item in parent { total += item } } except err { caught += 1 }
+        try { for item in parent { total += item } } except err { caught += 1 }
+        try { for item in child { total += item } } except err { caught += 1 }
+        func* recover(g) { try { for item in g { yield item } } except err { yield 10 } yield 20 }
+        for item in recover(child) { total += item }
+        let verified := caught == 3 && attempts == 1 && total == 31
+    "#,
+    );
+}
+
+#[test]
+fn abandoning_parent_does_not_drain_or_close_an_aliased_child() {
+    delegation_contract(
+        r#"
+        mut produced := 0
+        func* leaf() { produced += 1 yield 5 produced += 1 yield 6 }
+        func* forward(g) { for item in g { yield item } }
+        let child := leaf()
+        mut parent := forward(child)
+        for item in parent { break }
+        parent = null
+        let paused := produced == 1
+        mut total := 0
+        for item in child { total += item }
+        let verified := paused && total == 6 && produced == 2
+    "#,
+    );
+}
+
+#[test]
+fn delegated_factory_captures_survive_and_remain_independent_snapshots() {
+    delegation_contract(
+        r#"
+        func factory(start) {
+            func* child() { yield start yield start + 1 }
+            func* parent() { for item in child() { yield item } }
+            return parent()
+        }
+        let a := factory(2)
+        let b := factory(10)
+        func consume(g) { let start := 1000 mut total := 0 for item in g { total += item } return total }
+        let verified := consume(a) == 5 && consume(b) == 21
+    "#,
+    );
+}
+
+#[test]
+fn delegation_intersects_child_parent_and_resumer_capabilities() {
+    use kujo::interpreter::RuntimeCapabilityPolicy;
+    for restricted_stage in 0..3 {
+        let source = [
+            "func* leaf() { yield read_file(\"must-not-be-opened\") } let child := leaf()",
+            "func* forward(g) { for item in g { yield item } } let parent := forward(child)",
+            "for item in parent { print(item) }",
+        ];
+        let env = Arc::new(Mutex::new(Interpreter::new().env));
+        let mut vm = VM::new();
+        vm.set_globals(env);
+        let mut interpreter = Interpreter::new();
+        for (stage, code) in source.iter().enumerate() {
+            let policy = if stage == restricted_stage {
+                RuntimeCapabilityPolicy::restricted()
+            } else {
+                RuntimeCapabilityPolicy::trusted()
+            };
+            vm.set_capability_policy(policy.clone());
+            interpreter.set_capability_policy(policy);
+            let result = execute(&mut vm, code);
+            interpret(&mut interpreter, code);
+            if stage == 2 {
+                assert!(result.unwrap_err().contains("--allow-fs-read"));
+                assert!(format!("{:?}", interpreter.return_value).contains("--allow-fs-read"));
+            } else {
+                result.unwrap();
+                assert!(interpreter.return_value.is_none());
+            }
+        }
+    }
+}

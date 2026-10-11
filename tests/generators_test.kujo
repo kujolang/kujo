@@ -1,8 +1,8 @@
 # Test suite for generator functionality  
 # Run with: kujo test-run tests/generators_test.kujo
 #
-# NOTE: Current limitation - Generators with yields inside loop blocks
-# only execute once. Yields must be sequential statements, not inside loops.
+# Generators resume lazily through loop bodies in both runtimes.
+# See generator_continuation_contracts.rs for nested delegation and alias coverage.
 # This is due to PC-based execution tracking at statement level.
 # Future work: Implement bytecode VM or state machine transformation for full loop support.
 

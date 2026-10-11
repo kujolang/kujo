@@ -159,3 +159,45 @@ fn task_callbacks_and_detached_workers_inherit_all_host_denials() {
 fn cross_feature_task_spawn_and_generator_captures_keep_their_owners() {
     both("shared_set(\"done\", 0) async func outer() { let n := 21 spawn { async func inner() { return n * 2 } let v := await inner() shared_set(\"done\", v) } return 1 } let started := await outer() while shared_get(\"done\") == 0 {} print(started == 1 && shared_get(\"done\") == 42)", false);
 }
+
+#[test]
+fn explicit_delegation_depth_is_bounded_and_restores_the_top_level_caller() {
+    both(
+        r#"
+        func* chain(n) {
+            if n == 0 { yield 7 }
+            else { for value in chain(n - 1) { yield value } }
+        }
+        mut total := 0
+        for value in chain(4) { total += value }
+        mut caught := 0
+        let deep := chain(40)
+        try { for value in deep { total += value } } except err { caught += 1 }
+        try { for value in deep { total += value } } except err { caught += 1 }
+        print(total == 7 && caught == 2)
+    "#,
+        true,
+    );
+}
+
+#[test]
+fn task_cancellation_reaches_explicitly_delegated_generators() {
+    both(
+        r#"
+        shared_set("delegation_started", 0)
+        func work() {
+            func* leaf() { shared_set("delegation_started", 1) loop { yield 1 } }
+            func* parent() { for item in leaf() { yield item } }
+            for item in parent() {}
+        }
+        let handle := spawn_task(work)
+        while shared_get("delegation_started") == 0 {}
+        let cancelled := cancel_task(handle)
+        mut failures := 0
+        try { await await_task(handle) } except err { failures += 1 }
+        try { await await_task(handle) } except err { failures += 1 }
+        print(cancelled && failures == 2)
+    "#,
+        false,
+    );
+}
