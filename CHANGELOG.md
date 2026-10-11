@@ -6,6 +6,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Language design evidence
+
+- Complete the bounded `yield from` design decision with an explicit 1.9 deferral.
+  Document supported for/yield delegation, add lifecycle/parity contracts, and
+  preserve a mixed-call depth/error reproduction. No new syntax is introduced.
+
 ### Payload and output efficiency
 
 - Stream canonical AI request serialization into SHA-256 with a bounded buffer;

@@ -1,0 +1,171 @@
+{
+  "starting_sha": "ecece02d36fafc0d44c63724e2f546cdbb69bd71",
+  "decision": "Defer yield-from implementation; supported for/yield characterized, mixed-call acceptance boundary fails.",
+  "probe": {
+    "path": "docs/designs/yield-from-depth-probe.kujo",
+    "sha256": "ee97d5587bc11c60b1b8a1065ca1732f05ed587a88d52a43986e5387581bd28e",
+    "timeout_ms": 10000,
+    "runs": [
+      {
+        "command": "target/debug/kujo run docs/designs/yield-from-depth-probe.kujo",
+        "exit": 0,
+        "stdout": "7\nfalse\n",
+        "stderr": ""
+      },
+      {
+        "command": "target/debug/kujo run docs/designs/yield-from-depth-probe.kujo --interpreter",
+        "exit": 4,
+        "stdout": "",
+        "stderr": "[KUJORUN001] [runtime] Runtime Error: Maximum call stack depth of 32 exceeded while calling <generator>\n  --> 0:0\n\n"
+      }
+    ]
+  },
+  "top_level_depth_probe": [
+    {
+      "n": 0,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 0,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 4,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 4,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 29,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 29,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 30,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 30,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 31,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 31,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "7\nfalse\n",
+      "stderr": ""
+    },
+    {
+      "n": 32,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "0\ntrue\n",
+      "stderr": ""
+    },
+    {
+      "n": 32,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "0\ntrue\n",
+      "stderr": ""
+    },
+    {
+      "n": 40,
+      "runtime": "vm",
+      "status": 0,
+      "stdout": "0\ntrue\n",
+      "stderr": ""
+    },
+    {
+      "n": 40,
+      "runtime": "interpreter",
+      "status": 0,
+      "stdout": "0\ntrue\n",
+      "stderr": ""
+    }
+  ],
+  "verification": {
+    "baseline": {
+      "command": "cargo test --test generator_continuation_contracts --test concurrency_lifecycle_contracts",
+      "generator_passed": 22,
+      "concurrency_passed": 17
+    },
+    "targeted": {
+      "command": "cargo test --test generator_continuation_contracts --test concurrency_lifecycle_contracts --test readme_contracts --test docs_examples",
+      "passed": 53,
+      "failed": 0,
+      "ignored": 0
+    },
+    "environment": "CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0",
+    "scope": "Local macOS. Runtime sources unchanged. Full release/hosted gates not rerun for this tests-and-design change.",
+    "parity": {
+      "command": "cargo test --test vm_interpreter_parity_surfaces",
+      "passed": 123,
+      "failed": 0,
+      "ignored": 0
+    },
+    "clippy": {
+      "command": "cargo clippy --test generator_continuation_contracts --test concurrency_lifecycle_contracts -- -D warnings",
+      "exit": 0
+    },
+    "format": {
+      "command": "cargo fmt --check",
+      "exit": 0
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    },
+    "hygiene": {
+      "command": "bash scripts/repo_hygiene_audit.sh",
+      "exit": 0
+    }
+  },
+  "test_commit": "18e1df3c6e787916c903a10d11753c349a3ee0d5",
+  "follow_up": {
+    "capture_id": "cap_d8e153bd-7472-4eb5-861a-725fc44ade7f",
+    "signal_id": "sig_79eb8a70-4ce0-4e2e-b2f7-6dd8e4842fe4",
+    "exact_and_concept_retrieval": "passed",
+    "duplicate_searches": [
+      "generator depth",
+      "Maximum call stack depth"
+    ],
+    "duplicates": 0
+  }
+}

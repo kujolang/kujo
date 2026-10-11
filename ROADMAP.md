@@ -32,10 +32,10 @@ post-release validation.
 
 ## 1.8.1 maintenance release, then the 1.9 work sequence
 
-The **1.8.1 maintenance baseline is published and verified**. Items **2–4** are
+The **1.8.1 maintenance baseline is published and verified**. Items **2–5** are
 complete on main for the recorded native representation, release-performance,
-and token/payload/output contracts. Begin item **5**, the bounded `yield from`
-design decision, then item **6**.
+and token/payload/output contracts. Item **5** completed with an evidence-backed
+deferral of `yield from`; begin item **6**, human first-hour adopter validation.
 The maintenance release is complete for core native/npm distribution; separate
 website/catalog promotion remains explicit cross-repository work in the
 [publication receipt](release/kujo-1.8.1-publication.json).
@@ -142,8 +142,12 @@ clear update mechanism. No provider-specific control plane enters the runtime.
 
 ### 5. One bounded language enhancement: design `yield from` first
 
-**Status: design candidate after the maintenance/parity work; implementation is
-conditional on the design and compatibility evidence. Owner: Kujo core.**
+**Status: design complete — implementation deferred for 1.9. Owner: Kujo core.**
+
+Decision and executable evidence: [synchronous delegation decision](docs/designs/YIELD_FROM_DECISION.md).
+Existing explicit for/yield forwarding remains supported. The design specifies
+a bounded future shorthand and records a reproduced mixed-call depth/error parity
+boundary that must be resolved before implementation. No grammar change is shipped.
 
 - Specify delegation, yielded values, return/completion behavior, error propagation,
   cancellation, ownership/lifetime and alias behavior before changing grammar.

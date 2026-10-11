@@ -348,6 +348,7 @@ detached spawn now performs its body and can produce effects.
 - Task globals are submission snapshots. Aliases of one captured closure retain its mutable state; separate closures retain independent snapshots. Concurrent read-modify-write is not atomic; `shared_add_int` provides the shared integer operation. Captured AST writes to different bindings do not overwrite each other.
 - Tasks inherit the submitting capability policy. Generator resume intersects creation and resumer policies. Neither mechanism grants additional host capabilities.
 - Generator aliases share progress. Yield suspends owned state, return completes without yielding, and a terminal error is cached. Iteration is lazy; `break` does not drain the generator. Struct generator methods use the same continuation contract and snapshot their receiver at invocation. Async generators remain explicitly unsupported.
+- `yield from` is not supported. Forward values with `for item in source { yield item }` inside a synchronous generator. The [delegation decision](designs/YIELD_FROM_DECISION.md) specifies the deferred candidate and its compatibility prerequisites.
 - Current VM/interpreter parity and capability notes for `spawn`, spread/destructuring, and match-binding surfaces are tracked in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
 ### 5.8 Numeric semantics

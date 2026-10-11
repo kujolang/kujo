@@ -1,0 +1,29 @@
+# Item-5 acceptance probe: existing explicit delegation, not yield-from syntax.
+# Current VM succeeds; interpreter depth failure escapes the outer catch.
+func* chain(n) {
+    if n == 0 {
+        yield 7
+    } else {
+        for value in chain(n - 1) {
+            yield value
+        }
+    }
+}
+
+func consume(g) {
+    mut total := 0
+    for value in g {
+        total += value
+    }
+    return total
+}
+
+mut caught := false
+mut total := 0
+try {
+    total = consume(chain(31))
+} except err {
+    caught = true
+}
+print(total)
+print(caught)
