@@ -32,9 +32,9 @@ post-release validation.
 
 ## 1.8.1 maintenance release, then the 1.9 work sequence
 
-The **1.8.1 maintenance baseline is published and verified**. Item **2** is
-complete on main for the recorded native representation contracts. Begin item
-**3**, the release-build performance and resource campaign, then items **4–6**.
+The **1.8.1 maintenance baseline is published and verified**. Items **2 and 3** are
+complete on main for the recorded native representation and release-performance
+contracts. Begin item **4**, token/payload/output efficiency, then items **5–6**.
 The maintenance release is complete for core native/npm distribution; separate
 website/catalog promotion remains explicit cross-repository work in the
 [publication receipt](release/kujo-1.8.1-publication.json).
@@ -88,7 +88,17 @@ implementations or weaken representation-specific behavior merely for parity.
 
 ### 3. Release-build performance and resource campaign
 
-**Status: ready — item 2 established the behavioral baseline. Owner: Kujo core.**
+**Status: completed on main — post-1.8.1 development, not a new published release.
+Owner: Kujo core.**
+
+The [campaign and verification receipt](docs/audits/release-performance-campaign.md)
+preserves paired optimized-build evidence and A/A controls for 21 runtime and
+three static workloads on Linux, macOS and Windows. The measured ASCII token
+estimator shortcut preserves results and limits; resource claims stay bounded
+by the collected CPU/peak-RSS evidence. The campaign also fixes no-JIT CLI
+verification and disposable Windows benchmark artifacts. Nine harness contracts
+run on all three operating systems; no noisy wall-time CI threshold was added.
+The existing arm64 async-wake latency observation remains a profiling candidate.
 
 - Extend the existing reproducible workload corpus for CLI/data processing,
   collections/serialization, AI context fitting and request hashing, schema
@@ -107,7 +117,7 @@ memory claim is made. A measured no-change result is acceptable.
 
 ### 4. Token, payload and command-output efficiency
 
-**Status: planned after measurement setup; independent fixes may overlap item 3.
+**Status: ready — item 3 established reproducible measurement and evidence.
 Owner: Kujo core mechanisms; SDK/agent policy stays in ecosystem packages.**
 
 - Audit repeated parsing/serialization, full-buffer reads, cloned model payloads,

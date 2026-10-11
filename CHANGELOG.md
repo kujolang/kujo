@@ -14,6 +14,7 @@ This file records user-visible changes to Kujo, following
   platform-specific resource evidence; no provider-token accuracy claim changes.
 - Extend the release benchmark corpus and add a pinned Linux/macOS/Windows
   comparison workflow with correctness checks, raw evidence and noise controls.
+  Remove disposable runner executables and Windows symbols from successful evidence.
 
 ### Fixed
 
@@ -34,6 +35,8 @@ This file records user-visible changes to Kujo, following
   to the existing parity CI job, including the build without JIT. Cover all six
   dictionary representations and their 36 merge/update pairings, nested data,
   bytes, secrets, numeric boundaries, AI messages/context, mutation and errors.
+  Explicitly rebuild the required-feature CLI before no-JIT checks so a stale
+  default-feature executable cannot supply misleading parity evidence.
 
 ## [1.8.1] - 2026-10-10
 

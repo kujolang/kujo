@@ -52,7 +52,9 @@ standard-library wrapper is repository-maintenance orchestration for identical
 cross-platform evidence, not a Kujo application adapter. It compiles and runs the
 existing Rust runners, retains raw samples, workload source, measurements,
 compiler/CPU/OS metadata, binary/source checksums and statistical summaries, and
-prints one receipt. Build logs/cache state accompany the evidence separately.
+prints one receipt. Successful runner executions remove their temporary executables
+and Windows PDBs; failed runner executions retain them for diagnosis. Build
+logs/cache state accompany the evidence separately.
 
 Runtime samples use two discarded warmups followed by eleven samples for each
 of baseline, candidate and instrumented candidate, rotating their order. Static
