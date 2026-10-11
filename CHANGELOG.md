@@ -6,6 +6,14 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Installation documentation
+
+- Pin stable install examples to Kujo 1.8.1 using the installer’s existing
+  version override, avoiding a stale website deployment’s 1.8.0 default.
+- Add the human first-hour walkthrough and separate agent rehearsal evidence;
+  adopter validation remains open pending the human session and a reproduced
+  published-runtime Kennel network blocker.
+
 ### Language design evidence
 
 - Complete the bounded `yield from` design decision with an explicit 1.9 deferral.

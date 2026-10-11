@@ -1,0 +1,16 @@
+# Small public, credential-free reproduction for the item-6 install blocker.
+match http_request("https://kennel.kujolang.ai/install.kujo", {
+    "method": "GET",
+    "timeout": 15,
+    "max_response_bytes": 1048576,
+    "redirects": "none"
+}) {
+    case Result::Ok(response): {
+        print(response["status"])
+        if response["status"] != 200 { exit(1) }
+    }
+    case Result::Err(message): {
+        print(message)
+        exit(1)
+    }
+}

@@ -164,8 +164,16 @@ remain separate unscheduled designs.
 
 ### 6. First-hour adopter validation and developer experience
 
-**Status: ready after 1.8.1; can run alongside items 2–5. Owner: Kujo docs/tools,
+**Status: in progress — agent preparation complete; human walkthrough and
+published-runtime Kennel install blocker remain open. Owner: Kujo docs/tools,
 with explicitly coordinated ecosystem follow-ups.**
+
+[Participant walkthrough](docs/FIRST_HOUR_WALKTHROUGH.md) and
+[preparation evidence](docs/audits/first-hour-adopter-validation.md) separate
+observed agent checks from the required human record. The macOS x64 published
+1.8.1 runtime failed the Kennel installer HTTP fetch on the rehearsal host; the
+development-binary control succeeded. Cause and broader platform scope remain
+unconfirmed. Install examples now explicitly pin the advertised runtime version.
 
 - Have a human new to the current workflow use only published instructions to
   install Kujo, run a small default-VM program, use Kennel packages, diagnose a

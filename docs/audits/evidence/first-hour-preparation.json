@@ -1,0 +1,164 @@
+{
+  "status": "in_progress_not_human_validation",
+  "starting_sha": "776c3f0c9fd0b179f0bc7582025083096d5534fc",
+  "human": {
+    "participant": null,
+    "os": null,
+    "time_to_first_program_minutes": null,
+    "walkthrough_complete": false
+  },
+  "host": {
+    "platform": "darwin",
+    "arch": "x64",
+    "node": "v26.7.0"
+  },
+  "install": {
+    "package": "@kujolang/kujo-runtime@1.8.1",
+    "channel": "npm",
+    "empty_prefix": true,
+    "fresh_os": false,
+    "ignore_scripts": true,
+    "exit": 0,
+    "binary_sha256": "cc811ce04910d68f6703f8717eb6dc4fcd05666a29f738dee88bf57d52f852c2"
+  },
+  "public_sources": [
+    {
+      "url": "https://kujolang.ai/install.sh",
+      "sha256": "34fe2816918a459ec8f41fdc79b6ba0327b37d2f34bf371629bb194723ef9f46",
+      "default_dry_run": "would download and verify Kujo release v1.8.0",
+      "override_dry_run": "KUJO_RELEASE_VERSION=v1.8.1 selects v1.8.1"
+    },
+    {
+      "url": "https://kennel.kujolang.ai/install.sh",
+      "sha256": "555a49de344f35c7e0417b26d84a57c5e42c0a8caadb8aa9d0cd78142bf5dcc6"
+    },
+    {
+      "url": "https://kennel.kujolang.ai/install.kujo",
+      "sha256": "2444835c54d971d521906a3f5107c3c23f95c69c3e21c9cf6dbe5311ce7eaf91"
+    }
+  ],
+  "runtime_rehearsal": [
+    {
+      "command": "kujo --version",
+      "exit": 0,
+      "stdout": "kujo 1.8.1\n",
+      "stderr": ""
+    },
+    {
+      "command": "kujo doctor --json",
+      "exit": 0,
+      "output": "Retained locally; omitted host-specific environment details."
+    },
+    {
+      "command": "kujo check hello.kujo",
+      "exit": 0,
+      "stdout": "check passed: hello.kujo\n",
+      "stderr": ""
+    },
+    {
+      "command": "kujo run hello.kujo",
+      "exit": 0,
+      "stdout": "Hello, Kujo!\n",
+      "stderr": ""
+    },
+    {
+      "command": "kujo run broken.kujo",
+      "exit": 4,
+      "stdout": "",
+      "stderr": "[KUJOVM001] [vm] Runtime Error: Undefined variable: missing_name\n  --> 0:0\n   = help: Define this name before using it, check the spelling, or import the module that provides it.\n\n"
+    },
+    {
+      "command": "kujo run --untrusted read.kujo",
+      "exit": 4,
+      "stdout": "",
+      "stderr": "[KUJOVM001] [vm] Runtime Error: Capability denied: filesystem-read required for read_file; rerun with --allow-fs-read\n  --> 0:0\n   = help: Rerun with the required --allow-* flag, or remove the host-effect operation.\n\n"
+    },
+    {
+      "command": "kujo run --untrusted --allow-fs-read read.kujo",
+      "exit": 0,
+      "stdout": "local evidence\n",
+      "stderr": ""
+    }
+  ],
+  "repair": {
+    "command": "kujo run repaired.kujo",
+    "exit": 0,
+    "stdout": "missing_name\n",
+    "stderr": ""
+  },
+  "kennel_published_install": {
+    "exit": 1,
+    "error": "Installer download failed: HTTP request failed: error sending request for url (https://kennel.kujolang.ai/install.kujo)"
+  },
+  "network_probe": {
+    "source": "docs/audits/fixtures/first-hour-http-probe.kujo",
+    "sha256": "86c4b773d05a67b688538072c3b1026930d3c7942b34a9c1641759c42a20c7d7",
+    "results": [
+      {
+        "runtime": "published 1.8.1 macOS x64",
+        "exit": 1,
+        "stdout": "HTTP request failed: error sending request for url (https://kennel.kujolang.ai/install.kujo)\n",
+        "stderr": ""
+      },
+      {
+        "runtime": "development 776c3f0",
+        "exit": 0,
+        "stdout": "200\n",
+        "stderr": ""
+      }
+    ],
+    "root_cause": "unconfirmed; development control succeeds, direct published executable fails"
+  },
+  "development_only_package_control": [
+    {
+      "command": "kennel --version",
+      "exit": 0,
+      "stdout": "Kennel 1.1.1\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel init --name my-project",
+      "exit": 0,
+      "stdout": "Kennel initialized kennel.toml\nKennel defaults are production-oriented: deterministic lockfiles, explicit sources, and trust policy support.\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel add ability",
+      "exit": 0,
+      "stdout": "Resolved `ability` via static index: https://kennel.kujolang.ai/api/v1/index.json\nAdded ability from ability\nResolved ability to commit 2dc7d4e9eb25e987544ac48793cd11d1999c45e0\nInstalled ability into kennel_packages/ability\nUpdated kennel.lock\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel install",
+      "exit": 0,
+      "stdout": "Installed ability into kennel_packages/ability\nInstalled dependencies from kennel.lock\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel validate",
+      "exit": 0,
+      "stdout": "kennel.toml is valid\n",
+      "stderr": ""
+    }
+  ],
+  "verification": {
+    "command": "cargo test --test readme_contracts --test docs_examples --test release_process_docs_contract",
+    "passed": 10,
+    "failed": 0,
+    "ignored": 0,
+    "full_runtime_suite": "not rerun: runtime source unchanged",
+    "format_exit": 0,
+    "diff_exit": 0,
+    "hygiene_exit": 0
+  },
+  "cross_repo": "Website installer deployment remains in existing release/kujo-1.8.1-publication.json; not changed here.",
+  "signalbox": {
+    "capture_id": "cap_bf4796c2-cf1c-42b6-9a61-79490cf4450c",
+    "signal_id": "sig_16748c22-a277-4549-bc05-6f5ffd61a9ae",
+    "retrieval": "exact and onboarding concept passed; two-word phrase query missed",
+    "duplicates": 0,
+    "rejected": "Routine preparation and pending human participation are handoff material; website deployment is already documented in release follow-ups."
+  },
+  "local_fix_commit": "038ad0d3b384b3aaffebac1847a7206df7eb4a4d",
+  "observed_at_utc": "2026-10-11T03:07:25.844Z"
+}
