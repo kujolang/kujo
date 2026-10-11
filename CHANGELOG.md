@@ -6,6 +6,19 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Payload and output efficiency
+
+- Stream canonical AI request serialization into SHA-256 with a bounded buffer;
+  preserve request hashes, cassette keys, validation and secret redaction.
+- Share immutable tool-call strings between raw and normalized response fields
+  instead of copying their contents.
+- Add opt-in `KUJO_RELEASE_GATE_LOG_DIR` command receipts with complete private
+  per-run logs and unchanged failure exit codes. Default gate output is unchanged.
+- Add deterministic context/output budgets and hash compatibility regressions.
+- Redact configured credentials before shortening AI error previews, preventing
+  partial credentials from surviving the preview boundary. Saturate oversized
+  `Retry-After` seconds at the maximum integer millisecond value.
+
 ### Performance
 
 - Reuse the validated character count when estimating ASCII token weights.

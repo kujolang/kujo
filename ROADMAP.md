@@ -32,9 +32,10 @@ post-release validation.
 
 ## 1.8.1 maintenance release, then the 1.9 work sequence
 
-The **1.8.1 maintenance baseline is published and verified**. Items **2 and 3** are
-complete on main for the recorded native representation and release-performance
-contracts. Begin item **4**, token/payload/output efficiency, then items **5–6**.
+The **1.8.1 maintenance baseline is published and verified**. Items **2–4** are
+complete on main for the recorded native representation, release-performance,
+and token/payload/output contracts. Begin item **5**, the bounded `yield from`
+design decision, then item **6**.
 The maintenance release is complete for core native/npm distribution; separate
 website/catalog promotion remains explicit cross-repository work in the
 [publication receipt](release/kujo-1.8.1-publication.json).
@@ -117,8 +118,14 @@ memory claim is made. A measured no-change result is acceptable.
 
 ### 4. Token, payload and command-output efficiency
 
-**Status: ready — item 3 established reproducible measurement and evidence.
+**Status: completed on main — post-1.8.1 development, not a new published release.
 Owner: Kujo core mechanisms; SDK/agent policy stays in ecosystem packages.**
+
+Completion evidence: [token/payload/output audit](docs/audits/token-payload-output-efficiency.md).
+Canonical hashes now use bounded serialization buffering; normalized tool-call
+strings share existing storage. Opt-in release-gate receipts preserve full logs
+and exact failures. Context/output budgets and compatibility tests protect the
+retained behavior. Provider wire payloads and billing tokens are unchanged.
 
 - Audit repeated parsing/serialization, full-buffer reads, cloned model payloads,
   context selection, tool/schema payloads and oversized errors or command output.

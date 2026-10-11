@@ -1,0 +1,352 @@
+{
+  "starting_sha": "13f005f7152dc7d228c841142c15d8516fea2af2",
+  "toolchain": "rustc 1.96.0 (ac68faa20 2026-05-25)\nbinary: rustc\ncommit-hash: ac68faa20c58cbccd01ee7208bf3b6e93a7d7f96\ncommit-date: 2026-05-25\nhost: x86_64-apple-darwin\nrelease: 1.96.0\nLLVM version: 22.1.2\nDarwin x86_64",
+  "baseline": {
+    "command": "cargo test --lib",
+    "passed": 952,
+    "failed": 0,
+    "ignored": 7
+  },
+  "hash_measurement": {
+    "command": "CARGO_PROFILE_RELEASE_DEBUG=0 CARGO_INCREMENTAL=0 cargo test --release --lib request_hash_payload_measurement -- --ignored --nocapture",
+    "scope": "Normalized request serialization/hash only. Built before final bounded error-preview refinement; hash implementation and measurement function unchanged. No latency improvement claimed.",
+    "binary_sha256": "1bbab6acde7f00b2652eb1240650f3dc32ccb0f433556e2e9d0abf5fe5d81f43",
+    "samples": [
+      {
+        "payload_bytes": 1024,
+        "serialized_bytes": 1209,
+        "hash_buffer_bytes": 8192,
+        "legacy_median_ns": 16530,
+        "streamed_median_ns": 16567,
+        "legacy_ns": [
+          16197,
+          16248,
+          16307,
+          16441,
+          16528,
+          16530,
+          16538,
+          16560,
+          16621,
+          17034,
+          17080
+        ],
+        "streamed_ns": [
+          16284,
+          16385,
+          16391,
+          16448,
+          16498,
+          16567,
+          16578,
+          16668,
+          16918,
+          17169,
+          17410
+        ]
+      },
+      {
+        "payload_bytes": 262144,
+        "serialized_bytes": 262329,
+        "hash_buffer_bytes": 8192,
+        "legacy_median_ns": 2159416,
+        "streamed_median_ns": 2185502,
+        "legacy_ns": [
+          2046176,
+          2058126,
+          2065080,
+          2072090,
+          2076493,
+          2159416,
+          2177581,
+          2259701,
+          2458666,
+          2469597,
+          2810287
+        ],
+        "streamed_ns": [
+          2149759,
+          2150751,
+          2155423,
+          2170497,
+          2173533,
+          2185502,
+          2221915,
+          2236728,
+          2271330,
+          2414225,
+          2567174
+        ]
+      },
+      {
+        "payload_bytes": 2097152,
+        "serialized_bytes": 2097337,
+        "hash_buffer_bytes": 8192,
+        "legacy_median_ns": 19459630,
+        "streamed_median_ns": 19232364,
+        "legacy_ns": [
+          17425702,
+          17835901,
+          17896639,
+          18801091,
+          19072528,
+          19459630,
+          19505980,
+          19772591,
+          19938455,
+          20378239,
+          24364259
+        ],
+        "streamed_ns": [
+          18018820,
+          18306157,
+          18607633,
+          18610503,
+          19024409,
+          19232364,
+          19497434,
+          19852574,
+          21226027,
+          22202628,
+          23068692
+        ]
+      }
+    ]
+  },
+  "output": {
+    "command": "set -euo pipefail; source scripts/release_gate_output.sh; run_cmd bash -c 'printf \"%100000s\" x'; run_cmd printf done",
+    "legacy_stdout_bytes": 100050,
+    "receipt_stdout_bytes": 208,
+    "retained_command_bytes": 100004,
+    "retained_sha256": [
+      "4e13ae4b43493895af416a824219af70986c051b8c370736ffb34c2e35d9ea91",
+      "a4c3ed04a95a3da14a9d235c83d868bed7c0f45cf7f3faa751ee8f50598d2211"
+    ],
+    "legacy_exit": 0,
+    "receipt_exit": 0,
+    "legacy_estimated_text_tokens": 25013,
+    "receipt_estimated_text_tokens": 52,
+    "token_contract": "ai_count_tokens default deterministic heuristic, not provider billing"
+  },
+  "context": {
+    "input_bytes": 345,
+    "input_estimated_tokens": 80,
+    "budget": 40,
+    "existing_fit_result_bytes": 185,
+    "retained_estimated_tokens": 30,
+    "note": "Existing behavior ratchet; not newly achieved model-token savings."
+  },
+  "security": {
+    "reproductions": [
+      "ai_error_previews_redact_credentials_before_character_truncation",
+      "retry_after_seconds_handles_the_entire_integer_range",
+      "ai_error_redaction_merges_overlapping_original_credential_spans"
+    ],
+    "before": "Each regression failed before its fix (exit 101).",
+    "focused_after": {
+      "command": "cargo test --lib interpreter::native_functions::http::tests",
+      "passed": 42,
+      "failed": 0,
+      "ignored": 1,
+      "log_sha256": "870ae35c10766d2735193f012368b2d2653fdb71fa149a8408bbb010fc01265b"
+    }
+  },
+  "final_verification": {
+    "command": "CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 KUJO_RELEASE_GATE_LOG_DIR=.audit-evidence/payload-efficiency/accepted-gate bash scripts/release_gate.sh --full",
+    "exit": 0,
+    "implementation_sha": "9bd525a87216b55ee11ad6a36b071ce1127802a6",
+    "checks": [
+      {
+        "command": "bash scripts/repo_hygiene_audit.sh",
+        "exit": 0,
+        "log_sha256": "de9e499e36a46f781eba6abd7738e2a993e2cc91c7fedd696848cd3dd6da0df8",
+        "test_summaries": []
+      },
+      {
+        "command": "cargo fmt --check",
+        "exit": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "test_summaries": []
+      },
+      {
+        "command": "cargo clippy --all-targets --all-features -- -D warnings",
+        "exit": 0,
+        "log_sha256": "56b2361731036f518b3e0ae916c722a165f564bd00fe2d2593850c7feb7fff25",
+        "test_summaries": []
+      },
+      {
+        "command": "cargo test",
+        "exit": 0,
+        "log_sha256": "57c5925898b27dec798548055fb599632656c0733a77104fe849f6024e1afbb8",
+        "test_summaries": [
+          "test result: ok. 958 passed; 0 failed; 8 ignored; 0 measured; 0 filtered out; finished in 26.95s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1008 filtered out; finished in 42.84s",
+          "test result: ok. 1001 passed; 0 failed; 8 ignored; 0 measured; 0 filtered out; finished in 61.00s",
+          "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 71.69s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s",
+          "test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.87s",
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s",
+          "test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s",
+          "test result: ok. 55 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.93s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 41.30s",
+          "test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
+          "test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.57s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.22s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.04s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.81s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s",
+          "test result: ok. 263 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.93s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.71s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.48s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s",
+          "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s",
+          "test result: ok. 94 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s",
+          "test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s",
+          "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s",
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s",
+          "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.21s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.40s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+          "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s",
+          "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
+          "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s",
+          "test result: ok. 31 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s",
+          "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.29s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.14s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "test result: ok. 123 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s",
+          "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.98s",
+          "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.77s",
+          "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.10s",
+          "test result: ok. 11 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.13s",
+          "test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ]
+      },
+      {
+        "command": "cargo test --test native_api_security_boundaries",
+        "exit": 0,
+        "log_sha256": "7a74ba61125bb2c975f73edddb0ca50ceabfedf69c24cc5cfcb163395c63acda",
+        "test_summaries": [
+          "test result: ok. 94 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.49s"
+        ]
+      },
+      {
+        "command": "cargo test --test package_module_workflow_integration",
+        "exit": 0,
+        "log_sha256": "41e1690f8ccd79de4ec3e0c087f5ff5218cdb5cfadff5393ba97d92425374d84",
+        "test_summaries": [
+          "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.62s"
+        ]
+      },
+      {
+        "command": "cargo test --test vm_interpreter_parity_surfaces",
+        "exit": 0,
+        "log_sha256": "aa39e400a4b66d713ff8d3b6d6ebbb779dd3b1f24ba43d3460760a8625bf6eb8",
+        "test_summaries": [
+          "test result: ok. 123 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s"
+        ]
+      },
+      {
+        "command": "cargo run -- test",
+        "exit": 0,
+        "log_sha256": "4ef8cec3b39bad40449b9cd59c5a4d3d8a3d1d75f561f3cb522745e377832763",
+        "test_summaries": []
+      },
+      {
+        "command": "cargo run -- test --runtime interpreter",
+        "exit": 0,
+        "log_sha256": "619dfcd32aa8b35c3caafdaa69ee7d758acabb9922e316944fc9c6e2056f1c07",
+        "test_summaries": []
+      },
+      {
+        "command": "cargo audit --deny warnings --ignore RUSTSEC-2025-0141",
+        "exit": 0,
+        "log_sha256": "247e246dc581068b839d4d8adcc56502c466d3c865a27c7f3e007ee7afc32286",
+        "test_summaries": []
+      }
+    ],
+    "skips": [
+      "- Skipping socket-bound serve integration tests (set KUJO_ENABLE_SOCKET_TESTS=1 to enable)",
+      "- Skipping benchmark smoke (set KUJO_RELEASE_GATE_RUN_BENCH=1 to enable)",
+      "- Skipping optional command: cargo deny check (missing cargo-deny)"
+    ],
+    "audit_exception": "Existing RUSTSEC-2025-0141 build-only bincode maintenance warning exception unchanged.",
+    "cargo_test_aggregate": {
+      "passed": 3059,
+      "failed": 0,
+      "ignored": 20
+    }
+  }
+}
