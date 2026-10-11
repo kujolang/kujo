@@ -34,6 +34,11 @@ Dictionary keys are serialized deterministically through Kujo's JSON conversion.
 
 `ai_request_hash` is pure, deterministic, and has no capability gate.
 
+The runtime streams the canonical JSON serialization into SHA-256 with an 8 KiB
+buffer; it still validates the complete value and constructs the canonical JSON
+tree. Hash bytes, version and cassette keys are unchanged. This reduces internal
+serialization buffering, not provider input tokens or wire payload size.
+
 ## Deterministic AI (Record/Replay)
 
 Kujo AI helpers can replay committed response cassettes without opening a socket. This keeps `ai_chat`, `ai_stream_chat`, `ai_embedding`, and `ai_tool_loop` deterministic in tests and examples.
@@ -165,6 +170,12 @@ result := ai_chat("Hello", {
 Structured error dictionaries contain `kind`, `message`, `http_status`, `retry_after_ms`, `provider_code`, and `body_excerpt`. Known `kind` values are `http_error`, `rate_limited`, `timeout`, `network`, `decode_error`, and `invalid_response`.
 
 HTTP status `429` maps to `rate_limited`; other 4xx/5xx statuses map to `http_error`. `Retry-After` seconds or HTTP-date values are exposed as `retry_after_ms` when present. Non-JSON successful responses produce `decode_error`; successful JSON that lacks required helper-specific fields can produce `invalid_response`.
+
+Error body previews redact configured credentials before retaining at most 240
+characters plus an ellipsis. This prevents a credential crossing the preview
+boundary from appearing in part. Integer `Retry-After` seconds that exceed the
+millisecond integer range saturate at `9223372036854775807`; negative seconds
+remain zero. Result fields and ordinary retry values are unchanged.
 
 Migration note: `structured_errors` is opt-in for this release so existing string error handling keeps working. A future major release may make structured errors the default.
 

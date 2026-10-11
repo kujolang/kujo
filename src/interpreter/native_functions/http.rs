@@ -906,6 +906,8 @@ fn merge_ai_extra_body(
     Ok(())
 }
 
+// Previous truncation semantics retained as an independent test oracle.
+#[cfg(test)]
 fn truncate_for_error(text: &str, max_chars: usize) -> String {
     let mut out = String::new();
     for (count, ch) in text.chars().enumerate() {
@@ -918,20 +920,129 @@ fn truncate_for_error(text: &str, max_chars: usize) -> String {
     out
 }
 
+// An overlapping literal matcher. The prefix table keeps repeated-prefix
+// credentials linear in text length instead of rescanning a long credential at
+// every overlapping occurrence. Offsets are bytes; full UTF-8 literals can only
+// match at scalar boundaries.
+struct CredentialMatches<'a> {
+    text: &'a [u8],
+    needle: &'a [u8],
+    prefixes: Vec<usize>,
+    cursor: usize,
+    matched: usize,
+}
+
+impl<'a> CredentialMatches<'a> {
+    fn new(text: &'a str, needle: &'a str) -> Self {
+        let needle = needle.as_bytes();
+        let mut prefixes = vec![0; needle.len()];
+        for index in 1..needle.len() {
+            let mut matched = prefixes[index - 1];
+            while matched > 0 && needle[index] != needle[matched] {
+                matched = prefixes[matched - 1];
+            }
+            if needle[index] == needle[matched] {
+                matched += 1;
+            }
+            prefixes[index] = matched;
+        }
+        Self { text: text.as_bytes(), needle, prefixes, cursor: 0, matched: 0 }
+    }
+}
+
+impl Iterator for CredentialMatches<'_> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<usize> {
+        if self.needle.is_empty() {
+            return None;
+        }
+        while self.cursor < self.text.len() {
+            let byte = self.text[self.cursor];
+            self.cursor += 1;
+            while self.matched > 0 && byte != self.needle[self.matched] {
+                self.matched = self.prefixes[self.matched - 1];
+            }
+            if byte == self.needle[self.matched] {
+                self.matched += 1;
+            }
+            if self.matched == self.needle.len() {
+                self.matched = self.prefixes[self.matched - 1];
+                return Some(self.cursor - self.needle.len());
+            }
+        }
+        None
+    }
+}
+
 fn redact_ai_error_text(text: &str, config: &AiRequestConfig) -> String {
-    let mut redacted = text.to_string();
-    if let Some(api_key) = &config.api_key {
-        if !api_key.is_empty() {
-            redacted = redacted.replace(api_key, "[redacted]");
-            redacted = redacted.replace(&format!("Bearer {}", api_key), "Bearer [redacted]");
+    redact_ai_text(text, config, None)
+}
+
+fn redact_ai_text(text: &str, config: &AiRequestConfig, max_chars: Option<usize>) -> String {
+    let mut credentials: Vec<&str> = config.api_key.as_deref().into_iter().collect();
+    credentials.extend(
+        config
+            .headers
+            .iter()
+            .filter_map(|(name, value)| is_ai_hash_excluded_header(name).then_some(value.as_str())),
+    );
+    credentials.retain(|value| !value.is_empty());
+    credentials.sort_unstable();
+    credentials.dedup();
+    // Avoid building match state for credentials absent from ordinary errors.
+    credentials.retain(|value| text.contains(value));
+
+    // Match the original text: replacing a short credential first can destroy
+    // an overlapping longer credential's match and expose its remaining bytes.
+    // Keep only the next match per credential, not a list of all occurrences.
+    let mut matchers: Vec<_> =
+        credentials.iter().map(|value| CredentialMatches::new(text, value)).collect();
+    let mut pending = std::collections::BinaryHeap::new();
+    for (index, matches) in matchers.iter_mut().enumerate() {
+        if let Some(start) = matches.next() {
+            pending.push(std::cmp::Reverse((start, index)));
         }
     }
-    for (name, value) in &config.headers {
-        if !value.is_empty() && is_ai_hash_excluded_header(name) {
-            redacted = redacted.replace(value, "[redacted]");
+    let mut redacted = String::with_capacity(max_chars.unwrap_or(text.len()).min(text.len()));
+    let mut remaining = max_chars;
+    let mut append = |segment: &str| {
+        if let Some(remaining) = &mut remaining {
+            for ch in segment.chars() {
+                if *remaining == 0 {
+                    redacted.push_str("...");
+                    return false;
+                }
+                redacted.push(ch);
+                *remaining -= 1;
+            }
+        } else {
+            redacted.push_str(segment);
+        }
+        true
+    };
+    let mut redacted_until = 0;
+    while let Some(std::cmp::Reverse((start, index))) = pending.pop() {
+        let end = start + matchers[index].needle.len();
+        if start < redacted_until {
+            redacted_until = redacted_until.max(end);
+        } else {
+            if !append(&text[redacted_until..start]) || !append("[redacted]") {
+                return redacted;
+            }
+            redacted_until = end;
+        }
+        if let Some(start) = matchers[index].next() {
+            pending.push(std::cmp::Reverse((start, index)));
         }
     }
+    append(&text[redacted_until..]);
     redacted
+}
+
+fn ai_error_excerpt(text: &str, config: &AiRequestConfig) -> String {
+    // Truncating first can split a credential and prevent exact-value redaction.
+    redact_ai_text(text, config, Some(240))
 }
 
 fn ai_error_string(config: &AiRequestConfig, message: String) -> Value {
@@ -982,7 +1093,7 @@ fn parse_retry_after(headers: &DictMap) -> Option<i64> {
     let raw = retry_after_header(headers)?;
     let trimmed = raw.trim();
     if let Ok(seconds) = trimmed.parse::<i64>() {
-        return Some(seconds.max(0) * 1000);
+        return Some(seconds.max(0).saturating_mul(1000));
     }
     let parsed = DateTime::parse_from_rfc2822(trimmed).ok()?;
     Some((parsed.with_timezone(&Utc) - Utc::now()).num_milliseconds().max(0))
@@ -1033,7 +1144,7 @@ fn ai_http_status_error(
     headers: &DictMap,
     text: &str,
 ) -> Value {
-    let excerpt = truncate_for_error(text, 240);
+    let excerpt = ai_error_excerpt(text, config);
     let message = format!("{} failed with HTTP status {}: {}", surface, status, excerpt);
     if config.structured_errors {
         let kind = if status == 429 { "rate_limited" } else { "http_error" };
@@ -1060,7 +1171,7 @@ fn ai_decode_error(surface: &str, config: &AiRequestConfig, error: String, text:
             None,
             None,
             None,
-            Some(truncate_for_error(text, 240)),
+            Some(ai_error_excerpt(text, config)),
             config,
         )
     } else {
@@ -1076,10 +1187,31 @@ fn ai_invalid_response_error(_surface: &str, config: &AiRequestConfig, message: 
     }
 }
 
-fn sha256_hex(bytes: &[u8]) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(bytes);
-    format!("{:x}", hasher.finalize())
+fn canonical_json_hash(value: &Value) -> Result<String, String> {
+    struct HashWriter(Sha256);
+    impl Write for HashWriter {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0.update(bytes);
+            Ok(bytes.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+
+    // Use the same validated JSON tree and serializer as to_json, but avoid
+    // retaining the complete serialized request just to hash it. Buffer tiny
+    // punctuation writes without buffering the entire payload.
+    let json = builtins::kujo_value_to_json(value)?;
+    let mut digest = HashWriter(Sha256::new());
+    {
+        let mut writer = io::BufWriter::with_capacity(8192, &mut digest);
+        serde_json::to_writer(&mut writer, &json)
+            .map_err(|error| format!("JSON serialization error: {}", error))?;
+        writer.flush().map_err(|error| format!("JSON serialization error: {}", error))?;
+    }
+    Ok(format!("{:x}", digest.0.finalize()))
 }
 
 fn is_ai_hash_excluded_header(name: &str) -> bool {
@@ -1150,17 +1282,16 @@ fn build_ai_request_key_value(config: &AiRequestConfig, payload: &Value) -> Valu
 
 fn ai_request_hash_value(prompt_or_messages: &Value, options: &DictMap) -> Result<String, Value> {
     let normalized = build_ai_request_hash_value(prompt_or_messages, options)?;
-    let canonical_json = builtins::to_json(&normalized).map_err(|error| {
+    canonical_json_hash(&normalized).map_err(|error| {
         Value::Error(format!("ai_request_hash() failed to serialize normalized request: {}", error))
-    })?;
-    Ok(sha256_hex(canonical_json.as_bytes()))
+    })
 }
 
 fn ai_request_key(config: &AiRequestConfig, payload: &Value) -> Result<(String, Value), String> {
     let normalized = build_ai_request_key_value(config, payload);
-    let canonical_json = builtins::to_json(&normalized)
+    let hash = canonical_json_hash(&normalized)
         .map_err(|error| format!("AI cassette request serialization error: {}", error))?;
-    Ok((sha256_hex(canonical_json.as_bytes()), normalized))
+    Ok((hash, normalized))
 }
 
 fn cassette_path(dir: &Path, key: &str) -> PathBuf {
@@ -1811,23 +1942,23 @@ fn extract_tool_calls(response_json: &Value) -> Value {
         };
 
         let id = match call_dict.get("id") {
-            Some(Value::Str(id)) => id.as_ref().clone(),
-            _ => String::new(),
+            Some(Value::Str(id)) => id.clone(),
+            _ => Arc::new(String::new()),
         };
         let name = match function_dict.get("name") {
-            Some(Value::Str(name)) => name.as_ref().clone(),
-            _ => String::new(),
+            Some(Value::Str(name)) => name.clone(),
+            _ => Arc::new(String::new()),
         };
         let arguments_json = match function_dict.get("arguments") {
-            Some(Value::Str(arguments)) => arguments.as_ref().clone(),
-            Some(arguments) => builtins::to_json(arguments).unwrap_or_default(),
-            None => String::new(),
+            Some(Value::Str(arguments)) => arguments.clone(),
+            Some(arguments) => Arc::new(builtins::to_json(arguments).unwrap_or_default()),
+            None => Arc::new(String::new()),
         };
 
         let mut normalized = DictMap::default();
-        normalized.insert("id".into(), Value::Str(Arc::new(id)));
-        normalized.insert("name".into(), Value::Str(Arc::new(name)));
-        normalized.insert("arguments_json".into(), Value::Str(Arc::new(arguments_json)));
+        normalized.insert("id".into(), Value::Str(id));
+        normalized.insert("name".into(), Value::Str(name));
+        normalized.insert("arguments_json".into(), Value::Str(arguments_json));
         calls.push(Value::Dict(Arc::new(normalized)));
     }
 
@@ -3602,6 +3733,118 @@ mod tests {
         Value::Str(Arc::new(value.to_string()))
     }
 
+    fn legacy_json_hash(value: &Value) -> Result<String, String> {
+        builtins::to_json(value).map(|json| format!("{:x}", Sha256::digest(json.as_bytes())))
+    }
+
+    #[test]
+    fn normalized_tool_calls_share_large_strings_and_preserve_fallbacks() {
+        let arguments = Arc::new("x".repeat(1_048_576));
+        let mut function = DictMap::default();
+        function.insert("name".into(), str_value("inspect"));
+        function.insert("arguments".into(), Value::Str(arguments.clone()));
+        let mut call = DictMap::default();
+        call.insert("id".into(), str_value("call-1"));
+        call.insert("function".into(), Value::Dict(Arc::new(function)));
+        let mut message = DictMap::default();
+        message
+            .insert("tool_calls".into(), Value::Array(Arc::new(vec![Value::Dict(Arc::new(call))])));
+        let mut choice = DictMap::default();
+        choice.insert("message".into(), Value::Dict(Arc::new(message)));
+        let mut root = DictMap::default();
+        root.insert("choices".into(), Value::Array(Arc::new(vec![Value::Dict(Arc::new(choice))])));
+        let response = Value::Dict(Arc::new(root));
+        let Value::Array(calls) = extract_tool_calls(&response) else { panic!("calls") };
+        let Value::Dict(call) = &calls[0] else { panic!("call") };
+        let Value::Str(shared) = &call["arguments_json"] else { panic!("arguments") };
+        assert!(Arc::ptr_eq(shared, &arguments));
+        assert_eq!(shared.len(), 1_048_576);
+        assert_eq!(builtins::to_json(&call["id"]).unwrap(), "\"call-1\"");
+        assert_eq!(builtins::to_json(&call["name"]).unwrap(), "\"inspect\"");
+
+        let response = builtins::parse_json(r#"{"choices":[{"message":{"tool_calls":[{"function":{"arguments":{"z":1,"a":2}}},{"function":{}},{}]}}]}"#).unwrap();
+        let normalized = extract_tool_calls(&response);
+        let expected = builtins::parse_json(r#"[{"id":"","name":"","arguments_json":"{\"a\":2,\"z\":1}"},{"id":"","name":"","arguments_json":""}]"#).unwrap();
+        assert!(Value::equals(&normalized, &expected));
+    }
+
+    #[test]
+    fn streamed_request_hash_preserves_canonical_bytes_and_validation_errors() {
+        let mut cases = vec![
+            Value::Null,
+            Value::Bool(true),
+            Value::Int(i64::MIN),
+            Value::Int(i64::MAX),
+            Value::Float(-0.0),
+            Value::Float(1.2345678901234567),
+            Value::Float(f64::INFINITY),
+            Value::Float(f64::NAN),
+            Value::Secret(Arc::new("never reveal".into())),
+            builtins::parse_json(r#"{"z":[true,null,1.5],"a":"café 世界\n\"\\"}"#).unwrap(),
+            Value::FixedDict {
+                keys: Arc::new(vec![Arc::from("z"), Arc::from("a"), Arc::from("z")]),
+                values: vec![Value::Int(1), Value::Int(2), Value::Int(3)],
+            },
+        ];
+        for size in [0, 1, 8191, 8192, 8193, 262144] {
+            cases.push(str_value(&"a\n🦀\"".repeat(size)));
+        }
+        let mut nested = Value::Null;
+        for depth in 1..=66 {
+            nested = Value::Array(Arc::new(vec![nested]));
+            if depth >= 63 {
+                cases.push(nested.clone());
+            }
+        }
+        for value in cases {
+            assert_eq!(canonical_json_hash(&value), legacy_json_hash(&value));
+        }
+    }
+
+    #[test]
+    #[ignore = "manual paired performance receipt; no timing threshold"]
+    fn request_hash_payload_measurement() {
+        use std::hint::black_box;
+        use std::time::Instant;
+
+        for size in [1024, 262144, 2097152] {
+            let Value::Dict(options) =
+                ai_options("https://api.example.test/v1/chat/completions", "gpt-fixture")
+            else {
+                unreachable!()
+            };
+            let value =
+                build_ai_request_hash_value(&str_value(&"x".repeat(size)), &options).unwrap();
+            let mut old = Vec::new();
+            let mut new = Vec::new();
+            for round in 0..13 {
+                // Alternate order and discard two warmup rounds.
+                for streaming in if round % 2 == 0 { [false, true] } else { [true, false] } {
+                    let start = Instant::now();
+                    let hash = if streaming {
+                        canonical_json_hash(black_box(&value))
+                    } else {
+                        legacy_json_hash(black_box(&value))
+                    }
+                    .unwrap();
+                    let elapsed = start.elapsed().as_nanos();
+                    black_box(hash);
+                    if round >= 2 {
+                        if streaming {
+                            new.push(elapsed);
+                        } else {
+                            old.push(elapsed);
+                        }
+                    }
+                }
+            }
+            old.sort();
+            new.sort();
+            assert_eq!(canonical_json_hash(&value), legacy_json_hash(&value));
+            println!("payload_bytes={size} serialized_bytes={} hash_buffer_bytes=8192 legacy_median_ns={} streamed_median_ns={} legacy_ns={old:?} streamed_ns={new:?}", builtins::to_json(&value).unwrap().len(), old[5], new[5]);
+        }
+    }
+
     #[test]
     fn file_http_policy_options_are_bounded_and_fail_closed() {
         let defaults = file_http_policy_options(&DictMap::default(), "file-http")
@@ -4712,6 +4955,174 @@ mod tests {
                 Some(Value::Str(text)) => assert!(!text.contains("secret-token")),
                 Some(Value::Null) => {}
                 other => panic!("expected string/null for {}, got {:?}", key, other),
+            }
+        }
+    }
+
+    #[test]
+    fn ai_error_previews_redact_credentials_before_character_truncation() {
+        for secret in ["credential-fragment-full-value".to_string(), "credential".repeat(40)] {
+            for header_only in [false, true] {
+                for structured in [false, true] {
+                    let config = AiRequestConfig {
+                        endpoint: "https://api.example.test/v1/chat".into(),
+                        model: "fixture".into(),
+                        api_key: (!header_only).then(|| secret.clone()),
+                        timeout_seconds: 1.0,
+                        headers: if header_only {
+                            vec![("X-API-Key".into(), secret.clone())]
+                        } else {
+                            vec![]
+                        },
+                        cassette: AiCassetteMode::Off,
+                        structured_errors: structured,
+                        provider: String::new(),
+                    };
+                    for prefix in ["".to_string(), "x".repeat(230), "界".repeat(230)] {
+                        let body = format!("{prefix}{secret} tail");
+                        let expected = if prefix.is_empty() {
+                            "[redacted] tail".into()
+                        } else {
+                            format!("{prefix}[redacted]...")
+                        };
+                        let http = ai_http_status_error(
+                            "ai_chat",
+                            &config,
+                            500,
+                            &DictMap::default(),
+                            &body,
+                        );
+                        let decode =
+                            ai_decode_error("ai_chat", &config, "fixture error".into(), &body);
+                        let message = format!("ai_chat failed with HTTP status 500: {expected}");
+                        if structured {
+                            let http = result_err_dict(http);
+                            assert!(
+                                matches!(&http["message"], Value::Str(actual) if actual.as_str() == message)
+                            );
+                            assert!(
+                                matches!(&http["body_excerpt"], Value::Str(actual) if actual.as_str() == expected)
+                            );
+                            let decode = result_err_dict(decode);
+                            assert!(
+                                matches!(&decode["body_excerpt"], Value::Str(actual) if actual.as_str() == expected)
+                            );
+                        } else {
+                            assert_eq!(result_err_string(http), message);
+                            assert_eq!(
+                                result_err_string(decode),
+                                "ai_chat failed: response was not valid JSON (fixture error)"
+                            );
+                        }
+                    }
+                    for length in [239, 240, 241] {
+                        let body = "界".repeat(length);
+                        let expected = format!(
+                            "{}{}",
+                            "界".repeat(length.min(240)),
+                            if length > 240 { "..." } else { "" }
+                        );
+                        assert_eq!(ai_error_excerpt(&body, &config), expected);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retry_after_seconds_handles_the_entire_integer_range() {
+        for (seconds, expected) in [
+            ("0", 0),
+            ("-1", 0),
+            ("17", 17000),
+            ("9223372036854775", 9223372036854775000),
+            ("9223372036854776", i64::MAX),
+            ("9223372036854775807", i64::MAX),
+        ] {
+            let mut headers = DictMap::default();
+            headers.insert("Retry-After".into(), str_value(seconds));
+            assert_eq!(parse_retry_after(&headers), Some(expected));
+        }
+    }
+
+    #[test]
+    fn ai_error_redaction_merges_overlapping_original_credential_spans() {
+        let mut config = AiRequestConfig {
+            endpoint: "https://api.example.test/v1/chat".into(),
+            model: "fixture".into(),
+            api_key: Some("shared".into()),
+            timeout_seconds: 1.0,
+            headers: vec![("X-API-Key".into(), "shared-sensitive-suffix".into())],
+            cassette: AiCassetteMode::Off,
+            structured_errors: true,
+            provider: String::new(),
+        };
+        let prefix = "x".repeat(220);
+        assert_eq!(
+            ai_error_excerpt(&format!("{prefix}shared-sensitive-suffix"), &config),
+            format!("{prefix}[redacted]")
+        );
+        config.api_key = Some("abcdef".into());
+        config.headers = vec![("Authorization".into(), "defghi".into())];
+        assert_eq!(
+            redact_ai_error_text("before abcdefghi after", &config),
+            "before [redacted] after"
+        );
+        config.api_key = Some("aba".into());
+        config.headers.clear();
+        assert_eq!(redact_ai_error_text("ababa", &config), "[redacted]");
+        config.api_key = Some("界界".into());
+        assert_eq!(redact_ai_error_text("界界界", &config), "[redacted]");
+        config.api_key = Some("key".into());
+        assert_eq!(
+            redact_ai_error_text("keykey / key", &config),
+            "[redacted][redacted] / [redacted]"
+        );
+        assert_eq!(redact_ai_error_text("ordinary text", &config), "ordinary text");
+        config.api_key = Some("a".repeat(32768));
+        assert_eq!(redact_ai_error_text(&"a".repeat(65536), &config), "[redacted]");
+        for text in [
+            "a".repeat(65536),
+            "界".repeat(65536),
+            format!("{}{} tail", "界".repeat(230), "a".repeat(32768)),
+        ] {
+            let full = redact_ai_error_text(&text, &config);
+            for budget in [0, 1, 9, 10, 239, 240, 241] {
+                assert_eq!(
+                    redact_ai_text(&text, &config, Some(budget)),
+                    truncate_for_error(&full, budget)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn overlapping_credential_matcher_matches_scalar_boundary_oracle() {
+        let mut texts = vec![String::new()];
+        for _ in 0..5 {
+            let mut next = texts.clone();
+            for text in &texts {
+                for ch in ['a', 'b', '界'] {
+                    next.push(format!("{text}{ch}"));
+                }
+            }
+            next.sort();
+            next.dedup();
+            texts = next;
+        }
+        for text in &texts {
+            for needle in ["", "a", "aa", "aba", "ba", "界", "界界", "a界a", "abba"] {
+                let expected: Vec<_> = text
+                    .char_indices()
+                    .filter_map(|(index, _)| {
+                        (!needle.is_empty() && text[index..].starts_with(needle)).then_some(index)
+                    })
+                    .collect();
+                assert_eq!(
+                    CredentialMatches::new(text, needle).collect::<Vec<_>>(),
+                    expected,
+                    "text={text:?}, needle={needle:?}"
+                );
             }
         }
     }
