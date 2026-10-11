@@ -89,6 +89,19 @@ Canonical full gate command:
 bash scripts/release_gate.sh --full
 ```
 
+For concise agent/CI output with complete evidence retained:
+
+```bash
+KUJO_RELEASE_GATE_LOG_DIR=.audit-evidence/release-gate bash scripts/release_gate.sh --full
+```
+
+This opt-in mode creates a private, unique run directory and prints each command's
+exit code and log path. Each log retains complete stdout and stderr. Failures
+stop the gate with the original exit code; an unusable log directory fails before
+commands run. Upload or retain the printed directory when the worker is temporary.
+Default output and the Kujo CLI's JSON contracts are unchanged. Logs can contain
+sensitive diagnostics; choose an appropriate local storage and retention policy.
+
 Release-candidate readiness gate command:
 
 ```bash

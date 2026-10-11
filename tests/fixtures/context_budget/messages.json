@@ -1,0 +1,6 @@
+[
+  {"role":"system","content":"Retain the evidence and report errors."},
+  {"role":"user","content":"Earlier question with background information that is no longer needed."},
+  {"role":"assistant","content":"Earlier answer with detailed background and an explanation of the previous task."},
+  {"role":"user","content":"Current question: verify the fix."}
+]

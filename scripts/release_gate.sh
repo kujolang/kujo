@@ -15,6 +15,7 @@ Environment:
   KUJO_ENABLE_SOCKET_TESTS=1        Include socket-bound serve integration tests.
   KUJO_RELEASE_GATE_RUN_BENCH=1     Run benchmark smoke command in full mode.
   KUJO_RELEASE_GATE_MODE=full|minimal
+  KUJO_RELEASE_GATE_LOG_DIR=path   Preserve full command logs; print concise receipts
 EOF
 }
 
@@ -43,11 +44,7 @@ if [[ "$#" -eq 1 ]]; then
   esac
 fi
 
-run_cmd() {
-  echo ""
-  echo "+ $*"
-  "$@"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/release_gate_output.sh"
 
 run_optional_cmd() {
   local tool="$1"
