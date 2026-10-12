@@ -1,5 +1,9 @@
 # First-hour adopter walkthrough
 
+**Deferred by owner decision, 2026-10-12.** No participant recruitment is required
+to continue development. Retain this protocol for a future voluntary session;
+do not present an agent rehearsal as human evidence.
+
 This is the human evidence protocol for roadmap item 6. A developer new to the
 current Kujo workflow should attempt it on a fresh user account or disposable
 machine, using published instructions. An agent rehearsal is preparation only.
@@ -66,7 +70,7 @@ values empty; a pending form is not proof of success.
 | Local fixes and participant retest result | |
 | External-owner follow-ups | |
 
-Completion requires the actual human record, clean-install evidence, fixes and
+If this optional study is resumed, completing it requires the actual human record, clean-install evidence, fixes and
 retests for confirmed blockers, and agreement between public guidance and the
 shipped runtime. Report agent observations separately in
 [the preparation audit](audits/first-hour-adopter-validation.md).

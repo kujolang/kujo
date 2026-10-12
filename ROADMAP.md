@@ -35,7 +35,8 @@ post-release validation.
 The **1.8.1 maintenance baseline is published and verified**. Items **2–5** are
 complete on main for the recorded native representation, release-performance,
 and token/payload/output contracts. Item **5** completed with an evidence-backed
-deferral of `yield from`; begin item **6**, human first-hour adopter validation.
+deferral of `yield from`. Item **6** human validation is deferred by owner decision
+(2026-10-12); proceed with technical readiness and the 1.9 release decision.
 The maintenance release is complete for core native/npm distribution; separate
 website/catalog promotion remains explicit cross-repository work in the
 [publication receipt](release/kujo-1.8.1-publication.json).
@@ -164,16 +165,19 @@ remain separate unscheduled designs.
 
 ### 6. First-hour adopter validation and developer experience
 
-**Status: in progress — agent preparation complete; human walkthrough and
-published-runtime Kennel install blocker remain open. Owner: Kujo docs/tools,
-with explicitly coordinated ecosystem follow-ups.**
+**Status: human walkthrough deferred by owner decision on 2026-10-12.
+Agent preparation is retained; no human usability pass is claimed.
+Owner: Kujo docs/tools, with explicitly coordinated ecosystem follow-ups.**
 
 [Participant walkthrough](docs/FIRST_HOUR_WALKTHROUGH.md) and
 [preparation evidence](docs/audits/first-hour-adopter-validation.md) separate
-observed agent checks from the required human record. The macOS x64 published
-1.8.1 runtime failed the Kennel installer HTTP fetch on the rehearsal host; the
-development-binary control succeeded. Cause and broader platform scope remain
-unconfirmed. Install examples now explicitly pin the advertised runtime version.
+observed agent checks from any future human record. No participant is currently
+available beyond the owner or an agent. Recruiting a new participant is not
+required to continue engineering or make the 1.9 release decision. The original macOS x64 published-runtime HTTP failure did not reproduce on
+2026-10-12: the identical executable passed the probe, fresh Kennel install and
+package workflow. [Recheck evidence](docs/audits/evidence/first-hour-published-recheck-2026-10-12.json)
+preserves this distinction; no root cause or code fix is claimed. Final release
+artifact matrices must still pass. Install examples pin the advertised runtime.
 
 - Have a human new to the current workflow use only published instructions to
   install Kujo, run a small default-VM program, use Kennel packages, diagnose a
@@ -183,17 +187,22 @@ unconfirmed. Install examples now explicitly pin the advertised runtime version.
 - Fix demonstrated local issues; assign package, website, SDK and catalog changes
   to their owning repositories rather than silently expanding core scope.
 
-**Done when:** the human walkthrough and clean-install evidence are recorded,
+**If resumed:** the human walkthrough and clean-install evidence are recorded,
 confirmed blockers are fixed and retested, and public guidance agrees with the
 shipped runtime. Participant SDK usability and promotion remain separate from
 stable Kujo language/runtime guarantees.
 
 ### 1.9 release decision
 
-Items 2–4 establish the technical evidence; item 6 establishes usability evidence.
-Item 5 may finish with a documented deferral. Before freezing 1.9, review the
+Items 2–4 establish the technical evidence. Item 5 is deferred, and the owner
+has deferred item 6 human validation; absence of human evidence must remain
+explicit in release claims but is not a release gate. Automated clean-install,
+correctness, security and published-artifact verification remain required.
+Next, review the
 remaining findings, compatibility notes, workload budgets and external follow-ups,
-then run the full release and published-artifact matrices. Experimental ecosystem
+then run the full release and published-artifact matrices. The unresolved mixed-call
+generator depth/catch discrepancy in the item-5 decision remains an explicit
+technical finding to triage; deferring the human study does not waive it. Experimental ecosystem
 waves are not automatic 1.9 requirements and must not expand this scope silently.
 
 ## Recently completed

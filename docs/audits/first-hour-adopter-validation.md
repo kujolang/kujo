@@ -1,9 +1,11 @@
 # Item 6: first-hour adopter validation
 
-Status: **in progress; not complete**. This record is an agent rehearsal and
+Status: **human study deferred by owner decision, 2026-10-12; not a human pass**. This record is an agent rehearsal and
 walkthrough preparation. No human usability evidence or time-to-first-program
 measurement has been obtained. A participant new to the current workflow and
-an operating system are still needed. Use the
+an operating system would be needed if the study resumes. The owner has no new
+participant available and explicitly deferred the study so engineering can
+continue. This removes the human-study gate, not automated release checks. Use the
 [human walkthrough and evidence form](../FIRST_HOUR_WALKTHROUGH.md).
 
 Repository: `kujolang/kujo`, main; starting commit
@@ -13,7 +15,26 @@ lifecycle scripts disabled. This isolates install files; it is **not** a fresh
 OS account, VM or human clean-machine walkthrough. Existing host network and
 system trust settings remain part of the environment.
 
-## Evidence and fixes
+## 2026-10-12 owner decision and published-path recheck
+
+The owner explicitly deferred the human study because no new participant is
+available. No action to recruit a participant is required now. Continue technical
+readiness; retain the optional protocol and disclose the missing usability evidence.
+
+The identical published executable (SHA-256 checked against the original receipt)
+now passes the bounded HTTP probe, a fresh Kennel 1.1.1 installation in a new
+user-owned directory, and `init`, `add ability`, `install`, `validate`. All exit 0.
+See [the recheck receipt](evidence/first-hour-published-recheck-2026-10-12.json).
+The original failure is no longer reproduced on this host; its cause remains
+unknown and no code fix is claimed. The development binary had been removed
+from `target/debug`, so a new development comparison was unavailable and is not
+claimed. This recheck uses the actual published runtime throughout.
+
+`cargo fmt --check` and `git diff --check` passed. No code or executable docs
+examples changed; runtime tests were not rebuilt for this status-only change.
+Original verification and failure observations below remain historical evidence.
+
+## Original rehearsal evidence and fixes
 
 | Check | Observation | Disposition |
 | --- | --- | --- |
@@ -24,7 +45,7 @@ system trust settings remain part of the environment.
 | Restricted capabilities | File read denied with exit 4 under `--untrusted`; succeeds with only `--allow-fs-read` | Expected behavior, preserved. |
 | Published-runtime Kennel install | Installer fetch fails; repeated standalone request and direct packaged-executable invocation also fail | Open blocker on this host. Root cause and other platforms unconfirmed. Do not call package onboarding successful. |
 | Development control | Same HTTP request succeeds; separate Kennel 1.1.1 install and documented `init`, `add ability`, `install`, `validate` succeed | Diagnostic control only; never substituted for the failed published-runtime path. |
-| Human first hour | No participant session yet | Pending; no duration or success rate invented. |
+| Human first hour | No participant session | Owner-deferred 2026-10-12; no duration or success rate invented. |
 
 The version pin affects only the runtime archive. Ecosystem source snapshots still
 follow the installer's source selection; this is not an ecosystem-wide lockfile.
@@ -93,15 +114,15 @@ not newly verified by this session.
 
 ## Remaining work and owners
 
-- **Kujo runtime/release owner:** investigate and fix or isolate the reproduced
-  published-artifact network failure without weakening validation; repeat the
-  real published install/package path.
+- **Kujo runtime/release owner:** the published install/package recheck now passes.
+  Preserve the earlier network failure for recurrence investigation and require
+  final clean-install/platform matrices; root cause remains unknown.
 - **Website owner (`kujolang/kujolang.ai`):** deploy the current installer already
   requested by the 1.8.1 publication receipt. Local pinned commands mitigate the
   runtime-version mismatch; they do not deploy the site.
-- **Participant/observer:** run the human protocol, record actual timing and
+- **Participant/observer (deferred):** if voluntarily resumed, run the human protocol, record actual timing and
   friction, then fix and retest confirmed blockers. No outreach was sent.
 
 No public API, configuration, runtime environment variable, file format or
-capability policy changed. Item 6 remains open and must not be treated as a passed
-1.9 usability gate.
+capability policy changed. Item 6 is deferred and must not be treated as a passed
+usability study. Its absence does not block the 1.9 release decision.

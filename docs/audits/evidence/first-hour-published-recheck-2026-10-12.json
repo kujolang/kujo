@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-12",
+  "kind": "published_runtime_recheck_not_human_study",
+  "binary_sha256": "cc811ce04910d68f6703f8717eb6dc4fcd05666a29f738dee88bf57d52f852c2",
+  "same_binary_as_prior": true,
+  "http_probe": {
+    "runtime": "published",
+    "exit": 0,
+    "stdout": "200\n",
+    "stderr": ""
+  },
+  "kennel_install_exit": 0,
+  "package_commands": [
+    {
+      "command": "kennel --version",
+      "exit": 0,
+      "stdout": "Kennel 1.1.1\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel init --name my-project",
+      "exit": 0,
+      "stdout": "Kennel initialized kennel.toml\nKennel defaults are production-oriented: deterministic lockfiles, explicit sources, and trust policy support.\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel add ability",
+      "exit": 0,
+      "stdout": "Resolved `ability` via static index: https://kennel.kujolang.ai/api/v1/index.json\nAdded ability from ability\nResolved ability to commit 2dc7d4e9eb25e987544ac48793cd11d1999c45e0\nInstalled ability into kennel_packages/ability\nUpdated kennel.lock\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel install",
+      "exit": 0,
+      "stdout": "Installed ability into kennel_packages/ability\nInstalled dependencies from kennel.lock\n",
+      "stderr": ""
+    },
+    {
+      "command": "kennel validate",
+      "exit": 0,
+      "stdout": "kennel.toml is valid\n",
+      "stderr": ""
+    }
+  ],
+  "human_validation": "owner deferred; no human evidence obtained",
+  "root_cause": "unknown; original failure is not erased and no code fix is claimed"
+}
