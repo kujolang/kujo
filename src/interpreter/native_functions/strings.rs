@@ -358,11 +358,11 @@ fn rl_xml_escape(s: &str) -> String {
 }
 
 fn rl_json_escape(s: &str) -> String {
-    s.replace('\\', "\\\\")
-        .replace('"', "\\\"")
-        .replace('\n', "\\n")
-        .replace('\r', "\\r")
-        .replace('\t', "\\t")
+    // JSON controls must round-trip, and HTML's raw-script parser must never
+    // see a literal '<' from data (including closing tags and comment tokens).
+    // Later template substitutions must not reinterpret data as {{key}} tokens.
+    let quoted = serde_json::to_string(s).expect("serializing a string cannot fail");
+    quoted[1..quoted.len() - 1].replace('<', "\\u003c").replace('{', "\\u007b")
 }
 
 fn rl_normalize_route(route: &str) -> String {
@@ -1403,6 +1403,139 @@ mod tests {
 
     fn str_value(value: &str) -> Value {
         Value::Str(Arc::new(value.to_string()))
+    }
+
+    #[test]
+    fn native_json_ld_escapes_controls_and_html_delimiters() {
+        let controls: String = (0u8..32).map(char::from).collect();
+        for input in [
+            format!("start{}end", controls),
+            "braces{ {{lang}} {{stylesheet_path}} {{content}}".to_string(),
+            "</ScRiPt ><script>alert(1)</script><!--".to_string(),
+            "quotes\" backslash\\ literal\\u003c &lt; %3C Ω 🐕\u{2028}\u{2029}".to_string(),
+        ] {
+            let encoded = rl_json_escape(&input);
+            assert!(!encoded.contains('<'));
+            assert!(!encoded.contains('{'));
+            let decoded: String = serde_json::from_str(&format!("\"{}\"", encoded)).unwrap();
+            assert_eq!(decoded, input);
+        }
+        assert_eq!(rl_json_escape("ordinary Ω & > / '"), "ordinary Ω & > / '");
+        assert_eq!(rl_json_escape("\"\\\n\r\t"), "\\\"\\\\\\n\\r\\t");
+    }
+
+    fn layout_dictionary(entries: &[(&str, &str)], fixed: bool) -> Value {
+        if fixed {
+            Value::FixedDict {
+                keys: Arc::new(entries.iter().map(|(key, _)| Arc::<str>::from(*key)).collect()),
+                values: entries.iter().map(|(_, value)| str_value(value)).collect(),
+            }
+        } else {
+            Value::Dict(Arc::new(
+                entries
+                    .iter()
+                    .map(|(key, value)| (Arc::<str>::from(*key), str_value(value)))
+                    .collect(),
+            ))
+        }
+    }
+
+    fn render_json_ld(settings: Value, meta: Value) -> String {
+        let result = handle(
+            "render_layout_native",
+            &[
+                str_value("{{json_ld}}"),
+                settings,
+                str_value("page/"),
+                str_value("Ordinary"),
+                str_value("Description"),
+                str_value(""),
+                str_value(""),
+                meta,
+            ],
+        )
+        .unwrap();
+        match result {
+            Value::Str(html) => html.to_string(),
+            other => panic!("Expected layout string, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn native_json_ld_dispatch_protects_all_fields_and_dictionary_forms() {
+        let attack = "https://example.test/</ScRiPt/><script>x</script>\u{0}\u{b}end";
+        for fixed in [false, true] {
+            let settings = layout_dictionary(
+                &[("site_title", attack), ("site_url", "https://example.test")],
+                fixed,
+            );
+            let meta = layout_dictionary(
+                &[
+                    ("seo_title", attack),
+                    ("seo_description", attack),
+                    ("canonical", attack),
+                    ("featured_image", attack),
+                    ("og_type", "article"),
+                    ("author", attack),
+                    ("published_iso", attack),
+                ],
+                fixed,
+            );
+            let html = render_json_ld(settings, meta);
+            let body = html
+                .strip_prefix("<script type=\"application/ld+json\">")
+                .unwrap()
+                .strip_suffix("</script>")
+                .unwrap();
+            assert!(!body.contains('<'));
+            let json: serde_json::Value = serde_json::from_str(body).unwrap();
+            for key in ["headline", "name", "description", "url", "image", "datePublished"] {
+                assert_eq!(json[key], attack, "{}", key);
+            }
+            assert_eq!(json["author"]["name"], attack);
+            assert_eq!(json["publisher"]["name"], attack);
+            assert_eq!(json["@type"], "BlogPosting");
+        }
+    }
+
+    #[test]
+    fn native_json_ld_data_is_opaque_to_later_template_substitutions() {
+        let tokens = "{{lang}} {{stylesheet_path}} {{content}} {{json_ld}}";
+        for fixed in [false, true] {
+            let html = render_json_ld(
+                layout_dictionary(&[("site_title", "Site")], fixed),
+                layout_dictionary(
+                    &[("seo_title", tokens), ("lang", "</script><script>alert(1)</script>")],
+                    fixed,
+                ),
+            );
+            let body = html
+                .strip_prefix("<script type=\"application/ld+json\">")
+                .unwrap()
+                .strip_suffix("</script>")
+                .unwrap();
+            assert!(!body.contains('<'));
+            let json: serde_json::Value = serde_json::from_str(body).unwrap();
+            assert_eq!(json["headline"], tokens);
+            assert_eq!(json["name"], tokens);
+        }
+    }
+
+    #[test]
+    fn native_json_ld_ordinary_output_is_byte_compatible() {
+        for fixed in [false, true] {
+            let html = render_json_ld(
+                layout_dictionary(
+                    &[("site_title", "Site"), ("site_url", "https://example.test")],
+                    fixed,
+                ),
+                layout_dictionary(&[], fixed),
+            );
+            assert_eq!(
+                html,
+                r#"<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","headline":"Ordinary","name":"Ordinary","description":"Description","url":"https://example.test/page/","publisher":{"@type":"Organization","name":"Site"}}</script>"#
+            );
+        }
     }
 
     #[test]

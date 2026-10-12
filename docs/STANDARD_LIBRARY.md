@@ -562,6 +562,16 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `tls_close` | `tls_close(stream)` | handler-defined | bool | Performs TLS and TCP shutdown and idempotently consumes the live stream. | `none` | `tls_close(tls)` |
 | `tls_info` | `tls_info(stream_or_acceptor)` | handler-defined | dictionary | Returns a `kujo.tls.info.v1` envelope with negotiated protocol/cipher and SHA-256 certificate fingerprints, never certificate private material. | `none` | `info := tls_info(tls)` |
 
+## Native layout JSON-LD
+
+`render_layout_native` JSON-escapes dynamic structured-data strings and encodes
+`<` as `\u003c` before embedding JSON-LD in an HTML script element. It also
+encodes `{` as `\u007b` so later template substitutions cannot reinterpret
+metadata as `{{key}}` tokens. JSON parsing
+recovers the original strings, including control characters. This protection
+applies to both dictionary representations; templates and authored HTML remain
+trusted input, not a general HTML sanitization boundary.
+
 ## Coverage Contract
 
 The integration contract test `tests/stdlib_reference_contract.rs` verifies:

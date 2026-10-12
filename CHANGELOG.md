@@ -6,6 +6,13 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Native layout security
+
+- Encode all JSON control characters and HTML script delimiters in native
+  layout JSON-LD, and prevent later template passes from reinterpreting data
+  placeholders. Metadata remains JSON-round-trippable and ordinary rendered
+  output is unchanged.
+
 ### Installation documentation
 
 - Pin stable install examples to Kujo 1.8.1 using the installer’s existing
