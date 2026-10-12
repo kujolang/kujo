@@ -79,7 +79,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: kujolang/watchdog
-          ref: 1af292b3e03217760649dcb4f903e443f48c563c
+          ref: 9e82e8f5b05edca948f6a432ae517031388296e6
           path: .agent-fixtures/watchdog
           persist-credentials: false
 
