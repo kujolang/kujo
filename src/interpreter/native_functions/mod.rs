@@ -474,6 +474,7 @@ mod tests {
             "io_copy_range",
             "http_get",
             "http_request",
+            "http_stream_collect",
             "http_post",
             "http_put",
             "http_delete",

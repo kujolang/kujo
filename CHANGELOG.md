@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### HTTP stream consumption
+
+- Add one-shot `http_stream_collect` and `http_request` collection mode with UTF-8-safe incremental callbacks, bounded reads, cancellation, capability checks and reentrant ownership protection. Existing buffered requests and server forwarding remain compatible.
+
 No additional release scope beyond the 1.6.0 candidate is included here.
 
 ## [1.6.0] - Candidate (unpublished)
