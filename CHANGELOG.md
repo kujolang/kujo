@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo. It follows
 
 ## [Unreleased]
 
+### HTTP stream consumption
+
+- Add one-shot `http_stream_collect` and `http_request` collection mode with UTF-8-safe incremental callbacks, bounded reads, cancellation, capability checks and reentrant ownership protection. Existing buffered requests and server forwarding remain compatible.
+
 ## [1.5.0] - 2026-09-22
 - Added `digest_file_beneath` for bounded streaming SHA-256 of rooted regular
   files up to 64 MiB without retaining the full artifact in memory.

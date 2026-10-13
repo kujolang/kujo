@@ -828,6 +828,7 @@ impl Interpreter {
             // HTTP client functions
             "http_get",
             "http_request",
+            "http_stream_collect",
             "http_post",
             "http_put",
             "http_delete",
@@ -1576,6 +1577,10 @@ impl Interpreter {
         self.env
             .define("regex_split".to_string(), Value::NativeFunction("regex_split".to_string()));
 
+        self.env.define(
+            "http_stream_collect".to_string(),
+            Value::NativeFunction("http_stream_collect".to_string()),
+        );
         // HTTP client functions
         self.env.define("http_get".to_string(), Value::NativeFunction("http_get".to_string()));
         self.env
@@ -3697,6 +3702,9 @@ impl Interpreter {
                 3,
                 vec!["items".to_string(), "mapper".to_string(), "concurrency".to_string()],
             ),
+            "http_stream_collect" => {
+                CallableArity::exact(name, vec!["response".into(), "callback".into()])
+            }
             "http_request" => CallableArity::range(
                 "http_request",
                 1,

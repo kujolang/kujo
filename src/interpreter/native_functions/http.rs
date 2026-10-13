@@ -193,6 +193,139 @@ impl Drop for IncrementalHttpResponseBody {
     }
 }
 
+// Decode complete UTF-8 sequences only; retain a split code point for the next read.
+fn stream_text(pending: &mut Vec<u8>, eof: bool) -> String {
+    let mut text = String::new();
+    let mut offset = 0;
+    while offset < pending.len() {
+        match std::str::from_utf8(&pending[offset..]) {
+            Ok(valid) => {
+                text.push_str(valid);
+                offset = pending.len();
+            }
+            Err(error) => {
+                let valid_end = offset + error.valid_up_to();
+                text.push_str(std::str::from_utf8(&pending[offset..valid_end]).unwrap());
+                offset = valid_end;
+                match error.error_len() {
+                    Some(length) => {
+                        text.push('\u{fffd}');
+                        offset += length;
+                    }
+                    None if eof => {
+                        text.push('\u{fffd}');
+                        offset = pending.len();
+                    }
+                    None => break,
+                }
+            }
+        }
+    }
+    pending.drain(..offset);
+    text
+}
+
+fn collect_http_stream(interp: &mut Interpreter, args: &[Value]) -> Value {
+    let fail = |message: &str| Value::Result {
+        is_ok: false,
+        value: Box::new(Value::Str(Arc::new(message.to_string()))),
+    };
+    if args.len() != 2 {
+        return Value::Error("http_stream_collect expects (response, callback)".into());
+    }
+    let Value::HttpStreamingResponse { status, headers, stream, callback: original_callback } =
+        &args[0]
+    else {
+        return Value::Error("http_stream_collect requires an incremental HTTP response".into());
+    };
+    if original_callback.is_some() {
+        return fail(
+            "http_stream_collect requires a response without a server-forwarding callback",
+        );
+    }
+    if !matches!(
+        &args[1],
+        Value::Function(..) | Value::NativeFunction(..) | Value::BytecodeFunction { .. }
+    ) {
+        return Value::Error("http_stream_collect callback must be a function".into());
+    }
+    let mut parts = match stream.lock() {
+        Ok(mut slot) => match slot.take() {
+            Some(parts) => parts,
+            None => return fail("HTTP response stream already consumed"),
+        },
+        Err(_) => return fail("HTTP response stream unavailable"),
+    };
+    // Take ownership before invoking user code, so reentrant consumption fails
+    // immediately instead of deadlocking on the stream mutex.
+    let mut body = Vec::new();
+    let mut pending = Vec::new();
+    let mut buffer = [0u8; HTTP_RESPONSE_STREAM_CHUNK_BYTES];
+    loop {
+        // Drain the bounded notification channel before the next body read.
+        while let Ok(event) = parts.events.try_recv() {
+            let mut event = match event {
+                Value::Dict(fields) => fields.as_ref().clone(),
+                _ => continue,
+            };
+            if let Some(Value::Bytes(bytes)) = event.get("bytes") {
+                pending.extend_from_slice(bytes);
+                event.insert("text".into(), Value::Str(Arc::new(stream_text(&mut pending, false))));
+            }
+            if matches!(event.get("type"), Some(Value::Str(kind)) if kind.as_str() == "complete") {
+                event.insert("text".into(), Value::Str(Arc::new(stream_text(&mut pending, true))));
+            }
+            event.insert("status".into(), Value::Int(i64::from(*status)));
+            let result = interp.call_user_function(&args[1], &[Value::Dict(Arc::new(event))]);
+            if matches!(result, Value::Bool(false) | Value::Error(_) | Value::ErrorObject { .. }) {
+                parts.cancelled.store(true, Ordering::Release);
+                return fail("HTTP stream callback cancelled or failed");
+            }
+        }
+        match parts.body.read(&mut buffer) {
+            Ok(0) => {
+                // The reader queued its terminal event; deliver it without a
+                // second read or a second complete callback.
+                while let Ok(event) = parts.events.try_recv() {
+                    let mut fields = match event {
+                        Value::Dict(fields) => fields.as_ref().clone(),
+                        _ => continue,
+                    };
+                    fields.insert(
+                        "text".into(),
+                        Value::Str(Arc::new(stream_text(&mut pending, true))),
+                    );
+                    fields.insert("status".into(), Value::Int(i64::from(*status)));
+                    let result =
+                        interp.call_user_function(&args[1], &[Value::Dict(Arc::new(fields))]);
+                    if matches!(
+                        result,
+                        Value::Bool(false) | Value::Error(_) | Value::ErrorObject { .. }
+                    ) {
+                        parts.cancelled.store(true, Ordering::Release);
+                        return fail("HTTP stream callback cancelled or failed");
+                    }
+                }
+                break;
+            }
+            Ok(count) => body.extend_from_slice(&buffer[..count]),
+            Err(error) => return fail(&format!("HTTP stream read failed: {}", error)),
+        }
+    }
+    let mut response = DictMap::default();
+    response.insert("_status".into(), Value::Int(i64::from(*status)));
+    response.insert("status".into(), Value::Int(i64::from(*status)));
+    let text = Value::Str(Arc::new(String::from_utf8_lossy(&body).into_owned()));
+    response.insert("_body".into(), text.clone());
+    response.insert("body".into(), text);
+    let fields = headers
+        .iter()
+        .map(|(key, value)| (key.clone().into(), Value::Str(Arc::new(value.clone()))))
+        .collect();
+    response.insert("headers".into(), Value::Dict(Arc::new(fields)));
+    Value::Result { is_ok: true, value: Box::new(Value::Dict(Arc::new(response))) }
+}
+
 fn incremental_http_response_value(
     response: reqwest::blocking::Response,
     max_response_bytes: usize,
@@ -1921,6 +2054,7 @@ pub fn handle_with_interpreter(
     arg_values: &[Value],
 ) -> Option<Value> {
     let result = match name {
+        "http_stream_collect" => collect_http_stream(interp, arg_values),
         "parallel_http" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error(format!(
@@ -2094,9 +2228,14 @@ pub fn handle_with_interpreter(
                 (url, options)
             };
 
+            let collect_mode = matches!(options.get("response_stream"), Some(Value::Str(mode)) if mode.as_str() == "collect");
+            if collect_mode && callback.is_none() {
+                return Some(Value::Error("response_stream=collect requires a callback".into()));
+            }
             let incremental = match options.get("response_stream") {
                 None => false,
                 Some(Value::Bool(value)) => *value,
+                Some(Value::Str(mode)) if mode.as_str() == "collect" => true,
                 Some(_) => {
                     return Some(Value::Result {
                         is_ok: false,
@@ -2328,7 +2467,14 @@ pub fn handle_with_interpreter(
                     }
                 }
                 Ok(HttpRequestResult::Incremental(response)) => {
-                    match incremental_http_response_value(response, max_response_bytes, callback) {
+                    match incremental_http_response_value(
+                        response,
+                        max_response_bytes,
+                        if collect_mode { None } else { callback.clone() },
+                    ) {
+                        Ok(response) if collect_mode => {
+                            collect_http_stream(interp, &[response, callback.unwrap()])
+                        }
                         Ok(response) => Value::Result { is_ok: true, value: Box::new(response) },
                         Err(error) => Value::Result {
                             is_ok: false,
@@ -4840,5 +4986,49 @@ mod tests {
         assert!(
             matches!(result, Value::Result { is_ok: false, value } if matches!(value.as_ref(), Value::Str(message) if message.contains("response was not valid JSON")))
         );
+    }
+}
+
+#[cfg(test)]
+mod stream_collect_tests {
+    use super::*;
+
+    #[test]
+    fn stream_collect_utf8_split_and_invalid_bytes() {
+        let mut pending = vec![b'A', 0xe2];
+        assert_eq!(stream_text(&mut pending, false), "A");
+        pending.extend_from_slice(&[0x82]);
+        assert_eq!(stream_text(&mut pending, false), "");
+        pending.extend_from_slice(&[0xac, 0xff, b'B', 0xc3]);
+        assert_eq!(stream_text(&mut pending, false), "€\u{fffd}B");
+        assert_eq!(stream_text(&mut pending, true), "\u{fffd}");
+        assert!(pending.is_empty());
+    }
+
+    #[test]
+    fn stream_collect_is_single_consumer_and_preserves_response() {
+        let (_sender, events) = sync_channel(16);
+        let response = Value::HttpStreamingResponse {
+            status: 201,
+            headers: HashMap::new(),
+            callback: None,
+            stream: Arc::new(Mutex::new(Some(HttpResponseStreamParts {
+                body: Box::new(io::Cursor::new(b"hello".to_vec())),
+                events,
+                cancelled: Arc::new(AtomicBool::new(false)),
+                content_length: Some(5),
+            }))),
+        };
+        let mut interp = Interpreter::new();
+        let args = [response, Value::NativeFunction("to_string".to_string())];
+        let result = collect_http_stream(&mut interp, &args);
+        let Value::Result { is_ok: true, value } = result else { panic!("expected success") };
+        let Value::Dict(fields) = *value else { panic!("expected response") };
+        assert!(matches!(fields.get("_status"), Some(Value::Int(201))));
+        assert!(matches!(fields.get("_body"), Some(Value::Str(body)) if body.as_str() == "hello"));
+        assert!(matches!(
+            collect_http_stream(&mut interp, &args),
+            Value::Result { is_ok: false, .. }
+        ));
     }
 }
