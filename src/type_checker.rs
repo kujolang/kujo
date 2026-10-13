@@ -1083,6 +1083,10 @@ impl TypeChecker {
             "http_request".to_string(),
             FunctionSignature { param_types: vec![], return_type: None },
         );
+        self.functions.insert(
+            "http_stream_collect".to_string(),
+            FunctionSignature { param_types: vec![None, None], return_type: None },
+        );
         // JSON functions
         self.functions.insert(
             "parse_json".to_string(),

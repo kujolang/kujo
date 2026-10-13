@@ -255,6 +255,7 @@ pub fn capability_for_native_function(name: &str) -> Option<NativeCapability> {
         | "http_get_file_response"
         | "http_destination_check"
         | "http_request"
+        | "http_stream_collect"
         | "http_put"
         | "http_delete"
         | "http_get_binary"
