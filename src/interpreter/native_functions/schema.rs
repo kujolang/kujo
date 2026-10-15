@@ -10,6 +10,8 @@ use std::sync::Arc;
 
 const MAX_SCHEMA_DEPTH: usize = 64;
 const MAX_VALIDATION_NODES: usize = 100_000;
+const MAX_DIAGNOSTICS: usize = 10_000;
+const MAX_DIAGNOSTIC_BYTES: usize = 4 * 1024 * 1024;
 const MAX_PATTERN_BYTES: usize = 1024;
 const MAX_INSTANCE_ARRAY_ITEMS: usize = 100_000;
 
@@ -74,6 +76,8 @@ impl std::fmt::Display for NumericValue {
 #[derive(Default)]
 struct ValidationState {
     visited_nodes: usize,
+    diagnostic_count: usize,
+    diagnostic_bytes: usize,
     ref_stack: Vec<String>,
     schema_nodes: usize,
     patterns: HashMap<String, Arc<Regex>>,
@@ -267,7 +271,7 @@ fn validate_schema(
     }
 
     if let Some(type_schema) = get_key(schema, "type") {
-        validate_type_keyword(value, type_schema, instance_path, errors)?;
+        validate_type_keyword(value, type_schema, instance_path, state, errors)?;
     }
 
     if let Some(enum_schema) = get_key(schema, "enum") {
@@ -276,11 +280,11 @@ fn validate_schema(
 
     if let Some(const_schema) = get_key(schema, "const") {
         if !json_values_equal(value, const_schema, state)? {
-            push_error(errors, instance_path, "const", "value does not match const");
+            push_error(state, errors, instance_path, "const", "value does not match const")?;
         }
     }
 
-    validate_number_keywords(value, schema, instance_path, errors)?;
+    validate_number_keywords(value, schema, instance_path, state, errors)?;
     validate_string_keywords(value, schema, instance_path, state, errors)?;
     validate_array_keywords(value, schema, root_schema, instance_path, depth, state, errors)?;
     validate_object_keywords(value, schema, root_schema, instance_path, depth, state, errors)?;
@@ -352,17 +356,25 @@ fn validate_type_keyword(
     value: &Value,
     type_schema: &Value,
     instance_path: &str,
+    state: &mut ValidationState,
     errors: &mut Vec<ValidationError>,
 ) -> Result<(), String> {
     let accepted_types = schema_types(type_schema)?;
 
     if !accepted_types.iter().any(|expected| value_matches_type(value, expected)) {
-        push_error(
-            errors,
-            instance_path,
-            "type",
-            &format!("expected type {}", accepted_types.join(" or ")),
-        );
+        let name_bytes = accepted_types
+            .iter()
+            .try_fold(0usize, |sum, name| {
+                sum.checked_add(name.len()).and_then(|n| n.checked_add(4))
+            })
+            .ok_or("exceeded diagnostic byte limit")?
+            .saturating_sub(4);
+        reserve_diagnostic(state, &[instance_path.len(), 4, "expected type ".len(), name_bytes])?;
+        errors.push(ValidationError {
+            path: instance_path.to_string(),
+            keyword: "type".to_string(),
+            message: format!("expected type {}", accepted_types.join(" or ")),
+        });
     }
 
     Ok(())
@@ -384,7 +396,7 @@ fn validate_enum_keyword(
             return Ok(());
         }
     }
-    push_error(errors, instance_path, "enum", "value is not one of the allowed enum cases");
+    push_error(state, errors, instance_path, "enum", "value is not one of the allowed enum cases")?;
     Ok(())
 }
 
@@ -392,6 +404,7 @@ fn validate_number_keywords(
     value: &Value,
     schema: &Value,
     instance_path: &str,
+    state: &mut ValidationState,
     errors: &mut Vec<ValidationError>,
 ) -> Result<(), String> {
     let Some(number) = numeric_value(value) else {
@@ -401,7 +414,13 @@ fn validate_number_keywords(
     if let Some(minimum) = get_key(schema, "minimum") {
         let minimum = numeric_schema_value(minimum, "minimum")?;
         if compare_numeric(number, minimum) == Ordering::Less {
-            push_error(errors, instance_path, "minimum", &format!("number is less than {minimum}"));
+            push_error(
+                state,
+                errors,
+                instance_path,
+                "minimum",
+                &format!("number is less than {minimum}"),
+            )?;
         }
     }
 
@@ -409,11 +428,12 @@ fn validate_number_keywords(
         let maximum = numeric_schema_value(maximum, "maximum")?;
         if compare_numeric(number, maximum) == Ordering::Greater {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "maximum",
                 &format!("number is greater than {maximum}"),
-            );
+            )?;
         }
     }
 
@@ -421,11 +441,12 @@ fn validate_number_keywords(
         let minimum = numeric_schema_value(minimum, "exclusiveMinimum")?;
         if compare_numeric(number, minimum) != Ordering::Greater {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "exclusiveMinimum",
                 &format!("number is not greater than {minimum}"),
-            );
+            )?;
         }
     }
 
@@ -433,11 +454,12 @@ fn validate_number_keywords(
         let maximum = numeric_schema_value(maximum, "exclusiveMaximum")?;
         if compare_numeric(number, maximum) != Ordering::Less {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "exclusiveMaximum",
                 &format!("number is not less than {maximum}"),
-            );
+            )?;
         }
     }
 
@@ -460,11 +482,12 @@ fn validate_string_keywords(
         let min_length = non_negative_i64_schema_value(min_length, "minLength")?;
         if char_count < min_length {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "minLength",
                 &format!("string length is less than {min_length}"),
-            );
+            )?;
         }
     }
 
@@ -472,18 +495,19 @@ fn validate_string_keywords(
         let max_length = non_negative_i64_schema_value(max_length, "maxLength")?;
         if char_count > max_length {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "maxLength",
                 &format!("string length is greater than {max_length}"),
-            );
+            )?;
         }
     }
 
     if let Some(pattern) = get_key(schema, "pattern") {
         let regex = schema_pattern(pattern, state)?;
         if !regex.is_match(text.as_ref()) {
-            push_error(errors, instance_path, "pattern", "string does not match pattern");
+            push_error(state, errors, instance_path, "pattern", "string does not match pattern")?;
         }
     }
 
@@ -511,11 +535,12 @@ fn validate_array_keywords(
         let min_items = non_negative_i64_schema_value(min_items, "minItems")? as usize;
         if items.len() < min_items {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "minItems",
                 &format!("array has fewer than {min_items} items"),
-            );
+            )?;
         }
     }
 
@@ -523,11 +548,12 @@ fn validate_array_keywords(
         let max_items = non_negative_i64_schema_value(max_items, "maxItems")? as usize;
         if items.len() > max_items {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "maxItems",
                 &format!("array has more than {max_items} items"),
-            );
+            )?;
         }
     }
 
@@ -565,12 +591,14 @@ fn validate_object_keywords(
         for required_name in required_names.iter() {
             let required_name = string_schema_value(required_name, "required")?;
             if get_key(value, required_name).is_none() {
-                push_error(
+                push_property_error(
+                    state,
                     errors,
-                    &join_path(instance_path, required_name),
+                    instance_path,
+                    required_name,
                     "required",
-                    &format!("required property '{required_name}' is missing"),
-                );
+                    ("required property '", "' is missing"),
+                )?;
             }
         }
     }
@@ -613,12 +641,14 @@ fn validate_object_keywords(
             Value::Bool(false) => {
                 for (key, _) in value_entries {
                     if properties.and_then(|properties| get_key(properties, &key)).is_none() {
-                        push_error(
+                        push_property_error(
+                            state,
                             errors,
-                            &join_path(instance_path, &key),
+                            instance_path,
+                            &key,
                             "additionalProperties",
-                            &format!("additional property '{key}' is not allowed"),
-                        );
+                            ("additional property '", "' is not allowed"),
+                        )?;
                     }
                 }
             }
@@ -680,7 +710,13 @@ fn validate_combinators(
             }
         }
         if matches == 0 {
-            push_error(errors, instance_path, "anyOf", "value does not match any allowed schema");
+            push_error(
+                state,
+                errors,
+                instance_path,
+                "anyOf",
+                "value does not match any allowed schema",
+            )?;
         }
     }
 
@@ -694,11 +730,12 @@ fn validate_combinators(
         }
         if matches != 1 {
             push_error(
+                state,
                 errors,
                 instance_path,
                 "oneOf",
                 &format!("value matches {matches} schemas; expected exactly one"),
-            );
+            )?;
         }
     }
 
@@ -995,12 +1032,64 @@ fn join_path(parent: &str, segment: &str) -> String {
     }
 }
 
-fn push_error(errors: &mut Vec<ValidationError>, path: &str, keyword: &str, message: &str) {
+fn reserve_diagnostic(state: &mut ValidationState, lengths: &[usize]) -> Result<(), String> {
+    let bytes =
+        lengths.iter().try_fold(state.diagnostic_bytes, |sum, length| sum.checked_add(*length));
+    if state.diagnostic_count >= MAX_DIAGNOSTICS
+        || bytes.is_none_or(|bytes| bytes > MAX_DIAGNOSTIC_BYTES)
+    {
+        return Err(format!("exceeded diagnostic limit ({MAX_DIAGNOSTICS} errors or {MAX_DIAGNOSTIC_BYTES} string bytes)"));
+    }
+    state.diagnostic_count += 1;
+    state.diagnostic_bytes = bytes.unwrap();
+    Ok(())
+}
+
+fn push_error(
+    state: &mut ValidationState,
+    errors: &mut Vec<ValidationError>,
+    path: &str,
+    keyword: &str,
+    message: &str,
+) -> Result<(), String> {
+    reserve_diagnostic(state, &[path.len(), keyword.len(), message.len()])?;
     errors.push(ValidationError {
-        path: if path.is_empty() { String::new() } else { path.to_string() },
+        path: path.to_string(),
         keyword: keyword.to_string(),
         message: message.to_string(),
     });
+    Ok(())
+}
+
+fn push_property_error(
+    state: &mut ValidationState,
+    errors: &mut Vec<ValidationError>,
+    parent: &str,
+    name: &str,
+    keyword: &str,
+    message_parts: (&str, &str),
+) -> Result<(), String> {
+    let (prefix, suffix) = message_parts;
+    let escapes = name.bytes().filter(|byte| matches!(byte, b'~' | b'/')).count();
+    reserve_diagnostic(
+        state,
+        &[
+            parent.len(),
+            1,
+            name.len(),
+            escapes,
+            keyword.len(),
+            prefix.len(),
+            name.len(),
+            suffix.len(),
+        ],
+    )?;
+    errors.push(ValidationError {
+        path: join_path(parent, name),
+        keyword: keyword.to_string(),
+        message: format!("{prefix}{name}{suffix}"),
+    });
+    Ok(())
 }
 
 #[cfg(test)]
@@ -1008,6 +1097,42 @@ mod tests {
     use super::{handle, json_schema_validate};
     use crate::interpreter::{DictMap, Value};
     use std::sync::Arc;
+
+    #[test]
+    fn diagnostic_budget_boundaries_and_overflow() {
+        let mut state = super::ValidationState::default();
+        super::reserve_diagnostic(&mut state, &[super::MAX_DIAGNOSTIC_BYTES]).unwrap();
+        assert!(super::reserve_diagnostic(&mut state, &[1]).is_err());
+        assert_eq!(state.diagnostic_count, 1);
+        assert_eq!(state.diagnostic_bytes, super::MAX_DIAGNOSTIC_BYTES);
+        assert!(super::reserve_diagnostic(&mut state, &[usize::MAX]).is_err());
+        let mut state = super::ValidationState::default();
+        for _ in 0..super::MAX_DIAGNOSTICS {
+            super::reserve_diagnostic(&mut state, &[0]).unwrap();
+        }
+        assert!(super::reserve_diagnostic(&mut state, &[0]).is_err());
+        assert_eq!(state.diagnostic_count, super::MAX_DIAGNOSTICS);
+    }
+
+    #[test]
+    fn diagnostic_budget_counts_escaped_unicode_paths_exactly() {
+        let mut state = super::ValidationState::default();
+        let mut errors = Vec::new();
+        super::push_property_error(
+            &mut state,
+            &mut errors,
+            "/parent",
+            "é~/",
+            "required",
+            ("property '", "' missing"),
+        )
+        .unwrap();
+        assert_eq!(errors[0].path, "/parent/é~0~1");
+        assert_eq!(
+            state.diagnostic_bytes,
+            errors[0].path.len() + errors[0].keyword.len() + errors[0].message.len()
+        );
+    }
 
     #[test]
     fn pattern_reuse_is_per_call_bounded_and_checks_uncached_patterns() {
