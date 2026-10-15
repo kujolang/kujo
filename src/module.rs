@@ -526,7 +526,7 @@ impl ModuleLoader {
         module_name: &str,
     ) -> Result<HashMap<String, Value>, Box<KujoError>> {
         let module = self.load_module(module_name)?;
-        Ok(module.exports.clone())
+        Ok(module.exports)
     }
 }
 
