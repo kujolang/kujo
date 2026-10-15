@@ -131,7 +131,7 @@ export KUJO_AI_ALLOWED_ENDPOINTS=https://api.example.test/v1,http://localhost:11
 kujo run --untrusted --allow-ai examples/ai_egress_allowlist.kujo
 ```
 
-When the allowlist is unset, trusted-mode behavior remains backward compatible. When it is set, non-matching AI helper endpoints return `kind:"endpoint_denied"`; callers using `options.structured_errors: true` receive the standard structured AI error dictionary. Live AI requests still honor `KUJO_NET_DESTINATION_POLICY` and `--deny-private-net`.
+When the allowlist is unset, trusted-mode behavior remains backward compatible. When it is set, non-matching AI helper endpoints return `kind:"endpoint_denied"`; callers using `options.structured_errors: true` receive the standard structured AI error dictionary. Each live request snapshots the allowlist and checks every redirect destination before forwarding its body, including redirects to another path on the same origin. Live AI requests still honor `KUJO_NET_DESTINATION_POLICY` and `--deny-private-net`.
 
 ## Secrets And Redaction
 

@@ -1261,9 +1261,13 @@ fn classify_transport_error(message: &str) -> &'static str {
     }
 }
 
-fn ai_transport_error(_surface: &str, config: &AiRequestConfig, error: String) -> Value {
+fn ai_transport_error(surface: &str, config: &AiRequestConfig, error: String) -> Value {
     if config.structured_errors {
-        let kind = classify_transport_error(&error);
+        let kind = if error.starts_with(&format!("{surface} failed: kind:\"endpoint_denied\" ")) {
+            "endpoint_denied"
+        } else {
+            classify_transport_error(&error)
+        };
         ai_structured_error(kind, error, None, None, None, None, config)
     } else {
         ai_error_string(config, error)
@@ -1690,9 +1694,10 @@ fn run_ai_request(
     let surface_for_task = surface.to_string();
 
     let request_result = network_policy::run_blocking_http_task(surface, move || {
-        let client = network_policy::build_http_client_for_url(
+        let client = network_policy::build_ai_http_client(
             &endpoint,
             Duration::from_secs_f64(timeout_seconds),
+            &surface_for_task,
         )?;
         let mut request = client.post(&endpoint);
         request = request.header("Content-Type", "application/json");
@@ -1710,10 +1715,20 @@ fn run_ai_request(
             request = request.header(&name, &value);
         }
 
-        let response = request
-            .body(payload_json)
-            .send()
-            .map_err(|error| format!("{} failed: {}", surface_for_task, error))?;
+        let response = request.body(payload_json).send().map_err(|error| {
+            // reqwest's Display hides the redirect policy's structured denial.
+            if error.is_redirect() {
+                let mut source = std::error::Error::source(&error);
+                while let Some(cause) = source {
+                    let message = cause.to_string();
+                    if message.contains("kind:\"endpoint_denied\"") {
+                        return message;
+                    }
+                    source = cause.source();
+                }
+            }
+            format!("{} failed: {}", surface_for_task, error)
+        })?;
         network_policy::read_http_response_bytes(response, surface_for_task.as_str())
     })?;
 

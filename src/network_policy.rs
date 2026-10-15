@@ -422,6 +422,13 @@ pub fn ai_endpoint_allowed(endpoint: &str, surface: &str) -> Result<(), String> 
         _ => return Ok(()),
     };
 
+    ai_endpoint_allowed_by(endpoint, surface, &allowlist)
+}
+
+fn ai_endpoint_allowed_by(endpoint: &str, surface: &str, allowlist: &str) -> Result<(), String> {
+    if allowlist.trim().is_empty() {
+        return Ok(());
+    }
     let endpoint_url = http_url_for_policy(endpoint, surface)?;
     for raw_entry in allowlist.split(',') {
         let entry = raw_entry.trim();
@@ -480,6 +487,34 @@ pub fn build_http_client(timeout: Duration) -> Result<Client, String> {
 
 pub(crate) fn build_http_client_for_url(url: &str, timeout: Duration) -> Result<Client, String> {
     build_http_client_inner(timeout, Some(url))
+}
+
+/// Freeze AI egress policy for this request, including every redirect hop.
+pub(crate) fn build_ai_http_client(
+    url: &str,
+    timeout: Duration,
+    surface: &str,
+) -> Result<Client, String> {
+    let allowlist = std::env::var(AI_ALLOWED_ENDPOINTS_ENV).unwrap_or_default();
+    ai_endpoint_allowed_by(url, surface, &allowlist)?;
+    let strict = deny_private_destinations()?;
+    let mut builder = Client::builder().timeout(timeout);
+    if strict {
+        check_initial_http_literal(Some(url))?;
+        builder = builder.no_proxy().dns_resolver(Arc::new(StrictDnsResolver));
+    }
+    let surface = surface.to_string();
+    builder = builder.redirect(reqwest::redirect::Policy::custom(move |attempt| {
+        if let Err(error) = ai_endpoint_allowed_by(attempt.url().as_str(), &surface, &allowlist) {
+            return attempt.error(error);
+        }
+        if strict && blocked_http_literal(attempt.url()) {
+            return attempt
+                .error("HTTP redirect blocked by outbound destination policy 'deny_private'");
+        }
+        reqwest::redirect::Policy::default().redirect(attempt)
+    }));
+    builder.build().map_err(|error| format!("Failed to create HTTP client: {}", error))
 }
 
 fn build_http_client_inner(timeout: Duration, url: Option<&str>) -> Result<Client, String> {
