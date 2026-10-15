@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "baseline_sha": "d6ed9c0cfa76a1f17fb87020b9e9a77950c7fc25",
+  "candidate_sha": "996eb92c348d5a2f43941d5c3411848f0c7eba8a",
+  "platform": "macOS x64",
+  "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "profile": "unoptimized; CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0",
+  "warmup_batches": 2,
+  "measured_batches": 7,
+  "imports_per_batch": 100,
+  "summary_method": "median of three run medians; shared-host local microbenchmark, not application or release-build guarantee",
+  "runs": [
+    {
+      "round": 0,
+      "version": "baseline",
+      "cases": [
+        {
+          "exports": 100,
+          "iterations": 100,
+          "median_ns": 29305449,
+          "samples_ns": [
+            28666309,
+            28776171,
+            28944441,
+            29305449,
+            29603182,
+            30280811,
+            32146974
+          ]
+        },
+        {
+          "exports": 1000,
+          "iterations": 100,
+          "median_ns": 160129056,
+          "samples_ns": [
+            102722617,
+            107136641,
+            110337424,
+            160129056,
+            196424527,
+            205213717,
+            272640619
+          ]
+        },
+        {
+          "exports": 5000,
+          "iterations": 100,
+          "median_ns": 557933114,
+          "samples_ns": [
+            521272126,
+            527076943,
+            544942227,
+            557933114,
+            570871629,
+            672779353,
+            783010178
+          ]
+        }
+      ]
+    },
+    {
+      "round": 0,
+      "version": "candidate",
+      "cases": [
+        {
+          "exports": 100,
+          "iterations": 100,
+          "median_ns": 27255930,
+          "samples_ns": [
+            24737009,
+            25509142,
+            26260636,
+            27255930,
+            27497646,
+            27523710,
+            28061693
+          ]
+        },
+        {
+          "exports": 1000,
+          "iterations": 100,
+          "median_ns": 62090559,
+          "samples_ns": [
+            60247205,
+            60268910,
+            60455943,
+            62090559,
+            62329557,
+            62629741,
+            67766054
+          ]
+        },
+        {
+          "exports": 5000,
+          "iterations": 100,
+          "median_ns": 253886283,
+          "samples_ns": [
+            247866173,
+            251439797,
+            252338625,
+            253886283,
+            255137709,
+            255672508,
+            279492308
+          ]
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "version": "candidate",
+      "cases": [
+        {
+          "exports": 100,
+          "iterations": 100,
+          "median_ns": 27090902,
+          "samples_ns": [
+            25515704,
+            25832576,
+            26849263,
+            27090902,
+            27644897,
+            28164636,
+            31900658
+          ]
+        },
+        {
+          "exports": 1000,
+          "iterations": 100,
+          "median_ns": 88141400,
+          "samples_ns": [
+            67059865,
+            70155157,
+            78077266,
+            88141400,
+            98779385,
+            107425906,
+            111867299
+          ]
+        },
+        {
+          "exports": 5000,
+          "iterations": 100,
+          "median_ns": 347851829,
+          "samples_ns": [
+            270086744,
+            302839797,
+            332545917,
+            347851829,
+            361501020,
+            381761743,
+            412479761
+          ]
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "version": "baseline",
+      "cases": [
+        {
+          "exports": 100,
+          "iterations": 100,
+          "median_ns": 56608596,
+          "samples_ns": [
+            46694413,
+            49009821,
+            53321132,
+            56608596,
+            60746423,
+            68990364,
+            70451964
+          ]
+        },
+        {
+          "exports": 1000,
+          "iterations": 100,
+          "median_ns": 142113872,
+          "samples_ns": [
+            112807409,
+            118332910,
+            126265312,
+            142113872,
+            142441348,
+            194393904,
+            196826932
+          ]
+        },
+        {
+          "exports": 5000,
+          "iterations": 100,
+          "median_ns": 559025289,
+          "samples_ns": [
+            521079955,
+            524043803,
+            556075729,
+            559025289,
+            576331339,
+            594817590,
+            626027834
+          ]
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "version": "baseline",
+      "cases": [
+        {
+          "exports": 100,
+          "iterations": 100,
+          "median_ns": 34500691,
+          "samples_ns": [
+            32131839,
+            33241750,
+            33866399,
+            34500691,
+            38573249,
+            39925117,
+            41293714
+          ]
+        },
+        {
+          "exports": 1000,
+          "iterations": 100,
+          "median_ns": 169496483,
+          "samples_ns": [
+            113193607,
+            133403545,
+            146597819,
+            169496483,
+            192187202,
+            202893467,
+            210925235
+          ]
+        },
+        {
+          "exports": 5000,
+          "iterations": 100,
+          "median_ns": 581612697,
+          "samples_ns": [
+            554662333,
+            576868757,
+            577424662,
+            581612697,
+            586666236,
+            596483588,
+            843523199
+          ]
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "version": "candidate",
+      "cases": [
+        {
+          "exports": 100,
+          "iterations": 100,
+          "median_ns": 29739785,
+          "samples_ns": [
+            27962266,
+            29595992,
+            29656067,
+            29739785,
+            29951947,
+            30268117,
+            39077752
+          ]
+        },
+        {
+          "exports": 1000,
+          "iterations": 100,
+          "median_ns": 86610731,
+          "samples_ns": [
+            74058375,
+            75059296,
+            83669944,
+            86610731,
+            88456646,
+            97315333,
+            102710373
+          ]
+        },
+        {
+          "exports": 5000,
+          "iterations": 100,
+          "median_ns": 341497104,
+          "samples_ns": [
+            317589886,
+            321141707,
+            322169733,
+            341497104,
+            396868334,
+            398352828,
+            553196662
+          ]
+        }
+      ]
+    }
+  ]
+}

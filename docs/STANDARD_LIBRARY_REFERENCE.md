@@ -605,6 +605,7 @@ destinations remain subject to the outbound destination policy described in
 | `regex_split` | stable | `parts := regex_split(text, ",\\s*")` |
 | `http_get` | preview | `res := http_get("https://example.com")` |
 | `http_request` | preview | `res := http_request({"method":"GET", "url": url, "destination_policy":"deny_private", "pin_dns":true, "redirects":"none", "max_response_bytes":65536})` |
+| `http_stream_collect` | preview | `res := http_stream_collect(response, on_event)` consumes a stream once, preserving bounded response reads and the final body; see the [stream contract](HTTP_STREAM_CONSUMER.md). |
 | `http_post` | preview | `res := http_post("https://example.com", {"x":1})` |
 | `http_put` | preview | `res := http_put("https://example.com", {"x":1})` |
 | `http_delete` | preview | `res := http_delete("https://example.com")` |

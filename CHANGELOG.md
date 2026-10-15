@@ -6,6 +6,26 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+### Runtime boundary hardening
+
+- Preserve caller capabilities during module initialization, test-run bodies and
+  hooks, and parallel bytecode mapper execution. Invalidate evaluated module
+  exports when the loader's capability policy changes.
+- Enforce AI endpoint allowlists on every redirect while preserving structured
+  `endpoint_denied` errors, private-network controls and redirect hop limits.
+- Reject static-file aliases resolving to private names, including custom 404
+  pages; ordinary public-file aliases remain supported.
+- Bound schema diagnostics to 10,000 errors and 4 MiB of cumulative diagnostic
+  string bytes per call, including discarded combinator branches. Exceeding a
+  limit returns an operational error rather than a truncated validation result.
+- Update the locked rustls dependency to 0.23.46.
+- Avoid a redundant clone when returning an owned module's exported values.
+- Grant the live agent provider bridge explicit randomness for AI SDK client
+  identifiers; keep deterministic fixture permissions unchanged. Stop its mock
+  server explicitly so a failed client cannot hang integration verification.
+- Refresh the generated TODO source location and document `http_stream_collect`
+  in the standard-library reference inventory.
+
 ### HTTP stream consumption
 
 - Add one-shot `http_stream_collect` and `http_request` collection mode with UTF-8-safe incremental callbacks, bounded reads, cancellation, capability checks and reentrant ownership protection. Existing buffered requests and server forwarding remain compatible.
