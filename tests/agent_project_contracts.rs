@@ -1,7 +1,6 @@
 use serde_json::Value;
 use std::fs;
-use std::io::{Read, Write};
-use std::net::TcpListener;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::Stdio;
@@ -496,20 +495,22 @@ fn project_is_portable_without_sibling_repositories() {
 
 #[test]
 fn live_custom_provider_flows_through_ai_sdk_and_agents_sdk() {
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let port = listener.local_addr().unwrap().port();
-    let server = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
-        let mut request = [0_u8; 16_384];
-        let _ = stream.read(&mut request).unwrap();
-        let body = r#"{"id":"live-proof","model":"mock-model","choices":[{"message":{"content":"live bridge verified"},"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}"#;
-        write!(
-            stream,
-            "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
-            body.len(),
-            body
-        )
-        .unwrap();
+    let server = std::sync::Arc::new(tiny_http::Server::http("127.0.0.1:0").unwrap());
+    let address = server.server_addr();
+    let receiver = std::sync::Arc::clone(&server);
+    let worker = thread::spawn(move || {
+        let Ok(mut request) = receiver.recv() else {
+            return false;
+        };
+        let mut body = String::new();
+        request.as_reader().read_to_string(&mut body).unwrap();
+        let response = r#"{"id":"live-proof","model":"mock-model","choices":[{"message":{"content":"live bridge verified"},"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":3,"total_tokens":5}}"#;
+        request
+            .respond(tiny_http::Response::from_string(response).with_header(
+                tiny_http::Header::from_bytes("Content-Type", "application/json").unwrap(),
+            ))
+            .unwrap();
+        true
     });
 
     let project = scaffold("basic");
@@ -521,7 +522,7 @@ fn live_custom_provider_flows_through_ai_sdk_and_agents_sdk() {
     config["mode"] = Value::String("live".into());
     config["model"] = Value::String("mock-model".into());
     config["api_key_env"] = Value::String("CUSTOM_API_KEY".into());
-    config["base_url"] = Value::String(format!("http://127.0.0.1:{port}/v1"));
+    config["base_url"] = Value::String(format!("http://{address}/v1"));
     config["allow_insecure_localhost"] = Value::Bool(true);
     fs::write(&config_path, format!("{}\n", serde_json::to_string_pretty(&config).unwrap()))
         .unwrap();
@@ -540,8 +541,17 @@ fn live_custom_provider_flows_through_ai_sdk_and_agents_sdk() {
         .current_dir(&project)
         .output()
         .unwrap();
-    server.join().unwrap();
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    // A failed client may never connect. Wake recv before joining so its actual
+    // failure is reported instead of hanging the entire test suite.
+    server.unblock();
+    let received = worker.join().unwrap();
+    assert!(
+        output.status.success(),
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(received, "live provider did not receive a request");
     let payload: Value = serde_json::from_slice(&output.stdout).unwrap();
     assert_eq!(payload["provider_mode"], "live");
     assert_eq!(payload["output"], "live bridge verified");

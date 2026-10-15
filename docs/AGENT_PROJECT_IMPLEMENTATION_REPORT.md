@@ -10,6 +10,10 @@ ecosystem components retain their established responsibilities.
 
 ## Final CLI
 
+The live AI SDK bridge grants randomness explicitly for provider-client UUIDs,
+alongside its existing read, environment, network, AI and clock permissions.
+Deterministic fixture execution does not acquire that additional capability.
+
 ```text
 kujo agent new <name> [--profile <profile>] [--dir <path>] [--provider <id>] [--model <id>] [--no-git] [--install] [--json]
 kujo agent inspect [--json]

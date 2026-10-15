@@ -1125,7 +1125,8 @@ fn invoke_live_model(
         .arg("--allow-env-read")
         .arg("--allow-net-client")
         .arg("--allow-ai")
-        .arg("--allow-clock");
+        .arg("--allow-clock")
+        .arg("--allow-random");
     if !allow_local {
         command.arg("--deny-private-net");
     } else {
