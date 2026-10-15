@@ -1009,3 +1009,31 @@ fn serve_rejects_symlink_escape_target() {
     let _ = fs::remove_dir_all(root);
     let _ = fs::remove_dir_all(outside);
 }
+
+#[cfg(unix)]
+#[test]
+fn serve_rejects_aliases_to_private_targets() {
+    let root = tempfile::tempdir().unwrap();
+    fs::create_dir(root.path().join(".git")).unwrap();
+    fs::write(root.path().join(".git/config"), "private-marker").unwrap();
+    fs::write(root.path().join(".env"), "private-marker").unwrap();
+    fs::write(root.path().join("public.txt"), "public-marker").unwrap();
+    unix_fs::symlink(".git", root.path().join("repository")).unwrap();
+    unix_fs::symlink(".env", root.path().join("config.txt")).unwrap();
+    unix_fs::symlink(".env", root.path().join("404.html")).unwrap();
+    unix_fs::symlink("public.txt", root.path().join("alias.txt")).unwrap();
+    let server = spawn_server_or_skip!(spawn_serve_process(root.path()));
+    for (path, status) in
+        [("/repository/config", 403), ("/config.txt", 403), ("/missing", 404), ("/alias.txt", 200)]
+    {
+        let response = send_http_request(
+            server.port,
+            &format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n"),
+        );
+        assert_eq!(response.status_code, status, "{path}");
+        assert!(!String::from_utf8_lossy(&response.body).contains("private-marker"), "{path}");
+        if status == 200 {
+            assert_eq!(response.body, b"public-marker");
+        }
+    }
+}

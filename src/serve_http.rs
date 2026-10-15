@@ -303,6 +303,7 @@ fn build_response(
     };
 
     if path_security::ensure_path_within_root(&canonical_target, root_dir, "request path").is_err()
+        || canonical_target.strip_prefix(root_dir).map_or(true, path_has_blocked_private_components)
     {
         return headify(
             static_text_response(403, "Forbidden", options, request.secure(), &[]),
@@ -525,7 +526,9 @@ fn custom_not_found_response(
         Ok(path) => path,
         Err(_) => return static_text_response(404, "Not Found", options, secure, &[]),
     };
-    if path_security::ensure_path_within_root(&canonical_path, root_dir, "404 page").is_err() {
+    if path_security::ensure_path_within_root(&canonical_path, root_dir, "404 page").is_err()
+        || canonical_path.strip_prefix(root_dir).map_or(true, path_has_blocked_private_components)
+    {
         return static_text_response(404, "Not Found", options, secure, &[]);
     }
 
