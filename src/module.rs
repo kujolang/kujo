@@ -1,6 +1,6 @@
 use crate::ast::{Expr, Pattern, Stmt};
 use crate::errors::{ErrorKind, KujoError};
-use crate::interpreter::{Environment, Interpreter, Value};
+use crate::interpreter::{Environment, Interpreter, RuntimeCapabilityPolicy, Value};
 use crate::lexer::tokenize_with_file;
 use crate::parser::Parser;
 use crate::path_security;
@@ -68,6 +68,8 @@ impl ModuleSourceState {
 
 /// Manages module loading, caching, and resolution.
 pub struct ModuleLoader {
+    /// Authority used to evaluate this loader's cached module initializers.
+    capability_policy: RuntimeCapabilityPolicy,
     /// Cache of loaded modules to avoid re-parsing.
     loaded_modules: HashMap<ModuleCacheKey, CachedModule>,
     /// Stack of modules currently being loaded (for circular import detection).
@@ -201,12 +203,22 @@ impl ModuleLoader {
     pub fn new() -> Self {
         let search_paths = initial_module_search_paths();
         ModuleLoader {
+            capability_policy: RuntimeCapabilityPolicy::trusted(),
             loaded_modules: HashMap::new(),
             loading_stack: Vec::new(),
             loading_stack_index: HashMap::new(),
             search_paths,
             automatic_search_starts: vec![current_working_directory()],
             automatic_search_paths: RefCell::new(None),
+        }
+    }
+
+    pub(crate) fn set_capability_policy(&mut self, policy: RuntimeCapabilityPolicy) {
+        if self.capability_policy != policy {
+            // Evaluated exports may contain data or handles acquired under the
+            // previous authority. Never reuse them under a different policy.
+            self.loaded_modules.clear();
+            self.capability_policy = policy;
         }
     }
 
@@ -431,7 +443,8 @@ impl ModuleLoader {
             let program = parse_output.stmts;
             let export_names = Self::collect_exported_symbol_names(&program);
 
-            let mut interpreter = Interpreter::new();
+            let mut interpreter =
+                Interpreter::with_capability_policy(self.capability_policy.clone());
             let mut active_loader = std::mem::take(self);
             if let Some(parent) = module_path.parent() {
                 active_loader.add_search_path(parent);

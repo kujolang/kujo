@@ -34,6 +34,13 @@ Provide deterministic runtime controls and failure contracts for host-effect API
 
 `kujo run` and `kujo test-run` default to trusted mode when no capability flags are provided.
 
+Imported module initializers, nested imports, test-run bodies/setup/teardown, and
+parallel bytecode mappers inherit the caller's capability policy. Changing an
+interpreter's policy invalidates evaluated module exports before another import;
+it does not revoke values already handed to host code. Pure imports remain usable
+under restricted execution without granting general filesystem-read authority.
+Setup and teardown failures, including structured runtime errors, fail the test.
+
 Trusted mode means all host-effect capabilities are enabled and scripts run with ambient user permissions.
 
 ### Restricted behavior
@@ -164,7 +171,7 @@ Built-in guardrails:
   - only `http` and `https` schemes are accepted.
   - malformed URLs and missing hosts fail early with deterministic diagnostics before request execution.
 - Outbound destination policy mode:
-  - `--deny-private-net`: CLI-level strict outbound policy for `kujo run` / `kujo test-run`, independent of environment variables and valid in trusted or untrusted mode.
+  - `--deny-private-net`: selects strict outbound policy for `kujo run` / `kujo test-run` in trusted or untrusted mode. The explicit `KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1` trusted-local override still takes precedence.
   - `KUJO_NET_DESTINATION_POLICY=allow_all` (default): preserves backward-compatible permissive destination behavior.
   - `KUJO_NET_DESTINATION_POLICY=deny_private`: blocks outbound HTTP/TCP/UDP client destinations that resolve to loopback/private/link-local/multicast/unspecified IP ranges.
   - `KUJO_ALLOW_PRIVATE_NETWORK_DESTINATIONS=1`: explicit trusted-local override when strict policy mode is enabled.

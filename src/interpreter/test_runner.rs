@@ -88,7 +88,8 @@ impl TestRunner {
         let start_time = std::time::Instant::now();
 
         // Create fresh interpreter for this test
-        let mut test_interp = Interpreter::new();
+        let mut test_interp =
+            Interpreter::with_capability_policy(base_interp.capability_policy().clone());
 
         // Copy environment from base interpreter (for imports, etc.)
         test_interp.env = base_interp.env.clone();
@@ -98,7 +99,9 @@ impl TestRunner {
             test_interp.eval_stmts(setup_stmts);
 
             // Check for errors in setup
-            if let Some(Value::Error(msg)) = &test_interp.return_value {
+            if let Some(Value::Error(msg) | Value::ErrorObject { message: msg, .. }) =
+                &test_interp.return_value
+            {
                 return TestResult {
                     name: name.to_string(),
                     passed: false,
@@ -147,7 +150,16 @@ impl TestRunner {
         // Run teardown if present
         if let Some(teardown_stmts) = &self.teardown {
             test_interp.eval_stmts(teardown_stmts);
-            // We don't fail the test if teardown fails, but we could log it
+            if let Some(Value::Error(message) | Value::ErrorObject { message, .. }) =
+                &test_interp.return_value
+            {
+                return TestResult {
+                    name: name.to_string(),
+                    passed: false,
+                    message: Some(format!("Teardown failed: {}", message)),
+                    duration_ms: start_time.elapsed().as_millis(),
+                };
+            }
         }
 
         let duration = start_time.elapsed();

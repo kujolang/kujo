@@ -53,7 +53,7 @@ impl NativeCapability {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct RuntimeCapabilityPolicy {
     pub filesystem_read: bool,
     pub filesystem_write: bool,

@@ -439,6 +439,8 @@ impl Interpreter {
     }
 
     fn with_environment(capability_policy: RuntimeCapabilityPolicy, env: Environment) -> Self {
+        let mut module_loader = ModuleLoader::new();
+        module_loader.set_capability_policy(capability_policy.clone());
         Interpreter {
             env,
             return_value: None,
@@ -448,7 +450,7 @@ impl Interpreter {
             output: None,
             source_file: None,
             source_lines: Vec::new(),
-            module_loader: ModuleLoader::new(),
+            module_loader,
             call_stack: Vec::new(),
             error_call_stack: Vec::new(),
             async_task_pool_size: DEFAULT_ASYNC_TASK_POOL_SIZE,
@@ -467,6 +469,7 @@ impl Interpreter {
     }
 
     pub fn set_capability_policy(&mut self, capability_policy: RuntimeCapabilityPolicy) {
+        self.module_loader.set_capability_policy(capability_policy.clone());
         self.capability_policy = capability_policy;
     }
 

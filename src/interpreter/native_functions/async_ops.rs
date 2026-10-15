@@ -4,7 +4,7 @@
 // Provides async functions for sleep, timeouts, Promise.all, Promise.race, etc.
 
 use crate::bytecode::{BytecodeChunk, OpCode};
-use crate::interpreter::{AsyncRuntime, DictMap, Environment, Value};
+use crate::interpreter::{AsyncRuntime, DictMap, Environment, RuntimeCapabilityPolicy, Value};
 #[cfg(feature = "runtime-network")]
 use crate::network_policy;
 use crate::vm::{VmExecutionResult, VM};
@@ -728,6 +728,7 @@ fn try_parallel_map_with_jit_bytecode(
         concurrency_limit.unwrap_or(interp.get_async_task_pool_size() as i64).max(1) as usize;
     let mapper = mapper.clone();
     let base_env = interp.env.clone();
+    let capability_policy = interp.capability_policy().clone();
     let elements = array.as_ref().clone();
     let (tx, rx) = tokio::sync::oneshot::channel();
     AsyncRuntime::spawn_task(async move {
@@ -737,8 +738,9 @@ fn try_parallel_map_with_jit_bytecode(
         let spawn = |idx: usize, element: Value| {
             let mapper = mapper.clone();
             let worker_env = base_env.clone();
+            let worker_policy = capability_policy.clone();
             tokio::task::spawn_blocking(move || {
-                (idx, execute_bytecode_mapper(mapper, element, worker_env))
+                (idx, execute_bytecode_mapper(mapper, element, worker_env, worker_policy))
             })
         };
 
@@ -788,6 +790,7 @@ fn execute_bytecode_mapper(
     mapper: Value,
     element: Value,
     mut environment: Environment,
+    capability_policy: RuntimeCapabilityPolicy,
 ) -> Result<Value, String> {
     const MAPPER: &str = "__kujo_parallel_mapper";
     const ARGUMENT: &str = "__kujo_parallel_argument";
@@ -810,6 +813,7 @@ fn execute_bytecode_mapper(
     ];
 
     let mut vm = VM::new();
+    vm.set_capability_policy(capability_policy);
     vm.set_globals(Arc::clone(&shared_environment));
     match vm.execute_until_suspend(wrapper)? {
         VmExecutionResult::Completed => {}
