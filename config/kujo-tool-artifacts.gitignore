@@ -190,6 +190,7 @@
 # RAG, Watchdog, AI Chat, CMS, CRUD API, Email local state
 /.email/
 /.email-test*/
+/.totalrecall.local
 /data/rag_index*.json
 /data/*.db
 /data/*.db-shm

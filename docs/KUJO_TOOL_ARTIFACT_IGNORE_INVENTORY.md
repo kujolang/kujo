@@ -1,7 +1,7 @@
 # Kujo Tool Artifact Ignore Inventory
 
 Status: research snapshot
-Last updated: 2026-10-11
+Last updated: 2026-10-18
 
 This inventory captures local files and directories created by Kujo and adjacent tooling so each repository can share one ignore block. The reusable block is tracked at `config/kujo-tool-artifacts.gitignore`.
 
@@ -78,7 +78,7 @@ This inventory captures local files and directories created by Kujo and adjacent
 | Agents SDK | file-backed artifact/trace stores write under caller-provided roots, often `/tmp`; no repo-local default artifact root found | Ignore chosen local roots where configured. |
 | AI SDK | `artifacts/security/integrity-manifest.sha256`, `artifacts/hardening/` logs, generated catalogs, wrapper measurements, stress output, integrity manifests, and other local release/security artifacts | CI may upload reviewed release artifacts; local hardening evidence is documented as ignored and not shipped. |
 | Ability Gateway | `artifacts/live-conformance.json` from live OAuth/gateway certification | The runner writes a mode-0600 redacted receipt while keeping tokens, authorization codes, OAuth state, GitHub credentials, and request bodies out of the file. |
-| TotalRecall | Caller-selected reports such as `artifacts/run-report.json`, coverage checks under `artifacts/coverage/` and `.coverage`, and optional Markdown/HTML/local-index destination directories configured via `TOTALRECALL_*_OUTPUT_DIR` | Destination roots are caller-selected and can be source-worthy exports; only the known local coverage artifact roots are in the shared block. |
+| TotalRecall | `.totalrecall.local` local config (often credential-bearing), caller-selected reports such as `artifacts/run-report.json`, coverage checks under `artifacts/coverage/` and `.coverage`, and optional Markdown/HTML/local-index destination directories configured via `TOTALRECALL_*_OUTPUT_DIR` | The local config is intentionally ignored; destination roots are caller-selected and can be source-worthy exports, so only known local config and coverage artifact roots are in the shared block. |
 | Benchmarks System | `results/<run-id>/`, `results/<run-id>/source_evidence/`, generated static dashboard `dist/`, and zipped dashboard bundles under `dist-build/` | `BENCHMARK_EXECUTION_KIT/` and `BENCHMARK_REVIEW_KIT/` are source-worthy operator prompts. The benchmark runner output directory is caller-selected; the local dashboard exporter defaults to `results/` and writes `dist/`. |
 | Cross-language local support files | `.DS_Store`, `.cache/`, `.local/`, `__pycache__/`, `*.pyc`, `*.pyo`, `*.pyd` | Observed across many Kujo ecosystem repos from macOS, Python tests, browser/tool caches, and package-install sentinel runs. Track only deliberately authored cache fixtures with repo-specific negations. |
 
@@ -139,6 +139,7 @@ serve multiple rows in the inventory:
 - `/.tribunal/` covers Tribunal's default local artifact-store and telemetry roots beside `/tribunal-runs/`.
 - `/.cache/`, `__pycache__/`, `*.py[cod]`, and `.DS_Store` cover local caches, Python bytecode, and macOS metadata commonly emitted across Kujo ecosystem repos.
 - `/.coverage` covers TotalRecall's local Python harness coverage marker beside the existing `/artifacts/coverage/` report root.
+- `/.totalrecall.local` covers TotalRecall's documented local config, which is copied from the tracked example and may contain credentials; shared configuration should use a differently named, intentionally tracked file.
 
 ## Verification
 
