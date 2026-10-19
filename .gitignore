@@ -383,3 +383,6 @@ benchmark_output.txt
 /.cache/
 __pycache__/
 *.py[cod]
+
+# Fixed ZIP 7 backward-compatibility test inputs.
+!/tests/fixtures/zip7/*.zip

@@ -124,7 +124,7 @@ fn zip_single_file_read(arg_values: &[Value]) -> Value {
         Ok(entry) => entry,
         Err(error) => return Value::Error(format!("zip_single_file_read failed: {}", error)),
     };
-    let name = entry.name().to_string();
+    let name = crate::zip_compat::entry_name(&entry);
     if entry.is_dir()
         || entry.unix_mode().map(|mode| (mode & 0o170000) == 0o120000).unwrap_or(false)
         || crate::path_security::sanitize_relative_path(&name, "zip entry").is_err()

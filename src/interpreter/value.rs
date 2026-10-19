@@ -1329,7 +1329,7 @@ pub enum Value {
     #[cfg(feature = "runtime-image")]
     Image { data: Arc<Mutex<DynamicImage>>, format: String },
     /// Zip archive writer
-    /// Infrastructure for zip.rs stub module
+    /// The public writer uses zip 9; see docs/ZIP_9_RUST_MIGRATION.md for embedders.
     #[cfg(feature = "runtime-archive")]
     #[allow(dead_code)]
     ZipArchive { writer: Arc<Mutex<Option<ZipWriter<File>>>>, path: String },

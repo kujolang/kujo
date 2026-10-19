@@ -47,3 +47,5 @@ pub mod serve_http;
 pub mod type_checker;
 pub mod vm;
 pub mod workflow_pack;
+#[cfg(feature = "runtime-archive")]
+mod zip_compat;

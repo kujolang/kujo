@@ -246,8 +246,11 @@ fn extract(bytes: &[u8], windows: bool) -> Result<Vec<u8>> {
         let local = bytes.get(..30).ok_or("truncated ZIP local header")?;
         let name_len = u16::from_le_bytes([local[26], local[27]]) as usize;
         let has_descriptor = local[6] & 8 != 0;
-        let payload_end =
-            entry.data_start().checked_add(entry.compressed_size()).ok_or("invalid ZIP size")?;
+        let payload_end = entry
+            .data_start()
+            .ok_or("missing ZIP payload offset")?
+            .checked_add(entry.compressed_size())
+            .ok_or("invalid ZIP size")?;
         let gap =
             (directory_start as u64).checked_sub(payload_end).ok_or("overlapping ZIP directory")?;
         if entry.header_start() != 0
@@ -258,7 +261,7 @@ fn extract(bytes: &[u8], windows: bool) -> Result<Vec<u8>> {
             return Err("ZIP has unexpected local entries or payload layout".into());
         }
         let mode = entry.unix_mode().unwrap_or(0o100644) & 0o170000;
-        if entry.name() != expected
+        if entry.name().map_err(|e| e.to_string())? != expected
             || !matches!(mode, 0 | 0o100000)
             || entry.is_dir()
             || entry.size() > BINARY_LIMIT

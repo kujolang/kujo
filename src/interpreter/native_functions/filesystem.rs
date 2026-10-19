@@ -1045,7 +1045,7 @@ fn extract_zip_archive_with_limits(
         let mut archive_file = archive
             .by_index(entry_index)
             .map_err(|error| format!("Failed to read zip entry {}: {}", entry_index, error))?;
-        let entry_name = archive_file.name().to_string();
+        let entry_name = crate::zip_compat::entry_name(&archive_file);
 
         if archive_entry_is_symlink(&archive_file) {
             return Err(format!(
@@ -1162,7 +1162,21 @@ fn extract_zip_archive_with_limits(
             })?;
 
         let copied = std::io::copy(&mut (&mut archive_file).take(entry_size + 1), &mut output_file)
-            .map_err(|error| format!("Failed to extract file '{}': {}", entry_name, error))?;
+            .map_err(|error| {
+                // ZIP 9 rejects oversize output inside its decoder, before our
+                // post-copy check. It exposes this as an untyped I/O error;
+                // retain Kujo's established diagnostic for this exact case.
+                if error.kind() == std::io::ErrorKind::InvalidData
+                    && error.to_string() == "File is larger than its declared uncompressed size"
+                {
+                    format!(
+                        "Archive entry '{}' decoded size does not match declared size (more than {} bytes)",
+                        entry_name, entry_size
+                    )
+                } else {
+                    format!("Failed to extract file '{}': {}", entry_name, error)
+                }
+            })?;
         if copied != entry_size {
             return Err(format!(
                 "Archive entry '{}' decoded size does not match declared size ({} != {})",

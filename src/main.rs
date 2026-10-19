@@ -50,6 +50,8 @@ mod serve_http;
 mod type_checker;
 mod upgrade;
 mod vm;
+#[cfg(feature = "runtime-archive")]
+mod zip_compat;
 
 mod workflow_pack;
 

@@ -92,7 +92,7 @@ image = { version = "0.25", default-features = false, features = [
     "tiff",
     "webp",
 ], optional = true }
-zip = { version = "7.0.0" }
+zip = { version = "9.0.5" }
 flate2 = "1.1"
 tar = { version = "0.4.46", default-features = false }
 same-file = "1"

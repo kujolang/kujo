@@ -8,6 +8,10 @@ This file records user-visible changes to Kujo, following
 
 ### Runtime boundary hardening
 
+- Upgrade ZIP to 9.0.5 to resolve RUSTSEC-2026-0367/0368/0369 while retaining
+  Kujo-language archive behavior and filename decoding. Rust embedders using
+  `Value::ZipArchive.writer` must migrate their direct ZIP dependency to version 9;
+  see [the Rust migration guide](docs/ZIP_9_RUST_MIGRATION.md).
 - Replace the unmaintained YAML parser dependencies with the YAML organization's
   maintained compatible fork. Keep YAML values, tags and serialization behavior
   covered by compatibility tests.
