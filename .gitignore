@@ -392,3 +392,15 @@ __pycache__/
 
 # Preserve the reviewed upstream manifest alongside the normalized patch.
 !/vendor/hyphenation-0.8.4/Cargo.toml.orig
+
+# Generated video media and local TotalRecall state (canonical artifact policy).
+/video-*/work-*-*/
+/video-*/snapshots/
+/video-*/proof/
+/video-*/audio/*.wav
+/video-*/captions.ass
+/video-*/*.mp4
+/the-great-delete/snapshots/
+/the-great-delete/proof/
+/the-great-delete/*.mp4
+/.totalrecall.local
