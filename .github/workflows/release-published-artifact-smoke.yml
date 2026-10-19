@@ -85,6 +85,32 @@ jobs:
         with:
           version: ${{ github.event.release.tag_name || inputs.tag_name }}
 
+      - name: Wait for shared-runner GitHub API quota
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import json, time, urllib.request
+
+          # Upgrade intentionally uses the public unauthenticated API. Hosted
+          # runners can share an exhausted address; do not skip real upgrades
+          # or alter the published binary to mask that infrastructure failure.
+          deadline = time.monotonic() + 2400
+          while True:
+              request = urllib.request.Request(
+                  "https://api.github.com/rate_limit?kujo_smoke=" + str(time.time_ns()),
+                  headers={"User-Agent": "kujo-published-install-smoke"},
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  quota = json.load(response)["resources"]["core"]
+              remaining, reset = quota["remaining"], quota["reset"]
+              print(f"Public API requests remaining: {remaining}; reset: {reset}", flush=True)
+              if remaining >= 8:
+                  break
+              if time.monotonic() >= deadline:
+                  raise RuntimeError("Shared-runner GitHub API quota stayed exhausted for 40 minutes")
+              time.sleep(min(60, max(5, reset - time.time() + 2)))
+          PYTHON
+
       - name: Download and verify published artifact
         shell: bash
         env:

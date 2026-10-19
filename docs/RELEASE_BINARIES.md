@@ -201,3 +201,8 @@ their package manager. Only the runtime changes; ecosystem sources, profiles,
 and package pins are preserved. Older releases need an installer bootstrap.
 See [native upgrade and recovery documentation](RUNTIME_UPGRADE.md)
 for installation recognition, retained backups, Windows recovery, JSON, and limits.
+
+Published-install CI waits up to 40 minutes for at least eight unauthenticated
+GitHub API requests on a shared runner before executing native upgrade checks.
+Quota exhaustion fails the job after that bound; checksum, execution, no-op and
+cross-version upgrade assertions are never skipped.
