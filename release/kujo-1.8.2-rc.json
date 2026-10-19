@@ -1,0 +1,12 @@
+{
+  "schema": "kujo.release-candidate/v1",
+  "version": "1.8.2",
+  "status": "candidate-unpublished",
+  "intended_tag": "v1.8.2",
+  "published_stable": "1.8.1",
+  "native_archive": "kujo-v1.8.2-{platform}.tar.gz",
+  "source_archive": "kujo-v1.8.2-source.tar.gz",
+  "evidence_note": "notes/2026-10-19_14-20_kujo-1-8-2-candidate.md",
+  "release_theme": "Dependency security, compatibility and runtime boundary maintenance.",
+  "publication_authorized": false
+}
