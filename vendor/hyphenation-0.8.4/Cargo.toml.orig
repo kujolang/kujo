@@ -1,0 +1,73 @@
+[package]
+name = "hyphenation"
+version = "0.8.4"
+edition = "2018"
+
+authors = ["Andrew <andrew@banausia.com>"]
+license = "Apache-2.0/MIT"
+repository = "https://github.com/tapeinosyne/hyphenation"
+homepage = "https://github.com/tapeinosyne/hyphenation"
+documentation = "https://docs.rs/hyphenation"
+
+readme = "README.md"
+description = "Knuth-Liang hyphenation for a variety of languages"
+keywords = ["text", "typesetting"]
+
+
+include = [
+  "**/*.rs",
+  "**/Cargo.toml",
+  "dictionaries/*",
+  "patterns/*",
+  "README.md",
+  "CHANGELOG.md",
+  "LICENSE*",
+]
+build = "build.rs"
+
+
+[features]
+embed_all = ["pocket-resources"]
+embed_en-us = ["pocket-resources"]
+build_dictionaries = []
+
+# Unicode normalization.
+#
+# HEED: these features are mutually exclusive; only one may be passed to
+# rustc/cargo as an argument. `build.rs` ensures that these multiple "features"
+# effectively behave as a single, configurable parameter: were the user to
+# select more than one normalization form, the build will fail.
+nfc = ["unicode-normalization"]
+nfd = ["unicode-normalization"]
+nfkc = ["unicode-normalization"]
+nfkd = ["unicode-normalization"]
+
+[package.metadata.docs.rs]
+features = ["embed_en-us"]
+
+[workspace]
+members = ["hyphenation_commons"]
+
+[dependencies]
+hyphenation_commons = { path = "hyphenation_commons", version = "0.8.4" }
+fst = "0.4.6"
+bincode = { package = "bincode-next", version = "=2.1.0", default-features = false, features = ["std", "serde"] }
+serde = "1.0.126"
+
+[build-dependencies]
+hyphenation_commons = { path = "hyphenation_commons", version = "0.8.4" }
+fst = "0.4.6"
+bincode = { package = "bincode-next", version = "=2.1.0", default-features = false, features = ["std", "serde"] }
+serde = "1.0.126"
+pocket-resources = { version = "0.3.2", optional = true }
+unicode-normalization = { version = "0.1.19", optional = true }
+
+[dev-dependencies]
+once_cell = "1.7.2"
+quickcheck = "1.0.3"
+unicode-segmentation = "1.7.1"
+criterion = "0.3.4"
+
+[[bench]]
+name = "hyphenate"
+harness = false

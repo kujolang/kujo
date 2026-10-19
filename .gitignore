@@ -386,3 +386,9 @@ __pycache__/
 
 # Fixed ZIP 7 backward-compatibility test inputs.
 !/tests/fixtures/zip7/*.zip
+
+# Locked transitive dictionary compatibility fixture.
+!/tests/fixtures/hyphenation_compat/Cargo.lock
+
+# Preserve the reviewed upstream manifest alongside the normalized patch.
+!/vendor/hyphenation-0.8.4/Cargo.toml.orig

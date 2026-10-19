@@ -1,0 +1,47 @@
+name: hyphenation-compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'vendor/hyphenation-0.8.4/**'
+      - 'tests/fixtures/hyphenation_compat/**'
+      - '.github/workflows/hyphenation-compatibility.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'vendor/hyphenation-0.8.4/**'
+      - 'tests/fixtures/hyphenation_compat/**'
+      - '.github/workflows/hyphenation-compatibility.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dictionaries:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rust: '1.89.0'
+          - os: macos-latest
+            rust: stable
+          - os: windows-latest
+            rust: stable
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      CARGO_TARGET_DIR: target/hyphenation-compat
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Verify original dictionary compatibility
+        run: cargo run --locked --manifest-path tests/fixtures/hyphenation_compat/Cargo.toml
+      - name: Verify rebuilt dictionary compatibility
+        run: cargo run --locked --manifest-path tests/fixtures/hyphenation_compat/Cargo.toml --features rebuild

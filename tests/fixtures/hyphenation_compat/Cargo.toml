@@ -1,0 +1,16 @@
+[package]
+name = "kujo-hyphenation-compat"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[features]
+rebuild = ["hyphenation/build_dictionaries"]
+
+[dependencies]
+hyphenation = { path = "../../../vendor/hyphenation-0.8.4", features = ["embed_all"] }
+bincode-next = { version = "=2.1.0", default-features = false, features = ["std", "serde"] }
+serde_json = "1"
+sha2 = "0.10"

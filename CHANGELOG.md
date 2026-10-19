@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Replace the retired bincode dependency in PDF hyphenation with a maintained,
+  legacy-format-compatible codec; preserve bundled dictionary contents and
+  remove the release audit exception.
+
 ### Runtime boundary hardening
 
 - Upgrade ZIP to 9.0.5 to resolve RUSTSEC-2026-0367/0368/0369 while retaining

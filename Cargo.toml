@@ -142,6 +142,8 @@ dbus-secret-service-keyring-store = { version = "1.0.1", features = ["crypto-rus
 pulp = { path = "vendor/pulp-0.22.3" }
 rav1e = { path = "vendor/rav1e-0.8.1" }
 tiny_http = { path = "vendor/tiny_http-0.12.0" }
+# Preserve bundled dictionary bytes while replacing the retired bincode codec.
+hyphenation = { path = "vendor/hyphenation-0.8.4" }
 
 [dev-dependencies]
 criterion = "0.5"
