@@ -6,6 +6,8 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
+#[cfg(feature = "runtime-network")]
+mod credential_store;
 mod credentials;
 mod doctor;
 mod scaffold;

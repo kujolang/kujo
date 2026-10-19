@@ -1,0 +1,42 @@
+name: keyring-compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'src/agent_project/credential*'
+      - 'tests/fixtures/keyring_interop/**'
+      - '.github/workflows/keyring-compatibility.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'src/agent_project/credential*'
+      - 'tests/fixtures/keyring_interop/**'
+      - '.github/workflows/keyring-compatibility.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-service-interop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CARGO_TARGET_DIR: target/keyring-interop
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install isolated Secret Service test dependencies
+        run: sudo apt-get update && sudo apt-get install -y dbus gnome-keyring
+      - name: Build legacy/current compatibility fixture
+        run: cargo build --locked --manifest-path tests/fixtures/keyring_interop/Cargo.toml
+      - name: Verify stored credential interoperability
+        run: |
+          dbus-run-session -- sh -c '
+            printf test-only | gnome-keyring-daemon --unlock --components=secrets >/dev/null
+            target/keyring-interop/debug/kujo-keyring-interop
+          '

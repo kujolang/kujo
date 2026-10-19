@@ -317,8 +317,8 @@ fn current_project_root() -> Result<PathBuf, AgentError> {
 }
 
 #[cfg(feature = "runtime-network")]
-fn keyring_entry(credential_name: &str) -> Result<keyring::Entry, AgentError> {
-    keyring::Entry::new(KEYRING_SERVICE, credential_name)
+fn keyring_entry(credential_name: &str) -> Result<keyring_core::Entry, AgentError> {
+    credential_store::entry(KEYRING_SERVICE, credential_name)
         .map_err(|e| fail(format!("OS credential store is unavailable: {e}")))
 }
 
@@ -339,7 +339,7 @@ fn keyring_get(credential_name: &str) -> Result<Option<String>, AgentError> {
     }
     match keyring_entry(credential_name)?.get_password() {
         Ok(value) => Ok(Some(value)),
-        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(keyring_core::Error::NoEntry) => Ok(None),
         Err(error) => Err(fail(format!("Could not read the OS credential store: {error}"))),
     }
 }
@@ -353,7 +353,7 @@ fn keyring_remove(credential_name: &str) -> Result<bool, AgentError> {
     }
     match keyring_entry(credential_name)?.delete_credential() {
         Ok(()) => Ok(true),
-        Err(keyring::Error::NoEntry) => Ok(false),
+        Err(keyring_core::Error::NoEntry) => Ok(false),
         Err(error) => Err(fail(format!("Could not remove credential: {error}"))),
     }
 }

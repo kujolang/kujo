@@ -1,0 +1,13 @@
+[package]
+name = "kujo-keyring-interop"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+keyring-core = "=1.0.0"
+dbus-secret-service-keyring-store = { version = "=1.0.1", features = ["crypto-rust", "vendored"] }
+# Test-only legacy reader/writer: intentionally excluded from the runtime lockfile.
+zbus-secret-service-keyring-store = { version = "=1.0.1", features = ["crypto-rust"] }

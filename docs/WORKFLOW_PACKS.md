@@ -410,7 +410,7 @@ src/workflow_pack/
 
 ### Key Design Decisions
 
-- **Manifest format**: YAML (`kujo-pack.yaml`) — human-friendly, already a project dependency via `serde_yaml`
+- **Manifest format**: YAML (`kujo-pack.yaml`) — parsed by the maintained `yaml_serde` dependency (internally aliased as `serde_yaml`).
 - **CLI integration**: Uses clap's `allow_external_subcommands` to capture unknown namespaces without modifying the core command enum
 - **Built-in packs**: Compiled Rust code for performance and zero external dependencies
 - **External packs**: Discovered at runtime via manifest files; commands run as Kujo scripts or native executables

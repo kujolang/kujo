@@ -69,6 +69,7 @@ Icon?
 
 # Keep lockfile tracked for reproducible binary releases
 !/Cargo.lock
+!/tests/fixtures/keyring_interop/Cargo.lock
 
 # === BY PRODUCTS ===
 *.dSYM/

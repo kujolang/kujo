@@ -8,6 +8,12 @@ This file records user-visible changes to Kujo, following
 
 ### Runtime boundary hardening
 
+- Replace the unmaintained YAML parser dependencies with the YAML organization's
+  maintained compatible fork. Keep YAML values, tags and serialization behavior
+  covered by compatibility tests.
+- Preserve native credential stores and existing Secret Service entries while
+  replacing the unmaintained Linux zbus dependency chain with the maintained
+  libdbus backend; add old/new stored-credential interoperability coverage.
 - Check existing ZIP extraction ancestors before creating directories; reject
   outside aliases without outside directory creation while preserving in-root aliases.
 - Do not cache initialized module exports against source metadata that changed
