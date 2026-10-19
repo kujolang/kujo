@@ -226,8 +226,14 @@ impl ModuleLoader {
     #[allow(dead_code)]
     pub fn add_search_path<P: AsRef<Path>>(&mut self, path: P) {
         let path = path.as_ref().to_path_buf();
-        self.search_paths.push(path.clone());
-        self.automatic_search_starts.push(path);
+        if !self.search_paths.contains(&path) {
+            self.search_paths.push(path.clone());
+        }
+        if !self.automatic_search_starts.contains(&path) {
+            self.automatic_search_starts.push(path);
+        }
+        // Re-adding a path still refreshes lockfile discovery. Deduplicate the
+        // stored roots without changing the caller's explicit refresh behavior.
         *self.automatic_search_paths.borrow_mut() = None;
     }
 
@@ -497,8 +503,12 @@ impl ModuleLoader {
 
         let module = load_result?;
         let source_state = ModuleSourceState::from_path(&module.path)?;
-        self.loaded_modules
-            .insert(cache_key, CachedModule { module: module.clone(), source_state });
+        // An initializer may replace its own source. Its exports belong to the
+        // input we evaluated, not the replacement observed after evaluation.
+        if source_state == current_source_state {
+            self.loaded_modules
+                .insert(cache_key, CachedModule { module: module.clone(), source_state });
+        }
 
         Ok(module)
     }
@@ -712,6 +722,24 @@ mod tests {
             .expect("system time should be after epoch")
             .as_nanos();
         format!("{}_{}_{}", prefix, std::process::id(), nanos)
+    }
+
+    #[test]
+    fn imports_from_one_directory_do_not_accumulate_duplicate_search_roots() {
+        let root = tempfile::tempdir().unwrap();
+        let canonical_root = fs::canonicalize(root.path()).unwrap();
+        let mut loader = ModuleLoader::new();
+        loader.add_search_path(&canonical_root);
+        let search_count = loader.search_paths.len();
+        let discovery_count = loader.automatic_search_starts.len();
+        for index in 0..32 {
+            let name = format!("bounded_roots_{index}");
+            fs::write(canonical_root.join(format!("{name}.kujo")), "export answer := 42\n")
+                .unwrap();
+            assert!(matches!(loader.get_symbol(&name, "answer").unwrap(), Value::Int(42)));
+        }
+        assert_eq!(loader.search_paths.len(), search_count);
+        assert_eq!(loader.automatic_search_starts.len(), discovery_count);
     }
 
     #[test]

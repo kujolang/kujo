@@ -421,6 +421,10 @@ detached spawn now performs its body and can produce effects.
   - cache keys are scoped by package-root context plus canonical module path,
   - cached exports are reused only while module source metadata is unchanged,
   - when source metadata changes (mtime/size), the module is re-evaluated and cache state is refreshed.
+  - if source metadata changes during initialization, the current evaluation is
+    returned but is not cached as the replacement source; a subsequent import
+    evaluates the replacement. This remains metadata-based freshness, not a
+    content or transitive-dependency fingerprint.
 
 Example:
 
