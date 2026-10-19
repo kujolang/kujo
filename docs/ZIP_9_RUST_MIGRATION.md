@@ -1,6 +1,6 @@
 # ZIP 9 migration for Rust embedders
 
-This unreleased change upgrades Kujo's ZIP dependency from 7.2.0 to 9.0.5 to
+Kujo 1.8.2 upgrades the ZIP dependency from 7.2.0 to 9.0.5 to
 resolve RUSTSEC-2026-0367, RUSTSEC-2026-0368 and RUSTSEC-2026-0369. All previously
 enabled default compression features remain enabled. ZIP 9's Rust 1.88 minimum
 fits Kujo's declared Rust 1.89 minimum.
