@@ -80,3 +80,9 @@ warning: bincode `RUSTSEC-2025-0141`. The repository's prior release-gate except
 is unchanged. No ZIP advisory suppression was added. No new unresolved finding
 was admitted to SignalBox; the old ZIP decision is resolved by this migration.
 Detailed local logs are retained in `.audit-evidence/zip9-migration-2026-10-19/`.
+
+## Later maintenance follow-up
+
+The remaining bincode warning and release-gate exception were subsequently
+removed by the [compatible dictionary codec migration](bincode-maintenance-2026-10-19.md).
+The exception noted above describes the ZIP migration revision's historical state.
