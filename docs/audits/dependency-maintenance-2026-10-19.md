@@ -104,3 +104,10 @@ warrant new captures.
   [0368](https://rustsec.org/advisories/RUSTSEC-2026-0368.html),
   [0369](https://rustsec.org/advisories/RUSTSEC-2026-0369.html)
 - [Official 7.x backport](https://github.com/zip-rs/zip2/commit/75f967dafa6ef174208629d15350d7091e29ada8)
+
+## Follow-up: authorized ZIP migration
+
+Later on 2026-10-19 the owner explicitly authorized ZIP 9 and its Rust API
+migration. The [ZIP migration receipt](zip9-migration-2026-10-19.md) records
+remediation and compatibility verification. The blocked decision and audit
+counts above describe this earlier maintenance revision, not the later state.
