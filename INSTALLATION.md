@@ -1,6 +1,6 @@
 # Install Kujo
 
-Kujo 1.8.1 is the current stable native release. Choose the install that matches what
+Kujo 1.8.2 is the current stable native release. Choose the install that matches what
 you need.
 
 ## Kujo and the core toolset
@@ -9,12 +9,12 @@ On macOS or Linux, this installs the current Kujo runtime, Kennel, and the core
 Kujo tools without `sudo`:
 
 ```bash
-curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.8.1 bash
+curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.8.2 bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```
 
-The version override above pins the runtime to 1.8.1 even while the public
+The version override above pins the runtime to 1.8.2 even while the public
 installer deployment catches up. It does not pin the separate ecosystem source
 snapshots; use a reviewed release manifest when those must be reproducible.
 
@@ -27,7 +27,7 @@ Inspect the available profiles before installing more:
 ```bash
 curl -fsSL https://kujolang.ai/install.sh -o install.sh
 bash install.sh --list
-KUJO_RELEASE_VERSION=v1.8.1 bash install.sh --group ai
+KUJO_RELEASE_VERSION=v1.8.2 bash install.sh --group ai
 ```
 
 `--all` installs every profile. `--source` builds Kujo from source instead of
@@ -37,15 +37,15 @@ for profile contents and pinned multi-repository installs.
 ## Runtime only
 
 Download the checksum file and matching archive from the
-[v1.8.1 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.8.1).
+[v1.8.2 GitHub release](https://github.com/kujolang/kujo/releases/tag/v1.8.2).
 Release assets use these names:
 
 ```text
-kujo-v1.8.1-linux-x64.tar.gz
-kujo-v1.8.1-linux-arm64.tar.gz
-kujo-v1.8.1-macos-x64.tar.gz
-kujo-v1.8.1-macos-arm64.tar.gz
-kujo-v1.8.1-windows-x64.zip
+kujo-v1.8.2-linux-x64.tar.gz
+kujo-v1.8.2-linux-arm64.tar.gz
+kujo-v1.8.2-macos-x64.tar.gz
+kujo-v1.8.2-macos-arm64.tar.gz
+kujo-v1.8.2-windows-x64.zip
 ```
 
 Each archive has a matching `.sha256` file, and `checksums.txt` lists them all.
@@ -53,12 +53,12 @@ Verify the published checksums and release provenance. The annotated release tag
 identifies source; it is not a signed assertion over archive digests.
 Read [release binaries](docs/RELEASE_BINARIES.md) for manual verification steps.
 
-The lifecycle-script-free npm channel publishes Kujo **1.8.1** for Linux x64
+The lifecycle-script-free npm channel publishes Kujo **1.8.2** for Linux x64
 and arm64, macOS x64 and arm64, and Windows x64. Node.js 18 or newer can install
 the current runtime package:
 
 ```bash
-npm install --global @kujolang/kujo-runtime@1.8.1
+npm install --global @kujolang/kujo-runtime@1.8.2
 kujo --version
 ```
 
@@ -153,14 +153,14 @@ kujo upgrade --check
 kujo upgrade
 ```
 
-Select an exact version with `kujo upgrade 1.8.1`. Downgrades require
+Select an exact version with `kujo upgrade 1.8.2`. Downgrades require
 `--allow-downgrade`. The command verifies the release checksum and keeps a backup
 of the previous executable.
 
 Use the original manager for managed installs:
 
 ```bash
-npm install --global @kujolang/kujo-runtime@1.8.1
+npm install --global @kujolang/kujo-runtime@1.8.2
 cargo install --path . --locked --force
 ```
 

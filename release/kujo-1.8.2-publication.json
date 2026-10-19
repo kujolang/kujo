@@ -1,0 +1,37 @@
+{
+  "schema": "kujo.runtime-publication/v1",
+  "version": "1.8.2",
+  "tag": "v1.8.2",
+  "commit": "549bdb4d5aa8edc60a83c81bf3be4b1c688ad3e1",
+  "tag_signature_verified": true,
+  "native_and_npm": "published",
+  "publication_workflow": 39302864893,
+  "native_install_smoke": 39314705109,
+  "native_upgrade_from": "v1.8.1",
+  "npm_install_smoke": 39312366647,
+  "npm_install_smoke_attempt": 2,
+  "all_five_targets_verified": true,
+  "source_archive_verified": true,
+  "evidence_note": "docs/RELEASE_NOTES_1_8_2.md",
+  "crates_io": "not published: optional and outside the canonical native/npm distribution",
+  "ecosystem_promotion": {
+    "status": "deployed and verified on 2026-10-19",
+    "source_commits": {
+      "kujolang.ai": "332fb2c033abbf16621b3b2c770f8f6cc635d003",
+      "docs.kujolang.ai": "faf17cfb0aee32497a871a28a63bb9a1d3ddc0d9",
+      "mcp.kujolang.ai/mcp": "5cd8f3bb86ccddc99ba92ed892a508f97775fbfe",
+      "kennel.kujolang.ai": "6227f0d1045d327f4d5e8ce0b980c6306a4b37a8",
+      "kujo.robertdevore.com": "dc6688809c8e6f78b20f252bbcfb983467fde7c5"
+    },
+    "website_workflow": 39312516030,
+    "docs_workflow": 39312408077,
+    "docs_pages_workflow": 39313004744,
+    "mcp_workflow": 39312566210,
+    "registry_reconciliation": 39312905237,
+    "kennel_public_acceptance": 39314469703,
+    "course_workflow": 39312964536,
+    "installer": "Live public script installed kujo 1.8.2 in a disposable prefix; bytes match the promoted runtime installer.",
+    "mcp_catalog_revision": "9186f1f01ee929dd7a1c02c8c9ef6657447bbe94250b7081f7731c8262275710",
+    "compatibility": "Kennel minimum remains 1.4.0; component versions remain independent; course retains two documented pre-existing VM/interpreter differences."
+  }
+}

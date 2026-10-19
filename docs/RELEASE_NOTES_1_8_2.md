@@ -1,7 +1,8 @@
 # Kujo 1.8.2 maintenance release
 
-Status: release preparation. Publication and five-platform install verification
-must complete before stable installer and website defaults advance from 1.8.1.
+Status: released on 2026-10-19. Native/source and npm published-install checks
+passed across all five supported platforms. See the
+[publication receipt](../release/kujo-1.8.2-publication.json).
 
 This release packages the fixes and compatible additions since 1.8.1. It adds no
 language syntax. Wave C beta, Wave D alpha and unpublished participant SDKs
@@ -58,8 +59,9 @@ The [changelog](../CHANGELOG.md) records the complete change set. Reproduction
 and compatibility evidence is retained in the repository hardening, dependency
 maintenance, ZIP 9 and bincode maintenance reports under `docs/audits/`.
 The pre-release baseline passed 3,112 tests across 121 test targets and all
-12 CI workflows (29 jobs), including platform compatibility checks. Release
-publication must additionally verify the exact 1.8.2 artifacts.
+12 CI workflows (29 jobs), including platform compatibility checks. The exact
+1.8.2 native/source and npm artifacts also passed their published-install
+matrices; the publication receipt identifies those runs.
 
 Distribution targets remain Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with native archives, deterministic source/checksums and six npm packages.

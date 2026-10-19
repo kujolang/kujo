@@ -1,17 +1,17 @@
 # Kujo Roadmap
 
-Updated: 2026-10-10
-Stable release: [v1.8.1](https://github.com/kujolang/kujo/releases/tag/v1.8.1)
+Exact published 1.8.2 source: `549bdb4d5aa8edc60a83c81bf3be4b1c688ad3e1`.
+
+Updated: 2026-10-19
+Stable release: [v1.8.2](https://github.com/kujolang/kujo/releases/tag/v1.8.2)
 
 > Current crate version: `1.8.2` in [Cargo.toml](Cargo.toml)
 
-Kujo **1.8.1 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
-with matching lifecycle-script-free runtime npm packages. The exact source/tag
-target is `357796a1a868f2c80bc8f7b8edcc7d6aff384f04`.
-See the [publication record](release/kujo-1.8.1-publication.json) and
-[published-install evidence](notes/2026-10-10_13-31_published-1-8-1-maintenance.md)
-for the five-target native/npm validation. Wave C beta and Wave D alpha remain
-experimental;
+Kujo **1.8.2 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
+with matching lifecycle-script-free npm packages. See the
+[1.8.2 release notes](docs/RELEASE_NOTES_1_8_2.md) and
+[publication record](release/kujo-1.8.2-publication.json) for exact source and
+artifact verification. Wave C beta and Wave D alpha remain experimental;
 participant SDK packages remain unpublished. Human adopter usability remains
 post-release validation.
 
@@ -22,7 +22,7 @@ post-release validation.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The public npm 1.8.1 runtime package covers the same targets
+  SHA-256 checksums. The public npm 1.8.2 runtime package covers the same targets
   with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
@@ -30,16 +30,16 @@ post-release validation.
 - Kujo's built-in `kujo.toml` / `kujo.lock` commands remain separate from
   Kennel's `kennel.toml` / `kennel.lock` workflow.
 
-## 1.8.1 maintenance release, then the 1.9 work sequence
+## Maintenance releases and the 1.9 work sequence
 
 The **1.8.1 maintenance baseline is published and verified**. Items **2–5** are
 complete on main for the recorded native representation, release-performance,
 and token/payload/output contracts. Item **5** completed with an evidence-backed
 deferral of `yield from`. Item **6** human validation is deferred by owner decision
 (2026-10-12); proceed with technical readiness and the 1.9 release decision.
-The maintenance release is complete for core native/npm distribution; separate
-website/catalog promotion remains explicit cross-repository work in the
-[publication receipt](release/kujo-1.8.1-publication.json).
+Kujo 1.8.2 packages these completed contracts and the subsequent hardening and
+dependency maintenance. Distribution and website/catalog verification are tracked
+in the [1.8.2 publication receipt](release/kujo-1.8.2-publication.json).
 
 This plan makes 1.9 a runtime consistency, efficiency, and developer-experience
 release. It permits at most one bounded language addition after a design gate;
@@ -63,7 +63,7 @@ successful runtime publication alone. Crates.io remains optional.
 
 ### 2. Native API representation and runtime parity
 
-**Status: completed on main — post-1.8.1 development, not a new published release.
+**Status: completed — included in the 1.8.2 maintenance release.
 Owner: Kujo core.**
 
 The [campaign inventory and verification receipt](docs/audits/native-api-representation-parity.md)
@@ -90,7 +90,7 @@ implementations or weaken representation-specific behavior merely for parity.
 
 ### 3. Release-build performance and resource campaign
 
-**Status: completed on main — post-1.8.1 development, not a new published release.
+**Status: completed — included in the 1.8.2 maintenance release.
 Owner: Kujo core.**
 
 The [campaign and verification receipt](docs/audits/release-performance-campaign.md)
@@ -119,7 +119,7 @@ memory claim is made. A measured no-change result is acceptable.
 
 ### 4. Token, payload and command-output efficiency
 
-**Status: completed on main — post-1.8.1 development, not a new published release.
+**Status: completed — included in the 1.8.2 maintenance release.
 Owner: Kujo core mechanisms; SDK/agent policy stays in ecosystem packages.**
 
 Completion evidence: [token/payload/output audit](docs/audits/token-payload-output-efficiency.md).
@@ -358,7 +358,7 @@ introduce dynamic topology or promote Wave F to production-ready status.
 ## Maintenance lane
 
 Maintain the completed optional-inference, shared CLI/LSP analysis, struct
-generator methods and measured generator-resume optimization. Kujo 1.8.1 is
+generator methods and measured generator-resume optimization. Kujo 1.8.2 is
 published with the accumulated maintenance fixes. Use the numbered 1.9 sequence
 above. Continue VM/interpreter compatibility, security, fuzzing and release reliability as
 ongoing gates rather than reopening completed 1.8 implementation work.

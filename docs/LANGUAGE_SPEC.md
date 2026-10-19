@@ -1,9 +1,9 @@
 # Kujo Language Specification
 
-Current stable runtime: **1.8.1**, with native and npm artifacts for Linux
+Current stable runtime: **1.8.2**, with native and npm artifacts for Linux
 x64/arm64, macOS x64/arm64 and Windows x64. Wave C beta and Wave D alpha remain
 experimental; participant SDKs remain unpublished.
-See [1.8.1 maintenance notes](RELEASE_NOTES_1_8_1.md) for runtime versus experimental ecosystem scope.
+See [1.8.2 maintenance notes](RELEASE_NOTES_1_8_2.md) for runtime versus experimental ecosystem scope.
 
 
 Status: stable v1.0.0 contract
@@ -16,7 +16,7 @@ This document defines the stable Kujo language and tooling compatibility contrac
 
 This specification describes the stable Kujo `v1.0.0` language contract. Explicit deferrals and non-goals remain documented in `docs/V1_SCOPE.md` and `docs/VM_INTERPRETER_PARITY_MATRIX.md`.
 
-Release boundary: Kujo `v1.8.1` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.8.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 It is normative for:
 

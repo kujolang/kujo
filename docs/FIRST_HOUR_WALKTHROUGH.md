@@ -28,7 +28,7 @@ silently switch channels or edit the recorded result.
 
 1. Follow [Installation](../INSTALLATION.md) to install Kujo. Record the chosen
    channel, exact version and resolved executable path. Confirm the version is
-   1.8.1. Record prerequisite/PATH confusion and any help used.
+   1.8.2. Record prerequisite/PATH confusion and any help used.
 2. Use the [README quickstart](../README.md#run-your-first-program) to create,
    check and run `hello.kujo` on the default VM. Change the greeting and run it
    again. Record time to this first working program.
