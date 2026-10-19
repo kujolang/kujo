@@ -169,17 +169,7 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Configure OpenSSL for Windows
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          if (-not $env:VCPKG_INSTALLATION_ROOT) {
-            $env:VCPKG_INSTALLATION_ROOT = "C:\vcpkg"
-          }
-          vcpkg install openssl:x64-windows-static-md
-          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "VCPKG_DEFAULT_TRIPLET=x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "OPENSSL_DIR=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+      # Cargo enables openssl/vendored; a separate vcpkg build is unused.
 
       - name: Verify native upgrade and running executable replacement
         run: cargo test --locked --bin kujo upgrade::tests
