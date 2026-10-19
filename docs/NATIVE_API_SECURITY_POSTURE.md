@@ -474,6 +474,10 @@ existing target intact. Previously published entries remain on a later-entry
 failure (this is not an archive-wide transaction). Read-only targets are rejected. Ordinary file permissions are
 preserved; replacement changes inode/hard-link identity. Extraction roots must
 remain trusted against concurrent hostile filesystem mutation.
+Existing ancestor paths are checked for canonical containment before creating
+missing directories, so rejected outside aliases do not create outside directory
+trees. Ancestor aliases resolving inside the root remain supported; final-target
+symlinks remain rejected.
 
 AI cassette writes use unique private staging files and atomic last-writer-wins
 publication. On Unix, new/replaced cassettes are owner-readable/writable only.

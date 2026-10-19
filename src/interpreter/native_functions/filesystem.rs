@@ -978,6 +978,36 @@ fn ensure_canonical_path_within_root(
 }
 
 #[cfg(feature = "runtime-archive")]
+fn ensure_existing_extraction_ancestor_within_root(
+    path: &Path,
+    canonical_output_root: &Path,
+    entry_name: &str,
+) -> Result<(), String> {
+    // Check before create_dir_all: its missing descendants may otherwise be
+    // created outside the root through a pre-existing ancestor symlink. Keep
+    // compatible aliases whose resolved destination is inside the root.
+    for ancestor in path.ancestors() {
+        match fs::symlink_metadata(ancestor) {
+            Ok(_) => {
+                return ensure_canonical_path_within_root(
+                    ancestor,
+                    canonical_output_root,
+                    entry_name,
+                );
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => {
+                return Err(format!(
+                    "Failed to resolve extraction path for '{}': {}",
+                    entry_name, error
+                ));
+            }
+        }
+    }
+    Err(format!("Failed to resolve extraction path for '{}': no existing ancestor", entry_name))
+}
+
+#[cfg(feature = "runtime-archive")]
 fn reject_symlink_target_path(path: &Path, entry_name: &str) -> Result<(), String> {
     path_security::reject_symlink_target_path(path, "archive entry target path").map_err(|_| {
         format!(
@@ -1051,6 +1081,11 @@ fn extract_zip_archive_with_limits(
 
         if archive_file.is_dir() {
             reject_symlink_target_path(&output_path, &entry_name)?;
+            ensure_existing_extraction_ancestor_within_root(
+                &output_path,
+                &canonical_output_root,
+                &entry_name,
+            )?;
             std::fs::create_dir_all(&output_path).map_err(|error| {
                 format!("Failed to create directory '{}': {}", output_path.display(), error)
             })?;
@@ -1059,6 +1094,11 @@ fn extract_zip_archive_with_limits(
         }
 
         if let Some(parent) = output_path.parent() {
+            ensure_existing_extraction_ancestor_within_root(
+                parent,
+                &canonical_output_root,
+                &entry_name,
+            )?;
             std::fs::create_dir_all(parent).map_err(|error| {
                 format!(
                     "Failed to create parent directory for '{}': {}",

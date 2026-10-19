@@ -28,6 +28,9 @@ jobs:
       - name: Run VM/interpreter capability parity
         run: cargo test --locked --test native_api_security_boundaries filesystem_
 
+      - name: Run archive ancestor confinement contracts
+        run: cargo test --locked --test archive_ancestor_confinement
+
       - name: Run bounded process stdin conformance
         run: cargo test --locked test_process_stdin --lib
 
