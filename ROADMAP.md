@@ -3,7 +3,7 @@
 Updated: 2026-10-10
 Stable release: [v1.8.1](https://github.com/kujolang/kujo/releases/tag/v1.8.1)
 
-> Current crate version: `1.8.1` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.8.2` in [Cargo.toml](Cargo.toml)
 
 Kujo **1.8.1 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free runtime npm packages. The exact source/tag

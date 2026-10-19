@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+## [1.8.2] - 2026-10-19
+
+See [release notes](docs/RELEASE_NOTES_1_8_2.md) for compatibility and distribution scope.
+
 - Replace the retired bincode dependency in PDF hyphenation with a maintained,
   legacy-format-compatible codec; preserve bundled dictionary contents and
   remove the release audit exception.

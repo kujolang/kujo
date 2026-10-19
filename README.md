@@ -188,7 +188,7 @@ See the [VM/interpreter migration playbook](docs/VM_INTERPRETER_MIGRATION_PLAYBO
 Release boundary: Kujo `v1.8.1` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
 - Kujo 1.8.1 is released for Linux x64/arm64, macOS x64/arm64 and Windows x64; see [release notes](docs/RELEASE_NOTES_1_8_1.md).
-- The source tree is currently at `1.8.1` in `Cargo.toml`; the latest published stable release tag is `v1.8.1`.
+- The source tree is currently at `1.8.2` in `Cargo.toml`; the latest published stable release tag is `v1.8.1`.
 - The signed release, native/source archives, checksums, and all six npm packages
   passed their published-install verification matrices.
 - Prebuilt Linux x64/arm64, macOS x64/arm64, and Windows x64 binaries ship with
