@@ -55,7 +55,23 @@ fn readme_covers_v1_status_cli_security_and_core_reference_links() {
 
 #[test]
 fn stable_install_examples_pin_the_advertised_runtime_version() {
-    let version = env!("CARGO_PKG_VERSION");
+    // Release preparation advances Cargo before publishing artifacts. Install
+    // examples must continue to select the advertised published release.
+    let readme = fs::read_to_string(repo_root().join("README.md")).unwrap();
+    let version = readme
+        .split_once("latest published stable release tag is `v")
+        .expect("README must identify the published stable release")
+        .1
+        .split_once('`')
+        .expect("published release tag must be delimited")
+        .0;
+    let installer = fs::read_to_string(repo_root().join("install.sh")).unwrap();
+    assert!(
+        installer.contains(&format!(
+            "DEFAULT_RELEASE_VERSION=\"${{KUJO_RELEASE_VERSION:-v{version}}}\""
+        )),
+        "installer default must match the advertised stable release"
+    );
     let pinned =
         format!("curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v{version} bash");
     for file in ["README.md", "INSTALLATION.md", "docs/ECOSYSTEM_INSTALL.md"] {
