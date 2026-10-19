@@ -8,6 +8,13 @@ This file records user-visible changes to Kujo, following
 
 ### Runtime boundary hardening
 
+- Check existing ZIP extraction ancestors before creating directories; reject
+  outside aliases without outside directory creation while preserving in-root aliases.
+- Do not cache initialized module exports against source metadata that changed
+  during initialization. Deduplicate registered import roots while preserving
+  search precedence and explicit lockfile-discovery refresh.
+- Remove unused vcpkg OpenSSL builds from current-source Windows upgrade and
+  release jobs; Cargo continues to build the configured vendored OpenSSL.
 - Preserve caller capabilities during module initialization, test-run bodies and
   hooks, and parallel bytecode mapper execution. Invalidate evaluated module
   exports when the loader's capability policy changes.

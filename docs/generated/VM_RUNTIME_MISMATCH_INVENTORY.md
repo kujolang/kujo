@@ -1,6 +1,6 @@
 # VM Runtime Mismatch Inventory
 
-Generated: 2026-10-10
+Generated: 2026-10-19
 Runner: `/Users/robertdevore/2026/Kujolang/kujo-repos/kujo/target/debug/kujo`
 Fixture root: `tests`
 

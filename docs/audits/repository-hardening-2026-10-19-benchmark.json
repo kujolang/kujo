@@ -1,0 +1,212 @@
+{
+  "host": "macOS x86_64",
+  "rustc": "1.96.0",
+  "profile": "unoptimized, debug=0, incremental=0",
+  "baseline": "27be6e55247e071509f8791799e448ed55659dc6",
+  "candidate": "843e1df007ef5bfc99271b0fbc79fd3b04a74797",
+  "method": "Three alternating before/after pairs; two warmups and seven measured samples per size per invocation; median of three invocation medians. Every export asserted. Fixture creation excluded.",
+  "runs": [
+    {
+      "version": "before",
+      "results": [
+        {
+          "modules": 100,
+          "median_ns": 400107588,
+          "samples_ns": [
+            357044579,
+            371961169,
+            376265518,
+            400107588,
+            406436096,
+            418191684,
+            457192389
+          ]
+        },
+        {
+          "modules": 500,
+          "median_ns": 5560827371,
+          "samples_ns": [
+            5422306462,
+            5534658057,
+            5559399475,
+            5560827371,
+            5574265263,
+            5694996631,
+            6112131047
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "results": [
+        {
+          "modules": 100,
+          "median_ns": 153284532,
+          "samples_ns": [
+            149623674,
+            151510822,
+            152536179,
+            153284532,
+            154881957,
+            155315589,
+            159836955
+          ]
+        },
+        {
+          "modules": 500,
+          "median_ns": 775294198,
+          "samples_ns": [
+            766537012,
+            770012373,
+            775204063,
+            775294198,
+            780929622,
+            787352008,
+            793455584
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "results": [
+        {
+          "modules": 100,
+          "median_ns": 159431452,
+          "samples_ns": [
+            150623793,
+            151405597,
+            158085876,
+            159431452,
+            159467942,
+            160364218,
+            173383210
+          ]
+        },
+        {
+          "modules": 500,
+          "median_ns": 820496697,
+          "samples_ns": [
+            801666278,
+            804228567,
+            807951038,
+            820496697,
+            829402991,
+            844629313,
+            850834981
+          ]
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "results": [
+        {
+          "modules": 100,
+          "median_ns": 336861105,
+          "samples_ns": [
+            329420626,
+            331133223,
+            336193064,
+            336861105,
+            339898900,
+            347537010,
+            353980711
+          ]
+        },
+        {
+          "modules": 500,
+          "median_ns": 5576975409,
+          "samples_ns": [
+            5473037823,
+            5474063388,
+            5497840220,
+            5576975409,
+            5690191366,
+            5728948476,
+            6420912778
+          ]
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "results": [
+        {
+          "modules": 100,
+          "median_ns": 341050737,
+          "samples_ns": [
+            333233087,
+            337460551,
+            337944378,
+            341050737,
+            356210660,
+            366628373,
+            391365532
+          ]
+        },
+        {
+          "modules": 500,
+          "median_ns": 5496835956,
+          "samples_ns": [
+            5424332302,
+            5444664211,
+            5480194870,
+            5496835956,
+            5551940960,
+            5594888381,
+            5764278372
+          ]
+        }
+      ]
+    },
+    {
+      "version": "after",
+      "results": [
+        {
+          "modules": 100,
+          "median_ns": 152530601,
+          "samples_ns": [
+            151109199,
+            151799631,
+            152392377,
+            152530601,
+            156023026,
+            156944064,
+            159243270
+          ]
+        },
+        {
+          "modules": 500,
+          "median_ns": 791860149,
+          "samples_ns": [
+            770535911,
+            781657653,
+            783766479,
+            791860149,
+            802503384,
+            824893039,
+            915801273
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "modules": 100,
+      "before_median_ns": 341050737,
+      "after_median_ns": 153284532,
+      "speedup": 2.224952071484943,
+      "reduction_percent": 55.05521162383531
+    },
+    {
+      "modules": 500,
+      "before_median_ns": 5560827371,
+      "after_median_ns": 791860149,
+      "speedup": 7.022486708066427,
+      "reduction_percent": 85.76003000687288
+    }
+  ]
+}
