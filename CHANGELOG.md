@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Share byte-buffer storage on value clones, avoiding full-buffer copies during
+  reads while preserving exact binary content and host API ownership.
+
 - Add stable, fallible `sort_by(items, comparator)` without changing `sort`;
   callback failures stop sorting and the input remains unchanged.
 

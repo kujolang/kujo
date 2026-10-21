@@ -1216,7 +1216,7 @@ mod tests {
         let index_of_bytes = call_native_function(
             &mut interpreter,
             "index_of",
-            &[Value::Bytes(vec![0, 13, 10, 255]), Value::Bytes(vec![13, 10])],
+            &[Value::bytes(vec![0, 13, 10, 255]), Value::bytes(vec![13, 10])],
         );
         assert!(matches!(index_of_bytes, Value::Int(1)));
     }
@@ -1254,7 +1254,7 @@ mod tests {
         assert!(matches!(dict_len, Value::Int(2)));
 
         let bytes_len =
-            call_native_function(&mut interpreter, "len", &[Value::Bytes(vec![1, 2, 3])]);
+            call_native_function(&mut interpreter, "len", &[Value::bytes(vec![1, 2, 3])]);
         assert!(matches!(bytes_len, Value::Int(3)));
 
         let set_len = call_native_function(
@@ -1579,7 +1579,7 @@ mod tests {
             "bytes",
             &[Value::Array(Arc::new(vec![Value::Int(65), Value::Int(66), Value::Int(67)]))],
         );
-        assert!(matches!(bytes_ok, Value::Bytes(values) if values == vec![65, 66, 67]));
+        assert!(matches!(bytes_ok, Value::Bytes(values) if values.as_slice() == vec![65, 66, 67]));
 
         let bytes_bad_range = call_native_function(
             &mut interpreter,
@@ -2991,7 +2991,7 @@ mod tests {
 
         let decode_base64_ok =
             call_native_function(&mut interpreter, "decode_base64", &[Value::Str(encoded)]);
-        assert!(matches!(decode_base64_ok, Value::Bytes(bytes) if bytes == b"kujo"));
+        assert!(matches!(decode_base64_ok, Value::Bytes(bytes) if bytes.as_slice() == b"kujo"));
 
         let parse_json_bad_shape =
             call_native_function(&mut interpreter, "parse_json", &[Value::Int(1)]);
@@ -3878,7 +3878,7 @@ mod tests {
             "write_binary_file",
             &[
                 Value::Str(Arc::new("/tmp/kujo-bin.bin".to_string())),
-                Value::Bytes(vec![1, 2]),
+                Value::bytes(vec![1, 2]),
                 Value::Int(1),
             ],
         );
@@ -3909,7 +3909,7 @@ mod tests {
         let beneath_args = [
             Value::Str(Arc::new(base_dir.clone())),
             Value::Str(Arc::new("beneath/payload.bin".into())),
-            Value::Bytes(vec![0, 255]),
+            Value::bytes(vec![0, 255]),
         ];
         assert!(matches!(
             call_native_function(&mut interpreter, "write_file_atomic_beneath", &beneath_args),
@@ -3963,7 +3963,7 @@ mod tests {
         let atomic_binary_ok = call_native_function(
             &mut interpreter,
             "write_file_atomic",
-            &[Value::Str(Arc::new(atomic_binary_file.clone())), Value::Bytes(vec![0, 1, 2, 255])],
+            &[Value::Str(Arc::new(atomic_binary_file.clone())), Value::bytes(vec![0, 1, 2, 255])],
         );
         assert!(matches!(atomic_binary_ok, Value::Bool(true)));
         assert_eq!(
@@ -4050,7 +4050,7 @@ mod tests {
         let write_binary_ok = call_native_function(
             &mut interpreter,
             "write_binary_file",
-            &[Value::Str(Arc::new(binary_file.clone())), Value::Bytes(vec![0, 1, 2, 255])],
+            &[Value::Str(Arc::new(binary_file.clone())), Value::bytes(vec![0, 1, 2, 255])],
         );
         assert!(matches!(write_binary_ok, Value::Bool(true)));
 
@@ -4130,7 +4130,7 @@ mod tests {
             "io_write_bytes",
             &[
                 Value::Str(Arc::new("/tmp/kujo_io.bin".to_string())),
-                Value::Bytes(vec![]),
+                Value::bytes(vec![]),
                 Value::Int(1),
             ],
         );
@@ -4143,7 +4143,7 @@ mod tests {
             "io_append_bytes",
             &[
                 Value::Str(Arc::new("/tmp/kujo_io.bin".to_string())),
-                Value::Bytes(vec![]),
+                Value::bytes(vec![]),
                 Value::Int(1),
             ],
         );
@@ -4175,7 +4175,7 @@ mod tests {
             "io_write_at",
             &[
                 Value::Str(Arc::new("/tmp/kujo_io.bin".to_string())),
-                Value::Bytes(vec![]),
+                Value::bytes(vec![]),
                 Value::Int(0),
                 Value::Int(2),
             ],
@@ -6363,7 +6363,7 @@ mod tests {
         let sha_bytes = call_native_function(
             &mut interpreter,
             "sha256",
-            &[Value::Bytes(vec![0, 1, 2, 0x80, 0xFF, 0])],
+            &[Value::bytes(vec![0, 1, 2, 0x80, 0xFF, 0])],
         );
         assert!(
             matches!(sha_bytes, Value::Str(message) if message.as_ref() == "5b35354055af6a5442460fc80a36f4c47cf5fe7cade16773e1c474a2d37e9a3d")

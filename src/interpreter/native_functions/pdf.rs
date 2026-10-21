@@ -336,7 +336,7 @@ fn parse_assets(value: &Value) -> Result<PdfAssets, String> {
             total_bytes = total_bytes
                 .checked_add(bytes.len())
                 .ok_or_else(|| "pdf asset byte total overflow".to_string())?;
-            destination.insert(name.to_string(), Base64OrRaw::Raw(bytes.clone()));
+            destination.insert(name.to_string(), Base64OrRaw::Raw(bytes.to_vec()));
         }
     }
     if total_count > MAX_ASSET_COUNT || total_bytes > MAX_ASSET_BYTES {
@@ -854,7 +854,7 @@ fn receipt(
         Value::Int(elapsed.as_millis().min(i64::MAX as u128) as i64),
     );
     if include_bytes {
-        result.insert("pdf_bytes".into(), Value::Bytes(rendered.bytes));
+        result.insert("pdf_bytes".into(), Value::bytes(rendered.bytes));
     }
     Value::Dict(Arc::new(result))
 }
@@ -1215,7 +1215,7 @@ mod tests {
             .decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
             .expect("fixture PNG");
         let mut images = DictMap::default();
-        images.insert("logo.png".into(), Value::Bytes(png));
+        images.insert("logo.png".into(), Value::bytes(png));
         let mut assets = DictMap::default();
         assets.insert("images".into(), Value::Dict(Arc::new(images)));
         let value = handle(
@@ -1238,7 +1238,7 @@ mod tests {
         let mut fonts = DictMap::default();
         fonts.insert(
             "Sansation".into(),
-            Value::Bytes(
+            Value::bytes(
                 include_bytes!("../../../tests/fixtures/pdf/Sansation-Regular.ttf").to_vec(),
             ),
         );
@@ -1334,7 +1334,7 @@ mod tests {
     fn rejects_malformed_and_oversized_assets_before_rendering() {
         let _guard = test_guard();
         let mut malformed_images = DictMap::default();
-        malformed_images.insert("logo.png".into(), Value::Bytes(vec![0_u8; 32]));
+        malformed_images.insert("logo.png".into(), Value::bytes(vec![0_u8; 32]));
         let mut assets = DictMap::default();
         assets.insert("images".into(), Value::Dict(Arc::new(malformed_images)));
         let result = handle(
@@ -1348,7 +1348,7 @@ mod tests {
         assert!(matches!(result, Some(Value::Error(error)) if error.contains("image asset")));
 
         let mut oversized_fonts = DictMap::default();
-        oversized_fonts.insert("tenant.ttf".into(), Value::Bytes(vec![0_u8; MAX_FONT_BYTES + 1]));
+        oversized_fonts.insert("tenant.ttf".into(), Value::bytes(vec![0_u8; MAX_FONT_BYTES + 1]));
         let mut assets = DictMap::default();
         assets.insert("fonts".into(), Value::Dict(Arc::new(oversized_fonts)));
         let result = handle(
@@ -1399,7 +1399,7 @@ mod tests {
         let mut fonts = DictMap::default();
         let mut fake = vec![0_u8; 64];
         fake[..4].copy_from_slice(&[0, 1, 0, 0]);
-        fonts.insert("tenant.ttf".into(), Value::Bytes(fake));
+        fonts.insert("tenant.ttf".into(), Value::bytes(fake));
         let mut assets = DictMap::default();
         assets.insert("fonts".into(), Value::Dict(Arc::new(fonts)));
         let result = handle(

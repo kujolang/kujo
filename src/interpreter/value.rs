@@ -1233,7 +1233,7 @@ pub enum Value {
     /// Null value for optional chaining and null coalescing
     Null,
     /// Binary data for files, HTTP downloads, etc.
-    Bytes(Vec<u8>),
+    Bytes(Arc<Vec<u8>>),
     /// Function: parameters, body, optional captured environment
     Function(Vec<String>, LeakyFunctionBody, Option<Arc<Mutex<Environment>>>),
     /// Async function: parameters, body, optional captured environment
@@ -1644,6 +1644,11 @@ impl std::fmt::Debug for Value {
 }
 
 impl Value {
+    /// Construct copy-on-write bytes; cloning a runtime byte value is constant time.
+    pub fn bytes(bytes: impl Into<Arc<Vec<u8>>>) -> Self {
+        Self::Bytes(bytes.into())
+    }
+
     /// Helper to create a Str value from a String
     #[allow(dead_code)]
     pub fn str(s: String) -> Self {

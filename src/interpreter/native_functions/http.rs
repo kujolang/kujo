@@ -168,7 +168,7 @@ impl Read for IncrementalHttpResponseBody {
                 let mut event = http_stream_event("chunk");
                 event.insert("chunk_index".into(), Value::Int(self.chunk_index));
                 event.insert("total_bytes".into(), Value::Int(self.total_bytes as i64));
-                event.insert("bytes".into(), Value::Bytes(output[..read].to_vec()));
+                event.insert("bytes".into(), Value::bytes(output[..read].to_vec()));
                 self.emit(event);
                 Ok(read)
             }
@@ -2598,7 +2598,7 @@ pub fn handle_with_interpreter(
                 options.get("_body").or_else(|| options.get("body")).and_then(
                     |value| match value {
                         Value::Str(body) => Some(body.as_bytes().to_vec()),
-                        Value::Bytes(body) => Some(body.clone()),
+                        Value::Bytes(body) => Some(body.to_vec()),
                         _ => None,
                     },
                 );
@@ -2652,7 +2652,7 @@ pub fn handle_with_interpreter(
                     result_dict.insert("_status".into(), Value::Int(status));
                     result_dict.insert("body".into(), Value::Str(Arc::new(body.clone())));
                     result_dict.insert("_body".into(), Value::Str(Arc::new(body)));
-                    result_dict.insert("_body_bytes".into(), Value::Bytes(body_bytes));
+                    result_dict.insert("_body_bytes".into(), Value::bytes(body_bytes));
 
                     let mut headers_dict = DictMap::default();
                     let mut header_values = DictMap::default();
@@ -3281,7 +3281,7 @@ pub fn handle_with_interpreter(
 
             if let Some(Value::Str(url)) = arg_values.first() {
                 match builtins::http_get_binary(url.as_ref()) {
-                    Ok(bytes) => Value::Bytes(bytes),
+                    Ok(bytes) => Value::bytes(bytes),
                     Err(error) => Value::Error(error),
                 }
             } else {
@@ -3462,7 +3462,7 @@ pub fn handle_with_interpreter(
 
             if let Some(Value::Str(url)) = arg_values.first() {
                 match builtins::http_get_stream(url.as_ref()) {
-                    Ok(bytes) => Value::Bytes(bytes),
+                    Ok(bytes) => Value::bytes(bytes),
                     Err(error) => Value::Error(error),
                 }
             } else {
@@ -3533,7 +3533,7 @@ pub fn handle_with_interpreter(
                     new_headers.insert(key.as_ref().to_string(), value.as_ref().to_string());
                     Value::HttpResponse {
                         status: *status,
-                        body: body.clone(),
+                        body: body.to_vec(),
                         headers: new_headers,
                     }
                 } else if let Value::HttpStreamingResponse { status, headers, stream, callback } =
@@ -3595,7 +3595,7 @@ pub fn handle_with_interpreter(
                         }
                         Value::HttpResponse {
                             status: *status,
-                            body: body.clone(),
+                            body: body.to_vec(),
                             headers: new_headers,
                         }
                     } else if let Value::HttpStreamingResponse {
@@ -3646,7 +3646,7 @@ pub fn handle_with_interpreter(
                 },
                 (Some(Value::Int(status)), Some(Value::Bytes(body))) => Value::HttpResponse {
                     status: *status as u16,
-                    body: body.clone(),
+                    body: body.to_vec(),
                     headers: HashMap::new(),
                 },
                 _ => Value::Error(
@@ -5301,7 +5301,7 @@ mod tests {
         }
 
         let binary_response =
-            handle("http_response", &[Value::Int(200), Value::Bytes(vec![0, 0x80, 0xff])]).unwrap();
+            handle("http_response", &[Value::Int(200), Value::bytes(vec![0, 0x80, 0xff])]).unwrap();
         assert!(
             matches!(binary_response, Value::HttpResponse { body, .. } if body == vec![0, 0x80, 0xff])
         );
@@ -5464,14 +5464,14 @@ mod tests {
         };
         let mut options = DictMap::default();
         options.insert("method".into(), str_value("POST"));
-        options.insert("_body".into(), Value::Bytes(vec![0, 0x7f, 0x80, 0xff]));
+        options.insert("_body".into(), Value::bytes(vec![0, 0x7f, 0x80, 0xff]));
         let result =
             handle("http_request", &[str_value(&endpoint), Value::Dict(Arc::new(options))])
                 .expect("http_request should return a result value");
         server_handle.join().expect("server thread should finish");
         assert!(matches!(result, Value::Result { is_ok: true, ref value }
             if matches!(value.as_ref(), Value::Dict(dict)
-                if matches!(dict.get("_body_bytes"), Some(Value::Bytes(bytes)) if bytes == b"{}"))));
+                if matches!(dict.get("_body_bytes"), Some(Value::Bytes(bytes)) if bytes.as_slice() == b"{}"))));
         assert_eq!(
             request_rx.recv().expect("request body should be captured"),
             vec![0, 0x7f, 0x80, 0xff]

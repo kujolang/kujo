@@ -214,7 +214,7 @@ impl SpawnCapturedValue {
             Value::Secret(text) => Some(SpawnCapturedValue::Secret(text.as_ref().clone())),
             Value::Bool(boolean) => Some(SpawnCapturedValue::Bool(*boolean)),
             Value::Null => Some(SpawnCapturedValue::Null),
-            Value::Bytes(bytes) => Some(SpawnCapturedValue::Bytes(bytes.clone())),
+            Value::Bytes(bytes) => Some(SpawnCapturedValue::Bytes(bytes.to_vec())),
             Value::NativeFunction(name) => Some(SpawnCapturedValue::NativeFunction(name.clone())),
             Value::Struct { name, fields } => {
                 let mut captured_fields = Vec::with_capacity(fields.len());
@@ -312,7 +312,7 @@ impl SpawnCapturedValue {
             SpawnCapturedValue::Secret(text) => Value::Secret(Arc::new(text)),
             SpawnCapturedValue::Bool(boolean) => Value::Bool(boolean),
             SpawnCapturedValue::Null => Value::Null,
-            SpawnCapturedValue::Bytes(bytes) => Value::Bytes(bytes),
+            SpawnCapturedValue::Bytes(bytes) => Value::bytes(bytes),
             SpawnCapturedValue::NativeFunction(name) => Value::NativeFunction(name),
             SpawnCapturedValue::Struct { name, fields } => {
                 let mut value_fields = HashMap::with_capacity(fields.len());
@@ -2954,7 +2954,7 @@ impl Interpreter {
                 req_fields.insert("path".into(), Value::Str(Arc::new(url_path.clone())));
                 req_fields.insert("raw_path".into(), Value::Str(Arc::new(request_url.clone())));
                 req_fields.insert("body".into(), Value::Str(Arc::new(body_content.clone())));
-                req_fields.insert("body_bytes".into(), Value::Bytes(body_bytes.clone()));
+                req_fields.insert("body_bytes".into(), Value::bytes(body_bytes.clone()));
                 req_fields.insert("params".into(), Value::Dict(Arc::new(params_dict)));
                 req_fields
                     .insert("peer_address".into(), Value::Str(Arc::new(peer_address.clone())));

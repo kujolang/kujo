@@ -20,7 +20,7 @@ const PRIVATE_SPOOL_FILE_RANGE_MAX_PATH_BYTES: usize = 4096;
 fn private_spool_content_bytes(content: &Value) -> Option<Vec<u8>> {
     match content {
         Value::Str(value) => Some(value.as_bytes().to_vec()),
-        Value::Bytes(value) => Some(value.clone()),
+        Value::Bytes(value) => Some(value.to_vec()),
         _ => None,
     }
 }
@@ -243,7 +243,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                             match file.read(&mut buffer) {
                                 Ok(bytes_read) => {
                                     buffer.truncate(bytes_read);
-                                    Value::Bytes(buffer)
+                                    Value::bytes(buffer)
                                 }
                                 Err(error) => Value::Error(format!(
                                     "Cannot read {} bytes from '{}': {}",
@@ -272,7 +272,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             } else if let (Some(Value::Str(path)), Some(Value::Bytes(bytes))) =
                 (arg_values.first(), arg_values.get(1))
             {
-                match fs::write(path.as_ref(), bytes) {
+                match fs::write(path.as_ref(), bytes.as_slice()) {
                     Ok(_) => Value::Bool(true),
                     Err(error) => Value::Error(format!(
                         "Cannot write bytes to file '{}': {}",
@@ -351,7 +351,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                         match file.read(&mut buffer) {
                             Ok(bytes_read) => {
                                 buffer.truncate(bytes_read);
-                                Value::Bytes(buffer)
+                                Value::bytes(buffer)
                             }
                             Err(error) => Value::Error(format!(
                                 "Cannot read {} bytes at offset {} from '{}': {}",
@@ -450,7 +450,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
 
                         let mut buffer = Vec::new();
                         match file.read_to_end(&mut buffer) {
-                            Ok(_) => Value::Bytes(buffer),
+                            Ok(_) => Value::bytes(buffer),
                             Err(error) => Value::Error(format!(
                                 "Cannot read from offset {} in '{}': {}",
                                 offset,
@@ -619,7 +619,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             {
                 let bytes = match content {
                     Value::Str(value) => Some(value.as_bytes().to_vec()),
-                    Value::Bytes(value) => Some(value.clone()),
+                    Value::Bytes(value) => Some(value.to_vec()),
                     _ => None,
                 };
                 if bytes.is_none() {
@@ -1255,7 +1255,7 @@ mod tests {
         let write_result = handle(
             &mut interpreter,
             "io_write_bytes",
-            &[Value::Str(Arc::new(path.clone())), Value::Bytes(vec![1, 2, 3])],
+            &[Value::Str(Arc::new(path.clone())), Value::bytes(vec![1, 2, 3])],
         )
         .unwrap();
         assert!(matches!(write_result, Value::Bool(true)));
@@ -1263,7 +1263,7 @@ mod tests {
         let append_result = handle(
             &mut interpreter,
             "io_append_bytes",
-            &[Value::Str(Arc::new(path.clone())), Value::Bytes(vec![4, 5])],
+            &[Value::Str(Arc::new(path.clone())), Value::bytes(vec![4, 5])],
         )
         .unwrap();
         assert!(matches!(append_result, Value::Bool(true)));
@@ -1274,7 +1274,9 @@ mod tests {
             &[Value::Str(Arc::new(path.clone())), Value::Int(10)],
         )
         .unwrap();
-        assert!(matches!(read_result, Value::Bytes(bytes) if bytes == vec![1, 2, 3, 4, 5]));
+        assert!(
+            matches!(read_result, Value::Bytes(bytes) if bytes.as_slice() == vec![1, 2, 3, 4, 5])
+        );
 
         let _ = std::fs::remove_file(path);
     }
@@ -1387,7 +1389,7 @@ mod tests {
         let second = handle(
             &mut Interpreter::new(),
             "io_private_spool_write",
-            &[spool.clone(), Value::Bytes(vec![0, 255])],
+            &[spool.clone(), Value::bytes(vec![0, 255])],
         )
         .expect("binary spool write should be handled");
         assert!(matches!(second, Value::Dict(ref fields)
@@ -1396,7 +1398,7 @@ mod tests {
         let overflow = handle(
             &mut Interpreter::new(),
             "io_private_spool_write",
-            &[spool.clone(), Value::Bytes(vec![1])],
+            &[spool.clone(), Value::bytes(vec![1])],
         )
         .expect("overflow should be handled");
         assert!(
@@ -1586,12 +1588,12 @@ mod tests {
             &[Value::Str(Arc::new(path.clone())), Value::Int(1), Value::Int(3)],
         )
         .unwrap();
-        assert!(matches!(read_at, Value::Bytes(bytes) if bytes == vec![20, 30, 40]));
+        assert!(matches!(read_at, Value::Bytes(bytes) if bytes.as_slice() == vec![20, 30, 40]));
 
         let write_at = handle(
             &mut interpreter,
             "io_write_at",
-            &[Value::Str(Arc::new(path.clone())), Value::Bytes(vec![99, 88]), Value::Int(2)],
+            &[Value::Str(Arc::new(path.clone())), Value::bytes(vec![99, 88]), Value::Int(2)],
         )
         .unwrap();
         assert!(matches!(write_at, Value::Bool(true)));
@@ -1602,7 +1604,9 @@ mod tests {
             &[Value::Str(Arc::new(path.clone())), Value::Int(1)],
         )
         .unwrap();
-        assert!(matches!(seek_read, Value::Bytes(bytes) if bytes == vec![20, 99, 88, 50]));
+        assert!(
+            matches!(seek_read, Value::Bytes(bytes) if bytes.as_slice() == vec![20, 99, 88, 50])
+        );
 
         let _ = std::fs::remove_file(path);
     }
@@ -1719,7 +1723,7 @@ mod tests {
                 "io_write_bytes",
                 vec![
                     Value::Str(Arc::new("/tmp/kujo_io.bin".to_string())),
-                    Value::Bytes(vec![]),
+                    Value::bytes(vec![]),
                     Value::Int(99),
                 ],
                 "io_write_bytes requires two arguments: path and bytes",
@@ -1728,7 +1732,7 @@ mod tests {
                 "io_append_bytes",
                 vec![
                     Value::Str(Arc::new("/tmp/kujo_io.bin".to_string())),
-                    Value::Bytes(vec![]),
+                    Value::bytes(vec![]),
                     Value::Int(99),
                 ],
                 "io_append_bytes requires two arguments: path and bytes",
@@ -1747,7 +1751,7 @@ mod tests {
                 "io_write_at",
                 vec![
                     Value::Str(Arc::new("/tmp/kujo_io.bin".to_string())),
-                    Value::Bytes(vec![]),
+                    Value::bytes(vec![]),
                     Value::Int(0),
                     Value::Int(99),
                 ],

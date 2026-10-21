@@ -202,7 +202,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
 
             if let Some(Value::Str(s)) = arg_values.first() {
                 match builtins::decode_base64(s.as_ref()) {
-                    Ok(bytes) => Value::Bytes(bytes),
+                    Ok(bytes) => Value::bytes(bytes),
                     Err(error) => Value::Error(error),
                 }
             } else {
@@ -364,7 +364,7 @@ mod tests {
             Value::Str(encoded) => {
                 let decode_result = handle("decode_base64", &[Value::Str(encoded)]).unwrap();
                 match decode_result {
-                    Value::Bytes(bytes) => assert_eq!(bytes, b"kujo"),
+                    Value::Bytes(bytes) => assert_eq!(bytes.as_slice(), b"kujo"),
                     other => panic!("Expected Value::Bytes from decode_base64, got {:?}", other),
                 }
             }
@@ -392,7 +392,7 @@ mod tests {
     fn test_charset_decode_is_strict_bounded_and_label_explicit() {
         let latin1 = handle(
             "decode_charset",
-            &[Value::Bytes(b"caf\xe9".to_vec()), string_value("iso-8859-1"), Value::Int(16)],
+            &[Value::bytes(b"caf\xe9".to_vec()), string_value("iso-8859-1"), Value::Int(16)],
         )
         .unwrap();
         assert!(matches!(latin1, Value::Str(value) if value.as_ref() == "café"));
@@ -400,7 +400,7 @@ mod tests {
         let windows = handle(
             "decode_charset",
             &[
-                Value::Bytes(b"smart \x91quotes\x92".to_vec()),
+                Value::bytes(b"smart \x91quotes\x92".to_vec()),
                 string_value("windows-1252"),
                 Value::Int(64),
             ],
@@ -410,7 +410,7 @@ mod tests {
 
         let invalid = handle(
             "decode_charset",
-            &[Value::Bytes(vec![0xff]), string_value("us-ascii"), Value::Int(8)],
+            &[Value::bytes(vec![0xff]), string_value("us-ascii"), Value::Int(8)],
         )
         .unwrap();
         assert!(
@@ -419,7 +419,7 @@ mod tests {
 
         let bounded = handle(
             "decode_charset",
-            &[Value::Bytes(b"caf\xe9".to_vec()), string_value("iso-8859-1"), Value::Int(4)],
+            &[Value::bytes(b"caf\xe9".to_vec()), string_value("iso-8859-1"), Value::Int(4)],
         )
         .unwrap();
         assert!(

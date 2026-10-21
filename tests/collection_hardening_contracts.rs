@@ -49,7 +49,7 @@ fn unique_does_not_treat_redacted_debug_output_as_value_identity() {
         vec![array(vec![a.clone()]), array(vec![b]), array(vec![a])],
         vec![json("[1]"), json("[2]"), json("[1]")],
         vec![json(r#"{"a":1}"#), json(r#"{"a":2}"#), json(r#"{"a":1}"#)],
-        vec![Value::Bytes(vec![1]), Value::Bytes(vec![2]), Value::Bytes(vec![1])],
+        vec![Value::bytes(vec![1]), Value::bytes(vec![2]), Value::bytes(vec![1])],
     ] {
         let Value::Array(result) = call("unique", &[array(values)]) else {
             panic!("expected array")

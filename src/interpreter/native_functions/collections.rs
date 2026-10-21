@@ -172,7 +172,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     }
                     Some(Value::Bytes(bytes)) => {
                         let (start_idx, end_idx) = normalize_slice_bounds(bytes.len(), start, end);
-                        Value::Bytes(bytes[start_idx..end_idx].to_vec())
+                        Value::bytes(bytes[start_idx..end_idx].to_vec())
                     }
                     _ => Value::Error(
                         "slice() requires array or bytes and numeric start/end arguments"
@@ -201,7 +201,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 let mut result = Vec::with_capacity(capacity);
                 result.extend_from_slice(left);
                 result.extend_from_slice(right);
-                Value::Bytes(result)
+                Value::bytes(result)
             } else {
                 Value::Error("concat() requires two arrays or two bytes values".to_string())
             }
@@ -1796,15 +1796,17 @@ mod tests {
         let concat_bytes = handle(
             &mut interpreter,
             "concat",
-            &[Value::Bytes(vec![0, 1]), Value::Bytes(vec![2, 255])],
+            &[Value::bytes(vec![0, 1]), Value::bytes(vec![2, 255])],
         )
         .expect("handler");
-        assert!(matches!(concat_bytes, Value::Bytes(bytes) if bytes == vec![0, 1, 2, 255]));
+        assert!(
+            matches!(concat_bytes, Value::Bytes(bytes) if bytes.as_slice() == vec![0, 1, 2, 255])
+        );
 
         let index_bytes = handle(
             &mut interpreter,
             "index_of",
-            &[Value::Bytes(vec![0, 13, 10, 255]), Value::Bytes(vec![13, 10])],
+            &[Value::bytes(vec![0, 13, 10, 255]), Value::bytes(vec![13, 10])],
         )
         .expect("handler");
         assert!(matches!(index_bytes, Value::Int(1)));
@@ -1812,17 +1814,17 @@ mod tests {
         let index_bytes_missing = handle(
             &mut interpreter,
             "index_of",
-            &[Value::Bytes(vec![0, 1]), Value::Bytes(vec![2])],
+            &[Value::bytes(vec![0, 1]), Value::bytes(vec![2])],
         )
         .expect("handler");
         assert!(matches!(index_bytes_missing, Value::Int(-1)));
 
         let ascii_bytes =
-            handle(&mut interpreter, "bytes_is_ascii", &[Value::Bytes(vec![0, 13, 127])])
+            handle(&mut interpreter, "bytes_is_ascii", &[Value::bytes(vec![0, 13, 127])])
                 .expect("handler");
         assert!(matches!(ascii_bytes, Value::Bool(true)));
         let non_ascii_bytes =
-            handle(&mut interpreter, "bytes_is_ascii", &[Value::Bytes(vec![128])])
+            handle(&mut interpreter, "bytes_is_ascii", &[Value::bytes(vec![128])])
                 .expect("handler");
         assert!(matches!(non_ascii_bytes, Value::Bool(false)));
 

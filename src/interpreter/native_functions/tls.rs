@@ -446,7 +446,7 @@ fn tls_receive(arg_values: &[Value]) -> Value {
             buffer.truncate(read);
             match String::from_utf8(buffer.clone()) {
                 Ok(text) => string_value(text),
-                Err(_) => Value::Bytes(buffer),
+                Err(_) => Value::bytes(buffer),
             }
         }
         Err(_) => error("TLS read failed or timed out"),

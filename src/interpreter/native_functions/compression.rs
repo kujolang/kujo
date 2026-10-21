@@ -68,7 +68,7 @@ fn gzip_decompress(arg_values: &[Value]) -> Value {
         return Value::Error("gzip_decompress requires a valid gzip stream".to_string());
     }
     match read_bounded(MultiGzDecoder::new(bytes), maximum, "gzip_decompress") {
-        Ok(output) => Value::Bytes(output),
+        Ok(output) => Value::bytes(output),
         Err(error) => error,
     }
 }
@@ -95,7 +95,7 @@ fn gzip_compress(arg_values: &[Value]) -> Value {
         return Value::Error(format!("gzip_compress failed: {}", error));
     }
     match encoder.finish() {
-        Ok(output) => Value::Bytes(output),
+        Ok(output) => Value::bytes(output),
         Err(error) => Value::Error(format!("gzip_compress failed: {}", error)),
     }
 }
@@ -149,7 +149,7 @@ fn zip_single_file_read(arg_values: &[Value]) -> Value {
     result.insert("name".into(), compression_string(name));
     result.insert("compressed_bytes".into(), Value::Int(compressed_bytes as i64));
     result.insert("uncompressed_bytes".into(), Value::Int(output.len() as i64));
-    result.insert("bytes".into(), Value::Bytes(output));
+    result.insert("bytes".into(), Value::bytes(output));
     Value::dict(result)
 }
 
@@ -187,9 +187,9 @@ mod tests {
     #[test]
     fn gzip_is_bounded_and_binary_safe() {
         let compressed = gzip_bytes(b"kujo email");
-        let result = gzip_decompress(&[Value::Bytes(compressed.clone()), Value::Int(64)]);
-        assert!(matches!(result, Value::Bytes(bytes) if bytes == b"kujo email"));
-        let bounded = gzip_decompress(&[Value::Bytes(compressed), Value::Int(4)]);
+        let result = gzip_decompress(&[Value::bytes(compressed.clone()), Value::Int(64)]);
+        assert!(matches!(result, Value::Bytes(bytes) if bytes.as_slice() == b"kujo email"));
+        let bounded = gzip_decompress(&[Value::bytes(compressed), Value::Int(4)]);
         assert!(
             matches!(bounded, Value::Error(message) if message.contains("exceeds max_output_bytes"))
         );
@@ -197,11 +197,13 @@ mod tests {
 
     #[test]
     fn gzip_compress_round_trips_binary_bytes() {
-        let original = Value::Bytes(vec![0, 1, 0x80, 0xff]);
+        let original = Value::bytes(vec![0, 1, 0x80, 0xff]);
         let compressed = gzip_compress(std::slice::from_ref(&original));
         let Value::Bytes(compressed) = compressed else { panic!("expected compressed bytes") };
-        let decompressed = gzip_decompress(&[Value::Bytes(compressed), Value::Int(64)]);
-        assert!(matches!(decompressed, Value::Bytes(bytes) if bytes == vec![0, 1, 0x80, 0xff]));
+        let decompressed = gzip_decompress(&[Value::bytes(compressed), Value::Int(64)]);
+        assert!(
+            matches!(decompressed, Value::Bytes(bytes) if bytes.as_slice() == vec![0, 1, 0x80, 0xff])
+        );
     }
 
     #[test]
@@ -211,13 +213,13 @@ mod tests {
         writer.start_file("report.xml", SimpleFileOptions::default()).unwrap();
         writer.write_all(b"<feedback/>").unwrap();
         let archive = writer.finish().unwrap().into_inner();
-        let result = zip_single_file_read(&[Value::Bytes(archive), Value::Int(64)]);
+        let result = zip_single_file_read(&[Value::bytes(archive), Value::Int(64)]);
         let Value::Dict(result) = result else { panic!("expected dictionary") };
         assert!(
             matches!(result.get("name"), Some(Value::Str(name)) if name.as_ref() == "report.xml")
         );
         assert!(
-            matches!(result.get("bytes"), Some(Value::Bytes(bytes)) if bytes == b"<feedback/>")
+            matches!(result.get("bytes"), Some(Value::Bytes(bytes)) if bytes.as_slice() == b"<feedback/>")
         );
     }
 
@@ -230,7 +232,7 @@ mod tests {
         writer.start_file("two.xml", SimpleFileOptions::default()).unwrap();
         writer.write_all(b"two").unwrap();
         let multiple = writer.finish().unwrap().into_inner();
-        let result = zip_single_file_read(&[Value::Bytes(multiple), Value::Int(64)]);
+        let result = zip_single_file_read(&[Value::bytes(multiple), Value::Int(64)]);
         assert!(matches!(result, Value::Error(message) if message.contains("exactly one")));
 
         let cursor = Cursor::new(Vec::new());
@@ -238,7 +240,7 @@ mod tests {
         writer.start_file("../report.xml", SimpleFileOptions::default()).unwrap();
         writer.write_all(b"unsafe").unwrap();
         let traversal = writer.finish().unwrap().into_inner();
-        let result = zip_single_file_read(&[Value::Bytes(traversal), Value::Int(64)]);
+        let result = zip_single_file_read(&[Value::bytes(traversal), Value::Int(64)]);
         assert!(matches!(result, Value::Error(message) if message.contains("safe regular file")));
     }
 }

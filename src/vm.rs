@@ -6237,7 +6237,7 @@ impl VM {
             Constant::Int(n) => Ok(Value::Int(*n)),
             Constant::Float(f) => Ok(Value::Float(*f)),
             Constant::String(s) => Ok(Value::Str(Arc::new(s.clone()))),
-            Constant::Bytes(bytes) => Ok(Value::Bytes(bytes.clone())),
+            Constant::Bytes(bytes) => Ok(Value::bytes(bytes.clone())),
             Constant::Bool(b) => Ok(Value::Bool(*b)),
             Constant::None => Ok(Value::Null),
             Constant::Function(chunk) => Ok(Value::BytecodeFunction {
@@ -6533,7 +6533,7 @@ impl VM {
             Value::Int(n) => Ok(Constant::Int(*n)),
             Value::Float(f) => Ok(Constant::Float(*f)),
             Value::Str(s) => Ok(Constant::String(s.as_ref().clone())),
-            Value::Bytes(bytes) => Ok(Constant::Bytes(bytes.clone())),
+            Value::Bytes(bytes) => Ok(Constant::Bytes(bytes.to_vec())),
             Value::Bool(b) => Ok(Constant::Bool(*b)),
             Value::Array(items) => {
                 let mut constants = Vec::with_capacity(items.len());
@@ -6908,7 +6908,7 @@ impl VM {
                 req_fields.insert("path".into(), Value::Str(Arc::new(url_path.clone())));
                 req_fields.insert("raw_path".into(), Value::Str(Arc::new(request_url.clone())));
                 req_fields.insert("body".into(), Value::Str(Arc::new(body_content.clone())));
-                req_fields.insert("body_bytes".into(), Value::Bytes(body_bytes.clone()));
+                req_fields.insert("body_bytes".into(), Value::bytes(body_bytes.clone()));
                 req_fields.insert("params".into(), Value::Dict(Arc::new(params_dict)));
                 req_fields
                     .insert("peer_address".into(), Value::Str(Arc::new(peer_address.clone())));

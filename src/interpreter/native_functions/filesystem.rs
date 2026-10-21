@@ -1418,7 +1418,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
             };
             let bytes = match payload {
                 Value::Str(content) => content.as_bytes().to_vec(),
-                Value::Bytes(bytes) => bytes.clone(),
+                Value::Bytes(bytes) => bytes.to_vec(),
                 _ => {
                     return Some(Value::Error(
                         "write_file_atomic requires path (string) and content/bytes arguments"
@@ -1613,7 +1613,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 read_file_beneath_bytes(root.as_ref(), relative_path.as_ref(), max_bytes)
             };
             match result {
-                Ok(bytes) if name != "read_file_beneath" => Value::Bytes(bytes),
+                Ok(bytes) if name != "read_file_beneath" => Value::bytes(bytes),
                 Ok(bytes) => match String::from_utf8(bytes) {
                     Ok(content) => Value::Str(Arc::new(content)),
                     Err(_) => Value::Error(beneath_error(
@@ -1684,7 +1684,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 }
 
                 match std::fs::read(path.as_ref()) {
-                    Ok(bytes) => Value::Bytes(bytes),
+                    Ok(bytes) => Value::bytes(bytes),
                     Err(e) => {
                         Value::Error(format!("Cannot read binary file '{}': {}", path.as_ref(), e))
                     }
@@ -1710,7 +1710,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     return Some(Value::Error(error));
                 }
 
-                match std::fs::write(path.as_ref(), bytes) {
+                match std::fs::write(path.as_ref(), bytes.as_slice()) {
                     Ok(_) => Value::Bool(true),
                     Err(e) => {
                         Value::Error(format!("Cannot write binary file '{}': {}", path.as_ref(), e))

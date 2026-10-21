@@ -600,7 +600,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                                 buffer.truncate(read_size);
                                 match String::from_utf8(buffer.clone()) {
                                     Ok(text) => Value::Str(Arc::new(text)),
-                                    Err(_) => Value::Bytes(buffer),
+                                    Err(_) => Value::bytes(buffer),
                                 }
                             }
                             Err(error) => Value::ErrorObject {
@@ -1004,7 +1004,7 @@ pub fn handle(_interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Op
                                 buffer.truncate(read_size);
                                 let data_value = match String::from_utf8(buffer.clone()) {
                                     Ok(text) => Value::Str(Arc::new(text)),
-                                    Err(_) => Value::Bytes(buffer),
+                                    Err(_) => Value::bytes(buffer),
                                 };
 
                                 let mut result = DictMap::default();

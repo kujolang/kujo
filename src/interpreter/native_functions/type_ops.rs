@@ -212,7 +212,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
                         }
                     }
                 }
-                Value::Bytes(byte_vec)
+                Value::bytes(byte_vec)
             } else {
                 Value::Error("bytes() requires an array argument".to_string())
             }

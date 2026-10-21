@@ -743,7 +743,7 @@ fn decode_file_range(
         Arc::<str>::from("sha256"),
         Value::Str(Arc::new(format!("{:x}", sink.hasher.finalize()))),
     );
-    result.insert(Arc::<str>::from("prefix"), Value::Bytes(sink.prefix));
+    result.insert(Arc::<str>::from("prefix"), Value::bytes(sink.prefix));
     result.insert(Arc::<str>::from("ascii"), Value::Bool(sink.ascii));
     result.insert(Arc::<str>::from("contains_nul"), Value::Bool(sink.contains_nul));
     result.insert(Arc::<str>::from("utf8_valid"), Value::Bool(sink.utf8.is_valid()));
@@ -756,7 +756,7 @@ fn decode_file_range(
             Arc::<str>::from("utf8_sha256"),
             Value::Str(Arc::new(format!("{:x}", text.hasher.finalize()))),
         );
-        result.insert(Arc::<str>::from("utf8_prefix"), Value::Bytes(text.prefix));
+        result.insert(Arc::<str>::from("utf8_prefix"), Value::bytes(text.prefix));
         result.insert(Arc::<str>::from("text_ascii"), Value::Bool(text.ascii));
         result.insert(Arc::<str>::from("text_contains_nul"), Value::Bool(text.contains_nul));
     }
@@ -2170,7 +2170,7 @@ mod tests {
             matches!(sha, Value::Str(value) if value.as_ref() == "cc89e49d76db3627520f5bd923995954a08f0bd5885b56cb99fc68c98e6ff7d1")
         );
 
-        let sha_bytes = handle("sha256", &[Value::Bytes(b"kujo".to_vec())]).unwrap();
+        let sha_bytes = handle("sha256", &[Value::bytes(b"kujo".to_vec())]).unwrap();
         assert!(
             matches!(sha_bytes, Value::Str(value) if value.as_ref() == "cc89e49d76db3627520f5bd923995954a08f0bd5885b56cb99fc68c98e6ff7d1")
         );
@@ -2180,7 +2180,7 @@ mod tests {
             matches!(md5, Value::Str(value) if value.as_ref() == "4865bdebde111b22232a5e509bc58c75")
         );
 
-        let md5_bytes = handle("md5", &[Value::Bytes(b"kujo".to_vec())]).unwrap();
+        let md5_bytes = handle("md5", &[Value::bytes(b"kujo".to_vec())]).unwrap();
         assert!(
             matches!(md5_bytes, Value::Str(value) if value.as_ref() == "4865bdebde111b22232a5e509bc58c75")
         );
@@ -2199,7 +2199,7 @@ mod tests {
 
         let bytes_result = handle(
             "hmac_sha256",
-            &[Value::Bytes(vec![0x0b; 20]), Value::Bytes(b"Hi There".to_vec())],
+            &[Value::bytes(vec![0x0b; 20]), Value::bytes(b"Hi There".to_vec())],
         )
         .unwrap();
         assert!(
@@ -2257,7 +2257,7 @@ mod tests {
             matches!(result, Value::Str(value) if value.as_ref() == "5b35354055af6a5442460fc80a36f4c47cf5fe7cade16773e1c474a2d37e9a3d")
         );
 
-        let direct = handle("sha256", &[Value::Bytes(vec![0, 1, 2, 0x80, 0xFF, 0])]).unwrap();
+        let direct = handle("sha256", &[Value::bytes(vec![0, 1, 2, 0x80, 0xFF, 0])]).unwrap();
         assert!(
             matches!(direct, Value::Str(value) if value.as_ref() == "5b35354055af6a5442460fc80a36f4c47cf5fe7cade16773e1c474a2d37e9a3d")
         );
@@ -2299,7 +2299,9 @@ mod tests {
             matches!(base64.get("schema"), Some(Value::Str(value)) if value.as_ref() == "kujo.file.decode.v1")
         );
         assert!(matches!(base64.get("output_bytes"), Some(Value::Int(13))));
-        assert!(matches!(base64.get("prefix"), Some(Value::Bytes(value)) if value == b"Hello"));
+        assert!(
+            matches!(base64.get("prefix"), Some(Value::Bytes(value)) if value.as_slice() == b"Hello")
+        );
         assert!(matches!(base64.get("ascii"), Some(Value::Bool(true))));
         assert!(matches!(base64.get("utf8_valid"), Some(Value::Bool(true))));
         assert!(matches!(base64.get("max_input_line_bytes"), Some(Value::Int(12))));
@@ -2324,7 +2326,7 @@ mod tests {
         let Value::Dict(qp) = qp else { panic!("expected quoted-printable decode metadata") };
         assert!(matches!(qp.get("output_bytes"), Some(Value::Int(8))));
         assert!(
-            matches!(qp.get("prefix"), Some(Value::Bytes(value)) if value == b"caf\xc3\xa9!\r\n")
+            matches!(qp.get("prefix"), Some(Value::Bytes(value)) if value.as_slice() == b"caf\xc3\xa9!\r\n")
         );
         assert!(matches!(qp.get("ascii"), Some(Value::Bool(false))));
         assert!(matches!(qp.get("utf8_valid"), Some(Value::Bool(true))));
@@ -2487,7 +2489,7 @@ mod tests {
         let key = PKey::from_rsa(rsa).unwrap();
         let pem = String::from_utf8(key.public_key_to_pem().unwrap()).unwrap();
         let der = key.public_key_to_der().unwrap();
-        for input in [Value::Str(Arc::new(pem)), Value::Bytes(der)] {
+        for input in [Value::Str(Arc::new(pem)), Value::bytes(der)] {
             let result = handle("rsa_public_key_info", &[input]).unwrap();
             let Value::Dict(info) = result else { panic!("expected public key info") };
             assert!(

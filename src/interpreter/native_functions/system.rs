@@ -295,7 +295,7 @@ fn parse_process_options(options: Option<&Value>) -> Result<ProcessExecOptions, 
             "stdin" => {
                 let bytes = match value {
                     Value::Str(text) => text.as_bytes().to_vec(),
-                    Value::Bytes(bytes) => bytes,
+                    Value::Bytes(bytes) => bytes.to_vec(),
                     _ => {
                         return Err(Value::Error("stdin must be a string or bytes".to_string()));
                     }
@@ -2498,7 +2498,7 @@ mod tests {
     #[test]
     fn test_spawn_process_accepts_bounded_binary_stdin() {
         let mut options = DictMap::default();
-        options.insert(Arc::from("stdin"), Value::Bytes(b"hello\0world".to_vec()));
+        options.insert(Arc::from("stdin"), Value::bytes(b"hello\0world".to_vec()));
         let args = vec![string_value("sh"), string_value("-c"), string_value("cat")];
         let result = handle(
             "spawn_process",
@@ -2520,7 +2520,7 @@ mod tests {
     #[test]
     fn test_process_stdin_rejects_oversized_input_before_spawn() {
         let mut options = DictMap::default();
-        options.insert(Arc::from("stdin"), Value::Bytes(vec![0_u8; MAX_PROCESS_STDIN_BYTES + 1]));
+        options.insert(Arc::from("stdin"), Value::bytes(vec![0_u8; MAX_PROCESS_STDIN_BYTES + 1]));
         let args = vec![string_value("definitely-not-executed")];
         let result = handle(
             "spawn_process",
@@ -2559,7 +2559,7 @@ mod tests {
         env.insert(Arc::from("KUJO_PROCESS_STDIN_CHILD"), string_value("1"));
         let mut options = DictMap::default();
         options.insert(Arc::from("env"), Value::Dict(Arc::new(env)));
-        options.insert(Arc::from("stdin"), Value::Bytes(b"cross-platform\0stdin".to_vec()));
+        options.insert(Arc::from("stdin"), Value::bytes(b"cross-platform\0stdin".to_vec()));
         let result = handle(
             "spawn_process",
             &[Value::Array(Arc::new(args)), Value::Dict(Arc::new(options))],
@@ -2576,7 +2576,7 @@ mod tests {
     #[test]
     fn test_process_stdin_inherited_by_descendant_cannot_delay_completion() {
         let mut options = DictMap::default();
-        options.insert(Arc::from("stdin"), Value::Bytes(vec![b'A'; 1024 * 1024]));
+        options.insert(Arc::from("stdin"), Value::bytes(vec![b'A'; 1024 * 1024]));
         options.insert(Arc::from("timeout_ms"), Value::Int(100));
         let args = vec![
             string_value("sh"),
@@ -2602,7 +2602,7 @@ mod tests {
     #[test]
     fn test_process_stdin_broken_pipe_preserves_successful_result() {
         let mut options = DictMap::default();
-        options.insert(Arc::from("stdin"), Value::Bytes(vec![b'A'; 1024 * 1024]));
+        options.insert(Arc::from("stdin"), Value::bytes(vec![b'A'; 1024 * 1024]));
         let args =
             vec![string_value("sh"), string_value("-c"), string_value("head -c 1 >/dev/null")];
         let result = handle(
@@ -2621,7 +2621,7 @@ mod tests {
     #[test]
     fn test_process_stdin_descriptor_is_read_only() {
         let mut options = DictMap::default();
-        options.insert(Arc::from("stdin"), Value::Bytes(b"bounded".to_vec()));
+        options.insert(Arc::from("stdin"), Value::bytes(b"bounded".to_vec()));
         let args = vec![
             string_value("sh"),
             string_value("-c"),
