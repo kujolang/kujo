@@ -271,3 +271,164 @@ mod append_ownership_tests {
         assert!(matches!(items[0], Value::Int(9)));
     }
 }
+
+// Weak identities invalidate on every Arc::make_mut, including writes outside
+// this module. Bounds may overestimate depth after deletion; only the exact
+// fallback below can reject a write. No cached entry retains a collection payload.
+#[derive(Default)]
+pub(crate) struct DepthCache {
+    arrays: std::collections::HashMap<usize, (std::sync::Weak<Vec<Value>>, usize)>,
+    dictionaries: std::collections::HashMap<usize, (std::sync::Weak<super::DictMap>, usize)>,
+    #[cfg(test)]
+    scans: usize,
+}
+impl DepthCache {
+    fn remember(&mut self, value: &Value, bound: usize) {
+        match value {
+            Value::Array(items) => {
+                self.arrays.insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
+            }
+            Value::Dict(items) => {
+                self.dictionaries
+                    .insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
+            }
+            _ => {}
+        }
+    }
+    fn depth(&mut self, root: &Value) -> usize {
+        let mut work = vec![(root, 0)];
+        let mut depth = 0;
+        while let Some((value, offset)) = work.pop() {
+            depth = depth.max(offset);
+            let cached = match value {
+                Value::Array(a) => self.arrays.get(&(Arc::as_ptr(a) as usize)).map(|e| e.1),
+                Value::Dict(d) => self.dictionaries.get(&(Arc::as_ptr(d) as usize)).map(|e| e.1),
+                _ => None,
+            };
+            if let Some(bound) = cached {
+                depth = depth.max(offset + bound);
+            } else if let Value::Struct { fields, .. } = value {
+                work.extend(fields.values().map(|v| (v, offset + 1)));
+            } else {
+                #[cfg(test)]
+                {
+                    self.scans += 1;
+                }
+                let bound = Value::nesting_depth(value);
+                self.remember(value, bound);
+                depth = depth.max(offset + bound);
+            }
+        }
+        depth
+    }
+    fn remember_path(&mut self, root: &Value, path: &[Access], bound: usize) {
+        let mut cursor = root;
+        let mut bound = bound;
+        self.remember(cursor, bound);
+        for access in path {
+            let Some(child) = child(cursor, access) else { break };
+            cursor = child;
+            bound = bound.saturating_sub(1);
+            self.remember(cursor, bound);
+        }
+        if self.arrays.len() + self.dictionaries.len() >= 1024 {
+            self.arrays.retain(|_, (weak, _)| weak.strong_count() > 0);
+            self.dictionaries.retain(|_, (weak, _)| weak.strong_count() > 0);
+            if self.arrays.len() + self.dictionaries.len() >= 1024 {
+                self.arrays.clear();
+                self.dictionaries.clear();
+            }
+        }
+    }
+}
+
+fn child<'a>(value: &'a Value, access: &Access) -> Option<&'a Value> {
+    match (value, access) {
+        (Value::Array(a), Access::Index(Value::Int(i))) => {
+            let i = if *i < 0 { a.len() as i64 + i } else { *i };
+            if i < 0 {
+                None
+            } else {
+                a.get(i as usize)
+            }
+        }
+        (Value::Struct { fields, .. }, Access::Field(field)) => fields.get(field),
+        (Value::Dict(d), Access::Index(Value::Str(key))) => d.get(key.as_str()),
+        (Value::Dict(d), Access::Index(Value::Int(key))) => d.get(key.to_string().as_str()),
+        _ => None,
+    }
+}
+
+pub(crate) fn update_checked(
+    root: &mut Value,
+    path: &[Access],
+    value: Value,
+    cache: &mut DepthCache,
+) -> Result<(), String> {
+    validate(root, path, &value)?;
+    let bound = cache.depth(root).max(Value::nesting_depth(&value) + path.len());
+    let limit = crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH;
+    let bound = if bound <= limit {
+        update_in_place(root, path, value)?;
+        bound
+    } else {
+        // Host/native inputs can already be too deep. Check the proposed result
+        // exactly, allowing a write that repairs them and never partially writing.
+        let updated = update(root.clone(), path, value)?;
+        let exact = Value::nesting_depth(&updated);
+        if exact > limit {
+            return Err(format!(
+                "Maximum data nesting depth of {limit} exceeded while updating nested assignment"
+            ));
+        }
+        *root = updated;
+        exact
+    };
+    cache.remember_path(root, path, bound);
+    Ok(())
+}
+
+#[cfg(test)]
+mod state_depth_tests {
+    use super::*;
+    #[test]
+    fn state_container_writes_reuse_rows_and_cached_depths() {
+        for dictionary in [false, true] {
+            let rows = Value::array(vec![Value::array(vec![Value::Int(0); 10_000])]);
+            let mut root = if dictionary {
+                Value::Dict(Arc::new([("rows".into(), rows)].into_iter().collect()))
+            } else {
+                Value::Struct {
+                    name: "State".into(),
+                    fields: [("rows".into(), rows)].into_iter().collect(),
+                }
+            };
+            let path = [
+                if dictionary {
+                    Access::Index(Value::str_ref("rows"))
+                } else {
+                    Access::Field("rows".into())
+                },
+                Access::Index(Value::Int(0)),
+                Access::Index(Value::Int(0)),
+            ];
+            let buffer = |root: &Value| {
+                let rows = child(root, &path[0]).unwrap();
+                let Value::Array(row) = child(rows, &path[1]).unwrap() else { panic!() };
+                row.as_ptr()
+            };
+            let mut cache = DepthCache::default();
+            update_checked(&mut root, &path, Value::Int(1), &mut cache).unwrap();
+            let ptr = buffer(&root);
+            let scans = cache.scans;
+            for _ in 0..100 {
+                update_checked(&mut root, &path, Value::Int(2), &mut cache).unwrap();
+                assert_eq!(buffer(&root), ptr);
+            }
+            assert_eq!(cache.scans, scans, "unchanged collection was rescanned");
+            let alias = root.clone();
+            update_checked(&mut root, &path, Value::Int(3), &mut cache).unwrap();
+            assert_ne!(buffer(&alias), buffer(&root));
+        }
+    }
+}

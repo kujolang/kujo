@@ -97,7 +97,7 @@ pub struct VM {
     jit_enabled: bool,
     // Weak identities cache only successful nested-write depth validation. Every
     // Arc::make_mut dissociates weak identities, so other mutation paths invalidate it.
-    path_depth_valid: HashMap<usize, std::sync::Weak<Vec<Value>>>,
+    path_depth_valid: crate::interpreter::assignment::DepthCache,
 
     /// Function call stack for error reporting (tracks function names)
     function_call_stack: Vec<String>,
@@ -623,7 +623,7 @@ impl VM {
             exception_handlers: Vec::new(),
             jit_compiler: None,
             jit_enabled: false,
-            path_depth_valid: HashMap::new(),
+            path_depth_valid: Default::default(),
             function_call_stack: Vec::new(),
             function_call_counts: HashMap::new(),
             compiled_functions: HashMap::new(),
@@ -5149,39 +5149,10 @@ impl VM {
                     }
                     path.reverse();
                     let value = self.stack.pop().ok_or("Stack underflow")?;
-                    let inserted_depth = Self::value_nesting_depth(&value) + path.len();
                     let mut validated = std::mem::take(&mut self.path_depth_valid);
                     let result = self.mutate_binding(&binding, |root| {
-                        let identity = match root {
-                            Value::Array(items) => Some(Arc::as_ptr(items) as usize),
-                            _ => None,
-                        };
-                        if identity.is_some_and(|id| validated.contains_key(&id)) {
-                            assignment::validate(root, &path, &value)?;
-                            if inserted_depth > runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
-                                return Err(format!("Maximum data nesting depth of {} exceeded while updating nested assignment", runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH));
-                            }
-                            assignment::update_in_place(root, &path, value)?;
-                        } else {
-                            // Native/host values need not have passed a builder's
-                            // depth check. Validate their updated snapshot once;
-                            // this also allows replacing an over-deep subtree.
-                            let updated = assignment::update(root.clone(), &path, value)?;
-                            Self::ensure_value_nesting_depth(&updated, "updating nested assignment")?;
-                            *root = updated;
-                        }
-                        if let Some(id) = identity { validated.remove(&id); }
-                        if let Value::Array(items) = root {
-                            validated.insert(Arc::as_ptr(items) as usize, Arc::downgrade(items));
-                        }
-                        Ok(())
+                        assignment::update_checked(root, &path, value, &mut validated)
                     });
-                    if validated.len() >= 1024 {
-                        validated.retain(|_, weak| weak.strong_count() > 0);
-                        if validated.len() >= 1024 {
-                            validated.clear();
-                        }
-                    }
                     self.path_depth_valid = validated;
                     if let Err(error) = result {
                         self.throw_runtime_value(Value::Error(error))?;

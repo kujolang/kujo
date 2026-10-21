@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid repeated VM row copies and depth scans through benchmark-state structs
+  and dictionaries while preserving alias isolation and atomic failed writes.
+
 - Reuse unaliased array storage for append rebinding after evaluating the original
   call arguments; retain ordinary calls when shadowing or callback effects prevent reuse.
 

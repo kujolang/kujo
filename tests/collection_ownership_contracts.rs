@@ -211,6 +211,29 @@ fn collection_fast_paths_preserve_existing_vm_depth_checks() {
                 deep = Value::array(vec![deep]);
             }
             let mut interpreter = Interpreter::new();
+            interpreter.env.define(
+                "host_struct".into(),
+                Value::Struct {
+                    name: "Host".into(),
+                    fields: [
+                        ("bad".into(), deep.clone()),
+                        ("safe".into(), Value::array(vec![Value::Int(0)])),
+                    ]
+                    .into_iter()
+                    .collect(),
+                },
+            );
+            interpreter.env.define(
+                "host_dict".into(),
+                Value::Dict(Arc::new(
+                    [
+                        ("bad".into(), deep.clone()),
+                        ("safe".into(), Value::array(vec![Value::Int(0)])),
+                    ]
+                    .into_iter()
+                    .collect(),
+                )),
+            );
             interpreter.env.define("deep".into(), deep);
             let source = r#"
             mut items := []
@@ -242,6 +265,18 @@ fn collection_fast_paths_preserve_existing_vm_depth_checks() {
             assert_equal(rows[0][0], 1)
             rows[1][0] = 0
             assert_equal(rows[1], [0])
+            try { host_struct.safe[0] = 1 } except e { failures += 1 }
+            try { host_dict["safe"][0] = 1 } except e { failures += 1 }
+            assert_equal(failures, 7)
+            assert_equal(host_struct.safe[0], 0)
+            assert_equal(host_dict["safe"][0], 0)
+            host_struct.bad[0] = 0
+            host_dict["bad"][0] = 0
+            host_struct.safe[0] = 2
+            host_dict["safe"][0] = 2
+            assert_equal(host_struct.safe[0], 2)
+            assert_equal(host_dict["safe"][0], 2)
+
         "#;
             let mut parser = Parser::new(tokenize(source).unwrap());
             let parsed = parser.parse_with_diagnostics();
@@ -253,4 +288,48 @@ fn collection_fast_paths_preserve_existing_vm_depth_checks() {
         .unwrap()
         .join()
         .unwrap();
+}
+
+#[test]
+fn benchmark_state_writes_preserve_snapshots_and_failed_writes() {
+    support::success(
+        r#"
+        struct State { rows: array }
+        func work() {
+            mut s := State { rows: [range(0, 2000)] }
+            mut d := {"rows": [range(0, 2000)]}
+            let before_s := s
+            let before_d := d
+            mut i := 0
+            while i < 2000 {
+                s.rows[0][i] = i + 1
+                d["rows"][0][i] = i + 1
+                i += 1
+            }
+            assert_equal(s.rows[0][-1], 2000)
+            assert_equal(d["rows"][0][-1], 2000)
+            assert_equal(before_s.rows[0][-1], 1999)
+            assert_equal(before_d["rows"][0][-1], 1999)
+            mut failures := 0
+            try { s.rows[0][2000] = 9 } except e { failures += 1 }
+            try { d["missing"][0] = 9 } except e { failures += 1 }
+            assert_equal(failures, 2)
+            assert_equal(s.rows[0][-1], 2000)
+            assert_equal(d["rows"][0][-1], 2000)
+            func update() { s.rows[0][0] = 99 d["rows"][0][0] = 88 return [s, d] }
+            return update
+        }
+        let update := work()
+        let first := update()
+        assert_equal(first[0].rows[0][0], 99)
+        assert_equal(first[1]["rows"][0][0], 88)
+        let second := update()
+        assert_equal(first, second)
+    "#,
+    );
+    support::failure(
+        "struct S { rows: array } let s := S { rows: [[0]] } s.rows[0][0] = 1",
+        "immutable",
+    );
+    support::failure("const d := {\"rows\": [[0]]} d[\"rows\"][0][0] = 1", "const");
 }

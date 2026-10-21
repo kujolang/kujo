@@ -188,3 +188,14 @@ their assertions; formatting, `cargo check`, and diff checks passed. The full
 unfiltered Cargo suite was not run. The first broad run exposed a pre-existing
 parallel fixture filename collision; an atomic suffix fixed it and the final
 123-test parity suite passed within the clean broad rerun.
+
+## Benchmark-state containers
+
+VM nested writes now cache conservative depth bounds for array and dictionary
+allocations below struct fields as well as for array roots. Weak identities are
+invalidated by copy-on-write, and caches retain no collection payloads. Paths
+validate before mutation. A possibly excessive bound triggers an exact proposed
+result check, so repairing an over-deep host value remains possible. Unique row
+buffers are preserved; retained snapshots still detach. Structural tests check
+buffer identity and absence of repeated scans for both struct and dictionary
+roots, alongside dual-runtime alias, closure, mutability and error tests.
