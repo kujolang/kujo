@@ -951,11 +951,33 @@ impl VM {
     }
 
     fn value_nesting_depth(value: &Value) -> usize {
+        Self::walk_value_nesting_depth(value, || {})
+    }
+
+    fn walk_value_nesting_depth(value: &Value, mut visit: impl FnMut()) -> usize {
         let mut stack: Vec<(&Value, usize)> = vec![(value, 0)];
         let mut max_depth = 0;
+        // Values can form a compact DAG through shared collection storage. Revisit
+        // a shared allocation only if this path reaches it at a greater depth.
+        // The cache is per walk: later copy-on-write updates cannot stale it.
+        let mut seen = HashMap::<(u8, usize), usize>::new();
 
         while let Some((value, depth)) = stack.pop() {
+            visit();
             max_depth = max_depth.max(depth);
+            let allocation = match value {
+                Value::Array(items) => Some((0, Arc::as_ptr(items) as usize)),
+                Value::Dict(items) => Some((1, Arc::as_ptr(items) as usize)),
+                Value::IntDict(items) => Some((2, Arc::as_ptr(items) as usize)),
+                Value::DenseIntDict(items) => Some((3, Arc::as_ptr(items) as usize)),
+                _ => None,
+            };
+            if let Some(key) = allocation {
+                if seen.get(&key).is_some_and(|previous| *previous >= depth) {
+                    continue;
+                }
+                seen.insert(key, depth);
+            }
 
             match value {
                 Value::Array(items) => {
@@ -9208,6 +9230,33 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn nesting_checks_walk_shared_allocations_without_exponential_expansion() {
+        let mut tree = Value::array(vec![Value::Int(0)]);
+        for _ in 0..40 {
+            tree = Value::array(vec![tree.clone(), tree]);
+        }
+        let mut visits = 0;
+        assert_eq!(VM::walk_value_nesting_depth(&tree, || visits += 1), 41);
+        assert_eq!(visits, 82); // one root, two edges per level, one scalar
+    }
+
+    #[test]
+    fn nesting_checks_revisit_shared_values_reached_on_deeper_paths() {
+        let leaf = Value::array(vec![Value::Int(0)]);
+        let deep = Value::array(vec![Value::array(vec![leaf.clone()])]);
+        // Exercise both traversal orders; a pointer-only visited set would
+        // incorrectly skip the deep occurrence after visiting the shallow one.
+        for values in [vec![deep.clone(), leaf.clone()], vec![leaf, deep]] {
+            assert_eq!(VM::value_nesting_depth(&Value::array(values)), 4);
+        }
+        let mut value = Value::array(vec![Value::Int(0)]);
+        assert_eq!(VM::value_nesting_depth(&value), 1);
+        let Value::Array(items) = &mut value else { unreachable!() };
+        Arc::make_mut(items)[0] = Value::array(vec![Value::Int(0)]);
+        assert_eq!(VM::value_nesting_depth(&value), 2);
+    }
 
     /// Helper to compile and run Kujo code through the VM
     fn run_vm_code(code: &str) -> Result<Value, String> {

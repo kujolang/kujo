@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid exponential VM nesting-check work on shared collection graphs while
+  retaining deeper-path validation and per-operation freshness.
+
 - Add strict `utf8_encode`/`utf8_decode` and checked byte indexed assignment in
   both runtimes, including nested paths and copy-on-write alias isolation.
 
