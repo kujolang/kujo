@@ -997,6 +997,54 @@ fn kujo_value_to_yaml(value: &Value) -> Result<serde_yaml::Value, String> {
     }
 }
 
+/// Headerless CSV records with positional, lossless string fields.
+pub fn parse_csv_rows(text: &str) -> Result<Value, String> {
+    use crate::runtime_limits::{MAX_FILE_IO_BYTES, MAX_GENERATED_SEQUENCE_ITEMS};
+    if text.len() > MAX_FILE_IO_BYTES {
+        return Err(format!("CSV input exceeds {MAX_FILE_IO_BYTES} bytes"));
+    }
+    // csv::Reader intentionally tolerates malformed quotes. This API rejects
+    // those rather than silently repairing records before returning them.
+    #[derive(Clone, Copy)]
+    enum State {
+        Start,
+        Plain,
+        Quoted,
+        Closed,
+    }
+    let mut state = State::Start;
+    for (offset, byte) in text.bytes().enumerate() {
+        state = match (state, byte) {
+            (State::Start, b'"') => State::Quoted,
+            (State::Quoted, b'"') => State::Closed,
+            (State::Quoted, _) => State::Quoted,
+            (State::Closed, b'"') => State::Quoted,
+            (_, b',' | b'\n' | b'\r') => State::Start,
+            (State::Plain, b'"') | (State::Closed, _) => {
+                return Err(format!("CSV invalid quoting at byte {offset}"))
+            }
+            _ => State::Plain,
+        };
+    }
+    if matches!(state, State::Quoted) {
+        return Err("CSV unterminated quoted field".into());
+    }
+    let mut reader = csv::ReaderBuilder::new().has_headers(false).from_reader(text.as_bytes());
+    let mut rows = Vec::new();
+    let mut fields = 0;
+    for record in reader.records() {
+        let record = record.map_err(|error| format!("CSV record error: {error}"))?;
+        fields += record.len();
+        if fields > MAX_GENERATED_SEQUENCE_ITEMS {
+            return Err(format!("CSV exceeds {MAX_GENERATED_SEQUENCE_ITEMS} fields"));
+        }
+        rows.push(Value::Array(Arc::new(
+            record.iter().map(|field| Value::Str(Arc::new(field.to_string()))).collect(),
+        )));
+    }
+    Ok(Value::Array(Arc::new(rows)))
+}
+
 /// CSV functions
 /// Parse a CSV string into a Kujo array of dictionaries
 /// Each row becomes a dictionary with column headers as keys

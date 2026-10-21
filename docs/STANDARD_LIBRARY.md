@@ -326,6 +326,11 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `to_toml` | `to_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_toml(...)` |
 | `parse_yaml` | `parse_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_yaml(...)` |
 | `to_yaml` | `to_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_yaml(...)` |
+| `format_fixed` | `format_fixed(value, precision)` | exact 2 | string | Invalid type, non-finite value, precision outside 0–100. | `none` | `format_fixed(1.25, 7)` |
+| `wrapping_add` | `wrapping_add(left, right)` | exact 2 | integer | Non-integer arguments. | `none` | `wrapping_add(1, 2)` |
+| `wrapping_sub` | `wrapping_sub(left, right)` | exact 2 | integer | Non-integer arguments. | `none` | `wrapping_sub(1, 2)` |
+| `wrapping_mul` | `wrapping_mul(left, right)` | exact 2 | integer | Non-integer arguments. | `none` | `wrapping_mul(2, 3)` |
+| `parse_csv_rows` | `parse_csv_rows(text)` | exact 1 | array of string arrays | Invalid type, quoting, width, or resource limit. | `none` | `parse_csv_rows("1,2")` |
 | `parse_csv` | `parse_csv(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_csv(...)` |
 | `to_csv` | `to_csv(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_csv(...)` |
 | `encode_base64` | `encode_base64(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := encode_base64(...)` |
@@ -759,3 +764,15 @@ shared store or wrap in optimized builds.
   For unsigned 32-bit results, explicitly mask with `bit_and(result, 4294967295)`.
   Existing bit shifts are unchanged: shift counts must be in 0–63 and `bit_shr`
   is an arithmetic (sign-extending) shift. These APIs require no capabilities.
+
+### Headerless CSV
+
+`parse_csv_rows(text)` returns an array of rows, each an array of strings. Every
+record is data; leading zeros, decimal spelling, whitespace and empty fields are
+preserved. Use explicit numeric conversion when needed. Commas delimit fields;
+quoted fields support doubled quotes and embedded newlines. CRLF, LF and CR
+record endings are accepted; empty lines are skipped. All records must have the
+same field count. Invalid/unclosed quotes, inconsistent widths, non-string input,
+input over 8 MiB or more than 1,000,000 total fields return errors. This pure API
+requires no capabilities. `parse_csv` retains its header-based dictionary and
+numeric-conversion behavior.

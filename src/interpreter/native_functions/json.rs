@@ -113,6 +113,13 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "parse_csv_rows" => {
+            let [Value::Str(text)] = arg_values else {
+                return Some(Value::Error("parse_csv_rows expects one string argument".into()));
+            };
+            builtins::parse_csv_rows(text).unwrap_or_else(Value::Error)
+        }
+
         "parse_csv" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("parse_csv requires a string argument".to_string()));

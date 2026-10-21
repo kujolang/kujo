@@ -885,3 +885,11 @@ at most 8 MiB, including empty argument strings after the executable. No shell
 parsing occurs. Success does not return; invalid options, unsupported platforms
 and OS execution failures return runtime errors. Unlike bounded `spawn_process`,
 it deliberately has no capture buffer or timeout for interactive commands.
+
+## Explicit numeric and positional data APIs (unreleased)
+
+`format_fixed` provides bounded, locale-independent decimal formatting.
+`wrapping_add`, `wrapping_sub`, and `wrapping_mul` explicitly wrap signed 64-bit
+integers without changing checked arithmetic. `parse_csv_rows` preserves all
+headerless records as positional strings. These pure APIs require no capabilities;
+see [exact contracts](STANDARD_LIBRARY.md) for rounding and parsing limits.

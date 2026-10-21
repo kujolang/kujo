@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add bounded `parse_csv_rows(text)` for headerless positional string records,
+  strict quoting, and consistent field counts; preserve existing `parse_csv`.
+
 - Add locale-independent `format_fixed(value, precision)` and explicit signed
   64-bit `wrapping_add`, `wrapping_sub`, and `wrapping_mul`; ordinary arithmetic
   remains checked.
