@@ -501,3 +501,26 @@ Setup is excluded; length and final byte are asserted. These are local scaling
 observations, not release-build LangArena results or timing thresholds. The new
 measurements scale approximately fourfold for fourfold input; retained snapshots
 can still require copying.
+
+## Production text workloads: string ownership and indexing
+
+The LangArena production sweep on 2026-10-21 exposed two independent text costs:
+
+- `text = text + suffix` retained the evaluated left operand while allocating the
+  replacement, even when no program alias existed. Both runtimes now discard
+  only that temporary reference when the destination still has the same storage.
+  Retained aliases, self-appends, RHS reassignment, and immutable bindings retain
+  their ordinary value semantics. A storage-pointer unit test verifies capacity
+  reuse independently of wall-clock timing.
+- Repeated `len(text)`, string indexing, and `substring` scanned stable strings.
+  A per-thread cache retains at most 64 weak allocation references and character
+  counts. ASCII strings then support direct character indexing and slicing.
+  Unicode strings retain character-based indexing and slicing. Unicode indexed
+  lookup still walks the prefix; this is not a general Unicode random-access
+  index. Weak references retain no string payload and `Arc::make_mut` invalidates
+  allocation identity before mutation. Cache tests verify bounded size, reuse,
+  alias isolation, and invalidation.
+
+Production workload completion and timing evidence belong in the LangArena
+production report; a passing reduced checksum configuration is not evidence
+that the production configuration completed.

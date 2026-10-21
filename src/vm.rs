@@ -1057,14 +1057,9 @@ impl VM {
                 let idx = if *i < 0 { (arr.len() as i64 + i) as usize } else { *i as usize };
                 arr.get(idx).cloned().ok_or_else(|| format!("Index out of bounds: {}", i))
             }
-            (Value::Str(s), Value::Int(i)) => {
-                let char_len = s.chars().count();
-                let idx = if *i < 0 { (char_len as i64 + i) as usize } else { *i as usize };
-                s.chars()
-                    .nth(idx)
-                    .map(|c| Value::Str(Arc::new(c.to_string())))
-                    .ok_or_else(|| format!("Index out of bounds: {}", i))
-            }
+            (Value::Str(s), Value::Int(i)) => crate::interpreter::string_access::char_at(s, *i)
+                .map(|c| Value::Str(Arc::new(c.to_string())))
+                .ok_or_else(|| format!("Index out of bounds: {}", i)),
             (Value::Bytes(bytes), Value::Int(i)) => {
                 let resolved = if *i < 0 { bytes.len() as i64 + i } else { *i };
                 if resolved < 0 {

@@ -6,6 +6,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Cache stable string character counts without retaining payloads and accelerate
+  ASCII indexing and substring extraction while preserving Unicode semantics.
+
+- Reuse string capacity for dynamic self-appends in both runtimes, preserving
+  retained snapshots, immutable bindings, and right-hand-side reassignment order.
+
 - Infer numeric remainder (`%`) results so valid remainder-based string indices
   no longer produce spurious type-check warnings; defer unknown index types to
   runtime validation consistently with gradual typing.

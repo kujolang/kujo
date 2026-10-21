@@ -713,7 +713,7 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
     let result = match name {
         "len" => {
             if let Some(Value::Str(s)) = args.first() {
-                Value::Int(builtins::str_len(&**s) as i64)
+                Value::Int(crate::interpreter::string_access::len(s) as i64)
             } else {
                 return None; // Let collections module handle other types
             }
@@ -880,7 +880,7 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
 
         "count_chars" => {
             if let Some(Value::Str(s)) = args.first() {
-                Value::Int(builtins::count_chars(&**s))
+                Value::Int(crate::interpreter::string_access::len(s) as i64)
             } else {
                 Value::Error("count_chars() requires a string argument".to_string())
             }
@@ -954,7 +954,7 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
         }
 
         "substring" | "substr" => {
-            let s = match require_string_arg(args, 0, "substring", "value") {
+            let _s = match require_string_arg(args, 0, "substring", "value") {
                 Ok(value) => value,
                 Err(error) => return Some(error),
             };
@@ -969,7 +969,12 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             if end < start {
                 Value::Error("substring() end must be greater than or equal to start".to_string())
             } else {
-                Value::Str(Arc::new(builtins::substring(s, start as f64, end as f64)))
+                let Value::Str(text) = &args[0] else { unreachable!() };
+                Value::Str(Arc::new(crate::interpreter::string_access::substring(
+                    text,
+                    start as usize,
+                    end as usize,
+                )))
             }
         }
 

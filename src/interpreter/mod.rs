@@ -29,6 +29,7 @@ mod generator_lowering;
 pub(crate) mod native_functions;
 pub mod persistent_queue;
 pub mod promise;
+pub(crate) mod string_access;
 pub mod tasks;
 mod test_runner;
 mod value;
@@ -3214,12 +3215,11 @@ impl Interpreter {
                 }
             }
             (Value::Str(s), Value::Int(i)) => {
-                let idx = if *i < 0 { (s.chars().count() as i64) + *i } else { *i };
+                let idx = if *i < 0 { (string_access::len(s) as i64) + *i } else { *i };
                 if idx < 0 {
                     Value::Error(format!("Index out of bounds: {}", i))
                 } else {
-                    s.chars()
-                        .nth(idx as usize)
+                    string_access::char_at(s, idx)
                         .map(|c| Value::Str(Arc::new(c.to_string())))
                         .unwrap_or_else(|| Value::Error(format!("Index out of bounds: {}", i)))
                 }
@@ -3229,12 +3229,11 @@ impl Interpreter {
                     return Value::Error("Invalid index operation".to_string());
                 }
                 let idx = *i as i64;
-                let resolved = if idx < 0 { (s.chars().count() as i64) + idx } else { idx };
+                let resolved = if idx < 0 { (string_access::len(s) as i64) + idx } else { idx };
                 if resolved < 0 {
                     Value::Error(format!("Index out of bounds: {}", i))
                 } else {
-                    s.chars()
-                        .nth(resolved as usize)
+                    string_access::char_at(s, resolved)
                         .map(|c| Value::Str(Arc::new(c.to_string())))
                         .unwrap_or_else(|| Value::Error(format!("Index out of bounds: {}", i)))
                 }

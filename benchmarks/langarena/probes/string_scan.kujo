@@ -1,0 +1,10 @@
+func scan(n) {
+    let text := repeat("x", n)
+    mut i := 0
+    mut total := 0
+    let start := time_ns()
+    while i < len(text) { if text[i] == "x" { total += 1 } i += 1 }
+    print(str(n) + " ns=" + str(time_ns() - start) + " total=" + str(total))
+}
+scan(16000)
+scan(64000)
