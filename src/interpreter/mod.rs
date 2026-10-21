@@ -3150,7 +3150,7 @@ impl Interpreter {
             Value::Str(_) => "string",
             Value::Secret(_) => "secret",
             Value::Array(_) => "array",
-            Value::Dict(_) => "dict",
+            value if value.dictionary_len().is_some() => "dict",
             Value::Struct { .. } => "struct",
             Value::Function(..) => "function",
             Value::NativeFunction(_) => "native_function",
@@ -3174,6 +3174,16 @@ impl Interpreter {
     }
 
     fn index_value(object: &Value, index: &Value) -> Value {
+        if object.dictionary_len().is_some() {
+            let (key, diagnostic) = match index {
+                Value::Str(key) => (key.as_ref().clone(), format!("{:?}", key.as_ref())),
+                Value::Int(key) => (key.to_string(), key.to_string()),
+                _ => return Value::Error("Invalid index operation".into()),
+            };
+            return object
+                .dictionary_get(&key)
+                .unwrap_or_else(|| Value::Error(format!("Missing map key: {diagnostic}")));
+        }
         match (object, index) {
             (Value::Array(arr), Value::Int(i)) => {
                 let idx = if *i < 0 { (arr.len() as i64) + *i } else { *i };
@@ -3308,6 +3318,15 @@ impl Interpreter {
             Value::Dict(dict) => {
                 let key = Self::stringify_value(&index_clone);
                 Arc::make_mut(dict).insert(key.into(), value_clone.clone());
+            }
+            other if other.dictionary_len().is_some() => {
+                let mut dict: DictMap = Value::map_entries(other)
+                    .expect("dictionary entries")
+                    .into_iter()
+                    .map(|(key, value)| (Arc::from(key), value))
+                    .collect();
+                dict.insert(Self::stringify_value(&index_clone).into(), value_clone.clone());
+                *other = Value::Dict(Arc::new(dict));
             }
             _ => {
                 assignment_error = Some("Invalid index assignment".to_string());
@@ -4113,158 +4132,22 @@ impl Interpreter {
                 }
             }
             Pattern::Dict { keys, rest } => {
-                // Extract dict values
-                if let Value::Dict(dict) = value {
-                    // Bind each key
-                    for key in keys {
-                        let val = dict.get(key.as_str()).cloned().unwrap_or(Value::Null);
-                        self.env.define_with_kind_checked(key.clone(), val, binding)?;
-                    }
-
-                    // Bind rest elements if present
-                    if let Some(rest_name) = rest {
-                        let mut rest_dict = DictMap::default();
-                        for (k, v) in dict.iter() {
-                            if !keys.iter().any(|key| key.as_str() == k.as_ref()) {
-                                rest_dict.insert(k.clone(), v.clone());
-                            }
-                        }
-                        self.env.define_with_kind_checked(
-                            rest_name.clone(),
-                            Value::Dict(Arc::new(rest_dict)),
-                            binding,
-                        )?;
-                    }
-                } else if let Value::FixedDict { keys: dict_keys, values } = value {
-                    for key in keys {
-                        let idx = dict_keys.iter().position(|k| k.as_ref() == key.as_str());
-                        let val = idx.and_then(|i| values.get(i).cloned()).unwrap_or(Value::Null);
-                        self.env.define_with_kind_checked(key.clone(), val, binding)?;
-                    }
-
-                    if let Some(rest_name) = rest {
-                        let mut rest_dict = DictMap::default();
-                        for (k, v) in dict_keys.iter().cloned().zip(values.iter().cloned()) {
-                            if !keys.iter().any(|key| key.as_str() == k.as_ref()) {
-                                rest_dict.insert(k, v);
-                            }
-                        }
-                        self.env.define_with_kind_checked(
-                            rest_name.clone(),
-                            Value::Dict(Arc::new(rest_dict)),
-                            binding,
-                        )?;
-                    }
-                } else if let Value::DenseIntDict(values) = value {
-                    for key in keys {
-                        let val = match key.parse::<i64>() {
-                            Ok(int_key) => {
-                                if int_key < 0 {
-                                    Value::Null
-                                } else {
-                                    values.get(int_key as usize).cloned().unwrap_or(Value::Null)
-                                }
-                            }
-                            Err(_) => Value::Null,
-                        };
-                        self.env.define_with_kind_checked(key.clone(), val, binding)?;
-                    }
-
-                    if let Some(rest_name) = rest {
-                        let mut rest_dict = DictMap::default();
-                        for (index, value) in values.iter().enumerate() {
-                            let key = index.to_string();
-                            if !keys.iter().any(|existing| existing.as_str() == key.as_str()) {
-                                rest_dict.insert(Arc::from(key.as_str()), value.clone());
-                            }
-                        }
-                        self.env.define_with_kind_checked(
-                            rest_name.clone(),
-                            Value::Dict(Arc::new(rest_dict)),
-                            binding,
-                        )?;
-                    }
-                } else if let Value::DenseIntDictInt(values) = value {
-                    for key in keys {
-                        let val = match key.parse::<i64>() {
-                            Ok(int_key) => {
-                                if int_key < 0 {
-                                    Value::Null
-                                } else {
-                                    match values.get(int_key as usize) {
-                                        Some(value) => {
-                                            (*value).map(Value::Int).unwrap_or(Value::Null)
-                                        }
-                                        None => Value::Null,
-                                    }
-                                }
-                            }
-                            Err(_) => Value::Null,
-                        };
-                        self.env.define_with_kind_checked(key.clone(), val, binding)?;
-                    }
-
-                    if let Some(rest_name) = rest {
-                        let mut rest_dict = DictMap::default();
-                        for (index, value) in values.iter().enumerate() {
-                            let key = index.to_string();
-                            if !keys.iter().any(|existing| existing.as_str() == key.as_str()) {
-                                rest_dict.insert(
-                                    Arc::from(key.as_str()),
-                                    (*value).map(Value::Int).unwrap_or(Value::Null),
-                                );
-                            }
-                        }
-                        self.env.define_with_kind_checked(
-                            rest_name.clone(),
-                            Value::Dict(Arc::new(rest_dict)),
-                            binding,
-                        )?;
-                    }
-                } else if let Value::DenseIntDictIntFull(values) = value {
-                    for key in keys {
-                        let val = match key.parse::<i64>() {
-                            Ok(int_key) => {
-                                if int_key < 0 {
-                                    Value::Null
-                                } else {
-                                    values
-                                        .get(int_key as usize)
-                                        .map(|value| Value::Int(*value))
-                                        .unwrap_or(Value::Null)
-                                }
-                            }
-                            Err(_) => Value::Null,
-                        };
-                        self.env.define_with_kind_checked(key.clone(), val, binding)?;
-                    }
-
-                    if let Some(rest_name) = rest {
-                        let mut rest_dict = DictMap::default();
-                        for (index, value) in values.iter().enumerate() {
-                            let key = index.to_string();
-                            if !keys.iter().any(|existing| existing.as_str() == key.as_str()) {
-                                rest_dict.insert(Arc::from(key.as_str()), Value::Int(*value));
-                            }
-                        }
-                        self.env.define_with_kind_checked(
-                            rest_name.clone(),
-                            Value::Dict(Arc::new(rest_dict)),
-                            binding,
-                        )?;
-                    }
-                } else {
-                    // Not a dict - bind all to null
-                    for key in keys {
-                        self.env.define_with_kind_checked(key.clone(), Value::Null, binding)?;
-                    }
-                    if let Some(rest_name) = rest {
-                        self.env.define_with_kind_checked(
-                            rest_name.clone(),
-                            Value::Dict(Arc::new(DictMap::default())),
-                            binding,
-                        )?;
-                    }
+                for key in keys {
+                    let item = value.dictionary_get(key).unwrap_or(Value::Null);
+                    self.env.define_with_kind_checked(key.clone(), item, binding)?;
+                }
+                if let Some(rest_name) = rest {
+                    let rest_dict = Value::map_entries(&value)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .filter(|(key, _)| !keys.contains(key))
+                        .map(|(key, value)| (Arc::from(key), value))
+                        .collect();
+                    self.env.define_with_kind_checked(
+                        rest_name.clone(),
+                        Value::Dict(Arc::new(rest_dict)),
+                        binding,
+                    )?;
                 }
             }
         }
@@ -4905,11 +4788,10 @@ impl Interpreter {
                                 }
                             }
                         }
-                        Value::Dict(dict) => {
+                        dict if dict.dictionary_len().is_some() => {
                             // Dictionary iteration: for key in {"a": 1, "b": 2} { ... }
                             // Iterate over keys
-                            let keys: Vec<String> =
-                                dict.keys().map(|key| key.to_string()).collect();
+                            let keys = dict.dictionary_keys().expect("dictionary keys");
                             for key in keys {
                                 // Create new scope for loop iteration
                                 // Push new scope
@@ -5381,11 +5263,8 @@ impl Interpreter {
                                 Value::Struct { name: _, fields } => {
                                     return fields.get(field_name).cloned().unwrap_or(Value::Null);
                                 }
-                                Value::Dict(map) => {
-                                    return map
-                                        .get(field_name.as_str())
-                                        .cloned()
-                                        .unwrap_or(Value::Null);
+                                map if map.dictionary_len().is_some() => {
+                                    return map.dictionary_get(field_name).unwrap_or(Value::Null);
                                 }
                                 _ => return Value::Null,
                             }
@@ -6234,9 +6113,9 @@ impl Interpreter {
                             if Self::is_error_value(&spread_val) {
                                 return spread_val;
                             }
-                            if let Value::Dict(dict) = spread_val {
-                                for (k, v) in dict.iter() {
-                                    map.insert(k.clone(), v.clone());
+                            if let Some(entries) = Value::map_entries(&spread_val) {
+                                for (k, v) in entries {
+                                    map.insert(Arc::from(k), v);
                                 }
                             }
                             // If not a dict, ignore the spread
@@ -6925,7 +6804,8 @@ impl Interpreter {
 
                 if let Some(Value::Array(arg_list)) = fields.get("_args") {
                     for arg_val in arg_list.iter() {
-                        if let Value::Dict(arg_dict) = arg_val {
+                        if let Some(entries) = Value::map_entries(arg_val) {
+                            let arg_dict: HashMap<String, Value> = entries.into_iter().collect();
                             let long_name = match arg_dict.get("long") {
                                 Some(Value::Str(s)) => s.as_ref().clone(),
                                 _ => continue,
@@ -6988,7 +6868,8 @@ impl Interpreter {
 
                 if let Some(Value::Array(arg_list)) = fields.get("_args") {
                     for arg_val in arg_list.iter() {
-                        if let Value::Dict(arg_dict) = arg_val {
+                        if let Some(entries) = Value::map_entries(arg_val) {
+                            let arg_dict: HashMap<String, Value> = entries.into_iter().collect();
                             let long_name = match arg_dict.get("long") {
                                 Some(Value::Str(s)) => s.as_ref().clone(),
                                 _ => continue,
@@ -7860,5 +7741,75 @@ mod helper_ownership_tests {
         };
         assert_eq!(result.as_ptr(), buffer, "helper copied uniquely owned array");
         assert!(result[..64].iter().all(|v| matches!(v, Value::Int(7))));
+    }
+}
+
+#[cfg(test)]
+mod boundary_dictionary_tests {
+    use super::*;
+
+    #[test]
+    fn interpreter_consumes_all_dictionary_representations_without_materialization() {
+        let cases = vec![
+            Value::dict(
+                [("0".into(), Value::Int(7)), ("1".into(), Value::Int(8))].into_iter().collect(),
+            ),
+            Value::FixedDict {
+                keys: Arc::new(vec!["0".into(), "1".into()]),
+                values: vec![Value::Int(7), Value::Int(8)],
+            },
+            Value::IntDict(Arc::new(
+                [(0, Value::Int(7)), (1, Value::Int(8))].into_iter().collect(),
+            )),
+            Value::DenseIntDict(Arc::new(vec![Value::Int(7), Value::Int(8)])),
+            Value::DenseIntDictInt(Arc::new(vec![Some(7), Some(8)])),
+            Value::DenseIntDictIntFull(Arc::new(vec![7, 8])),
+        ];
+        let source = r#"
+            assert_equal(d[0], 7)
+            assert_equal(d["1"], 8)
+            let nested := [d]
+            assert_equal(nested[0][0], 7)
+            mut count := 0
+            for key in d { count += 1 }
+            assert_equal(count, 2)
+            assert_equal({...d}, {"0": 7, "1": 8})
+            let {...rest} := d
+            assert_equal(rest, {"0": 7, "1": 8})
+            mut copy := d
+            copy[0] = 99
+            assert_equal(copy[0], 99)
+            assert_equal(d[0], 7)
+            mut caught := false
+            try { let missing := d["01"] } except e { caught = true }
+            assert(caught)
+        "#;
+        let parsed = crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap())
+            .parse_with_diagnostics();
+        assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+        for value in cases {
+            let mut interpreter = Interpreter::new();
+            interpreter.env.define("d".into(), value);
+            interpreter.eval_stmts(&parsed.stmts);
+            assert!(interpreter.return_value.is_none(), "{:?}", interpreter.return_value);
+        }
+    }
+
+    #[test]
+    fn dictionary_lookup_preserves_null_and_canonical_keys() {
+        let value = Value::DenseIntDictInt(Arc::new(vec![None, Some(7)]));
+        assert!(matches!(value.dictionary_get("0"), Some(Value::Null)));
+        for missing in ["-1", "01", "+1", "-0", "2"] {
+            assert!(value.dictionary_get(missing).is_none(), "{missing}");
+        }
+        for empty in [
+            Value::FixedDict { keys: Arc::new(vec![]), values: vec![] },
+            Value::IntDict(Arc::new(Default::default())),
+            Value::DenseIntDict(Arc::new(vec![])),
+            Value::DenseIntDictInt(Arc::new(vec![])),
+            Value::DenseIntDictIntFull(Arc::new(vec![])),
+        ] {
+            assert!(!empty.is_truthy());
+        }
     }
 }

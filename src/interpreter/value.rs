@@ -1822,7 +1822,7 @@ impl Value {
             Value::Str(value) => !value.is_empty(),
             Value::Secret(value) => !value.is_empty(),
             Value::Array(values) => !values.is_empty(),
-            Value::Dict(values) => !values.is_empty(),
+            value if value.dictionary_len().is_some() => value.dictionary_len() != Some(0),
             _ => true,
         }
     }
@@ -2059,6 +2059,41 @@ impl Value {
             Self::DenseIntDictIntFull(values) => Some(values.len()),
             _ => None,
         }
+    }
+
+    /// Lookup without materializing a VM dictionary representation.
+    pub(crate) fn dictionary_get(&self, key: &str) -> Option<Value> {
+        match self {
+            Self::Dict(map) => map.get(key).cloned(),
+            Self::FixedDict { keys, values } => {
+                keys.iter().position(|k| k.as_ref() == key).and_then(|i| values.get(i).cloned())
+            }
+            Self::IntDict(map) => map.get(&Self::dict_index(key).ok()?).cloned(),
+            Self::DenseIntDict(values) => {
+                values.get(usize::try_from(Self::dict_index(key).ok()?).ok()?).cloned()
+            }
+            Self::DenseIntDictInt(values) => values
+                .get(usize::try_from(Self::dict_index(key).ok()?).ok()?)
+                .map(|v| v.map(Self::Int).unwrap_or(Self::Null)),
+            Self::DenseIntDictIntFull(values) => values
+                .get(usize::try_from(Self::dict_index(key).ok()?).ok()?)
+                .copied()
+                .map(Self::Int),
+            _ => None,
+        }
+    }
+
+    /// Iterating keys must not clone unrelated collection-valued payloads.
+    pub(crate) fn dictionary_keys(&self) -> Option<Vec<String>> {
+        Some(match self {
+            Self::Dict(map) => map.keys().map(|k| k.to_string()).collect(),
+            Self::FixedDict { keys, .. } => keys.iter().map(|k| k.to_string()).collect(),
+            Self::IntDict(map) => map.keys().map(|k| k.to_string()).collect(),
+            Self::DenseIntDict(values) => (0..values.len()).map(|i| i.to_string()).collect(),
+            Self::DenseIntDictInt(values) => (0..values.len()).map(|i| i.to_string()).collect(),
+            Self::DenseIntDictIntFull(values) => (0..values.len()).map(|i| i.to_string()).collect(),
+            _ => return None,
+        })
     }
 
     /// Only canonical decimal strings alias integer dictionary keys.

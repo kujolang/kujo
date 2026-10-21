@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Support VM dictionary representations directly in interpreter lookup, iteration,
+  spread, destructuring, optional access and truthiness, retaining canonical keys
+  and snapshot isolation.
+
 - Route VM array index-write failures through active exception handlers, including
   helper failures, so callers can recover without replacing their original value.
 
