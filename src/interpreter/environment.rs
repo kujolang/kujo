@@ -169,7 +169,7 @@ impl Environment {
                 Value::FixedDict { values, .. } | Value::Set(values) | Value::Stack(values) => {
                     pending.extend(values)
                 }
-                Value::Queue(values) => pending.extend(values),
+                Value::Queue(values) => pending.extend(values.iter().cloned()),
                 Value::IntDict(values) => {
                     if visited_containers.insert((1, std::sync::Arc::as_ptr(&values) as usize)) {
                         pending.extend(values.values().cloned());

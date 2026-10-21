@@ -1289,7 +1289,7 @@ pub enum Value {
     /// Set of unique values
     Set(Vec<Value>),
     /// FIFO queue
-    Queue(std::collections::VecDeque<Value>),
+    Queue(super::persistent_queue::PersistentQueue),
     /// LIFO stack
     Stack(Vec<Value>),
     /// Bounded thread-safe channel for message passing and backpressure.
@@ -1644,6 +1644,136 @@ impl std::fmt::Debug for Value {
 }
 
 impl Value {
+    pub(crate) fn nesting_depth(value: &Value) -> usize {
+        Self::walk_nesting_depth(value, || {})
+    }
+
+    pub(crate) fn walk_nesting_depth(value: &Value, mut visit: impl FnMut()) -> usize {
+        let mut stack: Vec<(&Value, usize)> = vec![(value, 0)];
+        let mut max_depth = 0;
+        // Values can form a compact DAG through shared collection storage. Revisit
+        // a shared allocation only if this path reaches it at a greater depth.
+        // The cache is per walk: later copy-on-write updates cannot stale it.
+        let mut seen = HashMap::<(u8, usize), usize>::new();
+
+        while let Some((value, depth)) = stack.pop() {
+            visit();
+            max_depth = max_depth.max(depth);
+            let allocation = match value {
+                Value::Array(items) => Some((0, Arc::as_ptr(items) as usize)),
+                Value::Dict(items) => Some((1, Arc::as_ptr(items) as usize)),
+                Value::IntDict(items) => Some((2, Arc::as_ptr(items) as usize)),
+                Value::DenseIntDict(items) => Some((3, Arc::as_ptr(items) as usize)),
+                _ => None,
+            };
+            if let Some(key) = allocation {
+                if seen.get(&key).is_some_and(|previous| *previous >= depth) {
+                    continue;
+                }
+                seen.insert(key, depth);
+            }
+
+            match value {
+                Value::Array(items) => {
+                    for item in items.iter() {
+                        stack.push((item, depth + 1));
+                    }
+                }
+                Value::Dict(dict) => {
+                    for nested in dict.values() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::FixedDict { values, .. } => {
+                    for nested in values.iter() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::Struct { fields, .. } | Value::Tagged { fields, .. } => {
+                    for nested in fields.values() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::IntDict(dict) => {
+                    for nested in dict.values() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::DenseIntDict(values) => {
+                    for nested in values.iter() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::Set(items) | Value::Stack(items) => {
+                    for nested in items.iter() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::Queue(items) => {
+                    max_depth = max_depth.max(depth + items.nesting_depth());
+                }
+                Value::HttpServer { routes, upload_routes, .. } => {
+                    for (_, _, nested) in routes.iter() {
+                        stack.push((nested, depth + 1));
+                    }
+                    for route in upload_routes.iter() {
+                        stack.push((&route.authorize, depth + 1));
+                        stack.push((&route.handler, depth + 1));
+                    }
+                }
+                Value::Result { value, .. }
+                | Value::Option { value, .. }
+                | Value::Return(value) => {
+                    stack.push((value.as_ref(), depth + 1));
+                }
+                Value::ErrorObject { cause: Some(cause), .. } => {
+                    stack.push((cause.as_ref(), depth + 1));
+                }
+                #[cfg(feature = "runtime-db")]
+                Value::Database { .. } | Value::DatabasePool { .. } => {}
+                #[cfg(feature = "runtime-image")]
+                Value::Image { .. } => {}
+                #[cfg(feature = "runtime-archive")]
+                Value::ZipArchive { .. } => {}
+                Value::HttpResponse { .. }
+                | Value::HttpStreamingResponse { .. }
+                | Value::Int(_)
+                | Value::Float(_)
+                | Value::Str(_)
+                | Value::Secret(_)
+                | Value::Bool(_)
+                | Value::Null
+                | Value::Bytes(_)
+                | Value::Function(_, _, _)
+                | Value::AsyncFunction(_, _, _)
+                | Value::NativeFunction(_)
+                | Value::BytecodeFunction { .. }
+                | Value::BytecodeGenerator { .. }
+                | Value::ArrayMarker
+                | Value::Error(_)
+                | Value::ErrorObject { .. }
+                | Value::Enum(_)
+                | Value::DenseIntDictInt(_)
+                | Value::DenseIntDictIntFull(_)
+                | Value::TcpListener { .. }
+                | Value::TcpStream { .. }
+                | Value::TlsStream { .. }
+                | Value::TlsAcceptor { .. }
+                | Value::PrivateSpool { .. }
+                | Value::UdpSocket { .. }
+                | Value::Channel(_)
+                | Value::GeneratorDef(..)
+                | Value::Generator { .. }
+                | Value::Iterator { .. }
+                | Value::Promise { .. }
+                | Value::TaskHandle { .. }
+                | Value::StructDef { .. } => {}
+            }
+        }
+
+        max_depth
+    }
+
     /// Construct copy-on-write bytes; cloning a runtime byte value is constant time.
     pub fn bytes(bytes: impl Into<Arc<Vec<u8>>>) -> Self {
         Self::Bytes(bytes.into())

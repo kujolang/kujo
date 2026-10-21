@@ -2,9 +2,10 @@
 //
 // Collection manipulation native functions (arrays, dicts, sets)
 
+use super::super::persistent_queue::PersistentQueue as VecDeque;
 use crate::builtins;
 use crate::interpreter::{DictMap, IntDictMap, Interpreter, Value};
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 fn strict_arity_error(function_name: &str, expected: usize, got: usize) -> Value {

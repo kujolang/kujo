@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Use persistent shared queues with cached reversal and nesting metadata, avoiding
+  full-queue copies and validation scans during functional queue updates.
+
 - Validate nested assignment paths before writing, eliminating redundant row
   snapshots while retaining copy isolation and failed-write atomicity.
 

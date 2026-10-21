@@ -19,6 +19,7 @@
 // Module structure
 pub(crate) mod assignment;
 mod async_runtime;
+pub mod persistent_queue;
 mod capabilities;
 mod control_flow;
 #[cfg(feature = "runtime-db")]
