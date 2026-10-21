@@ -176,3 +176,9 @@ module lexical environment; this does not compile imports to bytecode. The
 separate 32-entry synchronous callback-bridge guard is unchanged. Regression tests
 cover direct and imported mutual recursion, namespace imports, caller-name
 shadowing, catchable exhaustion/recovery, and a 2 MiB embedding thread stack.
+
+Generator delegation is bounded to 32 simultaneous resumes in both runtimes,
+independently of the 256 ordinary-function recursion limit. Failure remains
+sticky on the failed generator; unwinding restores the caller's resume capacity,
+so unrelated generators remain usable. The concurrency lifecycle contract checks
+the exact boundary and recovery after repeated attempts to resume a failed chain.

@@ -169,12 +169,13 @@ fn explicit_delegation_depth_is_bounded_and_restores_the_top_level_caller() {
             else { for value in chain(n - 1) { yield value } }
         }
         mut total := 0
-        for value in chain(4) { total += value }
+        for value in chain(31) { total += value }
         mut caught := 0
-        let deep := chain(40)
+        let deep := chain(32)
         try { for value in deep { total += value } } except err { caught += 1 }
         try { for value in deep { total += value } } except err { caught += 1 }
-        print(total == 7 && caught == 2)
+        for value in chain(4) { total += value }
+        print(total == 14 && caught == 2)
     "#,
         true,
     );

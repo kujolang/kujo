@@ -6,6 +6,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Restore the interpreter generator delegation limit independently of ordinary function recursion, matching VM depth and recovery behavior.
+
 - Reuse unaliased byte-buffer capacity for consuming `concat` assignments,
   including struct fields and indexed paths, while preserving retained snapshots.
 

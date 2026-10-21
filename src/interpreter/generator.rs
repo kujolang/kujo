@@ -72,6 +72,11 @@ impl Interpreter {
         let Value::Generator { state, .. } = generator else {
             return Value::Error("generator_next() can only be called on generators".to_owned());
         };
+        // Generator delegation has its own bound, independent of ordinary
+        // function recursion. Keep it aligned with the VM resume contract.
+        if self.generator_resume_depth >= 32 {
+            return Value::Error("Maximum generator resume depth of 32 exceeded".to_owned());
+        }
         let (mut continuation, policy) = {
             let Ok(mut state) = state.try_lock() else {
                 return Value::Error("Generator is already being resumed".to_owned());
@@ -101,11 +106,13 @@ impl Interpreter {
         let caller_return = self.return_value.take();
         let caller_control = std::mem::replace(&mut self.control_flow, super::ControlFlow::None);
         let caller_policy = std::mem::replace(&mut self.capability_policy, policy);
+        self.generator_resume_depth += 1;
         let result = self
             .with_function_context("<generator>", |interpreter| {
                 interpreter.run_generator_frames(&mut continuation.frames)
             })
             .unwrap_or_else(Err);
+        self.generator_resume_depth -= 1;
         self.env.swap_global_scope(&mut caller_env);
         continuation.env = std::mem::replace(&mut self.env, caller_env);
         self.return_value = caller_return;
