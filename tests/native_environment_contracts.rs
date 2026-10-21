@@ -34,3 +34,28 @@ fn argument_only_calls_preserve_aliases_and_callback_global_freshness() {
 fn native_fast_path_still_enforces_restricted_capabilities() {
     support::failure("read_file(\"forbidden\")", "denied");
 }
+
+#[test]
+fn bytecode_callbacks_keep_globals_and_imported_interpreter_helpers_fresh() {
+    for interpreter in [false, true] {
+        let out = support::run_modules(
+            r#"
+            from helpers import decorate
+            mut count := 0
+            func replacement(c) {
+                count += 1
+                return decorate(str(count))
+            }
+            assert_equal(regex_replace_with("aaa", "a", replacement), "[1][2][3]")
+            assert_equal(count, 3)
+            assert_equal(regex_replace_with("a", "a", replacement), "[4]")
+            func nested(c) { return regex_replace_with(c[0], "a", replacement) }
+            assert_equal(regex_replace_with("aa", "aa", nested), "[5][6]")
+            assert_equal(count, 6)
+            "#,
+            interpreter,
+            &[("helpers.kujo", "export func decorate(text) { return \"[\" + text + \"]\" }")],
+        );
+        assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    }
+}

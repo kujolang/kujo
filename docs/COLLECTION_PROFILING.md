@@ -539,3 +539,11 @@ cover independent captures, callable aliases, recursion and retained arrays.
 Legacy named-parameter detection is cached with the shared code allocation.
 Any mutable access invalidates that metadata, including edits to uniquely owned
 code. Cached metadata does not affect bytecode equality.
+
+Bytecode callback bridges attach the live global environment without immediately
+cloning its bindings into the interpreter. Interpreter fallback and native paths
+that need that environment materialize the snapshot before use. Each callback
+still has its own VM, cancellation/depth checks and capability policy. A regex
+probe with 2,000 matches and 0 versus 1,000 unrelated globals exposed this cost;
+ownership tests verify the deferred copy, and both runtimes cover imported helpers,
+nested callbacks, global updates, errors and restricted capabilities.

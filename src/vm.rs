@@ -81,6 +81,9 @@ pub struct VM {
 
     /// Interpreter instance for calling native functions
     interpreter: Interpreter,
+    /// Callback VMs resolve bytecode globals directly; defer the interpreter
+    /// snapshot until an interpreter-dependent path actually needs it.
+    interpreter_env_pending: bool,
 
     /// Upvalues (captured variables) - indexed by upvalue ID
     /// These are heap-allocated shared references to captured variables
@@ -619,6 +622,7 @@ impl VM {
             ip: 0,
             chunk: BytecodeChunk::new(),
             interpreter: Interpreter::new_for_vm(),
+            interpreter_env_pending: false,
             upvalues: Vec::new(),
             exception_handlers: Vec::new(),
             jit_compiler: None,
@@ -699,6 +703,7 @@ impl VM {
         self.jit_obj_stack = snapshot.jit_obj_stack;
         self.globals = snapshot.globals;
         self.interpreter.set_env(Arc::clone(&self.globals));
+        self.interpreter_env_pending = false;
     }
 
     fn allocate_execution_context_id(&mut self) -> VmContextId {
@@ -797,6 +802,20 @@ impl VM {
         self.globals = env.clone();
         // Also set the interpreter's environment so it can resolve native functions
         self.interpreter.set_env(env);
+        self.interpreter_env_pending = false;
+    }
+
+    fn set_callback_globals(&mut self, env: Arc<Mutex<Environment>>) {
+        self.globals = Arc::clone(&env);
+        self.interpreter.vm_globals = Some(env);
+        self.interpreter_env_pending = true;
+    }
+
+    fn ensure_interpreter_environment(&mut self) {
+        if self.interpreter_env_pending {
+            self.interpreter.set_env(Arc::clone(&self.globals));
+            self.interpreter_env_pending = false;
+        }
     }
 
     /// Adds a module search path used by VM import helpers.
@@ -5717,6 +5736,7 @@ impl VM {
                 OpCode::MakeIterator => {
                     let collection = self.stack.pop().ok_or("Stack underflow")?;
                     // Call interpreter's built-in iterator function
+                    self.ensure_interpreter_environment();
                     let result = self.interpreter.call_native_function_impl("iter", &[collection]);
                     self.stack.push(result);
                 }
@@ -6141,6 +6161,7 @@ impl VM {
                                     Value::Error("ai_stream_chat() callback dispatch failed".to_string())
                                 })
                             } else {
+                                self.ensure_interpreter_environment();
                                 self.interpreter.call_native_function_impl(&name, &args)
                             };
                             match native_result {
@@ -6364,7 +6385,7 @@ impl VM {
         }
         vm.interpreter.task_cancellation = cancellation;
         vm.set_capability_policy(policy);
-        vm.set_globals(globals);
+        vm.set_callback_globals(globals);
         if let Some(output) = output {
             vm.interpreter.set_output(output);
         }
@@ -6411,6 +6432,9 @@ impl VM {
         function: &Value,
         args: Vec<Value>,
     ) -> Result<Value, String> {
+        if !matches!(function, Value::BytecodeFunction { .. }) {
+            self.ensure_interpreter_environment();
+        }
         // Both runtimes consume the same collection representations. Passing ownership
         // directly avoids recursively scanning or rebuilding argument graphs.
         self.interpreter.vm_globals = Some(Arc::clone(&self.globals));
@@ -7285,7 +7309,10 @@ impl VM {
                     Value::BytecodeFunction { .. } => self
                         .call_function_from_jit(callback.clone(), vec![event])
                         .unwrap_or_else(Value::Error),
-                    _ => self.interpreter.call_user_function(callback, &[event]),
+                    _ => {
+                        self.ensure_interpreter_environment();
+                        self.interpreter.call_user_function(callback, &[event])
+                    }
                 };
                 if matches!(
                     callback_result,
@@ -7886,6 +7913,7 @@ impl VM {
                     | "__vm_for_iterable"
             ) {
                 self.interpreter.set_env(Arc::clone(&self.globals));
+                self.interpreter_env_pending = false;
             }
             let result = self.interpreter.call_native_function_impl(&name, &args);
 
@@ -8819,6 +8847,7 @@ impl VM {
                                             )
                                         })
                                     } else {
+                                        self.ensure_interpreter_environment();
                                         self.interpreter.call_native_function_impl(&name, &args)
                                     };
                                     match native_result {
@@ -9480,6 +9509,31 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn callback_globals_are_not_copied_until_interpreter_fallback_needs_them() {
+        let payload = Arc::new(vec![7_u8; 1024]);
+        let mut globals = Environment::new();
+        globals.define("payload".into(), Value::Bytes(Arc::clone(&payload)));
+        globals.define("answer".into(), Value::Int(42));
+        let globals = Arc::new(Mutex::new(globals));
+        let mut vm = VM::new();
+        let owners = Arc::strong_count(&payload);
+        vm.set_callback_globals(Arc::clone(&globals));
+        assert_eq!(Arc::strong_count(&payload), owners);
+        assert!(vm.interpreter.env.get("payload").is_none());
+        let function = Value::Function(
+            vec![],
+            crate::interpreter::LeakyFunctionBody::new(vec![crate::ast::Stmt::Return(Some(
+                crate::ast::Expr::Identifier("answer".into()),
+            ))]),
+            None,
+        );
+        let result = vm.call_interpreter_callable(&function, vec![]).unwrap();
+        assert!(matches!(result, Value::Int(42)));
+        assert!(!vm.interpreter_env_pending);
+        assert_eq!(Arc::strong_count(&payload), owners + 1);
+    }
 
     #[test]
     fn cached_parameter_metadata_preserves_legacy_named_slots_after_code_edits() {

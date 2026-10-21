@@ -1,0 +1,21 @@
+# Usage: kujo run callback_globals.kujo BINARY OUTPUT_DIRECTORY
+let options := args()
+assert_equal(len(options), 2)
+for count in [0, 1000] {
+    mut source := ""
+    mut i := 0
+    while i < count {
+        source += "let unused_" + str(i) + " := " + str(i) + "\n"
+        i += 1
+    }
+    source += "func replace_match(captures) { return \"x\" }\nlet text := repeat(\"a\", 2000)\nlet start := time_ns()\nassert_equal(regex_replace_with(text, \"a\", replace_match), repeat(\"x\", 2000))\nprint(time_ns() - start)\n"
+    let path := options[1] + "/callback-globals-" + str(count) + ".kujo"
+    write_file(path, source, true)
+    for runtime in ["vm", "interpreter"] {
+        mut command := [options[0], "run", path, "--scheduler-no-timeout"]
+        if runtime == "interpreter" { command = push(command, "--interpreter") }
+        let result := spawn_process(command, {"timeout_ms": 120000})
+        assert(result.success, result.stderr)
+        print(runtime + " globals=" + str(count) + " ns=" + trim(result.stdout))
+    }
+}

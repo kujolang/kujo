@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Defer global-environment snapshots in bytecode callbacks until interpreter
+  fallback needs them, avoiding repeated copies of unrelated globals in regex
+  replacement and comparator callbacks.
+
 - Cache legacy VM parameter-binding metadata per code allocation, avoiding a
   function-body scan on every call while preserving hand-built chunk support.
 
