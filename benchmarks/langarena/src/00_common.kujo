@@ -1,0 +1,37 @@
+# Local port of kostya/LangArena at 3c9f84ddaeec834c0631747cb789e8cfd602f993.
+# Copyright (c) 2026 Konstantin Makarchev; MIT, see LICENSE.upstream.
+mut rng := 42
+func reset_rng() { rng = 42 }
+func random_int(maximum) {
+    rng = (rng * 3877 + 29573) % 139968
+    return to_int(to_float(rng) / 139968.0 * maximum)
+}
+func random_float() {
+    rng = (rng * 3877 + 29573) % 139968
+    return to_float(rng) / 139968.0
+}
+func u32(value) { return bit_and(value, 4294967295) }
+func checksum_bytes(data) {
+    mut result := 5381
+    for value in data { result = u32(result * 33 + value) }
+    return result
+}
+func checksum_string(text) { return checksum_bytes(utf8_encode(text)) }
+func checksum_float(value) { return checksum_string(format_fixed(value, 7)) }
+func vector(n, value) {
+    mut result := []
+    mut i := 0
+    while i < n { result = push(result, value) i += 1 }
+    return result
+}
+func basic_state(cfg) { return {"cfg": cfg, "result": 0} }
+func unchanged(state) { return state }
+func result_checksum(state) { return u32(state["result"]) }
+func get_default(map, key, fallback) {
+    if has_key(map, key) == 1 { return map[key] }
+    return fallback
+}
+func idiv(a, b) { return to_int(a / b) }
+mut registry := {}
+func imin(a, b) { if a < b { return a } return b }
+func imax(a, b) { if a > b { return a } return b }

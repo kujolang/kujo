@@ -1,0 +1,253 @@
+func bf_commands(text) {
+    mut commands := []
+    for c in text { if contains("+-<>[].,", c) == 1 { commands = push(commands, c) } }
+    return commands
+}
+func bf_array(text) {
+    let commands := bf_commands(text)
+    mut jumps := vector(len(commands), 0)
+    mut stack := []
+    mut i := 0
+    while i < len(commands) {
+        if commands[i] == "[" { stack = push(stack, i) }
+        if commands[i] == "]" {
+            let pair := pop(stack)
+            stack = pair[0]
+            let start := pair[1]
+            jumps[start] = i
+            jumps[i] = start
+        }
+        i += 1
+    }
+    assert_equal(len(stack), 0)
+    mut tape := bytes(vector(30000, 0))
+    mut position := 0
+    mut pc := 0
+    mut result := 0
+    while pc < len(commands) {
+        let op := commands[pc]
+        if op == "+" { tape[position] = (tape[position] + 1) % 256 }
+        else if op == "-" { tape[position] = (tape[position] + 255) % 256 }
+        else if op == ">" { position += 1 if position >= len(tape) { tape = concat(tape, bytes([0])) } }
+        else if op == "<" { position = imax(0, position - 1) }
+        else if op == "[" { if tape[position] == 0 { pc = jumps[pc] continue } }
+        else if op == "]" { if tape[position] != 0 { pc = jumps[pc] continue } }
+        else if op == "." { result = u32(result * 4 + tape[position]) }
+        pc += 1
+    }
+    return result
+}
+func bf_parse(code, start) {
+    mut ops := []
+    mut i := start
+    while i < len(code) {
+        let c := code[i]
+        i += 1
+        if c == "]" { break }
+        if c == "[" {
+            let parsed := bf_parse(code, i)
+            ops = push(ops, parsed[0])
+            i = parsed[1]
+        } else if contains("+-<>.", c) == 1 { ops = push(ops, c) }
+    }
+    return [ops, i]
+}
+func bf_run_ops(ops, input) {
+    mut machine := input
+    for op in ops {
+        let position := machine["position"]
+        if type(op) == "array" {
+            while machine["tape"][machine["position"]] != 0 { machine = bf_run_ops(op, machine) }
+        } else if op == "+" { machine["tape"][position] = (machine["tape"][position] + 1) % 256 }
+        else if op == "-" { machine["tape"][position] = (machine["tape"][position] + 255) % 256 }
+        else if op == ">" {
+            machine["position"] += 1
+            if machine["position"] >= len(machine["tape"]) { machine["tape"] = concat(machine["tape"], bytes([0])) }
+        } else if op == "<" { machine["position"] = imax(0, position - 1) }
+        else if op == "." { machine["result"] = u32(machine["result"] * 4 + machine["tape"][position]) }
+    }
+    return machine
+}
+func bf_text(cfg, text) {
+    if cfg["name"] == "Brainfuck::Array" { return bf_array(text) }
+    let parsed := bf_parse(text, 0)
+    let machine := bf_run_ops(parsed[0], {"tape": bytes(vector(30000, 0)), "position": 0, "result": 0})
+    return machine["result"]
+}
+func bf_warmup(input, iteration) {
+    bf_text(input["cfg"], input["cfg"]["warmup_program"])
+    return input
+}
+func bf_run(input, iteration) {
+    mut state := input
+    state["result"] = u32(state["result"] + bf_text(state["cfg"], state["cfg"]["program"]))
+    return state
+}
+func words_prepare(input) {
+    mut state := input
+    mut words := []
+    mut i := 0
+    while i < state["cfg"]["words"] {
+        let count := random_int(state["cfg"]["word_len"]) + random_int(3) + 3
+        mut word := ""
+        mut j := 0
+        while j < count { word += "abcdefghijklmnopqrstuvwxyz"[random_int(26)] j += 1 }
+        words = push(words, word)
+        i += 1
+    }
+    state["text"] = join(words, " ")
+    return state
+}
+func words_run(input, iteration) {
+    mut state := input
+    mut frequencies := {}
+    mut order := []
+    for word in split(state["text"], " ") {
+        if has_key(frequencies, word) != 1 { order = push(order, word) frequencies[word] = 0 }
+        frequencies[word] += 1
+    }
+    mut best := ""
+    mut count := 0
+    for word in order { if frequencies[word] > count { best = word count = frequencies[word] } }
+    state["result"] = u32(state["result"] + count + checksum_string(best) + len(frequencies))
+    return state
+}
+func hash_prepare(input) {
+    mut state := input
+    mut data := bytes(vector(state["cfg"]["size"], 0))
+    mut i := 0
+    while i < byte_length(data) { data[i] = random_int(256) i += 1 }
+    state["data"] = data
+    return state
+}
+func hash_run(input, iteration) {
+    mut state := input
+    mut result := 0
+    if state["cfg"]["name"] == "Hash::CRC32" {
+        mut crc := 4294967295
+        for b in state["data"] {
+            crc = bit_xor(crc, b)
+            mut j := 0
+            while j < 8 {
+                if bit_and(crc, 1) != 0 { crc = bit_xor(bit_shr(crc, 1), 3988292384) }
+                else { crc = bit_shr(crc, 1) }
+                j += 1
+            }
+        }
+        result = bit_xor(crc, 4294967295)
+    } else {
+        mut hashes := [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]
+        mut i := 0
+        for b in state["data"] {
+            let index := i % 8
+            mut hash := hashes[index]
+            hash = u32(hash * 33 + b)
+            hash = bit_xor(u32(hash + bit_shl(hash, 10)), bit_shr(hash, 6))
+            hashes[index] = hash
+            i += 1
+        }
+        mut digest := bytes(vector(32, 0))
+        i = 0
+        while i < 8 {
+            let hash := hashes[i]
+            digest[i * 4] = bit_and(bit_shr(hash, 24), 255)
+            digest[i * 4 + 1] = bit_and(bit_shr(hash, 16), 255)
+            digest[i * 4 + 2] = bit_and(bit_shr(hash, 8), 255)
+            digest[i * 4 + 3] = bit_and(hash, 255)
+            i += 1
+        }
+        result = digest[0] + bit_shl(digest[1], 8) + bit_shl(digest[2], 16) + bit_shl(digest[3], 24)
+    }
+    state["result"] = u32(state["result"] + result)
+    return state
+}
+func distance_prepare(input) {
+    mut state := input
+    mut pairs := []
+    mut i := 0
+    while i < state["cfg"]["count"] {
+        let a := random_int(state["cfg"]["size"]) + 4
+        let b := random_int(state["cfg"]["size"]) + 4
+        mut first := ""
+        mut second := ""
+        mut j := 0
+        while j < a { first += "abcdefghij"[random_int(10)] j += 1 }
+        j = 0
+        while j < b { second += "abcdefghij"[random_int(10)] j += 1 }
+        pairs = push(pairs, [first, second])
+        i += 1
+    }
+    state["pairs"] = pairs
+    return state
+}
+func jaro(first, second) {
+    let a := utf8_encode(first)
+    let b := utf8_encode(second)
+    let n := byte_length(a)
+    let m := byte_length(b)
+    if n == 0 || m == 0 { return 0.0 }
+    let distance := imax(idiv(imax(n, m), 2) - 1, 0)
+    mut seen_a := vector(n, false)
+    mut seen_b := vector(m, false)
+    mut matches := 0
+    mut i := 0
+    while i < n {
+        mut j := imax(0, i - distance)
+        while j <= imin(m - 1, i + distance) {
+            if !seen_b[j] && a[i] == b[j] { seen_a[i] = true seen_b[j] = true matches += 1 break }
+            j += 1
+        }
+        i += 1
+    }
+    if matches == 0 { return 0.0 }
+    mut k := 0
+    mut transpositions := 0
+    i = 0
+    while i < n {
+        if seen_a[i] {
+            while k < m && !seen_b[k] { k += 1 }
+            if k < m { if a[i] != b[k] { transpositions += 1 } k += 1 }
+        }
+        i += 1
+    }
+    transpositions = idiv(transpositions, 2)
+    let count := to_float(matches)
+    return (count / n + count / m + (count - transpositions) / count) / 3.0
+}
+func gram_at(data, i) { return bit_shl(data[i], 24) + bit_shl(data[i + 1], 16) + bit_shl(data[i + 2], 8) + data[i + 3] }
+func ngram(first, second) {
+    let a := utf8_encode(first)
+    let b := utf8_encode(second)
+    mut counts_a := {}
+    mut counts_b := {}
+    mut i := 0
+    while i <= byte_length(a) - 4 { let gram := gram_at(a, i) counts_a[gram] = get_default(counts_a, gram, 0) + 1 i += 1 }
+    mut intersection := 0
+    i = 0
+    while i <= byte_length(b) - 4 {
+        let gram := gram_at(b, i)
+        counts_b[gram] = get_default(counts_b, gram, 0) + 1
+        if counts_b[gram] <= get_default(counts_a, gram, 0) { intersection += 1 }
+        i += 1
+    }
+    let total := len(counts_a) + len(counts_b)
+    if total == 0 { return 0.0 }
+    return to_float(intersection) / total
+}
+func distance_run(input, iteration) {
+    mut state := input
+    for pair in state["pairs"] {
+        mut result := 0.0
+        if state["cfg"]["name"] == "Distance::Jaro" { result = jaro(pair[0], pair[1]) }
+        else { result = ngram(pair[0], pair[1]) }
+        state["result"] = u32(state["result"] + to_int(result * 1000))
+    }
+    return state
+}
+registry["Brainfuck::Array"] = [basic_state, unchanged, bf_run, result_checksum, bf_warmup]
+registry["Brainfuck::Recursion"] = [basic_state, unchanged, bf_run, result_checksum, bf_warmup]
+registry["Etc::Words"] = [basic_state, words_prepare, words_run, result_checksum]
+registry["Hash::SHA256"] = [basic_state, hash_prepare, hash_run, result_checksum]
+registry["Hash::CRC32"] = [basic_state, hash_prepare, hash_run, result_checksum]
+registry["Distance::Jaro"] = [basic_state, distance_prepare, distance_run, result_checksum]
+registry["Distance::NGram"] = [basic_state, distance_prepare, distance_run, result_checksum]

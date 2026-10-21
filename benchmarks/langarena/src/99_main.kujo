@@ -1,0 +1,39 @@
+func main() {
+    let arguments := args()
+    assert(len(arguments) >= 1, "usage: port.kujo CONFIG [exact benchmark name]")
+    let configurations := parse_json(read_file(arguments[0]))
+    mut selected := ""
+    if len(arguments) > 1 { selected = arguments[1] }
+    mut passed := 0
+    mut failed := 0
+    for cfg in configurations {
+        let name := cfg["name"]
+        if selected != "" && name != selected { continue }
+        if has_key(registry, name) != 1 { print(name + ": MISSING") failed += 1 continue }
+        let definition := registry[name]
+        let create := definition[0]
+        let prepare := definition[1]
+        let run := definition[2]
+        let checksum := definition[3]
+        try {
+            mut state := create(cfg)
+            reset_rng()
+            state = prepare(state)
+            let warmups := get_default(cfg, "warmup_iterations", imax(to_int(cfg["iterations"] * 0.2), 1))
+            mut i := 0
+            mut warmup := run
+            if len(definition) > 4 { warmup = definition[4] }
+            while i < warmups { state = warmup(state, i) i += 1 }
+            reset_rng()
+            i = 0
+            while i < cfg["iterations"] { state = run(state, i) i += 1 }
+            let actual := u32(checksum(state))
+            if actual == cfg["checksum"] { print(name + ": OK " + str(actual)) passed += 1 }
+            else { print(name + ": FAIL actual=" + str(actual) + " expected=" + str(cfg["checksum"])) failed += 1 }
+        } except err { print(name + ": ERROR " + str(err)) failed += 1 }
+    }
+    print("Summary: " + str(passed + failed) + ", " + str(passed) + ", " + str(failed))
+    assert(passed + failed > 0, "no benchmark selected")
+    assert_equal(failed, 0)
+}
+main()

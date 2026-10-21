@@ -1,0 +1,180 @@
+struct Tree { item: int, left: any, right: any }
+func tree_new(item, depth) {
+    if depth == 0 { return Tree { item: item, left: null, right: null } }
+    let delta := bit_shl(1, depth - 1)
+    return Tree { item: item, left: tree_new(item - delta, depth - 1), right: tree_new(item + delta, depth - 1) }
+}
+func tree_sum(node) {
+    mut total := node.item + 1
+    if node.left != null { total += tree_sum(node.left) }
+    if node.right != null { total += tree_sum(node.right) }
+    return total
+}
+func tree_run(input, iteration) {
+    mut state := input
+    let root := tree_new(0, state["cfg"]["depth"])
+    state["result"] = u32(state["result"] + tree_sum(root))
+    return state
+}
+func arena_build(input, item, depth) {
+    mut arena := input
+    let index := len(arena)
+    arena = push(arena, [item, -1, -1])
+    if depth > 0 {
+        let delta := bit_shl(1, depth - 1)
+        let left := len(arena)
+        arena = arena_build(arena, item - delta, depth - 1)
+        let right := len(arena)
+        arena = arena_build(arena, item + delta, depth - 1)
+        arena[index] = [item, left, right]
+    }
+    return arena
+}
+func arena_sum(arena, index) {
+    let node := arena[index]
+    mut total := node[0] + 1
+    if node[1] >= 0 { total += arena_sum(arena, node[1]) }
+    if node[2] >= 0 { total += arena_sum(arena, node[2]) }
+    return total
+}
+func arena_run(input, iteration) {
+    mut state := input
+    let arena := arena_build([], 0, state["cfg"]["depth"])
+    state["result"] = u32(state["result"] + arena_sum(arena, 0))
+    return state
+}
+func base64_prepare(input) {
+    mut state := input
+    state["plain"] = utf8_encode(repeat("a", state["cfg"]["size"]))
+    state["encoded"] = encode_base64(state["plain"])
+    if state["cfg"]["name"] == "Base64::Decode" { state["decoded"] = decode_base64(state["encoded"]) }
+    return state
+}
+func base64_run(input, iteration) {
+    mut state := input
+    if state["cfg"]["name"] == "Base64::Encode" {
+        state["encoded"] = encode_base64(state["plain"])
+        state["result"] = u32(state["result"] + byte_length(state["encoded"]))
+    } else {
+        state["decoded"] = decode_base64(state["encoded"])
+        state["result"] = u32(state["result"] + byte_length(state["decoded"]))
+    }
+    return state
+}
+func base64_checksum(state) {
+    if state["cfg"]["name"] == "Base64::Encode" {
+        return checksum_string("encode " + substring(utf8_decode(state["plain"]), 0, 4) + "... to " + substring(state["encoded"], 0, 4) + "...: " + str(state["result"]))
+    }
+    return checksum_string("decode " + substring(state["encoded"], 0, 4) + "... to " + substring(utf8_decode(state["decoded"]), 0, 4) + "...: " + str(state["result"]))
+}
+func coordinates(n) {
+    mut data := []
+    mut i := 0
+    while i < n {
+        let x := to_float(format_fixed(random_float(), 8))
+        let y := to_float(format_fixed(random_float(), 8))
+        let z := to_float(format_fixed(random_float(), 8))
+        let name := format_fixed(random_float(), 7) + " " + str(random_int(10000))
+        data = push(data, {"x": x, "y": y, "z": z, "name": name, "opts": {"1": [1, true]}})
+        i += 1
+    }
+    return data
+}
+func json_create(cfg) {
+    mut state := basic_state(cfg)
+    if cfg["name"] == "Json::Generate" { state["data"] = coordinates(cfg["coords"]) }
+    return state
+}
+func json_prepare(input) {
+    mut state := input
+    if state["cfg"]["name"] != "Json::Generate" {
+        state["text"] = to_json({"coordinates": coordinates(state["cfg"]["coords"]), "info": "some info"})
+    }
+    return state
+}
+struct Coordinate { x: float, y: float, z: float }
+func json_run(input, iteration) {
+    mut state := input
+    if state["cfg"]["name"] == "Json::Generate" {
+        state["text"] = to_json({"coordinates": state["data"], "info": "some info"})
+        if starts_with(state["text"], "{\"coordinates\":") { state["result"] += 1 }
+        return state
+    }
+    let parsed := parse_json(state["text"])
+    mut data := parsed["coordinates"]
+    if state["cfg"]["name"] == "Json::ParseMapping" {
+        mut mapped := []
+        for row in data { mapped = push(mapped, Coordinate { x: row["x"], y: row["y"], z: row["z"] }) }
+        data = mapped
+    }
+    mut x := 0.0
+    mut y := 0.0
+    mut z := 0.0
+    for row in data {
+        if state["cfg"]["name"] == "Json::ParseMapping" { x += row.x y += row.y z += row.z }
+        else { x += row["x"] y += row["y"] z += row["z"] }
+    }
+    state["result"] = u32(state["result"] + checksum_float(x / len(data)) + checksum_float(y / len(data)) + checksum_float(z / len(data)))
+    return state
+}
+func sieve_run(input, iteration) {
+    mut state := input
+    let limit := state["cfg"]["limit"]
+    mut primes := bytes(vector(limit + 1, 1))
+    primes[0] = 0
+    primes[1] = 0
+    mut p := 2
+    let sqrt_limit := to_int(sqrt(limit))
+    while p <= sqrt_limit {
+        if primes[p] == 1 {
+            mut multiple := p * p
+            while multiple <= limit { primes[multiple] = 0 multiple += p }
+        }
+        p += 1
+    }
+    mut last := 2
+    mut count := 1
+    mut n := 3
+    while n <= limit { if primes[n] == 1 { last = n count += 1 } n += 2 }
+    state["result"] = u32(state["result"] + last + count)
+    return state
+}
+func csv_prepare(input) {
+    mut state := input
+    mut lines := []
+    mut i := 0
+    while i < state["cfg"]["rows"] {
+        let c := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[i % 26]
+        let x := random_float()
+        let z := random_float()
+        let y := random_float()
+        mut flag := "false"
+        if i % 2 == 0 { flag = "true" }
+        lines = push(lines, "\"point " + c + "\\n, \"\"" + str(i % 100) + "\"\"\"," + format_fixed(x, 10) + ",," + format_fixed(z, 10) + ",\"[" + flag + "\\n, " + str(i % 100) + "]\"," + format_fixed(y, 10) + "\n")
+        i += 1
+    }
+    state["text"] = join(lines, "")
+    return state
+}
+func csv_run(input, iteration) {
+    mut state := input
+    let rows := parse_csv_rows(state["text"])
+    mut points := []
+    for row in rows { points = push(points, Coordinate { x: to_float(row[1]), y: to_float(row[5]), z: to_float(row[3]) }) }
+    mut x := 0.0
+    mut y := 0.0
+    mut z := 0.0
+    for point in points { x += point.x y += point.y z += point.z }
+    if len(points) > 0 { state["result"] = u32(state["result"] + checksum_float(x / len(points)) + checksum_float(y / len(points)) + checksum_float(z / len(points))) }
+    return state
+}
+func csv_checksum(state) { return u32(state["result"] + checksum_string(state["text"])) }
+registry["Binarytrees::Obj"] = [basic_state, unchanged, tree_run, result_checksum]
+registry["Binarytrees::Arena"] = [basic_state, unchanged, arena_run, result_checksum]
+registry["Base64::Encode"] = [basic_state, base64_prepare, base64_run, base64_checksum]
+registry["Base64::Decode"] = [basic_state, base64_prepare, base64_run, base64_checksum]
+registry["Json::Generate"] = [json_create, json_prepare, json_run, result_checksum]
+registry["Json::ParseDom"] = [json_create, json_prepare, json_run, result_checksum]
+registry["Json::ParseMapping"] = [json_create, json_prepare, json_run, result_checksum]
+registry["CSV::Parse"] = [basic_state, csv_prepare, csv_run, csv_checksum]
+registry["Etc::Sieve"] = [basic_state, unchanged, sieve_run, result_checksum]
