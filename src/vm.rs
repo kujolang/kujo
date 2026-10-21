@@ -3925,6 +3925,15 @@ impl VM {
                     Self::prepare_dictionary_write(&mut object, &index);
 
                     match (object, index) {
+                        (Value::Bytes(mut bytes), index) => {
+                            if let Err(error) = crate::interpreter::assignment::write_byte(
+                                &mut bytes, &index, &value,
+                            ) {
+                                self.throw_runtime_value(Value::Error(error))?;
+                                continue;
+                            }
+                            self.stack.push(Value::Bytes(bytes));
+                        }
                         (Value::Array(arr), Value::Int(i)) => {
                             let mut arr_clone = arr;
                             let arr_mut = Arc::make_mut(&mut arr_clone);
@@ -4605,6 +4614,17 @@ impl VM {
                         .unwrap_or(BytecodeBindingKind::Mutable);
                     if !matches!(kind, BytecodeBindingKind::Mutable) {
                         return Err(Self::local_mutation_error(kind, &binding_name));
+                    }
+
+                    if let Some(Value::Bytes(bytes)) = frame.local_slots.get_mut(slot) {
+                        if let Err(error) =
+                            crate::interpreter::assignment::write_byte(bytes, &index, &value)
+                        {
+                            self.throw_runtime_value(Value::Error(error))?;
+                        } else {
+                            self.ip += 1;
+                        }
+                        continue;
                     }
 
                     {

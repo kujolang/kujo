@@ -57,6 +57,9 @@ fn write(root: &mut Value, path: &[Access], value: Value) -> Result<(), String> 
     }
 
     match (root, access) {
+        (Value::Bytes(bytes), Access::Index(index)) if rest.is_empty() => {
+            write_byte(bytes, index, &value)
+        }
         (Value::Array(items), Access::Index(Value::Int(index))) => {
             let resolved = if *index < 0 { items.len() as i64 + index } else { *index };
             if resolved < 0 || resolved as usize >= items.len() {
@@ -93,4 +96,24 @@ fn write(root: &mut Value, path: &[Access], value: Value) -> Result<(), String> 
         (_, Access::Field(_)) => Err("Cannot set field on non-struct value".to_string()),
         _ => Err("Invalid index assignment".to_string()),
     }
+}
+
+/// Validate before copy-on-write so rejected writes never change storage or content.
+pub(crate) fn write_byte(
+    bytes: &mut Arc<Vec<u8>>,
+    index: &Value,
+    value: &Value,
+) -> Result<(), String> {
+    let Value::Int(index) = index else {
+        return Err("Byte index assignment requires an integer index".into());
+    };
+    let resolved = if *index < 0 { bytes.len() as i64 + index } else { *index };
+    if resolved < 0 || resolved as usize >= bytes.len() {
+        return Err(format!("Index out of bounds: {index}"));
+    }
+    let Value::Int(byte @ 0..=255) = value else {
+        return Err("Byte index assignment requires an integer in range 0-255".into());
+    };
+    Arc::make_mut(bytes)[resolved as usize] = *byte as u8;
+    Ok(())
 }

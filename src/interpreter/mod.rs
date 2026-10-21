@@ -557,6 +557,8 @@ impl Interpreter {
     /// This returns a list of all native functions that the interpreter supports
     pub fn get_builtin_names() -> Vec<&'static str> {
         vec![
+            "utf8_encode",
+            "utf8_decode",
             "parse_csv_rows",
             "regex_replace_with",
             "sort_by",
@@ -1080,6 +1082,9 @@ impl Interpreter {
 
     /// Registers all built-in functions and constants
     fn register_builtins(&mut self) {
+        for name in ["utf8_encode", "utf8_decode"] {
+            self.env.define(name.into(), Value::NativeFunction(name.into()));
+        }
         self.env.define("sort_by".into(), Value::NativeFunction("sort_by".into()));
         self.env.define(
             "regex_replace_with".into(),
@@ -3251,6 +3256,9 @@ impl Interpreter {
         let value_clone = value.clone();
 
         let mutate_result = self.env.mutate_checked(container_name, |container| match container {
+            Value::Bytes(bytes) => {
+                assignment_error = assignment::write_byte(bytes, &index_clone, &value_clone).err();
+            }
             Value::Array(arr) => {
                 let idx = match &index_clone {
                     Value::Int(i) => *i,
@@ -3512,6 +3520,7 @@ impl Interpreter {
             return Some(CallableArity::exact(name, (0..*n).map(|i| format!("arg{i}")).collect()));
         }
         let metadata = match name {
+            "utf8_encode" | "utf8_decode" => CallableArity::exact(name, vec!["value".into()]),
             "sort_by" => CallableArity::exact(name, vec!["items".into(), "comparator".into()]),
             "regex_replace_with" => {
                 CallableArity::exact(name, vec!["text".into(), "pattern".into(), "callback".into()])

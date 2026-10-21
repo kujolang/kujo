@@ -327,6 +327,8 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `to_toml` | `to_toml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_toml(...)` |
 | `parse_yaml` | `parse_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := parse_yaml(...)` |
 | `to_yaml` | `to_yaml(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := to_yaml(...)` |
+| `utf8_encode` | `utf8_encode(text)` | exact 1 | bytes | Requires a string. | `none` | `utf8_encode("é")` |
+| `utf8_decode` | `utf8_decode(data)` | exact 1 | string | Requires bytes containing valid UTF-8. | `none` | `utf8_decode(bytes([65]))` |
 | `format_fixed` | `format_fixed(value, precision)` | exact 2 | string | Invalid type, non-finite value, precision outside 0–100. | `none` | `format_fixed(1.25, 7)` |
 | `wrapping_add` | `wrapping_add(left, right)` | exact 2 | integer | Non-integer arguments. | `none` | `wrapping_add(1, 2)` |
 | `wrapping_sub` | `wrapping_sub(left, right)` | exact 2 | integer | Non-integer arguments. | `none` | `wrapping_sub(1, 2)` |
@@ -806,3 +808,20 @@ to the `range` construction limit. Stable merge sorting uses O(n log n) comparis
 returned elements retain value-copy semantics. Comparators must define consistent
 ordering; inconsistent results have unspecified ordering but cannot cause a native
 sort panic or unbounded comparison loop. Existing `sort` remains unchanged.
+
+### UTF-8 bytes and indexed writes
+
+`utf8_encode(text)` converts a string directly to its UTF-8 bytes, including NULs.
+`utf8_decode(data)` strictly decodes bytes; malformed, overlong, surrogate, and
+truncated sequences raise an error identifying the first invalid byte offset.
+Neither operation changes its input. Both accept empty values and take linear
+time in the input length. No normalization or replacement characters are added.
+
+Mutable byte bindings support `data[index] = value`, including nested paths.
+Indices must be integers (negative indices count from the end), and assigned
+values must be integers from 0 through 255. Failed writes preserve the old value.
+Byte values share storage on reads and copies; writing detaches shared storage,
+so other bindings and closure snapshots retain their contents. Slices and
+concatenation produce independent values. Use an explicitly encoded byte buffer
+for sequential UTF-8 byte processing; string indexing remains Unicode-scalar
+indexing and can require a scan.

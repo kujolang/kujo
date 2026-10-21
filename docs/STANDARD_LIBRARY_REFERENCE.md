@@ -899,3 +899,7 @@ callbacks. Callback capabilities remain restricted by the caller policy.
 
 `sort_by` provides stable comparator sorting through the same synchronous callback
 bridge, preserving value-copy semantics and propagating callback failures.
+
+`utf8_encode` converts strings directly to UTF-8 bytes. `utf8_decode` strictly
+decodes byte buffers, rejecting invalid UTF-8 without replacement. Mutable bytes
+support checked integer indexed writes with copy isolation.

@@ -187,6 +187,20 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "utf8_encode" => match arg_values {
+            [Value::Str(text)] => Value::bytes(text.as_bytes().to_vec()),
+            _ => Value::Error("utf8_encode() requires one string argument".into()),
+        },
+        "utf8_decode" => match arg_values {
+            [Value::Bytes(bytes)] => match std::str::from_utf8(bytes) {
+                Ok(text) => Value::Str(Arc::new(text.to_string())),
+                Err(error) => Value::Error(format!(
+                    "utf8_decode() invalid UTF-8 at byte {}",
+                    error.valid_up_to()
+                )),
+            },
+            _ => Value::Error("utf8_decode() requires one bytes argument".into()),
+        },
         "bytes" => {
             if arg_values.len() != 1 {
                 return Some(Value::Error("bytes() requires an array argument".to_string()));

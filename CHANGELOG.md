@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add strict `utf8_encode`/`utf8_decode` and checked byte indexed assignment in
+  both runtimes, including nested paths and copy-on-write alias isolation.
+
 - Share byte-buffer storage on value clones, avoiding full-buffer copies during
   reads while preserving exact binary content and host API ownership.
 
