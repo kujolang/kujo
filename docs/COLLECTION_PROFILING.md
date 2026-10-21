@@ -377,3 +377,61 @@ dual used zero interpreter fallback. `cargo check`, `cargo fmt --check` and
 `git diff --check` passed. All profiling assertions passed. The full unfiltered
 Cargo integration suite was not run. No LangArena port, maintainer contact or
 release artifact is included.
+
+## Dictionary deletion and field/indexed pop (2026-10-21)
+
+Baseline: `c72ee562f8e1905cd01b26d04576e373f220bdf1`. Repeated dictionary
+removal rebuilt the remaining map, and field/indexed pop copied the shrinking
+array. Even after storage reuse, an ordinary field write-back would rescan its
+payload for depth validation. The consuming adjacent pair now fuses that
+write-back, preserves the validated depth bound, and refreshes cache identities
+for ordinary and specialized dictionary parents.
+
+The runtime checks the native callable, binding mutability and destination
+storage identity after argument evaluation. Retained aliases, closures, result
+pairs and parent snapshots still detach on mutation. Effectful index expressions,
+shadowed index names, nonadjacent write-back and other callables retain their
+ordinary evaluation. VM optimization is limited to function scopes. Specialized
+map deletion may convert representation once; retaining each intermediate result
+still requires copies. These are bounded ownership optimizations, not reference
+semantics or a universal constant-time deletion guarantee.
+
+Measurements: macOS x86-64 debug binaries, median of three runs, N removals/pops
+from N entries. Setup and process startup are excluded. Builds and tests finished
+before these measurements. All workload assertions passed. The cases are retained
+in `tests/collection_profile.rs`; select `dictionary_remove`, `field_pop`,
+`indexed_pop`, `nested_dictionary_remove`, or the existing `pop` control with
+`KUJO_PROFILE_CASE`. The harness also offers N=2000; the table reports the measured
+1000/4000 endpoints. Absolute timings remain diagnostic, not release claims.
+
+| Workload | N | VM before (ms) | VM after (ms) | Interpreter before (ms) | Interpreter after (ms) |
+|---|---:|---:|---:|---:|---:|
+| dictionary_remove | 1000 | 200.879 | 83.467 | 151.629 | 81.743 |
+| dictionary_remove | 4000 | 2943.91 | 318.656 | 2181.048 | 245.885 |
+| field_pop | 1000 | 294.576 | 25.224 | 104.096 | 26.394 |
+| field_pop | 4000 | 2084.883 | 103.685 | 1244.156 | 111.081 |
+| indexed_pop | 1000 | 113.459 | 22.195 | 103.058 | 30.217 |
+| indexed_pop | 4000 | 1281.114 | 109.024 | 1214.798 | 99.694 |
+| nested_dictionary_remove | 1000 | 238.622 | 87.409 | 161.878 | 54.796 |
+| nested_dictionary_remove | 4000 | 2435.222 | 339.878 | 2213.697 | 221.375 |
+| local_pop_control | 1000 | 11.58 | 11.84 | 25.813 | 18.522 |
+| local_pop_control | 4000 | 48.52 | 45.533 | 149.054 | 81.014 |
+
+Structural regressions assert allocation reuse, parent snapshot isolation and a
+single payload depth scan across repeated pops, including fixed, sparse integer
+and dense integer dictionary parents. Language regressions cover both runtimes,
+null/missing/canonical keys, empty and negative-index pops, callable aliases,
+key/index effects, immutable errors, retained pairs and closure snapshots. A
+host-injected overdeep value verifies failed VM write-back leaves state intact.
+
+Validation: 1,291 selected Rust tests passed, with eight existing library ignores.
+The VM and dual CLI gates each passed 150/150 runnable fixtures, 11 policy skips,
+and zero dual interpreter fallbacks. `cargo check`, `cargo fmt --check`,
+`git diff --check` and the profiling harness build passed. The full unfiltered
+Cargo integration suite was not run.
+
+A separate pre-existing parity gap remains: out-of-bounds indexed reads and
+immutable indexed writes can bypass VM `except` handlers; the interpreter catches
+them. Both baseline and updated binaries reproduce it (VM exit 4, interpreter
+exit 0). This is recorded separately for follow-up, not fixed by the ownership
+optimization. No benchmark port, maintainer contact or release is included.

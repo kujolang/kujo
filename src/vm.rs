@@ -1502,7 +1502,7 @@ impl VM {
                             | OpCode::TryAppendAssign(_, _)
                             | OpCode::GuardAppendPath(_)
                             | OpCode::AppendBindingPath(_, _)
-                            | OpCode::TryPopRebind(_, _, _, _)
+                            | OpCode::TryPopRebind(_, _, _, _, _)
                             | OpCode::IndexGetInPlace(_)
                             | OpCode::IndexSetInPlace(_)
                             | OpCode::LoadVar(_)
@@ -5163,7 +5163,16 @@ impl VM {
                     self.stack.push(result);
                 }
 
-                OpCode::TryPopRebind(binding, pair_slot, argc, end) => {
+                OpCode::TryPopRebind(binding, pair_slot, argc, shape, end) => {
+                    use crate::interpreter::assignment::Access;
+                    let mut path = Vec::new();
+                    for access in shape.into_iter().rev() {
+                        path.push(match access {
+                            Some(field) => Access::Field(field),
+                            None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
+                        });
+                    }
+                    path.reverse();
                     let function = self.stack.pop().ok_or("Stack underflow")?;
                     let key = if argc == 2 {
                         Some(self.stack.pop().ok_or("Stack underflow")?)
@@ -5181,18 +5190,27 @@ impl VM {
                         *frame.local_slots.get_mut(pair_slot).ok_or("Invalid pair slot")? =
                             Value::Null;
                         let mut pair = None;
+                        let mut cache = std::mem::take(&mut self.path_depth_valid);
                         let _ = self.mutate_binding(&binding, |root| {
-                            pair = if let Some(key) = &key {
-                                crate::interpreter::assignment::remove_rebinding(
+                            pair = if path.is_empty() {
+                                crate::interpreter::assignment::collection_rebinding_path(
                                     root,
+                                    &path,
                                     &mut original,
-                                    key,
+                                    key.as_ref(),
                                 )
                             } else {
-                                crate::interpreter::assignment::pop_rebinding(root, &mut original)
+                                crate::interpreter::assignment::collection_rebinding_path_checked(
+                                    root,
+                                    &path,
+                                    &mut original,
+                                    key.as_ref(),
+                                    &mut cache,
+                                )
                             };
                             Ok(())
                         });
+                        self.path_depth_valid = cache;
                         if let Some(pair) = pair {
                             self.stack.push(pair);
                             self.ip = end;

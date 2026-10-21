@@ -279,17 +279,23 @@ mod append_ownership_tests {
 pub(crate) struct DepthCache {
     arrays: std::collections::HashMap<usize, (std::sync::Weak<Vec<Value>>, usize)>,
     dictionaries: std::collections::HashMap<usize, (std::sync::Weak<super::DictMap>, usize)>,
+    integer_dictionaries:
+        std::collections::HashMap<usize, (std::sync::Weak<super::IntDictMap>, usize)>,
     #[cfg(test)]
     scans: usize,
 }
 impl DepthCache {
     fn remember(&mut self, value: &Value, bound: usize) {
         match value {
-            Value::Array(items) => {
+            Value::Array(items) | Value::DenseIntDict(items) => {
                 self.arrays.insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
             }
             Value::Dict(items) => {
                 self.dictionaries
+                    .insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
+            }
+            Value::IntDict(items) => {
+                self.integer_dictionaries
                     .insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
             }
             _ => {}
@@ -301,14 +307,21 @@ impl DepthCache {
         while let Some((value, offset)) = work.pop() {
             depth = depth.max(offset);
             let cached = match value {
-                Value::Array(a) => self.arrays.get(&(Arc::as_ptr(a) as usize)).map(|e| e.1),
+                Value::Array(a) | Value::DenseIntDict(a) => {
+                    self.arrays.get(&(Arc::as_ptr(a) as usize)).map(|e| e.1)
+                }
                 Value::Dict(d) => self.dictionaries.get(&(Arc::as_ptr(d) as usize)).map(|e| e.1),
+                Value::IntDict(d) => {
+                    self.integer_dictionaries.get(&(Arc::as_ptr(d) as usize)).map(|e| e.1)
+                }
                 _ => None,
             };
             if let Some(bound) = cached {
                 depth = depth.max(offset + bound);
             } else if let Value::Struct { fields, .. } = value {
                 work.extend(fields.values().map(|v| (v, offset + 1)));
+            } else if let Value::FixedDict { values, .. } = value {
+                work.extend(values.iter().map(|v| (v, offset + 1)));
             } else {
                 #[cfg(test)]
                 {
@@ -326,17 +339,20 @@ impl DepthCache {
         let mut bound = bound;
         self.remember(cursor, bound);
         for access in path {
-            let Some(child) = child(cursor, access) else { break };
+            let Some(child) = collection_child(cursor, access) else { break };
             cursor = child;
             bound = bound.saturating_sub(1);
             self.remember(cursor, bound);
         }
-        if self.arrays.len() + self.dictionaries.len() >= 1024 {
+        if self.arrays.len() + self.dictionaries.len() + self.integer_dictionaries.len() >= 1024 {
             self.arrays.retain(|_, (weak, _)| weak.strong_count() > 0);
             self.dictionaries.retain(|_, (weak, _)| weak.strong_count() > 0);
-            if self.arrays.len() + self.dictionaries.len() >= 1024 {
+            self.integer_dictionaries.retain(|_, (weak, _)| weak.strong_count() > 0);
+            if self.arrays.len() + self.dictionaries.len() + self.integer_dictionaries.len() >= 1024
+            {
                 self.arrays.clear();
                 self.dictionaries.clear();
+                self.integer_dictionaries.clear();
             }
         }
     }
@@ -580,22 +596,137 @@ pub(crate) fn pop_rebind_pair<'a>(
     if !(1..=2).contains(&args.len()) || !matches!(function.as_ref(), Expr::Identifier(_)) {
         return None;
     }
-    let Expr::Identifier(root) = &args[0] else { return None };
-    let Some(Stmt::Assign {
-        target: Expr::Identifier(target),
-        value: Expr::IndexAccess { object, index },
-    }) = next
-    else {
+    let (root, _) = split_target(&args[0]).ok()?;
+    let Some(Stmt::Assign { target, value: Expr::IndexAccess { object, index } }) = next else {
         return None;
     };
     if root != pair
-        && target == root
+        && same_stable_place(&args[0], target, pair)
         && matches!(object.as_ref(), Expr::Identifier(name) if name == pair)
         && matches!(index.as_ref(), Expr::Int(0))
     {
         Some((root, pair, function, args, *mutable))
     } else {
         None
+    }
+}
+
+// Only paths whose re-evaluation cannot run user code are fused. The pair's
+// declaration must not shadow an index binding needed by the following write.
+fn same_stable_place(a: &Expr, b: &Expr, pair: &str) -> bool {
+    match (a, b) {
+        (Expr::Identifier(a), Expr::Identifier(b)) => a == b && a != pair,
+        (Expr::Int(a), Expr::Int(b)) => a == b,
+        (Expr::String(a), Expr::String(b)) => a == b,
+        (
+            Expr::FieldAccess { object: a, field: af },
+            Expr::FieldAccess { object: b, field: bf },
+        ) => af == bf && same_stable_place(a, b, pair),
+        (
+            Expr::IndexAccess { object: a, index: ai },
+            Expr::IndexAccess { object: b, index: bi },
+        ) => same_stable_place(a, b, pair) && same_stable_index(ai, bi, pair),
+        _ => false,
+    }
+}
+fn same_stable_index(a: &Expr, b: &Expr, pair: &str) -> bool {
+    match (a, b) {
+        (Expr::Identifier(_), Expr::Identifier(_))
+        | (Expr::Int(_), Expr::Int(_))
+        | (Expr::String(_), Expr::String(_)) => same_stable_place(a, b, pair),
+        (Expr::UnaryOp { op: aop, operand: a }, Expr::UnaryOp { op: bop, operand: b })
+            if aop == "-"
+                && bop == "-"
+                && matches!(a.as_ref(), Expr::Int(_))
+                && matches!(b.as_ref(), Expr::Int(_)) =>
+        {
+            same_stable_place(a, b, pair)
+        }
+        _ => false,
+    }
+}
+
+fn collection_index(access: &Access) -> Option<i64> {
+    match access {
+        Access::Index(Value::Int(i)) => Some(*i),
+        Access::Index(Value::Str(s)) => Value::dict_index(s).ok(),
+        _ => None,
+    }
+}
+fn fixed_collection_index(keys: &[Arc<str>], access: &Access) -> Option<usize> {
+    let key = match access {
+        Access::Index(Value::Str(s)) => s.as_ref().clone(),
+        Access::Index(Value::Int(i)) => i.to_string(),
+        _ => return None,
+    };
+    keys.iter().position(|k| k.as_ref() == key)
+}
+fn collection_child<'a>(root: &'a Value, access: &Access) -> Option<&'a Value> {
+    match root {
+        Value::FixedDict { keys, values } => values.get(fixed_collection_index(keys, access)?),
+        Value::IntDict(map) => map.get(&collection_index(access)?),
+        Value::DenseIntDict(values) => values.get(usize::try_from(collection_index(access)?).ok()?),
+        _ => child(root, access),
+    }
+}
+fn collection_child_mut<'a>(root: &'a mut Value, access: &Access) -> Option<&'a mut Value> {
+    match root {
+        Value::FixedDict { keys, values } => values.get_mut(fixed_collection_index(keys, access)?),
+        Value::IntDict(map) => Arc::make_mut(map).get_mut(&collection_index(access)?),
+        Value::DenseIntDict(values) => {
+            Arc::make_mut(values).get_mut(usize::try_from(collection_index(access)?).ok()?)
+        }
+        _ => child_mut(root, access),
+    }
+}
+
+pub(crate) fn collection_rebinding_path_checked(
+    root: &mut Value,
+    path: &[Access],
+    original: &mut Option<Value>,
+    key: Option<&Value>,
+    cache: &mut DepthCache,
+) -> Option<Value> {
+    let bound = cache.depth(root);
+    if bound > crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+        return None;
+    }
+    let pair = collection_rebinding_path(root, path, original, key)?;
+    // Shrinking cannot increase the validated bound. Refresh identities after
+    // COW/weak-pointer detachment so the next operation does not rescan payloads.
+    cache.remember_path(root, path, bound);
+    Some(pair)
+}
+
+pub(crate) fn collection_rebinding_path(
+    root: &mut Value,
+    path: &[Access],
+    original: &mut Option<Value>,
+    key: Option<&Value>,
+) -> Option<Value> {
+    let mut destination = &*root;
+    for access in path {
+        destination = collection_child(destination, access)?;
+    }
+    let same = match (destination, original.as_ref()?, key) {
+        (Value::Array(a), Value::Array(b), None) => Arc::ptr_eq(a, b),
+        (Value::Dict(a), Value::Dict(b), Some(Value::Str(_) | Value::Int(_))) => Arc::ptr_eq(a, b),
+        (Value::IntDict(a), Value::IntDict(b), Some(_)) => Arc::ptr_eq(a, b),
+        _ => false,
+    };
+    if !same {
+        return None;
+    }
+    // Detach retained parent snapshots before mutating the leaf. Releasing only
+    // the call's argument leaves all real aliases visible to copy-on-write.
+    let mut destination = root;
+    for access in path {
+        destination = collection_child_mut(destination, access).expect("validated collection path");
+    }
+    if let Some(key) = key {
+        remove_rebinding(destination, original, key)
+    } else {
+        pop_rebinding(destination, original)
     }
 }
 
@@ -752,5 +883,99 @@ mod removal_tests {
         assert_ne!(address(&root), address(&alias));
         assert!(alias.dictionary_get("100").is_some());
         assert!(root.dictionary_get("100").is_none());
+    }
+}
+
+#[cfg(test)]
+mod path_removal_tests {
+    use super::*;
+    #[test]
+    fn nested_pop_keeps_leaf_buffer_and_detaches_parent_aliases() {
+        let row = Value::array((0..10_000).map(Value::Int).collect());
+        let mut root = Value::Struct {
+            name: "State".into(),
+            fields: [("rows".into(), Value::array(vec![row]))].into_iter().collect(),
+        };
+        let path = [Access::Field("rows".into()), Access::Index(Value::Int(0))];
+        let leaf = |v: &Value| {
+            let Value::Array(a) = child(child(v, &path[0]).unwrap(), &path[1]).unwrap() else {
+                panic!()
+            };
+            a.as_ptr()
+        };
+        let address = leaf(&root);
+        let mut cache = DepthCache::default();
+        for _ in 0..100 {
+            let mut original =
+                Some(child(child(&root, &path[0]).unwrap(), &path[1]).unwrap().clone());
+            let pair = collection_rebinding_path_checked(
+                &mut root,
+                &path,
+                &mut original,
+                None,
+                &mut cache,
+            )
+            .unwrap();
+            assert_eq!(leaf(&root), address);
+            drop(pair);
+        }
+        assert_eq!(cache.scans, 1, "shrinking path rescanned payloads");
+        let alias = root.clone();
+        let mut original = Some(child(child(&root, &path[0]).unwrap(), &path[1]).unwrap().clone());
+        collection_rebinding_path(&mut root, &path, &mut original, None).unwrap();
+        assert_ne!(leaf(&root), leaf(&alias));
+    }
+}
+
+#[cfg(test)]
+mod specialized_path_removal_tests {
+    use super::*;
+    #[test]
+    fn specialized_parent_maps_reuse_unique_leaf_storage() {
+        for kind in 0..3 {
+            let row = Value::array((0..10_000).map(Value::Int).collect());
+            let mut root = match kind {
+                0 => Value::FixedDict { keys: Arc::new(vec!["0".into()]), values: vec![row] },
+                1 => Value::IntDict(Arc::new([(0, row)].into_iter().collect())),
+                _ => Value::DenseIntDict(Arc::new(vec![row])),
+            };
+            let path = [Access::Index(Value::Int(0))];
+            let address = |v: &Value| {
+                let Value::Array(a) = collection_child(v, &path[0]).unwrap() else { panic!() };
+                a.as_ptr()
+            };
+            let initial = address(&root);
+            let mut cache = DepthCache::default();
+            for _ in 0..64 {
+                let mut original = Some(collection_child(&root, &path[0]).unwrap().clone());
+                collection_rebinding_path_checked(
+                    &mut root,
+                    &path,
+                    &mut original,
+                    None,
+                    &mut cache,
+                )
+                .unwrap();
+                assert_eq!(address(&root), initial);
+            }
+            assert_eq!(cache.scans, 1, "specialized parent rescanned payloads");
+            let alias = root.clone();
+            let mut original = Some(collection_child(&root, &path[0]).unwrap().clone());
+            collection_rebinding_path(&mut root, &path, &mut original, None).unwrap();
+            assert_ne!(address(&root), address(&alias));
+        }
+    }
+}
+
+#[cfg(test)]
+mod removal_matcher_tests {
+    use super::*;
+    #[test]
+    fn pair_shadowing_an_index_keeps_ordinary_evaluation() {
+        let statements = crate::parser::Parser::new(
+            crate::lexer::tokenize("let slot := pop(rows[slot]) rows[slot] = slot[0]").unwrap(),
+        )
+        .parse();
+        assert!(pop_rebind_pair(&statements[0], statements.get(1)).is_none());
     }
 }

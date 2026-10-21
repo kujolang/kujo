@@ -1904,7 +1904,12 @@ impl Compiler {
 
     /// Compile assignment target
     fn compile_sequence(&mut self, statements: &[Stmt]) -> Result<(), String> {
+        let mut skip_next = false;
         for (i, stmt) in statements.iter().enumerate() {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
             if i == 0
                 && self.uses_local_slots
                 && self.scope_depth == 1
@@ -1941,6 +1946,19 @@ impl Compiler {
                         self.compile_expr(arg)?;
                     }
                     self.compile_expr(function)?;
+                    let (_, path) = crate::interpreter::assignment::split_target(&args[0])?;
+                    let mut shape = Vec::new();
+                    for access in path {
+                        match access {
+                            crate::interpreter::assignment::AccessExpr::Field(field) => {
+                                shape.push(Some(field.to_string()))
+                            }
+                            crate::interpreter::assignment::AccessExpr::Index(index) => {
+                                self.compile_expr(index)?;
+                                shape.push(None);
+                            }
+                        }
+                    }
                     let binding = if let Some(slot) = self.resolve_local_slot(root) {
                         crate::bytecode::MutationBinding::Local(slot)
                     } else {
@@ -1953,12 +1971,23 @@ impl Compiler {
                         BytecodeBindingKind::LetImmutable
                     };
                     let pair_slot = self.declare_local(pair, kind)?;
-                    let fast =
-                        self.chunk.emit(OpCode::TryPopRebind(binding, pair_slot, args.len(), 0));
+                    let fast = self.chunk.emit(OpCode::TryPopRebind(
+                        binding,
+                        pair_slot,
+                        args.len(),
+                        shape,
+                        0,
+                    ));
                     self.chunk.emit(OpCode::Call(args.len()));
+                    self.chunk.emit(OpCode::DefineLocal(pair_slot));
+                    self.chunk.emit(OpCode::Pop);
+                    self.compile_stmt(&statements[i + 1])?;
+                    let end = self.chunk.emit(OpCode::Jump(0));
                     self.chunk.patch_jump(fast);
                     self.chunk.emit(OpCode::DefineLocal(pair_slot));
                     self.chunk.emit(OpCode::Pop);
+                    self.chunk.patch_jump(end);
+                    skip_next = true;
                     continue;
                 }
             }

@@ -4188,7 +4188,12 @@ impl Interpreter {
             }
         }
 
+        let mut skip_next = false;
         for (index, stmt) in stmts.iter().enumerate() {
+            if skip_next {
+                skip_next = false;
+                continue;
+            }
             if should_hoist && is_hoistable(stmt) {
                 continue;
             }
@@ -4231,14 +4236,29 @@ impl Interpreter {
                             } else {
                                 let key = if values.len() == 2 { values.pop() } else { None };
                                 let mut original = values.pop();
+                                let (_, expressions) = assignment::split_target(&args[0])
+                                    .expect("matched collection target");
+                                let path: Vec<_> = expressions
+                                    .into_iter()
+                                    .map(|access| match access {
+                                        assignment::AccessExpr::Field(field) => {
+                                            assignment::Access::Field(field.into())
+                                        }
+                                        assignment::AccessExpr::Index(index) => {
+                                            assignment::Access::Index(self.eval_expr(index))
+                                        }
+                                    })
+                                    .collect();
                                 let mut pair = None;
                                 let _ = self.env.mutate_checked(root, |value| {
-                                    pair = if let Some(key) = &key {
-                                        assignment::remove_rebinding(value, &mut original, key)
-                                    } else {
-                                        assignment::pop_rebinding(value, &mut original)
-                                    };
+                                    pair = assignment::collection_rebinding_path(
+                                        value,
+                                        &path,
+                                        &mut original,
+                                        key.as_ref(),
+                                    );
                                 });
+                                skip_next = pair.is_some();
                                 let pair = pair.unwrap_or_else(|| {
                                     let mut values = vec![original.unwrap()];
                                     if let Some(key) = key {

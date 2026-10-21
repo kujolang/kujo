@@ -850,6 +850,15 @@ still copy the requested entries. Cloning a struct or fixed dictionary can still
 copy its immediate fields or values, so this is not a constant-time guarantee for
 every helper call.
 
+In function scopes, adjacent `let pair := pop(state.items)` followed by
+`state.items = pair[0]` can reuse unique array storage; the same applies to
+`remove(map, key)` and indexed paths. The runtimes verify the native callable,
+mutable destination and storage identity after evaluating arguments. Literal or
+variable indices are eligible; index expressions that execute code, a pair name
+that shadows an index, and nonadjacent write-back use ordinary functional calls.
+Retained aliases, closures and result pairs keep their snapshots. Specialized
+dictionaries may still convert representation on their first deletion.
+
 Nested assignments validate the complete path before editing unique rows, keeping
 failed writes atomic. Queues use shared immutable storage: cloning, `queue_size`,
 and `queue_peek` are constant time in queue length; enqueue is constant time apart

@@ -260,7 +260,7 @@ pub enum OpCode {
     GuardAppendPath(usize),
     /// Conditional pop/remove followed by rebinding: binding, dead pair slot,
     /// argument count, success jump. Other callables use ordinary call semantics.
-    TryPopRebind(MutationBinding, usize, usize, usize),
+    TryPopRebind(MutationBinding, usize, usize, Vec<Option<String>>, usize),
     /// Stack: [array, item, native, indices...] -> [null].
     AppendBindingPath(MutationBinding, Vec<Option<String>>),
 
@@ -564,7 +564,7 @@ impl BytecodeChunk {
             | OpCode::ForNext(ref mut addr)
             | OpCode::TryAppendAssign(_, ref mut addr)
             | OpCode::GuardAppendPath(ref mut addr)
-            | OpCode::TryPopRebind(_, _, _, ref mut addr)
+            | OpCode::TryPopRebind(_, _, _, _, ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr) => {
                 *addr = target;
             }
@@ -582,7 +582,7 @@ impl BytecodeChunk {
             | OpCode::JumpBack(ref mut addr)
             | OpCode::TryAppendAssign(_, ref mut addr)
             | OpCode::GuardAppendPath(ref mut addr)
-            | OpCode::TryPopRebind(_, _, _, ref mut addr)
+            | OpCode::TryPopRebind(_, _, _, _, ref mut addr)
             | OpCode::BeginTry(ref mut addr) => {
                 *addr = target;
             }

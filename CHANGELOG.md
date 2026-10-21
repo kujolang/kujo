@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Extend consuming pop/removal rebinding to fields and indexed collection paths,
+  preserving parent snapshots and falling back for effectful index expressions.
+
 - Reuse uniquely owned dictionary storage for adjacent removal/rebinding while
   preserving removed values, retained snapshots and ordinary callable fallbacks.
 

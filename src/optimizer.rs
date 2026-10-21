@@ -38,7 +38,7 @@ impl Optimizer {
             | OpCode::ForNext(t)
             | OpCode::TryAppendAssign(_, t)
             | OpCode::GuardAppendPath(t)
-            | OpCode::TryPopRebind(_, _, _, t)
+            | OpCode::TryPopRebind(_, _, _, _, t)
             | OpCode::BeginTry(t) => Some(t),
             _ => None,
         }
@@ -361,7 +361,7 @@ impl Optimizer {
                 | OpCode::JumpIfTrue(target)
                 | OpCode::TryAppendAssign(_, target)
                 | OpCode::GuardAppendPath(target)
-                | OpCode::TryPopRebind(_, _, _, target)
+                | OpCode::TryPopRebind(_, _, _, _, target)
                 | OpCode::ForNext(target) => {
                     self.mark_reachable(chunk, reachable, *target);
                     // Continue with next instruction (fall-through)
