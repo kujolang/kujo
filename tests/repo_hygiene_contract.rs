@@ -78,6 +78,7 @@ fn seed_hygiene_policy_repo(root: &Path) {
     for entry in [
         ".editorconfig",
         ".gitattributes",
+        ".nvmrc",
         "AGENTS.md",
         "CHANGELOG.md",
         "CONTRIBUTING.md",
@@ -121,6 +122,7 @@ fn tracked_root_surface_matches_hygiene_allowlist() {
         ".editorconfig".to_string(),
         ".gitattributes".to_string(),
         ".gitignore".to_string(),
+        ".nvmrc".to_string(),
         "AGENTS.md".to_string(),
         "CHANGELOG.md".to_string(),
         "CONTRIBUTING.md".to_string(),

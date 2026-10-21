@@ -18,6 +18,7 @@ Current allowed tracked root files:
 - `.editorconfig`
 - `.gitattributes`
 - `.gitignore`
+- `.nvmrc`
 - `AGENTS.md`
 - `CHANGELOG.md`
 - `CONTRIBUTING.md`
