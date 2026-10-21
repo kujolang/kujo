@@ -1877,7 +1877,15 @@ impl TypeChecker {
             },
         );
 
+        self.functions.insert(
+            "regex_count".to_string(),
+            FunctionSignature {
+                param_types: vec![Some(TypeAnnotation::String), Some(TypeAnnotation::String)],
+                return_type: Some(TypeAnnotation::Int),
+            },
+        );
         // Regular expression functions
+
         self.functions.insert(
             "regex_match".to_string(),
             FunctionSignature {

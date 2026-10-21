@@ -1065,6 +1065,19 @@ pub fn handle(name: &str, args: &[Value]) -> Option<Value> {
             }
         }
 
+        "regex_count" => {
+            if args.len() != 2 {
+                Value::Error("regex_count() requires exactly two arguments".into())
+            } else if let (Value::Str(text), Value::Str(pattern)) = (&args[0], &args[1]) {
+                match builtins::cached_regex(pattern) {
+                    Some(regex) => Value::Int(regex.find_iter(text).count() as i64),
+                    None => Value::Error("regex_count() invalid regular expression".into()),
+                }
+            } else {
+                Value::Error("regex_count() requires two strings (text, pattern)".into())
+            }
+        }
+
         "regex_find_all" => {
             if let (Some(Value::Str(text)), Some(Value::Str(pattern))) = (args.first(), args.get(1))
             {

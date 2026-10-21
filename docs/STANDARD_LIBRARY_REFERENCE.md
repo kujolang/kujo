@@ -601,6 +601,7 @@ destinations remain subject to the outbound destination policy described in
 | --- | --- | --- |
 | `regex_match` | stable | `ok := regex_match(text, "^[a-z]+$")` |
 | `regex_find_all` | stable | `matches := regex_find_all(text, "\\w+")` |
+| `regex_count` | stable | `count := regex_count(text, "[0-9]+")` |
 | `regex_replace` | stable | `out := regex_replace(text, "\\s+", " ")` |
 | `regex_split` | stable | `parts := regex_split(text, ",\\s*")` |
 | `http_get` | preview | `res := http_get("https://example.com")` |

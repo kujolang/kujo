@@ -576,6 +576,7 @@ impl Interpreter {
             "utf8_encode",
             "utf8_decode",
             "parse_csv_rows",
+            "regex_count",
             "regex_replace_with",
             "sort_by",
             "format_fixed",
@@ -1101,6 +1102,7 @@ impl Interpreter {
         for name in ["utf8_encode", "utf8_decode"] {
             self.env.define(name.into(), Value::NativeFunction(name.into()));
         }
+        self.env.define("regex_count".into(), Value::NativeFunction("regex_count".into()));
         self.env.define("sort_by".into(), Value::NativeFunction("sort_by".into()));
         self.env.define(
             "regex_replace_with".into(),
@@ -3664,6 +3666,7 @@ impl Interpreter {
         let metadata = match name {
             "utf8_encode" | "utf8_decode" => CallableArity::exact(name, vec!["value".into()]),
             "sort_by" => CallableArity::exact(name, vec!["items".into(), "comparator".into()]),
+            "regex_count" => CallableArity::exact(name, vec!["text".into(), "pattern".into()]),
             "regex_replace_with" => {
                 CallableArity::exact(name, vec!["text".into(), "pattern".into(), "callback".into()])
             }

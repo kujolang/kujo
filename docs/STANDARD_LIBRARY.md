@@ -399,6 +399,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `regex_match` | `regex_match(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_match(...)` |
 | `regex_find_all` | `regex_find_all(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_find_all(...)` |
 | `regex_replace_with` | `regex_replace_with(text, pattern, callback)` | exact 3 | string | Invalid pattern, callback, return type, or resource limit; callback errors propagate. | `none` | `regex_replace_with("abc", "b", replacement)` |
+| `regex_count` | `regex_count(text, pattern)` | exact 2 | integer | Invalid pattern or non-string arguments raise errors. Counts non-overlapping matches without allocating matched strings. | `none` | `regex_count("a12 b34", "[0-9]+")` |
 | `regex_replace` | `regex_replace(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_replace(...)` |
 | `regex_split` | `regex_split(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_split(...)` |
 | `pdf_render_html` | `pdf_render_html(html: string, options: dict, assets: dict) -> dict` | exact 3 | dictionary | Canonicalizes and renders the strict profile in `docs/PDF_RENDERING.md` entirely in-process. Returns a receipt containing `pdf_bytes`, SHA-256 digests, page geometry/count, renderer versions, deterministic warning codes, and duration. Input cannot access the network or filesystem. Tables can opt into deterministic header repetition with bounded `data-repeat-header-every`. | `none` | `receipt := pdf_render_html("<h1>Estimate</h1>", {"page_size":"Letter"}, {})` |
@@ -782,6 +783,14 @@ requires no capabilities. `parse_csv` retains its header-based dictionary and
 numeric-conversion behavior.
 
 ### Regex callback replacement
+
+`regex_count(text, pattern)` counts non-overlapping matches with the same Unicode
+and inline-flag semantics as `regex_find_all`, including empty matches at valid
+Unicode boundaries. It allocates no result array or matched substrings. Invalid
+patterns raise an error. The shared regex cache retains at most 32 compiled
+patterns (keys up to 4096 bytes); larger patterns compile without retention.
+Cache eviction can still cause recompilation; this is not an explicit compiled
+regex handle or a promise that all patterns remain resident.
 
 `regex_replace_with(text, pattern, callback)` invokes a synchronous Kujo or native
 function once for each non-overlapping match, in text order. Its single argument

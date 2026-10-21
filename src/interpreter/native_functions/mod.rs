@@ -763,6 +763,7 @@ mod tests {
             "encode_uri_component",
             "decode_uri_component",
             "regex_match",
+            "regex_count",
             "regex_find_all",
             "regex_replace",
             "regex_split",

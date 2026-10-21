@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add `regex_count` for scanning without matched-string allocation and retain a
+  bounded working set of 32 regex patterns to avoid small-cache compilation churn.
+
 - Share struct field storage with copy-on-write, removing recursive subtree
   copies during reads while preserving mutation and closure snapshots.
 

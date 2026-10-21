@@ -1587,7 +1587,7 @@ pub fn path_exists(path_str: &str) -> bool {
 // Patterns are immutable and include inline flags, so the complete pattern is the
 // cache identity. Bound retained programs and keys; large patterns still compile
 // normally without retention. No input text or replacement strings are cached.
-const REGEX_CACHE_CAPACITY: usize = 8;
+const REGEX_CACHE_CAPACITY: usize = 32;
 const REGEX_CACHE_MAX_KEY_BYTES: usize = 4096;
 type RegexCache = std::collections::VecDeque<(String, Option<Arc<Regex>>)>;
 static REGEX_CACHE: std::sync::OnceLock<Mutex<RegexCache>> = std::sync::OnceLock::new();
@@ -1597,6 +1597,10 @@ pub(crate) fn cached_regex(pattern: &str) -> Option<Arc<Regex>> {
         return Regex::new(pattern).ok().map(Arc::new);
     }
     let cache = REGEX_CACHE.get_or_init(|| Mutex::new(RegexCache::new()));
+    cached_regex_in(pattern, cache)
+}
+
+fn cached_regex_in(pattern: &str, cache: &Mutex<RegexCache>) -> Option<Arc<Regex>> {
     {
         let mut entries = cache.lock().unwrap_or_else(|error| error.into_inner());
         if let Some(index) = entries.iter().position(|(key, _)| key == pattern) {
@@ -3266,5 +3270,28 @@ mod regex_cache_regressions {
                 });
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod regex_working_set_tests {
+    use super::*;
+    #[test]
+    fn repeated_pattern_working_set_reuses_compiled_programs_and_stays_bounded() {
+        let cache = Mutex::new(RegexCache::new());
+        let patterns: Vec<_> = (0..24).map(|i| format!("^item-{i}$")).collect();
+        let first: Vec<_> = patterns.iter().map(|p| cached_regex_in(p, &cache).unwrap()).collect();
+        for _ in 0..3 {
+            for (pattern, original) in patterns.iter().zip(&first) {
+                assert!(
+                    Arc::ptr_eq(original, &cached_regex_in(pattern, &cache).unwrap()),
+                    "working set was recompiled"
+                );
+            }
+        }
+        for i in 0..64 {
+            cached_regex_in(&format!("churn-{i}"), &cache);
+        }
+        assert_eq!(cache.lock().unwrap().len(), REGEX_CACHE_CAPACITY);
     }
 }
