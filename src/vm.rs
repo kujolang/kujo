@@ -1453,6 +1453,12 @@ impl VM {
 
     /// Execute a bytecode chunk
     pub fn execute(&mut self, chunk: BytecodeChunk) -> Result<Value, String> {
+        // Nested generator/callback entry can arrive on a small embedding stack.
+        // Keep the large dispatch frame behind the growth check.
+        stacker::maybe_grow(512 * 1024, 2 * 1024 * 1024, || self.execute_dispatch(chunk))
+    }
+
+    fn execute_dispatch(&mut self, chunk: BytecodeChunk) -> Result<Value, String> {
         measurement::add(Metric::VmEntries, 1);
         let _measurement = measurement::Span::new(Metric::VmWallNs);
         let _hashmap_profile_guard = HashMapProfileGuard::new();
