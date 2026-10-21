@@ -35,6 +35,18 @@ fn run_code(code: &str) -> Interpreter {
     interp
 }
 
+// Failed initializers raise a runtime error and must not create a binding.
+// Inspect the propagated error while also asserting assignment atomicity.
+fn failed_initializer(interpreter: &Interpreter, name: &str) -> Option<Value> {
+    assert!(interpreter.env.get(name).is_none(), "failed initializer bound {name}");
+    assert!(
+        matches!(interpreter.return_value, Some(Value::Error(_))),
+        "expected propagated error for {name}, got {:?}",
+        interpreter.return_value
+    );
+    interpreter.return_value.clone()
+}
+
 fn run_code_with_output(code: &str) -> (Interpreter, String) {
     let tokens = tokenize(code).expect("test source should tokenize");
     let mut parser = Parser::new(tokens);
@@ -80,7 +92,7 @@ fn test_parallel_map_async_mapper_isolated_ordered_and_fail_closed() {
         "#,
     );
     assert!(matches!(
-        failed.env.get("result"),
+        failed_initializer(&failed, "result"),
         Some(Value::Error(message)) if message.contains("worker-denied")
     ));
 }
@@ -133,7 +145,7 @@ fn test_jsonl_query_rejects_partial_join_configuration() {
         let interpreter = run_code(&source);
         assert!(
             matches!(
-                interpreter.env.get(name),
+                failed_initializer(&interpreter, name),
                 Some(Value::Error(message))
                     if message.contains("join_path, left_field, and right_field together")
             ),
@@ -538,19 +550,19 @@ fn test_path_join_alias_argument_shape_contract() {
     let interp_bad_type_b = run_code("bad_type_b := path_join(\"root\", 42)");
 
     assert!(matches!(
-        interp_no_args_a.env.get("no_args_a"),
+        failed_initializer(&interp_no_args_a, "no_args_a"),
         Some(Value::Error(message)) if message.contains("requires at least one string argument")
     ));
     assert!(matches!(
-        interp_no_args_b.env.get("no_args_b"),
+        failed_initializer(&interp_no_args_b, "no_args_b"),
         Some(Value::Error(message)) if message.contains("requires at least one string argument")
     ));
     assert!(matches!(
-        interp_bad_type_a.env.get("bad_type_a"),
+        failed_initializer(&interp_bad_type_a, "bad_type_a"),
         Some(Value::Error(message)) if message.contains("argument 2 must be a string")
     ));
     assert!(matches!(
-        interp_bad_type_b.env.get("bad_type_b"),
+        failed_initializer(&interp_bad_type_b, "bad_type_b"),
         Some(Value::Error(message)) if message.contains("argument 2 must be a string")
     ));
 }
@@ -565,28 +577,28 @@ fn test_queue_and_stack_size_argument_shape_contract() {
     let interp_s_extra = run_code("s_extra := stack_size(Stack([1]), Stack([2]))");
 
     assert!(matches!(
-        interp_q_missing.env.get("q_missing"),
+        failed_initializer(&interp_q_missing, "q_missing"),
         Some(Value::Error(message)) if message.contains("expects 1 argument")
     ));
     assert!(matches!(
-        interp_q_wrong.env.get("q_wrong"),
+        failed_initializer(&interp_q_wrong, "q_wrong"),
         Some(Value::Error(message)) if message.contains("requires a Queue argument")
     ));
     assert!(matches!(
-        interp_q_extra.env.get("q_extra"),
+        failed_initializer(&interp_q_extra, "q_extra"),
         Some(Value::Error(message)) if message.contains("expects 1 argument")
     ));
 
     assert!(matches!(
-        interp_s_missing.env.get("s_missing"),
+        failed_initializer(&interp_s_missing, "s_missing"),
         Some(Value::Error(message)) if message.contains("expects 1 argument")
     ));
     assert!(matches!(
-        interp_s_wrong.env.get("s_wrong"),
+        failed_initializer(&interp_s_wrong, "s_wrong"),
         Some(Value::Error(message)) if message.contains("requires a Stack argument")
     ));
     assert!(matches!(
-        interp_s_extra.env.get("s_extra"),
+        failed_initializer(&interp_s_extra, "s_extra"),
         Some(Value::Error(message)) if message.contains("expects 1 argument")
     ));
 }
@@ -601,29 +613,29 @@ fn test_promise_all_and_await_all_argument_shape_contract() {
     let interp_a_zero_limit = run_code("a_zero_limit := await_all([async_sleep(1)], 0)");
 
     assert!(matches!(
-        interp_p_non_array.env.get("p_non_array"),
+        failed_initializer(&interp_p_non_array, "p_non_array"),
         Some(Value::Error(message)) if message.contains("requires an array of promises")
     ));
     assert!(matches!(
-        interp_a_non_array.env.get("a_non_array"),
+        failed_initializer(&interp_a_non_array, "a_non_array"),
         Some(Value::Error(message)) if message.contains("requires an array of promises")
     ));
 
     assert!(matches!(
-        interp_p_bad_limit.env.get("p_bad_limit"),
+        failed_initializer(&interp_p_bad_limit, "p_bad_limit"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be an integer")
     ));
     assert!(matches!(
-        interp_a_bad_limit.env.get("a_bad_limit"),
+        failed_initializer(&interp_a_bad_limit, "a_bad_limit"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be an integer")
     ));
 
     assert!(matches!(
-        interp_p_zero_limit.env.get("p_zero_limit"),
+        failed_initializer(&interp_p_zero_limit, "p_zero_limit"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be > 0")
     ));
     assert!(matches!(
-        interp_a_zero_limit.env.get("a_zero_limit"),
+        failed_initializer(&interp_a_zero_limit, "a_zero_limit"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be > 0")
     ));
 }
@@ -642,43 +654,43 @@ fn test_parallel_map_and_par_map_argument_shape_contract() {
     let interp_alias_zero_limit = run_code("alias_zero_limit := par_map([1], len, 0)");
 
     assert!(matches!(
-        interp_parallel_missing.env.get("parallel_missing"),
+        failed_initializer(&interp_parallel_missing, "parallel_missing"),
         Some(Value::Error(message)) if message.contains("expects 2 to 3 arguments")
     ));
     assert!(matches!(
-        interp_alias_missing.env.get("alias_missing"),
+        failed_initializer(&interp_alias_missing, "alias_missing"),
         Some(Value::Error(message)) if message.contains("expects 2 to 3 arguments")
     ));
     assert!(matches!(
-        interp_parallel_non_array.env.get("parallel_non_array"),
+        failed_initializer(&interp_parallel_non_array, "parallel_non_array"),
         Some(Value::Error(message)) if message.contains("first argument must be an array")
     ));
     assert!(matches!(
-        interp_alias_non_array.env.get("alias_non_array"),
+        failed_initializer(&interp_alias_non_array, "alias_non_array"),
         Some(Value::Error(message)) if message.contains("first argument must be an array")
     ));
     assert!(matches!(
-        interp_parallel_non_callable.env.get("parallel_non_callable"),
+        failed_initializer(&interp_parallel_non_callable, "parallel_non_callable"),
         Some(Value::Error(message)) if message.contains("second argument must be a callable function")
     ));
     assert!(matches!(
-        interp_alias_non_callable.env.get("alias_non_callable"),
+        failed_initializer(&interp_alias_non_callable, "alias_non_callable"),
         Some(Value::Error(message)) if message.contains("second argument must be a callable function")
     ));
     assert!(matches!(
-        interp_parallel_bad_limit.env.get("parallel_bad_limit"),
+        failed_initializer(&interp_parallel_bad_limit, "parallel_bad_limit"),
         Some(Value::Error(message)) if message.contains("optional concurrency_limit must be an integer")
     ));
     assert!(matches!(
-        interp_alias_bad_limit.env.get("alias_bad_limit"),
+        failed_initializer(&interp_alias_bad_limit, "alias_bad_limit"),
         Some(Value::Error(message)) if message.contains("optional concurrency_limit must be an integer")
     ));
     assert!(matches!(
-        interp_parallel_zero_limit.env.get("parallel_zero_limit"),
+        failed_initializer(&interp_parallel_zero_limit, "parallel_zero_limit"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be > 0")
     ));
     assert!(matches!(
-        interp_alias_zero_limit.env.get("alias_zero_limit"),
+        failed_initializer(&interp_alias_zero_limit, "alias_zero_limit"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be > 0")
     ));
 }
@@ -698,47 +710,47 @@ fn test_shared_value_argument_shape_contract() {
     let interp_add_bad_delta = run_code("add_bad_delta := shared_add_int(\"k\", \"2\")");
 
     assert!(matches!(
-        interp_set_missing.env.get("set_missing"),
+        failed_initializer(&interp_set_missing, "set_missing"),
         Some(Value::Error(message)) if message.contains("requires (key, value) arguments")
     ));
     assert!(matches!(
-        interp_set_bad_key.env.get("set_bad_key"),
+        failed_initializer(&interp_set_bad_key, "set_bad_key"),
         Some(Value::Error(message)) if message.contains("key must be a string")
     ));
     assert!(matches!(
-        interp_get_missing.env.get("get_missing"),
+        failed_initializer(&interp_get_missing, "get_missing"),
         Some(Value::Error(message)) if message.contains("requires one key argument")
     ));
     assert!(matches!(
-        interp_get_bad_key.env.get("get_bad_key"),
+        failed_initializer(&interp_get_bad_key, "get_bad_key"),
         Some(Value::Error(message)) if message.contains("key must be a string")
     ));
     assert!(matches!(
-        interp_has_missing.env.get("has_missing"),
+        failed_initializer(&interp_has_missing, "has_missing"),
         Some(Value::Error(message)) if message.contains("requires one key argument")
     ));
     assert!(matches!(
-        interp_has_bad_key.env.get("has_bad_key"),
+        failed_initializer(&interp_has_bad_key, "has_bad_key"),
         Some(Value::Error(message)) if message.contains("key must be a string")
     ));
     assert!(matches!(
-        interp_delete_missing.env.get("delete_missing"),
+        failed_initializer(&interp_delete_missing, "delete_missing"),
         Some(Value::Error(message)) if message.contains("requires one key argument")
     ));
     assert!(matches!(
-        interp_delete_bad_key.env.get("delete_bad_key"),
+        failed_initializer(&interp_delete_bad_key, "delete_bad_key"),
         Some(Value::Error(message)) if message.contains("key must be a string")
     ));
     assert!(matches!(
-        interp_add_missing.env.get("add_missing"),
+        failed_initializer(&interp_add_missing, "add_missing"),
         Some(Value::Error(message)) if message.contains("requires (key, delta) arguments")
     ));
     assert!(matches!(
-        interp_add_bad_key.env.get("add_bad_key"),
+        failed_initializer(&interp_add_bad_key, "add_bad_key"),
         Some(Value::Error(message)) if message.contains("key must be a string")
     ));
     assert!(matches!(
-        interp_add_bad_delta.env.get("add_bad_delta"),
+        failed_initializer(&interp_add_bad_delta, "add_bad_delta"),
         Some(Value::Error(message)) if message.contains("delta must be an int")
     ));
 }
@@ -751,19 +763,19 @@ fn test_task_pool_size_argument_shape_contract() {
     let interp_get_extra = run_code("get_extra := get_task_pool_size(1)");
 
     assert!(matches!(
-        interp_set_missing.env.get("set_missing"),
+        failed_initializer(&interp_set_missing, "set_missing"),
         Some(Value::Error(message)) if message.contains("expects 1 argument")
     ));
     assert!(matches!(
-        interp_set_bad_type.env.get("set_bad_type"),
+        failed_initializer(&interp_set_bad_type, "set_bad_type"),
         Some(Value::Error(message)) if message.contains("requires an integer size argument")
     ));
     assert!(matches!(
-        interp_set_bad_value.env.get("set_bad_value"),
+        failed_initializer(&interp_set_bad_value, "set_bad_value"),
         Some(Value::Error(message)) if message.contains("size must be > 0")
     ));
     assert!(matches!(
-        interp_get_extra.env.get("get_extra"),
+        failed_initializer(&interp_get_extra, "get_extra"),
         Some(Value::Error(message)) if message.contains("expects 0 arguments")
     ));
 }
@@ -3235,7 +3247,7 @@ fn test_channel_receive_arity_error_via_expression_method_call() {
     "#;
 
     let interp = run_code(code);
-    let message = match interp.env.get("err") {
+    let message = match failed_initializer(&interp, "err") {
         Some(Value::Error(message)) => message,
         other => panic!("expected error value, got {other:?}"),
     };
@@ -3301,7 +3313,7 @@ fn test_shared_add_int_success_and_error_paths() {
     assert!(matches!(interp.env.get("plus_two"), Some(Value::Int(7))));
     assert!(matches!(interp.env.get("final_value"), Some(Value::Int(7))));
     assert!(
-        matches!(interp.env.get("bad_delta"), Some(Value::Error(msg)) if msg.contains("delta must be an int"))
+        matches!(failed_initializer(&interp, "bad_delta"), Some(Value::Error(msg)) if msg.contains("delta must be an int"))
     );
 }
 
@@ -3321,7 +3333,7 @@ fn test_shared_add_int_rejects_non_int_target_value() {
     let interp = run_code(&code);
 
     assert!(matches!(
-        interp.env.get("result"),
+        failed_initializer(&interp, "result"),
         Some(Value::Error(msg)) if msg.contains("to reference an int")
     ));
 }
@@ -3340,7 +3352,7 @@ fn test_shared_add_int_rejects_missing_key() {
     let interp = run_code(&code);
 
     assert!(matches!(
-        interp.env.get("result"),
+        failed_initializer(&interp, "result"),
         Some(Value::Error(msg)) if msg.contains("not found")
     ));
 }
@@ -3471,7 +3483,7 @@ fn test_promise_all_rejects_zero_concurrency_limit() {
     let interp = run_code(code);
 
     assert!(matches!(
-        interp.env.get("result"),
+        failed_initializer(&interp, "result"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be > 0")
     ));
 }
@@ -3485,7 +3497,7 @@ fn test_promise_all_rejects_non_integer_concurrency_limit() {
     let interp = run_code(code);
 
     assert!(matches!(
-        interp.env.get("result"),
+        failed_initializer(&interp, "result"),
         Some(Value::Error(message)) if message.contains("concurrency_limit must be an integer")
     ));
 }
@@ -3514,19 +3526,19 @@ fn test_task_pool_size_set_get_round_trip() {
 fn test_task_pool_size_validation_errors() {
     let interp_zero = run_code("bad_zero := set_task_pool_size(0)");
     assert!(matches!(
-        interp_zero.env.get("bad_zero"),
+        failed_initializer(&interp_zero, "bad_zero"),
         Some(Value::Error(message)) if message.contains("size must be > 0")
     ));
 
     let interp_type = run_code("bad_type := set_task_pool_size(\"4\")");
     assert!(matches!(
-        interp_type.env.get("bad_type"),
+        failed_initializer(&interp_type, "bad_type"),
         Some(Value::Error(message)) if message.contains("requires an integer size argument")
     ));
 
     let interp_get = run_code("bad_get_args := get_task_pool_size(1)");
     assert!(matches!(
-        interp_get.env.get("bad_get_args"),
+        failed_initializer(&interp_get, "bad_get_args"),
         Some(Value::Error(message)) if message.contains("expects 0 arguments")
     ));
 }
@@ -3628,7 +3640,7 @@ fn test_par_each_propagates_rejection() {
 
     let interp = run_code(code);
     assert!(matches!(
-        interp.env.get("result"),
+        failed_initializer(&interp, "result"),
         Some(Value::Error(message)) if message.contains("Promise 0 rejected")
     ));
 }
@@ -4621,7 +4633,7 @@ fn test_file_size_nonexistent() {
     let interp = run_code(code);
 
     // Should return an error
-    if let Some(Value::Error(err)) = interp.env.get("result") {
+    if let Some(Value::Error(err)) = failed_initializer(&interp, "result") {
         assert!(err.contains("Cannot get file size"));
     } else {
         panic!("Expected an error for nonexistent file");
@@ -4664,7 +4676,7 @@ fn test_delete_file_nonexistent() {
     let interp = run_code(code);
 
     // Should return an error
-    if let Some(Value::Error(err)) = interp.env.get("result") {
+    if let Some(Value::Error(err)) = failed_initializer(&interp, "result") {
         assert!(err.contains("Cannot delete file"));
     } else {
         panic!("Expected an error for nonexistent file");
@@ -4717,7 +4729,7 @@ fn test_rename_file_nonexistent() {
     let interp = run_code(code);
 
     // Should return an error
-    if let Some(Value::Error(err)) = interp.env.get("result") {
+    if let Some(Value::Error(err)) = failed_initializer(&interp, "result") {
         assert!(err.contains("Cannot rename file"));
     } else {
         panic!("Expected an error for nonexistent file");
@@ -4758,7 +4770,7 @@ fn test_publish_file_noreplace_is_atomic_and_receipted() {
     assert!(second_source.exists());
     assert_eq!(std::fs::read(&destination).unwrap(), b"retained bytes");
     assert!(
-        matches!(interpreter.env.get("result"), Some(Value::Error(message)) if message.contains("atomic no-replace publication failed"))
+        matches!(failed_initializer(&interpreter, "result"), Some(Value::Error(message)) if message.contains("atomic no-replace publication failed"))
     );
 }
 
@@ -4811,7 +4823,7 @@ fn test_copy_file_nonexistent() {
     let interp = run_code(code);
 
     // Should return an error
-    if let Some(Value::Error(err)) = interp.env.get("result") {
+    if let Some(Value::Error(err)) = failed_initializer(&interp, "result") {
         assert!(err.contains("Cannot copy file"));
     } else {
         panic!("Expected an error for nonexistent file");
@@ -5401,7 +5413,7 @@ fn test_assert_failure_with_default_message() {
     let interp = run_code(code);
 
     // Assert should fail and return error
-    if let Some(Value::Error(msg)) = interp.env.get("result") {
+    if let Some(Value::Error(msg)) = failed_initializer(&interp, "result") {
         assert_eq!(msg, "Assertion failed");
     } else {
         panic!("Expected assertion to fail with error");
@@ -5417,7 +5429,7 @@ fn test_assert_failure_with_custom_message() {
     let interp = run_code(code);
 
     // Assert should fail with custom message
-    if let Some(Value::Error(msg)) = interp.env.get("result") {
+    if let Some(Value::Error(msg)) = failed_initializer(&interp, "result") {
         assert_eq!(msg, "Five must be greater than three");
     } else {
         panic!("Expected assertion to fail with custom message");
@@ -5451,7 +5463,7 @@ fn test_assert_with_falsy_values() {
     let interp = run_code(code);
 
     // Zero should fail
-    assert!(matches!(interp.env.get("r1"), Some(Value::Error(_))));
+    assert!(matches!(failed_initializer(&interp, "r1"), Some(Value::Error(_))));
 }
 
 #[test]
@@ -5463,7 +5475,7 @@ fn test_assert_with_boolean_false() {
     let interp = run_code(code);
 
     // Should fail
-    assert!(matches!(interp.env.get("result"), Some(Value::Error(_))));
+    assert!(matches!(failed_initializer(&interp, "result"), Some(Value::Error(_))));
 }
 
 #[test]
@@ -5486,7 +5498,7 @@ fn test_assert_in_function() {
     assert!(matches!(interp.env.get("result1"), Some(Value::Int(_)) | Some(Value::Float(_))));
 
     // Second call should return error
-    assert!(matches!(interp.env.get("result2"), Some(Value::Error(_))));
+    assert!(matches!(failed_initializer(&interp, "result2"), Some(Value::Error(_))));
 }
 
 #[test]
