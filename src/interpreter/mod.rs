@@ -4836,6 +4836,26 @@ impl Interpreter {
                                 }
                             }
                         }
+                        Value::Bytes(bytes) => {
+                            // The retained Arc is the loop's snapshot. Writes to
+                            // another binding detach without copying on reads.
+                            for byte in bytes.iter() {
+                                interp.env.push_scope();
+                                interp.env.define(var.clone(), Value::Int(i64::from(*byte)));
+                                interp.eval_stmts(body);
+                                interp.env.pop_scope();
+                                if interp.control_flow == ControlFlow::Break {
+                                    interp.control_flow = ControlFlow::None;
+                                    break;
+                                } else if interp.control_flow == ControlFlow::Continue {
+                                    interp.control_flow = ControlFlow::None;
+                                    continue;
+                                }
+                                if interp.return_value.is_some() {
+                                    break;
+                                }
+                            }
+                        }
                         Value::Array(arr) => {
                             // Array iteration: for item in [1, 2, 3] { ... }
                             let arr_clone = arr.as_ref().clone();

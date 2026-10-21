@@ -182,3 +182,8 @@ independently of the 256 ordinary-function recursion limit. Failure remains
 sticky on the failed generator; unwinding restores the caller's resume capacity,
 so unrelated generators remain usable. The concurrency lifecycle contract checks
 the exact boundary and recovery after repeated attempts to resume a failed chain.
+
+Byte values support `for` iteration in both runtimes, including generator bodies.
+Each element is an integer in 0–255. Iteration retains the original byte snapshot;
+mutating another binding detaches its storage. Empty inputs, break/continue,
+return, body errors and generator suspension follow ordinary loop semantics.

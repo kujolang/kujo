@@ -241,6 +241,9 @@ impl Interpreter {
                                 error => return Err(error),
                             },
                             Value::Array(values) => values.get(index).cloned(),
+                            Value::Bytes(values) => {
+                                values.get(index).map(|v| Value::Int(i64::from(*v)))
+                            }
                             _ => return Err(Value::Error("Invalid generator iterable".to_owned())),
                         };
                         if let Some(value) = next {

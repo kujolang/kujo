@@ -6,6 +6,8 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Support snapshot-safe iteration over bytes in VM/interpreter and generator loops.
+
 - Restore the interpreter generator delegation limit independently of ordinary function recursion, matching VM depth and recovery behavior.
 
 - Reuse unaliased byte-buffer capacity for consuming `concat` assignments,

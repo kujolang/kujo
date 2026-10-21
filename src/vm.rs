@@ -5753,6 +5753,13 @@ impl VM {
                             Ok(_) => return Err("Invalid generator step result".to_owned()),
                             Err(error) => self.throw_runtime_value(Value::Error(error))?,
                         },
+                        Value::Bytes(values) => match index {
+                            Value::Int(index) if index >= 0 => match values.get(index as usize) {
+                                Some(value) => self.stack.push(Value::Int(i64::from(*value))),
+                                None => self.ip = target,
+                            },
+                            _ => return Err("ForNext requires a nonnegative index".to_owned()),
+                        },
                         Value::Array(values) => match index {
                             Value::Int(index) if index >= 0 => match values.get(index as usize) {
                                 Some(value) => self.stack.push(value.clone()),
