@@ -5,6 +5,8 @@ Kujo implementations of the 50 benchmarks in `kostya/LangArena` at
 not an accepted LangArena submission. Upstream code is MIT licensed; see
 [LICENSE.upstream](LICENSE.upstream).
 Recorded results and validation limits are in [VERIFICATION.md](VERIFICATION.md).
+Production-size attempts and remaining gaps are in
+[PRODUCTION_VERIFICATION.md](PRODUCTION_VERIFICATION.md).
 
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark

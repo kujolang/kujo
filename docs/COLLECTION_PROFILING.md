@@ -521,6 +521,7 @@ The LangArena production sweep on 2026-10-21 exposed two independent text costs:
   allocation identity before mutation. Cache tests verify bounded size, reuse,
   alias isolation, and invalidation.
 
-Production workload completion and timing evidence belong in the LangArena
-production report; a passing reduced checksum configuration is not evidence
+Production workload completion and timing evidence are in the
+[LangArena production report](../benchmarks/langarena/PRODUCTION_VERIFICATION.md);
+a passing reduced checksum configuration is not evidence
 that the production configuration completed.

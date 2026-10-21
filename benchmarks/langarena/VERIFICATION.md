@@ -1,4 +1,7 @@
-# Local port verification
+# Initial local port verification
+
+This records the initial port gate. Current runtime verification and production
+attempts are recorded in [PRODUCTION_VERIFICATION.md](PRODUCTION_VERIFICATION.md).
 
 Upstream pin: `3c9f84ddaeec834c0631747cb789e8cfd602f993`.
 The checked-in `test.json` and `run.json` match upstream byte for byte.
