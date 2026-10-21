@@ -1,0 +1,142 @@
+struct CalcNumber { kind: string, value: int }
+struct CalcVariable { kind: string, name: string }
+struct CalcBinary { kind: string, op: string, left: any, right: any }
+struct CalcAssignment { kind: string, name: string, expression: any }
+func calc_program(n) {
+    mut text := "v0 = 1\n"
+    mut i := 1
+    while i <= 10 { text += "v" + str(i) + " = v" + str(i - 1) + " + " + str(i) + "\n" i += 1 }
+    i = 0
+    while i < n {
+        let v := i + 10
+        text += "v" + str(v) + " = v" + str(v - 1) + " + "
+        let choice := random_int(10)
+        if choice == 0 { text += "(v" + str(v-1) + " / 3) * 4 - " + str(i) + " / (3 + (18 - v" + str(v-2) + ")) % v" + str(v-3) + " + 2 * ((9 - v" + str(v-6) + ") * (v" + str(v-5) + " + 7))" }
+        else if choice == 1 { text += "v" + str(v-1) + " + (v" + str(v-2) + " + v" + str(v-3) + ") * v" + str(v-4) + " - (v" + str(v-5) + " /  v" + str(v-6) + ")" }
+        else if choice == 2 { text += "(3789 - (((v" + str(v-7) + ")))) + 1" }
+        else if choice == 3 { text += "4/2 * (1-3) + v" + str(v-9) + "/v" + str(v-5) }
+        else if choice == 4 { text += "1+2+3+4+5+6+v" + str(v-1) }
+        else if choice == 5 { text += "(99999 / v" + str(v-3) + ")" }
+        else if choice == 6 { text += "0 + 0 - v" + str(v-8) }
+        else if choice == 7 { text += "((((((((((v" + str(v-6) + ")))))))))) * 2" }
+        else if choice == 8 { text += str(i) + " * (v" + str(v-1) + "%6)%7" }
+        else { text += "(1)/(0-v" + str(v-5) + ") + (v" + str(v-7) + ")" }
+        text += "\n"
+        i += 1
+    }
+    return text
+}
+func calc_char(text, pos) { if pos >= len(text) { return "" } return text[pos] }
+func calc_space(text, input) { mut pos := input while pos < len(text) && contains(" \t\n\r", text[pos]) == 1 { pos += 1 } return pos }
+func calc_digit(c) { return c != "" && contains("0123456789", c) == 1 }
+func calc_letter(c) { return c != "" && contains("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", c) == 1 }
+func calc_factor(text, input) {
+    mut pos := calc_space(text, input)
+    let c := calc_char(text, pos)
+    if calc_digit(c) {
+        mut value := 0
+        while calc_digit(calc_char(text, pos)) { value = wrapping_add(wrapping_mul(value, 10), to_int(text[pos])) pos += 1 }
+        return [CalcNumber { kind: "CalcNumber", value: value }, pos]
+    }
+    if calc_letter(c) {
+        let start := pos
+        while calc_letter(calc_char(text, pos)) || calc_digit(calc_char(text, pos)) { pos += 1 }
+        let name := substring(text, start, pos)
+        pos = calc_space(text, pos)
+        if calc_char(text, pos) == "=" { let parsed := calc_expression(text, pos + 1) return [CalcAssignment { kind: "CalcAssignment", name: name, expression: parsed[0] }, parsed[1]] }
+        return [CalcVariable { kind: "CalcVariable", name: name }, pos]
+    }
+    if c == "(" {
+        let parsed := calc_expression(text, pos + 1)
+        pos = calc_space(text, parsed[1])
+        if calc_char(text, pos) == ")" { pos += 1 }
+        return [parsed[0], pos]
+    }
+    return [CalcNumber { kind: "CalcNumber", value: 0 }, pos + 1]
+}
+func calc_term(text, start) {
+    mut parsed := calc_factor(text, start)
+    mut node := parsed[0]
+    mut pos := parsed[1]
+    while true {
+        pos = calc_space(text, pos)
+        let c := calc_char(text, pos)
+        if c != "*" && c != "/" && c != "%" { break }
+        parsed = calc_factor(text, pos + 1)
+        node = CalcBinary { kind: "CalcBinary", op: c, left: node, right: parsed[0] }
+        pos = parsed[1]
+    }
+    return [node, pos]
+}
+func calc_expression(text, start) {
+    mut parsed := calc_term(text, start)
+    mut node := parsed[0]
+    mut pos := parsed[1]
+    while true {
+        pos = calc_space(text, pos)
+        let c := calc_char(text, pos)
+        if c != "+" && c != "-" { break }
+        parsed = calc_term(text, pos + 1)
+        node = CalcBinary { kind: "CalcBinary", op: c, left: node, right: parsed[0] }
+        pos = parsed[1]
+    }
+    return [node, pos]
+}
+func calc_parse(text) {
+    mut pos := 0
+    mut expressions := []
+    while pos < len(text) {
+        pos = calc_space(text, pos)
+        if pos >= len(text) { break }
+        let parsed := calc_expression(text, pos)
+        expressions = push(expressions, parsed[0])
+        pos = parsed[1]
+    }
+    return expressions
+}
+func calc_evaluate(node, input) {
+    mut variables := input
+    let kind := node.kind
+    if kind == "CalcNumber" { return [node.value, variables] }
+    if kind == "CalcVariable" { return [get_default(variables, node.name, 0), variables] }
+    if kind == "CalcAssignment" {
+        let evaluated := calc_evaluate(node.expression, variables)
+        variables = evaluated[1]
+        variables[node.name] = evaluated[0]
+        return [evaluated[0], variables]
+    }
+    let left := calc_evaluate(node.left, variables)
+    let right := calc_evaluate(node.right, left[1])
+    let a := left[0]
+    let b := right[0]
+    mut value := 0
+    if node.op == "+" { value = wrapping_add(a, b) }
+    else if node.op == "-" { value = wrapping_sub(a, b) }
+    else if node.op == "*" { value = wrapping_mul(a, b) }
+    else if b != 0 {
+        let quotient := idiv(a, b)
+        if node.op == "/" { value = quotient } else { value = wrapping_sub(a, wrapping_mul(quotient, b)) }
+    }
+    return [value, right[1]]
+}
+func calc_prepare(input) {
+    mut state := input
+    state["text"] = calc_program(state["cfg"]["operations"])
+    if state["cfg"]["name"] == "Calculator::Interpreter" { state["ast"] = calc_parse(state["text"]) }
+    return state
+}
+func calc_run(input, iteration) {
+    mut state := input
+    if state["cfg"]["name"] == "Calculator::Ast" {
+        state["ast"] = calc_parse(state["text"])
+        state["result"] = u32(state["result"] + len(state["ast"]) + checksum_string(state["ast"][-1].name))
+    } else {
+        mut variables := {}
+        mut value := 0
+        for node in state["ast"] { let evaluated := calc_evaluate(node, variables) value = evaluated[0] variables = evaluated[1] }
+        state["result"] = u32(state["result"] + value)
+    }
+    return state
+}
+registry["Calculator::Ast"] = [basic_state, calc_prepare, calc_run, result_checksum]
+registry["Calculator::Interpreter"] = [basic_state, calc_prepare, calc_run, result_checksum]

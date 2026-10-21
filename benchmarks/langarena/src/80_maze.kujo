@@ -1,0 +1,159 @@
+struct MazeCell { x: int, y: int, kind: int, neighbors: array }
+func maze_create(cfg) {
+    let w := cfg["w"]
+    let h := cfg["h"]
+    mut cells := []
+    mut y := 0
+    while y < h {
+        mut x := 0
+        while x < w {
+            mut kind := 0
+            if x == 1 && y == 1 { kind = 2 }
+            if x == w - 2 && y == h - 2 { kind = 3 }
+            mut neighbors := []
+            if x > 0 && y > 0 && x < w - 1 && y < h - 1 {
+                neighbors = [(y - 1) * w + x, (y + 1) * w + x, y * w + x + 1, y * w + x - 1]
+                mut k := 0
+                while k < 4 { let i := random_int(4) let j := random_int(4) if i != j { let tmp := neighbors[i] neighbors[i] = neighbors[j] neighbors[j] = tmp } k += 1 }
+            } else { kind = 4 }
+            cells = push(cells, MazeCell { x: x, y: y, kind: kind, neighbors: neighbors })
+            x += 1
+        }
+        y += 1
+    }
+    return {"cfg": cfg, "cells": cells, "start": w + 1, "finish": (h - 2) * w + w - 2, "result": 0, "path": []}
+}
+func maze_walkable(kind) { return kind >= 1 && kind <= 3 }
+func maze_neighbors(cells, index) {
+    mut count := 0
+    for neighbor in cells[index].neighbors { if maze_walkable(cells[neighbor].kind) { count += 1 } }
+    return count
+}
+func maze_dig(input, start) {
+    mut cells := input
+    mut stack := [start]
+    while len(stack) > 0 {
+        let pair := pop(stack)
+        stack = pair[0]
+        let current := pair[1]
+        if maze_neighbors(cells, current) == 1 {
+            cells[current].kind = 1
+            for neighbor in cells[current].neighbors { if cells[neighbor].kind == 0 { stack = push(stack, neighbor) } }
+        }
+    }
+    return cells
+}
+func maze_open(input, index) {
+    mut cells := input
+    cells[index].kind = 1
+    if maze_neighbors(cells, index) > 1 { return cells }
+    for neighbor in cells[index].neighbors { if cells[neighbor].kind == 0 { cells = maze_open(cells, neighbor) } }
+    return cells
+}
+func maze_generate(input) {
+    mut state := input
+    for neighbor in state["cells"][state["start"]].neighbors {
+        if state["cells"][neighbor].kind == 0 { state["cells"] = maze_dig(state["cells"], neighbor) }
+    }
+    for neighbor in state["cells"][state["finish"]].neighbors {
+        if state["cells"][neighbor].kind == 0 { state["cells"] = maze_open(state["cells"], neighbor) }
+    }
+    return state
+}
+func maze_prepare(input) { if input["cfg"]["name"] == "Maze::Generator" { return input } return maze_generate(input) }
+func maze_bfs(state) {
+    let cells := state["cells"]
+    let start := state["start"]
+    let target := state["finish"]
+    if start == target { return [start] }
+    mut visited := vector(len(cells), false)
+    visited[start] = true
+    mut path := [[start, -1]]
+    mut queue := Queue([0])
+    while queue_size(queue) > 0 {
+        let pair := queue_dequeue(queue)
+        queue = pair[0]
+        let path_id := pair[1]
+        let index := path[path_id][0]
+        for neighbor in cells[index].neighbors {
+            if neighbor == target {
+                mut result := [target]
+                mut current := path_id
+                while current >= 0 { result = push(result, path[current][0]) current = path[current][1] }
+                return reverse(result)
+            }
+            if maze_walkable(cells[neighbor].kind) && !visited[neighbor] {
+                visited[neighbor] = true
+                path = push(path, [neighbor, path_id])
+                queue = queue_enqueue(queue, len(path) - 1)
+            }
+        }
+    }
+    return []
+}
+func maze_heuristic(cells, a, b) { return to_int(abs(cells[a].x - cells[b].x) + abs(cells[a].y - cells[b].y)) }
+func maze_astar(state) {
+    let cells := state["cells"]
+    let start := state["start"]
+    let target := state["finish"]
+    if start == target { return [start] }
+    let n := len(cells)
+    mut previous := vector(n, -1)
+    mut scores := vector(n, 2147483647)
+    mut best := vector(n, 2147483647)
+    scores[start] = 0
+    let initial := maze_heuristic(cells, start, target)
+    best[start] = initial
+    mut heap := graph_heap_push([[], 0], start, initial)
+    while heap[1] > 0 {
+        let pair := graph_heap_pop(heap)
+        heap = pair[0]
+        let current := pair[1][0]
+        if current == target {
+            mut path := []
+            mut index := current
+            while index != -1 { path = push(path, index) index = previous[index] }
+            return reverse(path)
+        }
+        for neighbor in cells[current].neighbors {
+            if !maze_walkable(cells[neighbor].kind) { continue }
+            let score := scores[current] + 1
+            if score < scores[neighbor] {
+                previous[neighbor] = current
+                scores[neighbor] = score
+                let priority := score + maze_heuristic(cells, neighbor, target)
+                if priority < best[neighbor] { best[neighbor] = priority heap = graph_heap_push(heap, neighbor, priority) }
+            }
+        }
+    }
+    return []
+}
+func maze_run(input, iteration) {
+    mut state := input
+    let name := state["cfg"]["name"]
+    if name == "Maze::Generator" {
+        mut i := 0
+        while i < len(state["cells"]) { if state["cells"][i].kind == 1 { state["cells"][i].kind = 0 } i += 1 }
+        state["cells"][state["start"]].kind = 2
+        state["cells"][state["finish"]].kind = 3
+        state = maze_generate(state)
+        let middle := idiv(state["cfg"]["h"], 2) * state["cfg"]["w"] + idiv(state["cfg"]["w"], 2)
+        state["result"] = u32(state["result"] + state["cells"][middle].kind)
+    } else {
+        if name == "Maze::BFS" { state["path"] = maze_bfs(state) } else { state["path"] = maze_astar(state) }
+        state["result"] = u32(state["result"] + len(state["path"]))
+    }
+    return state
+}
+func maze_checksum(state) {
+    if state["cfg"]["name"] == "Maze::Generator" {
+        mut hash := 2166136261
+        for cell in state["cells"] { if cell.kind == 1 { hash = u32(bit_xor(hash, u32(cell.x * cell.y)) * 16777619) } }
+        return u32(state["result"] + hash)
+    }
+    let middle := state["cells"][state["path"][idiv(len(state["path"]), 2)]]
+    return u32(state["result"] + middle.x * middle.y)
+}
+registry["Maze::Generator"] = [maze_create, maze_prepare, maze_run, maze_checksum]
+registry["Maze::BFS"] = [maze_create, maze_prepare, maze_run, maze_checksum]
+registry["Maze::AStar"] = [maze_create, maze_prepare, maze_run, maze_checksum]
