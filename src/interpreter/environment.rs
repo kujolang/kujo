@@ -222,6 +222,25 @@ impl Environment {
         }
     }
 
+    pub(crate) fn release_rebound_local(
+        &mut self,
+        name: &str,
+        first_scope: usize,
+        argument: &Value,
+    ) {
+        let Some(index) = self.scopes.iter().rposition(|scope| scope.contains_key(name)) else {
+            return;
+        };
+        if index >= first_scope
+            && self.binding_kinds[index].get(name) == Some(&BindingKind::Mutable)
+        {
+            let value = self.scopes[index].get_mut(name).unwrap();
+            if super::assignment::same_storage(value, argument) {
+                *value = Value::Null;
+            }
+        }
+    }
+
     pub(crate) fn visible_bindings(&self) -> HashMap<String, (Value, BindingKind)> {
         let mut visible = HashMap::new();
         for (index, scope) in self.scopes.iter().enumerate() {

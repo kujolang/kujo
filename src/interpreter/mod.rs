@@ -371,6 +371,9 @@ pub struct Interpreter {
     pub return_value: Option<Value>,
     control_flow: ControlFlow,
     function_depth: usize,
+    ownership_scope: Option<usize>,
+    ownership_entry: bool,
+    ownership_catches: usize,
     loop_depth: usize,
     output: Option<Arc<Mutex<Vec<u8>>>>,
     pub source_file: Option<String>,
@@ -448,6 +451,9 @@ impl Interpreter {
             return_value: None,
             control_flow: ControlFlow::None,
             function_depth: 0,
+            ownership_scope: None,
+            ownership_entry: false,
+            ownership_catches: 0,
             loop_depth: 0,
             output: None,
             source_file: None,
@@ -537,6 +543,9 @@ impl Interpreter {
         }
 
         self.function_depth += 1;
+        let saved_scope = self.ownership_scope.replace(self.env.scopes.len() - 1);
+        let saved_entry = std::mem::replace(&mut self.ownership_entry, true);
+        let saved_catches = std::mem::replace(&mut self.ownership_catches, 0);
         // AST calls recurse on the host stack, including imports from the VM.
         // Grow before executing another body; the language depth guard above
         // remains authoritative on both large CLI and small embedding stacks.
@@ -546,6 +555,9 @@ impl Interpreter {
         {
             self.error_call_stack = self.call_stack.clone();
         }
+        self.ownership_scope = saved_scope;
+        self.ownership_entry = saved_entry;
+        self.ownership_catches = saved_catches;
         self.function_depth = self.function_depth.saturating_sub(1);
         Ok(result)
     }
@@ -2174,6 +2186,19 @@ impl Interpreter {
     /// Helper function to call a user-defined function with given arguments
     /// Used by higher-order functions like map, filter, reduce
     pub(crate) fn call_user_function(&mut self, func: &Value, args: &[Value]) -> Value {
+        self.call_user_function_owned(func, args.to_vec())
+    }
+
+    pub(crate) fn call_user_function_owned(&mut self, func: &Value, args: Vec<Value>) -> Value {
+        self.call_user_function_owned_named(func, args, None)
+    }
+
+    fn call_user_function_owned_named(
+        &mut self,
+        func: &Value,
+        mut args: Vec<Value>,
+        name: Option<&str>,
+    ) -> Value {
         match func {
             Value::BytecodeFunction { .. } => {
                 let globals = self
@@ -2182,7 +2207,7 @@ impl Interpreter {
                     .unwrap_or_else(|| Arc::new(Mutex::new(self.env.clone())));
                 crate::vm::VM::call_interpreter_callback(
                     func.clone(),
-                    args.to_vec(),
+                    args,
                     globals,
                     self.capability_policy.clone(),
                     self.output.clone(),
@@ -2196,22 +2221,22 @@ impl Interpreter {
                     return error;
                 }
 
-                self.create_generator(params, body, captured, args)
+                self.create_generator(params, body, captured, &args)
             }
-            Value::AsyncFunction(..) => {
-                match self.submit_language_task(func.clone(), args.to_vec()) {
-                    Ok(task) => task.completion.clone(),
-                    Err(error) => Value::Error(error),
-                }
-            }
+            Value::AsyncFunction(..) => match self.submit_language_task(func.clone(), args) {
+                Ok(task) => task.completion.clone(),
+                Err(error) => Value::Error(error),
+            },
             Value::Function(params, body, captured_env) => {
-                let arity = Self::function_arity("<anonymous function>", params);
+                let arity = Self::function_arity(name.unwrap_or("<anonymous function>"), params);
                 if let Some(error) = self.validate_callable_arity(&arity, args.len()) {
                     return error;
                 }
 
                 // Push function name to call stack
-                let func_name = format!("<function with {} params>", params.len());
+                let func_name = name
+                    .map(str::to_owned)
+                    .unwrap_or_else(|| format!("<function with {} params>", params.len()));
                 self.call_stack.push(func_name);
 
                 // If this is a closure with captured environment, use it
@@ -2231,15 +2256,13 @@ impl Interpreter {
                     }
 
                     // Bind parameters to arguments
-                    for (i, param) in params.iter().enumerate() {
-                        if let Some(arg) = args.get(i) {
-                            self.env.define(param.clone(), arg.clone());
-                        }
+                    for (param, arg) in params.iter().zip(args.drain(..)) {
+                        self.env.define(param.clone(), arg);
                     }
 
                     // Execute function body
                     if let Err(error) = self
-                        .with_function_context("<anonymous function>", |interp| {
+                        .with_function_context(name.unwrap_or("<anonymous function>"), |interp| {
                             interp.eval_stmts(&body.get())
                         })
                     {
@@ -2281,15 +2304,13 @@ impl Interpreter {
                     let caller_scopes = self.env.enter_global_function();
 
                     // Bind parameters to arguments
-                    for (i, param) in params.iter().enumerate() {
-                        if let Some(arg) = args.get(i) {
-                            self.env.define(param.clone(), arg.clone());
-                        }
+                    for (param, arg) in params.iter().zip(args.drain(..)) {
+                        self.env.define(param.clone(), arg);
                     }
 
                     // Execute function body
                     if let Err(error) = self
-                        .with_function_context("<anonymous function>", |interp| {
+                        .with_function_context(name.unwrap_or("<anonymous function>"), |interp| {
                             interp.eval_stmts(&body.get())
                         })
                     {
@@ -3372,6 +3393,39 @@ impl Interpreter {
         })
     }
 
+    fn try_owned_call_assignment(&mut self, target: &Expr, rhs: &Expr) -> Option<Value> {
+        let Expr::Identifier(name) = target else { return None };
+        let Expr::Call { function, args } = rhs else { return None };
+        let Expr::Identifier(function_name) = function.as_ref() else { return None };
+        if !matches!(args.first(), Some(Expr::Identifier(source)) if source == name) {
+            return None;
+        }
+        let scope = self.ownership_scope?;
+        if self.ownership_catches != 0 {
+            return None;
+        }
+        // Function lookup precedes argument evaluation in the interpreter.
+        let callable = self.env.get(function_name)?;
+        if !matches!(callable, Value::Function(..)) {
+            return None;
+        }
+        self.call_stack.push(function_name.clone());
+        let values: Vec<Value> = args.iter().map(|arg| self.eval_expr(arg)).collect();
+        self.call_stack.pop();
+        if let Some(error) = values.iter().find(|value| Self::is_error_value(value)) {
+            return Some(error.clone());
+        }
+        self.env.release_rebound_local(name, scope, &values[0]);
+        let result = self.call_user_function_owned_named(&callable, values, Some(function_name));
+        if Self::is_error_value(&result) {
+            return Some(result);
+        }
+        Some(match self.env.assign_checked(name.clone(), result) {
+            Ok(()) => Value::Null,
+            Err(error) => Value::Error(error),
+        })
+    }
+
     fn assign_path(&mut self, target: &Expr, value: Value) -> Value {
         use assignment::{split_target, Access, AccessExpr};
         let (name, expressions) = match split_target(target) {
@@ -4220,6 +4274,9 @@ impl Interpreter {
 
     /// Evaluates a list of statements sequentially, stopping on return/error
     pub fn eval_stmts(&mut self, stmts: &[Stmt]) {
+        let entry = std::mem::take(&mut self.ownership_entry);
+        let initial_alias = if entry { assignment::initial_parameter_alias(stmts) } else { None };
+
         if self.function_depth == 0 {
             self.error_call_stack.clear();
         }
@@ -4253,6 +4310,27 @@ impl Interpreter {
                 continue;
             }
             let mut handled = false;
+            if index == 0 {
+                if let Some(source) = initial_alias {
+                    if let Stmt::Let { pattern, mutable, .. } = stmt {
+                        if let Some(scope) = self.env.scopes.last_mut() {
+                            if let Some(value) = scope.get_mut(source) {
+                                let value = std::mem::replace(value, Value::Null);
+                                let kind = if *mutable {
+                                    BindingKind::Mutable
+                                } else {
+                                    BindingKind::LetImmutable
+                                };
+                                if let Err(error) = self.bind_pattern(pattern, value, kind) {
+                                    self.return_value = Some(Value::Error(error));
+                                }
+                                handled = true;
+                            }
+                        }
+                    }
+                }
+            }
+
             if let Some((root, pair_name, Expr::Identifier(function), mutable)) =
                 assignment::pop_rebind_pair(stmt, stmts.get(index + 1))
             {
@@ -4402,6 +4480,11 @@ impl Interpreter {
                 }
             }
             Stmt::Assign { target, value } => {
+                if let Some(result) = self.try_owned_call_assignment(target, value) {
+                    self.set_return_if_error(&result);
+                    return;
+                }
+
                 if let Some(result) = self.try_append_assignment(target, value) {
                     self.set_return_if_error(&result);
                     return;
@@ -4946,7 +5029,9 @@ impl Interpreter {
                 // Push new scope
                 self.env.push_scope();
 
+                self.ownership_catches += 1;
                 self.eval_stmts(try_block);
+                self.ownership_catches -= 1;
 
                 // Check if an error occurred (support both old Error and new ErrorObject)
                 let error_occurred = matches!(
@@ -5748,10 +5833,8 @@ impl Interpreter {
                                 );
                             }
 
-                            for (i, param) in params.iter().enumerate() {
-                                if let Some(arg) = evaluated_args.get(i) {
-                                    self.env.define(param.clone(), arg.clone());
-                                }
+                            for (param, arg) in params.iter().zip(evaluated_args) {
+                                self.env.define(param.clone(), arg);
                             }
 
                             if let Err(error) = self
@@ -5793,10 +5876,8 @@ impl Interpreter {
                             // Top-level function: hide unrelated caller-local scopes
                             let caller_scopes = self.env.enter_global_function();
 
-                            for (i, param) in params.iter().enumerate() {
-                                if let Some(arg) = evaluated_args.get(i) {
-                                    self.env.define(param.clone(), arg.clone());
-                                }
+                            for (param, arg) in params.iter().zip(evaluated_args) {
+                                self.env.define(param.clone(), arg);
                             }
 
                             if let Err(error) = self
@@ -7748,5 +7829,36 @@ impl Interpreter {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod helper_ownership_tests {
+    use super::*;
+
+    #[test]
+    fn helper_rebinding_reuses_unique_argument_buffer() {
+        let source = r#"
+            func edit(a, i) { mut b := a b[i] = 7 return b }
+            func work(x) {
+                mut i := 0
+                while i < 64 { x = edit(x, i) i += 1 }
+                return x
+            }
+        "#;
+        let statements =
+            crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap()).parse();
+        let mut interpreter = Interpreter::new();
+        interpreter.eval_stmts(&statements);
+        let function = interpreter.env.get("work").unwrap();
+        let values = Arc::new(vec![Value::Int(0); 10_000]);
+        let buffer = values.as_ptr();
+        let Value::Array(result) =
+            interpreter.call_user_function_owned(&function, vec![Value::Array(values)])
+        else {
+            panic!()
+        };
+        assert_eq!(result.as_ptr(), buffer, "helper copied uniquely owned array");
+        assert!(result[..64].iter().all(|v| matches!(v, Value::Int(7))));
     }
 }

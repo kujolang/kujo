@@ -835,6 +835,16 @@ runtimes can reuse unaliased array storage after evaluating the call operands.
 A shadowed callable or a destination changed during argument evaluation follows
 the ordinary call path. Retained aliases still trigger copy-on-write.
 
+User-defined helpers can also reuse storage in function-local assignments such as
+`items = edit(items, index)`. All operands are evaluated first. Only mutable local
+bindings with unchanged storage and no active local exception handler are eligible.
+An initial `mut result := items` inside a helper can consume the parameter when
+lexical analysis proves it is never read again. Aliases and closure snapshots keep
+their original values. Globals, captured bindings, async/generator calls, and
+non-rebinding expressions retain the ordinary ownership path. Imported VM-to-AST
+collection normalization can reuse uniquely owned buffers but still traverses
+collections and converts specialized dictionary representations.
+
 Nested assignments validate the complete path before editing unique rows, keeping
 failed writes atomic. Queues use shared immutable storage: cloning, `queue_size`,
 and `queue_peek` are constant time in queue length; enqueue is constant time apart

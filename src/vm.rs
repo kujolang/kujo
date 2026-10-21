@@ -1997,6 +1997,40 @@ impl VM {
                     }
                 }
 
+                OpCode::ReleaseDeadLocal(slot) => {
+                    let frame = self.call_frames.last_mut().ok_or("Release requires call frame")?;
+                    frame.local_slots[slot] = Value::Null;
+                    if let Some(name) = self.chunk.local_names.get(slot) {
+                        frame.locals.remove(name);
+                    }
+                }
+                OpCode::ReleaseRebindLocal(slot, count) => {
+                    // A catch in this invocation can observe the old binding on
+                    // failure. Outer callers cannot observe these local slots.
+                    let can_catch = self
+                        .exception_handlers
+                        .iter()
+                        .any(|h| h.frame_offset == self.call_frames.len());
+                    let ordinary = matches!(self.stack.last(), Some(Value::BytecodeFunction { chunk, .. }) if !chunk.is_async && !chunk.is_generator)
+                        || matches!(self.stack.last(), Some(Value::Function(..)));
+                    if !can_catch && ordinary && self.stack.len() > count {
+                        let argument = &self.stack[self.stack.len() - count - 1];
+                        if let Some(frame) = self.call_frames.last_mut() {
+                            if frame.local_slot_binding_kinds.get(slot)
+                                == Some(&BytecodeBindingKind::Mutable)
+                                && crate::interpreter::assignment::same_storage(
+                                    &frame.local_slots[slot],
+                                    argument,
+                                )
+                            {
+                                frame.local_slots[slot] = Value::Null;
+                                if let Some(name) = self.chunk.local_names.get(slot) {
+                                    frame.locals.remove(name);
+                                }
+                            }
+                        }
+                    }
+                }
                 OpCode::LoadLocal(slot) => {
                     let frame = self.call_frames.last().ok_or("LoadLocal requires call frame")?;
                     let value = frame
@@ -3468,7 +3502,7 @@ impl VM {
                         Value::Function(..)
                         | Value::AsyncFunction(..)
                         | Value::GeneratorDef(..) => {
-                            match self.call_interpreter_callable(&function, &args) {
+                            match self.call_interpreter_callable(&function, args) {
                                 Ok(result) => self.stack.push(result),
                                 Err(error) => self.throw_runtime_value(Value::Error(error))?,
                             }
@@ -6198,22 +6232,22 @@ impl VM {
     pub(crate) fn normalize_value_for_interpreter(value: Value) -> Value {
         match value {
             Value::Array(items) => {
-                let normalized = items
-                    .iter()
-                    .cloned()
-                    .map(Self::normalize_value_for_interpreter)
-                    .collect::<Vec<_>>();
-                Value::Array(Arc::new(normalized))
+                let mut items = Arc::unwrap_or_clone(items);
+                for item in &mut items {
+                    *item =
+                        Self::normalize_value_for_interpreter(std::mem::replace(item, Value::Null));
+                }
+                Value::Array(Arc::new(items))
             }
             Value::Dict(map) => {
-                let mut normalized = DictMap::default();
-                for (key, entry) in map.iter() {
-                    normalized.insert(
-                        Arc::from(key.as_ref()),
-                        Self::normalize_value_for_interpreter(entry.clone()),
-                    );
+                let mut map = Arc::unwrap_or_clone(map);
+                for entry in map.values_mut() {
+                    *entry = Self::normalize_value_for_interpreter(std::mem::replace(
+                        entry,
+                        Value::Null,
+                    ));
                 }
-                Value::Dict(Arc::new(normalized))
+                Value::Dict(Arc::new(map))
             }
             Value::FixedDict { keys, values } => {
                 let mut normalized = DictMap::default();
@@ -6328,13 +6362,13 @@ impl VM {
     fn call_interpreter_callable(
         &mut self,
         function: &Value,
-        args: &[Value],
+        args: Vec<Value>,
     ) -> Result<Value, String> {
         let normalized_args =
-            args.iter().cloned().map(Self::normalize_value_for_interpreter).collect::<Vec<_>>();
+            args.into_iter().map(Self::normalize_value_for_interpreter).collect::<Vec<_>>();
         self.interpreter.vm_globals = Some(Arc::clone(&self.globals));
         let saved_return = self.interpreter.return_value.take();
-        let result = self.interpreter.call_user_function(function, &normalized_args);
+        let result = self.interpreter.call_user_function_owned(function, normalized_args);
         self.interpreter.return_value = saved_return;
         match result {
             Value::Error(message) => Err(message),
@@ -6528,15 +6562,23 @@ impl VM {
             }
 
             // Bind each argument to its corresponding parameter name
-            for (param_name, arg_value) in param_names.iter().zip(call_args.iter()) {
-                locals.insert(param_name.clone(), arg_value.clone());
-                locals_binding_kinds.insert(param_name.clone(), BytecodeBindingKind::Mutable);
+            for (param_name, arg_value) in param_names.iter().zip(call_args) {
                 if let Some(slot) = chunk.local_names.iter().position(|name| name == param_name) {
-                    if slot < local_slots.len() {
-                        local_slots[slot] = arg_value.clone();
-                        local_slot_binding_kinds[slot] = BytecodeBindingKind::Mutable;
-                        local_slot_initialized[slot] = true;
+                    local_slots[slot] = arg_value;
+                    local_slot_binding_kinds[slot] = BytecodeBindingKind::Mutable;
+                    local_slot_initialized[slot] = true;
+                    // Hand-built/legacy chunks may still address a parameter by name.
+                    if chunk.instructions.iter().any(|op| {
+                        matches!(op,
+                        OpCode::LoadVar(name) | OpCode::StoreVar(name) if name == param_name)
+                    }) {
+                        locals.insert(param_name.clone(), local_slots[slot].clone());
+                        locals_binding_kinds
+                            .insert(param_name.clone(), BytecodeBindingKind::Mutable);
                     }
+                } else {
+                    locals.insert(param_name.clone(), arg_value);
+                    locals_binding_kinds.insert(param_name.clone(), BytecodeBindingKind::Mutable);
                 }
             }
 
@@ -6718,7 +6760,7 @@ impl VM {
 
                 result
             }
-            Value::Function(..) => self.call_interpreter_callable(&handler, &[req_obj]),
+            Value::Function(..) => self.call_interpreter_callable(&handler, vec![req_obj]),
             _ => Err(Self::non_callable_error_message(
                 "route handlers must evaluate to a callable function",
             )),
@@ -7979,7 +8021,7 @@ impl VM {
                 {
                     // Creation needs the full VM dispatcher. Reuse the guarded
                     // bridge, including the caller's capabilities and output.
-                    return self.call_interpreter_callable(&function, &args);
+                    return self.call_interpreter_callable(&function, args);
                 }
                 // OPTIMIZATION: Check if target function is JIT-compiled
                 // If so, make direct JIT → JIT call for maximum performance
@@ -8774,7 +8816,7 @@ impl VM {
                 self.call_native_function_vm(function, args)
             }
             Value::Function(..) | Value::AsyncFunction(..) | Value::GeneratorDef(..) => {
-                self.call_interpreter_callable(&function, &args)
+                self.call_interpreter_callable(&function, args)
             }
             _ => Err(Self::non_callable_error_message("the value being called is not callable")),
         }
@@ -10777,5 +10819,54 @@ mod tests {
 impl Drop for GeneratorState {
     fn drop(&mut self) {
         measurement::add(Metric::GeneratorDrops, 1);
+    }
+}
+
+#[cfg(test)]
+mod helper_ownership_tests {
+    use super::*;
+
+    #[test]
+    fn helper_rebinding_reuses_unique_argument_buffer() {
+        for ast_helper in [false, true] {
+            assert_helper_reuses_buffer(ast_helper);
+        }
+    }
+
+    fn assert_helper_reuses_buffer(ast_helper: bool) {
+        let source = r#"
+            func edit(a, i) { mut b := a b[i] = 7 return b }
+            func work(x) {
+                mut i := 0
+                while i < 64 { x = edit(x, i) i += 1 }
+                return x
+            }
+        "#;
+        let statements =
+            crate::parser::Parser::new(crate::lexer::tokenize(source).unwrap()).parse();
+        let chunk = crate::compiler::Compiler::new().compile(&statements).unwrap();
+        let mut vm = VM::new();
+        vm.jit_enabled = false;
+        vm.execute(chunk).unwrap();
+        if ast_helper {
+            // Imported ordinary functions take this same AST bridge from a VM caller.
+            vm.interpreter.eval_stmts(&statements);
+            let edit = vm.interpreter.env.get("edit").unwrap();
+            vm.globals.lock().unwrap().define("edit".into(), edit);
+        }
+        let function = vm.globals.lock().unwrap().get("work").unwrap();
+        let values = Arc::new(vec![Value::Int(0); 10_000]);
+        let buffer = values.as_ptr();
+        let mut wrapper = BytecodeChunk::new();
+        wrapper.emit(OpCode::Call(1));
+        wrapper.emit(OpCode::Return);
+        vm.set_chunk(wrapper);
+        vm.stack.push(Value::Array(values));
+        vm.stack.push(function);
+        vm.ip = 0;
+        vm.skip_execute_reset_once = true;
+        let Value::Array(result) = vm.execute(BytecodeChunk::new()).unwrap() else { panic!() };
+        assert_eq!(result.as_ptr(), buffer, "helper copied uniquely owned array");
+        assert!(result[..64].iter().all(|v| matches!(v, Value::Int(7))));
     }
 }

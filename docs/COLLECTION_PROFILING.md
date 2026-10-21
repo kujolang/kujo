@@ -261,3 +261,59 @@ documentation and affected API contracts. Both VM and dual CLI gates passed
 passed their assertions. The full unfiltered Cargo integration suite was not run;
 validation focused on the broad runtime/CLI and affected-surface gate above.
 No benchmark port, release artifact, or maintainer communication is included.
+
+## Helper-call ownership (2026-10-21)
+
+Baseline: `229d808bf5fcb79f5c542f4b5f562ad56ff205cb`. A function-local loop
+`x = edit(x, i)`, with `edit(a, i) { mut b := a; b[i] = 7; return b }`, retained
+both the caller's old array and redundant callee parameter references. Repeated
+updates consequently copied the whole array. The implementation now:
+
+- Evaluates all call operands in the runtime's existing order, then releases a
+  mutable caller-local destination only if its storage still matches argument one.
+- Retains the old value when a handler in that invocation could observe it after
+  failure. Globals/captured bindings and async/generator calls use ordinary paths.
+- Moves owned argument vectors into callee bindings; VM slot parameters no longer
+  carry a redundant named mirror unless legacy bytecode actually uses that name.
+- Consumes an initial parameter alias only when lexical analysis proves the source
+  is dead afterward. Other aliases, nested closures, and repeated arguments still
+  retain their snapshots and trigger copy-on-write.
+- Moves VM-to-AST arguments through normalization, retaining unique array/dictionary
+  buffers. Normalization still traverses collections and converts specialized maps;
+  this is not a constant-time imported-call guarantee.
+
+Internal tests assert the original 10,000-element array buffer survives 64 helper
+updates in the interpreter, VM, and VM-to-AST bridge. Integration contracts run
+both runtimes and cover aliases, closures, recursive updates, bytes, dictionaries,
+struct rows, immutable bindings, repeated arguments, argument effects, imports,
+and catch recovery. No timing threshold is a test assertion.
+
+Imported-recursion reproduction used an exported `expression` calling private
+`term`/`factor` functions and recurring back into `expression`. Baseline VM imports
+and the interpreter rejected `expression(10)` at the old 32-call limit. Both now
+support `expression(60)` (183 ordinary calls), preserve module-private bindings,
+and recover after excessive recursion. The ordinary interpreter limit is 256,
+with guarded host-stack growth; the separate callback-bridge limit remains 32.
+Small-stack embedding tests cover AST calls. The broader generator suite also
+exposed a host-stack overflow in nested VM dispatch; guarding the dispatch entry
+allows all 27 generator continuation contracts to pass on default test stacks.
+
+Assertion-backed debug measurements on macOS x86-64, median of three runs per
+size, timed inside the loop workload (setup and process startup excluded). All
+verification builds completed before these samples. Times are milliseconds and
+are diagnostic scaling evidence, not release-throughput claims.
+
+| N | VM before | VM after | Interpreter before | Interpreter after |
+|---:|---:|---:|---:|---:|
+| 1000 | 194.291 | 74.707 | 211.608 | 112.874 |
+| 2000 | 734.668 | 170.978 | 646.189 | 211.447 |
+| 4000 | 2492.025 | 379.896 | 3822.707 | 358.025 |
+
+Final validation: 1,264 selected Rust tests passed, with eight existing library
+ignores. VM and dual CLI fixture gates each passed 150/150 runnable cases and
+11 policy skips; dual used zero interpreter fallback. `cargo check`,
+`cargo fmt --check`, and diff whitespace checks passed. The unfiltered Cargo
+integration suite was not run. All profiling assertions passed. The helper
+failure contracts also cover the baseline VM defect where array index-write
+errors bypassed active handlers; both affected dispatch paths now unwind normally.
+No LangArena port, maintainer contact, or release artifact is included.

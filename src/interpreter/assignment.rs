@@ -633,3 +633,60 @@ mod pop_tests {
         assert_ne!(buffer(&alias), buffer(&root));
     }
 }
+
+/// Only storage-backed values can be released by allocation identity. Retained
+/// aliases keep their own strong references and therefore still force COW.
+pub(crate) fn same_storage(a: &Value, b: &Value) -> bool {
+    // Scalars alone do not benefit from release. Struct field maps are owned,
+    // but their storage-backed children can be released without walking payloads.
+    if !matches!(a, Value::Array(_) | Value::Bytes(_) | Value::Dict(_) | Value::Struct { .. }) {
+        return false;
+    }
+    let mut pending = vec![(a, b)];
+    while let Some((a, b)) = pending.pop() {
+        let same = match (a, b) {
+            (Value::Array(a), Value::Array(b)) => Arc::ptr_eq(a, b),
+            (Value::Bytes(a), Value::Bytes(b)) => Arc::ptr_eq(a, b),
+            (Value::Dict(a), Value::Dict(b)) => Arc::ptr_eq(a, b),
+            (Value::Str(a), Value::Str(b)) => Arc::ptr_eq(a, b),
+            (Value::Int(a), Value::Int(b)) => a == b,
+            (Value::Float(a), Value::Float(b)) => a.to_bits() == b.to_bits(),
+            (Value::Bool(a), Value::Bool(b)) => a == b,
+            (Value::Null, Value::Null) => true,
+            (
+                Value::Struct { name: a_name, fields: a },
+                Value::Struct { name: b_name, fields: b },
+            ) if a_name == b_name && a.len() == b.len() => {
+                for (key, value) in a {
+                    let Some(other) = b.get(key) else { return false };
+                    pending.push((value, other));
+                }
+                true
+            }
+            _ => false,
+        };
+        if !same {
+            return false;
+        }
+    }
+    true
+}
+
+/// A function's initial local alias can consume a parameter that is never read
+/// again. Use the compiler's lexical resolver, not a textual name search; on
+/// unsupported syntax keep the original value. The binding itself stays defined.
+pub(crate) fn initial_parameter_alias<'a>(body: &'a [crate::ast::Stmt]) -> Option<&'a str> {
+    use crate::ast::{Pattern, Stmt};
+    let Stmt::Let { pattern: Pattern::Identifier(target), value: Expr::Identifier(source), .. } =
+        body.first()?
+    else {
+        return None;
+    };
+    if target == source {
+        return None;
+    }
+    let free =
+        crate::compiler::Compiler::spawn_free_bindings(&body[1..], std::iter::once(source.clone()))
+            .ok()?;
+    (!free.contains(source)).then_some(source.as_str())
+}

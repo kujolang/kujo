@@ -252,6 +252,10 @@ pub enum OpCode {
     /// Conditional fast path for x = f(x, item). On success consume three call
     /// operands and jump past call/store; otherwise leave the stack unchanged.
     TryAppendAssign(MutationBinding, usize),
+    /// Drop an unobservable caller-local snapshot after evaluating all operands.
+    ReleaseRebindLocal(usize, usize),
+    /// Release a proven dead parameter after loading its initial local alias.
+    ReleaseDeadLocal(usize),
     /// Check a native append call before evaluating assignment indices.
     GuardAppendPath(usize),
     /// Conditional pop followed immediately by rebinding; fresh pair slot is dead on entry.

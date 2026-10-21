@@ -9,6 +9,9 @@ This file records user-visible changes to Kujo, following
 - Route VM array index-write failures through active exception handlers, including
   helper failures, so callers can recover without replacing their original value.
 
+- Reuse uniquely owned collections across local helper rebinding and dead parameter
+  aliases in both runtimes, preserving retained snapshots and catch recovery.
+
 - Support up to 256 interpreter calls, including imported recursion from VM scripts,
   with guarded host-stack growth; retain the separate 32-entry callback bridge limit.
 

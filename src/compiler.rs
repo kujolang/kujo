@@ -466,11 +466,33 @@ impl Compiler {
                             crate::bytecode::MutationBinding::Named(target_name.clone())
                         };
                         let fast = self.chunk.emit(OpCode::TryAppendAssign(binding, 0));
+                        if let Some(slot) = self.resolve_local_slot(target_name) {
+                            self.chunk.emit(OpCode::ReleaseRebindLocal(slot, 2));
+                        }
                         self.chunk.emit(OpCode::Call(2));
                         self.compile_assignment(target)?;
                         self.chunk.emit(OpCode::Pop);
                         self.chunk.patch_jump(fast);
                         return Ok(());
+                    }
+                }
+                if let (Expr::Identifier(target_name), Expr::Call { function, args }) =
+                    (target, value)
+                {
+                    if matches!(function.as_ref(), Expr::Identifier(_))
+                        && matches!(args.first(), Some(Expr::Identifier(name)) if name == target_name)
+                    {
+                        if let Some(slot) = self.resolve_local_slot(target_name) {
+                            for arg in args {
+                                self.compile_expr(arg)?;
+                            }
+                            self.compile_expr(function)?;
+                            self.chunk.emit(OpCode::ReleaseRebindLocal(slot, args.len()));
+                            self.chunk.emit(OpCode::Call(args.len()));
+                            self.compile_assignment(target)?;
+                            self.chunk.emit(OpCode::Pop);
+                            return Ok(());
+                        }
                     }
                 }
                 if let (Expr::Identifier(target_name), Expr::BinaryOp { left, op, right }) =
@@ -1883,6 +1905,34 @@ impl Compiler {
     /// Compile assignment target
     fn compile_sequence(&mut self, statements: &[Stmt]) -> Result<(), String> {
         for (i, stmt) in statements.iter().enumerate() {
+            if i == 0
+                && self.uses_local_slots
+                && self.scope_depth == 1
+                && self.chunk.instructions.is_empty()
+            {
+                if let Some(source) =
+                    crate::interpreter::assignment::initial_parameter_alias(statements)
+                {
+                    if self.chunk.params.iter().any(|p| p == source) {
+                        if let (Some(slot), Stmt::Let { pattern, mutable, .. }) =
+                            (self.resolve_local_slot(source), stmt)
+                        {
+                            self.chunk.emit(OpCode::LoadLocal(slot));
+                            self.chunk.emit(OpCode::ReleaseDeadLocal(slot));
+                            self.compile_pattern_binding(
+                                pattern,
+                                if *mutable {
+                                    BytecodeBindingKind::Mutable
+                                } else {
+                                    BytecodeBindingKind::LetImmutable
+                                },
+                            )?;
+                            self.chunk.emit(OpCode::Pop);
+                            continue;
+                        }
+                    }
+                }
+            }
             if self.uses_local_slots && self.scope_depth > 0 {
                 if let Some((root, pair, function, mutable)) =
                     crate::interpreter::assignment::pop_rebind_pair(stmt, statements.get(i + 1))
