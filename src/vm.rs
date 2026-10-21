@@ -7768,7 +7768,95 @@ impl VM {
             // Higher-order native functions execute bytecode callbacks in fresh
             // VMs, so a stale interpreter snapshot would silently hide those
             // dependencies from the callback.
-            self.interpreter.set_env(Arc::clone(&self.globals));
+            // Argument-only builtins do not consult the interpreter environment.
+            // Refreshing it here clones every global bytecode function for each
+            // arithmetic/string/collection operation. Keep the conservative
+            // refresh for callbacks, host APIs, and unknown future builtins.
+            if !matches!(
+                name.as_str(),
+                "wrapping_add"
+                    | "wrapping_sub"
+                    | "wrapping_mul"
+                    | "abs"
+                    | "sqrt"
+                    | "floor"
+                    | "ceil"
+                    | "round"
+                    | "sin"
+                    | "cos"
+                    | "tan"
+                    | "log"
+                    | "exp"
+                    | "pow"
+                    | "min"
+                    | "max"
+                    | "bit_and"
+                    | "bit_or"
+                    | "bit_xor"
+                    | "bit_not"
+                    | "bit_shl"
+                    | "bit_shr"
+                    | "len"
+                    | "push"
+                    | "append"
+                    | "pop"
+                    | "slice"
+                    | "concat"
+                    | "contains"
+                    | "has_key"
+                    | "get"
+                    | "get_default"
+                    | "keys"
+                    | "values"
+                    | "remove"
+                    | "remove_at"
+                    | "insert"
+                    | "clear"
+                    | "sort"
+                    | "reverse"
+                    | "range"
+                    | "Queue"
+                    | "queue_enqueue"
+                    | "queue_dequeue"
+                    | "queue_size"
+                    | "queue_peek"
+                    | "queue_is_empty"
+                    | "queue_to_array"
+                    | "Stack"
+                    | "stack_push"
+                    | "stack_pop"
+                    | "stack_size"
+                    | "stack_peek"
+                    | "stack_is_empty"
+                    | "stack_to_array"
+                    | "to_int"
+                    | "to_float"
+                    | "to_string"
+                    | "str"
+                    | "type"
+                    | "bytes"
+                    | "utf8_encode"
+                    | "utf8_decode"
+                    | "byte_length"
+                    | "substring"
+                    | "substr"
+                    | "split"
+                    | "join"
+                    | "trim"
+                    | "repeat"
+                    | "starts_with"
+                    | "ends_with"
+                    | "format_fixed"
+                    | "encode_base64"
+                    | "decode_base64"
+                    | "parse_json"
+                    | "to_json"
+                    | "regex_count"
+                    | "parse_csv_rows"
+                    | "__vm_for_iterable"
+            ) {
+                self.interpreter.set_env(Arc::clone(&self.globals));
+            }
             let result = self.interpreter.call_native_function_impl(&name, &args);
 
             // Check if the result is an error
@@ -9362,6 +9450,24 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn argument_only_native_calls_do_not_snapshot_unrelated_globals() {
+        let mut vm = VM::new();
+        let unrelated = Arc::new(vec![0_u8; 1024]);
+        vm.globals.lock().unwrap().define("unrelated".into(), Value::Bytes(unrelated.clone()));
+        let owners = Arc::strong_count(&unrelated);
+        for _ in 0..100 {
+            let result = vm
+                .call_native_function_vm(
+                    Value::NativeFunction("wrapping_add".into()),
+                    vec![Value::Int(1), Value::Int(2)],
+                )
+                .unwrap();
+            assert!(matches!(result, Value::Int(3)));
+            assert_eq!(Arc::strong_count(&unrelated), owners);
+        }
+    }
 
     #[test]
     fn nesting_checks_walk_shared_allocations_without_exponential_expansion() {

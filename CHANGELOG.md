@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid cloning VM globals for argument-only arithmetic, string, byte, JSON,
+  and collection builtins; callback APIs still refresh their global dependencies.
+
 - Support snapshot-safe iteration over bytes in VM/interpreter and generator loops.
 
 - Restore the interpreter generator delegation limit independently of ordinary function recursion, matching VM depth and recovery behavior.
