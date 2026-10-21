@@ -1,0 +1,70 @@
+func byte_character(value) {
+    if value < 128 { return utf8_decode(bytes([value])) }
+    return utf8_decode(bytes([192 + idiv(value, 64), 128 + value % 64]))
+}
+func lzw_encode(data) {
+    if byte_length(data) == 0 { return bytes([]) }
+    mut dictionary := {}
+    mut i := 0
+    while i < 256 { dictionary[byte_character(i)] = i i += 1 }
+    mut next_code := 256
+    mut result := []
+    mut current := byte_character(data[0])
+    i = 1
+    while i < byte_length(data) {
+        let character := byte_character(data[i])
+        let combined := current + character
+        if has_key(dictionary, combined) == 1 { current = combined }
+        else {
+            let code := dictionary[current]
+            result = push(result, bit_and(bit_shr(code, 8), 255))
+            result = push(result, bit_and(code, 255))
+            dictionary[combined] = next_code
+            next_code += 1
+            current = character
+        }
+        i += 1
+    }
+    let code := dictionary[current]
+    result = push(result, bit_and(bit_shr(code, 8), 255))
+    result = push(result, bit_and(code, 255))
+    return bytes(result)
+}
+func lzw_decode(data) {
+    if byte_length(data) == 0 { return bytes([]) }
+    mut dictionary := []
+    mut i := 0
+    while i < 256 { dictionary = push(dictionary, byte_character(i)) i += 1 }
+    mut old := dictionary[bit_shl(data[0], 8) + data[1]]
+    mut result := utf8_encode(old)
+    mut next_code := 256
+    i = 2
+    while i < byte_length(data) {
+        let code := bit_shl(data[i], 8) + data[i + 1]
+        i += 2
+        mut current := ""
+        if code < len(dictionary) { current = dictionary[code] }
+        else if code == next_code { current = old + old[0] }
+        else { return bytes([]) }
+        result = concat(result, utf8_encode(current))
+        dictionary = push(dictionary, old + current[0])
+        next_code += 1
+        old = current
+    }
+    return result
+}
+func lzw_prepare(input) {
+    mut state := input
+    state["data"] = compress_data(state["cfg"]["size"])
+    if state["cfg"]["name"] == "Compress::LZWDecode" { state["encoded"] = lzw_encode(state["data"]) }
+    return state
+}
+func lzw_run(input, iteration) {
+    mut state := input
+    if state["cfg"]["name"] == "Compress::LZWEncode" { state["encoded"] = lzw_encode(state["data"]) state["result"] += byte_length(state["encoded"]) }
+    else { state["decoded"] = lzw_decode(state["encoded"]) state["result"] += byte_length(state["decoded"]) }
+    state["result"] = u32(state["result"])
+    return state
+}
+registry["Compress::LZWEncode"] = [basic_state, lzw_prepare, lzw_run, result_checksum]
+registry["Compress::LZWDecode"] = [basic_state, lzw_prepare, lzw_run, compress_decode_checksum]

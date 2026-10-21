@@ -1,0 +1,95 @@
+func frequency_table(counts) {
+    mut low := vector(256, 0)
+    mut high := vector(256, 0)
+    mut total := 0
+    mut i := 0
+    while i < 256 { low[i] = total total += counts[i] high[i] = total i += 1 }
+    return [low, high, total]
+}
+func arith_encode(data) {
+    let counts := frequencies(data)
+    let table := frequency_table(counts)
+    mut low := 0
+    mut high := 4294967295
+    mut pending := 0
+    mut output := [[], 0, 0, 0]
+    for b in data {
+        let width := high - low + 1
+        high = low + idiv(width * table[1][b], table[2]) - 1
+        low = low + idiv(width * table[0][b], table[2])
+        while true {
+            if high < 2147483648 {
+                output = bit_write(output, 0)
+                while pending > 0 { output = bit_write(output, 1) pending -= 1 }
+            } else if low >= 2147483648 {
+                output = bit_write(output, 1)
+                while pending > 0 { output = bit_write(output, 0) pending -= 1 }
+                low -= 2147483648
+                high -= 2147483648
+            } else if low >= 1073741824 && high < 3221225472 { pending += 1 low -= 1073741824 high -= 1073741824 }
+            else { break }
+            low = bit_shl(low, 1)
+            high = u32(bit_or(bit_shl(high, 1), 1))
+        }
+    }
+    pending += 1
+    mut bit := 1
+    if low < 1073741824 { bit = 0 }
+    output = bit_write(output, bit)
+    while pending > 0 { output = bit_write(output, 1 - bit) pending -= 1 }
+    return [bit_flush(output), output[3], counts]
+}
+func bit_read(data, position) {
+    let index := idiv(position, 8)
+    if index >= byte_length(data) { return 0 }
+    return bit_and(bit_shr(data[index], 7 - position % 8), 1)
+}
+func arith_decode(encoded) {
+    let table := frequency_table(encoded[2])
+    let total := table[2]
+    mut result := bytes(vector(total, 0))
+    mut position := 0
+    mut value := 0
+    while position < 32 { value = bit_or(bit_shl(value, 1), bit_read(encoded[0], position)) position += 1 }
+    mut low := 0
+    mut high := 4294967295
+    mut j := 0
+    while j < total {
+        let width := high - low + 1
+        let scaled := idiv((value - low + 1) * total - 1, width)
+        mut a := 0
+        mut b := 256
+        while a < b { let mid := idiv(a + b, 2) if table[1][mid] > scaled { b = mid } else { a = mid + 1 } }
+        let symbol := a
+        result[j] = symbol
+        high = low + idiv(width * table[1][symbol], total) - 1
+        low = low + idiv(width * table[0][symbol], total)
+        while true {
+            if high < 2147483648 { }
+            else if low >= 2147483648 { value -= 2147483648 low -= 2147483648 high -= 2147483648 }
+            else if low >= 1073741824 && high < 3221225472 { value -= 1073741824 low -= 1073741824 high -= 1073741824 }
+            else { break }
+            low = bit_shl(low, 1)
+            high = bit_or(bit_shl(high, 1), 1)
+            value = bit_or(bit_shl(value, 1), bit_read(encoded[0], position))
+            position += 1
+        }
+        j += 1
+    }
+    return result
+}
+func arith_prepare(input) {
+    mut state := input
+    state["data"] = compress_data(state["cfg"]["size"])
+    if state["cfg"]["name"] == "Compress::ArithDecode" { state["encoded"] = arith_encode(state["data"]) }
+    return state
+}
+func arith_run(input, iteration) {
+    mut state := input
+    if state["cfg"]["name"] == "Compress::ArithEncode" { state["encoded"] = arith_encode(state["data"]) state["result"] += byte_length(state["encoded"][0]) }
+    else { state["decoded"] = arith_decode(state["encoded"]) state["result"] += byte_length(state["decoded"]) }
+    state["result"] = u32(state["result"])
+    return state
+}
+registry["Compress::ArithEncode"] = [basic_state, arith_prepare, arith_run, result_checksum]
+registry["Compress::ArithDecode"] = [basic_state, arith_prepare, arith_run, compress_decode_checksum]

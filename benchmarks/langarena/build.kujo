@@ -1,5 +1,5 @@
 let root := "benchmarks/langarena/"
-let parts := ["00_common", "10_basic", "20_text_hash", "25_matmul", "30_sort", "35_template", "40_graph", "45_life", "46_ray", "47_cache", "48_logs", "49_neural", "99_main"]
+let parts := ["00_common", "10_basic", "20_text_hash", "25_matmul", "30_sort", "35_template", "40_graph", "45_life", "46_ray", "47_cache", "48_logs", "49_neural", "50_bwt", "51_huffman", "52_arithmetic", "53_lzw", "99_main"]
 mut source := ""
 for part in parts { source += read_file(root + "src/" + part + ".kujo") + "\n" }
 write_file(root + "port.kujo", source, true)

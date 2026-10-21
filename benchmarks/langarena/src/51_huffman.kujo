@@ -1,0 +1,84 @@
+struct HuffNode { frequency: int, byte: int, leaf: bool, left: any, right: any }
+func frequencies(data) { mut counts := vector(256, 0) for b in data { counts[b] += 1 } return counts }
+func huff_tree(counts) {
+    mut nodes := []
+    mut i := 0
+    while i < 256 { if counts[i] > 0 { nodes = push(nodes, HuffNode { frequency: counts[i], byte: i, leaf: true, left: null, right: null }) } i += 1 }
+    func frequency_order(a, b) { return a.frequency - b.frequency }
+    nodes = sort_by(nodes, frequency_order)
+    if len(nodes) == 1 { return HuffNode { frequency: nodes[0].frequency, byte: 0, leaf: false, left: nodes[0], right: HuffNode { frequency: 0, byte: 0, leaf: true, left: null, right: null } } }
+    while len(nodes) > 1 {
+        let left := nodes[0]
+        let right := nodes[1]
+        nodes = slice(nodes, 2, len(nodes))
+        let parent := HuffNode { frequency: left.frequency + right.frequency, byte: 0, leaf: false, left: left, right: right }
+        mut low := 0
+        mut high := len(nodes)
+        while low < high { let mid := idiv(low + high, 2) if nodes[mid].frequency >= parent.frequency { high = mid } else { low = mid + 1 } }
+        nodes = concat(concat(slice(nodes, 0, low), [parent]), slice(nodes, low, len(nodes)))
+    }
+    return nodes[0]
+}
+func huff_codes(node, code, length, input) {
+    mut codes := input
+    if node.leaf {
+        if length > 0 || node.byte != 0 { codes[0][node.byte] = code codes[1][node.byte] = length }
+    } else {
+        if node.left != null { codes = huff_codes(node.left, bit_shl(code, 1), length + 1, codes) }
+        if node.right != null { codes = huff_codes(node.right, bit_or(bit_shl(code, 1), 1), length + 1, codes) }
+    }
+    return codes
+}
+func bit_write(input, bit) {
+    mut state := input
+    state[1] = bit_or(bit_shl(state[1], 1), bit)
+    state[2] += 1
+    state[3] += 1
+    if state[2] == 8 { state[0] = push(state[0], state[1]) state[1] = 0 state[2] = 0 }
+    return state
+}
+func bit_flush(input) {
+    mut state := input
+    if state[2] > 0 { state[0] = push(state[0], bit_shl(state[1], 8 - state[2])) }
+    return bytes(state[0])
+}
+func huff_encode(data) {
+    let counts := frequencies(data)
+    let tree := huff_tree(counts)
+    let codes := huff_codes(tree, 0, 0, [vector(256, 0), vector(256, 0)])
+    mut output := [[], 0, 0, 0]
+    for b in data {
+        mut i := codes[1][b] - 1
+        while i >= 0 { output = bit_write(output, bit_and(bit_shr(codes[0][b], i), 1)) i -= 1 }
+    }
+    return [bit_flush(output), output[3], counts]
+}
+func huff_decode(encoded) {
+    let tree := huff_tree(encoded[2])
+    mut node := tree
+    mut result := bytes(vector(encoded[1], 0))
+    mut size := 0
+    mut i := 0
+    while i < encoded[1] {
+        let bit := bit_and(bit_shr(encoded[0][idiv(i, 8)], 7 - i % 8), 1)
+        if bit == 1 { node = node.right } else { node = node.left }
+        if node.leaf { result[size] = node.byte size += 1 node = tree }
+        i += 1
+    }
+    return slice(result, 0, size)
+}
+func huff_prepare(input) {
+    mut state := input
+    state["data"] = compress_data(state["cfg"]["size"])
+    if state["cfg"]["name"] == "Compress::HuffDecode" { state["encoded"] = huff_encode(state["data"]) }
+    return state
+}
+func huff_run(input, iteration) {
+    mut state := input
+    if state["cfg"]["name"] == "Compress::HuffEncode" { state["encoded"] = huff_encode(state["data"]) state["result"] += byte_length(state["encoded"][0]) }
+    else { state["decoded"] = huff_decode(state["encoded"]) state["result"] += byte_length(state["decoded"]) }
+    state["result"] = u32(state["result"])
+    return state
+}
+registry["Compress::HuffEncode"] = [basic_state, huff_prepare, huff_run, result_checksum]
+registry["Compress::HuffDecode"] = [basic_state, huff_prepare, huff_run, compress_decode_checksum]
