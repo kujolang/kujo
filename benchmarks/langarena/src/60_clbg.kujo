@@ -1,0 +1,100 @@
+func fannkuch(n_input) {
+    let n := imin(n_input, 32)
+    mut perm1 := range(0, 32)
+    mut perm := vector(32, 0)
+    mut count := vector(32, 0)
+    mut maximum := 0
+    mut permutations := 0
+    mut checksum := 0
+    mut r := n
+    while true {
+        while r > 1 { count[r - 1] = r r -= 1 }
+        mut i := 0
+        while i < n { perm[i] = perm1[i] i += 1 }
+        mut flips := 0
+        while perm[0] != 0 {
+            let k := perm[0]
+            let half := idiv(k + 1, 2)
+            i = 0
+            while i < half { let j := k - i let tmp := perm[i] perm[i] = perm[j] perm[j] = tmp i += 1 }
+            flips += 1
+        }
+        maximum = imax(maximum, flips)
+        if permutations % 2 == 0 { checksum += flips } else { checksum -= flips }
+        while true {
+            if r == n { return [checksum, maximum] }
+            let first := perm1[0]
+            i = 0
+            while i < r { let tmp := perm1[i] perm1[i] = perm1[i + 1] perm1[i + 1] = tmp i += 1 }
+            perm1[r] = first
+            count[r] -= 1
+            if count[r] > 0 { break }
+            r += 1
+        }
+        permutations += 1
+    }
+}
+func fann_run(input, iteration) { mut state := input let result := fannkuch(state["cfg"]["n"]) state["result"] = u32(state["result"] + result[0] * 100 + result[1]) return state }
+func mandel_create(cfg) { return {"cfg": cfg, "data": bytes([])} }
+func mandel_run(input, iteration) {
+    mut state := input
+    let w := state["cfg"]["w"]
+    let h := state["cfg"]["h"]
+    state["data"] = concat(state["data"], utf8_encode("P4\n" + str(w) + " " + str(h) + "\n"))
+    mut output := []
+    mut bit := 0
+    mut byte := 0
+    mut y := 0
+    while y < h {
+        let ci := 2.0 * y / h - 1.0
+        mut x := 0
+        while x < w {
+            mut zr := 0.0
+            mut zi := 0.0
+            mut tr := 0.0
+            mut ti := 0.0
+            let cr := 2.0 * x / w - 1.5
+            mut i := 0
+            while i < 50 && tr + ti <= 4.0 { zi = 2.0 * zr * zi + ci zr = tr - ti + cr tr = zr * zr ti = zi * zi i += 1 }
+            byte = bit_shl(byte, 1)
+            if tr + ti <= 4.0 { byte = bit_or(byte, 1) }
+            bit += 1
+            if bit == 8 { output = push(output, byte) byte = 0 bit = 0 }
+            else if x == w - 1 { byte = bit_shl(byte, 8 - w % 8) output = push(output, byte) byte = 0 bit = 0 }
+            x += 1
+        }
+        y += 1
+    }
+    state["data"] = concat(state["data"], bytes(output))
+    return state
+}
+func mandel_checksum(state) { return checksum_bytes(state["data"]) }
+func spectral_create(cfg) { return {"cfg": cfg, "u": vector(cfg["size"], 1.0), "v": vector(cfg["size"], 1.0)} }
+func spectral_a(i, j) { return 1.0 / ((i + j) * (i + j + 1.0) / 2.0 + i + 1.0) }
+func spectral_multiply(u, transpose) {
+    mut result := []
+    mut i := 0
+    while i < len(u) {
+        mut value := 0.0
+        mut j := 0
+        while j < len(u) {
+            if transpose { value += spectral_a(j, i) * u[j] } else { value += spectral_a(i, j) * u[j] }
+            j += 1
+        }
+        result = push(result, value)
+        i += 1
+    }
+    return result
+}
+func spectral_ata(u) { return spectral_multiply(spectral_multiply(u, false), true) }
+func spectral_run(input, iteration) { mut state := input state["v"] = spectral_ata(state["u"]) state["u"] = spectral_ata(state["v"]) return state }
+func spectral_checksum(state) {
+    mut vbv := 0.0
+    mut vv := 0.0
+    mut i := 0
+    while i < len(state["u"]) { vbv += state["u"][i] * state["v"][i] vv += state["v"][i] * state["v"][i] i += 1 }
+    return checksum_float(sqrt(vbv / vv))
+}
+registry["CLBG::Fannkuchredux"] = [basic_state, unchanged, fann_run, result_checksum]
+registry["CLBG::Mandelbrot"] = [mandel_create, unchanged, mandel_run, mandel_checksum]
+registry["CLBG::Spectralnorm"] = [spectral_create, unchanged, spectral_run, spectral_checksum]
