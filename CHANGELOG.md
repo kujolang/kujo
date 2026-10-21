@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Infer numeric remainder (`%`) results so valid remainder-based string indices
+  no longer produce spurious type-check warnings; defer unknown index types to
+  runtime validation consistently with gradual typing.
+
 - Move suspended VM caller bytecode into call frames instead of cloning its
   instructions and constants on every helper or recursive call.
 

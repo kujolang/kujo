@@ -54,3 +54,24 @@ fn type_checker_accepts_numeric_string_read_indices() {
     assert!(parsed.diagnostics.is_empty());
     kujo::type_checker::TypeChecker::new().check(&parsed.stmts).unwrap();
 }
+
+#[test]
+fn remainder_indices_have_numeric_types_and_run_in_both_runtimes() {
+    let source = r#"
+        assert_equal("abc"[5 % 3], "c")
+        assert_equal("abc"[5.5 % 3.0], "c")
+        assert_equal("abc"[5 % 3.0], "c")
+        func at(index) { return "abc"[index % 3] }
+        assert_equal(at(5), "c")
+    "#;
+    let mut parser = kujo::parser::Parser::new(kujo::lexer::tokenize(source).unwrap());
+    let parsed = parser.parse_with_diagnostics();
+    assert!(parsed.diagnostics.is_empty());
+    kujo::type_checker::TypeChecker::new().check(&parsed.stmts).unwrap();
+    support::success(source);
+    let mut invalid =
+        kujo::parser::Parser::new(kujo::lexer::tokenize("let x := \"abc\"[true]").unwrap());
+    assert!(kujo::type_checker::TypeChecker::new()
+        .check(&invalid.parse_with_diagnostics().stmts)
+        .is_err());
+}

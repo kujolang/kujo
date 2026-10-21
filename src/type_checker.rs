@@ -4255,7 +4255,7 @@ impl TypeChecker {
                         }
                         Some(TypeAnnotation::Bool)
                     }
-                    "+" | "-" | "*" | "/" => {
+                    "+" | "-" | "*" | "/" | "%" => {
                         // Arithmetic operations with type promotion
                         match (&left_type, &right_type) {
                             // Int op Int => Int
@@ -4739,6 +4739,7 @@ impl TypeChecker {
                             Some(TypeAnnotation::Int)
                                 | Some(TypeAnnotation::Float)
                                 | Some(TypeAnnotation::Any)
+                                | None
                         ) {
                             Some(TypeAnnotation::String)
                         } else {

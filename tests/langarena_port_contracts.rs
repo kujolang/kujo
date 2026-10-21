@@ -13,6 +13,14 @@ fn source(include_main: bool) -> String {
 }
 
 #[test]
+fn assembled_port_passes_static_type_checking() {
+    let mut parser = kujo::parser::Parser::new(kujo::lexer::tokenize(&source(true)).unwrap());
+    let parsed = parser.parse_with_diagnostics();
+    assert!(parsed.diagnostics.is_empty());
+    kujo::type_checker::TypeChecker::new().check(&parsed.stmts).unwrap();
+}
+
+#[test]
 fn registry_covers_exactly_the_fifty_pinned_benchmarks() {
     let config: serde_json::Value =
         serde_json::from_str(include_str!("../benchmarks/langarena/test.json")).unwrap();
