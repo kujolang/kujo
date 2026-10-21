@@ -559,3 +559,77 @@ mod field_append_tests {
         }
     }
 }
+
+/// Recognize adjacent `let pair = f(array); array = pair[0]`. There is no
+/// observable execution between these statements; all other uses keep ordinary
+/// functional pop semantics. The runtime still verifies the actual native callee.
+pub(crate) fn pop_rebind_pair<'a>(
+    stmt: &'a crate::ast::Stmt,
+    next: Option<&crate::ast::Stmt>,
+) -> Option<(&'a str, &'a str, &'a Expr, bool)> {
+    use crate::ast::{Pattern, Stmt};
+    let Stmt::Let {
+        pattern: Pattern::Identifier(pair),
+        value: Expr::Call { function, args },
+        mutable,
+        ..
+    } = stmt
+    else {
+        return None;
+    };
+    if args.len() != 1 || !matches!(function.as_ref(), Expr::Identifier(_)) {
+        return None;
+    }
+    let Expr::Identifier(root) = &args[0] else { return None };
+    let Some(Stmt::Assign {
+        target: Expr::Identifier(target),
+        value: Expr::IndexAccess { object, index },
+    }) = next
+    else {
+        return None;
+    };
+    if root != pair
+        && target == root
+        && matches!(object.as_ref(), Expr::Identifier(name) if name == pair)
+        && matches!(index.as_ref(), Expr::Int(0))
+    {
+        Some((root, pair, function, *mutable))
+    } else {
+        None
+    }
+}
+
+pub(crate) fn pop_rebinding(root: &mut Value, original: &mut Option<Value>) -> Option<Value> {
+    let Value::Array(destination) = root else { return None };
+    let Some(Value::Array(source)) = original.as_ref() else { return None };
+    if !Arc::ptr_eq(destination, source) {
+        return None;
+    }
+    drop(original.take());
+    let popped = Arc::make_mut(destination).pop().unwrap_or(Value::Int(0));
+    Some(Value::array(vec![Value::Array(destination.clone()), popped]))
+}
+
+#[cfg(test)]
+mod pop_tests {
+    use super::*;
+    #[test]
+    fn pop_rebinding_reuses_unique_buffer_and_detaches_aliases() {
+        let mut root = Value::array((0..10_000).map(Value::Int).collect());
+        let buffer = |v: &Value| {
+            let Value::Array(a) = v else { panic!() };
+            a.as_ptr()
+        };
+        let ptr = buffer(&root);
+        for _ in 0..100 {
+            let mut argument = Some(root.clone());
+            let pair = pop_rebinding(&mut root, &mut argument).unwrap();
+            assert_eq!(buffer(&root), ptr);
+            drop(pair);
+        }
+        let alias = root.clone();
+        let mut argument = Some(root.clone());
+        pop_rebinding(&mut root, &mut argument).unwrap();
+        assert_ne!(buffer(&alias), buffer(&root));
+    }
+}

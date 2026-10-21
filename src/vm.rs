@@ -1494,6 +1494,9 @@ impl VM {
                             | OpCode::UpdatePath(_)
                             | OpCode::UpdateBindingPath(_, _)
                             | OpCode::TryAppendAssign(_, _)
+                            | OpCode::GuardAppendPath(_)
+                            | OpCode::AppendBindingPath(_, _)
+                            | OpCode::TryPopRebind(_, _, _)
                             | OpCode::IndexGetInPlace(_)
                             | OpCode::IndexSetInPlace(_)
                             | OpCode::LoadVar(_)
@@ -5110,6 +5113,35 @@ impl VM {
                     };
 
                     self.stack.push(result);
+                }
+
+                OpCode::TryPopRebind(binding, pair_slot, end) => {
+                    let function = self.stack.pop().ok_or("Stack underflow")?;
+                    let mut original = Some(self.stack.pop().ok_or("Stack underflow")?);
+                    if matches!(&function, Value::NativeFunction(name) if name == "pop")
+                        && matches!(original.as_ref(), Some(Value::Array(_)))
+                    {
+                        // This slot belongs to the forthcoming fresh declaration,
+                        // not an in-scope binding. Release a previous loop iteration's
+                        // dead temporary before COW. Retained closures own snapshots.
+                        let frame =
+                            self.call_frames.last_mut().ok_or("Pop rebind requires a frame")?;
+                        *frame.local_slots.get_mut(pair_slot).ok_or("Invalid pair slot")? =
+                            Value::Null;
+                        let mut pair = None;
+                        let _ = self.mutate_binding(&binding, |root| {
+                            pair =
+                                crate::interpreter::assignment::pop_rebinding(root, &mut original);
+                            Ok(())
+                        });
+                        if let Some(pair) = pair {
+                            self.stack.push(pair);
+                            self.ip = end;
+                            continue;
+                        }
+                    }
+                    self.stack.push(original.unwrap());
+                    self.stack.push(function);
                 }
 
                 OpCode::GuardAppendPath(fallback) => {

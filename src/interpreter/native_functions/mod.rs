@@ -1277,7 +1277,9 @@ mod tests {
         let stack_len = call_native_function(
             &mut interpreter,
             "len",
-            &[Value::Stack(vec![Value::Int(1), Value::Int(2), Value::Int(3), Value::Int(4)])],
+            &[Value::Stack(
+                vec![Value::Int(1), Value::Int(2), Value::Int(3), Value::Int(4)].into(),
+            )],
         );
         assert!(matches!(stack_len, Value::Int(4)));
 
@@ -6646,14 +6648,14 @@ mod tests {
         let stack_push = call_native_function(
             &mut interpreter,
             "stack_push",
-            &[Value::Stack(vec![Value::Int(1)]), Value::Int(2)],
+            &[Value::Stack(vec![Value::Int(1)].into()), Value::Int(2)],
         );
         assert!(matches!(stack_push, Value::Stack(values) if values.len() == 2));
 
         let stack_pop = call_native_function(
             &mut interpreter,
             "stack_pop",
-            &[Value::Stack(vec![Value::Int(1), Value::Int(2)])],
+            &[Value::Stack(vec![Value::Int(1), Value::Int(2)].into())],
         );
         assert!(matches!(stack_pop, Value::Array(values) if values.len() == 2
             && matches!(&values[0], Value::Stack(stack) if stack.len() == 1)
@@ -6662,25 +6664,28 @@ mod tests {
         let stack_peek = call_native_function(
             &mut interpreter,
             "stack_peek",
-            &[Value::Stack(vec![Value::Int(5), Value::Int(6)])],
+            &[Value::Stack(vec![Value::Int(5), Value::Int(6)].into())],
         );
         assert!(matches!(stack_peek, Value::Int(6)));
 
         let stack_is_empty_false = call_native_function(
             &mut interpreter,
             "stack_is_empty",
-            &[Value::Stack(vec![Value::Int(1)])],
+            &[Value::Stack(vec![Value::Int(1)].into())],
         );
         assert!(matches!(stack_is_empty_false, Value::Bool(false)));
 
-        let stack_is_empty_true =
-            call_native_function(&mut interpreter, "stack_is_empty", &[Value::Stack(vec![])]);
+        let stack_is_empty_true = call_native_function(
+            &mut interpreter,
+            "stack_is_empty",
+            &[Value::Stack(vec![].into())],
+        );
         assert!(matches!(stack_is_empty_true, Value::Bool(true)));
 
         let stack_to_array = call_native_function(
             &mut interpreter,
             "stack_to_array",
-            &[Value::Stack(vec![Value::Int(11), Value::Int(12)])],
+            &[Value::Stack(vec![Value::Int(11), Value::Int(12)].into())],
         );
         assert!(matches!(stack_to_array, Value::Array(values) if values.len() == 2
             && matches!(&values[0], Value::Int(11))
@@ -6689,7 +6694,7 @@ mod tests {
         let stack_size_ok = call_native_function(
             &mut interpreter,
             "stack_size",
-            &[Value::Stack(vec![Value::Int(1), Value::Int(2), Value::Int(3)])],
+            &[Value::Stack(vec![Value::Int(1), Value::Int(2), Value::Int(3)].into())],
         );
         assert!(matches!(stack_size_ok, Value::Int(3)));
 

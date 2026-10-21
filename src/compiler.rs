@@ -535,9 +535,7 @@ impl Compiler {
                 // Compile then block
                 self.push_local_aware_runtime_scope();
                 self.enter_scope();
-                for stmt in then_branch {
-                    self.compile_stmt(stmt)?;
-                }
+                self.compile_sequence(then_branch)?;
                 self.exit_scope();
                 self.pop_local_aware_runtime_scope();
 
@@ -552,9 +550,7 @@ impl Compiler {
                 if let Some(else_stmts) = else_branch {
                     self.push_local_aware_runtime_scope();
                     self.enter_scope();
-                    for stmt in else_stmts {
-                        self.compile_stmt(stmt)?;
-                    }
+                    self.compile_sequence(else_stmts)?;
                     self.exit_scope();
                     self.pop_local_aware_runtime_scope();
                 }
@@ -612,9 +608,7 @@ impl Compiler {
                 // Compile body
                 self.enter_scope();
                 self.push_local_aware_runtime_scope();
-                for stmt in body {
-                    self.compile_stmt(stmt)?;
-                }
+                self.compile_sequence(body)?;
                 self.exit_scope();
                 self.pop_local_aware_runtime_scope();
                 self.patch_loop_continues();
@@ -732,9 +726,7 @@ impl Compiler {
 
                 // Compile body
                 self.push_local_aware_runtime_scope();
-                for stmt in body {
-                    self.compile_stmt(stmt)?;
-                }
+                self.compile_sequence(body)?;
 
                 self.pop_local_aware_runtime_scope();
                 self.patch_loop_continues();
@@ -848,9 +840,7 @@ impl Compiler {
                 }
 
                 // Compile function body
-                for stmt in body {
-                    func_compiler.compile_stmt(stmt)?;
-                }
+                func_compiler.compile_sequence(body)?;
 
                 // Ensure function returns None if no explicit return
                 func_compiler.chunk.emit(OpCode::ReturnNone);
@@ -925,9 +915,7 @@ impl Compiler {
                                 .extend(fields.iter().map(|(name, _)| name.clone()));
                         }
 
-                        for stmt in body {
-                            func_compiler.compile_stmt(stmt)?;
-                        }
+                        func_compiler.compile_sequence(body)?;
 
                         func_compiler.chunk.emit(OpCode::ReturnNone);
 
@@ -980,9 +968,7 @@ impl Compiler {
                     self.chunk.emit(OpCode::Pop);
 
                     // Compile case body
-                    for stmt in body {
-                        self.compile_stmt(stmt)?;
-                    }
+                    self.compile_sequence(body)?;
 
                     // Jump to end of match
                     let end_jump = self.chunk.emit(OpCode::Jump(0));
@@ -999,9 +985,7 @@ impl Compiler {
                 // Compile default case if present
                 if let Some(default_body) = default {
                     self.chunk.emit(OpCode::Pop); // Pop the value
-                    for stmt in default_body {
-                        self.compile_stmt(stmt)?;
-                    }
+                    self.compile_sequence(default_body)?;
                 } else {
                     // Pop the original value if no case matched
                     self.chunk.emit(OpCode::Pop);
@@ -1033,9 +1017,7 @@ impl Compiler {
                     // Compile body
                     self.enter_scope();
                     self.push_local_aware_runtime_scope();
-                    for stmt in body {
-                        self.compile_stmt(stmt)?;
-                    }
+                    self.compile_sequence(body)?;
                     self.exit_scope();
                     self.pop_local_aware_runtime_scope();
                     self.patch_loop_continues();
@@ -1050,9 +1032,7 @@ impl Compiler {
                     // Unconditional loop
                     self.enter_scope();
                     self.push_local_aware_runtime_scope();
-                    for stmt in body {
-                        self.compile_stmt(stmt)?;
-                    }
+                    self.compile_sequence(body)?;
                     self.exit_scope();
                     self.pop_local_aware_runtime_scope();
                     self.patch_loop_continues();
@@ -1083,9 +1063,7 @@ impl Compiler {
                 let begin_try_index = self.chunk.emit(OpCode::BeginTry(0));
 
                 // Compile try block
-                for stmt in try_block {
-                    self.compile_stmt(stmt)?;
-                }
+                self.compile_sequence(try_block)?;
 
                 // End try block
                 self.chunk.emit(OpCode::EndTry);
@@ -1105,9 +1083,7 @@ impl Compiler {
                 self.runtime_bindings.insert(except_var.clone());
 
                 // Compile catch block
-                for stmt in except_block {
-                    self.compile_stmt(stmt)?;
-                }
+                self.compile_sequence(except_block)?;
 
                 // End catch block
                 self.chunk.emit(OpCode::EndCatch);
@@ -1135,9 +1111,7 @@ impl Compiler {
                 self.enter_scope();
 
                 // Compile block statements
-                for stmt in statements {
-                    self.compile_stmt(stmt)?;
-                }
+                self.compile_sequence(statements)?;
 
                 // Exit scope
                 self.exit_scope();
@@ -1601,9 +1575,7 @@ impl Compiler {
                 };
 
                 // Compile function body
-                for stmt in body {
-                    func_compiler.compile_stmt(stmt)?;
-                }
+                func_compiler.compile_sequence(body)?;
 
                 func_compiler.chunk.emit(OpCode::ReturnNone);
 
@@ -1909,6 +1881,39 @@ impl Compiler {
     }
 
     /// Compile assignment target
+    fn compile_sequence(&mut self, statements: &[Stmt]) -> Result<(), String> {
+        for (i, stmt) in statements.iter().enumerate() {
+            if self.uses_local_slots && self.scope_depth > 0 {
+                if let Some((root, pair, function, mutable)) =
+                    crate::interpreter::assignment::pop_rebind_pair(stmt, statements.get(i + 1))
+                {
+                    self.compile_expr(&Expr::Identifier(root.into()))?;
+                    self.compile_expr(function)?;
+                    let binding = if let Some(slot) = self.resolve_local_slot(root) {
+                        crate::bytecode::MutationBinding::Local(slot)
+                    } else {
+                        self.resolve_capture(root);
+                        crate::bytecode::MutationBinding::Named(root.into())
+                    };
+                    let kind = if mutable {
+                        BytecodeBindingKind::Mutable
+                    } else {
+                        BytecodeBindingKind::LetImmutable
+                    };
+                    let pair_slot = self.declare_local(pair, kind)?;
+                    let fast = self.chunk.emit(OpCode::TryPopRebind(binding, pair_slot, 0));
+                    self.chunk.emit(OpCode::Call(1));
+                    self.chunk.patch_jump(fast);
+                    self.chunk.emit(OpCode::DefineLocal(pair_slot));
+                    self.chunk.emit(OpCode::Pop);
+                    continue;
+                }
+            }
+            self.compile_stmt(stmt)?;
+        }
+        Ok(())
+    }
+
     fn compile_assignment(&mut self, target: &Expr) -> Result<(), String> {
         if matches!(target,
             Expr::IndexAccess { object, .. } | Expr::FieldAccess { object, .. }

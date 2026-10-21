@@ -1550,9 +1550,9 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
         // Stack functions
         "Stack" => {
             if let Some(Value::Array(arr)) = arg_values.first() {
-                Value::Stack((**arr).clone())
+                Value::Stack(arr.iter().cloned().collect())
             } else {
-                Value::Stack(Vec::new())
+                Value::Stack(Default::default())
             }
         }
 
@@ -1563,7 +1563,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                 stack.push(item);
                 Value::Stack(stack)
             } else {
-                Value::Stack(Vec::new())
+                Value::Stack(Default::default())
             }
         }
 
@@ -1575,7 +1575,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
                     Value::Array(Arc::new(vec![Value::Stack(stack), Value::Null]))
                 }
             } else {
-                Value::Array(Arc::new(vec![Value::Stack(Vec::new()), Value::Null]))
+                Value::Array(Arc::new(vec![Value::Stack(Default::default()), Value::Null]))
             }
         }
 
@@ -1610,7 +1610,7 @@ pub fn handle(interp: &mut Interpreter, name: &str, arg_values: &[Value]) -> Opt
 
         "stack_to_array" => {
             if let Some(Value::Stack(stack)) = arg_values.first() {
-                Value::Array(Arc::new(stack.clone()))
+                Value::array(stack.iter().cloned().collect())
             } else {
                 Value::Array(Arc::new(Vec::new()))
             }

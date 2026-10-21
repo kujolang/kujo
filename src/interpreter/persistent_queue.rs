@@ -178,3 +178,84 @@ impl From<Vec<Value>> for PersistentQueue {
         items.into_iter().collect()
     }
 }
+/// Persistent LIFO storage. Iteration remains bottom-to-top for the public
+/// stack-to-array/debug contracts; push/pop/peek only touch the top link.
+#[derive(Clone, Default)]
+pub struct PersistentStack {
+    top: Link,
+}
+impl PersistentStack {
+    pub fn new() -> Self {
+        Self::default()
+    }
+    pub fn len(&self) -> usize {
+        self.top.as_ref().map_or(0, |n| n.len)
+    }
+    pub fn is_empty(&self) -> bool {
+        self.top.is_none()
+    }
+    pub fn last(&self) -> Option<&Value> {
+        self.top.as_ref().map(|n| n.value.as_ref())
+    }
+    pub fn push(&mut self, value: Value) {
+        self.top = Some(Node::prepend(value, self.top.take()));
+    }
+    pub fn pop(&mut self) -> Option<Value> {
+        let head = self.top.take()?;
+        self.top = head.next.clone();
+        Some(head.value.as_ref().clone())
+    }
+    pub(crate) fn nesting_depth(&self) -> usize {
+        self.top.as_ref().map_or(0, |n| n.max_depth + 1)
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &Value> {
+        let values: Vec<_> = std::iter::successors(self.top.as_deref(), |n| n.next.as_deref())
+            .map(|n| n.value.as_ref())
+            .collect();
+        values.into_iter().rev()
+    }
+}
+impl FromIterator<Value> for PersistentStack {
+    fn from_iter<T: IntoIterator<Item = Value>>(items: T) -> Self {
+        let mut stack = Self::new();
+        for item in items {
+            stack.push(item);
+        }
+        stack
+    }
+}
+impl From<Vec<Value>> for PersistentStack {
+    fn from(items: Vec<Value>) -> Self {
+        items.into_iter().collect()
+    }
+}
+
+#[cfg(test)]
+mod stack_tests {
+    use super::*;
+    #[test]
+    fn stack_updates_share_spines_preserve_depth_and_drop_iteratively() {
+        let original: PersistentStack = (0..100_000).map(Value::Int).collect();
+        let mut changed = original.clone();
+        changed.push(Value::array(vec![Value::array(vec![Value::Int(7)])]));
+        assert!(Arc::ptr_eq(
+            original.top.as_ref().unwrap(),
+            changed.top.as_ref().unwrap().next.as_ref().unwrap()
+        ));
+        assert_eq!(changed.nesting_depth(), 3);
+        changed.pop();
+        assert!(Arc::ptr_eq(original.top.as_ref().unwrap(), changed.top.as_ref().unwrap()));
+        assert_eq!(changed.nesting_depth(), 1);
+        assert_eq!(changed.iter().count(), 100_000);
+        for i in (0..100_000).rev() {
+            assert!(matches!(changed.pop(), Some(Value::Int(n)) if n == i));
+        }
+        assert!(changed.pop().is_none());
+        assert_eq!(original.len(), 100_000);
+        let value = Value::Stack(original);
+        let mut visits = 0;
+        assert_eq!(Value::walk_nesting_depth(&value, || visits += 1), 1);
+        assert_eq!(visits, 1);
+        drop(value);
+    }
+}

@@ -172,6 +172,10 @@ fn collection_fast_paths_survive_optimizer_relocation_and_jit_fallback() {
             assert_equal(rows[0][0], 49)
             a = fake(a, 9)
             assert_equal(a, [9])
+            let p := pop(a)
+            a = p[0]
+            assert_equal(a, [])
+            assert_equal(p[1], 9)
         }
         run()
     "#;
@@ -402,4 +406,97 @@ fn field_appends_preserve_evaluation_order_aliases_and_fallbacks() {
         "struct S { items: array } let s := S { items: [] } s.items = push(s.items, 1)",
         "immutable",
     );
+}
+
+#[test]
+fn lifo_updates_preserve_snapshots_order_and_empty_contracts() {
+    support::success(
+        r#"
+        mut stack := Stack([1,2,3])
+        let saved := stack
+        stack = stack_push(stack, [4])
+        let p := stack_pop(stack)
+        mut item := p[1]
+        item[0] = 99
+        assert_equal(stack_to_array(saved), [1,2,3])
+        assert_equal(stack_to_array(stack), [1,2,3,[4]])
+        assert_equal(stack_to_array(p[0]), [1,2,3])
+        assert_equal(stack_pop(Stack())[1], null)
+        assert_equal(pop([])[1], 0)
+        func run() {
+            mut a := range(0, 10000)
+            let original := a
+            mut sum := 0
+            while len(a) > 0 {
+                let pair := pop(a)
+                a = pair[0]
+                sum += pair[1]
+            }
+            assert_equal(sum, 49995000)
+            assert_equal(len(original), 10000)
+            mut b := [[1],[2]]
+            let snapshot := pop(b)
+            b = snapshot[0]
+            let second := pop(b)
+            b = second[0]
+            assert_equal(snapshot[0], [[1]])
+            assert_equal(second[1], [1])
+            assert_equal(b, [])
+            mut empty := []
+            let z := pop(empty)
+            empty = z[0]
+            assert_equal(z[1], 0)
+            mut stack := Stack(range(0,10000))
+            mut i := 9999
+            while !stack_is_empty(stack) {
+                let pair := stack_pop(stack)
+                stack = pair[0]
+                assert_equal(pair[1], i)
+                i -= 1
+            }
+            assert_equal(i, -1)
+        }
+        run()
+        func atomic_errors() {
+            let fixed := [1,2]
+            mut caught := false
+            try { let rejected := pop(fixed) fixed = rejected[0] } except e { caught = true }
+            assert(caught)
+            assert_equal(fixed,[1,2])
+            mut a := [1,2]
+            let p := pop(a)
+            assert_equal(a,[1,2])
+            assert_equal(p[0],[1])
+        }
+        atomic_errors()
+        func fake(a) { return [[9],8] }
+        func shadow(pop) {
+            mut a := [1,2]
+            let p := pop(a)
+            a = p[0]
+            assert_equal(a,[9])
+            assert_equal(p[1],8)
+        }
+        shadow(fake)
+        func fail(a) { throw("pop failed") }
+        mut a := [1]
+        mut caught := false
+        try { let p := fail(a) a = p[0] } except e { caught = true }
+        assert(caught)
+        assert_equal(a,[1])
+        func closure() {
+            mut a := [1,2,3]
+            func next() { let p := pop(a) a = p[0] return p[1] }
+            return next
+        }
+        let next := closure()
+        assert_equal(next(),3)
+        assert_equal(next(),2)
+        assert_equal(next(),1)
+        assert_equal(next(),0)
+    "#,
+    );
+    support::failure("func f() { let a := [1] let p := pop(a) a = p[0] } f()", "immutable");
+    support::failure("func f() { mut a := 1 let p := pop(a) a = p[0] } f()", "array");
+    support::failure("mut a := [1] let p := 9 let p := pop(a) a = p[0]", "Duplicate");
 }

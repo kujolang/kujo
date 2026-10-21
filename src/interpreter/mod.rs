@@ -4245,11 +4245,37 @@ impl Interpreter {
             }
         }
 
-        for stmt in stmts {
+        for (index, stmt) in stmts.iter().enumerate() {
             if should_hoist && is_hoistable(stmt) {
                 continue;
             }
-            self.eval_stmt(stmt);
+            let mut handled = false;
+            if let Some((root, pair_name, Expr::Identifier(function), mutable)) =
+                assignment::pop_rebind_pair(stmt, stmts.get(index + 1))
+            {
+                if !self.env.scopes.last().is_some_and(|scope| scope.contains_key(pair_name))
+                    && matches!(self.env.get(function), Some(Value::NativeFunction(name)) if name == "pop")
+                {
+                    let mut original = self.env.get(root);
+                    let mut pair = None;
+                    let _ = self.env.mutate_checked(root, |value| {
+                        pair = assignment::pop_rebinding(value, &mut original);
+                    });
+                    if let Some(pair) = pair {
+                        let kind =
+                            if mutable { BindingKind::Mutable } else { BindingKind::LetImmutable };
+                        if let Err(error) =
+                            self.env.define_with_kind_checked(pair_name.into(), pair, kind)
+                        {
+                            self.return_value = Some(Value::Error(error));
+                        }
+                        handled = true;
+                    }
+                }
+            }
+            if !handled {
+                self.eval_stmt(stmt);
+            }
             if self.return_value.is_some() || self.control_flow != ControlFlow::None {
                 break;
             }

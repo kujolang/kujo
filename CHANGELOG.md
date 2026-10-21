@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Share persistent LIFO stack storage and reuse uniquely owned arrays in adjacent
+  pop/rebind sequences, retaining aliases, popped values and empty-pop behavior.
+
 - Reuse array storage for field and indexed-path append assignments, including
   dynamic indices, while preserving callback ordering and snapshot semantics.
 

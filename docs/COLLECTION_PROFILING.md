@@ -207,3 +207,57 @@ holds the evaluated source allocation. Callback replacement, aliases, shadowed
 functions, and errors preserve ordinary behavior. Dynamic indexed paths are
 supported; this is not limited to literal fields. VM guards retain normal calls
 for other functions and participate in optimizer branch relocation/JIT fallback.
+
+## LIFO storage and consuming array pop
+
+Native `Stack` now uses persistent links, sharing unchanged storage across values.
+Push, pop, size and peek avoid whole-stack copies, and depth metadata avoids scans
+when a stack is returned inside a result pair. Iteration/array conversion remains
+linear and preserves bottom-to-top order. Removed compound items retain ordinary
+value semantics. Long unique chains are destroyed iteratively.
+
+An adjacent `let pair := pop(items); items = pair[0]` can reuse array storage when
+`pop` resolves to the native builtin and `items` is mutable. Both runtimes retain
+aliases, popped values, empty-pop results, shadowing, and ordinary error behavior.
+The VM recognizes this sequence in function-local statement blocks and releases
+the dead pair slot from a previous loop iteration before checking ownership.
+Standalone functional `pop(items)` still preserves `items` and therefore copies;
+non-adjacent statements and other spellings use the ordinary path. Persistent
+`Stack` provides cheap functional LIFO updates without that syntactic restriction.
+
+### State/LIFO follow-up verification (2026-10-21)
+
+Baseline: `5710de50e2294b23b409e11b0dd043b040ac3694`. Same macOS x86-64
+host and debug builds as above, setup excluded, medians of three samples. The
+first four baseline cases overlapped compilation; final samples ran after the
+verification builds. Absolute timings and ratios are diagnostic, not rankings.
+
+Milliseconds at N=4,000:
+
+| Workload | VM before | VM after | Interpreter before | Interpreter after |
+|---|---:|---:|---:|---:|
+| Struct-owned row writes | 1924.34 | 82.85 | 34.69 | 42.96 |
+| Dictionary-owned row writes | 1904.40 | 67.04 | 38.88 | 44.84 |
+| Field append | 4093.31 | 77.36 | 1735.10 | 66.50 |
+| Adjacent array pop/rebind | 994.17 | 37.12 | 1033.38 | 62.31 |
+| Stack pop/push pairs | 9372.63 | 270.75 | 8652.94 | 161.41 |
+
+The stack baseline was rerun with the preserved baseline executable; its VM
+2,000-element sample was noisier and slower than its 4,000-element sample. Do not
+infer precise scaling ratios from those absolute baseline timings.
+
+Final 1,000 → 4,000 element samples grow approximately with the amount of work.
+Interpreter nested writes were already efficient; their small timing differences
+are not evidence of improvement. The structural tests cover row/append/pop buffer
+identity, retained aliases, cached depth work, stack spine sharing and destruction,
+plus both runtimes' evaluation order, errors, closures and immutable bindings.
+VM host-value tests cover over-deep siblings and repair without partial writes.
+
+Validation: 1,241 selected Rust tests passed (eight existing library ignores),
+including library, native representation, runtime parity, CLI/JSON, diagnostics,
+documentation and affected API contracts. Both VM and dual CLI gates passed
+150/150 runnable fixtures, 11 policy skips, with zero dual fallback. Formatting,
+`cargo check`, and diff whitespace checks passed. All five manual profile cases
+passed their assertions. The full unfiltered Cargo integration suite was not run;
+validation focused on the broad runtime/CLI and affected-surface gate above.
+No benchmark port, release artifact, or maintainer communication is included.

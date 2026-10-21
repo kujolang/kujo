@@ -1291,7 +1291,7 @@ pub enum Value {
     /// FIFO queue
     Queue(super::persistent_queue::PersistentQueue),
     /// LIFO stack
-    Stack(Vec<Value>),
+    Stack(super::persistent_queue::PersistentStack),
     /// Bounded thread-safe channel for message passing and backpressure.
     Channel(Arc<Mutex<(std::sync::mpsc::SyncSender<Value>, std::sync::mpsc::Receiver<Value>)>>),
     /// HTTP server with routes
@@ -1704,10 +1704,13 @@ impl Value {
                         stack.push((nested, depth + 1));
                     }
                 }
-                Value::Set(items) | Value::Stack(items) => {
+                Value::Set(items) => {
                     for nested in items.iter() {
                         stack.push((nested, depth + 1));
                     }
+                }
+                Value::Stack(items) => {
+                    max_depth = max_depth.max(depth + items.nesting_depth());
                 }
                 Value::Queue(items) => {
                     max_depth = max_depth.max(depth + items.nesting_depth());
