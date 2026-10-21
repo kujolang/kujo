@@ -4736,13 +4736,15 @@ impl TypeChecker {
                     Some(TypeAnnotation::String) => {
                         if matches!(
                             index_type,
-                            Some(TypeAnnotation::Int) | Some(TypeAnnotation::Any)
+                            Some(TypeAnnotation::Int)
+                                | Some(TypeAnnotation::Float)
+                                | Some(TypeAnnotation::Any)
                         ) {
                             Some(TypeAnnotation::String)
                         } else {
                             self.errors.push(KujoError::new(
                                 ErrorKind::TypeError,
-                                "String index access expects integer index".to_string(),
+                                "String index access expects numeric index".to_string(),
                                 SourceLocation::unknown(),
                             ));
                             Some(TypeAnnotation::Any)

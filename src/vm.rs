@@ -1044,6 +1044,15 @@ impl VM {
 
     fn get_indexed_value(object: &Value, index: &Value) -> Result<Value, String> {
         match (object, index) {
+            (Value::Array(_) | Value::Str(_) | Value::Bytes(_), Value::Float(i)) => {
+                if !i.is_finite() {
+                    return Err("Invalid index operation".to_string());
+                }
+                // Match the interpreter's legacy read-index conversion. Writes
+                // and dictionary indexing still require integer/string indices.
+                Self::get_indexed_value(object, &Value::Int(*i as i64))
+                    .map_err(|_| format!("Index out of bounds: {}", i))
+            }
             (Value::Array(arr), Value::Int(i)) => {
                 let idx = if *i < 0 { (arr.len() as i64 + i) as usize } else { *i as usize };
                 arr.get(idx).cloned().ok_or_else(|| format!("Index out of bounds: {}", i))

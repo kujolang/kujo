@@ -321,6 +321,10 @@ let or_value := false || 5
 - Dictionary indexing accepts string keys and integer keys. Other key types are invalid index operations.
 - Integer keys alias their canonical decimal string (`0` aliases `"0"`, but not `"00"`, `"+0"`, or `"-0"`). Assigning a sparse key creates only that entry; intermediate keys do not appear. An explicitly assigned `null` remains a present, readable entry and participates in dictionary equality.
 - Array/string indexing outside bounds is a runtime error (`Index out of bounds: <index>`), not a sentinel-value fallback.
+- Array/string/byte reads retain legacy finite floating-point indices, truncated toward
+  zero before resolving negative indices, in both runtimes. Non-finite indices
+  are errors. Writes and dictionary indices retain their integer/string
+  contracts; use explicit integer conversion when an index comes from math helpers.
 - Invalid index assignment targets (for example assigning through index access on non-indexable values) are runtime errors.
 - Nested assignment paths may combine array/dictionary indexing and struct
   fields, rooted in a mutable binding (for example `rows[0][1] = 7` or

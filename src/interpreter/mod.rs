@@ -3301,7 +3301,6 @@ impl Interpreter {
             Value::Array(arr) => {
                 let idx = match &index_clone {
                     Value::Int(i) => *i,
-                    Value::Float(f) if f.is_finite() => *f as i64,
                     _ => {
                         assignment_error = Some(
                             "Invalid index assignment: unsupported array index type".to_string(),
@@ -3318,6 +3317,13 @@ impl Interpreter {
                 }
 
                 arr_mut[resolved as usize] = value_clone.clone();
+            }
+            other
+                if other.dictionary_len().is_some()
+                    && !matches!(index_clone, Value::Int(_) | Value::Str(_)) =>
+            {
+                assignment_error =
+                    Some("Invalid index assignment: unsupported map key type".into());
             }
             Value::Dict(dict) => {
                 let key = Self::stringify_value(&index_clone);

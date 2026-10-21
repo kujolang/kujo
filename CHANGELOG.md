@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Match the interpreter's finite floating-point array/string/byte read indices in the
+  VM; non-finite indices remain errors. Reject floating-point simple array writes
+  and non-string/non-integer dictionary writes in the interpreter consistently
+  with VM and nested writes.
+
 - Avoid cloning VM globals for argument-only arithmetic, string, byte, JSON,
   and collection builtins; callback APIs still refresh their global dependencies.
 
