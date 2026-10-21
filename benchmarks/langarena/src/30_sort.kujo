@@ -1,0 +1,58 @@
+func sort_prepare(input) {
+    mut state := input
+    mut data := []
+    mut i := 0
+    while i < state["cfg"]["size"] { data = push(data, random_int(1000000)) i += 1 }
+    state["data"] = data
+    return state
+}
+func quick_sort(input, low, high) {
+    mut data := input
+    if low >= high { return data }
+    let pivot := data[idiv(low + high, 2)]
+    mut i := low
+    mut j := high
+    while i <= j {
+        while data[i] < pivot { i += 1 }
+        while data[j] > pivot { j -= 1 }
+        if i <= j { let tmp := data[i] data[i] = data[j] data[j] = tmp i += 1 j -= 1 }
+    }
+    data = quick_sort(data, low, j)
+    data = quick_sort(data, i, high)
+    return data
+}
+func merge_sort(input, left, right) {
+    mut state := input
+    if left >= right { return state }
+    let mid := idiv(left + right, 2)
+    state = merge_sort(state, left, mid)
+    state = merge_sort(state, mid + 1, right)
+    mut k := left
+    while k <= right { state[1][k] = state[0][k] k += 1 }
+    mut i := left
+    mut j := mid + 1
+    k = left
+    while i <= mid && j <= right {
+        if state[1][i] <= state[1][j] { state[0][k] = state[1][i] i += 1 }
+        else { state[0][k] = state[1][j] j += 1 }
+        k += 1
+    }
+    while i <= mid { state[0][k] = state[1][i] i += 1 k += 1 }
+    return state
+}
+func sort_run(input, iteration) {
+    mut state := input
+    let n := len(state["data"])
+    state["result"] = u32(state["result"] + state["data"][random_int(n)])
+    mut sorted := []
+    if state["cfg"]["name"] == "Sort::Quick" { sorted = quick_sort(state["data"], 0, n - 1) }
+    else if state["cfg"]["name"] == "Sort::Merge" {
+        let merged := merge_sort([state["data"], vector(n, 0)], 0, n - 1)
+        sorted = merged[0]
+    } else { sorted = sort(state["data"]) }
+    state["result"] = u32(state["result"] + sorted[random_int(n)])
+    return state
+}
+registry["Sort::Quick"] = [basic_state, sort_prepare, sort_run, result_checksum]
+registry["Sort::Merge"] = [basic_state, sort_prepare, sort_run, result_checksum]
+registry["Sort::Self"] = [basic_state, sort_prepare, sort_run, result_checksum]

@@ -1,0 +1,53 @@
+struct CacheNode { value: string, previous: any, next: any }
+func cache_create(cfg) { return {"cfg": cfg, "nodes": {}, "head": null, "tail": null, "hits": 0, "misses": 0} }
+func cache_front(input, key) {
+    mut state := input
+    if state["head"] == key { return state }
+    let previous := state["nodes"][key].previous
+    let next := state["nodes"][key].next
+    if previous != null { state["nodes"][previous].next = next }
+    if next != null { state["nodes"][next].previous = previous }
+    if state["tail"] == key { state["tail"] = previous }
+    state["nodes"][key].previous = null
+    state["nodes"][key].next = state["head"]
+    if state["head"] != null { state["nodes"][state["head"]].previous = key }
+    state["head"] = key
+    if state["tail"] == null { state["tail"] = key }
+    return state
+}
+func cache_run(input, iteration) {
+    mut state := input
+    mut i := 0
+    while i < 1000 {
+        let key := "item_" + str(random_int(state["cfg"]["values"]))
+        if has_key(state["nodes"], key) == 1 {
+            state = cache_front(state, key)
+            state["hits"] += 1
+            state["nodes"][key].value = "updated_" + str(iteration)
+            state = cache_front(state, key)
+        } else {
+            state["misses"] += 1
+            if len(state["nodes"]) >= state["cfg"]["size"] {
+                let oldest := state["tail"]
+                let previous := state["nodes"][oldest].previous
+                let removed := remove(state["nodes"], oldest)
+                state["nodes"] = removed[0]
+                if previous != null { state["nodes"][previous].next = null }
+                state["tail"] = previous
+                if state["head"] == oldest { state["head"] = null }
+            }
+            state["nodes"][key] = CacheNode { value: "new_" + str(iteration), previous: null, next: state["head"] }
+            if state["head"] != null { state["nodes"][state["head"]].previous = key }
+            state["head"] = key
+            if state["tail"] == null { state["tail"] = key }
+        }
+        i += 1
+    }
+    return state
+}
+func cache_checksum(state) {
+    mut result := u32(bit_shl(5432, 5) + state["hits"])
+    result = u32(bit_shl(result, 5) + state["misses"])
+    return u32(bit_shl(result, 5) + len(state["nodes"]))
+}
+registry["Etc::CacheSimulation"] = [cache_create, unchanged, cache_run, cache_checksum]

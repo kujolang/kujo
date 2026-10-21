@@ -1,0 +1,54 @@
+struct Vec3 { x: float, y: float, z: float }
+struct Sphere { center: any, radius: float, color: any }
+func vec(x, y, z) { return Vec3 { x: x, y: y, z: z } }
+func vscale(v, s) { return vec(v.x * s, v.y * s, v.z * s) }
+func vadd(a, b) { return vec(a.x + b.x, a.y + b.y, a.z + b.z) }
+func vsub(a, b) { return vec(a.x - b.x, a.y - b.y, a.z - b.z) }
+func vdot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z }
+func vnorm(v) { return vscale(v, 1.0 / sqrt(vdot(v, v))) }
+func ray_intersect(origin, direction, sphere) {
+    let l := vsub(sphere.center, origin)
+    let tca := vdot(l, direction)
+    if tca < 0.0 { return null }
+    let d2 := vdot(l, l) - tca * tca
+    let r2 := sphere.radius * sphere.radius
+    if d2 > r2 { return null }
+    let t := tca - sqrt(r2 - d2)
+    if t > 10000.0 { return null }
+    return t
+}
+func ray_shade(origin, direction, sphere, distance) {
+    let point := vadd(origin, vscale(direction, distance))
+    let normal := vnorm(vsub(point, sphere.center))
+    let lambert := vdot(vnorm(vsub(vec(0.7, -1.0, 1.7), point)), normal)
+    let clamped := min(max(lambert, 0.0), 1.0)
+    let color := vadd(vscale(vec(1.0, 1.0, 1.0), clamped * 0.5), vscale(sphere.color, 0.3))
+    return to_int((color.x + color.y + color.z) / 3.0 * 6.0)
+}
+func ray_run(input, iteration) {
+    mut state := input
+    let scene := [Sphere { center: vec(-1.0,0.0,3.0), radius: 0.3, color: vec(1.0,0.0,0.0) }, Sphere { center: vec(0.0,0.0,3.0), radius: 0.8, color: vec(0.0,1.0,0.0) }, Sphere { center: vec(1.0,0.0,3.0), radius: 0.4, color: vec(0.0,0.0,1.0) }]
+    let lut := utf8_encode(".-+*XM")
+    let w := state["cfg"]["w"]
+    let h := state["cfg"]["h"]
+    mut result := 0
+    mut y := 0
+    while y < h {
+        mut x := 0
+        while x < w {
+            let origin := vec(0.0,0.0,0.0)
+            let direction := vnorm(vec((x - w / 2.0) / w, (y - h / 2.0) / h, 1.0))
+            mut pixel := 32
+            for sphere in scene {
+                let distance := ray_intersect(origin, direction, sphere)
+                if distance != null { pixel = lut[ray_shade(origin, direction, sphere, distance)] break }
+            }
+            result += pixel
+            x += 1
+        }
+        y += 1
+    }
+    state["result"] = u32(state["result"] + result)
+    return state
+}
+registry["Etc::TextRaytracer"] = [basic_state, unchanged, ray_run, result_checksum]

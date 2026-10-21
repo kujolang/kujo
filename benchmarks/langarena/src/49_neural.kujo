@@ -1,0 +1,101 @@
+struct Neuron { threshold: float, previous: float, output: float, error: float, incoming: array, outgoing: array }
+struct Synapse { source: int, destination: int, weight: float, previous: float }
+func neural_prepare(input) {
+    mut state := input
+    mut neurons := []
+    mut i := 0
+    while i < 13 {
+        let threshold := random_float() * 2.0 - 1.0
+        neurons = push(neurons, Neuron { threshold: threshold, previous: threshold, output: 0.0, error: 0.0, incoming: [], outgoing: [] })
+        i += 1
+    }
+    mut synapses := []
+    i = 0
+    while i < 12 {
+        mut first := 2
+        mut end := 12
+        if i >= 2 { first = 12 end = 13 }
+        mut j := first
+        while j < end {
+            let weight := random_float() * 2.0 - 1.0
+            let index := len(synapses)
+            synapses = push(synapses, Synapse { source: i, destination: j, weight: weight, previous: weight })
+            neurons[i].outgoing = push(neurons[i].outgoing, index)
+            neurons[j].incoming = push(neurons[j].incoming, index)
+            j += 1
+        }
+        i += 1
+    }
+    state["neurons"] = neurons
+    state["synapses"] = synapses
+    return state
+}
+func neural_forward(input, a, b) {
+    mut state := input
+    state["neurons"][0].output = to_float(a)
+    state["neurons"][1].output = to_float(b)
+    mut i := 2
+    while i < 13 {
+        mut activation := 0.0
+        for index in state["neurons"][i].incoming {
+            let synapse := state["synapses"][index]
+            activation += synapse.weight * state["neurons"][synapse.source].output
+        }
+        activation -= state["neurons"][i].threshold
+        state["neurons"][i].output = 1.0 / (1.0 + exp(-activation))
+        i += 1
+    }
+    return state
+}
+func neural_update(input, i) {
+    mut state := input
+    let error := state["neurons"][i].error
+    for index in state["neurons"][i].incoming {
+        let old := state["synapses"][index].weight
+        let source := state["synapses"][index].source
+        state["synapses"][index].weight += (0.3 * error * state["neurons"][source].output) + (0.3 * (old - state["synapses"][index].previous))
+        state["synapses"][index].previous = old
+    }
+    let old := state["neurons"][i].threshold
+    state["neurons"][i].threshold += (0.3 * error * -1.0) + (0.3 * (old - state["neurons"][i].previous))
+    state["neurons"][i].previous = old
+    return state
+}
+func neural_train(input, a, b, target) {
+    mut state := neural_forward(input, a, b)
+    let output := state["neurons"][12].output
+    state["neurons"][12].error = (target - output) * (output * (1.0 - output))
+    state = neural_update(state, 12)
+    mut i := 2
+    while i < 12 {
+        mut error := 0.0
+        for index in state["neurons"][i].outgoing {
+            let synapse := state["synapses"][index]
+            error += synapse.previous * state["neurons"][synapse.destination].error
+        }
+        let value := state["neurons"][i].output
+        state["neurons"][i].error = error * (value * (1.0 - value))
+        state = neural_update(state, i)
+        i += 1
+    }
+    return state
+}
+func neural_run(input, iteration) {
+    mut state := input
+    mut i := 0
+    while i < 1000 {
+        state = neural_train(state, 0, 0, 0)
+        state = neural_train(state, 1, 0, 1)
+        state = neural_train(state, 0, 1, 1)
+        state = neural_train(state, 1, 1, 0)
+        i += 1
+    }
+    return state
+}
+func neural_checksum(input) {
+    mut state := input
+    mut total := 0.0
+    for pair in [[0,0],[0,1],[1,0],[1,1]] { state = neural_forward(state, pair[0], pair[1]) total += state["neurons"][12].output }
+    return checksum_float(total)
+}
+registry["Etc::NeuralNet"] = [basic_state, neural_prepare, neural_run, neural_checksum]

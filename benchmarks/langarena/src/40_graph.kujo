@@ -1,0 +1,134 @@
+func graph_prepare(input) {
+    mut state := input
+    let n := state["cfg"]["vertices"]
+    mut adj := vector(n, [])
+    mut i := 1
+    while i < n { adj[i] = push(adj[i], i - 1) adj[i - 1] = push(adj[i - 1], i) i += 1 }
+    i = 0
+    while i < n {
+        let jumps := random_int(state["cfg"]["jumps"])
+        mut j := 0
+        while j < jumps {
+            let u := i + random_int(state["cfg"]["jump_len"]) - idiv(state["cfg"]["jump_len"], 2)
+            if u >= 0 && u < n && u != i { adj[i] = push(adj[i], u) adj[u] = push(adj[u], i) }
+            j += 1
+        }
+        i += 1
+    }
+    state["adj"] = adj
+    return state
+}
+func graph_bfs(adj) {
+    let target := len(adj) - 1
+    if target == 0 { return 0 }
+    mut visited := bytes(vector(len(adj), 0))
+    mut queue := Queue([[0, 0]])
+    visited[0] = 1
+    while queue_size(queue) > 0 {
+        let pair := queue_dequeue(queue)
+        queue = pair[0]
+        let vertex := pair[1][0]
+        let distance := pair[1][1]
+        for neighbor in adj[vertex] {
+            if neighbor == target { return distance + 1 }
+            if visited[neighbor] == 0 { visited[neighbor] = 1 queue = queue_enqueue(queue, [neighbor, distance + 1]) }
+        }
+    }
+    return -1
+}
+func graph_dfs(adj) {
+    let target := len(adj) - 1
+    if target == 0 { return 0 }
+    mut visited := bytes(vector(len(adj), 0))
+    mut stack := [[0, 0]]
+    mut best := 2147483647
+    while len(stack) > 0 {
+        let pair := pop(stack)
+        stack = pair[0]
+        let vertex := pair[1][0]
+        let distance := pair[1][1]
+        if visited[vertex] == 1 || distance >= best { continue }
+        visited[vertex] = 1
+        for neighbor in adj[vertex] {
+            if neighbor == target { if distance + 1 < best { best = distance + 1 } }
+            else if visited[neighbor] == 0 { stack = push(stack, [neighbor, distance + 1]) }
+        }
+    }
+    if best == 2147483647 { return -1 }
+    return best
+}
+# Preserve upstream heap ordering, including its exact pop sift behavior.
+func graph_heap_push(input, vertex, priority) {
+    mut state := input
+    let size := state[1]
+    if size >= len(state[0]) { state[0] = push(state[0], [vertex, priority]) }
+    else { state[0][size] = [vertex, priority] }
+    mut i := size
+    state[1] += 1
+    while i > 0 {
+        let parent := idiv(i - 1, 2)
+        if state[0][parent][1] <= priority { break }
+        state[0][i] = state[0][parent]
+        i = parent
+    }
+    state[0][i] = [vertex, priority]
+    return state
+}
+func graph_heap_pop(input) {
+    mut state := input
+    let first := state[0][0]
+    state[1] -= 1
+    if state[1] > 0 {
+        let last := state[0][state[1]]
+        mut i := 0
+        while true {
+            let left := 2 * i + 1
+            let right := 2 * i + 2
+            mut smallest := i
+            if left < state[1] && state[0][left][1] < state[0][smallest][1] { smallest = left }
+            if right < state[1] && state[0][right][1] < state[0][smallest][1] { smallest = right }
+            if smallest == i { break }
+            state[0][i] = state[0][smallest]
+            i = smallest
+        }
+        state[0][i] = last
+    }
+    return [state, first]
+}
+func graph_astar(adj) {
+    let n := len(adj)
+    let target := n - 1
+    if target == 0 { return 0 }
+    mut scores := vector(n, 2147483647)
+    mut best := vector(n, 2147483647)
+    scores[0] = 0
+    best[0] = target
+    mut heap := graph_heap_push([[], 0], 0, target)
+    while heap[1] > 0 {
+        let pair := graph_heap_pop(heap)
+        heap = pair[0]
+        let current := pair[1][0]
+        if current == target { return scores[current] }
+        for neighbor in adj[current] {
+            let score := scores[current] + 1
+            if score < scores[neighbor] {
+                scores[neighbor] = score
+                let priority := score + target - neighbor
+                if priority < best[neighbor] { best[neighbor] = priority heap = graph_heap_push(heap, neighbor, priority) }
+            }
+        }
+    }
+    return -1
+}
+func graph_run(input, iteration) {
+    mut state := input
+    mut result := 0
+    if state["cfg"]["name"] == "Graph::BFS" { result = graph_bfs(state["adj"]) }
+    else if state["cfg"]["name"] == "Graph::DFS" { result = graph_dfs(state["adj"]) }
+    else { result = graph_astar(state["adj"]) }
+    state["result"] = u32(state["result"] + result)
+    return state
+}
+registry["Graph::BFS"] = [basic_state, graph_prepare, graph_run, result_checksum]
+registry["Graph::DFS"] = [basic_state, graph_prepare, graph_run, result_checksum]
+registry["Graph::AStar"] = [basic_state, graph_prepare, graph_run, result_checksum]

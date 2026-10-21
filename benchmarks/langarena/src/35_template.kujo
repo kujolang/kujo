@@ -1,0 +1,53 @@
+func template_prepare(input) {
+    mut state := input
+    let first := ["John", "Jane", "Bob", "Alice", "Charlie", "Diana", "Sarah", "Mike"]
+    let last := ["Smith", "Johnson", "Brown", "Taylor", "Wilson", "Davis", "Miller", "Jones"]
+    let cities := ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "San Francisco"]
+    mut text := "<html><body><h1>{{TITLE}}</h1><p>Lorem {ipsum} dolor {sit} amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore {et} dolore magna aliqua. </p><table>"
+    mut vars := {"TITLE": "Template title"}
+    mut i := 0
+    while i < state["cfg"]["count"] {
+        if i % 3 == 0 { text += "<!-- {comment} -->" }
+        let suffix := str(i)
+        text += "<tr><td>{{ FIRST_NAME" + suffix + " }}</td><td>{{LAST_NAME" + suffix + "}}</td><td>{{  CITY" + suffix + "  }}</td>"
+        vars["FIRST_NAME" + suffix] = first[i % len(first)]
+        vars["LAST_NAME" + suffix] = last[i % len(last)]
+        vars["CITY" + suffix] = cities[i % len(cities)]
+        text += "<td>{balance: " + str(i % 100) + "}</td></tr>\n"
+        i += 1
+    }
+    state["text"] = text + "</table></body></html>"
+    state["vars"] = vars
+    return state
+}
+func template_run(input, iteration) {
+    mut state := input
+    let vars := state["vars"]
+    let text := state["text"]
+    mut rendered := ""
+    if state["cfg"]["name"] == "Template::Regex" {
+        func replace_var(captures) { return get_default(vars, trim(captures[1]), "") }
+        rendered = regex_replace_with(text, "\\{\\{(.*?)\\}\\}", replace_var)
+    } else {
+        mut i := 0
+        while i < len(text) {
+            if i + 1 < len(text) && text[i] == "{" && text[i + 1] == "{" {
+                mut j := i + 2
+                while j + 1 < len(text) { if text[j] == "}" && text[j + 1] == "}" { break } j += 1 }
+                if j + 1 < len(text) {
+                    rendered += get_default(vars, trim(substring(text, i + 2, j)), "")
+                    i = j + 2
+                    continue
+                }
+            }
+            rendered += text[i]
+            i += 1
+        }
+    }
+    state["rendered"] = rendered
+    state["result"] = u32(state["result"] + byte_length(utf8_encode(rendered)))
+    return state
+}
+func template_checksum(state) { return u32(state["result"] + checksum_string(state["rendered"])) }
+registry["Template::Regex"] = [basic_state, template_prepare, template_run, template_checksum]
+registry["Template::Parse"] = [basic_state, template_prepare, template_run, template_checksum]

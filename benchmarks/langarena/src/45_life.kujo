@@ -1,0 +1,56 @@
+struct LifeCell { alive: bool, next: bool, neighbors: array }
+func life_create(cfg) {
+    let w := cfg["w"]
+    let h := cfg["h"]
+    mut cells := []
+    mut y := 0
+    while y < h {
+        mut x := 0
+        while x < w {
+            mut neighbors := []
+            mut dy := -1
+            while dy <= 1 {
+                mut dx := -1
+                while dx <= 1 {
+                    if dx != 0 || dy != 0 { neighbors = push(neighbors, ((y + dy + h) % h) * w + (x + dx + w) % w) }
+                    dx += 1
+                }
+                dy += 1
+            }
+            cells = push(cells, LifeCell { alive: false, next: false, neighbors: neighbors })
+            x += 1
+        }
+        y += 1
+    }
+    return {"cfg": cfg, "cells": cells}
+}
+func life_prepare(input) {
+    mut state := input
+    mut i := 0
+    while i < len(state["cells"]) { state["cells"][i].alive = random_float() < 0.1 i += 1 }
+    return state
+}
+func life_run(input, iteration) {
+    mut state := input
+    mut i := 0
+    while i < len(state["cells"]) {
+        mut count := 0
+        for neighbor in state["cells"][i].neighbors { if state["cells"][neighbor].alive { count += 1 } }
+        state["cells"][i].next = count == 3 || (state["cells"][i].alive && count == 2)
+        i += 1
+    }
+    i = 0
+    while i < len(state["cells"]) { state["cells"][i].alive = state["cells"][i].next i += 1 }
+    return state
+}
+func life_checksum(state) {
+    mut hash := 2166136261
+    mut count := 0
+    for cell in state["cells"] {
+        mut alive := 0
+        if cell.alive { alive = 1 count += 1 }
+        hash = u32(bit_xor(hash, alive) * 16777619)
+    }
+    return u32(hash + count)
+}
+registry["Etc::GameOfLife"] = [life_create, life_prepare, life_run, life_checksum]

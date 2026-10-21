@@ -1,0 +1,68 @@
+func matgen(n) {
+    let tmp := 1.0 / n / n
+    mut rows := []
+    mut i := 0
+    while i < n {
+        mut row := []
+        mut j := 0
+        while j < n { row = push(row, tmp * (i - j) * (i + j)) j += 1 }
+        rows = push(rows, row)
+        i += 1
+    }
+    return rows
+}
+func mat_create(cfg) { return {"cfg": cfg, "result": 0, "a": matgen(cfg["n"]), "b": matgen(cfg["n"])} }
+func mat_rows(job) {
+    let a := job[0]
+    let t := job[1]
+    let n := len(a)
+    mut rows := []
+    mut i := job[2]
+    while i < job[3] {
+        let ai := a[i]
+        mut row := vector(n, 0.0)
+        mut j := 0
+        while j < n {
+            let tj := t[j]
+            mut sum := 0.0
+            mut k := 0
+            while k < n { sum += ai[k] * tj[k] k += 1 }
+            row[j] = sum
+            j += 1
+        }
+        rows = push(rows, row)
+        i += 1
+    }
+    return rows
+}
+async func mat_worker(job) { return mat_rows(job) }
+func mat_run(input, iteration) {
+    mut state := input
+    let n := state["cfg"]["n"]
+    mut transpose := []
+    mut i := 0
+    while i < n { transpose = push(transpose, vector(n, 0.0)) i += 1 }
+    i = 0
+    while i < n { mut j := 0 while j < n { transpose[j][i] = state["b"][i][j] j += 1 } i += 1 }
+    mut result := []
+    let name := state["cfg"]["name"]
+    if name == "Matmul::Single" { result = mat_rows([state["a"], transpose, 0, n]) }
+    else {
+        mut workers := 4
+        if name == "Matmul::T8" { workers = 8 }
+        if name == "Matmul::T16" { workers = 16 }
+        let per_worker := idiv(n + workers - 1, workers)
+        mut jobs := []
+        i = 0
+        while i < workers { jobs = push(jobs, [state["a"], transpose, i * per_worker, imin((i + 1) * per_worker, n)]) i += 1 }
+        let chunks := await parallel_map(jobs, mat_worker, workers)
+        for chunk in chunks { for row in chunk { result = push(result, row) } }
+    }
+    let middle := idiv(n, 2)
+    state["result"] = u32(state["result"] + checksum_float(result[middle][middle]))
+    return state
+}
+registry["Matmul::Single"] = [mat_create, unchanged, mat_run, result_checksum]
+registry["Matmul::T4"] = [mat_create, unchanged, mat_run, result_checksum]
+registry["Matmul::T8"] = [mat_create, unchanged, mat_run, result_checksum]
+registry["Matmul::T16"] = [mat_create, unchanged, mat_run, result_checksum]
