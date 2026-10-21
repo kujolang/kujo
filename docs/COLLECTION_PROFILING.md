@@ -439,3 +439,65 @@ catchable in the default VM; `tests/index_exception_contracts.rs` covers local
 and general indexed reads, cross-frame recovery, rejected writes and unchanged
 snapshots in both runtimes. Uncaught errors still fail. No benchmark port,
 maintainer contact or release is included.
+
+## Object-tree storage and full-depth prerequisite probe (2026-10-21)
+
+Struct fields now use shared immutable storage with copy-on-write. Reads and
+ordinary value clones no longer recursively duplicate subtrees. Field/indexed
+writes, helper calls, closures, imports, task capture and errors preserve value
+semantics. Depth validation and environment graph traversal recognize shared
+struct allocations; a 40-level shared graph is visited once per relevant depth,
+not expanded exponentially. The weak depth cache refreshes identities after
+mutation. This changes runtime storage, not object identity or reference semantics.
+Rust embedders constructing `Value::Struct` supply shared field storage (`.into()`
+converts an owned field map); Kujo source syntax is unchanged.
+
+The reproducible resource probe is
+`cargo test --test struct_storage_contracts -- --ignored --nocapture`.
+It constructs and counts a fresh depth-20 binary tree (2,097,151 distinct nodes),
+using an explicit 600-second cooperative deadline per runtime. It passed in both
+runtimes at commit `2101e1c`, on macOS x86-64 with the debug build:
+
+| Runtime | Construction | Traversal |
+|---|---:|---:|
+| VM | 220.550 s | 87.582 s |
+| Interpreter | 67.013 s | 69.596 s |
+
+These are single-run resource-completion observations, not release performance
+numbers. The VM process was observed near 4.5 GiB RSS during execution; this is
+not an instrumented peak-memory figure. A prior depth-12 probe on `d7ddda3`
+measured 1.973 s VM traversal and 1.344 s interpreter traversal with recursive
+field-map cloning. The post-change VM depth-12 probe measured 0.320 s traversal.
+Do not extrapolate these debug samples into official benchmark rankings.
+
+The resource probe verifies one construction/traversal workload, not the complete
+LangArena lifecycle, production iteration counts or checksums. The object-tree
+port must still preserve fresh allocation and distinguish objects from arenas.
+
+## Growing byte buffers
+
+`concat` assignment now consumes the temporary source reference and reuses unique
+byte capacity, including struct fields and indexed destinations. Actual aliases,
+closure snapshots, and self-concatenation retain value semantics. A storage test
+checks capacity reuse directly; a dual-runtime contract grows and edits 3 MiB.
+
+The reproducible opt-in profile is:
+
+```sh
+cargo test --test byte_concat_contracts profile_byte_growth -- --ignored --nocapture
+# Set KUJO_PROFILE_BINARY to a baseline binary to compare.
+```
+
+Local debug-build medians of three samples, in milliseconds, using 16-byte chunks:
+
+| Runtime | Appends | Before (2101e1c) | After |
+| --- | ---: | ---: | ---: |
+| VM | 16,000 | 831.65 | 144.44 |
+| VM | 64,000 | 5,113.64 | 585.88 |
+| Interpreter | 16,000 | 602.27 | 214.70 |
+| Interpreter | 64,000 | 4,128.48 | 851.90 |
+
+Setup is excluded; length and final byte are asserted. These are local scaling
+observations, not release-build LangArena results or timing thresholds. The new
+measurements scale approximately fourfold for fourfold input; retained snapshots
+can still require copying.
