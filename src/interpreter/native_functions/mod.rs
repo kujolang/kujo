@@ -5,6 +5,7 @@
 // call_native_function_impl into manageable category-based modules.
 
 pub mod async_ops;
+mod callbacks;
 pub mod collections;
 pub mod compression;
 pub mod concurrency;
@@ -258,6 +259,9 @@ pub fn call_native_function(interp: &mut Interpreter, name: &str, arg_values: &[
     }
 
     // Try async operations first (high priority for async functions)
+    if let Some(result) = callbacks::handle(interp, canonical_name, arg_values) {
+        return result;
+    }
     if let Some(result) = async_ops::handle(interp, canonical_name, arg_values) {
         return result;
     }

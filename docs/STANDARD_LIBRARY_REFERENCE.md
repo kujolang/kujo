@@ -893,3 +893,6 @@ it deliberately has no capture buffer or timeout for interactive commands.
 integers without changing checked arithmetic. `parse_csv_rows` preserves all
 headerless records as positional strings. These pure APIs require no capabilities;
 see [exact contracts](STANDARD_LIBRARY.md) for rounding and parsing limits.
+
+`regex_replace_with` performs bounded, capture-aware replacement through synchronous
+callbacks. Callback capabilities remain restricted by the caller policy.

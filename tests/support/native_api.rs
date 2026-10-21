@@ -1,7 +1,18 @@
 use std::process::Command;
 
 pub fn run(source: &str, interpreter: bool) -> std::process::Output {
+    run_modules(source, interpreter, &[])
+}
+
+pub fn run_modules(
+    source: &str,
+    interpreter: bool,
+    modules: &[(&str, &str)],
+) -> std::process::Output {
     let dir = tempfile::tempdir().unwrap();
+    for (name, text) in modules {
+        std::fs::write(dir.path().join(name), text).unwrap();
+    }
     let path = dir.path().join("contract.kujo");
     std::fs::write(&path, source).unwrap();
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_kujo"));

@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add `regex_replace_with(text, pattern, callback)` with ordered capture groups,
+  literal replacements, bounded output, and ordinary callback capability checks.
+
 - Add bounded `parse_csv_rows(text)` for headerless positional string records,
   strict quoting, and consistent field counts; preserve existing `parse_csv`.
 

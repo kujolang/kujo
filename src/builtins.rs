@@ -1592,7 +1592,7 @@ const REGEX_CACHE_MAX_KEY_BYTES: usize = 4096;
 type RegexCache = std::collections::VecDeque<(String, Option<Arc<Regex>>)>;
 static REGEX_CACHE: std::sync::OnceLock<Mutex<RegexCache>> = std::sync::OnceLock::new();
 
-fn cached_regex(pattern: &str) -> Option<Arc<Regex>> {
+pub(crate) fn cached_regex(pattern: &str) -> Option<Arc<Regex>> {
     if pattern.len() > REGEX_CACHE_MAX_KEY_BYTES {
         return Regex::new(pattern).ok().map(Arc::new);
     }

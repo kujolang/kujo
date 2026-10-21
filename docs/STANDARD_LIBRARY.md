@@ -395,6 +395,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `path_extension` | `path_extension(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `filesystem-read` | `result := path_extension(...)` |
 | `regex_match` | `regex_match(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_match(...)` |
 | `regex_find_all` | `regex_find_all(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_find_all(...)` |
+| `regex_replace_with` | `regex_replace_with(text, pattern, callback)` | exact 3 | string | Invalid pattern, callback, return type, or resource limit; callback errors propagate. | `none` | `regex_replace_with("abc", "b", replacement)` |
 | `regex_replace` | `regex_replace(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_replace(...)` |
 | `regex_split` | `regex_split(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := regex_split(...)` |
 | `pdf_render_html` | `pdf_render_html(html: string, options: dict, assets: dict) -> dict` | exact 3 | dictionary | Canonicalizes and renders the strict profile in `docs/PDF_RENDERING.md` entirely in-process. Returns a receipt containing `pdf_bytes`, SHA-256 digests, page geometry/count, renderer versions, deterministic warning codes, and duration. Input cannot access the network or filesystem. Tables can opt into deterministic header repetition with bounded `data-repeat-header-every`. | `none` | `receipt := pdf_render_html("<h1>Estimate</h1>", {"page_size":"Letter"}, {})` |
@@ -776,3 +777,17 @@ same field count. Invalid/unclosed quotes, inconsistent widths, non-string input
 input over 8 MiB or more than 1,000,000 total fields return errors. This pure API
 requires no capabilities. `parse_csv` retains its header-based dictionary and
 numeric-conversion behavior.
+
+### Regex callback replacement
+
+`regex_replace_with(text, pattern, callback)` invokes a synchronous Kujo or native
+function once for each non-overlapping match, in text order. Its single argument
+is an array: group 0 is the complete match, followed by numbered captures;
+unmatched optional groups are `null`. The returned string is inserted literally
+(no `$` expansion). Zero-length matches advance on Unicode boundaries, including
+the final boundary. No matches returns unchanged text without calling the function.
+Invalid patterns, non-callables, wrong callback return types and callback errors
+fail the operation. Callback errors stop further calls; callback side effects
+already performed remain. Ordinary capability and call-depth checks apply.
+Input, output and the combined captured text per match are each limited to 8 MiB;
+at most 1,000,000 matches are replaced. `regex_replace` remains unchanged.
