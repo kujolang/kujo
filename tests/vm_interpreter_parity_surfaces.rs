@@ -82,11 +82,13 @@ fn unique_spawn_key() -> String {
 }
 
 fn unique_module_name() -> String {
+    static NEXT_MODULE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let sequence = NEXT_MODULE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("system time should be after unix epoch")
         .as_nanos();
-    format!("vm_interp_parity_module_{}_{}", std::process::id(), nanos)
+    format!("vm_interp_parity_module_{}_{}_{}", std::process::id(), nanos, sequence)
 }
 
 #[test]
