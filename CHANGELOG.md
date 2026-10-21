@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse unaliased array storage for append rebinding after evaluating the original
+  call arguments; retain ordinary calls when shadowing or callback effects prevent reuse.
+
 - Use persistent shared queues with cached reversal and nesting metadata, avoiding
   full-queue copies and validation scans during functional queue updates.
 

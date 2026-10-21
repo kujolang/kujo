@@ -825,3 +825,20 @@ so other bindings and closure snapshots retain their contents. Slices and
 concatenation produce independent values. Use an explicitly encoded byte buffer
 for sequential UTF-8 byte processing; string indexing remains Unicode-scalar
 indexing and can require a scan.
+
+### Collection ownership and update costs
+
+Arrays, nested array rows, and queues retain value semantics: changing a mutable
+binding never changes a retained copy or closure snapshot. For ordinary rebinding
+such as `items = push(items, expression)` (also `append` and builtin aliases), the
+runtimes can reuse unaliased array storage after evaluating the call operands.
+A shadowed callable or a destination changed during argument evaluation follows
+the ordinary call path. Retained aliases still trigger copy-on-write.
+
+Nested assignments validate the complete path before editing unique rows, keeping
+failed writes atomic. Queues use shared immutable storage: cloning, `queue_size`,
+and `queue_peek` are constant time in queue length; enqueue is constant time apart
+from validating the inserted value, and dequeue is amortized constant time with
+occasional cached linear reversal. `queue_to_array` remains linear. These costs
+exclude cloning an individual compound element when returning it. See
+[collection profiling](COLLECTION_PROFILING.md) for measured cases and limits.

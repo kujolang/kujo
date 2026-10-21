@@ -1267,7 +1267,10 @@ mod tests {
         let queue_len = call_native_function(
             &mut interpreter,
             "len",
-            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![Value::Int(1), Value::Int(2)]))],
+            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![
+                Value::Int(1),
+                Value::Int(2),
+            ]))],
         );
         assert!(matches!(queue_len, Value::Int(2)));
 
@@ -6557,14 +6560,22 @@ mod tests {
         let queue_enqueue = call_native_function(
             &mut interpreter,
             "queue_enqueue",
-            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![Value::Int(1)])), Value::Int(2)],
+            &[
+                Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![
+                    Value::Int(1),
+                ])),
+                Value::Int(2),
+            ],
         );
         assert!(matches!(queue_enqueue, Value::Queue(queue) if queue.len() == 2));
 
         let queue_dequeue = call_native_function(
             &mut interpreter,
             "queue_dequeue",
-            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![Value::Int(1), Value::Int(2)]))],
+            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![
+                Value::Int(1),
+                Value::Int(2),
+            ]))],
         );
         assert!(matches!(queue_dequeue, Value::Array(values) if values.len() == 2
             && matches!(&values[0], Value::Queue(queue) if queue.len() == 1)
@@ -6573,14 +6584,19 @@ mod tests {
         let queue_peek = call_native_function(
             &mut interpreter,
             "queue_peek",
-            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![Value::Int(42), Value::Int(99)]))],
+            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![
+                Value::Int(42),
+                Value::Int(99),
+            ]))],
         );
         assert!(matches!(queue_peek, Value::Int(42)));
 
         let queue_is_empty_false = call_native_function(
             &mut interpreter,
             "queue_is_empty",
-            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![Value::Int(1)]))],
+            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![
+                Value::Int(1),
+            ]))],
         );
         assert!(matches!(queue_is_empty_false, Value::Bool(false)));
 
@@ -6594,7 +6610,10 @@ mod tests {
         let queue_to_array = call_native_function(
             &mut interpreter,
             "queue_to_array",
-            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![Value::Int(7), Value::Int(8)]))],
+            &[Value::Queue(crate::interpreter::persistent_queue::PersistentQueue::from(vec![
+                Value::Int(7),
+                Value::Int(8),
+            ]))],
         );
         assert!(matches!(queue_to_array, Value::Array(values) if values.len() == 2
             && matches!(&values[0], Value::Int(7))

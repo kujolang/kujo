@@ -19,7 +19,6 @@
 // Module structure
 pub(crate) mod assignment;
 mod async_runtime;
-pub mod persistent_queue;
 mod capabilities;
 mod control_flow;
 #[cfg(feature = "runtime-db")]
@@ -28,6 +27,7 @@ mod environment;
 pub mod generator;
 mod generator_lowering;
 pub(crate) mod native_functions;
+pub mod persistent_queue;
 pub mod promise;
 pub mod tasks;
 mod test_runner;
@@ -3301,6 +3301,44 @@ impl Interpreter {
         Value::Null
     }
 
+    fn try_append_assignment(&mut self, target: &Expr, rhs: &Expr) -> Option<Value> {
+        let Expr::Identifier(target) = target else { return None };
+        let Expr::Call { function, args } = rhs else { return None };
+        let Expr::Identifier(function) = function.as_ref() else { return None };
+        if args.len() != 2 || !matches!(&args[0], Expr::Identifier(name) if name == target) {
+            return None;
+        }
+        // Interpreter calls resolve the callable before evaluating arguments.
+        let Some(Value::NativeFunction(native)) = self.env.get(function) else { return None };
+        if !matches!(native.as_str(), "push" | "append") {
+            return None;
+        }
+        let values: Vec<Value> = args.iter().map(|arg| self.eval_expr(arg)).collect();
+        if let Some(error) = values.iter().find(|v| Self::is_error_value(v)) {
+            return Some(error.clone());
+        }
+        let mut values = values.into_iter();
+        let mut original = values.next();
+        let mut item = values.next();
+        let mut appended = false;
+        // No callbacks run while borrowing the destination. A callback that
+        // reassigned it during argument evaluation forces ordinary call semantics.
+        let _ = self.env.mutate_checked(target, |root| {
+            appended = assignment::append_rebinding(root, &mut original, &mut item);
+        });
+        if appended {
+            return Some(Value::Null);
+        }
+        let value = self.call_native_function_impl(&native, &[original.unwrap(), item.unwrap()]);
+        if Self::is_error_value(&value) {
+            return Some(value);
+        }
+        Some(match self.env.assign_checked(target.clone(), value) {
+            Ok(()) => Value::Null,
+            Err(error) => Value::Error(error),
+        })
+    }
+
     fn assign_path(&mut self, target: &Expr, value: Value) -> Value {
         use assignment::{split_target, Access, AccessExpr};
         let (name, expressions) = match split_target(target) {
@@ -4305,6 +4343,10 @@ impl Interpreter {
                 }
             }
             Stmt::Assign { target, value } => {
+                if let Some(result) = self.try_append_assignment(target, value) {
+                    self.set_return_if_error(&result);
+                    return;
+                }
                 let val = self.eval_expr(value);
                 if self.set_return_if_error(&val) {
                     return;

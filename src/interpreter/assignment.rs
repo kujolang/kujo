@@ -217,3 +217,57 @@ mod ownership_tests {
         assert_eq!(detached, row_pointer(&root));
     }
 }
+
+/// Release the already-evaluated first argument only after proving that the
+/// destination still holds that exact value. Other aliases continue to force COW.
+pub(crate) fn append_rebinding(
+    root: &mut Value,
+    original: &mut Option<Value>,
+    item: &mut Option<Value>,
+) -> bool {
+    let Value::Array(destination) = root else { return false };
+    let Some(Value::Array(source)) = original.as_ref() else { return false };
+    if !Arc::ptr_eq(destination, source) {
+        return false;
+    }
+    drop(original.take());
+    Arc::make_mut(destination).push(item.take().expect("evaluated append item"));
+    true
+}
+
+#[cfg(test)]
+mod append_ownership_tests {
+    use super::*;
+    #[test]
+    fn rebinding_releases_only_its_temporary_argument_snapshot() {
+        let mut items = Vec::with_capacity(128);
+        items.push(Value::Int(0));
+        let mut root = Value::array(items);
+        let Value::Array(storage) = &root else { unreachable!() };
+        let pointer = Arc::as_ptr(storage);
+        for i in 1..100 {
+            let mut original = Some(root.clone());
+            assert!(append_rebinding(&mut root, &mut original, &mut Some(Value::Int(i))));
+            assert!(original.is_none());
+        }
+        let Value::Array(storage) = &root else { unreachable!() };
+        assert_eq!(pointer, Arc::as_ptr(storage));
+        let saved = root.clone();
+        let mut original = Some(root.clone());
+        assert!(append_rebinding(&mut root, &mut original, &mut Some(Value::Int(100))));
+        let Value::Array(storage) = &root else { unreachable!() };
+        assert_ne!(pointer, Arc::as_ptr(storage));
+        let Value::Array(old) = saved else { unreachable!() };
+        assert_eq!(old.len(), 100);
+    }
+    #[test]
+    fn replaced_destination_preserves_both_call_arguments_for_fallback() {
+        let mut root = Value::array(vec![Value::Int(9)]);
+        let mut original = Some(Value::array(vec![Value::Int(1)]));
+        let mut item = Some(Value::Int(2));
+        assert!(!append_rebinding(&mut root, &mut original, &mut item));
+        assert!(original.is_some() && item.is_some());
+        let Value::Array(items) = root else { unreachable!() };
+        assert!(matches!(items[0], Value::Int(9)));
+    }
+}

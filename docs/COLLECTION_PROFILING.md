@@ -38,15 +38,15 @@ Milliseconds; sizes are 1,000 and 4,000. All workload assertions passed.
 
 - **append:** N functional `x = push(x, item)` operations. Existing arguments
   retain the old array while the helper returns a new one; repeated growth copies
-  increasing prefixes. This remains quadratic in copied elements.
+  increasing prefixes. At this baseline, work was quadratic in copied elements.
 - **index:** N writes into a preallocated N-element local array. Setup excluded;
   the local in-place path scales approximately with the number of writes.
-- **queue:** N dequeue/enqueue pairs on a queue of N values. `Queue` currently
-  owns a `VecDeque<Value>`; argument evaluation and functional helpers copy it.
-  This remains quadratic in copied elements. Size/peek calls also clone a queue
+- **queue:** N dequeue/enqueue pairs on a queue of N values. `Queue` at the baseline
+  owned a `VecDeque<Value>`; argument evaluation and functional helpers copy it.
+  At this baseline, work was quadratic in copied elements. Size/peek calls also cloned a queue
   through ordinary argument evaluation even though their handler only reads it.
 - **nested:** N writes into one N-element row. Snapshot-based assignment keeps
-  failed writes atomic but copies the path's shared row. This remains quadratic
+  failed writes atomic but copies the path's shared row. At this baseline, work was quadratic
   for this shape, despite flat local array writes being efficient.
 - **tree:** balanced struct construction by doubling an owned struct tree until
   approximately N leaves. Owned field maps deep-copy subtrees. The measured
@@ -117,19 +117,74 @@ A single diagnostic shared-DAG probe (start `[0]`, repeat `tree = [tree, tree]`
 interpreter 0.73 ms before and 0.57 ms after. The visit-count test, rather than
 those single timings, locks in the complexity improvement.
 
-Validation: 1,218 selected Rust tests passed (eight existing library ignores;
+Initial byte/DAG milestone validation: 1,218 selected Rust tests passed (eight existing library ignores;
 one profiling test ignored in the normal run), plus the explicit profiling run.
 VM and dual CLI fixture gates each passed 150/150 runnable fixtures with 11 policy
 skips; dual used no interpreter fallback. `cargo check`, formatting, and diff
 whitespace checks passed. The full unfiltered Cargo suite was not run.
 
-## Remaining performance decisions
+## Copying-cost follow-up: resolved
 
-Functional append, queue copies, and nested-row snapshot writes remain measured
-limitations, not fixed by this patch. Improving them requires a separately scoped
-ownership-transfer or persistent-collection design with explicit tests for builtin
-shadowing, argument evaluation order, retained aliases, callbacks, failed writes,
-closure snapshots, and depth enforcement. Do not infer full-suite feasibility from
-these microprofiles. These are Kujo implementation decisions; no Kostya input is
-needed to fix them. Benchmark algorithm/representation acceptance remains outside
-this task.
+The follow-up uses `68b6e911dba00e95d5f833f607470e8a2296afb2` as its baseline.
+The same assertion-backed harness, machine, debug profile, sizes, and three-sample
+medians were used. Builds overlapped parts of profiling, so treat timings as
+qualitative scaling evidence rather than stable throughput claims.
+
+Milliseconds at N=4,000:
+
+| Workload | VM before | VM after | Interpreter before | Interpreter after |
+|---|---:|---:|---:|---:|
+| Append rebinding | 2599.75 | 30.36 | 5053.81 | 32.37 |
+| Queue dequeue/enqueue | 15004.86 | 230.29 | 14592.86 | 147.15 |
+| Nested row writes | 3222.25 | 39.07 | 2672.31 | 44.24 |
+
+The final samples were collected after the verification builds finished.
+Measurements support removal of the copying bottlenecks; allocation-identity and
+snapshot tests, not timing ratios, guard against recurrence. No timing threshold
+is used as a test assertion.
+
+- **Append rebinding:** `items = f(items, expression)` evaluates the original
+  arguments and resolves the callable in each runtime's existing order. When
+  `f` resolves to builtin `push` or `append`, the destination is mutable, and it
+  still contains the first argument's exact array allocation, the temporary
+  argument snapshot is released before copy-on-write append. Callback changes,
+  shadowed functions, invalid values, and immutable bindings use the original
+  call/store path. An alias holding the array still forces copy-on-write; appending
+  an array to itself retains a snapshot rather than creating a cycle. The VM
+  checks the inserted item's depth before taking the fast path. The conditional
+  bytecode target participates in optimizer relocation and safe JIT fallback.
+- **Nested writes:** validate every path component before mutation, then edit
+  the actual binding. A unique row retains its allocation across repeated writes;
+  aliased rows detach. Validation failures cannot partially modify ancestors.
+  The VM fully validates an updated snapshot once, then caches a weak identity
+  for a valid array root and checks the inserted subtree's depth on repeated
+  writes. Copy-on-write dissociates weak identities, invalidating the cache when
+  another operation changes the array. The cache is bounded and retains no array
+  payloads. This preserves checks on native/host-created inputs, including the
+  ability to repair an over-deep subtree, without rescanning unchanged siblings. RHS and index-expression order is retained.
+- **Queues:** immutable shared front/rear spines replace owned deques. Clone,
+  size, and peek no longer copy the queue. Enqueue creates one node; dequeue is
+  amortized constant time along an update sequence, with occasional linear rear
+  reversal. Reversal is cached for snapshots sharing a rear spine, and reversed
+  nodes share element payloads. Per-node length and maximum nesting metadata
+  avoid full-queue scans when an enclosing bytecode collection is depth-checked. Iteration/array conversion remains
+  linear, and returning a popped compound value can require its own value clone.
+  Unique spine destruction is iterative, avoiding stack growth per queued item.
+
+Deterministic regression evidence includes array/row allocation identity, alias
+isolation, cached reversal identity, constant-visit queue depth checks, FIFO order
+through 10,000 updates, 100,000-node destruction, closure snapshots, failed writes,
+callback reassignment, builtin aliases/shadowing, optimizer relocation, JIT fallback,
+and the existing VM builder/nested-write depth checks without partial assignment. This fixes the three
+profiled costs; it does not promise constant-time copies of all retained snapshots,
+optimize arbitrary non-rebinding append expressions, or change Unicode string-index
+semantics. No benchmark port, maintainer contact, or release-readiness claim is part
+of this work.
+
+Follow-up verification: 1,234 selected Rust tests passed, with eight existing
+library ignores. VM and dual CLI fixture gates each passed 150/150 runnable cases,
+11 policy skips, and zero dual fallback. All three before/after profiles passed
+their assertions; formatting, `cargo check`, and diff checks passed. The full
+unfiltered Cargo suite was not run. The first broad run exposed a pre-existing
+parallel fixture filename collision; an atomic suffix fixed it and the final
+123-test parity suite passed within the clean broad rerun.

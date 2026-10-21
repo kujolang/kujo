@@ -36,6 +36,7 @@ impl Optimizer {
             | OpCode::JumpIfTrue(t)
             | OpCode::JumpBack(t)
             | OpCode::ForNext(t)
+            | OpCode::TryAppendAssign(_, t)
             | OpCode::BeginTry(t) => Some(t),
             _ => None,
         }
@@ -356,6 +357,7 @@ impl Optimizer {
                 // Conditional jumps - follow both paths
                 OpCode::JumpIfFalse(target)
                 | OpCode::JumpIfTrue(target)
+                | OpCode::TryAppendAssign(_, target)
                 | OpCode::ForNext(target) => {
                     self.mark_reachable(chunk, reachable, *target);
                     // Continue with next instruction (fall-through)

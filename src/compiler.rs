@@ -408,6 +408,32 @@ impl Compiler {
             }
 
             Stmt::Assign { target, value } => {
+                if let (Expr::Identifier(target_name), Expr::Call { function, args }) =
+                    (target, value)
+                {
+                    if matches!(function.as_ref(), Expr::Identifier(_))
+                        && args.len() == 2
+                        && matches!(&args[0], Expr::Identifier(name) if name == target_name)
+                    {
+                        // Preserve the VM's ordinary args-before-callable order.
+                        for arg in args {
+                            self.compile_expr(arg)?;
+                        }
+                        self.compile_expr(function)?;
+                        let binding = if let Some(slot) = self.resolve_local_slot(target_name) {
+                            crate::bytecode::MutationBinding::Local(slot)
+                        } else {
+                            self.resolve_capture(target_name);
+                            crate::bytecode::MutationBinding::Named(target_name.clone())
+                        };
+                        let fast = self.chunk.emit(OpCode::TryAppendAssign(binding, 0));
+                        self.chunk.emit(OpCode::Call(2));
+                        self.compile_assignment(target)?;
+                        self.chunk.emit(OpCode::Pop);
+                        self.chunk.patch_jump(fast);
+                        return Ok(());
+                    }
+                }
                 if let (Expr::Identifier(target_name), Expr::BinaryOp { left, op, right }) =
                     (target, value)
                 {

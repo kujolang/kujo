@@ -95,6 +95,9 @@ pub struct VM {
 
     /// JIT enabled flag (can be disabled for debugging)
     jit_enabled: bool,
+    // Weak identities cache only successful nested-write depth validation. Every
+    // Arc::make_mut dissociates weak identities, so other mutation paths invalidate it.
+    path_depth_valid: HashMap<usize, std::sync::Weak<Vec<Value>>>,
 
     /// Function call stack for error reporting (tracks function names)
     function_call_stack: Vec<String>,
@@ -620,6 +623,7 @@ impl VM {
             exception_handlers: Vec::new(),
             jit_compiler: None,
             jit_enabled: false,
+            path_depth_valid: HashMap::new(),
             function_call_stack: Vec::new(),
             function_call_counts: HashMap::new(),
             compiled_functions: HashMap::new(),
@@ -1489,6 +1493,7 @@ impl VM {
                             | OpCode::IndexSet
                             | OpCode::UpdatePath(_)
                             | OpCode::UpdateBindingPath(_, _)
+                            | OpCode::TryAppendAssign(_, _)
                             | OpCode::IndexGetInPlace(_)
                             | OpCode::IndexSetInPlace(_)
                             | OpCode::LoadVar(_)
@@ -5107,6 +5112,32 @@ impl VM {
                     self.stack.push(result);
                 }
 
+                OpCode::TryAppendAssign(binding, end) => {
+                    let function = self.stack.pop().ok_or("Stack underflow")?;
+                    let mut item = Some(self.stack.pop().ok_or("Stack underflow")?);
+                    let mut original = Some(self.stack.pop().ok_or("Stack underflow")?);
+                    let eligible = matches!(&function, Value::NativeFunction(name) if matches!(name.as_str(), "push" | "append"))
+                        && Self::value_nesting_depth(item.as_ref().unwrap())
+                            < runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH;
+                    let appended = eligible
+                        && self
+                            .mutate_binding(&binding, |root| {
+                                Ok(crate::interpreter::assignment::append_rebinding(
+                                    root,
+                                    &mut original,
+                                    &mut item,
+                                ))
+                            })
+                            .unwrap_or(false);
+                    if appended {
+                        self.ip = end;
+                        continue;
+                    }
+                    self.stack.push(original.unwrap());
+                    self.stack.push(item.unwrap());
+                    self.stack.push(function);
+                }
+
                 OpCode::UpdateBindingPath(binding, shape) => {
                     use crate::interpreter::assignment::{self, Access};
                     let mut path = Vec::with_capacity(shape.len());
@@ -5119,13 +5150,39 @@ impl VM {
                     path.reverse();
                     let value = self.stack.pop().ok_or("Stack underflow")?;
                     let inserted_depth = Self::value_nesting_depth(&value) + path.len();
+                    let mut validated = std::mem::take(&mut self.path_depth_valid);
                     let result = self.mutate_binding(&binding, |root| {
-                        assignment::validate(root, &path, &value)?;
-                        if inserted_depth > runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
-                            return Err(format!("Maximum data nesting depth of {} exceeded while updating nested assignment", runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH));
+                        let identity = match root {
+                            Value::Array(items) => Some(Arc::as_ptr(items) as usize),
+                            _ => None,
+                        };
+                        if identity.is_some_and(|id| validated.contains_key(&id)) {
+                            assignment::validate(root, &path, &value)?;
+                            if inserted_depth > runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+                                return Err(format!("Maximum data nesting depth of {} exceeded while updating nested assignment", runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH));
+                            }
+                            assignment::update_in_place(root, &path, value)?;
+                        } else {
+                            // Native/host values need not have passed a builder's
+                            // depth check. Validate their updated snapshot once;
+                            // this also allows replacing an over-deep subtree.
+                            let updated = assignment::update(root.clone(), &path, value)?;
+                            Self::ensure_value_nesting_depth(&updated, "updating nested assignment")?;
+                            *root = updated;
                         }
-                        assignment::update_in_place(root, &path, value)
+                        if let Some(id) = identity { validated.remove(&id); }
+                        if let Value::Array(items) = root {
+                            validated.insert(Arc::as_ptr(items) as usize, Arc::downgrade(items));
+                        }
+                        Ok(())
                     });
+                    if validated.len() >= 1024 {
+                        validated.retain(|_, weak| weak.strong_count() > 0);
+                        if validated.len() >= 1024 {
+                            validated.clear();
+                        }
+                    }
+                    self.path_depth_valid = validated;
                     if let Err(error) = result {
                         self.throw_runtime_value(Value::Error(error))?;
                         continue;

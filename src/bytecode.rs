@@ -249,6 +249,9 @@ pub enum OpCode {
     UpdatePath(Vec<Option<String>>),
     /// Stack: [value, indices...] -> [null]. Validate before borrowing for writing.
     UpdateBindingPath(MutationBinding, Vec<Option<String>>),
+    /// Conditional fast path for x = f(x, item). On success consume three call
+    /// operands and jump past call/store; otherwise leave the stack unchanged.
+    TryAppendAssign(MutationBinding, usize),
 
     /// Get value from local variable dict/array in-place (no cloning)
     /// Operand: local slot index
@@ -548,6 +551,7 @@ impl BytecodeChunk {
             OpCode::Jump(ref mut addr)
             | OpCode::JumpIfFalse(ref mut addr)
             | OpCode::ForNext(ref mut addr)
+            | OpCode::TryAppendAssign(_, ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr) => {
                 *addr = target;
             }
@@ -563,6 +567,7 @@ impl BytecodeChunk {
             | OpCode::ForNext(ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr)
             | OpCode::JumpBack(ref mut addr)
+            | OpCode::TryAppendAssign(_, ref mut addr)
             | OpCode::BeginTry(ref mut addr) => {
                 *addr = target;
             }
