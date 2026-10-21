@@ -167,3 +167,12 @@ Updated evidence snapshot: 2026-09-26 compatibility follow-up
   experimental, opt-in surface (`kujo run --jit`) with explicit
   unsupported-opcode detection and deterministic fallback messaging.
 - Any newly added language/runtime surface must update this matrix and add parity evidence in the same change.
+
+## Imported recursion (2026-10-21)
+
+Ordinary AST calls now support the same 256-call budget as VM calls, using guarded
+host-stack growth. Imported functions still execute as AST functions with their
+module lexical environment; this does not compile imports to bytecode. The
+separate 32-entry synchronous callback-bridge guard is unchanged. Regression tests
+cover direct and imported mutual recursion, namespace imports, caller-name
+shadowing, catchable exhaustion/recovery, and a 2 MiB embedding thread stack.

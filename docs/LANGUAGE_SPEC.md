@@ -169,6 +169,7 @@ Notes:
 
 - Spread (`...`) is valid in array/dictionary literal element positions.
 - `Ok/Err/Some/None` pattern matching remains contextual and parser-driven.
+- Ordinary VM and interpreter calls are bounded to 256 nested calls. Interpreter calls, including imported functions invoked by VM scripts, grow the host stack before recursive body execution. Exceeding the bound remains a catchable runtime error. Synchronous cross-runtime callback bridges retain their separate 32-entry limit.
 - Parser safety limits: expression nesting depth is capped at `256` and statement-block nesting depth is capped at `128`. Inputs beyond either limit fail with parser diagnostics instead of recursing indefinitely.
 - Assignment operators (`:=`, `=`, `+=`, `-=`, `*=`, `/=`, `%=`) are statement-level only. Chained assignments (for example `a := b := 1`) are rejected with parser diagnostics.
 

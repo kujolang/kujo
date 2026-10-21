@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Support up to 256 interpreter calls, including imported recursion from VM scripts,
+  with guarded host-stack growth; retain the separate 32-entry callback bridge limit.
+
 - Share persistent LIFO stack storage and reuse uniquely owned arrays in adjacent
   pop/rebind sequences, retaining aliases, popped values and empty-pop behavior.
 

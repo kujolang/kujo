@@ -537,7 +537,10 @@ impl Interpreter {
         }
 
         self.function_depth += 1;
-        let result = body(self);
+        // AST calls recurse on the host stack, including imports from the VM.
+        // Grow before executing another body; the language depth guard above
+        // remains authoritative on both large CLI and small embedding stacks.
+        let result = stacker::maybe_grow(512 * 1024, 2 * 1024 * 1024, || body(self));
         if self.return_value.as_ref().is_some_and(Self::is_error_value)
             && self.error_call_stack.is_empty()
         {

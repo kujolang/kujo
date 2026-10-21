@@ -12,7 +12,7 @@ pub const DEFAULT_MAX_VALUE_NESTING_DEPTH: usize = 4096;
 pub const MAX_GENERATED_SEQUENCE_ITEMS: usize = 1_000_000;
 pub const MAX_GENERATED_STRING_CHARS: usize = MAX_FILE_IO_BYTES + 1;
 
-pub const DEFAULT_MAX_INTERPRETER_CALL_DEPTH: usize = 32;
+pub const DEFAULT_MAX_INTERPRETER_CALL_DEPTH: usize = 256;
 pub const DEFAULT_MAX_VM_CALL_DEPTH: usize = 256;
 
 thread_local! {
@@ -25,7 +25,7 @@ pub(crate) struct CallbackBridgeGuard;
 impl CallbackBridgeGuard {
     pub(crate) fn enter() -> Result<Self, String> {
         CALLBACK_BRIDGE_DEPTH.with(|depth| {
-            if depth.get() >= DEFAULT_MAX_INTERPRETER_CALL_DEPTH {
+            if depth.get() >= 32 {
                 return Err("Maximum cross-runtime callback depth exceeded".to_string());
             }
             depth.set(depth.get() + 1);
