@@ -3498,7 +3498,7 @@ impl VM {
                                 }
                             }
 
-                            self.call_bytecode_function(function.clone(), raw_args, args)?;
+                            self.call_bytecode_function(function, raw_args, args)?;
                         }
                         Value::NativeFunction(_) => {
                             match self.call_native_function_vm(function.clone(), args) {
@@ -6637,7 +6637,13 @@ impl VM {
                 captured: captured_map,
                 captured_binding_kinds: captured_binding_kinds_map,
                 captured_slots: Vec::new(),
-                prev_chunk: if chunk.is_generator { None } else { Some(self.chunk.clone()) },
+                prev_chunk: if chunk.is_generator {
+                    None
+                } else {
+                    // The suspended caller owns its code until return/unwind;
+                    // it does not need a fresh instruction/constant allocation.
+                    Some(std::mem::replace(&mut self.chunk, BytecodeChunk::new()))
+                },
             };
 
             if chunk.is_generator {
@@ -9459,6 +9465,31 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn call_frames_move_the_suspended_callers_instruction_storage() {
+        let mut vm = VM::new();
+        vm.chunk.instructions = vec![OpCode::Nop; 1024];
+        let caller_storage = vm.chunk.instructions.as_ptr();
+        let mut callee = BytecodeChunk::new();
+        callee.instructions = vec![OpCode::Return];
+        let callee_storage = callee.instructions.as_ptr();
+        vm.call_bytecode_function(
+            Value::BytecodeFunction {
+                chunk: callee,
+                captured: HashMap::new(),
+                captured_binding_kinds: HashMap::new(),
+            },
+            Vec::new(),
+            Vec::new(),
+        )
+        .unwrap();
+        assert_eq!(
+            vm.call_frames[0].prev_chunk.as_ref().unwrap().instructions.as_ptr(),
+            caller_storage
+        );
+        assert_eq!(vm.chunk.instructions.as_ptr(), callee_storage);
+    }
 
     #[test]
     fn argument_only_native_calls_do_not_snapshot_unrelated_globals() {

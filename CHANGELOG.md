@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Move suspended VM caller bytecode into call frames instead of cloning its
+  instructions and constants on every helper or recursive call.
+
 - Match the interpreter's finite floating-point array/string/byte read indices in the
   VM; non-finite indices remain errors. Reject floating-point simple array writes
   and non-string/non-integer dictionary writes in the interpreter consistently
