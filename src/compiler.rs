@@ -1861,14 +1861,14 @@ impl Compiler {
                     AccessExpr::Field(field) => shape.push(Some(field.to_string())),
                 }
             }
-            if self.scope_depth == 0 && !self.is_upvalue(name) {
-                self.chunk.emit(OpCode::EnsureMutableGlobalForMutation(name.to_string()));
-            }
-            // Load after evaluating indices so their side effects are retained.
-            let root = Expr::Identifier(name.to_string());
-            self.compile_expr(&root)?;
-            self.chunk.emit(OpCode::UpdatePath(shape));
-            return self.compile_assignment(&root);
+            let binding = if let Some(slot) = self.resolve_local_slot(name) {
+                crate::bytecode::MutationBinding::Local(slot)
+            } else {
+                self.resolve_capture(name);
+                crate::bytecode::MutationBinding::Named(name.into())
+            };
+            self.chunk.emit(OpCode::UpdateBindingPath(binding, shape));
+            return Ok(());
         }
         match target {
             Expr::Identifier(name) => {

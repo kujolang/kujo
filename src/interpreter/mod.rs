@@ -3321,10 +3321,7 @@ impl Interpreter {
         }
         let mut error = None;
         let result = self.env.mutate_checked(name, |root| {
-            match assignment::update(root.clone(), &path, value) {
-                Ok(updated) => *root = updated,
-                Err(message) => error = Some(message),
-            }
+            error = assignment::update_in_place(root, &path, value).err();
         });
         match result.err().or(error) {
             Some(error) => Value::Error(error),

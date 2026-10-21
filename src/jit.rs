@@ -3291,6 +3291,9 @@ impl BytecodeTranslator {
             // Dict/Array operations
             OpCode::IndexGet => (2, 1), // Pop object + index, push value
             OpCode::IndexSet => (3, 0), // Pop object + index + value, push nothing
+            OpCode::UpdateBindingPath(_, path) => {
+                (1 + path.iter().filter(|step| step.is_none()).count(), 1)
+            }
             OpCode::UpdatePath(path) => (2 + path.iter().filter(|step| step.is_none()).count(), 1),
             OpCode::IndexGetInPlace(_) => (1, 1), // Pop index, load var, push value
             OpCode::IndexSetInPlace(_) => (2, 0), // Pop index + value, modify variable in place

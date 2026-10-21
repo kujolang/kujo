@@ -950,6 +950,61 @@ impl VM {
         format!("Missing map key: {}", Self::index_key_description(index))
     }
 
+    fn mutate_binding<R>(
+        &mut self,
+        binding: &crate::bytecode::MutationBinding,
+        operation: impl FnOnce(&mut Value) -> Result<R, String>,
+    ) -> Result<R, String> {
+        use crate::bytecode::MutationBinding;
+        match binding {
+            MutationBinding::Local(slot) => {
+                let frame = self.call_frames.last_mut().ok_or("Mutation requires call frame")?;
+                let kind = frame
+                    .local_slot_binding_kinds
+                    .get(*slot)
+                    .copied()
+                    .unwrap_or(BytecodeBindingKind::Mutable);
+                if kind != BytecodeBindingKind::Mutable {
+                    let name =
+                        self.chunk.local_names.get(*slot).map(String::as_str).unwrap_or("<local>");
+                    return Err(Self::local_mutation_error(kind, name));
+                }
+                operation(frame.local_slots.get_mut(*slot).ok_or("Invalid local slot")?)
+            }
+            MutationBinding::Named(name) => {
+                if let Some(frame) = self.call_frames.last_mut() {
+                    if let Some(cell) = frame.captured.get(name) {
+                        let kind = frame
+                            .captured_binding_kinds
+                            .get(name)
+                            .copied()
+                            .unwrap_or(BytecodeBindingKind::Mutable);
+                        if kind != BytecodeBindingKind::Mutable {
+                            return Err(Self::local_mutation_error(kind, name));
+                        }
+                        return operation(&mut *cell.lock().map_err(|_| "Capture lock poisoned")?);
+                    }
+                    if let Some(value) = frame.locals.get_mut(name) {
+                        let kind = frame
+                            .locals_binding_kinds
+                            .get(name)
+                            .copied()
+                            .unwrap_or(BytecodeBindingKind::Mutable);
+                        if kind != BytecodeBindingKind::Mutable {
+                            return Err(Self::local_mutation_error(kind, name));
+                        }
+                        return operation(value);
+                    }
+                }
+                let mut result = None;
+                self.globals.lock().unwrap().mutate_checked(name, |value| {
+                    result = Some(operation(value));
+                })?;
+                result.expect("mutable binding callback")
+            }
+        }
+    }
+
     fn value_nesting_depth(value: &Value) -> usize {
         Self::walk_value_nesting_depth(value, || {})
     }
@@ -1556,6 +1611,7 @@ impl VM {
                             | OpCode::IndexGet
                             | OpCode::IndexSet
                             | OpCode::UpdatePath(_)
+                            | OpCode::UpdateBindingPath(_, _)
                             | OpCode::IndexGetInPlace(_)
                             | OpCode::IndexSetInPlace(_)
                             | OpCode::LoadVar(_)
@@ -5172,6 +5228,32 @@ impl VM {
                     };
 
                     self.stack.push(result);
+                }
+
+                OpCode::UpdateBindingPath(binding, shape) => {
+                    use crate::interpreter::assignment::{self, Access};
+                    let mut path = Vec::with_capacity(shape.len());
+                    for access in shape.into_iter().rev() {
+                        path.push(match access {
+                            Some(field) => Access::Field(field),
+                            None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
+                        });
+                    }
+                    path.reverse();
+                    let value = self.stack.pop().ok_or("Stack underflow")?;
+                    let inserted_depth = Self::value_nesting_depth(&value) + path.len();
+                    let result = self.mutate_binding(&binding, |root| {
+                        assignment::validate(root, &path, &value)?;
+                        if inserted_depth > runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+                            return Err(format!("Maximum data nesting depth of {} exceeded while updating nested assignment", runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH));
+                        }
+                        assignment::update_in_place(root, &path, value)
+                    });
+                    if let Err(error) = result {
+                        self.throw_runtime_value(Value::Error(error))?;
+                        continue;
+                    }
+                    self.stack.push(Value::Null);
                 }
 
                 OpCode::UpdatePath(shape) => {

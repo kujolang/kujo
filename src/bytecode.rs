@@ -26,6 +26,13 @@ pub enum CaptureSource {
     Environment(String, BytecodeBindingKind),
 }
 
+/// A binding whose value can be changed after all observable expressions run.
+#[derive(Debug, Clone, PartialEq)]
+pub enum MutationBinding {
+    Local(usize),
+    Named(String),
+}
+
 /// Bytecode instruction opcodes for the Kujo VM
 /// Stack-based virtual machine with separate value and call stacks
 #[derive(Debug, Clone, PartialEq)]
@@ -240,6 +247,8 @@ pub enum OpCode {
     /// Some(field) selects a struct field; None consumes a dynamic index.
     /// Stack: [value, indices in path order..., root] -> [updated root].
     UpdatePath(Vec<Option<String>>),
+    /// Stack: [value, indices...] -> [null]. Validate before borrowing for writing.
+    UpdateBindingPath(MutationBinding, Vec<Option<String>>),
 
     /// Get value from local variable dict/array in-place (no cloning)
     /// Operand: local slot index

@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Validate nested assignment paths before writing, eliminating redundant row
+  snapshots while retaining copy isolation and failed-write atomicity.
+
 - Avoid exponential VM nesting-check work on shared collection graphs while
   retaining deeper-path validation and per-operation freshness.
 

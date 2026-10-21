@@ -42,6 +42,71 @@ pub(crate) fn update(mut root: Value, path: &[Access], value: Value) -> Result<V
     Ok(root)
 }
 
+/// Validate the complete path before touching any container. Afterwards writes
+/// cannot fail, so unique array rows can be edited without a rollback snapshot.
+pub(crate) fn validate(root: &Value, path: &[Access], value: &Value) -> Result<(), String> {
+    let Some((access, rest)) = path.split_first() else { return Ok(()) };
+    match (root, access) {
+        (Value::Array(items), Access::Index(Value::Int(index))) => {
+            let resolved = if *index < 0 { items.len() as i64 + index } else { *index };
+            let child = if resolved >= 0 { items.get(resolved as usize) } else { None };
+            validate(child.ok_or_else(|| format!("Index out of bounds: {index}"))?, rest, value)
+        }
+        (Value::Bytes(bytes), Access::Index(index)) if rest.is_empty() => {
+            validate_byte(bytes, index, value).map(|_| ())
+        }
+        (Value::Struct { fields, .. }, Access::Field(field)) => {
+            if rest.is_empty() {
+                Ok(())
+            } else {
+                validate(
+                    fields.get(field).ok_or_else(|| format!("Field not found: {field}"))?,
+                    rest,
+                    value,
+                )
+            }
+        }
+        (Value::Dict(map), Access::Index(index)) => {
+            let key = match index {
+                Value::Str(key) => key.as_ref().clone(),
+                Value::Int(key) => key.to_string(),
+                _ => return Err("Invalid index assignment".into()),
+            };
+            if rest.is_empty() {
+                Ok(())
+            } else {
+                validate(
+                    map.get(key.as_str()).ok_or_else(|| format!("Missing map key: {key}"))?,
+                    rest,
+                    value,
+                )
+            }
+        }
+        (Value::FixedDict { .. }, _) => {
+            let entries = Value::map_entries(root).expect("fixed dictionary");
+            validate(
+                &Value::Dict(Arc::new(entries.into_iter().map(|(k, v)| (k.into(), v)).collect())),
+                path,
+                value,
+            )
+        }
+        (_, _) if root.integer_dictionary_as_dict().is_some() => {
+            validate(&root.integer_dictionary_as_dict().unwrap(), path, value)
+        }
+        (_, Access::Field(_)) => Err("Cannot set field on non-struct value".into()),
+        _ => Err("Invalid index assignment".into()),
+    }
+}
+
+pub(crate) fn update_in_place(
+    root: &mut Value,
+    path: &[Access],
+    value: Value,
+) -> Result<(), String> {
+    validate(root, path, &value)?;
+    write(root, path, value)
+}
+
 fn write(root: &mut Value, path: &[Access], value: Value) -> Result<(), String> {
     let Some((access, rest)) = path.split_first() else {
         *root = value;
@@ -104,6 +169,12 @@ pub(crate) fn write_byte(
     index: &Value,
     value: &Value,
 ) -> Result<(), String> {
+    let (index, byte) = validate_byte(bytes, index, value)?;
+    Arc::make_mut(bytes)[index] = byte;
+    Ok(())
+}
+
+fn validate_byte(bytes: &[u8], index: &Value, value: &Value) -> Result<(usize, u8), String> {
     let Value::Int(index) = index else {
         return Err("Byte index assignment requires an integer index".into());
     };
@@ -114,6 +185,35 @@ pub(crate) fn write_byte(
     let Value::Int(byte @ 0..=255) = value else {
         return Err("Byte index assignment requires an integer in range 0-255".into());
     };
-    Arc::make_mut(bytes)[resolved as usize] = *byte as u8;
-    Ok(())
+    Ok((resolved as usize, *byte as u8))
+}
+
+#[cfg(test)]
+mod ownership_tests {
+    use super::*;
+
+    #[test]
+    fn unique_nested_rows_are_not_copied_on_writes() {
+        let mut root = Value::array(vec![Value::array(vec![Value::Int(0); 10_000])]);
+        fn row_pointer(root: &Value) -> *const Vec<Value> {
+            let Value::Array(outer) = root else { panic!() };
+            let Value::Array(row) = &outer[0] else { panic!() };
+            Arc::as_ptr(row)
+        }
+        let before = row_pointer(&root);
+        let path = [Access::Index(Value::Int(0)), Access::Index(Value::Int(7))];
+        for i in 0..100 {
+            update_in_place(&mut root, &path, Value::Int(i)).unwrap();
+        }
+        assert_eq!(before, row_pointer(&root));
+        let saved = root.clone();
+        update_in_place(&mut root, &path, Value::Int(999)).unwrap();
+        assert_ne!(row_pointer(&saved), row_pointer(&root));
+        let detached = row_pointer(&root);
+        update_in_place(&mut root, &path, Value::Int(1000)).unwrap();
+        assert_eq!(detached, row_pointer(&root));
+        let invalid = [Access::Index(Value::Int(0)), Access::Index(Value::Int(10_000))];
+        assert!(update_in_place(&mut root, &invalid, Value::Int(1)).is_err());
+        assert_eq!(detached, row_pointer(&root));
+    }
 }
