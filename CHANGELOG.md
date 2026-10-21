@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add stable, fallible `sort_by(items, comparator)` without changing `sort`;
+  callback failures stop sorting and the input remains unchanged.
+
 - Add `regex_replace_with(text, pattern, callback)` with ordered capture groups,
   literal replacements, bounded output, and ordinary callback capability checks.
 

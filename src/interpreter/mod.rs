@@ -559,6 +559,7 @@ impl Interpreter {
         vec![
             "parse_csv_rows",
             "regex_replace_with",
+            "sort_by",
             "format_fixed",
             "wrapping_add",
             "wrapping_sub",
@@ -1079,6 +1080,7 @@ impl Interpreter {
 
     /// Registers all built-in functions and constants
     fn register_builtins(&mut self) {
+        self.env.define("sort_by".into(), Value::NativeFunction("sort_by".into()));
         self.env.define(
             "regex_replace_with".into(),
             Value::NativeFunction("regex_replace_with".into()),
@@ -3510,6 +3512,7 @@ impl Interpreter {
             return Some(CallableArity::exact(name, (0..*n).map(|i| format!("arg{i}")).collect()));
         }
         let metadata = match name {
+            "sort_by" => CallableArity::exact(name, vec!["items".into(), "comparator".into()]),
             "regex_replace_with" => {
                 CallableArity::exact(name, vec!["text".into(), "pattern".into(), "callback".into()])
             }

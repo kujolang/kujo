@@ -222,6 +222,7 @@ Secret redaction contract (`secret` / `reveal` / `is_secret`):
 | `filter` | `filter(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := filter(...)` |
 | `reduce` | `reduce(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := reduce(...)` |
 | `find` | `find(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := find(...)` |
+| `sort_by` | `sort_by(items, comparator)` | exact 2 | array | Invalid arguments or comparator result; callback errors propagate. | `none` | `sort_by(items, compare)` |
 | `sort` | `sort(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := sort(...)` |
 | `reverse` | `reverse(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := reverse(...)` |
 | `unique` | `unique(...)` | handler-defined | dynamic (Value) | Value::Error on invalid args/types/operation; capability-denied when gated. | `none` | `result := unique(...)` |
@@ -791,3 +792,17 @@ fail the operation. Callback errors stop further calls; callback side effects
 already performed remain. Ordinary capability and call-depth checks apply.
 Input, output and the combined captured text per match are each limited to 8 MiB;
 at most 1,000,000 matches are replaced. `regex_replace` remains unchanged.
+
+### Comparator sorting
+
+`sort_by(items, comparator)` returns a new array sorted by a synchronous Kujo or
+native function taking two elements and returning an integer: negative means
+before, zero means tied, positive means after. Ties preserve input order. Empty
+and single-element inputs do not invoke the comparator. The input is unchanged;
+callback side effects are not rolled back. Invalid arguments, non-integer results
+and callback errors fail immediately, without publishing a partial result.
+Ordinary capability and call-depth checks apply. Existing arrays are not subject
+to the `range` construction limit. Stable merge sorting uses O(n log n) comparisons and O(n) index storage;
+returned elements retain value-copy semantics. Comparators must define consistent
+ordering; inconsistent results have unspecified ordering but cannot cause a native
+sort panic or unbounded comparison loop. Existing `sort` remains unchanged.

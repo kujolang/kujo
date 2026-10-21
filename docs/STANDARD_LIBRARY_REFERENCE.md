@@ -896,3 +896,6 @@ see [exact contracts](STANDARD_LIBRARY.md) for rounding and parsing limits.
 
 `regex_replace_with` performs bounded, capture-aware replacement through synchronous
 callbacks. Callback capabilities remain restricted by the caller policy.
+
+`sort_by` provides stable comparator sorting through the same synchronous callback
+bridge, preserving value-copy semantics and propagating callback failures.

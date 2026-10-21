@@ -23,6 +23,9 @@ fn append(output: &mut String, text: &str) -> Result<(), Value> {
 }
 
 pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Value> {
+    if name == "sort_by" {
+        return Some(sort_by(interp, args));
+    }
     if name != "regex_replace_with" {
         return None;
     }
@@ -83,4 +86,54 @@ pub fn handle(interp: &mut Interpreter, name: &str, args: &[Value]) -> Option<Va
         return Some(error);
     }
     Some(Value::Str(Arc::new(output)))
+}
+
+fn sort_by(interp: &mut Interpreter, args: &[Value]) -> Value {
+    let [Value::Array(items), callback] = args else {
+        return Value::Error("sort_by expects an array and function".into());
+    };
+    if !callable(callback) {
+        return Value::Error("sort_by expects a synchronous function".into());
+    }
+    // Sort indices, not deep values. Explicit fallible merges avoid Rust sort's
+    // comparator panics and stop at the first callback failure.
+    let mut order: Vec<usize> = (0..items.len()).collect();
+    let mut scratch = order.clone();
+    let mut width = 1;
+    while width < items.len() {
+        for start in (0..items.len()).step_by(2 * width) {
+            let middle = (start + width).min(items.len());
+            let end = (start + 2 * width).min(items.len());
+            let (mut left, mut right) = (start, middle);
+            for slot in &mut scratch[start..end] {
+                let take_left = if right == end {
+                    true
+                } else if left == middle {
+                    false
+                } else {
+                    match invoke(
+                        interp,
+                        callback,
+                        &[items[order[left]].clone(), items[order[right]].clone()],
+                    ) {
+                        Value::Int(result) => result <= 0,
+                        error @ (Value::Error(_) | Value::ErrorObject { .. }) => return error,
+                        _ => {
+                            return Value::Error("sort_by comparator must return an integer".into())
+                        }
+                    }
+                };
+                if take_left {
+                    *slot = order[left];
+                    left += 1;
+                } else {
+                    *slot = order[right];
+                    right += 1;
+                }
+            }
+        }
+        std::mem::swap(&mut order, &mut scratch);
+        width *= 2;
+    }
+    Value::Array(Arc::new(order.into_iter().map(|index| items[index].clone()).collect()))
 }
