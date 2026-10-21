@@ -1,5 +1,9 @@
 # LangArena production verification — 2026-10-21
 
+This is historical evidence for runtime `376b36f`. See the
+[follow-up verification](FOLLOWUP_VERIFICATION.md) for the subsequent runtime
+fixes, updated production attempts and remaining gates.
+
 **7/50 unchanged production workloads completed with matching checksums in
 the final optimized VM. The other 43 remain unverified after the 30-second
 discovery deadline. This is not a completed production-suite pass.** No checksum

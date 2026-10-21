@@ -522,7 +522,7 @@ The LangArena production sweep on 2026-10-21 exposed two independent text costs:
   alias isolation, and invalidation.
 
 Production workload completion and timing evidence are in the
-[LangArena production report](../benchmarks/langarena/PRODUCTION_VERIFICATION.md);
+[LangArena production follow-up](../benchmarks/langarena/FOLLOWUP_VERIFICATION.md);
 a passing reduced checksum configuration is not evidence
 that the production configuration completed.
 

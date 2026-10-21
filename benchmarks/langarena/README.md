@@ -6,7 +6,9 @@ not an accepted LangArena submission. Upstream code is MIT licensed; see
 [LICENSE.upstream](LICENSE.upstream).
 Recorded results and validation limits are in [VERIFICATION.md](VERIFICATION.md).
 Production-size attempts and remaining gaps are in
-[PRODUCTION_VERIFICATION.md](PRODUCTION_VERIFICATION.md).
+[FOLLOWUP_VERIFICATION.md](FOLLOWUP_VERIFICATION.md); the
+[earlier production report](PRODUCTION_VERIFICATION.md) is retained as historical
+evidence for its pinned executable.
 
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark
