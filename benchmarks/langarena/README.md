@@ -4,6 +4,7 @@ Kujo implementations of the 50 benchmarks in `kostya/LangArena` at
 `3c9f84ddaeec834c0631747cb789e8cfd602f993`. This is a local development port,
 not an accepted LangArena submission. Upstream code is MIT licensed; see
 [LICENSE.upstream](LICENSE.upstream).
+Recorded results and validation limits are in [VERIFICATION.md](VERIFICATION.md).
 
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark
@@ -29,7 +30,7 @@ Reusable regression gates:
 
 ```sh
 cargo test --test byte_iteration_contracts --test native_environment_contracts --test langarena_port_contracts
-KUJO_LANGARENA_BINARY="$PWD/target/release/kujo" cargo test --test langarena_port_contracts -- --ignored
+KUJO_LANGARENA_BINARY="$PWD/target/release/kujo" cargo test --test langarena_port_contracts -- --ignored --nocapture
 ```
 
 The full checksum test is explicit because it is a long-running workload. The
@@ -54,5 +55,8 @@ roundtrip, AST, and value-semantics cases in both runtimes.
   including its pop ordering, because changing it changes traversal behavior.
 - A passing `test.json` run proves those exact checksum workloads only. It does
   not establish production `run.json` performance, memory limits, or acceptance.
+- This runner checks correctness; upstream timing/start protocol, language
+  registration, Linux/Docker packaging, and official driver integration remain
+  submission work.
 
 No maintainer contact or upstream submission is part of this local work.

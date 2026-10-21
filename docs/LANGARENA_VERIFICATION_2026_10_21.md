@@ -1,5 +1,10 @@
 # LangArena verification checkpoint — 2026-10-21
 
+Historical pre-port checkpoint. The subsequently authorized local implementation
+and its checksum evidence are in
+[the local port verification report](../benchmarks/langarena/VERIFICATION.md).
+The absence-of-implementation findings below describe this earlier checkpoint.
+
 ## What was actually verified
 
 - Kujo revision: `4113d0dc9fd704620a37ec8cc451d24701934afb`, macOS x86-64 debug binary.
