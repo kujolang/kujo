@@ -164,6 +164,7 @@ fn collection_fast_paths_survive_optimizer_relocation_and_jit_fallback() {
             while i < 50 {
                 a = push(a, i + (1 + 2))
                 rows[0][0] = i
+                rows[0] = push(rows[0], i)
                 i += 1
             }
             assert_equal(len(a), 50)
@@ -332,4 +333,73 @@ fn benchmark_state_writes_preserve_snapshots_and_failed_writes() {
         "immutable",
     );
     support::failure("const d := {\"rows\": [[0]]} d[\"rows\"][0][0] = 1", "const");
+}
+
+#[test]
+fn field_appends_preserve_evaluation_order_aliases_and_fallbacks() {
+    support::success(
+        r#"
+        struct State { items: array }
+        mut s := State { items: [] }
+        mut d := {"items": []}
+        mut rows := [[]]
+        mut i := 0
+        while i < 3000 {
+            s.items = push(s.items, i)
+            d["items"] = append(d["items"], i)
+            rows[0] = push(rows[0], i)
+            i += 1
+        }
+        assert_equal(s.items, range(0,3000))
+        assert_equal(d["items"], s.items)
+        assert_equal(rows[0], s.items)
+        let alias := s
+        s.items = push(s.items, s.items)
+        assert_equal(len(alias.items), 3000)
+        assert_equal(s.items[-1], alias.items)
+        mut log := ""
+        func index() { log += "i" return 0 }
+        func item() { log += "v" return 7 }
+        rows[index()] = push(rows[index()], item())
+        assert_equal(log, "ivi")
+        assert_equal(rows[0][-1], 7)
+        func replacement() { s.items = [99] return 8 }
+        s.items = push(s.items, replacement())
+        assert_equal(s.items[-1], 8)
+        assert_equal(len(s.items), 3002)
+        func fake(a,b) { return [b] }
+        s.items = fake(s.items, 42)
+        assert_equal(s.items, [42])
+        let f := append
+        s.items = f(s.items, 43)
+        assert_equal(s.items, [42,43])
+        mut failures := 0
+        log = ""
+        try { rows[index()] = push(3, item()) } except e { failures += 1 }
+        assert_equal(log, "v")
+        assert_equal(failures, 1)
+        func fail() { throw("failed item") }
+        try { s.items = push(s.items, fail()) } except e { failures += 1 }
+        assert_equal(failures, 2)
+        assert_equal(s.items, [42,43])
+        mut switched := [[1], [2]]
+        mut next := 0
+        func moving_index() { let old := next next = 1 return old }
+        switched[moving_index()] = push(switched[moving_index()], 3)
+        assert_equal(switched, [[1], [1,3]])
+        func factory() {
+            mut state := State { items: [1] }
+            func add() { state.items = push(state.items, 2) return state.items }
+            state.items = push(state.items, 3)
+            return add
+        }
+        let add := factory()
+        assert_equal(add(), [1,2])
+        assert_equal(add(), [1,2,2])
+    "#,
+    );
+    support::failure(
+        "struct S { items: array } let s := S { items: [] } s.items = push(s.items, 1)",
+        "immutable",
+    );
 }

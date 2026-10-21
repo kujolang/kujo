@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse array storage for field and indexed-path append assignments, including
+  dynamic indices, while preserving callback ordering and snapshot semantics.
+
 - Avoid repeated VM row copies and depth scans through benchmark-state structs
   and dictionaries while preserving alias isolation and atomic failed writes.
 

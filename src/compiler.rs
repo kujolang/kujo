@@ -408,6 +408,45 @@ impl Compiler {
             }
 
             Stmt::Assign { target, value } => {
+                if !matches!(target, Expr::Identifier(_)) {
+                    if let Expr::Call { function, args } = value {
+                        if args.len() == 2 && matches!(function.as_ref(), Expr::Identifier(_)) {
+                            use crate::interpreter::assignment::{split_target, AccessExpr};
+                            let (name, path) = split_target(target)?;
+                            for arg in args {
+                                self.compile_expr(arg)?;
+                            }
+                            self.compile_expr(function)?;
+                            let guard = self.chunk.emit(OpCode::GuardAppendPath(0));
+                            let mut shape = Vec::new();
+                            for access in path {
+                                match access {
+                                    AccessExpr::Index(index) => {
+                                        self.compile_expr(index)?;
+                                        shape.push(None);
+                                    }
+                                    AccessExpr::Field(field) => shape.push(Some(field.to_owned())),
+                                }
+                            }
+                            let binding = if let Some(slot) = self.resolve_local_slot(name) {
+                                crate::bytecode::MutationBinding::Local(slot)
+                            } else {
+                                self.resolve_capture(name);
+                                crate::bytecode::MutationBinding::Named(name.into())
+                            };
+                            self.chunk.emit(OpCode::AppendBindingPath(binding, shape));
+                            self.chunk.emit(OpCode::Pop);
+                            let done = self.chunk.emit(OpCode::Jump(0));
+                            self.chunk.patch_jump(guard);
+                            self.chunk.emit(OpCode::Call(2));
+                            self.compile_assignment(target)?;
+                            self.chunk.emit(OpCode::Pop);
+                            self.chunk.patch_jump(done);
+                            return Ok(());
+                        }
+                    }
+                }
+
                 if let (Expr::Identifier(target_name), Expr::Call { function, args }) =
                     (target, value)
                 {

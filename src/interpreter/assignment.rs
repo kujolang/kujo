@@ -432,3 +432,130 @@ mod state_depth_tests {
         }
     }
 }
+
+fn child_mut<'a>(root: &'a mut Value, access: &Access) -> Option<&'a mut Value> {
+    if matches!(root, Value::FixedDict { .. }) {
+        let entries = Value::map_entries(root)?;
+        *root = Value::Dict(Arc::new(entries.into_iter().map(|(k, v)| (k.into(), v)).collect()));
+    } else if let Some(map) = root.integer_dictionary_as_dict() {
+        *root = map;
+    }
+    match (root, access) {
+        (Value::Array(a), Access::Index(Value::Int(i))) => {
+            let i = if *i < 0 { a.len() as i64 + i } else { *i };
+            if i < 0 {
+                None
+            } else {
+                Arc::make_mut(a).get_mut(i as usize)
+            }
+        }
+        (Value::Struct { fields, .. }, Access::Field(field)) => fields.get_mut(field),
+        (Value::Dict(d), Access::Index(Value::Str(key))) => Arc::make_mut(d).get_mut(key.as_str()),
+        (Value::Dict(d), Access::Index(Value::Int(key))) => {
+            Arc::make_mut(d).get_mut(key.to_string().as_str())
+        }
+        _ => None,
+    }
+}
+
+pub(crate) fn append_path(
+    root: &mut Value,
+    path: &[Access],
+    original: Value,
+    item: Value,
+    mut cache: Option<&mut DepthCache>,
+) -> Result<(), String> {
+    // Single dictionary field assignments predate nested assignment and accept
+    // dot syntax. Preserve that existing surface without broadening nested paths.
+    let normalized;
+    let path = if path.len() == 1 && !matches!(root, Value::Struct { .. }) {
+        if let Access::Field(field) = &path[0] {
+            normalized = vec![Access::Index(Value::str_ref(field))];
+            &normalized[..]
+        } else {
+            path
+        }
+    } else {
+        path
+    };
+    validate(root, path, &original)?;
+    let bound = cache.as_mut().map(|cache| {
+        cache
+            .depth(root)
+            .max(path.len() + cache.depth(&original).max(1 + Value::nesting_depth(&item)))
+    });
+    let mut original = Some(original);
+    let mut item = Some(item);
+    let mut destination = &*root;
+    let mut same = true;
+    for access in path {
+        match child(destination, access) {
+            Some(value) => destination = value,
+            None => {
+                same = false;
+                break;
+            }
+        }
+    }
+    same &= matches!((destination, original.as_ref()), (Value::Array(a), Some(Value::Array(b))) if Arc::ptr_eq(a,b));
+    if same && bound.is_none_or(|n| n <= crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH) {
+        let mut destination = &mut *root;
+        for access in path {
+            destination = child_mut(destination, access).expect("validated append path");
+        }
+        // Parent detachment may retain the source through a real alias. Only
+        // release our temporary argument; ordinary COW handles all other owners.
+        assert!(append_rebinding(destination, &mut original, &mut item));
+        if let Some(cache) = cache {
+            cache.remember_path(root, path, bound.unwrap());
+        }
+        Ok(())
+    } else {
+        let Value::Array(mut array) = original.take().unwrap() else {
+            unreachable!("guarded native array append")
+        };
+        Arc::make_mut(&mut array).push(item.take().unwrap());
+        match cache {
+            Some(cache) => update_checked(root, path, Value::Array(array), cache),
+            None => update_in_place(root, path, Value::Array(array)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod field_append_tests {
+    use super::*;
+    #[test]
+    fn field_append_preserves_reserved_buffer_and_snapshot() {
+        for checked in [false, true] {
+            let array = Value::array(Vec::with_capacity(1000));
+            let mut root = Value::Struct {
+                name: "S".into(),
+                fields: [("items".into(), array)].into_iter().collect(),
+            };
+            let path = [Access::Field("items".into())];
+            let buffer = |v: &Value| {
+                let Value::Array(a) = child(v, &path[0]).unwrap() else { panic!() };
+                a.as_ptr()
+            };
+            let ptr = buffer(&root);
+            let mut cache = DepthCache::default();
+            for i in 0..500 {
+                let original = child(&root, &path[0]).unwrap().clone();
+                append_path(
+                    &mut root,
+                    &path,
+                    original,
+                    Value::Int(i),
+                    if checked { Some(&mut cache) } else { None },
+                )
+                .unwrap();
+                assert_eq!(ptr, buffer(&root));
+            }
+            let alias = root.clone();
+            let original = child(&root, &path[0]).unwrap().clone();
+            append_path(&mut root, &path, original, Value::Int(501), None).unwrap();
+            assert_ne!(buffer(&alias), buffer(&root));
+        }
+    }
+}

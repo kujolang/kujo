@@ -252,6 +252,10 @@ pub enum OpCode {
     /// Conditional fast path for x = f(x, item). On success consume three call
     /// operands and jump past call/store; otherwise leave the stack unchanged.
     TryAppendAssign(MutationBinding, usize),
+    /// Check a native append call before evaluating assignment indices.
+    GuardAppendPath(usize),
+    /// Stack: [array, item, native, indices...] -> [null].
+    AppendBindingPath(MutationBinding, Vec<Option<String>>),
 
     /// Get value from local variable dict/array in-place (no cloning)
     /// Operand: local slot index
@@ -552,6 +556,7 @@ impl BytecodeChunk {
             | OpCode::JumpIfFalse(ref mut addr)
             | OpCode::ForNext(ref mut addr)
             | OpCode::TryAppendAssign(_, ref mut addr)
+            | OpCode::GuardAppendPath(ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr) => {
                 *addr = target;
             }
@@ -568,6 +573,7 @@ impl BytecodeChunk {
             | OpCode::JumpIfTrue(ref mut addr)
             | OpCode::JumpBack(ref mut addr)
             | OpCode::TryAppendAssign(_, ref mut addr)
+            | OpCode::GuardAppendPath(ref mut addr)
             | OpCode::BeginTry(ref mut addr) => {
                 *addr = target;
             }

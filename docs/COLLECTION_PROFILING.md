@@ -199,3 +199,11 @@ result check, so repairing an over-deep host value remains possible. Unique row
 buffers are preserved; retained snapshots still detach. Structural tests check
 buffer identity and absence of repeated scans for both struct and dictionary
 roots, alongside dual-runtime alias, closure, mutability and error tests.
+
+Field/index append assignments now evaluate the callable and its arguments in the
+runtime's original order, then evaluate assignment indices once in their original
+position. Native array push/append can reuse the destination only when it still
+holds the evaluated source allocation. Callback replacement, aliases, shadowed
+functions, and errors preserve ordinary behavior. Dynamic indexed paths are
+supported; this is not limited to literal fields. VM guards retain normal calls
+for other functions and participate in optimizer branch relocation/JIT fallback.

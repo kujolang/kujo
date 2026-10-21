@@ -5112,6 +5112,43 @@ impl VM {
                     self.stack.push(result);
                 }
 
+                OpCode::GuardAppendPath(fallback) => {
+                    let n = self.stack.len();
+                    if n < 3 {
+                        return Err("Stack underflow".into());
+                    }
+                    if !matches!(&self.stack[n-1], Value::NativeFunction(name) if matches!(name.as_str(), "push" | "append"))
+                        || !matches!(&self.stack[n - 3], Value::Array(_))
+                    {
+                        self.ip = fallback;
+                        continue;
+                    }
+                }
+                OpCode::AppendBindingPath(binding, shape) => {
+                    use crate::interpreter::assignment::{self, Access};
+                    let mut path = Vec::new();
+                    for access in shape.into_iter().rev() {
+                        path.push(match access {
+                            Some(field) => Access::Field(field),
+                            None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
+                        });
+                    }
+                    path.reverse();
+                    self.stack.pop().ok_or("Stack underflow")?;
+                    let item = self.stack.pop().ok_or("Stack underflow")?;
+                    let original = self.stack.pop().ok_or("Stack underflow")?;
+                    let mut cache = std::mem::take(&mut self.path_depth_valid);
+                    let result = self.mutate_binding(&binding, |root| {
+                        assignment::append_path(root, &path, original, item, Some(&mut cache))
+                    });
+                    self.path_depth_valid = cache;
+                    if let Err(error) = result {
+                        self.throw_runtime_value(Value::Error(error))?;
+                        continue;
+                    }
+                    self.stack.push(Value::Null);
+                }
+
                 OpCode::TryAppendAssign(binding, end) => {
                     let function = self.stack.pop().ok_or("Stack underflow")?;
                     let mut item = Some(self.stack.pop().ok_or("Stack underflow")?);

@@ -3302,12 +3302,12 @@ impl Interpreter {
     }
 
     fn try_append_assignment(&mut self, target: &Expr, rhs: &Expr) -> Option<Value> {
-        let Expr::Identifier(target) = target else { return None };
         let Expr::Call { function, args } = rhs else { return None };
         let Expr::Identifier(function) = function.as_ref() else { return None };
-        if args.len() != 2 || !matches!(&args[0], Expr::Identifier(name) if name == target) {
+        if args.len() != 2 {
             return None;
         }
+        let (name, expressions) = assignment::split_target(target).ok()?;
         // Interpreter calls resolve the callable before evaluating arguments.
         let Some(Value::NativeFunction(native)) = self.env.get(function) else { return None };
         if !matches!(native.as_str(), "push" | "append") {
@@ -3317,6 +3317,36 @@ impl Interpreter {
         if let Some(error) = values.iter().find(|v| Self::is_error_value(v)) {
             return Some(error.clone());
         }
+        if !expressions.is_empty() {
+            if !matches!(values.first(), Some(Value::Array(_))) {
+                return Some(self.call_native_function_impl(&native, &values));
+            }
+            let mut path = Vec::new();
+            for access in expressions {
+                path.push(match access {
+                    assignment::AccessExpr::Field(field) => assignment::Access::Field(field.into()),
+                    assignment::AccessExpr::Index(index) => {
+                        let value = self.eval_expr(index);
+                        if Self::is_error_value(&value) {
+                            return Some(value);
+                        }
+                        assignment::Access::Index(value)
+                    }
+                });
+            }
+            let mut values = values.into_iter();
+            let original = values.next().unwrap();
+            let item = values.next().unwrap();
+            let mut error = None;
+            let result = self.env.mutate_checked(name, |root| {
+                error = assignment::append_path(root, &path, original, item, None).err();
+            });
+            return Some(match result.err().or(error) {
+                Some(error) => Value::Error(error),
+                None => Value::Null,
+            });
+        }
+        let target = name;
         let mut values = values.into_iter();
         let mut original = values.next();
         let mut item = values.next();
@@ -3333,7 +3363,7 @@ impl Interpreter {
         if Self::is_error_value(&value) {
             return Some(value);
         }
-        Some(match self.env.assign_checked(target.clone(), value) {
+        Some(match self.env.assign_checked(target.to_string(), value) {
             Ok(()) => Value::Null,
             Err(error) => Value::Error(error),
         })
