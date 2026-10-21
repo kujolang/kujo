@@ -321,6 +321,17 @@ let or_value := false || 5
 - Integer keys alias their canonical decimal string (`0` aliases `"0"`, but not `"00"`, `"+0"`, or `"-0"`). Assigning a sparse key creates only that entry; intermediate keys do not appear. An explicitly assigned `null` remains a present, readable entry and participates in dictionary equality.
 - Array/string indexing outside bounds is a runtime error (`Index out of bounds: <index>`), not a sentinel-value fallback.
 - Invalid index assignment targets (for example assigning through index access on non-indexable values) are runtime errors.
+- Nested assignment paths may combine array/dictionary indexing and struct
+  fields, rooted in a mutable binding (for example `rows[0][1] = 7` or
+  `items[0].values[1] += 2`). Updates write back to that binding and preserve
+  independent copies. Missing intermediate entries and invalid indices fail;
+  assignment does not create intermediate containers.
+- Nested simple assignment evaluates the right-hand side first, then target indices
+  once each from root to leaf. The root is read after index evaluation. A failed
+  write does not publish a partially updated root; side effects from evaluating
+  expressions are not rolled back. Compound assignment retains its existing
+  lowering to a read expression followed by assignment, so index expressions
+  also run during that read.
 - Unsupported unary/binary operations are runtime errors; Kujo does not silently coerce invalid operations to `Int(0)` or empty-string values.
 - Struct fields are resolved by declared field names.
 - Struct method behavior and runtime-path parity are tracked in `docs/VM_INTERPRETER_PARITY_MATRIX.md`.

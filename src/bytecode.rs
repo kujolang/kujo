@@ -236,6 +236,11 @@ pub enum OpCode {
     /// Operand: field name
     FieldSet(String),
 
+    /// Update a binding-rooted nested path on an owned root value.
+    /// Some(field) selects a struct field; None consumes a dynamic index.
+    /// Stack: [value, indices in path order..., root] -> [updated root].
+    UpdatePath(Vec<Option<String>>),
+
     /// Get value from local variable dict/array in-place (no cloning)
     /// Operand: local slot index
     /// Stack: [index] -> [value]

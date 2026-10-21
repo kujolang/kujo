@@ -1845,6 +1845,31 @@ impl Compiler {
 
     /// Compile assignment target
     fn compile_assignment(&mut self, target: &Expr) -> Result<(), String> {
+        if matches!(target,
+            Expr::IndexAccess { object, .. } | Expr::FieldAccess { object, .. }
+                if !matches!(&**object, Expr::Identifier(_)))
+        {
+            use crate::interpreter::assignment::{split_target, AccessExpr};
+            let (name, path) = split_target(target)?;
+            let mut shape = Vec::with_capacity(path.len());
+            for access in path {
+                match access {
+                    AccessExpr::Index(index) => {
+                        self.compile_expr(index)?;
+                        shape.push(None);
+                    }
+                    AccessExpr::Field(field) => shape.push(Some(field.to_string())),
+                }
+            }
+            if self.scope_depth == 0 && !self.is_upvalue(name) {
+                self.chunk.emit(OpCode::EnsureMutableGlobalForMutation(name.to_string()));
+            }
+            // Load after evaluating indices so their side effects are retained.
+            let root = Expr::Identifier(name.to_string());
+            self.compile_expr(&root)?;
+            self.chunk.emit(OpCode::UpdatePath(shape));
+            return self.compile_assignment(&root);
+        }
         match target {
             Expr::Identifier(name) => {
                 if let Some(slot) = self.resolve_local_slot(name) {
@@ -1893,14 +1918,8 @@ impl Compiler {
                 self.compile_expr(index)?;
                 self.chunk.emit(OpCode::IndexSet);
 
-                // IndexSet leaves the modified object on the stack
-                // We need to store it back to the variable if object is an identifier
-                if let Expr::Identifier(name) = &**object {
-                    self.compile_assignment(&Expr::Identifier(name.clone()))?;
-                } else {
-                    // For non-identifier objects (like nested access), just pop the result
-                    self.chunk.emit(OpCode::Pop);
-                }
+                // Nested targets were handled above; this is a binding root.
+                self.compile_assignment(object)?;
                 Ok(())
             }
 

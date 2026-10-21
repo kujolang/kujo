@@ -17,6 +17,7 @@
 // or error values for exception handling.
 
 // Module structure
+pub(crate) mod assignment;
 mod async_runtime;
 mod capabilities;
 mod control_flow;
@@ -3113,14 +3114,6 @@ impl Interpreter {
         }
     }
 
-    fn index_key_description(index: &Value) -> String {
-        match index {
-            Value::Str(key) => format!("{:?}", key.as_ref()),
-            Value::Int(key) => key.to_string(),
-            _ => Self::stringify_value(index),
-        }
-    }
-
     fn invalid_binary_operation(op: &str, left: &Value, right: &Value) -> Value {
         Value::Error(format!(
             "Invalid binary operation: {} {} {}",
@@ -3283,6 +3276,38 @@ impl Interpreter {
         Value::Null
     }
 
+    fn assign_path(&mut self, target: &Expr, value: Value) -> Value {
+        use assignment::{split_target, Access, AccessExpr};
+        let (name, expressions) = match split_target(target) {
+            Ok(path) => path,
+            Err(error) => return Value::Error(error),
+        };
+        let mut path = Vec::with_capacity(expressions.len());
+        for expression in expressions {
+            path.push(match expression {
+                AccessExpr::Index(index) => {
+                    let index = self.eval_expr(index);
+                    if Self::is_error_value(&index) {
+                        return index;
+                    }
+                    Access::Index(index)
+                }
+                AccessExpr::Field(field) => Access::Field(field.to_string()),
+            });
+        }
+        let mut error = None;
+        let result = self.env.mutate_checked(name, |root| {
+            match assignment::update(root.clone(), &path, value) {
+                Ok(updated) => *root = updated,
+                Err(message) => error = Some(message),
+            }
+        });
+        match result.err().or(error) {
+            Some(error) => Value::Error(error),
+            None => Value::Null,
+        }
+    }
+
     fn assign_member(&mut self, object: &Expr, field: &str, value: &Value) -> Value {
         let field_name = field.to_string();
         let value_clone = value.clone();
@@ -3297,82 +3322,6 @@ impl Interpreter {
                         assignment_error = Some("Cannot set field on non-struct value".to_string());
                     }
                 });
-
-                if let Err(error) = mutate_result {
-                    return Value::Error(error);
-                }
-
-                if let Some(error) = assignment_error {
-                    return Value::Error(error);
-                }
-
-                Value::Null
-            }
-            Expr::IndexAccess { object: container_expr, index } => {
-                let index_value = self.eval_expr(index);
-                if Self::is_error_value(&index_value) {
-                    return index_value;
-                }
-
-                let container_name = match container_expr.as_ref() {
-                    Expr::Identifier(name) => name.as_str(),
-                    _ => {
-                        return Value::Error(
-                            "Complex field assignment not yet supported".to_string(),
-                        )
-                    }
-                };
-
-                let mut assignment_error: Option<String> = None;
-                let index_clone = index_value.clone();
-                let mutate_result =
-                    self.env.mutate_checked(container_name, |container| match container {
-                        Value::Array(arr) => {
-                            let idx = match &index_clone {
-                                Value::Int(i) => *i,
-                                Value::Float(f) if f.is_finite() => *f as i64,
-                                _ => {
-                                    assignment_error = Some(
-                                        "Invalid index assignment: unsupported array index type"
-                                            .to_string(),
-                                    );
-                                    return;
-                                }
-                            };
-
-                            let arr_mut = Arc::make_mut(arr);
-                            let resolved = if idx < 0 { (arr_mut.len() as i64) + idx } else { idx };
-                            if resolved < 0 || resolved as usize >= arr_mut.len() {
-                                assignment_error = Some(format!("Index out of bounds: {}", idx));
-                                return;
-                            }
-
-                            if let Value::Struct { name: _, fields } =
-                                &mut arr_mut[resolved as usize]
-                            {
-                                fields.insert(field_name.clone(), value_clone.clone());
-                            } else {
-                                assignment_error =
-                                    Some("Array element is not a struct".to_string());
-                            }
-                        }
-                        Value::Dict(dict) => {
-                            let key = Self::stringify_value(&index_clone);
-                            if let Some(Value::Struct { name: _, fields }) =
-                                Arc::make_mut(dict).get_mut(key.as_str())
-                            {
-                                fields.insert(field_name.clone(), value_clone.clone());
-                            } else {
-                                assignment_error = Some(format!(
-                                    "Missing map key: {}",
-                                    Self::index_key_description(&index_clone)
-                                ));
-                            }
-                        }
-                        _ => {
-                            assignment_error = Some("Invalid index assignment".to_string());
-                        }
-                    });
 
                 if let Err(error) = mutate_result {
                     return Value::Error(error);
@@ -4325,10 +4274,16 @@ impl Interpreter {
             }
             Stmt::Assign { target, value } => {
                 let val = self.eval_expr(value);
-                self.set_return_if_error(&val);
+                if self.set_return_if_error(&val) {
+                    return;
+                }
 
-                // Always perform the assignment, even for errors
                 let assignment_result = match target {
+                    Expr::IndexAccess { object, .. } | Expr::FieldAccess { object, .. }
+                        if !matches!(&**object, Expr::Identifier(_)) =>
+                    {
+                        self.assign_path(target, val.clone())
+                    }
                     Expr::Identifier(name) => {
                         match self.env.assign_checked(name.clone(), val.clone()) {
                             Ok(()) => Value::Null,

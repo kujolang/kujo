@@ -8,6 +8,9 @@ This file records user-visible changes to Kujo, following
 
 - Fix VM struct field assignment write-back for global, local, and captured
   bindings, preserving immutable-binding checks and value-copy isolation.
+- Support binding-rooted nested array, dictionary, and struct assignments in
+  both runtimes, with checked write-back and unchanged roots on failed writes.
+- Stop interpreter assignment when evaluating its right-hand side fails.
 
 ## [1.8.2] - 2026-10-19
 

@@ -1533,6 +1533,7 @@ impl VM {
                             | OpCode::Not
                             | OpCode::IndexGet
                             | OpCode::IndexSet
+                            | OpCode::UpdatePath(_)
                             | OpCode::IndexGetInPlace(_)
                             | OpCode::IndexSetInPlace(_)
                             | OpCode::LoadVar(_)
@@ -5129,6 +5130,30 @@ impl VM {
                     };
 
                     self.stack.push(result);
+                }
+
+                OpCode::UpdatePath(shape) => {
+                    use crate::interpreter::assignment::{update, Access};
+                    let root = self.stack.pop().ok_or("Stack underflow")?;
+                    let mut path = Vec::with_capacity(shape.len());
+                    for access in shape.into_iter().rev() {
+                        path.push(match access {
+                            Some(field) => Access::Field(field),
+                            None => Access::Index(self.stack.pop().ok_or("Stack underflow")?),
+                        });
+                    }
+                    path.reverse();
+                    let value = self.stack.pop().ok_or("Stack underflow")?;
+                    match update(root, &path, value) {
+                        Ok(updated) => {
+                            if !self.push_checked_value(updated, "updating nested assignment")? {
+                                continue;
+                            }
+                        }
+                        Err(error) => {
+                            self.throw_runtime_value(Value::Error(error))?;
+                        }
+                    }
                 }
 
                 OpCode::FieldSet(field) => {

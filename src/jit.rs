@@ -3291,9 +3291,10 @@ impl BytecodeTranslator {
             // Dict/Array operations
             OpCode::IndexGet => (2, 1), // Pop object + index, push value
             OpCode::IndexSet => (3, 0), // Pop object + index + value, push nothing
+            OpCode::UpdatePath(path) => (2 + path.iter().filter(|step| step.is_none()).count(), 1),
             OpCode::IndexGetInPlace(_) => (1, 1), // Pop index, load var, push value
             OpCode::IndexSetInPlace(_) => (2, 0), // Pop index + value, modify variable in place
-            OpCode::MakeDict(n) => (*n * 2, 1), // Pop N key-value pairs, push dict
+            OpCode::MakeDict(n) => (*n * 2, 1),   // Pop N key-value pairs, push dict
             OpCode::MakeDictWithKeys(keys) => (keys.len(), 1), // Pop N values, push dict
 
             // Default for unknown opcodes - assume neutral
