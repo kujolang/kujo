@@ -6615,10 +6615,7 @@ impl VM {
                     local_slot_binding_kinds[slot] = BytecodeBindingKind::Mutable;
                     local_slot_initialized[slot] = true;
                     // Hand-built/legacy chunks may still address a parameter by name.
-                    if chunk.instructions.iter().any(|op| {
-                        matches!(op,
-                        OpCode::LoadVar(name) | OpCode::StoreVar(name) if name == param_name)
-                    }) {
+                    if chunk.uses_named_binding(param_name) {
                         locals.insert(param_name.clone(), local_slots[slot].clone());
                         locals_binding_kinds
                             .insert(param_name.clone(), BytecodeBindingKind::Mutable);
@@ -9483,6 +9480,33 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn cached_parameter_metadata_preserves_legacy_named_slots_after_code_edits() {
+        let mut chunk = BytecodeChunk::new();
+        chunk.params = vec!["x".into()];
+        chunk.local_names = vec!["x".into()];
+        chunk.local_count = 1;
+        chunk.instructions = vec![OpCode::LoadVar("x".into()), OpCode::Return];
+        assert!(chunk.uses_named_binding("x"));
+        let mut slotted = chunk.clone();
+        slotted.instructions[0] = OpCode::LoadLocal(0);
+        for (code, named) in [(chunk, true), (slotted, false)] {
+            let mut vm = VM::new();
+            vm.call_bytecode_function(
+                Value::BytecodeFunction {
+                    chunk: code,
+                    captured: HashMap::new(),
+                    captured_binding_kinds: HashMap::new(),
+                },
+                vec![Value::Int(42)],
+                vec![Value::Int(42)],
+            )
+            .unwrap();
+            assert_eq!(vm.call_frames[0].locals.contains_key("x"), named);
+            assert!(matches!(vm.call_frames[0].local_slots[0], Value::Int(42)));
+        }
+    }
 
     #[test]
     fn call_frames_move_the_suspended_callers_instruction_storage() {

@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Cache legacy VM parameter-binding metadata per code allocation, avoiding a
+  function-body scan on every call while preserving hand-built chunk support.
+
 - Share compiled bytecode across callable aliases and execution snapshots instead
   of copying function bodies on lookup and calls. Compiler and generator edits
   detach storage, preserving independent code and capture semantics.

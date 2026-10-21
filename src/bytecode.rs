@@ -3,8 +3,8 @@
 // Bytecode instruction definitions and structures for the Kujo VM.
 // Defines OpCode enum representing all bytecode instructions and supporting types.
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, OnceLock};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BytecodeBindingKind {
@@ -469,19 +469,33 @@ pub enum OpCode {
 /// Compiled code is shared by callable values and suspended frames. Compiler
 /// edits and generator flag changes detach storage before mutation.
 #[derive(Debug, Clone, PartialEq)]
-pub struct BytecodeChunk(Arc<BytecodeData>);
+pub struct BytecodeChunk(Arc<BytecodeStorage>);
+
+#[derive(Debug, Clone)]
+struct BytecodeStorage {
+    data: BytecodeData,
+    named_bindings: OnceLock<HashSet<String>>,
+}
+
+impl PartialEq for BytecodeStorage {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
 
 impl std::ops::Deref for BytecodeChunk {
     type Target = BytecodeData;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.0.data
     }
 }
 
 impl std::ops::DerefMut for BytecodeChunk {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        Arc::make_mut(&mut self.0)
+        let storage = Arc::make_mut(&mut self.0);
+        storage.named_bindings.take();
+        &mut storage.data
     }
 }
 
@@ -535,22 +549,42 @@ pub struct BytecodeData {
 #[allow(dead_code)] // Methods not yet used - VM integration incomplete
 impl BytecodeChunk {
     pub fn new() -> Self {
-        Self(Arc::new(BytecodeData {
-            instructions: Vec::new(),
-            constants: Vec::new(),
-            source_map: HashMap::new(),
-            name: None,
-            params: Vec::new(),
-            local_names: Vec::new(),
-            local_binding_kinds: Vec::new(),
-            local_count: 0,
-            exception_handlers: Vec::new(),
-            upvalues: Vec::new(),
-            capture_sources: None,
-            lexical_self: None,
-            is_generator: false,
-            is_async: false,
+        Self(Arc::new(BytecodeStorage {
+            data: BytecodeData {
+                instructions: Vec::new(),
+                constants: Vec::new(),
+                source_map: HashMap::new(),
+                name: None,
+                params: Vec::new(),
+                local_names: Vec::new(),
+                local_binding_kinds: Vec::new(),
+                local_count: 0,
+                exception_handlers: Vec::new(),
+                upvalues: Vec::new(),
+                capture_sources: None,
+                lexical_self: None,
+                is_generator: false,
+                is_async: false,
+            },
+            named_bindings: OnceLock::new(),
         }))
+    }
+
+    /// Legacy hand-built chunks can address a slotted parameter by name. Scan
+    /// once per immutable code allocation, not once per argument on every call.
+    pub(crate) fn uses_named_binding(&self, name: &str) -> bool {
+        self.0
+            .named_bindings
+            .get_or_init(|| {
+                self.instructions
+                    .iter()
+                    .filter_map(|op| match op {
+                        OpCode::LoadVar(name) | OpCode::StoreVar(name) => Some(name.clone()),
+                        _ => None,
+                    })
+                    .collect()
+            })
+            .contains(name)
     }
 
     /// Add a constant to the pool and return its index
@@ -664,6 +698,26 @@ pub struct ExceptionHandler {
 #[cfg(test)]
 mod sharing_tests {
     use super::*;
+
+    #[test]
+    fn named_binding_cache_is_shared_invalidated_and_not_part_of_code_equality() {
+        let mut original = BytecodeChunk::new();
+        original.emit(OpCode::LoadVar("x".into()));
+        let mut edited = original.clone();
+        assert!(original.uses_named_binding("x"));
+        assert!(edited.0.named_bindings.get().is_some());
+        edited.instructions[0] = OpCode::LoadVar("y".into());
+        assert!(edited.0.named_bindings.get().is_none());
+        assert!(!edited.uses_named_binding("x"));
+        assert!(edited.uses_named_binding("y"));
+        assert!(original.uses_named_binding("x"));
+        assert!(!original.uses_named_binding("y"));
+        edited.instructions[0] = OpCode::LoadVar("x".into());
+        assert_eq!(original, edited);
+        // Unique mutation must invalidate metadata too.
+        edited.instructions.clear();
+        assert!(!edited.uses_named_binding("x"));
+    }
 
     #[test]
     fn bytecode_clones_share_storage_and_edits_detach() {

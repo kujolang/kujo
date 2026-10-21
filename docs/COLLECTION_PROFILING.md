@@ -536,3 +536,6 @@ A 10,000-call probe with an unused 1,000-statement branch exposed repeated code
 copies despite executing the same short path. Storage-identity tests cover cheap
 clones and detached edits, including nested functions; dual-runtime contracts
 cover independent captures, callable aliases, recursion and retained arrays.
+Legacy named-parameter detection is cached with the shared code allocation.
+Any mutable access invalidates that metadata, including edits to uniquely owned
+code. Cached metadata does not affect bytecode equality.
