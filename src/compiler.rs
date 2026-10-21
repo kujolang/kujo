@@ -1934,10 +1934,12 @@ impl Compiler {
                 }
             }
             if self.uses_local_slots && self.scope_depth > 0 {
-                if let Some((root, pair, function, mutable)) =
+                if let Some((root, pair, function, args, mutable)) =
                     crate::interpreter::assignment::pop_rebind_pair(stmt, statements.get(i + 1))
                 {
-                    self.compile_expr(&Expr::Identifier(root.into()))?;
+                    for arg in args {
+                        self.compile_expr(arg)?;
+                    }
                     self.compile_expr(function)?;
                     let binding = if let Some(slot) = self.resolve_local_slot(root) {
                         crate::bytecode::MutationBinding::Local(slot)
@@ -1951,8 +1953,9 @@ impl Compiler {
                         BytecodeBindingKind::LetImmutable
                     };
                     let pair_slot = self.declare_local(pair, kind)?;
-                    let fast = self.chunk.emit(OpCode::TryPopRebind(binding, pair_slot, 0));
-                    self.chunk.emit(OpCode::Call(1));
+                    let fast =
+                        self.chunk.emit(OpCode::TryPopRebind(binding, pair_slot, args.len(), 0));
+                    self.chunk.emit(OpCode::Call(args.len()));
                     self.chunk.patch_jump(fast);
                     self.chunk.emit(OpCode::DefineLocal(pair_slot));
                     self.chunk.emit(OpCode::Pop);

@@ -560,13 +560,13 @@ mod field_append_tests {
     }
 }
 
-/// Recognize adjacent `let pair = f(array); array = pair[0]`. There is no
+/// Recognize adjacent `let pair = f(collection, ...); collection = pair[0]`. There is no
 /// observable execution between these statements; all other uses keep ordinary
-/// functional pop semantics. The runtime still verifies the actual native callee.
+/// functional pop/remove semantics. The runtime verifies the actual native callee.
 pub(crate) fn pop_rebind_pair<'a>(
     stmt: &'a crate::ast::Stmt,
     next: Option<&crate::ast::Stmt>,
-) -> Option<(&'a str, &'a str, &'a Expr, bool)> {
+) -> Option<(&'a str, &'a str, &'a Expr, &'a [Expr], bool)> {
     use crate::ast::{Pattern, Stmt};
     let Stmt::Let {
         pattern: Pattern::Identifier(pair),
@@ -577,7 +577,7 @@ pub(crate) fn pop_rebind_pair<'a>(
     else {
         return None;
     };
-    if args.len() != 1 || !matches!(function.as_ref(), Expr::Identifier(_)) {
+    if !(1..=2).contains(&args.len()) || !matches!(function.as_ref(), Expr::Identifier(_)) {
         return None;
     }
     let Expr::Identifier(root) = &args[0] else { return None };
@@ -593,7 +593,7 @@ pub(crate) fn pop_rebind_pair<'a>(
         && matches!(object.as_ref(), Expr::Identifier(name) if name == pair)
         && matches!(index.as_ref(), Expr::Int(0))
     {
-        Some((root, pair, function, *mutable))
+        Some((root, pair, function, args, *mutable))
     } else {
         None
     }
@@ -608,6 +608,42 @@ pub(crate) fn pop_rebinding(root: &mut Value, original: &mut Option<Value>) -> O
     drop(original.take());
     let popped = Arc::make_mut(destination).pop().unwrap_or(Value::Int(0));
     Some(Value::array(vec![Value::Array(destination.clone()), popped]))
+}
+
+pub(crate) fn remove_rebinding(
+    root: &mut Value,
+    original: &mut Option<Value>,
+    key: &Value,
+) -> Option<Value> {
+    let removed = match (root, original.as_ref()?, key) {
+        (Value::Dict(destination), Value::Dict(source), key)
+            if Arc::ptr_eq(destination, source) =>
+        {
+            let key = match key {
+                Value::Str(s) => s.as_ref().clone(),
+                Value::Int(i) => i.to_string(),
+                _ => return None,
+            };
+            drop(original.take());
+            let removed = Arc::make_mut(destination).remove(key.as_str()).unwrap_or(Value::Int(0));
+            (Value::Dict(destination.clone()), removed)
+        }
+        (Value::IntDict(destination), Value::IntDict(source), key)
+            if Arc::ptr_eq(destination, source) =>
+        {
+            let key = match key {
+                Value::Int(i) => Some(*i),
+                Value::Str(s) => Value::dict_index(s).ok(),
+                _ => None,
+            };
+            drop(original.take());
+            let removed =
+                key.and_then(|k| Arc::make_mut(destination).remove(&k)).unwrap_or(Value::Int(0));
+            (Value::IntDict(destination.clone()), removed)
+        }
+        _ => return None,
+    };
+    Some(Value::array(vec![removed.0, removed.1]))
 }
 
 #[cfg(test)]
@@ -689,4 +725,32 @@ pub(crate) fn initial_parameter_alias<'a>(body: &'a [crate::ast::Stmt]) -> Optio
         crate::compiler::Compiler::spawn_free_bindings(&body[1..], std::iter::once(source.clone()))
             .ok()?;
     (!free.contains(source)).then_some(source.as_str())
+}
+
+#[cfg(test)]
+mod removal_tests {
+    use super::*;
+    #[test]
+    fn deletion_keeps_unique_map_allocation_and_detaches_snapshots() {
+        let mut root =
+            Value::dict((0..10_000).map(|i| (i.to_string().into(), Value::Int(i))).collect());
+        let address = |v: &Value| {
+            let Value::Dict(d) = v else { panic!() };
+            Arc::as_ptr(d)
+        };
+        let original_address = address(&root);
+        for i in 0..100 {
+            let mut original = Some(root.clone());
+            let pair = remove_rebinding(&mut root, &mut original, &Value::str_ref(&i.to_string()))
+                .unwrap();
+            assert_eq!(address(&root), original_address);
+            drop(pair);
+        }
+        let alias = root.clone();
+        let mut original = Some(root.clone());
+        remove_rebinding(&mut root, &mut original, &Value::str_ref("100")).unwrap();
+        assert_ne!(address(&root), address(&alias));
+        assert!(alias.dictionary_get("100").is_some());
+        assert!(root.dictionary_get("100").is_none());
+    }
 }

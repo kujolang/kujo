@@ -4214,26 +4214,57 @@ impl Interpreter {
                 }
             }
 
-            if let Some((root, pair_name, Expr::Identifier(function), mutable)) =
+            if let Some((root, pair_name, Expr::Identifier(function), args, mutable)) =
                 assignment::pop_rebind_pair(stmt, stmts.get(index + 1))
             {
-                if !self.env.scopes.last().is_some_and(|scope| scope.contains_key(pair_name))
-                    && matches!(self.env.get(function), Some(Value::NativeFunction(name)) if name == "pop")
+                if !handled
+                    && !self.env.scopes.last().is_some_and(|scope| scope.contains_key(pair_name))
                 {
-                    let mut original = self.env.get(root);
-                    let mut pair = None;
-                    let _ = self.env.mutate_checked(root, |value| {
-                        pair = assignment::pop_rebinding(value, &mut original);
-                    });
-                    if let Some(pair) = pair {
-                        let kind =
-                            if mutable { BindingKind::Mutable } else { BindingKind::LetImmutable };
-                        if let Err(error) =
-                            self.env.define_with_kind_checked(pair_name.into(), pair, kind)
+                    if let Some(Value::NativeFunction(native)) = self.env.get(function) {
+                        if (native == "pop" && args.len() == 1)
+                            || (native == "remove" && args.len() == 2)
                         {
-                            self.return_value = Some(Value::Error(error));
+                            let mut values: Vec<Value> =
+                                args.iter().map(|arg| self.eval_expr(arg)).collect();
+                            if let Some(error) = values.iter().find(|v| Self::is_error_value(v)) {
+                                self.return_value = Some(error.clone());
+                            } else {
+                                let key = if values.len() == 2 { values.pop() } else { None };
+                                let mut original = values.pop();
+                                let mut pair = None;
+                                let _ = self.env.mutate_checked(root, |value| {
+                                    pair = if let Some(key) = &key {
+                                        assignment::remove_rebinding(value, &mut original, key)
+                                    } else {
+                                        assignment::pop_rebinding(value, &mut original)
+                                    };
+                                });
+                                let pair = pair.unwrap_or_else(|| {
+                                    let mut values = vec![original.unwrap()];
+                                    if let Some(key) = key {
+                                        values.push(key);
+                                    }
+                                    self.call_native_function_impl(&native, &values)
+                                });
+                                if Self::is_error_value(&pair) {
+                                    self.return_value = Some(pair);
+                                } else {
+                                    let kind = if mutable {
+                                        BindingKind::Mutable
+                                    } else {
+                                        BindingKind::LetImmutable
+                                    };
+                                    if let Err(error) = self.env.define_with_kind_checked(
+                                        pair_name.into(),
+                                        pair,
+                                        kind,
+                                    ) {
+                                        self.return_value = Some(Value::Error(error));
+                                    }
+                                }
+                            }
+                            handled = true;
                         }
-                        handled = true;
                     }
                 }
             }

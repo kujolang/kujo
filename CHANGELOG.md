@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse uniquely owned dictionary storage for adjacent removal/rebinding while
+  preserving removed values, retained snapshots and ordinary callable fallbacks.
+
 - Pass imported helper arguments, VM callback results and awaited collections
   without recursively normalizing their graphs, preserving shared storage and
   copy-on-write isolation.

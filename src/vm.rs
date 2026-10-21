@@ -1502,7 +1502,7 @@ impl VM {
                             | OpCode::TryAppendAssign(_, _)
                             | OpCode::GuardAppendPath(_)
                             | OpCode::AppendBindingPath(_, _)
-                            | OpCode::TryPopRebind(_, _, _)
+                            | OpCode::TryPopRebind(_, _, _, _)
                             | OpCode::IndexGetInPlace(_)
                             | OpCode::IndexSetInPlace(_)
                             | OpCode::LoadVar(_)
@@ -5163,11 +5163,15 @@ impl VM {
                     self.stack.push(result);
                 }
 
-                OpCode::TryPopRebind(binding, pair_slot, end) => {
+                OpCode::TryPopRebind(binding, pair_slot, argc, end) => {
                     let function = self.stack.pop().ok_or("Stack underflow")?;
+                    let key = if argc == 2 {
+                        Some(self.stack.pop().ok_or("Stack underflow")?)
+                    } else {
+                        None
+                    };
                     let mut original = Some(self.stack.pop().ok_or("Stack underflow")?);
-                    if matches!(&function, Value::NativeFunction(name) if name == "pop")
-                        && matches!(original.as_ref(), Some(Value::Array(_)))
+                    if matches!(&function, Value::NativeFunction(name) if (name == "pop" && argc == 1) || (name == "remove" && argc == 2))
                     {
                         // This slot belongs to the forthcoming fresh declaration,
                         // not an in-scope binding. Release a previous loop iteration's
@@ -5178,8 +5182,15 @@ impl VM {
                             Value::Null;
                         let mut pair = None;
                         let _ = self.mutate_binding(&binding, |root| {
-                            pair =
-                                crate::interpreter::assignment::pop_rebinding(root, &mut original);
+                            pair = if let Some(key) = &key {
+                                crate::interpreter::assignment::remove_rebinding(
+                                    root,
+                                    &mut original,
+                                    key,
+                                )
+                            } else {
+                                crate::interpreter::assignment::pop_rebinding(root, &mut original)
+                            };
                             Ok(())
                         });
                         if let Some(pair) = pair {
@@ -5189,6 +5200,9 @@ impl VM {
                         }
                     }
                     self.stack.push(original.unwrap());
+                    if let Some(key) = key {
+                        self.stack.push(key);
+                    }
                     self.stack.push(function);
                 }
 
