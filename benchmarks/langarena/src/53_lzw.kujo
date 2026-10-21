@@ -34,20 +34,20 @@ func lzw_decode(data) {
     if byte_length(data) == 0 { return bytes([]) }
     mut dictionary := []
     mut i := 0
-    while i < 256 { dictionary = push(dictionary, byte_character(i)) i += 1 }
+    while i < 256 { dictionary = push(dictionary, bytes([i])) i += 1 }
     mut old := dictionary[bit_shl(data[0], 8) + data[1]]
-    mut result := utf8_encode(old)
+    mut result := old
     mut next_code := 256
     i = 2
     while i < byte_length(data) {
         let code := bit_shl(data[i], 8) + data[i + 1]
         i += 2
-        mut current := ""
+        mut current := bytes([])
         if code < len(dictionary) { current = dictionary[code] }
-        else if code == next_code { current = old + old[0] }
+        else if code == next_code { current = concat(old, bytes([old[0]])) }
         else { return bytes([]) }
-        result = concat(result, utf8_encode(current))
-        dictionary = push(dictionary, old + current[0])
+        result = concat(result, current)
+        dictionary = push(dictionary, concat(old, bytes([current[0]])))
         next_code += 1
         old = current
     }

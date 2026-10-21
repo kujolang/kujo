@@ -41,9 +41,12 @@ fn port_kernels_preserve_input_values_and_roundtrip_binary_data() {
             assert_equal(bwt_decode(bwt_encode(data)), data)
             assert_equal(huff_decode(huff_encode(data)), data)
             assert_equal(arith_decode(arith_encode(data)), data)
+            assert_equal(lzw_decode(lzw_encode(data)), data)
         }
         let text := utf8_encode("ABRACADABRA")
         assert_equal(lzw_decode(lzw_encode(text)), text)
+        assert_equal(lzw_decode(lzw_encode(bytes([255, 255, 255]))), bytes([255, 255, 255]))
+        assert_equal(lzw_decode(lzw_encode(bytes([]))), bytes([]))
         let ast := calc_parse("a = 8\nb = a * 3 - 2\n")
         let first := calc_evaluate(ast[0], {})
         let second := calc_evaluate(ast[1], first[1])
