@@ -1,0 +1,596 @@
+{
+  "binaries": {
+    "Goose": "/tmp/kujo-langa-verification/goose/target/benchmark",
+    "Kujo": "/tmp/kujo-final-followup-bin",
+    "Rust": "/tmp/kujo-langa-verification/rust/target/release/benchmarks"
+  },
+  "results": [
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 4.977966212,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "@comparison_ns 4977966212\nBase64::Encode: OK 3516658482\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 8.795090955
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.848,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606867743\nBase64::Encode: OK in 0.848s\nSummary: 0.8483s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.992137584
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.941,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606868737\nBase64::Encode: OK in 0.941s\nSummary: 0.9409s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.177243069
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 28.702904766,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "@comparison_ns 28702904766\nJson::Generate: OK 120\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 32.98200426
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.962,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606902939\nJson::Generate: OK in 0.962s\nSummary: 0.9619s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.225283786
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.816,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606904182\nJson::Generate: OK in 0.816s\nSummary: 0.8155s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.008713716
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 1.158287108,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "@comparison_ns 1158287108\nEtc::LogParser: OK 2439432\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 3.955239898
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.939,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606909144\nEtc::LogParser: OK in 0.939s\nSummary: 0.9392s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.275578244
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.744,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606910425\nEtc::LogParser: OK in 0.744s\nSummary: 0.7445s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.906201827
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 14.136378599,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "@comparison_ns 14136378599\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 23.585836378
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.021,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606934916\nSort::Quick: OK in 0.021s\nSummary: 0.0213s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.04688651
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.024,
+      "passed": true,
+      "round": 1,
+      "stderr": "",
+      "stdout": "start: 1792606934966\nSort::Quick: OK in 0.024s\nSummary: 0.0240s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.062641215
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.613,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606935030\nBase64::Encode: OK in 0.613s\nSummary: 0.6132s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.73904387
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.863,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606935773\nBase64::Encode: OK in 0.863s\nSummary: 0.8627s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.049795309
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 2.736090651,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "@comparison_ns 2736090651\nBase64::Encode: OK 3516658482\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 3.458374028
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.745,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606940302\nJson::Generate: OK in 0.745s\nSummary: 0.7452s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.985649407
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.762,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606941288\nJson::Generate: OK in 0.762s\nSummary: 0.7616s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.948342334
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 12.260229007,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "@comparison_ns 12260229007\nJson::Generate: OK 120\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 17.183104676
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.862,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606959424\nEtc::LogParser: OK in 0.862s\nSummary: 0.8623s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.134588476
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.648,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606960562\nEtc::LogParser: OK in 0.648s\nSummary: 0.6477s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.836412131
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 0.75344684,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "@comparison_ns 753446840\nEtc::LogParser: OK 2439432\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 3.076667155
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.039,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606964513\nSort::Quick: OK in 0.039s\nSummary: 0.0392s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.082621608
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.027,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "start: 1792606964595\nSort::Quick: OK in 0.027s\nSummary: 0.0267s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.058369472
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 17.296357846,
+      "passed": true,
+      "round": 2,
+      "stderr": "",
+      "stdout": "@comparison_ns 17296357846\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 25.955816558
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 1.305,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792606990610\nBase64::Encode: OK in 1.305s\nSummary: 1.3047s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.506475213
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 5.375556333,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "@comparison_ns 5375556333\nBase64::Encode: OK 3516658482\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 6.376525499
+    },
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 1.114,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792606998510\nBase64::Encode: OK in 1.114s\nSummary: 1.1135s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.37134742
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 1.147,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792606999883\nJson::Generate: OK in 1.147s\nSummary: 1.1471s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.464556175
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 16.170262832,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "@comparison_ns 16170262832\nJson::Generate: OK 120\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 22.10822578
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 1.143,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792607023460\nJson::Generate: OK in 1.143s\nSummary: 1.1427s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 1.453072463
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.666,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792607024909\nEtc::LogParser: OK in 0.666s\nSummary: 0.6664s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.857363619
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 1.263466223,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "@comparison_ns 1263466223\nEtc::LogParser: OK 2439432\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 4.911112295
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 2.52,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792607030697\nEtc::LogParser: OK in 2.520s\nSummary: 2.5200s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 3.007056802
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Goose",
+      "measured_seconds": 0.029,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792607033713\nSort::Quick: OK in 0.029s\nSummary: 0.0293s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.061802217
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Kujo",
+      "measured_seconds": 23.359440643,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "@comparison_ns 23359440643\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 41.856122406
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "exitcode": 0,
+      "language": "Rust",
+      "measured_seconds": 0.026,
+      "passed": true,
+      "round": 3,
+      "stderr": "",
+      "stdout": "start: 1792607075635\nSort::Quick: OK in 0.026s\nSummary: 0.0261s, 1, 1, 0\n",
+      "timed_out": false,
+      "wall_seconds": 0.068813755
+    }
+  ],
+  "provenance": {
+    "date": "2026-10-21",
+    "langarena_commit": "3c9f84ddaeec834c0631747cb789e8cfd602f993",
+    "kujo_runtime_commit": "34b82c909ebbf7a50c19e9835b562ac700a58959",
+    "kujo_build": "Rust 1.96.0; default-feature release, thin LTO; default bytecode VM",
+    "goose_commit": "ea1f368c109c083a2161580ff1d74c70200b6cc8",
+    "goose_build": "goose -O2 --standalone; Apple clang 17.0.0 cc -O2 -w -lm -pthread; upstream prod target",
+    "rust_build": "rustc 1.96.0; cargo build --locked --release; upstream release profile",
+    "host": "Intel Core i7-9750H, 16 GiB RAM, macOS 26.6.2",
+    "limits": "Shared loaded host; CPU speed limit reported 51% before and 48% after; load average 38.76 before and 42.92 after. Exploratory observations, not official rankings or controlled speedups.",
+    "method": "Three sequential samples per case/language; rotate language order each round. Measured iterations only; preparation, warmup, RNG reset, checksum and compilation excluded. Rust/Goose times rounded by upstream runners to 0.001s. QuickSort uses unchanged test.json; other cases unchanged run.json.",
+    "pilot": "One initial Kujo Base64 checksum passed, but the new comparison parser incorrectly compared starts_with boolean with integer 1. Fixed harness, excluded pilot and restarted all samples. No runtime/benchmark source fix.",
+    "goose_build_environment": "Installed SDK C++ header directory supplied via CMAKE_CXX_FLAGS=-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1; no Goose source edits."
+  },
+  "binary_sha256": {
+    "Goose": "b66b89dc42709b39958324df2b5f0501c4ee9418c398f31ba76956d0e3c1e9a5",
+    "Kujo": "fde0f6c0ab999c97349c4a1ee05db6497532fcfa7765a5a654f32d08ff1976e2",
+    "Rust": "708dfe5f0f7df8c990dc718a2bc9968744067a4b0bde3a11fe19f1003a83e443"
+  },
+  "source_sha256": {
+    "benchmarks/langarena/compare.kujo": "e0b7805d7f2d6764656aa86a909f60686c3175beb363c4cce3d283ed0df0b98f",
+    "benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "benchmarks/langarena/run.json": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+    "benchmarks/langarena/test.json": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797"
+  },
+  "summary": [
+    {
+      "benchmark": "Base64::Encode",
+      "config": "benchmarks/langarena/run.json",
+      "times": {
+        "Kujo": {
+          "median_seconds": 4.977966212,
+          "min_seconds": 2.736090651,
+          "max_seconds": 5.375556333
+        },
+        "Rust": {
+          "median_seconds": 0.848,
+          "min_seconds": 0.613,
+          "max_seconds": 1.114
+        },
+        "Goose": {
+          "median_seconds": 0.941,
+          "min_seconds": 0.863,
+          "max_seconds": 1.305
+        }
+      },
+      "kujo_over_goose": 5.290080990435707,
+      "kujo_over_rust": 5.870243174528302
+    },
+    {
+      "benchmark": "Json::Generate",
+      "config": "benchmarks/langarena/run.json",
+      "times": {
+        "Kujo": {
+          "median_seconds": 16.170262832,
+          "min_seconds": 12.260229007,
+          "max_seconds": 28.702904766
+        },
+        "Rust": {
+          "median_seconds": 0.962,
+          "min_seconds": 0.745,
+          "max_seconds": 1.143
+        },
+        "Goose": {
+          "median_seconds": 0.816,
+          "min_seconds": 0.762,
+          "max_seconds": 1.147
+        }
+      },
+      "kujo_over_goose": 19.816498568627452,
+      "kujo_over_rust": 16.809005022869023
+    },
+    {
+      "benchmark": "Etc::LogParser",
+      "config": "benchmarks/langarena/run.json",
+      "times": {
+        "Kujo": {
+          "median_seconds": 1.158287108,
+          "min_seconds": 0.75344684,
+          "max_seconds": 1.263466223
+        },
+        "Rust": {
+          "median_seconds": 0.939,
+          "min_seconds": 0.862,
+          "max_seconds": 2.52
+        },
+        "Goose": {
+          "median_seconds": 0.666,
+          "min_seconds": 0.648,
+          "max_seconds": 0.744
+        }
+      },
+      "kujo_over_goose": 1.7391698318318316,
+      "kujo_over_rust": 1.2335325963791266
+    },
+    {
+      "benchmark": "Sort::Quick",
+      "config": "benchmarks/langarena/test.json",
+      "times": {
+        "Kujo": {
+          "median_seconds": 17.296357846,
+          "min_seconds": 14.136378599,
+          "max_seconds": 23.359440643
+        },
+        "Rust": {
+          "median_seconds": 0.026,
+          "min_seconds": 0.021,
+          "max_seconds": 0.039
+        },
+        "Goose": {
+          "median_seconds": 0.027,
+          "min_seconds": 0.024,
+          "max_seconds": 0.029
+        }
+      },
+      "kujo_over_goose": 640.6058461481481,
+      "kujo_over_rust": 665.2445325384615
+    }
+  ]
+}

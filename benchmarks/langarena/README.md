@@ -9,6 +9,8 @@ Production-size attempts and remaining gaps are in
 [FOLLOWUP_VERIFICATION.md](FOLLOWUP_VERIFICATION.md); the
 [earlier production report](PRODUCTION_VERIFICATION.md) is retained as historical
 evidence for its pinned executable.
+An exploratory four-workload Kujo/Goose/Rust comparison is recorded in
+[COMPARISON_2026_10_21.md](COMPARISON_2026_10_21.md), with raw samples and limitations.
 
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark
