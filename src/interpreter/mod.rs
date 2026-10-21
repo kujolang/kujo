@@ -3346,6 +3346,25 @@ impl Interpreter {
         Value::Null
     }
 
+    fn assign_evaluated(&mut self, target: &Expr, val: &Value) -> Value {
+        match target {
+            Expr::IndexAccess { object, .. } | Expr::FieldAccess { object, .. }
+                if !matches!(&**object, Expr::Identifier(_)) =>
+            {
+                self.assign_path(target, val.clone())
+            }
+            Expr::Identifier(name) => match self.env.assign_checked(name.clone(), val.clone()) {
+                Ok(()) => Value::Null,
+                Err(error) => Value::Error(error),
+            },
+            Expr::IndexAccess { object, index } => {
+                self.assign_index(object.as_ref(), index.as_ref(), val)
+            }
+            Expr::FieldAccess { object, field } => self.assign_member(object.as_ref(), field, val),
+            _ => Value::Error("Invalid assignment target".to_string()),
+        }
+    }
+
     fn try_append_assignment(&mut self, target: &Expr, rhs: &Expr) -> Option<Value> {
         let Expr::Call { function, args } = rhs else { return None };
         let Expr::Identifier(function) = function.as_ref() else { return None };
@@ -3355,15 +3374,27 @@ impl Interpreter {
         let (name, expressions) = assignment::split_target(target).ok()?;
         // Interpreter calls resolve the callable before evaluating arguments.
         let Some(Value::NativeFunction(native)) = self.env.get(function) else { return None };
-        if !matches!(native.as_str(), "push" | "append") {
+        if !matches!(native.as_str(), "push" | "append" | "concat") {
             return None;
         }
         let values: Vec<Value> = args.iter().map(|arg| self.eval_expr(arg)).collect();
         if let Some(error) = values.iter().find(|v| Self::is_error_value(v)) {
             return Some(error.clone());
         }
+        if native == "concat"
+            && (!matches!((&values[0], &values[1]), (Value::Bytes(_), Value::Bytes(_)))
+                || (matches!(expressions.as_slice(), [assignment::AccessExpr::Field(_)])
+                    && !matches!(self.env.get(name), Some(Value::Struct { .. }))))
+        {
+            let value = self.call_native_function_impl(&native, &values);
+            return Some(if Self::is_error_value(&value) {
+                value
+            } else {
+                self.assign_evaluated(target, &value)
+            });
+        }
         if !expressions.is_empty() {
-            if !matches!(values.first(), Some(Value::Array(_))) {
+            if !matches!(values.first(), Some(Value::Array(_))) && native != "concat" {
                 return Some(self.call_native_function_impl(&native, &values));
             }
             let mut path = Vec::new();
@@ -3384,7 +3415,11 @@ impl Interpreter {
             let item = values.next().unwrap();
             let mut error = None;
             let result = self.env.mutate_checked(name, |root| {
-                error = assignment::append_path(root, &path, original, item, None).err();
+                error = if native == "concat" {
+                    assignment::concat_bytes_path(root, &path, original, item, None).err()
+                } else {
+                    assignment::append_path(root, &path, original, item, None).err()
+                };
             });
             return Some(match result.err().or(error) {
                 Some(error) => Value::Error(error),
@@ -3399,7 +3434,11 @@ impl Interpreter {
         // No callbacks run while borrowing the destination. A callback that
         // reassigned it during argument evaluation forces ordinary call semantics.
         let _ = self.env.mutate_checked(target, |root| {
-            appended = assignment::append_rebinding(root, &mut original, &mut item);
+            appended = if native == "concat" {
+                assignment::concat_bytes_rebinding(root, &mut original, item.as_ref().unwrap())
+            } else {
+                assignment::append_rebinding(root, &mut original, &mut item)
+            };
         });
         if appended {
             return Some(Value::Null);
@@ -4431,26 +4470,7 @@ impl Interpreter {
                     return;
                 }
 
-                let assignment_result = match target {
-                    Expr::IndexAccess { object, .. } | Expr::FieldAccess { object, .. }
-                        if !matches!(&**object, Expr::Identifier(_)) =>
-                    {
-                        self.assign_path(target, val.clone())
-                    }
-                    Expr::Identifier(name) => {
-                        match self.env.assign_checked(name.clone(), val.clone()) {
-                            Ok(()) => Value::Null,
-                            Err(error) => Value::Error(error),
-                        }
-                    }
-                    Expr::IndexAccess { object, index } => {
-                        self.assign_index(object.as_ref(), index.as_ref(), &val)
-                    }
-                    Expr::FieldAccess { object, field } => {
-                        self.assign_member(object.as_ref(), field, &val)
-                    }
-                    _ => Value::Error("Invalid assignment target".to_string()),
-                };
+                let assignment_result = self.assign_evaluated(target, &val);
 
                 if self.set_return_if_error(&assignment_result) {
                     return;

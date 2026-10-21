@@ -5265,8 +5265,13 @@ impl VM {
                     if n < 3 {
                         return Err("Stack underflow".into());
                     }
-                    if !matches!(&self.stack[n-1], Value::NativeFunction(name) if matches!(name.as_str(), "push" | "append"))
-                        || !matches!(&self.stack[n - 3], Value::Array(_))
+                    if !(matches!(&self.stack[n-1], Value::NativeFunction(name) if matches!(name.as_str(), "push" | "append"))
+                        && matches!(&self.stack[n - 3], Value::Array(_)))
+                        && !(matches!(&self.stack[n-1], Value::NativeFunction(name) if name == "concat")
+                            && matches!(
+                                (&self.stack[n - 3], &self.stack[n - 2]),
+                                (Value::Bytes(_), Value::Bytes(_))
+                            ))
                     {
                         self.ip = fallback;
                         continue;
@@ -5282,12 +5287,22 @@ impl VM {
                         });
                     }
                     path.reverse();
-                    self.stack.pop().ok_or("Stack underflow")?;
+                    let function = self.stack.pop().ok_or("Stack underflow")?;
                     let item = self.stack.pop().ok_or("Stack underflow")?;
                     let original = self.stack.pop().ok_or("Stack underflow")?;
                     let mut cache = std::mem::take(&mut self.path_depth_valid);
                     let result = self.mutate_binding(&binding, |root| {
-                        assignment::append_path(root, &path, original, item, Some(&mut cache))
+                        if matches!(&function, Value::NativeFunction(name) if name == "concat") {
+                            assignment::concat_bytes_path(
+                                root,
+                                &path,
+                                original,
+                                item,
+                                Some(&mut cache),
+                            )
+                        } else {
+                            assignment::append_path(root, &path, original, item, Some(&mut cache))
+                        }
                     });
                     self.path_depth_valid = cache;
                     if let Err(error) = result {
@@ -5301,17 +5316,13 @@ impl VM {
                     let function = self.stack.pop().ok_or("Stack underflow")?;
                     let mut item = Some(self.stack.pop().ok_or("Stack underflow")?);
                     let mut original = Some(self.stack.pop().ok_or("Stack underflow")?);
-                    let eligible = matches!(&function, Value::NativeFunction(name) if matches!(name.as_str(), "push" | "append"))
+                    let eligible = matches!(&function, Value::NativeFunction(name) if matches!(name.as_str(), "push" | "append" | "concat"))
                         && Self::value_nesting_depth(item.as_ref().unwrap())
                             < runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH;
                     let appended = eligible
                         && self
                             .mutate_binding(&binding, |root| {
-                                Ok(crate::interpreter::assignment::append_rebinding(
-                                    root,
-                                    &mut original,
-                                    &mut item,
-                                ))
+                                Ok(if matches!(&function, Value::NativeFunction(name) if name == "concat") { crate::interpreter::assignment::concat_bytes_rebinding(root, &mut original, item.as_ref().unwrap()) } else { crate::interpreter::assignment::append_rebinding(root, &mut original, &mut item) })
                             })
                             .unwrap_or(false);
                     if appended {

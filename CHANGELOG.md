@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse unaliased byte-buffer capacity for consuming `concat` assignments,
+  including struct fields and indexed paths, while preserving retained snapshots.
+
 - Add `regex_count` for scanning without matched-string allocation and retain a
   bounded working set of 32 regex patterns to avoid small-cache compilation churn.
 

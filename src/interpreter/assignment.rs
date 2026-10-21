@@ -1041,3 +1041,148 @@ mod shared_struct_depth_tests {
         ));
     }
 }
+
+/// Consume only the evaluated byte argument; retained values still trigger COW.
+pub(crate) fn concat_bytes_rebinding(
+    root: &mut Value,
+    original: &mut Option<Value>,
+    suffix: &Value,
+) -> bool {
+    let (Value::Bytes(destination), Some(Value::Bytes(source)), Value::Bytes(suffix)) =
+        (root, original.as_ref(), suffix)
+    else {
+        return false;
+    };
+    if !Arc::ptr_eq(destination, source) || destination.len().checked_add(suffix.len()).is_none() {
+        return false;
+    }
+    drop(original.take());
+    Arc::make_mut(destination).extend_from_slice(suffix);
+    true
+}
+
+pub(crate) fn concat_bytes_path(
+    root: &mut Value,
+    path: &[Access],
+    original: Value,
+    suffix: Value,
+    mut cache: Option<&mut DepthCache>,
+) -> Result<(), String> {
+    let (Value::Bytes(source), Value::Bytes(tail)) = (&original, &suffix) else {
+        return Err("concat() requires two arrays or two bytes values".into());
+    };
+    source.len().checked_add(tail.len()).ok_or("concat() byte length overflow")?;
+    let normalized;
+    let path = if path.len() == 1 && !matches!(root, Value::Struct { .. }) {
+        if let Access::Field(field) = &path[0] {
+            normalized = vec![Access::Index(Value::str_ref(field))];
+            &normalized[..]
+        } else {
+            path
+        }
+    } else {
+        path
+    };
+    let bound = cache.as_mut().map(|c| c.depth(root).max(path.len()));
+    let mut destination = &*root;
+    let mut same = true;
+    for access in path {
+        match collection_child(destination, access) {
+            Some(child) => destination = child,
+            None => {
+                same = false;
+                break;
+            }
+        }
+    }
+    same &= matches!(destination, Value::Bytes(bytes) if Arc::ptr_eq(bytes, source));
+    let mut original = Some(original);
+    if same && bound.is_none_or(|n| n <= crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH) {
+        let mut destination = &mut *root;
+        for access in path {
+            destination = collection_child_mut(destination, access).expect("validated byte path");
+        }
+        assert!(concat_bytes_rebinding(destination, &mut original, &suffix));
+        if let Some(cache) = cache {
+            cache.remember_path(root, path, bound.unwrap());
+        }
+        Ok(())
+    } else {
+        let Value::Bytes(mut bytes) = original.take().unwrap() else { unreachable!() };
+        Arc::make_mut(&mut bytes).extend_from_slice(tail);
+        let result = Value::Bytes(bytes);
+        if let Some(cache) = cache {
+            update_checked(root, path, result, cache)
+        } else {
+            update_in_place(root, path, result)
+        }
+    }
+}
+
+#[cfg(test)]
+mod byte_concat_storage_tests {
+    use super::*;
+    #[test]
+    fn byte_growth_reuses_capacity_and_detaches_real_aliases() {
+        let mut bytes = Vec::with_capacity(1024);
+        bytes.push(1);
+        let mut root = Value::bytes(bytes);
+        let pointer = |v: &Value| {
+            let Value::Bytes(b) = v else { panic!() };
+            b.as_ptr()
+        };
+        let original_pointer = pointer(&root);
+        let suffix = Value::bytes(vec![2]);
+        for _ in 0..100 {
+            let mut original = Some(root.clone());
+            assert!(concat_bytes_rebinding(&mut root, &mut original, &suffix));
+            assert_eq!(pointer(&root), original_pointer);
+        }
+        let saved = root.clone();
+        let mut original = Some(root.clone());
+        assert!(concat_bytes_rebinding(&mut root, &mut original, &suffix));
+        assert_ne!(pointer(&root), pointer(&saved));
+        let Value::Bytes(b) = saved else { panic!() };
+        assert_eq!(b.len(), 101);
+    }
+}
+
+#[cfg(test)]
+mod byte_concat_depth_tests {
+    use super::*;
+    #[test]
+    fn rejected_byte_growth_does_not_modify_an_overdeep_root() {
+        std::thread::Builder::new()
+            .stack_size(16 * 1024 * 1024)
+            .spawn(|| {
+                let mut deep = Value::Null;
+                for _ in 0..crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+                    deep = Value::array(vec![deep]);
+                }
+                let mut root = Value::dict(
+                    [("bad".into(), deep), ("safe".into(), Value::bytes(vec![1]))]
+                        .into_iter()
+                        .collect(),
+                );
+                let path = [Access::Index(Value::str_ref("safe"))];
+                let original = collection_child(&root, &path[0]).unwrap().clone();
+                let mut cache = DepthCache::default();
+                let error = concat_bytes_path(
+                    &mut root,
+                    &path,
+                    original,
+                    Value::bytes(vec![2]),
+                    Some(&mut cache),
+                )
+                .unwrap_err();
+                assert!(error.contains("nesting depth"));
+                let Value::Bytes(bytes) = collection_child(&root, &path[0]).unwrap() else {
+                    panic!()
+                };
+                assert_eq!(bytes.as_slice(), &[1]);
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+}

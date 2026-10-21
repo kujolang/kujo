@@ -869,6 +869,14 @@ that shadows an index, and nonadjacent write-back use ordinary functional calls.
 Retained aliases, closures and result pairs keep their snapshots. Specialized
 dictionaries may still convert representation on their first deletion.
 
+For bytes, `buffer = concat(buffer, chunk)` can reuse unaliased capacity, including
+struct fields and indexed destinations. Arguments and target indices retain their
+ordinary evaluation order. The runtime checks the native callable and destination
+identity before consuming the temporary input reference. Retained copies still
+detach, self-concatenation retains its original input, and array concatenation
+keeps its existing returned-copy behavior. Byte growth does not remove allocation
+costs when capacity expands or a snapshot must be retained.
+
 Nested assignments validate the complete path before editing unique rows, keeping
 failed writes atomic. Queues use shared immutable storage: cloning, `queue_size`,
 and `queue_peek` are constant time in queue length; enqueue is constant time apart
