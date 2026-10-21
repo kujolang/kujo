@@ -278,9 +278,9 @@ updates consequently copied the whole array. The implementation now:
 - Consumes an initial parameter alias only when lexical analysis proves the source
   is dead afterward. Other aliases, nested closures, and repeated arguments still
   retain their snapshots and trigger copy-on-write.
-- Moves VM-to-AST arguments through normalization, retaining unique array/dictionary
-  buffers. Normalization still traverses collections and converts specialized maps;
-  this is not a constant-time imported-call guarantee.
+- At this milestone, moved VM-to-AST arguments through normalization, retaining
+  unique array/dictionary buffers. The traversal and specialized-map conversion
+  cost was subsequently removed by the imported collection work below.
 
 Internal tests assert the original 10,000-element array buffer survives 64 helper
 updates in the interpreter, VM, and VM-to-AST bridge. Integration contracts run
@@ -317,3 +317,63 @@ integration suite was not run. All profiling assertions passed. The helper
 failure contracts also cover the baseline VM defect where array index-write
 errors bypassed active handlers; both affected dispatch paths now unwind normally.
 No LangArena port, maintainer contact, or release artifact is included.
+
+## Imported collection boundaries (2026-10-21)
+
+Baseline: `0c45eabaf44dd6b420255d03feb921d1d58a0e08`. Imported reads and
+updates recursively normalized every collection argument. Retained arrays were
+copied, shared subgraphs were revisited, and specialized dictionaries were rebuilt
+as ordinary maps. The normalizer also omitted the full dense integer dictionary:
+`mut d := {}; d[0] = 7` followed by an imported `peek(d)` returning `d[0]`
+failed with `Invalid index operation` in the VM while passing in the interpreter.
+
+The interpreter now reads every dictionary representation directly, including
+indexing, iteration, spread, destructuring, optional access and truthiness.
+Canonical decimal keys and explicit null entries retain their meaning. The
+VM-to-AST bridge, VM callback results and await cache no longer normalize the
+collection graph. Mutations retain copy-on-write isolation. Specialized map
+writes can still materialize an ordinary dictionary, spread/rest explicitly copy
+entries, and struct/fixed-dictionary cloning can copy immediate fields/values.
+These changes remove unconditional normalization, not all function-call costs.
+
+Structural regressions assert shared array/dictionary identity across the actual
+AST bridge, including a 12-level shared graph and a struct containing a
+10,000-element row. Direct representation tests cover all six dictionary shapes.
+Integration regressions exercise imports in both runtimes, nested writes, aliases,
+closure snapshots, struct rows, native serialization, VM callbacks, and repeated
+awaits whose cached values must remain unchanged after a returned copy is edited.
+No elapsed-time threshold is used in tests.
+
+Measurements below use the baseline and updated debug binaries on macOS x86-64,
+median of three assertion-backed runs. Setup and process startup are excluded;
+builds and test runs finished before profiling. The read cases perform 256
+imported calls returning one element. The edit case performs N imported calls
+`x = edit(x, i)`, each assigning one array element. Map reads use a dense integer
+map with an explicit null at key zero. Interpreter runs are controls: their
+ordinary calls did not use the VM-to-AST normalizer. Timings are diagnostic,
+not release-throughput promises.
+
+| Workload | N | VM before (ms) | VM after (ms) | Interpreter before (ms) | Interpreter after (ms) |
+|---|---:|---:|---:|---:|---:|
+| read | 1000 | 177.293 | 118.3 | 101.928 | 110.036 |
+| read | 4000 | 263.22 | 115.881 | 99.172 | 108.561 |
+| edit | 1000 | 442.464 | 408.278 | 353.692 | 393.143 |
+| edit | 4000 | 2669.201 | 1629.058 | 1599.006 | 1579.502 |
+| map_read | 1000 | 540.35 | 118.567 | 132.566 | 113.463 |
+| map_read | 4000 | 2852.142 | 130.648 | 117.838 | 102.584 |
+
+The baseline was remeasured after the updated binary, under idle conditions;
+these final baseline samples are the table's comparison. An earlier baseline
+batch was substantially slower, including interpreter controls, so exact speedup
+ratios should not be generalized. Fixed-count VM reads no longer scale with the
+input collection size; N edits scale approximately with the number of calls.
+
+Final validation: 1,279 selected Rust tests passed, with eight existing library
+ignores. This includes library, imported collection/recursion/callback, helper and
+collection ownership, closure, assignment, native representation, task, generator,
+VM/interpreter parity, CLI/JSON, diagnostic, README and docs/example contracts.
+VM and dual CLI gates each passed 150/150 runnable fixtures with 11 policy skips;
+dual used zero interpreter fallback. `cargo check`, `cargo fmt --check` and
+`git diff --check` passed. All profiling assertions passed. The full unfiltered
+Cargo integration suite was not run. No LangArena port, maintainer contact or
+release artifact is included.

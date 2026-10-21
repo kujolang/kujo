@@ -6229,75 +6229,6 @@ impl VM {
         Ok(Value::Null)
     }
 
-    pub(crate) fn normalize_value_for_interpreter(value: Value) -> Value {
-        match value {
-            Value::Array(items) => {
-                let mut items = Arc::unwrap_or_clone(items);
-                for item in &mut items {
-                    *item =
-                        Self::normalize_value_for_interpreter(std::mem::replace(item, Value::Null));
-                }
-                Value::Array(Arc::new(items))
-            }
-            Value::Dict(map) => {
-                let mut map = Arc::unwrap_or_clone(map);
-                for entry in map.values_mut() {
-                    *entry = Self::normalize_value_for_interpreter(std::mem::replace(
-                        entry,
-                        Value::Null,
-                    ));
-                }
-                Value::Dict(Arc::new(map))
-            }
-            Value::FixedDict { keys, values } => {
-                let mut normalized = DictMap::default();
-                for (key, entry) in keys.iter().zip(values.iter()) {
-                    normalized.insert(
-                        Arc::from(key.as_ref()),
-                        Self::normalize_value_for_interpreter(entry.clone()),
-                    );
-                }
-                Value::Dict(Arc::new(normalized))
-            }
-            Value::IntDict(map) => {
-                let mut normalized = DictMap::default();
-                for (key, entry) in map.iter() {
-                    normalized.insert(
-                        Arc::from(key.to_string().as_str()),
-                        Self::normalize_value_for_interpreter(entry.clone()),
-                    );
-                }
-                Value::Dict(Arc::new(normalized))
-            }
-            Value::DenseIntDict(values) => {
-                let mut normalized = DictMap::default();
-                for (index, entry) in values.iter().enumerate() {
-                    normalized.insert(
-                        Arc::from(index.to_string().as_str()),
-                        Self::normalize_value_for_interpreter(entry.clone()),
-                    );
-                }
-                Value::Dict(Arc::new(normalized))
-            }
-            Value::DenseIntDictInt(values) => {
-                let mut normalized = DictMap::default();
-                for (index, entry) in values.iter().enumerate() {
-                    let value = entry.map(Value::Int).unwrap_or(Value::Null);
-                    normalized.insert(Arc::from(index.to_string().as_str()), value);
-                }
-                Value::Dict(Arc::new(normalized))
-            }
-            Value::Struct { name, fields } => {
-                let mut normalized_fields = HashMap::new();
-                for (key, entry) in fields {
-                    normalized_fields.insert(key, Self::normalize_value_for_interpreter(entry));
-                }
-                Value::Struct { name, fields: normalized_fields }
-            }
-            other => other,
-        }
-    }
-
     /// Run the full VM instruction set without borrowing/re-entering the caller VM.
     /// Shared globals and closure cells retain lexical state; no temporary global
     /// names or trusted interpreter are introduced by the bridge.
@@ -6328,7 +6259,7 @@ impl VM {
         vm.stack.extend(args);
         vm.stack.push(function);
         vm.skip_execute_reset_once = true;
-        vm.execute(BytecodeChunk::new()).map(Self::normalize_value_for_interpreter)
+        vm.execute(BytecodeChunk::new())
     }
 
     pub(crate) fn execute_language_task(
@@ -6364,11 +6295,11 @@ impl VM {
         function: &Value,
         args: Vec<Value>,
     ) -> Result<Value, String> {
-        let normalized_args =
-            args.into_iter().map(Self::normalize_value_for_interpreter).collect::<Vec<_>>();
+        // Both runtimes consume the same collection representations. Passing ownership
+        // directly avoids recursively scanning or rebuilding argument graphs.
         self.interpreter.vm_globals = Some(Arc::clone(&self.globals));
         let saved_return = self.interpreter.return_value.take();
-        let result = self.interpreter.call_user_function_owned(function, normalized_args);
+        let result = self.interpreter.call_user_function_owned(function, args);
         self.interpreter.return_value = saved_return;
         match result {
             Value::Error(message) => Err(message),
@@ -10868,5 +10799,49 @@ mod helper_ownership_tests {
         let Value::Array(result) = vm.execute(BytecodeChunk::new()).unwrap() else { panic!() };
         assert_eq!(result.as_ptr(), buffer, "helper copied uniquely owned array");
         assert!(result[..64].iter().all(|v| matches!(v, Value::Int(7))));
+    }
+}
+
+#[cfg(test)]
+mod imported_collection_boundary_tests {
+    use super::*;
+
+    #[test]
+    fn ast_bridge_preserves_shared_collection_identity() {
+        let mut vm = VM::new();
+        let statements = crate::parser::Parser::new(
+            crate::lexer::tokenize("func identity(a) { return a }").unwrap(),
+        )
+        .parse();
+        vm.interpreter.eval_stmts(&statements);
+        let identity = vm.interpreter.env.get("identity").unwrap();
+        let row = Value::array(vec![Value::Int(1); 10_000]);
+        let mut dag = row.clone();
+        for _ in 0..12 {
+            dag = Value::array(vec![dag.clone(), dag]);
+        }
+        let cases = vec![
+            row.clone(),
+            dag,
+            Value::dict([("rows".into(), row.clone())].into_iter().collect()),
+            Value::Struct {
+                name: "State".into(),
+                fields: [("rows".into(), row)].into_iter().collect(),
+            },
+        ];
+        for original in cases {
+            let result = vm.call_interpreter_callable(&identity, vec![original.clone()]).unwrap();
+            match (&original, &result) {
+                (Value::Array(a), Value::Array(b)) => assert!(Arc::ptr_eq(a, b)),
+                (Value::Dict(a), Value::Dict(b)) => assert!(Arc::ptr_eq(a, b)),
+                (Value::Struct { fields: a, .. }, Value::Struct { fields: b, .. }) => {
+                    let (Value::Array(a), Value::Array(b)) = (&a["rows"], &b["rows"]) else {
+                        panic!()
+                    };
+                    assert!(Arc::ptr_eq(a, b));
+                }
+                _ => panic!("representation changed"),
+            }
+        }
     }
 }

@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Pass imported helper arguments, VM callback results and awaited collections
+  without recursively normalizing their graphs, preserving shared storage and
+  copy-on-write isolation.
+
 - Support VM dictionary representations directly in interpreter lookup, iteration,
   spread, destructuring, optional access and truthiness, retaining canonical keys
   and snapshot isolation.

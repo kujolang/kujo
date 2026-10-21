@@ -6210,9 +6210,7 @@ impl Interpreter {
                             if *polled {
                                 // Use cached result
                                 return match cached.as_ref() {
-                                    Some(Ok(val)) => {
-                                        crate::vm::VM::normalize_value_for_interpreter(val.clone())
-                                    }
+                                    Some(Ok(val)) => val.clone(),
                                     Some(Err(err)) => {
                                         Value::Error(format!("Promise rejected: {}", err))
                                     }
@@ -6261,7 +6259,6 @@ impl Interpreter {
 
                         match result {
                             Ok(Ok(value)) => {
-                                let value = crate::vm::VM::normalize_value_for_interpreter(value);
                                 // Cache the successful result
                                 *cached = Some(Ok(value.clone()));
                                 *polled = true;

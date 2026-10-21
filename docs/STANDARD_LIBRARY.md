@@ -842,8 +842,13 @@ An initial `mut result := items` inside a helper can consume the parameter when
 lexical analysis proves it is never read again. Aliases and closure snapshots keep
 their original values. Globals, captured bindings, async/generator calls, and
 non-rebinding expressions retain the ordinary ownership path. Imported VM-to-AST
-collection normalization can reuse uniquely owned buffers but still traverses
-collections and converts specialized dictionary representations.
+arguments, VM callback results, and awaited results retain their collection
+representations without recursively normalizing the graph. Interpreter dictionary
+operations accept all runtime representations directly. Actual writes still use
+copy-on-write and may materialize a specialized dictionary; spread and rest patterns
+still copy the requested entries. Cloning a struct or fixed dictionary can still
+copy its immediate fields or values, so this is not a constant-time guarantee for
+every helper call.
 
 Nested assignments validate the complete path before editing unique rows, keeping
 failed writes atomic. Queues use shared immutable storage: cloning, `queue_size`,
