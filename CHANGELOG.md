@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route VM array index-write failures through active exception handlers, including
+  helper failures, so callers can recover without replacing their original value.
+
 - Support up to 256 interpreter calls, including imported recursion from VM scripts,
   with guarded host-stack growth; retain the separate 32-entry callback bridge limit.
 

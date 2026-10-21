@@ -3921,7 +3921,11 @@ impl VM {
                                     continue;
                                 }
                             } else {
-                                return Err(format!("Index out of bounds: {}", i));
+                                self.throw_runtime_value(Value::Error(format!(
+                                    "Index out of bounds: {}",
+                                    i
+                                )))?;
+                                continue;
                             }
                         }
                         (Value::Dict(dict), Value::Str(key)) => {
@@ -4615,7 +4619,11 @@ impl VM {
                                     if idx < arr_mut.len() {
                                         arr_mut[idx] = value;
                                     } else {
-                                        return Err(format!("Index out of bounds: {}", i));
+                                        self.throw_runtime_value(Value::Error(format!(
+                                            "Index out of bounds: {}",
+                                            i
+                                        )))?;
+                                        continue;
                                     }
                                 }
                                 Value::Dict(dict) => {
