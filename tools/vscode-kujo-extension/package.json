@@ -5,7 +5,8 @@
   "version": "0.1.0",
   "publisher": "kujolang",
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.91.0",
+    "node": ">=22.23.4 <23 || >=24.22.1 <25 || >=26.12.1"
   },
   "categories": [
     "Programming Languages"
