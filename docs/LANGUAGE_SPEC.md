@@ -200,6 +200,8 @@ From highest precedence to lowest:
 - `mut` introduces mutable bindings.
   - Reassignment is allowed.
   - In-place mutation through the binding is allowed.
+  - Struct field assignment writes the updated struct back to the binding in
+    both runtimes. Previously copied values remain independent.
 - `const` introduces constant bindings.
   - Reassignment is rejected.
   - In-place mutation through that binding is rejected.

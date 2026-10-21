@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Fix VM struct field assignment write-back for global, local, and captured
+  bindings, preserving immutable-binding checks and value-copy isolation.
+
 ## [1.8.2] - 2026-10-19
 
 See [release notes](docs/RELEASE_NOTES_1_8_2.md) for compatibility and distribution scope.

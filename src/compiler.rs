@@ -1906,8 +1906,17 @@ impl Compiler {
 
             Expr::FieldAccess { object, field } => {
                 // Value is already on stack
+                if let Expr::Identifier(name) = &**object {
+                    if self.scope_depth == 0 && !self.is_upvalue(name) {
+                        self.chunk.emit(OpCode::EnsureMutableGlobalForMutation(name.clone()));
+                    }
+                }
                 self.compile_expr(object)?;
                 self.chunk.emit(OpCode::FieldSet(field.clone()));
+                // FieldSet produces a new value; publish it to the owning binding.
+                if matches!(&**object, Expr::Identifier(_)) {
+                    self.compile_assignment(object)?;
+                }
                 Ok(())
             }
 
