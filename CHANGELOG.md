@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add locale-independent `format_fixed(value, precision)` and explicit signed
+  64-bit `wrapping_add`, `wrapping_sub`, and `wrapping_mul`; ordinary arithmetic
+  remains checked.
+- Preserve floating-point signed zero when deduplicating bytecode constants.
+
 - Fix VM struct field assignment write-back for global, local, and captured
   bindings, preserving immutable-binding checks and value-copy isolation.
 - Support binding-rooted nested array, dictionary, and struct assignments in

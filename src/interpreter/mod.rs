@@ -557,6 +557,10 @@ impl Interpreter {
     /// This returns a list of all native functions that the interpreter supports
     pub fn get_builtin_names() -> Vec<&'static str> {
         vec![
+            "format_fixed",
+            "wrapping_add",
+            "wrapping_sub",
+            "wrapping_mul",
             // I/O functions
             "print",
             "println",
@@ -1073,6 +1077,9 @@ impl Interpreter {
 
     /// Registers all built-in functions and constants
     fn register_builtins(&mut self) {
+        for name in ["format_fixed", "wrapping_add", "wrapping_sub", "wrapping_mul"] {
+            self.env.define(name.to_string(), Value::NativeFunction(name.to_string()));
+        }
         // I/O functions
         self.env.define("print".to_string(), Value::NativeFunction("print".to_string()));
         self.env.define("println".to_string(), Value::NativeFunction("print".to_string()));
@@ -3496,6 +3503,10 @@ impl Interpreter {
             return Some(CallableArity::exact(name, (0..*n).map(|i| format!("arg{i}")).collect()));
         }
         let metadata = match name {
+            "format_fixed" => CallableArity::exact(name, vec!["value".into(), "precision".into()]),
+            "wrapping_add" | "wrapping_sub" | "wrapping_mul" => {
+                CallableArity::exact(name, vec!["left".into(), "right".into()])
+            }
             "__vm_for_iterable" => {
                 CallableArity::exact("__vm_for_iterable", vec!["value".to_string()])
             }

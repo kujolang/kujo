@@ -30,6 +30,16 @@ fn int_arg(name: &str, arg_name: &str, value: &Value) -> Result<i64, Value> {
 /// Returns Some(value) if the function was handled, None if not recognized
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
     let result = match name {
+        "wrapping_add" | "wrapping_sub" | "wrapping_mul" => {
+            let [Value::Int(left), Value::Int(right)] = arg_values else {
+                return Some(Value::Error(format!("{name} expects two integer arguments")));
+            };
+            Value::Int(match name {
+                "wrapping_add" => left.wrapping_add(*right),
+                "wrapping_sub" => left.wrapping_sub(*right),
+                _ => left.wrapping_mul(*right),
+            })
+        }
         // Math functions - single argument
         "abs" | "sqrt" | "floor" | "ceil" | "round" | "sin" | "cos" | "tan" | "log" | "exp" => {
             if arg_values.len() != 1 {

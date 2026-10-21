@@ -403,6 +403,23 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             }
         }
 
+        "format_fixed" => {
+            let [number, Value::Int(precision @ 0..=100)] = arg_values else {
+                return Some(Value::Error(
+                    "format_fixed expects a number and integer precision in 0..=100".into(),
+                ));
+            };
+            let precision = *precision as usize;
+            let text = match number {
+                // Do not round large integers through f64.
+                Value::Int(value) if precision == 0 => value.to_string(),
+                Value::Int(value) => format!("{value}.{}", "0".repeat(precision)),
+                Value::Float(value) if value.is_finite() => format!("{value:.precision$}"),
+                _ => return Some(Value::Error("format_fixed expects a finite number".into())),
+            };
+            Value::Str(Arc::new(text))
+        }
+
         "format" => {
             if arg_values.is_empty() {
                 return Some(Value::Error(

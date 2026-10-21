@@ -744,3 +744,18 @@ environment read. See the security posture's hardening corrections for migration
 `shared_add_int` uses checked signed 64-bit addition. Overflow is a catchable
 runtime error and leaves the shared integer unchanged; it does not poison the
 shared store or wrap in optimized builds.
+
+### Explicit numeric formatting and wrapping
+
+- `format_fixed(value, precision)` returns fixed decimal text with exactly
+  `precision` fractional digits (integer 0–100), no grouping or locale effects.
+  Integers retain all 64 bits. Finite floats round their binary floating-point
+  value to nearest, ties to even; trailing zeros and negative zero are retained.
+  Precision zero omits the decimal point. Non-finite numbers and invalid types
+  or precision are errors. Existing `format` is unchanged.
+- `wrapping_add(left, right)`, `wrapping_sub(left, right)`, and
+  `wrapping_mul(left, right)` accept exactly two integers and return signed
+  two's-complement results modulo 2^64. Ordinary operators remain checked.
+  For unsigned 32-bit results, explicitly mask with `bit_and(result, 4294967295)`.
+  Existing bit shifts are unchanged: shift counts must be in 0–63 and `bit_shr`
+  is an arithmetic (sign-extending) shift. These APIs require no capabilities.

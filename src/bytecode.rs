@@ -512,7 +512,11 @@ impl BytecodeChunk {
     /// Add a constant to the pool and return its index
     pub fn add_constant(&mut self, constant: Constant) -> usize {
         // Check if constant already exists (simple optimization)
-        if let Some(index) = self.constants.iter().position(|c| c == &constant) {
+        if let Some(index) = self.constants.iter().position(|c| match (c, &constant) {
+            // Numeric equality merges signed zeros; constant storage must not.
+            (Constant::Float(left), Constant::Float(right)) => left.to_bits() == right.to_bits(),
+            _ => c == &constant,
+        }) {
             return index;
         }
 
