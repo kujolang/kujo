@@ -60,3 +60,25 @@ roundtrip, AST, and value-semantics cases in both runtimes.
   submission work.
 
 No maintainer contact or upstream submission is part of this local work.
+
+## Production diagnostics
+
+`profile.kujo` runs each unchanged configuration in a separate process, records
+phase progress and elapsed nanoseconds, and checkpoints JSON after every case:
+
+```sh
+target/release/kujo run benchmarks/langarena/profile.kujo --scheduler-no-timeout target/release/kujo benchmarks/langarena/run.json /tmp/kujo-production.json 3600000 vm
+```
+
+Use `interpreter` instead of `vm` for interpreter coverage. Optional trailing
+`SHARD SHARDS` selects disjoint cases; an additional exact name selects one case.
+The parent has no scheduler deadline because child processes have individual
+hard deadlines. `timeout` means incomplete, not a checksum failure. Cancellation
+stops the runner after saving the interrupted case. Stream files beside the JSON
+append live child output; per-case output is also retained in the JSON.
+The runner exits nonzero if any selected case fails, times out, or is cancelled.
+
+For reproducible before/after measurements, pin a copy of the executable and
+record its SHA-256 and source commit. Avoid simultaneous compilation or other
+benchmarks for comparative timings. Profiling includes process startup and
+instrumentation and is not an official LangArena performance score.

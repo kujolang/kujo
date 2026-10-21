@@ -1,0 +1,44 @@
+# Run unchanged workloads in isolated processes. Timeout is an incomplete result,
+# never a checksum failure. Results are checkpointed after every case.
+let arguments := args()
+assert(len(arguments) >= 5, "usage: profile.kujo BINARY CONFIG OUTPUT TIMEOUT_MS RUNTIME [SHARD SHARDS] [EXACT_NAME]")
+let binary := arguments[0]
+let config := arguments[1]
+let output := arguments[2]
+let timeout := to_int(arguments[3])
+let runtime := arguments[4]
+assert(runtime == "vm" || runtime == "interpreter", "invalid runtime")
+mut shard := 0
+mut shards := 1
+if len(arguments) >= 7 { shard = to_int(arguments[5]) shards = to_int(arguments[6]) }
+assert(shards > 0 && shard >= 0 && shard < shards, "invalid shard")
+mut selected := ""
+if len(arguments) >= 8 { selected = arguments[7] }
+let cases := parse_json(read_file(config))
+mut results := []
+mut incomplete := 0
+mut index := 0
+for cfg in cases {
+    let ordinal := index
+    index += 1
+    if ordinal % shards != shard { continue }
+    if selected != "" && selected != cfg["name"] { continue }
+    let name := cfg["name"]
+    print("START " + name)
+    mut command := [binary, "run", "benchmarks/langarena/port.kujo", "--scheduler-no-timeout", config, name, "--profile"]
+    if runtime == "interpreter" { command = [binary, "run", "benchmarks/langarena/port.kujo", "--interpreter", "--scheduler-no-timeout", config, name, "--profile"] }
+    let started := time_ns()
+    let result := spawn_process(command, {"timeout_ms": timeout, "max_output_bytes": 1048576, "stream_stdout_path": output + ".current.stdout", "stream_stderr_path": output + ".current.stderr"})
+    let duration := time_ns() - started
+    mut status := "failed"
+    if result.timed_out { status = "timeout" }
+    else if result.cancelled { status = "cancelled" }
+    else if result.success && contains(result.stdout, name + ": OK " + str(cfg["checksum"])) == 1 && contains(result.stdout, "Summary: 1, 1, 0") == 1 { status = "passed" }
+    if status != "passed" { incomplete += 1 }
+    results = push(results, {"name": name, "runtime": runtime, "config": cfg, "status": status, "elapsed_ns": duration, "timeout_ms": timeout, "exitcode": result.exitcode, "stdout": result.stdout, "stderr": result.stderr, "stdout_truncated": result.stdout_truncated, "stderr_truncated": result.stderr_truncated})
+    write_file(output, to_json({"binary": binary, "config": config, "runtime": runtime, "results": results}), true)
+    print(name + ": " + status + " ns=" + str(duration))
+    if result.cancelled { break }
+}
+assert(len(results) > 0, "no cases selected")
+assert_equal(incomplete, 0)

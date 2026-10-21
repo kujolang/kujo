@@ -93,3 +93,77 @@ fn all_fifty_upstream_checksums_in_both_runtimes() {
         assert_eq!(stdout.lines().filter(|line| line.contains(": OK ")).count(), 50);
     }
 }
+
+#[test]
+fn profiling_keeps_configured_iterations_and_checksums_in_both_runtimes() {
+    let dir = tempfile::tempdir().unwrap();
+    let port = dir.path().join("port.kujo");
+    std::fs::write(&port, source(true)).unwrap();
+    let config =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("benchmarks/langarena/test.json");
+    for interpreter in [false, true] {
+        let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command.arg("run").arg(&port);
+        if interpreter {
+            command.arg("--interpreter");
+        }
+        let output = command.arg(&config).args(["Base64::Encode", "--profile"]).output().unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(output.status.success(), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
+        for phase in
+            ["create-start", "create-done", "prepare-done", "warmup-done", "run-1", "run-8192"]
+        {
+            assert!(stdout.contains(&format!("@profile {phase} ns=")), "{stdout}");
+        }
+        assert!(stdout.contains("Base64::Encode: OK 3894061047"), "{stdout}");
+        assert!(stdout.contains("Summary: 1, 1, 0"), "{stdout}");
+    }
+}
+
+#[test]
+fn isolated_runner_checkpoints_and_fails_incomplete_cases_in_both_runtimes() {
+    let dir = tempfile::tempdir().unwrap();
+    let port = dir.path().join("benchmarks/langarena/port.kujo");
+    std::fs::create_dir_all(port.parent().unwrap()).unwrap();
+    std::fs::write(&port, source(true)).unwrap();
+    let config: serde_json::Value =
+        serde_json::from_str(include_str!("../benchmarks/langarena/test.json")).unwrap();
+    let case = config.as_array().unwrap().iter().find(|c| c["name"] == "Base64::Encode").unwrap();
+    let runner =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("benchmarks/langarena/profile.kujo");
+    for interpreter in [false, true] {
+        for status in ["passed", "failed", "timeout"] {
+            let mut case = case.clone();
+            if status == "failed" {
+                case["checksum"] = serde_json::json!(0);
+            }
+            let config_path = dir.path().join("config.json");
+            let output_path = dir.path().join("result.json");
+            std::fs::write(&config_path, serde_json::to_vec(&vec![case]).unwrap()).unwrap();
+            let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_kujo"));
+            command.current_dir(dir.path()).arg("run").arg(&runner).arg("--scheduler-no-timeout");
+            if interpreter {
+                command.arg("--interpreter");
+            }
+            let output = command
+                .arg(env!("CARGO_BIN_EXE_kujo"))
+                .arg(&config_path)
+                .arg(&output_path)
+                .arg(if status == "timeout" { "1" } else { "30000" })
+                .arg(if interpreter { "interpreter" } else { "vm" })
+                .output()
+                .unwrap();
+            assert_eq!(
+                output.status.success(),
+                status == "passed",
+                "{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let report: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(&output_path).unwrap()).unwrap();
+            assert_eq!(report["results"].as_array().unwrap().len(), 1);
+            assert_eq!(report["results"][0]["status"], status);
+        }
+    }
+}

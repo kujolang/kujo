@@ -1,9 +1,13 @@
+func profile_checkpoint(enabled, phase, started) {
+    if enabled { print("@profile " + phase + " ns=" + str(time_ns() - started)) }
+}
 func main() {
     let arguments := args()
     assert(len(arguments) >= 1, "usage: port.kujo CONFIG [exact benchmark name]")
     let configurations := parse_json(read_file(arguments[0]))
     mut selected := ""
     if len(arguments) > 1 { selected = arguments[1] }
+    let profiling := len(arguments) > 2 && arguments[2] == "--profile"
     mut passed := 0
     mut failed := 0
     for cfg in configurations {
@@ -16,17 +20,28 @@ func main() {
         let run := definition[2]
         let checksum := definition[3]
         try {
+            mut started := 0
+            if profiling { started = time_ns() }
+            profile_checkpoint(profiling, "create-start", started)
             mut state := create(cfg)
+            profile_checkpoint(profiling, "create-done", started)
             reset_rng()
             state = prepare(state)
+            profile_checkpoint(profiling, "prepare-done", started)
             let warmups := get_default(cfg, "warmup_iterations", imax(to_int(cfg["iterations"] * 0.2), 1))
             mut i := 0
             mut warmup := run
             if len(definition) > 4 { warmup = definition[4] }
             while i < warmups { state = warmup(state, i) i += 1 }
+            profile_checkpoint(profiling, "warmup-done", started)
             reset_rng()
             i = 0
-            while i < cfg["iterations"] { state = run(state, i) i += 1 }
+            let interval := imax(idiv(cfg["iterations"], 10), 1)
+            while i < cfg["iterations"] {
+                state = run(state, i)
+                i += 1
+                if profiling && (i == 1 || i == cfg["iterations"] || i % interval == 0) { profile_checkpoint(true, "run-" + str(i), started) }
+            }
             let actual := u32(checksum(state))
             if actual == cfg["checksum"] { print(name + ": OK " + str(actual)) passed += 1 }
             else { print(name + ": FAIL actual=" + str(actual) + " expected=" + str(cfg["checksum"])) failed += 1 }
