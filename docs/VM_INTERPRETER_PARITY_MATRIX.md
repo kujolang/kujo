@@ -9,8 +9,8 @@ parity. New runtime work must update the table and its named test evidence.
 
 Imported interpreter functions can invoke VM-defined callbacks through the full
 VM instruction set. The bridge shares the caller's global environment and
-closure cells, retains capability restrictions, normalizes returned dictionaries
-and propagates failures. A thread-local guard bounds synchronous cross-runtime
+closure cells, retains capability restrictions, preserves returned collection
+representations and propagates failures. A thread-local guard bounds synchronous cross-runtime
 nesting to 32 entries so creating a child VM cannot reset the recursion bound.
 Dedicated results, state, error recovery, arity, capability and recursion
 contracts live in `tests/imported_vm_callback.rs`. This does not erase the

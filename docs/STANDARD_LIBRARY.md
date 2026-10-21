@@ -846,9 +846,10 @@ arguments, VM callback results, and awaited results retain their collection
 representations without recursively normalizing the graph. Interpreter dictionary
 operations accept all runtime representations directly. Actual writes still use
 copy-on-write and may materialize a specialized dictionary; spread and rest patterns
-still copy the requested entries. Cloning a struct or fixed dictionary can still
-copy its immediate fields or values, so this is not a constant-time guarantee for
-every helper call.
+still copy the requested entries. Struct clones share immutable field storage;
+field mutations detach shared storage, preserving value snapshots without cloning
+entire subtrees on reads. Fixed dictionary clones still copy their immediate
+values, so this is not a constant-time guarantee for every helper call.
 
 In function scopes, adjacent `let pair := pop(state.items)` followed by
 `state.items = pair[0]` can reuse unique array storage; the same applies to

@@ -205,7 +205,7 @@ impl Interpreter {
         if let Some(cause) = cause {
             fields.insert("cause".to_owned(), *cause);
         }
-        Value::Struct { name: "Error".to_owned(), fields }
+        Value::Struct { name: "Error".to_owned(), fields: fields.into() }
     }
 
     fn run_generator_frames(&mut self, frames: &mut Vec<Frame>) -> Result<Option<Value>, Value> {

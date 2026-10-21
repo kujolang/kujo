@@ -503,7 +503,10 @@ impl StreamSink {
             fields.insert("sequence".to_string(), Value::Int(self.sequence as i64));
             fields.insert("eof".to_string(), Value::Bool(false));
             self.sequence += 1;
-            self.send_event(Value::Struct { name: "ProcessStreamEvent".to_string(), fields });
+            self.send_event(Value::Struct {
+                name: "ProcessStreamEvent".to_string(),
+                fields: fields.into(),
+            });
         }
         Ok(())
     }
@@ -518,7 +521,10 @@ impl StreamSink {
             fields.insert("data".to_string(), Value::Str(Arc::new(String::new())));
             fields.insert("sequence".to_string(), Value::Int(self.sequence as i64));
             fields.insert("eof".to_string(), Value::Bool(true));
-            self.send_event(Value::Struct { name: "ProcessStreamEvent".to_string(), fields });
+            self.send_event(Value::Struct {
+                name: "ProcessStreamEvent".to_string(),
+                fields: fields.into(),
+            });
         }
         Ok(())
     }
@@ -960,7 +966,7 @@ fn process_result_to_value(result: ProcessExecutionResult) -> Value {
     fields.insert("stdout_truncated".to_string(), Value::Bool(result.stdout_truncated));
     fields.insert("stderr_truncated".to_string(), Value::Bool(result.stderr_truncated));
 
-    Value::Struct { name: "ProcessResult".to_string(), fields }
+    Value::Struct { name: "ProcessResult".to_string(), fields: fields.into() }
 }
 
 pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
@@ -1579,7 +1585,7 @@ pub fn handle(name: &str, arg_values: &[Value]) -> Option<Value> {
             fields.insert("_args".to_string(), Value::Array(Arc::new(Vec::new())));
             fields.insert("_app_name".to_string(), Value::Str(Arc::new(String::new())));
             fields.insert("_description".to_string(), Value::Str(Arc::new(String::new())));
-            Value::Struct { name: "ArgParser".to_string(), fields }
+            Value::Struct { name: "ArgParser".to_string(), fields: fields.into() }
         }
 
         "read_stdin" => {

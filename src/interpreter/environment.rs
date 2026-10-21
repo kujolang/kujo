@@ -180,9 +180,12 @@ impl Environment {
                         pending.extend(values.values().cloned());
                     }
                 }
-                Value::Struct { fields, .. } | Value::Tagged { fields, .. } => {
-                    pending.extend(fields.into_values())
+                Value::Struct { fields, .. } => {
+                    if visited_containers.insert((3, std::sync::Arc::as_ptr(&fields) as usize)) {
+                        pending.extend(fields.values().cloned());
+                    }
                 }
+                Value::Tagged { fields, .. } => pending.extend(fields.into_values()),
                 Value::Result { value, .. } | Value::Option { value, .. } => pending.push(*value),
                 Value::Iterator { source, transformer, filter_fn, .. } => {
                     pending.push(*source);

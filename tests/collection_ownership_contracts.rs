@@ -225,7 +225,8 @@ fn collection_fast_paths_preserve_existing_vm_depth_checks() {
                         ("safe".into(), Value::array(vec![Value::Int(0)])),
                     ]
                     .into_iter()
-                    .collect(),
+                    .collect::<std::collections::HashMap<_, _>>()
+                    .into(),
                 },
             );
             interpreter.env.define(

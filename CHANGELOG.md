@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Share struct field storage with copy-on-write, removing recursive subtree
+  copies during reads while preserving mutation and closure snapshots.
+
 - Route VM indexed-read, invalid indexed-write and immutable indexed-write errors
   through active exception handlers, preserving uncaught failures and unchanged
   values after rejected writes.

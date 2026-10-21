@@ -134,11 +134,12 @@ fn write(root: &mut Value, path: &[Access], value: Value) -> Result<(), String> 
         }
         (Value::Struct { fields, .. }, Access::Field(field)) => {
             if rest.is_empty() {
-                fields.insert(field.clone(), value);
+                Arc::make_mut(fields).insert(field.clone(), value);
                 Ok(())
             } else {
-                let child =
-                    fields.get_mut(field).ok_or_else(|| format!("Field not found: {field}"))?;
+                let child = Arc::make_mut(fields)
+                    .get_mut(field)
+                    .ok_or_else(|| format!("Field not found: {field}"))?;
                 write(child, rest, value)
             }
         }
@@ -277,6 +278,10 @@ mod append_ownership_tests {
 // fallback below can reject a write. No cached entry retains a collection payload.
 #[derive(Default)]
 pub(crate) struct DepthCache {
+    structs: std::collections::HashMap<
+        usize,
+        (std::sync::Weak<std::collections::HashMap<String, Value>>, usize),
+    >,
     arrays: std::collections::HashMap<usize, (std::sync::Weak<Vec<Value>>, usize)>,
     dictionaries: std::collections::HashMap<usize, (std::sync::Weak<super::DictMap>, usize)>,
     integer_dictionaries:
@@ -287,6 +292,9 @@ pub(crate) struct DepthCache {
 impl DepthCache {
     fn remember(&mut self, value: &Value, bound: usize) {
         match value {
+            Value::Struct { fields, .. } => {
+                self.structs.insert(Arc::as_ptr(fields) as usize, (Arc::downgrade(fields), bound));
+            }
             Value::Array(items) | Value::DenseIntDict(items) => {
                 self.arrays.insert(Arc::as_ptr(items) as usize, (Arc::downgrade(items), bound));
             }
@@ -307,6 +315,9 @@ impl DepthCache {
         while let Some((value, offset)) = work.pop() {
             depth = depth.max(offset);
             let cached = match value {
+                Value::Struct { fields, .. } => {
+                    self.structs.get(&(Arc::as_ptr(fields) as usize)).map(|e| e.1)
+                }
                 Value::Array(a) | Value::DenseIntDict(a) => {
                     self.arrays.get(&(Arc::as_ptr(a) as usize)).map(|e| e.1)
                 }
@@ -318,8 +329,6 @@ impl DepthCache {
             };
             if let Some(bound) = cached {
                 depth = depth.max(offset + bound);
-            } else if let Value::Struct { fields, .. } = value {
-                work.extend(fields.values().map(|v| (v, offset + 1)));
             } else if let Value::FixedDict { values, .. } = value {
                 work.extend(values.iter().map(|v| (v, offset + 1)));
             } else {
@@ -344,12 +353,23 @@ impl DepthCache {
             bound = bound.saturating_sub(1);
             self.remember(cursor, bound);
         }
-        if self.arrays.len() + self.dictionaries.len() + self.integer_dictionaries.len() >= 1024 {
+        if self.structs.len()
+            + self.arrays.len()
+            + self.dictionaries.len()
+            + self.integer_dictionaries.len()
+            >= 1024
+        {
+            self.structs.retain(|_, (weak, _)| weak.strong_count() > 0);
             self.arrays.retain(|_, (weak, _)| weak.strong_count() > 0);
             self.dictionaries.retain(|_, (weak, _)| weak.strong_count() > 0);
             self.integer_dictionaries.retain(|_, (weak, _)| weak.strong_count() > 0);
-            if self.arrays.len() + self.dictionaries.len() + self.integer_dictionaries.len() >= 1024
+            if self.structs.len()
+                + self.arrays.len()
+                + self.dictionaries.len()
+                + self.integer_dictionaries.len()
+                >= 1024
             {
+                self.structs.clear();
                 self.arrays.clear();
                 self.dictionaries.clear();
                 self.integer_dictionaries.clear();
@@ -416,7 +436,10 @@ mod state_depth_tests {
             } else {
                 Value::Struct {
                     name: "State".into(),
-                    fields: [("rows".into(), rows)].into_iter().collect(),
+                    fields: [("rows".into(), rows)]
+                        .into_iter()
+                        .collect::<std::collections::HashMap<_, _>>()
+                        .into(),
                 }
             };
             let path = [
@@ -465,7 +488,9 @@ fn child_mut<'a>(root: &'a mut Value, access: &Access) -> Option<&'a mut Value> 
                 Arc::make_mut(a).get_mut(i as usize)
             }
         }
-        (Value::Struct { fields, .. }, Access::Field(field)) => fields.get_mut(field),
+        (Value::Struct { fields, .. }, Access::Field(field)) => {
+            Arc::make_mut(fields).get_mut(field)
+        }
         (Value::Dict(d), Access::Index(Value::Str(key))) => Arc::make_mut(d).get_mut(key.as_str()),
         (Value::Dict(d), Access::Index(Value::Int(key))) => {
             Arc::make_mut(d).get_mut(key.to_string().as_str())
@@ -547,7 +572,10 @@ mod field_append_tests {
             let array = Value::array(Vec::with_capacity(1000));
             let mut root = Value::Struct {
                 name: "S".into(),
-                fields: [("items".into(), array)].into_iter().collect(),
+                fields: [("items".into(), array)]
+                    .into_iter()
+                    .collect::<std::collections::HashMap<_, _>>()
+                    .into(),
             };
             let path = [Access::Field("items".into())];
             let buffer = |v: &Value| {
@@ -824,7 +852,10 @@ pub(crate) fn same_storage(a: &Value, b: &Value) -> bool {
                 Value::Struct { name: a_name, fields: a },
                 Value::Struct { name: b_name, fields: b },
             ) if a_name == b_name && a.len() == b.len() => {
-                for (key, value) in a {
+                if Arc::ptr_eq(a, b) {
+                    continue;
+                }
+                for (key, value) in a.iter() {
                     let Some(other) = b.get(key) else { return false };
                     pending.push((value, other));
                 }
@@ -894,7 +925,10 @@ mod path_removal_tests {
         let row = Value::array((0..10_000).map(Value::Int).collect());
         let mut root = Value::Struct {
             name: "State".into(),
-            fields: [("rows".into(), Value::array(vec![row]))].into_iter().collect(),
+            fields: [("rows".into(), Value::array(vec![row]))]
+                .into_iter()
+                .collect::<std::collections::HashMap<_, _>>()
+                .into(),
         };
         let path = [Access::Field("rows".into()), Access::Index(Value::Int(0))];
         let leaf = |v: &Value| {
@@ -977,5 +1011,33 @@ mod removal_matcher_tests {
         )
         .parse();
         assert!(pop_rebind_pair(&statements[0], statements.get(1)).is_none());
+    }
+}
+
+#[cfg(test)]
+mod shared_struct_depth_tests {
+    use super::*;
+    #[test]
+    fn repeated_shared_struct_updates_use_depth_cache_and_detach() {
+        let mut root = Value::Null;
+        for _ in 0..40 {
+            root = Value::Struct {
+                name: "Node".into(),
+                fields: Arc::new(
+                    [("left".into(), root.clone()), ("right".into(), root)].into_iter().collect(),
+                ),
+            };
+        }
+        let alias = root.clone();
+        let mut cache = DepthCache::default();
+        for i in 0..64 {
+            update_checked(&mut root, &[Access::Field("right".into())], Value::Int(i), &mut cache)
+                .unwrap();
+        }
+        assert_eq!(cache.scans, 1);
+        assert!(matches!(
+            child(&alias, &Access::Field("right".into())),
+            Some(Value::Struct { .. })
+        ));
     }
 }

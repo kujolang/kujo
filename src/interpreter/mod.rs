@@ -219,7 +219,7 @@ impl SpawnCapturedValue {
             Value::NativeFunction(name) => Some(SpawnCapturedValue::NativeFunction(name.clone())),
             Value::Struct { name, fields } => {
                 let mut captured_fields = Vec::with_capacity(fields.len());
-                for (field_name, field_value) in fields {
+                for (field_name, field_value) in fields.iter() {
                     let captured_value =
                         Self::from_value_bounded(field_value, depth + 1, remaining)?;
                     captured_fields.push((field_name.clone(), captured_value));
@@ -320,7 +320,7 @@ impl SpawnCapturedValue {
                 for (field_name, field_value) in fields {
                     value_fields.insert(field_name, field_value.into_value());
                 }
-                Value::Struct { name, fields: value_fields }
+                Value::Struct { name, fields: value_fields.into() }
             }
             SpawnCapturedValue::Array(elements) => {
                 Value::Array(Arc::new(elements.into_iter().map(|v| v.into_value()).collect()))
@@ -2424,7 +2424,7 @@ impl Interpreter {
                         }
                     } else {
                         // Backward compatibility: bind fields directly into scope
-                        for (field_name, field_value) in fields {
+                        for (field_name, field_value) in fields.iter() {
                             self.env.define(field_name.clone(), field_value.clone());
                         }
 
@@ -2491,7 +2491,7 @@ impl Interpreter {
                         self.env.define("self".to_string(), struct_val.clone());
                     } else {
                         // Backward compatibility: bind fields directly into scope
-                        for (field_name, field_value) in fields {
+                        for (field_name, field_value) in fields.iter() {
                             self.env.define(field_name.clone(), field_value.clone());
                         }
                     }
@@ -3483,7 +3483,7 @@ impl Interpreter {
                 let mut assignment_error: Option<String> = None;
                 let mutate_result = self.env.mutate_checked(name.as_str(), |obj_value| {
                     if let Value::Struct { name: _, fields } = obj_value {
-                        fields.insert(field_name.clone(), value_clone.clone());
+                        Arc::make_mut(fields).insert(field_name.clone(), value_clone.clone());
                     } else {
                         assignment_error = Some("Cannot set field on non-struct value".to_string());
                     }
@@ -4990,7 +4990,7 @@ impl Interpreter {
 
                             self.env.define(
                                 except_var.clone(),
-                                Value::Struct { name: "Error".to_string(), fields },
+                                Value::Struct { name: "Error".to_string(), fields: fields.into() },
                             );
                         }
                         Value::ErrorObject { message, stack, line, cause } => {
@@ -5010,7 +5010,7 @@ impl Interpreter {
 
                             self.env.define(
                                 except_var.clone(),
-                                Value::Struct { name: "Error".to_string(), fields },
+                                Value::Struct { name: "Error".to_string(), fields: fields.into() },
                             );
                         }
                         _ => unreachable!(),
@@ -5620,7 +5620,7 @@ impl Interpreter {
                                     }
                                 } else {
                                     // Backward compatibility: bind fields directly into scope
-                                    for (field_name, field_value) in fields {
+                                    for (field_name, field_value) in fields.iter() {
                                         self.env.define(field_name.clone(), field_value.clone());
                                     }
 
@@ -6072,7 +6072,7 @@ impl Interpreter {
                     }
                     field_values.insert(field_name.clone(), value);
                 }
-                Value::Struct { name: name.clone(), fields: field_values }
+                Value::Struct { name: name.clone(), fields: field_values.into() }
             }
             Expr::FieldAccess { object, field } => {
                 let obj_val = self.eval_expr(object);
@@ -6843,7 +6843,7 @@ impl Interpreter {
                     new_fields.insert("_args".to_string(), Value::Array(Arc::new(arg_list_vec)));
                 }
 
-                Value::Struct { name: "ArgParser".to_string(), fields: new_fields }
+                Value::Struct { name: "ArgParser".to_string(), fields: new_fields.into() }
             }
             "parse" => {
                 // parser.parse() - parse command-line arguments
@@ -7263,7 +7263,7 @@ impl Interpreter {
                                         }
                                     }
                                 } else {
-                                    for (field_name, field_value) in &fields {
+                                    for (field_name, field_value) in fields.iter() {
                                         self.env.define(field_name.clone(), field_value.clone());
                                     }
 

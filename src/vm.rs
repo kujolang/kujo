@@ -5376,7 +5376,7 @@ impl VM {
 
                     match object {
                         Value::Struct { name, mut fields } => {
-                            fields.insert(field, value);
+                            Arc::make_mut(&mut fields).insert(field, value);
                             if !self.push_checked_value(
                                 Value::Struct { name, fields },
                                 "building struct value",
@@ -5660,7 +5660,7 @@ impl VM {
                     }
 
                     if !self.push_checked_value(
-                        Value::Struct { name, fields: field_map },
+                        Value::Struct { name, fields: field_map.into() },
                         "building struct value",
                     )? {
                         continue;
@@ -6004,7 +6004,7 @@ impl VM {
                             fields.insert("message".to_string(), Value::Str(msg));
                             fields.insert("stack".to_string(), Value::Array(Arc::new(Vec::new())));
                             fields.insert("line".to_string(), Value::Int(0));
-                            Value::Struct { name: "Error".to_string(), fields }
+                            Value::Struct { name: "Error".to_string(), fields: fields.into() }
                         }
                         Value::Error(msg) => {
                             // Legacy Error type - wrap in struct
@@ -6012,7 +6012,7 @@ impl VM {
                             fields.insert("message".to_string(), Value::Str(Arc::new(msg)));
                             fields.insert("stack".to_string(), Value::Array(Arc::new(Vec::new())));
                             fields.insert("line".to_string(), Value::Int(0));
-                            Value::Struct { name: "Error".to_string(), fields }
+                            Value::Struct { name: "Error".to_string(), fields: fields.into() }
                         }
                         Value::ErrorObject { message, stack, line, cause } => {
                             // Full error object - convert to struct
@@ -6028,7 +6028,7 @@ impl VM {
                             if let Some(cause_val) = cause {
                                 fields.insert("cause".to_string(), *cause_val);
                             }
-                            Value::Struct { name: "Error".to_string(), fields }
+                            Value::Struct { name: "Error".to_string(), fields: fields.into() }
                         }
                         other => {
                             // Any other value - wrap as message
@@ -6039,7 +6039,7 @@ impl VM {
                             );
                             fields.insert("stack".to_string(), Value::Array(Arc::new(Vec::new())));
                             fields.insert("line".to_string(), Value::Int(0));
-                            Value::Struct { name: "Error".to_string(), fields }
+                            Value::Struct { name: "Error".to_string(), fields: fields.into() }
                         }
                     };
 
@@ -6236,7 +6236,10 @@ impl VM {
         for (name, value) in exports {
             module_fields.insert(name.clone(), Self::wrap_module_export_for_method_call(value));
         }
-        Value::Struct { name: format!("__module_namespace_{}", module_name), fields: module_fields }
+        Value::Struct {
+            name: format!("__module_namespace_{}", module_name),
+            fields: module_fields.into(),
+        }
     }
 
     fn vm_import_all(&mut self, args: &[Value]) -> Result<Value, String> {
@@ -6545,7 +6548,7 @@ impl VM {
             let mut local_slot_initialized = vec![false; chunk.local_count];
 
             if let Some(fields) = compat_receiver_fields {
-                for (field_name, field_value) in fields {
+                for (field_name, field_value) in Arc::unwrap_or_clone(fields) {
                     locals.insert(field_name.clone(), field_value.clone());
                     locals_binding_kinds.insert(field_name.clone(), BytecodeBindingKind::Mutable);
                     if let Some(slot) =
@@ -7599,7 +7602,7 @@ impl VM {
                                 let mut arg_list_vec =
                                     Arc::try_unwrap(arg_list).unwrap_or_else(|arc| (*arc).clone());
                                 arg_list_vec.push(Value::Dict(Arc::new(arg_def)));
-                                fields.insert(
+                                Arc::make_mut(&mut fields).insert(
                                     "_args".to_string(),
                                     Value::Array(Arc::new(arg_list_vec)),
                                 );
@@ -8745,7 +8748,7 @@ impl VM {
                                 fields.insert(field_name.clone(), value);
                             }
                             if !self.push_checked_value(
-                                Value::Struct { name, fields },
+                                Value::Struct { name, fields: fields.into() },
                                 "building struct value",
                             )? {
                                 continue;
@@ -10894,7 +10897,7 @@ mod imported_collection_boundary_tests {
             Value::dict([("rows".into(), row.clone())].into_iter().collect()),
             Value::Struct {
                 name: "State".into(),
-                fields: [("rows".into(), row)].into_iter().collect(),
+                fields: [("rows".into(), row)].into_iter().collect::<HashMap<_, _>>().into(),
             },
         ];
         for original in cases {

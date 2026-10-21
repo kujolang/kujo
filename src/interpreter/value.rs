@@ -1269,7 +1269,7 @@ pub enum Value {
     #[allow(dead_code)]
     Enum(String),
     /// Struct instance with fields
-    Struct { name: String, fields: HashMap<String, Value> },
+    Struct { name: String, fields: Arc<HashMap<String, Value>> },
     /// Struct definition with methods
     StructDef { name: String, field_names: Vec<String>, methods: HashMap<String, Value> },
     /// Array of values (reference-counted for cheap cloning)
@@ -1664,6 +1664,7 @@ impl Value {
                 Value::Dict(items) => Some((1, Arc::as_ptr(items) as usize)),
                 Value::IntDict(items) => Some((2, Arc::as_ptr(items) as usize)),
                 Value::DenseIntDict(items) => Some((3, Arc::as_ptr(items) as usize)),
+                Value::Struct { fields, .. } => Some((4, Arc::as_ptr(fields) as usize)),
                 _ => None,
             };
             if let Some(key) = allocation {
@@ -1689,7 +1690,12 @@ impl Value {
                         stack.push((nested, depth + 1));
                     }
                 }
-                Value::Struct { fields, .. } | Value::Tagged { fields, .. } => {
+                Value::Struct { fields, .. } => {
+                    for nested in fields.values() {
+                        stack.push((nested, depth + 1));
+                    }
+                }
+                Value::Tagged { fields, .. } => {
                     for nested in fields.values() {
                         stack.push((nested, depth + 1));
                     }
@@ -2302,5 +2308,33 @@ impl Value {
             return left == right;
         }
         (left - right).abs() < f64::EPSILON
+    }
+}
+
+#[cfg(test)]
+mod struct_storage_regressions {
+    use super::*;
+
+    #[test]
+    fn struct_clones_share_fields_and_depth_walk_visits_shared_nodes_once() {
+        let mut tree = Value::Null;
+        for _ in 0..40 {
+            tree = Value::Struct {
+                name: "Node".into(),
+                fields: Arc::new(
+                    [("left".into(), tree.clone()), ("right".into(), tree)].into_iter().collect(),
+                ),
+            };
+        }
+        let alias = tree.clone();
+        let Value::Struct { fields: original, .. } = &alias else { panic!() };
+        let Value::Struct { fields, .. } = &mut tree else { panic!() };
+        assert!(Arc::ptr_eq(fields, original), "clone copied struct fields");
+        Arc::make_mut(fields).insert("left".into(), Value::Null);
+        assert!(!Arc::ptr_eq(fields, original));
+        assert!(matches!(original.get("left"), Some(Value::Struct { .. })));
+        let mut visits = 0;
+        assert_eq!(Value::walk_nesting_depth(&alias, || visits += 1), 40);
+        assert!(visits <= 81, "shared struct subtree revisited: {visits}");
     }
 }

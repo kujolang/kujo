@@ -1,0 +1,15 @@
+struct Node { left: any, right: any }
+func make(depth) {
+ if depth == 0 { return Node { left: null, right: null } }
+ return Node { left: make(depth-1), right: make(depth-1) }
+}
+func count(node) {
+ if node.left == null { return 1 }
+ return 1 + count(node.left) + count(node.right)
+}
+let start := time_ns()
+let root := make(12)
+let built := time_ns()
+assert_equal(count(root),8191)
+print(built-start)
+print(time_ns()-built)
