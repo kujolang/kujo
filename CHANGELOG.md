@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route VM indexed-read, invalid indexed-write and immutable indexed-write errors
+  through active exception handlers, preserving uncaught failures and unchanged
+  values after rejected writes.
+
 - Extend consuming pop/removal rebinding to fields and indexed collection paths,
   preserving parent snapshots and falling back for effectful index expressions.
 

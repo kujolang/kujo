@@ -430,8 +430,12 @@ and zero dual interpreter fallbacks. `cargo check`, `cargo fmt --check`,
 `git diff --check` and the profiling harness build passed. The full unfiltered
 Cargo integration suite was not run.
 
-A separate pre-existing parity gap remains: out-of-bounds indexed reads and
+A separate pre-existing parity gap was identified: out-of-bounds indexed reads and
 immutable indexed writes can bypass VM `except` handlers; the interpreter catches
 them. Both baseline and updated binaries reproduce it (VM exit 4, interpreter
 exit 0). This is recorded separately for follow-up, not fixed by the ownership
-optimization. No benchmark port, maintainer contact or release is included.
+optimization. A subsequent exception-routing fix now makes these failures
+catchable in the default VM; `tests/index_exception_contracts.rs` covers local
+and general indexed reads, cross-frame recovery, rejected writes and unchanged
+snapshots in both runtimes. Uncaught errors still fail. No benchmark port,
+maintainer contact or release is included.

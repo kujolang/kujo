@@ -3916,7 +3916,13 @@ impl VM {
                 OpCode::IndexGet => {
                     let index = self.stack.pop().ok_or("Stack underflow")?;
                     let object = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = Self::get_indexed_value(&object, &index)?;
+                    let result = match Self::get_indexed_value(&object, &index) {
+                        Ok(value) => value,
+                        Err(error) => {
+                            self.throw_runtime_value(Value::Error(error))?;
+                            continue;
+                        }
+                    };
 
                     self.stack.push(result);
                 }
@@ -4578,7 +4584,12 @@ impl VM {
                                 }
                             }
                         }
-                        _ => return Err("Invalid index assignment".to_string()),
+                        _ => {
+                            self.throw_runtime_value(Value::Error(
+                                "Invalid index assignment".to_string(),
+                            ))?;
+                            continue;
+                        }
                     }
                 }
 
@@ -4594,7 +4605,13 @@ impl VM {
                         .get(slot)
                         .cloned()
                         .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-                    let result = Self::get_indexed_value(&object, &index)?;
+                    let result = match Self::get_indexed_value(&object, &index) {
+                        Ok(value) => value,
+                        Err(error) => {
+                            self.throw_runtime_value(Value::Error(error))?;
+                            continue;
+                        }
+                    };
 
                     self.stack.push(result);
                 }
@@ -4620,7 +4637,11 @@ impl VM {
                         .copied()
                         .unwrap_or(BytecodeBindingKind::Mutable);
                     if !matches!(kind, BytecodeBindingKind::Mutable) {
-                        return Err(Self::local_mutation_error(kind, &binding_name));
+                        self.throw_runtime_value(Value::Error(Self::local_mutation_error(
+                            kind,
+                            &binding_name,
+                        )))?;
+                        continue;
                     }
 
                     if let Some(Value::Bytes(bytes)) = frame.local_slots.get_mut(slot) {
@@ -4886,7 +4907,12 @@ impl VM {
                                         }
                                     }
                                 }
-                                _ => return Err("Invalid index assignment".to_string()),
+                                _ => {
+                                    self.throw_runtime_value(Value::Error(
+                                        "Invalid index assignment".to_string(),
+                                    ))?;
+                                    continue;
+                                }
                             },
 
                             Value::Str(key) => match object {
@@ -5063,9 +5089,19 @@ impl VM {
                                         }
                                     }
                                 }
-                                _ => return Err("Invalid index assignment".to_string()),
+                                _ => {
+                                    self.throw_runtime_value(Value::Error(
+                                        "Invalid index assignment".to_string(),
+                                    ))?;
+                                    continue;
+                                }
                             },
-                            _ => return Err("Invalid index assignment".to_string()),
+                            _ => {
+                                self.throw_runtime_value(Value::Error(
+                                    "Invalid index assignment".to_string(),
+                                ))?;
+                                continue;
+                            }
                         }
                     }
 
