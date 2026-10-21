@@ -3461,6 +3461,42 @@ impl Interpreter {
         })
     }
 
+    fn try_string_append_assignment(&mut self, target: &Expr, rhs: &Expr) -> Option<Value> {
+        let Expr::Identifier(name) = target else { return None };
+        let Expr::BinaryOp { left, op, right } = rhs else { return None };
+        if op != "+" || !matches!(left.as_ref(), Expr::Identifier(source) if source == name) {
+            return None;
+        }
+        if matches!(right.as_ref(), Expr::Int(_) | Expr::Float(_) | Expr::Bool(_) | Expr::None) {
+            return None;
+        }
+        if !matches!(self.env.get(name), Some(Value::Str(_))) {
+            return None;
+        }
+        let original = self.eval_expr(left);
+        if Self::is_error_value(&original) {
+            return Some(original);
+        }
+        let suffix = self.eval_expr(right);
+        if Self::is_error_value(&suffix) {
+            return Some(suffix);
+        }
+        let mut original = Some(original);
+        let mut appended = false;
+        let _ = self.env.mutate_checked(name, |root| {
+            appended = assignment::concat_string_rebinding(root, &mut original, &suffix);
+        });
+        if appended {
+            return Some(Value::Null);
+        }
+        let result = self.binary_op_value(original.as_ref().unwrap(), op, &suffix);
+        Some(if Self::is_error_value(&result) {
+            result
+        } else {
+            self.assign_evaluated(target, &result)
+        })
+    }
+
     fn try_owned_call_assignment(&mut self, target: &Expr, rhs: &Expr) -> Option<Value> {
         let Expr::Identifier(name) = target else { return None };
         let Expr::Call { function, args } = rhs else { return None };
@@ -4470,6 +4506,10 @@ impl Interpreter {
                 }
 
                 if let Some(result) = self.try_append_assignment(target, value) {
+                    self.set_return_if_error(&result);
+                    return;
+                }
+                if let Some(result) = self.try_string_append_assignment(target, value) {
                     self.set_return_if_error(&result);
                     return;
                 }

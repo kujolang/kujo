@@ -37,6 +37,7 @@ impl Optimizer {
             | OpCode::JumpBack(t)
             | OpCode::ForNext(t)
             | OpCode::TryAppendAssign(_, t)
+            | OpCode::TryStringAppendAssign(_, t)
             | OpCode::GuardAppendPath(t)
             | OpCode::TryPopRebind(_, _, _, _, t)
             | OpCode::BeginTry(t) => Some(t),
@@ -360,6 +361,7 @@ impl Optimizer {
                 OpCode::JumpIfFalse(target)
                 | OpCode::JumpIfTrue(target)
                 | OpCode::TryAppendAssign(_, target)
+                | OpCode::TryStringAppendAssign(_, target)
                 | OpCode::GuardAppendPath(target)
                 | OpCode::TryPopRebind(_, _, _, _, target)
                 | OpCode::ForNext(target) => {

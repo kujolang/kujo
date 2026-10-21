@@ -1509,6 +1509,7 @@ impl VM {
                             | OpCode::UpdatePath(_)
                             | OpCode::UpdateBindingPath(_, _)
                             | OpCode::TryAppendAssign(_, _)
+                            | OpCode::TryStringAppendAssign(_, _)
                             | OpCode::GuardAppendPath(_)
                             | OpCode::AppendBindingPath(_, _)
                             | OpCode::TryPopRebind(_, _, _, _, _)
@@ -5319,6 +5320,28 @@ impl VM {
                         continue;
                     }
                     self.stack.push(Value::Null);
+                }
+
+                OpCode::TryStringAppendAssign(binding, end) => {
+                    let suffix = self.stack.pop().ok_or("Stack underflow")?;
+                    let mut original = Some(self.stack.pop().ok_or("Stack underflow")?);
+                    let appended = matches!(original.as_ref(), Some(Value::Str(_)))
+                        && matches!(&suffix, Value::Str(_))
+                        && self
+                            .mutate_binding(&binding, |root| {
+                                Ok(crate::interpreter::assignment::concat_string_rebinding(
+                                    root,
+                                    &mut original,
+                                    &suffix,
+                                ))
+                            })
+                            .unwrap_or(false);
+                    if appended {
+                        self.ip = end;
+                        continue;
+                    }
+                    self.stack.push(original.unwrap());
+                    self.stack.push(suffix);
                 }
 
                 OpCode::TryAppendAssign(binding, end) => {

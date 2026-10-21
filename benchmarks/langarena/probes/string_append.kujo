@@ -1,0 +1,10 @@
+func grow(n) {
+    mut s := ""
+    let piece := "0123456789abcdef0123456789abcdef"
+    mut i := 0
+    let start := time_ns()
+    while i < n { s += piece i += 1 }
+    print(str(n) + " ns=" + str(time_ns() - start) + " bytes=" + str(len(s)))
+}
+grow(16000)
+grow(64000)

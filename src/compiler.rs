@@ -498,6 +498,32 @@ impl Compiler {
                 if let (Expr::Identifier(target_name), Expr::BinaryOp { left, op, right }) =
                     (target, value)
                 {
+                    if op == "+"
+                        && matches!(left.as_ref(), Expr::Identifier(name) if name == target_name)
+                        && !matches!(
+                            right.as_ref(),
+                            Expr::String(_)
+                                | Expr::Int(_)
+                                | Expr::Float(_)
+                                | Expr::Bool(_)
+                                | Expr::None
+                        )
+                    {
+                        self.compile_expr(left)?;
+                        self.compile_expr(right)?;
+                        let binding = if let Some(slot) = self.resolve_local_slot(target_name) {
+                            crate::bytecode::MutationBinding::Local(slot)
+                        } else {
+                            self.resolve_capture(target_name);
+                            crate::bytecode::MutationBinding::Named(target_name.clone())
+                        };
+                        let fast = self.chunk.emit(OpCode::TryStringAppendAssign(binding, 0));
+                        self.chunk.emit(OpCode::Add);
+                        self.compile_assignment(target)?;
+                        self.chunk.emit(OpCode::Pop);
+                        self.chunk.patch_jump(fast);
+                        return Ok(());
+                    }
                     if op == "+" {
                         if let (Expr::Identifier(left_name), Expr::String(_)) = (&**left, &**right)
                         {

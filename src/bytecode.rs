@@ -252,6 +252,8 @@ pub enum OpCode {
     /// Conditional fast path for x = f(x, item). On success consume three call
     /// operands and jump past call/store; otherwise leave the stack unchanged.
     TryAppendAssign(MutationBinding, usize),
+    /// Conditional string x = x + rhs. Preserve evaluated operands on fallback.
+    TryStringAppendAssign(MutationBinding, usize),
     /// Drop an unobservable caller-local snapshot after evaluating all operands.
     ReleaseRebindLocal(usize, usize),
     /// Release a proven dead parameter after loading its initial local alias.
@@ -563,6 +565,7 @@ impl BytecodeChunk {
             | OpCode::JumpIfFalse(ref mut addr)
             | OpCode::ForNext(ref mut addr)
             | OpCode::TryAppendAssign(_, ref mut addr)
+            | OpCode::TryStringAppendAssign(_, ref mut addr)
             | OpCode::GuardAppendPath(ref mut addr)
             | OpCode::TryPopRebind(_, _, _, _, ref mut addr)
             | OpCode::JumpIfTrue(ref mut addr) => {
@@ -581,6 +584,7 @@ impl BytecodeChunk {
             | OpCode::JumpIfTrue(ref mut addr)
             | OpCode::JumpBack(ref mut addr)
             | OpCode::TryAppendAssign(_, ref mut addr)
+            | OpCode::TryStringAppendAssign(_, ref mut addr)
             | OpCode::GuardAppendPath(ref mut addr)
             | OpCode::TryPopRebind(_, _, _, _, ref mut addr)
             | OpCode::BeginTry(ref mut addr) => {

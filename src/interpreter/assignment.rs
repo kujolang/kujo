@@ -1061,6 +1061,26 @@ pub(crate) fn concat_bytes_rebinding(
     true
 }
 
+/// Reuse a string only when it is still the evaluated left operand. RHS calls
+/// may reassign the destination; retained aliases must continue to force COW.
+pub(crate) fn concat_string_rebinding(
+    root: &mut Value,
+    original: &mut Option<Value>,
+    suffix: &Value,
+) -> bool {
+    let (Value::Str(destination), Some(Value::Str(source)), Value::Str(suffix)) =
+        (root, original.as_ref(), suffix)
+    else {
+        return false;
+    };
+    if !Arc::ptr_eq(destination, source) || destination.len().checked_add(suffix.len()).is_none() {
+        return false;
+    }
+    drop(original.take());
+    Arc::make_mut(destination).push_str(suffix);
+    true
+}
+
 pub(crate) fn concat_bytes_path(
     root: &mut Value,
     path: &[Access],
@@ -1184,5 +1204,34 @@ mod byte_concat_depth_tests {
             .unwrap()
             .join()
             .unwrap();
+    }
+}
+
+#[cfg(test)]
+mod string_rebinding_tests {
+    use super::*;
+
+    #[test]
+    fn append_reuses_capacity_and_retained_aliases_force_copying() {
+        let mut text = String::with_capacity(4096);
+        text.push_str("a");
+        let pointer = text.as_ptr();
+        let mut root = Value::Str(Arc::new(text));
+        for _ in 0..100 {
+            let mut original = Some(root.clone());
+            assert!(concat_string_rebinding(&mut root, &mut original, &Value::str_ref("b")));
+            let Value::Str(value) = &root else { panic!() };
+            assert_eq!(value.as_ptr(), pointer);
+        }
+        let alias = root.clone();
+        let mut original = Some(root.clone());
+        assert!(concat_string_rebinding(&mut root, &mut original, &Value::str_ref("c")));
+        let (Value::Str(old), Value::Str(new)) = (&alias, &root) else { panic!() };
+        assert!(!Arc::ptr_eq(old, new));
+        assert_eq!(old.len(), 101);
+        assert_eq!(new.len(), 102);
+        let mut stale = Some(alias);
+        assert!(!concat_string_rebinding(&mut root, &mut stale, &Value::str_ref("d")));
+        assert!(stale.is_some());
     }
 }
