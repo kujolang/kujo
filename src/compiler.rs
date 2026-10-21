@@ -2352,7 +2352,7 @@ impl Compiler {
         for statement in body {
             compiler.compile_stmt(statement)?;
         }
-        Ok(compiler.chunk.upvalues)
+        Ok(std::mem::take(&mut compiler.chunk.upvalues))
     }
 
     /// Collect variables that are read within the statement list

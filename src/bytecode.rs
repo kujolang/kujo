@@ -466,9 +466,28 @@ pub enum OpCode {
     Nop,
 }
 
-/// A compiled bytecode chunk containing instructions and constants
+/// Compiled code is shared by callable values and suspended frames. Compiler
+/// edits and generator flag changes detach storage before mutation.
 #[derive(Debug, Clone, PartialEq)]
-pub struct BytecodeChunk {
+pub struct BytecodeChunk(Arc<BytecodeData>);
+
+impl std::ops::Deref for BytecodeChunk {
+    type Target = BytecodeData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for BytecodeChunk {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Arc::make_mut(&mut self.0)
+    }
+}
+
+/// The copy-on-write contents of a compiled bytecode chunk.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BytecodeData {
     /// The bytecode instructions
     pub instructions: Vec<OpCode>,
 
@@ -516,7 +535,7 @@ pub struct BytecodeChunk {
 #[allow(dead_code)] // Methods not yet used - VM integration incomplete
 impl BytecodeChunk {
     pub fn new() -> Self {
-        Self {
+        Self(Arc::new(BytecodeData {
             instructions: Vec::new(),
             constants: Vec::new(),
             source_map: HashMap::new(),
@@ -531,7 +550,7 @@ impl BytecodeChunk {
             lexical_self: None,
             is_generator: false,
             is_async: false,
-        }
+        }))
     }
 
     /// Add a constant to the pool and return its index
@@ -640,4 +659,43 @@ pub struct ExceptionHandler {
     pub catch_start: usize,
     /// Variable name to bind caught exception
     pub exception_var: String,
+}
+
+#[cfg(test)]
+mod sharing_tests {
+    use super::*;
+
+    #[test]
+    fn bytecode_clones_share_storage_and_edits_detach() {
+        let mut original = BytecodeChunk::new();
+        original.emit(OpCode::Return);
+        original.add_constant(Constant::Int(42));
+        original.source_map.insert(0, (1, 1));
+        let mut copy = original.clone();
+        assert!(Arc::ptr_eq(&original.0, &copy.0));
+        copy.is_generator = true;
+        copy.instructions[0] = OpCode::Nop;
+        copy.constants[0] = Constant::Int(7);
+        copy.source_map.insert(0, (2, 3));
+        assert!(!Arc::ptr_eq(&original.0, &copy.0));
+        assert!(!original.is_generator);
+        assert_eq!(original.instructions, vec![OpCode::Return]);
+        assert_eq!(original.constants, vec![Constant::Int(42)]);
+        assert_eq!(original.source_map[&0], (1, 1));
+    }
+
+    #[test]
+    fn editing_nested_bytecode_does_not_change_callable_snapshots() {
+        let mut child = BytecodeChunk::new();
+        child.emit(OpCode::Return);
+        let mut parent = BytecodeChunk::new();
+        parent.add_constant(Constant::Function(Box::new(child.clone())));
+        let snapshot = parent.clone();
+        let Constant::Function(nested) = &mut parent.constants[0] else { panic!() };
+        nested.emit(OpCode::Nop);
+        let Constant::Function(saved) = &snapshot.constants[0] else { panic!() };
+        assert!(Arc::ptr_eq(&saved.0, &child.0));
+        assert_eq!(saved.instructions.len(), 1);
+        assert_eq!(nested.instructions.len(), 2);
+    }
 }

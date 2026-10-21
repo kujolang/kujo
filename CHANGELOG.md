@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Share compiled bytecode across callable aliases and execution snapshots instead
+  of copying function bodies on lookup and calls. Compiler and generator edits
+  detach storage, preserving independent code and capture semantics.
+
 - Cache stable string character counts without retaining payloads and accelerate
   ASCII indexing and substring extraction while preserving Unicode semantics.
 

@@ -1,0 +1,16 @@
+# Usage: kujo run call_body_size.kujo BINARY OUTPUT_DIRECTORY
+# Generates identical executed work with 0/1000 unexecuted statements.
+let options := args()
+assert_equal(len(options), 2)
+for padding in [0, 1000] {
+    let source := "func helper(value) { if value < 0 {\n" + repeat("value += 1\n", padding) + "}\nreturn value + 1 }\nmut result := 0\nlet start := time_ns()\nwhile result < 10000 { result = helper(result) }\nassert_equal(result, 10000)\nprint(time_ns() - start)\n"
+    let path := options[1] + "/call-body-" + str(padding) + ".kujo"
+    write_file(path, source, true)
+    for runtime in ["vm", "interpreter"] {
+        mut command := [options[0], "run", path, "--scheduler-no-timeout"]
+        if runtime == "interpreter" { command = push(command, "--interpreter") }
+        let result := spawn_process(command, {"timeout_ms": 120000})
+        assert(result.success, result.stderr)
+        print(runtime + " padding=" + str(padding) + " ns=" + trim(result.stdout))
+    }
+}

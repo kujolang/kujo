@@ -525,3 +525,14 @@ Production workload completion and timing evidence are in the
 [LangArena production report](../benchmarks/langarena/PRODUCTION_VERIFICATION.md);
 a passing reduced checksum configuration is not evidence
 that the production configuration completed.
+
+### Callable bytecode storage
+
+Compiled chunks share their code and metadata across callable aliases, active
+frames and snapshots. Mutating a chunk (compiler optimization, jump patching or
+legacy generator marking) detaches its storage first. Capture cells and runtime
+values retain their existing semantics; sharing code does not merge captures.
+A 10,000-call probe with an unused 1,000-statement branch exposed repeated code
+copies despite executing the same short path. Storage-identity tests cover cheap
+clones and detached edits, including nested functions; dual-runtime contracts
+cover independent captures, callable aliases, recursion and retained arrays.
