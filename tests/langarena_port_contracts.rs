@@ -110,9 +110,16 @@ fn profiling_keeps_configured_iterations_and_checksums_in_both_runtimes() {
         let output = command.arg(&config).args(["Base64::Encode", "--profile"]).output().unwrap();
         let stdout = String::from_utf8_lossy(&output.stdout);
         assert!(output.status.success(), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
-        for phase in
-            ["create-start", "create-done", "prepare-done", "warmup-done", "run-1", "run-8192"]
-        {
+        for phase in [
+            "create-start",
+            "create-done",
+            "prepare-done",
+            "warmup-1",
+            "warmup-1638",
+            "warmup-done",
+            "run-1",
+            "run-8192",
+        ] {
             assert!(stdout.contains(&format!("@profile {phase} ns=")), "{stdout}");
         }
         assert!(stdout.contains("Base64::Encode: OK 3894061047"), "{stdout}");

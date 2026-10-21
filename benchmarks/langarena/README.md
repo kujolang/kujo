@@ -68,6 +68,10 @@ No maintainer contact or upstream submission is part of this local work.
 `profile.kujo` runs each unchanged configuration in a separate process, records
 phase progress and elapsed nanoseconds, and checkpoints JSON after every case:
 
+Progress includes the first, final and roughly every tenth warmup iteration, as
+well as the measured iterations. Long warmups are part of the unchanged workload;
+they must finish before a checksum result can be claimed.
+
 ```sh
 target/release/kujo run benchmarks/langarena/profile.kujo --scheduler-no-timeout target/release/kujo benchmarks/langarena/run.json /tmp/kujo-production.json 3600000 vm
 ```

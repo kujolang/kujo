@@ -32,7 +32,12 @@ func main() {
             mut i := 0
             mut warmup := run
             if len(definition) > 4 { warmup = definition[4] }
-            while i < warmups { state = warmup(state, i) i += 1 }
+            let warmup_interval := imax(idiv(warmups, 10), 1)
+            while i < warmups {
+                state = warmup(state, i)
+                i += 1
+                if profiling && (i == 1 || i == warmups || i % warmup_interval == 0) { profile_checkpoint(true, "warmup-" + str(i), started) }
+            }
             profile_checkpoint(profiling, "warmup-done", started)
             reset_rng()
             i = 0
