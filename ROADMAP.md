@@ -5,7 +5,7 @@ Exact published 1.8.2 source: `549bdb4d5aa8edc60a83c81bf3be4b1c688ad3e1`.
 Updated: 2026-10-19
 Stable release: [v1.8.2](https://github.com/kujolang/kujo/releases/tag/v1.8.2)
 
-> Current crate version: `1.8.2` in [Cargo.toml](Cargo.toml)
+> Current crate version: `1.9.0` in [Cargo.toml](Cargo.toml)
 
 Kujo **1.8.2 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free npm packages. See the

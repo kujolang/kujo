@@ -6,6 +6,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-22
+
+See [release notes](docs/RELEASE_NOTES_1_9_0.md) for candidate scope and compatibility.
+
+### Added, fixed, and performance
+
 - Preserve numeric accumulator JIT compilation when applying the speculative
   string-append optimization; ordinary addition still handles later type changes.
 
