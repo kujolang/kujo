@@ -2,6 +2,20 @@
 mod support;
 
 #[test]
+fn moved_call_frames_propagate_unhandled_recursive_exceptions() {
+    support::failure(
+        r#"
+        func fail(n) {
+            if n == 0 { throw("recursive leaf failure") }
+            return fail(n - 1)
+        }
+        fail(4)
+        "#,
+        "recursive leaf failure",
+    );
+}
+
+#[test]
 fn moved_call_frames_restore_recursive_returns_and_exception_handlers() {
     support::success(
         r#"
