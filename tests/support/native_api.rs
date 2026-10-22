@@ -23,6 +23,8 @@ pub fn run_modules(
     cmd.output().unwrap()
 }
 
+// Module-level suites can call run_modules directly instead of this helper.
+#[allow(dead_code)]
 pub fn success(source: &str) {
     for interpreter in [false, true] {
         let out = run(source, interpreter);
@@ -34,6 +36,8 @@ pub fn success(source: &str) {
     }
 }
 
+// This support file is compiled separately by suites that may only test success.
+#[allow(dead_code)]
 pub fn failure(source: &str, message: &str) {
     for interpreter in [false, true] {
         let out = run(source, interpreter);

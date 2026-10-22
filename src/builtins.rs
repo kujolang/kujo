@@ -268,10 +268,14 @@ pub fn range(args: &[Value]) -> Result<Vec<Value>, String> {
 }
 
 /// String functions
+// Public library compatibility API; the CLI uses cached string-access helpers.
+#[allow(dead_code)]
 pub fn str_len(s: &str) -> f64 {
     s.chars().count() as f64
 }
 
+// Public library compatibility API; the CLI uses cached string-access helpers.
+#[allow(dead_code)]
 pub fn substring(s: &str, start: f64, end: f64) -> String {
     let start_idx = start as usize;
     let end_idx = end as usize;
@@ -350,6 +354,8 @@ pub fn is_empty(s: &str) -> bool {
     s.is_empty()
 }
 
+// Public library compatibility API; the CLI uses cached string-access helpers.
+#[allow(dead_code)]
 pub fn count_chars(s: &str) -> i64 {
     s.chars().count() as i64
 }
@@ -3055,6 +3061,8 @@ mod tests {
     fn test_string_functions() {
         assert_eq!(str_len("hello"), 5.0);
         assert_eq!(str_len("Free Tools → Plan"), 17.0);
+        assert_eq!(count_chars("Free Tools → Plan"), 17);
+        assert_eq!(count_chars(""), 0);
         assert_eq!(substring("hello", 1.0, 4.0), "ell");
         assert_eq!(to_upper("hello"), "HELLO");
         assert_eq!(to_lower("HELLO"), "hello");
