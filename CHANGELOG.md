@@ -8,7 +8,7 @@ This file records user-visible changes to Kujo, following
 
 ## [1.9.0] - 2026-10-22
 
-See [release notes](docs/RELEASE_NOTES_1_9_0.md) for candidate scope and compatibility.
+See [release notes](docs/RELEASE_NOTES_1_9_0.md) for release scope and compatibility.
 
 ### Added, fixed, and performance
 

@@ -1,8 +1,9 @@
-# Kujo 1.9.0 release candidate
+# Kujo 1.9.0 release
 
-Version 1.9.0 prepares an additive runtime release. The published stable runtime
-remains 1.8.2 until signed native artifacts, npm packages, and their installation
-checks pass. Crates.io publication is not included in this release cycle.
+Released on 2026-10-22. Native installation and upgrades from 1.8.2, plus npm
+installation without lifecycle scripts, passed on all five supported platforms.
+See the [publication record](../release/kujo-1.9.0-publication.json).
+Crates.io publication is not included in this release cycle.
 
 ## Language and library additions
 
@@ -32,11 +33,16 @@ Wave D alpha and unpublished participant SDK boundaries remain unchanged.
 
 ## Distribution and evidence
 
-The intended native targets are Linux x64/arm64, macOS x64/arm64 and Windows x64,
+The published native targets are Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with npm platform packages wrapping those same verified executables. Node packaging
 requires the patched Node versions declared in each manifest. No install-time
 binary download hook is introduced.
 
 The pre-version source ff7e8b6fb197ba8dca8f8dc9e272a29792834d66 passed the full hosted
-release gate in run 39820688222. Candidate-source and published-artifact evidence
-must be recorded separately before this candidate is promoted as stable.
+release gate in run 39820688222. Exact candidate source
+`2cfaf185ad03059c89ef4f72fb061074255d00fc` passed release gate 39828988276.
+Tagged build/publication run 39833231473 passed; native installation and upgrades
+passed in 39841977009, and npm installation passed in 39841981205 attempt 2.
+The first npm install attempt encountered registry processing delay; the unchanged
+checks passed once all six package versions became visible. Website and catalog
+promotion are tracked separately in the publication record.

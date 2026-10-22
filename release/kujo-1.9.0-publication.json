@@ -1,0 +1,20 @@
+{
+  "schema": "kujo.runtime-publication/v1",
+  "version": "1.9.0",
+  "tag": "v1.9.0",
+  "commit": "2cfaf185ad03059c89ef4f72fb061074255d00fc",
+  "tag_signature_verified": true,
+  "native_and_npm": "published",
+  "publication_workflow": 39833231473,
+  "native_install_smoke": 39841977009,
+  "native_upgrade_from": "v1.8.2",
+  "npm_install_smoke": 39841981205,
+  "npm_install_smoke_attempt": 2,
+  "all_five_targets_verified": true,
+  "source_archive_verified": true,
+  "evidence_note": "docs/RELEASE_NOTES_1_9_0.md",
+  "crates_io": "not published: optional and outside canonical native/npm distribution",
+  "ecosystem_promotion": {
+    "status": "pending: runtime distribution verified; website, docs, MCP and course promotion in progress"
+  }
+}

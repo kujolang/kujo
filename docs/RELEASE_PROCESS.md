@@ -1,10 +1,10 @@
 # Kujo Release Process
 
-Exact published 1.8.2 source: `549bdb4d5aa8edc60a83c81bf3be4b1c688ad3e1`.
+Exact published 1.9.0 source: `2cfaf185ad03059c89ef4f72fb061074255d00fc`.
 
-Current published stable runtime: `1.8.2` (five native platforms and npm).
+Current published stable runtime: `1.9.0` (five native platforms and npm).
 The source, signed tag, artifacts and install verification are recorded in
-`release/kujo-1.8.2-publication.json`.
+`release/kujo-1.9.0-publication.json`.
 
 This document is the canonical release and compatibility policy for Kujo.
 It defines how maintainers cut releases, what compatibility guarantees apply, and which gates must pass before a tag is created.

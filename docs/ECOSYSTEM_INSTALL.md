@@ -7,7 +7,7 @@ The supported onboarding path is the repository's [`install.sh`](../install.sh).
 Install the current stable Kujo runtime and the current ecosystem sources:
 
 ```bash
-curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.8.2 bash
+curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.9.0 bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```
@@ -63,21 +63,21 @@ The default is `core` plus `operating`. It is intentionally small enough for eve
 Install one additional profile with `--group`:
 
 ```bash
-KUJO_RELEASE_VERSION=v1.8.2 bash install.sh --group ai
-KUJO_RELEASE_VERSION=v1.8.2 bash install.sh --group agent
-KUJO_RELEASE_VERSION=v1.8.2 bash install.sh --group quality --group showcases
+KUJO_RELEASE_VERSION=v1.9.0 bash install.sh --group ai
+KUJO_RELEASE_VERSION=v1.9.0 bash install.sh --group agent
+KUJO_RELEASE_VERSION=v1.9.0 bash install.sh --group quality --group showcases
 ```
 
 Install everything with:
 
 ```bash
-KUJO_RELEASE_VERSION=v1.8.2 bash install.sh --all
+KUJO_RELEASE_VERSION=v1.9.0 bash install.sh --all
 ```
 
 `--all` installs source snapshots for all profiles. Optional Node dependencies for AI Chat, Intake, Site Kit, and the CRUD API frontend are installed only when requested:
 
 ```bash
-KUJO_RELEASE_VERSION=v1.8.2 bash install.sh --all --with-deps
+KUJO_RELEASE_VERSION=v1.9.0 bash install.sh --all --with-deps
 ```
 
 This keeps the default path free of Node, browser, Docker, provider credentials, and network-service setup. Those are environment-specific prerequisites, not safe universal defaults.

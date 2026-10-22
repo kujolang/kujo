@@ -1,6 +1,6 @@
 # Kujo
 
-[![Version](https://img.shields.io/badge/version-1.8.2-black)](docs/RELEASE_NOTES_1_8_2.md)
+[![Version](https://img.shields.io/badge/version-1.9.0-black)](docs/RELEASE_NOTES_1_9_0.md)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 [![built with Rust](https://img.shields.io/badge/built%20with-Rust-white.svg)](https://www.rust-lang.org/)
 
@@ -15,7 +15,7 @@ On macOS or Linux, the Kujo installer sets up the current runtime and the core
 Kujo toolset in user-owned directories:
 
 ```bash
-curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.8.2 bash
+curl -fsSL https://kujolang.ai/install.sh | KUJO_RELEASE_VERSION=v1.9.0 bash
 export PATH="$HOME/.local/bin:$PATH"
 kujo --version
 ```
@@ -185,10 +185,10 @@ See the [VM/interpreter migration playbook](docs/VM_INTERPRETER_MIGRATION_PLAYBO
 
 ## 1.0 Release Status
 
-Release boundary: Kujo `v1.8.2` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
+Release boundary: Kujo `v1.9.0` is the current stable release; explicit deferrals and compatibility guarantees are governed by `docs/V1_SCOPE.md`.
 
-- Kujo 1.8.2 is released for Linux x64/arm64, macOS x64/arm64 and Windows x64; see [release notes](docs/RELEASE_NOTES_1_8_2.md).
-- The source tree is currently at `1.9.0` in `Cargo.toml`; the latest published stable release tag is `v1.8.2`.
+- Kujo 1.9.0 is released for Linux x64/arm64, macOS x64/arm64 and Windows x64; see [release notes](docs/RELEASE_NOTES_1_9_0.md).
+- The source tree is currently at `1.9.0` in `Cargo.toml`; the latest published stable release tag is `v1.9.0`.
 - The signed release, native/source archives, checksums, and all six npm packages
   passed their published-install verification matrices.
 - Prebuilt Linux x64/arm64, macOS x64/arm64, and Windows x64 binaries ship with

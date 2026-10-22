@@ -1,16 +1,16 @@
 # Kujo Roadmap
 
-Exact published 1.8.2 source: `549bdb4d5aa8edc60a83c81bf3be4b1c688ad3e1`.
+Exact published 1.9.0 source: `2cfaf185ad03059c89ef4f72fb061074255d00fc`.
 
-Updated: 2026-10-19
-Stable release: [v1.8.2](https://github.com/kujolang/kujo/releases/tag/v1.8.2)
+Updated: 2026-10-22
+Stable release: [v1.9.0](https://github.com/kujolang/kujo/releases/tag/v1.9.0)
 
 > Current crate version: `1.9.0` in [Cargo.toml](Cargo.toml)
 
-Kujo **1.8.2 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
+Kujo **1.9.0 is released** for Linux x64/arm64, macOS x64/arm64 and Windows x64,
 with matching lifecycle-script-free npm packages. See the
-[1.8.2 release notes](docs/RELEASE_NOTES_1_8_2.md) and
-[publication record](release/kujo-1.8.2-publication.json) for exact source and
+[1.9.0 release notes](docs/RELEASE_NOTES_1_9_0.md) and
+[publication record](release/kujo-1.9.0-publication.json) for exact source and
 artifact verification. Wave C beta and Wave D alpha remain experimental;
 participant SDK packages remain unpublished. Human adopter usability remains
 post-release validation.
@@ -22,7 +22,7 @@ post-release validation.
 - The language, CLI, LSP, capability model, AI runtime primitives, and supported
   machine-readable contracts are stable within the v1 compatibility policy.
 - Linux x64/arm64, macOS x64/arm64, and Windows x64 release binaries ship with
-  SHA-256 checksums. The public npm 1.8.2 runtime package covers the same targets
+  SHA-256 checksums. The public npm 1.9.0 runtime package covers the same targets
   with trusted-publisher provenance.
 - The official Kennel registry is live at
   [kennel.kujolang.ai](https://kennel.kujolang.ai/). Kennel 1.1.0 manages project
