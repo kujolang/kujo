@@ -15,6 +15,35 @@
   "evidence_note": "docs/RELEASE_NOTES_1_9_0.md",
   "crates_io": "not published: optional and outside canonical native/npm distribution",
   "ecosystem_promotion": {
-    "status": "pending: runtime distribution verified; website, docs, MCP and course promotion in progress"
+    "status": "verified",
+    "website": {
+      "source": "e3ed371e23e09b854b989954b19aa512a3124e52",
+      "workflow": 39845723371,
+      "artifact": 12454947643,
+      "live_verification": "runtime, MCP, Workcell, skills and workflows pages plus exact installer match the deployed artifact"
+    },
+    "docs": {
+      "source": "652d6f05207204d5d47fcd04dae0cc93d9af7fe3",
+      "verification_workflow": 39845723557,
+      "deployment_commit": "5e243fbf98c6cf99c06444dbcda46c6be8c6a73f",
+      "deployment_workflow": 39845928221,
+      "live_verification": "nine affected pages match the verified artifact"
+    },
+    "mcp": {
+      "source": "0c33e49ffe1c9a158bd46c102997bf667a3638d8",
+      "verification_workflow": 39845868100,
+      "deployment": "d6c5ac27-0fd2-46f7-a2ae-cfa0ba0380b6",
+      "catalog_revision": "73bfcb690a45974b706144ca3d528dd39e8718fa356fcecf51df683ea17394ce",
+      "live_records_verified": 237,
+      "installer_profiles_verified": 6
+    },
+    "course": {
+      "source": "fa2cd42c8755c5bceb94b91e375ac3ddd74cf62d",
+      "verification_workflow": 39844054936,
+      "deployment": "34926558-3295-466b-9733-d9ec8bd4fe42",
+      "live_pages_verified": 53
+    },
+    "html_comparison_note": "Only inspected Cloudflare-injected markup and associated body-close whitespace are normalized; authored content is compared exactly. Installer and JSON evidence use exact bytes.",
+    "independent_package_versions": "Kennel and companion packages retain their independent versions, minimum runtimes, and immutable release artifacts."
   }
 }
