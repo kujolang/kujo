@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve numeric accumulator JIT compilation when applying the speculative
+  string-append optimization; ordinary addition still handles later type changes.
+
 - Defer global-environment snapshots in bytecode callbacks until interpreter
   fallback needs them, avoiding repeated copies of unrelated globals in regex
   replacement and comparator callbacks.

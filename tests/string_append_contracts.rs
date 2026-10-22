@@ -30,6 +30,11 @@ fn string_rebinding_preserves_aliases_unicode_and_rhs_effects() {
             let step := 2
             number += step
             assert_equal(number, 3)
+            number = "changed"
+            let prior := number
+            number += suffix
+            assert_equal(number, "changedé🙂")
+            assert_equal(prior, "changed")
         }
         build()
         mut changed := "before"

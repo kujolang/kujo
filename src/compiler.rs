@@ -88,6 +88,8 @@ struct Local {
     depth: usize,
     slot: usize,
     binding_kind: BytecodeBindingKind,
+    // Optimization hint only: never a runtime type restriction.
+    numeric_initializer: bool,
 }
 
 #[allow(dead_code)] // Compiler not yet integrated into execution path
@@ -199,7 +201,13 @@ impl Compiler {
     fn add_local(&mut self, name: &str, depth: usize, binding_kind: BytecodeBindingKind) -> usize {
         let slot = self.next_local_slot;
         self.next_local_slot += 1;
-        self.locals.push(Local { name: name.to_string(), depth, slot, binding_kind });
+        self.locals.push(Local {
+            name: name.to_string(),
+            depth,
+            slot,
+            binding_kind,
+            numeric_initializer: false,
+        });
 
         if slot == self.chunk.local_names.len() {
             self.chunk.local_names.push(name.to_string());
@@ -399,6 +407,17 @@ impl Compiler {
                     BytecodeBindingKind::LetImmutable
                 };
                 self.compile_pattern_binding(pattern, binding_kind)?;
+                if matches!(value, Expr::Int(_) | Expr::Float(_)) {
+                    if let Pattern::Identifier(name) = pattern {
+                        if let Some(slot) = self.resolve_local_slot(name) {
+                            if let Some(local) =
+                                self.locals.iter_mut().find(|local| local.slot == slot)
+                            {
+                                local.numeric_initializer = true;
+                            }
+                        }
+                    }
+                }
 
                 // Pop the value from stack - StoreVar peeks, doesn't pop
                 // This keeps the stack clean between statements
@@ -498,7 +517,17 @@ impl Compiler {
                 if let (Expr::Identifier(target_name), Expr::BinaryOp { left, op, right }) =
                     (target, value)
                 {
+                    // Numeric accumulators should retain ordinary Add/Store lowering,
+                    // which the numeric JIT supports. This merely skips a speculative
+                    // string fast path: later string reassignments still use normal Add.
+                    let numeric_initializer =
+                        self.resolve_local_slot(target_name).is_some_and(|slot| {
+                            self.locals
+                                .iter()
+                                .any(|local| local.slot == slot && local.numeric_initializer)
+                        });
                     if op == "+"
+                        && !numeric_initializer
                         && matches!(left.as_ref(), Expr::Identifier(name) if name == target_name)
                         && !matches!(
                             right.as_ref(),
