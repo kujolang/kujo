@@ -33,7 +33,8 @@
       "scope": "Evidence-led calls, collections, numerics, strings, native boundaries and allocation fixes preserving language contracts",
       "status": "in_progress",
       "evidence": [
-
+        "json-serialization-allocations-2026-10-23.json",
+        "paired-json-2026-10-23.json"
       ]
     },
     {
@@ -951,7 +952,7 @@
       "evidence": [
         "src/builtins.rs: to_json and kujo_value_to_json_with_depth"
       ],
-      "status": "verified_source; CPU/allocation attribution and optimization pending"
+      "status": "Resolved in 27fd599: borrowed serialization; allocation and seven-round paired VM evidence recorded."
     },
     {
       "claim": "Generic CPU profiler sampling is not implemented; bounded measurements do not report total allocations or all JIT execution.",
@@ -1018,6 +1019,11 @@
       "scope": "full library suite at runtime source 27fd599",
       "command": "cargo test --locked --lib -- --test-threads=2",
       "result": "1006 passed; 0 failed; 8 ignored. Not full repository integration or all-fifty checksum verification."
+    },
+    {
+      "scope": "paired optimized JSON and control workloads",
+      "result": "56/56 checksum-valid samples. JSON median 13.0618s baseline to 4.4466s candidate; paired median speedup 2.916x. Controls approximately unchanged. Three production cases, QuickSort test size; shared laptop, not full-suite/idle-host acceptance.",
+      "evidence": "paired-json-2026-10-23.json"
     }
   ]
 }
