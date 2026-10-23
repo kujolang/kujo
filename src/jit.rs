@@ -2408,6 +2408,20 @@ pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
 }
 
 #[no_mangle]
+// SAFETY: ctx is a live, exclusively borrowed native context. The payload is
+// validated as a root identity before borrowing its Value; no raw address is used.
+pub unsafe extern "C" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    match ctx.owned_roots.owned_truth(payload) {
+        Ok(truth) => i64::from(truth),
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
+#[no_mangle]
 // SAFETY: ctx and its stack are live and exclusively borrowed for this call.
 pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) {
     if let Some(ctx) = ctx.as_mut() {
@@ -3344,6 +3358,7 @@ struct BytecodeTranslator {
     scalar_kinds: HashMap<cranelift::prelude::Value, cranelift::prelude::Value>,
     scalar_return_func: Option<FuncRef>,
     scalar_kind_func: Option<FuncRef>,
+    owned_truth_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3493,6 +3508,7 @@ impl BytecodeTranslator {
             scalar_kinds: HashMap::new(),
             scalar_return_func: None,
             scalar_kind_func: None,
+            owned_truth_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -6260,7 +6276,33 @@ impl BytecodeTranslator {
         // Both signs of floating zero are false; NaNs and infinities are true.
         let magnitude = builder.ins().band_imm(value, i64::MAX);
         let truth_bits = builder.ins().select(is_float, magnitude, value);
-        builder.ins().icmp_imm(IntCC::NotEqual, truth_bits, 0)
+        let immediate_truth = builder.ins().icmp_imm(IntCC::NotEqual, truth_bits, 0);
+        if let (Some(ctx), Some(helper)) = (self.ctx_param, self.owned_truth_func) {
+            let owned = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_owned::OWNED);
+            let owned_block = builder.create_block();
+            let immediate_block = builder.create_block();
+            let join = builder.create_block();
+            builder.append_block_param(join, types::I8);
+            builder.ins().brif(owned, owned_block, &[], immediate_block, &[]);
+            builder.seal_block(owned_block);
+            builder.seal_block(immediate_block);
+            builder.switch_to_block(immediate_block);
+            builder.ins().jump(join, &[immediate_truth]);
+            builder.switch_to_block(owned_block);
+            let call = builder.ins().call(helper, &[ctx, value]);
+            let truth = builder.inst_results(call)[0];
+            if let Some(error_func) = self.runtime_error_func {
+                let check = builder.ins().call(error_func, &[ctx]);
+                self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
+            }
+            let truth = builder.ins().icmp_imm(IntCC::NotEqual, truth, 0);
+            builder.ins().jump(join, &[truth]);
+            builder.seal_block(join);
+            builder.switch_to_block(join);
+            builder.block_params(join)[0]
+        } else {
+            immediate_truth
+        }
     }
 
     fn as_float(
@@ -6621,6 +6663,7 @@ impl JitCompiler {
         for (name, parameters, returns) in [
             ("jit_set_return_scalar", 3, true),
             ("jit_return_scalar_kind", 1, true),
+            ("jit_owned_truth", 2, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -6638,6 +6681,7 @@ impl JitCompiler {
             match name {
                 "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
+                "jit_owned_truth" => translator.owned_truth_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -6718,6 +6762,7 @@ impl JitCompiler {
         builder.symbol("jit_set_return_int", jit_set_return_int as *const u8);
         builder.symbol("jit_set_return_scalar", jit_set_return_scalar as *const u8);
         builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
+        builder.symbol("jit_owned_truth", jit_owned_truth as *const u8);
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
         builder.symbol("jit_get_return_int", jit_get_return_int as *const u8);
         builder.symbol("jit_get_arg", jit_get_arg as *const u8);
@@ -9226,6 +9271,36 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_owned_truth_borrows_values_and_rejects_retired_roots() {
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.owned_roots.enter().unwrap();
+        let values = [
+            Value::Str(Arc::new(String::new())),
+            Value::Str(Arc::new("false".into())),
+            Value::Array(Arc::new(vec![])),
+            Value::Array(Arc::new(vec![Value::Null])),
+            Value::Dict(Arc::default()),
+            Value::NativeFunction("len".into()),
+        ];
+        for value in values {
+            let expected = i64::from(value.is_truthy());
+            let (payload, kind) = context.owned_roots.encode(value).unwrap();
+            let state = context.owned_roots.storage_state();
+            for _ in 0..1000 {
+                // SAFETY: context and root remain live for every call.
+                assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, expected);
+                assert_eq!(context.owned_roots.storage_state(), state);
+            }
+            context.owned_roots.take_value(payload, kind).unwrap();
+            // SAFETY: stale identities are checked, never dereferenced as pointers.
+            assert_eq!(unsafe { jit_owned_truth(&mut context, payload) }, 0);
+            assert!(context.runtime_error.take().unwrap().contains("StaleHandle"));
+        }
+        context.owned_roots.leave().unwrap();
+    }
 
     #[test]
     fn native_stack_boundary_preserves_owned_values_and_snapshots() {

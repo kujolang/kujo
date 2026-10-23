@@ -1779,6 +1779,15 @@
         "../../tests/jit_owned_stack_contracts.rs",
         "../../docs/NATIVE_OWNERSHIP.md"
       ]
+    },
+    {
+      "id": "jit_owned_condition_truthiness",
+      "status": "Fixed tagged owned callback results being treated as true because their handle was nonzero. Native conditional/logical lowering now branches to a borrowing Value::is_truthy helper for owned kind4, retaining native immediate evaluation and routing stale-handle errors through generated exit handling. Original empty-global-string audit still requires named-load conversion; no claim that remaining seven audit mismatches are closed.",
+      "evidence": [
+        "../../src/jit.rs",
+        "../../src/native_owned.rs",
+        "../../tests/jit_owned_stack_contracts.rs"
+      ]
     }
   ],
   "verification": [
@@ -2009,6 +2018,14 @@
         "jit-owned-stack-2026-10-23.json",
         "../../tests/jit_owned_stack_contracts.rs",
         "../../src/jit.rs"
+      ]
+    },
+    {
+      "scope": "native tagged owned truthiness",
+      "result": "New generated regression passes VM/interpreter but fails baseline JIT (empty callback string yields1 instead of0). Fixed full library1024passes/8ignored and24 targeted integrations pass. Helper tests cover empty/nonempty strings/arrays,empty dictionary and callable,6000 repeated borrowed evaluations without root-storage changes and stale-handle rejection. Native regressions require per-function compilation and an aggregate native-entry count of at least100 times the fixture function count. No new all50, production or speed result.",
+      "evidence": [
+        "../../tests/jit_owned_stack_contracts.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
       ]
     }
   ]

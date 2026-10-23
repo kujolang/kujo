@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Apply ordinary value truthiness to tagged owned results in experimental native
+  conditions and logical operations, including empty callback-returned strings.
+  Native global owned-value loads remain unfinished.
+
 - Preserve owned callback results across the experimental native VM-stack boundary
   instead of replacing them with integer zero. Full native owned-value support
   and dead-operand lifetime integration remain unfinished.

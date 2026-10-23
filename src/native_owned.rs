@@ -117,6 +117,10 @@ impl NativeCallRoots {
         self.values.clone_value(payload, kind)
     }
 
+    pub(crate) fn owned_truth(&self, payload: i64) -> Result<bool, OwnershipError> {
+        self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
+    }
+
     pub(crate) fn take_value(&mut self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
         // An empty callee has a logical scope but no physical root frame yet.
         // Do not let the store mistake the caller's frame for the current one.
