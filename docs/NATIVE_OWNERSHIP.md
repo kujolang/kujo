@@ -97,7 +97,7 @@ it does not add another reference. The outermost boundary takes the return `Valu
 before leaving its frame. Rust store destruction drops any remaining values, but
 generated normal/error exits still need explicit cleanup while the store is live.
 
-## Empty dictionary literals
+## Dictionary literals
 
 The supported `MakeDict(0)` path converts its constructed dictionary from the
 helper stack into a tagged owned operand immediately. It no longer returns an
@@ -109,8 +109,18 @@ loads use the same owned codec.
 Regression coverage includes returns, locals, callback arguments, truth/equality,
 reassignment to `-1`, saved snapshots, recursive returns and independent subsequent
 mutation. Repeated compiled literal creation/discard joins the bounded-root tests.
-Nonempty literal compilation and specialized indexing helper protocols remain
-separate gates; this change does not widen their supported opcode set.
+Nonempty dynamic-key and unique fixed-key literals now marshal tagged operands,
+release consumed roots and capture the constructed owned result. Dynamic keys
+follow VM string-key validation and source-order duplicate replacement. Fixed-key
+vectors are retained by the compiler independently of the source chunk; returned
+dictionaries acquire their own Arc reference. Both helpers retain the VM nesting
+depth checks. Invalid dynamic keys use catchable VM/native errors without replay.
+
+Repeated constant keys use the compiler's ordered-map path to preserve evaluation
+order and last-value-wins semantics; string constant loading still prevents native
+compilation of that particular form. Specialized indexing helper protocols and
+wider owned argument entry remain separate gates. Integer literal-key coercion
+still differs between interpreter and VM; this change does not resolve that policy.
 
 ## Integration gates still open
 

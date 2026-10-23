@@ -3337,113 +3337,79 @@ pub unsafe extern "C" fn jit_dict_set(ctx: *mut VMContext) -> i64 {
 #[no_mangle]
 pub extern "C" fn jit_make_dict(ctx: *mut VMContext, num_pairs: i64) -> i64 {
     with_vm_stack_mut(ctx, |vm_ctx, stack| {
-        let debug_jit = std::env::var("DEBUG_JIT").is_ok();
-
-        if debug_jit {
-            eprintln!(
-                "JIT: jit_make_dict called with num_pairs={}, stack len={}",
-                num_pairs,
-                stack.len()
-            );
-        }
-
-        // Pop N key-value pairs from the stack
+        let Some(count) = usize::try_from(num_pairs).ok().and_then(|n| n.checked_mul(2)) else {
+            vm_ctx.runtime_error = Some("Stack underflow".into());
+            return 0;
+        };
+        let Some(start) = stack.len().checked_sub(count) else {
+            vm_ctx.runtime_error = Some("Stack underflow".into());
+            return 0;
+        };
+        let mut entries = stack.drain(start..);
         let mut map = DictMap::default();
-        map.reserve(num_pairs as usize);
-        for i in 0..num_pairs {
-            // Pop value, then key (reverse order since stack)
-            let Some(value_val) = stack.pop() else {
-                if debug_jit {
-                    eprintln!("JIT: MakeDict stack underflow (value) at pair {}", i);
-                }
+        map.reserve(count / 2);
+        while let Some(key) = entries.next() {
+            let value = entries.next().expect("validated key/value pair count");
+            let Value::Str(key) = key else {
+                vm_ctx.runtime_error = Some("Dict keys must be strings".into());
                 return 0;
             };
-            let Some(key_val) = stack.pop() else {
-                if debug_jit {
-                    eprintln!("JIT: MakeDict stack underflow (key) at pair {}", i);
-                }
-                return 0;
-            };
-
-            if debug_jit {
-                eprintln!("JIT: Pair {}: key={:?}, value={:?}", i, key_val, value_val);
-            }
-
-            // Convert key to string
-            let key_str = match &key_val {
-                Value::Str(s) => Arc::from(s.as_str()),
-                Value::Int(i) => VMContext::jit_int_key_string(vm_ctx, *i),
-                other => {
-                    if debug_jit {
-                        eprintln!("JIT: MakeDict requires string or int keys, got {:?}", other);
-                    }
-                    return 0;
-                }
-            };
-
-            map.insert(Arc::clone(&key_str), value_val);
+            // Source order is significant: the last duplicate key wins.
+            map.insert(Arc::from(key.as_str()), value);
         }
-
-        if debug_jit {
-            eprintln!("JIT: Created dict with {} entries", map.len());
+        drop(entries);
+        let value = Value::Dict(Arc::new(map));
+        if let Err(error) = VM::ensure_value_nesting_depth(&value, "building dictionary literal") {
+            vm_ctx.runtime_error = Some(error);
+            return 0;
         }
-
-        // Push the new dict to the stack
-        stack.push(Value::Dict(Arc::new(map)));
-
-        1 // Success
+        stack.push(value);
+        1
     })
     .unwrap_or(0)
 }
 
-/// Runtime helper for creating dictionaries with constant string keys (MakeDictWithKeys opcode)
-/// Pops N values from VM stack and creates a new dict with provided keys
-///
-/// # Arguments
-/// * `ctx` - Mutable pointer to VM context with stack
-/// * `keys_ptr` - Pointer to Arc<Vec<Arc<str>>> keys
-/// * `num_keys` - Number of keys/values
-///
-/// # Returns
-/// 1 on success (dict pushed to stack), 0 on error
+/// Build a fixed-key dictionary. `keys_ptr` is Arc::as_ptr of a key vector
+/// retained by the JIT compiler for the entire lifetime of the generated code.
+/// Returns 1 after pushing the dictionary, or 0 with a runtime error.
 #[no_mangle]
 pub extern "C" fn jit_make_dict_with_keys(
     ctx: *mut VMContext,
     keys_ptr: i64,
     num_keys: i64,
 ) -> i64 {
-    if num_keys < 0 {
-        return 0;
-    }
-
-    with_vm_stack_mut(ctx, |_vm_ctx, stack| {
-        if num_keys == 0 {
-            stack.push(Value::Dict(Arc::new(DictMap::default())));
-            return 1;
-        }
-
+    with_vm_stack_mut(ctx, |vm_ctx, stack| {
+        let Ok(count) = usize::try_from(num_keys) else {
+            vm_ctx.runtime_error = Some("Stack underflow".into());
+            return 0;
+        };
         if keys_ptr == 0 {
+            vm_ctx.runtime_error = Some("Missing native dictionary keys".into());
             return 0;
         }
-
-        // SAFETY:
-        // - Preconditions: `keys_ptr` is non-zero and points to a live `Arc<Vec<Arc<str>>>` allocated by VM/JIT code.
-        // - Postconditions: keys are read immutably for this call only; ownership stays with the originating Arc.
-        let keys = unsafe { &*(keys_ptr as *const Arc<Vec<Arc<str>>>) };
-        if num_keys as usize != keys.len() {
+        // SAFETY: generated code passes Arc::as_ptr, and JitCompiler retains a
+        // strong reference for the lifetime of the machine code. This reads the
+        // Vec allocation, not an Arc wrapper or a temporary bytecode reference.
+        let keys = unsafe { &*(keys_ptr as *const Vec<Arc<str>>) };
+        if keys.len() != count || stack.len() < count {
+            vm_ctx.runtime_error = Some("Stack underflow".into());
             return 0;
         }
-
-        let mut values = vec![Value::Null; keys.len()];
-        for index in (0..keys.len()).rev() {
-            let Some(value_val) = stack.pop() else {
-                return 0;
-            };
-
-            values[index] = value_val;
+        // SAFETY: the retained Arc keeps this allocation live. Incrementing
+        // before from_raw creates exactly one owned reference for the new Value.
+        let owned_keys = unsafe {
+            Arc::increment_strong_count(keys_ptr as *const Vec<Arc<str>>);
+            Arc::from_raw(keys_ptr as *const Vec<Arc<str>>)
+        };
+        let values = stack.drain(stack.len() - count..).collect();
+        let value = Value::FixedDict { keys: owned_keys, values };
+        if let Err(error) =
+            VM::ensure_value_nesting_depth(&value, "building fixed dictionary literal")
+        {
+            vm_ctx.runtime_error = Some(error);
+            return 0;
         }
-
-        stack.push(Value::FixedDict { keys: Arc::clone(keys), values });
+        stack.push(value);
         1
     })
     .unwrap_or(0)
@@ -3476,6 +3442,8 @@ pub struct JitCompiler {
     /// Stores CompiledFnInfo which includes both standard and direct-arg variants
     /// This enables direct JIT recursion for eligible functions
     compiled_fn_info: HashMap<String, CompiledFnInfo>,
+    // Key-vector allocations embedded in native instructions must outlive code.
+    dictionary_keys: HashMap<usize, Arc<Vec<Arc<str>>>>,
 }
 
 /// Bytecode translator - converts bytecode to Cranelift IR
@@ -5100,10 +5068,13 @@ impl BytecodeTranslator {
                     }
 
                     // Push to VM stack in correct order (key1, val1, key2, val2, ...)
-                    if let Some(stack_push) = self.stack_push_func {
-                        for (key, value) in temp_pairs.iter().rev() {
-                            builder.ins().call(stack_push, &[ctx, *key]);
-                            builder.ins().call(stack_push, &[ctx, *value]);
+                    let push =
+                        self.scalar_push_func.ok_or("MakeDict requires tagged stack push")?;
+                    for (key, value) in temp_pairs.iter().rev() {
+                        for operand in [*key, *value] {
+                            let kind = self.scalar_kind(builder, operand);
+                            builder.ins().call(push, &[ctx, operand, kind]);
+                            self.release_operand(builder, operand);
                         }
                     }
 
@@ -5139,10 +5110,13 @@ impl BytecodeTranslator {
                         temp_values.push(value);
                     }
 
-                    if let Some(stack_push) = self.stack_push_func {
-                        for value in temp_values.iter().rev() {
-                            builder.ins().call(stack_push, &[ctx, *value]);
-                        }
+                    let push = self
+                        .scalar_push_func
+                        .ok_or("MakeDictWithKeys requires tagged stack push")?;
+                    for value in temp_values.iter().rev() {
+                        let kind = self.scalar_kind(builder, *value);
+                        builder.ins().call(push, &[ctx, *value, kind]);
+                        self.release_operand(builder, *value);
                     }
 
                     let keys_ptr = builder.ins().iconst(types::I64, Arc::as_ptr(keys) as i64);
@@ -5150,9 +5124,15 @@ impl BytecodeTranslator {
                     let call = builder.ins().call(make_dict_keys_ref, &[ctx, keys_ptr, keys_len]);
                     let _success = builder.inst_results(call)[0];
 
-                    // Leave dict on VM stack and push marker for non-int value
-                    let marker = builder.ins().iconst(types::I64, -1);
-                    self.push_value(marker);
+                    let failed = builder.ins().icmp_imm(IntCC::Equal, _success, 0);
+                    let status = builder.ins().uextend(types::I64, failed);
+                    self.exit_on_assignment_error(builder, status);
+                    let pop =
+                        self.stack_pop_func.ok_or("MakeDictWithKeys requires tagged stack pop")?;
+                    let call = builder.ins().call(pop, &[ctx]);
+                    let value = builder.inst_results(call)[0];
+                    self.capture_loaded_operand(builder, ctx, value);
+                    self.push_value(value);
 
                     return Ok(false);
                 } else {
@@ -6955,6 +6935,16 @@ impl BytecodeTranslator {
 }
 
 impl JitCompiler {
+    fn retain_dictionary_keys(&mut self, chunk: &BytecodeChunk) {
+        for instruction in &chunk.instructions {
+            if let OpCode::MakeDictWithKeys(keys) = instruction {
+                self.dictionary_keys
+                    .entry(Arc::as_ptr(keys) as usize)
+                    .or_insert_with(|| Arc::clone(keys));
+            }
+        }
+    }
+
     fn declare_scalar_helpers(
         module: &mut JITModule,
         builder: &mut FunctionBuilder,
@@ -7124,6 +7114,7 @@ impl JitCompiler {
             loop_jit_blacklist: HashSet::new(),
             type_profiles: HashMap::new(),
             compiled_fn_info: HashMap::new(),
+            dictionary_keys: HashMap::new(),
         })
     }
 
@@ -7246,9 +7237,7 @@ impl JitCompiler {
             OpCode::AppendConstStringInPlace(_, _)
             | OpCode::AppendConstCharInPlace(_, _)
             | OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => true,
-            // Only allow empty dict literals in JIT to avoid heavy helper overhead
-            OpCode::MakeDict(count) => *count == 0,
-            OpCode::MakeDictWithKeys(_) => false,
+            OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_) => true,
 
             // Everything else is unsupported - causes code to skip JIT
             // This includes: CallNative, Arrays, Dicts, Generators, Async, etc.
@@ -7290,6 +7279,7 @@ impl JitCompiler {
         int_dict_slots: Option<std::collections::HashSet<usize>>,
         loop_end: Option<usize>,
     ) -> Result<CompiledFn, String> {
+        self.retain_dictionary_keys(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Clear previous context
@@ -7986,6 +7976,7 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFn, String> {
+        self.retain_dictionary_keys(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // 1. Check if function is compilable
@@ -8633,6 +8624,7 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFnWithArg, String> {
+        self.retain_dictionary_keys(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Validate: must have exactly one parameter
@@ -8948,6 +8940,7 @@ impl JitCompiler {
         chunk: &BytecodeChunk,
         name: &str,
     ) -> Result<CompiledFn, String> {
+        self.retain_dictionary_keys(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Check if script is compilable (all opcodes supported)
@@ -9592,12 +9585,27 @@ mod tests {
     #[test]
     fn compiled_discarded_owned_operands_reuse_root_storage() {
         for repetitions in [8, 128] {
-            for pattern in ["discard", "overwrite", "callback", "dead", "dictionary"] {
+            for pattern in [
+                "discard",
+                "overwrite",
+                "callback",
+                "dead",
+                "dictionary",
+                "fixed_dictionary",
+                "dynamic_dictionary",
+            ] {
                 let mut compiler = JitCompiler::new().unwrap();
                 let mut chunk = BytecodeChunk::new();
                 chunk.local_names.push("saved".into());
                 for _ in 0..repetitions {
-                    if pattern == "dictionary" {
+                    if pattern == "fixed_dictionary" {
+                        chunk.emit(OpCode::LoadVar("source".into()));
+                        chunk.emit(OpCode::MakeDictWithKeys(Arc::new(vec![Arc::from("key")])));
+                    } else if pattern == "dynamic_dictionary" {
+                        chunk.emit(OpCode::LoadVar("key".into()));
+                        chunk.emit(OpCode::LoadVar("source".into()));
+                        chunk.emit(OpCode::MakeDict(1));
+                    } else if pattern == "dictionary" {
                         chunk.emit(OpCode::MakeDict(0));
                     } else {
                         chunk.emit(OpCode::LoadVar("source".into()));
@@ -9627,7 +9635,8 @@ mod tests {
                 let compiled = compiler.compile_function(&chunk, "discard_owned").unwrap();
                 let source = Arc::new(vec![Value::Int(7)]);
                 let mut globals = HashMap::from([("source".into(), Value::Array(source.clone()))]);
-                let mut names = ["source", "saved", "str"]
+                globals.insert("key".into(), Value::Str(Arc::new("key".into())));
+                let mut names = ["source", "saved", "str", "key"]
                     .into_iter()
                     .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
                     .collect();
@@ -9656,6 +9665,45 @@ mod tests {
                 assert!(stack.is_empty());
             }
         }
+    }
+
+    #[test]
+    fn compiled_dictionary_keys_outlive_the_source_chunk() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let keys = Arc::new(vec![Arc::<str>::from("a")]);
+        let weak = Arc::downgrade(&keys);
+        let mut chunk = BytecodeChunk::new();
+        let value = chunk.add_constant(Constant::Int(7));
+        chunk.emit(OpCode::LoadConst(value));
+        chunk.emit(OpCode::MakeDictWithKeys(keys.clone()));
+        chunk.emit(OpCode::Return);
+        let compiled = compiler.compile_function(&chunk, "retained_keys").unwrap();
+        drop(chunk);
+        drop(keys);
+        assert_eq!(weak.strong_count(), 1);
+        let mut stack = Vec::new();
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        assert_eq!(invoke_compiled_fn(compiled, &mut context), 0);
+        let result = context.take_return_value(context.return_value);
+        assert!(matches!(&result, Value::FixedDict { keys, values }
+            if keys[0].as_ref() == "a" && matches!(values[0], Value::Int(7))));
+        assert!(stack.is_empty());
+        drop(compiler);
+        assert_eq!(weak.strong_count(), 1);
+        drop(result);
+        assert!(weak.upgrade().is_none());
+    }
+
+    #[test]
+    fn dictionary_helper_preserves_prefix_and_reports_invalid_keys() {
+        let mut stack = vec![Value::Int(99), Value::Int(7), Value::Int(8)];
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        assert_eq!(jit_make_dict(&mut context, 1), 0);
+        assert_eq!(context.runtime_error.take().as_deref(), Some("Dict keys must be strings"));
+        assert!(matches!(stack.as_slice(), [Value::Int(99)]));
+        assert_eq!(jit_make_dict(&mut context, -1), 0);
+        assert_eq!(context.runtime_error.take().as_deref(), Some("Stack underflow"));
+        assert!(matches!(stack.as_slice(), [Value::Int(99)]));
     }
 
     #[test]

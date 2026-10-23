@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-23",
+  "baseline": "2769188",
+  "compiler_fix": "e2ee1e1",
+  "scope": "Native nonempty dictionary construction and VM duplicate-key/error semantics. Native owned argument entry and non-immediate constant loading are not widened.",
+  "changes": [
+    "Duplicate constant keys use the ordered map bytecode path, evaluate all values, and retain the last entry.",
+    "Dynamic and unique fixed-key constructors marshal tagged operands and release consumed roots.",
+    "JIT compiler retains fixed-key Arc allocations for native-code lifetime; helper clones ownership from the correct Vec allocation pointer.",
+    "Construction helpers reuse VM nesting checks; dynamic-key validation preserves VM string-only contract.",
+    "VM invalid literal-key errors now honor exception handlers without replaying effects."
+  ],
+  "verification": {
+    "library_passed": 1032,
+    "library_ignored": 8,
+    "integration_passed": 48,
+    "format": "cargo fmt --check and git diff --check passed",
+    "lifetime": "Compiled fixed keys survive source chunk destruction; result remains valid after compiler destruction and releases final key ownership when dropped.",
+    "cost": "Dynamic and fixed dictionary creation/dup/discard at 8 and 128 repetitions retains at most four root slots, zero live roots after return, empty VM stack.",
+    "modes": "Valid literals and duplicate/evaluation-order regressions pass interpreter, VM and JIT; invalid literal-key error regression follows existing VM contract and covers VM/JIT only."
+  },
+  "unresolved": {
+    "numeric_literal_keys": "Frozen739dd89 print({1:2}) exits4 in VM but exits0 with {\"1\":2} in interpreter. Literal coercion policy remains unresolved; no silent interpreter behavior change.",
+    "capture": "cap_f9342d20-92ff-45ff-9d1a-f3159d271048",
+    "signal": "sig_86870085-386a-4d41-aa3d-0267327ba408",
+    "other": [
+      "Non-immediate constant loading, including fallback for repeated constant-key literals",
+      "Specialized indexing and loop-local persistence ownership",
+      "Wider owned entry and recursive operand consumption",
+      "Exact current candidate all50/production/platform checks and controlled comparisons"
+    ]
+  },
+  "logs": {
+    "/tmp/kujo-duplicate-keys-before.log": "9243f550aeec5fa9ca0148dcddbb3336df8ad7129836e67e09af1a99f134a858",
+    "/tmp/kujo-duplicate-keys-after.log": "e71c84d080a3c205a325e43c31d208a3dc993e210edd1c1d3022a447b9309918",
+    "/tmp/kujo-nonempty-dict-before.log": "5e73c27825628d0525a3711b3551c9f63615d916b4feb7865de2fb181e1e6c13",
+    "/tmp/kujo-nonempty-dict-after.log": "1b338a72d8402a2af012e97ba94f10a90cde99998ebe51b68295dba086cdf7a4",
+    "/tmp/kujo-nonempty-dict-verified.log": "d321d10a98bb025712dee8fde59d779f49758ac74e0d52ca1222b3e9fc75d663",
+    "/tmp/kujo-nonempty-dict-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/kujo-literal-key-vm.log": "40f73c4d9c14d2ddbb5b1f9a423772e842b3a3777bd8ac808c17f825e3f3cc6d",
+    "/tmp/kujo-literal-key-interpreter.log": "357945edd7d1019f5c0be18b9345035ac152ea5e4c06097616bb747b6ec5e429"
+  },
+  "speed_claim": "None; native coverage and deterministic lifetime evidence only."
+}

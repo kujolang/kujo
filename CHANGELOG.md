@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile nonempty dictionary literals through tagged owned operands in the
+  experimental native runtime, retaining fixed-key allocations for generated-code
+  lifetime. Preserve VM nesting checks and make invalid dynamic literal-key
+  errors catchable in VM/native execution without replaying earlier effects.
+
 - Preserve last-value-wins semantics for repeated constant dictionary keys in the
   VM while evaluating every value expression in source order. Unique constant
   keys retain their fixed-dictionary representation.

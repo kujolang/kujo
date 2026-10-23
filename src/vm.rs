@@ -1040,7 +1040,7 @@ impl VM {
         Value::walk_nesting_depth(value, visit)
     }
 
-    fn ensure_value_nesting_depth(value: &Value, context: &str) -> Result<(), String> {
+    pub(crate) fn ensure_value_nesting_depth(value: &Value, context: &str) -> Result<(), String> {
         let max_depth = runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH;
         let depth = Self::value_nesting_depth(value);
         if depth > max_depth {
@@ -3951,16 +3951,29 @@ impl VM {
                     let mut dict = DictMap::default();
                     dict.reserve(count);
                     let mut entries = Vec::with_capacity(count);
+                    let mut invalid_key = false;
                     for _ in 0..count {
                         let value = self.stack.pop().ok_or("Stack underflow")?;
                         let key = self.stack.pop().ok_or("Stack underflow")?;
 
                         let key_str = match key {
                             Value::Str(s) => Arc::from(s.as_str()),
-                            _ => return Err("Dict keys must be strings".to_string()),
+                            _ => {
+                                invalid_key = true;
+                                break;
+                            }
                         };
 
                         entries.push((key_str, value));
+                    }
+
+                    if invalid_key {
+                        let message = "Dict keys must be strings".to_string();
+                        if self.exception_handlers.is_empty() {
+                            return Err(message);
+                        }
+                        self.throw_runtime_value(Value::Error(message))?;
+                        continue;
                     }
 
                     // Preserve source order so later key occurrences override earlier ones.

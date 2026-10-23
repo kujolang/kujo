@@ -146,3 +146,61 @@ fn native_empty_dictionary_literals_are_owned_operands() {
     );
     check(source, &["fresh", "local", "size", "empty", "equal", "replace", "snapshot", "descend"]);
 }
+
+#[test]
+fn native_nonempty_dictionary_literals_preserve_values_and_key_rules() {
+    let mut source = String::from(
+        "let key := \"a\"\nlet other := \"b\"\nlet payload := [1,2]\n\
+         func fixed(x) { return {\"a\": x, \"b\": payload} }\n\
+         func dynamic(x) { return {key: x, other: payload} }\n\
+         func duplicate(x) { return {key: 1, key: x} }\n\
+         func fixed_duplicate(x) { return {\"a\": 1, \"a\": x} }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(fixed(2.5), {\"a\":2.5,\"b\":[1,2]})\nassert_equal(dynamic(2.5), fixed(2.5))\nassert_equal(duplicate(7), {\"a\":7})\nassert_equal(fixed_duplicate(7), {\"a\":7})\n");
+    }
+    source.push_str("assert_equal(fixed(null), {\"a\":null,\"b\":[1,2]})\nassert_equal(dynamic(true), {\"a\":true,\"b\":[1,2]})\nmut copy := fixed(3)\ncopy[\"b\"][0] = 99\nassert_equal(payload, [1,2])\nprint(\"PASS\")\n");
+    check(source, &["fixed", "dynamic", "duplicate"]);
+}
+
+#[test]
+fn native_dynamic_dictionary_key_errors_are_catchable_without_replaying_effects() {
+    let directory = tempfile::tempdir().unwrap();
+    let file = directory.path().join("invalid_dictionary_key.kujo");
+    std::fs::write(
+        &file,
+        r#"
+        mut key := "valid"
+        mut effects := 0
+        func build(x) { effects += 1 return {key:x} }
+        mut n := 0
+        while n < 200 { assert_equal(build(n), {"valid":n}) n += 1 }
+        key = 1
+        mut caught := 0
+        try { build(9) } except error { caught += 1 }
+        assert_equal(caught, 1)
+        assert_equal(effects, 201)
+        key = "valid"
+        assert_equal(build(7), {"valid":7})
+        assert_equal(effects, 202)
+        print("PASS")
+    "#,
+    )
+    .unwrap();
+    // The VM rejects non-string literal keys; the interpreter's historical
+    // coercion is a separate contract and is not changed by native lowering.
+    for mode in [None, Some("--jit")] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command.args(["run", "--scheduler-no-timeout"]);
+        if let Some(flag) = mode {
+            command.arg(flag).env("DEBUG_JIT", "1");
+        }
+        let output = command.arg(&file).output().unwrap();
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(output.status.success(), "{mode:?}: {stderr}");
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "PASS");
+        if mode.is_some() {
+            assert!(stderr.contains("Successfully compiled function 'build'"), "{stderr}");
+        }
+    }
+}

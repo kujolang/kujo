@@ -115,6 +115,14 @@ Work in this order, with a separate small commit for each coherent change:
 Gate: new regressions fail on the baseline and pass on the fix; existing relevant
 contracts and the library suite pass. JIT stays opt-in until broader acceptance.
 
+The [dictionary constructor audit](native-dictionary-constructors-2026-10-23.json)
+adds native dynamic-key and unique fixed-key construction with tagged operands,
+retained key-vector lifetime and VM nesting/error checks. Repeated constant keys
+now preserve source-order evaluation and last-value-wins semantics in the VM;
+that form still falls back because its string constants are not native operands.
+Numeric literal-key coercion remains a separate VM/interpreter compatibility gap
+(recorded in the audit); no suite speedup or production acceptance is claimed.
+
 ### Remaining native ownership gate
 
 Converted operand paths now release Pop, overwritten SSA locals, VM-marshaled
