@@ -44,7 +44,8 @@
       "status": "in_progress",
       "evidence": [
         "jit-typed-audit-2026-10-23.json",
-        "../../tests/jit_argument_guards.rs"
+        "../../tests/jit_argument_guards.rs",
+        "../../tests/jit_global_assignment.rs"
       ]
     },
     {
@@ -1029,8 +1030,11 @@
     },
     {
       "id": "jit_global_update",
-      "evidence": "jit-audit-2026-10-23.json: global",
-      "status": "open: hot function returns 1 instead of 100; VM/interpreter pass"
+      "evidence": [
+        "jit-typed-audit-2026-10-23.json",
+        "../../tests/jit_global_assignment.rs"
+      ],
+      "status": "Original hot integer counter reproducer fixed in whole-function JIT: named stores retain runtime binding resolution and checked global assignment. Readonly failures stop later effects, local shadowing remains isolated, direct native parameter SSA values are initialized and recursive failures propagate. General-value global loads/stores and loop-JIT binding parity remain open; no performance claim."
     },
     {
       "id": "jit_boolean_return",
@@ -1151,6 +1155,14 @@
       "scope": "JIT callback failure propagation final source",
       "command": "cargo test --locked --lib --test jit_error_propagation --test jit_argument_guards --test jit_execution_contract --test jit_native_lookup_contracts --test jit_constant_contracts --test arithmetic_exception_contracts --test closure_capture_contracts -- --test-threads=2",
       "result": "1008 library tests passed,8 ignored;23 integration tests passed. New callback contracts cover VM/interpreter/JIT and explicitly compiled callback bridge. cargo fmt --check, git diff --check and cargo check --locked --no-default-features --lib passed. Not production or performance acceptance."
+    },
+    {
+      "scope": "whole-function integer JIT named/global assignments and direct native entry",
+      "result": "Original counter and readonly-write regressions failed before fix. Final4 new contracts pass across VM/interpreter/JIT and direct native ABI; compilation/execution assertions cover shadowing, setters and recursion. Direct ABI test additionally reproduced zero-initialized parameter before its fix. Full library1008passed/8ignored plus27 integrations passed; strengthened4-test suite rerun passed. No-default-features library check, formatting and diff checks passed. Loop-JIT/general-value bindings, current production checksums and speed acceptance remain open.",
+      "evidence": [
+        "../../tests/jit_global_assignment.rs",
+        "../../docs/ARCHITECTURE.md"
+      ]
     }
   ]
 }

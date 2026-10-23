@@ -8204,6 +8204,21 @@ impl VM {
         }
     }
 
+    /// Resolve named assignment against globals without touching the caller's locals.
+    pub(crate) fn assign_existing_global_from_jit(
+        &mut self,
+        name: &str,
+        value: Value,
+    ) -> Result<bool, String> {
+        let mut globals = self.globals.lock().unwrap();
+        if globals.get(name).is_some() || Interpreter::is_builtin_name(name) {
+            globals.assign_checked(name.to_string(), value)?;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
     /// Call a function from JIT-compiled code
     /// This is invoked by the jit_call_function runtime helper
     pub fn call_function_from_jit(

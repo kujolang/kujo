@@ -721,6 +721,61 @@ pub unsafe extern "C" fn jit_store_variable(
     }
 }
 
+/// Report a pending error after a direct recursive native call.
+#[no_mangle]
+// SAFETY: ctx points to the live, exclusively borrowed native-call context.
+pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
+    ctx.as_ref().map_or(1, |ctx| i64::from(ctx.runtime_error.is_some()))
+}
+
+/// Assign a named integer binding from a compiled function (0 success, 1 error).
+/// Declared locals use slots; unresolved names must retain runtime global lookup.
+#[no_mangle]
+// SAFETY: ctx and its local/name maps belong to the active compiled call. The VM
+// pointer is live and no globals lock is held by whole-function entry points.
+pub unsafe extern "C" fn jit_assign_variable(
+    ctx: *mut VMContext,
+    name_hash: i64,
+    value: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let name = ctx.var_names_ptr.as_ref().and_then(|names| names.get(&(name_hash as u64))).cloned();
+    let Some(name) = name else {
+        ctx.runtime_error = Some("JIT assignment has no variable name".into());
+        return 1;
+    };
+    let value = Value::Int(value);
+    // This is the compiled function's own named-local map, not its caller frame.
+    if let Some(locals) = ctx.locals_ptr.as_mut() {
+        if locals.contains_key(&name) {
+            locals.insert(name, value);
+            return 0;
+        }
+    }
+    if let Some(vm) = (ctx.vm_ptr as *mut crate::vm::VM).as_mut() {
+        match vm.assign_existing_global_from_jit(&name, value.clone()) {
+            Ok(true) => return 0,
+            Ok(false) => {}
+            Err(error) => {
+                ctx.runtime_error = Some(error);
+                return 1;
+            }
+        }
+    } else if let Some(globals) = ctx.globals_ptr.as_mut() {
+        // Standalone compiler fixtures have no Environment/binding metadata.
+        if globals.contains_key(&name) {
+            globals.insert(name, value);
+            return 0;
+        }
+    }
+    if let Some(locals) = ctx.locals_ptr.as_mut() {
+        locals.insert(name, value);
+        return 0;
+    }
+    ctx.runtime_error = Some("JIT assignment has no binding environment".into());
+    1
+}
+
 /// Store a variable from the VM stack (called from JIT code)
 /// name_hash: hash of the variable name
 /// Pops one Value from VM stack and stores it into locals/globals
@@ -3008,6 +3063,8 @@ struct BytecodeTranslator {
     /// External function references
     load_var_func: Option<FuncRef>,
     store_var_func: Option<FuncRef>,
+    named_assignment_func: Option<FuncRef>,
+    runtime_error_func: Option<FuncRef>,
     /// Float load/store function references
     load_var_float_func: Option<FuncRef>,
     store_var_float_func: Option<FuncRef>,
@@ -3133,6 +3190,8 @@ impl BytecodeTranslator {
             ctx_param: None,
             load_var_func: None,
             store_var_func: None,
+            named_assignment_func: None,
+            runtime_error_func: None,
             load_var_float_func: None,
             store_var_float_func: None,
             check_type_int_func: None,
@@ -3369,6 +3428,9 @@ impl BytecodeTranslator {
             // This ensures we don't create slots for function references that
             // should be loaded from globals (like 'fib' in recursive calls)
             if let OpCode::StoreVar(name) = instruction {
+                if self.named_assignment_func.is_some() {
+                    continue;
+                }
                 if !store_var_names.contains(name) {
                     store_var_names.push(name.clone());
                 }
@@ -3442,6 +3504,9 @@ impl BytecodeTranslator {
             }
 
             if let OpCode::StoreVar(name) = instruction {
+                if self.named_assignment_func.is_some() {
+                    continue;
+                }
                 if name != exclude_param && !store_var_names.contains(name) {
                     store_var_names.push(name.clone());
                 }
@@ -3754,6 +3819,23 @@ impl BytecodeTranslator {
 
         // Fallback: use max_reachable + 1
         max_reachable + 1
+    }
+
+    fn exit_on_assignment_error(
+        &self,
+        builder: &mut FunctionBuilder,
+        status: cranelift::prelude::Value,
+    ) {
+        let failed = builder.ins().icmp_imm(IntCC::NotEqual, status, 0);
+        let failure = builder.create_block();
+        let success = builder.create_block();
+        builder.ins().brif(failed, failure, &[], success, &[]);
+        builder.seal_block(failure);
+        builder.seal_block(success);
+        builder.switch_to_block(failure);
+        self.persist_local_slots(builder, true);
+        builder.ins().return_(&[status]);
+        builder.switch_to_block(success);
     }
 
     fn set_context_param(&mut self, ctx: cranelift::prelude::Value) {
@@ -5231,6 +5313,16 @@ impl BytecodeTranslator {
             }
 
             OpCode::StoreVar(name) => {
+                if let (Some(ctx), Some(assign)) = (self.ctx_param, self.named_assignment_func) {
+                    if !self.non_int_locals.contains(name) {
+                        let value = self.peek_value()?;
+                        let hash =
+                            builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+                        let call = builder.ins().call(assign, &[ctx, hash, value]);
+                        self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                        return Ok(false);
+                    }
+                }
                 // IMPORTANT: StoreVar PEEKS at the stack (doesn't pop)
                 // The value remains on stack after assignment
                 let value = self.peek_value()?;
@@ -5585,6 +5677,11 @@ impl BytecodeTranslator {
                         // This is the KEY optimization - no FFI boundary crossing!
                         let call_inst = builder.ins().call(self_func, &[ctx, arg_val]);
                         let result = builder.inst_results(call_inst)[0];
+                        if let Some(error_func) = self.runtime_error_func {
+                            let check = builder.ins().call(error_func, &[ctx]);
+                            self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
+                        }
+
                         self.push_value(result);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
@@ -5886,6 +5983,19 @@ impl BytecodeTranslator {
 }
 
 impl JitCompiler {
+    fn declare_named_assignment(
+        module: &mut JITModule,
+        builder: &mut FunctionBuilder,
+    ) -> Result<FuncRef, String> {
+        let mut sig = module.make_signature();
+        sig.params.extend([AbiParam::new(types::I64); 3]);
+        sig.returns.push(AbiParam::new(types::I64));
+        let id = module
+            .declare_function("jit_assign_variable", Linkage::Import, &sig)
+            .map_err(|error| format!("Failed to declare named assignment: {error}"))?;
+        Ok(module.declare_func_in_func(id, builder.func))
+    }
+
     /// Create a new JIT compiler instance
     pub fn new() -> Result<Self, String> {
         let mut flag_builder = settings::builder();
@@ -5903,6 +6013,8 @@ impl JitCompiler {
         // Register runtime helper symbols so JIT can find them
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
+        builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
+        builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
         builder.symbol("jit_load_local_slot", jit_load_local_slot as *const u8);
         builder.symbol("jit_store_local_slot", jit_store_local_slot as *const u8);
         builder.symbol("jit_store_variable_from_stack", jit_store_variable_from_stack as *const u8);
@@ -7264,6 +7376,8 @@ impl JitCompiler {
             translator
                 .set_append_in_place_functions(append_const_string_ref, append_const_char_ref);
             translator.set_external_functions(load_var_ref, store_var_ref, store_from_stack_ref);
+            translator.named_assignment_func =
+                Some(Self::declare_named_assignment(&mut self.module, &mut builder)?);
             translator.set_local_slot_int_dict_functions(
                 local_slot_int_dict_get_ref,
                 local_slot_int_dict_set_ref,
@@ -7559,6 +7673,28 @@ impl JitCompiler {
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(vm_context_param);
             translator.set_direct_arg_mode(direct_arg_param, 1);
+            let mut error_sig = self.module.make_signature();
+            error_sig.params.push(AbiParam::new(types::I64));
+            error_sig.returns.push(AbiParam::new(types::I64));
+            let error_id = self
+                .module
+                .declare_function("jit_runtime_failed", Linkage::Import, &error_sig)
+                .map_err(|error| format!("Failed to declare error query: {error}"))?;
+            translator.runtime_error_func =
+                Some(self.module.declare_func_in_func(error_id, builder.func));
+
+            translator.named_assignment_func =
+                Some(Self::declare_named_assignment(&mut self.module, &mut builder)?);
+            let mut load_sig = self.module.make_signature();
+            load_sig.params.extend([AbiParam::new(types::I64); 3]);
+            load_sig.returns.push(AbiParam::new(types::I64));
+            let load_id = self
+                .module
+                .declare_function("jit_load_variable", Linkage::Import, &load_sig)
+                .map_err(|error| format!("Failed to declare variable load: {error}"))?;
+            translator.load_var_func =
+                Some(self.module.declare_func_in_func(load_id, builder.func));
+
             translator.set_current_function_name(name);
             translator.set_self_call_function(self_func_ref);
 
@@ -7578,6 +7714,11 @@ impl JitCompiler {
                 function_end,
                 param_name,
             );
+
+            // Source-compiled parameters use SSA locals; initialize that value too.
+            if let Some(&variable) = translator.local_variables.get(param_name) {
+                builder.def_var(variable, direct_arg_param);
+            }
 
             // Initialize the parameter slot with the direct argument value
             if let Some(&slot) = translator.local_slots.get(param_name) {

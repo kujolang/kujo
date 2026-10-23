@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Fix named integer assignments in experimental whole-function JIT execution:
+  update existing globals, enforce readonly bindings, and stop on assignment
+  failures. Initialize direct native parameter values and propagate recursive
+  failures before later side effects.
+
 - Preserve callback failures across experimental JIT calls, stop compiled
   execution at the failed call, and route the original error to VM handlers.
 

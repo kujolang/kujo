@@ -14,10 +14,11 @@ a target to test, not a guarantee. This document explains the execution order;
 - The latest recorded complete test-size run passed 50 VM and 50 interpreter
   cases on candidate `ebe4258`. It predates subsequent runtime fixes and cannot
   certify current HEAD. No complete current production-size run exists.
-- Experimental JIT integer argument guards and callback error propagation have
-  regression coverage. Global writes, Boolean result types, checked overflow,
-  and catchable division errors remain known JIT gaps. Native float/general-value
-  compilation remains unfinished.
+- Experimental JIT integer argument guards, callback errors and whole-function
+  integer global assignments have regression coverage. General-value global
+  handling, loop-JIT bindings, Boolean result types, checked overflow and catchable
+  division errors remain open. Native float/general-value compilation remains
+  unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score
   predictions. A clean measurement environment is an acceptance requirement.
 

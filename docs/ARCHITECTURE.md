@@ -92,6 +92,12 @@ Generated calls branch out on failure before consuming a result or executing
 later instructions; VM entry points preserve the original message and unwind
 through existing handlers. This does not make unchecked native arithmetic or
 other JIT helper failures safe; those remain separate verification requirements.
+Whole-function integer JIT assignments resolve named bindings at runtime instead
+of treating every assignment target as a zero-initialized local. Existing globals
+use the environment's checked assignment; unresolved names remain function-local.
+Declared locals retain their slot path. Direct native calls initialize parameter
+SSA values and propagate recursive errors before further side effects. This does
+not establish general-value global handling or loop-JIT binding parity.
 
 See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for historical baseline evidence
 and the concurrency completion record for interpreter corrections. This mechanism does not add a tracing collector for
