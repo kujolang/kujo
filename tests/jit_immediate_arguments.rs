@@ -70,7 +70,7 @@ fn hot_immediate_arguments_compile_and_preserve_types_across_arity_and_loops() {
         assert_equal(copied_loop(2),3.5)
         print("PASS")
     "#,
-        &["one", "four", "five", "looping", "relay", "walk", "branch"],
+        &["one", "four", "five", "copied_loop", "looping", "relay", "walk", "branch"],
     );
 }
 
@@ -197,4 +197,49 @@ fn compiled_argument_bridge_preserves_immediate_payload_bits() {
             }
         }
     }
+}
+
+#[test]
+fn copied_parameter_native_calls_preserve_caller_slots_and_snapshots() {
+    check(
+        r#"
+        func copy_number(x) { mut result := x return result + 1 }
+        func caller(values) {
+            let snapshot := values
+            let result := copy_number(4)
+            assert_equal(values, [7,8])
+            assert_equal(snapshot, [7,8])
+            return result + values[0]
+        }
+        mut i := 0
+        while i < 200 {
+            assert_equal(copy_number(4), 5)
+            assert_equal(caller([7,8]), 12)
+            i += 1
+        }
+        print("PASS")
+        "#,
+        &["copy_number"],
+    );
+}
+
+#[test]
+fn direct_recursion_releases_each_copied_parameter_binding() {
+    check(
+        r#"
+        func walk(x) {
+            mut remaining := x
+            if remaining < 1 { return remaining }
+            return walk(remaining - 0.5)
+        }
+        mut i := 0
+        while i < 200 {
+            assert_equal(walk(3), 0.5)
+            assert_equal(walk(2.5), 0.5)
+            i += 1
+        }
+        print("PASS")
+        "#,
+        &["walk"],
+    );
 }

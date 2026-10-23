@@ -1,0 +1,63 @@
+{
+  "date": "2026-10-23",
+  "baseline": "215fbd4",
+  "scope": "Native ReleaseDeadLocal lowering and activation-owned direct parameters. No owned-entry guard widening or elapsed-time claim.",
+  "reproduction": "Requiring copied_loop native compilation fails before the patch; values alone passed through fallback.",
+  "implementation": [
+    "Remove dead named binding; clear VM slot only for loop contexts because whole-function contexts borrow caller slots.",
+    "Release SSA root, write tagged Null and invalidate dictionary pointer cache.",
+    "Direct parameters receive paired SSA bindings and duplicate owned roots into the current activation."
+  ],
+  "verification": {
+    "library_passed": 1030,
+    "library_ignored": 8,
+    "integration_passed": 35,
+    "formats": "cargo fmt --check and git diff --check passed",
+    "runtime_modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cost": "Compiled discard, overwrite, callback and dead-local patterns at 8 and 128 repetitions retain at most four root slots and zero live roots after return.",
+    "semantics": [
+      "Copied parameter loop compiles natively",
+      "Caller arrays/snapshots survive native callee release",
+      "Direct copied-parameter recursion compiles and executes natively",
+      "Dead local reads back as Null",
+      "Loop-context helper validates slot before mutation"
+    ]
+  },
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-dead-local-before.log",
+      "sha256": "a8d8ed32c0f24bce76d94f98083d1dcf8692b06338dc147dc954e62725d61370"
+    },
+    "final-lib": {
+      "path": "/tmp/kujo-dead-local-final-lib.log",
+      "sha256": "e2cccff710b7d79168ba54d57aa06ed5a8496705a69aa0dc4fea7c7077ebc7c4"
+    },
+    "contracts": {
+      "path": "/tmp/kujo-dead-local-contracts.log",
+      "sha256": "9230905516f6cb67da913f662e2004915f845926ef48a489a7782b54ab95fcb4"
+    },
+    "parity": {
+      "path": "/tmp/kujo-dead-local-parity.log",
+      "sha256": "9537fff942d2f4e4b9b62655fbfa98846ed517e02d36c7ceab488a0c7d5ea1c2"
+    },
+    "final-arguments": {
+      "path": "/tmp/kujo-dead-local-final-arguments.log",
+      "sha256": "4621f866e3bc19e6397bb7bd27c573b8814eebd2940a13ba85df5c7650408a15"
+    },
+    "format-check": {
+      "path": "/tmp/kujo-dead-local-format-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "remaining": [
+    "Legacy collection helper protocols",
+    "Loop-entry and local-persistence lifetime coverage",
+    "Wider owned argument entry and recursive operand consumption",
+    "Current candidate all50 and production checks",
+    "Controlled Goose/Rust comparison and platform/release gates"
+  ]
+}

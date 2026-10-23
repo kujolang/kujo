@@ -2120,6 +2120,11 @@
       "scope": "all50 tagged-owned VM test-size checksums at e2797da",
       "result": "All50 test-size VM checksums at e2797da. Frozen debug candidate predates operand cleanup and dead-local work. Own tests/builds overlapped diagnostics. Not production, competitive timing or current HEAD acceptance. Interpreter run remains separate.",
       "evidence": "checksums-2026-10-23-owned-values-vm.json"
+    },
+    {
+      "scope": "native dead-local release and copied-parameter compilation",
+      "result": "1030 library tests passed (8 ignored), 35 integration tests passed; bounded root storage and caller-slot isolation verified. No elapsed-time claim; broader ownership and production gates remain open.",
+      "evidence": "native-dead-locals-2026-10-23.json"
     }
   ]
 }

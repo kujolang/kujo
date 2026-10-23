@@ -810,6 +810,35 @@ pub unsafe extern "C" fn jit_release_operand(ctx: *mut VMContext, value: i64, ki
     }
 }
 
+/// Remove a dead binding. Whole-function contexts borrow the caller's slot
+/// vector, so only loop contexts may clear a physical VM local slot.
+#[no_mangle]
+// SAFETY: context maps and (for loop contexts) local slots remain exclusively
+// borrowed for this call. Validate the slot before changing either container.
+pub unsafe extern "C" fn jit_release_dead_local(
+    ctx: *mut VMContext,
+    slot: usize,
+    name_hash: u64,
+    clear_vm_slot: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let Some(name) = ctx.var_names_ptr.as_ref().and_then(|names| names.get(&name_hash)) else {
+        ctx.runtime_error = Some("JIT dead local has no variable name".into());
+        return 1;
+    };
+    if clear_vm_slot != 0 {
+        let Some(value) = ctx.local_slots_ptr.as_mut().and_then(|slots| slots.get_mut(slot)) else {
+            ctx.runtime_error = Some("JIT dead local has no valid local slot".into());
+            return 1;
+        };
+        *value = Value::Null;
+    }
+    if let Some(locals) = ctx.locals_ptr.as_mut() {
+        locals.remove(name);
+    }
+    0
+}
+
 /// Load a named operand without leaving hidden values on the VM stack.
 #[no_mangle]
 // SAFETY: ctx and the referenced name/local/global maps remain live for this
@@ -3461,6 +3490,7 @@ struct BytecodeTranslator {
     operand_load_func: Option<FuncRef>,
     operand_duplicate_func: Option<FuncRef>,
     operand_release_func: Option<FuncRef>,
+    dead_local_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3615,6 +3645,7 @@ impl BytecodeTranslator {
             operand_load_func: None,
             operand_duplicate_func: None,
             operand_release_func: None,
+            dead_local_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -3768,7 +3799,8 @@ impl BytecodeTranslator {
             OpCode::StoreVar(_)
             | OpCode::StoreLocal(_)
             | OpCode::DefineLocal(_)
-            | OpCode::StoreGlobal(_) => (0, 0),
+            | OpCode::StoreGlobal(_)
+            | OpCode::ReleaseDeadLocal(_) => (0, 0),
 
             // Binary ops (2 pops, 1 push)
             OpCode::Add
@@ -5847,6 +5879,32 @@ impl BytecodeTranslator {
                 }
             }
 
+            OpCode::ReleaseDeadLocal(slot) => {
+                let name = self
+                    .local_names
+                    .get(*slot)
+                    .ok_or_else(|| "Invalid dead-local slot".to_string())?
+                    .clone();
+                let ctx = self.ctx_param.ok_or("Dead local requires context")?;
+                let helper = self.dead_local_func.ok_or("Dead local requires helper")?;
+                let index = builder.ins().iconst(types::I64, *slot as i64);
+                let hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                let clear =
+                    builder.ins().iconst(types::I64, i64::from(!self.tracks_function_depth));
+                let call = builder.ins().call(helper, &[ctx, index, hash, clear]);
+                self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                if let Some(&variable) = self.local_variables.get(&name) {
+                    let null = builder.ins().iconst(types::I64, 0);
+                    let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+                    self.scalar_kinds.insert(null, kind);
+                    self.store_native_local(builder, variable, null);
+                }
+                if let Some(&cache) = self.int_dict_ptr_slots.get(slot) {
+                    let zero = builder.ins().iconst(types::I64, 0);
+                    builder.ins().stack_store(zero, cache, 0);
+                }
+            }
+
             OpCode::LoadLocal(slot) => {
                 if let Some(name) = self.local_names.get(*slot) {
                     if self.non_int_locals.contains(name) {
@@ -6212,7 +6270,15 @@ impl BytecodeTranslator {
             // LoadVar: Use direct_arg_param if loading the function parameter
             OpCode::LoadVar(name) => {
                 if name == param_name {
-                    // FAST PATH: Use the direct Cranelift parameter value
+                    if let Some(&variable) = self.local_variables.get(name) {
+                        let value = builder.use_var(variable);
+                        let kind = builder.use_var(Variable::new(variable.index() + 1));
+                        self.scalar_kinds.insert(value, kind);
+                        let value = self.duplicate_operand(builder, value);
+                        self.push_value(value);
+                        return Ok(false);
+                    }
+                    // Compatibility fallback for manually constructed translators.
                     if let Some(direct_param) = self.direct_arg_param {
                         let value = self.duplicate_operand(builder, direct_param);
                         self.push_value(value);
@@ -6937,6 +7003,7 @@ impl JitCompiler {
             ("jit_load_operand", 3, true),
             ("jit_duplicate_operand", 3, true),
             ("jit_release_operand", 3, true),
+            ("jit_release_dead_local", 4, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -6959,6 +7026,7 @@ impl JitCompiler {
                 "jit_load_operand" => translator.operand_load_func = Some(function),
                 "jit_duplicate_operand" => translator.operand_duplicate_func = Some(function),
                 "jit_release_operand" => translator.operand_release_func = Some(function),
+                "jit_release_dead_local" => translator.dead_local_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -7020,6 +7088,7 @@ impl JitCompiler {
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_duplicate_operand", jit_duplicate_operand as *const u8);
         builder.symbol("jit_release_operand", jit_release_operand as *const u8);
+        builder.symbol("jit_release_dead_local", jit_release_dead_local as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
@@ -7189,7 +7258,8 @@ impl JitCompiler {
             | OpCode::LoadLocal(_)
             | OpCode::StoreVar(_)
             | OpCode::StoreLocal(_)
-            | OpCode::DefineLocal(_) => true,
+            | OpCode::DefineLocal(_)
+            | OpCode::ReleaseDeadLocal(_) => true,
             OpCode::LoadGlobal(_) | OpCode::StoreGlobal(_) => true,
 
             // Control flow - simple jumps only
@@ -8687,9 +8757,7 @@ impl JitCompiler {
             // Create blocks for all jump targets
             translator.create_blocks(&mut builder, &chunk.instructions)?;
 
-            // IMPORTANT: For direct-arg mode, we DON'T allocate a stack slot for the parameter
-            // Instead, we track it as the direct_arg_param and use it directly
-            // Only allocate slots for OTHER local variables (not the first parameter)
+            // Locals and the direct parameter use paired SSA ownership bindings.
             let param_name = &chunk.params[0];
             let function_end = translator.function_end;
 
@@ -8700,6 +8768,8 @@ impl JitCompiler {
                 function_end,
                 param_name,
             );
+
+            translator.allocate_parameter_slots(&mut builder, &chunk.params);
 
             // The context remains live for this native activation. Capture the
             // incoming kind in SSA before a recursive call changes the context.
@@ -8712,7 +8782,8 @@ impl JitCompiler {
             translator.scalar_kinds.insert(direct_arg_param, kind);
             // Source-compiled parameters use paired payload/kind SSA locals.
             if let Some(&variable) = translator.local_variables.get(param_name) {
-                builder.def_var(variable, direct_arg_param);
+                let copy = translator.duplicate_operand(&mut builder, direct_arg_param);
+                builder.def_var(variable, copy);
                 builder.def_var(Variable::new(variable.index() + 1), kind);
             }
 
@@ -9556,7 +9627,7 @@ mod tests {
     #[test]
     fn compiled_discarded_owned_operands_reuse_root_storage() {
         for repetitions in [8, 128] {
-            for pattern in ["discard", "overwrite", "callback"] {
+            for pattern in ["discard", "overwrite", "callback", "dead"] {
                 let mut compiler = JitCompiler::new().unwrap();
                 let mut chunk = BytecodeChunk::new();
                 chunk.local_names.push("saved".into());
@@ -9568,10 +9639,13 @@ mod tests {
                         chunk.emit(OpCode::Pop);
                     } else {
                         chunk.emit(OpCode::Dup);
-                        if pattern == "overwrite" {
+                        if pattern == "overwrite" || pattern == "dead" {
                             chunk.emit(OpCode::StoreLocal(0));
                         }
                         chunk.emit(OpCode::Pop);
+                        if pattern == "dead" {
+                            chunk.emit(OpCode::ReleaseDeadLocal(0));
+                        }
                         chunk.emit(OpCode::Pop);
                     }
                 }
@@ -9612,6 +9686,59 @@ mod tests {
                 assert_eq!(Arc::strong_count(&source), 2);
                 assert!(stack.is_empty());
             }
+        }
+    }
+
+    #[test]
+    fn compiled_dead_local_reads_back_as_null() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let mut chunk = BytecodeChunk::new();
+        chunk.local_names.push("dead".into());
+        chunk.emit(OpCode::LoadVar("source".into()));
+        chunk.emit(OpCode::StoreLocal(0));
+        chunk.emit(OpCode::ReleaseDeadLocal(0));
+        chunk.emit(OpCode::Pop);
+        chunk.emit(OpCode::LoadLocal(0));
+        chunk.emit(OpCode::Return);
+        let compiled = compiler.compile_function(&chunk, "release_null").unwrap();
+        let mut globals =
+            HashMap::from([("source".into(), Value::Array(Arc::new(vec![Value::Int(7)])))]);
+        let mut names = ["source", "dead"]
+            .into_iter()
+            .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
+            .collect();
+        let mut stack = Vec::new();
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+        context.var_names_ptr = &mut names;
+        assert_eq!(invoke_compiled_fn(compiled, &mut context), 0);
+        assert!(context.runtime_error.is_none(), "{:?}", context.runtime_error);
+        assert!(matches!(context.take_return_value(context.return_value), Value::Null));
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+        assert!(stack.is_empty());
+    }
+
+    #[test]
+    fn dead_local_helper_distinguishes_callee_bindings_from_caller_slots() {
+        let hash = BytecodeTranslator::hash_var_name("dead");
+        let mut names = HashMap::from([(hash, "dead".to_owned())]);
+        let mut locals = HashMap::from([("dead".into(), Value::Int(7))]);
+        let mut slots = vec![Value::Int(99)];
+        let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
+        context.var_names_ptr = &mut names;
+        context.local_slots_ptr = &mut slots;
+        // SAFETY: all pointers refer to live, exclusively borrowed containers.
+        unsafe {
+            assert_eq!(jit_release_dead_local(&mut context, 0, hash, 0), 0);
+            assert!(!locals.contains_key("dead"));
+            assert!(matches!(slots[0], Value::Int(99)));
+            locals.insert("dead".into(), Value::Int(8));
+            assert_eq!(jit_release_dead_local(&mut context, 1, hash, 1), 1);
+            assert!(matches!(locals.get("dead"), Some(Value::Int(8))));
+            assert!(matches!(slots[0], Value::Int(99)));
+            context.runtime_error = None;
+            assert_eq!(jit_release_dead_local(&mut context, 0, hash, 1), 0);
+            assert!(matches!(slots[0], Value::Null));
+            assert!(!locals.contains_key("dead"));
         }
     }
 

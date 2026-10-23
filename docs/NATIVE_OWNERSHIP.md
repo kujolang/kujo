@@ -106,13 +106,21 @@ and equality/logical operations release their consumed operands after evaluation
 Immediate paths branch around root helpers. Lazy duplication materializes the
 current scope, and release cannot consume a caller's root.
 
-Compiled bytecode tests exercise discard, local overwrite and callback patterns
+Compiled bytecode tests exercise discard, local overwrite, dead-local release and callback patterns
 at 8 and 128 repetitions: root-slot capacity remains at most four, no roots remain
 after return, the VM stack is empty and returned-array identity is preserved.
 Source regressions cover saved locals surviving unrelated discards and overwrites.
 These checks do not establish lifetime coverage for every opcode, loop-entry/local
-persistence path or legacy collection helper. `ReleaseDeadLocal` and wider owned
-entry remain gated; no collection speedup is claimed.
+persistence path or legacy collection helper. Wider owned entry remains gated;
+no collection speedup is claimed.
+
+`ReleaseDeadLocal` now clears the paired SSA payload/kind, releases its owned root,
+removes the named binding and invalidates cached dictionary pointers. Whole-function
+contexts must leave the caller's VM slots untouched; only loop contexts clear
+the physical slot. Direct-argument parameters have their own SSA binding/root.
+Regressions cover copied-parameter native compilation, caller-slot isolation,
+Null readback, live operand copies and bounded root storage. This does not widen
+the native owned-argument entry guards.
 
 1. Boundary/function lifetime hooks are connected. Extend their validation to
    real owned-value bytecode, callbacks and imported native execution while
@@ -129,7 +137,7 @@ entry remain gated; no collection speedup is claimed.
 6. Prove bounded live storage through actual native loops, imports, recursion,
    callbacks, failures and alias mutations. Passing the isolated store tests alone
    does not prove generated-code lifetime correctness.
-7. Only then widen owned argument guards and enable `ReleaseDeadLocal`. Require
+7. Only then widen owned argument guards. Require
    the eight failure probes, both-runtime/JIT regressions and unchanged all50
    checksums, then paired optimized timings and production verification.
 

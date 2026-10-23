@@ -122,8 +122,11 @@ callable/arguments and consumed equality/logical operands. Dup and SSA local loa
 receive distinct roots. Compiled discard/overwrite/callback tests keep root-slot
 capacity at most four at both 8 and 128 repetitions. This is deterministic storage
 evidence, not a suite speedup or proof of every opcode's lifetime behavior.
-`ReleaseDeadLocal`, legacy collection helpers, loop-entry/local persistence and
-wider owned-entry coverage still require their own checks before the gate closes.
+`ReleaseDeadLocal` now has native lowering, caller-slot isolation, Null readback
+and copied-parameter compilation regressions. The bounded-storage test also covers
+dead-local release while a separate operand copy remains live. Legacy collection
+helpers, loop-entry/local persistence and wider owned-entry coverage still require
+their own checks before the gate closes.
 
 The latest [borrowed-equality audit](jit-owned-equality-2026-10-23.json) passes all
 11 focused probes in interpreter, VM and JIT modes with native entries verified.
@@ -171,8 +174,8 @@ number of loads. Verify release at pops, overwritten/dead locals, normal returns
 and every error exit, including recursion and nested callbacks. An append-only
 handle vector lasting for a whole invocation is not an acceptable final design.
 Keep alias snapshots and copy-on-write behavior intact across those boundaries.
-Only then enable `ReleaseDeadLocal` with real lifetime semantics and test copied
-parameter loops as native coverage. Add bounded-live-storage and allocation/scaling
+The dead-local path now implements lifetime semantics and copied-parameter loops
+have native compilation coverage; wider owned entry remains gated. Add bounded-live-storage and allocation/scaling
 checks alongside both-runtime semantic tests before claiming a performance win.
 
 ## 4. Remove measured VM and representation costs
