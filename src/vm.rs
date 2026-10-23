@@ -3013,6 +3013,11 @@ impl VM {
                             if self.jit_enabled
                                 && !chunk.is_generator
                                 && !Self::requires_closure_vm(chunk)
+                                // The function JIT parameter ABI currently carries i64s.
+                                // Guard before either cache path, including after a
+                                // previously integer-only call site changes its types.
+                                && args.len() == chunk.params.len()
+                                && args.iter().all(|arg| matches!(arg, Value::Int(_)))
                             {
                                 let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
@@ -8201,7 +8206,11 @@ impl VM {
                 }
                 // OPTIMIZATION: Check if target function is JIT-compiled
                 // If so, make direct JIT → JIT call for maximum performance
-                if self.jit_enabled && !Self::requires_closure_vm(chunk) {
+                if self.jit_enabled
+                    && !Self::requires_closure_vm(chunk)
+                    && args.len() == chunk.params.len()
+                    && args.iter().all(|arg| matches!(arg, Value::Int(_)))
+                {
                     let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
                     // PHASE 7 STEP 12: Check for direct-arg optimized variant first

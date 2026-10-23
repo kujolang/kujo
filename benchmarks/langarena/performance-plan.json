@@ -41,9 +41,10 @@
     {
       "id": "compiled_execution",
       "scope": "Audit and extend guarded JIT execution, fallback state, imports/captures/recursion where justified; measure startup; AOT only if evidence warrants",
-      "status": "pending",
+      "status": "in_progress",
       "evidence": [
-
+        "jit-typed-audit-2026-10-23.json",
+        "../../tests/jit_argument_guards.rs"
       ]
     },
     {
@@ -1044,7 +1045,7 @@
     {
       "id": "jit_argument_type_guards",
       "evidence": "jit-typed-audit-2026-10-23.json",
-      "status": "open at runtime27fd599: float_argument and changed_argument_type: expected Float(3.5), got Int(1) after compilation. VM/interpreter pass."
+      "status": "Fixed integer-only compiled function entry boundaries: VM cached/direct calls and callback bridge check argument count/kinds; non-integer values use VM without discarding integer code. Both original float/type-change reproducers pass. Native float/general-value compilation and full typed result flow remain open; no speed claim."
     },
     {
       "id": "jit_division_zero_trap",
@@ -1132,6 +1133,14 @@
       "scope": "all fifty test-size checksums, assignment candidate ebe4258",
       "result": "100/100 passed: VM50 and interpreter50. Exact names/checksums verified against unchanged test.json. Not production, all-fifty JIT or current HEAD acceptance.",
       "evidence": "checksums-2026-10-23-assignment-candidate.json"
+    },
+    {
+      "scope": "integer-only JIT function argument guards",
+      "result": "Baseline2newintegrationtestsfailed. Afterfix3newargumentcontracts pass (mixedtypes afterwarmup, floatonlyhotcalls, explicitlycompiledcallbackbridge),6existingJITcontracts pass,12closure/arithmeticcontracts pass. Full library1008passed/8ignored; fmt/diff checks passed. Existingintegercompilation retained. Optimized speed/fullcandidatebenchmarks not claimed.",
+      "evidence": [
+        "../../tests/jit_argument_guards.rs",
+        "../../docs/ARCHITECTURE.md"
+      ]
     }
   ]
 }

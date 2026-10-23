@@ -81,6 +81,12 @@ The experimental integer JIT lowering rejects non-integer/non-boolean constants
 at both eligibility and translation boundaries. Unsupported literals remain in
 VM execution; substituting integer zero is not a valid representation or fallback.
 This restriction does not establish full JIT type or side-effect parity.
+The current function JIT ABI accepts only integer arguments. Both ordinary VM
+calls and callback-bridge calls check argument count and value kinds
+before entering compiled caches. Non-integer calls use VM execution without
+discarding cached integer code; this is a correctness guard, not native float or
+general-value compilation. Typed results, globals and arithmetic errors require
+their own JIT verification.
 
 See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for historical baseline evidence
 and the concurrency completion record for interpreter corrections. This mechanism does not add a tracing collector for

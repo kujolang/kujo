@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Guard experimental integer-only JIT function entry points against non-integer
+  arguments, including cached calls whose argument types change after warmup.
+  Preserve VM behavior for those calls while retaining compiled integer code.
+
 - Route scalar VM arithmetic errors through `try`/`except`, including nested
   calls and checked integer overflow, while preserving uncaught diagnostics.
 
