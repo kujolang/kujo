@@ -2130,6 +2130,11 @@
       "scope": "native empty dictionary literal ownership",
       "result": "1030 library tests passed (8 ignored), 28 integration tests passed. Empty literals now yield owned dictionaries; slot-only native local names resolve. Bounded storage verified; no speed or wider opcode support claim.",
       "evidence": "native-empty-dictionaries-2026-10-23.json"
+    },
+    {
+      "scope": "all50 tagged-owned interpreter test-size checksums at e2797da",
+      "result": "All50 test-size interpreter checksums at e2797da. Frozen debug candidate predates operand cleanup, dead-local release and empty dictionary fixes. Own tests/builds overlapped diagnostics. Not current HEAD, production or competitive timing acceptance.",
+      "evidence": "checksums-2026-10-23-owned-values-interpreter.json"
     }
   ]
 }
