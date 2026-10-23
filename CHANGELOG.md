@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve typed dictionary reads/writes and checked global assignments in
+  experimental native loops. Guard dense integer access with explicit data/length
+  views, refresh views after storage changes, and propagate errors without
+  replaying prior effects or bypassing readonly bindings.
+
 - Avoid cloning the entire value vector when replacing an existing fixed-key
   dictionary entry through VM/native indexed writes. Existing snapshots retain
   their own vectors, and nested collections retain normal copy-on-write behavior.

@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-23",
+  "baseline": "43a4c50",
+  "scope": "Specialized native integer-dictionary loops and checked named assignments",
+  "reproductions": [
+    "After native loop entry, Boolean dictionary values became Int(1) instead of Bool(true).",
+    "Missing-key failure lost native-loop global increments: expected 151 prior effects, observed 100."
+  ],
+  "implementation": [
+    "Use an explicit repr(C) data/length view rather than interpreting Rust Vec memory layout.",
+    "Inline only unique dense integer vectors with integer keys, in-bounds accesses, integer write values and mutable bindings.",
+    "Route representation changes, sparse/owned keys, bounds failures and readonly writes through tagged VM contracts; refresh cached views after helper writes.",
+    "Reject slot redefinition/release in specialization eligibility; avoid creating redundant SSA aliases for physical dictionary slots.",
+    "Resolve loop global writes through the existing locked Environment and assign_checked without reacquiring its mutex."
+  ],
+  "verification": {
+    "library_passed": 1041,
+    "library_ignored": 8,
+    "integration_passed": 48,
+    "commands": [
+      "cargo test --locked --lib --test jit_loop_collection_contracts --test jit_owned_stack_contracts --test jit_immediate_values --test jit_immediate_arguments --test jit_error_propagation --test jit_global_assignment --test jit_safety_contract_checker",
+      "cargo fmt --check",
+      "cargo test --locked --test jit_loop_collection_contracts",
+      "git diff --check"
+    ],
+    "notes": "Broad run passed 47 integration tests; the final six-case loop rerun adds growth/snapshot coverage for 48 distinct integration tests total. Native loop entry is asserted in each language regression.",
+    "cost": "1000 compiled dense writes reuse the unique buffer, retain one view, and retain zero owned-root storage; shared vectors cannot expose a mutable view.",
+    "cases": [
+      "Int to Bool/Float/Null/String transitions",
+      "Sparse billion-index and string-key transitions",
+      "2000-key dense growth with immediate reads and later COW snapshot isolation",
+      "Missing-key errors retain prior global effects exactly once",
+      "Const collection writes and immutable global assignments remain catchable"
+    ],
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ]
+  },
+  "limitations": [
+    "No current all50 or production acceptance",
+    "No release elapsed-time or competitive speed claim",
+    "General owned native entry, fused append-until and broader lifetime audits remain open"
+  ],
+  "logs": [
+    {
+      "path": "/tmp/kujo-intdict-loop-types-jit.log",
+      "sha256": "4e07ea4f2e0276804d328d3e84c351426b65d076f0a0f43d038cb8f42f618aca"
+    },
+    {
+      "path": "/tmp/kujo-loop-collection-checked.log",
+      "sha256": "3622ca56f2a5751805989aec30db011fec3aac8392dedc2f50ca4e98c0c3817f"
+    },
+    {
+      "path": "/tmp/kujo-loop-collection-final-verified.log",
+      "sha256": "4ba2e11b116cff3f826bb74f5b415a8bf2bc60aa875a2712d53eadcf5940e2f7"
+    },
+    {
+      "path": "/tmp/kujo-loop-growth-verified.log",
+      "sha256": "d39786e5674689b8efaf94782565a58f0391a4d271ec06baa4f474df4a309129"
+    }
+  ]
+}

@@ -2099,7 +2099,10 @@ impl VM {
                                     .skip(jump_target)
                                 {
                                     match instr {
-                                        OpCode::LoadLocal(slot) | OpCode::StoreLocal(slot) => {
+                                        OpCode::LoadLocal(slot)
+                                        | OpCode::StoreLocal(slot)
+                                        | OpCode::DefineLocal(slot)
+                                        | OpCode::ReleaseDeadLocal(slot) => {
                                             if int_dict_slots.contains(slot) {
                                                 int_dict_loop_valid = false;
                                                 break;
@@ -2295,6 +2298,7 @@ impl VM {
                                             globals_ptr,
                                             vm_ptr,
                                         );
+                                        vm_context.loop_environment_ptr = &mut *globals_guard;
                                         vm_context.local_slots_ptr =
                                             match self.call_frames.last_mut() {
                                                 Some(frame) => {
@@ -3520,6 +3524,8 @@ impl VM {
                                                 owned_roots: Default::default(),
                                                 #[cfg(feature = "runtime-jit")]
                                                 owned_return: None,
+                                                loop_dense_views: Default::default(),
+                                                loop_environment_ptr: std::ptr::null_mut(),
                                                 arg_kinds: std::array::from_fn(|index| {
                                                     args.get(index)
                                                         .and_then(crate::native_scalar::encode)
@@ -3646,6 +3652,8 @@ impl VM {
                                                     owned_roots: Default::default(),
                                                     #[cfg(feature = "runtime-jit")]
                                                     owned_return: None,
+                                                    loop_dense_views: Default::default(),
+                                                    loop_environment_ptr: std::ptr::null_mut(),
                                                     arg_kinds: std::array::from_fn(|index| {
                                                         args.get(index)
                                                             .and_then(crate::native_scalar::encode)
@@ -3818,6 +3826,8 @@ impl VM {
                                         owned_roots: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
+                                        loop_dense_views: Default::default(),
+                                        loop_environment_ptr: std::ptr::null_mut(),
                                         arg_kinds: std::array::from_fn(|index| {
                                             args.get(index)
                                                 .and_then(crate::native_scalar::encode)
@@ -8401,6 +8411,8 @@ impl VM {
                                         owned_roots: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
+                                        loop_dense_views: Default::default(),
+                                        loop_environment_ptr: std::ptr::null_mut(),
                                         arg_kinds: std::array::from_fn(|index| {
                                             args.get(index)
                                                 .and_then(crate::native_scalar::encode)
@@ -8566,6 +8578,8 @@ impl VM {
                             owned_roots: Default::default(),
                             #[cfg(feature = "runtime-jit")]
                             owned_return: None,
+                            loop_dense_views: Default::default(),
+                            loop_environment_ptr: std::ptr::null_mut(),
                             arg_kinds: std::array::from_fn(|index| {
                                 args.get(index)
                                     .and_then(crate::native_scalar::encode)

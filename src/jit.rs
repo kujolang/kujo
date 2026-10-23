@@ -133,12 +133,21 @@ pub struct VMContext {
     pub native_call_depth: usize,
     pub(crate) owned_roots: crate::native_owned::NativeCallRoots,
     pub(crate) owned_return: Option<Value>,
+    pub(crate) loop_dense_views: HashMap<usize, Box<LoopDenseView>>,
+    pub(crate) loop_environment_ptr: *mut crate::interpreter::Environment,
     pub arg_kinds: [i64; 4],
     pub arg0: i64,
     pub arg1: i64,
     pub arg2: i64,
     pub arg3: i64,
     pub arg_count: i64,
+}
+
+/// Explicit native ABI; generated code never interprets Rust Vec layout.
+#[repr(C)]
+pub(crate) struct LoopDenseView {
+    data: *mut i64,
+    len: usize,
 }
 
 impl VMContext {
@@ -248,6 +257,8 @@ impl VMContext {
             native_call_depth: 0,
             owned_roots: Default::default(),
             owned_return: None,
+            loop_dense_views: HashMap::new(),
+            loop_environment_ptr: std::ptr::null_mut(),
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -281,6 +292,8 @@ impl VMContext {
             native_call_depth: 0,
             owned_roots: Default::default(),
             owned_return: None,
+            loop_dense_views: HashMap::new(),
+            loop_environment_ptr: std::ptr::null_mut(),
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -328,6 +341,8 @@ impl VMContext {
             native_call_depth: 0,
             owned_roots: Default::default(),
             owned_return: None,
+            loop_dense_views: HashMap::new(),
+            loop_environment_ptr: std::ptr::null_mut(),
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -920,6 +935,66 @@ pub unsafe extern "C" fn jit_indexed_read(
     }
 }
 
+/// Expose unique dense integer storage through an explicit native ABI.
+#[no_mangle]
+// SAFETY: ctx and its physical slots are exclusively borrowed by this loop.
+// Box addresses remain stable; the caller refreshes the view after every helper
+// write. Only a unique dense integer vector admits raw in-bounds native access.
+pub unsafe extern "C" fn jit_loop_dense_view(ctx: *mut VMContext, slot: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let Ok(slot) = usize::try_from(slot) else { return 0 };
+    let Some(Value::DenseIntDictIntFull(values)) =
+        ctx.local_slots_ptr.as_mut().and_then(|slots| slots.get_mut(slot))
+    else {
+        return 0;
+    };
+    let Some(values) = Arc::get_mut(values) else { return 0 };
+    let view = ctx
+        .loop_dense_views
+        .entry(slot)
+        .or_insert_with(|| Box::new(LoopDenseView { data: std::ptr::null_mut(), len: 0 }));
+    view.data = values.as_mut_ptr();
+    view.len = values.len();
+    &mut **view as *mut LoopDenseView as i64
+}
+
+#[no_mangle]
+// SAFETY: context slots stay live; no callback runs while the object is borrowed.
+pub unsafe extern "C" fn jit_loop_indexed_read(
+    ctx: *mut VMContext,
+    slot: i64,
+    index: i64,
+    kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let result = ctx
+        .owned_roots
+        .clone_value(index, kind)
+        .map_err(|error| format!("Native ownership error: {error:?}"))
+        .and_then(|index| {
+            let object = usize::try_from(slot)
+                .ok()
+                .and_then(|slot| ctx.local_slots_ptr.as_ref().and_then(|slots| slots.get(slot)))
+                .ok_or_else(|| format!("Invalid local slot: {slot}"))?;
+            VM::get_indexed_value(object, &index)
+        })
+        .and_then(|value| {
+            ctx.owned_roots
+                .encode(value)
+                .map_err(|error| format!("Native ownership error: {error:?}"))
+        });
+    match result {
+        Ok((value, kind)) => {
+            ctx.return_value_kind = kind;
+            value
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Mutate the callee binding through the VM's indexed-write contract.
 #[no_mangle]
 // SAFETY: ctx maps and roots are live and exclusively borrowed. Decode operand
@@ -969,6 +1044,10 @@ pub unsafe extern "C" fn jit_indexed_write(
         return 1;
     }
     let target = match location {
+        0 => usize::try_from(target)
+            .ok()
+            .and_then(|slot| ctx.local_slots_ptr.as_mut().and_then(|slots| slots.get_mut(slot)))
+            .ok_or_else(|| format!("Invalid local slot: {target}")),
         1 => ctx
             .owned_roots
             .current_value_mut(target, target_kind)
@@ -1242,12 +1321,30 @@ pub unsafe extern "C" fn jit_assign_variable(
     };
     // This is the compiled function's own named-local map, not its caller frame.
     if let Some(locals) = ctx.locals_ptr.as_mut() {
-        if global_only == 0 && locals.contains_key(&name) {
+        if global_only == 0
+            && locals.contains_key(&name)
+            && !(ctx.locals_ptr == ctx.globals_ptr && !ctx.loop_environment_ptr.is_null())
+        {
             locals.insert(name, value);
             return 0;
         }
     }
-    if let Some(vm) = (ctx.vm_ptr as *mut crate::vm::VM).as_mut() {
+    if let Some(environment) = ctx.loop_environment_ptr.as_mut() {
+        // The loop owns the globals guard for its entire native invocation.
+        // Use that environment directly rather than acquiring its lock again.
+        if global_only != 0
+            || ctx.locals_ptr == ctx.globals_ptr
+            || environment.scopes.iter().any(|scope| scope.contains_key(&name))
+        {
+            return match environment.assign_checked(name, value) {
+                Ok(()) => 0,
+                Err(error) => {
+                    ctx.runtime_error = Some(error);
+                    1
+                }
+            };
+        }
+    } else if let Some(vm) = (ctx.vm_ptr as *mut crate::vm::VM).as_mut() {
         match vm.assign_global_from_jit(&name, value.clone(), global_only != 0) {
             Ok(true) => return 0,
             Ok(false) => {}
@@ -3725,6 +3822,8 @@ struct BytecodeTranslator {
     append_local_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
+    loop_dense_view_func: Option<FuncRef>,
+    loop_indexed_read_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3885,6 +3984,8 @@ impl BytecodeTranslator {
             append_local_func: None,
             indexed_read_func: None,
             indexed_write_func: None,
+            loop_dense_view_func: None,
+            loop_indexed_read_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -4113,7 +4214,12 @@ impl BytecodeTranslator {
         self.scan_non_int_locals(instructions, function_end);
 
         if !self.local_names.is_empty() {
-            for name in &self.local_names {
+            for (slot_index, name) in self.local_names.iter().enumerate() {
+                // These loop bindings are updated in physical slots. Creating
+                // SSA aliases here would force unnecessary COW on native writes.
+                if self.int_dict_slots.contains(&slot_index) {
+                    continue;
+                }
                 if self.non_int_locals.contains(name) {
                     continue;
                 }
@@ -4466,7 +4572,7 @@ impl BytecodeTranslator {
             None => return,
         };
 
-        let unique_ptr_func = match self.int_dict_unique_ptr_func {
+        let unique_ptr_func = match self.loop_dense_view_func {
             Some(func) => func,
             None => return,
         };
@@ -5461,6 +5567,10 @@ impl BytecodeTranslator {
             }
 
             OpCode::IndexSetInPlace(slot_index) => {
+                if !self.tracks_function_depth && self.int_dict_slots.contains(slot_index) {
+                    self.loop_indexed_access(builder, *slot_index, true)?;
+                    return Ok(false);
+                }
                 if self.tracks_function_depth {
                     let index = self.pop_value()?;
                     let value = self.pop_value()?;
@@ -5522,181 +5632,6 @@ impl BytecodeTranslator {
                 // This is like: tmp = LoadVar(var); tmp[index] = value; StoreVar(var, tmp)
 
                 let var_name = self.local_names.get(*slot_index).cloned();
-                let is_non_int_local = var_name
-                    .as_ref()
-                    .map(|name| self.non_int_locals.contains(name))
-                    .unwrap_or(false);
-
-                if self.int_dict_slots.contains(slot_index) && !is_non_int_local {
-                    let _index = self.pop_value()?;
-                    let _value = self.pop_value()?;
-
-                    if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot_index) {
-                        if let Some(set_ptr_ref) = self.int_dict_set_ptr_func {
-                            let dict_ptr = builder.ins().stack_load(types::I64, ptr_slot, 0);
-                            let zero = builder.ins().iconst(types::I64, 0);
-                            let is_zero = builder.ins().icmp(IntCC::Equal, dict_ptr, zero);
-
-                            let slow_block = builder.create_block();
-                            let slow_clear_block = builder.create_block();
-                            let dense_int_full_block = builder.create_block();
-                            let dense_int_sparse_check_block = builder.create_block();
-                            let dense_int_sparse_block = builder.create_block();
-                            let fast_block = builder.create_block();
-                            let cont_block = builder.create_block();
-
-                            builder.ins().brif(is_zero, slow_block, &[], fast_block, &[]);
-
-                            builder.switch_to_block(fast_block);
-                            let tag_mask = builder.ins().iconst(types::I64, 7);
-                            let tag_value = builder.ins().band(dict_ptr, tag_mask);
-                            let dense_int_full_tag = builder.ins().iconst(types::I64, 2);
-                            let is_dense_int_full =
-                                builder.ins().icmp(IntCC::Equal, tag_value, dense_int_full_tag);
-                            let dense_int_sparse_tag = builder.ins().iconst(types::I64, 4);
-                            let is_dense_int_sparse =
-                                builder.ins().icmp(IntCC::Equal, tag_value, dense_int_sparse_tag);
-                            builder.ins().brif(
-                                is_dense_int_full,
-                                dense_int_full_block,
-                                &[],
-                                dense_int_sparse_check_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(dense_int_full_block);
-                            let zero = builder.ins().iconst(types::I64, 0);
-                            let is_negative =
-                                builder.ins().icmp(IntCC::SignedLessThan, _index, zero);
-                            let inline_slow_block = builder.create_block();
-                            let inline_set_block = builder.create_block();
-                            builder.ins().brif(
-                                is_negative,
-                                inline_slow_block,
-                                &[],
-                                inline_set_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(inline_set_block);
-                            let tag_mask = builder.ins().iconst(types::I64, !7i64);
-                            let base_ptr = builder.ins().band(dict_ptr, tag_mask);
-                            let data_ptr =
-                                builder.ins().load(types::I64, MemFlags::new(), base_ptr, 0);
-                            let len = builder.ins().load(types::I64, MemFlags::new(), base_ptr, 8);
-                            let cap = builder.ins().load(types::I64, MemFlags::new(), base_ptr, 16);
-
-                            let is_lt_len = builder.ins().icmp(IntCC::SignedLessThan, _index, len);
-                            let is_eq_len = builder.ins().icmp(IntCC::Equal, _index, len);
-                            let has_capacity = builder.ins().icmp(IntCC::SignedLessThan, len, cap);
-                            let can_append = builder.ins().band(is_eq_len, has_capacity);
-
-                            let update_block = builder.create_block();
-                            let append_check_block = builder.create_block();
-                            let append_block = builder.create_block();
-                            builder.ins().brif(
-                                is_lt_len,
-                                update_block,
-                                &[],
-                                append_check_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(update_block);
-                            let stride = builder.ins().iconst(types::I64, 8);
-                            let offset = builder.ins().imul(_index, stride);
-                            let addr = builder.ins().iadd(data_ptr, offset);
-                            builder.ins().store(MemFlags::new(), _value, addr, 0);
-                            builder.ins().jump(cont_block, &[]);
-
-                            builder.switch_to_block(append_check_block);
-                            builder.ins().brif(
-                                can_append,
-                                append_block,
-                                &[],
-                                inline_slow_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(append_block);
-                            let stride = builder.ins().iconst(types::I64, 8);
-                            let offset = builder.ins().imul(len, stride);
-                            let addr = builder.ins().iadd(data_ptr, offset);
-                            builder.ins().store(MemFlags::new(), _value, addr, 0);
-                            let one = builder.ins().iconst(types::I64, 1);
-                            let new_len = builder.ins().iadd(len, one);
-                            builder.ins().store(MemFlags::new(), new_len, base_ptr, 8);
-                            builder.ins().jump(cont_block, &[]);
-
-                            builder.switch_to_block(inline_slow_block);
-                            if let Some(set_dense_int_full_ref) =
-                                self.int_dict_set_ptr_dense_int_full_func
-                            {
-                                builder
-                                    .ins()
-                                    .call(set_dense_int_full_ref, &[dict_ptr, _index, _value]);
-                            } else {
-                                builder.ins().call(set_ptr_ref, &[dict_ptr, _index, _value]);
-                            }
-                            builder.ins().jump(cont_block, &[]);
-
-                            builder.switch_to_block(dense_int_sparse_check_block);
-                            builder.ins().brif(
-                                is_dense_int_sparse,
-                                dense_int_sparse_block,
-                                &[],
-                                slow_clear_block,
-                                &[],
-                            );
-                            builder.switch_to_block(dense_int_sparse_block);
-                            if let Some(set_dense_int_ref) = self.int_dict_set_ptr_dense_int_func {
-                                builder.ins().call(set_dense_int_ref, &[dict_ptr, _index, _value]);
-                            } else {
-                                builder.ins().call(set_ptr_ref, &[dict_ptr, _index, _value]);
-                            }
-                            builder.ins().jump(cont_block, &[]);
-
-                            builder.switch_to_block(slow_clear_block);
-                            builder.ins().call(set_ptr_ref, &[dict_ptr, _index, _value]);
-                            builder.ins().jump(cont_block, &[]);
-
-                            builder.switch_to_block(slow_block);
-                            if let (Some(ctx), Some(set_int_dict_ref)) =
-                                (self.ctx_param, self.local_slot_int_dict_set_func)
-                            {
-                                let slot_val = builder.ins().iconst(types::I64, *slot_index as i64);
-                                builder
-                                    .ins()
-                                    .call(set_int_dict_ref, &[ctx, slot_val, _index, _value]);
-                                if let Some(unique_ptr_ref) = self.int_dict_unique_ptr_func {
-                                    let call = builder.ins().call(unique_ptr_ref, &[ctx, slot_val]);
-                                    let new_ptr = builder.inst_results(call)[0];
-                                    builder.ins().stack_store(new_ptr, ptr_slot, 0);
-                                } else {
-                                    builder.ins().stack_store(zero, ptr_slot, 0);
-                                }
-                            }
-                            builder.ins().jump(cont_block, &[]);
-
-                            builder.switch_to_block(cont_block);
-                            let null_val = builder.ins().iconst(types::I64, 0);
-                            self.push_value(null_val);
-                            return Ok(false);
-                        }
-                    }
-
-                    if let (Some(ctx), Some(set_int_dict_ref)) =
-                        (self.ctx_param, self.local_slot_int_dict_set_func)
-                    {
-                        let slot_val = builder.ins().iconst(types::I64, *slot_index as i64);
-                        builder.ins().call(set_int_dict_ref, &[ctx, slot_val, _index, _value]);
-                        let null_val = builder.ins().iconst(types::I64, 0);
-                        self.push_value(null_val);
-                        return Ok(false);
-                    }
-
-                    return Err("IndexSetInPlace requires int-dict helpers".to_string());
-                }
 
                 if let (Some(ctx), Some(local_set_ref)) =
                     (self.ctx_param, self.local_slot_dict_set_func)
@@ -5834,6 +5769,10 @@ impl BytecodeTranslator {
             }
 
             OpCode::IndexGetInPlace(slot_index) => {
+                if !self.tracks_function_depth && self.int_dict_slots.contains(slot_index) {
+                    self.loop_indexed_access(builder, *slot_index, false)?;
+                    return Ok(false);
+                }
                 if self.tracks_function_depth {
                     let index = self.pop_value()?;
                     // Whole functions own callee bindings; local_slots_ptr
@@ -5863,150 +5802,6 @@ impl BytecodeTranslator {
                 // This is like: tmp = LoadVar(var); value = tmp[index]
 
                 let var_name = self.local_names.get(*slot_index).cloned();
-                let is_non_int_local = var_name
-                    .as_ref()
-                    .map(|name| self.non_int_locals.contains(name))
-                    .unwrap_or(false);
-
-                if self.int_dict_slots.contains(slot_index) && !is_non_int_local {
-                    let _index = self.pop_value()?;
-
-                    if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot_index) {
-                        if let Some(get_ptr_ref) = self.int_dict_get_ptr_func {
-                            let dict_ptr = builder.ins().stack_load(types::I64, ptr_slot, 0);
-                            let zero = builder.ins().iconst(types::I64, 0);
-                            let is_zero = builder.ins().icmp(IntCC::Equal, dict_ptr, zero);
-
-                            let slow_block = builder.create_block();
-                            let dense_int_full_block = builder.create_block();
-                            let dense_int_sparse_check_block = builder.create_block();
-                            let dense_int_sparse_block = builder.create_block();
-                            let fast_block = builder.create_block();
-                            let cont_block = builder.create_block();
-                            builder.append_block_param(cont_block, types::I64);
-
-                            builder.ins().brif(is_zero, slow_block, &[], fast_block, &[]);
-
-                            builder.switch_to_block(fast_block);
-                            let tag_mask = builder.ins().iconst(types::I64, 7);
-                            let tag_value = builder.ins().band(dict_ptr, tag_mask);
-                            let dense_int_full_tag = builder.ins().iconst(types::I64, 2);
-                            let is_dense_int_full =
-                                builder.ins().icmp(IntCC::Equal, tag_value, dense_int_full_tag);
-                            let dense_int_sparse_tag = builder.ins().iconst(types::I64, 4);
-                            let is_dense_int_sparse =
-                                builder.ins().icmp(IntCC::Equal, tag_value, dense_int_sparse_tag);
-                            builder.ins().brif(
-                                is_dense_int_full,
-                                dense_int_full_block,
-                                &[],
-                                dense_int_sparse_check_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(dense_int_full_block);
-                            let zero = builder.ins().iconst(types::I64, 0);
-                            let is_negative =
-                                builder.ins().icmp(IntCC::SignedLessThan, _index, zero);
-                            let inline_slow_block = builder.create_block();
-                            let inline_get_block = builder.create_block();
-                            builder.ins().brif(
-                                is_negative,
-                                inline_slow_block,
-                                &[],
-                                inline_get_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(inline_get_block);
-                            let tag_mask = builder.ins().iconst(types::I64, !7i64);
-                            let base_ptr = builder.ins().band(dict_ptr, tag_mask);
-                            let data_ptr =
-                                builder.ins().load(types::I64, MemFlags::new(), base_ptr, 0);
-                            let len = builder.ins().load(types::I64, MemFlags::new(), base_ptr, 8);
-                            let is_lt_len = builder.ins().icmp(IntCC::SignedLessThan, _index, len);
-                            let hit_block = builder.create_block();
-                            let miss_block = builder.create_block();
-                            builder.ins().brif(is_lt_len, hit_block, &[], miss_block, &[]);
-
-                            builder.switch_to_block(hit_block);
-                            let stride = builder.ins().iconst(types::I64, 8);
-                            let offset = builder.ins().imul(_index, stride);
-                            let addr = builder.ins().iadd(data_ptr, offset);
-                            let value = builder.ins().load(types::I64, MemFlags::new(), addr, 0);
-                            builder.ins().jump(cont_block, &[value]);
-
-                            builder.switch_to_block(miss_block);
-                            builder.ins().jump(cont_block, &[zero]);
-
-                            builder.switch_to_block(inline_slow_block);
-                            if let Some(get_dense_int_full_ref) =
-                                self.int_dict_get_ptr_dense_int_full_func
-                            {
-                                let call =
-                                    builder.ins().call(get_dense_int_full_ref, &[dict_ptr, _index]);
-                                let fast_value = builder.inst_results(call)[0];
-                                builder.ins().jump(cont_block, &[fast_value]);
-                            } else {
-                                let call = builder.ins().call(get_ptr_ref, &[dict_ptr, _index]);
-                                let fast_value = builder.inst_results(call)[0];
-                                builder.ins().jump(cont_block, &[fast_value]);
-                            }
-
-                            builder.switch_to_block(dense_int_sparse_check_block);
-                            builder.ins().brif(
-                                is_dense_int_sparse,
-                                dense_int_sparse_block,
-                                &[],
-                                slow_block,
-                                &[],
-                            );
-
-                            builder.switch_to_block(dense_int_sparse_block);
-                            if let Some(get_dense_int_ref) = self.int_dict_get_ptr_dense_int_func {
-                                let call =
-                                    builder.ins().call(get_dense_int_ref, &[dict_ptr, _index]);
-                                let fast_value = builder.inst_results(call)[0];
-                                builder.ins().jump(cont_block, &[fast_value]);
-                            } else {
-                                let call = builder.ins().call(get_ptr_ref, &[dict_ptr, _index]);
-                                let fast_value = builder.inst_results(call)[0];
-                                builder.ins().jump(cont_block, &[fast_value]);
-                            }
-
-                            builder.switch_to_block(slow_block);
-                            if let (Some(ctx), Some(get_int_dict_ref)) =
-                                (self.ctx_param, self.local_slot_int_dict_get_func)
-                            {
-                                let slot_val = builder.ins().iconst(types::I64, *slot_index as i64);
-                                let call =
-                                    builder.ins().call(get_int_dict_ref, &[ctx, slot_val, _index]);
-                                let slow_value = builder.inst_results(call)[0];
-                                builder.ins().jump(cont_block, &[slow_value]);
-                            } else {
-                                let zero_val = builder.ins().iconst(types::I64, 0);
-                                builder.ins().jump(cont_block, &[zero_val]);
-                            }
-
-                            builder.switch_to_block(cont_block);
-                            let result = builder.block_params(cont_block)[0];
-                            self.push_value(result);
-                            return Ok(false);
-                        }
-                    }
-
-                    if let (Some(ctx), Some(get_int_dict_ref)) =
-                        (self.ctx_param, self.local_slot_int_dict_get_func)
-                    {
-                        let slot_val = builder.ins().iconst(types::I64, *slot_index as i64);
-                        let call = builder.ins().call(get_int_dict_ref, &[ctx, slot_val, _index]);
-                        let value = builder.inst_results(call)[0];
-                        self.push_value(value);
-                        return Ok(false);
-                    }
-
-                    return Err("IndexGetInPlace requires int-dict helpers".to_string());
-                }
 
                 if let (Some(ctx), Some(local_get_ref)) =
                     (self.ctx_param, self.local_slot_dict_get_func)
@@ -6957,6 +6752,137 @@ impl BytecodeTranslator {
         Ok(())
     }
 
+    /// Inline only unique, in-bounds dense integer access. All type/shape changes
+    /// use the same tagged VM contracts, then refresh the explicit native view.
+    fn loop_indexed_access(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        slot: usize,
+        write: bool,
+    ) -> Result<(), String> {
+        let index = self.pop_value()?;
+        let value = if write { Some(self.pop_value()?) } else { None };
+        let index_kind = self.scalar_kind(builder, index);
+        let value_kind = value.map(|v| self.scalar_kind(builder, v));
+        let ctx = self.ctx_param.ok_or("Loop indexing requires context")?;
+        let cache = *self.int_dict_ptr_slots.get(&slot).ok_or("Missing loop dictionary view")?;
+        let name = self.local_names.get(slot).ok_or("Invalid loop dictionary slot")?;
+        let hash = Self::hash_var_name(name) as i64;
+        let binding = match self
+            .local_binding_kinds
+            .get(slot)
+            .copied()
+            .unwrap_or(BytecodeBindingKind::Mutable)
+        {
+            BytecodeBindingKind::Mutable => 0,
+            BytecodeBindingKind::LetImmutable => 1,
+            BytecodeBindingKind::Const => 2,
+        };
+        let view = builder.ins().stack_load(types::I64, cache, 0);
+        let present = builder.ins().icmp_imm(IntCC::NotEqual, view, 0);
+        let integer =
+            builder.ins().icmp_imm(IntCC::Equal, index_kind, crate::native_scalar::INTEGER);
+        let mut eligible = builder.ins().band(present, integer);
+        if let Some(kind) = value_kind {
+            let integer = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_scalar::INTEGER);
+            eligible = builder.ins().band(eligible, integer);
+            if binding != 0 {
+                eligible = builder.ins().iconst(types::I8, 0);
+            }
+        }
+        let bounds = builder.create_block();
+        let fast = builder.create_block();
+        let slow = builder.create_block();
+        let join = builder.create_block();
+        if !write {
+            builder.append_block_param(join, types::I64);
+            builder.append_block_param(join, types::I64);
+        }
+        builder.ins().brif(eligible, bounds, &[], slow, &[]);
+        builder.seal_block(bounds);
+        builder.switch_to_block(bounds);
+        let len = builder.ins().load(
+            types::I64,
+            MemFlags::new(),
+            view,
+            std::mem::offset_of!(LoopDenseView, len) as i32,
+        );
+        // Unsigned comparison also rejects negative indices.
+        let in_bounds = builder.ins().icmp(IntCC::UnsignedLessThan, index, len);
+        builder.ins().brif(in_bounds, fast, &[], slow, &[]);
+        builder.seal_block(fast);
+        builder.seal_block(slow);
+        builder.switch_to_block(fast);
+        let data = builder.ins().load(
+            types::I64,
+            MemFlags::new(),
+            view,
+            std::mem::offset_of!(LoopDenseView, data) as i32,
+        );
+        let offset = builder.ins().imul_imm(index, std::mem::size_of::<i64>() as i64);
+        let address = builder.ins().iadd(data, offset);
+        if let Some(value) = value {
+            builder.ins().store(MemFlags::new(), value, address, 0);
+            builder.ins().jump(join, &[]);
+        } else {
+            let result = builder.ins().load(types::I64, MemFlags::new(), address, 0);
+            let kind = builder.ins().iconst(types::I64, crate::native_scalar::INTEGER);
+            builder.ins().jump(join, &[result, kind]);
+        }
+        builder.switch_to_block(slow);
+        let slot_value = builder.ins().iconst(types::I64, slot as i64);
+        if let Some(value) = value {
+            let helper = self.indexed_write_func.ok_or("Missing loop write helper")?;
+            let zero = builder.ins().iconst(types::I64, 0);
+            let binding = builder.ins().iconst(types::I64, binding);
+            let hash = builder.ins().iconst(types::I64, hash);
+            let call = builder.ins().call(
+                helper,
+                &[
+                    ctx,
+                    zero,
+                    slot_value,
+                    zero,
+                    binding,
+                    hash,
+                    index,
+                    index_kind,
+                    value,
+                    value_kind.unwrap(),
+                ],
+            );
+            self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+            let refresh = self.loop_dense_view_func.ok_or("Missing loop view helper")?;
+            let call = builder.ins().call(refresh, &[ctx, slot_value]);
+            let refreshed = builder.inst_results(call)[0];
+            builder.ins().stack_store(refreshed, cache, 0);
+            builder.ins().jump(join, &[]);
+        } else {
+            let helper = self.loop_indexed_read_func.ok_or("Missing loop read helper")?;
+            let call = builder.ins().call(helper, &[ctx, slot_value, index, index_kind]);
+            let result = builder.inst_results(call)[0];
+            self.capture_loaded_operand(builder, ctx, result);
+            let kind = self.scalar_kind(builder, result);
+            builder.ins().jump(join, &[result, kind]);
+        }
+        builder.seal_block(join);
+        builder.switch_to_block(join);
+        self.release_operand(builder, index);
+        if let Some(value) = value {
+            self.release_operand(builder, value);
+            let null = builder.ins().iconst(types::I64, 0);
+            let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+            self.scalar_kinds.insert(null, kind);
+            self.push_value(null);
+        } else {
+            let result = builder.block_params(join)[0];
+            let kind = builder.block_params(join)[1];
+            self.scalar_kinds.insert(result, kind);
+            self.push_value(result);
+        }
+        Ok(())
+    }
+
     fn append_local(
         &mut self,
         builder: &mut FunctionBuilder,
@@ -7424,6 +7350,8 @@ impl JitCompiler {
             ("jit_append_local", 6, true),
             ("jit_indexed_read", 5, true),
             ("jit_indexed_write", 10, true),
+            ("jit_loop_dense_view", 2, true),
+            ("jit_loop_indexed_read", 4, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -7452,6 +7380,8 @@ impl JitCompiler {
                 "jit_append_local" => translator.append_local_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
+                "jit_loop_dense_view" => translator.loop_dense_view_func = Some(function),
+                "jit_loop_indexed_read" => translator.loop_indexed_read_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -7513,6 +7443,8 @@ impl JitCompiler {
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
         builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
+        builder.symbol("jit_loop_dense_view", jit_loop_dense_view as *const u8);
+        builder.symbol("jit_loop_indexed_read", jit_loop_indexed_read as *const u8);
         builder.symbol("jit_duplicate_operand", jit_duplicate_operand as *const u8);
         builder.symbol("jit_release_operand", jit_release_operand as *const u8);
         builder.symbol("jit_release_dead_local", jit_release_dead_local as *const u8);
@@ -8147,6 +8079,8 @@ impl JitCompiler {
             translator
                 .set_local_names(chunk.local_names.clone(), chunk.local_binding_kinds.clone());
             translator.set_context_param(ctx_ptr);
+            translator.named_assignment_func =
+                Some(Self::declare_named_assignment(&mut self.module, &mut builder)?);
             translator.set_external_functions(
                 load_var_func_ref,
                 store_var_func_ref,
@@ -8287,6 +8221,9 @@ impl JitCompiler {
                 translator.function_end
             };
             translator.function_end = function_end;
+            if let Some(slots) = int_dict_slots.as_ref() {
+                translator.set_int_dict_slots(slots.clone());
+            }
             translator.allocate_local_slots(&mut builder, &chunk.instructions, function_end);
             translator.initialize_local_slots_from_vm(
                 &mut builder,
@@ -10047,6 +9984,65 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn guarded_loop_dense_writes_inline_without_rust_vec_layout_assumptions() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let mut chunk = BytecodeChunk::new();
+        chunk.local_names.push("mapping".into());
+        chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+        let value = chunk.add_constant(Constant::Int(99));
+        let index = chunk.add_constant(Constant::Int(1));
+        chunk.emit(OpCode::LoadConst(value));
+        chunk.emit(OpCode::LoadConst(index));
+        chunk.emit(OpCode::IndexSetInPlace(0));
+        chunk.emit(OpCode::Pop);
+        chunk.emit(OpCode::ReturnNone);
+        let compiled =
+            compiler.compile_loop_with_int_dicts(&chunk, 0, 4, HashSet::from([0])).unwrap();
+        let mut slots = vec![Value::DenseIntDictIntFull(Arc::new(vec![1, 2]))];
+        let pointer = match &slots[0] {
+            Value::DenseIntDictIntFull(values) => values.as_ptr(),
+            _ => unreachable!(),
+        };
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.local_slots_ptr = &mut slots;
+        // No name map: the generic write helper would fail. Success proves the
+        // guarded native store ran, using an explicit C-layout data/length view.
+        for _ in 0..1000 {
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            assert!(
+                matches!(&slots[0], Value::DenseIntDictIntFull(values) if values.as_ptr() == pointer && values.as_slice() == [1,99])
+            );
+            assert_eq!(context.loop_dense_views.len(), 1);
+            assert_eq!(context.owned_roots.storage_state(), (0, 0, 0, 0));
+        }
+        let snapshot = slots[0].clone();
+        // SAFETY: live slot/context; shared vectors must never expose mutable data.
+        assert_eq!(unsafe { jit_loop_dense_view(&mut context, 0) }, 0);
+        assert!(
+            matches!(snapshot, Value::DenseIntDictIntFull(values) if values.as_slice() == [1,99])
+        );
+        let mut readonly_compiler = JitCompiler::new().unwrap();
+        chunk.local_binding_kinds[0] = BytecodeBindingKind::Const;
+        let readonly = readonly_compiler
+            .compile_loop_with_int_dicts(&chunk, 0, 4, HashSet::from([0]))
+            .unwrap();
+        let mut names =
+            HashMap::from([(BytecodeTranslator::hash_var_name("mapping"), "mapping".to_owned())]);
+        context.var_names_ptr = &mut names;
+        assert_ne!(invoke_compiled_fn(readonly, &mut context), 0);
+        assert_eq!(context.runtime_error.as_deref(), Some("Cannot mutate const binding: mapping"));
+        assert!(
+            matches!(&slots[0], Value::DenseIntDictIntFull(values) if values.as_slice() == [1,99])
+        );
+    }
 
     #[test]
     fn native_indexed_writes_reuse_unique_storage_and_preserve_snapshots() {

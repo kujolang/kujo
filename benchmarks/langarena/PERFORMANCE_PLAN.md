@@ -18,12 +18,13 @@ a target to test, not a guarantee. This document explains the execution order;
   2.916x on this laptop. That is one workload, not a suite-wide speedup.
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
   timings do not establish an end-to-end speedup.
-- The latest verified test-size VM and
+- The latest verified test-size
   [interpreter](checksums-2026-10-23-dictionary-ownership-interpreter.json)
-  runs passed all 50 cases at `739dd89`. The latest
+  run passed all 50 cases at `739dd89`. The latest
+  [VM matrix](checksums-2026-10-23-indexed-bindings-vm.json) and
   [JIT matrix](checksums-2026-10-23-indexed-bindings-jit.json) passed all 50 at
   `b286c5d`, with hashes/schemas verified and fallback allowed. These frozen candidates
-  predate subsequent constructor/operator fixes and cannot certify current HEAD.
+  predate the fixed-dictionary allocation and specialized-loop fixes and cannot certify current HEAD.
   No complete current production-size run exists.
 - All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
   per-case debug deadline. VM fallback was allowed. This establishes neither full
@@ -134,6 +135,15 @@ gated until retained literal lifetimes and specialized local-helper behavior are
 verified; bounded root storage is not evidence of reduced string copying or speed.
 
 ### Remaining native ownership gate
+
+The [specialized-loop audit](native-loop-collections-2026-10-23.json) replaces
+untyped integer-dictionary access with guarded dense integer access and tagged VM
+helpers. Generated code uses an explicit data/length ABI, checks key/value types,
+bounds and binding mutability, and refreshes views after helper writes. Loop global
+stores use checked binding resolution under the existing environment lock. Native
+entry regressions cover representation changes, missing keys and readonly failures;
+prior side effects persist exactly once. This does not establish current all-50
+production correctness, elapsed speed or general owned native-entry coverage.
 
 [Whole-function indexed reads](native-indexed-reads-2026-10-23.json) now use callee bindings and tagged VM indexing
 semantics rather than caller-slot integer-dictionary helpers. The regression
