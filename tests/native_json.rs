@@ -108,3 +108,57 @@ fn to_json_rejects_unsupported_value_types() {
         .expect_err("native function should not serialize to json");
     assert!(error.contains("Cannot convert"), "expected unsupported-type error, got: {error}");
 }
+
+#[test]
+fn parse_json_rounds_decimal_values_correctly() {
+    for source in [
+        "9007199254740991.0",
+        "-9007199254740991.0",
+        "9.007199254740991e15",
+        "0.1",
+        "5e-324",
+        "1.7976931348623157e308",
+    ] {
+        let expected: f64 = source.parse().unwrap();
+        match builtins::parse_json(source).unwrap() {
+            Value::Float(actual) => assert_eq!(actual.to_bits(), expected.to_bits(), "{source}"),
+            other => panic!("expected float for {source}, got {other:?}"),
+        }
+    }
+    for source in ["1e400", "-1e400"] {
+        assert!(builtins::parse_json(source).is_err(), "{source}");
+    }
+    assert!(matches!(
+        builtins::parse_json("9007199254740991").unwrap(),
+        Value::Int(9007199254740991)
+    ));
+}
+
+#[test]
+fn json_precision_has_vm_interpreter_parity() {
+    let dir = tempfile::tempdir().unwrap();
+    let script = dir.path().join("json_precision.kujo");
+    std::fs::write(
+        &script,
+        r#"
+        for source in ["9007199254740991.0", "-9007199254740991.0", "9.007199254740991e15"] {
+            print(to_int(parse_json(source)))
+        }
+        print(type(parse_json("9007199254740991")))
+    "#,
+    )
+    .unwrap();
+    for interpreter in [false, true] {
+        let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command.arg("run").arg(&script);
+        if interpreter {
+            command.arg("--interpreter");
+        }
+        let output = command.output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(
+            String::from_utf8_lossy(&output.stdout).trim(),
+            "9007199254740991\n-9007199254740991\n9007199254740991\nint"
+        );
+    }
+}
