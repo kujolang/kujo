@@ -1,0 +1,950 @@
+{
+  "binary": "/tmp/kujo-native-args-depth-2026-10-23/kujo",
+  "config": "benchmarks/langarena/test.json",
+  "results": [
+    {
+      "config": {
+        "checksum": 124,
+        "depth": 4,
+        "iterations": 3,
+        "name": "Binarytrees::Obj"
+      },
+      "elapsed_ns": 565949496.0,
+      "exitcode": 0,
+      "name": "Binarytrees::Obj",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=1092411\n@profile create-done ns=4929577\n@profile prepare-done ns=6304367\n@profile warmup-1 ns=19722282\n@profile warmup-done ns=21105491\n@profile run-1 ns=26697296\n@profile run-2 ns=31361043\n@profile run-3 ns=35649247\nBinarytrees::Obj: OK 124\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 124,
+        "depth": 4,
+        "iterations": 3,
+        "name": "Binarytrees::Arena"
+      },
+      "elapsed_ns": 349320061.0,
+      "exitcode": 0,
+      "name": "Binarytrees::Arena",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=769442\n@profile create-done ns=2132751\n@profile prepare-done ns=3560586\n@profile warmup-1 ns=13937168\n@profile warmup-done ns=15423629\n@profile run-1 ns=24422162\n@profile run-2 ns=32048312\n@profile run-3 ns=42047287\nBinarytrees::Arena: OK 124\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 3562897308,
+        "iterations": 2,
+        "name": "Brainfuck::Array",
+        "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+        "warmup_iterations": 1,
+        "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+      },
+      "elapsed_ns": 2336902402.0,
+      "exitcode": 0,
+      "name": "Brainfuck::Array",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=1209827\n@profile create-done ns=3412231\n@profile prepare-done ns=5133055\n@profile warmup-1 ns=811448727\n@profile warmup-done ns=812086114\n@profile run-1 ns=1460396017\n@profile run-2 ns=1988712684\nBrainfuck::Array: OK 3562897308\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 3562897308,
+        "iterations": 2,
+        "name": "Brainfuck::Recursion",
+        "program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.",
+        "warmup_iterations": 1,
+        "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+      },
+      "elapsed_ns": 1941071639.0,
+      "exitcode": 0,
+      "name": "Brainfuck::Recursion",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=726653\n@profile create-done ns=2201990\n@profile prepare-done ns=3777733\n@profile warmup-1 ns=664212867\n@profile warmup-done ns=664837965\n@profile run-1 ns=1190483944\n@profile run-2 ns=1672625004\nBrainfuck::Recursion: OK 3562897308\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 720656960,
+        "iterations": 3,
+        "n": 40,
+        "name": "Matmul::Single"
+      },
+      "elapsed_ns": 3148134893.0,
+      "exitcode": 0,
+      "name": "Matmul::Single",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=467808\n@profile create-done ns=73948242\n@profile prepare-done ns=74913961\n@profile warmup-1 ns=787745020\n@profile warmup-done ns=788293385\n@profile run-1 ns=1511564928\n@profile run-2 ns=2215554775\n@profile run-3 ns=2924839168\nMatmul::Single: OK 720656960\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2420334760,
+        "iterations": 3,
+        "n": 42,
+        "name": "Matmul::T4"
+      },
+      "elapsed_ns": 1723713279.0,
+      "exitcode": 0,
+      "name": "Matmul::T4",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=398911\n@profile create-done ns=65939880\n@profile prepare-done ns=66540683\n@profile warmup-1 ns=416833559\n@profile warmup-done ns=417720609\n@profile run-1 ns=758157459\n@profile run-2 ns=1133396492\n@profile run-3 ns=1514191479\nMatmul::T4: OK 2420334760\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 4014223764,
+        "iterations": 3,
+        "n": 44,
+        "name": "Matmul::T8"
+      },
+      "elapsed_ns": 1556549244.0,
+      "exitcode": 0,
+      "name": "Matmul::T8",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=317797\n@profile create-done ns=76052641\n@profile prepare-done ns=77188419\n@profile warmup-1 ns=460731298\n@profile warmup-done ns=461322908\n@profile run-1 ns=758441519\n@profile run-2 ns=1047982491\n@profile run-3 ns=1354731453\nMatmul::T8: OK 4014223764\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 418055336,
+        "iterations": 3,
+        "n": 46,
+        "name": "Matmul::T16"
+      },
+      "elapsed_ns": 1587665741.0,
+      "exitcode": 0,
+      "name": "Matmul::T16",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=313772\n@profile create-done ns=76793521\n@profile prepare-done ns=77407216\n@profile warmup-1 ns=460334791\n@profile warmup-done ns=460947246\n@profile run-1 ns=760048812\n@profile run-2 ns=1089050845\n@profile run-3 ns=1394145875\nMatmul::T16: OK 418055336\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 3894061047,
+        "iterations": 8192,
+        "name": "Base64::Encode",
+        "size": 30
+      },
+      "elapsed_ns": 2383058590.0,
+      "exitcode": 0,
+      "name": "Base64::Encode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=312947\n@profile create-done ns=925133\n@profile prepare-done ns=2793895\n@profile warmup-1 ns=4038897\n@profile warmup-163 ns=55715839\n@profile warmup-326 ns=95416780\n@profile warmup-489 ns=129579038\n@profile warmup-652 ns=171064035\n@profile warmup-815 ns=211398814\n@profile warmup-978 ns=249445402\n@profile warmup-1141 ns=290958379\n@profile warmup-1304 ns=328841331\n@profile warmup-1467 ns=368308495\n@profile warmup-1630 ns=405386649\n@profile warmup-1638 ns=407505612\n@profile warmup-done ns=408011862\n@profile run-1 ns=408886447\n@profile run-819 ns=592711068\n@profile run-1638 ns=767181045\n@profile run-2457 ns=938240902\n@profile run-3276 ns=1117572046\n@profile run-4095 ns=1296510040\n@profile run-4914 ns=1471758160\n@profile run-5733 ns=1641542473\n@profile run-6552 ns=1819488588\n@profile run-7371 ns=2003019562\n@profile run-8190 ns=2179869306\n@profile run-8192 ns=2180925475\nBase64::Encode: OK 3894061047\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 732348015,
+        "iterations": 8192,
+        "name": "Base64::Decode",
+        "size": 23
+      },
+      "elapsed_ns": 2383480837.0,
+      "exitcode": 0,
+      "name": "Base64::Decode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=544962\n@profile create-done ns=1563836\n@profile prepare-done ns=3083085\n@profile warmup-1 ns=4503760\n@profile warmup-163 ns=47577948\n@profile warmup-326 ns=84009412\n@profile warmup-489 ns=116995072\n@profile warmup-652 ns=150401046\n@profile warmup-815 ns=187790136\n@profile warmup-978 ns=220891513\n@profile warmup-1141 ns=255498139\n@profile warmup-1304 ns=291858875\n@profile warmup-1467 ns=328163966\n@profile warmup-1630 ns=367597861\n@profile warmup-1638 ns=370204475\n@profile warmup-done ns=370758139\n@profile run-1 ns=371637378\n@profile run-819 ns=570977400\n@profile run-1638 ns=756173166\n@profile run-2457 ns=937823271\n@profile run-3276 ns=1119376951\n@profile run-4095 ns=1290378546\n@profile run-4914 ns=1460837862\n@profile run-5733 ns=1635288325\n@profile run-6552 ns=1819890446\n@profile run-7371 ns=2004870037\n@profile run-8190 ns=2190225226\n@profile run-8192 ns=2191215872\nBase64::Decode: OK 732348015\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 4,
+        "coords": 9,
+        "iterations": 3,
+        "name": "Json::Generate"
+      },
+      "elapsed_ns": 206615032.0,
+      "exitcode": 0,
+      "name": "Json::Generate",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=320729\n@profile create-done ns=6295683\n@profile prepare-done ns=6963570\n@profile warmup-1 ns=15671096\n@profile warmup-done ns=16249885\n@profile run-1 ns=17572676\n@profile run-2 ns=18801698\n@profile run-3 ns=20022360\nJson::Generate: OK 4\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2918383076,
+        "coords": 10,
+        "iterations": 3,
+        "name": "Json::ParseDom"
+      },
+      "elapsed_ns": 218881646.0,
+      "exitcode": 0,
+      "name": "Json::ParseDom",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=310213\n@profile create-done ns=961865\n@profile prepare-done ns=8143875\n@profile warmup-1 ns=12665656\n@profile warmup-done ns=14454622\n@profile run-1 ns=19680051\n@profile run-2 ns=23547351\n@profile run-3 ns=36713616\nJson::ParseDom: OK 2918383076\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 1969907348,
+        "coords": 11,
+        "iterations": 3,
+        "name": "Json::ParseMapping"
+      },
+      "elapsed_ns": 229567645.0,
+      "exitcode": 0,
+      "name": "Json::ParseMapping",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=327806\n@profile create-done ns=990809\n@profile prepare-done ns=9077913\n@profile warmup-1 ns=14434650\n@profile warmup-done ns=14937528\n@profile run-1 ns=18991513\n@profile run-2 ns=22785093\n@profile run-3 ns=39790123\nJson::ParseMapping: OK 1969907348\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 3563398641,
+        "iterations": 3,
+        "name": "CSV::Parse",
+        "rows": 11
+      },
+      "elapsed_ns": 276864930.0,
+      "exitcode": 0,
+      "name": "CSV::Parse",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=356049\n@profile create-done ns=1003531\n@profile prepare-done ns=6133251\n@profile warmup-1 ns=13489042\n@profile warmup-done ns=14462287\n@profile run-1 ns=19990557\n@profile run-2 ns=24436202\n@profile run-3 ns=39872547\nCSV::Parse: OK 3563398641\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 4660,
+        "iterations": 3,
+        "limit": 1000,
+        "name": "Etc::Sieve"
+      },
+      "elapsed_ns": 295014585.0,
+      "exitcode": 0,
+      "name": "Etc::Sieve",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=363511\n@profile create-done ns=1174652\n@profile prepare-done ns=1887359\n@profile warmup-1 ns=30543531\n@profile warmup-done ns=31108746\n@profile run-1 ns=56464506\n@profile run-2 ns=82640774\n@profile run-3 ns=108824311\nEtc::Sieve: OK 4660\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 1438660,
+        "h": 100,
+        "iterations": 3,
+        "name": "Etc::TextRaytracer",
+        "w": 100
+      },
+      "elapsed_ns": 48576185490.0,
+      "exitcode": 0,
+      "name": "Etc::TextRaytracer",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=322689\n@profile create-done ns=928019\n@profile prepare-done ns=1477782\n@profile warmup-1 ns=11911885117\n@profile warmup-done ns=11912390962\n@profile run-1 ns=25655423300\n@profile run-2 ns=37289038519\n@profile run-3 ns=48398521728\nEtc::TextRaytracer: OK 1438660\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 1586674334,
+        "iterations": 2,
+        "name": "Etc::NeuralNet"
+      },
+      "elapsed_ns": 83959157829.0,
+      "exitcode": 0,
+      "name": "Etc::NeuralNet",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=429421\n@profile create-done ns=1106328\n@profile prepare-done ns=9003707\n@profile warmup-1 ns=26877819311\n@profile warmup-done ns=26878250779\n@profile run-1 ns=53981999056\n@profile run-2 ns=83797175023\nEtc::NeuralNet: OK 1586674334\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 179773224,
+        "iterations": 2,
+        "name": "Etc::CacheSimulation",
+        "size": 1000,
+        "values": 2000
+      },
+      "elapsed_ns": 11196818144.0,
+      "exitcode": 0,
+      "name": "Etc::CacheSimulation",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=254782\n@profile create-done ns=787455\n@profile prepare-done ns=1264586\n@profile warmup-1 ns=1903169841\n@profile warmup-done ns=1903609640\n@profile run-1 ns=5826572103\n@profile run-2 ns=11038457202\nEtc::CacheSimulation: OK 179773224\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 4006235749,
+        "h": 20,
+        "iterations": 3,
+        "name": "Etc::GameOfLife",
+        "w": 20
+      },
+      "elapsed_ns": 695826344.0,
+      "exitcode": 0,
+      "name": "Etc::GameOfLife",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=256045\n@profile create-done ns=90385177\n@profile prepare-done ns=170967119\n@profile warmup-1 ns=256670350\n@profile warmup-done ns=257094551\n@profile run-1 ns=346269878\n@profile run-2 ns=431703942\n@profile run-3 ns=516187153\nEtc::GameOfLife: OK 4006235749\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 580539813,
+        "iterations": 2,
+        "name": "Etc::Words",
+        "word_len": 1,
+        "words": 600
+      },
+      "elapsed_ns": 584767310.0,
+      "exitcode": 0,
+      "name": "Etc::Words",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=263390\n@profile create-done ns=799891\n@profile prepare-done ns=332203559\n@profile warmup-1 ns=366059203\n@profile warmup-done ns=366490391\n@profile run-1 ns=398226857\n@profile run-2 ns=431006141\nEtc::Words: OK 580539813\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 117,
+        "iterations": 2,
+        "lines_count": 10,
+        "name": "Etc::LogParser"
+      },
+      "elapsed_ns": 250511106.0,
+      "exitcode": 0,
+      "name": "Etc::LogParser",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=340128\n@profile create-done ns=1048514\n@profile prepare-done ns=3652063\n@profile warmup-1 ns=88997200\n@profile warmup-done ns=89433227\n@profile run-1 ns=91856675\n@profile run-2 ns=94097000\nEtc::LogParser: OK 117\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 1554169905,
+        "count": 12,
+        "iterations": 2,
+        "name": "Template::Regex"
+      },
+      "elapsed_ns": 241752632.0,
+      "exitcode": 0,
+      "name": "Template::Regex",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=265561\n@profile create-done ns=786932\n@profile prepare-done ns=3349028\n@profile warmup-1 ns=20635855\n@profile warmup-done ns=21065906\n@profile run-1 ns=31186253\n@profile run-2 ns=40356389\nTemplate::Regex: OK 1554169905\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 917360148,
+        "count": 10,
+        "iterations": 2,
+        "name": "Template::Parse"
+      },
+      "elapsed_ns": 366357898.0,
+      "exitcode": 0,
+      "name": "Template::Parse",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=244058\n@profile create-done ns=735630\n@profile prepare-done ns=2806896\n@profile warmup-1 ns=57779641\n@profile warmup-done ns=58203308\n@profile run-1 ns=111933581\n@profile run-2 ns=164234187\nTemplate::Parse: OK 917360148\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2548773,
+        "iterations": 2,
+        "name": "Sort::Quick",
+        "size": 100000
+      },
+      "elapsed_ns": 88934296112.0,
+      "exitcode": 0,
+      "name": "Sort::Quick",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=431437\n@profile create-done ns=1308715\n@profile prepare-done ns=8879937176\n@profile warmup-1 ns=33845483975\n@profile warmup-done ns=33845920094\n@profile run-1 ns=61014749166\n@profile run-2 ns=88772656337\nSort::Quick: OK 2548773\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2548773,
+        "iterations": 2,
+        "name": "Sort::Merge",
+        "size": 100000
+      },
+      "elapsed_ns": 225696025622.0,
+      "exitcode": 0,
+      "name": "Sort::Merge",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=284554\n@profile create-done ns=844600\n@profile prepare-done ns=9241808150\n@profile warmup-1 ns=103737136313\n@profile warmup-done ns=103743688525\n@profile run-1 ns=172311479339\n@profile run-2 ns=225506741885\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2548773,
+        "iterations": 2,
+        "name": "Sort::Self",
+        "size": 100000
+      },
+      "elapsed_ns": 6871720845.0,
+      "exitcode": 0,
+      "name": "Sort::Self",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=164970\n@profile create-done ns=480067\n@profile prepare-done ns=6368845996\n@profile warmup-1 ns=6500224389\n@profile warmup-done ns=6500511898\n@profile run-1 ns=6630016822\n@profile run-2 ns=6762683605\nSort::Self: OK 2548773\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 20,
+        "iterations": 3,
+        "jump_len": 100,
+        "jumps": 3,
+        "name": "Graph::BFS",
+        "vertices": 100
+      },
+      "elapsed_ns": 204875817.0,
+      "exitcode": 0,
+      "name": "Graph::BFS",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=204123\n@profile create-done ns=567627\n@profile prepare-done ns=66113055\n@profile warmup-1 ns=74466550\n@profile warmup-done ns=74750860\n@profile run-1 ns=81217724\n@profile run-2 ns=87681287\n@profile run-3 ns=93947151\nGraph::BFS: OK 20\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 28,
+        "iterations": 3,
+        "jump_len": 100,
+        "jumps": 3,
+        "name": "Graph::DFS",
+        "vertices": 100
+      },
+      "elapsed_ns": 218025432.0,
+      "exitcode": 0,
+      "name": "Graph::DFS",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=188544\n@profile create-done ns=536479\n@profile prepare-done ns=68333522\n@profile warmup-1 ns=78568871\n@profile warmup-done ns=78858351\n@profile run-1 ns=88995936\n@profile run-2 ns=98413983\n@profile run-3 ns=107851925\nGraph::DFS: OK 28\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 36,
+        "iterations": 3,
+        "jump_len": 100,
+        "jumps": 3,
+        "name": "Graph::AStar",
+        "vertices": 100
+      },
+      "elapsed_ns": 210415278.0,
+      "exitcode": 0,
+      "name": "Graph::AStar",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=186839\n@profile create-done ns=533234\n@profile prepare-done ns=66154909\n@profile warmup-1 ns=75633497\n@profile warmup-done ns=75975164\n@profile run-1 ns=85105123\n@profile run-2 ns=96266631\n@profile run-3 ns=107609973\nGraph::AStar: OK 36\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 1036619072,
+        "iterations": 3,
+        "name": "Hash::SHA256",
+        "size": 1000
+      },
+      "elapsed_ns": 879596128.0,
+      "exitcode": 0,
+      "name": "Hash::SHA256",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=199551\n@profile create-done ns=566315\n@profile prepare-done ns=125159157\n@profile warmup-1 ns=405349572\n@profile warmup-done ns=405948189\n@profile run-1 ns=545964787\n@profile run-2 ns=657217651\n@profile run-3 ns=751381520\nHash::SHA256: OK 1036619072\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 3031698216,
+        "iterations": 3,
+        "name": "Hash::CRC32",
+        "size": 1000
+      },
+      "elapsed_ns": 1168022539.0,
+      "exitcode": 0,
+      "name": "Hash::CRC32",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=200308\n@profile create-done ns=556000\n@profile prepare-done ns=105429163\n@profile warmup-1 ns=365392101\n@profile warmup-done ns=365692379\n@profile run-1 ns=595467634\n@profile run-2 ns=827599246\n@profile run-3 ns=1059201406\nHash::CRC32: OK 3031698216\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 774028720,
+        "iterations": 3,
+        "name": "Calculator::Ast",
+        "operations": 3
+      },
+      "elapsed_ns": 289985453.0,
+      "exitcode": 0,
+      "name": "Calculator::Ast",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=193729\n@profile create-done ns=679139\n@profile prepare-done ns=3386525\n@profile warmup-1 ns=50268579\n@profile warmup-done ns=50574187\n@profile run-1 ns=98792244\n@profile run-2 ns=142827228\n@profile run-3 ns=184683769\nCalculator::Ast: OK 774028720\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 3208680,
+        "iterations": 100,
+        "name": "Calculator::Interpreter",
+        "operations": 10
+      },
+      "elapsed_ns": 1284474752.0,
+      "exitcode": 0,
+      "name": "Calculator::Interpreter",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=192793\n@profile create-done ns=558416\n@profile prepare-done ns=96557916\n@profile warmup-1 ns=105678472\n@profile warmup-2 ns=114482015\n@profile warmup-4 ns=131796111\n@profile warmup-6 ns=149470055\n@profile warmup-8 ns=166190938\n@profile warmup-10 ns=197231987\n@profile warmup-12 ns=214584310\n@profile warmup-14 ns=231182140\n@profile warmup-16 ns=247807150\n@profile warmup-18 ns=263659524\n@profile warmup-20 ns=279841778\n@profile warmup-done ns=280192333\n@profile run-1 ns=289054379\n@profile run-10 ns=396791162\n@profile run-20 ns=498861874\n@profile run-30 ns=579879848\n@profile run-40 ns=661058603\n@profile run-50 ns=750268853\n@profile run-60 ns=836229183\n@profile run-70 ns=917236205\n@profile run-80 ns=1005388141\n@profile run-90 ns=1094034544\n@profile run-100 ns=1178818681\nCalculator::Interpreter: OK 3208680\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2309652669,
+        "h": 30,
+        "iterations": 2,
+        "name": "Maze::Generator",
+        "w": 200
+      },
+      "elapsed_ns": 13996934125.0,
+      "exitcode": 0,
+      "name": "Maze::Generator",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=236327\n@profile create-done ns=2719502228\n@profile prepare-done ns=2719925979\n@profile warmup-1 ns=5772952270\n@profile warmup-done ns=5773401989\n@profile run-1 ns=10338311965\n@profile run-2 ns=13561942189\nMaze::Generator: OK 2309652669\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 6771,
+        "h": 30,
+        "iterations": 2,
+        "name": "Maze::BFS",
+        "w": 200
+      },
+      "elapsed_ns": 8101928947.0,
+      "exitcode": 0,
+      "name": "Maze::BFS",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=237028\n@profile create-done ns=3254637865\n@profile prepare-done ns=5517727171\n@profile warmup-1 ns=6339197859\n@profile warmup-done ns=6339637847\n@profile run-1 ns=7143463511\n@profile run-2 ns=7954160419\nMaze::BFS: OK 6771\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 6771,
+        "h": 30,
+        "iterations": 2,
+        "name": "Maze::AStar",
+        "w": 200
+      },
+      "elapsed_ns": 13294010425.0,
+      "exitcode": 0,
+      "name": "Maze::AStar",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=335147\n@profile create-done ns=3970214242\n@profile prepare-done ns=6670760224\n@profile warmup-1 ns=8993322115\n@profile warmup-done ns=8993707112\n@profile run-1 ns=10988102436\n@profile run-2 ns=13130109536\nMaze::AStar: OK 6771\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 4428,
+        "iterations": 3,
+        "n": 5,
+        "name": "CLBG::Fannkuchredux"
+      },
+      "elapsed_ns": 283740192.0,
+      "exitcode": 0,
+      "name": "CLBG::Fannkuchredux",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=222517\n@profile create-done ns=644240\n@profile prepare-done ns=1023862\n@profile warmup-1 ns=63286199\n@profile warmup-done ns=63655571\n@profile run-1 ns=91515716\n@profile run-2 ns=119780234\n@profile run-3 ns=148493217\nCLBG::Fannkuchredux: OK 4428\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 2236342953,
+        "h": 30,
+        "iterations": 3,
+        "name": "CLBG::Mandelbrot",
+        "w": 30
+      },
+      "elapsed_ns": 1534463285.0,
+      "exitcode": 0,
+      "name": "CLBG::Mandelbrot",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=307507\n@profile create-done ns=880291\n@profile prepare-done ns=1277802\n@profile warmup-1 ns=358411057\n@profile warmup-done ns=358817431\n@profile run-1 ns=709869020\n@profile run-2 ns=1050574240\n@profile run-3 ns=1375213701\nCLBG::Mandelbrot: OK 2236342953\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 338796608,
+        "iterations": 2,
+        "name": "CLBG::Nbody"
+      },
+      "elapsed_ns": 5938937412.0,
+      "exitcode": 0,
+      "name": "CLBG::Nbody",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=235006\n@profile create-done ns=1081195\n@profile prepare-done ns=3019151\n@profile warmup-1 ns=1994193071\n@profile warmup-done ns=1995034475\n@profile run-1 ns=3955710911\n@profile run-2 ns=5813135648\nCLBG::Nbody: OK 338796608\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 1052168784,
+        "iterations": 10,
+        "name": "CLBG::Spectralnorm",
+        "size": 45
+      },
+      "elapsed_ns": 4573497117.0,
+      "exitcode": 0,
+      "name": "CLBG::Spectralnorm",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=231358\n@profile create-done ns=1520802\n@profile prepare-done ns=1912733\n@profile warmup-1 ns=391859956\n@profile warmup-2 ns=734911368\n@profile warmup-done ns=735262489\n@profile run-1 ns=1076293201\n@profile run-2 ns=1492061239\n@profile run-3 ns=1843672527\n@profile run-4 ns=2238848380\n@profile run-5 ns=2640266257\n@profile run-6 ns=3002202479\n@profile run-7 ns=3511500311\n@profile run-8 ns=3840683398\n@profile run-9 ns=4144760103\n@profile run-10 ns=4447509544\nCLBG::Spectralnorm: OK 1052168784\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 200,
+        "iterations": 3,
+        "name": "Compress::BWTEncode",
+        "size": 50
+      },
+      "elapsed_ns": 588367800.0,
+      "exitcode": 0,
+      "name": "Compress::BWTEncode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=207250\n@profile create-done ns=610187\n@profile prepare-done ns=2527871\n@profile warmup-1 ns=123996509\n@profile warmup-done ns=124332011\n@profile run-1 ns=240590815\n@profile run-2 ns=357447352\n@profile run-3 ns=476292715\nCompress::BWTEncode: OK 200\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 100204,
+        "iterations": 3,
+        "name": "Compress::BWTDecode",
+        "size": 51
+      },
+      "elapsed_ns": 280299819.0,
+      "exitcode": 0,
+      "name": "Compress::BWTDecode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=205465\n@profile create-done ns=618104\n@profile prepare-done ns=123336456\n@profile warmup-1 ns=133760121\n@profile warmup-done ns=134102166\n@profile run-1 ns=145351336\n@profile run-2 ns=155427415\n@profile run-3 ns=165468922\nCompress::BWTDecode: OK 100204\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 56,
+        "iterations": 3,
+        "name": "Compress::HuffEncode",
+        "size": 52
+      },
+      "elapsed_ns": 210378241.0,
+      "exitcode": 0,
+      "name": "Compress::HuffEncode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=240048\n@profile create-done ns=698369\n@profile prepare-done ns=2973195\n@profile warmup-1 ns=26055046\n@profile warmup-done ns=26394586\n@profile run-1 ns=47454712\n@profile run-2 ns=67863885\n@profile run-3 ns=88086003\nCompress::HuffEncode: OK 56\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 100212,
+        "iterations": 3,
+        "name": "Compress::HuffDecode",
+        "size": 53
+      },
+      "elapsed_ns": 207745908.0,
+      "exitcode": 0,
+      "name": "Compress::HuffDecode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=202235\n@profile create-done ns=606476\n@profile prepare-done ns=24217490\n@profile warmup-1 ns=52816954\n@profile warmup-done ns=53154243\n@profile run-1 ns=66890239\n@profile run-2 ns=80079551\n@profile run-3 ns=94115797\nCompress::HuffDecode: OK 100212\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 56,
+        "iterations": 3,
+        "name": "Compress::ArithEncode",
+        "size": 54
+      },
+      "elapsed_ns": 376787623.0,
+      "exitcode": 0,
+      "name": "Compress::ArithEncode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=422501\n@profile create-done ns=1074989\n@profile prepare-done ns=4129066\n@profile warmup-1 ns=83176836\n@profile warmup-done ns=84060748\n@profile run-1 ns=137487692\n@profile run-2 ns=181749986\n@profile run-3 ns=220169581\nCompress::ArithEncode: OK 56\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 100220,
+        "iterations": 3,
+        "name": "Compress::ArithDecode",
+        "size": 55
+      },
+      "elapsed_ns": 471864144.0,
+      "exitcode": 0,
+      "name": "Compress::ArithDecode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=268188\n@profile create-done ns=853785\n@profile prepare-done ns=73575271\n@profile warmup-1 ns=144633376\n@profile warmup-done ns=145107596\n@profile run-1 ns=213682767\n@profile run-2 ns=270543161\n@profile run-3 ns=324694543\nCompress::ArithDecode: OK 100220\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 208,
+        "iterations": 3,
+        "name": "Compress::LZWEncode",
+        "size": 60
+      },
+      "elapsed_ns": 286674280.0,
+      "exitcode": 0,
+      "name": "Compress::LZWEncode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=227184\n@profile create-done ns=723042\n@profile prepare-done ns=2947030\n@profile warmup-1 ns=53636445\n@profile warmup-done ns=53987669\n@profile run-1 ns=86944136\n@profile run-2 ns=120763995\n@profile run-3 ns=155570432\nCompress::LZWEncode: OK 208\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 100244,
+        "iterations": 3,
+        "name": "Compress::LZWDecode",
+        "size": 61
+      },
+      "elapsed_ns": 274798581.0,
+      "exitcode": 0,
+      "name": "Compress::LZWDecode",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=426588\n@profile create-done ns=1125994\n@profile prepare-done ns=70553192\n@profile warmup-1 ns=81703072\n@profile warmup-done ns=82062260\n@profile run-1 ns=93550505\n@profile run-2 ns=106060597\n@profile run-3 ns=117971256\nCompress::LZWDecode: OK 100244\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 7020,
+        "count": 10,
+        "iterations": 1,
+        "name": "Distance::Jaro",
+        "size": 5
+      },
+      "elapsed_ns": 265061994.0,
+      "exitcode": 0,
+      "name": "Distance::Jaro",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=215718\n@profile create-done ns=758819\n@profile prepare-done ns=58473552\n@profile warmup-1 ns=86725853\n@profile warmup-done ns=87059946\n@profile run-1 ns=114263383\nDistance::Jaro: OK 7020\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    },
+    {
+      "config": {
+        "checksum": 42,
+        "count": 2,
+        "iterations": 1,
+        "name": "Distance::NGram",
+        "size": 500
+      },
+      "elapsed_ns": 912167614.0,
+      "exitcode": 0,
+      "name": "Distance::NGram",
+      "runtime": "jit",
+      "status": "passed",
+      "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+      "stderr_truncated": false,
+      "stdout": "@profile create-start ns=224828\n@profile create-done ns=765011\n@profile prepare-done ns=235871307\n@profile warmup-1 ns=538846017\n@profile warmup-done ns=539408240\n@profile run-1 ns=745780533\nDistance::NGram: OK 42\nSummary: 1, 1, 0\n",
+      "stdout_truncated": false,
+      "timeout_ms": 600000
+    }
+  ],
+  "runtime": "jit",
+  "purpose": "All fifty unchanged test-size checksums with JIT enabled; debug build on shared host with concurrent correctness work. VM fallback allowed; native coverage and speed acceptance are not established.",
+  "runtime_source_commit": "33a85f9",
+  "binary_sha256": "d29fa1c0617e36a821bc03abd3a8a7dde62af6377788e8d8765d008593641b3e",
+  "source_sha256": {
+    "src/jit.rs": "091aaa753c5ec3bead78146715ffeb42ef76f7c137c9ebc3fbc96c8d6dd05e7c",
+    "src/jit_disabled.rs": "42c8dbbd4b2e23b3c117cfaeb182ebe05f049f7a447c33ae8b134b285962de98",
+    "src/vm.rs": "822f3730a9590ea1366a667768cb323a68b18af57aaaa886ffda5045a47b64ed"
+  },
+  "workload_sha256": {
+    "benchmarks/langarena/test.json": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+    "benchmarks/langarena/port.kujo": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+    "benchmarks/langarena/profile.kujo": "19680c8554c2d15a2527564de0ff6d89d04a07544c6493c660bb7ae37c807007"
+  },
+  "summary": {
+    "passed": 50,
+    "failed": 0,
+    "timeout": 0,
+    "total": 50,
+    "deadline_ms_per_case": 600000
+  },
+  "superseded_preflight": {
+    "reason": "Preliminary argument candidate was stopped when native tag transfer and depth accounting changed. This report is a complete rerun of the final frozen runtime.",
+    "passed": 17,
+    "cancelled": 1
+  }
+}

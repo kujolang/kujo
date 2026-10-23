@@ -14,9 +14,10 @@ a target to test, not a guarantee. This document explains the execution order;
 - The latest recorded complete test-size run passed 50 VM and 50 interpreter
   cases on candidate `ebe4258`. It predates subsequent runtime fixes and cannot
   certify current HEAD. No complete current production-size run exists.
-- All 50 test-size cases passed with JIT enabled at `c4a07cd`; MergeSort
-  required a longer retry after the initial two-minute debug deadline. VM fallback
-  was allowed. This establishes neither full native coverage nor speed acceptance.
+- All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
+  per-case debug deadline. VM fallback was allowed. This establishes neither full
+  native coverage nor speed acceptance. The earlier `c4a07cd` run and its MergeSort
+  timeout/retry remain in the evidence history.
 - Experimental JIT immediate argument guards, callback errors, whole-function
   integer global assignments and Boolean return/callback tags have regression
   coverage. Native scalar operand type guards also have regression coverage.
@@ -95,6 +96,24 @@ Work in this order, with a separate small commit for each coherent change:
 
 Gate: new regressions fail on the baseline and pass on the fix; existing relevant
 contracts and the library suite pass. JIT stays opt-in until broader acceptance.
+
+### Remaining native ownership gate
+
+The string-global audit still returns an integer marker after compilation. Fix the
+complete owned-value path before widening owned argument guards or claiming typed
+native parity: named loads, callable values, locals, operand-stack joins, operators,
+callback arguments/results, assignments and returns must agree on representation.
+Use the reference VM for operator/capability/error contracts that need a runtime
+helper; retain native immediate operations where their guards prove the types.
+
+Ownership storage must scale with live values, not loop iterations or the total
+number of loads. Verify release at pops, overwritten/dead locals, normal returns
+and every error exit, including recursion and nested callbacks. An append-only
+handle vector lasting for a whole invocation is not an acceptable final design.
+Keep alias snapshots and copy-on-write behavior intact across those boundaries.
+Only then enable `ReleaseDeadLocal` with real lifetime semantics and test copied
+parameter loops as native coverage. Add bounded-live-storage and allocation/scaling
+checks alongside both-runtime semantic tests before claiming a performance win.
 
 ## 4. Remove measured VM and representation costs
 
