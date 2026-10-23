@@ -290,6 +290,33 @@ pub(crate) struct DepthCache {
     scans: usize,
 }
 impl DepthCache {
+    // A Weak reference makes Arc::make_mut allocate even with one strong owner.
+    // Discard only the identities about to be mutated, after reading their depth
+    // bounds. Other cached identities retain automatic external-write invalidation.
+    fn release_path(&mut self, root: &Value, path: &[Access]) {
+        let mut cursor = root;
+        for index in 0..=path.len() {
+            match cursor {
+                Value::Struct { fields, .. } => {
+                    self.structs.remove(&(Arc::as_ptr(fields) as usize));
+                }
+                Value::Array(items) | Value::DenseIntDict(items) => {
+                    self.arrays.remove(&(Arc::as_ptr(items) as usize));
+                }
+                Value::Dict(items) => {
+                    self.dictionaries.remove(&(Arc::as_ptr(items) as usize));
+                }
+                Value::IntDict(items) => {
+                    self.integer_dictionaries.remove(&(Arc::as_ptr(items) as usize));
+                }
+                _ => {}
+            }
+            let Some(access) = path.get(index) else { break };
+            let Some(child) = collection_child(cursor, access) else { break };
+            cursor = child;
+        }
+    }
+
     fn remember(&mut self, value: &Value, bound: usize) {
         match value {
             Value::Struct { fields, .. } => {
@@ -405,6 +432,7 @@ pub(crate) fn update_checked(
     let bound = cache.depth(root).max(Value::nesting_depth(&value) + path.len());
     let limit = crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH;
     let bound = if bound <= limit {
+        cache.release_path(root, path);
         update_in_place(root, path, value)?;
         bound
     } else {
@@ -427,6 +455,63 @@ pub(crate) fn update_checked(
 #[cfg(test)]
 mod state_depth_tests {
     use super::*;
+    #[test]
+    fn cached_unique_assignment_preserves_arc_allocations() {
+        let mut root = Value::array(vec![Value::array(vec![Value::Int(0); 100])]);
+        let path = [Access::Index(Value::Int(0)), Access::Index(Value::Int(-1))];
+        let identities = |root: &Value| {
+            let Value::Array(outer) = root else { panic!() };
+            let Value::Array(inner) = &outer[0] else { panic!() };
+            (Arc::as_ptr(outer), Arc::as_ptr(inner))
+        };
+        let mut cache = DepthCache::default();
+        update_checked(&mut root, &path, Value::Int(1), &mut cache).unwrap();
+        let before = identities(&root);
+        for value in 2..102 {
+            update_checked(&mut root, &path, Value::Int(value), &mut cache).unwrap();
+            assert_eq!(identities(&root), before, "unique assignment allocated a new Arc");
+        }
+    }
+
+    #[test]
+    fn released_depth_identities_still_detect_external_growth_and_allow_repair() {
+        // Match the existing over-depth fixture's stack allowance for teardown
+        // of native-created values deeper than the language permits.
+        std::thread::Builder::new()
+            .stack_size(32 * 1024 * 1024)
+            .spawn(|| {
+                let mut root = Value::array(vec![Value::Int(0)]);
+                let path = [Access::Index(Value::Int(0))];
+                let mut cache = DepthCache::default();
+                update_checked(&mut root, &path, Value::Int(1), &mut cache).unwrap();
+                let mut deep = Value::Int(0);
+                for _ in 0..crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+                    deep = Value::array(vec![deep]);
+                }
+                // Model a native write outside this cache: make_mut must still invalidate
+                // the remembered root identity, otherwise the next write accepts it.
+                let Value::Array(items) = &mut root else { panic!() };
+                Arc::make_mut(items).push(deep);
+                let snapshot = root.clone();
+                assert!(update_checked(&mut root, &path, Value::Int(2), &mut cache).is_err());
+                let (Value::Array(current), Value::Array(saved)) = (&root, &snapshot) else {
+                    panic!()
+                };
+                assert!(Arc::ptr_eq(current, saved), "rejected write changed the root");
+                update_checked(
+                    &mut root,
+                    &[Access::Index(Value::Int(1))],
+                    Value::Int(3),
+                    &mut cache,
+                )
+                .unwrap();
+                assert!(Value::equals(&root, &Value::array(vec![Value::Int(1), Value::Int(3)])));
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+
     #[test]
     fn state_container_writes_reuse_rows_and_cached_depths() {
         for dictionary in [false, true] {

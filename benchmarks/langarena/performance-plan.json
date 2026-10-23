@@ -1029,6 +1029,15 @@
       "scope": "all fifty test-size checksums, JSON candidate 27fd599",
       "result": "100/100 passed: VM50 and interpreter50; exact names/checksums compared against unchanged test.json. Not production or JIT verification.",
       "evidence": "checksums-2026-10-23-json-candidate.json"
+    },
+    {
+      "scope": "nested assignment depth-cache Arc allocation fix",
+      "result": "Reproducer failed before fix because both unique array Arc identities changed on one cached write; afterward stable over100 writes. 16 assignment unit tests,31 targeted integrations and full library1008 passed/8 ignored. Both-runtime alias regression passed. Optimized benchmark impact pending.",
+      "evidence": [
+        "src/interpreter/assignment.rs:state_depth_tests",
+        "tests/nested_assignment.rs:cached_nested_writes_preserve_snapshots_and_external_mutations",
+        "docs/COLLECTION_PROFILING.md"
+      ]
     }
   ]
 }

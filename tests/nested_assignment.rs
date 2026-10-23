@@ -9,6 +9,38 @@ fn run(source: &str, vm: bool) {
     run_with_jit(source, vm, false);
 }
 
+#[test]
+fn cached_nested_writes_preserve_snapshots_and_external_mutations() {
+    for vm in [false, true] {
+        run(
+            r#"
+            struct State { rows: array }
+            mut state := State { rows: [[0, 1]] }
+            mut i := 0
+            while i < 100 {
+                let snapshot := state
+                state.rows[0][-1] = i
+                assert_equal(snapshot.rows[0][0], 0)
+                if i > 0 { assert_equal(snapshot.rows[0][1], i - 1) }
+                i += 1
+            }
+            let saved := state
+            state.rows = [[2, 3], [4, 5]]
+            state.rows[-1][-1] = 8
+            assert_equal(saved.rows, [[0, 99]])
+            assert_equal(state.rows, [[2, 3], [4, 8]])
+            mut dict := {"rows": state.rows}
+            let original := dict
+            i = 0
+            while i < 100 { dict["rows"][0][0] = i i += 1 }
+            assert_equal(original["rows"], [[2, 3], [4, 8]])
+            assert_equal(dict["rows"], [[99, 3], [4, 8]])
+        "#,
+            vm,
+        );
+    }
+}
+
 fn run_with_jit(source: &str, vm: bool, jit: bool) {
     let mut parser = Parser::new(tokenize(source).expect("tokenize"));
     let parsed = parser.parse_with_diagnostics();

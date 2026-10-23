@@ -580,3 +580,25 @@ optimized end-to-end speed comparison remain separate pending gates.
 
 Raw counts and measurement scope:
 [allocation evidence](../benchmarks/langarena/json-serialization-allocations-2026-10-23.json).
+
+Seven alternating baseline/candidate rounds subsequently passed all 56 checksums.
+JSON generation's measured-loop median fell from 13.0618s to 4.4466s; the median
+paired speedup was 2.916x. Base64, LogParser and test-size QuickSort controls were
+approximately unchanged. This shared-laptop result is preliminary, not an idle
+Linux or full-suite acceptance result. See the complete samples and provenance in
+[paired measurements](../benchmarks/langarena/paired-json-2026-10-23.json).
+
+### Nested assignment cache identities
+
+DepthCache uses weak Arc identities to invalidate cached bounds on external
+copy-on-write mutations. Those weak references also made `Arc::make_mut`
+allocate a new control block even for a uniquely owned container. A reduced
+two-level array assignment reproduced changed outer and inner Arc identities
+after a single cached write, despite reusing the underlying vector buffers.
+
+After reading the depth bound, checked assignment now releases cache identities
+on the mutation path and restores conservative bounds after the write. Other
+identities retain external-write invalidation. The deterministic regression
+requires stable Arc identities across 100 unique writes; alias, external growth,
+rejected-write and depth-repair checks guard semantics. This does not claim
+zero total allocations or a measured whole-benchmark speedup.

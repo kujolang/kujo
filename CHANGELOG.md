@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid depth-cache-induced `Arc` allocations on nested assignment paths while
+  preserving copy-on-write alias isolation and nesting-limit validation.
+
 - Serialize JSON from borrowed runtime values instead of constructing a second
   owned JSON tree. Preserve exact compact/pretty output, validation order,
   nesting limits and secret redaction. Correct the documented key ordering to
