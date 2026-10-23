@@ -1100,13 +1100,22 @@
     },
     {
       "id": "jit_short_circuit_native_merge",
-      "status": "open native coverage gap: short-circuit function compilation is rejected by the Cranelift verifier for mismatched block argument counts and a non-dominating value. VM fallback passes; do not count as native success. Audit does not establish when this failure was introduced.",
-      "evidence": "jit-boolean-flow-2026-10-23.json"
+      "status": "Fixed reproduced verifier failure: branch edges carry paired payload/type arguments and establish destination stack depth for unconditional jumps and fallthroughs as well as conditional edges. All four compiler entrypoints restore typed stack joins; native compilation and direct recursion are tested. No timing claim.",
+      "evidence": [
+        "../../tests/jit_short_circuit.rs",
+        "../../tests/jit_boolean_returns.rs",
+        "jit-short-circuit-2026-10-23.json"
+      ]
     },
     {
       "id": "vm_ordering_not_exception_unwind",
       "status": "Fixed reproduced VM ordering and logical-negation errors bypassing catch handlers. Those operations now use the existing result/error unwind path; interpreter, VM and JIT recovery tests pass.",
       "evidence": "../../tests/jit_scalar_operator_types.rs"
+    },
+    {
+      "id": "jit_cold_callback_recursion_depth",
+      "status": "Fixed in 8256219: callback Return/ReturnNone decrements recursion depth when removing the frame. Baseline sequential cold calls fail at call 256; regression covers 600 calls for each return opcode.",
+      "evidence": "../../tests/jit_callback_depth.rs"
     }
   ],
   "verification": [
@@ -1225,6 +1234,16 @@
       "evidence": [
         "../../tests/jit_scalar_operator_types.rs",
         "jit-scalar-types-2026-10-23.json"
+      ]
+    },
+    {
+      "scope": "native short-circuit stack joins and cold callback recursion depth",
+      "result": "Baseline source cases pass reference runtimes but native compilation fails verifier checks; independent cold callback returns fail after 256 sequential calls. Final combined run: 1008 library tests passed, 8 ignored, and 38 selected integration tests passed. New regressions cover both runtimes and native compilation, skipped effects/traps, loop conditions, direct recursion, mixed Bool/Int stack joins across all four compiler entrypoints, and 600 cold callbacks per return opcode. Initial parallel library run hit a process-cancellation pipe test failure; two four-thread library runs passed. A script fixture was corrected to use script input constants rather than nonexistent call-frame arguments. Follow-up 15-run audit confirms short-circuit native coverage; Boolean global reads remain incorrect in native code. No timing or production acceptance claim.",
+      "evidence": [
+        "../../tests/jit_short_circuit.rs",
+        "../../tests/jit_callback_depth.rs",
+        "../../tests/jit_boolean_returns.rs",
+        "jit-short-circuit-2026-10-23.json"
       ]
     }
   ]

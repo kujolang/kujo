@@ -17,8 +17,10 @@ a target to test, not a guarantee. This document explains the execution order;
 - Experimental JIT integer argument guards, callback errors, whole-function
   integer global assignments and Boolean return/callback tags have regression
   coverage. Native scalar operand type guards also have regression coverage.
-  General-value globals, loop-JIT bindings and short-circuit native block merges
-  remain open. Checked native
+  Native short-circuit joins now carry operand payloads and type tags; regressions
+  cover native execution, mixed stack joins and direct recursion. Cold callbacks
+  now restore recursion depth after return. General-value globals and loop-entry
+  binding types remain open. Checked native
   integer arithmetic now has overflow/divisor guards and regression coverage.
   Native float/general-value compilation remains unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score

@@ -3459,7 +3459,9 @@ impl BytecodeTranslator {
             | OpCode::LessThan
             | OpCode::GreaterThan
             | OpCode::LessEqual
-            | OpCode::GreaterEqual => (2, 1),
+            | OpCode::GreaterEqual
+            | OpCode::And
+            | OpCode::Or => (2, 1),
             OpCode::AddInPlace(_) => (1, 1),
             OpCode::AppendConstStringInPlace(_, _) => (0, 0),
             OpCode::AppendConstCharInPlace(_, _) => (0, 0),
@@ -4165,8 +4167,8 @@ impl BytecodeTranslator {
                                 // all predecessors (including back-edges) are processed
                                 self.loop_header_pcs.insert(*target);
 
-                                // Add i64 parameters for each expected stack value
-                                for _ in 0..expected_depth {
+                                // Each stack value carries an i64 payload and scalar kind
+                                for _ in 0..expected_depth * 2 {
                                     builder.append_block_param(block, types::I64);
                                 }
                                 // Record the expected stack depth for this block
@@ -4434,7 +4436,7 @@ impl BytecodeTranslator {
             OpCode::Jump(target) => {
                 if let Some(&target_block) = self.blocks.get(target) {
                     // Pass current stack as block arguments
-                    let args: Vec<_> = self.value_stack.clone();
+                    let args = self.stack_edge_args(builder, *target)?;
                     builder.ins().jump(target_block, &args);
                     return Ok(true); // Terminates block
                 } else {
@@ -4458,11 +4460,10 @@ impl BytecodeTranslator {
 
                     // Pass the current stack as block arguments to both branches
                     // This ensures both paths have access to the condition value
-                    let args: Vec<_> = self.value_stack.clone();
+                    let args = self.stack_edge_args(builder, *target)?;
 
                     // Record expected stack depth for both blocks
-                    self.block_entry_stack_depth.insert(*target, args.len());
-                    self.block_entry_stack_depth.insert(next_pc, args.len());
+                    self.prepare_stack_edge(builder, next_pc)?;
 
                     builder.ins().brif(is_false, target_block, &args, fallthrough_block, &args);
                     return Ok(true); // Terminates block
@@ -4486,11 +4487,10 @@ impl BytecodeTranslator {
                     })?;
 
                     // Pass the current stack as block arguments to both branches
-                    let args: Vec<_> = self.value_stack.clone();
+                    let args = self.stack_edge_args(builder, *target)?;
 
                     // Record expected stack depth for both blocks
-                    self.block_entry_stack_depth.insert(*target, args.len());
-                    self.block_entry_stack_depth.insert(next_pc, args.len());
+                    self.prepare_stack_edge(builder, next_pc)?;
 
                     builder.ins().brif(is_true, target_block, &args, fallthrough_block, &args);
                     return Ok(true); // Terminates block
@@ -4504,7 +4504,7 @@ impl BytecodeTranslator {
                 // STEP 11 FIX: Loop headers have block parameters, pass current stack
                 if let Some(&target_block) = self.blocks.get(target) {
                     // Pass current stack values as arguments to the loop header
-                    let args: Vec<_> = self.value_stack.clone();
+                    let args = self.stack_edge_args(builder, *target)?;
                     builder.ins().jump(target_block, &args);
                     return Ok(true); // Terminates block
                 } else {
@@ -5350,18 +5350,13 @@ impl BytecodeTranslator {
                 if let Some(return_value) = self.value_stack.pop() {
                     self.persist_local_slots_to_vm(builder);
                     if let Some(ctx) = self.ctx_param {
-                        // OPTIMIZATION: Use jit_set_return_int for fast integer returns
-                        // This stores the return value directly in VMContext instead of
-                        // pushing to the VM stack, avoiding stack operations overhead.
-                        // The VM will check has_return_value and use return_value directly.
-                        if let Some(set_return_int_func) = self.set_return_int_func {
-                            let inst = if let Some(set_return) = self.scalar_return_func {
-                                let kind = self.scalar_kind(builder, return_value);
-                                builder.ins().call(set_return, &[ctx, return_value, kind])
-                            } else {
-                                builder.ins().call(set_return_int_func, &[ctx, return_value])
-                            };
-                            let _result = builder.inst_results(inst)[0];
+                        // Scalar return metadata is available in every entrypoint,
+                        // including loop and script compilation.
+                        if let Some(set_return) = self.scalar_return_func {
+                            let kind = self.scalar_kind(builder, return_value);
+                            builder.ins().call(set_return, &[ctx, return_value, kind]);
+                        } else if let Some(set_return_int) = self.set_return_int_func {
+                            builder.ins().call(set_return_int, &[ctx, return_value]);
                         } else if let Some(push_int_func) = self.push_int_func {
                             // Fallback: Use original jit_push_int (slower path)
                             let inst = builder.ins().call(push_int_func, &[ctx, return_value]);
@@ -6039,6 +6034,58 @@ impl BytecodeTranslator {
             .get(&value)
             .copied()
             .unwrap_or_else(|| builder.ins().iconst(types::I64, 0))
+    }
+
+    /// Each operand-stack slot crosses a control-flow edge as (payload, kind).
+    /// Create explicit parameters before translating the destination: local SSA
+    /// variables can append their own parameters when the block is sealed.
+    fn prepare_stack_edge(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        pc: usize,
+    ) -> Result<(), String> {
+        let depth = self.value_stack.len();
+        if let Some(&expected) = self.block_entry_stack_depth.get(&pc) {
+            if expected != depth {
+                return Err(format!(
+                    "Inconsistent JIT stack depth at PC {pc}: {depth}, expected {expected}"
+                ));
+            }
+        } else {
+            let block =
+                *self.blocks.get(&pc).ok_or_else(|| format!("Undefined JIT block at PC {pc}"))?;
+            for _ in 0..depth * 2 {
+                builder.append_block_param(block, types::I64);
+            }
+            self.block_entry_stack_depth.insert(pc, depth);
+        }
+        Ok(())
+    }
+
+    fn stack_edge_args(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        pc: usize,
+    ) -> Result<Vec<cranelift::prelude::Value>, String> {
+        self.prepare_stack_edge(builder, pc)?;
+        let mut args = Vec::with_capacity(self.value_stack.len() * 2);
+        for &value in &self.value_stack {
+            args.push(value);
+            args.push(self.scalar_kind(builder, value));
+        }
+        Ok(args)
+    }
+
+    fn restore_block_stack(&mut self, builder: &FunctionBuilder, pc: usize, block: Block) {
+        if let Some(&depth) = self.block_entry_stack_depth.get(&pc) {
+            self.value_stack.clear();
+            let params = builder.block_params(block);
+            for slot in 0..depth {
+                let value = params[slot * 2];
+                self.value_stack.push(value);
+                self.scalar_kinds.insert(value, params[slot * 2 + 1]);
+            }
+        }
     }
 
     fn capture_scalar_kind(
@@ -6980,15 +7027,7 @@ impl JitCompiler {
                 current_block = start_block;
             }
 
-            if let Some(&expected_depth) = translator.block_entry_stack_depth.get(&offset) {
-                translator.value_stack.clear();
-                let params = builder.block_params(start_block);
-                if params.len() >= expected_depth {
-                    for i in 0..expected_depth {
-                        translator.value_stack.push(params[i]);
-                    }
-                }
-            }
+            translator.restore_block_stack(&builder, offset, start_block);
 
             if !entry_block_sealed {
                 builder.seal_block(entry_block);
@@ -7009,7 +7048,7 @@ impl JitCompiler {
                 if let Some(&block) = translator.blocks.get(&pc) {
                     if block != current_block {
                         if !block_terminated {
-                            let args: Vec<_> = translator.value_stack.clone();
+                            let args = translator.stack_edge_args(&mut builder, pc)?;
                             builder.ins().jump(block, &args);
                         }
 
@@ -7027,28 +7066,7 @@ impl JitCompiler {
                         current_block = block;
                         block_terminated = false;
 
-                        if let Some(&expected_depth) = translator.block_entry_stack_depth.get(&pc) {
-                            translator.value_stack.clear();
-                            let existing_params = builder.block_params(block);
-
-                            if existing_params.len() >= expected_depth {
-                                for i in 0..expected_depth {
-                                    translator.value_stack.push(existing_params[i]);
-                                }
-                            } else {
-                                for _ in 0..expected_depth {
-                                    let param = builder.append_block_param(block, types::I64);
-                                    translator.value_stack.push(param);
-                                }
-                            }
-
-                            if std::env::var("DEBUG_JIT").is_ok() {
-                                eprintln!(
-                                    "JIT: Block at PC {} has {} params, stack restored",
-                                    pc, expected_depth
-                                );
-                            }
-                        }
+                        translator.restore_block_stack(&builder, pc, block);
                     }
                 }
 
@@ -7663,7 +7681,7 @@ impl JitCompiler {
                         // If current block not terminated, add fallthrough jump
                         if !block_terminated {
                             // Pass current stack as arguments
-                            let args: Vec<_> = translator.value_stack.clone();
+                            let args = translator.stack_edge_args(&mut builder, pc)?;
                             builder.ins().jump(block, &args);
                         }
 
@@ -7684,29 +7702,7 @@ impl JitCompiler {
 
                         // If this block expects stack values, use block parameters
                         // NOTE: For loop headers, parameters were added during create_blocks
-                        if let Some(&expected_depth) = translator.block_entry_stack_depth.get(&pc) {
-                            translator.value_stack.clear();
-                            let existing_params = builder.block_params(block);
-
-                            if existing_params.len() >= expected_depth {
-                                // Loop header - use existing parameters
-                                for i in 0..expected_depth {
-                                    translator.value_stack.push(existing_params[i]);
-                                }
-                            } else {
-                                // Not a loop header - add parameters now
-                                for _ in 0..expected_depth {
-                                    let param = builder.append_block_param(block, types::I64);
-                                    translator.value_stack.push(param);
-                                }
-                            }
-                            if std::env::var("DEBUG_JIT").is_ok() {
-                                eprintln!(
-                                    "JIT: Block at PC {} has {} params, stack restored",
-                                    pc, expected_depth
-                                );
-                            }
-                        }
+                        translator.restore_block_stack(&builder, pc, block);
                     }
                 }
 
@@ -7949,7 +7945,7 @@ impl JitCompiler {
                 if let Some(&block) = translator.blocks.get(&pc) {
                     if block != current_block {
                         if !block_terminated {
-                            let args: Vec<_> = translator.value_stack.clone();
+                            let args = translator.stack_edge_args(&mut builder, pc)?;
                             builder.ins().jump(block, &args);
                         }
 
@@ -7962,21 +7958,7 @@ impl JitCompiler {
                         block_terminated = false;
 
                         // Use existing block parameters for loop headers
-                        if let Some(&expected_depth) = translator.block_entry_stack_depth.get(&pc) {
-                            translator.value_stack.clear();
-                            let existing_params = builder.block_params(block);
-
-                            if existing_params.len() >= expected_depth {
-                                for i in 0..expected_depth {
-                                    translator.value_stack.push(existing_params[i]);
-                                }
-                            } else {
-                                for _ in 0..expected_depth {
-                                    let param = builder.append_block_param(block, types::I64);
-                                    translator.value_stack.push(param);
-                                }
-                            }
-                        }
+                        translator.restore_block_stack(&builder, pc, block);
                     }
                 }
 
@@ -8525,7 +8507,7 @@ impl JitCompiler {
                     if block != current_block {
                         // If current block not terminated, add fallthrough jump
                         if !block_terminated {
-                            let args: Vec<_> = translator.value_stack.clone();
+                            let args = translator.stack_edge_args(&mut builder, pc)?;
                             builder.ins().jump(block, &args);
                         }
 
@@ -8540,21 +8522,7 @@ impl JitCompiler {
                         block_terminated = false;
 
                         // Restore stack from block parameters
-                        if let Some(&expected_depth) = translator.block_entry_stack_depth.get(&pc) {
-                            translator.value_stack.clear();
-                            let existing_params = builder.block_params(block);
-
-                            if existing_params.len() >= expected_depth {
-                                for i in 0..expected_depth {
-                                    translator.value_stack.push(existing_params[i]);
-                                }
-                            } else {
-                                for _ in 0..expected_depth {
-                                    let param = builder.append_block_param(block, types::I64);
-                                    translator.value_stack.push(param);
-                                }
-                            }
-                        }
+                        translator.restore_block_stack(&builder, pc, block);
                     }
                 }
 

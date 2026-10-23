@@ -72,6 +72,7 @@ fn direct_native_return_tags_survive_recursion_and_reset_between_calls() {
     for (name, source, checks) in [
         ("mixed", "func mixed(x) { if x > 0 { return true } return 7 } return mixed", vec![(2, Value::Bool(true)), (-2, Value::Int(7)), (3, Value::Bool(true)), (-3, Value::Int(7))]),
         ("positive", "func positive(x) { return x > 0 } return positive", vec![(2, Value::Bool(true)), (-2, Value::Bool(false))]),
+        ("short_recursive", "func short_recursive(x) { return x == 0 || short_recursive(x - 1) } return short_recursive", vec![(4, Value::Bool(true)), (0, Value::Bool(true))]),
         ("recursive", "func recursive(x) { if x > 0 { return recursive(x - 1) } return true } return recursive", vec![(4, Value::Bool(true)), (0, Value::Bool(true))]),
     ] {
         let mut parser = Parser::new(lexer::tokenize(source).unwrap());

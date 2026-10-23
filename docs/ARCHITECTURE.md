@@ -97,6 +97,8 @@ path calls Rust to construct the canonical error. Other JIT helper failures and
 general-value type behavior remain separate verification requirements.
 The callback bytecode path preserves assignment values for the following `Pop`,
 matching main-VM stores, including when the callee has not been compiled yet.
+Returning from that path decrements recursion depth alongside removing the frame,
+so sequential callbacks do not consume the recursion budget.
 Native scalar return metadata distinguishes Boolean predicates from integers.
 Callback argument/result helpers carry that distinction, and local SSA payloads
 have companion type variables for branch merges. Direct recursion preserves the
@@ -105,7 +107,12 @@ scalar tags before performing native work; error paths preserve canonical
 diagnostics and unwind handlers. Scalar equality includes type identity, and
 logical bytecodes normalize truthiness to Boolean values. This is not
 general-value native parity: Boolean global loads and loop-entry type metadata
-remain separate work; short-circuit fallback is not evidence of native coverage.
+remain separate work. Operand-stack joins carry paired payload/type parameters
+through conditional branches, unconditional jumps, fallthroughs and backedges;
+all incoming edges must agree on logical stack depth. All four compiler
+entrypoints restore these pairs, and scalar returns carry their tag even from
+loop/script compilation. Short-circuit regressions require native compilation
+and verify skipped effects, skipped traps, loop conditions and direct recursion.
 Whole-function integer JIT assignments resolve named bindings at runtime instead
 of treating every assignment target as a zero-initialized local. Existing globals
 use the environment's checked assignment; unresolved names remain function-local.

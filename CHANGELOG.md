@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile experimental native short-circuit branches with paired operand values
+  and type tags at every join, including unconditional jumps and fallthroughs.
+  Preserve scalar return metadata in function, loop and script entrypoints.
+
 - Restore recursion depth after cold bytecode callbacks return, preventing repeated
   sequential callbacks from incorrectly exhausting the VM recursion limit.
 
