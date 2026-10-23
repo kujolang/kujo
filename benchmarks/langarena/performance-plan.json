@@ -126,7 +126,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -164,7 +166,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -202,7 +206,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -240,7 +246,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -278,7 +286,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -316,7 +326,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -354,7 +366,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -392,7 +406,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -430,7 +446,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -468,7 +486,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -506,7 +526,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -544,7 +566,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -582,7 +606,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -620,7 +646,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -658,7 +686,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -696,7 +726,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -734,7 +766,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -772,7 +806,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -810,7 +846,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -848,7 +886,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -886,7 +926,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -924,7 +966,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -962,7 +1006,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1000,7 +1046,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1038,7 +1086,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1076,7 +1126,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1114,7 +1166,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1152,7 +1206,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1190,7 +1246,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1228,7 +1286,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1266,7 +1326,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1304,7 +1366,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1342,7 +1406,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1380,7 +1446,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1418,7 +1486,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1456,7 +1526,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1494,7 +1566,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1532,7 +1606,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1570,7 +1646,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1608,7 +1686,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1646,7 +1726,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1684,7 +1766,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1722,7 +1806,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1760,7 +1846,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1798,7 +1886,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1836,7 +1926,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1874,7 +1966,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1912,7 +2006,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1950,7 +2046,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1988,7 +2086,9 @@
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
         "checksums-2026-10-23-indexed-bindings-vm.json",
-        "checksums-2026-10-23-indexed-bindings-interpreter.json"
+        "checksums-2026-10-23-indexed-bindings-interpreter.json",
+        "checksums-2026-10-23-guarded-append-release-jit.json",
+        "checksums-2026-10-23-guarded-append-release-vm.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2545,6 +2645,16 @@
       "scope": "all50 interpreter test-size checksums at b286c5d",
       "result": "All 50 unchanged test-size interpreter checksums at b286c5d. Debug diagnostic overlapping local builds/tests; predates fixed-dictionary allocation, specialized loop and fused append fixes. Not current HEAD, production or speed acceptance. No measurement sidecars for interpreter mode.",
       "evidence": "checksums-2026-10-23-indexed-bindings-interpreter.json"
+    },
+    {
+      "scope": "all50 release jit test-size checksums at ac3fe6c",
+      "result": "All50 unchanged test-size jit checksums at ac3fe6c release. Fallback allowed for JIT. Instrumented diagnostics overlapping further builds; not competitive timing, production or current HEAD acceptance. Predates callback resume fix and retains audited operator gaps.",
+      "evidence": "checksums-2026-10-23-guarded-append-release-jit.json"
+    },
+    {
+      "scope": "all50 release vm test-size checksums at ac3fe6c",
+      "result": "All50 unchanged test-size vm checksums at ac3fe6c release. Fallback allowed for JIT. Instrumented diagnostics overlapping further builds; not competitive timing, production or current HEAD acceptance. Predates callback resume fix and retains audited operator gaps.",
+      "evidence": "checksums-2026-10-23-guarded-append-release-vm.json"
     }
   ]
 }
