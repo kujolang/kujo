@@ -58,7 +58,9 @@
         "../../tests/jit_immediate_arguments.rs",
         "jit-immediate-arguments-2026-10-23.json",
         "jit-owned-values-2026-10-23.json",
-        "probes/native_owned_values.kujo"
+        "probes/native_owned_values.kujo",
+        "../../src/native_owned.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
       ]
     },
     {
@@ -1909,6 +1911,14 @@
         "call-frame-allocation-2026-10-23.json",
         "../../tests/bytecode_call_profile.rs",
         "../../tests/call_frame_ownership_contracts.rs"
+      ]
+    },
+    {
+      "scope": "staged native owned-value lifetime foundation",
+      "result": "9 isolated ownership/codec tests pass within1018 library passes (8 ignored). Bounded roots across100000 load/overwrite operations,10000 frame cleanups and25000 model-checked mixed operations; stale handles, current-frame ownership, explicit return promotion, COW snapshots, immediate payload bits and identity exhaustion covered. Not integrated with generated native operations: all eight owned-value failures remain open; no new native coverage or speed claim.",
+      "evidence": [
+        "../../src/native_owned.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
       ]
     }
   ]

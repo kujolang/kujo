@@ -103,6 +103,10 @@ contracts and the library suite pass. JIT stays opt-in until broader acceptance.
 
 ### Remaining native ownership gate
 
+The [owned-value lifetime foundation](../../docs/NATIVE_OWNERSHIP.md) now provides
+recyclable roots, frame-local cleanup and explicit return promotion. It is not yet
+connected to native code generation; its isolated tests are not a parity pass.
+
 The [owned-value audit](jit-owned-values-2026-10-23.json) reproduces eight native
 mismatches on `0c77115`, with VM/interpreter agreement and measured native entries
 for every probe: string/array/dictionary returns, native callback returns and

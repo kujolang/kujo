@@ -34,6 +34,8 @@ pub mod lsp_references;
 pub mod lsp_rename;
 pub mod lsp_server;
 pub mod module;
+#[cfg(feature = "runtime-jit")]
+mod native_owned;
 mod native_scalar;
 #[cfg(feature = "runtime-network")]
 pub mod network_policy;

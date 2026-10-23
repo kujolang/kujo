@@ -37,6 +37,8 @@ mod lsp_rename;
 mod lsp_server;
 mod mcp_make;
 mod module;
+#[cfg(feature = "runtime-jit")]
+mod native_owned;
 mod native_scalar;
 mod network_policy;
 mod optimizer;
