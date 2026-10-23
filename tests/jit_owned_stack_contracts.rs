@@ -76,6 +76,20 @@ fn native_owned_equality_compares_values_not_root_identities() {
     );
 }
 
+#[test]
+fn native_owned_local_snapshots_survive_discard_and_overwrite() {
+    let mut source = String::from(
+        "func retained(x) { let value := str(x) str(x + 1) return value }\n\
+         func replaced(x) { mut value := str(x) value = str(x + 1) return value }\n\
+         func reused(x) { let value := str(x) return value == value }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(retained(7), \"7\")\nassert_equal(replaced(7), \"8\")\nassert_equal(reused(7), true)\n");
+    }
+    source.push_str("print(\"PASS\")\n");
+    check(source, &["retained", "replaced", "reused"]);
+}
+
 fn check(source: String, functions: &[&str]) {
     let directory = tempfile::tempdir().unwrap();
     let file = directory.path().join("owned_result.kujo");

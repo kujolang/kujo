@@ -117,6 +117,14 @@ contracts and the library suite pass. JIT stays opt-in until broader acceptance.
 
 ### Remaining native ownership gate
 
+Converted operand paths now release Pop, overwritten SSA locals, VM-marshaled
+callable/arguments and consumed equality/logical operands. Dup and SSA local loads
+receive distinct roots. Compiled discard/overwrite/callback tests keep root-slot
+capacity at most four at both 8 and 128 repetitions. This is deterministic storage
+evidence, not a suite speedup or proof of every opcode's lifetime behavior.
+`ReleaseDeadLocal`, legacy collection helpers, loop-entry/local persistence and
+wider owned-entry coverage still require their own checks before the gate closes.
+
 The latest [borrowed-equality audit](jit-owned-equality-2026-10-23.json) passes all
 11 focused probes in interpreter, VM and JIT modes with native entries verified.
 Owned comparisons now use `Value::equals` instead of handle identity. This closes

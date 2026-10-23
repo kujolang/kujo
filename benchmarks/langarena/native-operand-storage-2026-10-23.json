@@ -1,0 +1,37 @@
+{
+  "scope": "Deterministic generated-native root-storage regression; not competitive timing",
+  "baseline_source": "e2797da",
+  "baseline": {
+    "pattern": "load, duplicate, pop, pop",
+    "repetitions": 8,
+    "root_slot_capacity": 16,
+    "result": "New regression failed capacity <=4"
+  },
+  "candidate": {
+    "patterns": [
+      "discard",
+      "overwrite",
+      "callback"
+    ],
+    "repetitions": [
+      8,
+      128
+    ],
+    "verified_root_slot_capacity_upper_bound": 4,
+    "live_roots_after_return": 0,
+    "vm_stack_after_return": "empty",
+    "returned_array": "same Arc identity as source; source reference count restored"
+  },
+  "verification": {
+    "library_passed": 1028,
+    "library_ignored": 8,
+    "unique_targeted_integrations_passed": 39,
+    "expanded_generated_storage_cases_passed": 6
+  },
+  "evidence": [
+    "../../src/jit.rs:compiled_discarded_owned_operands_reuse_root_storage",
+    "../../src/native_owned.rs:lazy_operand_duplicates_belong_to_the_current_scope",
+    "../../tests/jit_owned_stack_contracts.rs:native_owned_local_snapshots_survive_discard_and_overwrite"
+  ],
+  "limits": "No baseline128 capacity measured because baseline test stops at first failure. Does not certify ReleaseDeadLocal, all legacy collection helpers, direct-recursive owned argument consumption, loop entry/persistence or broader owned entry. No elapsed-time speedup claim."
+}

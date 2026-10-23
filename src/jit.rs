@@ -782,6 +782,34 @@ pub unsafe extern "C" fn jit_load_variable(
     0
 }
 
+#[no_mangle]
+// SAFETY: ctx is live and exclusively borrowed. The root store validates the
+// operand identity and creates a distinct root in the current activation.
+pub unsafe extern "C" fn jit_duplicate_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    match ctx.owned_roots.duplicate(value, kind) {
+        Ok(value) => value,
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
+#[no_mangle]
+// SAFETY: ctx is live and exclusively borrowed. Only a validated current-scope
+// root can be released; payloads are never treated as raw pointers.
+pub unsafe extern "C" fn jit_release_operand(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    match ctx.owned_roots.release(value, kind) {
+        Ok(()) => 0,
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            1
+        }
+    }
+}
+
 /// Load a named operand without leaving hidden values on the VM stack.
 #[no_mangle]
 // SAFETY: ctx and the referenced name/local/global maps remain live for this
@@ -3431,6 +3459,8 @@ struct BytecodeTranslator {
     owned_truth_func: Option<FuncRef>,
     owned_equal_func: Option<FuncRef>,
     operand_load_func: Option<FuncRef>,
+    operand_duplicate_func: Option<FuncRef>,
+    operand_release_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3583,6 +3613,8 @@ impl BytecodeTranslator {
             owned_truth_func: None,
             owned_equal_func: None,
             operand_load_func: None,
+            operand_duplicate_func: None,
+            operand_release_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -4630,6 +4662,8 @@ impl BytecodeTranslator {
                     let result = self.pop_value()?;
                     self.finish_float_operation(builder, owned_merge, result, 1);
                 }
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
             }
 
             OpCode::NotEqual => {
@@ -4649,6 +4683,8 @@ impl BytecodeTranslator {
                     let result = self.pop_value()?;
                     self.finish_float_operation(builder, owned_merge, result, 1);
                 }
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
             }
 
             OpCode::LessThan => {
@@ -4710,6 +4746,8 @@ impl BytecodeTranslator {
                 let a = self.pop_value()?;
                 let a_truthy = self.scalar_truth(builder, a);
                 let b_truthy = self.scalar_truth(builder, b);
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
                 let truth = builder.ins().band(a_truthy, b_truthy);
                 let result = builder.ins().uextend(types::I64, truth);
                 let kind = builder.ins().iconst(types::I64, 1);
@@ -4722,6 +4760,8 @@ impl BytecodeTranslator {
                 let a = self.pop_value()?;
                 let a_truthy = self.scalar_truth(builder, a);
                 let b_truthy = self.scalar_truth(builder, b);
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
                 let truth = builder.ins().bor(a_truthy, b_truthy);
                 let result = builder.ins().uextend(types::I64, truth);
                 let kind = builder.ins().iconst(types::I64, 1);
@@ -4731,11 +4771,13 @@ impl BytecodeTranslator {
 
             // Stack operations
             OpCode::Pop => {
-                self.pop_value()?;
+                let value = self.pop_value()?;
+                self.release_operand(builder, value);
             }
 
             OpCode::Dup => {
                 let val = self.peek_value()?;
+                let val = self.duplicate_operand(builder, val);
                 self.push_value(val);
             }
 
@@ -4896,6 +4938,11 @@ impl BytecodeTranslator {
                         } else {
                             builder.ins().call(stack_push, &[ctx, *arg_val]);
                         }
+                    }
+
+                    self.release_operand(builder, function_value);
+                    for arg in &arg_vals {
+                        self.release_operand(builder, *arg);
                     }
 
                     // Call jit_call_function
@@ -5749,6 +5796,7 @@ impl BytecodeTranslator {
                         let value = builder.use_var(variable);
                         let kind = builder.use_var(Variable::new(variable.index() + 1));
                         self.scalar_kinds.insert(value, kind);
+                        let value = self.duplicate_operand(builder, value);
                         self.push_value(value);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
@@ -5820,6 +5868,7 @@ impl BytecodeTranslator {
                             let value = builder.use_var(variable);
                             let kind = builder.use_var(Variable::new(variable.index() + 1));
                             self.scalar_kinds.insert(value, kind);
+                            let value = self.duplicate_operand(builder, value);
                             self.push_value(value);
                             return Ok(false);
                         }
@@ -5891,9 +5940,7 @@ impl BytecodeTranslator {
                 if self.use_local_slots {
                     if let Some(&variable) = self.local_variables.get(name) {
                         self.dirty_local_names.insert(name.clone());
-                        builder.def_var(variable, value);
-                        let kind = self.scalar_kind(builder, value);
-                        builder.def_var(Variable::new(variable.index() + 1), kind);
+                        self.store_native_local(builder, variable, value);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
                             eprintln!("JIT: StoreVar '{}' using SSA variable {:?}", name, variable);
@@ -5970,9 +6017,7 @@ impl BytecodeTranslator {
                     if self.use_local_slots {
                         if let Some(&variable) = self.local_variables.get(name) {
                             self.dirty_local_names.insert(name.clone());
-                            builder.def_var(variable, value);
-                            let kind = self.scalar_kind(builder, value);
-                            builder.def_var(Variable::new(variable.index() + 1), kind);
+                            self.store_native_local(builder, variable, value);
                             if self.int_dict_slots.contains(slot) {
                                 if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                     let zero = builder.ins().iconst(types::I64, 0);
@@ -6080,13 +6125,15 @@ impl BytecodeTranslator {
                         let value = builder.use_var(variable);
                         let kind = builder.use_var(Variable::new(variable.index() + 1));
                         self.scalar_kinds.insert(value, kind);
+                        let value = self.duplicate_operand(builder, value);
                         self.push_value(value);
                         return Ok(false);
                     }
 
                     if name == param_name {
                         if let Some(direct_param) = self.direct_arg_param {
-                            self.push_value(direct_param);
+                            let value = self.duplicate_operand(builder, direct_param);
+                            self.push_value(value);
                             return Ok(false);
                         }
                     }
@@ -6141,9 +6188,7 @@ impl BytecodeTranslator {
                         }
                     }
                     if let Some(&variable) = self.local_variables.get(name) {
-                        builder.def_var(variable, value);
-                        let kind = self.scalar_kind(builder, value);
-                        builder.def_var(Variable::new(variable.index() + 1), kind);
+                        self.store_native_local(builder, variable, value);
                         if self.int_dict_slots.contains(slot) {
                             if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                 let zero = builder.ins().iconst(types::I64, 0);
@@ -6169,7 +6214,8 @@ impl BytecodeTranslator {
                 if name == param_name {
                     // FAST PATH: Use the direct Cranelift parameter value
                     if let Some(direct_param) = self.direct_arg_param {
-                        self.push_value(direct_param);
+                        let value = self.duplicate_operand(builder, direct_param);
+                        self.push_value(value);
                         if std::env::var("DEBUG_JIT").is_ok() {
                             eprintln!("JIT direct-arg: LoadVar '{}' using direct parameter", name);
                         }
@@ -6188,6 +6234,7 @@ impl BytecodeTranslator {
                         let value = builder.use_var(variable);
                         let kind = builder.use_var(Variable::new(variable.index() + 1));
                         self.scalar_kinds.insert(value, kind);
+                        let value = self.duplicate_operand(builder, value);
                         self.push_value(value);
                     } else if let (Some(ctx), Some(load_func)) =
                         (self.ctx_param, self.operand_load_func)
@@ -6208,6 +6255,7 @@ impl BytecodeTranslator {
                     let value = builder.use_var(variable);
                     let kind = builder.use_var(Variable::new(variable.index() + 1));
                     self.scalar_kinds.insert(value, kind);
+                    let value = self.duplicate_operand(builder, value);
                     self.push_value(value);
                 } else {
                     // Fall back to runtime call
@@ -6296,6 +6344,11 @@ impl BytecodeTranslator {
                             }
                         }
 
+                        self.release_operand(builder, function_value);
+                        for arg in &arg_vals {
+                            self.release_operand(builder, *arg);
+                        }
+
                         // Call jit_call_function
                         let null_ptr = builder.ins().iconst(types::I64, 0);
                         let arg_count_val = builder.ins().iconst(types::I64, *arg_count as i64);
@@ -6358,6 +6411,76 @@ impl BytecodeTranslator {
             let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
             builder.ins().call(set_return, &[ctx, zero, kind]);
         }
+    }
+
+    fn duplicate_operand(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        value: cranelift::prelude::Value,
+    ) -> cranelift::prelude::Value {
+        let (Some(ctx), Some(helper)) = (self.ctx_param, self.operand_duplicate_func) else {
+            return value;
+        };
+        let kind = self.scalar_kind(builder, value);
+        let owned = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_owned::OWNED);
+        let copy = builder.create_block();
+        let immediate = builder.create_block();
+        let join = builder.create_block();
+        builder.append_block_param(join, types::I64);
+        builder.ins().brif(owned, copy, &[], immediate, &[]);
+        builder.seal_block(copy);
+        builder.seal_block(immediate);
+        builder.switch_to_block(immediate);
+        builder.ins().jump(join, &[value]);
+        builder.switch_to_block(copy);
+        let call = builder.ins().call(helper, &[ctx, value, kind]);
+        let result = builder.inst_results(call)[0];
+        if let Some(error_func) = self.runtime_error_func {
+            let check = builder.ins().call(error_func, &[ctx]);
+            self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
+        }
+        builder.ins().jump(join, &[result]);
+        builder.seal_block(join);
+        builder.switch_to_block(join);
+        let result = builder.block_params(join)[0];
+        self.scalar_kinds.insert(result, kind);
+        result
+    }
+
+    fn release_operand(&self, builder: &mut FunctionBuilder, value: cranelift::prelude::Value) {
+        let (Some(ctx), Some(helper)) = (self.ctx_param, self.operand_release_func) else {
+            return;
+        };
+        let kind = self.scalar_kind(builder, value);
+        let owned = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_owned::OWNED);
+        let release = builder.create_block();
+        let join = builder.create_block();
+        builder.ins().brif(owned, release, &[], join, &[]);
+        builder.seal_block(release);
+        builder.switch_to_block(release);
+        let call = builder.ins().call(helper, &[ctx, value, kind]);
+        self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+        builder.ins().jump(join, &[]);
+        builder.seal_block(join);
+        builder.switch_to_block(join);
+    }
+
+    fn store_native_local(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        variable: Variable,
+        value: cranelift::prelude::Value,
+    ) {
+        // Stores peek at their operand. The local must own a separate root so
+        // discarding the operand cannot invalidate the stored value.
+        let copy = self.duplicate_operand(builder, value);
+        let old = builder.use_var(variable);
+        let old_kind = builder.use_var(Variable::new(variable.index() + 1));
+        self.scalar_kinds.insert(old, old_kind);
+        self.release_operand(builder, old);
+        builder.def_var(variable, copy);
+        let kind = self.scalar_kind(builder, copy);
+        builder.def_var(Variable::new(variable.index() + 1), kind);
     }
 
     fn begin_owned_equality(
@@ -6812,6 +6935,8 @@ impl JitCompiler {
             ("jit_owned_truth", 2, true),
             ("jit_owned_equal", 5, true),
             ("jit_load_operand", 3, true),
+            ("jit_duplicate_operand", 3, true),
+            ("jit_release_operand", 3, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -6832,6 +6957,8 @@ impl JitCompiler {
                 "jit_owned_truth" => translator.owned_truth_func = Some(function),
                 "jit_owned_equal" => translator.owned_equal_func = Some(function),
                 "jit_load_operand" => translator.operand_load_func = Some(function),
+                "jit_duplicate_operand" => translator.operand_duplicate_func = Some(function),
+                "jit_release_operand" => translator.operand_release_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -6891,6 +7018,8 @@ impl JitCompiler {
         // Register runtime helper symbols so JIT can find them
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
+        builder.symbol("jit_duplicate_operand", jit_duplicate_operand as *const u8);
+        builder.symbol("jit_release_operand", jit_release_operand as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
@@ -9423,6 +9552,68 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn compiled_discarded_owned_operands_reuse_root_storage() {
+        for repetitions in [8, 128] {
+            for pattern in ["discard", "overwrite", "callback"] {
+                let mut compiler = JitCompiler::new().unwrap();
+                let mut chunk = BytecodeChunk::new();
+                chunk.local_names.push("saved".into());
+                for _ in 0..repetitions {
+                    chunk.emit(OpCode::LoadVar("source".into()));
+                    if pattern == "callback" {
+                        chunk.emit(OpCode::LoadVar("str".into()));
+                        chunk.emit(OpCode::Call(1));
+                        chunk.emit(OpCode::Pop);
+                    } else {
+                        chunk.emit(OpCode::Dup);
+                        if pattern == "overwrite" {
+                            chunk.emit(OpCode::StoreLocal(0));
+                        }
+                        chunk.emit(OpCode::Pop);
+                        chunk.emit(OpCode::Pop);
+                    }
+                }
+                chunk.emit(if pattern == "overwrite" {
+                    OpCode::LoadLocal(0)
+                } else {
+                    OpCode::LoadVar("source".into())
+                });
+                chunk.emit(OpCode::Return);
+                let compiled = compiler.compile_function(&chunk, "discard_owned").unwrap();
+                let source = Arc::new(vec![Value::Int(7)]);
+                let mut globals = HashMap::from([("source".into(), Value::Array(source.clone()))]);
+                let mut names = ["source", "saved", "str"]
+                    .into_iter()
+                    .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
+                    .collect();
+                let mut stack = Vec::new();
+                let mut vm = VM::new();
+                let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+                context.var_names_ptr = &mut names;
+                context.vm_ptr = (&mut vm as *mut VM).cast();
+                assert_eq!(
+                    invoke_compiled_fn(compiled, &mut context),
+                    0,
+                    "{pattern}: {:?}",
+                    context.runtime_error
+                );
+                assert!(context.runtime_error.is_none(), "{:?}", context.runtime_error);
+                assert!(
+                    matches!(context.take_return_value(context.return_value), Value::Array(value) if Arc::ptr_eq(&value, &source))
+                );
+                let (depth, live, slots, _) = context.owned_roots.storage_state();
+                assert_eq!((depth, live), (0, 0));
+                assert!(
+                    slots <= 4,
+                    "{pattern}: {repetitions} repetitions retained {slots} root slots"
+                );
+                assert_eq!(Arc::strong_count(&source), 2);
+                assert!(stack.is_empty());
+            }
+        }
+    }
 
     #[test]
     fn native_owned_truth_borrows_values_and_rejects_retired_roots() {

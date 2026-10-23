@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Release discarded native owned operands and overwritten SSA locals promptly,
+  preserving separate roots for duplicates and local reads. Release marshaled
+  callback arguments and consumed equality/logical operands without changing value
+  semantics. Remaining legacy native collection paths are still experimental.
+
 - Compare tagged native owned operands by ordinary value equality instead of
   handle identity, including equal strings, nested collections and mixed types.
 

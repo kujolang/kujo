@@ -117,6 +117,24 @@ impl NativeCallRoots {
         self.values.clone_value(payload, kind)
     }
 
+    pub(crate) fn duplicate(&mut self, payload: i64, kind: i64) -> Result<i64, OwnershipError> {
+        match kind {
+            0..=3 => Ok(payload),
+            OWNED => {
+                let value = self.values.clone_value(payload, kind)?;
+                self.encode(value).map(|(payload, _)| payload)
+            }
+            _ => Err(OwnershipError::InvalidKind(kind)),
+        }
+    }
+
+    pub(crate) fn release(&mut self, payload: i64, kind: i64) -> Result<(), OwnershipError> {
+        if kind == OWNED && self.values.frames.len() != self.depth {
+            return Err(OwnershipError::NotCurrentFrame);
+        }
+        self.values.release_payload(payload, kind)
+    }
+
     pub(crate) fn owned_truth(&self, payload: i64) -> Result<bool, OwnershipError> {
         self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
     }
@@ -380,6 +398,24 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn lazy_operand_duplicates_belong_to_the_current_scope() {
+        let mut roots = NativeCallRoots::default();
+        roots.enter().unwrap();
+        let (parent, kind) = roots.encode(Value::Str(Arc::new("parent".into()))).unwrap();
+        roots.enter().unwrap();
+        assert_eq!(roots.release(parent, kind), Err(OwnershipError::NotCurrentFrame));
+        let copy = roots.duplicate(parent, kind).unwrap();
+        assert_ne!(parent, copy);
+        roots.release(copy, kind).unwrap();
+        assert!(roots.clone_value(parent, kind).is_ok());
+        assert_eq!(roots.release(parent, kind), Err(OwnershipError::NotCurrentFrame));
+        roots.leave().unwrap();
+        roots.release(parent, kind).unwrap();
+        roots.leave().unwrap();
+        assert_eq!(roots.storage_state().1, 0);
+    }
 
     #[test]
     fn equality_borrows_roots_and_rejects_stale_or_invalid_operands() {
