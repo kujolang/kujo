@@ -2370,6 +2370,11 @@
       "scope": "native whole-function indexed reads",
       "result": "1038 library pass, 8 ignored, 36 integrations pass; VM/interpreter/JIT parity, native execution and bounded root storage verified. No speed/current-all50 claim.",
       "evidence": "native-indexed-reads-2026-10-23.json"
+    },
+    {
+      "scope": "native whole-function indexed writes",
+      "result": "1040 library pass,8 ignored,42 integrations pass; both-runtime/JIT semantics, binding kinds, bounded roots and unique-array storage reuse verified. No speed/current-all50 claim.",
+      "evidence": "native-indexed-writes-2026-10-23.json"
     }
   ]
 }

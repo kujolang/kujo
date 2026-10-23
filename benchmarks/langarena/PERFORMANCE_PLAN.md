@@ -137,7 +137,15 @@ verified; bounded root storage is not evidence of reduced string copying or spee
 semantics rather than caller-slot integer-dictionary helpers. The regression
 covers typed array/dictionary results, strings, bytes, negative/fractional indices,
 snapshot isolation and catchable errors. This does not widen owned argument entry
-or validate indexed writes and specialized integer-dictionary loop paths.
+or validate specialized integer-dictionary loop paths.
+
+The [indexed-write audit](native-indexed-writes-2026-10-23.json) now covers native
+whole-function writes through callee SSA/named bindings, mutable/let/const checks,
+owned values, alias isolation and catchable bounds/byte errors. It shares the VM's
+existing value update implementation, mechanically checked against the original.
+Unique array storage survives 1,000 writes; 8/128 compiled writes retain bounded
+root storage. Specialized loop helpers and remaining representation costs still
+need separate audits; no elapsed-time improvement is claimed.
 
 The [constant append audit](native-constant-appends-2026-10-23.json) repairs callee
 binding selection, retains embedded suffix literals, preserves COW snapshots and

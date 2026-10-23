@@ -382,3 +382,54 @@ fn native_indexed_reads_preserve_binding_types_and_errors() {
     );
     check(source, &["array_read", "text_read", "byte_read", "dict_read", "checked"]);
 }
+
+#[test]
+fn native_indexed_writes_preserve_values_bindings_and_errors() {
+    let mut source = String::from(
+        r#"
+        let values := [1,2]
+        let data := bytes([0,255])
+        let word := "hello"
+        mut after := 0
+        func array_write(x) { mut local := values local[-1] = x after += 1 return local }
+        func byte_write(x) { mut local := data local[-1] = x after += 1 return local }
+        func dict_write(x) { mut local := {} local[x] = word return local[x] }
+        func text_key(x) { mut local := {} local[str(x)] = values return local[str(x)] }
+        func saved(x) { mut local := values let snapshot := local local[0] = x return snapshot }
+        func immutable(x) { let local := values if x < 0 { local[0] = x } return local }
+        func constant(x) { const local := values if x < 0 { local[0] = x } return local }
+        func bounds(x) { mut local := values local[x] = 7 after += 1 return local }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(array_write(7), [1,7])\nassert_equal(byte_write(7), bytes([0,7]))\nassert_equal(dict_write(7), word)\nassert_equal(text_key(7), values)\nassert_equal(saved(7), values)\nassert_equal(immutable(7), values)\nassert_equal(constant(7), values)\nassert_equal(bounds(0), [7,2])\n");
+    }
+    source.push_str(
+        r#"
+        mut caught := 0
+        try { byte_write(256) } except error { caught += 1 }
+        try { immutable(-1) } except error { caught += 1 }
+        try { constant(-1) } except error { caught += 1 }
+        try { bounds(99) } except error { caught += 1 }
+        assert_equal(caught, 4)
+        assert_equal(after, 600)
+        assert_equal(array_write(8), [1,8])
+        assert_equal(values, [1,2])
+        assert_equal(data, bytes([0,255]))
+        print("PASS")
+    "#,
+    );
+    check(
+        source,
+        &[
+            "array_write",
+            "byte_write",
+            "dict_write",
+            "text_key",
+            "saved",
+            "immutable",
+            "constant",
+            "bounds",
+        ],
+    );
+}

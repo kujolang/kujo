@@ -4,7 +4,7 @@
 // Provides just-in-time compilation of hot bytecode functions to native machine code.
 
 use crate::benchmarks::profiler::runtime::{self as measurement, Metric};
-use crate::bytecode::{BytecodeChunk, Constant, OpCode};
+use crate::bytecode::{BytecodeBindingKind, BytecodeChunk, Constant, OpCode};
 use crate::interpreter::{
     DenseIntDict, DenseIntDictInt, DenseIntDictIntFull, DictMap, IntDictMap, Value,
 };
@@ -916,6 +916,75 @@ pub unsafe extern "C" fn jit_indexed_read(
         Err(error) => {
             ctx.runtime_error = Some(error);
             0
+        }
+    }
+}
+
+/// Mutate the callee binding through the VM's indexed-write contract.
+#[no_mangle]
+// SAFETY: ctx maps and roots are live and exclusively borrowed. Decode operand
+// handles before borrowing the destination; mutation never invokes user code.
+pub unsafe extern "C" fn jit_indexed_write(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    binding_kind: i64,
+    name_hash: i64,
+    index: i64,
+    index_kind: i64,
+    value: i64,
+    value_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let name = ctx.var_names_ptr.as_ref().and_then(|names| names.get(&(name_hash as u64)));
+    let Some(name) = name else {
+        ctx.runtime_error = Some("Native indexed write has no binding name".into());
+        return 1;
+    };
+    if binding_kind != 0 {
+        let kind = match binding_kind {
+            1 => BytecodeBindingKind::LetImmutable,
+            2 => BytecodeBindingKind::Const,
+            _ => {
+                ctx.runtime_error = Some("Invalid native binding kind".into());
+                return 1;
+            }
+        };
+        ctx.runtime_error = Some(VM::local_mutation_error(kind, name));
+        return 1;
+    }
+    let operands = ctx.owned_roots.clone_value(index, index_kind).and_then(|index| {
+        ctx.owned_roots.clone_value(value, value_kind).map(|value| (index, value))
+    });
+    let (index, value) = match operands {
+        Ok(values) => values,
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            return 1;
+        }
+    };
+    if location == 1 && target_kind != crate::native_owned::OWNED {
+        ctx.runtime_error = Some("Invalid index assignment".into());
+        return 1;
+    }
+    let target = match location {
+        1 => ctx
+            .owned_roots
+            .current_value_mut(target, target_kind)
+            .map_err(|error| format!("Native ownership error: {error:?}")),
+        2 => ctx
+            .locals_ptr
+            .as_mut()
+            .and_then(|locals| locals.get_mut(name))
+            .ok_or_else(|| "Native indexed write binding is missing".to_string()),
+        _ => Err("Invalid native indexed write location".into()),
+    };
+    match target.and_then(|target| VM::set_indexed_value(target, index, value)) {
+        Ok(()) => 0,
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            1
         }
     }
 }
@@ -3655,6 +3724,7 @@ struct BytecodeTranslator {
     dead_local_func: Option<FuncRef>,
     append_local_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
+    indexed_write_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3745,6 +3815,7 @@ struct BytecodeTranslator {
     specialization: Option<SpecializationInfo>,
     /// Local slot names indexed by slot id
     local_names: Vec<String>,
+    local_binding_kinds: Vec<BytecodeBindingKind>,
     /// End of function body (PC index, exclusive)
     function_end: usize,
     /// Local variable slots - maps variable name to stack slot
@@ -3813,6 +3884,7 @@ impl BytecodeTranslator {
             dead_local_func: None,
             append_local_func: None,
             indexed_read_func: None,
+            indexed_write_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -3848,6 +3920,7 @@ impl BytecodeTranslator {
             non_int_locals: std::collections::HashSet::new(),
             use_local_slots: false,
             local_names: Vec::new(),
+            local_binding_kinds: Vec::new(),
             current_function_name: None,
             self_recursion_pending: false,
             self_call_func: None,
@@ -3881,8 +3954,9 @@ impl BytecodeTranslator {
         }
     }
 
-    fn set_local_names(&mut self, local_names: Vec<String>) {
+    fn set_local_names(&mut self, local_names: Vec<String>, kinds: Vec<BytecodeBindingKind>) {
         self.local_names = local_names;
+        self.local_binding_kinds = kinds;
     }
 
     /// Analyze bytecode to find loop headers (backward jump targets) and their expected stack depths.
@@ -5387,6 +5461,62 @@ impl BytecodeTranslator {
             }
 
             OpCode::IndexSetInPlace(slot_index) => {
+                if self.tracks_function_depth {
+                    let index = self.pop_value()?;
+                    let value = self.pop_value()?;
+                    let name = self
+                        .local_names
+                        .get(*slot_index)
+                        .ok_or("Invalid indexed write slot")?
+                        .clone();
+                    let ctx = self.ctx_param.ok_or("Indexed write requires context")?;
+                    let helper = self.indexed_write_func.ok_or("Indexed write requires helper")?;
+                    let (location, target, kind) =
+                        if let Some(&variable) = self.local_variables.get(&name) {
+                            self.dirty_local_names.insert(name.clone());
+                            (
+                                1,
+                                builder.use_var(variable),
+                                builder.use_var(Variable::new(variable.index() + 1)),
+                            )
+                        } else {
+                            (
+                                2,
+                                builder.ins().iconst(types::I64, 0),
+                                builder.ins().iconst(types::I64, 0),
+                            )
+                        };
+                    let binding = match self
+                        .local_binding_kinds
+                        .get(*slot_index)
+                        .copied()
+                        .unwrap_or(BytecodeBindingKind::Mutable)
+                    {
+                        BytecodeBindingKind::Mutable => 0,
+                        BytecodeBindingKind::LetImmutable => 1,
+                        BytecodeBindingKind::Const => 2,
+                    };
+                    let binding = builder.ins().iconst(types::I64, binding);
+                    let location = builder.ins().iconst(types::I64, location);
+                    let hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                    let index_kind = self.scalar_kind(builder, index);
+                    let value_kind = self.scalar_kind(builder, value);
+                    let call = builder.ins().call(
+                        helper,
+                        &[
+                            ctx, location, target, kind, binding, hash, index, index_kind, value,
+                            value_kind,
+                        ],
+                    );
+                    self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                    self.release_operand(builder, index);
+                    self.release_operand(builder, value);
+                    let null = builder.ins().iconst(types::I64, 0);
+                    let null_kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+                    self.scalar_kinds.insert(null, null_kind);
+                    self.push_value(null);
+                    return Ok(false);
+                }
                 // In-place index assignment: var[index] = value
                 // Stack: [value, index] -> []
                 // This is like: tmp = LoadVar(var); tmp[index] = value; StoreVar(var, tmp)
@@ -7293,6 +7423,7 @@ impl JitCompiler {
             ("jit_release_dead_local", 4, true),
             ("jit_append_local", 6, true),
             ("jit_indexed_read", 5, true),
+            ("jit_indexed_write", 10, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -7320,6 +7451,7 @@ impl JitCompiler {
                 "jit_release_dead_local" => translator.dead_local_func = Some(function),
                 "jit_append_local" => translator.append_local_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
+                "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -7380,6 +7512,7 @@ impl JitCompiler {
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
+        builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
         builder.symbol("jit_duplicate_operand", jit_duplicate_operand as *const u8);
         builder.symbol("jit_release_operand", jit_release_operand as *const u8);
         builder.symbol("jit_release_dead_local", jit_release_dead_local as *const u8);
@@ -8011,7 +8144,8 @@ impl JitCompiler {
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
-            translator.set_local_names(chunk.local_names.clone());
+            translator
+                .set_local_names(chunk.local_names.clone(), chunk.local_binding_kinds.clone());
             translator.set_context_param(ctx_ptr);
             translator.set_external_functions(
                 load_var_func_ref,
@@ -8732,7 +8866,8 @@ impl JitCompiler {
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
-            translator.set_local_names(chunk.local_names.clone());
+            translator
+                .set_local_names(chunk.local_names.clone(), chunk.local_binding_kinds.clone());
             translator.set_context_param(vm_context_param);
             let entry_block = translator.begin_function(&mut builder, entry_block)?;
             translator.set_call_function(call_func_ref);
@@ -8783,19 +8918,6 @@ impl JitCompiler {
             // Also allocate stack slots for function parameters
             // Parameters need slots so they can be accessed via the fast path
             translator.allocate_parameter_slots(&mut builder, &chunk.params);
-
-            let mut int_dict_slots = std::collections::HashSet::new();
-            for instr in &chunk.instructions {
-                if let OpCode::IndexSetInPlace(slot) = instr {
-                    int_dict_slots.insert(*slot);
-                }
-            }
-
-            if !int_dict_slots.is_empty() {
-                translator.set_int_dict_slots(int_dict_slots);
-                translator.allocate_int_dict_ptr_slots(&mut builder);
-                translator.initialize_int_dict_ptr_slots(&mut builder);
-            }
 
             let has_loop = chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
             // Initialize parameter slots with values from the func_locals HashMap
@@ -9024,7 +9146,8 @@ impl JitCompiler {
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
-            translator.set_local_names(chunk.local_names.clone());
+            translator
+                .set_local_names(chunk.local_names.clone(), chunk.local_binding_kinds.clone());
             translator.set_context_param(vm_context_param);
             let entry_block = translator.begin_function(&mut builder, entry_block)?;
             translator.set_direct_arg_mode(direct_arg_param, 1);
@@ -9632,7 +9755,8 @@ impl JitCompiler {
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
-            translator.set_local_names(chunk.local_names.clone());
+            translator
+                .set_local_names(chunk.local_names.clone(), chunk.local_binding_kinds.clone());
             translator.set_context_param(vm_context_param);
             translator.set_external_functions(
                 load_var_func_ref,
@@ -9923,6 +10047,109 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_indexed_writes_reuse_unique_storage_and_preserve_snapshots() {
+        let hash = BytecodeTranslator::hash_var_name("local");
+        let mut names = HashMap::from([(hash, "local".into())]);
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.var_names_ptr = &mut names;
+        context.owned_roots.enter().unwrap();
+        let (root, kind) =
+            context.owned_roots.encode(Value::array(vec![Value::Int(0); 100])).unwrap();
+        let pointer = match context.owned_roots.current_value_mut(root, kind).unwrap() {
+            Value::Array(values) => values.as_ptr(),
+            _ => unreachable!(),
+        };
+        for i in 0..1000 {
+            // SAFETY: live exclusive context and a current-scope array root.
+            assert_eq!(
+                unsafe {
+                    jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, i, 0)
+                },
+                0
+            );
+            assert!(
+                matches!(context.owned_roots.current_value_mut(root, kind).unwrap(), Value::Array(values) if values.as_ptr() == pointer)
+            );
+        }
+        let snapshot = context.owned_roots.duplicate(root, kind).unwrap();
+        // SAFETY: same context; the snapshot must force normal copy-on-write.
+        assert_eq!(
+            unsafe { jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, 7, 0) },
+            0
+        );
+        assert!(
+            matches!(context.owned_roots.clone_value(snapshot, kind).unwrap(), Value::Array(values) if matches!(values[0], Value::Int(999)))
+        );
+        // SAFETY: immutable metadata must reject mutation before touching the root.
+        assert_eq!(
+            unsafe { jit_indexed_write(&mut context, 1, root, kind, 1, hash as i64, 0, 0, 9, 0) },
+            1
+        );
+        assert_eq!(
+            context.runtime_error.as_deref(),
+            Some("Cannot mutate immutable let binding: local")
+        );
+        assert!(
+            matches!(context.owned_roots.clone_value(root, kind).unwrap(), Value::Array(values) if matches!(values[0], Value::Int(7)))
+        );
+        context.owned_roots.leave().unwrap();
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+    }
+
+    #[test]
+    fn compiled_indexed_writes_release_operands_and_preserve_caller() {
+        for repetitions in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.local_names.push("local".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.emit(OpCode::LoadVar("seed".into()));
+            chunk.emit(OpCode::StoreLocal(0));
+            chunk.emit(OpCode::Pop);
+            let index = chunk.add_constant(Constant::Int(0));
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadVar("item".into()));
+                chunk.emit(OpCode::LoadConst(index));
+                chunk.emit(OpCode::IndexSetInPlace(0));
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadLocal(0));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "indexed_write").unwrap();
+            let seed = Arc::new(vec![Value::Int(0)]);
+            let mut globals = HashMap::from([
+                ("seed".into(), Value::Array(seed.clone())),
+                ("item".into(), Value::Str(Arc::new("value".into()))),
+            ]);
+            let mut names = ["seed", "item", "local"]
+                .into_iter()
+                .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
+                .collect();
+            let mut caller = vec![Value::Int(77)];
+            let mut stack = Vec::new();
+            let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+            context.var_names_ptr = &mut names;
+            context.local_slots_ptr = &mut caller;
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            assert!(
+                matches!(context.take_return_value(context.return_value), Value::Array(values) if matches!(&values[0], Value::Str(text) if text.as_str() == "value"))
+            );
+            assert!(matches!(caller.as_slice(), [Value::Int(77)]));
+            assert!(matches!(seed[0], Value::Int(0)));
+            let (_, live, capacity, _) = context.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 4, "{repetitions} writes retained {capacity} root slots");
+            assert!(stack.is_empty());
+        }
+    }
 
     #[test]
     fn compiled_indexed_reads_release_temporary_roots() {

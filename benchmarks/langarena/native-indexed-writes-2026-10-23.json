@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-23",
+  "baseline": "3716776",
+  "scope": "Whole-function native indexed writes and shared VM value update routine",
+  "reproduction": "VM/interpreter passed the regression; compiling hot array_write failed in legacy integer-dictionary lowering. Whole-function writes incorrectly used caller-slot helpers/pointer caches rather than callee bindings.",
+  "implementation": [
+    "Carry BytecodeBindingKind metadata into every native translator entrypoint.",
+    "Resolve indexed write targets to callee SSA roots or named locals, reject immutable/const mutation, decode typed operands and propagate errors before later effects.",
+    "Share the existing VM indexed-write body; canonicalized extraction comparison verifies only four dispatcher error paths became Result returns, plus formatting. Byte writes use the same existing validated helper.",
+    "Remove caller-slot integer-dictionary pointer initialization from whole functions. Release consumed index/value roots and emit a tagged Null result."
+  ],
+  "verification": {
+    "library_passed": 1040,
+    "library_ignored": 8,
+    "integration_passed": 42,
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cases": [
+      "Array and byte writes with negative indices",
+      "Integer-key and string-key dictionaries with owned values",
+      "Snapshot and caller isolation",
+      "Let/const mutation failures after native warmup",
+      "Byte range and array bounds failures skip later effects; subsequent valid calls recover",
+      "Assignment writeback and byte-mutation contracts"
+    ],
+    "cost": "1000 native writes reuse the unique array buffer; a snapshot forces normal COW and remains unchanged. Compiled8/128 writes retain at most4 root slots of capacity, zero live roots after return, empty VM stack and unchanged caller sentinel.",
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "limitations": [
+    "No speedup/current-all50/production claim",
+    "Specialized integer-dictionary loop helpers remain separately gated and need audit",
+    "Fused append-until, general owned constant/argument entry and recursive lifetime work remain open",
+    "Existing FixedDict write implementation retained; this extraction is not a claim that all representation costs are eliminated"
+  ],
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-index-write-before.log",
+      "sha256": "44a10cff28765c827d949bb0f5670c6a187563f36ef5efa99f8c18dbfb1c1877"
+    },
+    "after": {
+      "path": "/tmp/kujo-index-write-after.log",
+      "sha256": "0e2d6b7d84d9992a4f23fbcf2209e227a4a1dfa6ac71a0b61963a860a33f35a2"
+    },
+    "contracts": {
+      "path": "/tmp/kujo-index-write-verified.log",
+      "sha256": "fe4034163ac58be3012dd370edeb8be2b148ea4578f4eb908a63a4a77b7184ca"
+    },
+    "extraction": {
+      "path": "/tmp/kujo-index-write-extraction.log",
+      "sha256": "5dbc12c4bb88a57f7dfcae66c48a396ecbb480fc8d4397364db00e17c94ce3b8"
+    },
+    "format": {
+      "path": "/tmp/kujo-index-write-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

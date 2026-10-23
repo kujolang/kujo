@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve native indexed writes in callee bindings using the VM's existing
+  collection update logic. Carry local mutability metadata into compiled code,
+  reject writes through `let`/`const`, preserve copy-on-write snapshots, and
+  propagate invalid-index/byte errors before subsequent effects.
+
 - Resolve indexed reads in experimental native whole functions against their
   callee bindings, using tagged operands and the VM's indexing rules. Preserve
   collection/string/byte result types, negative and fractional read indices,
