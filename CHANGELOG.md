@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route scalar VM arithmetic errors through `try`/`except`, including nested
+  calls and checked integer overflow, while preserving uncaught diagnostics.
+
 - Avoid depth-cache-induced `Arc` allocations on nested assignment paths while
   preserving copy-on-write alias isolation and nesting-limit validation.
 

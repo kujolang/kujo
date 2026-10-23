@@ -1008,7 +1008,7 @@
     {
       "id": "vm_arithmetic_exception_unwind",
       "evidence": "jit-typed-audit-2026-10-23.json",
-      "status": "open at runtime27fd599: division_zero and integer_overflow: interpreter catches; default VM exits4 instead of reaching caller except."
+      "status": "Fixed observed scalar VM arithmetic cases: errors now use existing handler unwind; nested calls, repeated failures, rethrow, compound-add atomicity and uncaught diagnostics pass both-runtime regressions. JIT failures remain separate and open."
     }
   ],
   "verification": [
@@ -1063,6 +1063,14 @@
       "scope": "seven typed JIT/error reproducers across three modes",
       "result": "21 runs recorded with source/output/exit/signal. Ordinary integer division passed all3 (7/2 yields3 by current contract). Six JIT cases fail; two default VM exception-unwind cases also fail. Not benchmark timings.",
       "evidence": "jit-typed-audit-2026-10-23.json"
+    },
+    {
+      "scope": "scalar VM arithmetic exception routing",
+      "result": "Baseline new regression suite:2 failed/1 passed. Fixed:3 arithmetic contracts plus10 assignment contracts passed,25 numeric/diagnostic/CLI JSON contracts passed, full library1008passed/8ignored. Both original VM audit reproducers nowPASS; no JIT fix claimed.",
+      "evidence": [
+        "tests/arithmetic_exception_contracts.rs",
+        "jit-typed-audit-2026-10-23.json"
+      ]
     }
   ]
 }

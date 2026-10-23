@@ -1061,6 +1061,16 @@ impl VM {
         Ok(true)
     }
 
+    fn push_arithmetic_result(&mut self, result: Result<Value, String>) -> Result<(), String> {
+        match result {
+            Ok(value) => {
+                self.stack.push(value);
+                Ok(())
+            }
+            Err(error) => self.throw_runtime_value(Value::Error(error)),
+        }
+    }
+
     fn get_indexed_value(object: &Value, index: &Value) -> Result<Value, String> {
         match (object, index) {
             (Value::Array(_) | Value::Str(_) | Value::Bytes(_), Value::Float(i)) => {
@@ -2299,11 +2309,11 @@ impl VM {
                                 result_str.reserve(new_capacity - result_str.capacity());
                             }
                             result_str.push_str(right_str.as_ref());
-                            Value::Str(left_str)
+                            Ok(Value::Str(left_str))
                         }
-                        (left_val, right_val) => self.binary_op(&left_val, "+", &right_val)?,
+                        (left_val, right_val) => self.binary_op(&left_val, "+", &right_val),
                     };
-                    self.stack.push(result);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::AddInPlace(slot) => {
@@ -2341,8 +2351,8 @@ impl VM {
                         .local_slots
                         .get_mut(slot)
                         .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-                    apply_add(target)?;
-                    self.stack.push(Value::Null);
+                    let result = apply_add(target).map(|()| Value::Null);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::AppendConstStringInPlace(slot, rhs) => {
@@ -2853,35 +2863,35 @@ impl VM {
                 OpCode::Sub => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.binary_op(&left, "-", &right)?;
-                    self.stack.push(result);
+                    let result = self.binary_op(&left, "-", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::Mul => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.binary_op(&left, "*", &right)?;
-                    self.stack.push(result);
+                    let result = self.binary_op(&left, "*", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::Div => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.binary_op(&left, "/", &right)?;
-                    self.stack.push(result);
+                    let result = self.binary_op(&left, "/", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::Mod => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.binary_op(&left, "%", &right)?;
-                    self.stack.push(result);
+                    let result = self.binary_op(&left, "%", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::Negate => {
                     let value = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.unary_op("-", &value)?;
-                    self.stack.push(result);
+                    let result = self.unary_op("-", &value);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 // Comparison operations
