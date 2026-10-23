@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-23",
+  "baseline": "d578926",
+  "scope": "Whole-function native indexed reads; specialized integer-dictionary loops and writes unchanged",
+  "reproduction": "VM/interpreter passed; native compilation of array_read(x) with a local array binding panicked in Cranelift: FunctionBuilder finalized, but block block23 is not sealed. The old lowering selected caller-slot integer-dictionary machinery for every indexed read.",
+  "implementation": [
+    "Load the actual callee local through existing tagged SSA/named binding resolution.",
+    "Use the reference VM get_indexed_value semantics with tagged object/index/result operands and propagate errors before later effects.",
+    "Release consumed object/index roots, retaining only the result. Do not initialize caller-slot dictionary pointers for read-only whole-function sites."
+  ],
+  "verification": {
+    "library_passed": 1038,
+    "library_ignored": 8,
+    "integration_passed": 36,
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cases": [
+      "Arrays returning Boolean, Null, string and nested array values",
+      "Dynamic string-key dictionaries returning owned arrays",
+      "UTF-8 character and byte reads",
+      "Negative indices and fractional array read indices",
+      "Out-of-bounds error after native warmup skips later effects and permits subsequent recovery",
+      "Returned array mutation preserves source aliases"
+    ],
+    "cost": "Compiled 8/128 repeated owned reads retain at most four root slots of vector capacity, zero live roots after return, empty VM stack and unchanged caller slot sentinel.",
+    "native_execution": "Integration check requires successful native compilation for five named functions and at least 100 native entries per named function in aggregate.",
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "limitations": [
+    "No speedup or current all50/production acceptance claimed",
+    "Helper retains ordinary Arc clone costs; no deep-copy or elapsed-time improvement claim",
+    "Native indexed writes and specialized loop helpers still need their own audits",
+    "Owned argument entry remains gated; constants, recursion, production comparisons and platform/release gates remain open"
+  ],
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-index-read-before.log",
+      "sha256": "da066fb3c0c1a8af768d6417a1c78e10a5ed1099c8396facb84f81046d45a302"
+    },
+    "after": {
+      "path": "/tmp/kujo-index-read-after.log",
+      "sha256": "52228df911c40aceaa47b61cd8b2de068c04289549dd3c9bd1bf63399666dc68"
+    },
+    "contracts": {
+      "path": "/tmp/kujo-index-read-verified.log",
+      "sha256": "b59f073572996009a73c338b97f64fb3043412457c0b55f17d50812a064334f1"
+    },
+    "format": {
+      "path": "/tmp/kujo-index-read-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

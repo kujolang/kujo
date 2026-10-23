@@ -883,6 +883,43 @@ pub unsafe extern "C" fn jit_load_operand(
     }
 }
 
+/// Read tagged operands using the VM's indexing and error contracts.
+#[no_mangle]
+// SAFETY: ctx is a live exclusive context. Decode validated root handles rather
+// than treating payloads as pointers; no borrow or pointer escapes this call.
+pub unsafe extern "C" fn jit_indexed_read(
+    ctx: *mut VMContext,
+    object: i64,
+    object_kind: i64,
+    index: i64,
+    index_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let result = ctx
+        .owned_roots
+        .clone_value(object, object_kind)
+        .and_then(|object| {
+            ctx.owned_roots.clone_value(index, index_kind).map(|index| (object, index))
+        })
+        .map_err(|error| format!("Native ownership error: {error:?}"))
+        .and_then(|(object, index)| VM::get_indexed_value(&object, &index))
+        .and_then(|value| {
+            ctx.owned_roots
+                .encode(value)
+                .map_err(|error| format!("Native ownership error: {error:?}"))
+        });
+    match result {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Execute owned operators through the reference VM, including method dispatch.
 #[no_mangle]
 // SAFETY: ctx and its VM are live for this call. Clone operands before entering
@@ -3617,6 +3654,7 @@ struct BytecodeTranslator {
     operand_release_func: Option<FuncRef>,
     dead_local_func: Option<FuncRef>,
     append_local_func: Option<FuncRef>,
+    indexed_read_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3774,6 +3812,7 @@ impl BytecodeTranslator {
             operand_release_func: None,
             dead_local_func: None,
             append_local_func: None,
+            indexed_read_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -5665,6 +5704,30 @@ impl BytecodeTranslator {
             }
 
             OpCode::IndexGetInPlace(slot_index) => {
+                if self.tracks_function_depth {
+                    let index = self.pop_value()?;
+                    // Whole functions own callee bindings; local_slots_ptr
+                    // belongs to their suspended caller, not to this function.
+                    self.translate_instruction(
+                        builder,
+                        pc,
+                        &OpCode::LoadLocal(*slot_index),
+                        constants,
+                    )?;
+                    let object = self.pop_value()?;
+                    let ctx = self.ctx_param.ok_or("Indexed read requires context")?;
+                    let helper = self.indexed_read_func.ok_or("Indexed read requires helper")?;
+                    let object_kind = self.scalar_kind(builder, object);
+                    let index_kind = self.scalar_kind(builder, index);
+                    let call =
+                        builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind]);
+                    let result = builder.inst_results(call)[0];
+                    self.capture_loaded_operand(builder, ctx, result);
+                    self.release_operand(builder, object);
+                    self.release_operand(builder, index);
+                    self.push_value(result);
+                    return Ok(false);
+                }
                 // In-place index read: value = var[index]
                 // Stack: [index] -> [value]
                 // This is like: tmp = LoadVar(var); value = tmp[index]
@@ -7229,6 +7292,7 @@ impl JitCompiler {
             ("jit_release_operand", 3, true),
             ("jit_release_dead_local", 4, true),
             ("jit_append_local", 6, true),
+            ("jit_indexed_read", 5, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -7255,6 +7319,7 @@ impl JitCompiler {
                 "jit_release_operand" => translator.operand_release_func = Some(function),
                 "jit_release_dead_local" => translator.dead_local_func = Some(function),
                 "jit_append_local" => translator.append_local_func = Some(function),
+                "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -7314,6 +7379,7 @@ impl JitCompiler {
         // Register runtime helper symbols so JIT can find them
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
+        builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
         builder.symbol("jit_duplicate_operand", jit_duplicate_operand as *const u8);
         builder.symbol("jit_release_operand", jit_release_operand as *const u8);
         builder.symbol("jit_release_dead_local", jit_release_dead_local as *const u8);
@@ -8720,7 +8786,7 @@ impl JitCompiler {
 
             let mut int_dict_slots = std::collections::HashSet::new();
             for instr in &chunk.instructions {
-                if let OpCode::IndexGetInPlace(slot) | OpCode::IndexSetInPlace(slot) = instr {
+                if let OpCode::IndexSetInPlace(slot) = instr {
                     int_dict_slots.insert(*slot);
                 }
             }
@@ -9857,6 +9923,49 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn compiled_indexed_reads_release_temporary_roots() {
+        for repetitions in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.local_names.push("local".into());
+            chunk.emit(OpCode::LoadVar("seed".into()));
+            chunk.emit(OpCode::StoreLocal(0));
+            chunk.emit(OpCode::Pop);
+            let index = chunk.add_constant(Constant::Int(0));
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadConst(index));
+                chunk.emit(OpCode::IndexGetInPlace(0));
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadConst(index));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "indexed").unwrap();
+            let seed = Arc::new(vec![Value::Str(Arc::new("value".into()))]);
+            let mut globals = HashMap::from([("seed".into(), Value::Array(seed.clone()))]);
+            let mut names =
+                HashMap::from([(BytecodeTranslator::hash_var_name("seed"), "seed".into())]);
+            let mut caller = vec![Value::Int(77)];
+            let mut stack = Vec::new();
+            let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+            context.var_names_ptr = &mut names;
+            context.local_slots_ptr = &mut caller;
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            assert!(matches!(context.take_return_value(context.return_value), Value::Int(0)));
+            assert!(matches!(caller.as_slice(), [Value::Int(77)]));
+            assert!(matches!(&seed[0], Value::Str(text) if text.as_str() == "value"));
+            let (_, live, capacity, _) = context.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 4, "{repetitions} reads retained {capacity} root slots");
+            assert!(stack.is_empty());
+        }
+    }
 
     #[test]
     fn native_append_reuses_unique_storage_and_rejects_outer_roots() {

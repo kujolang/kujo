@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Resolve indexed reads in experimental native whole functions against their
+  callee bindings, using tagged operands and the VM's indexing rules. Preserve
+  collection/string/byte result types, negative and fractional read indices,
+  alias isolation and catchable errors without touching caller slots.
+
 - Preserve native constant string/character appends in the actual callee binding,
   retain embedded string literals, and write owned loop locals back with their
   type tags. Append type errors are catchable and native helper errors stop later

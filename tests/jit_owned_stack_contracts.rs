@@ -346,3 +346,39 @@ fn native_append_and_owned_helper_errors_skip_later_effects() {
     );
     check(source, &["append_text", "append_char", "addition"]);
 }
+
+#[test]
+fn native_indexed_reads_preserve_binding_types_and_errors() {
+    let mut source = String::from(
+        r#"
+        let values := [true, null, "hello", [1,2]]
+        let text := "a🙂z"
+        let data := bytes([0, 127, 255])
+        func array_read(x) { let local := values return local[x] }
+        func text_read(x) { let local := text return local[x] }
+        func byte_read(x) { let local := data return local[x] }
+        func dict_read(x) { let local := {str(x): values} return local[str(x)] }
+        mut after := 0
+        func checked(x) { let local := values let result := local[x] after += 1 return result }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(byte_read(-1), 255)\n");
+        source.push_str("assert_equal(array_read(0), true)\nassert_equal(array_read(1), null)\nassert_equal(array_read(2), \"hello\")\nassert_equal(array_read(-1), [1,2])\nassert_equal(array_read(2.5), \"hello\")\nassert_equal(text_read(1), \"🙂\")\nassert_equal(dict_read(7), values)\nassert_equal(checked(0), true)\n");
+    }
+    source.push_str(
+        r#"
+        mut caught := 0
+        try { checked(99) } except error { caught += 1 }
+        assert_equal(caught, 1)
+        assert_equal(after, 200)
+        assert_equal(checked(2), "hello")
+        assert_equal(after, 201)
+        mut copy := array_read(3)
+        copy[0] = 9
+        assert_equal(values[3], [1,2])
+        print("PASS")
+    "#,
+    );
+    check(source, &["array_read", "text_read", "byte_read", "dict_read", "checked"]);
+}

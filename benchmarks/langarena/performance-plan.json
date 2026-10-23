@@ -2365,6 +2365,11 @@
       "scope": "native constant append and owned loop persistence",
       "result": "1037 library tests passed, 8 ignored; 37 integrations passed including VM/interpreter/JIT append and helper-error regressions. Bounded root capacity and unique-buffer reuse verified; no timing/current-all50 claim.",
       "evidence": "native-constant-appends-2026-10-23.json"
+    },
+    {
+      "scope": "native whole-function indexed reads",
+      "result": "1038 library pass, 8 ignored, 36 integrations pass; VM/interpreter/JIT parity, native execution and bounded root storage verified. No speed/current-all50 claim.",
+      "evidence": "native-indexed-reads-2026-10-23.json"
     }
   ]
 }

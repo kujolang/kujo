@@ -1074,7 +1074,7 @@ impl VM {
         }
     }
 
-    fn get_indexed_value(object: &Value, index: &Value) -> Result<Value, String> {
+    pub(crate) fn get_indexed_value(object: &Value, index: &Value) -> Result<Value, String> {
         match (object, index) {
             (Value::Array(_) | Value::Str(_) | Value::Bytes(_), Value::Float(i)) => {
                 if !i.is_finite() {

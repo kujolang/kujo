@@ -133,6 +133,12 @@ verified; bounded root storage is not evidence of reduced string copying or spee
 
 ### Remaining native ownership gate
 
+[Whole-function indexed reads](native-indexed-reads-2026-10-23.json) now use callee bindings and tagged VM indexing
+semantics rather than caller-slot integer-dictionary helpers. The regression
+covers typed array/dictionary results, strings, bytes, negative/fractional indices,
+snapshot isolation and catchable errors. This does not widen owned argument entry
+or validate indexed writes and specialized integer-dictionary loop paths.
+
 The [constant append audit](native-constant-appends-2026-10-23.json) repairs callee
 binding selection, retains embedded suffix literals, preserves COW snapshots and
 persists owned loop locals with their type tags. Native helper failures stop later
