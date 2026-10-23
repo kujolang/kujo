@@ -1,0 +1,225 @@
+{
+  "date": "2026-10-23",
+  "runtime_source_commit": "27fd599",
+  "binary_sha256": "6a7d7fbf5af06e559d3ca139915ac53aa08b60d825325e830f8a2cf1d5756f55",
+  "purpose": "Correctness reproducers only; release build overlaps execution, not performance evidence.",
+  "cases": [
+    {
+      "name": "global_update",
+      "source": "mut count := 0\nfunc bump() { count += 1 return count }\nmut i := 0\nwhile i < 200 { assert_equal(bump(), i + 1) i += 1 }\nassert_equal(count, 200)\nprint(\"PASS\")\n",
+      "reference_modes_pass": true,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Int(100), got Int(1)\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "boolean_return",
+      "source": "func positive(x) { return x > 0 }\nmut i := 0\nwhile i < 200 { assert_equal(positive(7), true) i += 1 }\nprint(\"PASS\")\n",
+      "reference_modes_pass": true,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Bool(true), got Int(1)\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "integer_division",
+      "source": "func divide(x, y) { return x / y }\nmut i := 0\nwhile i < 200 { assert_equal(divide(7, 2), 3) i += 1 }\nprint(\"PASS\")\n",
+      "reference_modes_pass": true,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+        }
+      ]
+    },
+    {
+      "name": "float_argument",
+      "source": "func plus_one(x) { return x + 1 }\nmut i := 0\nwhile i < 200 { assert_equal(plus_one(2.5), 3.5) i += 1 }\nprint(\"PASS\")\n",
+      "reference_modes_pass": true,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Float(3.5), got Int(1)\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "changed_argument_type",
+      "source": "func plus_one(x) { return x + 1 }\nmut i := 0\nwhile i < 200 { assert_equal(plus_one(2), 3) i += 1 }\nassert_equal(plus_one(2.5), 3.5)\nprint(\"PASS\")\n",
+      "reference_modes_pass": true,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Float(3.5), got Int(1)\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "division_zero",
+      "source": "func divide(x, y) { return x / y }\nmut i := 0\nwhile i < 200 { assert_equal(divide(8, 2), 4) i += 1 }\nmut caught := false\ntry { divide(8, 0) } except err { caught = true }\nassert_equal(caught, true)\nprint(\"PASS\")\n",
+      "reference_modes_pass": false,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Division by zero\n  --> 0:0\n\nCall stack:\n  0 at divide\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": null,
+          "exit_code": null,
+          "signal": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+        }
+      ]
+    },
+    {
+      "name": "integer_overflow",
+      "source": "func plus_one(x) { return x + 1 }\nmut i := 0\nwhile i < 200 { assert_equal(plus_one(2), 3) i += 1 }\nmut caught := false\ntry { plus_one(9223372036854775807) } except err { caught = true }\nassert_equal(caught, true)\nprint(\"PASS\")\n",
+      "reference_modes_pass": false,
+      "runs": [
+        {
+          "mode": "vm",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "[KUJOVM001] [vm] Runtime Error: Integer overflow: 9223372036854775807 + 1\n  --> 0:0\n\nCall stack:\n  0 at plus_one\n\n"
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Bool(true), got Bool(false)\n  --> 0:0\n\n"
+        }
+      ]
+    }
+  ]
+}

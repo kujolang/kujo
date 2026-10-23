@@ -989,6 +989,26 @@
       "id": "jit_builtin_lookup",
       "evidence": "Base64::Encode test checksum actual 48 vs expected 3894061047; reduced mask(12345) returns 0 after JIT; helper log shows bit_and not found",
       "status": "fixed in 16abf9c; VM/interpreter/JIT hot-call and shadowing integration plus lookup-precedence unit pass; isolated Base64 JIT checksum now passes"
+    },
+    {
+      "id": "jit_argument_type_guards",
+      "evidence": "jit-typed-audit-2026-10-23.json",
+      "status": "open at runtime27fd599: float_argument and changed_argument_type: expected Float(3.5), got Int(1) after compilation. VM/interpreter pass."
+    },
+    {
+      "id": "jit_division_zero_trap",
+      "evidence": "jit-typed-audit-2026-10-23.json",
+      "status": "open at runtime27fd599: division_zero: JIT terminates with signal4 instead of catchable Division by zero."
+    },
+    {
+      "id": "jit_checked_integer_overflow",
+      "evidence": "jit-typed-audit-2026-10-23.json",
+      "status": "open at runtime27fd599: integer_overflow: hot compiled addition does not raise checked overflow; caught remainsfalse."
+    },
+    {
+      "id": "vm_arithmetic_exception_unwind",
+      "evidence": "jit-typed-audit-2026-10-23.json",
+      "status": "open at runtime27fd599: division_zero and integer_overflow: interpreter catches; default VM exits4 instead of reaching caller except."
     }
   ],
   "verification": [
@@ -1038,6 +1058,11 @@
         "tests/nested_assignment.rs:cached_nested_writes_preserve_snapshots_and_external_mutations",
         "docs/COLLECTION_PROFILING.md"
       ]
+    },
+    {
+      "scope": "seven typed JIT/error reproducers across three modes",
+      "result": "21 runs recorded with source/output/exit/signal. Ordinary integer division passed all3 (7/2 yields3 by current contract). Six JIT cases fail; two default VM exception-unwind cases also fail. Not benchmark timings.",
+      "evidence": "jit-typed-audit-2026-10-23.json"
     }
   ]
 }
