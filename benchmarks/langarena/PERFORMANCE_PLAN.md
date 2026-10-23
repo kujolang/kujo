@@ -7,6 +7,15 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [literal-enabled current matrix](checksums-2026-10-23-native-literals-jit.json)
+  at `70606e8` records 42 passing test-size JIT checksums and eight compression
+  runtime failures. All report hashes and schemas were verified. Newly compiled
+  callers expose the incomplete cold callback dispatcher, which rejects
+  `MakeArray(0)` in the shared vector helper. This candidate is not accepted;
+  repair cold-call dispatch and re-run the unchanged matrix before widening
+  owned argument entry. The frozen release build of this revision has the same
+  known source gap and must not be promoted based on its successful build alone.
+
 - The [tagged-owned candidate](checksums-2026-10-23-owned-values-jit.json) at
   `e2797da` passed all 50 test-size JIT checksums, with frozen input/binary identity,
   raw report hashes and measurement schemas verified. 34 cases recorded native
