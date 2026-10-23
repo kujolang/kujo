@@ -2919,36 +2919,36 @@ impl VM {
                 OpCode::LessThan => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.compare_op(&left, "<", &right)?;
-                    self.stack.push(result);
+                    let result = self.compare_op(&left, "<", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::GreaterThan => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.compare_op(&left, ">", &right)?;
-                    self.stack.push(result);
+                    let result = self.compare_op(&left, ">", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::LessEqual => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.compare_op(&left, "<=", &right)?;
-                    self.stack.push(result);
+                    let result = self.compare_op(&left, "<=", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::GreaterEqual => {
                     let right = self.stack.pop().ok_or("Stack underflow")?;
                     let left = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.compare_op(&left, ">=", &right)?;
-                    self.stack.push(result);
+                    let result = self.compare_op(&left, ">=", &right);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 // Logical operations
                 OpCode::Not => {
                     let value = self.stack.pop().ok_or("Stack underflow")?;
-                    let result = self.unary_op("!", &value)?;
-                    self.stack.push(result);
+                    let result = self.unary_op("!", &value);
+                    self.push_arithmetic_result(result)?;
                 }
 
                 OpCode::And => {
@@ -9163,7 +9163,7 @@ impl VM {
         }
     }
 
-    fn invalid_binary_operation(op: &str, left: &Value, right: &Value) -> String {
+    pub(crate) fn invalid_binary_operation(op: &str, left: &Value, right: &Value) -> String {
         format!(
             "Invalid binary operation: {} {} {}",
             Self::value_type_name(left),

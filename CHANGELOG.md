@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Enforce scalar operand types in experimental native arithmetic, ordering and
+  unary operations. Keep Boolean/integer equality distinct and logical bytecode
+  results Boolean. Route VM ordering and logical-negation errors through catch
+  handlers, matching arithmetic error handling.
+
 - Preserve Boolean scalar types across experimental JIT function returns,
   callback arguments/results and direct recursion. Track local scalar type tags
   through SSA branch merges instead of reconstructing predicates as integers.

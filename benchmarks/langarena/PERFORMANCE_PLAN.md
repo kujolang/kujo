@@ -16,8 +16,9 @@ a target to test, not a guarantee. This document explains the execution order;
   certify current HEAD. No complete current production-size run exists.
 - Experimental JIT integer argument guards, callback errors, whole-function
   integer global assignments and Boolean return/callback tags have regression
-  coverage. General-value globals, loop-JIT bindings and Boolean operand type
-  guards remain open. Checked native
+  coverage. Native scalar operand type guards also have regression coverage.
+  General-value globals, loop-JIT bindings and short-circuit native block merges
+  remain open. Checked native
   integer arithmetic now has overflow/divisor guards and regression coverage.
   Native float/general-value compilation remains unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score

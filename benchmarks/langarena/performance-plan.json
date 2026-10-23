@@ -1087,8 +1087,11 @@
     },
     {
       "id": "jit_boolean_arithmetic_type_guard",
-      "status": "open: native arithmetic still accepts a Boolean intermediate as integer bits instead of raising the VM/interpreter type error; 200-call reproducer catches fewer errors in JIT. Requires type guards using scalar metadata, not only integer overflow guards.",
-      "evidence": "jit-boolean-flow-2026-10-23.json"
+      "status": "Fixed for tracked native scalar operands: arithmetic, ordering and unary guards reject invalid Boolean/integer operand kinds before native work and preserve canonical errors. Equality distinguishes scalar kinds; logical bytecodes normalize truthiness and return Bool. Existing global/loop-entry tagging and general-value gaps remain separate.",
+      "evidence": [
+        "../../tests/jit_scalar_operator_types.rs",
+        "jit-scalar-types-2026-10-23.json"
+      ]
     },
     {
       "id": "jit_boolean_global_load",
@@ -1099,6 +1102,11 @@
       "id": "jit_short_circuit_native_merge",
       "status": "open native coverage gap: short-circuit function compilation is rejected by the Cranelift verifier for mismatched block argument counts and a non-dominating value. VM fallback passes; do not count as native success. Audit does not establish when this failure was introduced.",
       "evidence": "jit-boolean-flow-2026-10-23.json"
+    },
+    {
+      "id": "vm_ordering_not_exception_unwind",
+      "status": "Fixed reproduced VM ordering and logical-negation errors bypassing catch handlers. Those operations now use the existing result/error unwind path; interpreter, VM and JIT recovery tests pass.",
+      "evidence": "../../tests/jit_scalar_operator_types.rs"
     }
   ],
   "verification": [
@@ -1209,6 +1217,14 @@
       "evidence": [
         "../../tests/jit_boolean_returns.rs",
         "jit-boolean-flow-2026-10-23.json"
+      ]
+    },
+    {
+      "scope": "scalar operand type guards and comparison/unary exception routing",
+      "result": "Before fix native type/equality cases fail; VM ordering/Not errors escape handlers while interpreter catches them. Final4newcontracts pass:13mixed-local arithmetic/ordering cases across3runtimes, unary/equality checks, canonical error/reuse checks and logical-bytecode truthiness checks. Full library1008passed/8ignored and prior35integrations passed; new4-test suite passed after correcting its raw fixture local_count (39unique integrations total). No-default library, fmt/diff passed.15-run audit confirms arithmetic type-error repro fixed; global Bool load still fails and short-circuit still falls back. No speed claim.",
+      "evidence": [
+        "../../tests/jit_scalar_operator_types.rs",
+        "jit-scalar-types-2026-10-23.json"
       ]
     }
   ]

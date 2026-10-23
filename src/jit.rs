@@ -739,6 +739,39 @@ pub unsafe extern "C" fn jit_store_variable(
     }
 }
 
+/// Raise a scalar operand type error on the cold side of a native type guard.
+#[no_mangle]
+// SAFETY: ctx points to the live, exclusively borrowed compiled-call context.
+pub unsafe extern "C" fn jit_scalar_type_error(
+    ctx: *mut VMContext,
+    operation: i64,
+    left: i64,
+    right: i64,
+    left_is_bool: i64,
+    right_is_bool: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let left = if left_is_bool != 0 { Value::Bool(left != 0) } else { Value::Int(left) };
+    let right = if right_is_bool != 0 { Value::Bool(right != 0) } else { Value::Int(right) };
+    let error = match operation {
+        0..=4 => crate::vm::VM::invalid_binary_operation(
+            ["+", "-", "*", "/", "%"][operation as usize],
+            &left,
+            &right,
+        ),
+        5 => format!("Invalid unary operation: - {:?}", left),
+        6 => format!("Invalid unary operation: ! {:?}", left),
+        7..=10 => crate::vm::VM::invalid_binary_operation(
+            ["<", ">", "<=", ">="][(operation - 7) as usize],
+            &left,
+            &right,
+        ),
+        _ => "Invalid native scalar operation".into(),
+    };
+    ctx.runtime_error = Some(error);
+    1
+}
+
 /// Construct the canonical arithmetic error only on a failed native guard.
 #[no_mangle]
 // SAFETY: ctx points to the active exclusively borrowed compiled-call context.
@@ -3143,6 +3176,7 @@ struct BytecodeTranslator {
     named_assignment_func: Option<FuncRef>,
     runtime_error_func: Option<FuncRef>,
     arithmetic_error_func: Option<FuncRef>,
+    scalar_type_error_func: Option<FuncRef>,
     /// Float load/store function references
     load_var_float_func: Option<FuncRef>,
     store_var_float_func: Option<FuncRef>,
@@ -3275,6 +3309,7 @@ impl BytecodeTranslator {
             named_assignment_func: None,
             runtime_error_func: None,
             arithmetic_error_func: None,
+            scalar_type_error_func: None,
             load_var_float_func: None,
             store_var_float_func: None,
             check_type_int_func: None,
@@ -4184,6 +4219,14 @@ impl BytecodeTranslator {
             OpCode::Add | OpCode::Sub | OpCode::Mul | OpCode::Div | OpCode::Mod => {
                 let right = self.pop_value()?;
                 let left = self.pop_value()?;
+                let operation = match instruction {
+                    OpCode::Add => 0,
+                    OpCode::Sub => 1,
+                    OpCode::Mul => 2,
+                    OpCode::Div => 3,
+                    _ => 4,
+                };
+                self.guard_scalar_types(builder, operation, left, right)?;
                 let result = match instruction {
                     OpCode::Add | OpCode::Sub | OpCode::Mul => {
                         let (result, overflow, operation) = match instruction {
@@ -4228,6 +4271,7 @@ impl BytecodeTranslator {
             }
             OpCode::Negate => {
                 let value = self.pop_value()?;
+                self.guard_scalar_types(builder, 5, value, value)?;
                 let overflow = builder.ins().icmp_imm(IntCC::Equal, value, i64::MIN);
                 let zero = builder.ins().iconst(types::I64, 0);
                 self.guard_arithmetic(builder, overflow, 5, value, zero)?;
@@ -4239,7 +4283,12 @@ impl BytecodeTranslator {
             OpCode::Equal => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let result = builder.ins().icmp(IntCC::Equal, a, b);
+                let value_match = builder.ins().icmp(IntCC::Equal, a, b);
+                let a_kind = self.scalar_kind(builder, a);
+                let b_kind = self.scalar_kind(builder, b);
+                let kind_match = builder.ins().icmp(IntCC::Equal, a_kind, b_kind);
+                let equal = builder.ins().band(value_match, kind_match);
+                let result = equal;
                 let extended = builder.ins().uextend(types::I64, result);
                 let kind = builder.ins().iconst(types::I64, 1);
                 self.scalar_kinds.insert(extended, kind);
@@ -4249,7 +4298,12 @@ impl BytecodeTranslator {
             OpCode::NotEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let result = builder.ins().icmp(IntCC::NotEqual, a, b);
+                let value_match = builder.ins().icmp(IntCC::Equal, a, b);
+                let a_kind = self.scalar_kind(builder, a);
+                let b_kind = self.scalar_kind(builder, b);
+                let kind_match = builder.ins().icmp(IntCC::Equal, a_kind, b_kind);
+                let equal = builder.ins().band(value_match, kind_match);
+                let result = builder.ins().icmp_imm(IntCC::Equal, equal, 0);
                 let extended = builder.ins().uextend(types::I64, result);
                 let kind = builder.ins().iconst(types::I64, 1);
                 self.scalar_kinds.insert(extended, kind);
@@ -4259,6 +4313,7 @@ impl BytecodeTranslator {
             OpCode::LessThan => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                self.guard_scalar_types(builder, 7, a, b)?;
                 let result = builder.ins().icmp(IntCC::SignedLessThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
                 let kind = builder.ins().iconst(types::I64, 1);
@@ -4269,6 +4324,7 @@ impl BytecodeTranslator {
             OpCode::GreaterThan => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                self.guard_scalar_types(builder, 8, a, b)?;
                 let result = builder.ins().icmp(IntCC::SignedGreaterThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
                 let kind = builder.ins().iconst(types::I64, 1);
@@ -4279,6 +4335,7 @@ impl BytecodeTranslator {
             OpCode::LessEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                self.guard_scalar_types(builder, 9, a, b)?;
                 // a <= b: use SignedLessThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedLessThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
@@ -4290,6 +4347,7 @@ impl BytecodeTranslator {
             OpCode::GreaterEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                self.guard_scalar_types(builder, 10, a, b)?;
                 // a >= b: use SignedGreaterThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedGreaterThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
@@ -4301,6 +4359,7 @@ impl BytecodeTranslator {
             // Logical operations
             OpCode::Not => {
                 let a = self.pop_value()?;
+                self.guard_scalar_types(builder, 6, a, a)?;
                 let zero = builder.ins().iconst(types::I64, 0);
                 let result = builder.ins().icmp(IntCC::Equal, a, zero);
                 let extended = builder.ins().uextend(types::I64, result);
@@ -4312,14 +4371,24 @@ impl BytecodeTranslator {
             OpCode::And => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let result = builder.ins().band(a, b);
+                let a_truthy = builder.ins().icmp_imm(IntCC::NotEqual, a, 0);
+                let b_truthy = builder.ins().icmp_imm(IntCC::NotEqual, b, 0);
+                let truth = builder.ins().band(a_truthy, b_truthy);
+                let result = builder.ins().uextend(types::I64, truth);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(result, kind);
                 self.push_value(result);
             }
 
             OpCode::Or => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let result = builder.ins().bor(a, b);
+                let a_truthy = builder.ins().icmp_imm(IntCC::NotEqual, a, 0);
+                let b_truthy = builder.ins().icmp_imm(IntCC::NotEqual, b, 0);
+                let truth = builder.ins().bor(a_truthy, b_truthy);
+                let result = builder.ins().uextend(types::I64, truth);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(result, kind);
                 self.push_value(result);
             }
 
@@ -5890,6 +5959,42 @@ impl BytecodeTranslator {
         }
     }
 
+    fn guard_scalar_types(
+        &self,
+        builder: &mut FunctionBuilder,
+        operation: i64,
+        left: cranelift::prelude::Value,
+        right: cranelift::prelude::Value,
+    ) -> Result<(), String> {
+        let (Some(ctx), Some(error_func)) = (self.ctx_param, self.scalar_type_error_func) else {
+            return Err("Scalar type guard requires a runtime error context".into());
+        };
+        let left_kind = self.scalar_kind(builder, left);
+        let right_kind = self.scalar_kind(builder, right);
+        let invalid = if operation == 6 {
+            builder.ins().icmp_imm(IntCC::Equal, left_kind, 0)
+        } else if operation == 5 {
+            builder.ins().icmp_imm(IntCC::NotEqual, left_kind, 0)
+        } else {
+            let either = builder.ins().bor(left_kind, right_kind);
+            builder.ins().icmp_imm(IntCC::NotEqual, either, 0)
+        };
+        let failure = builder.create_block();
+        let success = builder.create_block();
+        builder.ins().brif(invalid, failure, &[], success, &[]);
+        builder.seal_block(failure);
+        builder.seal_block(success);
+        builder.switch_to_block(failure);
+        self.persist_local_slots(builder, true);
+        let operation = builder.ins().iconst(types::I64, operation);
+        let call =
+            builder.ins().call(error_func, &[ctx, operation, left, right, left_kind, right_kind]);
+        let status = builder.inst_results(call)[0];
+        builder.ins().return_(&[status]);
+        builder.switch_to_block(success);
+        Ok(())
+    }
+
     fn guard_arithmetic(
         &self,
         builder: &mut FunctionBuilder,
@@ -6030,6 +6135,7 @@ impl JitCompiler {
             ("jit_set_return_scalar", 3, true),
             ("jit_return_scalar_kind", 1, true),
             ("jit_stack_push_scalar", 3, false),
+            ("jit_scalar_type_error", 6, true),
         ] {
             let mut sig = module.make_signature();
             sig.params.extend(std::iter::repeat(AbiParam::new(types::I64)).take(parameters));
@@ -6043,7 +6149,8 @@ impl JitCompiler {
             match name {
                 "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
-                _ => translator.scalar_push_func = Some(function),
+                "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
+                _ => translator.scalar_type_error_func = Some(function),
             }
         }
         Ok(())
@@ -6095,6 +6202,7 @@ impl JitCompiler {
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
         builder.symbol("jit_arithmetic_error", jit_arithmetic_error as *const u8);
+        builder.symbol("jit_scalar_type_error", jit_scalar_type_error as *const u8);
         builder.symbol("jit_load_local_slot", jit_load_local_slot as *const u8);
         builder.symbol("jit_store_local_slot", jit_store_local_slot as *const u8);
         builder.symbol("jit_store_variable_from_stack", jit_store_variable_from_stack as *const u8);

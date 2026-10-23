@@ -100,9 +100,12 @@ matching main-VM stores, including when the callee has not been compiled yet.
 Native scalar return metadata distinguishes Boolean predicates from integers.
 Callback argument/result helpers carry that distinction, and local SSA payloads
 have companion type variables for branch merges. Direct recursion preserves the
-callee's return tag. This is not general-value native parity: Boolean global
-loads and Boolean operands in native arithmetic still need their own guards and
-verification; short-circuit fallback is not evidence of native coverage.
+callee's return tag. Arithmetic, ordering and unary operations validate these
+scalar tags before performing native work; error paths preserve canonical
+diagnostics and unwind handlers. Scalar equality includes type identity, and
+logical bytecodes normalize truthiness to Boolean values. This is not
+general-value native parity: Boolean global loads and loop-entry type metadata
+remain separate work; short-circuit fallback is not evidence of native coverage.
 Whole-function integer JIT assignments resolve named bindings at runtime instead
 of treating every assignment target as a zero-initialized local. Existing globals
 use the environment's checked assignment; unresolved names remain function-local.
