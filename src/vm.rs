@@ -6752,9 +6752,10 @@ impl VM {
                 prev_chunk: if chunk.is_generator {
                     None
                 } else {
-                    // The suspended caller owns its code until return/unwind;
-                    // it does not need a fresh instruction/constant allocation.
-                    Some(std::mem::replace(&mut self.chunk, BytecodeChunk::new()))
+                    // Keep the shared caller code until return/unwind. Installing
+                    // the callee below releases our current reference; creating
+                    // an empty placeholder here would allocate on every call.
+                    Some(self.chunk.clone())
                 },
             };
 
@@ -9762,7 +9763,7 @@ mod tests {
     }
 
     #[test]
-    fn call_frames_move_the_suspended_callers_instruction_storage() {
+    fn call_frames_share_the_suspended_callers_instruction_storage() {
         let mut vm = VM::new();
         vm.chunk.instructions = vec![OpCode::Nop; 1024];
         let caller_storage = vm.chunk.instructions.as_ptr();

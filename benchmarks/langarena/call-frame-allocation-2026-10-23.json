@@ -1,0 +1,131 @@
+{
+  "purpose": "Deterministic allocation improvement, not elapsed-time acceptance",
+  "baseline_runtime": "0c77115",
+  "change": "Replace per-call empty BytecodeChunk with shared caller reference until callee installation",
+  "profile": "tests/bytecode_call_profile.rs",
+  "build": "debug x86_64-apple-darwin default features",
+  "before": [
+    {
+      "calls": 1,
+      "repeat": 0,
+      "allocations": 25,
+      "requested_bytes": 4140
+    },
+    {
+      "calls": 1,
+      "repeat": 1,
+      "allocations": 25,
+      "requested_bytes": 4140
+    },
+    {
+      "calls": 1,
+      "repeat": 2,
+      "allocations": 25,
+      "requested_bytes": 4140
+    },
+    {
+      "calls": 100,
+      "repeat": 0,
+      "allocations": 1411,
+      "requested_bytes": 139671
+    },
+    {
+      "calls": 100,
+      "repeat": 1,
+      "allocations": 1411,
+      "requested_bytes": 139671
+    },
+    {
+      "calls": 100,
+      "repeat": 2,
+      "allocations": 1411,
+      "requested_bytes": 139671
+    },
+    {
+      "calls": 1000,
+      "repeat": 0,
+      "allocations": 14011,
+      "requested_bytes": 1371771
+    },
+    {
+      "calls": 1000,
+      "repeat": 1,
+      "allocations": 14011,
+      "requested_bytes": 1371771
+    },
+    {
+      "calls": 1000,
+      "repeat": 2,
+      "allocations": 14011,
+      "requested_bytes": 1371771
+    }
+  ],
+  "after": [
+    {
+      "calls": 1,
+      "repeat": 0,
+      "allocations": 24,
+      "requested_bytes": 3764
+    },
+    {
+      "calls": 1,
+      "repeat": 1,
+      "allocations": 24,
+      "requested_bytes": 3764
+    },
+    {
+      "calls": 1,
+      "repeat": 2,
+      "allocations": 24,
+      "requested_bytes": 3764
+    },
+    {
+      "calls": 100,
+      "repeat": 0,
+      "allocations": 1311,
+      "requested_bytes": 102071
+    },
+    {
+      "calls": 100,
+      "repeat": 1,
+      "allocations": 1311,
+      "requested_bytes": 102071
+    },
+    {
+      "calls": 100,
+      "repeat": 2,
+      "allocations": 1311,
+      "requested_bytes": 102071
+    },
+    {
+      "calls": 1000,
+      "repeat": 0,
+      "allocations": 13011,
+      "requested_bytes": 995771
+    },
+    {
+      "calls": 1000,
+      "repeat": 1,
+      "allocations": 13011,
+      "requested_bytes": 995771
+    },
+    {
+      "calls": 1000,
+      "repeat": 2,
+      "allocations": 13011,
+      "requested_bytes": 995771
+    }
+  ],
+  "verification": {
+    "allocations_saved_per_call": 1,
+    "requested_bytes_saved_per_call_on_this_build": 376,
+    "repeats": 3,
+    "call_counts": [
+      1,
+      100,
+      1000
+    ],
+    "wall_clock_speedup": "not measured"
+  },
+  "runtime_patch_sha256": "367ced6a8af71f607c1024c164b372fa410dda2a654e96df051872fcf631dc7f"
+}

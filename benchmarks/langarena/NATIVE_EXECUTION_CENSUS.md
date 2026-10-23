@@ -49,6 +49,12 @@ Code inspection identifies an avoidable empty `BytecodeChunk` construction in
 `VM::call_bytecode_function`: it saves caller code by replacing it with a new
 empty chunk, then immediately replaces that placeholder with callee code. Measure
 and remove this allocation independently of the larger native ownership change.
+The subsequent [call-frame allocation fix](call-frame-allocation-2026-10-23.json)
+retains the existing shared caller reference until callee installation: across
+1, 100 and 1,000 calls, three repeats each, it saves exactly one allocation per
+call and 376 requested bytes per call on this build. A deterministic allocation
+budget and both-runtime return/unwind/generator tests guard the change. No paired
+release timing improvement has been established; the census above predates it.
 Opcode copying and diagnostic environment checks remain measured candidates;
 their changes still need independent semantic/cost evidence.
 

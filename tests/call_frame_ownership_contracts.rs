@@ -2,6 +2,28 @@
 mod support;
 
 #[test]
+fn callers_keep_their_code_across_repeated_unwinds_and_generator_resumes() {
+    support::success(
+        r#"
+        func leaf(x) { if x < 0 { throw("negative") } return x + 1 }
+        func caller(x) {
+            try { return leaf(x) * 3 } except error { return leaf(4) * 7 }
+        }
+        func* sequence() { yield caller(2) yield caller(-1) yield caller(5) }
+        mut i := 0
+        while i < 100 {
+            assert_equal(caller(-1), 35)
+            assert_equal(caller(3), 12)
+            mut actual := []
+            for value in sequence() { actual = push(actual, value) }
+            assert_equal(actual, [9, 35, 18])
+            i += 1
+        }
+        "#,
+    );
+}
+
+#[test]
 fn moved_call_frames_propagate_unhandled_recursive_exceptions() {
     support::failure(
         r#"

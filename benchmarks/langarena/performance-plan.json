@@ -40,7 +40,9 @@
       "evidence": [
         "json-serialization-allocations-2026-10-23.json",
         "paired-json-2026-10-23.json",
-        "paired-assignment-2026-10-23.json"
+        "paired-assignment-2026-10-23.json",
+        "call-frame-allocation-2026-10-23.json",
+        "../../tests/bytecode_call_profile.rs"
       ]
     },
     {
@@ -101,10 +103,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 140 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -112,8 +114,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 278,
+        "owned_argument_dispatches": 140,
+        "process_peak_rss_bytes": 16973824
+      }
     },
     {
       "name": "Binarytrees::Arena",
@@ -121,10 +132,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 264 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -132,8 +143,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 278,
+        "owned_argument_dispatches": 264,
+        "process_peak_rss_bytes": 16617472
+      }
     },
     {
       "name": "Brainfuck::Array",
@@ -141,10 +161,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 30 native function entries, 23 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -152,8 +172,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 30,
+        "native_boundary_entries": 30,
+        "call_dispatches": 207,
+        "owned_argument_dispatches": 23,
+        "process_peak_rss_bytes": 25653248
+      }
     },
     {
       "name": "Brainfuck::Recursion",
@@ -161,10 +190,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 30 native function entries, 56 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -172,8 +201,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 30,
+        "native_boundary_entries": 30,
+        "call_dispatches": 237,
+        "owned_argument_dispatches": 56,
+        "process_peak_rss_bytes": 25952256
+      }
     },
     {
       "name": "Matmul::Single",
@@ -181,10 +219,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 28 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -192,8 +230,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 412,
+        "owned_argument_dispatches": 28,
+        "process_peak_rss_bytes": 18542592
+      }
     },
     {
       "name": "Matmul::T4",
@@ -201,10 +248,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 24 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -212,8 +259,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 276,
+        "owned_argument_dispatches": 24,
+        "process_peak_rss_bytes": 20275200
+      }
     },
     {
       "name": "Matmul::T8",
@@ -221,10 +277,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 24 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -232,8 +288,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 300,
+        "owned_argument_dispatches": 24,
+        "process_peak_rss_bytes": 21626880
+      }
     },
     {
       "name": "Matmul::T16",
@@ -241,10 +306,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 24 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -252,8 +317,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 340,
+        "owned_argument_dispatches": 24,
+        "process_peak_rss_bytes": 24354816
+      }
     },
     {
       "name": "Base64::Encode",
@@ -261,10 +335,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 9765 native function entries, 9864 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -272,8 +346,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 9765,
+        "native_boundary_entries": 9765,
+        "call_dispatches": 19737,
+        "owned_argument_dispatches": 9864,
+        "process_peak_rss_bytes": 18132992
+      }
     },
     {
       "name": "Base64::Decode",
@@ -281,10 +364,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 9765 native function entries, 9864 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -292,8 +375,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 9765,
+        "native_boundary_entries": 9765,
+        "call_dispatches": 19737,
+        "owned_argument_dispatches": 9864,
+        "process_peak_rss_bytes": 18124800
+      }
     },
     {
       "name": "Json::Generate",
@@ -301,10 +393,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 17 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -312,8 +404,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 73,
+        "owned_argument_dispatches": 17,
+        "process_peak_rss_bytes": 16756736
+      }
     },
     {
       "name": "Json::ParseDom",
@@ -321,10 +422,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 15 native function entries, 41 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -332,8 +433,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 15,
+        "native_boundary_entries": 15,
+        "call_dispatches": 227,
+        "owned_argument_dispatches": 41,
+        "process_peak_rss_bytes": 18415616
+      }
     },
     {
       "name": "Json::ParseMapping",
@@ -341,10 +451,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 15 native function entries, 41 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -352,8 +462,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 15,
+        "native_boundary_entries": 15,
+        "call_dispatches": 232,
+        "owned_argument_dispatches": 41,
+        "process_peak_rss_bytes": 18149376
+      }
     },
     {
       "name": "CSV::Parse",
@@ -361,10 +480,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 825 native function entries, 42 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -372,8 +491,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 825,
+        "native_boundary_entries": 825,
+        "call_dispatches": 1020,
+        "owned_argument_dispatches": 42,
+        "process_peak_rss_bytes": 17924096
+      }
     },
     {
       "name": "Etc::Sieve",
@@ -381,10 +509,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -392,8 +520,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 34,
+        "owned_argument_dispatches": 16,
+        "process_peak_rss_bytes": 17346560
+      }
     },
     {
       "name": "Etc::TextRaytracer",
@@ -401,10 +538,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 742468 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -412,8 +549,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 1110426,
+        "owned_argument_dispatches": 742468,
+        "process_peak_rss_bytes": 16801792
+      }
     },
     {
       "name": "Etc::NeuralNet",
@@ -421,10 +567,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 156020 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -432,8 +578,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 156082,
+        "owned_argument_dispatches": 156020,
+        "process_peak_rss_bytes": 18644992
+      }
     },
     {
       "name": "Etc::CacheSimulation",
@@ -441,10 +596,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 2901 native function entries, 3402 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -452,8 +607,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 2901,
+        "native_boundary_entries": 2901,
+        "call_dispatches": 6415,
+        "owned_argument_dispatches": 3402,
+        "process_peak_rss_bytes": 23642112
+      }
     },
     {
       "name": "Etc::GameOfLife",
@@ -461,10 +625,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 604 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -472,8 +636,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 604,
+        "native_boundary_entries": 604,
+        "call_dispatches": 828,
+        "owned_argument_dispatches": 16,
+        "process_peak_rss_bytes": 21680128
+      }
     },
     {
       "name": "Etc::Words",
@@ -481,10 +654,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 3530 native function entries, 20 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -492,8 +665,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 3530,
+        "native_boundary_entries": 3530,
+        "call_dispatches": 3672,
+        "owned_argument_dispatches": 20,
+        "process_peak_rss_bytes": 19079168
+      }
     },
     {
       "name": "Etc::LogParser",
@@ -501,10 +683,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 14 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -512,8 +694,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 69,
+        "owned_argument_dispatches": 14,
+        "process_peak_rss_bytes": 18014208
+      }
     },
     {
       "name": "Template::Regex",
@@ -521,10 +712,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1104 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -532,8 +723,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 1104,
+        "native_boundary_entries": 1104,
+        "call_dispatches": 1228,
+        "owned_argument_dispatches": 16,
+        "process_peak_rss_bytes": 18571264
+      }
     },
     {
       "name": "Template::Parse",
@@ -541,10 +741,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 947 native function entries, 109 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -552,8 +752,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 947,
+        "native_boundary_entries": 947,
+        "call_dispatches": 1164,
+        "owned_argument_dispatches": 109,
+        "process_peak_rss_bytes": 17993728
+      }
     },
     {
       "name": "Sort::Quick",
@@ -561,10 +770,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
-      "cpu_profile": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 366708 native function entries, 533813 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "cpu_profile": "single three-second executing-thread sample at 0c77115; not whole-workload attribution",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -572,8 +781,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 366708,
+        "native_boundary_entries": 366708,
+        "call_dispatches": 900735,
+        "owned_argument_dispatches": 533813,
+        "process_peak_rss_bytes": 46120960
+      }
     },
     {
       "name": "Sort::Merge",
@@ -581,10 +799,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 399807 native function entries, 600011 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -592,8 +810,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 399807,
+        "native_boundary_entries": 399807,
+        "call_dispatches": 1000035,
+        "owned_argument_dispatches": 600011,
+        "process_peak_rss_bytes": 92352512
+      }
     },
     {
       "name": "Sort::Self",
@@ -601,10 +828,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 99907 native function entries, 14 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -612,8 +839,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 99907,
+        "native_boundary_entries": 99907,
+        "call_dispatches": 100037,
+        "owned_argument_dispatches": 14,
+        "process_peak_rss_bytes": 58032128
+      }
     },
     {
       "name": "Graph::BFS",
@@ -621,10 +857,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 108 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -632,8 +868,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 108,
+        "native_boundary_entries": 108,
+        "call_dispatches": 345,
+        "owned_argument_dispatches": 21,
+        "process_peak_rss_bytes": 18776064
+      }
     },
     {
       "name": "Graph::DFS",
@@ -641,10 +886,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 108 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -652,8 +897,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 108,
+        "native_boundary_entries": 108,
+        "call_dispatches": 345,
+        "owned_argument_dispatches": 21,
+        "process_peak_rss_bytes": 18812928
+      }
     },
     {
       "name": "Graph::AStar",
@@ -661,10 +915,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 344 native function entries, 169 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -672,8 +926,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 344,
+        "native_boundary_entries": 344,
+        "call_dispatches": 733,
+        "owned_argument_dispatches": 169,
+        "process_peak_rss_bytes": 18468864
+      }
     },
     {
       "name": "Hash::SHA256",
@@ -681,10 +944,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 8808 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -692,8 +955,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 8808,
+        "native_boundary_entries": 8808,
+        "call_dispatches": 9037,
+        "owned_argument_dispatches": 16,
+        "process_peak_rss_bytes": 18681856
+      }
     },
     {
       "name": "Hash::CRC32",
@@ -701,10 +973,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 901 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -712,8 +984,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 901,
+        "native_boundary_entries": 901,
+        "call_dispatches": 1032,
+        "owned_argument_dispatches": 16,
+        "process_peak_rss_bytes": 18612224
+      }
     },
     {
       "name": "Calculator::Ast",
@@ -721,10 +1002,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 4488 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -732,8 +1013,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 4518,
+        "owned_argument_dispatches": 4488,
+        "process_peak_rss_bytes": 17113088
+      }
     },
     {
       "name": "Calculator::Interpreter",
@@ -741,10 +1031,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1246 native function entries, 25476 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -752,8 +1042,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 1246,
+        "native_boundary_entries": 1246,
+        "call_dispatches": 26939,
+        "owned_argument_dispatches": 25476,
+        "process_peak_rss_bytes": 18558976
+      }
     },
     {
       "name": "Maze::Generator",
@@ -761,10 +1060,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 165882 native function entries, 28826 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -772,8 +1071,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 165882,
+        "native_boundary_entries": 165882,
+        "call_dispatches": 195022,
+        "owned_argument_dispatches": 28826,
+        "process_peak_rss_bytes": 58175488
+      }
     },
     {
       "name": "Maze::BFS",
@@ -781,10 +1089,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 121889 native function entries, 9621 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -792,8 +1100,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 121889,
+        "native_boundary_entries": 121889,
+        "call_dispatches": 131727,
+        "owned_argument_dispatches": 9621,
+        "process_peak_rss_bytes": 42663936
+      }
     },
     {
       "name": "Maze::AStar",
@@ -801,10 +1118,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 133064 native function entries, 38739 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -812,8 +1129,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 133064,
+        "native_boundary_entries": 133064,
+        "call_dispatches": 172123,
+        "owned_argument_dispatches": 38739,
+        "process_peak_rss_bytes": 42692608
+      }
     },
     {
       "name": "CLBG::Fannkuchredux",
@@ -821,10 +1147,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1347 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -832,8 +1158,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 1347,
+        "native_boundary_entries": 1347,
+        "call_dispatches": 1588,
+        "owned_argument_dispatches": 16,
+        "process_peak_rss_bytes": 18280448
+      }
     },
     {
       "name": "CLBG::Mandelbrot",
@@ -841,10 +1176,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 418 native function entries, 17 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -852,8 +1187,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 418,
+        "native_boundary_entries": 418,
+        "call_dispatches": 543,
+        "owned_argument_dispatches": 17,
+        "process_peak_rss_bytes": 18341888
+      }
     },
     {
       "name": "CLBG::Nbody",
@@ -861,10 +1205,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 25 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -872,8 +1216,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 57,
+        "owned_argument_dispatches": 25,
+        "process_peak_rss_bytes": 16752640
+      }
     },
     {
       "name": "CLBG::Spectralnorm",
@@ -881,10 +1234,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 97101 native function entries, 106 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -892,8 +1245,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 97101,
+        "native_boundary_entries": 97101,
+        "call_dispatches": 97328,
+        "owned_argument_dispatches": 106,
+        "process_peak_rss_bytes": 18575360
+      }
     },
     {
       "name": "Compress::BWTEncode",
@@ -901,10 +1263,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 20 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -912,8 +1274,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 84,
+        "owned_argument_dispatches": 20,
+        "process_peak_rss_bytes": 17006592
+      }
     },
     {
       "name": "Compress::BWTDecode",
@@ -921,10 +1292,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -932,8 +1303,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 69,
+        "owned_argument_dispatches": 21,
+        "process_peak_rss_bytes": 17100800
+      }
     },
     {
       "name": "Compress::HuffEncode",
@@ -941,10 +1321,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 500 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -952,8 +1332,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 0,
+        "native_boundary_entries": 0,
+        "call_dispatches": 548,
+        "owned_argument_dispatches": 500,
+        "process_peak_rss_bytes": 17305600
+      }
     },
     {
       "name": "Compress::HuffDecode",
@@ -961,10 +1350,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 372 native function entries, 148 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -972,8 +1361,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 372,
+        "native_boundary_entries": 372,
+        "call_dispatches": 641,
+        "owned_argument_dispatches": 148,
+        "process_peak_rss_bytes": 17895424
+      }
     },
     {
       "name": "Compress::ArithEncode",
@@ -981,10 +1379,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 682 native function entries, 480 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -992,8 +1390,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 682,
+        "native_boundary_entries": 682,
+        "call_dispatches": 1382,
+        "owned_argument_dispatches": 480,
+        "process_peak_rss_bytes": 18243584
+      }
     },
     {
       "name": "Compress::ArithDecode",
@@ -1001,10 +1408,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 3028 native function entries, 718 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -1012,8 +1419,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 3028,
+        "native_boundary_entries": 3028,
+        "call_dispatches": 3969,
+        "owned_argument_dispatches": 718,
+        "process_peak_rss_bytes": 18432000
+      }
     },
     {
       "name": "Compress::LZWEncode",
@@ -1021,10 +1437,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 415 native function entries, 20 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -1032,8 +1448,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 415,
+        "native_boundary_entries": 415,
+        "call_dispatches": 1813,
+        "owned_argument_dispatches": 20,
+        "process_peak_rss_bytes": 18288640
+      }
     },
     {
       "name": "Compress::LZWDecode",
@@ -1041,10 +1466,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 31 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -1052,8 +1477,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 31,
+        "native_boundary_entries": 31,
+        "call_dispatches": 483,
+        "owned_argument_dispatches": 21,
+        "process_peak_rss_bytes": 18481152
+      }
     },
     {
       "name": "Distance::Jaro",
@@ -1061,10 +1495,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 504 native function entries, 32 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -1072,8 +1506,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 504,
+        "native_boundary_entries": 504,
+        "call_dispatches": 937,
+        "owned_argument_dispatches": 32,
+        "process_peak_rss_bytes": 18743296
+      }
     },
     {
       "name": "Distance::NGram",
@@ -1081,10 +1524,10 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 33a85f9 with JIT enabled and 600-second per-case debug deadline; VM fallback allowed; native coverage pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1154 native function entries, 6320 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
-      "peak_memory": "pending",
+      "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
       "competitor_comparison": "pending",
       "semantic_regressions": "pending",
       "representation_review": "pending",
@@ -1092,8 +1535,17 @@
         "checksums-2026-10-23-json-candidate.json",
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
-      ]
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
+      ],
+      "native_census": {
+        "source_commit": "0c77115",
+        "native_function_entries": 1154,
+        "native_boundary_entries": 1154,
+        "call_dispatches": 7588,
+        "owned_argument_dispatches": 6320,
+        "process_peak_rss_bytes": 18456576
+      }
     }
   ],
   "initial_audit": [
@@ -1443,6 +1895,20 @@
         "../../tests/runtime_measurements.rs",
         "../../tests/langarena_port_contracts.rs",
         "../../docs/RUNTIME_MEASUREMENTS.md"
+      ]
+    },
+    {
+      "scope": "all50 native execution census at 0c77115",
+      "result": "50/50 unchanged test-size checksums, 50 schema-valid raw reports with matching SHA hashes; 34 cases have native entries, 16 do not. Owned dispatches are not exclusive fallback reasons or time coverage. One useful QuickSort CPU sample. Not production, competitor timing or current post-allocation-fix verification.",
+      "evidence": "native-execution-census-2026-10-23.json"
+    },
+    {
+      "scope": "call-frame placeholder allocation removal",
+      "result": "1009 library tests (8 ignored) and21 targeted integration tests pass, including both-runtime repeated unwind/generator behavior and allocation budget. Three allocation repeats at1/100/1000 calls save exactly1 allocation and376 requested bytes per call on this build. No paired release speedup measured.",
+      "evidence": [
+        "call-frame-allocation-2026-10-23.json",
+        "../../tests/bytecode_call_profile.rs",
+        "../../tests/call_frame_ownership_contracts.rs"
       ]
     }
   ]

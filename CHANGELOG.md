@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid allocating an unused empty bytecode chunk on each VM function call while
+  retaining shared caller code for normal returns, exceptions and generators.
+
 - Add bounded runtime measurements for actual native entries and JIT call
   dispatches containing owned arguments. Preserve older v1 measurement reports;
   the LangArena isolated runner can collect and hash per-case reports explicitly.
