@@ -112,6 +112,11 @@ impl NativeCallRoots {
     }
 
     pub(crate) fn take_value(&mut self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
+        // An empty callee has a logical scope but no physical root frame yet.
+        // Do not let the store mistake the caller's frame for the current one.
+        if kind == OWNED && self.values.frames.len() != self.depth {
+            return Err(OwnershipError::NotCurrentFrame);
+        }
         self.values.take_value(payload, kind)
     }
 
@@ -352,6 +357,7 @@ mod tests {
         roots.enter().unwrap();
         let (payload, kind) = roots.encode(Value::Str(Arc::new("caller".into()))).unwrap();
         roots.enter().unwrap();
+        assert_eq!(roots.take_value(payload, kind).unwrap_err(), OwnershipError::NotCurrentFrame);
         roots.leave().unwrap();
         assert!(
             matches!(roots.take_value(payload, kind).unwrap(), Value::Str(text) if text.as_str() == "caller")
