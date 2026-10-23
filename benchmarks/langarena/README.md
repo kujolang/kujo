@@ -13,6 +13,13 @@ An exploratory four-workload Kujo/Goose/Rust comparison is recorded in
 [COMPARISON_2026_10_21.md](COMPARISON_2026_10_21.md), with raw samples and limitations.
 The [October 23 rerun](COMPARISON_2026_10_23.md) reuses the exact same binaries
 and workloads to compare observed performance under the laptop's newer conditions.
+The active [performance checklist](performance-plan.json) tracks the full approved
+optimization scope and all 50 cases. Pending entries are not passing results.
+The comparison runner accepts optional `vm`, `jit`, or `interpreter` and a round
+count after its output directory (defaults: `vm`, three rounds). Use seven rounds
+for the new baseline, retain raw samples, and assess host variability before
+drawing conclusions. JIT is experimental; enabling it does not prove that a
+particular region executed as compiled code.
 
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark
@@ -82,7 +89,8 @@ they must finish before a checksum result can be claimed.
 target/release/kujo run benchmarks/langarena/profile.kujo --scheduler-no-timeout target/release/kujo benchmarks/langarena/run.json /tmp/kujo-production.json 3600000 vm
 ```
 
-Use `interpreter` instead of `vm` for interpreter coverage. Optional trailing
+Use `interpreter` instead of `vm` for interpreter coverage, or `jit` for explicit
+experimental JIT coverage. Optional trailing
 `SHARD SHARDS` selects disjoint cases; an additional exact name selects one case.
 The parent has no scheduler deadline because child processes have individual
 hard deadlines. `timeout` means incomplete, not a checksum failure. Cancellation

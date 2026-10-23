@@ -23,7 +23,7 @@
     {
       "id": "profile",
       "scope": "CPU/allocation profiles and JIT execution/coverage/fallback evidence; reproducible cost and semantic test before optimization",
-      "status": "pending",
+      "status": "in_progress",
       "evidence": [
 
       ]
@@ -31,7 +31,7 @@
     {
       "id": "runtime",
       "scope": "Evidence-led calls, collections, numerics, strings, native boundaries and allocation fixes preserving language contracts",
-      "status": "pending",
+      "status": "in_progress",
       "evidence": [
 
       ]
@@ -960,6 +960,49 @@
         "docs/RUNTIME_MEASUREMENTS.md"
       ],
       "status": "verified_source; use OS sampling and focused instrumentation"
+    }
+  ],
+  "baseline_build": {
+    "runtime_source_commit": "f037705",
+    "configuration": "cargo build --locked --release --bin kujo; normal default features, thin LTO",
+    "sha256": "16c407be9977d91748986904cf0ff956aa6cc1ff64ebc4473e802c57639920b1",
+    "status": "build_passed; comparative timings pending"
+  },
+  "correctness_findings": [
+    {
+      "id": "jit_constant_placeholder",
+      "evidence": "jit-audit-2026-10-23.json: float and rng",
+      "status": "fixed in 4750b9d; dedicated integration test passes VM/interpreter/JIT and low-level rejection unit test passes; no speed claim"
+    },
+    {
+      "id": "jit_global_update",
+      "evidence": "jit-audit-2026-10-23.json: global",
+      "status": "open: hot function returns 1 instead of 100; VM/interpreter pass"
+    },
+    {
+      "id": "jit_boolean_return",
+      "evidence": "jit-audit-2026-10-23.json: bool",
+      "status": "open: hot function returns Int(1) instead of Bool(true); VM/interpreter pass"
+    },
+    {
+      "id": "jit_builtin_lookup",
+      "evidence": "Base64::Encode test checksum actual 48 vs expected 3894061047; reduced mask(12345) returns 0 after JIT; helper log shows bit_and not found",
+      "status": "fixed in 16abf9c; VM/interpreter/JIT hot-call and shadowing integration plus lookup-precedence unit pass; isolated Base64 JIT checksum now passes"
+    }
+  ],
+  "verification": [
+    {
+      "scope": "targeted debug-profile integration tests",
+      "command": "cargo test --locked --test jit_native_lookup_contracts --test jit_constant_contracts --test jit_execution_contract --test langarena_port_contracts -- --test-threads=1",
+      "result": "11 passed; 1 long all-fifty test explicitly ignored; not whole-suite verification"
+    },
+    {
+      "scope": "JIT constant rejection and native lookup precedence",
+      "result": "Both targeted library unit tests passed"
+    },
+    {
+      "scope": "source hygiene",
+      "result": "cargo fmt --check and git diff --check passed"
     }
   ]
 }

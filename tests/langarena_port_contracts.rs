@@ -138,7 +138,7 @@ fn isolated_runner_checkpoints_and_fails_incomplete_cases_in_both_runtimes() {
     let case = config.as_array().unwrap().iter().find(|c| c["name"] == "Base64::Encode").unwrap();
     let runner =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("benchmarks/langarena/profile.kujo");
-    for interpreter in [false, true] {
+    for runtime in ["vm", "interpreter", "jit"] {
         for status in ["passed", "failed", "timeout"] {
             let mut case = case.clone();
             if status == "failed" {
@@ -149,7 +149,7 @@ fn isolated_runner_checkpoints_and_fails_incomplete_cases_in_both_runtimes() {
             std::fs::write(&config_path, serde_json::to_vec(&vec![case]).unwrap()).unwrap();
             let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_kujo"));
             command.current_dir(dir.path()).arg("run").arg(&runner).arg("--scheduler-no-timeout");
-            if interpreter {
+            if runtime == "interpreter" {
                 command.arg("--interpreter");
             }
             let output = command
@@ -157,7 +157,7 @@ fn isolated_runner_checkpoints_and_fails_incomplete_cases_in_both_runtimes() {
                 .arg(&config_path)
                 .arg(&output_path)
                 .arg(if status == "timeout" { "1" } else { "30000" })
-                .arg(if interpreter { "interpreter" } else { "vm" })
+                .arg(runtime)
                 .output()
                 .unwrap();
             assert_eq!(
@@ -169,6 +169,7 @@ fn isolated_runner_checkpoints_and_fails_incomplete_cases_in_both_runtimes() {
             );
             let report: serde_json::Value =
                 serde_json::from_slice(&std::fs::read(&output_path).unwrap()).unwrap();
+            assert_eq!(report["runtime"], runtime);
             assert_eq!(report["results"].as_array().unwrap().len(), 1);
             assert_eq!(report["results"][0]["status"], status);
         }

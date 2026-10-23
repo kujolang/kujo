@@ -1,7 +1,13 @@
-# Usage: kujo run benchmarks/langarena/compare.kujo --scheduler-no-timeout KUJO RUST GOOSE OUTPUT_DIRECTORY
+# Usage: kujo run benchmarks/langarena/compare.kujo --scheduler-no-timeout KUJO RUST GOOSE OUTPUT_DIRECTORY [vm|jit|interpreter] [ROUNDS]
 # Build competitors first. Run from the repository root. Never run concurrent samples.
 let options := args()
-assert_equal(len(options), 4)
+assert(len(options) >= 4 && len(options) <= 6, "Expected binaries, output directory, optional runtime and rounds")
+mut runtime := "vm"
+if len(options) >= 5 { runtime = options[4] }
+assert(runtime == "vm" || runtime == "jit" || runtime == "interpreter", "Unknown runtime")
+mut rounds := 3
+if len(options) >= 6 { rounds = to_int(options[5]) }
+assert(rounds >= 1 && rounds <= 100, "Rounds must be between 1 and 100")
 let binaries := {"Kujo": options[0], "Rust": options[1], "Goose": options[2]}
 let directory := options[3]
 let cases := [
@@ -24,7 +30,7 @@ let port := directory + "/timed-port.kujo"
 write_file(port, timed, true)
 mut results := []
 mut round := 0
-while round < 3 {
+while round < rounds {
     for selected in cases {
         let name := selected[0]
         let config := selected[1]
@@ -33,7 +39,12 @@ while round < 3 {
             let language := languages[(index + round) % 3]
             print("START round=" + str(round + 1) + " " + name + " " + language)
             mut command := [binaries[language], config, name]
-            if language == "Kujo" { command = [binaries[language], "run", port, "--scheduler-no-timeout", config, name] }
+            if language == "Kujo" {
+                command = [binaries[language], "run", port, "--scheduler-no-timeout"]
+                if runtime == "jit" { command = push(command, "--jit") }
+                if runtime == "interpreter" { command = push(command, "--interpreter") }
+                command = push(push(command, config), name)
+            }
             let started := time_ns()
             let result := spawn_process(command, {"timeout_ms": 600000, "max_output_bytes": 1048576})
             let wall := time_ns() - started
@@ -56,7 +67,7 @@ while round < 3 {
             }
             let valid := passed && measured >= 0.0
             results = push(results, {"round": round + 1, "benchmark": name, "config": config, "language": language, "passed": valid, "measured_seconds": measured, "wall_seconds": to_float(wall) / 1000000000.0, "exitcode": result.exitcode, "timed_out": result.timed_out, "stdout": result.stdout, "stderr": result.stderr})
-            write_file(directory + "/samples.json", to_json({"binaries": binaries, "results": results}), true)
+            write_file(directory + "/samples.json", to_json({"binaries": binaries, "kujo_runtime": runtime, "rounds": rounds, "results": results}), true)
             assert(valid, language + " " + name + ": " + result.stdout + result.stderr)
             print("PASS measured_seconds=" + str(measured))
             index += 1
