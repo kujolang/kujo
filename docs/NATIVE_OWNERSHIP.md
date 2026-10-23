@@ -57,6 +57,8 @@ not a slot retirement mechanism that gradually retains dead values.
 `NativeCallRoots` tracks logical scope depth without allocating frame storage for
 immediate-only execution. The first owned value materializes the needed ancestor
 frames. An immediate-only nested call cannot release its parent's existing roots.
+Consuming operations check logical depth against materialized frame depth before
+delegating to the store; an empty callee must not be mistaken for its caller.
 Every successful generated function entry acquires a logical scope after its
 shared recursion-depth guard; every generated exit releases it. Owned return roots
 are promoted before that cleanup. Invocation wrappers own an outer boundary scope,

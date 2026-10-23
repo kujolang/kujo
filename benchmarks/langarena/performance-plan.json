@@ -1929,6 +1929,14 @@
         "../../src/jit.rs",
         "../../docs/NATIVE_OWNERSHIP.md"
       ]
+    },
+    {
+      "scope": "lazy native scope parent-consumption guard",
+      "result": "Added regression fails before fix: an empty logical callee could take a root from its caller because no physical child frame existed. Fixed take_value to reject owned consumption when logical and physical scope depths differ. All10 native-owned mechanism tests plus2 boundary/compiled-immediate tests and default binary check pass. Existing generated owned operations are still pending; the in-progress all50 run uses the frozen7f89e13 lifecycle candidate, predating this guard.",
+      "evidence": [
+        "../../src/native_owned.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
+      ]
     }
   ]
 }
