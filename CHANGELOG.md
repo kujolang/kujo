@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — JSON decimal precision fix
+
+- Enable correctly rounded serde_json float parsing. Decimal/exponent values at the safe-integer boundary now preserve their nearest IEEE-754 value instead of losing one unit. Integer token types, overflow rejection and existing JSON bounds are preserved. Added builtin and VM/interpreter regression coverage.
+
+
 This file records user-visible changes to Kujo, following
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
