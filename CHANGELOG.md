@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve float and null immediate values through experimental native constants,
+  globals, assignments, callbacks, returns and scalar loop locals. Compile float
+  arithmetic/comparisons with checked zero divisors, signed-zero truthiness and
+  the existing NaN/infinity/equality semantics. Implicit returns now produce null.
+
 - Preserve Boolean/integer kinds on experimental native named loads and
   whole-function assignments. Explicit global bytecodes bypass same-named
   parameters and use checked global stores, including readonly enforcement.

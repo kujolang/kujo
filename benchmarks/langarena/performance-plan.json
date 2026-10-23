@@ -45,7 +45,9 @@
       "evidence": [
         "jit-typed-audit-2026-10-23.json",
         "../../tests/jit_argument_guards.rs",
-        "../../tests/jit_global_assignment.rs"
+        "../../tests/jit_global_assignment.rs",
+        "../../tests/jit_immediate_values.rs",
+        "jit-immediate-values-2026-10-23.json"
       ]
     },
     {
@@ -1052,7 +1054,7 @@
     {
       "id": "jit_argument_type_guards",
       "evidence": "jit-typed-audit-2026-10-23.json",
-      "status": "Fixed integer-only compiled function entry boundaries: VM cached/direct calls and callback bridge check argument count/kinds; non-integer values use VM without discarding integer code. Both original float/type-change reproducers pass. Native float/general-value compilation and full typed result flow remain open; no speed claim."
+      "status": "Fixed integer-only compiled function entry boundaries: cached/direct calls and callback bridge check argument count/kinds; non-integer arguments use VM fallback. Native function bodies now support immediate float/null values, but native non-integer argument entry remains unfinished. No speed claim."
     },
     {
       "id": "jit_division_zero_trap",
@@ -1122,8 +1124,20 @@
     },
     {
       "id": "jit_non_scalar_global_load",
-      "status": "Open confirmed native correctness gap: float, string and null global reads return Int(-1) after compilation; VM/interpreter pass. Requires coherent general-value representation through loads, operators, callbacks, stores and returns, not treating opaque stack markers as integers.",
-      "evidence": "jit-global-types-2026-10-23.json"
+      "status": "Partially resolved: Float and Null now use tagged immediate payloads through globals, scalar operators, assignments, callbacks, returns and loop-local persistence. Refreshed 15-run audit passes Int/Bool/Float/Null but still reproduces String returning Int(-1) in native code. String/object ownership and collection helper paths remain open; no general-value parity claim.",
+      "evidence": [
+        "jit-global-types-2026-10-23.json",
+        "jit-immediate-values-2026-10-23.json",
+        "../../tests/jit_immediate_values.rs"
+      ]
+    },
+    {
+      "id": "jit_immediate_float_null_flow",
+      "status": "Fixed reproduced Float/Null global-return and implicit-return errors, plus loop float persistence as raw integer bits. Four-kind ABI preserves immediate types; native floating arithmetic, ordering, equality and truthiness retain VM contracts. Native function arguments remain integer-only. String/object paths remain open.",
+      "evidence": [
+        "../../tests/jit_immediate_values.rs",
+        "jit-immediate-values-2026-10-23.json"
+      ]
     }
   ],
   "verification": [
@@ -1261,6 +1275,14 @@
         "../../tests/jit_global_scalar_types.rs",
         "../../src/vm.rs",
         "jit-global-types-2026-10-23.json"
+      ]
+    },
+    {
+      "scope": "native Float/Null immediate values and floating operations",
+      "result": "Final serial run: 1009 library tests passed, 8 ignored; 45 selected integration tests passed, including four new immediate-value contracts and 2548 VM/native boundary comparisons. Source fixtures cover interpreter, VM and JIT with compilation assertions; raw loop fixture checks persisted Float type. No-default-features library, formatting and diff checks passed. Refreshed 15-run audit passes Int/Bool/Float/Null globals in all three modes; String still fails native return. Debug correctness evidence only; no timing/production acceptance.",
+      "evidence": [
+        "../../tests/jit_immediate_values.rs",
+        "jit-immediate-values-2026-10-23.json"
       ]
     }
   ]

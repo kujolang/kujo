@@ -13,7 +13,7 @@ pub struct VMContext {
     pub vm_ptr: *mut std::ffi::c_void,
     pub return_value: i64,
     pub has_return_value: bool,
-    pub return_value_is_bool: bool,
+    pub return_value_kind: i64,
     /// Runtime failure preserved across the native ABI; never replay failed work.
     pub runtime_error: Option<String>,
     pub arg0: i64,
@@ -25,11 +25,7 @@ pub struct VMContext {
 
 impl VMContext {
     pub fn scalar_value(&self, value: i64) -> Value {
-        if self.return_value_is_bool {
-            Value::Bool(value != 0)
-        } else {
-            Value::Int(value)
-        }
+        crate::native_scalar::decode(value, self.return_value_kind)
     }
 
     pub fn new(
@@ -47,7 +43,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(),
             return_value: 0,
             has_return_value: false,
-            return_value_is_bool: false,
+            return_value_kind: 0,
             runtime_error: None,
             arg0: 0,
             arg1: 0,

@@ -1,0 +1,181 @@
+{
+  "purpose": "Immediate native value audit; correctness only, not speed or full typed/production acceptance.",
+  "runtime_base_commit": "6ecc8d5",
+  "runtime_patch_sha256": "17348a13c5a1d80313e8914b7ed95d5b048ec5924943d89e31797b5e9cd0176e",
+  "binary_sha256": "6ef7cf8c696ca9b220cd9f1583e63d01a4eb727ff4e366dc13b27e66ecd0d10c",
+  "cases": [
+    {
+      "name": "boolean",
+      "source": "mut state := true\nfunc f(x) { return state }\nmut i := 0\nwhile i < 200 { assert_equal(f(7), true) i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n"
+        },
+        {
+          "mode": "interpreter",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "native_function_compiled": true,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\nJIT: Function 'f' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'f':\n    0: LoadVar(\"state\")\n    1: Return\nJIT: Constants for 'f':\nJIT: Function body extent: 0..2, blocks created: []\nJIT: Allocated 1 local slots, optimization enabled: true\nJIT: Initialized parameter 'x' in SSA variable var0 (fast=true)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 0\nJIT: Checking self-recursion for 'f'\nJIT: No self-recursion found in 'f'\nJIT: Successfully compiled function 'f'\nJIT: Retrying current call to 'f' with native code\nJIT: Unsupported opcode at 14: PushScope\nJIT: Loop at offset 9 contains unsupported opcodes, using interpreter\n"
+        }
+      ]
+    },
+    {
+      "name": "integer",
+      "source": "mut state := -1\nfunc f(x) { return state }\nmut i := 0\nwhile i < 200 { assert_equal(f(7), -1) i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 2 constants folded, 1 dead instructions removed, 0 peephole optimizations\n"
+        },
+        {
+          "mode": "interpreter",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "native_function_compiled": true,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 2 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\nJIT: Function 'f' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'f':\n    0: LoadVar(\"state\")\n    1: Return\nJIT: Constants for 'f':\nJIT: Function body extent: 0..2, blocks created: []\nJIT: Allocated 1 local slots, optimization enabled: true\nJIT: Initialized parameter 'x' in SSA variable var0 (fast=true)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 0\nJIT: Checking self-recursion for 'f'\nJIT: No self-recursion found in 'f'\nJIT: Successfully compiled function 'f'\nJIT: Retrying current call to 'f' with native code\nJIT: Unsupported opcode at 14: PushScope\nJIT: Loop at offset 9 contains unsupported opcodes, using interpreter\n"
+        }
+      ]
+    },
+    {
+      "name": "float",
+      "source": "mut state := 2.5\nfunc f(x) { return state }\nmut i := 0\nwhile i < 200 { assert_equal(f(7), 2.5) i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n"
+        },
+        {
+          "mode": "interpreter",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "native_function_compiled": true,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\nJIT: Function 'f' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'f':\n    0: LoadVar(\"state\")\n    1: Return\nJIT: Constants for 'f':\nJIT: Function body extent: 0..2, blocks created: []\nJIT: Allocated 1 local slots, optimization enabled: true\nJIT: Initialized parameter 'x' in SSA variable var0 (fast=true)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 0\nJIT: Checking self-recursion for 'f'\nJIT: No self-recursion found in 'f'\nJIT: Successfully compiled function 'f'\nJIT: Retrying current call to 'f' with native code\nJIT: Unsupported opcode at 14: PushScope\nJIT: Loop at offset 9 contains unsupported opcodes, using interpreter\n"
+        }
+      ]
+    },
+    {
+      "name": "string",
+      "source": "mut state := \"hello\"\nfunc f(x) { return state }\nmut i := 0\nwhile i < 200 { assert_equal(f(7), \"hello\") i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n"
+        },
+        {
+          "mode": "interpreter",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "native_function_compiled": true,
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\nJIT: Function 'f' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'f':\n    0: LoadVar(\"state\")\n    1: Return\nJIT: Constants for 'f':\nJIT: Function body extent: 0..2, blocks created: []\nJIT: Allocated 1 local slots, optimization enabled: true\nJIT: Initialized parameter 'x' in SSA variable var0 (fast=true)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 0\nJIT: Checking self-recursion for 'f'\nJIT: No self-recursion found in 'f'\nJIT: Successfully compiled function 'f'\nJIT: Retrying current call to 'f' with native code\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Str(\"hello\"), got Int(-1)\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "null",
+      "source": "mut state := null\nfunc f(x) { return state }\nmut i := 0\nwhile i < 200 { assert_equal(f(7), null) i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n"
+        },
+        {
+          "mode": "interpreter",
+          "native_function_compiled": false,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "native_function_compiled": true,
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\nJIT: Function 'f' hit threshold (100 calls), attempting compilation...\nJIT: Bytecode for 'f':\n    0: LoadVar(\"state\")\n    1: Return\nJIT: Constants for 'f':\nJIT: Function body extent: 0..2, blocks created: []\nJIT: Allocated 1 local slots, optimization enabled: true\nJIT: Initialized parameter 'x' in SSA variable var0 (fast=true)\nJIT: PC 0 OK, stack depth now: 1\nJIT: PC 1 OK, stack depth now: 0\nJIT: Checking self-recursion for 'f'\nJIT: No self-recursion found in 'f'\nJIT: Successfully compiled function 'f'\nJIT: Retrying current call to 'f' with native code\nJIT: Unsupported opcode at 14: PushScope\nJIT: Loop at offset 9 contains unsupported opcodes, using interpreter\n"
+        }
+      ]
+    }
+  ],
+  "source_sha256": {
+    "src/jit.rs": "58878dee36ab9dd2baa50f8ee56ff451b34e7dd1b3d04b919c1c18659a3a2066",
+    "src/jit_disabled.rs": "2543e5dad1052078e800a8b962c54629795adfb418bc8ac3e8faafff44ff463d",
+    "src/native_scalar.rs": "282f068291eba746edaae0583bfa64e0a77bac9f8840d18c86e66b74d8ebd86d",
+    "src/vm.rs": "3cca3c3467278c3bfe70f2f70c69c9160f9e5989c79f38f982e6ddaac32963df",
+    "src/main.rs": "5aab0ce0b30c158448cdc9afd94f234c8b9928bb863a59a7a95318aac58e8f0f",
+    "src/lib.rs": "37498c881098d9e8fff403a13095a00091ef5e9c3426e84ae1319898ff2c74c5"
+  }
+}

@@ -34,6 +34,7 @@ pub mod lsp_references;
 pub mod lsp_rename;
 pub mod lsp_server;
 pub mod module;
+mod native_scalar;
 #[cfg(feature = "runtime-network")]
 pub mod network_policy;
 pub mod optimizer;

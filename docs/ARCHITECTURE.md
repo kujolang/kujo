@@ -99,25 +99,34 @@ The callback bytecode path preserves assignment values for the following `Pop`,
 matching main-VM stores, including when the callee has not been compiled yet.
 Returning from that path decrements recursion depth alongside removing the frame,
 so sequential callbacks do not consume the recursion budget.
-Native scalar return metadata distinguishes Boolean predicates from integers.
+Native scalar return metadata distinguishes integers, Booleans, null and IEEE
+floating payloads without object handles or heap allocation.
 Callback argument/result helpers carry that distinction, and local SSA payloads
 have companion type variables for branch merges. Direct recursion preserves the
 callee's return tag. Arithmetic, ordering and unary operations validate these
-scalar tags before performing native work; error paths preserve canonical
-diagnostics and unwind handlers. Scalar equality includes type identity, and
+scalar tags before performing native work; float add/subtract/multiply/divide,
+negation and comparisons execute as native F64 operations. Remainder uses a
+small runtime helper after a zero-divisor guard. Equality retains epsilon/NaN/
+infinity semantics, and both signs of floating zero are false. Error paths preserve
+canonical diagnostics and unwind handlers. Equality separates Booleans/null from
+numerics while retaining mixed integer/float comparisons, and
 logical bytecodes normalize truthiness to Boolean values. This is not
-general-value native parity: non-scalar global loads and loop-entry type metadata
-remain separate work. Named scalar loads carry Boolean/integer kinds; whole-function
+general-value native parity: string/object values and collection-helper ownership
+remain separate work. Named immediate loads carry their kinds; whole-function
 named stores reconstruct those kinds before checked assignment. Explicit global
 loads bypass named locals, and whole-function explicit global stores use checked
 global assignment, including creation of missing mutable globals. Direct native
 entrypoints receive cached variable-name metadata for global resolution. That
 metadata uses stable shared storage so adding cache entries during callbacks
-does not move the table referenced by active native code. Operand-stack joins carry paired payload/type parameters
+does not move the table referenced by active native code. Operand-stack joins
+carry paired payload/type parameters
 through conditional branches, unconditional jumps, fallthroughs and backedges;
 all incoming edges must agree on logical stack depth. All four compiler
 entrypoints restore these pairs, and scalar returns carry their tag even from
-loop/script compilation. Short-circuit regressions require native compilation
+loop/script compilation. Scalar loop locals load and persist their kind; implicit
+returns set null metadata rather than inheriting an earlier result. Integer-only
+function-entry guards remain: non-integer arguments still use VM execution.
+Short-circuit regressions require native compilation
 and verify skipped effects, skipped traps, loop conditions and direct recursion.
 Whole-function scalar JIT assignments resolve named bindings at runtime instead
 of treating every assignment target as a zero-initialized local. Existing globals

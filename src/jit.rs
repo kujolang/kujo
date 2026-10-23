@@ -116,14 +116,14 @@ pub struct VMContext {
     pub obj_stack_ptr: *mut Vec<Value>,
     /// Pointer to VM for calling back into interpreter (Step 4+)
     pub vm_ptr: *mut std::ffi::c_void, // Actually *mut VM, but avoid circular dependency
-    /// Scalar return payload; the Boolean tag preserves its language type.
+    /// Immediate return payload; its kind preserves the language type.
     /// When has_return_value is true, VM reads return_value instead of popping stack.
     pub return_value: i64,
     /// Flag indicating return_value contains a valid scalar return
     /// When true, VM uses return_value directly; when false, falls back to stack
     pub has_return_value: bool,
-    /// Distinguishes Bool(false/true) from Int(0/1) at native call boundaries.
-    pub return_value_is_bool: bool,
+    /// Immediate kind: integer, Boolean, null or IEEE float bits.
+    pub return_value_kind: i64,
     /// Runtime failure preserved across the native ABI; never replay failed work.
     pub runtime_error: Option<String>,
     /// Fast argument passing for recursive calls
@@ -137,11 +137,7 @@ pub struct VMContext {
 
 impl VMContext {
     pub fn scalar_value(&self, value: i64) -> Value {
-        if self.return_value_is_bool {
-            Value::Bool(value != 0)
-        } else {
-            Value::Int(value)
-        }
+        crate::native_scalar::decode(value, self.return_value_kind)
     }
 
     /// Create a new VMContext from VM state
@@ -162,7 +158,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(), // No VM pointer yet
             return_value: 0,
             has_return_value: false,
-            return_value_is_bool: false,
+            return_value_kind: 0,
             runtime_error: None,
             arg0: 0,
             arg1: 0,
@@ -189,7 +185,7 @@ impl VMContext {
             vm_ptr: vm,
             return_value: 0,
             has_return_value: false,
-            return_value_is_bool: false,
+            return_value_kind: 0,
             runtime_error: None,
             arg0: 0,
             arg1: 0,
@@ -230,7 +226,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(),
             return_value: 0,
             has_return_value: false,
-            return_value_is_bool: false,
+            return_value_kind: 0,
             runtime_error: None,
             arg0: 0,
             arg1: 0,
@@ -458,19 +454,14 @@ pub unsafe extern "C" fn jit_stack_push(ctx: *mut VMContext, value: i64) {
 // - Postconditions: all reads/writes stay within VM-owned structures reachable from validated pointers,
 //   and invalid inputs are handled via sentinel returns/early exits without transferring ownership.
 pub unsafe extern "C" fn jit_stack_pop(ctx: *mut VMContext) -> i64 {
-    if ctx.is_null() {
-        return 0;
-    }
-    let ctx = &mut *ctx;
-    ctx.return_value_is_bool = false;
-    if !ctx.stack_ptr.is_null() {
-        match (&mut *ctx.stack_ptr).pop() {
-            Some(Value::Int(value)) => return value,
-            Some(Value::Bool(value)) => {
-                ctx.return_value_is_bool = true;
-                return i64::from(value);
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.return_value_kind = 0;
+    if let Some(stack) = ctx.stack_ptr.as_mut() {
+        if let Some(value) = stack.pop() {
+            if let Some((payload, kind)) = crate::native_scalar::encode(&value) {
+                ctx.return_value_kind = kind;
+                return payload;
             }
-            _ => {}
         }
     }
     0
@@ -556,7 +547,7 @@ pub unsafe extern "C" fn jit_load_variable(
     }
 
     let ctx_ref = &mut *ctx;
-    ctx_ref.return_value_is_bool = false;
+    ctx_ref.return_value_kind = 0;
 
     // Try to resolve the name from hash
     let name = if name_hash != 0 && !ctx_ref.var_names_ptr.is_null() {
@@ -580,8 +571,16 @@ pub unsafe extern "C" fn jit_load_variable(
         let locals = &*ctx_ref.locals_ptr;
         if let Some(val) = locals.get(name) {
             match val {
+                Value::Float(value) => {
+                    ctx_ref.return_value_kind = crate::native_scalar::FLOAT;
+                    return value.to_bits() as i64;
+                }
+                Value::Null => {
+                    ctx_ref.return_value_kind = crate::native_scalar::NULL;
+                    return 0;
+                }
                 Value::Bool(value) => {
-                    ctx_ref.return_value_is_bool = true;
+                    ctx_ref.return_value_kind = 1;
                     return i64::from(*value);
                 }
                 Value::Int(i) => {
@@ -614,8 +613,16 @@ pub unsafe extern "C" fn jit_load_variable(
         let globals = &*ctx_ref.globals_ptr;
         if let Some(val) = globals.get(name) {
             match val {
+                Value::Float(value) => {
+                    ctx_ref.return_value_kind = crate::native_scalar::FLOAT;
+                    return value.to_bits() as i64;
+                }
+                Value::Null => {
+                    ctx_ref.return_value_kind = crate::native_scalar::NULL;
+                    return 0;
+                }
                 Value::Bool(value) => {
-                    ctx_ref.return_value_is_bool = true;
+                    ctx_ref.return_value_kind = 1;
                     return i64::from(*value);
                 }
                 Value::Int(i) => {
@@ -657,55 +664,49 @@ pub unsafe extern "C" fn jit_load_variable(
     0
 }
 
-/// Load an integer-compatible value from the active VM call frame's local slots.
+/// Load an immediate value and publish its kind from the active VM local slots.
 #[no_mangle]
 // SAFETY:
 // - `ctx` must point to a live VMContext for the duration of the call.
 // - The helper only reads a bounds-checked slot through the VM-owned vector pointer.
 pub unsafe extern "C" fn jit_load_local_slot(ctx: *mut VMContext, slot: i64) -> i64 {
-    if ctx.is_null() || slot < 0 {
-        return 0;
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.return_value_kind = 0;
+    if slot >= 0 {
+        if let Some(value) = ctx.local_slots_ptr.as_ref().and_then(|slots| slots.get(slot as usize))
+        {
+            if let Some((payload, kind)) = crate::native_scalar::encode(value) {
+                ctx.return_value_kind = kind;
+                return payload;
+            }
+        }
     }
-
-    let ctx_ref = &*ctx;
-    if ctx_ref.local_slots_ptr.is_null() {
-        return 0;
-    }
-
-    match (&*ctx_ref.local_slots_ptr).get(slot as usize) {
-        Some(Value::Int(value)) => *value,
-        Some(Value::Bool(value)) => i64::from(*value),
-        _ => 0,
-    }
+    0
 }
 
-/// Persist an integer-compatible value into the active VM call frame's local slots.
+/// Persist a tagged immediate value into a bounds-checked VM local slot.
 #[no_mangle]
-// SAFETY:
-// - `ctx` must point to a live, exclusively borrowed VMContext for the call.
-// - The helper only updates a bounds-checked scalar slot through the VM-owned vector pointer.
-pub unsafe extern "C" fn jit_store_local_slot(ctx: *mut VMContext, slot: i64, value: i64) -> i64 {
-    if ctx.is_null() || slot < 0 {
-        return 0;
+// SAFETY: ctx and its slot vector remain live and exclusively borrowed for the call.
+pub unsafe extern "C" fn jit_store_local_slot(
+    ctx: *mut VMContext,
+    slot: i64,
+    value: i64,
+    kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    if slot >= 0 {
+        if let Some(target) =
+            ctx.local_slots_ptr.as_mut().and_then(|slots| slots.get_mut(slot as usize))
+        {
+            // Object locals retain their separate ownership path.
+            if crate::native_scalar::encode(target).is_none() {
+                return 0;
+            }
+            *target = crate::native_scalar::decode(value, kind);
+            return 1;
+        }
     }
-
-    let ctx_ref = &mut *ctx;
-    if ctx_ref.local_slots_ptr.is_null() {
-        return 0;
-    }
-
-    let local_slots = &mut *ctx_ref.local_slots_ptr;
-    let target = match local_slots.get_mut(slot as usize) {
-        Some(target) => target,
-        None => return 0,
-    };
-
-    *target = match target {
-        Value::Bool(_) => Value::Bool(value != 0),
-        Value::Int(_) => Value::Int(value),
-        _ => return 0,
-    };
-    1
+    0
 }
 
 /// Store a variable to locals (called from JIT code)
@@ -722,6 +723,7 @@ pub unsafe extern "C" fn jit_store_variable(
     name_hash: i64,
     _name_len: usize,
     value: i64,
+    kind: i64,
 ) {
     if ctx.is_null() {
         return;
@@ -744,7 +746,7 @@ pub unsafe extern "C" fn jit_store_variable(
     // Store in locals
     if !ctx.locals_ptr.is_null() {
         let locals = &mut *ctx.locals_ptr;
-        locals.insert(name, Value::Int(value));
+        locals.insert(name, crate::native_scalar::decode(value, kind));
     }
 }
 
@@ -756,12 +758,12 @@ pub unsafe extern "C" fn jit_scalar_type_error(
     operation: i64,
     left: i64,
     right: i64,
-    left_is_bool: i64,
-    right_is_bool: i64,
+    left_kind: i64,
+    right_kind: i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
-    let left = if left_is_bool != 0 { Value::Bool(left != 0) } else { Value::Int(left) };
-    let right = if right_is_bool != 0 { Value::Bool(right != 0) } else { Value::Int(right) };
+    let left = crate::native_scalar::decode(left, left_kind);
+    let right = crate::native_scalar::decode(right, right_kind);
     let error = match operation {
         0..=4 => crate::vm::VM::invalid_binary_operation(
             ["+", "-", "*", "/", "%"][operation as usize],
@@ -820,7 +822,7 @@ pub unsafe extern "C" fn jit_assign_variable(
     ctx: *mut VMContext,
     name_hash: i64,
     value: i64,
-    is_bool: i64,
+    kind: i64,
     global_only: i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
@@ -829,7 +831,7 @@ pub unsafe extern "C" fn jit_assign_variable(
         ctx.runtime_error = Some("JIT assignment has no variable name".into());
         return 1;
     };
-    let value = if is_bool != 0 { Value::Bool(value != 0) } else { Value::Int(value) };
+    let value = crate::native_scalar::decode(value, kind);
     // This is the compiled function's own named-local map, not its caller frame.
     if let Some(locals) = ctx.locals_ptr.as_mut() {
         if global_only == 0 && locals.contains_key(&name) {
@@ -2237,6 +2239,11 @@ pub unsafe extern "C" fn jit_push_int(ctx: *mut VMContext, value: i64) -> i64 {
     0 // Success
 }
 
+#[no_mangle]
+pub extern "C" fn jit_float_remainder(left: f64, right: f64) -> f64 {
+    left % right
+}
+
 /// Runtime helper: Fast return value setter - stores integer directly in VMContext
 /// This is the OPTIMIZED path that avoids the stack push overhead.
 /// ~3x faster than jit_push_int because it avoids:
@@ -2261,37 +2268,33 @@ pub unsafe extern "C" fn jit_set_return_int(ctx: *mut VMContext, value: i64) -> 
     let ctx_ref = &mut *ctx;
     ctx_ref.return_value = value;
     ctx_ref.has_return_value = true;
-    ctx_ref.return_value_is_bool = false;
+    ctx_ref.return_value_kind = 0;
     0 // Success
 }
 
 /// Preserve scalar type information across the native calling convention.
 #[no_mangle]
 // SAFETY: ctx is the live, exclusively borrowed native-call context.
-pub unsafe extern "C" fn jit_set_return_scalar(
-    ctx: *mut VMContext,
-    value: i64,
-    is_bool: i64,
-) -> i64 {
+pub unsafe extern "C" fn jit_set_return_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     ctx.return_value = value;
     ctx.has_return_value = true;
-    ctx.return_value_is_bool = is_bool != 0;
+    ctx.return_value_kind = kind;
     0
 }
 
 #[no_mangle]
 // SAFETY: ctx points to the live native-call context.
 pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
-    ctx.as_ref().map_or(0, |ctx| i64::from(ctx.return_value_is_bool))
+    ctx.as_ref().map_or(0, |ctx| ctx.return_value_kind)
 }
 
 #[no_mangle]
 // SAFETY: ctx and its stack are live and exclusively borrowed for this call.
-pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, is_bool: i64) {
+pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) {
     if let Some(ctx) = ctx.as_mut() {
         if let Some(stack) = ctx.stack_ptr.as_mut() {
-            stack.push(if is_bool != 0 { Value::Bool(value != 0) } else { Value::Int(value) });
+            stack.push(crate::native_scalar::decode(value, kind));
         }
     }
 }
@@ -3188,6 +3191,7 @@ struct BytecodeTranslator {
     runtime_error_func: Option<FuncRef>,
     arithmetic_error_func: Option<FuncRef>,
     scalar_type_error_func: Option<FuncRef>,
+    float_remainder_func: Option<FuncRef>,
     /// Float load/store function references
     load_var_float_func: Option<FuncRef>,
     store_var_float_func: Option<FuncRef>,
@@ -3321,6 +3325,7 @@ impl BytecodeTranslator {
             runtime_error_func: None,
             arithmetic_error_func: None,
             scalar_type_error_func: None,
+            float_remainder_func: None,
             load_var_float_func: None,
             store_var_float_func: None,
             check_type_int_func: None,
@@ -3833,6 +3838,7 @@ impl BytecodeTranslator {
                     builder.inst_results(call)[0]
                 }
             };
+            self.capture_scalar_kind(builder, ctx, value);
             builder.def_var(variable, value);
             let kind = self.scalar_kind(builder, value);
             builder.def_var(Variable::new(variable.index() + 1), kind);
@@ -3913,12 +3919,14 @@ impl BytecodeTranslator {
                 self.vm_local_slot_set_func,
             ) {
                 let slot_index_value = builder.ins().iconst(types::I64, slot_index as i64);
-                builder.ins().call(store_func, &[ctx, slot_index_value, value]);
+                let kind = self.scalar_kind(builder, value);
+                builder.ins().call(store_func, &[ctx, slot_index_value, value, kind]);
             } else if let Some(store_func) = self.store_var_func {
                 let name_hash = Self::hash_var_name(name) as i64;
                 let name_hash_value = builder.ins().iconst(types::I64, name_hash);
                 let zero = builder.ins().iconst(types::I64, 0);
-                builder.ins().call(store_func, &[ctx, name_hash_value, zero, value]);
+                let kind = self.scalar_kind(builder, value);
+                builder.ins().call(store_func, &[ctx, name_hash_value, zero, value, kind]);
             }
         }
     }
@@ -4239,6 +4247,7 @@ impl BytecodeTranslator {
                     OpCode::Div => 3,
                     _ => 4,
                 };
+                let merge = self.begin_float_operation(builder, operation, left, right)?;
                 self.guard_scalar_types(builder, operation, left, right)?;
                 let result = match instruction {
                     OpCode::Add | OpCode::Sub | OpCode::Mul => {
@@ -4280,22 +4289,24 @@ impl BytecodeTranslator {
                         }
                     }
                 };
-                self.push_value(result);
+                self.finish_float_operation(builder, merge, result, 0);
             }
             OpCode::Negate => {
                 let value = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 5, value, value)?;
                 self.guard_scalar_types(builder, 5, value, value)?;
                 let overflow = builder.ins().icmp_imm(IntCC::Equal, value, i64::MIN);
                 let zero = builder.ins().iconst(types::I64, 0);
                 self.guard_arithmetic(builder, overflow, 5, value, zero)?;
                 let result = builder.ins().ineg(value);
-                self.push_value(result);
+                self.finish_float_operation(builder, merge, result, 0);
             }
 
             // Comparison operations
             OpCode::Equal => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 11, a, b)?;
                 let value_match = builder.ins().icmp(IntCC::Equal, a, b);
                 let a_kind = self.scalar_kind(builder, a);
                 let b_kind = self.scalar_kind(builder, b);
@@ -4303,14 +4314,13 @@ impl BytecodeTranslator {
                 let equal = builder.ins().band(value_match, kind_match);
                 let result = equal;
                 let extended = builder.ins().uextend(types::I64, result);
-                let kind = builder.ins().iconst(types::I64, 1);
-                self.scalar_kinds.insert(extended, kind);
-                self.push_value(extended);
+                self.finish_float_operation(builder, merge, extended, 1);
             }
 
             OpCode::NotEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 12, a, b)?;
                 let value_match = builder.ins().icmp(IntCC::Equal, a, b);
                 let a_kind = self.scalar_kind(builder, a);
                 let b_kind = self.scalar_kind(builder, b);
@@ -4318,55 +4328,49 @@ impl BytecodeTranslator {
                 let equal = builder.ins().band(value_match, kind_match);
                 let result = builder.ins().icmp_imm(IntCC::Equal, equal, 0);
                 let extended = builder.ins().uextend(types::I64, result);
-                let kind = builder.ins().iconst(types::I64, 1);
-                self.scalar_kinds.insert(extended, kind);
-                self.push_value(extended);
+                self.finish_float_operation(builder, merge, extended, 1);
             }
 
             OpCode::LessThan => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 7, a, b)?;
                 self.guard_scalar_types(builder, 7, a, b)?;
                 let result = builder.ins().icmp(IntCC::SignedLessThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
-                let kind = builder.ins().iconst(types::I64, 1);
-                self.scalar_kinds.insert(extended, kind);
-                self.push_value(extended);
+                self.finish_float_operation(builder, merge, extended, 1);
             }
 
             OpCode::GreaterThan => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 8, a, b)?;
                 self.guard_scalar_types(builder, 8, a, b)?;
                 let result = builder.ins().icmp(IntCC::SignedGreaterThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
-                let kind = builder.ins().iconst(types::I64, 1);
-                self.scalar_kinds.insert(extended, kind);
-                self.push_value(extended);
+                self.finish_float_operation(builder, merge, extended, 1);
             }
 
             OpCode::LessEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 9, a, b)?;
                 self.guard_scalar_types(builder, 9, a, b)?;
                 // a <= b: use SignedLessThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedLessThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
-                let kind = builder.ins().iconst(types::I64, 1);
-                self.scalar_kinds.insert(extended, kind);
-                self.push_value(extended);
+                self.finish_float_operation(builder, merge, extended, 1);
             }
 
             OpCode::GreaterEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let merge = self.begin_float_operation(builder, 10, a, b)?;
                 self.guard_scalar_types(builder, 10, a, b)?;
                 // a >= b: use SignedGreaterThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedGreaterThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
-                let kind = builder.ins().iconst(types::I64, 1);
-                self.scalar_kinds.insert(extended, kind);
-                self.push_value(extended);
+                self.finish_float_operation(builder, merge, extended, 1);
             }
 
             // Logical operations
@@ -4384,8 +4388,8 @@ impl BytecodeTranslator {
             OpCode::And => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let a_truthy = builder.ins().icmp_imm(IntCC::NotEqual, a, 0);
-                let b_truthy = builder.ins().icmp_imm(IntCC::NotEqual, b, 0);
+                let a_truthy = self.scalar_truth(builder, a);
+                let b_truthy = self.scalar_truth(builder, b);
                 let truth = builder.ins().band(a_truthy, b_truthy);
                 let result = builder.ins().uextend(types::I64, truth);
                 let kind = builder.ins().iconst(types::I64, 1);
@@ -4396,8 +4400,8 @@ impl BytecodeTranslator {
             OpCode::Or => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
-                let a_truthy = builder.ins().icmp_imm(IntCC::NotEqual, a, 0);
-                let b_truthy = builder.ins().icmp_imm(IntCC::NotEqual, b, 0);
+                let a_truthy = self.scalar_truth(builder, a);
+                let b_truthy = self.scalar_truth(builder, b);
                 let truth = builder.ins().bor(a_truthy, b_truthy);
                 let result = builder.ins().uextend(types::I64, truth);
                 let kind = builder.ins().iconst(types::I64, 1);
@@ -4431,6 +4435,21 @@ impl BytecodeTranslator {
                             self.scalar_kinds.insert(val, kind);
                             self.push_value(val);
                         }
+                        Constant::Float(value) => {
+                            let payload = builder.ins().iconst(types::I64, value.to_bits() as i64);
+                            let kind =
+                                builder.ins().iconst(types::I64, crate::native_scalar::FLOAT);
+                            self.scalar_kinds.insert(payload, kind);
+                            self.last_int_constant = None;
+                            self.push_value(payload);
+                        }
+                        Constant::None => {
+                            let payload = builder.ins().iconst(types::I64, 0);
+                            let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+                            self.scalar_kinds.insert(payload, kind);
+                            self.last_int_constant = None;
+                            self.push_value(payload);
+                        }
                         _ => {
                             // A placeholder is executed as a real integer by subsequent
                             // instructions (including division). Reject this region so
@@ -4459,8 +4478,8 @@ impl BytecodeTranslator {
                 // IMPORTANT: VM semantics PEEK at condition (doesn't pop)
                 // The condition stays on the stack for both branches
                 let condition = self.peek_value()?;
-                let zero = builder.ins().iconst(types::I64, 0);
-                let is_false = builder.ins().icmp(IntCC::Equal, condition, zero);
+                let truth = self.scalar_truth(builder, condition);
+                let is_false = builder.ins().icmp_imm(IntCC::Equal, truth, 0);
 
                 if let Some(&target_block) = self.blocks.get(target) {
                     // Get or create the fallthrough block
@@ -4487,8 +4506,7 @@ impl BytecodeTranslator {
                 // IMPORTANT: VM semantics PEEK at condition (doesn't pop)
                 // The condition stays on the stack for both branches
                 let condition = self.peek_value()?;
-                let zero = builder.ins().iconst(types::I64, 0);
-                let is_true = builder.ins().icmp(IntCC::NotEqual, condition, zero);
+                let is_true = self.scalar_truth(builder, condition);
 
                 if let Some(&target_block) = self.blocks.get(target) {
                     // Get or create the fallthrough block
@@ -5382,6 +5400,7 @@ impl BytecodeTranslator {
             }
 
             OpCode::ReturnNone => {
+                self.emit_null_return(builder);
                 self.persist_local_slots_to_vm(builder);
                 let zero = builder.ins().iconst(types::I64, 0);
                 builder.ins().return_(&[zero]);
@@ -5563,7 +5582,10 @@ impl BytecodeTranslator {
                             let name_hash = Self::hash_var_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
-                            builder.ins().call(store_func, &[ctx, name_hash_val, zero, value]);
+                            let kind = self.scalar_kind(builder, value);
+                            builder
+                                .ins()
+                                .call(store_func, &[ctx, name_hash_val, zero, value, kind]);
                         }
                     }
                 } else if let (Some(ctx), Some(store_func)) = (self.ctx_param, self.store_var_func)
@@ -5581,7 +5603,8 @@ impl BytecodeTranslator {
                     let zero = builder.ins().iconst(types::I64, 0); // name_len = 0
 
                     // Call jit_store_variable(ctx, name_hash, 0, value)
-                    builder.ins().call(store_func, &[ctx, name_hash_val, zero, value]);
+                    let kind = self.scalar_kind(builder, value);
+                    builder.ins().call(store_func, &[ctx, name_hash_val, zero, value, kind]);
                     // Value stays on stack - do NOT pop
                 }
                 // If no context, just leave value on stack
@@ -5639,7 +5662,8 @@ impl BytecodeTranslator {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
-                        builder.ins().call(store_func, &[ctx, name_hash_val, zero, value]);
+                        let kind = self.scalar_kind(builder, value);
+                        builder.ins().call(store_func, &[ctx, name_hash_val, zero, value, kind]);
                     }
                 }
             }
@@ -5693,7 +5717,9 @@ impl BytecodeTranslator {
                     let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                     let zero = builder.ins().iconst(types::I64, 0);
 
-                    builder.ins().call(store_func, &[ctx, name_hash_val, zero, value]);
+                    let kind = self.scalar_kind(builder, value);
+
+                    builder.ins().call(store_func, &[ctx, name_hash_val, zero, value, kind]);
                     // Value stays on stack - do NOT pop
                 } else {
                     // Can't store without context - leave value on stack
@@ -5805,7 +5831,8 @@ impl BytecodeTranslator {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
-                        builder.ins().call(store_func, &[ctx, name_hash_val, zero, value]);
+                        let kind = self.scalar_kind(builder, value);
+                        builder.ins().call(store_func, &[ctx, name_hash_val, zero, value, kind]);
                     }
                 }
                 Ok(false)
@@ -5975,6 +6002,7 @@ impl BytecodeTranslator {
             }
 
             OpCode::ReturnNone => {
+                self.emit_null_return(builder);
                 let zero = builder.ins().iconst(types::I64, 0);
                 builder.ins().return_(&[zero]);
                 Ok(true)
@@ -5983,6 +6011,152 @@ impl BytecodeTranslator {
             // For all other opcodes, delegate to standard translate_instruction
             _ => self.translate_instruction(builder, _pc, instruction, constants),
         }
+    }
+
+    fn emit_null_return(&self, builder: &mut FunctionBuilder) {
+        if let (Some(ctx), Some(set_return)) = (self.ctx_param, self.scalar_return_func) {
+            let zero = builder.ins().iconst(types::I64, 0);
+            let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+            builder.ins().call(set_return, &[ctx, zero, kind]);
+        }
+    }
+
+    fn scalar_truth(
+        &self,
+        builder: &mut FunctionBuilder,
+        value: cranelift::prelude::Value,
+    ) -> cranelift::prelude::Value {
+        let kind = self.scalar_kind(builder, value);
+        let is_float = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_scalar::FLOAT);
+        // Both signs of floating zero are false; NaNs and infinities are true.
+        let magnitude = builder.ins().band_imm(value, i64::MAX);
+        let truth_bits = builder.ins().select(is_float, magnitude, value);
+        builder.ins().icmp_imm(IntCC::NotEqual, truth_bits, 0)
+    }
+
+    fn as_float(
+        &self,
+        builder: &mut FunctionBuilder,
+        value: cranelift::prelude::Value,
+        kind: cranelift::prelude::Value,
+    ) -> cranelift::prelude::Value {
+        let is_float = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_scalar::FLOAT);
+        let bits = builder.ins().bitcast(types::F64, MemFlags::new(), value);
+        let integer = builder.ins().fcvt_from_sint(types::F64, value);
+        builder.ins().select(is_float, bits, integer)
+    }
+
+    /// Split dynamic numeric work while retaining the existing checked integer
+    /// path. Floating operations stay native except the platform remainder call.
+    fn begin_float_operation(
+        &self,
+        builder: &mut FunctionBuilder,
+        operation: i64,
+        left: cranelift::prelude::Value,
+        right: cranelift::prelude::Value,
+    ) -> Result<Block, String> {
+        let left_kind = self.scalar_kind(builder, left);
+        let right_kind = self.scalar_kind(builder, right);
+        let left_float =
+            builder.ins().icmp_imm(IntCC::Equal, left_kind, crate::native_scalar::FLOAT);
+        let right_float =
+            builder.ins().icmp_imm(IntCC::Equal, right_kind, crate::native_scalar::FLOAT);
+        let any_float = builder.ins().bor(left_float, right_float);
+        let floating = builder.create_block();
+        let integer = builder.create_block();
+        let merge = builder.create_block();
+        builder.append_block_param(merge, types::I64);
+        builder.append_block_param(merge, types::I64);
+        builder.ins().brif(any_float, floating, &[], integer, &[]);
+        builder.seal_block(floating);
+        builder.seal_block(integer);
+        builder.switch_to_block(floating);
+        if operation < 11 {
+            self.guard_scalar_types(builder, operation, left, right)?;
+        }
+        let a = self.as_float(builder, left, left_kind);
+        let b = self.as_float(builder, right, right_kind);
+        let result = match operation {
+            0 => builder.ins().fadd(a, b),
+            1 => builder.ins().fsub(a, b),
+            2 => builder.ins().fmul(a, b),
+            3 | 4 => {
+                let zero_float = builder.ins().f64const(0.0);
+                let zero_divisor = builder.ins().fcmp(FloatCC::Equal, b, zero_float);
+                let zero = builder.ins().iconst(types::I64, 0);
+                // Division/modulo have the same zero-divisor errors for both kinds.
+                self.guard_arithmetic(builder, zero_divisor, operation, zero, zero)?;
+                if operation == 3 {
+                    builder.ins().fdiv(a, b)
+                } else {
+                    let remainder =
+                        self.float_remainder_func.ok_or("Missing float remainder helper")?;
+                    let call = builder.ins().call(remainder, &[a, b]);
+                    builder.inst_results(call)[0]
+                }
+            }
+            5 => builder.ins().fneg(a),
+            7..=10 => {
+                let relation = [
+                    FloatCC::LessThan,
+                    FloatCC::GreaterThan,
+                    FloatCC::LessThanOrEqual,
+                    FloatCC::GreaterThanOrEqual,
+                ][(operation - 7) as usize];
+                builder.ins().fcmp(relation, a, b)
+            }
+            11 | 12 => {
+                // Match Value::float_equals: epsilon for finite values, exact
+                // equality for infinities, and NaN unequal even to itself.
+                let exact = builder.ins().fcmp(FloatCC::Equal, a, b);
+                let difference = builder.ins().fsub(a, b);
+                let absolute = builder.ins().fabs(difference);
+                let epsilon = builder.ins().f64const(f64::EPSILON);
+                let close = builder.ins().fcmp(FloatCC::LessThan, absolute, epsilon);
+                let equal = builder.ins().bor(exact, close);
+                let left_int = builder.ins().icmp_imm(IntCC::Equal, left_kind, 0);
+                let right_int = builder.ins().icmp_imm(IntCC::Equal, right_kind, 0);
+                let left_numeric = builder.ins().bor(left_int, left_float);
+                let right_numeric = builder.ins().bor(right_int, right_float);
+                let numeric = builder.ins().band(left_numeric, right_numeric);
+                let equal = builder.ins().band(equal, numeric);
+                if operation == 12 {
+                    builder.ins().icmp_imm(IntCC::Equal, equal, 0)
+                } else {
+                    equal
+                }
+            }
+            _ => return Err("Invalid floating operation".into()),
+        };
+        let (payload, kind) = if operation >= 7 {
+            (builder.ins().uextend(types::I64, result), crate::native_scalar::BOOLEAN)
+        } else {
+            (
+                builder.ins().bitcast(types::I64, MemFlags::new(), result),
+                crate::native_scalar::FLOAT,
+            )
+        };
+        let kind = builder.ins().iconst(types::I64, kind);
+        builder.ins().jump(merge, &[payload, kind]);
+        builder.switch_to_block(integer);
+        Ok(merge)
+    }
+
+    fn finish_float_operation(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        merge: Block,
+        result: cranelift::prelude::Value,
+        kind: i64,
+    ) {
+        let kind = builder.ins().iconst(types::I64, kind);
+        builder.ins().jump(merge, &[result, kind]);
+        builder.switch_to_block(merge);
+        builder.seal_block(merge);
+        let params = builder.block_params(merge);
+        let payload = params[0];
+        self.scalar_kinds.insert(payload, params[1]);
+        self.push_value(payload);
     }
 
     fn guard_scalar_types(
@@ -5998,12 +6172,18 @@ impl BytecodeTranslator {
         let left_kind = self.scalar_kind(builder, left);
         let right_kind = self.scalar_kind(builder, right);
         let invalid = if operation == 6 {
-            builder.ins().icmp_imm(IntCC::Equal, left_kind, 0)
-        } else if operation == 5 {
-            builder.ins().icmp_imm(IntCC::NotEqual, left_kind, 0)
+            builder.ins().icmp_imm(IntCC::NotEqual, left_kind, crate::native_scalar::BOOLEAN)
         } else {
-            let either = builder.ins().bor(left_kind, right_kind);
-            builder.ins().icmp_imm(IntCC::NotEqual, either, 0)
+            let left_int = builder.ins().icmp_imm(IntCC::Equal, left_kind, 0);
+            let left_float =
+                builder.ins().icmp_imm(IntCC::Equal, left_kind, crate::native_scalar::FLOAT);
+            let left_valid = builder.ins().bor(left_int, left_float);
+            let right_int = builder.ins().icmp_imm(IntCC::Equal, right_kind, 0);
+            let right_float =
+                builder.ins().icmp_imm(IntCC::Equal, right_kind, crate::native_scalar::FLOAT);
+            let right_valid = builder.ins().bor(right_int, right_float);
+            let valid = builder.ins().band(left_valid, right_valid);
+            builder.ins().icmp_imm(IntCC::Equal, valid, 0)
         };
         let failure = builder.create_block();
         let success = builder.create_block();
@@ -6231,6 +6411,13 @@ impl JitCompiler {
                 _ => translator.scalar_type_error_func = Some(function),
             }
         }
+        let mut signature = module.make_signature();
+        signature.params.extend([AbiParam::new(types::F64); 2]);
+        signature.returns.push(AbiParam::new(types::F64));
+        let id = module
+            .declare_function("jit_float_remainder", Linkage::Import, &signature)
+            .map_err(|error| error.to_string())?;
+        translator.float_remainder_func = Some(module.declare_func_in_func(id, builder.func));
         Ok(())
     }
 
@@ -6294,6 +6481,7 @@ impl JitCompiler {
         builder.symbol("jit_check_type_float", jit_check_type_float as *const u8);
         builder.symbol("jit_call_function", jit_call_function as *const u8);
         builder.symbol("jit_push_int", jit_push_int as *const u8);
+        builder.symbol("jit_float_remainder", jit_float_remainder as *const u8);
         builder.symbol("jit_set_return_int", jit_set_return_int as *const u8);
         builder.symbol("jit_set_return_scalar", jit_set_return_scalar as *const u8);
         builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
@@ -6412,7 +6600,12 @@ impl JitCompiler {
             // This lowering represents only integers and boolean condition bits.
             // Other values must stay in the VM until typed lowering exists.
             OpCode::LoadConst(idx) => {
-                matches!(constants.get(*idx), Some(Constant::Int(_) | Constant::Bool(_)))
+                matches!(
+                    constants.get(*idx),
+                    Some(
+                        Constant::Int(_) | Constant::Bool(_) | Constant::Float(_) | Constant::None
+                    )
+                )
             }
 
             // Arithmetic operations
@@ -6538,6 +6731,7 @@ impl JitCompiler {
         store_var_sig.params.push(AbiParam::new(types::I64)); // name_len
         store_var_sig.params.push(AbiParam::new(types::I64)); // value
                                                               // no return value
+        store_var_sig.params.push(AbiParam::new(types::I64)); // scalar kind
 
         let store_var_func_id = self
             .module
@@ -6557,6 +6751,7 @@ impl JitCompiler {
         store_local_slot_sig.params.push(AbiParam::new(types::I64));
         store_local_slot_sig.params.push(AbiParam::new(types::I64));
         store_local_slot_sig.params.push(AbiParam::new(types::I64));
+        store_local_slot_sig.params.push(AbiParam::new(types::I64)); // scalar kind
         store_local_slot_sig.returns.push(AbiParam::new(types::I64));
         let store_local_slot_func_id = self
             .module
@@ -7562,6 +7757,7 @@ impl JitCompiler {
             store_var_sig.params.push(AbiParam::new(types::I64)); // name_hash
             store_var_sig.params.push(AbiParam::new(types::I64)); // name_len
             store_var_sig.params.push(AbiParam::new(types::I64)); // value
+            store_var_sig.params.push(AbiParam::new(types::I64)); // scalar kind
 
             let store_var_id = self
                 .module
@@ -8412,6 +8608,7 @@ impl JitCompiler {
             store_var_sig.params.push(AbiParam::new(types::I64));
             store_var_sig.params.push(AbiParam::new(types::I64));
             store_var_sig.params.push(AbiParam::new(types::I64));
+            store_var_sig.params.push(AbiParam::new(types::I64)); // scalar kind
 
             let store_var_id = self
                 .module
@@ -8897,13 +9094,8 @@ mod tests {
     }
 
     #[test]
-    fn non_integer_constants_are_rejected_before_native_execution() {
-        for constant in [
-            Constant::Float(2.0),
-            Constant::String("preserve me".into()),
-            Constant::Bytes(vec![0, 255]),
-            Constant::None,
-        ] {
+    fn non_immediate_constants_are_rejected_before_native_execution() {
+        for constant in [Constant::String("preserve me".into()), Constant::Bytes(vec![0, 255])] {
             let mut compiler = JitCompiler::new().unwrap();
             let mut chunk = BytecodeChunk::new();
             let index = chunk.add_constant(constant);

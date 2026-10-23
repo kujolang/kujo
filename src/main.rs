@@ -37,6 +37,7 @@ mod lsp_rename;
 mod lsp_server;
 mod mcp_make;
 mod module;
+mod native_scalar;
 mod network_policy;
 mod optimizer;
 mod package_workflow;

@@ -3113,7 +3113,7 @@ impl VM {
                                                 vm_ptr,
                                                 return_value: 0,
                                                 has_return_value: false,
-                                                return_value_is_bool: false,
+                                                return_value_kind: 0,
                                                 runtime_error: None,
                                                 arg0: if use_fast_args && args.len() > 0 {
                                                     if let Value::Int(n) = args[0] {
@@ -3237,7 +3237,7 @@ impl VM {
                                                     vm_ptr,
                                                     return_value: 0,
                                                     has_return_value: false,
-                                                    return_value_is_bool: false,
+                                                    return_value_kind: 0,
                                                     runtime_error: None,
                                                     arg0: arg_val,
                                                     arg1: 0,
@@ -3390,7 +3390,7 @@ impl VM {
                                         vm_ptr,
                                         return_value: 0,
                                         has_return_value: false,
-                                        return_value_is_bool: false,
+                                        return_value_kind: 0,
                                         runtime_error: None,
                                         arg0: if use_fast_args && args.len() > 0 {
                                             if let Value::Int(n) = args[0] {
@@ -8346,7 +8346,7 @@ impl VM {
                                         vm_ptr,
                                         return_value: 0,
                                         has_return_value: false,
-                                        return_value_is_bool: false,
+                                        return_value_kind: 0,
                                         runtime_error: None,
                                         arg0: arg_val,
                                         arg1: 0,
@@ -8498,7 +8498,7 @@ impl VM {
                             vm_ptr,
                             return_value: 0,
                             has_return_value: false,
-                            return_value_is_bool: false,
+                            return_value_kind: 0,
                             runtime_error: None,
                             arg0: if use_fast_args && args.len() > 0 {
                                 if let Value::Int(n) = args[0] {

@@ -20,10 +20,12 @@ a target to test, not a guarantee. This document explains the execution order;
   Native short-circuit joins now carry operand payloads and type tags; regressions
   cover native execution, mixed stack joins and direct recursion. Cold callbacks
   now restore recursion depth after return. Boolean/integer named global loads and
-  whole-function stores preserve scalar types. Float/string/null global reads,
-  loop/script stores and loop-entry binding types remain open. Checked native
+  whole-function stores preserve scalar types. Float/null immediate values now
+  have native payloads, float arithmetic/comparisons and typed loop-local
+  persistence. String/object values, collection helper boundaries, non-integer
+  native arguments and full loop/script binding parity remain open. Checked native
   integer arithmetic now has overflow/divisor guards and regression coverage.
-  Native float/general-value compilation remains unfinished.
+  General-value compilation and non-integer native entry remain unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score
   predictions. A clean measurement environment is an acceptance requirement.
 
