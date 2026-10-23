@@ -1094,6 +1094,11 @@
       "id": "jit_boolean_global_load",
       "status": "open: compiled function reading Bool global returns Int(-1); VM/interpreter return Bool(true). Global scalar loads/stores and callable/opaque values need coherent tagged handling.",
       "evidence": "jit-boolean-flow-2026-10-23.json"
+    },
+    {
+      "id": "jit_short_circuit_native_merge",
+      "status": "open native coverage gap: short-circuit function compilation is rejected by the Cranelift verifier for mismatched block argument counts and a non-dominating value. VM fallback passes; do not count as native success. Audit does not establish when this failure was introduced.",
+      "evidence": "jit-boolean-flow-2026-10-23.json"
     }
   ],
   "verification": [
