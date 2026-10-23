@@ -11,6 +11,8 @@ Production-size attempts and remaining gaps are in
 evidence for its pinned executable.
 An exploratory four-workload Kujo/Goose/Rust comparison is recorded in
 [COMPARISON_2026_10_21.md](COMPARISON_2026_10_21.md), with raw samples and limitations.
+The [October 23 rerun](COMPARISON_2026_10_23.md) reuses the exact same binaries
+and workloads to compare observed performance under the laptop's newer conditions.
 
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark
