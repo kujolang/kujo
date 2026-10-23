@@ -95,6 +95,8 @@ flags; division and remainder guard zero and signed overflow before executing a
 native instruction, and negation guards the minimum integer. Only the failing
 path calls Rust to construct the canonical error. Other JIT helper failures and
 general-value type behavior remain separate verification requirements.
+The callback bytecode path preserves assignment values for the following `Pop`,
+matching main-VM stores, including when the callee has not been compiled yet.
 Whole-function integer JIT assignments resolve named bindings at runtime instead
 of treating every assignment target as a zero-initialized local. Existing globals
 use the environment's checked assignment; unresolved names remain function-local.

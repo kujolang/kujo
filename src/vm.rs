@@ -8581,7 +8581,7 @@ impl VM {
                         }
 
                         OpCode::StoreVar(name) => {
-                            let value = self.stack.pop().ok_or("Stack underflow")?;
+                            let value = self.stack.last().ok_or("Stack underflow")?.clone();
                             let global_exists = self.globals.lock().unwrap().get(&name).is_some()
                                 || Interpreter::is_builtin_name(&name);
                             let mut assign_global = false;
@@ -8644,7 +8644,7 @@ impl VM {
                         }
 
                         OpCode::StoreLocal(slot) => {
-                            let value = self.stack.pop().ok_or("Stack underflow")?;
+                            let value = self.stack.last().ok_or("Stack underflow")?.clone();
                             let binding_name = self
                                 .chunk
                                 .local_names
@@ -8681,12 +8681,12 @@ impl VM {
                         }
 
                         OpCode::StoreGlobal(name) => {
-                            let value = self.stack.pop().ok_or("Stack underflow")?;
+                            let value = self.stack.last().ok_or("Stack underflow")?.clone();
                             self.globals.lock().unwrap().assign_checked(name, value)?;
                         }
 
                         OpCode::DefineGlobal(name, kind) => {
-                            let value = self.stack.pop().ok_or("Stack underflow")?;
+                            let value = self.stack.last().ok_or("Stack underflow")?.clone();
                             self.globals.lock().unwrap().define_with_kind_checked(
                                 name,
                                 value,

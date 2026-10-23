@@ -1076,6 +1076,11 @@
       "id": "jit_callback_error_propagation",
       "evidence": "../../tests/jit_error_propagation.rs",
       "status": "Fixed reproduced callback failures: generated calls exit before later side effects, native ABI preserves original error, VM handlers unwind without replay. Nested calls and repeated failure/success reuse pass. Global stores, Bool results and checked native arithmetic remain separate open work; no speed claim."
+    },
+    {
+      "id": "jit_cold_callback_assignment_stack",
+      "status": "Fixed reproduced Stack underflow in compiled caller to cold bytecode callee. Callback StoreVar/StoreLocal/StoreGlobal/DefineGlobal now peek and clone the assignment value, matching main VM; following Pop consumes it. Both new regressions fail before fix and pass after.",
+      "evidence": "../../tests/jit_callback_assignment.rs"
     }
   ],
   "verification": [
@@ -1174,6 +1179,11 @@
       "scope": "checked native integer arithmetic",
       "result": "Before fix7 binary boundary cases fail in JIT (unchecked results, SIGILL or SIGFPE); reference VM/interpreter pass. After fix4newcontracts pass:8error cases across3runtimes,720binary boundary comparisons, direct-native exact errors/reuse and loop-compiler error-state persistence. Full library1008passed/8ignored and30integrations passed; final4-test arithmetic suite rerun includes1additional loop test (31unique integrations total). No-default-features library, fmt and diff checks passed. No speed/production acceptance claim.",
       "evidence": "../../tests/jit_checked_arithmetic.rs"
+    },
+    {
+      "scope": "cold callback assignment stack contract",
+      "result": "2new tests pass:4handcrafted bytecode store contracts and a VM/interpreter/JIT caller/cold-callee fixture with compilation assertions. All27selected integrations passed at final callback revision, including checked native arithmetic, global assignment, argument guards, errors and closures. Full library1008passed/8ignored at preceding arithmetic commit f5eba31; not rerun for4-line callback stack delta. No speed/full-suite acceptance claim.",
+      "evidence": "../../tests/jit_callback_assignment.rs"
     }
   ]
 }

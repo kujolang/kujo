@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Keep assignment values on the stack in the JIT callback bytecode path, matching
+  the main VM and preventing stack underflow when compiled callers invoke cold
+  functions that update named, local or global bindings.
+
 - Preserve checked integer arithmetic in experimental JIT execution, including
   overflow, zero divisors, signed division/remainder boundaries and negation.
   Native guards raise catchable runtime errors instead of wrapping or trapping.
