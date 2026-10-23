@@ -102,7 +102,7 @@
     {
       "name": "Binarytrees::Obj",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -125,7 +125,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -139,7 +140,7 @@
     {
       "name": "Binarytrees::Arena",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -162,7 +163,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -176,7 +178,7 @@
     {
       "name": "Brainfuck::Array",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -199,7 +201,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -213,7 +216,7 @@
     {
       "name": "Brainfuck::Recursion",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -236,7 +239,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -250,7 +254,7 @@
     {
       "name": "Matmul::Single",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -273,7 +277,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -287,7 +292,7 @@
     {
       "name": "Matmul::T4",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -310,7 +315,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -324,7 +330,7 @@
     {
       "name": "Matmul::T8",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -347,7 +353,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -361,7 +368,7 @@
     {
       "name": "Matmul::T16",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -384,7 +391,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -398,7 +406,7 @@
     {
       "name": "Base64::Encode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -421,7 +429,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -435,7 +444,7 @@
     {
       "name": "Base64::Decode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -458,7 +467,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -472,7 +482,7 @@
     {
       "name": "Json::Generate",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -495,7 +505,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -509,7 +520,7 @@
     {
       "name": "Json::ParseDom",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -532,7 +543,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -546,7 +558,7 @@
     {
       "name": "Json::ParseMapping",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -569,7 +581,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -583,7 +596,7 @@
     {
       "name": "CSV::Parse",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -606,7 +619,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -620,7 +634,7 @@
     {
       "name": "Etc::Sieve",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -643,7 +657,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -657,7 +672,7 @@
     {
       "name": "Etc::TextRaytracer",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -680,7 +695,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -694,7 +710,7 @@
     {
       "name": "Etc::NeuralNet",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -717,7 +733,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -731,7 +748,7 @@
     {
       "name": "Etc::CacheSimulation",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -754,7 +771,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -768,7 +786,7 @@
     {
       "name": "Etc::GameOfLife",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -791,7 +809,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -805,7 +824,7 @@
     {
       "name": "Etc::Words",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -828,7 +847,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -842,7 +862,7 @@
     {
       "name": "Etc::LogParser",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -865,7 +885,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -879,7 +900,7 @@
     {
       "name": "Template::Regex",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -902,7 +923,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -916,7 +938,7 @@
     {
       "name": "Template::Parse",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -939,7 +961,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -953,7 +976,7 @@
     {
       "name": "Sort::Quick",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -976,7 +999,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -990,7 +1014,7 @@
     {
       "name": "Sort::Merge",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1013,7 +1037,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1027,7 +1052,7 @@
     {
       "name": "Sort::Self",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1050,7 +1075,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1064,7 +1090,7 @@
     {
       "name": "Graph::BFS",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1087,7 +1113,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1101,7 +1128,7 @@
     {
       "name": "Graph::DFS",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1124,7 +1151,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1138,7 +1166,7 @@
     {
       "name": "Graph::AStar",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1161,7 +1189,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1175,7 +1204,7 @@
     {
       "name": "Hash::SHA256",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1198,7 +1227,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1212,7 +1242,7 @@
     {
       "name": "Hash::CRC32",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1235,7 +1265,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1249,7 +1280,7 @@
     {
       "name": "Calculator::Ast",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1272,7 +1303,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1286,7 +1318,7 @@
     {
       "name": "Calculator::Interpreter",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1309,7 +1341,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1323,7 +1356,7 @@
     {
       "name": "Maze::Generator",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1346,7 +1379,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1360,7 +1394,7 @@
     {
       "name": "Maze::BFS",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1383,7 +1417,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1397,7 +1432,7 @@
     {
       "name": "Maze::AStar",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1420,7 +1455,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1434,7 +1470,7 @@
     {
       "name": "CLBG::Fannkuchredux",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1457,7 +1493,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1471,7 +1508,7 @@
     {
       "name": "CLBG::Mandelbrot",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1494,7 +1531,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1508,7 +1546,7 @@
     {
       "name": "CLBG::Nbody",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1531,7 +1569,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1545,7 +1584,7 @@
     {
       "name": "CLBG::Spectralnorm",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1568,7 +1607,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1582,7 +1622,7 @@
     {
       "name": "Compress::BWTEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1605,7 +1645,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1619,7 +1660,7 @@
     {
       "name": "Compress::BWTDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1642,7 +1683,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1656,7 +1698,7 @@
     {
       "name": "Compress::HuffEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1679,7 +1721,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1693,7 +1736,7 @@
     {
       "name": "Compress::HuffDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1716,7 +1759,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1730,7 +1774,7 @@
     {
       "name": "Compress::ArithEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1753,7 +1797,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1767,7 +1812,7 @@
     {
       "name": "Compress::ArithDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1790,7 +1835,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1804,7 +1850,7 @@
     {
       "name": "Compress::LZWEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1827,7 +1873,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1841,7 +1888,7 @@
     {
       "name": "Compress::LZWDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1864,7 +1911,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1878,7 +1926,7 @@
     {
       "name": "Distance::Jaro",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1901,7 +1949,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1915,7 +1964,7 @@
     {
       "name": "Distance::NGram",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1938,7 +1987,8 @@
         "checksums-2026-10-23-owned-values-interpreter.json",
         "checksums-2026-10-23-dictionary-ownership-interpreter.json",
         "checksums-2026-10-23-indexed-bindings-jit.json",
-        "checksums-2026-10-23-indexed-bindings-vm.json"
+        "checksums-2026-10-23-indexed-bindings-vm.json",
+        "checksums-2026-10-23-indexed-bindings-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2490,6 +2540,11 @@
       "scope": "all50 indexed-bindings VM test-size checksums at b286c5d",
       "result": "All50 test-size VM checksums at b286c5d. Frozen copied binary/inputs; debug diagnostics overlapping builds/tests. Predates fixed-dictionary allocation and loop fixes; not production, speed or current HEAD acceptance.",
       "evidence": "checksums-2026-10-23-indexed-bindings-vm.json"
+    },
+    {
+      "scope": "all50 interpreter test-size checksums at b286c5d",
+      "result": "All 50 unchanged test-size interpreter checksums at b286c5d. Debug diagnostic overlapping local builds/tests; predates fixed-dictionary allocation, specialized loop and fused append fixes. Not current HEAD, production or speed acceptance. No measurement sidecars for interpreter mode.",
+      "evidence": "checksums-2026-10-23-indexed-bindings-interpreter.json"
     }
   ]
 }
