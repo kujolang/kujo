@@ -611,6 +611,14 @@ pub unsafe extern "C" fn jit_load_variable(
         }
     }
 
+    // Builtins are resolved lazily by the VM, rather than installed in globals.
+    // Preserve local/global shadowing, then use the same native callable value
+    // so invocation still passes through the VM's capability checks.
+    if crate::interpreter::Interpreter::is_builtin_name(name) && !ctx_ref.stack_ptr.is_null() {
+        (&mut *ctx_ref.stack_ptr).push(Value::NativeFunction(name.to_owned()));
+        return -1;
+    }
+
     if std::env::var("DEBUG_JIT_CALL").is_ok() {
         eprintln!("jit_load_variable: '{}' not found", name);
     }
@@ -8497,6 +8505,28 @@ mod tests {
         assert_eq!(stats.total_functions, 0);
         assert_eq!(stats.compiled_functions, 0);
         assert!(stats.enabled);
+    }
+
+    #[test]
+    fn jit_builtin_lookup_preserves_local_and_global_shadowing() {
+        let hash = BytecodeTranslator::hash_var_name("bit_and");
+        let mut names = std::collections::HashMap::from([(hash, "bit_and".to_owned())]);
+        let mut stack = Vec::new();
+        let mut locals = std::collections::HashMap::new();
+        let mut globals = std::collections::HashMap::new();
+        let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
+        context.var_names_ptr = &mut names;
+        // SAFETY: every context pointer references live, exclusively owned test
+        // storage, and the helper neither retains pointers nor invokes code.
+        assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, -1);
+        assert!(matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "bit_and"));
+        globals.insert("bit_and".into(), Value::Int(7));
+        // SAFETY: same live context/storage as above.
+        assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 7);
+        locals.insert("bit_and".into(), Value::Int(9));
+        // SAFETY: same live context/storage as above.
+        assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 9);
+        assert!(stack.is_empty());
     }
 
     #[test]
