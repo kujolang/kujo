@@ -15,6 +15,12 @@ a target to test, not a guarantee. This document explains the execution order;
   repair cold-call dispatch and re-run the unchanged matrix before widening
   owned argument entry. The frozen release build of this revision has the same
   known source gap and must not be promoted based on its successful build alone.
+  The subsequent [cold callback repair](cold-callback-2026-10-23.json) checks
+  unsupported helper bodies before execution and routes them through the full VM
+  bridge while preserving cached native calls. Its independent regression covers
+  native entry, array construction, prior effects, error recovery and unchanged
+  assignment targets. All eight compression cases now pass with reports verified;
+  a complete repaired all-50 matrix remains required.
 
 - The [tagged-owned candidate](checksums-2026-10-23-owned-values-jit.json) at
   `e2797da` passed all 50 test-size JIT checksums, with frozen input/binary identity,

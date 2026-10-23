@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route cold bytecode callbacks outside the inline dispatcher's supported subset
+  through the full VM bridge before executing their bodies. Native callers can
+  invoke array-building helpers without unsupported-opcode failures or replaying
+  earlier effects.
+
 - Compile string and byte constants through retained immutable native literals.
   Loads preserve value types and copy-on-write isolation, share backing buffers,
   and release temporary roots instead of falling back solely for these constants.

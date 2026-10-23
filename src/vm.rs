@@ -8602,7 +8602,61 @@ impl VM {
                     }
                 }
 
-                // Slow path: Execute through interpreter
+                // The compact callback dispatcher below is only a scalar subset
+                // of the VM. Decide before executing any instruction so a cold
+                // helper can use the full bridge without replaying prior effects.
+                // Cached native functions above keep their existing fast path.
+                if !chunk.instructions.iter().all(|instruction| {
+                    matches!(
+                        instruction,
+                        OpCode::LoadCapture(_)
+                            | OpCode::StoreCapture(_)
+                            | OpCode::LoadConst(_)
+                            | OpCode::LoadLocal(_)
+                            | OpCode::LoadVar(_)
+                            | OpCode::LoadGlobal(_)
+                            | OpCode::StoreVar(_)
+                            | OpCode::DefineLocal(_)
+                            | OpCode::StoreLocal(_)
+                            | OpCode::StoreGlobal(_)
+                            | OpCode::DefineGlobal(_, _)
+                            | OpCode::EnsureMutableGlobalForMutation(_)
+                            | OpCode::Pop
+                            | OpCode::Dup
+                            | OpCode::Add
+                            | OpCode::Sub
+                            | OpCode::Mul
+                            | OpCode::Div
+                            | OpCode::Mod
+                            | OpCode::Negate
+                            | OpCode::Not
+                            | OpCode::And
+                            | OpCode::Or
+                            | OpCode::LessThan
+                            | OpCode::GreaterThan
+                            | OpCode::LessEqual
+                            | OpCode::GreaterEqual
+                            | OpCode::Equal
+                            | OpCode::NotEqual
+                            | OpCode::Return
+                            | OpCode::ReturnNone
+                            | OpCode::Call(_)
+                            | OpCode::CallNative(_, _)
+                            | OpCode::FieldGet(_)
+                            | OpCode::MakeStruct(_, _)
+                            | OpCode::Jump(_)
+                            | OpCode::JumpIfFalse(_)
+                            | OpCode::JumpIfTrue(_)
+                            | OpCode::JumpBack(_)
+                            | OpCode::IndexGetInPlace(_)
+                            | OpCode::PushScope
+                            | OpCode::PopScope
+                    )
+                }) {
+                    return self.call_interpreter_callable(&function, args);
+                }
+
+                // Slow path: Execute the supported scalar subset inline.
                 // Save current execution state
                 let saved_ip = self.ip;
                 let saved_chunk = self.chunk.clone();
