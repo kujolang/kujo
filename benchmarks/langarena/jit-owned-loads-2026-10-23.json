@@ -1,0 +1,416 @@
+{
+  "binary": "/tmp/kujo-owned-load-audit-2026-10-23/kujo",
+  "binary_sha256": "40b598fa1ed8bee72134967c8e8afea4da9fe4401fffc45c46fec4c533473ef8",
+  "results": [
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "hello\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "hello\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "hello\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "string-return",
+      "source": "let state := \"hello\"\nfunc f(x) { return state }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "1e43181ea6521ec43736b87aba4aae0f8006e24775337040d3d070318c1e9dec",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "30ffcb277d8943354c9d4e066932b7cfeef46950c653fc48940554e1ec1e6061"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "[1, 2]\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "[1, 2]\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "[1, 2]\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "array-return",
+      "source": "let state := [1, 2]\nfunc f(x) { return state }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "a450638f7da26b91c8cfa8e4c1ff7ebb0b462e751caeaab321f7b9801f0c795c",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "4ea2ca3589bbd631d0707ceff1ee7080f778cfbfa9b504b67a8e702bc934c26e"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "{\"a\": 1}\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "{\"a\": 1}\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "{\"a\": 1}\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "dictionary-return",
+      "source": "let state := {\"a\": 1}\nfunc f(x) { return state }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "2e9fce966372efb51b01072362434ca7afda7abe6ac312938c42413d07ce533b",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "0be86ce2cc4218539843765d1a07d3b1dcbc3859a0735fc74a55bc18de4737cf"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "1\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "1\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "1\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "native-callback-return",
+      "source": "func f(x) { return str(x) }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "6f105044e39246e99fca2c4f0ad6175f80cc33443b0973bfee545bf03ebca28f",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "56bc4c1c586904e444a75d31cb35d8594498fc6acfa201465b1d26dc5140e73b"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "2\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "2\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "2\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "native-callback-argument",
+      "source": "let state := [1, 2]\nfunc f(x) { return len(state) }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "1464d630099fc2fdbf938d7e538e761b3ce54dc3cfc7e6c126a337e121f23506",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "78b7918d633d246f4eb548078790cc8e19f01962d30c76e7e48d1a19917e7e16"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "[1, 2]\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 2 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "[1, 2]\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 2 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "[1, 2]\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "bytecode-callback-argument",
+      "source": "let state := [1, 2]\nfunc echo(value) { return value }\nfunc f(x) { return echo(state) }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "f4344f5a7c2af70efa27a5a54cce43b0432d48a9161ce14f01d785ff900c06cb",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "8ef7a3d67d7169d5c82c4e5104f560267a0d3f46b7221c591c73e9b238d62626"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "false\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "false\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "false\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "string-equality",
+      "source": "let a := \"left\"\nlet b := \"right\"\nfunc f(x) { return a == b }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "4c598eeee4fd2b2ec9a7ea029e6d03b5817afe345ef7e301cab9aa54b62dedd3",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "8c05bcc33f6c22f2212a382b25080710e1ea62fa53b215d322961852fb2444b6"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "0\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 2 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "0\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 2 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "0\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "empty-string-truth",
+      "source": "let state := \"\"\nfunc f(x) { if state { return 1 } return 0 }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "44115c5db0152e60b56fef03aa9b1e51e44f00ceb626b07b9e2c3726ce785f55",
+      "parity": true,
+      "native_function_entries": 102,
+      "measurements_sha256": "d7f827375341dfa04e6a59189170c1d58c1a735d0415c76bcdcdb70b14f6686c"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "true\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "false\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "true\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "string-self-equality",
+      "source": "let state := \"hello\"\nfunc f(x) { return state == state }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "5889486b15574296d2fef7d7ca333bbb4e2ab6b832563d071bca4329921a8836",
+      "parity": false,
+      "native_function_entries": 102,
+      "measurements_sha256": "5457f4614c1a6c3e82287dca697441f52fddaee4fb9186643c5bd1ac9385e96b"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "true\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "false\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "true\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "array-value-equality",
+      "source": "let a := [1, 2]\nlet b := [1, 2]\nfunc f(x) { return a == b }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "5cb530f7588aba4fdef12c0b7de5d93cc4a5044a960286a0360d57b0255a4873",
+      "parity": false,
+      "native_function_entries": 102,
+      "measurements_sha256": "52e5e905836ac8316ec680dbe9334d2bdfed68a2b973d7a6385f2c374cdd9cbf"
+    },
+    {
+      "modes": {
+        "interpreter": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "true\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "jit": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+          "stderr_truncated": false,
+          "stdout": "false\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        },
+        "vm": {
+          "cancelled": false,
+          "exitcode": 0,
+          "stderr": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\n",
+          "stderr_truncated": false,
+          "stdout": "true\n",
+          "stdout_truncated": false,
+          "timed_out": false
+        }
+      },
+      "name": "dictionary-value-equality",
+      "source": "let a := {\"key\": 1}\nlet b := {\"key\": 1}\nfunc f(x) { return a == b }\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nf(1)\nprint(f(1))\n",
+      "source_sha256": "d1a61ba4adccfb0cfbb4f7d942278bc58af2ae23579e788be36facac68d74a45",
+      "parity": false,
+      "native_function_entries": 102,
+      "measurements_sha256": "b350892ff7ea19c6911ab390b55366d8ad0200c67fdbf4a548496f0f39f67b7e"
+    }
+  ],
+  "source_base": "de117eb",
+  "build": "Debug working candidate with tagged named loads and explicit callable marshaling, frozen before final comment/test-only additions; binary SHA identifies the exact executable. No competitive measurements.",
+  "interpretation": "Original8 probes agree, but expanded equal-value probes expose handle comparison: same string and structurally equal arrays/dictionaries still compare false. General owned equality remains open. No full50, production, bounded operand lifetime or speed acceptance."
+}

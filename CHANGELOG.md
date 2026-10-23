@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve owned named values and callables in experimental native execution,
+  including collection callback arguments, returns and checked named assignments.
+  General owned equality and dead-operand release remain unfinished.
+
 - Apply ordinary value truthiness to tagged owned results in experimental native
   conditions and logical operations, including empty callback-returned strings.
   Native global owned-value loads remain unfinished.

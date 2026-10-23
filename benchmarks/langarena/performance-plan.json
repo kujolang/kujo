@@ -1788,6 +1788,15 @@
         "../../src/native_owned.rs",
         "../../tests/jit_owned_stack_contracts.rs"
       ]
+    },
+    {
+      "id": "jit_tagged_named_owned_loads",
+      "status": "Ordinary named operands use tagged codec with local/global/builtin precedence and no hidden VM-stack value. Calls marshal callable explicitly; checked named assignments borrow owned values. Original8 audit probes now agree, but expanded equality shows3 failures, so native general-value equality remains open. Legacy specialized collection helpers and dead operand release remain unfinished; owned entry guards unchanged.",
+      "evidence": [
+        "jit-owned-loads-2026-10-23.json",
+        "../../tests/jit_owned_stack_contracts.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
+      ]
     }
   ],
   "verification": [
@@ -2027,6 +2036,11 @@
         "../../tests/jit_owned_stack_contracts.rs",
         "../../docs/NATIVE_OWNERSHIP.md"
       ]
+    },
+    {
+      "scope": "tagged named operands and callable marshaling",
+      "result": "Baseline generated return fails expected hello got -1. Fixed1025 library tests pass/8ignored;33 unique targeted integrations pass across two runs, including VM/interpreter/JIT returns, collection callback arguments, global assignment and returned-array COW isolation. All11 expanded audit probes have native entries;8parity passes,3equal-value mismatches. No all50 or speed claim.",
+      "evidence": "jit-owned-loads-2026-10-23.json"
     }
   ]
 }

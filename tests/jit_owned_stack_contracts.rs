@@ -28,6 +28,22 @@ fn native_owned_conditions_use_value_truthiness() {
     check(source, &["empty", "full", "either"]);
 }
 
+#[test]
+fn native_named_owned_values_survive_returns_and_callbacks() {
+    let mut source = String::from(
+        "let words := \"hello\"\nlet empty_text := \"\"\nlet numbers := [1, 2]\nlet mapping := {\"a\": 1}\n\
+         func text(x) { return words }\nfunc array(x) { return numbers }\nfunc dict(x) { return mapping }\n\
+         mut held := numbers\nfunc replace(x) { held = numbers return held }\n\
+         func size(x) { return len(numbers) }\nfunc echo(x) { return x }\n\
+         func relay(x) { return echo(numbers) }\nfunc truth(x) { if empty_text { return 1 } return 0 }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(text(1), words)\nassert_equal(array(1), numbers)\nassert_equal(dict(1), mapping)\nassert_equal(size(1), 2)\nassert_equal(relay(1), numbers)\nassert_equal(truth(1), 0)\nassert_equal(replace(1), numbers)\n");
+    }
+    source.push_str("mut copy := array(1)\ncopy[0] = 99\nassert_equal(numbers[0], 1)\nassert_equal(held[0], 1)\nprint(\"PASS\")\n");
+    check(source, &["text", "array", "dict", "size", "relay", "truth", "replace"]);
+}
+
 fn check(source: String, functions: &[&str]) {
     let directory = tempfile::tempdir().unwrap();
     let file = directory.path().join("owned_result.kujo");

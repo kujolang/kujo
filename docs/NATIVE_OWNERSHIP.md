@@ -1,9 +1,12 @@
 # Experimental native owned-value lifetime mechanism
 
-Status: **lifetime hooks and tagged VM-stack conversion connected; other owned operations pending**. Native invocation
+Status: **named operands, callbacks and truthiness connected; ownership integration incomplete**. Native invocation
 wrappers and generated function entry/exit helpers now enter and leave lazy root
-scopes. `src/native_owned.rs` is compiled with `runtime-jit`, but generated owned
-loads and most operators do not yet use its codec. VM-stack pops now encode owned
+scopes. `src/native_owned.rs` is compiled with `runtime-jit`. Ordinary named loads
+now use tagged roots, preserve local/global/builtin precedence and leave no hidden
+values on the VM stack. Calls explicitly marshal their callable before arguments,
+and checked named assignments borrow the tagged value. Specialized collection
+helpers still retain legacy paths. VM-stack pops encode owned
 callback results, and tagged pushes borrow roots when marshaling callback
 arguments. This repairs the native `str(x)` return path from the original audit;
 it does not establish full native parity/performance. Existing entry guards remain.
@@ -12,8 +15,14 @@ Conditions on tagged owned operands now borrow the root and use `Value::is_truth
 matching VM/interpreter truth rules without cloning the container. Immediate
 conditions retain native evaluation. Stale roots report an error and generated
 conditions exit through the existing error path. This covers callback-produced
-empty strings and logical operations, but the original empty-global-string audit
-still needs named-load conversion: its legacy integer marker has no owned tag.
+and named empty strings and logical operations.
+
+The original eight diagnostic probes now match the reference runtimes, but this
+does not establish general owned-value parity: the expanded audit reproduces
+incorrect equality for identical strings and equal arrays/dictionaries. Comparing
+distinct handle identities happens to pass the older unequal-string probe.
+Value equality, dead-operand release, legacy collection helpers and owned entry
+guards remain separate gates.
 
 The native execution census shows that owned-argument call boundaries are heavily
 exercised. The existing native path uses incompatible VM-stack markers and an

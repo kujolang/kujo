@@ -782,6 +782,50 @@ pub unsafe extern "C" fn jit_load_variable(
     0
 }
 
+/// Load a named operand without leaving hidden values on the VM stack.
+#[no_mangle]
+// SAFETY: ctx and the referenced name/local/global maps remain live for this
+// call. Values are cloned through their ordinary ownership contract, not pointers.
+pub unsafe extern "C" fn jit_load_operand(
+    ctx: *mut VMContext,
+    name_hash: i64,
+    global_only: usize,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.return_value_kind = 0;
+    let Some(name) = ctx.var_names_ptr.as_ref().and_then(|names| names.get(&(name_hash as u64)))
+    else {
+        ctx.runtime_error = Some("JIT load has no variable name".into());
+        return 0;
+    };
+    let local = if global_only == 0 {
+        ctx.locals_ptr.as_ref().and_then(|locals| locals.get(name))
+    } else {
+        None
+    };
+    let value = local
+        .or_else(|| ctx.globals_ptr.as_ref().and_then(|globals| globals.get(name)))
+        .cloned()
+        .or_else(|| {
+            crate::interpreter::Interpreter::is_builtin_name(name)
+                .then(|| Value::NativeFunction(name.clone()))
+        });
+    let Some(value) = value else {
+        ctx.runtime_error = Some(format!("Undefined variable: {name}"));
+        return 0;
+    };
+    match ctx.owned_roots.encode(value) {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
 /// Load an immediate value and publish its kind from the active VM local slots.
 #[no_mangle]
 // SAFETY:
@@ -949,7 +993,13 @@ pub unsafe extern "C" fn jit_assign_variable(
         ctx.runtime_error = Some("JIT assignment has no variable name".into());
         return 1;
     };
-    let value = crate::native_scalar::decode(value, kind);
+    let value = match ctx.owned_roots.clone_value(value, kind) {
+        Ok(value) => value,
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            return 1;
+        }
+    };
     // This is the compiled function's own named-local map, not its caller frame.
     if let Some(locals) = ctx.locals_ptr.as_mut() {
         if global_only == 0 && locals.contains_key(&name) {
@@ -3359,6 +3409,7 @@ struct BytecodeTranslator {
     scalar_return_func: Option<FuncRef>,
     scalar_kind_func: Option<FuncRef>,
     owned_truth_func: Option<FuncRef>,
+    operand_load_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
@@ -3509,6 +3560,7 @@ impl BytecodeTranslator {
             scalar_return_func: None,
             scalar_kind_func: None,
             owned_truth_func: None,
+            operand_load_func: None,
             scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
@@ -4783,18 +4835,14 @@ impl BytecodeTranslator {
                 // TODO: Implement proper tail-call optimization or save/restore slots
                 // For now, continue using VM-mediated recursion which is already optimized.
 
-                // Call instruction (all paths go through VM):
-                // 1. Pop the function marker from JIT stack (should be -1 if function)
-                // 2. Pop arguments from JIT stack
-                // 3. Push integer args to VM stack (function is already there from LoadVar)
-                // 4. Call the runtime helper (which pops args first, then function)
-                // 5. Pop the result from VM stack
+                // Marshal the tagged callable and arguments explicitly. Named
+                // operand loads no longer leave hidden values on the VM stack.
 
                 // Clear any pending self-recursion flag (not used yet)
                 self.self_recursion_pending = false;
 
                 // Pop values from JIT stack (in reverse order)
-                let _func_marker = self.pop_value()?; // -1 if it's a function, otherwise an int
+                let function_value = self.pop_value()?;
                 let mut arg_vals = Vec::new();
                 for _ in 0..*arg_count {
                     arg_vals.push(self.pop_value()?);
@@ -4804,10 +4852,11 @@ impl BytecodeTranslator {
                 if let (Some(ctx), Some(call_func), Some(stack_push)) =
                     (self.ctx_param, self.call_func, self.stack_push_func)
                 {
-                    // Push integer arguments to VM stack (function is already there at bottom)
-                    // VM stack before: [function]
-                    // VM stack after push: [function, arg0, arg1, ...]
-                    // jit_call_function will pop args first, then function
+                    // The runtime bridge pops arguments first, then the callable.
+                    if let Some(push) = self.scalar_push_func {
+                        let kind = self.scalar_kind(builder, function_value);
+                        builder.ins().call(push, &[ctx, function_value, kind]);
+                    }
                     for arg_val in &arg_vals {
                         if let Some(push) = self.scalar_push_func {
                             let kind = self.scalar_kind(builder, *arg_val);
@@ -5649,13 +5698,13 @@ impl BytecodeTranslator {
                 // stack overflow due to shared stack slots. Keeping detection code for
                 // future tail-call optimization work.
                 if self.non_int_locals.contains(name) {
-                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
-                        self.capture_scalar_kind(builder, ctx, result);
+                        self.capture_loaded_operand(builder, ctx, result);
                         self.push_value(result);
                         return Ok(false);
                     }
@@ -5676,20 +5725,24 @@ impl BytecodeTranslator {
                     } else {
                         // Variable not in local slots - fall back to runtime call
                         // This handles globals and captured variables
-                        if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                        if let (Some(ctx), Some(load_func)) =
+                            (self.ctx_param, self.operand_load_func)
+                        {
                             let name_hash = Self::hash_var_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
                             let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                             let result = builder.inst_results(call)[0];
-                            self.capture_scalar_kind(builder, ctx, result);
+                            self.capture_loaded_operand(builder, ctx, result);
                             self.push_value(result);
                         } else {
                             let zero = builder.ins().iconst(types::I64, 0);
                             self.push_value(zero);
                         }
                     }
-                } else if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                } else if let (Some(ctx), Some(load_func)) =
+                    (self.ctx_param, self.operand_load_func)
+                {
                     // Original slow path: Call runtime helper
                     let name_hash = {
                         use std::collections::hash_map::DefaultHasher;
@@ -5705,7 +5758,7 @@ impl BytecodeTranslator {
                     // Call jit_load_variable(ctx, name_hash, 0)
                     let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                     let result = builder.inst_results(call)[0];
-                    self.capture_scalar_kind(builder, ctx, result);
+                    self.capture_loaded_operand(builder, ctx, result);
                     self.push_value(result);
                 } else {
                     // Fallback: load 0 if context not available
@@ -5717,13 +5770,15 @@ impl BytecodeTranslator {
             OpCode::LoadLocal(slot) => {
                 if let Some(name) = self.local_names.get(*slot) {
                     if self.non_int_locals.contains(name) {
-                        if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                        if let (Some(ctx), Some(load_func)) =
+                            (self.ctx_param, self.operand_load_func)
+                        {
                             let name_hash = Self::hash_var_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                             let zero = builder.ins().iconst(types::I64, 0);
                             let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                             let result = builder.inst_results(call)[0];
-                            self.capture_scalar_kind(builder, ctx, result);
+                            self.capture_loaded_operand(builder, ctx, result);
                             self.push_value(result);
                             return Ok(false);
                         }
@@ -5738,13 +5793,13 @@ impl BytecodeTranslator {
                         }
                     }
 
-                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
-                        self.capture_scalar_kind(builder, ctx, result);
+                        self.capture_loaded_operand(builder, ctx, result);
                         self.push_value(result);
                         return Ok(false);
                     }
@@ -5789,8 +5844,9 @@ impl BytecodeTranslator {
                         builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
                         builder.ins().jump(cont_block, &[]);
                         builder.switch_to_block(push_block);
-                        if let Some(stack_push) = self.stack_push_func {
-                            builder.ins().call(stack_push, &[ctx, value]);
+                        if let Some(push) = self.scalar_push_func {
+                            let kind = self.scalar_kind(builder, value);
+                            builder.ins().call(push, &[ctx, value, kind]);
                         }
                         builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
                         builder.ins().jump(cont_block, &[]);
@@ -5869,8 +5925,9 @@ impl BytecodeTranslator {
                             builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
                             builder.ins().jump(cont_block, &[]);
                             builder.switch_to_block(push_block);
-                            if let Some(stack_push) = self.stack_push_func {
-                                builder.ins().call(stack_push, &[ctx, value]);
+                            if let Some(push) = self.scalar_push_func {
+                                let kind = self.scalar_kind(builder, value);
+                                builder.ins().call(push, &[ctx, value, kind]);
                             }
                             builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
                             builder.ins().jump(cont_block, &[]);
@@ -5906,7 +5963,7 @@ impl BytecodeTranslator {
 
             OpCode::LoadGlobal(name) => {
                 // Explicit global bytecode must bypass same-named parameters.
-                if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
                     let name_hash = {
                         use std::collections::hash_map::DefaultHasher;
                         use std::hash::{Hash, Hasher};
@@ -5920,7 +5977,7 @@ impl BytecodeTranslator {
 
                     let call = builder.ins().call(load_func, &[ctx, name_hash_val, global_only]);
                     let result = builder.inst_results(call)[0];
-                    self.capture_scalar_kind(builder, ctx, result);
+                    self.capture_loaded_operand(builder, ctx, result);
                     self.push_value(result);
                 } else {
                     let zero = builder.ins().iconst(types::I64, 0);
@@ -6041,8 +6098,9 @@ impl BytecodeTranslator {
                             builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
                             builder.ins().jump(cont_block, &[]);
                             builder.switch_to_block(push_block);
-                            if let Some(stack_push) = self.stack_push_func {
-                                builder.ins().call(stack_push, &[ctx, value]);
+                            if let Some(push) = self.scalar_push_func {
+                                let kind = self.scalar_kind(builder, value);
+                                builder.ins().call(push, &[ctx, value, kind]);
                             }
                             builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
                             builder.ins().jump(cont_block, &[]);
@@ -6100,7 +6158,7 @@ impl BytecodeTranslator {
                         self.scalar_kinds.insert(value, kind);
                         self.push_value(value);
                     } else if let (Some(ctx), Some(load_func)) =
-                        (self.ctx_param, self.load_var_func)
+                        (self.ctx_param, self.operand_load_func)
                     {
                         // Fall back to runtime call for globals
                         let name_hash = Self::hash_var_name(name) as i64;
@@ -6108,7 +6166,7 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
-                        self.capture_scalar_kind(builder, ctx, result);
+                        self.capture_loaded_operand(builder, ctx, result);
                         self.push_value(result);
                     } else {
                         let zero = builder.ins().iconst(types::I64, 0);
@@ -6121,13 +6179,13 @@ impl BytecodeTranslator {
                     self.push_value(value);
                 } else {
                     // Fall back to runtime call
-                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
-                        self.capture_scalar_kind(builder, ctx, result);
+                        self.capture_loaded_operand(builder, ctx, result);
                         self.push_value(result);
                     } else {
                         let zero = builder.ins().iconst(types::I64, 0);
@@ -6182,7 +6240,7 @@ impl BytecodeTranslator {
                     self.self_recursion_pending = false;
 
                     // Pop the function marker
-                    let _func_marker = self.pop_value()?;
+                    let function_value = self.pop_value()?;
                     let mut arg_vals = Vec::new();
                     for _ in 0..*arg_count {
                         arg_vals.push(self.pop_value()?);
@@ -6193,6 +6251,10 @@ impl BytecodeTranslator {
                         (self.ctx_param, self.call_func, self.stack_push_func)
                     {
                         // Push args to VM stack
+                        if let Some(push) = self.scalar_push_func {
+                            let kind = self.scalar_kind(builder, function_value);
+                            builder.ins().call(push, &[ctx, function_value, kind]);
+                        }
                         for arg_val in &arg_vals {
                             if let Some(push) = self.scalar_push_func {
                                 let kind = self.scalar_kind(builder, *arg_val);
@@ -6263,6 +6325,19 @@ impl BytecodeTranslator {
             let zero = builder.ins().iconst(types::I64, 0);
             let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
             builder.ins().call(set_return, &[ctx, zero, kind]);
+        }
+    }
+
+    fn capture_loaded_operand(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        ctx: cranelift::prelude::Value,
+        value: cranelift::prelude::Value,
+    ) {
+        self.capture_scalar_kind(builder, ctx, value);
+        if let Some(error_func) = self.runtime_error_func {
+            let check = builder.ins().call(error_func, &[ctx]);
+            self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
         }
     }
 
@@ -6664,6 +6739,7 @@ impl JitCompiler {
             ("jit_set_return_scalar", 3, true),
             ("jit_return_scalar_kind", 1, true),
             ("jit_owned_truth", 2, true),
+            ("jit_load_operand", 3, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
@@ -6682,6 +6758,7 @@ impl JitCompiler {
                 "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
                 "jit_owned_truth" => translator.owned_truth_func = Some(function),
+                "jit_load_operand" => translator.operand_load_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
@@ -6740,6 +6817,7 @@ impl JitCompiler {
 
         // Register runtime helper symbols so JIT can find them
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
+        builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
@@ -9558,6 +9636,38 @@ mod tests {
         // SAFETY: same live context/storage as above.
         assert_eq!(unsafe { jit_load_variable(&mut context, hash as i64, 0) }, 9);
         assert!(stack.is_empty());
+    }
+
+    #[test]
+    fn tagged_named_loads_preserve_shadowing_without_hidden_stack_values() {
+        let hash = BytecodeTranslator::hash_var_name("len");
+        let mut names = HashMap::from([(hash, "len".to_owned())]);
+        let mut stack = vec![Value::Int(77)];
+        let mut locals = HashMap::new();
+        let mut globals = HashMap::new();
+        let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
+        context.var_names_ptr = &mut names;
+        context.owned_roots.enter().unwrap();
+        // SAFETY: context maps and stack remain live and exclusively borrowed.
+        unsafe {
+            let payload = jit_load_operand(&mut context, hash as i64, 0);
+            let value = context.owned_roots.take_value(payload, context.return_value_kind).unwrap();
+            assert!(matches!(value, Value::NativeFunction(name) if name == "len"));
+            globals.insert("len".into(), Value::Str(Arc::new("global".into())));
+            locals.insert("len".into(), Value::Str(Arc::new("local".into())));
+            for (global_only, expected) in [(0, "local"), (1, "global")] {
+                let payload = jit_load_operand(&mut context, hash as i64, global_only);
+                let value =
+                    context.owned_roots.take_value(payload, context.return_value_kind).unwrap();
+                assert!(matches!(value, Value::Str(text) if text.as_str() == expected));
+                assert_eq!(stack.len(), 1);
+                assert!(matches!(stack[0], Value::Int(77)));
+            }
+            jit_load_operand(&mut context, 0, 0);
+            assert!(context.runtime_error.take().unwrap().contains("no variable name"));
+        }
+        context.owned_roots.leave().unwrap();
+        assert_eq!(context.owned_roots.storage_state().1, 0);
     }
 
     #[test]

@@ -110,6 +110,15 @@ contracts and the library suite pass. JIT stays opt-in until broader acceptance.
 
 ### Remaining native ownership gate
 
+Latest [named-operand audit](jit-owned-loads-2026-10-23.json): ordinary named loads,
+callable marshaling, collection callback arguments and named assignments now use
+tagged owned values. All eight original probes agree across the three modes.
+Three added equal-value probes still fail: comparing handles happens to pass the
+original unequal-string check but breaks identical strings and structurally equal
+arrays/dictionaries. Equality remains open, alongside dead-operand lifetime work,
+legacy specialized collection paths and broader native coverage. Older audit
+counts below describe their recorded candidates, not this latest state.
+
 The [owned-value lifetime foundation](../../docs/NATIVE_OWNERSHIP.md) now provides
 recyclable roots, frame-local cleanup and explicit return promotion. Native
 boundary/function lifetime hooks are connected, with lazy storage for immediate
