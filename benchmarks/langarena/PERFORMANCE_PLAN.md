@@ -142,6 +142,16 @@ verified; bounded root storage is not evidence of reduced string copying or spee
 
 ### Remaining native ownership gate
 
+The [current owned-argument probe](owned-argument-profile-2026-10-23.json) at
+`70606e8` confirms the entry exclusion independently of literal support: 200 calls
+to the same identity function yield 101 native entries with integer arguments,
+but zero with array arguments (both outputs pass). Preserve frame-local ownership,
+cache transitions, recursion, errors and alias isolation when widening this gate.
+A five-second debug NeuralNet sample places 975 of 3,420 execution-thread samples
+inside checked nested assignment. Copy-on-write appears in that path, but its
+necessity is unproven; require unique/aliased allocation reproducers and release
+profiling before changing it. Neither observation supplies a speedup estimate.
+
 The [native literal audit](native-literals-2026-10-23.json) adds string and byte
 constant lowering through compiler-retained values and the existing owned-value
 codec. Literal loads share immutable backing buffers and release temporary roots;
