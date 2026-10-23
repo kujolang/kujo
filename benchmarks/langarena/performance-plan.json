@@ -102,7 +102,7 @@
     {
       "name": "Binarytrees::Obj",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -128,7 +128,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -142,7 +143,7 @@
     {
       "name": "Binarytrees::Arena",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -168,7 +169,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -182,7 +184,7 @@
     {
       "name": "Brainfuck::Array",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -208,7 +210,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -222,7 +225,7 @@
     {
       "name": "Brainfuck::Recursion",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -248,7 +251,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -262,7 +266,7 @@
     {
       "name": "Matmul::Single",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -288,7 +292,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -302,7 +307,7 @@
     {
       "name": "Matmul::T4",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -328,7 +333,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -342,7 +348,7 @@
     {
       "name": "Matmul::T8",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -368,7 +374,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -382,7 +389,7 @@
     {
       "name": "Matmul::T16",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -408,7 +415,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -422,7 +430,7 @@
     {
       "name": "Base64::Encode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -448,7 +456,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -462,7 +471,7 @@
     {
       "name": "Base64::Decode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -488,7 +497,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -502,7 +512,7 @@
     {
       "name": "Json::Generate",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -528,7 +538,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -542,7 +553,7 @@
     {
       "name": "Json::ParseDom",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -568,7 +579,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -582,7 +594,7 @@
     {
       "name": "Json::ParseMapping",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -608,7 +620,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -622,7 +635,7 @@
     {
       "name": "CSV::Parse",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -648,7 +661,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -662,7 +676,7 @@
     {
       "name": "Etc::Sieve",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -688,7 +702,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -702,7 +717,7 @@
     {
       "name": "Etc::TextRaytracer",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -728,7 +743,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -742,7 +758,7 @@
     {
       "name": "Etc::NeuralNet",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -768,7 +784,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -782,7 +799,7 @@
     {
       "name": "Etc::CacheSimulation",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -808,7 +825,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -822,7 +840,7 @@
     {
       "name": "Etc::GameOfLife",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -848,7 +866,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -862,7 +881,7 @@
     {
       "name": "Etc::Words",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -888,7 +907,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -902,7 +922,7 @@
     {
       "name": "Etc::LogParser",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -928,7 +948,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -942,7 +963,7 @@
     {
       "name": "Template::Regex",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -968,7 +989,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -982,7 +1004,7 @@
     {
       "name": "Template::Parse",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1008,7 +1030,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1022,7 +1045,7 @@
     {
       "name": "Sort::Quick",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1048,7 +1071,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1062,7 +1086,7 @@
     {
       "name": "Sort::Merge",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1088,7 +1112,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1102,7 +1127,7 @@
     {
       "name": "Sort::Self",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1128,7 +1153,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1142,7 +1168,7 @@
     {
       "name": "Graph::BFS",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1168,7 +1194,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1182,7 +1209,7 @@
     {
       "name": "Graph::DFS",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1208,7 +1235,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1222,7 +1250,7 @@
     {
       "name": "Graph::AStar",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1248,7 +1276,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1262,7 +1291,7 @@
     {
       "name": "Hash::SHA256",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1288,7 +1317,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1302,7 +1332,7 @@
     {
       "name": "Hash::CRC32",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1328,7 +1358,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1342,7 +1373,7 @@
     {
       "name": "Calculator::Ast",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1368,7 +1399,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1382,7 +1414,7 @@
     {
       "name": "Calculator::Interpreter",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1408,7 +1440,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1422,7 +1455,7 @@
     {
       "name": "Maze::Generator",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1448,7 +1481,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1462,7 +1496,7 @@
     {
       "name": "Maze::BFS",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1488,7 +1522,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1502,7 +1537,7 @@
     {
       "name": "Maze::AStar",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1528,7 +1563,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1542,7 +1578,7 @@
     {
       "name": "CLBG::Fannkuchredux",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1568,7 +1604,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1582,7 +1619,7 @@
     {
       "name": "CLBG::Mandelbrot",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1608,7 +1645,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1622,7 +1660,7 @@
     {
       "name": "CLBG::Nbody",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1648,7 +1686,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1662,7 +1701,7 @@
     {
       "name": "CLBG::Spectralnorm",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1688,7 +1727,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1702,7 +1742,7 @@
     {
       "name": "Compress::BWTEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1728,7 +1768,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1742,7 +1783,7 @@
     {
       "name": "Compress::BWTDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1768,7 +1809,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1782,7 +1824,7 @@
     {
       "name": "Compress::HuffEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1808,7 +1850,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1822,7 +1865,7 @@
     {
       "name": "Compress::HuffDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1848,7 +1891,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1862,7 +1906,7 @@
     {
       "name": "Compress::ArithEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1888,7 +1932,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1902,7 +1947,7 @@
     {
       "name": "Compress::ArithDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1928,7 +1973,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1942,7 +1988,7 @@
     {
       "name": "Compress::LZWEncode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -1968,7 +2014,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1982,7 +2029,7 @@
     {
       "name": "Compress::LZWDecode",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -2008,7 +2055,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2022,7 +2070,7 @@
     {
       "name": "Distance::Jaro",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -2048,7 +2096,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2062,7 +2111,7 @@
     {
       "name": "Distance::NGram",
       "test_vm": "passed at739dd89; debug test-size; later source changes require revalidation",
-      "test_interpreter": "passed at b286c5d; debug test-size; later source changes require revalidation",
+      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
@@ -2088,7 +2137,8 @@
         "checksums-2026-10-23-indexed-bindings-vm.json",
         "checksums-2026-10-23-indexed-bindings-interpreter.json",
         "checksums-2026-10-23-guarded-append-release-jit.json",
-        "checksums-2026-10-23-guarded-append-release-vm.json"
+        "checksums-2026-10-23-guarded-append-release-vm.json",
+        "checksums-2026-10-23-guarded-append-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2655,6 +2705,11 @@
       "scope": "all50 release vm test-size checksums at ac3fe6c",
       "result": "All50 unchanged test-size vm checksums at ac3fe6c release. Fallback allowed for JIT. Instrumented diagnostics overlapping further builds; not competitive timing, production or current HEAD acceptance. Predates callback resume fix and retains audited operator gaps.",
       "evidence": "checksums-2026-10-23-guarded-append-release-vm.json"
+    },
+    {
+      "scope": "all50 release interpreter test-size checksums at ac3fe6c",
+      "result": "All50 unchanged test-size interpreter checksums at ac3fe6c release. Predates loop callback resume fix, retains audited operator gaps. Not production or competitive timing evidence.",
+      "evidence": "checksums-2026-10-23-guarded-append-release-interpreter.json"
     }
   ]
 }
