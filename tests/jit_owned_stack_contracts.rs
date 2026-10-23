@@ -433,3 +433,38 @@ fn native_indexed_writes_preserve_values_bindings_and_errors() {
         ],
     );
 }
+
+#[test]
+fn fixed_dictionary_replacements_preserve_snapshots_and_nested_aliases() {
+    let mut source = String::from(
+        r#"
+        let word := "original"
+        let values := [1,2]
+        let key := "tail"
+        func fixed_numeric(x) { mut row := {"0":word,"tail":values} row[0] = x return row[0] }
+        func fixed_string(x) { mut row := {"0":word,"tail":values} row[key] = x return row[key] }
+        func fixed_snapshot(x) {
+            mut row := {"0":word,"tail":values}
+            let saved := row
+            row[0] = x
+            row[key] = x
+            return saved
+        }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(fixed_numeric(7), 7)\nassert_equal(fixed_string(7), 7)\nassert_equal(fixed_snapshot(7), {\"0\":word,\"tail\":values})\n");
+    }
+    source.push_str(
+        r#"
+        let saved := fixed_snapshot(8)
+        mut nested := saved[key]
+        nested[0] = 99
+        assert_equal(saved[key], [1,2])
+        assert_equal(values, [1,2])
+        assert_equal(saved[0], word)
+        print("PASS")
+    "#,
+    );
+    check(source, &["fixed_numeric", "fixed_string", "fixed_snapshot"]);
+}

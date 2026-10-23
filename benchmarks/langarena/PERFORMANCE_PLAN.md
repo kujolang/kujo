@@ -236,6 +236,13 @@ benefit exceeds its complexity and compatibility cost.
 Gate: deterministic cost/scaling improvement plus unchanged semantics. Claim a
 speedup only after paired release measurements; retain negative results too.
 
+The [fixed-dictionary write allocation audit](fixed-dictionary-write-allocations-2026-10-23.json)
+removes an unnecessary whole-value-vector clone for existing-key replacement.
+Across 36 observations it saves one allocation per write; the 256-field/1,000-write
+case saves 34,816,000 requested bytes on this build. Width-dependent write allocation
+growth is eliminated while snapshots/nested aliases pass VM/interpreter/JIT checks.
+Key lookup and snapshot creation costs remain; elapsed speed is not yet established.
+
 ## 5. Expand fast compiled execution
 
 - Add guarded typed paths for the numerics and collections found in real profiles,

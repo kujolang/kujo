@@ -2375,6 +2375,11 @@
       "scope": "native whole-function indexed writes",
       "result": "1040 library pass,8 ignored,42 integrations pass; both-runtime/JIT semantics, binding kinds, bounded roots and unique-array storage reuse verified. No speed/current-all50 claim.",
       "evidence": "native-indexed-writes-2026-10-23.json"
+    },
+    {
+      "scope": "fixed-dictionary existing-key write allocations",
+      "result": "1040 library pass,23 integrations pass;36 allocation pairs save one Vec allocation per write, width-scaling gate passes, VM/interpreter/JIT snapshots preserved. No elapsed-time claim.",
+      "evidence": "fixed-dictionary-write-allocations-2026-10-23.json"
     }
   ]
 }

@@ -91,3 +91,54 @@ fn profile_bytecode_call_allocations() {
         }
     }
 }
+
+fn measure_fixed_writes(width: usize, writes: usize, string_key: bool) -> (usize, usize) {
+    let entries = (0..width).map(|i| format!("\"{i}\":0")).collect::<Vec<_>>().join(",");
+    let key = if string_key { "\"0\"" } else { "0" };
+    let source = format!(
+        "func update() {{ mut row := {{{entries}}} {} return row[0] }} return update()",
+        format!("row[{key}] = 7\n").repeat(writes),
+    );
+    let mut parser = Parser::new(lexer::tokenize(&source).unwrap());
+    let chunk = Compiler::new().compile(&parser.parse()).unwrap();
+    let mut vm = VM::new();
+    vm.set_jit_enabled(false);
+    ALLOCATIONS.with(|count| count.set(0));
+    REQUESTED_BYTES.with(|count| count.set(0));
+    TRACK.with(|enabled| enabled.set(true));
+    let result = vm.execute(chunk);
+    TRACK.with(|enabled| enabled.set(false));
+    let counts = (ALLOCATIONS.with(Cell::get), REQUESTED_BYTES.with(Cell::get));
+    assert!(matches!(result.unwrap(), Value::Int(7)));
+    counts
+}
+
+#[test]
+fn fixed_dictionary_write_bytes_do_not_scale_with_row_width() {
+    for string_key in [false, true] {
+        measure_fixed_writes(8, 1, string_key);
+        let small = measure_fixed_writes(8, 10, string_key);
+        let small_many = measure_fixed_writes(8, 100, string_key);
+        let wide = measure_fixed_writes(256, 10, string_key);
+        let wide_many = measure_fixed_writes(256, 100, string_key);
+        let narrow_growth = small_many.1 - small.1;
+        let wide_growth = wide_many.1 - wide.1;
+        assert!(wide_growth <= narrow_growth,
+            "string_key={string_key}: 90 writes allocated {narrow_growth} bytes for 8 fields, {wide_growth} for 256 fields");
+    }
+}
+
+#[test]
+#[ignore = "allocation diagnostic; run explicitly with --ignored --nocapture"]
+fn profile_fixed_dictionary_writes() {
+    for string_key in [false, true] {
+        for width in [8, 256] {
+            for writes in [1, 100, 1000] {
+                for repeat in 0..3 {
+                    let (allocations, bytes) = measure_fixed_writes(width, writes, string_key);
+                    println!("string_key={string_key} width={width} writes={writes} repeat={repeat} allocations={allocations} requested_bytes={bytes}");
+                }
+            }
+        }
+    }
+}

@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid cloning the entire value vector when replacing an existing fixed-key
+  dictionary entry through VM/native indexed writes. Existing snapshots retain
+  their own vectors, and nested collections retain normal copy-on-write behavior.
+
 - Preserve native indexed writes in callee bindings using the VM's existing
   collection update logic. Carry local mutability metadata into compiled code,
   reject writes through `let`/`const`, preserve copy-on-write snapshots, and

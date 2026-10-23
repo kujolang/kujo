@@ -1,0 +1,705 @@
+{
+  "date": "2026-10-23",
+  "baseline": "b286c5d",
+  "scope": "Existing-key FixedDict replacements through shared VM/native indexed writes",
+  "reproduction": "Width-scaling gate failed:90 integer-key writes requested99900 bytes with8 fields versus3135420 with256 fields. The target owns a Vec already; each write cloned that entire vector unnecessarily.",
+  "change": "Replace the entry directly in the owned Vec for integer and string keys. Value clones already give snapshots independent Vecs; nested Values retain their normal COW behavior.",
+  "verification": {
+    "library_passed": 1040,
+    "library_ignored": 8,
+    "integration_passed": 23,
+    "integration_ignored_diagnostics": 2,
+    "explicit_allocation_diagnostic_passed": 1,
+    "semantic_modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cases": [
+      "Integer/string existing-key replacement",
+      "Saved fixed dictionaries preserve original values after both writes",
+      "Nested array mutation preserves saved dictionary/global aliases",
+      "Native execution and normal assignment/byte contracts"
+    ],
+    "cost": "36 paired allocation observations across integer/string keys,8/256 fields,1/100/1000 writes and3 repeats. Every observation saves exactly one allocation and width*136 requested bytes per write on this build. Width-scaling regression now passes.",
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "samples": [
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 1,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 25,
+        "requested_bytes": 8617
+      },
+      "after": {
+        "allocations": 24,
+        "requested_bytes": 7529
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 1088
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 1,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 25,
+        "requested_bytes": 8617
+      },
+      "after": {
+        "allocations": 24,
+        "requested_bytes": 7529
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 1088
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 1,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 25,
+        "requested_bytes": 8617
+      },
+      "after": {
+        "allocations": 24,
+        "requested_bytes": 7529
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 1088
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 100,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 322,
+        "requested_bytes": 118507
+      },
+      "after": {
+        "allocations": 222,
+        "requested_bytes": 9707
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 108800
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 100,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 322,
+        "requested_bytes": 118507
+      },
+      "after": {
+        "allocations": 222,
+        "requested_bytes": 9707
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 108800
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 100,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 322,
+        "requested_bytes": 118507
+      },
+      "after": {
+        "allocations": 222,
+        "requested_bytes": 9707
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 108800
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 1000,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 3022,
+        "requested_bytes": 1117507
+      },
+      "after": {
+        "allocations": 2022,
+        "requested_bytes": 29507
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 1088000
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 1000,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 3022,
+        "requested_bytes": 1117507
+      },
+      "after": {
+        "allocations": 2022,
+        "requested_bytes": 29507
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 1088000
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 8,
+        "writes": 1000,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 3022,
+        "requested_bytes": 1117507
+      },
+      "after": {
+        "allocations": 2022,
+        "requested_bytes": 29507
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 1088000
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 1,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 35,
+        "requested_bytes": 218921
+      },
+      "after": {
+        "allocations": 34,
+        "requested_bytes": 184105
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 34816
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 1,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 35,
+        "requested_bytes": 218921
+      },
+      "after": {
+        "allocations": 34,
+        "requested_bytes": 184105
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 34816
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 1,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 35,
+        "requested_bytes": 218921
+      },
+      "after": {
+        "allocations": 34,
+        "requested_bytes": 184105
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 34816
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 100,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 332,
+        "requested_bytes": 3667883
+      },
+      "after": {
+        "allocations": 232,
+        "requested_bytes": 186283
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 3481600
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 100,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 332,
+        "requested_bytes": 3667883
+      },
+      "after": {
+        "allocations": 232,
+        "requested_bytes": 186283
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 3481600
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 100,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 332,
+        "requested_bytes": 3667883
+      },
+      "after": {
+        "allocations": 232,
+        "requested_bytes": 186283
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 3481600
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 1000,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 3032,
+        "requested_bytes": 35022083
+      },
+      "after": {
+        "allocations": 2032,
+        "requested_bytes": 206083
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 34816000
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 1000,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 3032,
+        "requested_bytes": 35022083
+      },
+      "after": {
+        "allocations": 2032,
+        "requested_bytes": 206083
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 34816000
+    },
+    {
+      "case": {
+        "string_key": false,
+        "width": 256,
+        "writes": 1000,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 3032,
+        "requested_bytes": 35022083
+      },
+      "after": {
+        "allocations": 2032,
+        "requested_bytes": 206083
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 34816000
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 1,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 26,
+        "requested_bytes": 8639
+      },
+      "after": {
+        "allocations": 25,
+        "requested_bytes": 7551
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 1088
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 1,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 26,
+        "requested_bytes": 8639
+      },
+      "after": {
+        "allocations": 25,
+        "requested_bytes": 7551
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 1088
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 1,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 26,
+        "requested_bytes": 8639
+      },
+      "after": {
+        "allocations": 25,
+        "requested_bytes": 7551
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 1088
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 100,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 422,
+        "requested_bytes": 120707
+      },
+      "after": {
+        "allocations": 322,
+        "requested_bytes": 11907
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 108800
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 100,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 422,
+        "requested_bytes": 120707
+      },
+      "after": {
+        "allocations": 322,
+        "requested_bytes": 11907
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 108800
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 100,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 422,
+        "requested_bytes": 120707
+      },
+      "after": {
+        "allocations": 322,
+        "requested_bytes": 11907
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 108800
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 1000,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 4022,
+        "requested_bytes": 1139507
+      },
+      "after": {
+        "allocations": 3022,
+        "requested_bytes": 51507
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 1088000
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 1000,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 4022,
+        "requested_bytes": 1139507
+      },
+      "after": {
+        "allocations": 3022,
+        "requested_bytes": 51507
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 1088000
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 8,
+        "writes": 1000,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 4022,
+        "requested_bytes": 1139507
+      },
+      "after": {
+        "allocations": 3022,
+        "requested_bytes": 51507
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 1088000
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 1,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 36,
+        "requested_bytes": 218943
+      },
+      "after": {
+        "allocations": 35,
+        "requested_bytes": 184127
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 34816
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 1,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 36,
+        "requested_bytes": 218943
+      },
+      "after": {
+        "allocations": 35,
+        "requested_bytes": 184127
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 34816
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 1,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 36,
+        "requested_bytes": 218943
+      },
+      "after": {
+        "allocations": 35,
+        "requested_bytes": 184127
+      },
+      "saved_allocations": 1,
+      "saved_requested_bytes": 34816
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 100,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 432,
+        "requested_bytes": 3670083
+      },
+      "after": {
+        "allocations": 332,
+        "requested_bytes": 188483
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 3481600
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 100,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 432,
+        "requested_bytes": 3670083
+      },
+      "after": {
+        "allocations": 332,
+        "requested_bytes": 188483
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 3481600
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 100,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 432,
+        "requested_bytes": 3670083
+      },
+      "after": {
+        "allocations": 332,
+        "requested_bytes": 188483
+      },
+      "saved_allocations": 100,
+      "saved_requested_bytes": 3481600
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 1000,
+        "repeat": 0
+      },
+      "before": {
+        "allocations": 4032,
+        "requested_bytes": 35044083
+      },
+      "after": {
+        "allocations": 3032,
+        "requested_bytes": 228083
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 34816000
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 1000,
+        "repeat": 1
+      },
+      "before": {
+        "allocations": 4032,
+        "requested_bytes": 35044083
+      },
+      "after": {
+        "allocations": 3032,
+        "requested_bytes": 228083
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 34816000
+    },
+    {
+      "case": {
+        "string_key": true,
+        "width": 256,
+        "writes": 1000,
+        "repeat": 2
+      },
+      "before": {
+        "allocations": 4032,
+        "requested_bytes": 35044083
+      },
+      "after": {
+        "allocations": 3032,
+        "requested_bytes": 228083
+      },
+      "saved_allocations": 1000,
+      "saved_requested_bytes": 34816000
+    }
+  ],
+  "limitations": [
+    "No elapsed-time or suite speedup claim; measurements count allocator requests, not RSS",
+    "Key lookup remains linear; snapshot creation still copies the FixedDict Vec by its current representation",
+    "Frozen all50 b286c5d run remains active and predates this change",
+    "Production/comparative/platform acceptance and broader native gates remain open"
+  ],
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-fixed-write-before.log",
+      "sha256": "4580dbaa47e59e8eb88b1501efedf2832dbf15377fc0526b250b782c1b42512a"
+    },
+    "profile_before": {
+      "path": "/tmp/kujo-fixed-write-profile-before.log",
+      "sha256": "2d57f5c6cf7001629fa3ec51df2a756c84035e9cb5f4b6193c59acff05223090"
+    },
+    "profile_after": {
+      "path": "/tmp/kujo-fixed-write-profile-after.log",
+      "sha256": "531b5b1f2dac85c1a3094caf22306273bd8dac455b4375108823f5a27db93f08"
+    },
+    "contracts": {
+      "path": "/tmp/kujo-fixed-write-verified.log",
+      "sha256": "5d38a445e936c8067a39f5f23a84d93981f0b47eb20c7c3c079256e6526141dd"
+    },
+    "format": {
+      "path": "/tmp/kujo-fixed-write-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

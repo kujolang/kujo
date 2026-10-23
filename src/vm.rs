@@ -1168,9 +1168,9 @@ impl VM {
                     } else {
                         let key = i.to_string();
                         if let Some(idx) = keys.iter().position(|k| k.as_ref() == key.as_str()) {
-                            let mut values = values.clone();
+                            // FixedDict owns its Vec; Value::clone already gives
+                            // aliases a separate vector. Only nested Values share.
                             values[idx] = value;
-                            *object = Value::FixedDict { keys: Arc::clone(keys), values };
                         } else {
                             let mut dict = DictMap::default();
                             for (k, v) in keys.iter().cloned().zip(values.iter().cloned()) {
@@ -1302,9 +1302,7 @@ impl VM {
                 }
                 Value::FixedDict { keys, values } => {
                     if let Some(idx) = keys.iter().position(|k| k.as_ref() == key.as_str()) {
-                        let mut values = values.clone();
                         values[idx] = value;
-                        *object = Value::FixedDict { keys: Arc::clone(keys), values };
                     } else {
                         let mut dict = DictMap::default();
                         for (k, v) in keys.iter().cloned().zip(values.iter().cloned()) {
