@@ -105,7 +105,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 140 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -117,7 +117,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -134,7 +135,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 264 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -146,7 +147,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -163,7 +165,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 30 native function entries, 23 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -175,7 +177,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -192,7 +195,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 30 native function entries, 56 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -204,7 +207,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -221,7 +225,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 28 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -233,7 +237,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -250,7 +255,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 24 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -262,7 +267,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -279,7 +285,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 24 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -291,7 +297,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -308,7 +315,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 24 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -320,7 +327,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -337,7 +345,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 9765 native function entries, 9864 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -349,7 +357,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -366,7 +375,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 9765 native function entries, 9864 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -378,7 +387,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -395,7 +405,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 17 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -407,7 +417,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -424,7 +435,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 15 native function entries, 41 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -436,7 +447,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -453,7 +465,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 15 native function entries, 41 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -465,7 +477,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -482,7 +495,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 825 native function entries, 42 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -494,7 +507,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -511,7 +525,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -523,7 +537,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -540,7 +555,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 742468 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -552,7 +567,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -569,7 +585,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 156020 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -581,7 +597,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -598,7 +615,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 2901 native function entries, 3402 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -610,7 +627,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -627,7 +645,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 604 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -639,7 +657,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -656,7 +675,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 3530 native function entries, 20 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -668,7 +687,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -685,7 +705,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 14 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -697,7 +717,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -714,7 +735,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1104 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -726,7 +747,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -743,7 +765,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 947 native function entries, 109 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -755,7 +777,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -772,7 +795,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 366708 native function entries, 533813 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "single three-second executing-thread sample at 0c77115; not whole-workload attribution",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -784,7 +807,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -801,7 +825,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 399807 native function entries, 600011 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -813,7 +837,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -830,7 +855,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 99907 native function entries, 14 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -842,7 +867,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -859,7 +885,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 108 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -871,7 +897,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -888,7 +915,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 108 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -900,7 +927,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -917,7 +945,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 344 native function entries, 169 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -929,7 +957,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -946,7 +975,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 8808 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -958,7 +987,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -975,7 +1005,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 901 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -987,7 +1017,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1004,7 +1035,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 4488 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1016,7 +1047,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1033,7 +1065,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1246 native function entries, 25476 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1045,7 +1077,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1062,7 +1095,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 165882 native function entries, 28826 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1074,7 +1107,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1091,7 +1125,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 121889 native function entries, 9621 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1103,7 +1137,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1120,7 +1155,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 133064 native function entries, 38739 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1132,7 +1167,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1149,7 +1185,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1347 native function entries, 16 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1161,7 +1197,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1178,7 +1215,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 418 native function entries, 17 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1190,7 +1227,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1207,7 +1245,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 25 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1219,7 +1257,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1236,7 +1275,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 97101 native function entries, 106 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1248,7 +1287,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1265,7 +1305,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 20 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1277,7 +1317,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1294,7 +1335,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1306,7 +1347,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1323,7 +1365,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 0 native function entries, 500 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1335,7 +1377,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1352,7 +1395,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 372 native function entries, 148 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1364,7 +1407,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1381,7 +1425,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 682 native function entries, 480 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1393,7 +1437,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1410,7 +1455,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 3028 native function entries, 718 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1422,7 +1467,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1439,7 +1485,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 415 native function entries, 20 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1451,7 +1497,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1468,7 +1515,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 31 native function entries, 21 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1480,7 +1527,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1497,7 +1545,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 504 native function entries, 32 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1509,7 +1557,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1526,7 +1575,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "test-size checksum passed at 0c77115 in instrumented optimized build; 1154 native function entries, 6320 owned-argument dispatches; VM fallback allowed; full native coverage unproven; predates call-frame allocation fix",
+      "jit_correctness_and_coverage": "Test-size checksum passed at 7f89e13 with native lifetime hooks; debug build, fallback allowed; same native/dispatch counters as 0c77115; predates0f4934f guard. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1538,7 +1587,8 @@
         "checksums-2026-10-23-assignment-candidate.json",
         "checksums-2026-10-23-immediate-jit.json",
         "checksums-2026-10-23-native-arguments-jit.json",
-        "native-execution-census-2026-10-23.json"
+        "native-execution-census-2026-10-23.json",
+        "checksums-2026-10-23-native-root-lifetimes-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1937,6 +1987,11 @@
         "../../src/native_owned.rs",
         "../../docs/NATIVE_OWNERSHIP.md"
       ]
+    },
+    {
+      "scope": "all50 native lifetime hook checksums at 7f89e13",
+      "result": "50/50 test-size checksums; all raw sidecar hashes and schemas valid. Four native/dispatch counters match 0c77115 for all50 cases. Debug build with fallback, predating0f4934f guard; not production, current HEAD or speed acceptance. Eight owned-value mismatches remain open.",
+      "evidence": "checksums-2026-10-23-native-root-lifetimes-jit.json"
     }
   ]
 }

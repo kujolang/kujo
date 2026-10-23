@@ -37,6 +37,13 @@ a target to test, not a guarantee. This document explains the execution order;
   test-size checksums with validated measurement reports. 34 cases recorded native
   function entries and 16 did not; this is not full native coverage. A QuickSort
   CPU sample identifies VM dispatch, opcode cloning and call-frame setup costs.
+- The [native lifetime-hook run](checksums-2026-10-23-native-root-lifetimes-jit.json)
+  at `7f89e13` passed all 50 test-size checksums. Binary/config/port/runner hashes,
+  all raw report hashes and all measurement schemas were verified. Four native
+  entry/dispatch counters match the earlier census for every case. This debug
+  run allowed fallback and overlapped local builds; it supplies no speed evidence.
+  It predates the `0f4934f` lazy-scope guard and does not close the eight owned-value
+  failures, current-HEAD verification or production gates.
 
 ## Non-negotiable rules
 
