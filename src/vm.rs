@@ -8831,6 +8831,7 @@ impl VM {
                             if let Some(frame) = self.call_frames.pop() {
                                 // Pop from function call stack
                                 self.function_call_stack.pop();
+                                self.recursion_depth = self.recursion_depth.saturating_sub(1);
 
                                 // Restore saved state
                                 self.ip = saved_ip;
@@ -8850,6 +8851,7 @@ impl VM {
                             measurement::add(Metric::Returns, 1);
                             if let Some(frame) = self.call_frames.pop() {
                                 self.function_call_stack.pop();
+                                self.recursion_depth = self.recursion_depth.saturating_sub(1);
                                 self.ip = saved_ip;
                                 self.set_chunk(saved_chunk);
                                 self.stack.truncate(frame.stack_offset);

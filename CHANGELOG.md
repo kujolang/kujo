@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Restore recursion depth after cold bytecode callbacks return, preventing repeated
+  sequential callbacks from incorrectly exhausting the VM recursion limit.
+
 - Enforce scalar operand types in experimental native arithmetic, ordering and
   unary operations. Keep Boolean/integer equality distinct and logical bytecode
   results Boolean. Route VM ordering and logical-negation errors through catch
