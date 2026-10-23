@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve native constant string/character appends in the actual callee binding,
+  retain embedded string literals, and write owned loop locals back with their
+  type tags. Append type errors are catchable and native helper errors stop later
+  effects. Aliased strings retain copy-on-write isolation.
+
 - Preserve owned operand semantics in experimental native arithmetic, ordering
   and unary operations through the reference VM, including string concatenation,
   struct operator methods and catchable errors. Immediate numeric paths remain

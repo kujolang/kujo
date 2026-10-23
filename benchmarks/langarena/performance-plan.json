@@ -2360,6 +2360,11 @@
       "scope": "all50 interpreter test-size checksums at 739dd89",
       "result": "All 50 unchanged test-size interpreter checksums at 739dd89. Debug diagnostic overlapping local builds/tests; predates nonempty dictionary constructors, owned operators and append changes. Not current HEAD, production or speed acceptance. No measurement sidecars for interpreter mode.",
       "evidence": "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+    },
+    {
+      "scope": "native constant append and owned loop persistence",
+      "result": "1037 library tests passed, 8 ignored; 37 integrations passed including VM/interpreter/JIT append and helper-error regressions. Bounded root capacity and unique-buffer reuse verified; no timing/current-all50 claim.",
+      "evidence": "native-constant-appends-2026-10-23.json"
     }
   ]
 }

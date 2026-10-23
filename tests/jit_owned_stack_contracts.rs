@@ -290,3 +290,59 @@ fn native_owned_operator_errors_preserve_effects_and_recover() {
     );
     check(source, &["plus", "minus", "times", "divided", "remainder", "negative", "logical"]);
 }
+
+#[test]
+fn native_constant_appends_preserve_locals_callers_and_snapshots() {
+    let mut source = String::from(
+        "func letter(x) { mut text := str(x) text += \"a\" return text }\n\
+         func unicode(x) { mut text := str(x) text += \"🙂\" return text }\n\
+         func suffix(x) { mut text := str(x) text += \"tail\" return text }\n\
+         func snapshot(x) { mut text := str(x) let saved := text text += \"a\" return saved }\n\
+         func repeated(x) { mut text := str(x) mut i := 0 while i < 4 { text += \"ab\" i += 1 } return text }\n\
+         func switched(x) { mut text := {} text = str(x) text += \"tail\" return text }\n\
+         func caller(values) { let result := letter(7) assert_equal(values,[3,4]) return result }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(letter(7), \"7a\")\nassert_equal(unicode(7), \"7🙂\")\nassert_equal(suffix(7), \"7tail\")\nassert_equal(snapshot(7), \"7\")\nassert_equal(repeated(7), \"7abababab\")\nassert_equal(caller([3,4]), \"7a\")\nassert_equal(switched(7), \"7tail\")\n");
+    }
+    source.push_str("print(\"PASS\")\n");
+    check(source, &["letter", "unicode", "suffix", "snapshot", "repeated", "switched"]);
+}
+
+#[test]
+fn native_append_and_owned_helper_errors_skip_later_effects() {
+    let mut source = String::from(
+        r#"
+        mut input := "7"
+        mut after := 0
+        func append_text(x) { mut text := input text += "tail" after += 1 return text }
+        func append_char(x) { mut text := input text += "a" after += 1 return text }
+        mut left := 7
+        func addition(x) { let result := left + x after += 1 return result }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(append_text(1), \"7tail\")\nassert_equal(append_char(1), \"7a\")\nassert_equal(addition(1), 8)\n");
+    }
+    source.push_str(
+        r#"
+        assert_equal(after, 600)
+        input = 7
+        left = "bad"
+        mut caught := 0
+        try { append_text(1) } except error { caught += 1 }
+        try { append_char(1) } except error { caught += 1 }
+        try { addition(1) } except error { caught += 1 }
+        assert_equal(caught, 3)
+        assert_equal(after, 600)
+        input = "7"
+        left = 7
+        assert_equal(append_text(1), "7tail")
+        assert_equal(append_char(1), "7a")
+        assert_equal(addition(1), 8)
+        assert_equal(after, 603)
+        print("PASS")
+    "#,
+    );
+    check(source, &["append_text", "append_char", "addition"]);
+}

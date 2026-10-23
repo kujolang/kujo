@@ -133,6 +133,15 @@ verified; bounded root storage is not evidence of reduced string copying or spee
 
 ### Remaining native ownership gate
 
+The [constant append audit](native-constant-appends-2026-10-23.json) repairs callee
+binding selection, retains embedded suffix literals, preserves COW snapshots and
+persists owned loop locals with their type tags. Native helper failures stop later
+effects; VM append type errors are catchable. Unique preallocated storage is reused
+for 1,000 appends, and compiled 8/128-append cases retain at most four root slots of
+capacity. This is correctness/storage evidence, not an elapsed-time improvement.
+Fused append-until and specialized indexed collection helpers remain unaudited;
+general string/byte constants and wider owned native entry remain gated.
+
 Converted operand paths now release Pop, overwritten SSA locals, VM-marshaled
 callable/arguments and consumed equality/logical operands. Dup and SSA local loads
 receive distinct roots. Compiled discard/overwrite/callback tests keep root-slot

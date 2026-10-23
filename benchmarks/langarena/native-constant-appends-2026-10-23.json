@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-23",
+  "baseline": "3d86c98",
+  "scope": "Native constant append binding, literal lifetime, owned loop persistence and helper failure propagation",
+  "reproduction": "After successful native compilation repeated(7) returned 7 instead of 7abababab; VM/interpreter agreed on the expected value.",
+  "implementation": [
+    "Append mutates the current callee SSA root or named binding, never the caller physical slot. Loop paths use their own bindings.",
+    "Retain constant string allocations through compiled-code lifetime. Preserve COW snapshots and current-scope mutation checks.",
+    "Load and persist owned loop locals through the tagged codec and paired SSA kind. Named assignment targets stay in maps to avoid premature undefined reads; named stores preserve owned values.",
+    "Install runtime-error checks for standard/loop/script helper results as well as direct-argument functions. Append type failures are catchable in the VM and skip later effects."
+  ],
+  "verification": {
+    "library_passed": 1037,
+    "library_ignored": 8,
+    "integration_passed": 37,
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cost": "1000 character appends reuse preallocated unique storage; aliased snapshots remain unchanged. Compiled 8/128-append cases retain at most four root slots of vector capacity, zero live roots after return, and no VM stack residue.",
+    "cases": [
+      "ASCII/multibyte character and string suffixes",
+      "Callee/caller isolation, saved snapshots, repeated loops and dictionary-to-string local type changes",
+      "Dropped source-chunk literal lifetime and compiler-drop release",
+      "Owned loop writeback and named assignment",
+      "Undefined reads stop before later named assignments",
+      "Hot append/operator errors skip later effects and recover on subsequent valid calls"
+    ],
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "earlier_failures": [
+    "Initial candidate: storage-capacity bound incorrectly expected <=3 rather than Vec minimum capacity4; no slot growth was found.",
+    "Initial candidate: eager named-local initialization attempted an undefined read before assignment; repaired without suppressing actual undefined reads.",
+    "Intermediate library run: subprocess descendant stdin test reported timeout under overlapping work; unmodified test passes in final full library run."
+  ],
+  "limitations": [
+    "No speedup or current all50/production acceptance claimed",
+    "General string/byte constant operands and wider owned-entry guards remain gated",
+    "Fused append-until, specialized indexed collection paths and wider recursive ownership still require separate auditing",
+    "Controlled competitor comparisons and platform/release gates remain open"
+  ],
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-native-append-before.log",
+      "sha256": "7b8ed5f535bd04d1013daa04bc88654eb2afc72b92654d5bf17a7a570c72f147"
+    },
+    "initial_candidate": {
+      "path": "/tmp/kujo-native-append-final.log",
+      "sha256": "d66451e0706b1d7fafe656b01c68fb8e9b66bbf21052a53cf0cd84b27fcdf893"
+    },
+    "intermediate": {
+      "path": "/tmp/kujo-append-reverified.log",
+      "sha256": "67e48cb7ca7b144fe36a2569181f8932aec3c1699f00bcbcf050e820e2ece5ac"
+    },
+    "final": {
+      "path": "/tmp/kujo-append-final-verified.log",
+      "sha256": "ec70236ba598df2bd1dbfe2d33c3f60e6c5d14acf0c605e3bc56438beea63a6a"
+    },
+    "format": {
+      "path": "/tmp/kujo-append-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

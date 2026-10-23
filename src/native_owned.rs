@@ -135,6 +135,23 @@ impl NativeCallRoots {
         self.values.release_payload(payload, kind)
     }
 
+    /// Mutations must target a root owned by this logical activation. The Value
+    /// retains its ordinary copy-on-write rules for aliases and saved snapshots.
+    pub(crate) fn current_value_mut(
+        &mut self,
+        payload: i64,
+        kind: i64,
+    ) -> Result<&mut Value, OwnershipError> {
+        if kind != OWNED {
+            return Err(OwnershipError::InvalidKind(kind));
+        }
+        if self.values.frames.len() != self.depth {
+            return Err(OwnershipError::NotCurrentFrame);
+        }
+        let index = self.values.current_index(Handle::from_payload(payload))?;
+        Ok(self.values.slots[index].value.as_mut().expect("live native root"))
+    }
+
     pub(crate) fn owned_truth(&self, payload: i64) -> Result<bool, OwnershipError> {
         self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
     }

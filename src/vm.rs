@@ -2396,7 +2396,14 @@ impl VM {
 
                             left_str.push_str(rhs.as_ref());
                         }
-                        _ => return Err("Type mismatch in AppendConstStringInPlace".to_string()),
+                        _ => {
+                            let message = "Type mismatch in AppendConstStringInPlace".to_string();
+                            if self.exception_handlers.is_empty() {
+                                return Err(message);
+                            }
+                            self.throw_runtime_value(Value::Error(message))?;
+                            continue;
+                        }
                     }
                 }
 
@@ -2423,7 +2430,14 @@ impl VM {
 
                             left_str.push(rhs);
                         }
-                        _ => return Err("Type mismatch in AppendConstCharInPlace".to_string()),
+                        _ => {
+                            let message = "Type mismatch in AppendConstCharInPlace".to_string();
+                            if self.exception_handlers.is_empty() {
+                                return Err(message);
+                            }
+                            self.throw_runtime_value(Value::Error(message))?;
+                            continue;
+                        }
                     }
                 }
 
