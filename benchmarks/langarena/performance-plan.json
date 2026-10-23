@@ -1038,8 +1038,11 @@
     },
     {
       "id": "jit_boolean_return",
-      "evidence": "jit-audit-2026-10-23.json: bool",
-      "status": "open: hot function returns Int(1) instead of Bool(true); VM/interpreter pass"
+      "evidence": [
+        "../../tests/jit_boolean_returns.rs",
+        "jit-boolean-flow-2026-10-23.json"
+      ],
+      "status": "Original native predicate return fixed with explicit scalar type metadata across VM reconstruction, callback arguments/results and direct recursion. Companion SSA type variables preserve mixed Int/Bool locals at branch joins. Boolean globals and Boolean operator guards remain open; not full typed-value parity."
     },
     {
       "id": "jit_builtin_lookup",
@@ -1081,6 +1084,16 @@
       "id": "jit_cold_callback_assignment_stack",
       "status": "Fixed reproduced Stack underflow in compiled caller to cold bytecode callee. Callback StoreVar/StoreLocal/StoreGlobal/DefineGlobal now peek and clone the assignment value, matching main VM; following Pop consumes it. Both new regressions fail before fix and pass after.",
       "evidence": "../../tests/jit_callback_assignment.rs"
+    },
+    {
+      "id": "jit_boolean_arithmetic_type_guard",
+      "status": "open: native arithmetic still accepts a Boolean intermediate as integer bits instead of raising the VM/interpreter type error; 200-call reproducer catches fewer errors in JIT. Requires type guards using scalar metadata, not only integer overflow guards.",
+      "evidence": "jit-boolean-flow-2026-10-23.json"
+    },
+    {
+      "id": "jit_boolean_global_load",
+      "status": "open: compiled function reading Bool global returns Int(-1); VM/interpreter return Bool(true). Global scalar loads/stores and callable/opaque values need coherent tagged handling.",
+      "evidence": "jit-boolean-flow-2026-10-23.json"
     }
   ],
   "verification": [
@@ -1184,6 +1197,14 @@
       "scope": "cold callback assignment stack contract",
       "result": "2new tests pass:4handcrafted bytecode store contracts and a VM/interpreter/JIT caller/cold-callee fixture with compilation assertions. All27selected integrations passed at final callback revision, including checked native arithmetic, global assignment, argument guards, errors and closures. Full library1008passed/8ignored at preceding arithmetic commit f5eba31; not rerun for4-line callback stack delta. No speed/full-suite acceptance claim.",
       "evidence": "../../tests/jit_callback_assignment.rs"
+    },
+    {
+      "scope": "Boolean native scalar ABI and local SSA type tags",
+      "result": "Original predicate return and mixed-local branch-merge reproducers failed before their fixes.2newcontracts now pass across VM/interpreter/JIT, direct native ABI and recursion, with compilation assertions and mixed Bool/Int return reuse. Full library1008passed/8ignored plus35integrations passed; no-default-features library, fmt/diff checks passed.15-run flow audit: native local/merged-local Boolean cases pass; short-circuit passes through fallback; Boolean global load and Boolean arithmetic type-error cases still fail in native JIT. Not full typed parity or speed acceptance.",
+      "evidence": [
+        "../../tests/jit_boolean_returns.rs",
+        "jit-boolean-flow-2026-10-23.json"
+      ]
     }
   ]
 }

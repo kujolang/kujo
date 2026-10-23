@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve Boolean scalar types across experimental JIT function returns,
+  callback arguments/results and direct recursion. Track local scalar type tags
+  through SSA branch merges instead of reconstructing predicates as integers.
+
 - Keep assignment values on the stack in the JIT callback bytecode path, matching
   the main VM and preventing stack underflow when compiled callers invoke cold
   functions that update named, local or global bindings.

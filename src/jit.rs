@@ -116,12 +116,14 @@ pub struct VMContext {
     pub obj_stack_ptr: *mut Vec<Value>,
     /// Pointer to VM for calling back into interpreter (Step 4+)
     pub vm_ptr: *mut std::ffi::c_void, // Actually *mut VM, but avoid circular dependency
-    /// Fast return value storage - avoids stack push overhead
-    /// When has_return_value is true, VM reads return_value directly instead of popping stack
+    /// Scalar return payload; the Boolean tag preserves its language type.
+    /// When has_return_value is true, VM reads return_value instead of popping stack.
     pub return_value: i64,
-    /// Flag indicating return_value contains a valid integer return
+    /// Flag indicating return_value contains a valid scalar return
     /// When true, VM uses return_value directly; when false, falls back to stack
     pub has_return_value: bool,
+    /// Distinguishes Bool(false/true) from Int(0/1) at native call boundaries.
+    pub return_value_is_bool: bool,
     /// Runtime failure preserved across the native ABI; never replay failed work.
     pub runtime_error: Option<String>,
     /// Fast argument passing for recursive calls
@@ -134,6 +136,14 @@ pub struct VMContext {
 }
 
 impl VMContext {
+    pub fn scalar_value(&self, value: i64) -> Value {
+        if self.return_value_is_bool {
+            Value::Bool(value != 0)
+        } else {
+            Value::Int(value)
+        }
+    }
+
     /// Create a new VMContext from VM state
     /// Used for JIT function execution with VM integration
     #[allow(dead_code)] // TODO: Will be used when JIT fully integrated into VM loop
@@ -152,6 +162,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(), // No VM pointer yet
             return_value: 0,
             has_return_value: false,
+            return_value_is_bool: false,
             runtime_error: None,
             arg0: 0,
             arg1: 0,
@@ -178,6 +189,7 @@ impl VMContext {
             vm_ptr: vm,
             return_value: 0,
             has_return_value: false,
+            return_value_is_bool: false,
             runtime_error: None,
             arg0: 0,
             arg1: 0,
@@ -218,6 +230,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(),
             return_value: 0,
             has_return_value: false,
+            return_value_is_bool: false,
             runtime_error: None,
             arg0: 0,
             arg1: 0,
@@ -449,10 +462,15 @@ pub unsafe extern "C" fn jit_stack_pop(ctx: *mut VMContext) -> i64 {
         return 0;
     }
     let ctx = &mut *ctx;
+    ctx.return_value_is_bool = false;
     if !ctx.stack_ptr.is_null() {
-        let stack = &mut *ctx.stack_ptr;
-        if let Some(Value::Int(val)) = stack.pop() {
-            return val;
+        match (&mut *ctx.stack_ptr).pop() {
+            Some(Value::Int(value)) => return value,
+            Some(Value::Bool(value)) => {
+                ctx.return_value_is_bool = true;
+                return i64::from(value);
+            }
+            _ => {}
         }
     }
     0
@@ -2199,7 +2217,39 @@ pub unsafe extern "C" fn jit_set_return_int(ctx: *mut VMContext, value: i64) -> 
     let ctx_ref = &mut *ctx;
     ctx_ref.return_value = value;
     ctx_ref.has_return_value = true;
+    ctx_ref.return_value_is_bool = false;
     0 // Success
+}
+
+/// Preserve scalar type information across the native calling convention.
+#[no_mangle]
+// SAFETY: ctx is the live, exclusively borrowed native-call context.
+pub unsafe extern "C" fn jit_set_return_scalar(
+    ctx: *mut VMContext,
+    value: i64,
+    is_bool: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    ctx.return_value = value;
+    ctx.has_return_value = true;
+    ctx.return_value_is_bool = is_bool != 0;
+    0
+}
+
+#[no_mangle]
+// SAFETY: ctx points to the live native-call context.
+pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
+    ctx.as_ref().map_or(0, |ctx| i64::from(ctx.return_value_is_bool))
+}
+
+#[no_mangle]
+// SAFETY: ctx and its stack are live and exclusively borrowed for this call.
+pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, is_bool: i64) {
+    if let Some(ctx) = ctx.as_mut() {
+        if let Some(stack) = ctx.stack_ptr.as_mut() {
+            stack.push(if is_bool != 0 { Value::Bool(value != 0) } else { Value::Int(value) });
+        }
+    }
 }
 
 /// Safe wrapper around `jit_set_return_int` for internal Rust callsites that
@@ -3066,6 +3116,10 @@ pub struct JitCompiler {
 struct BytecodeTranslator {
     /// Stack simulation - maps stack depth to Cranelift values
     value_stack: Vec<cranelift::prelude::Value>,
+    scalar_kinds: HashMap<cranelift::prelude::Value, cranelift::prelude::Value>,
+    scalar_return_func: Option<FuncRef>,
+    scalar_kind_func: Option<FuncRef>,
+    scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
     /// bytecode stack representation.
@@ -3206,6 +3260,10 @@ impl BytecodeTranslator {
     fn new() -> Self {
         Self {
             value_stack: Vec::new(),
+            scalar_kinds: HashMap::new(),
+            scalar_return_func: None,
+            scalar_kind_func: None,
+            scalar_push_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
             blocks: HashMap::new(),
@@ -3599,10 +3657,14 @@ impl BytecodeTranslator {
             if self.local_variables.contains_key(&name) {
                 continue;
             }
-            let variable = Variable::new(self.local_variables.len());
+            // Adjacent payload/type SSA variables merge together at branch joins.
+            let variable = Variable::new(self.local_variables.len() * 2);
+            let kind_variable = Variable::new(self.local_variables.len() * 2 + 1);
+            builder.declare_var(kind_variable, types::I64);
             builder.declare_var(variable, types::I64);
             let zero = builder.ins().iconst(types::I64, 0);
             builder.def_var(variable, zero);
+            builder.def_var(kind_variable, zero);
             self.local_variables.insert(name, variable);
         }
     }
@@ -3724,6 +3786,8 @@ impl BytecodeTranslator {
                 }
             };
             builder.def_var(variable, value);
+            let kind = self.scalar_kind(builder, value);
+            builder.def_var(Variable::new(variable.index() + 1), kind);
         }
     }
 
@@ -4177,6 +4241,8 @@ impl BytecodeTranslator {
                 let a = self.pop_value()?;
                 let result = builder.ins().icmp(IntCC::Equal, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4185,6 +4251,8 @@ impl BytecodeTranslator {
                 let a = self.pop_value()?;
                 let result = builder.ins().icmp(IntCC::NotEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4193,6 +4261,8 @@ impl BytecodeTranslator {
                 let a = self.pop_value()?;
                 let result = builder.ins().icmp(IntCC::SignedLessThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4201,6 +4271,8 @@ impl BytecodeTranslator {
                 let a = self.pop_value()?;
                 let result = builder.ins().icmp(IntCC::SignedGreaterThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4210,6 +4282,8 @@ impl BytecodeTranslator {
                 // a <= b: use SignedLessThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedLessThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4219,6 +4293,8 @@ impl BytecodeTranslator {
                 // a >= b: use SignedGreaterThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedGreaterThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4228,6 +4304,8 @@ impl BytecodeTranslator {
                 let zero = builder.ins().iconst(types::I64, 0);
                 let result = builder.ins().icmp(IntCC::Equal, a, zero);
                 let extended = builder.ins().uextend(types::I64, result);
+                let kind = builder.ins().iconst(types::I64, 1);
+                self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
             }
 
@@ -4267,6 +4345,8 @@ impl BytecodeTranslator {
                         Constant::Bool(b) => {
                             let val = builder.ins().iconst(types::I64, if *b { 1 } else { 0 });
                             self.last_int_constant = None;
+                            let kind = builder.ins().iconst(types::I64, 1);
+                            self.scalar_kinds.insert(val, kind);
                             self.push_value(val);
                         }
                         _ => {
@@ -4395,7 +4475,12 @@ impl BytecodeTranslator {
                     // VM stack after push: [function, arg0, arg1, ...]
                     // jit_call_function will pop args first, then function
                     for arg_val in &arg_vals {
-                        builder.ins().call(stack_push, &[ctx, *arg_val]);
+                        if let Some(push) = self.scalar_push_func {
+                            let kind = self.scalar_kind(builder, *arg_val);
+                            builder.ins().call(push, &[ctx, *arg_val, kind]);
+                        } else {
+                            builder.ins().call(stack_push, &[ctx, *arg_val]);
+                        }
                     }
 
                     // Call jit_call_function
@@ -4422,6 +4507,7 @@ impl BytecodeTranslator {
                     if let Some(stack_pop) = self.stack_pop_func {
                         let call = builder.ins().call(stack_pop, &[ctx]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                     } else {
                         // Fallback: push placeholder
@@ -4461,6 +4547,7 @@ impl BytecodeTranslator {
                     if let Some(stack_pop) = self.stack_pop_func {
                         let call = builder.ins().call(stack_pop, &[ctx]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                     } else {
                         let zero = builder.ins().iconst(types::I64, 0);
@@ -5111,6 +5198,7 @@ impl BytecodeTranslator {
                             // Pop result value from VM stack
                             let call = builder.ins().call(stack_pop, &[ctx]);
                             let value = builder.inst_results(call)[0];
+                            self.capture_scalar_kind(builder, ctx, value);
                             self.push_value(value);
                             return Ok(false);
                         }
@@ -5131,6 +5219,7 @@ impl BytecodeTranslator {
 
                                 let call = builder.ins().call(stack_pop, &[ctx]);
                                 let value = builder.inst_results(call)[0];
+                                self.capture_scalar_kind(builder, ctx, value);
                                 self.push_value(value);
                                 return Ok(false);
                             } else {
@@ -5175,6 +5264,7 @@ impl BytecodeTranslator {
                         // Pop the result value from VM stack
                         let call = builder.ins().call(stack_pop, &[ctx]);
                         let value = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, value);
                         self.push_value(value);
                     }
 
@@ -5196,8 +5286,12 @@ impl BytecodeTranslator {
                         // pushing to the VM stack, avoiding stack operations overhead.
                         // The VM will check has_return_value and use return_value directly.
                         if let Some(set_return_int_func) = self.set_return_int_func {
-                            let inst =
-                                builder.ins().call(set_return_int_func, &[ctx, return_value]);
+                            let inst = if let Some(set_return) = self.scalar_return_func {
+                                let kind = self.scalar_kind(builder, return_value);
+                                builder.ins().call(set_return, &[ctx, return_value, kind])
+                            } else {
+                                builder.ins().call(set_return_int_func, &[ctx, return_value])
+                            };
                             let _result = builder.inst_results(inst)[0];
                         } else if let Some(push_int_func) = self.push_int_func {
                             // Fallback: Use original jit_push_int (slower path)
@@ -5241,6 +5335,8 @@ impl BytecodeTranslator {
                 if self.use_local_slots {
                     if let Some(&variable) = self.local_variables.get(name) {
                         let value = builder.use_var(variable);
+                        let kind = builder.use_var(Variable::new(variable.index() + 1));
+                        self.scalar_kinds.insert(value, kind);
                         self.push_value(value);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
@@ -5301,6 +5397,8 @@ impl BytecodeTranslator {
                     if self.use_local_slots {
                         if let Some(&variable) = self.local_variables.get(name) {
                             let value = builder.use_var(variable);
+                            let kind = builder.use_var(Variable::new(variable.index() + 1));
+                            self.scalar_kinds.insert(value, kind);
                             self.push_value(value);
                             return Ok(false);
                         }
@@ -5369,6 +5467,8 @@ impl BytecodeTranslator {
                     if let Some(&variable) = self.local_variables.get(name) {
                         self.dirty_local_names.insert(name.clone());
                         builder.def_var(variable, value);
+                        let kind = self.scalar_kind(builder, value);
+                        builder.def_var(Variable::new(variable.index() + 1), kind);
 
                         if std::env::var("DEBUG_JIT").is_ok() {
                             eprintln!("JIT: StoreVar '{}' using SSA variable {:?}", name, variable);
@@ -5441,6 +5541,8 @@ impl BytecodeTranslator {
                         if let Some(&variable) = self.local_variables.get(name) {
                             self.dirty_local_names.insert(name.clone());
                             builder.def_var(variable, value);
+                            let kind = self.scalar_kind(builder, value);
+                            builder.def_var(Variable::new(variable.index() + 1), kind);
                             if self.int_dict_slots.contains(slot) {
                                 if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                     let zero = builder.ins().iconst(types::I64, 0);
@@ -5533,6 +5635,8 @@ impl BytecodeTranslator {
                 if let Some(name) = self.local_names.get(*slot) {
                     if let Some(&variable) = self.local_variables.get(name) {
                         let value = builder.use_var(variable);
+                        let kind = builder.use_var(Variable::new(variable.index() + 1));
+                        self.scalar_kinds.insert(value, kind);
                         self.push_value(value);
                         return Ok(false);
                     }
@@ -5593,6 +5697,8 @@ impl BytecodeTranslator {
                     }
                     if let Some(&variable) = self.local_variables.get(name) {
                         builder.def_var(variable, value);
+                        let kind = self.scalar_kind(builder, value);
+                        builder.def_var(Variable::new(variable.index() + 1), kind);
                         if self.int_dict_slots.contains(slot) {
                             if let Some(&ptr_slot) = self.int_dict_ptr_slots.get(slot) {
                                 let zero = builder.ins().iconst(types::I64, 0);
@@ -5634,6 +5740,8 @@ impl BytecodeTranslator {
                         self.self_recursion_pending = true;
                     } else if let Some(&variable) = self.local_variables.get(name) {
                         let value = builder.use_var(variable);
+                        let kind = builder.use_var(Variable::new(variable.index() + 1));
+                        self.scalar_kinds.insert(value, kind);
                         self.push_value(value);
                     } else if let (Some(ctx), Some(load_func)) =
                         (self.ctx_param, self.load_var_func)
@@ -5651,6 +5759,8 @@ impl BytecodeTranslator {
                     }
                 } else if let Some(&variable) = self.local_variables.get(name) {
                     let value = builder.use_var(variable);
+                    let kind = builder.use_var(Variable::new(variable.index() + 1));
+                    self.scalar_kinds.insert(value, kind);
                     self.push_value(value);
                 } else {
                     // Fall back to runtime call
@@ -5686,6 +5796,7 @@ impl BytecodeTranslator {
                         // This is the KEY optimization - no FFI boundary crossing!
                         let call_inst = builder.ins().call(self_func, &[ctx, arg_val]);
                         let result = builder.inst_results(call_inst)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         if let Some(error_func) = self.runtime_error_func {
                             let check = builder.ins().call(error_func, &[ctx]);
                             self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
@@ -5716,7 +5827,12 @@ impl BytecodeTranslator {
                     {
                         // Push args to VM stack
                         for arg_val in &arg_vals {
-                            builder.ins().call(stack_push, &[ctx, *arg_val]);
+                            if let Some(push) = self.scalar_push_func {
+                                let kind = self.scalar_kind(builder, *arg_val);
+                                builder.ins().call(push, &[ctx, *arg_val, kind]);
+                            } else {
+                                builder.ins().call(stack_push, &[ctx, *arg_val]);
+                            }
                         }
 
                         // Call jit_call_function
@@ -5728,6 +5844,7 @@ impl BytecodeTranslator {
                         if let Some(stack_pop) = self.stack_pop_func {
                             let call = builder.ins().call(stack_pop, &[ctx]);
                             let result = builder.inst_results(call)[0];
+                            self.capture_scalar_kind(builder, ctx, result);
                             self.push_value(result);
                         } else {
                             let zero = builder.ins().iconst(types::I64, 0);
@@ -5743,6 +5860,11 @@ impl BytecodeTranslator {
             // Return: In direct-arg mode, return the actual value (not status code)
             OpCode::Return => {
                 if let Some(return_value) = self.value_stack.pop() {
+                    if let (Some(ctx), Some(set_return)) = (self.ctx_param, self.scalar_return_func)
+                    {
+                        let kind = self.scalar_kind(builder, return_value);
+                        builder.ins().call(set_return, &[ctx, return_value, kind]);
+                    }
                     // Direct return of the computed value
                     builder.ins().return_(&[return_value]);
 
@@ -5801,6 +5923,29 @@ impl BytecodeTranslator {
         let mut hasher = DefaultHasher::new();
         name.hash(&mut hasher);
         hasher.finish()
+    }
+
+    fn scalar_kind(
+        &self,
+        builder: &mut FunctionBuilder,
+        value: cranelift::prelude::Value,
+    ) -> cranelift::prelude::Value {
+        self.scalar_kinds
+            .get(&value)
+            .copied()
+            .unwrap_or_else(|| builder.ins().iconst(types::I64, 0))
+    }
+
+    fn capture_scalar_kind(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        ctx: cranelift::prelude::Value,
+        value: cranelift::prelude::Value,
+    ) {
+        if let Some(get_kind) = self.scalar_kind_func {
+            let call = builder.ins().call(get_kind, &[ctx]);
+            self.scalar_kinds.insert(value, builder.inst_results(call)[0]);
+        }
     }
 
     fn push_value(&mut self, val: cranelift::prelude::Value) {
@@ -5876,6 +6021,34 @@ impl BytecodeTranslator {
 }
 
 impl JitCompiler {
+    fn declare_scalar_helpers(
+        module: &mut JITModule,
+        builder: &mut FunctionBuilder,
+        translator: &mut BytecodeTranslator,
+    ) -> Result<(), String> {
+        for (name, parameters, returns) in [
+            ("jit_set_return_scalar", 3, true),
+            ("jit_return_scalar_kind", 1, true),
+            ("jit_stack_push_scalar", 3, false),
+        ] {
+            let mut sig = module.make_signature();
+            sig.params.extend(std::iter::repeat(AbiParam::new(types::I64)).take(parameters));
+            if returns {
+                sig.returns.push(AbiParam::new(types::I64));
+            }
+            let id = module
+                .declare_function(name, Linkage::Import, &sig)
+                .map_err(|error| error.to_string())?;
+            let function = module.declare_func_in_func(id, builder.func);
+            match name {
+                "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
+                "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
+                _ => translator.scalar_push_func = Some(function),
+            }
+        }
+        Ok(())
+    }
+
     fn declare_arithmetic_error(
         module: &mut JITModule,
         builder: &mut FunctionBuilder,
@@ -5936,6 +6109,9 @@ impl JitCompiler {
         builder.symbol("jit_call_function", jit_call_function as *const u8);
         builder.symbol("jit_push_int", jit_push_int as *const u8);
         builder.symbol("jit_set_return_int", jit_set_return_int as *const u8);
+        builder.symbol("jit_set_return_scalar", jit_set_return_scalar as *const u8);
+        builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
+        builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
         builder.symbol("jit_get_return_int", jit_get_return_int as *const u8);
         builder.symbol("jit_get_arg", jit_get_arg as *const u8);
         builder.symbol("jit_dict_get", jit_dict_get as *const u8);
@@ -6523,6 +6699,7 @@ impl JitCompiler {
 
             // Translate bytecode instructions to Cranelift IR
             let mut translator = BytecodeTranslator::new();
+            Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
@@ -7270,6 +7447,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
+            Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
@@ -7581,6 +7759,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator with direct-arg mode enabled
             let mut translator = BytecodeTranslator::new();
+            Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
@@ -8188,6 +8367,7 @@ impl JitCompiler {
 
             // Initialize translator
             let mut translator = BytecodeTranslator::new();
+            Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());

@@ -3110,6 +3110,7 @@ impl VM {
                                                 vm_ptr,
                                                 return_value: 0,
                                                 has_return_value: false,
+                                                return_value_is_bool: false,
                                                 runtime_error: None,
                                                 arg0: if use_fast_args && args.len() > 0 {
                                                     if let Value::Int(n) = args[0] {
@@ -3165,8 +3166,10 @@ impl VM {
                                             }
 
                                             if vm_context.has_return_value {
-                                                self.stack
-                                                    .push(Value::Int(vm_context.return_value));
+                                                self.stack.push(
+                                                    vm_context
+                                                        .scalar_value(vm_context.return_value),
+                                                );
                                             } else if self.stack.len() > stack_size_before {
                                                 // Return value was pushed to stack
                                             } else {
@@ -3229,6 +3232,7 @@ impl VM {
                                                     vm_ptr,
                                                     return_value: 0,
                                                     has_return_value: false,
+                                                    return_value_is_bool: false,
                                                     runtime_error: None,
                                                     arg0: arg_val,
                                                     arg1: 0,
@@ -3254,7 +3258,7 @@ impl VM {
                                                         func_name, arg_val, result);
                                                 }
 
-                                                self.stack.push(Value::Int(result));
+                                                self.stack.push(vm_context.scalar_value(result));
                                                 continue; // Skip to next instruction
                                             }
                                         }
@@ -3377,6 +3381,7 @@ impl VM {
                                         vm_ptr,
                                         return_value: 0,
                                         has_return_value: false,
+                                        return_value_is_bool: false,
                                         runtime_error: None,
                                         arg0: if use_fast_args && args.len() > 0 {
                                             if let Value::Int(n) = args[0] {
@@ -3437,7 +3442,8 @@ impl VM {
                                     // This is the FAST PATH from Phase 7 Step 8 optimization
                                     if vm_context.has_return_value {
                                         // Use the optimized return value directly
-                                        self.stack.push(Value::Int(vm_context.return_value));
+                                        self.stack
+                                            .push(vm_context.scalar_value(vm_context.return_value));
                                     } else if self.stack.len() > stack_size_before {
                                         // Fallback: return value was pushed to stack (old path)
                                         // No action needed - value is already on stack
@@ -8298,6 +8304,7 @@ impl VM {
                                         vm_ptr,
                                         return_value: 0,
                                         has_return_value: false,
+                                        return_value_is_bool: false,
                                         runtime_error: None,
                                         arg0: arg_val,
                                         arg1: 0,
@@ -8324,7 +8331,7 @@ impl VM {
                                         );
                                     }
 
-                                    return Ok(Value::Int(result));
+                                    return Ok(vm_context.scalar_value(result));
                                 }
                             }
                         }
@@ -8445,6 +8452,7 @@ impl VM {
                             vm_ptr,
                             return_value: 0,
                             has_return_value: false,
+                            return_value_is_bool: false,
                             runtime_error: None,
                             arg0: if use_fast_args && args.len() > 0 {
                                 if let Value::Int(n) = args[0] {
@@ -8500,7 +8508,7 @@ impl VM {
                         // This is the FAST PATH from Phase 7 Step 8 optimization
                         if vm_context.has_return_value {
                             // Use the optimized return value directly
-                            return Ok(Value::Int(vm_context.return_value));
+                            return Ok(vm_context.scalar_value(vm_context.return_value));
                         } else if self.stack.len() > stack_size_before {
                             // Fallback: return value was pushed to stack (old path)
                             let result = self.stack.pop().unwrap();
