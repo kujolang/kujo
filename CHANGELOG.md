@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reject unsupported constants in experimental JIT regions instead of executing
+  integer-zero placeholders. Float literals such as a divisor of `2.0` retain
+  their VM semantics rather than causing a native division trap after warmup.
+
 ## [1.9.0] - 2026-10-22
 
 See [release notes](docs/RELEASE_NOTES_1_9_0.md) for release scope and compatibility.

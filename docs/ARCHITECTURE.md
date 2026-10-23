@@ -77,6 +77,11 @@ task/spawn behavior is described below. Legacy manually constructed chunks witho
 retain their compatibility path; the older VM-wide `Upvalue` opcodes are not the
 compiler-produced closure mechanism. Bytecode is not a persistent public format.
 
+The experimental integer JIT lowering rejects non-integer/non-boolean constants
+at both eligibility and translation boundaries. Unsupported literals remain in
+VM execution; substituting integer zero is not a valid representation or fallback.
+This restriction does not establish full JIT type or side-effect parity.
+
 See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for historical baseline evidence
 and the concurrency completion record for interpreter corrections. This mechanism does not add a tracing collector for
 arbitrary user-created cyclic value graphs.

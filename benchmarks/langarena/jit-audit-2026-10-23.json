@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-23",
+  "runtime_source_commit": "f037705",
+  "binary_sha256": "16c407be9977d91748986904cf0ff956aa6cc1ff64ebc4473e802c57639920b1",
+  "purpose": "Correctness reproducers, not performance measurements. Build activity overlapped these checks.",
+  "cases": [
+    {
+      "name": "float",
+      "source": "func half(value) { return value / 2.0 }\nmut i := 0\nwhile i < 200 { assert_equal(half(7), 3.5) i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": null,
+          "exit_code": null,
+          "signal": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+        }
+      ]
+    },
+    {
+      "name": "rng",
+      "source": "mut rng := 42\nfunc random_int(maximum) {\n    rng = (rng * 3877 + 29573) % 139968\n    return to_int(to_float(rng) / 139968.0 * maximum)\n}\nmut total := 0\nmut i := 0\nwhile i < 1000 { total += random_int(1000000) i += 1 }\nprint(total)\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "516069931\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "516069931\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": null,
+          "exit_code": null,
+          "signal": 4,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n"
+        }
+      ]
+    },
+    {
+      "name": "global",
+      "source": "mut count := 0\nfunc bump() { count = count + 1 return count }\nmut i := 0\nwhile i < 200 { i += 1 assert_equal(bump(), i) }\nassert_equal(count, 200)\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Int(100), got Int(1)\n  --> 0:0\n\n"
+        }
+      ]
+    },
+    {
+      "name": "bool",
+      "source": "func yes() { return true }\nmut i := 0\nwhile i < 200 { assert_equal(yes(), true) i += 1 }\nprint(\"PASS\")\n",
+      "runs": [
+        {
+          "mode": "vm",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "interpreter",
+          "success": true,
+          "exit_code": 0,
+          "signal": null,
+          "stdout": "PASS\n",
+          "stderr": ""
+        },
+        {
+          "mode": "jit",
+          "success": false,
+          "exit_code": 4,
+          "signal": null,
+          "stdout": "",
+          "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n[KUJOVM001] [vm] Runtime Error: Assertion failed: expected Bool(true), got Int(1)\n  --> 0:0\n\n"
+        }
+      ]
+    }
+  ]
+}

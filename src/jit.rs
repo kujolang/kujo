@@ -4161,13 +4161,11 @@ impl BytecodeTranslator {
                             self.last_int_constant = None;
                             self.push_value(val);
                         }
-                        // Other constant types (strings, floats, etc.) - push placeholder
-                        // These will be handled by interpreter when needed
-                        // Push 0 as placeholder to maintain stack balance
                         _ => {
-                            let zero = builder.ins().iconst(types::I64, 0);
-                            self.last_int_constant = None;
-                            self.push_value(zero);
+                            // A placeholder is executed as a real integer by subsequent
+                            // instructions (including division). Reject this region so
+                            // the VM retains the actual value and its type.
+                            return Err(format!("Unsupported JIT constant: {:?}", constant));
                         }
                     }
                 } else {
@@ -5998,8 +5996,11 @@ impl JitCompiler {
     /// Check if a specific opcode is supported by JIT compiler
     fn is_supported_opcode(&self, opcode: &OpCode, constants: &[Constant]) -> bool {
         match opcode {
-            // Constants - All types supported (strings push placeholder 0)
-            OpCode::LoadConst(idx) => constants.get(*idx).is_some(),
+            // This lowering represents only integers and boolean condition bits.
+            // Other values must stay in the VM until typed lowering exists.
+            OpCode::LoadConst(idx) => {
+                matches!(constants.get(*idx), Some(Constant::Int(_) | Constant::Bool(_)))
+            }
 
             // Arithmetic operations
             OpCode::Add | OpCode::Sub | OpCode::Mul | OpCode::Div | OpCode::Mod => true,
@@ -8496,6 +8497,28 @@ mod tests {
         assert_eq!(stats.total_functions, 0);
         assert_eq!(stats.compiled_functions, 0);
         assert!(stats.enabled);
+    }
+
+    #[test]
+    fn non_integer_constants_are_rejected_before_native_execution() {
+        for constant in [
+            Constant::Float(2.0),
+            Constant::String("preserve me".into()),
+            Constant::Bytes(vec![0, 255]),
+            Constant::None,
+        ] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            let index = chunk.add_constant(constant);
+            chunk.emit(OpCode::LoadConst(index));
+            chunk.emit(OpCode::Return);
+            assert!(!compiler.can_compile_function(&chunk));
+            assert!(!compiler.can_compile_loop(&chunk, 0, 1));
+            assert!(!compiler.can_compile_loop_with_int_dicts(&chunk, 0, 1));
+            assert!(compiler.compile_function(&chunk, "unsupported_constant").is_err());
+            // The low-level compiler must also reject callers bypassing eligibility.
+            assert!(compiler.compile(&chunk, 0).is_err());
+        }
     }
 
     #[test]
