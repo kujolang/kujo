@@ -27,7 +27,10 @@
       "evidence": [
         "quicksort-execution-counters-2026-10-23.json",
         "../../docs/RUNTIME_MEASUREMENTS.md",
-        "../../tests/runtime_measurements.rs"
+        "../../tests/runtime_measurements.rs",
+        "NATIVE_EXECUTION_CENSUS.md",
+        "native-execution-census-2026-10-23.json",
+        "quicksort-cpu-sample-2026-10-23.txt"
       ]
     },
     {
@@ -62,7 +65,8 @@
       "status": "pending",
       "evidence": [
         "checksums-2026-10-23-immediate-jit.json",
-        "checksums-2026-10-23-native-arguments-jit.json"
+        "checksums-2026-10-23-native-arguments-jit.json",
+        "native-execution-census-2026-10-23.json"
       ]
     },
     {

@@ -33,6 +33,10 @@ a target to test, not a guarantee. This document explains the execution order;
   General-value compilation and owned-value native entry remain unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score
   predictions. A clean measurement environment is an acceptance requirement.
+- The [native census](NATIVE_EXECUTION_CENSUS.md) at `0c77115` passed all 50
+  test-size checksums with validated measurement reports. 34 cases recorded native
+  function entries and 16 did not; this is not full native coverage. A QuickSort
+  CPU sample identifies VM dispatch, opcode cloning and call-frame setup costs.
 
 ## Non-negotiable rules
 
