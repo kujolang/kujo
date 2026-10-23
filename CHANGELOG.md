@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve owned operand semantics in experimental native arithmetic, ordering
+  and unary operations through the reference VM, including string concatenation,
+  struct operator methods and catchable errors. Immediate numeric paths remain
+  native; non-immediate constants and wider owned arguments remain gated.
+
 - Compile nonempty dictionary literals through tagged owned operands in the
   experimental native runtime, retaining fixed-key allocations for generated-code
   lifetime. Preserve VM nesting checks and make invalid dynamic literal-key

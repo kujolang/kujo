@@ -883,6 +883,59 @@ pub unsafe extern "C" fn jit_load_operand(
     }
 }
 
+/// Execute owned operators through the reference VM, including method dispatch.
+#[no_mangle]
+// SAFETY: ctx and its VM are live for this call. Clone operands before entering
+// VM callbacks so no root-store borrow or global lock spans user code.
+pub unsafe extern "C" fn jit_owned_operator(
+    ctx: *mut VMContext,
+    operation: i64,
+    left: i64,
+    left_kind: i64,
+    right: i64,
+    right_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let operands = ctx
+        .owned_roots
+        .clone_value(left, left_kind)
+        .and_then(|left| ctx.owned_roots.clone_value(right, right_kind).map(|right| (left, right)));
+    let (left, right) = match operands {
+        Ok(values) => values,
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            return 0;
+        }
+    };
+    let Some(vm) = ctx.vm_ptr.cast::<VM>().as_mut() else {
+        ctx.runtime_error = Some("Native owned operator requires VM context".into());
+        return 0;
+    };
+    let result = match operation {
+        0..=4 => vm.binary_op(&left, ["+", "-", "*", "/", "%"][operation as usize], &right),
+        5 => vm.unary_op("-", &left),
+        6 => vm.unary_op("!", &left),
+        7..=10 => vm.compare_op(&left, ["<", ">", "<=", ">="][(operation - 7) as usize], &right),
+        _ => Err("Invalid native owned operation".into()),
+    };
+    match result {
+        Ok(value) => match ctx.owned_roots.encode(value) {
+            Ok((payload, kind)) => {
+                ctx.return_value_kind = kind;
+                payload
+            }
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                0
+            }
+        },
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Load an immediate value and publish its kind from the active VM local slots.
 #[no_mangle]
 // SAFETY:
@@ -3455,6 +3508,7 @@ struct BytecodeTranslator {
     scalar_kind_func: Option<FuncRef>,
     owned_truth_func: Option<FuncRef>,
     owned_equal_func: Option<FuncRef>,
+    owned_operator_func: Option<FuncRef>,
     operand_load_func: Option<FuncRef>,
     operand_duplicate_func: Option<FuncRef>,
     operand_release_func: Option<FuncRef>,
@@ -3610,6 +3664,7 @@ impl BytecodeTranslator {
             scalar_kind_func: None,
             owned_truth_func: None,
             owned_equal_func: None,
+            owned_operator_func: None,
             operand_load_func: None,
             operand_duplicate_func: None,
             operand_release_func: None,
@@ -4589,6 +4644,7 @@ impl BytecodeTranslator {
                     OpCode::Div => 3,
                     _ => 4,
                 };
+                let owned_merge = self.begin_owned_operation(builder, operation, left, right);
                 let merge = self.begin_float_operation(builder, operation, left, right)?;
                 self.guard_scalar_types(builder, operation, left, right)?;
                 let result = match instruction {
@@ -4632,9 +4688,13 @@ impl BytecodeTranslator {
                     }
                 };
                 self.finish_float_operation(builder, merge, result, 0);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, left);
+                self.release_operand(builder, right);
             }
             OpCode::Negate => {
                 let value = self.pop_value()?;
+                let owned_merge = self.begin_owned_operation(builder, 5, value, value);
                 let merge = self.begin_float_operation(builder, 5, value, value)?;
                 self.guard_scalar_types(builder, 5, value, value)?;
                 let overflow = builder.ins().icmp_imm(IntCC::Equal, value, i64::MIN);
@@ -4642,6 +4702,8 @@ impl BytecodeTranslator {
                 self.guard_arithmetic(builder, overflow, 5, value, zero)?;
                 let result = builder.ins().ineg(value);
                 self.finish_float_operation(builder, merge, result, 0);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, value);
             }
 
             // Comparison operations
@@ -4690,48 +4752,65 @@ impl BytecodeTranslator {
             OpCode::LessThan => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_operation(builder, 7, a, b);
                 let merge = self.begin_float_operation(builder, 7, a, b)?;
                 self.guard_scalar_types(builder, 7, a, b)?;
                 let result = builder.ins().icmp(IntCC::SignedLessThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
                 self.finish_float_operation(builder, merge, extended, 1);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
             }
 
             OpCode::GreaterThan => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_operation(builder, 8, a, b);
                 let merge = self.begin_float_operation(builder, 8, a, b)?;
                 self.guard_scalar_types(builder, 8, a, b)?;
                 let result = builder.ins().icmp(IntCC::SignedGreaterThan, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
                 self.finish_float_operation(builder, merge, extended, 1);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
             }
 
             OpCode::LessEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_operation(builder, 9, a, b);
                 let merge = self.begin_float_operation(builder, 9, a, b)?;
                 self.guard_scalar_types(builder, 9, a, b)?;
                 // a <= b: use SignedLessThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedLessThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
                 self.finish_float_operation(builder, merge, extended, 1);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
             }
 
             OpCode::GreaterEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_operation(builder, 10, a, b);
                 let merge = self.begin_float_operation(builder, 10, a, b)?;
                 self.guard_scalar_types(builder, 10, a, b)?;
                 // a >= b: use SignedGreaterThanOrEqual directly
                 let result = builder.ins().icmp(IntCC::SignedGreaterThanOrEqual, a, b);
                 let extended = builder.ins().uextend(types::I64, result);
                 self.finish_float_operation(builder, merge, extended, 1);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, a);
+                self.release_operand(builder, b);
             }
 
             // Logical operations
             OpCode::Not => {
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_operation(builder, 6, a, a);
                 self.guard_scalar_types(builder, 6, a, a)?;
                 let zero = builder.ins().iconst(types::I64, 0);
                 let result = builder.ins().icmp(IntCC::Equal, a, zero);
@@ -4739,6 +4818,8 @@ impl BytecodeTranslator {
                 let kind = builder.ins().iconst(types::I64, 1);
                 self.scalar_kinds.insert(extended, kind);
                 self.push_value(extended);
+                self.finish_owned_operation(builder, owned_merge)?;
+                self.release_operand(builder, a);
             }
 
             OpCode::And => {
@@ -6533,6 +6614,61 @@ impl BytecodeTranslator {
         Some(merge)
     }
 
+    fn begin_owned_operation(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        operation: i64,
+        left: cranelift::prelude::Value,
+        right: cranelift::prelude::Value,
+    ) -> Option<Block> {
+        let (Some(ctx), Some(helper)) = (self.ctx_param, self.owned_operator_func) else {
+            return None;
+        };
+        let left_kind = self.scalar_kind(builder, left);
+        let right_kind = self.scalar_kind(builder, right);
+        let left_owned =
+            builder.ins().icmp_imm(IntCC::Equal, left_kind, crate::native_owned::OWNED);
+        let right_owned =
+            builder.ins().icmp_imm(IntCC::Equal, right_kind, crate::native_owned::OWNED);
+        let owned = builder.ins().bor(left_owned, right_owned);
+        let owned_block = builder.create_block();
+        let immediate = builder.create_block();
+        let merge = builder.create_block();
+        builder.append_block_param(merge, types::I64);
+        builder.append_block_param(merge, types::I64);
+        builder.ins().brif(owned, owned_block, &[], immediate, &[]);
+        builder.seal_block(owned_block);
+        builder.seal_block(immediate);
+        builder.switch_to_block(owned_block);
+        let op = builder.ins().iconst(types::I64, operation);
+        let call = builder.ins().call(helper, &[ctx, op, left, left_kind, right, right_kind]);
+        let result = builder.inst_results(call)[0];
+        self.capture_loaded_operand(builder, ctx, result);
+        let kind = self.scalar_kind(builder, result);
+        builder.ins().jump(merge, &[result, kind]);
+        builder.switch_to_block(immediate);
+        Some(merge)
+    }
+
+    fn finish_owned_operation(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        merge: Option<Block>,
+    ) -> Result<(), String> {
+        if let Some(merge) = merge {
+            let result = self.pop_value()?;
+            let kind = self.scalar_kind(builder, result);
+            builder.ins().jump(merge, &[result, kind]);
+            builder.switch_to_block(merge);
+            builder.seal_block(merge);
+            let params = builder.block_params(merge);
+            let payload = params[0];
+            self.scalar_kinds.insert(payload, params[1]);
+            self.push_value(payload);
+        }
+        Ok(())
+    }
+
     fn capture_loaded_operand(
         &mut self,
         builder: &mut FunctionBuilder,
@@ -6955,6 +7091,7 @@ impl JitCompiler {
             ("jit_return_scalar_kind", 1, true),
             ("jit_owned_truth", 2, true),
             ("jit_owned_equal", 5, true),
+            ("jit_owned_operator", 6, true),
             ("jit_load_operand", 3, true),
             ("jit_duplicate_operand", 3, true),
             ("jit_release_operand", 3, true),
@@ -6978,6 +7115,7 @@ impl JitCompiler {
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
                 "jit_owned_truth" => translator.owned_truth_func = Some(function),
                 "jit_owned_equal" => translator.owned_equal_func = Some(function),
+                "jit_owned_operator" => translator.owned_operator_func = Some(function),
                 "jit_load_operand" => translator.operand_load_func = Some(function),
                 "jit_duplicate_operand" => translator.operand_duplicate_func = Some(function),
                 "jit_release_operand" => translator.operand_release_func = Some(function),
@@ -7068,6 +7206,7 @@ impl JitCompiler {
         builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
         builder.symbol("jit_owned_truth", jit_owned_truth as *const u8);
         builder.symbol("jit_owned_equal", jit_owned_equal as *const u8);
+        builder.symbol("jit_owned_operator", jit_owned_operator as *const u8);
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
         builder.symbol("jit_get_return_int", jit_get_return_int as *const u8);
         builder.symbol("jit_get_arg", jit_get_arg as *const u8);
@@ -9593,12 +9732,22 @@ mod tests {
                 "dictionary",
                 "fixed_dictionary",
                 "dynamic_dictionary",
+                "owned_add",
+                "owned_order",
             ] {
                 let mut compiler = JitCompiler::new().unwrap();
                 let mut chunk = BytecodeChunk::new();
                 chunk.local_names.push("saved".into());
                 for _ in 0..repetitions {
-                    if pattern == "fixed_dictionary" {
+                    if pattern == "owned_add" || pattern == "owned_order" {
+                        chunk.emit(OpCode::LoadVar("text".into()));
+                        chunk.emit(OpCode::LoadVar("text".into()));
+                        chunk.emit(if pattern == "owned_add" {
+                            OpCode::Add
+                        } else {
+                            OpCode::LessThan
+                        });
+                    } else if pattern == "fixed_dictionary" {
                         chunk.emit(OpCode::LoadVar("source".into()));
                         chunk.emit(OpCode::MakeDictWithKeys(Arc::new(vec![Arc::from("key")])));
                     } else if pattern == "dynamic_dictionary" {
@@ -9636,7 +9785,8 @@ mod tests {
                 let source = Arc::new(vec![Value::Int(7)]);
                 let mut globals = HashMap::from([("source".into(), Value::Array(source.clone()))]);
                 globals.insert("key".into(), Value::Str(Arc::new("key".into())));
-                let mut names = ["source", "saved", "str", "key"]
+                globals.insert("text".into(), Value::Str(Arc::new("text".into())));
+                let mut names = ["source", "saved", "str", "key", "text"]
                     .into_iter()
                     .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
                     .collect();

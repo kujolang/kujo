@@ -122,6 +122,22 @@ compilation of that particular form. Specialized indexing helper protocols and
 wider owned argument entry remain separate gates. Integer literal-key coercion
 still differs between interpreter and VM; this change does not resolve that policy.
 
+## Owned operators
+
+Native arithmetic, ordering and unary operators branch on operand tags before
+entering the existing immediate paths. Owned operands call the reference VM's
+operator implementations, including struct methods and canonical errors. The
+helper clones ordinary Values before callbacks, holds no root-store borrow or
+global lock across user code, and roots its tagged result in the current scope.
+Generated code releases consumed operands after joining the result paths.
+
+Regressions cover string concatenation/order, struct arithmetic/comparison/unary
+methods, mixed-type errors, effects before failure and recovery afterward.
+Compiled repeated owned addition/ordering also checks bounded root storage.
+This is correctness and lifetime evidence, not a string allocation or speed win.
+String/byte constants remain gated pending literal lifetime and local-helper
+validation; wider owned arguments and specialized collection paths remain open.
+
 ## Integration gates still open
 
 Generated Pop now releases owned operands; Dup and SSA local loads create distinct

@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-23",
+  "baseline": "d42cd3f",
+  "scope": "Native owned arithmetic, ordering and unary operations; constants and entry guards unchanged.",
+  "reproduction": "After hot compilation joined(x) returning str(x)+str(x+1) failed with Invalid binary operation: error + error; VM/interpreter returned the expected string.",
+  "implementation": [
+    "Branch on owned operand tags before existing native float/int paths.",
+    "Invoke reference VM binary, comparison or unary operations, including struct operator methods.",
+    "Clone ordinary Values before callbacks, hold no root-store borrow/global lock over user code, encode a tagged result.",
+    "Preserve dynamic result kinds at joins and release consumed operand roots."
+  ],
+  "verification": {
+    "library_passed": 1032,
+    "library_ignored": 8,
+    "integration_passed": 33,
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cases": [
+      "String concatenation and all four ordering comparisons",
+      "Struct arithmetic, ordering and unary method dispatch",
+      "Mixed-type arithmetic/unary errors remain catchable",
+      "Effects occur exactly once before failure and later calls recover"
+    ],
+    "cost": "Compiled owned addition/order repeated8/128 times retains at most4 root slots, zero live roots after return and an empty VM stack. Immediate-only storage tests continue passing.",
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-owned-operators-before.log",
+      "sha256": "07ba1b8c93cf45cce177398ee160c83d7e30352e2887ba2fb9b4114cab4dc2ce"
+    },
+    "after": {
+      "path": "/tmp/kujo-owned-operators-after.log",
+      "sha256": "99001334c93716e252e35b503649b3d89f2f665bad583127e08360d3fdc593a4"
+    },
+    "contracts": {
+      "path": "/tmp/kujo-owned-operators-contracts.log",
+      "sha256": "4ed5f4d818d2798d7064612e4d37240704bf529a4c9e54c28450a3a410d34127"
+    },
+    "final": {
+      "path": "/tmp/kujo-owned-operators-final.log",
+      "sha256": "9593793fee6c8b49522107f32e8ffd91f32228e4ad2e205ec47d20ee16dd483f"
+    },
+    "format": {
+      "path": "/tmp/kujo-owned-operators-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limitations": [
+    "No elapsed-time or string-allocation speedup claim",
+    "String/byte constants remain gated pending retained-literal and local-helper checks",
+    "Specialized indexed/append helpers and loop-local persistence remain open",
+    "Wider owned-entry guards and recursive operand consumption remain open",
+    "Exact current candidate all50, production, controlled comparison and platform/release gates remain open"
+  ]
+}

@@ -9361,7 +9361,12 @@ impl VM {
     }
 
     /// Binary operation
-    fn binary_op(&mut self, left: &Value, op: &str, right: &Value) -> Result<Value, String> {
+    pub(crate) fn binary_op(
+        &mut self,
+        left: &Value,
+        op: &str,
+        right: &Value,
+    ) -> Result<Value, String> {
         if let Some(result) = self.try_call_vm_binary_operator_method(left, op, right) {
             return result;
         }
@@ -9402,7 +9407,7 @@ impl VM {
     }
 
     /// Unary operation
-    fn unary_op(&mut self, op: &str, value: &Value) -> Result<Value, String> {
+    pub(crate) fn unary_op(&mut self, op: &str, value: &Value) -> Result<Value, String> {
         if let Some(result) = self.try_call_vm_unary_operator_method(value, op) {
             return result;
         }
@@ -9418,7 +9423,12 @@ impl VM {
     }
 
     /// Comparison operation
-    fn compare_op(&mut self, left: &Value, op: &str, right: &Value) -> Result<Value, String> {
+    pub(crate) fn compare_op(
+        &mut self,
+        left: &Value,
+        op: &str,
+        right: &Value,
+    ) -> Result<Value, String> {
         if let Some(result) = self.try_call_vm_binary_operator_method(left, op, right) {
             return result;
         }

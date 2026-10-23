@@ -18,9 +18,10 @@ a target to test, not a guarantee. This document explains the execution order;
   2.916x on this laptop. That is one workload, not a suite-wide speedup.
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
   timings do not establish an end-to-end speedup.
-- The latest recorded complete test-size run passed 50 VM and 50 interpreter
-  cases on candidate `ebe4258`. It predates subsequent runtime fixes and cannot
-  certify current HEAD. No complete current production-size run exists.
+- The latest verified test-size VM and JIT runs passed all 50 cases at `739dd89`;
+  the latest complete interpreter run is `e2797da`. These frozen candidates
+  predate subsequent constructor/operator fixes and cannot certify current HEAD.
+  No complete current production-size run exists.
 - All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
   per-case debug deadline. VM fallback was allowed. This establishes neither full
   native coverage nor speed acceptance. The earlier `c4a07cd` run and its MergeSort
@@ -122,6 +123,12 @@ now preserve source-order evaluation and last-value-wins semantics in the VM;
 that form still falls back because its string constants are not native operands.
 Numeric literal-key coercion remains a separate VM/interpreter compatibility gap
 (recorded in the audit); no suite speedup or production acceptance is claimed.
+
+The [owned operator audit](native-owned-operators-2026-10-23.json) fixes native
+string arithmetic/ordering and preserves struct operator dispatch and errors
+through the reference VM. Immediate numeric paths remain native. Constants remain
+gated until retained literal lifetimes and specialized local-helper behavior are
+verified; bounded root storage is not evidence of reduced string copying or speed.
 
 ### Remaining native ownership gate
 

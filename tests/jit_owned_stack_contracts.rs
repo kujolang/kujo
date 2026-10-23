@@ -204,3 +204,89 @@ fn native_dynamic_dictionary_key_errors_are_catchable_without_replaying_effects(
         }
     }
 }
+
+#[test]
+fn native_owned_string_operators_match_runtime_semantics() {
+    let mut source = String::from(
+        "func joined(x) { return str(x) + str(x + 1) }\n\
+         func before(x) { return str(x) < str(x + 1) }\n\
+         func after(x) { return str(x) > str(x + 1) }\n\
+         func at_most(x) { return str(x) <= str(x) }\n\
+         func at_least(x) { return str(x) >= str(x) }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(joined(9), \"910\")\nassert_equal(before(9), false)\nassert_equal(after(9), true)\nassert_equal(at_most(9), true)\nassert_equal(at_least(9), true)\n");
+    }
+    source.push_str("print(\"PASS\")\n");
+    check(source, &["joined", "before", "after", "at_most", "at_least"]);
+}
+
+#[test]
+fn native_owned_operators_dispatch_struct_methods() {
+    let mut source = String::from(
+        r#"
+        struct Box {
+            value: int,
+            func op_add(other) { return value + other.value },
+            func op_lt(other) { return value < other.value },
+            func op_neg() { return -value },
+            func op_not() { return value == 0 }
+        }
+        let left := Box { value: 3 }
+        let right := Box { value: 5 }
+        func addition(x) { return left + right }
+        func ordering(x) { return left < right }
+        func negative(x) { return -left }
+        func logical(x) { return !left }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(addition(1), 8)\nassert_equal(ordering(1), true)\nassert_equal(negative(1), -3)\nassert_equal(logical(1), false)\n");
+    }
+    source.push_str("print(\"PASS\")\n");
+    check(source, &["addition", "ordering", "negative", "logical"]);
+}
+
+#[test]
+fn native_owned_operator_errors_preserve_effects_and_recover() {
+    let mut source = String::from(
+        r#"
+        mut value := 6
+        mut condition := true
+        mut effects := 0
+        func plus(x) { effects += 1 return value + x }
+        func minus(x) { return value - x }
+        func times(x) { return value * x }
+        func divided(x) { return value / x }
+        func remainder(x) { return value % x }
+        func negative(x) { return -value }
+        func logical(x) { return !condition }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(plus(3), 9)\nassert_equal(minus(3), 3)\nassert_equal(times(3), 18)\nassert_equal(divided(3), 2)\nassert_equal(remainder(3), 0)\nassert_equal(negative(1), -6)\nassert_equal(logical(1), false)\n");
+    }
+    source.push_str(
+        r#"
+        value = "bad"
+        condition = "bad"
+        mut caught := 0
+        try { plus(3) } except error { caught += 1 }
+        try { minus(3) } except error { caught += 1 }
+        try { times(3) } except error { caught += 1 }
+        try { divided(3) } except error { caught += 1 }
+        try { remainder(3) } except error { caught += 1 }
+        try { negative(1) } except error { caught += 1 }
+        try { logical(1) } except error { caught += 1 }
+        assert_equal(caught, 7)
+        assert_equal(effects, 201)
+        value = 6
+        condition = false
+        assert_equal(plus(3), 9)
+        assert_equal(effects, 202)
+        assert_equal(logical(1), true)
+        print("PASS")
+    "#,
+    );
+    check(source, &["plus", "minus", "times", "divided", "remainder", "negative", "logical"]);
+}

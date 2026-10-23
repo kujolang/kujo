@@ -2300,6 +2300,11 @@
       "scope": "all50 VM test-size dictionary ownership at739dd89",
       "result": "All50 test-size VM checksums at739dd89. Predates nonempty dictionary constructors, duplicate-key fixes and owned operators. Debug diagnostic with overlapping host work, not currentHEAD, production or competitive timing acceptance. Interpreter run separate.",
       "evidence": "checksums-2026-10-23-dictionary-ownership-vm.json"
+    },
+    {
+      "scope": "native owned arithmetic ordering and unary operators",
+      "result": "1032 library tests passed (8 ignored),33 integrations passed. String operators, struct method dispatch, errors/effects and bounded root storage verified. Constants/owned-entry guards unchanged; no elapsed-time speedup claim.",
+      "evidence": "native-owned-operators-2026-10-23.json"
     }
   ]
 }
