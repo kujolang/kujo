@@ -35,7 +35,10 @@ JSON conversion contract (`parse_json` / `to_json` / `to_json_pretty`):
 - Invalid JSON returns a `Value::Error` message including parse-location details from `serde_json`.
 - `to_json` and `to_json_pretty` reject non-finite floats (`NaN`, `+/-inf`) with a `Value::Error` instead of silently coercing values.
 - `to_json` and `to_json_pretty` accept JSON-compatible scalar/container values, including `secret` values which serialize as `"***"`; runtime structs, functions, bytes, and other unsupported values return `Value::Error`.
-- Dictionary-like values are serialized with deterministic key ordering (lexicographic for string-key dictionaries, ascending for integer-key dictionaries, and declaration/index order for fixed and dense dictionaries).
+- JSON object keys are serialized in lexicographic order, including the string
+  forms of integer keys and keys from fixed/dense dictionaries. For example,
+  `"10"` precedes `"2"`. This matches the existing JSON output; numeric key
+  order and declaration order are not preserved by JSON serialization.
 - `to_json_pretty` uses the same ordering and conversion rules as `to_json`, adding only human-readable whitespace. `parse_json` accepts any JSON root value, caps input at `8,388,608` bytes and nesting at `64`, and includes parser-location details in invalid-input errors.
 
 CSV and TOML conversion contracts:

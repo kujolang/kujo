@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-23",
+  "baseline_commit": "1c0fcb1",
+  "probe": "tests/json_serialization_profile.rs",
+  "command": "cargo test --locked --test json_serialization_profile -- --ignored --nocapture --test-threads=1",
+  "units": "Per-thread allocation/reallocation operation count and cumulative requested bytes, not peak/live memory. Fixture construction, parsing/assertions and printing excluded. Debug build; not wall-time speed evidence.",
+  "before": [
+    {
+      "rows": 1,
+      "repeat": 0,
+      "allocations": 19,
+      "requested_bytes": 2569,
+      "output_bytes": 120
+    },
+    {
+      "rows": 1,
+      "repeat": 1,
+      "allocations": 19,
+      "requested_bytes": 2569,
+      "output_bytes": 120
+    },
+    {
+      "rows": 1,
+      "repeat": 2,
+      "allocations": 19,
+      "requested_bytes": 2569,
+      "output_bytes": 120
+    },
+    {
+      "rows": 100,
+      "repeat": 0,
+      "allocations": 1219,
+      "requested_bytes": 200418,
+      "output_bytes": 8526
+    },
+    {
+      "rows": 100,
+      "repeat": 1,
+      "allocations": 1219,
+      "requested_bytes": 200418,
+      "output_bytes": 8526
+    },
+    {
+      "rows": 100,
+      "repeat": 2,
+      "allocations": 1219,
+      "requested_bytes": 200418,
+      "output_bytes": 8526
+    },
+    {
+      "rows": 1000,
+      "repeat": 0,
+      "allocations": 12025,
+      "requested_bytes": 1919038,
+      "output_bytes": 85926
+    },
+    {
+      "rows": 1000,
+      "repeat": 1,
+      "allocations": 12025,
+      "requested_bytes": 1919038,
+      "output_bytes": 85926
+    },
+    {
+      "rows": 1000,
+      "repeat": 2,
+      "allocations": 12025,
+      "requested_bytes": 1919038,
+      "output_bytes": 85926
+    }
+  ],
+  "after": [
+    {
+      "rows": 1,
+      "repeat": 0,
+      "allocations": 7,
+      "requested_bytes": 544,
+      "output_bytes": 120
+    },
+    {
+      "rows": 1,
+      "repeat": 1,
+      "allocations": 7,
+      "requested_bytes": 544,
+      "output_bytes": 120
+    },
+    {
+      "rows": 1,
+      "repeat": 2,
+      "allocations": 7,
+      "requested_bytes": 544,
+      "output_bytes": 120
+    },
+    {
+      "rows": 100,
+      "repeat": 0,
+      "allocations": 410,
+      "requested_bytes": 61568,
+      "output_bytes": 8526
+    },
+    {
+      "rows": 100,
+      "repeat": 1,
+      "allocations": 410,
+      "requested_bytes": 61568,
+      "output_bytes": 8526
+    },
+    {
+      "rows": 100,
+      "repeat": 2,
+      "allocations": 410,
+      "requested_bytes": 61568,
+      "output_bytes": 8526
+    },
+    {
+      "rows": 1000,
+      "repeat": 0,
+      "allocations": 4013,
+      "requested_bytes": 550144,
+      "output_bytes": 85926
+    },
+    {
+      "rows": 1000,
+      "repeat": 1,
+      "allocations": 4013,
+      "requested_bytes": 550144,
+      "output_bytes": 85926
+    },
+    {
+      "rows": 1000,
+      "repeat": 2,
+      "allocations": 4013,
+      "requested_bytes": 550144,
+      "output_bytes": 85926
+    }
+  ],
+  "summary": {
+    "rows": 1000,
+    "allocation_reduction_percent": 66.62785862785863,
+    "requested_bytes_reduction_percent": 71.33230295596023
+  },
+  "verification": "32 JSON library tests +13 targeted integrations +39 representation/schema/CLI JSON integrations passed; separate allocation probe passed. Full runtime suite and optimized production timings pending."
+}

@@ -1008,6 +1008,11 @@
       "scope": "seven-round pre-optimization baseline",
       "result": "84/84 unique checksum-validated samples; first3 production, QuickSort test size; shared throttled laptop; no own compilation/profiling overlap",
       "evidence": "performance-baseline-2026-10-23.json"
+    },
+    {
+      "scope": "borrowed JSON serialization",
+      "result": "32 JSON library tests +13 targeted integrations +39 representation/schema/CLI JSON integrations passed; separate allocation probe passed. Full runtime suite and optimized production timings pending.",
+      "evidence": "json-serialization-allocations-2026-10-23.json"
     }
   ]
 }

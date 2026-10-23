@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Serialize JSON from borrowed runtime values instead of constructing a second
+  owned JSON tree. Preserve exact compact/pretty output, validation order,
+  nesting limits and secret redaction. Correct the documented key ordering to
+  match existing lexicographic JSON output, including integer and fixed keys.
+
 - Reject unsupported constants in experimental JIT regions instead of executing
   integer-zero placeholders. Float literals such as a divisor of `2.0` retain
   their VM semantics rather than causing a native division trap after warmup.

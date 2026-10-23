@@ -547,3 +547,36 @@ still has its own VM, cancellation/depth checks and capability policy. A regex
 probe with 2,000 matches and 0 versus 1,000 unrelated globals exposed this cost;
 ownership tests verify the deferred copy, and both runtimes cover imported helpers,
 nested callbacks, global updates, errors and restricted capabilities.
+
+## Borrowed JSON serialization (2026-10-23)
+
+`to_json` and `to_json_pretty` now validate runtime values and serialize borrowed
+views instead of constructing an owned `serde_json::Value` tree. String payloads
+and string keys are borrowed; array elements stream through the serializer.
+Objects retain the existing lexicographic JSON key order. Validation retains the
+historical traversal order, depth limit, non-finite-number errors, unsupported
+value errors, secret redaction and duplicate fixed-key behavior. The standard
+library ordering documentation was corrected to match existing output.
+
+The opt-in `json_serialization_profile` test counts allocation/reallocation
+operations on the calling thread. It excludes fixture construction, parsing,
+assertions and printing. For a 1,000-row nested dictionary/array fixture, the old
+path made 12,025 allocation operations requesting 1,919,038 cumulative bytes; the
+borrowed path made 4,013 operations requesting 550,144 bytes. Both produced
+85,926 output bytes. Three repeats at each of 1, 100 and 1,000 rows agreed.
+These are allocation mechanism measurements, not peak-memory or timing claims.
+
+```sh
+cargo test --test json_serialization_profile -- --ignored --nocapture --test-threads=1
+```
+
+A normal test enforces an allocation budget with headroom against reintroducing
+the owned DOM. Differential tests compare exact compact/pretty output and errors
+against the retained owned converter across all dictionary representations,
+boundary depths and invalid values. Both runtimes cover snapshots, redaction,
+ordering and errors. The 32 JSON library tests, 13 targeted integration tests and
+39 representation/schema/CLI JSON tests passed. The full runtime suite and
+optimized end-to-end speed comparison remain separate pending gates.
+
+Raw counts and measurement scope:
+[allocation evidence](../benchmarks/langarena/json-serialization-allocations-2026-10-23.json).

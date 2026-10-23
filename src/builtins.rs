@@ -36,6 +36,8 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
+mod json_serialize;
+
 /// Global seeded RNG for deterministic testing
 /// When set, all random functions use this instead of thread_rng()
 static SEEDED_RNG: Mutex<Option<StdRng>> = Mutex::new(None);
@@ -618,21 +620,13 @@ pub fn parse_json(json_str: &str) -> Result<Value, String> {
 /// Infrastructure for json.stringify() builtin
 #[allow(dead_code)]
 pub fn to_json(value: &Value) -> Result<String, String> {
-    let json_value = kujo_value_to_json(value)?;
-    match serde_json::to_string(&json_value) {
-        Ok(s) => Ok(s),
-        Err(e) => Err(format!("JSON serialization error: {}", e)),
-    }
+    json_serialize::encode(value, false)
 }
 
 /// Convert a Kujo value to a pretty-printed JSON string
 #[allow(dead_code)]
 pub fn to_json_pretty(value: &Value) -> Result<String, String> {
-    let json_value = kujo_value_to_json(value)?;
-    match serde_json::to_string_pretty(&json_value) {
-        Ok(s) => Ok(s),
-        Err(e) => Err(format!("JSON serialization error: {}", e)),
-    }
+    json_serialize::encode(value, true)
 }
 
 /// Convert serde_json::Value to Kujo Value
