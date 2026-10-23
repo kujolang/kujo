@@ -1,0 +1,965 @@
+{
+  "schema_version": 1,
+  "objective": "Execute the full approved Kujo performance plan, preserving semantics and workloads; competitive performance must be measured, never presumed.",
+  "baseline_source_commit": "f037705",
+  "status": "in_progress",
+  "constraints": [
+    "No Kostya contact or upstream submission",
+    "No changed algorithms, inputs, iterations, warmups or checksums",
+    "No benchmark-name special cases or benchmark-specific native kernels",
+    "No suppressed correctness checks; retain value semantics, errors, cancellation and capabilities",
+    "Experimental JIT remains opt-in until reliability and portability justify promotion",
+    "Unverified and timed-out cases remain visible; no extrapolated pass claims"
+  ],
+  "stages": [
+    {
+      "id": "baseline",
+      "scope": "Pin current builds and host conditions; sequential seven-sample VM/JIT/Goose/Rust comparisons, checksums, startup, total time and peak memory",
+      "status": "in_progress",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "profile",
+      "scope": "CPU/allocation profiles and JIT execution/coverage/fallback evidence; reproducible cost and semantic test before optimization",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "runtime",
+      "scope": "Evidence-led calls, collections, numerics, strings, native boundaries and allocation fixes preserving language contracts",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "compiled_execution",
+      "scope": "Audit and extend guarded JIT execution, fallback state, imports/captures/recursion where justified; measure startup; AOT only if evidence warrants",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "all_benchmarks",
+      "scope": "All 50 unchanged production VM checksums on candidate revision; separate interpreter and JIT evidence; no historical pass substitution",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "regression_gates",
+      "scope": "Both-runtime semantic tests, differential/generated JIT tests, deterministic cost/scaling checks and controlled performance CI; investigate repeatable >5% slowdowns",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "competitive_targets",
+      "scope": "Per-case targets against faster comparator: within 2x, then 1.25x, then repeatable wins; report all failures, worst gaps, startup and memory without selective aggregates",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "id": "release_acceptance",
+      "scope": "Full relevant tests, Linux/macOS and supported-architecture gates, default-feature release artifacts, official local runner integration, concrete maintainer questions; no contact/submission without authorization",
+      "status": "pending",
+      "evidence": [
+
+      ]
+    }
+  ],
+  "benchmarks": [
+    {
+      "name": "Binarytrees::Obj",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Binarytrees::Arena",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Brainfuck::Array",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Brainfuck::Recursion",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Matmul::Single",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Matmul::T4",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Matmul::T8",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Matmul::T16",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Base64::Encode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Base64::Decode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Json::Generate",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Json::ParseDom",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Json::ParseMapping",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "CSV::Parse",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::Sieve",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::TextRaytracer",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::NeuralNet",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::CacheSimulation",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::GameOfLife",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::Words",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Etc::LogParser",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Template::Regex",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Template::Parse",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Sort::Quick",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Sort::Merge",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Sort::Self",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Graph::BFS",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Graph::DFS",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Graph::AStar",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Hash::SHA256",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Hash::CRC32",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Calculator::Ast",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Calculator::Interpreter",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Maze::Generator",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Maze::BFS",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Maze::AStar",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "CLBG::Fannkuchredux",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "CLBG::Mandelbrot",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "CLBG::Nbody",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "CLBG::Spectralnorm",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::BWTEncode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::BWTDecode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::HuffEncode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::HuffDecode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::ArithEncode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::ArithDecode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::LZWEncode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Compress::LZWDecode",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Distance::Jaro",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    },
+    {
+      "name": "Distance::NGram",
+      "test_vm": "pending",
+      "test_interpreter": "pending",
+      "production_vm": "pending",
+      "production_interpreter": "pending",
+      "jit_correctness_and_coverage": "pending",
+      "cpu_profile": "pending",
+      "allocation_profile": "pending",
+      "peak_memory": "pending",
+      "competitor_comparison": "pending",
+      "semantic_regressions": "pending",
+      "representation_review": "pending",
+      "evidence": [
+
+      ]
+    }
+  ],
+  "initial_audit": [
+    {
+      "claim": "Previous comparisons used default VM without JIT; current and previous runtime require explicit --jit.",
+      "evidence": [
+        "src/main.rs: RunCommandArgs.jit default false and vm.set_jit_enabled(jit_requested)",
+        "benchmarks/langarena/comparison-2026-10-23.json"
+      ],
+      "status": "verified_source_and_run_metadata"
+    },
+    {
+      "claim": "Ownership and general collection opcodes can exclude hot functions/loops from JIT. Captured functions bypass compiled-function caches.",
+      "evidence": [
+        "src/jit.rs: is_supported_opcode and can_compile_loop",
+        "docs/ARCHITECTURE.md: VM lexical captures"
+      ],
+      "status": "verified_source; dynamic per-workload coverage pending"
+    },
+    {
+      "claim": "to_json first builds an owned serde_json value tree, including copied strings and object keys, before serialization.",
+      "evidence": [
+        "src/builtins.rs: to_json and kujo_value_to_json_with_depth"
+      ],
+      "status": "verified_source; CPU/allocation attribution and optimization pending"
+    },
+    {
+      "claim": "Generic CPU profiler sampling is not implemented; bounded measurements do not report total allocations or all JIT execution.",
+      "evidence": [
+        "src/benchmarks/profiler.rs: CPUProfile and ProfileConfig",
+        "docs/RUNTIME_MEASUREMENTS.md"
+      ],
+      "status": "verified_source; use OS sampling and focused instrumentation"
+    }
+  ]
+}
