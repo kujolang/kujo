@@ -67,6 +67,72 @@ pub(crate) struct NativeOwnedValues {
     next_frame: Option<u64>,
 }
 
+/// Native control flow enters scopes even when it uses only immediates. Defer
+/// all frame storage until an owned value actually appears on that path.
+#[derive(Default)]
+pub(crate) struct NativeCallRoots {
+    values: NativeOwnedValues,
+    depth: usize,
+}
+
+impl NativeCallRoots {
+    pub(crate) fn depth(&self) -> usize {
+        self.depth
+    }
+
+    pub(crate) fn enter(&mut self) -> Result<(), OwnershipError> {
+        self.depth = self.depth.checked_add(1).ok_or(OwnershipError::IdentityExhausted)?;
+        Ok(())
+    }
+
+    pub(crate) fn leave(&mut self) -> Result<(), OwnershipError> {
+        if self.depth == 0 || self.values.frames.len() > self.depth {
+            return Err(OwnershipError::FrameOrder);
+        }
+        if self.values.frames.len() == self.depth {
+            let frame = self.values.frames.last().expect("current root frame");
+            let token = FrameToken { depth: self.depth - 1, identity: frame.identity };
+            self.values.leave_frame(token)?;
+        }
+        self.depth -= 1;
+        Ok(())
+    }
+
+    pub(crate) fn encode(&mut self, value: Value) -> Result<(i64, i64), OwnershipError> {
+        if let Some(immediate) = crate::native_scalar::encode(&value) {
+            return Ok(immediate);
+        }
+        if self.depth == 0 {
+            return Err(OwnershipError::NoFrame);
+        }
+        while self.values.frames.len() < self.depth {
+            self.values.enter_frame()?;
+        }
+        self.values.encode(value)
+    }
+
+    pub(crate) fn take_value(&mut self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
+        self.values.take_value(payload, kind)
+    }
+
+    pub(crate) fn promote(&mut self, payload: i64, kind: i64) -> Result<(), OwnershipError> {
+        if kind == OWNED && self.values.frames.len() != self.depth {
+            return Err(OwnershipError::NotCurrentFrame);
+        }
+        self.values.promote_payload(payload, kind)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn storage_state(&self) -> (usize, usize, usize, usize) {
+        (
+            self.depth,
+            self.values.lookup.len(),
+            self.values.slots.capacity(),
+            self.values.frames.capacity(),
+        )
+    }
+}
+
 impl Default for NativeOwnedValues {
     fn default() -> Self {
         Self {
@@ -271,6 +337,29 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn lazy_scopes_do_not_allocate_for_immediates_or_release_outer_roots() {
+        let mut roots = NativeCallRoots::default();
+        for _ in 0..1000 {
+            roots.enter().unwrap();
+            roots.enter().unwrap();
+            roots.encode(Value::Float(3.5)).unwrap();
+            roots.leave().unwrap();
+            roots.leave().unwrap();
+        }
+        assert_eq!(roots.storage_state(), (0, 0, 0, 0));
+        roots.enter().unwrap();
+        let (payload, kind) = roots.encode(Value::Str(Arc::new("caller".into()))).unwrap();
+        roots.enter().unwrap();
+        roots.leave().unwrap();
+        assert!(
+            matches!(roots.take_value(payload, kind).unwrap(), Value::Str(text) if text.as_str() == "caller")
+        );
+        roots.leave().unwrap();
+        assert_eq!(roots.depth(), 0);
+        assert_eq!(roots.leave(), Err(OwnershipError::FrameOrder));
+    }
 
     #[test]
     fn immediate_codec_never_allocates_roots_or_changes_payload_bits() {

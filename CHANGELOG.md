@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Connect lazy ownership scopes to experimental native invocation and recursive
+  function exits. Owned-value bytecode support remains incomplete.
+
 - Avoid allocating an unused empty bytecode chunk on each VM function call while
   retaining shared caller code for normal returns, exceptions and generators.
 

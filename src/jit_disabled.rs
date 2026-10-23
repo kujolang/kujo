@@ -28,6 +28,9 @@ pub struct VMContext {
 }
 
 impl VMContext {
+    pub(crate) fn take_return_value(&mut self, value: i64) -> Value {
+        self.scalar_value(value)
+    }
     pub fn scalar_value(&self, value: i64) -> Value {
         crate::native_scalar::decode(value, self.return_value_kind)
     }

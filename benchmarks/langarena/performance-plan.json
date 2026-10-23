@@ -1920,6 +1920,15 @@
         "../../src/native_owned.rs",
         "../../docs/NATIVE_OWNERSHIP.md"
       ]
+    },
+    {
+      "scope": "native boundary and activation ownership lifetimes",
+      "result": "1021 library tests and41 targeted integrations pass, with18 JIT contracts rechecked after repairing minimal-feature context gating. Minimal-feature library check passes. Lazy scopes keep real compiled immediate calls and depth-rejected entries at zero root-storage capacity. Recursive ABI probes repeat1000 normal/error cycles, transfer owned returns through standard-status and direct-payload ABIs, clear stale return state, and keep live roots bounded. VM consumes returned Values without an extra clone. Generated owned bytecode operations remain unconverted; eight owned-value failures and performance acceptance remain open.",
+      "evidence": [
+        "../../src/native_owned.rs",
+        "../../src/jit.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
+      ]
     }
   ]
 }

@@ -1,7 +1,9 @@
 # Experimental native owned-value lifetime mechanism
 
-Status: **foundation only**. `src/native_owned.rs` is compiled with `runtime-jit`
-but is not yet used by generated native operations. It does not repair the eight
+Status: **lifetime hooks connected; owned operations pending**. Native invocation
+wrappers and generated function entry/exit helpers now enter and leave lazy root
+scopes. `src/native_owned.rs` is compiled with `runtime-jit`, but generated owned
+loads, operators and callback marshaling do not yet use its codec. It does not repair the eight
 failures in `benchmarks/langarena/jit-owned-values-2026-10-23.json`, enable owned
 arguments, or establish native parity/performance. Existing entry guards remain.
 
@@ -52,6 +54,23 @@ not a slot retirement mechanism that gradually retains dead values.
 | `promote` | Transfers a current-frame return root to its immediate caller without cloning. |
 | `leave_frame` | Releases remaining roots; rejects stale/out-of-order tokens without mutation. |
 
+`NativeCallRoots` tracks logical scope depth without allocating frame storage for
+immediate-only execution. The first owned value materializes the needed ancestor
+frames. An immediate-only nested call cannot release its parent's existing roots.
+Every successful generated function entry acquires a logical scope after its
+shared recursion-depth guard; every generated exit releases it. Owned return roots
+are promoted before that cleanup. Invocation wrappers own an outer boundary scope,
+take the result into the context before releasing it, and let the VM move out the
+result without an extra clone. Standard status-return and direct payload-return
+calling conventions are handled separately. Reused boundaries clear old result
+metadata and release any previous context-owned return.
+
+Tests exercise both wrappers through recursive ABI probes, normal/error exits,
+return transfer and 1,000 context reuse cycles. A real compiled immediate function
+and a depth-rejected entry leave all root-storage capacities at zero. These probes
+do not establish generated owned-operand correctness; they supply owned payloads
+through the codec directly, bypassing the still-incomplete bytecode paths.
+
 A callee may borrow an outer argument but must duplicate it before owning or
 releasing a native operand. Promoting a return transfers that operand's ownership;
 it does not add another reference. The outermost boundary takes the return `Value`
@@ -60,8 +79,9 @@ generated normal/error exits still need explicit cleanup while the store is live
 
 ## Integration gates still open
 
-1. Give every native invocation a boundary frame and every recursive function a
-   matching activation frame; preserve the existing shared recursion budget.
+1. Boundary/function lifetime hooks are connected. Extend their validation to
+   real owned-value bytecode, callbacks and imported native execution while
+   preserving the existing shared recursion budget.
 2. Replace all named/local/constant/callable loads and legacy marker protocols with
    the same payload/kind representation. Root every owned operand independently.
 3. Duplicate on operand duplication and local loads. Transfer or duplicate on

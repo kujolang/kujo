@@ -3124,6 +3124,10 @@ impl VM {
                                                 call_name_ptr: func_name.as_ptr(),
                                                 call_name_len: func_name.len(),
                                                 native_call_depth: 0,
+                                                #[cfg(feature = "runtime-jit")]
+                                                owned_roots: Default::default(),
+                                                #[cfg(feature = "runtime-jit")]
+                                                owned_return: None,
                                                 arg_kinds: std::array::from_fn(|index| {
                                                     args.get(index)
                                                         .and_then(crate::native_scalar::encode)
@@ -3171,10 +3175,10 @@ impl VM {
                                             }
 
                                             if vm_context.has_return_value {
-                                                self.stack.push(
-                                                    vm_context
-                                                        .scalar_value(vm_context.return_value),
-                                                );
+                                                self.stack
+                                                    .push(vm_context.take_return_value(
+                                                        vm_context.return_value,
+                                                    ));
                                             } else if self.stack.len() > stack_size_before {
                                                 // Return value was pushed to stack
                                             } else {
@@ -3246,6 +3250,10 @@ impl VM {
                                                     call_name_ptr: func_name.as_ptr(),
                                                     call_name_len: func_name.len(),
                                                     native_call_depth: 0,
+                                                    #[cfg(feature = "runtime-jit")]
+                                                    owned_roots: Default::default(),
+                                                    #[cfg(feature = "runtime-jit")]
+                                                    owned_return: None,
                                                     arg_kinds: std::array::from_fn(|index| {
                                                         args.get(index)
                                                             .and_then(crate::native_scalar::encode)
@@ -3275,7 +3283,8 @@ impl VM {
                                                         func_name, arg_val, result);
                                                 }
 
-                                                self.stack.push(vm_context.scalar_value(result));
+                                                self.stack
+                                                    .push(vm_context.take_return_value(result));
                                                 continue; // Skip to next instruction
                                             }
                                         }
@@ -3409,6 +3418,10 @@ impl VM {
                                         call_name_ptr: func_name.as_ptr(),
                                         call_name_len: func_name.len(),
                                         native_call_depth: 0,
+                                        #[cfg(feature = "runtime-jit")]
+                                        owned_roots: Default::default(),
+                                        #[cfg(feature = "runtime-jit")]
+                                        owned_return: None,
                                         arg_kinds: std::array::from_fn(|index| {
                                             args.get(index)
                                                 .and_then(crate::native_scalar::encode)
@@ -3461,8 +3474,9 @@ impl VM {
                                     // This is the FAST PATH from Phase 7 Step 8 optimization
                                     if vm_context.has_return_value {
                                         // Use the optimized return value directly
-                                        self.stack
-                                            .push(vm_context.scalar_value(vm_context.return_value));
+                                        self.stack.push(
+                                            vm_context.take_return_value(vm_context.return_value),
+                                        );
                                     } else if self.stack.len() > stack_size_before {
                                         // Fallback: return value was pushed to stack (old path)
                                         // No action needed - value is already on stack
@@ -8401,6 +8415,10 @@ impl VM {
                                         call_name_ptr: func_name.as_ptr(),
                                         call_name_len: func_name.len(),
                                         native_call_depth: 0,
+                                        #[cfg(feature = "runtime-jit")]
+                                        owned_roots: Default::default(),
+                                        #[cfg(feature = "runtime-jit")]
+                                        owned_return: None,
                                         arg_kinds: std::array::from_fn(|index| {
                                             args.get(index)
                                                 .and_then(crate::native_scalar::encode)
@@ -8431,7 +8449,7 @@ impl VM {
                                         );
                                     }
 
-                                    return Ok(vm_context.scalar_value(result));
+                                    return Ok(vm_context.take_return_value(result));
                                 }
                             }
                         }
@@ -8561,6 +8579,10 @@ impl VM {
                             call_name_ptr: func_name.as_ptr(),
                             call_name_len: func_name.len(),
                             native_call_depth: 0,
+                            #[cfg(feature = "runtime-jit")]
+                            owned_roots: Default::default(),
+                            #[cfg(feature = "runtime-jit")]
+                            owned_return: None,
                             arg_kinds: std::array::from_fn(|index| {
                                 args.get(index)
                                     .and_then(crate::native_scalar::encode)
@@ -8604,7 +8626,7 @@ impl VM {
                         // This is the FAST PATH from Phase 7 Step 8 optimization
                         if vm_context.has_return_value {
                             // Use the optimized return value directly
-                            return Ok(vm_context.scalar_value(vm_context.return_value));
+                            return Ok(vm_context.take_return_value(vm_context.return_value));
                         } else if self.stack.len() > stack_size_before {
                             // Fallback: return value was pushed to stack (old path)
                             let result = self.stack.pop().unwrap();

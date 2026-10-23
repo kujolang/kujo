@@ -131,6 +131,8 @@ pub struct VMContext {
     pub call_name_ptr: *const u8,
     pub call_name_len: usize,
     pub native_call_depth: usize,
+    pub(crate) owned_roots: crate::native_owned::NativeCallRoots,
+    pub(crate) owned_return: Option<Value>,
     pub arg_kinds: [i64; 4],
     pub arg0: i64,
     pub arg1: i64,
@@ -140,8 +142,85 @@ pub struct VMContext {
 }
 
 impl VMContext {
+    #[allow(dead_code)] // Borrowing accessor retained; VM transfers result ownership.
     pub fn scalar_value(&self, value: i64) -> Value {
+        if self.return_value_kind == crate::native_owned::OWNED {
+            if value != self.return_value {
+                return Value::Error("Invalid native owned return payload".into());
+            }
+            return self
+                .owned_return
+                .clone()
+                .unwrap_or_else(|| Value::Error("Missing native owned return".into()));
+        }
         crate::native_scalar::decode(value, self.return_value_kind)
+    }
+
+    pub(crate) fn take_return_value(&mut self, value: i64) -> Value {
+        if self.return_value_kind == crate::native_owned::OWNED {
+            if value != self.return_value {
+                return Value::Error("Invalid native owned return payload".into());
+            }
+            return self
+                .owned_return
+                .take()
+                .unwrap_or_else(|| Value::Error("Missing native owned return".into()));
+        }
+        crate::native_scalar::decode(value, self.return_value_kind)
+    }
+
+    fn begin_owned_boundary(&mut self) -> Result<usize, i64> {
+        let previous = self.owned_roots.depth();
+        self.owned_return = None;
+        self.has_return_value = false;
+        self.return_value = 0;
+        self.return_value_kind = crate::native_scalar::INTEGER;
+        if let Err(error) = self.owned_roots.enter() {
+            self.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            return Err(1);
+        }
+        Ok(previous)
+    }
+
+    fn finish_owned_boundary(
+        &mut self,
+        previous: usize,
+        mut result: i64,
+        direct_result: bool,
+    ) -> i64 {
+        if result == 0 && self.runtime_error.is_some() {
+            result = 1;
+        }
+        if self.owned_roots.depth() != previous + 1 {
+            self.runtime_error.get_or_insert_with(|| "Unbalanced native ownership scopes".into());
+            result = 1;
+        }
+        if (direct_result || result == 0)
+            && self.runtime_error.is_none()
+            && self.has_return_value
+            && self.return_value_kind == crate::native_owned::OWNED
+        {
+            let payload = if direct_result { result } else { self.return_value };
+            match self.owned_roots.take_value(payload, self.return_value_kind) {
+                Ok(value) => self.owned_return = Some(value),
+                Err(error) => {
+                    self.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                    result = 1;
+                }
+            }
+        }
+        while self.owned_roots.depth() > previous {
+            if let Err(error) = self.owned_roots.leave() {
+                self.runtime_error
+                    .get_or_insert_with(|| format!("Native ownership error: {error:?}"));
+                result = 1;
+                break;
+            }
+        }
+        if self.runtime_error.is_some() {
+            self.owned_return = None;
+        }
+        result
     }
 
     /// Create a new VMContext from VM state
@@ -167,6 +246,8 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            owned_roots: Default::default(),
+            owned_return: None,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -198,6 +279,8 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            owned_roots: Default::default(),
+            owned_return: None,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -243,6 +326,8 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            owned_roots: Default::default(),
+            owned_return: None,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -271,11 +356,16 @@ pub type CompiledFnWithArg = unsafe extern "C" fn(*mut VMContext, i64) -> i64;
 /// - The called function must not outlive or stash pointers derived from `ctx`.
 #[inline]
 pub fn invoke_compiled_fn(compiled_fn: CompiledFn, ctx: &mut VMContext) -> i64 {
+    let boundary = match ctx.begin_owned_boundary() {
+        Ok(boundary) => boundary,
+        Err(status) => return status,
+    };
     measurement::add(Metric::JitNativeBoundaryEntries, 1);
     // SAFETY:
     // - Preconditions: `compiled_fn` was produced by this JIT and `ctx` is a live VM-owned context for this call.
     // - Postconditions: control returns with JIT status code and no pointer from `ctx` escapes this wrapper.
-    unsafe { compiled_fn(ctx as *mut VMContext) }
+    let status = unsafe { compiled_fn(ctx as *mut VMContext) };
+    ctx.finish_owned_boundary(boundary, status, false)
 }
 
 /// Invoke a single-argument compiled JIT function through one audited unsafe boundary.
@@ -291,11 +381,16 @@ pub fn invoke_compiled_fn_with_arg(
     ctx: &mut VMContext,
     arg: i64,
 ) -> i64 {
+    let boundary = match ctx.begin_owned_boundary() {
+        Ok(boundary) => boundary,
+        Err(status) => return status,
+    };
     measurement::add(Metric::JitNativeBoundaryEntries, 1);
     // SAFETY:
     // - Preconditions: identical to `invoke_compiled_fn`; `arg` is plain value data and ABI-compatible.
     // - Postconditions: returns the direct-arg JIT result without transferring ownership of context internals.
-    unsafe { compiled_fn(ctx as *mut VMContext, arg) }
+    let status = unsafe { compiled_fn(ctx as *mut VMContext, arg) };
+    ctx.finish_owned_boundary(boundary, status, true)
 }
 
 /// Details about a bytecode surface that current JIT cannot compile.
@@ -2399,6 +2494,15 @@ pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
         ctx.runtime_error = Some(error);
         return 1;
     }
+    if let Err(error) = ctx.owned_roots.enter() {
+        if let Some(vm) = (ctx.vm_ptr as *mut VM).as_mut() {
+            vm.leave_native_function();
+        } else {
+            ctx.native_call_depth = ctx.native_call_depth.saturating_sub(1);
+        }
+        ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+        return 1;
+    }
     measurement::add(Metric::JitNativeFunctionEntries, 1);
     0
 }
@@ -2408,6 +2512,17 @@ pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
 // pairs with one successful native-function entry on every generated exit path.
 pub unsafe extern "C" fn jit_leave_function(ctx: *mut VMContext) {
     if let Some(ctx) = ctx.as_mut() {
+        if ctx.runtime_error.is_none()
+            && ctx.has_return_value
+            && ctx.return_value_kind == crate::native_owned::OWNED
+        {
+            if let Err(error) = ctx.owned_roots.promote(ctx.return_value, ctx.return_value_kind) {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            }
+        }
+        if let Err(error) = ctx.owned_roots.leave() {
+            ctx.runtime_error.get_or_insert_with(|| format!("Native ownership error: {error:?}"));
+        }
         if let Some(vm) = (ctx.vm_ptr as *mut VM).as_mut() {
             vm.leave_native_function();
         } else {
@@ -9099,6 +9214,114 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // SAFETY: test callers supply a live context with initialized local values;
+    // recursion stays within the normal native depth guard and retains no pointers.
+    unsafe extern "C" fn owned_lifetime_probe(ctx: *mut VMContext, depth: i64) -> i64 {
+        if jit_enter_function(ctx) != 0 {
+            return 1;
+        }
+        let scratch = (&*(*ctx).locals_ptr)["scratch"].clone();
+        (*ctx).owned_roots.encode(scratch).unwrap();
+        let status = if depth > 0 {
+            owned_lifetime_probe(ctx, depth - 1)
+        } else if (*ctx).arg0 != 0 {
+            (*ctx).runtime_error = Some("owned probe failure".into());
+            7
+        } else {
+            let input = (&*(*ctx).locals_ptr)["input"].clone();
+            let (payload, kind) = (*ctx).owned_roots.encode(input).unwrap();
+            jit_set_return_scalar(ctx, payload, kind)
+        };
+        jit_leave_function(ctx);
+        status
+    }
+
+    // SAFETY: forwards the same validated test context to the direct-arg probe.
+    unsafe extern "C" fn owned_standard_probe(ctx: *mut VMContext) -> i64 {
+        owned_lifetime_probe(ctx, 3)
+    }
+
+    // SAFETY: same live test context as owned_lifetime_probe; the direct ABI
+    // returns the payload itself, not the standard ABI's success status.
+    unsafe extern "C" fn owned_direct_probe(ctx: *mut VMContext, depth: i64) -> i64 {
+        let status = owned_lifetime_probe(ctx, depth);
+        if status == 0 {
+            (*ctx).return_value
+        } else {
+            status
+        }
+    }
+
+    #[test]
+    fn native_boundaries_transfer_owned_returns_and_cleanup_recursive_failures() {
+        let input = Arc::new(vec![Value::Int(8)]);
+        let scratch = Arc::new("scratch".to_string());
+        let mut locals = HashMap::from([
+            ("input".into(), Value::Array(input.clone())),
+            ("scratch".into(), Value::Str(scratch.clone())),
+        ]);
+        let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
+        for _ in 0..1000 {
+            context.arg0 = 0;
+            assert_eq!(invoke_compiled_fn(owned_standard_probe, &mut context), 0);
+            assert!(
+                matches!(context.scalar_value(context.return_value), Value::Array(array) if Arc::ptr_eq(&array, &input))
+            );
+            assert_eq!(Arc::strong_count(&input), 3);
+            assert_eq!(Arc::strong_count(&scratch), 2);
+            assert_eq!(context.native_call_depth, 0);
+            let (depth, live, slots, frames) = context.owned_roots.storage_state();
+            assert_eq!((depth, live), (0, 0));
+            assert!(slots <= 8 && frames <= 8);
+            let direct = invoke_compiled_fn_with_arg(owned_direct_probe, &mut context, 3);
+            assert_ne!(direct, 0);
+            assert!(
+                matches!(context.scalar_value(direct), Value::Array(array) if Arc::ptr_eq(&array, &input))
+            );
+            assert_eq!(Arc::strong_count(&input), 3);
+            let returned = context.take_return_value(direct);
+            assert!(context.owned_return.is_none());
+            assert!(matches!(&returned, Value::Array(array) if Arc::ptr_eq(array, &input)));
+            assert_eq!(Arc::strong_count(&input), 3);
+            drop(returned);
+            assert_eq!(Arc::strong_count(&input), 2);
+            context.arg0 = 1;
+            assert_eq!(invoke_compiled_fn_with_arg(owned_lifetime_probe, &mut context, 3), 7);
+            assert_eq!(context.runtime_error.take().as_deref(), Some("owned probe failure"));
+            assert!(context.owned_return.is_none());
+            assert_eq!(Arc::strong_count(&input), 2);
+            assert_eq!(Arc::strong_count(&scratch), 2);
+            assert_eq!(context.native_call_depth, 0);
+            assert_eq!(context.owned_roots.depth(), 0);
+        }
+        assert_eq!(invoke_compiled_fn(dummy_compiled_fn, &mut context), 0);
+        assert!(!context.has_return_value);
+    }
+
+    #[test]
+    fn compiled_immediate_functions_keep_ownership_storage_unallocated() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let mut chunk = BytecodeChunk::new();
+        let constant = chunk.add_constant(Constant::Int(42));
+        chunk.emit(OpCode::LoadConst(constant));
+        chunk.emit(OpCode::Return);
+        let compiled = compiler.compile_function(&chunk, "immediate_root_scope").unwrap();
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        for _ in 0..1000 {
+            assert_eq!(invoke_compiled_fn(compiled, &mut context), 0);
+            assert_eq!(context.return_value, 42);
+            assert_eq!(context.owned_roots.storage_state(), (0, 0, 0, 0));
+            assert_eq!(context.native_call_depth, 0);
+        }
+        context.native_call_depth = crate::runtime_limits::DEFAULT_MAX_VM_CALL_DEPTH;
+        assert_ne!(invoke_compiled_fn(compiled, &mut context), 0);
+        assert_eq!(context.owned_roots.storage_state(), (0, 0, 0, 0));
+        assert!(context.runtime_error.take().unwrap().contains("depth"));
+        context.native_call_depth = 0;
+        assert_eq!(invoke_compiled_fn(compiled, &mut context), 0);
+    }
 
     // SAFETY:
     // - Preconditions: dummy_compiled_fn is invoked from JIT-compiled code using the C ABI, and `ctx` points to a live
