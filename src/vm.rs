@@ -1594,6 +1594,7 @@ impl VM {
                         let cache_key = format!("script:{}", chunk_name);
                         if !self.jit_var_names_cache.contains_key(&cache_key) {
                             let mut cached_var_names = HashMap::new();
+                            Self::register_jit_local_names(&self.chunk, &mut cached_var_names);
 
                             for instr in &self.chunk.instructions {
                                 match instr {
@@ -1936,6 +1937,10 @@ impl VM {
                                         let cache_key = format!("loop:{}", chunk_name);
                                         if !self.jit_var_names_cache.contains_key(&cache_key) {
                                             let mut cached_var_names = HashMap::new();
+                                            Self::register_jit_local_names(
+                                                &self.chunk,
+                                                &mut cached_var_names,
+                                            );
 
                                             for instr in &self.chunk.instructions {
                                                 match instr {
@@ -3314,6 +3319,10 @@ impl VM {
                                     } else {
                                         // Build var_names once and cache it
                                         let mut cached_var_names = HashMap::new();
+                                        Self::register_jit_local_names(
+                                            chunk,
+                                            &mut cached_var_names,
+                                        );
 
                                         // Register parameter names
                                         for param_name in &chunk.params {
@@ -8284,6 +8293,16 @@ impl VM {
         }
     }
 
+    fn register_jit_local_names(chunk: &BytecodeChunk, names: &mut HashMap<u64, String>) {
+        use std::hash::{Hash, Hasher};
+        // Slot-only locals can still cross named native helper boundaries.
+        for name in &chunk.local_names {
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            name.hash(&mut hasher);
+            names.insert(hasher.finish(), name.clone());
+        }
+    }
+
     fn jit_function_names(&mut self, chunk: &BytecodeChunk) -> Arc<HashMap<u64, String>> {
         let key = chunk.name.as_deref().unwrap_or("<anonymous>");
         if let Some(names) = self.jit_var_names_cache.get(key) {
@@ -8294,6 +8313,7 @@ impl VM {
             .or_insert_with(|| {
                 use std::hash::{Hash, Hasher};
                 let mut names = HashMap::new();
+                Self::register_jit_local_names(chunk, &mut names);
                 for name in
                     chunk.params.iter().chain(chunk.instructions.iter().filter_map(|op| match op {
                         OpCode::LoadVar(name)
@@ -8500,6 +8520,7 @@ impl VM {
                         if !cached_var_names_exists {
                             // Build var_names once and cache it
                             let mut cached_var_names = HashMap::new();
+                            Self::register_jit_local_names(chunk, &mut cached_var_names);
 
                             // Register parameter names
                             for param_name in &chunk.params {
@@ -9710,6 +9731,7 @@ mod tests {
         let mut chunk = BytecodeChunk::new();
         chunk.name = Some("owner".into());
         chunk.params = vec!["argument".into()];
+        chunk.local_names = vec!["slot_only".into()];
         for op in [
             OpCode::LoadVar("read".into()),
             OpCode::StoreVar("write".into()),
@@ -9725,7 +9747,7 @@ mod tests {
             vm.jit_function_names(&other);
         }
         assert!(Arc::ptr_eq(&names, &vm.jit_function_names(&chunk)));
-        for name in ["argument", "read", "write", "global_read", "global_write"] {
+        for name in ["argument", "slot_only", "read", "write", "global_read", "global_write"] {
             let mut hasher = std::collections::hash_map::DefaultHasher::new();
             name.hash(&mut hasher);
             assert_eq!(names.get(&hasher.finish()).map(String::as_str), Some(name));

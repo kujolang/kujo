@@ -5112,9 +5112,16 @@ impl BytecodeTranslator {
                     let call = builder.ins().call(make_dict_ref, &[ctx, num_pairs_val]);
                     let _success = builder.inst_results(call)[0];
 
-                    // Leave dict on VM stack and push marker for non-int value
-                    let marker = builder.ins().iconst(types::I64, -1);
-                    self.push_value(marker);
+                    // The constructor's Value becomes an independently rooted
+                    // operand, never a sentinel referring to hidden VM-stack state.
+                    let failed = builder.ins().icmp_imm(IntCC::Equal, _success, 0);
+                    let status = builder.ins().uextend(types::I64, failed);
+                    self.exit_on_assignment_error(builder, status);
+                    let pop = self.stack_pop_func.ok_or("MakeDict requires tagged stack pop")?;
+                    let call = builder.ins().call(pop, &[ctx]);
+                    let value = builder.inst_results(call)[0];
+                    self.capture_loaded_operand(builder, ctx, value);
+                    self.push_value(value);
 
                     return Ok(false);
                 } else {
@@ -5971,25 +5978,11 @@ impl BytecodeTranslator {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
 
-                        let marker = builder.ins().iconst(types::I64, -1);
-                        let is_marker = builder.ins().icmp(IntCC::Equal, value, marker);
-
-                        let marker_block = builder.create_block();
-                        let push_block = builder.create_block();
-                        let cont_block = builder.create_block();
-
-                        builder.ins().brif(is_marker, marker_block, &[], push_block, &[]);
-                        builder.switch_to_block(marker_block);
-                        builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
-                        builder.ins().jump(cont_block, &[]);
-                        builder.switch_to_block(push_block);
                         if let Some(push) = self.scalar_push_func {
                             let kind = self.scalar_kind(builder, value);
                             builder.ins().call(push, &[ctx, value, kind]);
                         }
                         builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
-                        builder.ins().jump(cont_block, &[]);
-                        builder.switch_to_block(cont_block);
                         return Ok(false);
                     }
                 }
@@ -6050,25 +6043,11 @@ impl BytecodeTranslator {
                             let name_hash = Self::hash_var_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
 
-                            let marker = builder.ins().iconst(types::I64, -1);
-                            let is_marker = builder.ins().icmp(IntCC::Equal, value, marker);
-
-                            let marker_block = builder.create_block();
-                            let push_block = builder.create_block();
-                            let cont_block = builder.create_block();
-
-                            builder.ins().brif(is_marker, marker_block, &[], push_block, &[]);
-                            builder.switch_to_block(marker_block);
-                            builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
-                            builder.ins().jump(cont_block, &[]);
-                            builder.switch_to_block(push_block);
                             if let Some(push) = self.scalar_push_func {
                                 let kind = self.scalar_kind(builder, value);
                                 builder.ins().call(push, &[ctx, value, kind]);
                             }
                             builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
-                            builder.ins().jump(cont_block, &[]);
-                            builder.switch_to_block(cont_block);
                             return Ok(false);
                         }
                     }
@@ -6196,13 +6175,13 @@ impl BytecodeTranslator {
                         }
                     }
 
-                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
+                    if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.operand_load_func) {
                         let name_hash = Self::hash_var_name(name) as i64;
                         let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
-                        self.capture_scalar_kind(builder, ctx, result);
+                        self.capture_loaded_operand(builder, ctx, result);
                         self.push_value(result);
                         return Ok(false);
                     }
@@ -6223,25 +6202,11 @@ impl BytecodeTranslator {
                             let name_hash = Self::hash_var_name(name) as i64;
                             let name_hash_val = builder.ins().iconst(types::I64, name_hash);
 
-                            let marker = builder.ins().iconst(types::I64, -1);
-                            let is_marker = builder.ins().icmp(IntCC::Equal, value, marker);
-
-                            let marker_block = builder.create_block();
-                            let push_block = builder.create_block();
-                            let cont_block = builder.create_block();
-
-                            builder.ins().brif(is_marker, marker_block, &[], push_block, &[]);
-                            builder.switch_to_block(marker_block);
-                            builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
-                            builder.ins().jump(cont_block, &[]);
-                            builder.switch_to_block(push_block);
                             if let Some(push) = self.scalar_push_func {
                                 let kind = self.scalar_kind(builder, value);
                                 builder.ins().call(push, &[ctx, value, kind]);
                             }
                             builder.ins().call(store_from_stack, &[ctx, name_hash_val]);
-                            builder.ins().jump(cont_block, &[]);
-                            builder.switch_to_block(cont_block);
                             return Ok(false);
                         }
                     }
@@ -9627,12 +9592,16 @@ mod tests {
     #[test]
     fn compiled_discarded_owned_operands_reuse_root_storage() {
         for repetitions in [8, 128] {
-            for pattern in ["discard", "overwrite", "callback", "dead"] {
+            for pattern in ["discard", "overwrite", "callback", "dead", "dictionary"] {
                 let mut compiler = JitCompiler::new().unwrap();
                 let mut chunk = BytecodeChunk::new();
                 chunk.local_names.push("saved".into());
                 for _ in 0..repetitions {
-                    chunk.emit(OpCode::LoadVar("source".into()));
+                    if pattern == "dictionary" {
+                        chunk.emit(OpCode::MakeDict(0));
+                    } else {
+                        chunk.emit(OpCode::LoadVar("source".into()));
+                    }
                     if pattern == "callback" {
                         chunk.emit(OpCode::LoadVar("str".into()));
                         chunk.emit(OpCode::Call(1));

@@ -125,3 +125,24 @@ fn check(source: String, functions: &[&str]) {
         }
     }
 }
+
+#[test]
+fn native_empty_dictionary_literals_are_owned_operands() {
+    let mut source = String::from(
+        "func fresh(x) { return {} }\n\
+         func local(x) { mut value := {} return value }\n\
+         func size(x) { return len({}) }\n\
+         func empty(x) { if {} { return false } return true }\n\
+         func equal(x) { return {} == {} }\n\
+         func replace(x) { mut value := {} value = -1 return value }\n\
+         func snapshot(x) { mut value := {} let saved := value value = -1 return saved }\n\
+         func descend(x) { mut value := {} if x <= 0 { return value } return descend(x - 1) }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(fresh(1), {})\nassert_equal(local(1), {})\nassert_equal(size(1), 0)\nassert_equal(empty(1), true)\nassert_equal(equal(1), true)\nassert_equal(replace(1), -1)\nassert_equal(snapshot(1), {})\nassert_equal(descend(3), {})\n");
+    }
+    source.push_str(
+        "mut copy := fresh(1)\ncopy[\"x\"] = 7\nassert_equal(fresh(1), {})\nprint(\"PASS\")\n",
+    );
+    check(source, &["fresh", "local", "size", "empty", "equal", "replace", "snapshot", "descend"]);
+}

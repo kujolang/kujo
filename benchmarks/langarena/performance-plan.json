@@ -2125,6 +2125,11 @@
       "scope": "native dead-local release and copied-parameter compilation",
       "result": "1030 library tests passed (8 ignored), 35 integration tests passed; bounded root storage and caller-slot isolation verified. No elapsed-time claim; broader ownership and production gates remain open.",
       "evidence": "native-dead-locals-2026-10-23.json"
+    },
+    {
+      "scope": "native empty dictionary literal ownership",
+      "result": "1030 library tests passed (8 ignored), 28 integration tests passed. Empty literals now yield owned dictionaries; slot-only native local names resolve. Bounded storage verified; no speed or wider opcode support claim.",
+      "evidence": "native-empty-dictionaries-2026-10-23.json"
     }
   ]
 }

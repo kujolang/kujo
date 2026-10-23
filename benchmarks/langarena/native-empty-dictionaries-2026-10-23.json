@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-23",
+  "baseline": "c3cb829",
+  "scope": "Supported empty dictionary literals in native functions; opcode support is not widened.",
+  "reproductions": [
+    "A hot native function returning {} returned Int(-1) rather than a dictionary.",
+    "Converting the constructor exposed missing slot-only local names: dictionary local load failed with JIT load has no variable name."
+  ],
+  "changes": [
+    "Convert MakeDict helper output into a tagged rooted operand immediately.",
+    "Remove -1 sentinel branches from dictionary local stores; -1 is an ordinary integer.",
+    "Use tagged operand loading for direct-mode locals.",
+    "Register local slot names in all five VM native name-table construction paths."
+  ],
+  "verification": {
+    "library_passed": 1030,
+    "library_ignored": 8,
+    "integration_passed": 28,
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "cases": [
+      "empty dict return",
+      "dictionary local",
+      "callback argument",
+      "truth",
+      "equality",
+      "reassignment to -1",
+      "saved snapshot",
+      "recursive return",
+      "independent mutation"
+    ],
+    "cost": "Compiled empty dictionary creation/dup/discard at 8 and 128 repetitions retains at most four root slots, zero live roots after return, and an empty VM stack.",
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "logs": {
+    "before": {
+      "path": "/tmp/kujo-native-dict-before.log",
+      "sha256": "3f231340b6869faf129db2501137e105f84b79db6567c451fd7dc0d40850e36a"
+    },
+    "after": {
+      "path": "/tmp/kujo-native-dict-after.log",
+      "sha256": "0292922ed4abbb3e6627f967d42cd91f37c5861eb4dcd6d2e1f6882e52567387"
+    },
+    "final": {
+      "path": "/tmp/kujo-native-dict-final.log",
+      "sha256": "369058d8a21ceb11e88564e9139a0465bb67f235816d516e970bb06203766a97"
+    },
+    "format": {
+      "path": "/tmp/kujo-native-dict-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limitations": [
+    "No elapsed-time speedup claim",
+    "Nonempty dictionary constructors remain unsupported by native compilation",
+    "Legacy specialized indexing helpers and wider owned entry still require audits",
+    "Current-candidate all50 and production/platform/comparison gates remain open"
+  ]
+}

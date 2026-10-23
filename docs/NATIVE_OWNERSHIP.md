@@ -97,6 +97,21 @@ it does not add another reference. The outermost boundary takes the return `Valu
 before leaving its frame. Rust store destruction drops any remaining values, but
 generated normal/error exits still need explicit cleanup while the store is live.
 
+## Empty dictionary literals
+
+The supported `MakeDict(0)` path converts its constructed dictionary from the
+helper stack into a tagged owned operand immediately. It no longer returns an
+integer sentinel or leaves a hidden dictionary on the VM stack. Local stores
+marshal the tagged value even when its payload is integer `-1`; slot-only local
+names are included in native name tables for helper lookup. Direct-mode local
+loads use the same owned codec.
+
+Regression coverage includes returns, locals, callback arguments, truth/equality,
+reassignment to `-1`, saved snapshots, recursive returns and independent subsequent
+mutation. Repeated compiled literal creation/discard joins the bounded-root tests.
+Nonempty literal compilation and specialized indexing helper protocols remain
+separate gates; this change does not widen their supported opcode set.
+
 ## Integration gates still open
 
 Generated Pop now releases owned operands; Dup and SSA local loads create distinct
