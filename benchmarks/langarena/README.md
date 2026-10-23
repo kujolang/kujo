@@ -24,6 +24,14 @@ for the new baseline, retain raw samples, and assess host variability before
 drawing conclusions. JIT is experimental; enabling it does not prove that a
 particular region executed as compiled code.
 
+For before/after VM measurements, `compare_revisions.kujo BASELINE CANDIDATE
+OUTPUT_DIRECTORY [ROUNDS]` runs the same four workloads sequentially, alternating
+revision order each round (default seven). Run it through `kujo run` with
+`--scheduler-no-timeout` and an existing fresh output directory. Each sample
+checks the unchanged workload checksum and records measured-loop and total time.
+Pin/hash both executables, record host conditions, and finish builds/profiling
+before starting. Paired laptop measurements do not replace an idle-host gate.
+
 `test.json` and `run.json` are unchanged copies of upstream `test.js` and
 `run.js`. Expected checksums are used only by the runner, never by benchmark
 implementations. Source fragments are assembled into one Kujo program so the

@@ -1,0 +1,51 @@
+# Usage: kujo run compare_revisions.kujo --scheduler-no-timeout BASELINE CANDIDATE OUTPUT_DIRECTORY [ROUNDS]
+# Paired default-VM runs. Alternate revision order; never overlap samples/builds.
+let options := args()
+assert(len(options) >= 3 && len(options) <= 4, "Expected baseline, candidate, output directory and optional rounds")
+mut rounds := 7
+if len(options) == 4 { rounds = to_int(options[3]) }
+assert(rounds >= 1 && rounds <= 100, "Rounds must be between 1 and 100")
+let binaries := {"baseline": options[0], "candidate": options[1]}
+let directory := options[2]
+let revisions := ["baseline", "candidate"]
+let cases := [
+    ["Json::Generate", "benchmarks/langarena/run.json"],
+    ["Base64::Encode", "benchmarks/langarena/run.json"],
+    ["Etc::LogParser", "benchmarks/langarena/run.json"],
+    ["Sort::Quick", "benchmarks/langarena/test.json"]
+]
+let source := read_file("benchmarks/langarena/port.kujo")
+let begin := "            while i < cfg[\"iterations\"] {"
+let end := "            let actual := u32(checksum(state))"
+assert_equal(len(split(source, begin)), 2)
+assert_equal(len(split(source, end)), 2)
+let timed := replace(replace(source, begin, "            let comparison_started := time_ns()\n" + begin), end, "            let comparison_elapsed := time_ns() - comparison_started\n            print(\"@comparison_ns \" + str(comparison_elapsed))\n" + end)
+let port := directory + "/timed-port.kujo"
+write_file(port, timed, true)
+mut results := []
+mut round := 0
+while round < rounds {
+    for selected in cases {
+        let name := selected[0]
+        let config := selected[1]
+        mut index := 0
+        while index < 2 {
+            let revision := revisions[(round + index) % 2]
+            print("START round=" + str(round + 1) + " " + name + " " + revision)
+            let started := time_ns()
+            let result := spawn_process([binaries[revision], "run", port, "--scheduler-no-timeout", config, name], {"timeout_ms": 600000, "max_output_bytes": 1048576})
+            let wall := time_ns() - started
+            mut measured := -1.0
+            for line in split(result.stdout, "\n") {
+                if starts_with(line, "@comparison_ns ") { measured = to_float(split(line, " ")[1]) / 1000000000.0 }
+            }
+            let valid := result.success && measured >= 0.0 && contains(result.stdout, name + ": OK ") == 1 && contains(result.stdout, "Summary: 1, 1, 0") == 1
+            results = push(results, {"round": round + 1, "benchmark": name, "config": config, "revision": revision, "passed": valid, "measured_seconds": measured, "wall_seconds": to_float(wall) / 1000000000.0, "exitcode": result.exitcode, "timed_out": result.timed_out, "cancelled": result.cancelled, "stdout": result.stdout, "stderr": result.stderr})
+            write_file(directory + "/samples.json", to_json({"binaries": binaries, "kujo_runtime": "vm", "rounds": rounds, "results": results}), true)
+            assert(valid, revision + " " + name + ": " + result.stdout + result.stderr)
+            print("PASS measured_seconds=" + str(measured))
+            index += 1
+        }
+    }
+    round += 1
+}
