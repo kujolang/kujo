@@ -55,7 +55,7 @@
       "scope": "All 50 unchanged production VM checksums on candidate revision; separate interpreter and JIT evidence; no historical pass substitution",
       "status": "pending",
       "evidence": [
-
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -90,7 +90,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -99,7 +99,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -108,7 +109,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -117,7 +118,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -126,7 +128,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -135,7 +137,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -144,7 +147,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -153,7 +156,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -162,7 +166,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -171,7 +175,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -180,7 +185,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -189,7 +194,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -198,7 +204,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -207,7 +213,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -216,7 +223,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -225,7 +232,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -234,7 +242,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -243,7 +251,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -252,7 +261,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -261,7 +270,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -270,7 +280,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -279,7 +289,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -288,7 +299,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -297,7 +308,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -306,7 +318,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -315,7 +327,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -324,7 +337,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -333,7 +346,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -342,7 +356,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -351,7 +365,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -360,7 +375,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -369,7 +384,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -378,7 +394,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -387,7 +403,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -396,7 +413,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -405,7 +422,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -414,7 +432,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -423,7 +441,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -432,7 +451,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -441,7 +460,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -450,7 +470,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -459,7 +479,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -468,7 +489,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -477,7 +498,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -486,7 +508,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -495,7 +517,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -504,7 +527,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -513,7 +536,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -522,7 +546,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled on 600-second retry after 120-second debug timeout; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -531,7 +555,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -540,7 +565,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -549,7 +574,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -558,7 +584,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -567,7 +593,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -576,7 +603,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -585,7 +612,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -594,7 +622,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -603,7 +631,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -612,7 +641,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -621,7 +650,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -630,7 +660,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -639,7 +669,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -648,7 +679,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -657,7 +688,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -666,7 +698,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -675,7 +707,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -684,7 +717,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -693,7 +726,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -702,7 +736,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -711,7 +745,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -720,7 +755,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -729,7 +764,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -738,7 +774,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -747,7 +783,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -756,7 +793,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -765,7 +802,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -774,7 +812,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -783,7 +821,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -792,7 +831,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -801,7 +840,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -810,7 +850,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -819,7 +859,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -828,7 +869,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -837,7 +878,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -846,7 +888,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -855,7 +897,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -864,7 +907,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -873,7 +916,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -882,7 +926,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -891,7 +935,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -900,7 +945,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -909,7 +954,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -918,7 +964,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -927,7 +973,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -936,7 +983,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -945,7 +992,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -954,7 +1002,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -963,7 +1011,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     },
     {
@@ -972,7 +1021,7 @@
       "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "pending",
+      "jit_correctness_and_coverage": "test-size checksum passed at c4a07cd with JIT enabled; VM fallback allowed; native coverage pending",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "pending",
@@ -981,7 +1030,8 @@
       "representation_review": "pending",
       "evidence": [
         "checksums-2026-10-23-json-candidate.json",
-        "checksums-2026-10-23-assignment-candidate.json"
+        "checksums-2026-10-23-assignment-candidate.json",
+        "checksums-2026-10-23-immediate-jit.json"
       ]
     }
   ],
@@ -1284,6 +1334,11 @@
         "../../tests/jit_immediate_values.rs",
         "jit-immediate-values-2026-10-23.json"
       ]
+    },
+    {
+      "scope": "all fifty test-size JIT-enabled checksums at c4a07cd",
+      "result": "All 50 unchanged cases passed: 49 within initial 120-second per-case debug deadline; MergeSort passed unchanged with a 600-second retry. Exact case identities, configurations and checksum lines independently verified; original timeout retained. Frozen executable/source hashes match immediate audit. VM fallback allowed, native coverage not established. Shared-host debug elapsed times are diagnostic only. Not current VM/interpreter, production, speed or release acceptance.",
+      "evidence": "checksums-2026-10-23-immediate-jit.json"
     }
   ]
 }

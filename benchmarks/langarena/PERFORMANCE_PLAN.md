@@ -14,6 +14,9 @@ a target to test, not a guarantee. This document explains the execution order;
 - The latest recorded complete test-size run passed 50 VM and 50 interpreter
   cases on candidate `ebe4258`. It predates subsequent runtime fixes and cannot
   certify current HEAD. No complete current production-size run exists.
+- All 50 test-size cases passed with JIT enabled at `c4a07cd`; MergeSort
+  required a longer retry after the initial two-minute debug deadline. VM fallback
+  was allowed. This establishes neither full native coverage nor speed acceptance.
 - Experimental JIT integer argument guards, callback errors, whole-function
   integer global assignments and Boolean return/callback tags have regression
   coverage. Native scalar operand type guards also have regression coverage.
