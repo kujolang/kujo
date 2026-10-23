@@ -25,7 +25,7 @@
       "scope": "CPU/allocation profiles and JIT execution/coverage/fallback evidence; reproducible cost and semantic test before optimization",
       "status": "in_progress",
       "evidence": [
-
+        "quicksort-execution-counters-2026-10-23.json"
       ]
     },
     {
@@ -82,8 +82,8 @@
   "benchmarks": [
     {
       "name": "Binarytrees::Obj",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -94,13 +94,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Binarytrees::Arena",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -111,13 +112,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Brainfuck::Array",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -128,13 +130,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Brainfuck::Recursion",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -145,13 +148,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Matmul::Single",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -162,13 +166,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Matmul::T4",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -179,13 +184,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Matmul::T8",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -196,13 +202,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Matmul::T16",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -213,13 +220,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Base64::Encode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -230,13 +238,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Base64::Decode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -247,13 +256,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Json::Generate",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -264,13 +274,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Json::ParseDom",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -281,13 +292,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Json::ParseMapping",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -298,13 +310,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "CSV::Parse",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -315,13 +328,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::Sieve",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -332,13 +346,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::TextRaytracer",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -349,13 +364,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::NeuralNet",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -366,13 +382,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::CacheSimulation",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -383,13 +400,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::GameOfLife",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -400,13 +418,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::Words",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -417,13 +436,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Etc::LogParser",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -434,13 +454,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Template::Regex",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -451,13 +472,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Template::Parse",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -468,13 +490,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Sort::Quick",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -485,13 +508,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Sort::Merge",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -502,13 +526,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Sort::Self",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -519,13 +544,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Graph::BFS",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -536,13 +562,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Graph::DFS",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -553,13 +580,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Graph::AStar",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -570,13 +598,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Hash::SHA256",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -587,13 +616,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Hash::CRC32",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -604,13 +634,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Calculator::Ast",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -621,13 +652,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Calculator::Interpreter",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -638,13 +670,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Maze::Generator",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -655,13 +688,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Maze::BFS",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -672,13 +706,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Maze::AStar",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -689,13 +724,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "CLBG::Fannkuchredux",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -706,13 +742,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "CLBG::Mandelbrot",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -723,13 +760,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "CLBG::Nbody",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -740,13 +778,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "CLBG::Spectralnorm",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -757,13 +796,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::BWTEncode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -774,13 +814,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::BWTDecode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -791,13 +832,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::HuffEncode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -808,13 +850,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::HuffDecode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -825,13 +868,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::ArithEncode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -842,13 +886,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::ArithDecode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -859,13 +904,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::LZWEncode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -876,13 +922,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Compress::LZWDecode",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -893,13 +940,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Distance::Jaro",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -910,13 +958,14 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     },
     {
       "name": "Distance::NGram",
-      "test_vm": "passed at 27fd599; subsequent source changes require revalidation",
-      "test_interpreter": "passed at 27fd599; subsequent source changes require revalidation",
+      "test_vm": "passed at ebe4258; subsequent source changes require revalidation",
+      "test_interpreter": "passed at ebe4258; subsequent source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
       "jit_correctness_and_coverage": "pending",
@@ -927,7 +976,8 @@
       "semantic_regressions": "pending",
       "representation_review": "pending",
       "evidence": [
-        "checksums-2026-10-23-json-candidate.json"
+        "checksums-2026-10-23-json-candidate.json",
+        "checksums-2026-10-23-assignment-candidate.json"
       ]
     }
   ],
@@ -1077,6 +1127,11 @@
       "scope": "seven-round paired nested assignment candidate ebe4258 versus JSON27fd599",
       "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754–1.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
       "evidence": "paired-assignment-2026-10-23.json"
+    },
+    {
+      "scope": "all fifty test-size checksums, assignment candidate ebe4258",
+      "result": "100/100 passed: VM50 and interpreter50. Exact names/checksums verified against unchanged test.json. Not production, all-fifty JIT or current HEAD acceptance.",
+      "evidence": "checksums-2026-10-23-assignment-candidate.json"
     }
   ]
 }
