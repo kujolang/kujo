@@ -1797,6 +1797,15 @@
         "../../tests/jit_owned_stack_contracts.rs",
         "../../docs/NATIVE_OWNERSHIP.md"
       ]
+    },
+    {
+      "id": "jit_owned_value_equality",
+      "status": "Fixed native handle-identity comparison for tagged owned operands. Either-owned path borrows both Values and uses canonical Value::equals, including mixed owned/scalar comparisons; immediate numeric comparisons stay native. Expanded11-probe corpus now agrees across VM/interpreter/JIT. Dead-operand lifetime, specialized legacy collection paths and broader native coverage remain open.",
+      "evidence": [
+        "jit-owned-equality-2026-10-23.json",
+        "../../src/native_owned.rs",
+        "../../tests/jit_owned_stack_contracts.rs"
+      ]
     }
   ],
   "verification": [
@@ -2041,6 +2050,11 @@
       "scope": "tagged named operands and callable marshaling",
       "result": "Baseline generated return fails expected hello got -1. Fixed1025 library tests pass/8ignored;33 unique targeted integrations pass across two runs, including VM/interpreter/JIT returns, collection callback arguments, global assignment and returned-array COW isolation. All11 expanded audit probes have native entries;8parity passes,3equal-value mismatches. No all50 or speed claim.",
       "evidence": "jit-owned-loads-2026-10-23.json"
+    },
+    {
+      "scope": "borrowed native owned equality",
+      "result": "Generated regression passes VM/interpreter and fails baseline JIT for equal strings. Fixed1026 library passes/8ignored plus28 targeted integrations; native compilation and minimum entry counts checked. Unit test repeats3000 comparisons without root-storage or reference-count growth and checks stale handles/invalid kinds on either operand. All11 audit cases agree with102 native entries each. No full50 or speed claim.",
+      "evidence": "jit-owned-equality-2026-10-23.json"
     }
   ]
 }

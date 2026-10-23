@@ -17,12 +17,13 @@ conditions retain native evaluation. Stale roots report an error and generated
 conditions exit through the existing error path. This covers callback-produced
 and named empty strings and logical operations.
 
-The original eight diagnostic probes now match the reference runtimes, but this
-does not establish general owned-value parity: the expanded audit reproduces
-incorrect equality for identical strings and equal arrays/dictionaries. Comparing
-distinct handle identities happens to pass the older unequal-string probe.
-Value equality, dead-operand release, legacy collection helpers and owned entry
-guards remain separate gates.
+The named-load candidate passed the original eight diagnostic probes but failed
+expanded equal-value cases: comparing distinct handle identities happens to pass
+the older unequal-string probe. Native equality now branches to borrowed
+`Value::equals` when either operand is owned, including mixed owned/scalar pairs.
+Immediate comparisons retain their native paths. The helper validates both kinds
+and identities without cloning collections or allocating new roots. This does not
+close dead-operand release, legacy collection helpers or owned entry guards.
 
 The native execution census shows that owned-argument call boundaries are heavily
 exercised. The existing native path uses incompatible VM-stack markers and an

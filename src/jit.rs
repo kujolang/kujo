@@ -2472,6 +2472,26 @@ pub unsafe extern "C" fn jit_owned_truth(ctx: *mut VMContext, payload: i64) -> i
 }
 
 #[no_mangle]
+// SAFETY: ctx is live and exclusively borrowed. Owned operands are validated
+// store identities, borrowed only for this call; scalar payloads are decoded.
+pub unsafe extern "C" fn jit_owned_equal(
+    ctx: *mut VMContext,
+    left: i64,
+    left_kind: i64,
+    right: i64,
+    right_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    match ctx.owned_roots.values_equal(left, left_kind, right, right_kind) {
+        Ok(equal) => i64::from(equal),
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
+#[no_mangle]
 // SAFETY: ctx and its stack are live and exclusively borrowed for this call.
 pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) {
     if let Some(ctx) = ctx.as_mut() {
@@ -3409,6 +3429,7 @@ struct BytecodeTranslator {
     scalar_return_func: Option<FuncRef>,
     scalar_kind_func: Option<FuncRef>,
     owned_truth_func: Option<FuncRef>,
+    owned_equal_func: Option<FuncRef>,
     operand_load_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
@@ -3560,6 +3581,7 @@ impl BytecodeTranslator {
             scalar_return_func: None,
             scalar_kind_func: None,
             owned_truth_func: None,
+            owned_equal_func: None,
             operand_load_func: None,
             scalar_push_func: None,
             last_int_constant: None,
@@ -4594,6 +4616,7 @@ impl BytecodeTranslator {
             OpCode::Equal => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_equality(builder, a, b, false);
                 let merge = self.begin_float_operation(builder, 11, a, b)?;
                 let value_match = builder.ins().icmp(IntCC::Equal, a, b);
                 let a_kind = self.scalar_kind(builder, a);
@@ -4603,11 +4626,16 @@ impl BytecodeTranslator {
                 let result = equal;
                 let extended = builder.ins().uextend(types::I64, result);
                 self.finish_float_operation(builder, merge, extended, 1);
+                if let Some(owned_merge) = owned_merge {
+                    let result = self.pop_value()?;
+                    self.finish_float_operation(builder, owned_merge, result, 1);
+                }
             }
 
             OpCode::NotEqual => {
                 let b = self.pop_value()?;
                 let a = self.pop_value()?;
+                let owned_merge = self.begin_owned_equality(builder, a, b, true);
                 let merge = self.begin_float_operation(builder, 12, a, b)?;
                 let value_match = builder.ins().icmp(IntCC::Equal, a, b);
                 let a_kind = self.scalar_kind(builder, a);
@@ -4617,6 +4645,10 @@ impl BytecodeTranslator {
                 let result = builder.ins().icmp_imm(IntCC::Equal, equal, 0);
                 let extended = builder.ins().uextend(types::I64, result);
                 self.finish_float_operation(builder, merge, extended, 1);
+                if let Some(owned_merge) = owned_merge {
+                    let result = self.pop_value()?;
+                    self.finish_float_operation(builder, owned_merge, result, 1);
+                }
             }
 
             OpCode::LessThan => {
@@ -6328,6 +6360,45 @@ impl BytecodeTranslator {
         }
     }
 
+    fn begin_owned_equality(
+        &self,
+        builder: &mut FunctionBuilder,
+        left: cranelift::prelude::Value,
+        right: cranelift::prelude::Value,
+        negate: bool,
+    ) -> Option<Block> {
+        let (Some(ctx), Some(helper)) = (self.ctx_param, self.owned_equal_func) else {
+            return None;
+        };
+        let left_kind = self.scalar_kind(builder, left);
+        let right_kind = self.scalar_kind(builder, right);
+        let left_owned =
+            builder.ins().icmp_imm(IntCC::Equal, left_kind, crate::native_owned::OWNED);
+        let right_owned =
+            builder.ins().icmp_imm(IntCC::Equal, right_kind, crate::native_owned::OWNED);
+        let owned = builder.ins().bor(left_owned, right_owned);
+        let owned_block = builder.create_block();
+        let immediate_block = builder.create_block();
+        let merge = builder.create_block();
+        builder.append_block_param(merge, types::I64);
+        builder.append_block_param(merge, types::I64);
+        builder.ins().brif(owned, owned_block, &[], immediate_block, &[]);
+        builder.seal_block(owned_block);
+        builder.seal_block(immediate_block);
+        builder.switch_to_block(owned_block);
+        let call = builder.ins().call(helper, &[ctx, left, left_kind, right, right_kind]);
+        let result = builder.inst_results(call)[0];
+        if let Some(error_func) = self.runtime_error_func {
+            let check = builder.ins().call(error_func, &[ctx]);
+            self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
+        }
+        let result = if negate { builder.ins().bxor_imm(result, 1) } else { result };
+        let kind = builder.ins().iconst(types::I64, crate::native_scalar::BOOLEAN);
+        builder.ins().jump(merge, &[result, kind]);
+        builder.switch_to_block(immediate_block);
+        Some(merge)
+    }
+
     fn capture_loaded_operand(
         &mut self,
         builder: &mut FunctionBuilder,
@@ -6739,6 +6810,7 @@ impl JitCompiler {
             ("jit_set_return_scalar", 3, true),
             ("jit_return_scalar_kind", 1, true),
             ("jit_owned_truth", 2, true),
+            ("jit_owned_equal", 5, true),
             ("jit_load_operand", 3, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
@@ -6758,6 +6830,7 @@ impl JitCompiler {
                 "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
                 "jit_owned_truth" => translator.owned_truth_func = Some(function),
+                "jit_owned_equal" => translator.owned_equal_func = Some(function),
                 "jit_load_operand" => translator.operand_load_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
@@ -6841,6 +6914,7 @@ impl JitCompiler {
         builder.symbol("jit_set_return_scalar", jit_set_return_scalar as *const u8);
         builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
         builder.symbol("jit_owned_truth", jit_owned_truth as *const u8);
+        builder.symbol("jit_owned_equal", jit_owned_equal as *const u8);
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
         builder.symbol("jit_get_return_int", jit_get_return_int as *const u8);
         builder.symbol("jit_get_arg", jit_get_arg as *const u8);

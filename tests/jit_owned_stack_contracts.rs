@@ -44,6 +44,38 @@ fn native_named_owned_values_survive_returns_and_callbacks() {
     check(source, &["text", "array", "dict", "size", "relay", "truth", "replace"]);
 }
 
+#[test]
+fn native_owned_equality_compares_values_not_root_identities() {
+    let mut source = String::from(
+        "let text := \"hello\"\nlet same_text := \"hello\"\nlet other_text := \"other\"\n\
+         let a := [1, [2]]\nlet b := [1, [2]]\nlet c := [1, [3]]\n\
+         let d := {\"key\": [1]}\nlet e := {\"key\": [1]}\n\
+         func text_equal(x) { return text == same_text }\n\
+         func self_equal(x) { return text == text }\n\
+         func text_unequal(x) { return text != other_text }\n\
+         func array_equal(x) { return !(a != b) }\nfunc array_unequal(x) { return a != c }\n\
+         func dict_equal(x) { return d == e }\n\
+         func mixed(x) { return text == x }\nfunc reversed(x) { return x != text }\n",
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(text_equal(1), true)\nassert_equal(self_equal(1), true)\nassert_equal(text_unequal(1), true)\nassert_equal(array_equal(1), true)\nassert_equal(array_unequal(1), true)\nassert_equal(dict_equal(1), true)\nassert_equal(mixed(1.5), false)\nassert_equal(reversed(1.5), true)\n");
+    }
+    source.push_str("assert_equal(mixed(null), false)\nassert_equal(mixed(true), false)\nassert_equal(reversed(0), true)\nprint(\"PASS\")\n");
+    check(
+        source,
+        &[
+            "text_equal",
+            "self_equal",
+            "text_unequal",
+            "array_equal",
+            "array_unequal",
+            "dict_equal",
+            "mixed",
+            "reversed",
+        ],
+    );
+}
+
 fn check(source: String, functions: &[&str]) {
     let directory = tempfile::tempdir().unwrap();
     let file = directory.path().join("owned_result.kujo");

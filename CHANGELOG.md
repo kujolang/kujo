@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compare tagged native owned operands by ordinary value equality instead of
+  handle identity, including equal strings, nested collections and mixed types.
+
 - Preserve owned named values and callables in experimental native execution,
   including collection callback arguments, returns and checked named assignments.
   General owned equality and dead-operand release remain unfinished.

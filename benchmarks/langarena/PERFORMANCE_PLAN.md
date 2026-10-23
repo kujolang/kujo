@@ -110,7 +110,13 @@ contracts and the library suite pass. JIT stays opt-in until broader acceptance.
 
 ### Remaining native ownership gate
 
-Latest [named-operand audit](jit-owned-loads-2026-10-23.json): ordinary named loads,
+The latest [borrowed-equality audit](jit-owned-equality-2026-10-23.json) passes all
+11 focused probes in interpreter, VM and JIT modes with native entries verified.
+Owned comparisons now use `Value::equals` instead of handle identity. This closes
+the expanded equality reproductions below, but does not establish general native
+coverage, dead-operand lifetime bounds, production correctness or speed acceptance.
+
+Earlier [named-operand audit](jit-owned-loads-2026-10-23.json): ordinary named loads,
 callable marshaling, collection callback arguments and named assignments now use
 tagged owned values. All eight original probes agree across the three modes.
 Three added equal-value probes still fail: comparing handles happens to pass the

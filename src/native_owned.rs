@@ -121,6 +121,34 @@ impl NativeCallRoots {
         self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
     }
 
+    pub(crate) fn values_equal(
+        &self,
+        left: i64,
+        left_kind: i64,
+        right: i64,
+        right_kind: i64,
+    ) -> Result<bool, OwnershipError> {
+        let left_immediate = match left_kind {
+            0..=3 => Some(crate::native_scalar::decode(left, left_kind)),
+            OWNED => None,
+            _ => return Err(OwnershipError::InvalidKind(left_kind)),
+        };
+        let right_immediate = match right_kind {
+            0..=3 => Some(crate::native_scalar::decode(right, right_kind)),
+            OWNED => None,
+            _ => return Err(OwnershipError::InvalidKind(right_kind)),
+        };
+        let left = match &left_immediate {
+            Some(value) => value,
+            None => self.values.get(Handle::from_payload(left))?,
+        };
+        let right = match &right_immediate {
+            Some(value) => value,
+            None => self.values.get(Handle::from_payload(right))?,
+        };
+        Ok(Value::equals(left, right))
+    }
+
     pub(crate) fn take_value(&mut self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
         // An empty callee has a logical scope but no physical root frame yet.
         // Do not let the store mistake the caller's frame for the current one.
@@ -352,6 +380,30 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn equality_borrows_roots_and_rejects_stale_or_invalid_operands() {
+        let mut roots = NativeCallRoots::default();
+        roots.enter().unwrap();
+        let text = Arc::new("hello".to_string());
+        let (a, ak) = roots.encode(Value::Str(text.clone())).unwrap();
+        let (b, bk) = roots.encode(Value::Str(Arc::new("hello".into()))).unwrap();
+        assert_ne!(a, b);
+        let state = roots.storage_state();
+        for _ in 0..1000 {
+            assert_eq!(roots.values_equal(a, ak, b, bk), Ok(true));
+            assert_eq!(roots.values_equal(a, ak, 0, crate::native_scalar::NULL), Ok(false));
+            assert_eq!(roots.values_equal(0, crate::native_scalar::NULL, b, bk), Ok(false));
+            assert_eq!(roots.storage_state(), state);
+            assert_eq!(Arc::strong_count(&text), 2);
+        }
+        roots.take_value(a, ak).unwrap();
+        assert_eq!(roots.values_equal(a, ak, b, bk), Err(OwnershipError::StaleHandle));
+        assert_eq!(roots.values_equal(b, bk, a, ak), Err(OwnershipError::StaleHandle));
+        assert_eq!(roots.values_equal(0, 99, b, bk), Err(OwnershipError::InvalidKind(99)));
+        assert_eq!(roots.values_equal(b, bk, 0, 99), Err(OwnershipError::InvalidKind(99)));
+        roots.leave().unwrap();
+    }
 
     #[test]
     fn lazy_scopes_do_not_allocate_for_immediates_or_release_outer_roots() {
