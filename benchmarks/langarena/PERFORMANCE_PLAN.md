@@ -148,8 +148,10 @@ by persisting the full operand stack and locals, exiting native execution and
 resuming the exact VM instruction after releasing the lock. Calls and struct
 operators may therefore fall back; immediate numeric operations stay native.
 The original deadlock probe and regression checks now pass with native entry
-verified. Constant append operator dispatch remains open, as does a separately
-observed interpreter/VM discrepancy in assigned operator-error results.
+verified. The [constant append operator fix](constant-append-operators-2026-10-23.json)
+also restores `op_add` dispatch, snapshot isolation and immediate result tags in
+native functions; locked loops resume before invoking the operator. The separately
+observed interpreter/VM discrepancy in assigned operator-error results remains open.
 
 The [fused character-append audit](guarded-append-fusion-2026-10-23.json) adds
 an ordinary bytecode fallback to the VM fast path.

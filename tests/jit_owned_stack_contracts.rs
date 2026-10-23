@@ -1,6 +1,54 @@
 use std::process::Command;
 
 #[test]
+fn native_constant_appends_dispatch_operators_and_preserve_snapshots() {
+    let mut source = String::from(
+        r#"
+        struct Box {
+            value: int,
+            func op_add(other) { return str(value) + other }
+        }
+        struct Number {
+            value: int,
+            func op_add(other) { return value + len(other) }
+        }
+        struct ResultValue {
+            value: any,
+            func op_add(other) { return value }
+        }
+        let seed := Box { value: 7 }
+        let number := Number { value: 40 }
+        let float_seed := ResultValue { value: 1.5 }
+        let bool_seed := ResultValue { value: true }
+        let null_seed := ResultValue { value: null }
+        func append_char(x) { mut text := seed text = text + "é" return text }
+        func append_string(x) { mut text := seed text = text + "suffix" return text }
+        func append_number(x) { mut text := number text = text + "xx" return text }
+        func append_float(x) { mut text := float_seed text = text + "x" return text }
+        func append_bool(x) { mut text := bool_seed text = text + "x" return text }
+        func append_null(x) { mut text := null_seed text = text + "x" return text }
+    "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(append_char(0), \"7é\")\nassert_equal(append_string(0), \"7suffix\")\nassert_equal(append_number(0), 42)\n");
+        source.push_str("assert_equal(append_float(0), 1.5)\nassert_equal(append_bool(0), true)\nassert_equal(append_null(0), null)\n");
+    }
+    source
+        .push_str("assert_equal(seed.value, 7)\nassert_equal(number.value, 40)\nprint(\"PASS\")\n");
+    check(
+        source,
+        &[
+            "append_char",
+            "append_string",
+            "append_number",
+            "append_float",
+            "append_bool",
+            "append_null",
+        ],
+    );
+}
+
+#[test]
 fn native_callback_owned_result_survives_return_and_repeated_calls() {
     // Unroll calls so this probes whole-function compilation, independently of
     // loop compilation. The final call must run after the hot-call threshold.

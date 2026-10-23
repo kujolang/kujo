@@ -1466,7 +1466,8 @@ pub unsafe extern "C" fn jit_store_variable_from_stack(ctx: *mut VMContext, name
 }
 
 /// Append to the actual local binding: current-scope SSA root, named callee
-/// local, or physical loop slot. Returns zero on success, one on error.
+/// local, or physical loop slot. Returns zero on success, one on error, or two
+/// when a locked loop must resume in the VM before invoking a struct operator.
 #[no_mangle]
 // SAFETY: ctx and referenced maps/slots are live and exclusively borrowed. A
 // string pointer refers to an Arc retained by JitCompiler; a negative length
@@ -1504,7 +1505,81 @@ pub unsafe extern "C" fn jit_append_local(
         ctx.runtime_error = Some(format!("Type mismatch in {opcode}"));
         return 1;
     }
-    let value = match location {
+    if location == 1 {
+        ctx.return_value = target;
+        ctx.return_value_kind = kind;
+    }
+    let locked_loop = !ctx.loop_environment_ptr.is_null();
+    let value = jit_append_target(ctx, location, target, kind);
+    let left = match value {
+        Ok(Value::Str(value)) => {
+            let value = Arc::make_mut(value);
+            let needed = text.len();
+            if value.capacity() - value.len() < needed {
+                value.reserve(needed.saturating_mul(1000).max(value.capacity()));
+            }
+            value.push_str(text);
+            return 0;
+        }
+        Ok(value @ Value::Struct { .. }) => {
+            if locked_loop {
+                return 2;
+            }
+            value.clone()
+        }
+        Ok(_) => {
+            let opcode =
+                if length == -1 { "AppendConstCharInPlace" } else { "AppendConstStringInPlace" };
+            ctx.runtime_error = Some(format!("Type mismatch in {opcode}"));
+            return 1;
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            return 1;
+        }
+    };
+    let result = match ctx.vm_ptr.cast::<VM>().as_mut() {
+        Some(vm) => vm.binary_op(&left, "+", &Value::Str(Arc::new(text.to_owned()))),
+        None => Err("Native append operator requires VM context".into()),
+    };
+    match result.and_then(|result| {
+        if location == 1 {
+            let (payload, result_kind) = ctx
+                .owned_roots
+                .encode(result)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?;
+            ctx.owned_roots
+                .release(target, kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?;
+            ctx.return_value = payload;
+            ctx.return_value_kind = result_kind;
+        } else {
+            *jit_append_target(ctx, location, target, kind)? = result;
+        }
+        Ok(())
+    }) {
+        Ok(()) => 0,
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            1
+        }
+    }
+}
+
+#[no_mangle]
+// SAFETY: ctx is the live native context; append published the new binding payload.
+pub unsafe extern "C" fn jit_append_result(ctx: *mut VMContext) -> i64 {
+    ctx.as_ref().map_or(0, |ctx| ctx.return_value)
+}
+
+// SAFETY: the returned borrow is confined to the live native context.
+unsafe fn jit_append_target(
+    ctx: &mut VMContext,
+    location: i64,
+    target: i64,
+    kind: i64,
+) -> Result<&mut Value, String> {
+    match location {
         1 => ctx
             .owned_roots
             .current_value_mut(target, kind)
@@ -1519,27 +1594,6 @@ pub unsafe extern "C" fn jit_append_local(
             .and_then(|slot| ctx.local_slots_ptr.as_mut().and_then(|slots| slots.get_mut(slot)))
             .ok_or_else(|| format!("Invalid local slot: {target}")),
         _ => Err("Invalid native append location".into()),
-    };
-    match value {
-        Ok(Value::Str(value)) => {
-            let value = Arc::make_mut(value);
-            let needed = text.len();
-            if value.capacity() - value.len() < needed {
-                value.reserve(needed.saturating_mul(1000).max(value.capacity()));
-            }
-            value.push_str(text);
-            0
-        }
-        Ok(_) => {
-            let opcode =
-                if length == -1 { "AppendConstCharInPlace" } else { "AppendConstStringInPlace" };
-            ctx.runtime_error = Some(format!("Type mismatch in {opcode}"));
-            1
-        }
-        Err(error) => {
-            ctx.runtime_error = Some(error);
-            1
-        }
     }
 }
 
@@ -3863,6 +3917,7 @@ struct BytecodeTranslator {
     operand_release_func: Option<FuncRef>,
     dead_local_func: Option<FuncRef>,
     append_local_func: Option<FuncRef>,
+    append_result_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
     loop_resume_enabled: bool,
@@ -4028,6 +4083,7 @@ impl BytecodeTranslator {
             operand_release_func: None,
             dead_local_func: None,
             append_local_func: None,
+            append_result_func: None,
             indexed_read_func: None,
             indexed_write_func: None,
             loop_resume_enabled: false,
@@ -5610,12 +5666,12 @@ impl BytecodeTranslator {
             OpCode::AppendConstStringInPlace(slot, rhs) => {
                 let suffix = builder.ins().iconst(types::I64, rhs.as_ptr() as i64);
                 let length = builder.ins().iconst(types::I64, rhs.len() as i64);
-                self.append_local(builder, *slot, suffix, length)?;
+                self.append_local(builder, pc, *slot, suffix, length)?;
             }
             OpCode::AppendConstCharInPlace(slot, rhs) => {
                 let suffix = builder.ins().iconst(types::I64, *rhs as i64);
                 let length = builder.ins().iconst(types::I64, -1);
-                self.append_local(builder, *slot, suffix, length)?;
+                self.append_local(builder, pc, *slot, suffix, length)?;
             }
 
             OpCode::IndexSetInPlace(slot_index) => {
@@ -7012,6 +7068,7 @@ impl BytecodeTranslator {
     fn append_local(
         &mut self,
         builder: &mut FunctionBuilder,
+        pc: usize,
         slot: usize,
         suffix: cranelift::prelude::Value,
         length: cranelift::prelude::Value,
@@ -7036,7 +7093,37 @@ impl BytecodeTranslator {
         };
         let location = builder.ins().iconst(types::I64, location);
         let call = builder.ins().call(helper, &[ctx, location, target, kind, suffix, length]);
+        if self.loop_resume_enabled {
+            let status = builder.inst_results(call)[0];
+            let needs_resume = builder.ins().icmp_imm(IntCC::Equal, status, 2);
+            let resume = builder.create_block();
+            let proceed = builder.create_block();
+            builder.ins().brif(needs_resume, resume, &[], proceed, &[]);
+            builder.seal_block(resume);
+            builder.seal_block(proceed);
+            builder.switch_to_block(resume);
+            let prepare = self.loop_resume_prepare_func.ok_or("Missing resume helper")?;
+            let push = self.scalar_push_func.ok_or("Missing resume operand helper")?;
+            let pc = builder.ins().iconst(types::I64, pc as i64);
+            builder.ins().call(prepare, &[ctx, pc]);
+            for value in &self.value_stack {
+                let kind = self.scalar_kind(builder, *value);
+                builder.ins().call(push, &[ctx, *value, kind]);
+            }
+            self.persist_local_slots(builder, true);
+            self.emit_return(builder, status);
+            builder.switch_to_block(proceed);
+        }
         self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+        if let Some(&variable) = self.local_variables.get(&name) {
+            let result_helper = self.append_result_func.ok_or("Missing append result helper")?;
+            let call = builder.ins().call(result_helper, &[ctx]);
+            let payload = builder.inst_results(call)[0];
+            self.capture_scalar_kind(builder, ctx, payload);
+            let kind = self.scalar_kind(builder, payload);
+            builder.def_var(variable, payload);
+            builder.def_var(Variable::new(variable.index() + 1), kind);
+        }
         Ok(())
     }
 
@@ -7474,6 +7561,7 @@ impl JitCompiler {
             ("jit_release_operand", 3, true),
             ("jit_release_dead_local", 4, true),
             ("jit_append_local", 6, true),
+            ("jit_append_result", 1, true),
             ("jit_indexed_read", 5, true),
             ("jit_indexed_write", 10, true),
             ("jit_loop_resume_guard", 3, true),
@@ -7506,6 +7594,7 @@ impl JitCompiler {
                 "jit_release_operand" => translator.operand_release_func = Some(function),
                 "jit_release_dead_local" => translator.dead_local_func = Some(function),
                 "jit_append_local" => translator.append_local_func = Some(function),
+                "jit_append_result" => translator.append_result_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
@@ -7581,6 +7670,7 @@ impl JitCompiler {
         builder.symbol("jit_release_operand", jit_release_operand as *const u8);
         builder.symbol("jit_release_dead_local", jit_release_dead_local as *const u8);
         builder.symbol("jit_append_local", jit_append_local as *const u8);
+        builder.symbol("jit_append_result", jit_append_result as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);

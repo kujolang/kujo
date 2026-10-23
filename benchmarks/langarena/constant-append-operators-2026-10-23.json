@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-23",
+  "baseline": "768beb7",
+  "scope": "VM/native constant append operator dispatch and result type handoff",
+  "reproduction": "Committed constant_append_operator.kujo passed interpreter but VM/JIT reported Type mismatch in AppendConstCharInPlace. Initial native fix exposed StaleHandle when an op_add result was an integer stored under an owned handle kind.",
+  "implementation": [
+    "Retain in-place COW string append; for struct targets clone the left value, release slot/root borrow before calling the canonical VM binary operator, and resolve the binding again after evaluation.",
+    "Locked native loops return status2 and use exact-PC VM resume before callbacks; marshal native stack and persist locals without replay.",
+    "Publish the new native binding payload and kind after operator evaluation. Release the replaced root and update SSA binding tags rather than storing an immediate inside an owned handle."
+  ],
+  "verification": {
+    "library_passed": 1041,
+    "library_ignored": 8,
+    "integration_passed": 47,
+    "focused_expansion": "One existing integration test rerun after adding Float/Bool/Null cases; passed with native compilation asserted for all six functions.",
+    "cases": [
+      "Original probe passes VM/interpreter/JIT-enabled mode",
+      "Native Unicode character and multi-character appends dispatch op_add",
+      "Integer/Float/Bool/Null native operator results preserve tags",
+      "Original struct snapshots remain unchanged",
+      "Loop changes target from string to struct after native entry and records exactly1 operator callback and200 prior effects",
+      "Existing append unique-storage/root bounds, readonly, alias, assignment and error contracts"
+    ],
+    "limitations": [
+      "Interpreter assigned operator errors still differ: before log expects2 catches, interpreter observes0; separate repair required",
+      "Frozen production matrix is ac3fe6c, not this source; no current all50/speed acceptance"
+    ]
+  },
+  "logs": [
+    {
+      "path": "/tmp/kujo-operator-append-checked.log",
+      "sha256": "730645e98d27df5ca2f2aeeef5de87904073ad681f0cfb90882c8ed71a469089"
+    },
+    {
+      "path": "/tmp/kujo-operator-append-retagged.log",
+      "sha256": "812f4ef5215e854ce57221a824de86d0ae70d7210dc6e9a62da892f100bb7939"
+    },
+    {
+      "path": "/tmp/kujo-operator-append-verified.log",
+      "sha256": "99a2cfdd721334f9bd697cab50cfdc273ee25f5c2090c8bca52a01a6517d50b6"
+    },
+    {
+      "path": "/tmp/kujo-operator-append-kinds.log",
+      "sha256": "a3c3ff1c7a7032bab97352d552e0d634523f9d3af1000e91095e55d5ae11d0c0"
+    },
+    {
+      "path": "/tmp/kujo-operator-append-probe-after.log",
+      "sha256": "2b4921cabf3933777071a3c44b2b95816f6b905aa59ab7e813567d0008bf3c4d"
+    },
+    {
+      "path": "/tmp/kujo-operator-error-before.log",
+      "sha256": "3cc77665026a88b0b64ec9e7b2ce63bd3e7ecc59e9c72697fde45c70120019ad"
+    }
+  ]
+}

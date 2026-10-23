@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Dispatch struct `op_add` methods for constant character/string appends in the
+  VM and native functions. Preserve snapshots and retag native bindings when an
+  operator returns an immediate value. Locked native loops resume in the VM
+  before the operator callback.
+
 - Resume native loops in the VM before calls or struct operator callbacks can
   reacquire the globals mutex. Preserve the exact instruction, operand stack and
   local state so prior effects are not replayed and exceptions remain catchable.

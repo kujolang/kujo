@@ -2762,70 +2762,23 @@ impl VM {
                 }
 
                 OpCode::AppendConstStringInPlace(slot, rhs) => {
-                    let frame = self
-                        .call_frames
-                        .last_mut()
-                        .ok_or("AppendConstStringInPlace requires call frame")?;
-                    let target = frame
-                        .local_slots
-                        .get_mut(slot)
-                        .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-
-                    match target {
-                        Value::Str(left) => {
-                            let left_str = Arc::make_mut(left);
-                            let needed = rhs.len();
-                            let available = left_str.capacity() - left_str.len();
-
-                            if available < needed {
-                                let reserve_amount = (needed * 1000).max(left_str.capacity());
-                                left_str.reserve(reserve_amount);
-                            }
-
-                            left_str.push_str(rhs.as_ref());
-                        }
-                        _ => {
-                            let message = "Type mismatch in AppendConstStringInPlace".to_string();
-                            if self.exception_handlers.is_empty() {
-                                return Err(message);
-                            }
-                            self.throw_runtime_value(Value::Error(message))?;
-                            continue;
-                        }
+                    if let Err(message) =
+                        self.append_constant_local(slot, &rhs, "AppendConstStringInPlace")
+                    {
+                        self.throw_runtime_value(Value::Error(message))?;
+                        continue;
                     }
                 }
 
                 OpCode::AppendConstCharInPlace(slot, rhs) => {
-                    let frame = self
-                        .call_frames
-                        .last_mut()
-                        .ok_or("AppendConstCharInPlace requires call frame")?;
-                    let target = frame
-                        .local_slots
-                        .get_mut(slot)
-                        .ok_or_else(|| format!("Invalid local slot: {}", slot))?;
-
-                    match target {
-                        Value::Str(left) => {
-                            let left_str = Arc::make_mut(left);
-                            let needed = rhs.len_utf8();
-                            let available = left_str.capacity() - left_str.len();
-
-                            if available < needed {
-                                let reserve_amount = (needed * 1000).max(left_str.capacity());
-                                left_str.reserve(reserve_amount);
-                            }
-
-                            left_str.push(rhs);
-                        }
-                        _ => {
-                            let message = "Type mismatch in AppendConstCharInPlace".to_string();
-                            if self.exception_handlers.is_empty() {
-                                return Err(message);
-                            }
-                            self.throw_runtime_value(Value::Error(message))?;
-                            continue;
-                        }
+                    let mut utf8 = [0; 4];
+                    if let Err(message) = self.append_constant_local(
+                        slot,
+                        rhs.encode_utf8(&mut utf8),
+                        "AppendConstCharInPlace",
+                    ) {
+                        self.throw_runtime_value(Value::Error(message))?;
+                        continue;
                     }
                 }
 
@@ -9336,6 +9289,45 @@ impl VM {
         let method_global_name = format!("{}.{}", struct_name, method_name);
         let method_value = self.globals.lock().unwrap().get(&method_global_name)?;
         Some(self.call_function_from_jit(method_value, vec![value.clone()]))
+    }
+
+    fn append_constant_local(
+        &mut self,
+        slot: usize,
+        suffix: &str,
+        opcode: &str,
+    ) -> Result<(), String> {
+        let target = self
+            .call_frames
+            .last_mut()
+            .ok_or_else(|| format!("{opcode} requires call frame"))?
+            .local_slots
+            .get_mut(slot)
+            .ok_or_else(|| format!("Invalid local slot: {slot}"))?;
+        let left = match target {
+            Value::Str(text) => {
+                let text = Arc::make_mut(text);
+                if text.capacity() - text.len() < suffix.len() {
+                    text.reserve(suffix.len().saturating_mul(1000).max(text.capacity()));
+                }
+                text.push_str(suffix);
+                return Ok(());
+            }
+            value @ Value::Struct { .. } => value.clone(),
+            _ => return Err(format!("Type mismatch in {opcode}")),
+        };
+        // No frame/slot borrow spans a user operator callback. Resolve the
+        // destination again after evaluation, just like ordinary assignment.
+        let result = self.binary_op(&left, "+", &Value::Str(Arc::new(suffix.to_owned())))?;
+        let target = self
+            .call_frames
+            .last_mut()
+            .ok_or_else(|| format!("{opcode} requires call frame"))?
+            .local_slots
+            .get_mut(slot)
+            .ok_or_else(|| format!("Invalid local slot: {slot}"))?;
+        *target = result;
+        Ok(())
     }
 
     /// Binary operation

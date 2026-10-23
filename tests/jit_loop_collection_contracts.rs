@@ -37,6 +37,39 @@ fn check(source: &str) {
 }
 
 #[test]
+fn loop_constant_append_resumes_for_operator_after_native_entry() {
+    check(
+        r#"
+        mut calls := 0
+        mut effects := 0
+        struct Box {
+            value: int,
+            func op_add(other) { calls += 1 return "custom:" + other }
+        }
+        let seed := Box { value: 7 }
+        func once() {
+            mut mapping := {}
+            mut text := str(0)
+            mut i := 0
+            while i < 200 {
+                mapping[i % 7] = i
+                effects += 1
+                if i == 151 { text = seed }
+                text = text + "x"
+                i += 1
+            }
+            return text
+        }
+        assert_equal(once(), "custom:" + repeat("x", 49))
+        assert_equal(calls, 1)
+        assert_equal(effects, 200)
+        assert_equal(seed.value, 7)
+        print("PASS")
+    "#,
+    );
+}
+
+#[test]
 fn loop_operator_callback_resumes_with_full_stack_and_prior_effects() {
     check(
         r#"
