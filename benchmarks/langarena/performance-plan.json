@@ -17,7 +17,7 @@
       "scope": "Pin current builds and host conditions; sequential seven-sample VM/JIT/Goose/Rust comparisons, checksums, startup, total time and peak memory",
       "status": "in_progress",
       "evidence": [
-
+        "performance-baseline-2026-10-23.json"
       ]
     },
     {
@@ -966,7 +966,7 @@
     "runtime_source_commit": "f037705",
     "configuration": "cargo build --locked --release --bin kujo; normal default features, thin LTO",
     "sha256": "16c407be9977d91748986904cf0ff956aa6cc1ff64ebc4473e802c57639920b1",
-    "status": "build_passed; comparative timings pending"
+    "status": "build_passed; seven-round four-case VM comparison passed84/84; full candidate and controlled-host acceptance pending"
   },
   "correctness_findings": [
     {
@@ -1003,6 +1003,11 @@
     {
       "scope": "source hygiene",
       "result": "cargo fmt --check and git diff --check passed"
+    },
+    {
+      "scope": "seven-round pre-optimization baseline",
+      "result": "84/84 unique checksum-validated samples; first3 production, QuickSort test size; shared throttled laptop; no own compilation/profiling overlap",
+      "evidence": "performance-baseline-2026-10-23.json"
     }
   ]
 }
