@@ -37,6 +37,27 @@ fn check(source: &str) {
 }
 
 #[test]
+fn loop_literal_loads_preserve_owned_values_after_native_entry() {
+    check(
+        r#"
+        func once() {
+            mut mapping := {}
+            mut i := 0
+            mut text := ""
+            while i < 200 {
+                mapping[i % 7] = i
+                text = "héllo"
+                i += 1
+            }
+            return text
+        }
+        assert_equal(once(), "héllo")
+        print("PASS")
+    "#,
+    );
+}
+
+#[test]
 fn loop_constant_append_resumes_for_operator_after_native_entry() {
     check(
         r#"

@@ -1,6 +1,37 @@
 use std::process::Command;
 
 #[test]
+fn native_string_literals_preserve_types_snapshots_and_repeated_calls() {
+    let mut source = String::from(
+        r#"
+        func literal(x) { return "héllo" }
+        func empty_literal(x) { return "" }
+        func literal_branch(x) { if x > 0 { return "left" } return "right" }
+        func literal_snapshot(x) { mut text := "seed" let saved := text text = text + "x" return saved }
+        func literal_append(x) { mut text := "seed" text = text + "x" return text }
+        func literal_equal(x) { return "same" == "same" }
+        func literal_truth(x) { if "" { return false } return true }
+        "#,
+    );
+    for _ in 0..200 {
+        source.push_str("assert_equal(literal(0), \"héllo\")\nassert_equal(empty_literal(0), \"\")\nassert_equal(literal_branch(1), \"left\")\nassert_equal(literal_branch(0), \"right\")\nassert_equal(literal_snapshot(0), \"seed\")\nassert_equal(literal_append(0), \"seedx\")\nassert_equal(literal_equal(0), true)\nassert_equal(literal_truth(0), true)\n");
+    }
+    source.push_str("print(\"PASS\")\n");
+    check(
+        source,
+        &[
+            "literal",
+            "empty_literal",
+            "literal_branch",
+            "literal_snapshot",
+            "literal_append",
+            "literal_equal",
+            "literal_truth",
+        ],
+    );
+}
+
+#[test]
 fn native_constant_appends_dispatch_operators_and_preserve_snapshots() {
     let mut source = String::from(
         r#"

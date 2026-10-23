@@ -1,0 +1,170 @@
+{
+  "date": "2026-10-23",
+  "scope": "Native string/byte literal coverage and lifetime, not competitive timing",
+  "parent_commit": "1618e41",
+  "baseline": {
+    "source_commit": "ac3fe6c",
+    "binary_sha256": "1b9c9eb57e6b4c47f90c34e9c69478be08eee4b54d0bf7f753eb26e775610bea",
+    "report": {
+      "counters": {
+        "bytecode_compile_wall_ns": 1191758,
+        "detached_tasks_observed": 0,
+        "jit_cache_lookup_hits": 0,
+        "jit_cache_lookup_misses": 0,
+        "jit_call_dispatches": 200,
+        "jit_compile_entries": 1,
+        "jit_compile_inclusive_wall_ns": 4770,
+        "jit_native_boundary_entries": 0,
+        "jit_native_function_entries": 0,
+        "jit_owned_argument_dispatches": 0,
+        "jit_type_guard_failures": 0,
+        "jit_type_guard_passes": 0,
+        "promise_pending_polls": 0,
+        "promise_polls": 0,
+        "promise_ready_polls": 0,
+        "scheduler_rounds": 0,
+        "source_parse_wall_ns": 2456547,
+        "task_bodies_exited": 0,
+        "task_cancellations_published": 0,
+        "task_completions_published": 0,
+        "task_queue_wall_ns": 0,
+        "tasks_admission_rejected": 0,
+        "tasks_admitted": 0,
+        "tasks_started": 0,
+        "vm_call_opcodes": 401,
+        "vm_capture_cells_created": 0,
+        "vm_capture_value_shallow_bytes": 0,
+        "vm_closures_created": 1,
+        "vm_entries": 1,
+        "vm_generator_resume_attempts": 0,
+        "vm_generator_state_drops": 0,
+        "vm_generator_state_shallow_bytes": 0,
+        "vm_generator_states_created": 0,
+        "vm_inclusive_wall_ns": 2521700,
+        "vm_native_call_opcodes": 0,
+        "vm_return_opcodes": 201,
+        "vm_setup_wall_ns": 391344
+      },
+      "cpu_seconds": 0.0044369999999999965,
+      "outcome": "success",
+      "process_peak_rss_bytes": 7774208,
+      "runtime": "vm",
+      "runtime_version": "1.9.0",
+      "schema": "kujo.runtime-measurements/v1",
+      "scope": "process",
+      "snapshot_consistency": "independent_counters",
+      "unsupported": [
+        "total_heap_bytes",
+        "total_value_allocations",
+        "total_value_drops",
+        "retained_capture_graph_bytes",
+        "provider_usage",
+        "provider_cost"
+      ],
+      "waited_for_detached": false,
+      "wall_ns": 4492958
+    },
+    "log": "/tmp/kujo-native-literal-frozen-baseline.log"
+  },
+  "candidate": {
+    "report": {
+      "counters": {
+        "bytecode_compile_wall_ns": 2851415,
+        "detached_tasks_observed": 0,
+        "jit_cache_lookup_hits": 0,
+        "jit_cache_lookup_misses": 0,
+        "jit_call_dispatches": 201,
+        "jit_compile_entries": 1,
+        "jit_compile_inclusive_wall_ns": 6231134,
+        "jit_native_boundary_entries": 101,
+        "jit_native_function_entries": 101,
+        "jit_owned_argument_dispatches": 0,
+        "jit_type_guard_failures": 0,
+        "jit_type_guard_passes": 0,
+        "promise_pending_polls": 0,
+        "promise_polls": 0,
+        "promise_ready_polls": 0,
+        "scheduler_rounds": 0,
+        "source_parse_wall_ns": 6209821,
+        "task_bodies_exited": 0,
+        "task_cancellations_published": 0,
+        "task_completions_published": 0,
+        "task_queue_wall_ns": 0,
+        "tasks_admission_rejected": 0,
+        "tasks_admitted": 0,
+        "tasks_started": 0,
+        "vm_call_opcodes": 402,
+        "vm_capture_cells_created": 0,
+        "vm_capture_value_shallow_bytes": 0,
+        "vm_closures_created": 1,
+        "vm_entries": 1,
+        "vm_generator_resume_attempts": 0,
+        "vm_generator_state_drops": 0,
+        "vm_generator_state_shallow_bytes": 0,
+        "vm_generator_states_created": 0,
+        "vm_inclusive_wall_ns": 17911844,
+        "vm_native_call_opcodes": 0,
+        "vm_return_opcodes": 100,
+        "vm_setup_wall_ns": 1104310
+      },
+      "cpu_seconds": 0.022576,
+      "outcome": "success",
+      "process_peak_rss_bytes": 18227200,
+      "runtime": "vm",
+      "runtime_version": "1.9.0",
+      "schema": "kujo.runtime-measurements/v1",
+      "scope": "process",
+      "snapshot_consistency": "independent_counters",
+      "unsupported": [
+        "total_heap_bytes",
+        "total_value_allocations",
+        "total_value_drops",
+        "retained_capture_graph_bytes",
+        "provider_usage",
+        "provider_cost"
+      ],
+      "waited_for_detached": false,
+      "wall_ns": 22955845
+    },
+    "log": "/tmp/kujo-native-literal-candidate-probe.log",
+    "binary_sha256": "852a70ef20c3fa15be81bc494d15abdf38b8bee906956629bfaec5f18a55c7d3"
+  },
+  "probe": {
+    "source": "func literal(x) { return \"héllo\" }\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nassert_equal(literal(0), \"héllo\")\nprint(\"PASS\")\n",
+    "sha256": "ba92967264770589c32937ab733187d393953bdf5cfa51aa47cf27c2c539f57e",
+    "command": "BINARY run --jit PROBE --measurements REPORT",
+    "result": "PASS in both builds; native function entries 0 -> 101"
+  },
+  "mechanism": [
+    "Deduplicate retained Value allocations by literal type/content for generated-code lifetime",
+    "Load through owned root codec, preserving tags and ordinary COW",
+    "Keep aggregate/function/pattern/type constants unsupported"
+  ],
+  "limitations": [
+    "Shared-host instrumentation, different baseline/candidate build profiles: no speed comparison",
+    "Wider owned function arguments remain gated",
+    "No all50 production acceptance for this candidate",
+    "First draft language regression incorrectly used unary ! on a string; corrected to ordinary conditional truthiness before successful verification"
+  ],
+  "verification": {
+    "library": {
+      "command": "cargo test --lib",
+      "result": "test result: ok. 1042 passed; 0 failed; 8 ignored; 0 measured; 0 filtered out; finished in 90.42s"
+    },
+    "format": "cargo fmt --check passed",
+    "storage": "String/byte results share backing Arc pointers; 8/128 discarded loads retain at most4 root slots, zero live roots; source dropped before execution, repeated invocations; retained pool freed with compiler",
+    "integration": {
+      "command": "cargo test --test jit_owned_stack_contracts --test jit_loop_collection_contracts --test jit_error_propagation --test jit_immediate_arguments --test jit_scalar_operator_types --test operator_error_contracts",
+      "results": [
+        "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s",
+        "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.63s",
+        "test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s",
+        "test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.59s",
+        "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.99s",
+        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s"
+      ],
+      "passed": 45,
+      "failed": 0
+    }
+  }
+}

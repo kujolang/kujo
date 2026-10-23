@@ -142,6 +142,15 @@ verified; bounded root storage is not evidence of reduced string copying or spee
 
 ### Remaining native ownership gate
 
+The [native literal audit](native-literals-2026-10-23.json) adds string and byte
+constant lowering through compiler-retained values and the existing owned-value
+codec. Literal loads share immutable backing buffers and release temporary roots;
+tests exercise source-bytecode disposal, repeated compilation retention, native
+functions and specialized loops. A focused string-return probe moves from zero
+to 101 native entries while preserving output. General owned argument entry and
+aggregate constants remain gated. This is coverage/storage evidence, not a
+competitive speed result; older constant exclusions below describe prior audits.
+
 The [operator-loop audit](operator-loop-audit-2026-10-23.json) reproduces two open
 gaps at `ac3fe6c`: constant appends bypass struct `op_add`, and specialized native
 loops deadlock when an operator callback reacquires the globals mutex held by the

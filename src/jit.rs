@@ -862,6 +862,29 @@ pub unsafe extern "C" fn jit_release_dead_local(
     0
 }
 
+/// Load a retained immutable literal through the ordinary owned-value codec.
+#[no_mangle]
+// SAFETY: generated code passes a Value allocation retained by JitCompiler for
+// the lifetime of the machine code. ctx is live and exclusively borrowed.
+pub unsafe extern "C" fn jit_load_literal(ctx: *mut VMContext, pointer: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.return_value_kind = 0;
+    let Some(value) = (pointer as *const Value).as_ref() else {
+        ctx.runtime_error = Some("Missing native literal".into());
+        return 0;
+    };
+    match ctx.owned_roots.encode(value.clone()) {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
 /// Load a named operand without leaving hidden values on the VM stack.
 #[no_mangle]
 // SAFETY: ctx and the referenced name/local/global maps remain live for this
@@ -3900,6 +3923,7 @@ pub struct JitCompiler {
     // Key-vector allocations embedded in native instructions must outlive code.
     dictionary_keys: HashMap<usize, Arc<Vec<Arc<str>>>>,
     append_strings: HashMap<usize, Arc<str>>,
+    literal_values: HashMap<(u8, Vec<u8>), Arc<Value>>,
 }
 
 /// Bytecode translator - converts bytecode to Cranelift IR
@@ -3913,6 +3937,8 @@ struct BytecodeTranslator {
     owned_equal_func: Option<FuncRef>,
     owned_operator_func: Option<FuncRef>,
     operand_load_func: Option<FuncRef>,
+    literal_load_func: Option<FuncRef>,
+    literal_values: HashMap<usize, Arc<Value>>,
     operand_duplicate_func: Option<FuncRef>,
     operand_release_func: Option<FuncRef>,
     dead_local_func: Option<FuncRef>,
@@ -4079,6 +4105,8 @@ impl BytecodeTranslator {
             owned_equal_func: None,
             owned_operator_func: None,
             operand_load_func: None,
+            literal_load_func: None,
+            literal_values: HashMap::new(),
             operand_duplicate_func: None,
             operand_release_func: None,
             dead_local_func: None,
@@ -5332,6 +5360,21 @@ impl BytecodeTranslator {
                             let payload = builder.ins().iconst(types::I64, 0);
                             let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
                             self.scalar_kinds.insert(payload, kind);
+                            self.last_int_constant = None;
+                            self.push_value(payload);
+                        }
+                        Constant::String(_) | Constant::Bytes(_) => {
+                            let literal = self
+                                .literal_values
+                                .get(index)
+                                .ok_or("Native literal was not retained")?;
+                            let pointer = Arc::as_ptr(literal) as i64;
+                            let helper = self.literal_load_func.ok_or("Missing literal helper")?;
+                            let ctx = self.ctx_param.ok_or("Missing native context")?;
+                            let pointer = builder.ins().iconst(types::I64, pointer);
+                            let call = builder.ins().call(helper, &[ctx, pointer]);
+                            let payload = builder.inst_results(call)[0];
+                            self.capture_loaded_operand(builder, ctx, payload);
                             self.last_int_constant = None;
                             self.push_value(payload);
                         }
@@ -7529,6 +7572,29 @@ impl BytecodeTranslator {
 }
 
 impl JitCompiler {
+    fn retain_literal_values(&mut self, chunk: &BytecodeChunk) -> HashMap<usize, Arc<Value>> {
+        chunk
+            .constants
+            .iter()
+            .enumerate()
+            .filter_map(|(index, constant)| {
+                let key = match constant {
+                    Constant::String(text) => (0, text.as_bytes().to_vec()),
+                    Constant::Bytes(bytes) => (1, bytes.clone()),
+                    _ => return None,
+                };
+                let value = self.literal_values.entry(key).or_insert_with(|| {
+                    Arc::new(match constant {
+                        Constant::String(text) => Value::Str(Arc::new(text.clone())),
+                        Constant::Bytes(bytes) => Value::Bytes(Arc::new(bytes.clone())),
+                        _ => unreachable!(),
+                    })
+                });
+                Some((index, Arc::clone(value)))
+            })
+            .collect()
+    }
+
     fn retain_dictionary_keys(&mut self, chunk: &BytecodeChunk) {
         for instruction in &chunk.instructions {
             if let OpCode::AppendConstStringInPlace(_, text) = instruction {
@@ -7557,6 +7623,7 @@ impl JitCompiler {
             ("jit_owned_equal", 5, true),
             ("jit_owned_operator", 6, true),
             ("jit_load_operand", 3, true),
+            ("jit_load_literal", 2, true),
             ("jit_duplicate_operand", 3, true),
             ("jit_release_operand", 3, true),
             ("jit_release_dead_local", 4, true),
@@ -7590,6 +7657,7 @@ impl JitCompiler {
                 "jit_owned_equal" => translator.owned_equal_func = Some(function),
                 "jit_owned_operator" => translator.owned_operator_func = Some(function),
                 "jit_load_operand" => translator.operand_load_func = Some(function),
+                "jit_load_literal" => translator.literal_load_func = Some(function),
                 "jit_duplicate_operand" => translator.operand_duplicate_func = Some(function),
                 "jit_release_operand" => translator.operand_release_func = Some(function),
                 "jit_release_dead_local" => translator.dead_local_func = Some(function),
@@ -7694,6 +7762,7 @@ impl JitCompiler {
         builder.symbol("jit_set_return_scalar", jit_set_return_scalar as *const u8);
         builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
         builder.symbol("jit_owned_truth", jit_owned_truth as *const u8);
+        builder.symbol("jit_load_literal", jit_load_literal as *const u8);
         builder.symbol("jit_owned_equal", jit_owned_equal as *const u8);
         builder.symbol("jit_owned_operator", jit_owned_operator as *const u8);
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
@@ -7744,6 +7813,7 @@ impl JitCompiler {
             compiled_fn_info: HashMap::new(),
             dictionary_keys: HashMap::new(),
             append_strings: HashMap::new(),
+            literal_values: HashMap::new(),
         })
     }
 
@@ -7812,13 +7882,17 @@ impl JitCompiler {
     /// Check if a specific opcode is supported by JIT compiler
     fn is_supported_opcode(&self, opcode: &OpCode, constants: &[Constant]) -> bool {
         match opcode {
-            // This lowering represents only integers and boolean condition bits.
-            // Other values must stay in the VM until typed lowering exists.
+            // Only constants with a typed lowering and retained lifetime may enter native code.
             OpCode::LoadConst(idx) => {
                 matches!(
                     constants.get(*idx),
                     Some(
-                        Constant::Int(_) | Constant::Bool(_) | Constant::Float(_) | Constant::None
+                        Constant::Int(_)
+                            | Constant::Bool(_)
+                            | Constant::Float(_)
+                            | Constant::None
+                            | Constant::String(_)
+                            | Constant::Bytes(_)
                     )
                 )
             }
@@ -7909,6 +7983,7 @@ impl JitCompiler {
         loop_end: Option<usize>,
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
+        let literal_values = self.retain_literal_values(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Clear previous context
@@ -8295,6 +8370,7 @@ impl JitCompiler {
 
             // Translate bytecode instructions to Cranelift IR
             let mut translator = BytecodeTranslator::new();
+            translator.literal_values = literal_values;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -8613,6 +8689,7 @@ impl JitCompiler {
         name: &str,
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
+        let literal_values = self.retain_literal_values(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // 1. Check if function is compilable
@@ -9023,6 +9100,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
+            translator.literal_values = literal_values;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -9249,6 +9327,7 @@ impl JitCompiler {
         name: &str,
     ) -> Result<CompiledFnWithArg, String> {
         self.retain_dictionary_keys(chunk);
+        let literal_values = self.retain_literal_values(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Validate: must have exactly one parameter
@@ -9303,6 +9382,7 @@ impl JitCompiler {
 
             // Create BytecodeTranslator with direct-arg mode enabled
             let mut translator = BytecodeTranslator::new();
+            translator.literal_values = literal_values;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -9566,6 +9646,7 @@ impl JitCompiler {
         name: &str,
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
+        let literal_values = self.retain_literal_values(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
         // Check if script is compilable (all opcodes supported)
@@ -9912,6 +9993,7 @@ impl JitCompiler {
 
             // Initialize translator
             let mut translator = BytecodeTranslator::new();
+            translator.literal_values = literal_values;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
@@ -10454,6 +10536,57 @@ mod tests {
         context.owned_roots.leave().unwrap();
         context.owned_roots.leave().unwrap();
         assert_eq!(context.owned_roots.storage_state().1, 0);
+    }
+
+    #[test]
+    fn compiled_literals_outlive_source_and_bound_discarded_roots() {
+        for constant in [Constant::String("héllo".into()), Constant::Bytes(vec![0, 255, 7])] {
+            for repetitions in [8, 128] {
+                let mut compiler = JitCompiler::new().unwrap();
+                let mut chunk = BytecodeChunk::new();
+                let index = chunk.add_constant(constant.clone());
+                for _ in 0..repetitions {
+                    chunk.emit(OpCode::LoadConst(index));
+                    chunk.emit(OpCode::Pop);
+                }
+                chunk.emit(OpCode::LoadConst(index));
+                chunk.emit(OpCode::Return);
+                let compiled = compiler.compile_function(&chunk, "literal_lifetime").unwrap();
+                let retained = compiler.literal_values.values().next().unwrap();
+                let weak = Arc::downgrade(retained);
+                let expected = retained.as_ref().clone();
+                // Repeated retention must not grow with compilation attempts.
+                compiler.retain_literal_values(&chunk);
+                assert_eq!(compiler.literal_values.len(), 1);
+                drop(chunk);
+                let mut stack = Vec::new();
+                let mut context =
+                    VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+                for _ in 0..10 {
+                    assert_eq!(
+                        invoke_compiled_fn(compiled, &mut context),
+                        0,
+                        "{:?}",
+                        context.runtime_error
+                    );
+                    let result = context.take_return_value(context.return_value);
+                    assert!(Value::equals(&result, &expected));
+                    // Literal loads share immutable backing storage, rather than
+                    // allocating/copying the string or byte buffer per execution.
+                    match (&result, &expected) {
+                        (Value::Str(a), Value::Str(b)) => assert!(Arc::ptr_eq(a, b)),
+                        (Value::Bytes(a), Value::Bytes(b)) => assert!(Arc::ptr_eq(a, b)),
+                        _ => unreachable!(),
+                    }
+                    let (_, live, capacity, _) = context.owned_roots.storage_state();
+                    assert_eq!(live, 0);
+                    assert!(capacity <= 4, "{repetitions} loads retained {capacity} slots");
+                    assert!(stack.is_empty());
+                }
+                drop(compiler);
+                assert!(weak.upgrade().is_none());
+            }
+        }
     }
 
     #[test]
@@ -11042,8 +11175,8 @@ mod tests {
     }
 
     #[test]
-    fn non_immediate_constants_are_rejected_before_native_execution() {
-        for constant in [Constant::String("preserve me".into()), Constant::Bytes(vec![0, 255])] {
+    fn unsupported_aggregate_constants_are_rejected_before_native_execution() {
+        for constant in [Constant::Array(vec![Constant::Int(7)]), Constant::Dict(vec![])] {
             let mut compiler = JitCompiler::new().unwrap();
             let mut chunk = BytecodeChunk::new();
             let index = chunk.add_constant(constant);

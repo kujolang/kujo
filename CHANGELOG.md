@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile string and byte constants through retained immutable native literals.
+  Loads preserve value types and copy-on-write isolation, share backing buffers,
+  and release temporary roots instead of falling back solely for these constants.
+
 - Preserve interpreter errors from unary and binary struct operator methods.
   Failed operator assignments keep their previous target value, stop subsequent
   effects and remain catchable, matching VM behavior.
