@@ -128,6 +128,10 @@ pub struct VMContext {
     pub runtime_error: Option<String>,
     /// Fast argument passing for recursive calls
     /// These avoid HashMap creation for simple recursive functions
+    pub call_name_ptr: *const u8,
+    pub call_name_len: usize,
+    pub native_call_depth: usize,
+    pub arg_kinds: [i64; 4],
     pub arg0: i64,
     pub arg1: i64,
     pub arg2: i64,
@@ -160,6 +164,10 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            call_name_ptr: std::ptr::null(),
+            call_name_len: 0,
+            native_call_depth: 0,
+            arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
             arg2: 0,
@@ -187,6 +195,10 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            call_name_ptr: std::ptr::null(),
+            call_name_len: 0,
+            native_call_depth: 0,
+            arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
             arg2: 0,
@@ -228,6 +240,10 @@ impl VMContext {
             has_return_value: false,
             return_value_kind: 0,
             runtime_error: None,
+            call_name_ptr: std::ptr::null(),
+            call_name_len: 0,
+            native_call_depth: 0,
+            arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
             arg2: 0,
@@ -2345,23 +2361,55 @@ pub unsafe extern "C" fn jit_get_return_int(ctx: *mut VMContext) -> i64 {
 // - Postconditions: all reads/writes stay within VM-owned structures reachable from validated pointers,
 //   and invalid inputs are handled via sentinel returns/early exits without transferring ownership.
 pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64) -> i64 {
-    if ctx.is_null() {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.return_value_kind = 0;
+    if index < 0 || index >= ctx.arg_count || index >= 4 {
         return 0;
     }
+    ctx.return_value_kind = ctx.arg_kinds[index as usize];
+    [ctx.arg0, ctx.arg1, ctx.arg2, ctx.arg3][index as usize]
+}
 
-    let ctx_ref = &*ctx;
-
-    // Check if index is valid
-    if index < 0 || index >= ctx_ref.arg_count {
-        return 0;
+#[no_mangle]
+// SAFETY: ctx is live and exclusively borrowed. Its optional VM and name pointers
+// remain valid throughout the enclosing native invocation.
+pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let name = if ctx.call_name_ptr.is_null() {
+        "<native>"
+    } else {
+        std::str::from_utf8(std::slice::from_raw_parts(ctx.call_name_ptr, ctx.call_name_len))
+            .unwrap_or("<native>")
+    };
+    let result = if let Some(vm) = (ctx.vm_ptr as *mut VM).as_mut() {
+        vm.enter_native_function(name)
+    } else if ctx.native_call_depth >= crate::runtime_limits::DEFAULT_MAX_VM_CALL_DEPTH {
+        Err(format!(
+            "Maximum VM call stack depth of {} exceeded while calling {}",
+            crate::runtime_limits::DEFAULT_MAX_VM_CALL_DEPTH,
+            name
+        ))
+    } else {
+        ctx.native_call_depth += 1;
+        Ok(())
+    };
+    if let Err(error) = result {
+        ctx.runtime_error = Some(error);
+        return 1;
     }
+    0
+}
 
-    match index {
-        0 => ctx_ref.arg0,
-        1 => ctx_ref.arg1,
-        2 => ctx_ref.arg2,
-        3 => ctx_ref.arg3,
-        _ => 0,
+#[no_mangle]
+// SAFETY: ctx and its optional VM remain live and exclusively borrowed; this
+// pairs with one successful native-function entry on every generated exit path.
+pub unsafe extern "C" fn jit_leave_function(ctx: *mut VMContext) {
+    if let Some(ctx) = ctx.as_mut() {
+        if let Some(vm) = (ctx.vm_ptr as *mut VM).as_mut() {
+            vm.leave_native_function();
+        } else {
+            ctx.native_call_depth = ctx.native_call_depth.saturating_sub(1);
+        }
     }
 }
 
@@ -3192,6 +3240,9 @@ struct BytecodeTranslator {
     arithmetic_error_func: Option<FuncRef>,
     scalar_type_error_func: Option<FuncRef>,
     float_remainder_func: Option<FuncRef>,
+    enter_function_func: Option<FuncRef>,
+    leave_function_func: Option<FuncRef>,
+    tracks_function_depth: bool,
     /// Float load/store function references
     load_var_float_func: Option<FuncRef>,
     store_var_float_func: Option<FuncRef>,
@@ -3326,6 +3377,9 @@ impl BytecodeTranslator {
             arithmetic_error_func: None,
             scalar_type_error_func: None,
             float_remainder_func: None,
+            enter_function_func: None,
+            leave_function_func: None,
+            tracks_function_depth: false,
             load_var_float_func: None,
             store_var_float_func: None,
             check_type_int_func: None,
@@ -3790,7 +3844,10 @@ impl BytecodeTranslator {
                     builder.inst_results(call)[0]
                 };
 
+                self.capture_scalar_kind(builder, ctx, param_value);
                 builder.def_var(variable, param_value);
+                let kind = self.scalar_kind(builder, param_value);
+                builder.def_var(Variable::new(variable.index() + 1), kind);
 
                 if std::env::var("DEBUG_JIT").is_ok() {
                     eprintln!(
@@ -3966,6 +4023,39 @@ impl BytecodeTranslator {
         max_reachable + 1
     }
 
+    fn begin_function(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        entry: Block,
+    ) -> Result<Block, String> {
+        let ctx = self.ctx_param.ok_or("Missing native context")?;
+        let enter = self.enter_function_func.ok_or("Missing native depth guard")?;
+        let call = builder.ins().call(enter, &[ctx]);
+        let status = builder.inst_results(call)[0];
+        let failed = builder.ins().icmp_imm(IntCC::NotEqual, status, 0);
+        let failure = builder.create_block();
+        let body = builder.create_block();
+        builder.ins().brif(failed, failure, &[], body, &[]);
+        builder.seal_block(entry);
+        builder.seal_block(failure);
+        builder.switch_to_block(failure);
+        // Entry failed without acquiring a native depth slot.
+        builder.ins().return_(&[status]);
+        builder.switch_to_block(body);
+        self.tracks_function_depth = true;
+        Ok(body)
+    }
+
+    fn emit_return(&self, builder: &mut FunctionBuilder, value: cranelift::prelude::Value) {
+        if self.tracks_function_depth {
+            builder.ins().call(
+                self.leave_function_func.expect("native exit helper"),
+                &[self.ctx_param.expect("native context")],
+            );
+        }
+        builder.ins().return_(&[value]);
+    }
+
     fn exit_on_assignment_error(
         &self,
         builder: &mut FunctionBuilder,
@@ -3979,7 +4069,7 @@ impl BytecodeTranslator {
         builder.seal_block(success);
         builder.switch_to_block(failure);
         self.persist_local_slots(builder, true);
-        builder.ins().return_(&[status]);
+        self.emit_return(builder, status);
         builder.switch_to_block(success);
     }
 
@@ -4598,7 +4688,7 @@ impl BytecodeTranslator {
                     self.persist_local_slots(builder, true);
                     // Direct-argument functions return a value rather than a status.
                     // The owning context carries the failure in both conventions.
-                    builder.ins().return_(&[status]);
+                    self.emit_return(builder, status);
                     builder.switch_to_block(success_block);
 
                     // Pop the result from VM stack
@@ -5395,7 +5485,7 @@ impl BytecodeTranslator {
                 }
                 // Return 0 (success)
                 let zero = builder.ins().iconst(types::I64, 0);
-                builder.ins().return_(&[zero]);
+                self.emit_return(builder, zero);
                 return Ok(true); // Terminates block
             }
 
@@ -5403,7 +5493,7 @@ impl BytecodeTranslator {
                 self.emit_null_return(builder);
                 self.persist_local_slots_to_vm(builder);
                 let zero = builder.ins().iconst(types::I64, 0);
-                builder.ins().return_(&[zero]);
+                self.emit_return(builder, zero);
                 return Ok(true); // Terminates block
             }
 
@@ -5916,6 +6006,15 @@ impl BytecodeTranslator {
                     if let (Some(ctx), Some(self_func)) = (self.ctx_param, self.self_call_func) {
                         // Direct recursive call: self(ctx, arg)
                         // This is the KEY optimization - no FFI boundary crossing!
+                        let kind = self.scalar_kind(builder, arg_val);
+                        // Context lifetime is the enclosing native invocation; use
+                        // a native store rather than adding an FFI call per recursion.
+                        builder.ins().store(
+                            MemFlags::new(),
+                            kind,
+                            ctx,
+                            std::mem::offset_of!(VMContext, arg_kinds) as i32,
+                        );
                         let call_inst = builder.ins().call(self_func, &[ctx, arg_val]);
                         let result = builder.inst_results(call_inst)[0];
                         self.capture_scalar_kind(builder, ctx, result);
@@ -5988,7 +6087,7 @@ impl BytecodeTranslator {
                         builder.ins().call(set_return, &[ctx, return_value, kind]);
                     }
                     // Direct return of the computed value
-                    builder.ins().return_(&[return_value]);
+                    self.emit_return(builder, return_value);
 
                     if std::env::var("DEBUG_JIT").is_ok() {
                         eprintln!("JIT direct-arg: Direct value return");
@@ -5996,7 +6095,7 @@ impl BytecodeTranslator {
                 } else {
                     // No value to return - return 0
                     let zero = builder.ins().iconst(types::I64, 0);
-                    builder.ins().return_(&[zero]);
+                    self.emit_return(builder, zero);
                 }
                 Ok(true) // Terminates block
             }
@@ -6004,7 +6103,7 @@ impl BytecodeTranslator {
             OpCode::ReturnNone => {
                 self.emit_null_return(builder);
                 let zero = builder.ins().iconst(types::I64, 0);
-                builder.ins().return_(&[zero]);
+                self.emit_return(builder, zero);
                 Ok(true)
             }
 
@@ -6196,7 +6295,7 @@ impl BytecodeTranslator {
         let call =
             builder.ins().call(error_func, &[ctx, operation, left, right, left_kind, right_kind]);
         let status = builder.inst_results(call)[0];
-        builder.ins().return_(&[status]);
+        self.emit_return(builder, status);
         builder.switch_to_block(success);
         Ok(())
     }
@@ -6222,7 +6321,7 @@ impl BytecodeTranslator {
         let operation = builder.ins().iconst(types::I64, operation);
         let call = builder.ins().call(error_func, &[ctx, operation, left, right]);
         let status = builder.inst_results(call)[0];
-        builder.ins().return_(&[status]);
+        self.emit_return(builder, status);
         builder.switch_to_block(success);
         Ok(())
     }
@@ -6394,6 +6493,8 @@ impl JitCompiler {
             ("jit_return_scalar_kind", 1, true),
             ("jit_stack_push_scalar", 3, false),
             ("jit_scalar_type_error", 6, true),
+            ("jit_enter_function", 1, true),
+            ("jit_leave_function", 1, false),
         ] {
             let mut sig = module.make_signature();
             sig.params.extend(std::iter::repeat(AbiParam::new(types::I64)).take(parameters));
@@ -6408,6 +6509,8 @@ impl JitCompiler {
                 "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
+                "jit_enter_function" => translator.enter_function_func = Some(function),
+                "jit_leave_function" => translator.leave_function_func = Some(function),
                 _ => translator.scalar_type_error_func = Some(function),
             }
         }
@@ -6488,6 +6591,8 @@ impl JitCompiler {
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
         builder.symbol("jit_get_return_int", jit_get_return_int as *const u8);
         builder.symbol("jit_get_arg", jit_get_arg as *const u8);
+        builder.symbol("jit_enter_function", jit_enter_function as *const u8);
+        builder.symbol("jit_leave_function", jit_leave_function as *const u8);
         builder.symbol("jit_dict_get", jit_dict_get as *const u8);
         builder.symbol("jit_dict_set", jit_dict_set as *const u8);
         builder.symbol("jit_local_slot_dict_get", jit_local_slot_dict_get as *const u8);
@@ -7805,6 +7910,7 @@ impl JitCompiler {
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(vm_context_param);
+            let entry_block = translator.begin_function(&mut builder, entry_block)?;
             translator.set_call_function(call_func_ref);
             translator.set_push_int_function(push_int_ref);
             translator.set_return_int_function(set_return_int_ref);
@@ -7978,7 +8084,7 @@ impl JitCompiler {
             // If last block not terminated, add return
             if !block_terminated {
                 let zero = builder.ins().iconst(types::I64, 0);
-                builder.ins().return_(&[zero]);
+                translator.emit_return(&mut builder, zero);
                 if !sealed_blocks.contains(&current_block) {
                     builder.seal_block(current_block);
                     sealed_blocks.insert(current_block);
@@ -8095,6 +8201,7 @@ impl JitCompiler {
                 Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(vm_context_param);
+            let entry_block = translator.begin_function(&mut builder, entry_block)?;
             translator.set_direct_arg_mode(direct_arg_param, 1);
             let mut error_sig = self.module.make_signature();
             error_sig.params.push(AbiParam::new(types::I64));
@@ -8138,9 +8245,19 @@ impl JitCompiler {
                 param_name,
             );
 
-            // Source-compiled parameters use SSA locals; initialize that value too.
+            // The context remains live for this native activation. Capture the
+            // incoming kind in SSA before a recursive call changes the context.
+            let kind = builder.ins().load(
+                types::I64,
+                MemFlags::new(),
+                vm_context_param,
+                std::mem::offset_of!(VMContext, arg_kinds) as i32,
+            );
+            translator.scalar_kinds.insert(direct_arg_param, kind);
+            // Source-compiled parameters use paired payload/kind SSA locals.
             if let Some(&variable) = translator.local_variables.get(param_name) {
                 builder.def_var(variable, direct_arg_param);
+                builder.def_var(Variable::new(variable.index() + 1), kind);
             }
 
             // Initialize the parameter slot with the direct argument value
@@ -8218,7 +8335,7 @@ impl JitCompiler {
             // If last block not terminated, return 0
             if !block_terminated {
                 let zero = builder.ins().iconst(types::I64, 0);
-                builder.ins().return_(&[zero]);
+                translator.emit_return(&mut builder, zero);
                 if !sealed_blocks.contains(&current_block) {
                     builder.seal_block(current_block);
                 }

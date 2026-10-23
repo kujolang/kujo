@@ -77,16 +77,24 @@ task/spawn behavior is described below. Legacy manually constructed chunks witho
 retain their compatibility path; the older VM-wide `Upvalue` opcodes are not the
 compiler-produced closure mechanism. Bytecode is not a persistent public format.
 
-The experimental integer JIT lowering rejects non-integer/non-boolean constants
-at both eligibility and translation boundaries. Unsupported literals remain in
-VM execution; substituting integer zero is not a valid representation or fallback.
-This restriction does not establish full JIT type or side-effect parity.
-The current function JIT ABI accepts only integer arguments. Both ordinary VM
-calls and callback-bridge calls check argument count and value kinds
-before entering compiled caches. Non-integer calls use VM execution without
-discarding cached integer code; this is a correctness guard, not native float or
-general-value compilation. Typed results, globals and arithmetic errors require
+The experimental JIT lowering represents integer, Boolean, float and null
+constants directly; owned literals such as strings and bytes remain unsupported
+at eligibility and translation boundaries. Substituting integer zero is not a
+valid representation or fallback. This does not establish general-value parity.
+The function JIT ABI carries immediate payloads with companion argument kinds.
+Ordinary VM and callback-bridge calls guard arity and supported kinds before
+entering compiled caches. Owned-value arguments still use VM execution without
+discarding the cached code. Fast argument fields, named parameter loads and
+parameter SSA variables preserve kinds; direct single-argument calls and recursive
+calls pass the kind through their context and capture it into each activation's
+SSA state. A recursive callee changing its argument kind cannot reinterpret the
+caller's existing parameter. Typed results, globals and arithmetic errors require
 their own JIT verification.
+Native function entries count against the same VM depth budget as bytecode frames,
+including direct recursion and nested callbacks. Normal and error exits release
+that native slot. Active native depth is separate from restorable bytecode state,
+so a caught VM error cannot erase still-active native frames. Bytecode call-entry
+failures also use the normal exception handler path.
 Compiled callbacks carry runtime failures separately from integer return values.
 Generated calls branch out on failure before consuming a result or executing
 later instructions; VM entry points preserve the original message and unwind
@@ -125,7 +133,7 @@ all incoming edges must agree on logical stack depth. All four compiler
 entrypoints restore these pairs, and scalar returns carry their tag even from
 loop/script compilation. Scalar loop locals load and persist their kind; implicit
 returns set null metadata rather than inheriting an earlier result. Integer-only
-function-entry guards remain: non-integer arguments still use VM execution.
+function-entry guards remain: owned-value arguments still use VM execution.
 Short-circuit regressions require native compilation
 and verify skipped effects, skipped traps, loop conditions and direct recursion.
 Whole-function scalar JIT assignments resolve named bindings at runtime instead

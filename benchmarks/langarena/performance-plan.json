@@ -47,7 +47,9 @@
         "../../tests/jit_argument_guards.rs",
         "../../tests/jit_global_assignment.rs",
         "../../tests/jit_immediate_values.rs",
-        "jit-immediate-values-2026-10-23.json"
+        "jit-immediate-values-2026-10-23.json",
+        "../../tests/jit_immediate_arguments.rs",
+        "jit-immediate-arguments-2026-10-23.json"
       ]
     },
     {
@@ -1103,8 +1105,12 @@
     },
     {
       "id": "jit_argument_type_guards",
-      "evidence": "jit-typed-audit-2026-10-23.json",
-      "status": "Fixed integer-only compiled function entry boundaries: cached/direct calls and callback bridge check argument count/kinds; non-integer arguments use VM fallback. Native function bodies now support immediate float/null values, but native non-integer argument entry remains unfinished. No speed claim."
+      "evidence": [
+        "../../tests/jit_argument_guards.rs",
+        "../../tests/jit_immediate_arguments.rs",
+        "jit-immediate-arguments-2026-10-23.json"
+      ],
+      "status": "Extended guarded native function entry to Int/Bool/Float/Null. Fast argument fields and named loads capture kinds into SSA parameters; direct calls and recursion transfer kinds per invocation without extra tag-transfer helper calls. Owned-value arguments remain on the VM path. Six contracts cover reference runtimes, actual compilation/direct execution, arity, loops, IEEE payload bits, errors and recovery. Native depth is now bounded. Current all-fifty audit in progress."
     },
     {
       "id": "jit_division_zero_trap",
@@ -1183,10 +1189,23 @@
     },
     {
       "id": "jit_immediate_float_null_flow",
-      "status": "Fixed reproduced Float/Null global-return and implicit-return errors, plus loop float persistence as raw integer bits. Four-kind ABI preserves immediate types; native floating arithmetic, ordering, equality and truthiness retain VM contracts. Native function arguments remain integer-only. String/object paths remain open.",
+      "status": "Fixed reproduced Float/Null global-return and implicit-return errors, plus loop float persistence as raw integer bits. Four-kind ABI preserves immediate types; native floating arithmetic, ordering, equality and truthiness retain VM contracts. Native function entry now accepts tagged immediate arguments; owned values remain guarded out. String/object paths remain open.",
       "evidence": [
         "../../tests/jit_immediate_values.rs",
         "jit-immediate-values-2026-10-23.json"
+      ]
+    },
+    {
+      "id": "jit_release_dead_local_coverage",
+      "status": "Confirmed coverage gap: compiler-generated ReleaseDeadLocal in copied-parameter loop prevents whole-function compilation. Copied loop remains correct via fallback in tests/jit_immediate_arguments.rs. Requires proper lifetime/slot semantics alongside native ownership work; do not count this fallback as native coverage.",
+      "evidence": "../../tests/jit_immediate_arguments.rs"
+    },
+    {
+      "id": "jit_native_recursion_depth_limit",
+      "status": "Fixed confirmed bypass: pre-guard native Int400 and Float400.5 recursion returns successfully while reference runtimes reject depth256. Native entries now consume a budget shared with VM frames; direct recursion and callbacks release native slots on every generated normal/error exit. Separate active-native accounting survives VM error recovery. Bytecode call-entry errors now reach try/except. Tests include mutual native callbacks containing cold VM error recovery,300 caught deep failures followed by successful calls, and both-runtime/JIT depth limits.",
+      "evidence": [
+        "../../tests/jit_immediate_arguments.rs",
+        "jit-immediate-arguments-2026-10-23.json"
       ]
     }
   ],
@@ -1339,6 +1358,19 @@
       "scope": "all fifty test-size JIT-enabled checksums at c4a07cd",
       "result": "All 50 unchanged cases passed: 49 within initial 120-second per-case debug deadline; MergeSort passed unchanged with a 600-second retry. Exact case identities, configurations and checksum lines independently verified; original timeout retained. Frozen executable/source hashes match immediate audit. VM fallback allowed, native coverage not established. Shared-host debug elapsed times are diagnostic only. Not current VM/interpreter, production, speed or release acceptance.",
       "evidence": "checksums-2026-10-23-immediate-jit.json"
+    },
+    {
+      "scope": "native immediate argument entry audit",
+      "result": "Baseline float/Boolean/null hot-call fixtures never compile. Candidate fixtures compile and preserve output; unchanged 200-call unrolled probes reduce vm_return_opcodes from201 to100, matching the unchanged integer control100. Eight baseline/candidate probe runs succeed. Counters and compilation evidence only, not timing or native object parity.",
+      "evidence": "jit-immediate-arguments-2026-10-23.json"
+    },
+    {
+      "scope": "tagged native arguments and shared recursion depth budget",
+      "result": "Final runtime source passed1009 library tests (8 ignored) and119 selected integrations, including CLI/JSON diagnostics, closures and imported recursion. Strengthened six-test argument suite then passed, adding IEEE payload preservation and cold-VM recovery within mutual native recursion (120 unique integration contracts total). No-default-feature library, formatting and diff checks passed. Refreshed audit:8 successful baseline/candidate call probes plus8 depth probes; pre-guard native depth bypass reproduced, final VM/interpreter/JIT reject depth256. No speed, general-value or production acceptance claim.",
+      "evidence": [
+        "../../tests/jit_immediate_arguments.rs",
+        "jit-immediate-arguments-2026-10-23.json"
+      ]
     }
   ]
 }

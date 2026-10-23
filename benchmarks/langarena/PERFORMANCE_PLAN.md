@@ -17,7 +17,7 @@ a target to test, not a guarantee. This document explains the execution order;
 - All 50 test-size cases passed with JIT enabled at `c4a07cd`; MergeSort
   required a longer retry after the initial two-minute debug deadline. VM fallback
   was allowed. This establishes neither full native coverage nor speed acceptance.
-- Experimental JIT integer argument guards, callback errors, whole-function
+- Experimental JIT immediate argument guards, callback errors, whole-function
   integer global assignments and Boolean return/callback tags have regression
   coverage. Native scalar operand type guards also have regression coverage.
   Native short-circuit joins now carry operand payloads and type tags; regressions
@@ -25,10 +25,11 @@ a target to test, not a guarantee. This document explains the execution order;
   now restore recursion depth after return. Boolean/integer named global loads and
   whole-function stores preserve scalar types. Float/null immediate values now
   have native payloads, float arithmetic/comparisons and typed loop-local
-  persistence. String/object values, collection helper boundaries, non-integer
-  native arguments and full loop/script binding parity remain open. Checked native
+  persistence. Function arguments now carry immediate kinds through cached calls,
+  callbacks and direct recursion. String/object values, collection helper boundaries
+  and full loop/script binding parity remain open. Checked native
   integer arithmetic now has overflow/divisor guards and regression coverage.
-  General-value compilation and non-integer native entry remain unfinished.
+  General-value compilation and owned-value native entry remain unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score
   predictions. A clean measurement environment is an acceptance requirement.
 

@@ -6,6 +6,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile hot calls with float, Boolean and null arguments using tagged native
+  parameters, including callbacks, loops, larger argument lists and direct
+  recursion. Owned-value arguments retain the guarded VM path. Enforce the VM
+  depth limit across native recursion/callbacks and preserve catchable call-entry
+  errors without leaking depth slots after recovery.
+
 - Preserve float and null immediate values through experimental native constants,
   globals, assignments, callbacks, returns and scalar loop locals. Compile float
   arithmetic/comparisons with checked zero divisors, signed-zero truthiness and

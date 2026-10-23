@@ -123,6 +123,8 @@ pub struct VM {
 
     /// Current recursion depth (for optimization and debugging)
     recursion_depth: usize,
+    // Active native host frames; deliberately separate from restorable VM frames.
+    native_call_depth: usize,
 
     /// Maximum recursion depth observed (for profiling)
     max_recursion_depth: usize,
@@ -634,6 +636,7 @@ impl VM {
             compiled_fn_info: HashMap::new(),
             jit_var_names_cache: HashMap::new(),
             recursion_depth: 0,
+            native_call_depth: 0,
             max_recursion_depth: 0,
             inline_cache: HashMap::new(),
             int_key_cache: HashMap::new(),
@@ -3023,11 +3026,11 @@ impl VM {
                             if self.jit_enabled
                                 && !chunk.is_generator
                                 && !Self::requires_closure_vm(chunk)
-                                // The function JIT parameter ABI currently carries i64s.
+                                // The function JIT parameter ABI carries immediate payloads and kinds.
                                 // Guard before either cache path, including after a
-                                // previously integer-only call site changes its types.
+                                // previously immediate call site receives an owned value.
                                 && args.len() == chunk.params.len()
-                                && args.iter().all(|arg| matches!(arg, Value::Int(_)))
+                                && args.iter().all(|arg| crate::native_scalar::encode(arg).is_some())
                             {
                                 let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
@@ -3056,10 +3059,12 @@ impl VM {
                                                 .instructions
                                                 .iter()
                                                 .any(|op| matches!(op, OpCode::JumpBack(_)));
-                                            // Check if we can use fast arg passing (≤4 integer args)
+                                            // Check if we can use fast arg passing (≤4 immediate args)
                                             let use_fast_args = !has_loop
                                                 && args.len() <= 4
-                                                && args.iter().all(|a| matches!(a, Value::Int(_)));
+                                                && args.iter().all(|a| {
+                                                    crate::native_scalar::encode(a).is_some()
+                                                });
 
                                             // Bind arguments to parameter names
                                             for (i, param_name) in chunk.params.iter().enumerate() {
@@ -3115,39 +3120,35 @@ impl VM {
                                                 has_return_value: false,
                                                 return_value_kind: 0,
                                                 runtime_error: None,
+                                                call_name_ptr: func_name.as_ptr(),
+                                                call_name_len: func_name.len(),
+                                                native_call_depth: 0,
+                                                arg_kinds: std::array::from_fn(|index| {
+                                                    args.get(index)
+                                                        .and_then(crate::native_scalar::encode)
+                                                        .map_or(0, |value| value.1)
+                                                }),
                                                 arg0: if use_fast_args && args.len() > 0 {
-                                                    if let Value::Int(n) = args[0] {
-                                                        n
-                                                    } else {
-                                                        0
-                                                    }
+                                                    crate::native_scalar::encode(&args[0])
+                                                        .map_or(0, |value| value.0)
                                                 } else {
                                                     0
                                                 },
                                                 arg1: if use_fast_args && args.len() > 1 {
-                                                    if let Value::Int(n) = args[1] {
-                                                        n
-                                                    } else {
-                                                        0
-                                                    }
+                                                    crate::native_scalar::encode(&args[1])
+                                                        .map_or(0, |value| value.0)
                                                 } else {
                                                     0
                                                 },
                                                 arg2: if use_fast_args && args.len() > 2 {
-                                                    if let Value::Int(n) = args[2] {
-                                                        n
-                                                    } else {
-                                                        0
-                                                    }
+                                                    crate::native_scalar::encode(&args[2])
+                                                        .map_or(0, |value| value.0)
                                                 } else {
                                                     0
                                                 },
                                                 arg3: if use_fast_args && args.len() > 3 {
-                                                    if let Value::Int(n) = args[3] {
-                                                        n
-                                                    } else {
-                                                        0
-                                                    }
+                                                    crate::native_scalar::encode(&args[3])
+                                                        .map_or(0, |value| value.0)
                                                 } else {
                                                     0
                                                 },
@@ -3194,7 +3195,9 @@ impl VM {
                                 // PHASE 7 STEP 12: Check for direct-arg version FIRST for single-int-arg calls
                                 // This is the key optimization for recursive functions - avoids FFI on each call
                                 if args.len() == 1 {
-                                    if let Value::Int(arg_val) = args[0] {
+                                    if let Some((arg_val, _)) =
+                                        crate::native_scalar::encode(&args[0])
+                                    {
                                         if let Some(fn_info) = self.compiled_fn_info.get(func_name)
                                         {
                                             if let Some(direct_fn) = fn_info.fn_with_arg {
@@ -3239,6 +3242,14 @@ impl VM {
                                                     has_return_value: false,
                                                     return_value_kind: 0,
                                                     runtime_error: None,
+                                                    call_name_ptr: func_name.as_ptr(),
+                                                    call_name_len: func_name.len(),
+                                                    native_call_depth: 0,
+                                                    arg_kinds: std::array::from_fn(|index| {
+                                                        args.get(index)
+                                                            .and_then(crate::native_scalar::encode)
+                                                            .map_or(0, |value| value.1)
+                                                    }),
                                                     arg0: arg_val,
                                                     arg1: 0,
                                                     arg2: 0,
@@ -3374,10 +3385,12 @@ impl VM {
                                         .instructions
                                         .iter()
                                         .any(|op| matches!(op, OpCode::JumpBack(_)));
-                                    // Check if we can use fast arg passing (≤4 integer args)
+                                    // Check if we can use fast arg passing (≤4 immediate args)
                                     let use_fast_args = !has_loop
                                         && args.len() <= 4
-                                        && args.iter().all(|a| matches!(a, Value::Int(_)));
+                                        && args
+                                            .iter()
+                                            .all(|a| crate::native_scalar::encode(a).is_some());
 
                                     // Create VMContext with fast arg fields
                                     let mut vm_context = crate::jit::VMContext {
@@ -3392,39 +3405,35 @@ impl VM {
                                         has_return_value: false,
                                         return_value_kind: 0,
                                         runtime_error: None,
+                                        call_name_ptr: func_name.as_ptr(),
+                                        call_name_len: func_name.len(),
+                                        native_call_depth: 0,
+                                        arg_kinds: std::array::from_fn(|index| {
+                                            args.get(index)
+                                                .and_then(crate::native_scalar::encode)
+                                                .map_or(0, |value| value.1)
+                                        }),
                                         arg0: if use_fast_args && args.len() > 0 {
-                                            if let Value::Int(n) = args[0] {
-                                                n
-                                            } else {
-                                                0
-                                            }
+                                            crate::native_scalar::encode(&args[0])
+                                                .map_or(0, |value| value.0)
                                         } else {
                                             0
                                         },
                                         arg1: if use_fast_args && args.len() > 1 {
-                                            if let Value::Int(n) = args[1] {
-                                                n
-                                            } else {
-                                                0
-                                            }
+                                            crate::native_scalar::encode(&args[1])
+                                                .map_or(0, |value| value.0)
                                         } else {
                                             0
                                         },
                                         arg2: if use_fast_args && args.len() > 2 {
-                                            if let Value::Int(n) = args[2] {
-                                                n
-                                            } else {
-                                                0
-                                            }
+                                            crate::native_scalar::encode(&args[2])
+                                                .map_or(0, |value| value.0)
                                         } else {
                                             0
                                         },
                                         arg3: if use_fast_args && args.len() > 3 {
-                                            if let Value::Int(n) = args[3] {
-                                                n
-                                            } else {
-                                                0
-                                            }
+                                            crate::native_scalar::encode(&args[3])
+                                                .map_or(0, |value| value.0)
                                         } else {
                                             0
                                         },
@@ -3566,7 +3575,11 @@ impl VM {
                                 }
                             }
 
-                            self.call_bytecode_function(function, raw_args, args)?;
+                            if let Err(error) =
+                                self.call_bytecode_function(function, raw_args, args)
+                            {
+                                self.throw_runtime_value(Value::Error(error))?;
+                            }
                         }
                         Value::NativeFunction(_) => {
                             match self.call_native_function_vm(function.clone(), args) {
@@ -6605,7 +6618,13 @@ impl VM {
             }
 
             let max_depth = runtime_limits::DEFAULT_MAX_VM_CALL_DEPTH;
-            if self.call_frames.len() >= max_depth || self.recursion_depth >= max_depth {
+            if self
+                .call_frames
+                .len()
+                .max(self.recursion_depth)
+                .saturating_add(self.native_call_depth)
+                >= max_depth
+            {
                 let callable = chunk.name.as_deref().unwrap_or("<anonymous>");
                 return Err(format!(
                     "Maximum VM call stack depth of {} exceeded while calling {}",
@@ -8221,6 +8240,24 @@ impl VM {
 
     /// Keep name storage stable when a native callback adds another cache entry.
     /// Native helpers only read this table; the local Arc keeps it alive across calls.
+    pub(crate) fn enter_native_function(&mut self, name: &str) -> Result<(), String> {
+        let limit = runtime_limits::DEFAULT_MAX_VM_CALL_DEPTH;
+        if self.call_frames.len().max(self.recursion_depth).saturating_add(self.native_call_depth)
+            >= limit
+        {
+            return Err(format!(
+                "Maximum VM call stack depth of {} exceeded while calling {}",
+                limit, name
+            ));
+        }
+        self.native_call_depth += 1;
+        Ok(())
+    }
+
+    pub(crate) fn leave_native_function(&mut self) {
+        self.native_call_depth = self.native_call_depth.saturating_sub(1);
+    }
+
     fn jit_function_names(&mut self, chunk: &BytecodeChunk) -> Arc<HashMap<u64, String>> {
         let key = chunk.name.as_deref().unwrap_or("<anonymous>");
         if let Some(names) = self.jit_var_names_cache.get(key) {
@@ -8293,14 +8330,14 @@ impl VM {
                 if self.jit_enabled
                     && !Self::requires_closure_vm(chunk)
                     && args.len() == chunk.params.len()
-                    && args.iter().all(|arg| matches!(arg, Value::Int(_)))
+                    && args.iter().all(|arg| crate::native_scalar::encode(arg).is_some())
                 {
                     let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
                     // PHASE 7 STEP 12: Check for direct-arg optimized variant first
                     // This enables direct JIT recursion without FFI boundary crossing
                     if args.len() == 1 {
-                        if let Value::Int(arg_val) = args[0] {
+                        if let Some((arg_val, _)) = crate::native_scalar::encode(&args[0]) {
                             // Copy the function info to avoid borrow checker issues
                             let fn_info_opt = self.compiled_fn_info.get(func_name).copied();
 
@@ -8348,6 +8385,14 @@ impl VM {
                                         has_return_value: false,
                                         return_value_kind: 0,
                                         runtime_error: None,
+                                        call_name_ptr: func_name.as_ptr(),
+                                        call_name_len: func_name.len(),
+                                        native_call_depth: 0,
+                                        arg_kinds: std::array::from_fn(|index| {
+                                            args.get(index)
+                                                .and_then(crate::native_scalar::encode)
+                                                .map_or(0, |value| value.1)
+                                        }),
                                         arg0: arg_val,
                                         arg1: 0,
                                         arg2: 0,
@@ -8385,17 +8430,17 @@ impl VM {
                     if let Some(compiled_fn) = compiled_fn_opt {
                         // Fast path: Direct JIT → JIT call!
 
-                        // OPTIMIZATION: For simple integer-only functions with ≤4 args,
+                        // OPTIMIZATION: For simple immediate-valued functions with ≤4 args,
                         // pass arguments directly via VMContext fields instead of HashMap
                         let has_loop =
                             chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
                         let use_fast_args = !has_loop
                             && args.len() <= 4
-                            && args.iter().all(|a| matches!(a, Value::Int(_)));
+                            && args.iter().all(|a| crate::native_scalar::encode(a).is_some());
 
-                        // ULTRA-FAST PATH: Skip HashMap entirely for simple integer functions
+                        // ULTRA-FAST PATH: Skip HashMap entirely for simple immediate-valued functions
                         // The JIT uses jit_get_arg to read parameters directly from VMContext
-                        // We only need the HashMap for functions with non-integer args or >4 args
+                        // We only need the HashMap for functions with loops or >4 args
                         let mut func_locals: HashMap<String, Value>;
                         let use_empty_locals = use_fast_args && chunk.params.len() == args.len();
 
@@ -8500,39 +8545,31 @@ impl VM {
                             has_return_value: false,
                             return_value_kind: 0,
                             runtime_error: None,
+                            call_name_ptr: func_name.as_ptr(),
+                            call_name_len: func_name.len(),
+                            native_call_depth: 0,
+                            arg_kinds: std::array::from_fn(|index| {
+                                args.get(index)
+                                    .and_then(crate::native_scalar::encode)
+                                    .map_or(0, |value| value.1)
+                            }),
                             arg0: if use_fast_args && args.len() > 0 {
-                                if let Value::Int(n) = args[0] {
-                                    n
-                                } else {
-                                    0
-                                }
+                                crate::native_scalar::encode(&args[0]).map_or(0, |value| value.0)
                             } else {
                                 0
                             },
                             arg1: if use_fast_args && args.len() > 1 {
-                                if let Value::Int(n) = args[1] {
-                                    n
-                                } else {
-                                    0
-                                }
+                                crate::native_scalar::encode(&args[1]).map_or(0, |value| value.0)
                             } else {
                                 0
                             },
                             arg2: if use_fast_args && args.len() > 2 {
-                                if let Value::Int(n) = args[2] {
-                                    n
-                                } else {
-                                    0
-                                }
+                                crate::native_scalar::encode(&args[2]).map_or(0, |value| value.0)
                             } else {
                                 0
                             },
                             arg3: if use_fast_args && args.len() > 3 {
-                                if let Value::Int(n) = args[3] {
-                                    n
-                                } else {
-                                    0
-                                }
+                                crate::native_scalar::encode(&args[3]).map_or(0, |value| value.0)
                             } else {
                                 0
                             },
