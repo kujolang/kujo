@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Resume native loops in the VM before calls or struct operator callbacks can
+  reacquire the globals mutex. Preserve the exact instruction, operand stack and
+  local state so prior effects are not replayed and exceptions remain catchable.
+
 - Guard fused character-append loops and retain the original bytecode loop for
   unsupported types or bindings. Skipped loops preserve their counters; fractional
   counters, readonly bindings and catchable errors retain ordinary loop behavior.

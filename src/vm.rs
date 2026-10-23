@@ -2219,7 +2219,12 @@ impl VM {
                                         self.jit_compiler
                                             .as_mut()
                                             .expect("JIT compiler initialized when JIT is enabled")
-                                            .compile(&self.chunk, jump_target)
+                                            .compile_loop_with_int_dicts(
+                                                &self.chunk,
+                                                jump_target,
+                                                self.ip,
+                                                std::collections::HashSet::new(),
+                                            )
                                     };
 
                                 match compile_result {
@@ -2299,6 +2304,7 @@ impl VM {
                                             vm_ptr,
                                         );
                                         vm_context.loop_environment_ptr = &mut *globals_guard;
+                                        vm_context.loop_stack_base = self.stack.len();
                                         vm_context.local_slots_ptr =
                                             match self.call_frames.last_mut() {
                                                 Some(frame) => {
@@ -2357,6 +2363,11 @@ impl VM {
                                         drop(globals_guard);
                                         if let Some(error) = vm_context.runtime_error.take() {
                                             self.throw_runtime_value(Value::Error(error))?;
+                                            continue;
+                                        }
+
+                                        if let Some(resume_ip) = vm_context.loop_resume_ip {
+                                            self.ip = resume_ip;
                                             continue;
                                         }
 
@@ -3520,6 +3531,8 @@ impl VM {
                                                 owned_return: None,
                                                 loop_dense_views: Default::default(),
                                                 loop_environment_ptr: std::ptr::null_mut(),
+                                                loop_resume_ip: None,
+                                                loop_stack_base: 0,
                                                 arg_kinds: std::array::from_fn(|index| {
                                                     args.get(index)
                                                         .and_then(crate::native_scalar::encode)
@@ -3648,6 +3661,8 @@ impl VM {
                                                     owned_return: None,
                                                     loop_dense_views: Default::default(),
                                                     loop_environment_ptr: std::ptr::null_mut(),
+                                                    loop_resume_ip: None,
+                                                    loop_stack_base: 0,
                                                     arg_kinds: std::array::from_fn(|index| {
                                                         args.get(index)
                                                             .and_then(crate::native_scalar::encode)
@@ -3822,6 +3837,8 @@ impl VM {
                                         owned_return: None,
                                         loop_dense_views: Default::default(),
                                         loop_environment_ptr: std::ptr::null_mut(),
+                                        loop_resume_ip: None,
+                                        loop_stack_base: 0,
                                         arg_kinds: std::array::from_fn(|index| {
                                             args.get(index)
                                                 .and_then(crate::native_scalar::encode)
@@ -8407,6 +8424,8 @@ impl VM {
                                         owned_return: None,
                                         loop_dense_views: Default::default(),
                                         loop_environment_ptr: std::ptr::null_mut(),
+                                        loop_resume_ip: None,
+                                        loop_stack_base: 0,
                                         arg_kinds: std::array::from_fn(|index| {
                                             args.get(index)
                                                 .and_then(crate::native_scalar::encode)
@@ -8574,6 +8593,8 @@ impl VM {
                             owned_return: None,
                             loop_dense_views: Default::default(),
                             loop_environment_ptr: std::ptr::null_mut(),
+                            loop_resume_ip: None,
+                            loop_stack_base: 0,
                             arg_kinds: std::array::from_fn(|index| {
                                 args.get(index)
                                     .and_then(crate::native_scalar::encode)

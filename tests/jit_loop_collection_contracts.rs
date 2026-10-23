@@ -11,7 +11,22 @@ fn check(source: &str) {
             command.arg(mode);
         }
         command.env("DISABLE_FUNCTION_JIT", "1").env("DEBUG_JIT_LOOP", "1");
-        let output = command.arg(&file).output().unwrap();
+        let mut child = command
+            .arg(&file)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        let start = std::time::Instant::now();
+        while child.try_wait().unwrap().is_none() {
+            if start.elapsed() > std::time::Duration::from_secs(20) {
+                child.kill().unwrap();
+                let output = child.wait_with_output().unwrap();
+                panic!("{mode:?} timed out: {}", String::from_utf8_lossy(&output.stderr));
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        let output = child.wait_with_output().unwrap();
         let error = String::from_utf8_lossy(&output.stderr);
         assert!(output.status.success(), "{mode:?}: {error}");
         assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "PASS");
@@ -19,6 +34,94 @@ fn check(source: &str) {
             assert!(error.contains("Executing compiled loop"), "{error}");
         }
     }
+}
+
+#[test]
+fn loop_operator_callback_resumes_with_full_stack_and_prior_effects() {
+    check(
+        r#"
+        mut calls := 0
+        mut effects := 0
+        struct Box {
+            value: int,
+            func op_add(other) { calls += 1 return value + other.value }
+        }
+        let left := Box { value: 3 }
+        let right := Box { value: 5 }
+        func once() {
+            mut mapping := {}
+            mut i := 0
+            mut sum := 0
+            while i < 200 {
+                mapping[i % 7] = i
+                effects += 1
+                sum = 10 + (left + right)
+                i += 1
+            }
+            assert_equal(sum, 18)
+            assert_equal(mapping[3], 199)
+        }
+        once()
+        assert_equal(calls, 200)
+        assert_equal(effects, 200)
+        print("PASS")
+    "#,
+    );
+}
+
+#[test]
+fn loop_call_resumes_without_replaying_arguments_or_prior_effects() {
+    check(
+        r#"
+        mut calls := 0
+        mut effects := 0
+        func callback(x) { calls += 1 return x + 1 }
+        func once() {
+            mut mapping := {}
+            mut i := 0
+            mut total := 0
+            while i < 200 {
+                mapping[i % 7] = i
+                effects += 1
+                total = 10 + callback(i)
+                i += 1
+            }
+            assert_equal(total, 210)
+            return total
+        }
+        assert_equal(100 + once(), 310)
+        assert_equal(calls, 200)
+        assert_equal(effects, 200)
+        print("PASS")
+    "#,
+    );
+}
+
+#[test]
+fn loop_callback_error_unwinds_after_native_resume() {
+    check(
+        r#"
+        mut effects := 0
+        func callback(x) { assert(false, "callback stop") return 0 }
+        func once() {
+            mut mapping := {}
+            mut i := 0
+            mut result := 0
+            while i < 200 {
+                mapping[i % 7] = i
+                effects += 1
+                if i > 150 { result = callback(i) }
+                i += 1
+            }
+            return result
+        }
+        mut caught := 0
+        try { once() } except error { caught += 1 }
+        assert_equal(caught, 1)
+        assert_equal(effects, 152)
+        print("PASS")
+    "#,
+    );
 }
 
 #[test]

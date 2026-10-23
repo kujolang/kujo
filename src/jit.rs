@@ -135,6 +135,8 @@ pub struct VMContext {
     pub(crate) owned_return: Option<Value>,
     pub(crate) loop_dense_views: HashMap<usize, Box<LoopDenseView>>,
     pub(crate) loop_environment_ptr: *mut crate::interpreter::Environment,
+    pub(crate) loop_resume_ip: Option<usize>,
+    pub(crate) loop_stack_base: usize,
     pub arg_kinds: [i64; 4],
     pub arg0: i64,
     pub arg1: i64,
@@ -259,6 +261,8 @@ impl VMContext {
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
+            loop_resume_ip: None,
+            loop_stack_base: 0,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -294,6 +298,8 @@ impl VMContext {
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
+            loop_resume_ip: None,
+            loop_stack_base: 0,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -343,6 +349,8 @@ impl VMContext {
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
+            loop_resume_ip: None,
+            loop_stack_base: 0,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
@@ -1066,6 +1074,41 @@ pub unsafe extern "C" fn jit_indexed_write(
             1
         }
     }
+}
+
+/// A locked loop must return to bytecode before invoking user callbacks.
+#[no_mangle]
+// SAFETY: ctx and roots are live; this only borrows an operand, never calls user code.
+pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    if ctx.loop_environment_ptr.is_null() {
+        return 0;
+    }
+    if kind == -1 {
+        return 1;
+    } // A Call instruction can enter arbitrary user code.
+    if kind != crate::native_owned::OWNED {
+        return 0;
+    }
+    match ctx.owned_roots.has_operator_methods(value) {
+        Ok(required) => i64::from(required),
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            1
+        }
+    }
+}
+
+#[no_mangle]
+// SAFETY: the loop owns ctx/stack. The translator then marshals its complete
+// operand stack and persists locals before returning to the VM at this exact PC.
+pub unsafe extern "C" fn jit_loop_resume_prepare(ctx: *mut VMContext, pc: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let Some(stack) = ctx.stack_ptr.as_mut() else { return 1 };
+    let Ok(pc) = usize::try_from(pc) else { return 1 };
+    stack.truncate(ctx.loop_stack_base);
+    ctx.loop_resume_ip = Some(pc);
+    0
 }
 
 /// Execute owned operators through the reference VM, including method dispatch.
@@ -3822,6 +3865,9 @@ struct BytecodeTranslator {
     append_local_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
+    loop_resume_enabled: bool,
+    loop_resume_guard_func: Option<FuncRef>,
+    loop_resume_prepare_func: Option<FuncRef>,
     loop_dense_view_func: Option<FuncRef>,
     loop_indexed_read_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
@@ -3984,6 +4030,9 @@ impl BytecodeTranslator {
             append_local_func: None,
             indexed_read_func: None,
             indexed_write_func: None,
+            loop_resume_enabled: false,
+            loop_resume_guard_func: None,
+            loop_resume_prepare_func: None,
             loop_dense_view_func: None,
             loop_indexed_read_func: None,
             scalar_push_func: None,
@@ -4964,6 +5013,9 @@ impl BytecodeTranslator {
         instruction: &OpCode,
         constants: &[Constant],
     ) -> Result<bool, String> {
+        if self.guard_loop_callback(builder, pc, instruction)? {
+            return Ok(true);
+        }
         // Returns Ok(true) if this instruction terminates the block
 
         match instruction {
@@ -6883,6 +6935,80 @@ impl BytecodeTranslator {
         Ok(())
     }
 
+    fn guard_loop_callback(
+        &self,
+        builder: &mut FunctionBuilder,
+        pc: usize,
+        instruction: &OpCode,
+    ) -> Result<bool, String> {
+        if self.tracks_function_depth || !self.loop_resume_enabled {
+            return Ok(false);
+        }
+        let depth = match instruction {
+            OpCode::Add
+            | OpCode::Sub
+            | OpCode::Mul
+            | OpCode::Div
+            | OpCode::Mod
+            | OpCode::LessThan
+            | OpCode::LessEqual
+            | OpCode::GreaterThan
+            | OpCode::GreaterEqual => 2,
+            OpCode::Negate | OpCode::Not => 1,
+            OpCode::Call(_) => 0,
+            _ => return Ok(false),
+        };
+        let (Some(ctx), Some(guard), Some(prepare), Some(push)) = (
+            self.ctx_param,
+            self.loop_resume_guard_func,
+            self.loop_resume_prepare_func,
+            self.scalar_push_func,
+        ) else {
+            return Ok(false);
+        };
+        if depth == 0 {
+            let pc = builder.ins().iconst(types::I64, pc as i64);
+            builder.ins().call(prepare, &[ctx, pc]);
+            for value in &self.value_stack {
+                let kind = self.scalar_kind(builder, *value);
+                builder.ins().call(push, &[ctx, *value, kind]);
+            }
+            self.persist_local_slots(builder, true);
+            let status = builder.ins().iconst(types::I64, 2);
+            self.emit_return(builder, status);
+            return Ok(true);
+        }
+        let index =
+            self.value_stack.len().checked_sub(depth).ok_or("Callback guard stack underflow")?;
+        let value = self.value_stack[index];
+        let kind = self.scalar_kind(builder, value);
+        let resume = builder.create_block();
+        let proceed = builder.create_block();
+        let inspect = builder.create_block();
+        let owned = builder.ins().icmp_imm(IntCC::Equal, kind, crate::native_owned::OWNED);
+        builder.ins().brif(owned, inspect, &[], proceed, &[]);
+        builder.seal_block(inspect);
+        builder.switch_to_block(inspect);
+        let call = builder.ins().call(guard, &[ctx, value, kind]);
+        let result = builder.inst_results(call)[0];
+        let required = builder.ins().icmp_imm(IntCC::NotEqual, result, 0);
+        builder.ins().brif(required, resume, &[], proceed, &[]);
+        builder.seal_block(resume);
+        builder.seal_block(proceed);
+        builder.switch_to_block(resume);
+        let pc = builder.ins().iconst(types::I64, pc as i64);
+        builder.ins().call(prepare, &[ctx, pc]);
+        for value in &self.value_stack {
+            let kind = self.scalar_kind(builder, *value);
+            builder.ins().call(push, &[ctx, *value, kind]);
+        }
+        self.persist_local_slots(builder, true);
+        let status = builder.ins().iconst(types::I64, 2);
+        self.emit_return(builder, status);
+        builder.switch_to_block(proceed);
+        Ok(false)
+    }
+
     fn append_local(
         &mut self,
         builder: &mut FunctionBuilder,
@@ -7350,6 +7476,8 @@ impl JitCompiler {
             ("jit_append_local", 6, true),
             ("jit_indexed_read", 5, true),
             ("jit_indexed_write", 10, true),
+            ("jit_loop_resume_guard", 3, true),
+            ("jit_loop_resume_prepare", 2, true),
             ("jit_loop_dense_view", 2, true),
             ("jit_loop_indexed_read", 4, true),
             ("jit_stack_push_scalar", 3, false),
@@ -7380,6 +7508,8 @@ impl JitCompiler {
                 "jit_append_local" => translator.append_local_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
+                "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
+                "jit_loop_resume_prepare" => translator.loop_resume_prepare_func = Some(function),
                 "jit_loop_dense_view" => translator.loop_dense_view_func = Some(function),
                 "jit_loop_indexed_read" => translator.loop_indexed_read_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
@@ -7443,6 +7573,8 @@ impl JitCompiler {
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
         builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
+        builder.symbol("jit_loop_resume_guard", jit_loop_resume_guard as *const u8);
+        builder.symbol("jit_loop_resume_prepare", jit_loop_resume_prepare as *const u8);
         builder.symbol("jit_loop_dense_view", jit_loop_dense_view as *const u8);
         builder.symbol("jit_loop_indexed_read", jit_loop_indexed_read as *const u8);
         builder.symbol("jit_duplicate_operand", jit_duplicate_operand as *const u8);
@@ -8221,6 +8353,7 @@ impl JitCompiler {
                 translator.function_end
             };
             translator.function_end = function_end;
+            translator.loop_resume_enabled = loop_end.is_some();
             if let Some(slots) = int_dict_slots.as_ref() {
                 translator.set_int_dict_slots(slots.clone());
             }

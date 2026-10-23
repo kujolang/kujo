@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-23",
+  "baseline": "ac3fe6c",
+  "scope": "Native loop callback exit and exact VM resumption",
+  "reproduction": "Specialized native dictionary loop deadlocked in jit_owned_operator while reacquiring globals mutex; baseline probe/stack in operator-loop-audit-2026-10-23.json.",
+  "implementation": [
+    "Guard struct operators before consuming operands; borrow native roots for type inspection without cloning. Immediate kinds bypass the helper.",
+    "Native loop Call instructions exit to VM before user code. Persist all native operands above saved VM stack base and local SSA state; set exact source bytecode PC.",
+    "Drop globals guard before resuming dispatch. No completed instruction is replayed; VM performs callback/error handling.",
+    "Compile ordinary VM loop regions with bounded loop compilation, not the function tail, so callback exit is supported there too."
+  ],
+  "verification": {
+    "library_passed": 1041,
+    "library_ignored": 8,
+    "integration_passed": 39,
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT"
+    ],
+    "native_entry_asserted": true,
+    "cases": [
+      "Original deadlock probe now enters native loop and prints PASS",
+      "Nested 10+(left+right) preserves entire operand stack and exactly200 callback/prior-effect counts",
+      "Direct callback with caller operand100 and native operand10 preserves both stack prefixes",
+      "Callback assertion after native warmup is catchable with exactly152 prior effects",
+      "Existing loop collection typing/growth/readonly contracts, whole-function owned stack and callback/global error contracts"
+    ],
+    "format": "cargo fmt --check and git diff --check passed"
+  },
+  "limitations": [
+    "Callbacks use VM resumption; no fully native callback coverage or speed claim",
+    "Current all50/production acceptance still pending; frozen ac3fe6c matrix predates this change",
+    "Constant append operator dispatch remains open",
+    "An earlier assigned struct-operator-error probe passed VM but interpreter failed caught-count expectation; recorded separately, not fixed or claimed covered by direct-callback error test"
+  ],
+  "logs": [
+    {
+      "path": "/tmp/kujo-loop-resume-probe.log",
+      "sha256": "9f90a5851c7326bb74e520b6fd19ad96c8d9612c78469f8683f3f120c28891e0"
+    },
+    {
+      "path": "/tmp/kujo-loop-resume-verified.log",
+      "sha256": "7fd5cb8b6390b542525b25cfc5236c7e390f75d6194565d40990949b81bcdce1"
+    },
+    {
+      "path": "/tmp/kujo-loop-resume-format.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/tmp/kujo-loop-resume-final-contracts.log",
+      "sha256": "5b45985c72dfc12031ca02935e3a63802b5df2992cbae5b7b339e5ec96b18bf0"
+    }
+  ]
+}

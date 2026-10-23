@@ -156,6 +156,12 @@ impl NativeCallRoots {
         self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
     }
 
+    pub(crate) fn has_operator_methods(&self, payload: i64) -> Result<bool, OwnershipError> {
+        self.values
+            .get(Handle::from_payload(payload))
+            .map(|value| matches!(value, Value::Struct { .. }))
+    }
+
     pub(crate) fn values_equal(
         &self,
         left: i64,

@@ -19,12 +19,12 @@ a target to test, not a guarantee. This document explains the execution order;
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
   timings do not establish an end-to-end speedup.
 - The latest verified test-size
-  [interpreter](checksums-2026-10-23-indexed-bindings-interpreter.json),
-  [VM matrix](checksums-2026-10-23-indexed-bindings-vm.json) and
-  [JIT matrix](checksums-2026-10-23-indexed-bindings-jit.json) passed all 50 at
-  `b286c5d`, with hashes/schemas verified and fallback allowed. These frozen candidates
-  predate the fixed-dictionary allocation, specialized-loop and fused-append fixes
-  and cannot certify current HEAD.
+  [interpreter](checksums-2026-10-23-guarded-append-release-interpreter.json),
+  [VM matrix](checksums-2026-10-23-guarded-append-release-vm.json) and
+  [JIT matrix](checksums-2026-10-23-guarded-append-release-jit.json) passed all 50 at
+  `ac3fe6c` in release builds, with hashes/schemas verified and fallback allowed.
+  This frozen candidate predates native-loop callback resumption and retains
+  the operator gaps recorded below. It cannot certify current HEAD.
   No complete current production-size run exists.
 - All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
   per-case debug deadline. VM fallback was allowed. This establishes neither full
@@ -142,7 +142,14 @@ loops deadlock when an operator callback reacquires the globals mutex held by th
 loop invocation. The latter is confirmed by native-entry logs and a sampled lock
 stack; VM/interpreter pass the same probe. Preserve checked callback dispatch and
 resume state without replaying effects before widening native coverage. These
-probes are independent of the all-50 matrix and remain unresolved.
+probes are independent of the all-50 matrix. The
+[loop callback resume fix](native-loop-resume-2026-10-23.json) repairs the deadlock
+by persisting the full operand stack and locals, exiting native execution and
+resuming the exact VM instruction after releasing the lock. Calls and struct
+operators may therefore fall back; immediate numeric operations stay native.
+The original deadlock probe and regression checks now pass with native entry
+verified. Constant append operator dispatch remains open, as does a separately
+observed interpreter/VM discrepancy in assigned operator-error results.
 
 The [fused character-append audit](guarded-append-fusion-2026-10-23.json) adds
 an ordinary bytecode fallback to the VM fast path.
