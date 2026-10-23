@@ -34,7 +34,8 @@
       "status": "in_progress",
       "evidence": [
         "json-serialization-allocations-2026-10-23.json",
-        "paired-json-2026-10-23.json"
+        "paired-json-2026-10-23.json",
+        "paired-assignment-2026-10-23.json"
       ]
     },
     {
@@ -1071,6 +1072,11 @@
         "tests/arithmetic_exception_contracts.rs",
         "jit-typed-audit-2026-10-23.json"
       ]
+    },
+    {
+      "scope": "seven-round paired nested assignment candidate ebe4258 versus JSON27fd599",
+      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754–1.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
+      "evidence": "paired-assignment-2026-10-23.json"
     }
   ]
 }
