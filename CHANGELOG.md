@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Add bounded runtime measurements for actual native entries and JIT call
+  dispatches containing owned arguments. Preserve older v1 measurement reports;
+  the LangArena isolated runner can collect and hash per-case reports explicitly.
+
 - Compile hot calls with float, Boolean and null arguments using tagged native
   parameters, including callbacks, loops, larger argument lists and direct
   recursion. Owned-value arguments retain the guarded VM path. Enforce the VM

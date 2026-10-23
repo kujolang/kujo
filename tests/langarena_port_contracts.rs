@@ -175,3 +175,81 @@ fn isolated_runner_checkpoints_and_fails_incomplete_cases_in_both_runtimes() {
         }
     }
 }
+
+#[test]
+fn isolated_runner_collects_fresh_measurements_and_preserves_incomplete_results() {
+    use sha2::{Digest, Sha256};
+    let dir = tempfile::tempdir().unwrap();
+    let port = dir.path().join("benchmarks/langarena/port.kujo");
+    std::fs::create_dir_all(port.parent().unwrap()).unwrap();
+    std::fs::write(&port, source(true)).unwrap();
+    let config: serde_json::Value =
+        serde_json::from_str(include_str!("../benchmarks/langarena/test.json")).unwrap();
+    let case = config.as_array().unwrap().iter().find(|c| c["name"] == "Base64::Encode").unwrap();
+    let runner =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("benchmarks/langarena/profile.kujo");
+    for interpreter_driver in [false, true] {
+        for runtime in ["vm", "jit"] {
+            for status in ["passed", "failed", "timeout"] {
+                let mut case = case.clone();
+                if status == "failed" {
+                    case["checksum"] = serde_json::json!(0);
+                }
+                let prefix = format!("{interpreter_driver}-{runtime}-{status}");
+                let config_path = dir.path().join(format!("{prefix}-config.json"));
+                let output_path = dir.path().join(format!("{prefix}-result.json"));
+                std::fs::write(&config_path, serde_json::to_vec(&vec![case]).unwrap()).unwrap();
+                let mut command = std::process::Command::new(env!("CARGO_BIN_EXE_kujo"));
+                command
+                    .current_dir(dir.path())
+                    .arg("run")
+                    .arg(&runner)
+                    .arg("--scheduler-no-timeout");
+                if interpreter_driver {
+                    command.arg("--interpreter");
+                }
+                command
+                    .arg(env!("CARGO_BIN_EXE_kujo"))
+                    .arg(&config_path)
+                    .arg(&output_path)
+                    .arg(if status == "timeout" { "1" } else { "30000" })
+                    .arg(runtime)
+                    .args(["0", "1", "", "measurements"]);
+                let output = command.output().unwrap();
+                assert_eq!(
+                    output.status.success(),
+                    status == "passed",
+                    "{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                let checkpoint: serde_json::Value =
+                    serde_json::from_slice(&std::fs::read(&output_path).unwrap()).unwrap();
+                let row = &checkpoint["results"][0];
+                assert_eq!(row["status"], status);
+                let measurements = &row["measurements"];
+                if status == "timeout" {
+                    assert_eq!(measurements["status"], "unavailable");
+                } else {
+                    assert_eq!(measurements["status"], "available");
+                    assert_eq!(
+                        measurements["report"]["outcome"],
+                        if status == "passed" { "success" } else { "runtime_error" }
+                    );
+                    let path = measurements["path"].as_str().unwrap();
+                    let bytes = std::fs::read(path).unwrap();
+                    assert_eq!(measurements["sha256"], format!("{:x}", Sha256::digest(&bytes)));
+                    assert!(
+                        measurements["report"]["counters"]["jit_native_function_entries"].is_u64()
+                    );
+                    if status == "passed" {
+                        let repeated = command.output().unwrap();
+                        assert!(!repeated.status.success());
+                        assert!(String::from_utf8_lossy(&repeated.stderr)
+                            .contains("measurement destination already exists"));
+                        assert_eq!(std::fs::read(path).unwrap(), bytes);
+                    }
+                }
+            }
+        }
+    }
+}

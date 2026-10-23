@@ -30,6 +30,10 @@ does not read clocks or allocate per event.
 | `cpu_seconds`, `process_peak_rss_bytes` | CPU delta for this process (all threads, excluding children) and process-lifetime peak RSS from the existing Unix getrusage mechanism; null when unsupported or unavailable; RSS is not a session delta |
 | `vm_entries`, `vm_inclusive_wall_ns` | Entries/time in VM execute, including resumes and nested/callback execution; inclusive totals can exceed wall time |
 | `vm_call_opcodes`, `vm_return_opcodes`, `vm_native_call_opcodes` | Dispatched opcodes, not unique functions, successful calls or calls executed wholly in generated machine code |
+| `jit_native_boundary_entries` | Calls through the audited Rust-to-native wrappers, covering functions, loops and scripts; does not count direct native-to-native recursion |
+| `jit_native_function_entries` | Successful native function prologues, including direct native recursion; excludes loops/scripts and rejected depth-guard entries |
+| `jit_call_dispatches` | Bytecode-call dispatches observed after main-VM argument preparation or at native callback-bridge entry while JIT is enabled; includes compilation retries, excludes earlier preparation failures, and is not a count of unique logical calls |
+| `jit_owned_argument_dispatches` | Subset of those dispatches containing a value outside Int/Bool/Float/Null; other exclusions such as captures may also apply |
 | `scheduler_rounds` | Cooperative scheduler rounds; not Tokio's internal scheduling decisions |
 | `vm_closures_created`, `vm_capture_cells_created` | Created closure values and cells at MakeClosure; cumulative, not live/peak retention |
 | `vm_capture_value_shallow_bytes` | Count times Rust Value size, excluding Arc/Mutex, map/string storage and referenced graph; not retained heap bytes |
@@ -88,6 +92,13 @@ the producer or guarantee retention. Missing usage/cost stays null/unavailable.
 
 Never sum inclusive wall time as CPU duration, infer safe replay from measurements,
 or treat producer metadata as proof. See [end-to-end completion and ownership](WAVE_A_ECOSYSTEM_COMPLETION.md).
+
+The four native-entry/dispatch counters are additive v1 fields. Current producers
+emit them, but they remain optional in the schema so older reports still validate.
+Missing fields mean unavailable, not zero. These counts have different event
+boundaries: do not divide function entries by dispatches to claim a native coverage
+percentage, and do not infer speed from compilation or entry counts. They provide
+neither per-function attribution nor the fraction of workload CPU time in native code.
 
 ## Validation and benchmarking
 

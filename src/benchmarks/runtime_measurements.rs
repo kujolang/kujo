@@ -42,6 +42,10 @@ metrics! {
     PromisePolls => "promise_polls",
     PromisePending => "promise_pending_polls",
     PromiseReady => "promise_ready_polls",
+    JitNativeBoundaryEntries => "jit_native_boundary_entries",
+    JitNativeFunctionEntries => "jit_native_function_entries",
+    JitCallDispatches => "jit_call_dispatches",
+    JitOwnedArgumentDispatches => "jit_owned_argument_dispatches",
     JitCompileEntries => "jit_compile_entries",
     JitCompileWallNs => "jit_compile_inclusive_wall_ns",
     JitCacheHits => "jit_cache_lookup_hits",
@@ -68,6 +72,10 @@ pub fn start() -> Result<(), &'static str> {
             counters: std::array::from_fn(|_| AtomicU64::new(0)),
         })
         .map_err(|_| "runtime measurements already started in this process")
+}
+
+pub(crate) fn is_enabled() -> bool {
+    COLLECTOR.get().is_some()
 }
 
 // Keep fetch_update for the Rust 1.89 MSRV; newer Rust renames it to try_update.

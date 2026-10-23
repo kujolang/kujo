@@ -1,7 +1,7 @@
 # Run unchanged workloads in isolated processes. Timeout is an incomplete result,
 # never a checksum failure. Results are checkpointed after every case.
 let arguments := args()
-assert(len(arguments) >= 5, "usage: profile.kujo BINARY CONFIG OUTPUT TIMEOUT_MS RUNTIME [SHARD SHARDS] [EXACT_NAME]")
+assert(len(arguments) >= 5, "usage: profile.kujo BINARY CONFIG OUTPUT TIMEOUT_MS RUNTIME [SHARD SHARDS] [EXACT_NAME] [measurements]")
 let binary := arguments[0]
 let config := arguments[1]
 let output := arguments[2]
@@ -14,6 +14,22 @@ if len(arguments) >= 7 { shard = to_int(arguments[5]) shards = to_int(arguments[
 assert(shards > 0 && shard >= 0 && shard < shards, "invalid shard")
 mut selected := ""
 if len(arguments) >= 8 { selected = arguments[7] }
+let collect_measurements := len(arguments) >= 9
+if collect_measurements {
+    assert_equal(arguments[8], "measurements")
+    assert(runtime != "interpreter", "VM measurements cannot run with interpreter children")
+}
+func load_measurements(path) {
+    try {
+        let raw := read_file(path)
+        assert(len(raw) > 0 && len(raw) <= 8192, "empty or oversized measurement report")
+        let report := parse_json(raw)
+        assert_equal(report["schema"], "kujo.runtime-measurements/v1")
+        return {"status": "available", "path": path, "sha256": sha256(raw), "report": report}
+    } except error {
+        return {"status": "unavailable", "path": path, "reason": str(error)}
+    }
+}
 let cases := parse_json(read_file(config))
 mut results := []
 mut incomplete := 0
@@ -25,9 +41,15 @@ for cfg in cases {
     if selected != "" && selected != cfg["name"] { continue }
     let name := cfg["name"]
     print("START " + name)
-    mut command := [binary, "run", "benchmarks/langarena/port.kujo", "--scheduler-no-timeout", config, name, "--profile"]
-    if runtime == "interpreter" { command = [binary, "run", "benchmarks/langarena/port.kujo", "--interpreter", "--scheduler-no-timeout", config, name, "--profile"] }
-    if runtime == "jit" { command = [binary, "run", "benchmarks/langarena/port.kujo", "--jit", "--scheduler-no-timeout", config, name, "--profile"] }
+    mut options := ["--scheduler-no-timeout"]
+    if runtime == "interpreter" { options = push(options, "--interpreter") }
+    if runtime == "jit" { options = push(options, "--jit") }
+    let measurement_path := output + ".case-" + str(ordinal) + ".measurements.json"
+    if collect_measurements {
+        assert(!file_exists(measurement_path), "measurement destination already exists: " + measurement_path)
+        options = [...options, "--measurements", measurement_path]
+    }
+    let command := [binary, "run", ...options, "benchmarks/langarena/port.kujo", config, name, "--profile"]
     let started := time_ns()
     let result := spawn_process(command, {"timeout_ms": timeout, "max_output_bytes": 1048576, "stream_stdout_path": output + ".current.stdout", "stream_stderr_path": output + ".current.stderr"})
     let duration := time_ns() - started
@@ -35,8 +57,15 @@ for cfg in cases {
     if result.timed_out { status = "timeout" }
     else if result.cancelled { status = "cancelled" }
     else if result.success && contains(result.stdout, name + ": OK " + str(cfg["checksum"])) == 1 && contains(result.stdout, "Summary: 1, 1, 0") == 1 { status = "passed" }
-    if status != "passed" { incomplete += 1 }
-    results = push(results, {"name": name, "runtime": runtime, "config": cfg, "status": status, "elapsed_ns": duration, "timeout_ms": timeout, "exitcode": result.exitcode, "stdout": result.stdout, "stderr": result.stderr, "stdout_truncated": result.stdout_truncated, "stderr_truncated": result.stderr_truncated})
+    mut case_incomplete := status != "passed"
+    mut row := {"name": name, "runtime": runtime, "config": cfg, "status": status, "elapsed_ns": duration, "timeout_ms": timeout, "exitcode": result.exitcode, "stdout": result.stdout, "stderr": result.stderr, "stdout_truncated": result.stdout_truncated, "stderr_truncated": result.stderr_truncated}
+    if collect_measurements {
+        let measurements := load_measurements(measurement_path)
+        row["measurements"] = measurements
+        if measurements["status"] != "available" { case_incomplete = true }
+    }
+    if case_incomplete { incomplete += 1 }
+    results = push(results, row)
     write_file(output, to_json({"binary": binary, "config": config, "runtime": runtime, "results": results}), true)
     print(name + ": " + status + " ns=" + str(duration))
     if result.cancelled { break }

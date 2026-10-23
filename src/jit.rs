@@ -271,6 +271,7 @@ pub type CompiledFnWithArg = unsafe extern "C" fn(*mut VMContext, i64) -> i64;
 /// - The called function must not outlive or stash pointers derived from `ctx`.
 #[inline]
 pub fn invoke_compiled_fn(compiled_fn: CompiledFn, ctx: &mut VMContext) -> i64 {
+    measurement::add(Metric::JitNativeBoundaryEntries, 1);
     // SAFETY:
     // - Preconditions: `compiled_fn` was produced by this JIT and `ctx` is a live VM-owned context for this call.
     // - Postconditions: control returns with JIT status code and no pointer from `ctx` escapes this wrapper.
@@ -290,6 +291,7 @@ pub fn invoke_compiled_fn_with_arg(
     ctx: &mut VMContext,
     arg: i64,
 ) -> i64 {
+    measurement::add(Metric::JitNativeBoundaryEntries, 1);
     // SAFETY:
     // - Preconditions: identical to `invoke_compiled_fn`; `arg` is plain value data and ABI-compatible.
     // - Postconditions: returns the direct-arg JIT result without transferring ownership of context internals.
@@ -2397,6 +2399,7 @@ pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
         ctx.runtime_error = Some(error);
         return 1;
     }
+    measurement::add(Metric::JitNativeFunctionEntries, 1);
     0
 }
 

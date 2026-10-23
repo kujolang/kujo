@@ -319,6 +319,9 @@ retain exit 4 and existing diagnostics, and record `runtime_error` when export
 succeeds. Compile errors and runner panics record their distinct outcomes.
 Abrupt process termination need not produce a valid artifact. Never accept an
 empty/truncated report as completion or continuation authority.
+Additive native boundary/function entry and owned-argument dispatch counters are
+specified in `RUNTIME_MEASUREMENTS.md`. Older v1 reports may omit them; absence is
+unavailable, not zero or evidence that native execution did not occur.
 
 ## Opt-in Windows descendant lifetime
 

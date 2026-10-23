@@ -3022,6 +3022,7 @@ impl VM {
                             let raw_args = args.clone();
                             let args = self.prepare_bytecode_call_args(chunk, args.clone())?;
 
+                            self.record_jit_dispatch(&args);
                             // Track function calls for JIT compilation
                             if self.jit_enabled
                                 && !chunk.is_generator
@@ -8258,6 +8259,16 @@ impl VM {
         self.native_call_depth = self.native_call_depth.saturating_sub(1);
     }
 
+    fn record_jit_dispatch(&self, args: &[Value]) {
+        // Disabled measurement does not scan arguments or allocate.
+        if self.jit_enabled && measurement::is_enabled() {
+            measurement::add(Metric::JitCallDispatches, 1);
+            if args.iter().any(|value| crate::native_scalar::encode(value).is_none()) {
+                measurement::add(Metric::JitOwnedArgumentDispatches, 1);
+            }
+        }
+    }
+
     fn jit_function_names(&mut self, chunk: &BytecodeChunk) -> Arc<HashMap<u64, String>> {
         let key = chunk.name.as_deref().unwrap_or("<anonymous>");
         if let Some(names) = self.jit_var_names_cache.get(key) {
@@ -8311,6 +8322,7 @@ impl VM {
     ) -> Result<Value, String> {
         match &function {
             Value::BytecodeFunction { chunk, captured: _, captured_binding_kinds: _ } => {
+                self.record_jit_dispatch(&args);
                 if Self::requires_closure_vm(chunk)
                     || chunk.is_async
                     || chunk.is_generator

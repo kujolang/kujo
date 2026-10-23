@@ -25,7 +25,9 @@
       "scope": "CPU/allocation profiles and JIT execution/coverage/fallback evidence; reproducible cost and semantic test before optimization",
       "status": "in_progress",
       "evidence": [
-        "quicksort-execution-counters-2026-10-23.json"
+        "quicksort-execution-counters-2026-10-23.json",
+        "../../docs/RUNTIME_MEASUREMENTS.md",
+        "../../tests/runtime_measurements.rs"
       ]
     },
     {
@@ -1427,6 +1429,15 @@
       "scope": "all fifty test-size JIT-enabled checksums at33a85f9",
       "result": "50/50 passed unchanged with600-second per-case deadlines; exact identities, configurations and checksum lines independently verified. Final frozen binary and runtime source hashes match the argument/depth audit. No timeout or checksum failure. Preliminary pre-final candidate audit was intentionally stopped after17passes when runtime implementation changed; final run completed afresh. Debug/shared-host elapsed times are diagnostic only; VM fallback allowed. Not production, native coverage, controlled speed or full current reference-runtime acceptance.",
       "evidence": "checksums-2026-10-23-native-arguments-jit.json"
+    },
+    {
+      "scope": "native entry and owned-argument dispatch measurement contracts",
+      "result": "Baseline new metric assertion failed because fields were absent. Final34 selected integrations pass (one long all-fifty test ignored), plus1009 library tests (8 ignored) and53 CLI/JSON/diagnostic integrations. No-default-feature library, formatting and diff checks pass. Controlled200-call fixtures prove actual native entries, owned-argument exclusion and direct recursion; measured/unmeasured behavior matches, older v1 reports remain schema-valid. Runner tests cover both driver runtimes, VM/JIT children, success/failure/timeout, exact report hashes and stale-file refusal. Initial link failed for disk exhaustion; package-scoped cargo clean recovered reproducible artifacts and the unchanged source then passed.",
+      "evidence": [
+        "../../tests/runtime_measurements.rs",
+        "../../tests/langarena_port_contracts.rs",
+        "../../docs/RUNTIME_MEASUREMENTS.md"
+      ]
     }
   ]
 }

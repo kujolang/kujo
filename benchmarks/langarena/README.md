@@ -105,6 +105,14 @@ target/release/kujo run benchmarks/langarena/profile.kujo --scheduler-no-timeout
 Use `interpreter` instead of `vm` for interpreter coverage, or `jit` for explicit
 experimental JIT coverage. Optional trailing
 `SHARD SHARDS` selects disjoint cases; an additional exact name selects one case.
+Append `0 1 "" measurements` after the runtime to collect VM counters for all
+cases (or use an exact name instead of the empty string). This works for `vm` or
+`jit` children, not `interpreter`. Each child writes a new report beside the output;
+the checkpoint records its parsed data and SHA-256. Existing measurement files
+are rejected, and missing/empty reports remain unavailable and fail the collection
+gate even if a checksum passed. Instrumented elapsed times are diagnostic, not
+competitive scores; native entries are not a percentage of CPU coverage.
+
 The parent has no scheduler deadline because child processes have individual
 hard deadlines. `timeout` means incomplete, not a checksum failure. Cancellation
 stops the runner after saving the interrupted case. Stream files beside the JSON

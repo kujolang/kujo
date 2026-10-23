@@ -48,6 +48,16 @@ fn run(source: &str, extra: &[&str]) -> (Output, Value) {
         .compile(&schema)
         .unwrap();
     assert!(validator.is_valid(&value), "invalid report: {value}");
+    let mut legacy = value.clone();
+    for key in [
+        "jit_native_boundary_entries",
+        "jit_native_function_entries",
+        "jit_call_dispatches",
+        "jit_owned_argument_dispatches",
+    ] {
+        legacy["counters"].as_object_mut().unwrap().remove(key);
+    }
+    assert!(validator.is_valid(&legacy), "older v1 report rejected");
     let mut invalid = value.clone();
     invalid["counters"]["vm_entries"] = serde_json::json!(-1);
     assert!(!validator.is_valid(&invalid));
@@ -160,4 +170,56 @@ fn admission_failure_and_restricted_worker_errors_remain_conservative() {
     assert!(output.status.success());
     assert_eq!(String::from_utf8(output.stdout).unwrap().trim(), "true");
     assert_eq!(report["counters"]["task_completions_published"], 1);
+}
+
+#[test]
+#[cfg(feature = "runtime-jit")]
+fn native_entry_measurements_distinguish_execution_from_owned_argument_dispatches() {
+    let float_calls = format!(
+        "func identity(x) {{ return x }}\n{}",
+        "assert_equal(identity(2.5),2.5)\n".repeat(200)
+    );
+    let (output, measured) = run(&float_calls, &["--jit"]);
+    assert!(output.status.success());
+    let counts = &measured["counters"];
+    assert_eq!(counts["jit_native_function_entries"], 101);
+    assert_eq!(counts["jit_native_boundary_entries"], 101);
+    assert_eq!(counts["jit_call_dispatches"], 201); // Includes compilation retry.
+    assert_eq!(counts["jit_owned_argument_dispatches"], 0);
+
+    let owned_calls = format!(
+        "func identity(x) {{ return x }}\n{}",
+        "assert_equal(identity([1]),[1])\n".repeat(200)
+    );
+    let (output, measured) = run(&owned_calls, &["--jit"]);
+    assert!(output.status.success());
+    let counts = &measured["counters"];
+    assert_eq!(counts["jit_native_function_entries"], 0);
+    assert_eq!(counts["jit_native_boundary_entries"], 0);
+    assert_eq!(counts["jit_call_dispatches"], 200);
+    assert_eq!(counts["jit_owned_argument_dispatches"], 200);
+
+    let (_, measured) = run(&float_calls, &[]);
+    for key in [
+        "jit_native_function_entries",
+        "jit_native_boundary_entries",
+        "jit_call_dispatches",
+        "jit_owned_argument_dispatches",
+    ] {
+        assert_eq!(measured["counters"][key], 0);
+    }
+}
+
+#[test]
+#[cfg(feature = "runtime-jit")]
+fn native_function_entries_include_direct_recursion_without_inventing_boundaries() {
+    let source = format!(
+        "func walk(x) {{ if x <= 0 {{ return 0 }} return walk(x - 1) }}\n{}",
+        "assert_equal(walk(2.5),0)\n".repeat(200)
+    );
+    let (output, report) = run(&source, &["--jit"]);
+    assert!(output.status.success());
+    let functions = report["counters"]["jit_native_function_entries"].as_u64().unwrap();
+    let boundaries = report["counters"]["jit_native_boundary_entries"].as_u64().unwrap();
+    assert!(functions > boundaries && boundaries > 0);
 }
