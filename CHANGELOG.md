@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve last-value-wins semantics for repeated constant dictionary keys in the
+  VM while evaluating every value expression in source order. Unique constant
+  keys retain their fixed-dictionary representation.
+
 - Release discarded native owned operands and overwritten SSA locals promptly,
   preserving separate roots for duplicates and local reads. Release marshaled
   callback arguments and consumed equality/logical operands without changing value

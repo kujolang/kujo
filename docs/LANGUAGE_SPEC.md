@@ -316,7 +316,7 @@ let or_value := false || 5
 ### 5.6 Data structures
 
 - Arrays preserve insertion order.
-- Dictionaries preserve key/value associations; merge/spread behavior is right-biased for duplicate keys.
+- Dictionaries preserve key/value associations; literals and merge/spread behavior are right-biased for duplicate keys. Literal value expressions still evaluate in source order, including overwritten entries.
 - Dictionary indexing with a missing key is a runtime error. Programs that need fallback behavior should use explicit dictionary helpers such as `has_key`, `get`, or `get_default`.
 - Dictionary indexing accepts string keys and integer keys. Other key types are invalid index operations.
 - Integer keys alias their canonical decimal string (`0` aliases `"0"`, but not `"00"`, `"+0"`, or `"-0"`). Assigning a sparse key creates only that entry; intermediate keys do not appear. An explicitly assigned `null` remains a present, readable entry and participates in dictionary equality.

@@ -1538,6 +1538,7 @@ impl Compiler {
             Expr::DictLiteral(elements) => {
                 let mut pair_count = 0;
                 let mut const_keys = Vec::new();
+                let mut seen_keys = HashSet::new();
                 let mut all_string_keys = true;
                 let mut has_spread = false;
 
@@ -1546,6 +1547,12 @@ impl Compiler {
                         DictElement::Pair(key, _value) => {
                             if let Expr::String(s) = key {
                                 const_keys.push(Arc::from(s.clone()));
+                                // FixedDict assumes unique keys. Keep duplicate literals on
+                                // the ordered map path so every value is evaluated and
+                                // the last occurrence wins.
+                                if !seen_keys.insert(s.as_str()) {
+                                    all_string_keys = false;
+                                }
                             } else {
                                 all_string_keys = false;
                             }
