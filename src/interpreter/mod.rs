@@ -2449,12 +2449,12 @@ impl Interpreter {
                         return Some(error);
                     }
 
-                    let result = if let Some(Value::Return(val)) = self.return_value.clone() {
-                        self.return_value = None;
-                        *val
-                    } else {
-                        self.return_value = None;
-                        Value::Null
+                    let result = match self.return_value.take() {
+                        Some(Value::Return(value)) => *value,
+                        Some(value @ Value::Error(_)) | Some(value @ Value::ErrorObject { .. }) => {
+                            value
+                        }
+                        _ => Value::Null,
                     };
 
                     // Restore parent environment
@@ -2511,12 +2511,12 @@ impl Interpreter {
                         return Some(error);
                     }
 
-                    let result = if let Some(Value::Return(val)) = self.return_value.clone() {
-                        self.return_value = None;
-                        *val
-                    } else {
-                        self.return_value = None;
-                        Value::Null
+                    let result = match self.return_value.take() {
+                        Some(Value::Return(value)) => *value,
+                        Some(value @ Value::Error(_)) | Some(value @ Value::ErrorObject { .. }) => {
+                            value
+                        }
+                        _ => Value::Null,
                     };
 
                     // Restore parent environment

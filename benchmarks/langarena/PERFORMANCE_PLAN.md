@@ -157,7 +157,13 @@ The original deadlock probe and regression checks now pass with native entry
 verified. The [constant append operator fix](constant-append-operators-2026-10-23.json)
 also restores `op_add` dispatch, snapshot isolation and immediate result tags in
 native functions; locked loops resume before invoking the operator. The separately
-observed interpreter/VM discrepancy in assigned operator-error results remains open.
+observed interpreter/VM discrepancy in assigned operator-error results is repaired
+by preserving pending error values from unary and binary operator methods instead
+of replacing them with Null. The regression preserves assignment targets and
+prior effects, checks repeated failure/success recovery in all three modes, and
+checks an operator failure after verified native-loop entry. See the
+[operator error audit](operator-error-parity-2026-10-23.json). This closes that
+specific parity gap, not the broader native ownership or production gates.
 
 The [fused character-append audit](guarded-append-fusion-2026-10-23.json) adds
 an ordinary bytecode fallback to the VM fast path.

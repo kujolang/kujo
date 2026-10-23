@@ -60,7 +60,8 @@
         "jit-owned-values-2026-10-23.json",
         "probes/native_owned_values.kujo",
         "../../src/native_owned.rs",
-        "../../docs/NATIVE_OWNERSHIP.md"
+        "../../docs/NATIVE_OWNERSHIP.md",
+        "operator-error-parity-2026-10-23.json"
       ]
     },
     {

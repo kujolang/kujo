@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve interpreter errors from unary and binary struct operator methods.
+  Failed operator assignments keep their previous target value, stop subsequent
+  effects and remain catchable, matching VM behavior.
+
 - Dispatch struct `op_add` methods for constant character/string appends in the
   VM and native functions. Preserve snapshots and retag native bindings when an
   operator returns an immediate value. Locked native loops resume in the VM

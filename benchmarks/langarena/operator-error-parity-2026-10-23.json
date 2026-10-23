@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-23",
+  "baseline_source_commit": "16bb7a1",
+  "scope": "Unary/binary struct operator error propagation; no speed or all50 acceptance claim",
+  "baseline": {
+    "command": "cargo test --test operator_error_contracts",
+    "exit_code": 101,
+    "failure": "interpreter: Assertion failed: expected Int(17), got Null",
+    "log": "/tmp/kujo-operator-error-baseline.log"
+  },
+  "cause": "Both interpreter operator helpers cleared pending Error/ErrorObject values and returned Null unless the method produced Value::Return.",
+  "fix": "Take the pending result, unwrap normal returns, propagate errors, retain Null for methods without a result, and pop the method scope as before.",
+  "verification": {
+    "command": "cargo test --test operator_error_contracts --test jit_loop_collection_contracts --test jit_error_propagation --test assignment_writeback --test jit_owned_stack_contracts",
+    "passed": 33,
+    "failed": 0,
+    "log": "/tmp/kujo-operator-error-contracts.log",
+    "coverage": [
+      "200 repeated unary/binary failures and successful recovery in interpreter, VM and JIT-enabled modes",
+      "Failed assignments retain previous target and struct snapshots",
+      "Prior effects occur once and subsequent method effects do not occur",
+      "Separate specialized-loop regression verifies native entry before operator failure and exact VM resume/unwind"
+    ],
+    "format": "cargo fmt --check passed",
+    "library": {
+      "command": "cargo test --lib",
+      "result": "test result: ok. 1041 passed; 0 failed; 8 ignored; 0 measured; 0 filtered out; finished in 44.88s",
+      "log": "/tmp/kujo-operator-error-library.log"
+    }
+  },
+  "limitations": [
+    "JIT-enabled repeated-call test permits fallback; only the dedicated loop test asserts native entry",
+    "No current-HEAD all50 production verification or competitive measurement in this audit",
+    "Frozen ac3fe6c production matrix remains separate from this candidate"
+  ]
+}

@@ -131,6 +131,45 @@ fn loop_call_resumes_without_replaying_arguments_or_prior_effects() {
 }
 
 #[test]
+fn loop_operator_error_unwinds_after_native_resume() {
+    check(
+        r#"
+        mut effects := 0
+        mut calls := 0
+        struct Broken {
+            value: int,
+            func op_add(other) {
+                calls += 1
+                assert(false, "operator stop")
+                effects += 10000
+                return 0
+            }
+        }
+        let value := Broken { value: 3 }
+        mut result := 17
+        func once() {
+            mut mapping := {}
+            mut i := 0
+            while i < 200 {
+                mapping[i % 7] = i
+                effects += 1
+                if i > 150 { result = value + value }
+                i += 1
+            }
+        }
+        mut caught := 0
+        try { once() } except error { caught += 1 }
+        assert_equal(caught, 1)
+        assert_equal(effects, 152)
+        assert_equal(calls, 1)
+        assert_equal(result, 17)
+        assert_equal(value.value, 3)
+        print("PASS")
+    "#,
+    );
+}
+
+#[test]
 fn loop_callback_error_unwinds_after_native_resume() {
     check(
         r#"
