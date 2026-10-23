@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [tagged-owned candidate](checksums-2026-10-23-owned-values-jit.json) at
+  `e2797da` passed all 50 test-size JIT checksums, with frozen input/binary identity,
+  raw report hashes and measurement schemas verified. 34 cases recorded native
+  entries; fallback remained allowed. This debug diagnostic run predates operand
+  cleanup, overlapped local tests/builds and provides no competitive timing evidence.
+  Its separate VM/interpreter runs are not included in that result.
+
 - The JSON serialization change has a measured paired median improvement of
   2.916x on this laptop. That is one workload, not a suite-wide speedup.
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
