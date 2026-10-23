@@ -6,6 +6,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve callback failures across experimental JIT calls, stop compiled
+  execution at the failed call, and route the original error to VM handlers.
+
 - Guard experimental integer-only JIT function entry points against non-integer
   arguments, including cached calls whose argument types change after warmup.
   Preserve VM behavior for those calls while retaining compiled integer code.

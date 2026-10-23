@@ -13,6 +13,8 @@ pub struct VMContext {
     pub vm_ptr: *mut std::ffi::c_void,
     pub return_value: i64,
     pub has_return_value: bool,
+    /// Runtime failure preserved across the native ABI; never replay failed work.
+    pub runtime_error: Option<String>,
     pub arg0: i64,
     pub arg1: i64,
     pub arg2: i64,
@@ -36,6 +38,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(),
             return_value: 0,
             has_return_value: false,
+            runtime_error: None,
             arg0: 0,
             arg1: 0,
             arg2: 0,

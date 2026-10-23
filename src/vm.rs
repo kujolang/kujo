@@ -1622,6 +1622,9 @@ impl VM {
                         drop(globals_guard); // Release lock before calling compiled code
 
                         let status_code = invoke_compiled_fn(compiled_fn, &mut vm_context);
+                        if let Some(error) = vm_context.runtime_error.take() {
+                            return Err(error);
+                        }
 
                         if status_code < 0 {
                             if std::env::var("DEBUG_JIT").is_ok() {
@@ -1961,9 +1964,13 @@ impl VM {
                                         // Execute the compiled function
                                         let result_code =
                                             invoke_compiled_fn(compiled_fn, &mut vm_context);
-
-                                        // Drop the globals lock
+                                        // Unwinding may acquire globals; preserve the loop's
+                                        // existing lock protection during native execution.
                                         drop(globals_guard);
+                                        if let Some(error) = vm_context.runtime_error.take() {
+                                            self.throw_runtime_value(Value::Error(error))?;
+                                            continue;
+                                        }
 
                                         if result_code != 0 {
                                             return Err(format!(
@@ -3103,6 +3110,7 @@ impl VM {
                                                 vm_ptr,
                                                 return_value: 0,
                                                 has_return_value: false,
+                                                runtime_error: None,
                                                 arg0: if use_fast_args && args.len() > 0 {
                                                     if let Value::Int(n) = args[0] {
                                                         n
@@ -3144,6 +3152,10 @@ impl VM {
 
                                             let result_code =
                                                 invoke_compiled_fn(compiled_fn, &mut vm_context);
+                                            if let Some(error) = vm_context.runtime_error.take() {
+                                                self.throw_runtime_value(Value::Error(error))?;
+                                                continue;
+                                            }
 
                                             if result_code != 0 {
                                                 return Err(format!(
@@ -3217,6 +3229,7 @@ impl VM {
                                                     vm_ptr,
                                                     return_value: 0,
                                                     has_return_value: false,
+                                                    runtime_error: None,
                                                     arg0: arg_val,
                                                     arg1: 0,
                                                     arg2: 0,
@@ -3230,6 +3243,11 @@ impl VM {
                                                     &mut vm_context,
                                                     arg_val,
                                                 );
+                                                if let Some(error) = vm_context.runtime_error.take()
+                                                {
+                                                    self.throw_runtime_value(Value::Error(error))?;
+                                                    continue;
+                                                }
 
                                                 if std::env::var("DEBUG_JIT").is_ok() {
                                                     eprintln!("JIT: Interpreter direct-arg call to '{}' with arg {} returned {}", 
@@ -3359,6 +3377,7 @@ impl VM {
                                         vm_ptr,
                                         return_value: 0,
                                         has_return_value: false,
+                                        runtime_error: None,
                                         arg0: if use_fast_args && args.len() > 0 {
                                             if let Value::Int(n) = args[0] {
                                                 n
@@ -3402,6 +3421,10 @@ impl VM {
                                     // Lock is NOT held during execution to allow recursive calls
                                     let result_code =
                                         invoke_compiled_fn(*compiled_fn, &mut vm_context);
+                                    if let Some(error) = vm_context.runtime_error.take() {
+                                        self.throw_runtime_value(Value::Error(error))?;
+                                        continue;
+                                    }
 
                                     if result_code != 0 {
                                         return Err(format!(
@@ -8260,6 +8283,7 @@ impl VM {
                                         vm_ptr,
                                         return_value: 0,
                                         has_return_value: false,
+                                        runtime_error: None,
                                         arg0: arg_val,
                                         arg1: 0,
                                         arg2: 0,
@@ -8274,6 +8298,9 @@ impl VM {
                                         &mut vm_context,
                                         arg_val,
                                     );
+                                    if let Some(error) = vm_context.runtime_error.take() {
+                                        return Err(error);
+                                    }
 
                                     if std::env::var("DEBUG_JIT").is_ok() {
                                         eprintln!(
@@ -8403,6 +8430,7 @@ impl VM {
                             vm_ptr,
                             return_value: 0,
                             has_return_value: false,
+                            runtime_error: None,
                             arg0: if use_fast_args && args.len() > 0 {
                                 if let Value::Int(n) = args[0] {
                                     n
@@ -8445,6 +8473,9 @@ impl VM {
                         // Execute the compiled function!
                         // Lock is NOT held during execution to allow recursive calls
                         let result_code = invoke_compiled_fn(compiled_fn, &mut vm_context);
+                        if let Some(error) = vm_context.runtime_error.take() {
+                            return Err(error);
+                        }
 
                         if result_code != 0 {
                             return Err(format!("JIT execution failed with code: {}", result_code));

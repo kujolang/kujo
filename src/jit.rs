@@ -122,6 +122,8 @@ pub struct VMContext {
     /// Flag indicating return_value contains a valid integer return
     /// When true, VM uses return_value directly; when false, falls back to stack
     pub has_return_value: bool,
+    /// Runtime failure preserved across the native ABI; never replay failed work.
+    pub runtime_error: Option<String>,
     /// Fast argument passing for recursive calls
     /// These avoid HashMap creation for simple recursive functions
     pub arg0: i64,
@@ -150,6 +152,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(), // No VM pointer yet
             return_value: 0,
             has_return_value: false,
+            runtime_error: None,
             arg0: 0,
             arg1: 0,
             arg2: 0,
@@ -175,6 +178,7 @@ impl VMContext {
             vm_ptr: vm,
             return_value: 0,
             has_return_value: false,
+            runtime_error: None,
             arg0: 0,
             arg1: 0,
             arg2: 0,
@@ -214,6 +218,7 @@ impl VMContext {
             vm_ptr: std::ptr::null_mut(),
             return_value: 0,
             has_return_value: false,
+            runtime_error: None,
             arg0: 0,
             arg1: 0,
             arg2: 0,
@@ -2268,15 +2273,15 @@ pub unsafe extern "C" fn jit_call_function(
             if std::env::var("DEBUG_JIT_CALL").is_ok() {
                 eprintln!("jit_call_function: result={:?}", result);
             }
-            stack.push(result);
+            // Reborrow after the VM callback; it can mutate or grow this stack.
+            (&mut *ctx_ref.stack_ptr).push(result);
             0 // Success
         }
         Err(err) => {
-            // Error during execution - push null and return error
             if std::env::var("DEBUG_JIT_CALL").is_ok() {
                 eprintln!("jit_call_function: error={}", err);
             }
-            stack.push(Value::Null);
+            ctx_ref.runtime_error = Some(err);
             6 // Error: execution failed
         }
     }
@@ -3679,11 +3684,15 @@ impl BytecodeTranslator {
 
     /// Persist local slots back to VM locals (used for loop JIT)
     fn persist_local_slots_to_vm(&self, builder: &mut FunctionBuilder) {
+        self.persist_local_slots(builder, false);
+    }
+
+    fn persist_local_slots(&self, builder: &mut FunctionBuilder, all: bool) {
         if !self.use_local_slots || !self.persist_locals_on_return {
             return;
         }
 
-        if self.dirty_local_names.is_empty() {
+        if !all && self.dirty_local_names.is_empty() {
             return;
         }
 
@@ -3693,7 +3702,7 @@ impl BytecodeTranslator {
         };
 
         for (name, variable) in &self.local_variables {
-            if !self.dirty_local_names.contains(name) {
+            if !all && !self.dirty_local_names.contains(name) {
                 continue;
             }
             let value = builder.use_var(*variable);
@@ -4301,7 +4310,22 @@ impl BytecodeTranslator {
                     // Call jit_call_function
                     let null_ptr = builder.ins().iconst(types::I64, 0);
                     let arg_count_val = builder.ins().iconst(types::I64, *arg_count as i64);
-                    let _call_inst = builder.ins().call(call_func, &[ctx, null_ptr, arg_count_val]);
+                    let call_inst = builder.ins().call(call_func, &[ctx, null_ptr, arg_count_val]);
+                    let status = builder.inst_results(call_inst)[0];
+                    let failed = builder.ins().icmp_imm(IntCC::NotEqual, status, 0);
+                    let failure_block = builder.create_block();
+                    let success_block = builder.create_block();
+                    builder.ins().brif(failed, failure_block, &[], success_block, &[]);
+                    builder.seal_block(failure_block);
+                    builder.seal_block(success_block);
+                    builder.switch_to_block(failure_block);
+                    // A later store in this loop's bytecode may already have run
+                    // on a prior iteration. Persist every integer local here.
+                    self.persist_local_slots(builder, true);
+                    // Direct-argument functions return a value rather than a status.
+                    // The owning context carries the failure in both conventions.
+                    builder.ins().return_(&[status]);
+                    builder.switch_to_block(success_block);
 
                     // Pop the result from VM stack
                     if let Some(stack_pop) = self.stack_pop_func {

@@ -87,6 +87,11 @@ before entering compiled caches. Non-integer calls use VM execution without
 discarding cached integer code; this is a correctness guard, not native float or
 general-value compilation. Typed results, globals and arithmetic errors require
 their own JIT verification.
+Compiled callbacks carry runtime failures separately from integer return values.
+Generated calls branch out on failure before consuming a result or executing
+later instructions; VM entry points preserve the original message and unwind
+through existing handlers. This does not make unchecked native arithmetic or
+other JIT helper failures safe; those remain separate verification requirements.
 
 See [the capture audit](CLOSURE_UPVALUE_AUDIT.md) for historical baseline evidence
 and the concurrency completion record for interpreter corrections. This mechanism does not add a tracing collector for

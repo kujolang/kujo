@@ -1061,6 +1061,11 @@
       "id": "vm_arithmetic_exception_unwind",
       "evidence": "jit-typed-audit-2026-10-23.json",
       "status": "Fixed observed scalar VM arithmetic cases: errors now use existing handler unwind; nested calls, repeated failures, rethrow, compound-add atomicity and uncaught diagnostics pass both-runtime regressions. JIT failures remain separate and open."
+    },
+    {
+      "id": "jit_callback_error_propagation",
+      "evidence": "../../tests/jit_error_propagation.rs",
+      "status": "Fixed reproduced callback failures: generated calls exit before later side effects, native ABI preserves original error, VM handlers unwind without replay. Nested calls and repeated failure/success reuse pass. Global stores, Bool results and checked native arithmetic remain separate open work; no speed claim."
     }
   ],
   "verification": [
@@ -1141,6 +1146,11 @@
         "../../tests/jit_argument_guards.rs",
         "../../docs/ARCHITECTURE.md"
       ]
+    },
+    {
+      "scope": "JIT callback failure propagation final source",
+      "command": "cargo test --locked --lib --test jit_error_propagation --test jit_argument_guards --test jit_execution_contract --test jit_native_lookup_contracts --test jit_constant_contracts --test arithmetic_exception_contracts --test closure_capture_contracts -- --test-threads=2",
+      "result": "1008 library tests passed,8 ignored;23 integration tests passed. New callback contracts cover VM/interpreter/JIT and explicitly compiled callback bridge. cargo fmt --check, git diff --check and cargo check --locked --no-default-features --lib passed. Not production or performance acceptance."
     }
   ]
 }
