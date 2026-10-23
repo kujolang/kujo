@@ -99,6 +99,14 @@ contracts and the library suite pass. JIT stays opt-in until broader acceptance.
 
 ### Remaining native ownership gate
 
+The [owned-value audit](jit-owned-values-2026-10-23.json) reproduces eight native
+mismatches on `0c77115`, with VM/interpreter agreement and measured native entries
+for every probe: string/array/dictionary returns, native callback returns and
+arguments, bytecode callback arguments, string equality and empty-string truth.
+The [reproducer](probes/native_owned_values.kujo) records failures rather than
+treating its own successful exit as a parity pass. These are current correctness
+gaps, even though the earlier all-50 benchmark checksum run passed with fallback.
+
 The string-global audit still returns an integer marker after compilation. Fix the
 complete owned-value path before widening owned argument guards or claiming typed
 native parity: named loads, callable values, locals, operand-stack joins, operators,

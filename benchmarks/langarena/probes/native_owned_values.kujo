@@ -1,0 +1,39 @@
+# Diagnostic corpus, not a passing correctness gate. Compare all three modes in
+# owned-audit.json; successful process exit does not imply matching results.
+# Usage: native_owned_values.kujo BINARY EXISTING_FRESH_OUTPUT_DIRECTORY
+let argv := args()
+assert_equal(len(argv), 2)
+let binary := argv[0]
+let root := argv[1]
+let binary_hash := sha256_file(binary)
+assert(!file_exists(root + "/owned-audit.json"), "audit output already exists")
+let probes := [
+    {"name": "string-return", "prefix": "let state := \"hello\"\n", "body": "return state"},
+    {"name": "array-return", "prefix": "let state := [1, 2]\n", "body": "return state"},
+    {"name": "dictionary-return", "prefix": "let state := {\"a\": 1}\n", "body": "return state"},
+    {"name": "native-callback-return", "prefix": "", "body": "return str(x)"},
+    {"name": "native-callback-argument", "prefix": "let state := [1, 2]\n", "body": "return len(state)"},
+    {"name": "bytecode-callback-argument", "prefix": "let state := [1, 2]\nfunc echo(value) { return value }\n", "body": "return echo(state)"},
+    {"name": "string-equality", "prefix": "let a := \"left\"\nlet b := \"right\"\n", "body": "return a == b"},
+    {"name": "empty-string-truth", "prefix": "let state := \"\"\n", "body": "if state { return 1 } return 0"}
+]
+mut results := []
+for probe in probes {
+    mut source := probe.prefix + "func f(x) { " + probe.body + " }\n"
+    mut i := 0
+    while i < 200 { source += "f(1)\n" i += 1 }
+    source += "print(f(1))\n"
+    let path := root + "/" + probe.name + ".kujo"
+    write_file(path, source, true)
+    mut modes := {}
+    for mode in ["vm", "interpreter", "jit"] {
+        mut command := [binary, "run", "--scheduler-no-timeout"]
+        if mode == "interpreter" { command = push(command, "--interpreter") }
+        if mode == "jit" { command = [...command, "--jit", "--measurements", root + "/" + probe.name + ".metrics.json"] }
+        let result := spawn_process([...command, path], {"timeout_ms": 30000, "max_output_bytes": 65536})
+        modes[mode] = {"exitcode": result.exitcode, "stdout": result.stdout, "stderr": result.stderr, "timed_out": result.timed_out, "cancelled": result.cancelled, "stdout_truncated": result.stdout_truncated, "stderr_truncated": result.stderr_truncated}
+    }
+    results = push(results, {"name": probe.name, "source": source, "source_sha256": sha256(source), "modes": modes})
+    write_file(root + "/owned-audit.json", to_json({"binary": binary, "binary_sha256": binary_hash, "results": results}), true)
+    print(probe.name + " vm=" + modes.vm.stdout + " jit=" + modes.jit.stdout)
+}

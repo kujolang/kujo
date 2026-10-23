@@ -51,7 +51,9 @@
         "../../tests/jit_immediate_values.rs",
         "jit-immediate-values-2026-10-23.json",
         "../../tests/jit_immediate_arguments.rs",
-        "jit-immediate-arguments-2026-10-23.json"
+        "jit-immediate-arguments-2026-10-23.json",
+        "jit-owned-values-2026-10-23.json",
+        "probes/native_owned_values.kujo"
       ]
     },
     {
