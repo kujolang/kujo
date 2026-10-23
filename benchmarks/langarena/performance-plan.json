@@ -2115,6 +2115,11 @@
       "scope": "native operand lifetime release and local ownership",
       "result": "Baseline8 discard repetitions retain16slots and fail new bound. Fixed compiled discard,overwrite,callback patterns at8/128 repetitions all satisfy<=4slot capacity,0live roots afterreturn,empty VMstack and preserved returned-array identity.1028library passes/8ignored;39unique targeted integrations pass, plus expanded storage regression rerun. Explicit Pop/Dup,SSA local load/store,VM-marshaled callable/arguments and equality/logical consumption covered. Remaining lifetime/legacy paths and speed gates open.",
       "evidence": "native-operand-storage-2026-10-23.json"
+    },
+    {
+      "scope": "all50 tagged-owned VM test-size checksums at e2797da",
+      "result": "All50 test-size VM checksums at e2797da. Frozen debug candidate predates operand cleanup and dead-local work. Own tests/builds overlapped diagnostics. Not production, competitive timing or current HEAD acceptance. Interpreter run remains separate.",
+      "evidence": "checksums-2026-10-23-owned-values-vm.json"
     }
   ]
 }
