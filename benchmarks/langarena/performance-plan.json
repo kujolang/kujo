@@ -105,7 +105,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -123,7 +123,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -140,7 +141,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -158,7 +159,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -175,7 +177,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -193,7 +195,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -210,7 +213,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -228,7 +231,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -245,7 +249,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -263,7 +267,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -280,7 +285,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -298,7 +303,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -315,7 +321,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -333,7 +339,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -350,7 +357,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -368,7 +375,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -385,7 +393,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -403,7 +411,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -420,7 +429,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -438,7 +447,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -455,7 +465,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -473,7 +483,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -490,7 +501,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -508,7 +519,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -525,7 +537,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -543,7 +555,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -560,7 +573,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -578,7 +591,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -595,7 +609,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -613,7 +627,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -630,7 +645,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -648,7 +663,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -665,7 +681,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -683,7 +699,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -700,7 +717,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -718,7 +735,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -735,7 +753,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -753,7 +771,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -770,7 +789,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -788,7 +807,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -805,7 +825,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -823,7 +843,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -840,7 +861,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -858,7 +879,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -875,7 +897,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -893,7 +915,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -910,7 +933,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "single three-second executing-thread sample at 0c77115; not whole-workload attribution",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -928,7 +951,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -945,7 +969,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -963,7 +987,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -980,7 +1005,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -998,7 +1023,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1015,7 +1041,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1033,7 +1059,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1050,7 +1077,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1068,7 +1095,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1085,7 +1113,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1103,7 +1131,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1120,7 +1149,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1138,7 +1167,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1155,7 +1185,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1173,7 +1203,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1190,7 +1221,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1208,7 +1239,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1225,7 +1257,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1243,7 +1275,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1260,7 +1293,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1278,7 +1311,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1295,7 +1329,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1313,7 +1347,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1330,7 +1365,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1348,7 +1383,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1365,7 +1401,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1383,7 +1419,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1400,7 +1437,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1418,7 +1455,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1435,7 +1473,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1453,7 +1491,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1470,7 +1509,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1488,7 +1527,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1505,7 +1545,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1523,7 +1563,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1540,7 +1581,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1558,7 +1599,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1575,7 +1617,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1593,7 +1635,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1610,7 +1653,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1628,7 +1671,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1645,7 +1689,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1663,7 +1707,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1680,7 +1725,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1698,7 +1743,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1715,7 +1761,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1733,7 +1779,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1750,7 +1797,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1768,7 +1815,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1785,7 +1833,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1803,7 +1851,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1820,7 +1869,7 @@
       "test_interpreter": "passed at 739dd89; debug test-size; later source changes require revalidation",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Test-size checksum passed at739dd89; debug with fallback allowed. Full native coverage unproven; later nonempty dictionary/operator changes require revalidation.",
+      "jit_correctness_and_coverage": "Test-size checksum passed at b286c5d; debug with fallback allowed; later fixed-dictionary and loop changes require revalidation. Full native coverage unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1838,7 +1887,8 @@
         "checksums-2026-10-23-dictionary-ownership-vm.json",
         "checksums-2026-10-23-dictionary-ownership-jit.json",
         "checksums-2026-10-23-owned-values-interpreter.json",
-        "checksums-2026-10-23-dictionary-ownership-interpreter.json"
+        "checksums-2026-10-23-dictionary-ownership-interpreter.json",
+        "checksums-2026-10-23-indexed-bindings-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2380,6 +2430,11 @@
       "scope": "fixed-dictionary existing-key write allocations",
       "result": "1040 library pass,23 integrations pass;36 allocation pairs save one Vec allocation per write, width-scaling gate passes, VM/interpreter/JIT snapshots preserved. No elapsed-time claim.",
       "evidence": "fixed-dictionary-write-allocations-2026-10-23.json"
+    },
+    {
+      "scope": "all50 indexed-bindings JIT test-size checksums at b286c5d",
+      "result": "All50 test-size JIT checksums at b286c5d, fallback allowed. Frozen copied binary/inputs; debug diagnostic overlapping builds/tests. Predates fixed-dictionary allocation and loop-specialization fixes. Not production, competitive timing or current HEAD acceptance.",
+      "evidence": "checksums-2026-10-23-indexed-bindings-jit.json"
     }
   ]
 }

@@ -18,9 +18,11 @@ a target to test, not a guarantee. This document explains the execution order;
   2.916x on this laptop. That is one workload, not a suite-wide speedup.
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
   timings do not establish an end-to-end speedup.
-- The latest verified test-size VM, JIT and
+- The latest verified test-size VM and
   [interpreter](checksums-2026-10-23-dictionary-ownership-interpreter.json)
-  runs passed all 50 cases at `739dd89`. These frozen candidates
+  runs passed all 50 cases at `739dd89`. The latest
+  [JIT matrix](checksums-2026-10-23-indexed-bindings-jit.json) passed all 50 at
+  `b286c5d`, with hashes/schemas verified and fallback allowed. These frozen candidates
   predate subsequent constructor/operator fixes and cannot certify current HEAD.
   No complete current production-size run exists.
 - All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
