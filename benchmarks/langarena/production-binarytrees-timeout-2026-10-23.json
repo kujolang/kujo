@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-23",
+  "scope": "One completed production process outcome, not a completed matrix or successful checksum",
+  "identity": {
+    "paths": {
+      "port": "/tmp/kujo-guarded-append-release-2026-10-23/benchmarks/langarena/port.kujo",
+      "runner": "/tmp/kujo-guarded-append-release-2026-10-23/benchmarks/langarena/profile.kujo",
+      "config": "/tmp/kujo-guarded-append-release-2026-10-23/benchmarks/langarena/test.json",
+      "production_config": "/tmp/kujo-guarded-append-release-2026-10-23/benchmarks/langarena/run.json",
+      "driver": "/tmp/kujo-native-measurements-2026-10-23/kujo",
+      "binary": "/tmp/kujo-guarded-append-release-2026-10-23/kujo",
+      "schema": "/tmp/kujo-guarded-append-release-2026-10-23/schemas/runtime-measurements-v1.schema.json",
+      "validator": "/tmp/kujo-native-measurements-2026-10-23/validate",
+      "orchestrator": "/tmp/kujo-guarded-append-release-2026-10-23/run.sh",
+      "verification_script": "/tmp/kujo-guarded-append-release-2026-10-23/verify.rb"
+    },
+    "sha256": {
+      "port": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+      "runner": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+      "config": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+      "production_config": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+      "driver": "83ca999d5752e6aace8d14a80068e3261d781aba12f178206c0326053a8367e5",
+      "binary": "1b9c9eb57e6b4c47f90c34e9c69478be08eee4b54d0bf7f753eb26e775610bea",
+      "schema": "162970714aa734ef60ee0b8a75ae42fca6c5a25ac1558420040e8a5b57eb4da8",
+      "validator": "c3da4d584c5293b59e92badd02c3403871ae36f8fddf369ebf6ab87e20e49517",
+      "orchestrator": "507391d783234f87ea7b59348655e67c398a888454e646e20b45fb4870c0d9f7",
+      "verification_script": "b17f6f6efff3b8e0e5fee0f62c8b97c58f01d44ae09a66c607d5fd8f71e12739"
+    },
+    "source_commit": "ac3fe6c3c702c2004cbae2af8b33b2bfc993da39",
+    "build": "cargo build --locked --release; default features; thin LTO; one codegen unit; symbols stripped",
+    "scope": "Sequential all50 test-size then production checksums; instrumented diagnostics, not competitive timing acceptance."
+  },
+  "case": {
+    "config": {
+      "checksum": 75497436,
+      "depth": 20,
+      "iterations": 30,
+      "name": "Binarytrees::Obj"
+    },
+    "elapsed_ns": 600103157432.0,
+    "exitcode": -1,
+    "measurements": {
+      "path": "all50-run-jit.json.case-0.measurements.json",
+      "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+      "status": "unavailable"
+    },
+    "name": "Binarytrees::Obj",
+    "runtime": "jit",
+    "status": "timeout",
+    "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+    "stderr_truncated": false,
+    "stdout": "@profile create-start ns=131344\n@profile create-done ns=598562\n@profile prepare-done ns=889934\n@profile warmup-1 ns=68524102625\n@profile warmup-2 ns=130425015080\n@profile warmup-3 ns=198391533488\n@profile warmup-4 ns=246239985110\n@profile warmup-5 ns=281813574461\n@profile warmup-6 ns=316474932951\n@profile warmup-done ns=316475076528\n@profile run-1 ns=352964705075\n@profile run-3 ns=427817586579\n@profile run-6 ns=535898468450\n",
+    "stdout_truncated": false,
+    "timeout_ms": 600000
+  },
+  "interpretation": "Production depth20/30-iteration Binarytrees::Obj hit the600000ms process deadline. Six warmups completed and output reached measured run6. This is incomplete coverage, not a wrong-checksum classification. The instrumentation report is unavailable after forced termination.",
+  "limitations": [
+    "Shared host and overlapping builds; no competitive or idle-host speed inference",
+    "Sampled binary strips symbols; call graph is insufficient for source-level hotspot attribution",
+    "Frozen ac3fe6c predates subsequent callback/append fixes; current source needs separate verification"
+  ],
+  "sample": {
+    "path": "/tmp/kujo-guarded-append-release-2026-10-23/binarytrees-obj.sample.txt",
+    "sha256": "88f9499e1e035559ff4daf18a6aac543de1e410093790ba310d208530c083c92"
+  },
+  "next": "Profile current representative tree construction/traversal with retained symbols and allocation/scaling evidence; preserve unchanged production workload and retain this timeout when retrying."
+}

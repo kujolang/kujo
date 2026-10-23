@@ -26,6 +26,12 @@ a target to test, not a guarantee. This document explains the execution order;
   This frozen candidate predates native-loop callback resumption and retains
   the operator gaps recorded below. It cannot certify current HEAD.
   No complete current production-size run exists.
+- The frozen `ac3fe6c` release production run recorded a
+  [Binarytrees::Obj timeout](production-binarytrees-timeout-2026-10-23.json)
+  at the ten-minute process deadline, after six warmups and progress through
+  measured iteration six of thirty. This is incomplete checksum coverage.
+  The shared-host run is diagnostic; a stripped-symbol CPU sample cannot
+  identify the responsible source hotspot. Other production cases continue.
 - All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
   per-case debug deadline. VM fallback was allowed. This establishes neither full
   native coverage nor speed acceptance. The earlier `c4a07cd` run and its MergeSort
