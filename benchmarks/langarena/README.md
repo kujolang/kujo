@@ -15,6 +15,8 @@ The [October 23 rerun](COMPARISON_2026_10_23.md) reuses the exact same binaries
 and workloads to compare observed performance under the laptop's newer conditions.
 The active [performance checklist](performance-plan.json) tracks the full approved
 optimization scope and all 50 cases. Pending entries are not passing results.
+The [implementation plan](PERFORMANCE_PLAN.md) defines the order, verification gates,
+competitive targets and rules for accepting each optimization.
 The [seven-round baseline](performance-baseline-2026-10-23.json) records 84 passing
 samples on the pinned pre-optimization VM build, with executable/source hashes,
 host observations, medians and ranges. It remains a shared-laptop measurement.
