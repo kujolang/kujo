@@ -2140,6 +2140,11 @@
       "scope": "native nonempty dictionary constructors and duplicate literal keys",
       "result": "1032 library tests passed (8 ignored),48 integration tests passed; native typed construction, retained key lifetime, bounded root storage, duplicate key evaluation order and catchable VM/native errors verified. Numeric literal coercion remains a recorded VM/interpreter mismatch. No elapsed-time claim.",
       "evidence": "native-dictionary-constructors-2026-10-23.json"
+    },
+    {
+      "scope": "all50 JIT test-size dictionary ownership at739dd89",
+      "result": "All50 test-size JIT checksums at739dd89: operand cleanup, dead-local release and empty dictionaries. Predates nonempty dictionary constructor and duplicate-key fixes. Debug/fallback diagnostic with overlapping host work, not currentHEAD, production or competitive timing acceptance. VM/interpreter runs separate.",
+      "evidence": "checksums-2026-10-23-dictionary-ownership-jit.json"
     }
   ]
 }
