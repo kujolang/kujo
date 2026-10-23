@@ -1013,6 +1013,11 @@
       "scope": "borrowed JSON serialization",
       "result": "32 JSON library tests +13 targeted integrations +39 representation/schema/CLI JSON integrations passed; separate allocation probe passed. Full runtime suite and optimized production timings pending.",
       "evidence": "json-serialization-allocations-2026-10-23.json"
+    },
+    {
+      "scope": "full library suite at runtime source 27fd599",
+      "command": "cargo test --locked --lib -- --test-threads=2",
+      "result": "1006 passed; 0 failed; 8 ignored. Not full repository integration or all-fifty checksum verification."
     }
   ]
 }
