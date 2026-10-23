@@ -1,0 +1,13 @@
+struct Box {
+ value: int,
+ func op_add(other) { return "custom:" + other }
+}
+func build() {
+ mut text := Box { value: 7 }
+ mut i := 0
+ let limit := 2
+ while i < limit { text = text + "x" i = i + 1 }
+ assert_equal(text, "custom:xx")
+}
+build()
+print("PASS")

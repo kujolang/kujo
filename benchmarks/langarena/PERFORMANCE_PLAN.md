@@ -136,6 +136,14 @@ verified; bounded root storage is not evidence of reduced string copying or spee
 
 ### Remaining native ownership gate
 
+The [operator-loop audit](operator-loop-audit-2026-10-23.json) reproduces two open
+gaps at `ac3fe6c`: constant appends bypass struct `op_add`, and specialized native
+loops deadlock when an operator callback reacquires the globals mutex held by the
+loop invocation. The latter is confirmed by native-entry logs and a sampled lock
+stack; VM/interpreter pass the same probe. Preserve checked callback dispatch and
+resume state without replaying effects before widening native coverage. These
+probes are independent of the all-50 matrix and remain unresolved.
+
 The [fused character-append audit](guarded-append-fusion-2026-10-23.json) adds
 an ordinary bytecode fallback to the VM fast path.
 It guards independent mutable bindings and integer/string types, preserves counters

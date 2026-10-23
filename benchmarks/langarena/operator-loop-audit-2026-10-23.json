@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-23",
+  "source_commit": "ac3fe6c3c702c2004cbae2af8b33b2bfc993da39",
+  "status": "reproduced; unresolved",
+  "scope": "Operator dispatch in constant appends and compiled specialized loops",
+  "findings": [
+    {
+      "probe": "probes/constant_append_operator.kujo",
+      "expected": "custom:xx and PASS",
+      "interpreter": "PASS",
+      "vm": "Type mismatch in AppendConstCharInPlace",
+      "jit_enabled": "Type mismatch in AppendConstCharInPlace; native execution not established for this probe",
+      "cause": "Compiler constant append lowering bypasses generic binary operator dispatch for mutable non-string targets."
+    },
+    {
+      "probe": "probes/loop_operator_lock.kujo",
+      "interpreter": "PASS",
+      "vm": "PASS",
+      "jit": "Compiled loop 9..30 entered, then timed out after five seconds. Sample shows jit_owned_operator -> VM::binary_op -> try_call_vm_binary_operator_method -> Mutex::lock. Probe process terminated after sampling.",
+      "environment": {
+        "DISABLE_FUNCTION_JIT": "1",
+        "DEBUG_JIT_LOOP": "1"
+      },
+      "cause": "VM holds globals_guard across compiled loop invocation; operator callback lookup tries to acquire that mutex again.",
+      "sample_stack": [
+        "866 jit_owned_operator  (in kujo) + 1453  [0x10092bced]  jit.rs:1100",
+        "866 kujo::vm::VM::binary_op::h598b42583552da90  (in kujo) + 91  [0x10140eedb]  vm.rs:9327",
+        "866 kujo::vm::VM::try_call_vm_binary_operator_method::h9632fc553c01fbbc  (in kujo) + 666  [0x10140c84a]  vm.rs:9299",
+        "866 std::sync::poison::mutex::Mutex$LT$T$GT$::lock::h0eac18d74ff11a09  (in kujo) + 44  [0x100dcfc1c]  mutex.rs:492"
+      ]
+    }
+  ],
+  "limitations": [
+    "No runtime fix in this artifact",
+    "JIT is opt-in; this probe establishes a reachable native-loop failure, not a failure in all50 benchmark workloads",
+    "Ordinary loop variant fell back after compilation failure and passed; dictionary indexing is necessary in this reproducer to reach specialized native loop execution"
+  ],
+  "logs": [
+    {
+      "path": "/tmp/kujo-constant-append-operator-before.log",
+      "sha256": "2da8d5cd2251be1558903bb6c6486c74b774ee02a6dee579f994febbb210b6ff"
+    },
+    {
+      "path": "/tmp/kujo-loop-operator-lock-specialized.log",
+      "sha256": "924c802d1ad819619912f82ce8bfa1873bf0a27e1e1f9657487451aa1a2a747b"
+    },
+    {
+      "path": "/tmp/kujo-loop-operator-lock.sample.txt",
+      "sha256": "ea45a9aed9c13f81bbde03e7289ccebd86fccbbdd5a3b731b3dcd3a1afeba4b4"
+    }
+  ]
+}

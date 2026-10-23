@@ -1,0 +1,15 @@
+struct Box {
+ value: int,
+ func op_add(other) { return value + other.value }
+}
+let left := Box { value: 3 }
+let right := Box { value: 5 }
+func once() {
+ mut mapping := {}
+ mut i := 0
+ mut sum := 0
+ while i < 200 { mapping[i % 7] = i sum = left + right i += 1 }
+ assert_equal(sum, 8)
+}
+once()
+print("PASS")
