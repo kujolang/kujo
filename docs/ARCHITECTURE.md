@@ -106,14 +106,20 @@ callee's return tag. Arithmetic, ordering and unary operations validate these
 scalar tags before performing native work; error paths preserve canonical
 diagnostics and unwind handlers. Scalar equality includes type identity, and
 logical bytecodes normalize truthiness to Boolean values. This is not
-general-value native parity: Boolean global loads and loop-entry type metadata
-remain separate work. Operand-stack joins carry paired payload/type parameters
+general-value native parity: non-scalar global loads and loop-entry type metadata
+remain separate work. Named scalar loads carry Boolean/integer kinds; whole-function
+named stores reconstruct those kinds before checked assignment. Explicit global
+loads bypass named locals, and whole-function explicit global stores use checked
+global assignment, including creation of missing mutable globals. Direct native
+entrypoints receive cached variable-name metadata for global resolution. That
+metadata uses stable shared storage so adding cache entries during callbacks
+does not move the table referenced by active native code. Operand-stack joins carry paired payload/type parameters
 through conditional branches, unconditional jumps, fallthroughs and backedges;
 all incoming edges must agree on logical stack depth. All four compiler
 entrypoints restore these pairs, and scalar returns carry their tag even from
 loop/script compilation. Short-circuit regressions require native compilation
 and verify skipped effects, skipped traps, loop conditions and direct recursion.
-Whole-function integer JIT assignments resolve named bindings at runtime instead
+Whole-function scalar JIT assignments resolve named bindings at runtime instead
 of treating every assignment target as a zero-initialized local. Existing globals
 use the environment's checked assignment; unresolved names remain function-local.
 Declared locals retain their slot path. Direct native calls initialize parameter

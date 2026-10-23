@@ -1042,7 +1042,7 @@
         "../../tests/jit_boolean_returns.rs",
         "jit-boolean-flow-2026-10-23.json"
       ],
-      "status": "Original native predicate return fixed with explicit scalar type metadata across VM reconstruction, callback arguments/results and direct recursion. Companion SSA type variables preserve mixed Int/Bool locals at branch joins. Boolean globals and Boolean operator guards remain open; not full typed-value parity."
+      "status": "Original native predicate return fixed with explicit scalar type metadata across VM reconstruction, callback arguments/results and direct recursion. Companion SSA type variables preserve mixed Int/Bool locals at branch joins. Subsequent scalar operator, stack-merge and Boolean/global assignment fixes are tracked separately below. General-value parity remains open."
     },
     {
       "id": "jit_builtin_lookup",
@@ -1078,7 +1078,7 @@
     {
       "id": "jit_callback_error_propagation",
       "evidence": "../../tests/jit_error_propagation.rs",
-      "status": "Fixed reproduced callback failures: generated calls exit before later side effects, native ABI preserves original error, VM handlers unwind without replay. Nested calls and repeated failure/success reuse pass. Global stores, Bool results and checked native arithmetic remain separate open work; no speed claim."
+      "status": "Fixed reproduced callback failures: generated calls exit before later side effects, native ABI preserves original error, VM handlers unwind without replay. Nested calls and repeated failure/success reuse pass. Subsequent scalar global stores, Boolean results and checked native arithmetic fixes are tracked separately; general-value boundaries remain open. No speed claim."
     },
     {
       "id": "jit_cold_callback_assignment_stack",
@@ -1095,8 +1095,11 @@
     },
     {
       "id": "jit_boolean_global_load",
-      "status": "open: compiled function reading Bool global returns Int(-1); VM/interpreter return Bool(true). Global scalar loads/stores and callable/opaque values need coherent tagged handling.",
-      "evidence": "jit-boolean-flow-2026-10-23.json"
+      "status": "Fixed Boolean/integer named loads and whole-function scalar assignments. Load helpers publish scalar kind; regular/direct native lowering captures it. Explicit global loads bypass parameters and whole-function global stores preserve scalar types with checked assignment. Non-scalar globals and loop/script store paths remain separate. Direct native entrypoints now receive cached name metadata; shared table storage remains stable across cache growth. Regression tests require direct compilation and execution, including through a native wrapper.",
+      "evidence": [
+        "../../tests/jit_global_scalar_types.rs",
+        "jit-global-types-2026-10-23.json"
+      ]
     },
     {
       "id": "jit_short_circuit_native_merge",
@@ -1116,6 +1119,11 @@
       "id": "jit_cold_callback_recursion_depth",
       "status": "Fixed in 8256219: callback Return/ReturnNone decrements recursion depth when removing the frame. Baseline sequential cold calls fail at call 256; regression covers 600 calls for each return opcode.",
       "evidence": "../../tests/jit_callback_depth.rs"
+    },
+    {
+      "id": "jit_non_scalar_global_load",
+      "status": "Open confirmed native correctness gap: float, string and null global reads return Int(-1) after compilation; VM/interpreter pass. Requires coherent general-value representation through loads, operators, callbacks, stores and returns, not treating opaque stack markers as integers.",
+      "evidence": "jit-global-types-2026-10-23.json"
     }
   ],
   "verification": [
@@ -1244,6 +1252,15 @@
         "../../tests/jit_callback_depth.rs",
         "../../tests/jit_boolean_returns.rs",
         "jit-short-circuit-2026-10-23.json"
+      ]
+    },
+    {
+      "scope": "native Boolean/integer globals, explicit global stores and direct-call name metadata",
+      "result": "Baseline native scalar reads/assignments fail after warmup. Raw explicit global store returns Int(0) instead of Bool(false). Expanded recursion repro exposes absent direct-call name metadata, returning Int(0). Final serial run passed 1009 library tests (8 ignored) and 41 selected integrations; no-default-feature library, formatting and diff checks passed. New tests cover changing Bool/Int globals, type errors/recovery, readonly writes, explicit-global parameter shadowing and missing binding creation, direct recursion and a compiled wrapper, plus stable table storage across 512 cache insertions. Earlier four-thread library run returned the expected GIF timeout error but failed its two-second wall-time assertion; unmodified test passed in the serial run. Fifteen-run audit passes native scalar globals but confirms native float/string/null global-return failures. No speed or production acceptance claim.",
+      "evidence": [
+        "../../tests/jit_global_scalar_types.rs",
+        "../../src/vm.rs",
+        "jit-global-types-2026-10-23.json"
       ]
     }
   ]

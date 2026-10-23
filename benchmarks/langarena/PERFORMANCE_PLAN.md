@@ -19,8 +19,9 @@ a target to test, not a guarantee. This document explains the execution order;
   coverage. Native scalar operand type guards also have regression coverage.
   Native short-circuit joins now carry operand payloads and type tags; regressions
   cover native execution, mixed stack joins and direct recursion. Cold callbacks
-  now restore recursion depth after return. General-value globals and loop-entry
-  binding types remain open. Checked native
+  now restore recursion depth after return. Boolean/integer named global loads and
+  whole-function stores preserve scalar types. Float/string/null global reads,
+  loop/script stores and loop-entry binding types remain open. Checked native
   integer arithmetic now has overflow/divisor guards and regression coverage.
   Native float/general-value compilation remains unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score

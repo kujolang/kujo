@@ -6,6 +6,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve Boolean/integer kinds on experimental native named loads and
+  whole-function assignments. Explicit global bytecodes bypass same-named
+  parameters and use checked global stores, including readonly enforcement.
+  Supply stable cached name metadata to direct native calls and callbacks.
+
 - Compile experimental native short-circuit branches with paired operand values
   and type tags at every join, including unconditional jumps and fallthroughs.
   Preserve scalar return metadata in function, loop and script entrypoints.

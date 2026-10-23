@@ -536,9 +536,9 @@ pub unsafe extern "C" fn jit_obj_to_vm_stack(ctx: *mut VMContext, handle: i64) -
 }
 
 /// Load a variable from locals or globals (called from JIT code)
-/// name_hash: hash of the variable name (or 0 to use name_ptr/name_len)
-/// name_ptr/name_len: pointer and length of variable name string (if name_hash is 0)
-/// Returns the variable value as i64, or 0 if not found
+/// name_hash resolves through the context name table; global_only skips locals.
+/// Scalar results carry their kind in context metadata. Opaque values retain the
+/// existing VM-stack marker protocol; missing names still use the legacy sentinel.
 #[no_mangle]
 // SAFETY:
 // - Preconditions: jit_load_variable is invoked from JIT-compiled code using the C ABI, and `ctx` points to a live
@@ -549,13 +549,14 @@ pub unsafe extern "C" fn jit_obj_to_vm_stack(ctx: *mut VMContext, handle: i64) -
 pub unsafe extern "C" fn jit_load_variable(
     ctx: *mut VMContext,
     name_hash: i64,
-    _name_len: usize,
+    global_only: usize,
 ) -> i64 {
     if ctx.is_null() {
         return 0;
     }
 
-    let ctx_ref = &*ctx;
+    let ctx_ref = &mut *ctx;
+    ctx_ref.return_value_is_bool = false;
 
     // Try to resolve the name from hash
     let name = if name_hash != 0 && !ctx_ref.var_names_ptr.is_null() {
@@ -575,10 +576,14 @@ pub unsafe extern "C" fn jit_load_variable(
     // Debug disabled for performance
 
     // Try locals first
-    if !ctx_ref.locals_ptr.is_null() {
+    if global_only == 0 && !ctx_ref.locals_ptr.is_null() {
         let locals = &*ctx_ref.locals_ptr;
         if let Some(val) = locals.get(name) {
             match val {
+                Value::Bool(value) => {
+                    ctx_ref.return_value_is_bool = true;
+                    return i64::from(*value);
+                }
                 Value::Int(i) => {
                     if std::env::var("DEBUG_JIT_CALL").is_ok() {
                         eprintln!("jit_load_variable: '{}' = {} (from locals)", name, i);
@@ -609,6 +614,10 @@ pub unsafe extern "C" fn jit_load_variable(
         let globals = &*ctx_ref.globals_ptr;
         if let Some(val) = globals.get(name) {
             match val {
+                Value::Bool(value) => {
+                    ctx_ref.return_value_is_bool = true;
+                    return i64::from(*value);
+                }
                 Value::Int(i) => {
                     if std::env::var("DEBUG_JIT_CALL").is_ok() {
                         eprintln!("jit_load_variable: '{}' = {} (from globals)", name, i);
@@ -802,7 +811,7 @@ pub unsafe extern "C" fn jit_runtime_failed(ctx: *mut VMContext) -> i64 {
     ctx.as_ref().map_or(1, |ctx| i64::from(ctx.runtime_error.is_some()))
 }
 
-/// Assign a named integer binding from a compiled function (0 success, 1 error).
+/// Assign a named scalar binding from a compiled function (0 success, 1 error).
 /// Declared locals use slots; unresolved names must retain runtime global lookup.
 #[no_mangle]
 // SAFETY: ctx and its local/name maps belong to the active compiled call. The VM
@@ -811,6 +820,8 @@ pub unsafe extern "C" fn jit_assign_variable(
     ctx: *mut VMContext,
     name_hash: i64,
     value: i64,
+    is_bool: i64,
+    global_only: i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     let name = ctx.var_names_ptr.as_ref().and_then(|names| names.get(&(name_hash as u64))).cloned();
@@ -818,16 +829,16 @@ pub unsafe extern "C" fn jit_assign_variable(
         ctx.runtime_error = Some("JIT assignment has no variable name".into());
         return 1;
     };
-    let value = Value::Int(value);
+    let value = if is_bool != 0 { Value::Bool(value != 0) } else { Value::Int(value) };
     // This is the compiled function's own named-local map, not its caller frame.
     if let Some(locals) = ctx.locals_ptr.as_mut() {
-        if locals.contains_key(&name) {
+        if global_only == 0 && locals.contains_key(&name) {
             locals.insert(name, value);
             return 0;
         }
     }
     if let Some(vm) = (ctx.vm_ptr as *mut crate::vm::VM).as_mut() {
-        match vm.assign_existing_global_from_jit(&name, value.clone()) {
+        match vm.assign_global_from_jit(&name, value.clone(), global_only != 0) {
             Ok(true) => return 0,
             Ok(false) => {}
             Err(error) => {
@@ -837,7 +848,7 @@ pub unsafe extern "C" fn jit_assign_variable(
         }
     } else if let Some(globals) = ctx.globals_ptr.as_mut() {
         // Standalone compiler fixtures have no Environment/binding metadata.
-        if globals.contains_key(&name) {
+        if global_only != 0 || globals.contains_key(&name) {
             globals.insert(name, value);
             return 0;
         }
@@ -5389,6 +5400,7 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                         return Ok(false);
                     }
@@ -5415,6 +5427,7 @@ impl BytecodeTranslator {
                             let zero = builder.ins().iconst(types::I64, 0);
                             let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                             let result = builder.inst_results(call)[0];
+                            self.capture_scalar_kind(builder, ctx, result);
                             self.push_value(result);
                         } else {
                             let zero = builder.ins().iconst(types::I64, 0);
@@ -5437,6 +5450,7 @@ impl BytecodeTranslator {
                     // Call jit_load_variable(ctx, name_hash, 0)
                     let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                     let result = builder.inst_results(call)[0];
+                    self.capture_scalar_kind(builder, ctx, result);
                     self.push_value(result);
                 } else {
                     // Fallback: load 0 if context not available
@@ -5454,6 +5468,7 @@ impl BytecodeTranslator {
                             let zero = builder.ins().iconst(types::I64, 0);
                             let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                             let result = builder.inst_results(call)[0];
+                            self.capture_scalar_kind(builder, ctx, result);
                             self.push_value(result);
                             return Ok(false);
                         }
@@ -5474,6 +5489,7 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                         return Ok(false);
                     }
@@ -5489,7 +5505,9 @@ impl BytecodeTranslator {
                         let value = self.peek_value()?;
                         let hash =
                             builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
-                        let call = builder.ins().call(assign, &[ctx, hash, value]);
+                        let kind = self.scalar_kind(builder, value);
+                        let named = builder.ins().iconst(types::I64, 0);
+                        let call = builder.ins().call(assign, &[ctx, hash, value, kind, named]);
                         self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
                         return Ok(false);
                     }
@@ -5627,7 +5645,7 @@ impl BytecodeTranslator {
             }
 
             OpCode::LoadGlobal(name) => {
-                // Same as LoadVar for now
+                // Explicit global bytecode must bypass same-named parameters.
                 if let (Some(ctx), Some(load_func)) = (self.ctx_param, self.load_var_func) {
                     let name_hash = {
                         use std::collections::hash_map::DefaultHasher;
@@ -5638,10 +5656,11 @@ impl BytecodeTranslator {
                     };
 
                     let name_hash_val = builder.ins().iconst(types::I64, name_hash);
-                    let zero = builder.ins().iconst(types::I64, 0);
+                    let global_only = builder.ins().iconst(types::I64, 1);
 
-                    let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
+                    let call = builder.ins().call(load_func, &[ctx, name_hash_val, global_only]);
                     let result = builder.inst_results(call)[0];
+                    self.capture_scalar_kind(builder, ctx, result);
                     self.push_value(result);
                 } else {
                     let zero = builder.ins().iconst(types::I64, 0);
@@ -5650,6 +5669,15 @@ impl BytecodeTranslator {
             }
 
             OpCode::StoreGlobal(name) => {
+                if let (Some(ctx), Some(assign)) = (self.ctx_param, self.named_assignment_func) {
+                    let value = self.peek_value()?;
+                    let kind = self.scalar_kind(builder, value);
+                    let hash = builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+                    let global_only = builder.ins().iconst(types::I64, 1);
+                    let call = builder.ins().call(assign, &[ctx, hash, value, kind, global_only]);
+                    self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                    return Ok(false);
+                }
                 // Same as StoreVar - PEEKS at stack, doesn't pop
                 if let (Some(ctx), Some(store_func)) = (self.ctx_param, self.store_var_func) {
                     let value = self.peek_value()?;
@@ -5718,6 +5746,7 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                         return Ok(false);
                     }
@@ -5816,6 +5845,7 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                     } else {
                         let zero = builder.ins().iconst(types::I64, 0);
@@ -5834,6 +5864,7 @@ impl BytecodeTranslator {
                         let zero = builder.ins().iconst(types::I64, 0);
                         let call = builder.ins().call(load_func, &[ctx, name_hash_val, zero]);
                         let result = builder.inst_results(call)[0];
+                        self.capture_scalar_kind(builder, ctx, result);
                         self.push_value(result);
                     } else {
                         let zero = builder.ins().iconst(types::I64, 0);
@@ -6221,7 +6252,7 @@ impl JitCompiler {
         builder: &mut FunctionBuilder,
     ) -> Result<FuncRef, String> {
         let mut sig = module.make_signature();
-        sig.params.extend([AbiParam::new(types::I64); 3]);
+        sig.params.extend([AbiParam::new(types::I64); 5]);
         sig.returns.push(AbiParam::new(types::I64));
         let id = module
             .declare_function("jit_assign_variable", Linkage::Import, &sig)

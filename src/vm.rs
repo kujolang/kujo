@@ -119,7 +119,7 @@ pub struct VM {
 
     /// Cache of var_names for JIT-compiled functions
     /// This avoids re-computing hash mappings on every call
-    jit_var_names_cache: HashMap<String, HashMap<u64, String>>,
+    jit_var_names_cache: HashMap<String, Arc<HashMap<u64, String>>>,
 
     /// Current recursion depth (for optimization and debugging)
     recursion_depth: usize,
@@ -1609,13 +1609,14 @@ impl VM {
                                 }
                             }
 
-                            self.jit_var_names_cache.insert(cache_key.clone(), cached_var_names);
+                            self.jit_var_names_cache
+                                .insert(cache_key.clone(), Arc::new(cached_var_names));
                         }
 
                         let var_names_ptr: *mut HashMap<u64, String> = self
                             .jit_var_names_cache
                             .get_mut(&cache_key)
-                            .map(|v| v as *mut HashMap<u64, String>)
+                            .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
                             .unwrap_or(std::ptr::null_mut());
                         vm_context.var_names_ptr = var_names_ptr;
 
@@ -1950,14 +1951,16 @@ impl VM {
                                                 }
                                             }
 
-                                            self.jit_var_names_cache
-                                                .insert(cache_key.clone(), cached_var_names);
+                                            self.jit_var_names_cache.insert(
+                                                cache_key.clone(),
+                                                Arc::new(cached_var_names),
+                                            );
                                         }
 
                                         let var_names_ptr: *mut HashMap<u64, String> = self
                                             .jit_var_names_cache
                                             .get_mut(&cache_key)
-                                            .map(|v| v as *mut HashMap<u64, String>)
+                                            .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
                                             .unwrap_or(std::ptr::null_mut());
                                         vm_context.var_names_ptr = var_names_ptr;
 
@@ -3209,6 +3212,7 @@ impl VM {
                                                     drop(globals_guard);
                                                     ptr
                                                 };
+                                                let names = self.jit_function_names(chunk);
                                                 let mut func_locals = HashMap::new();
                                                 let locals_ptr: *mut HashMap<String, Value> =
                                                     &mut func_locals;
@@ -3225,7 +3229,8 @@ impl VM {
                                                     stack_ptr,
                                                     locals_ptr,
                                                     globals_ptr,
-                                                    var_names_ptr: std::ptr::null_mut(),
+                                                    var_names_ptr: Arc::as_ptr(&names)
+                                                        as *mut HashMap<u64, String>,
                                                     local_slots_ptr,
                                                     obj_stack_ptr: &mut self.jit_obj_stack
                                                         as *mut Vec<Value>,
@@ -3284,7 +3289,7 @@ impl VM {
                                     let var_names = if let Some(cached) =
                                         self.jit_var_names_cache.get(&func_name_owned)
                                     {
-                                        cached.clone()
+                                        cached.as_ref().clone()
                                     } else {
                                         // Build var_names once and cache it
                                         let mut cached_var_names = HashMap::new();
@@ -3301,7 +3306,11 @@ impl VM {
 
                                         // Register all LoadVar names
                                         for instr in &chunk.instructions {
-                                            if let OpCode::LoadVar(name) = instr {
+                                            if let OpCode::LoadVar(name)
+                                            | OpCode::StoreVar(name)
+                                            | OpCode::LoadGlobal(name)
+                                            | OpCode::StoreGlobal(name) = instr
+                                            {
                                                 use std::collections::hash_map::DefaultHasher;
                                                 use std::hash::{Hash, Hasher};
                                                 let mut hasher = DefaultHasher::new();
@@ -3313,7 +3322,7 @@ impl VM {
 
                                         self.jit_var_names_cache.insert(
                                             func_name_owned.clone(),
-                                            cached_var_names.clone(),
+                                            Arc::new(cached_var_names.clone()),
                                         );
                                         cached_var_names
                                     };
@@ -8210,14 +8219,45 @@ impl VM {
         }
     }
 
-    /// Resolve named assignment against globals without touching the caller's locals.
-    pub(crate) fn assign_existing_global_from_jit(
+    /// Keep name storage stable when a native callback adds another cache entry.
+    /// Native helpers only read this table; the local Arc keeps it alive across calls.
+    fn jit_function_names(&mut self, chunk: &BytecodeChunk) -> Arc<HashMap<u64, String>> {
+        let key = chunk.name.as_deref().unwrap_or("<anonymous>");
+        if let Some(names) = self.jit_var_names_cache.get(key) {
+            return Arc::clone(names);
+        }
+        self.jit_var_names_cache
+            .entry(key.to_owned())
+            .or_insert_with(|| {
+                use std::hash::{Hash, Hasher};
+                let mut names = HashMap::new();
+                for name in
+                    chunk.params.iter().chain(chunk.instructions.iter().filter_map(|op| match op {
+                        OpCode::LoadVar(name)
+                        | OpCode::StoreVar(name)
+                        | OpCode::LoadGlobal(name)
+                        | OpCode::StoreGlobal(name) => Some(name),
+                        _ => None,
+                    }))
+                {
+                    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+                    name.hash(&mut hasher);
+                    names.insert(hasher.finish(), name.clone());
+                }
+                Arc::new(names)
+            })
+            .clone()
+    }
+
+    /// Assign globals without touching caller locals; explicit global stores may create bindings.
+    pub(crate) fn assign_global_from_jit(
         &mut self,
         name: &str,
         value: Value,
+        create: bool,
     ) -> Result<bool, String> {
         let mut globals = self.globals.lock().unwrap();
-        if globals.get(name).is_some() || Interpreter::is_builtin_name(name) {
+        if create || globals.get(name).is_some() || Interpreter::is_builtin_name(name) {
             globals.assign_checked(name.to_string(), value)?;
             Ok(true)
         } else {
@@ -8284,6 +8324,7 @@ impl VM {
                                     };
 
                                     // Create minimal VMContext - direct-arg functions don't need HashMap
+                                    let names = self.jit_function_names(chunk);
                                     let mut func_locals = HashMap::new();
                                     let locals_ptr: *mut HashMap<String, Value> = &mut func_locals;
                                     let local_slots_ptr: *mut Vec<Value> = match self
@@ -8298,7 +8339,8 @@ impl VM {
                                         stack_ptr,
                                         locals_ptr,
                                         globals_ptr,
-                                        var_names_ptr: std::ptr::null_mut(),
+                                        var_names_ptr: Arc::as_ptr(&names)
+                                            as *mut HashMap<u64, String>,
                                         local_slots_ptr,
                                         obj_stack_ptr: &mut self.jit_obj_stack as *mut Vec<Value>,
                                         vm_ptr,
@@ -8395,7 +8437,11 @@ impl VM {
 
                             // Register all LoadVar names
                             for instr in &chunk.instructions {
-                                if let OpCode::LoadVar(name) = instr {
+                                if let OpCode::LoadVar(name)
+                                | OpCode::StoreVar(name)
+                                | OpCode::LoadGlobal(name)
+                                | OpCode::StoreGlobal(name) = instr
+                                {
                                     use std::collections::hash_map::DefaultHasher;
                                     use std::hash::{Hash, Hasher};
                                     let mut hasher = DefaultHasher::new();
@@ -8406,14 +8452,14 @@ impl VM {
                             }
 
                             self.jit_var_names_cache
-                                .insert(func_name_owned.clone(), cached_var_names);
+                                .insert(func_name_owned.clone(), Arc::new(cached_var_names));
                         }
 
                         // Get pointer to cached var_names (no clone!)
                         let var_names_ptr: *mut HashMap<u64, String> = self
                             .jit_var_names_cache
                             .get_mut(&func_name_owned)
-                            .map(|v| v as *mut HashMap<u64, String>)
+                            .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
                             .unwrap_or(std::ptr::null_mut());
 
                         let vm_ptr: *mut std::ffi::c_void = self as *mut _ as *mut std::ffi::c_void;
@@ -9584,6 +9630,35 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[test]
+    fn native_name_tables_remain_stable_across_cache_growth() {
+        use std::hash::{Hash, Hasher};
+        let mut vm = VM::new();
+        let mut chunk = BytecodeChunk::new();
+        chunk.name = Some("owner".into());
+        chunk.params = vec!["argument".into()];
+        for op in [
+            OpCode::LoadVar("read".into()),
+            OpCode::StoreVar("write".into()),
+            OpCode::LoadGlobal("global_read".into()),
+            OpCode::StoreGlobal("global_write".into()),
+        ] {
+            chunk.emit(op);
+        }
+        let names = vm.jit_function_names(&chunk);
+        for index in 0..512 {
+            let mut other = BytecodeChunk::new();
+            other.name = Some(format!("callee_{index}"));
+            vm.jit_function_names(&other);
+        }
+        assert!(Arc::ptr_eq(&names, &vm.jit_function_names(&chunk)));
+        for name in ["argument", "read", "write", "global_read", "global_write"] {
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            name.hash(&mut hasher);
+            assert_eq!(names.get(&hasher.finish()).map(String::as_str), Some(name));
+        }
+    }
 
     #[test]
     fn callback_globals_are_not_copied_until_interpreter_fallback_needs_them() {
