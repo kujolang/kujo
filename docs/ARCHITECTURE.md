@@ -90,8 +90,11 @@ their own JIT verification.
 Compiled callbacks carry runtime failures separately from integer return values.
 Generated calls branch out on failure before consuming a result or executing
 later instructions; VM entry points preserve the original message and unwind
-through existing handlers. This does not make unchecked native arithmetic or
-other JIT helper failures safe; those remain separate verification requirements.
+through existing handlers. Integer add/subtract/multiply use native overflow
+flags; division and remainder guard zero and signed overflow before executing a
+native instruction, and negation guards the minimum integer. Only the failing
+path calls Rust to construct the canonical error. Other JIT helper failures and
+general-value type behavior remain separate verification requirements.
 Whole-function integer JIT assignments resolve named bindings at runtime instead
 of treating every assignment target as a zero-initialized local. Existing globals
 use the environment's checked assignment; unresolved names remain function-local.

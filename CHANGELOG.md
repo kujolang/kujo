@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve checked integer arithmetic in experimental JIT execution, including
+  overflow, zero divisors, signed division/remainder boundaries and negation.
+  Native guards raise catchable runtime errors instead of wrapping or trapping.
+
 - Fix named integer assignments in experimental whole-function JIT execution:
   update existing globals, enforce readonly bindings, and stop on assignment
   failures. Initialize direct native parameter values and propagate recursive

@@ -1053,13 +1053,19 @@
     },
     {
       "id": "jit_division_zero_trap",
-      "evidence": "jit-typed-audit-2026-10-23.json",
-      "status": "open at runtime27fd599: division_zero: JIT terminates with signal4 instead of catchable Division by zero."
+      "evidence": [
+        "jit-typed-audit-2026-10-23.json",
+        "../../tests/jit_checked_arithmetic.rs"
+      ],
+      "status": "Fixed checked integer Add/Sub/Mul/Div/Mod/Negate in shared native lowering. Successful arithmetic stays native; guards route canonical overflow/zero-divisor errors through VMContext before traps or later side effects. Covers standard/direct native entry, nested recovery and loop local persistence; typed/general-value JIT parity remains separate."
     },
     {
       "id": "jit_checked_integer_overflow",
-      "evidence": "jit-typed-audit-2026-10-23.json",
-      "status": "open at runtime27fd599: integer_overflow: hot compiled addition does not raise checked overflow; caught remainsfalse."
+      "evidence": [
+        "jit-typed-audit-2026-10-23.json",
+        "../../tests/jit_checked_arithmetic.rs"
+      ],
+      "status": "Fixed checked integer Add/Sub/Mul/Div/Mod/Negate in shared native lowering. Successful arithmetic stays native; guards route canonical overflow/zero-divisor errors through VMContext before traps or later side effects. Covers standard/direct native entry, nested recovery and loop local persistence; typed/general-value JIT parity remains separate."
     },
     {
       "id": "vm_arithmetic_exception_unwind",
@@ -1163,6 +1169,11 @@
         "../../tests/jit_global_assignment.rs",
         "../../docs/ARCHITECTURE.md"
       ]
+    },
+    {
+      "scope": "checked native integer arithmetic",
+      "result": "Before fix7 binary boundary cases fail in JIT (unchecked results, SIGILL or SIGFPE); reference VM/interpreter pass. After fix4newcontracts pass:8error cases across3runtimes,720binary boundary comparisons, direct-native exact errors/reuse and loop-compiler error-state persistence. Full library1008passed/8ignored and30integrations passed; final4-test arithmetic suite rerun includes1additional loop test (31unique integrations total). No-default-features library, fmt and diff checks passed. No speed/production acceptance claim.",
+      "evidence": "../../tests/jit_checked_arithmetic.rs"
     }
   ]
 }

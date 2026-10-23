@@ -16,9 +16,9 @@ a target to test, not a guarantee. This document explains the execution order;
   certify current HEAD. No complete current production-size run exists.
 - Experimental JIT integer argument guards, callback errors and whole-function
   integer global assignments have regression coverage. General-value global
-  handling, loop-JIT bindings, Boolean result types, checked overflow and catchable
-  division errors remain open. Native float/general-value compilation remains
-  unfinished.
+  handling, loop-JIT bindings and Boolean result types remain open. Checked native
+  integer arithmetic now has overflow/divisor guards and regression coverage.
+  Native float/general-value compilation remains unfinished.
 - Shared-laptop contention and throttling prevent reliable idle-machine score
   predictions. A clean measurement environment is an acceptance requirement.
 

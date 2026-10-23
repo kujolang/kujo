@@ -721,6 +721,29 @@ pub unsafe extern "C" fn jit_store_variable(
     }
 }
 
+/// Construct the canonical arithmetic error only on a failed native guard.
+#[no_mangle]
+// SAFETY: ctx points to the active exclusively borrowed compiled-call context.
+pub unsafe extern "C" fn jit_arithmetic_error(
+    ctx: *mut VMContext,
+    operation: i64,
+    left: i64,
+    right: i64,
+) -> i64 {
+    if let Some(ctx) = ctx.as_mut() {
+        let error = if operation == 5 {
+            left.checked_neg().map(|_| ()).ok_or_else(|| format!("Integer overflow: -({left})"))
+        } else if let Some(operator) = ["+", "-", "*", "/", "%"].get(operation as usize) {
+            Value::checked_int_arithmetic(left, operator, right).map(|_| ())
+        } else {
+            Err("Invalid JIT arithmetic operation".into())
+        };
+        ctx.runtime_error =
+            Some(error.err().unwrap_or_else(|| "Invalid JIT arithmetic guard".into()));
+    }
+    1
+}
+
 /// Report a pending error after a direct recursive native call.
 #[no_mangle]
 // SAFETY: ctx points to the live, exclusively borrowed native-call context.
@@ -3065,6 +3088,7 @@ struct BytecodeTranslator {
     store_var_func: Option<FuncRef>,
     named_assignment_func: Option<FuncRef>,
     runtime_error_func: Option<FuncRef>,
+    arithmetic_error_func: Option<FuncRef>,
     /// Float load/store function references
     load_var_float_func: Option<FuncRef>,
     store_var_float_func: Option<FuncRef>,
@@ -3192,6 +3216,7 @@ impl BytecodeTranslator {
             store_var_func: None,
             named_assignment_func: None,
             runtime_error_func: None,
+            arithmetic_error_func: None,
             load_var_float_func: None,
             store_var_float_func: None,
             check_type_int_func: None,
@@ -4091,74 +4116,58 @@ impl BytecodeTranslator {
         // Returns Ok(true) if this instruction terminates the block
 
         match instruction {
-            // Arithmetic operations
-            OpCode::Add => {
-                // Check if we have specialization context for optimized path
-                if self.specialization.is_some() {
-                    self.translate_add_specialized(builder, None, None)?;
-                } else {
-                    // Generic fallback
-                    let b = self.pop_value()?;
-                    let a = self.pop_value()?;
-                    let result = builder.ins().iadd(a, b);
-                    self.push_value(result);
-                }
-            }
-
-            OpCode::Sub => {
-                // Check if we have specialization context for optimized path
-                if self.specialization.is_some() {
-                    self.translate_sub_specialized(builder, None, None)?;
-                } else {
-                    // Generic fallback
-                    let b = self.pop_value()?;
-                    let a = self.pop_value()?;
-                    let result = builder.ins().isub(a, b);
-                    self.push_value(result);
-                }
-            }
-
-            OpCode::Mul => {
-                // Check if we have specialization context for optimized path
-                if self.specialization.is_some() {
-                    self.translate_mul_specialized(builder, None, None)?;
-                } else {
-                    // Generic fallback
-                    let b = self.pop_value()?;
-                    let a = self.pop_value()?;
-                    let result = builder.ins().imul(a, b);
-                    self.push_value(result);
-                }
-            }
-
-            OpCode::Div => {
-                // Check if we have specialization context for optimized path
-                if self.specialization.is_some() {
-                    self.translate_div_specialized(builder, None, None)?;
-                } else {
-                    // Generic fallback
-                    let b = self.pop_value()?;
-                    let a = self.pop_value()?;
-                    let result = builder.ins().sdiv(a, b);
-                    self.push_value(result);
-                }
-            }
-
-            OpCode::Mod => {
-                let b = self.pop_value()?;
-                let a = self.pop_value()?;
-                let result = match self.last_int_constant {
-                    Some((constant_value, divisor)) if constant_value == b => self
-                        .translate_mersenne_remainder(builder, a, divisor)
-                        .unwrap_or_else(|| builder.ins().srem(a, b)),
-                    _ => builder.ins().srem(a, b),
+            // Successful operations stay native; only failures call into Rust.
+            OpCode::Add | OpCode::Sub | OpCode::Mul | OpCode::Div | OpCode::Mod => {
+                let right = self.pop_value()?;
+                let left = self.pop_value()?;
+                let result = match instruction {
+                    OpCode::Add | OpCode::Sub | OpCode::Mul => {
+                        let (result, overflow, operation) = match instruction {
+                            OpCode::Add => {
+                                let (r, o) = builder.ins().sadd_overflow(left, right);
+                                (r, o, 0)
+                            }
+                            OpCode::Sub => {
+                                let (r, o) = builder.ins().ssub_overflow(left, right);
+                                (r, o, 1)
+                            }
+                            _ => {
+                                let (r, o) = builder.ins().smul_overflow(left, right);
+                                (r, o, 2)
+                            }
+                        };
+                        self.guard_arithmetic(builder, overflow, operation, left, right)?;
+                        result
+                    }
+                    _ => {
+                        let zero = builder.ins().icmp_imm(IntCC::Equal, right, 0);
+                        let min = builder.ins().icmp_imm(IntCC::Equal, left, i64::MIN);
+                        let minus_one = builder.ins().icmp_imm(IntCC::Equal, right, -1);
+                        let overflow = builder.ins().band(min, minus_one);
+                        let failed = builder.ins().bor(zero, overflow);
+                        let operation = if matches!(instruction, OpCode::Div) { 3 } else { 4 };
+                        // Guard before division: native traps cannot unwind VM handlers.
+                        self.guard_arithmetic(builder, failed, operation, left, right)?;
+                        if matches!(instruction, OpCode::Div) {
+                            builder.ins().sdiv(left, right)
+                        } else {
+                            match self.last_int_constant {
+                                Some((constant, divisor)) if constant == right => self
+                                    .translate_mersenne_remainder(builder, left, divisor)
+                                    .unwrap_or_else(|| builder.ins().srem(left, right)),
+                                _ => builder.ins().srem(left, right),
+                            }
+                        }
+                    }
                 };
                 self.push_value(result);
             }
-
             OpCode::Negate => {
-                let a = self.pop_value()?;
-                let result = builder.ins().ineg(a);
+                let value = self.pop_value()?;
+                let overflow = builder.ins().icmp_imm(IntCC::Equal, value, i64::MIN);
+                let zero = builder.ins().iconst(types::I64, 0);
+                self.guard_arithmetic(builder, overflow, 5, value, zero)?;
+                let result = builder.ins().ineg(value);
                 self.push_value(result);
             }
 
@@ -5759,145 +5768,29 @@ impl BytecodeTranslator {
         }
     }
 
-    /// Translate Add operation with type specialization
-    fn translate_add_specialized(
-        &mut self,
+    fn guard_arithmetic(
+        &self,
         builder: &mut FunctionBuilder,
-        var_a: Option<&str>,
-        var_b: Option<&str>,
+        failed: cranelift::prelude::Value,
+        operation: i64,
+        left: cranelift::prelude::Value,
+        right: cranelift::prelude::Value,
     ) -> Result<(), String> {
-        // Try to determine types from specialization info
-        let type_a = var_a.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let type_b = var_b.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let b = self.pop_value()?;
-        let a = self.pop_value()?;
-
-        // Generate specialized code based on types
-        match (type_a, type_b) {
-            (Some(ValueType::Int), Some(ValueType::Int)) => {
-                // Pure integer addition - fastest path
-                // Direct native i64 addition without type checks
-                let result = builder.ins().iadd(a, b);
-                self.push_value(result);
-            }
-            // Float specialization deferred to future optimization pass
-            // Current implementation focuses on integer optimization
-            _ => {
-                // Generic fallback - assume integers for now
-                let result = builder.ins().iadd(a, b);
-                self.push_value(result);
-            }
-        }
-        Ok(())
-    }
-
-    /// Translate Sub operation with type specialization
-    fn translate_sub_specialized(
-        &mut self,
-        builder: &mut FunctionBuilder,
-        var_a: Option<&str>,
-        var_b: Option<&str>,
-    ) -> Result<(), String> {
-        let type_a = var_a.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let type_b = var_b.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let b = self.pop_value()?;
-        let a = self.pop_value()?;
-
-        match (type_a, type_b) {
-            (Some(ValueType::Int), Some(ValueType::Int)) => {
-                // Pure integer subtraction
-                let result = builder.ins().isub(a, b);
-                self.push_value(result);
-            }
-            _ => {
-                let result = builder.ins().isub(a, b);
-                self.push_value(result);
-            }
-        }
-        Ok(())
-    }
-
-    /// Translate Mul operation with type specialization
-    fn translate_mul_specialized(
-        &mut self,
-        builder: &mut FunctionBuilder,
-        var_a: Option<&str>,
-        var_b: Option<&str>,
-    ) -> Result<(), String> {
-        let type_a = var_a.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let type_b = var_b.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let b = self.pop_value()?;
-        let a = self.pop_value()?;
-
-        match (type_a, type_b) {
-            (Some(ValueType::Int), Some(ValueType::Int)) => {
-                // Pure integer multiplication
-                let result = builder.ins().imul(a, b);
-                self.push_value(result);
-            }
-            _ => {
-                let result = builder.ins().imul(a, b);
-                self.push_value(result);
-            }
-        }
-        Ok(())
-    }
-
-    /// Translate Div operation with type specialization
-    fn translate_div_specialized(
-        &mut self,
-        builder: &mut FunctionBuilder,
-        var_a: Option<&str>,
-        var_b: Option<&str>,
-    ) -> Result<(), String> {
-        let type_a = var_a.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let type_b = var_b.and_then(|name| {
-            let hash = Self::hash_var_name(name);
-            self.specialization.as_ref()?.specialized_types.get(&hash).copied()
-        });
-
-        let b = self.pop_value()?;
-        let a = self.pop_value()?;
-
-        match (type_a, type_b) {
-            (Some(ValueType::Int), Some(ValueType::Int)) => {
-                // Pure integer division
-                let result = builder.ins().sdiv(a, b);
-                self.push_value(result);
-            }
-            _ => {
-                let result = builder.ins().sdiv(a, b);
-                self.push_value(result);
-            }
-        }
+        let (Some(ctx), Some(error_func)) = (self.ctx_param, self.arithmetic_error_func) else {
+            return Err("Checked arithmetic requires a runtime error context".into());
+        };
+        let failure = builder.create_block();
+        let success = builder.create_block();
+        builder.ins().brif(failed, failure, &[], success, &[]);
+        builder.seal_block(failure);
+        builder.seal_block(success);
+        builder.switch_to_block(failure);
+        self.persist_local_slots(builder, true);
+        let operation = builder.ins().iconst(types::I64, operation);
+        let call = builder.ins().call(error_func, &[ctx, operation, left, right]);
+        let status = builder.inst_results(call)[0];
+        builder.ins().return_(&[status]);
+        builder.switch_to_block(success);
         Ok(())
     }
 
@@ -5983,6 +5876,19 @@ impl BytecodeTranslator {
 }
 
 impl JitCompiler {
+    fn declare_arithmetic_error(
+        module: &mut JITModule,
+        builder: &mut FunctionBuilder,
+    ) -> Result<FuncRef, String> {
+        let mut sig = module.make_signature();
+        sig.params.extend([AbiParam::new(types::I64); 4]);
+        sig.returns.push(AbiParam::new(types::I64));
+        let id = module
+            .declare_function("jit_arithmetic_error", Linkage::Import, &sig)
+            .map_err(|error| format!("Failed to declare arithmetic error: {error}"))?;
+        Ok(module.declare_func_in_func(id, builder.func))
+    }
+
     fn declare_named_assignment(
         module: &mut JITModule,
         builder: &mut FunctionBuilder,
@@ -6015,6 +5921,7 @@ impl JitCompiler {
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
+        builder.symbol("jit_arithmetic_error", jit_arithmetic_error as *const u8);
         builder.symbol("jit_load_local_slot", jit_load_local_slot as *const u8);
         builder.symbol("jit_store_local_slot", jit_store_local_slot as *const u8);
         builder.symbol("jit_store_variable_from_stack", jit_store_variable_from_stack as *const u8);
@@ -6616,6 +6523,8 @@ impl JitCompiler {
 
             // Translate bytecode instructions to Cranelift IR
             let mut translator = BytecodeTranslator::new();
+            translator.arithmetic_error_func =
+                Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(ctx_ptr);
             translator.set_external_functions(
@@ -7361,6 +7270,8 @@ impl JitCompiler {
 
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
+            translator.arithmetic_error_func =
+                Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(vm_context_param);
             translator.set_call_function(call_func_ref);
@@ -7670,6 +7581,8 @@ impl JitCompiler {
 
             // Create BytecodeTranslator with direct-arg mode enabled
             let mut translator = BytecodeTranslator::new();
+            translator.arithmetic_error_func =
+                Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(vm_context_param);
             translator.set_direct_arg_mode(direct_arg_param, 1);
@@ -8275,6 +8188,8 @@ impl JitCompiler {
 
             // Initialize translator
             let mut translator = BytecodeTranslator::new();
+            translator.arithmetic_error_func =
+                Some(Self::declare_arithmetic_error(&mut self.module, &mut builder)?);
             translator.set_local_names(chunk.local_names.clone());
             translator.set_context_param(vm_context_param);
             translator.set_external_functions(
