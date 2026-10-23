@@ -11,6 +11,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Guard fused character-append loops and retain the original bytecode loop for
+  unsupported types or bindings. Skipped loops preserve their counters; fractional
+  counters, readonly bindings and catchable errors retain ordinary loop behavior.
+  Fast appends run in bounded batches so dispatch cancellation checks remain active.
+  Ordinary constant appends to `let`/`const` strings also use checked assignment.
+
 - Preserve typed dictionary reads/writes and checked global assignments in
   experimental native loops. Guard dense integer access with explicit data/length
   views, refresh views after storage changes, and propagate errors without

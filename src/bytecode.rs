@@ -107,9 +107,10 @@ pub enum OpCode {
     /// Stack: [] -> []
     AppendConstCharInPlace(usize, char),
 
-    /// Append constant character repeatedly while index < limit, then set index = limit
+    /// Guarded batched character append while integer index < integer limit.
+    /// Push true when complete; false requests the original bytecode loop.
     /// Operand: target string slot, index slot, limit slot, character payload
-    /// Stack: [] -> []
+    /// Stack: [] -> [Bool]
     AppendConstCharUntilLocalInPlace(usize, usize, usize, char),
 
     /// Accumulate map[index] into sum while index < limit, then set index = limit

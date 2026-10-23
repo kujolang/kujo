@@ -558,6 +558,16 @@ impl Compiler {
                         {
                             if left_name == target_name {
                                 if let Some(slot) = self.resolve_local_slot(target_name) {
+                                    // Readonly bindings must use checked assignment;
+                                    // in-place append opcodes do not perform that check.
+                                    if self.chunk.local_binding_kinds.get(slot)
+                                        != Some(&BytecodeBindingKind::Mutable)
+                                    {
+                                        self.compile_expr(value)?;
+                                        self.compile_assignment(target)?;
+                                        self.chunk.emit(OpCode::Pop);
+                                        return Ok(());
+                                    }
                                     // Use dedicated in-place constant string append opcode
                                     if let Expr::String(s) = &**right {
                                         if let Some(ch) = {
@@ -639,17 +649,22 @@ impl Compiler {
             }
 
             Stmt::While { condition, body, .. } => {
-                if let Some((target_slot, index_slot, limit_slot, append_char)) =
-                    self.match_append_char_until_local_pattern(condition, body)
-                {
-                    self.chunk.emit(OpCode::AppendConstCharUntilLocalInPlace(
-                        target_slot,
-                        index_slot,
-                        limit_slot,
-                        append_char,
-                    ));
-                    return Ok(());
-                }
+                let append_fast_exit =
+                    if let Some((target_slot, index_slot, limit_slot, append_char)) =
+                        self.match_append_char_until_local_pattern(condition, body)
+                    {
+                        self.chunk.emit(OpCode::AppendConstCharUntilLocalInPlace(
+                            target_slot,
+                            index_slot,
+                            limit_slot,
+                            append_char,
+                        ));
+                        let exit = self.chunk.emit(OpCode::JumpIfTrue(0));
+                        self.chunk.emit(OpCode::Pop);
+                        Some(exit)
+                    } else {
+                        None
+                    };
 
                 if let Some((map_slot, index_slot, limit_slot)) =
                     self.match_fill_int_map_with_double_until_local_pattern(condition, body)
@@ -706,6 +721,13 @@ impl Compiler {
                 self.loop_starts.pop();
                 self.loop_continues.pop();
                 self.loop_runtime_depths.pop();
+
+                if let Some(fast_exit) = append_fast_exit {
+                    let done = self.chunk.emit(OpCode::Jump(0));
+                    self.chunk.patch_jump(fast_exit);
+                    self.chunk.emit(OpCode::Pop);
+                    self.chunk.patch_jump(done);
+                }
 
                 Ok(())
             }

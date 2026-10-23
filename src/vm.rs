@@ -2829,63 +2829,57 @@ impl VM {
                         .last_mut()
                         .ok_or("AppendConstCharUntilLocalInPlace requires call frame")?;
 
-                    let current_index = match frame.local_slots.get(index_slot) {
-                        Some(Value::Int(value)) => *value,
-                        Some(_) => {
-                            return Err("Type mismatch in AppendConstCharUntilLocalInPlace index"
-                                .to_string())
+                    // Fast fusion is valid only for independent mutable bindings
+                    // and integer counters. All other cases execute the original
+                    // bytecode loop, preserving type/operator/error semantics.
+                    let counters = match (
+                        frame.local_slots.get(index_slot),
+                        frame.local_slots.get(limit_slot),
+                    ) {
+                        (Some(Value::Int(index)), Some(Value::Int(limit))) => {
+                            Some((*index, *limit))
                         }
-                        None => return Err(format!("Invalid local slot: {}", index_slot)),
+                        _ => None,
                     };
-
-                    let limit_index = match frame.local_slots.get(limit_slot) {
-                        Some(Value::Int(value)) => *value,
-                        Some(_) => {
-                            return Err("Type mismatch in AppendConstCharUntilLocalInPlace limit"
-                                .to_string())
-                        }
-                        None => return Err(format!("Invalid local slot: {}", limit_slot)),
+                    let Some((index, limit)) = counters else {
+                        self.stack.push(Value::Bool(false));
+                        continue;
                     };
-
-                    if limit_index > current_index {
-                        let repeat_count_i64 = limit_index - current_index;
-                        let repeat_count = usize::try_from(repeat_count_i64).map_err(|_| {
-                            "Repeat count overflow in AppendConstCharUntilLocalInPlace".to_string()
-                        })?;
-
-                        let target = frame
-                            .local_slots
-                            .get_mut(target_slot)
-                            .ok_or_else(|| format!("Invalid local slot: {}", target_slot))?;
-
-                        match target {
-                            Value::Str(left) => {
-                                let left_str = Arc::make_mut(left);
-                                let needed = rhs.len_utf8().saturating_mul(repeat_count);
-                                let available = left_str.capacity() - left_str.len();
-
-                                if available < needed {
-                                    let reserve_amount = needed.max(left_str.capacity());
-                                    left_str.reserve(reserve_amount);
-                                }
-
-                                for _ in 0..repeat_count {
-                                    left_str.push(rhs);
-                                }
-                            }
-                            _ => {
-                                return Err(
-                                    "Type mismatch in AppendConstCharUntilLocalInPlace target"
-                                        .to_string(),
-                                )
-                            }
-                        }
+                    if index >= limit {
+                        // No assignment or target validation occurs in a skipped loop.
+                        self.stack.push(Value::Bool(true));
+                        continue;
                     }
-
-                    if let Some(index_value) = frame.local_slots.get_mut(index_slot) {
-                        *index_value = Value::Int(limit_index);
+                    let mutable = [target_slot, index_slot].iter().all(|slot| {
+                        self.chunk.local_binding_kinds.get(*slot)
+                            == Some(&BytecodeBindingKind::Mutable)
+                    });
+                    if !mutable
+                        || target_slot == index_slot
+                        || target_slot == limit_slot
+                        || index_slot == limit_slot
+                        || !matches!(frame.local_slots.get(target_slot), Some(Value::Str(_)))
+                    {
+                        self.stack.push(Value::Bool(false));
+                        continue;
+                    }
+                    // Widen before subtraction. Bounded batches avoid enormous
+                    // reservations and return to the dispatch cancellation check.
+                    let count = ((limit as i128 - index as i128).min(4096)) as usize;
+                    let Value::Str(text) = &mut frame.local_slots[target_slot] else {
+                        unreachable!()
+                    };
+                    let text = Arc::make_mut(text);
+                    text.reserve(rhs.len_utf8() * count);
+                    for _ in 0..count {
+                        text.push(rhs);
+                    }
+                    let next = index + count as i64; // next <= limit <= i64::MAX
+                    frame.local_slots[index_slot] = Value::Int(next);
+                    if next < limit {
+                        self.ip -= 1;
                     } else {
-                        return Err(format!("Invalid local slot: {}", index_slot));
+                        self.stack.push(Value::Bool(true));
                     }
                 }
 

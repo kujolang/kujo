@@ -7641,9 +7641,9 @@ impl JitCompiler {
             // Dict/Array operations - in-place ops supported for int paths
             OpCode::IndexGet | OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_) => true,
-            OpCode::AppendConstStringInPlace(_, _)
-            | OpCode::AppendConstCharInPlace(_, _)
-            | OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => true,
+            OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
+            // Guarded fusion remains in the VM until native lowering exists.
+            OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => false,
             OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_) => true,
 
             // Everything else is unsupported - causes code to skip JIT

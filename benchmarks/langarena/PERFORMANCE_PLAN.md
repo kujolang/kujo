@@ -19,12 +19,12 @@ a target to test, not a guarantee. This document explains the execution order;
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
   timings do not establish an end-to-end speedup.
 - The latest verified test-size
-  [interpreter](checksums-2026-10-23-dictionary-ownership-interpreter.json)
-  run passed all 50 cases at `739dd89`. The latest
+  [interpreter](checksums-2026-10-23-indexed-bindings-interpreter.json),
   [VM matrix](checksums-2026-10-23-indexed-bindings-vm.json) and
   [JIT matrix](checksums-2026-10-23-indexed-bindings-jit.json) passed all 50 at
   `b286c5d`, with hashes/schemas verified and fallback allowed. These frozen candidates
-  predate the fixed-dictionary allocation and specialized-loop fixes and cannot certify current HEAD.
+  predate the fixed-dictionary allocation, specialized-loop and fused-append fixes
+  and cannot certify current HEAD.
   No complete current production-size run exists.
 - All 50 test-size cases passed with JIT enabled at `33a85f9` using a ten-minute
   per-case debug deadline. VM fallback was allowed. This establishes neither full
@@ -135,6 +135,14 @@ gated until retained literal lifetimes and specialized local-helper behavior are
 verified; bounded root storage is not evidence of reduced string copying or speed.
 
 ### Remaining native ownership gate
+
+The [fused character-append audit](guarded-append-fusion-2026-10-23.json) adds
+an ordinary bytecode fallback to the VM fast path.
+It guards independent mutable bindings and integer/string types, preserves counters
+when the loop is skipped, and processes at most 4,096 appends per dispatch before
+checking cancellation again. Native eligibility no longer advertises this opcode
+without a lowering implementation. Native fusion and release speed measurements
+remain open; the guarded VM path is not a substitute for those gates.
 
 The [specialized-loop audit](native-loop-collections-2026-10-23.json) replaces
 untyped integer-dictionary access with guarded dense integer access and tagged VM

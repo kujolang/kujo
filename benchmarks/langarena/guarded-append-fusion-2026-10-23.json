@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-23",
+  "baseline": "b9de9c8",
+  "frozen_baseline": "b286c5d",
+  "scope": "Guarded VM character-append fusion and readonly constant append lowering",
+  "reproductions": [
+    "A skipped loop changed index from 9 to 3 in VM/JIT; interpreter retained 9.",
+    "Fused fractional counters errored instead of running the original loop.",
+    "Fused readonly counter assignments did not throw; fallback testing also exposed ordinary constant appends mutating const strings."
+  ],
+  "implementation": [
+    "Fused opcode returns a success guard; compiler retains original loop for guarded-out inputs with ordinary remappable branch instructions.",
+    "Fuse only independent mutable target/index bindings with integer counters and string target. Skip loops without assigning or inspecting the target when integer index >= limit.",
+    "Widen counter subtraction to i128 and append at most 4096 characters per dispatch, returning to cancellation checks between batches.",
+    "Readonly constant appends compile to ordinary checked assignment.",
+    "Stop advertising fused append as JIT-supported before it has native lowering; VM batching remains active."
+  ],
+  "verification": {
+    "library_passed": 1041,
+    "library_ignored": 8,
+    "broad_integration_passed": 35,
+    "additional_integration_results": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+      "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s"
+    ],
+    "cases": [
+      "Skipped/equal bounds preserve invalid targets and counter values",
+      "Fractional counters use original increment/condition behavior",
+      "Unicode growth over multiple batches preserves snapshots",
+      "Readonly counter errors preserve the append occurring before assignment; readonly target errors precede counter changes",
+      "Single/multichar constant append readonly errors",
+      "Optimized/unoptimized compilation retains fusion plus fallback; small, skipped, fractional and near-i64::MAX execution agree"
+    ],
+    "modes": [
+      "VM",
+      "interpreter",
+      "JIT-enabled VM fallback"
+    ],
+    "format": "cargo fmt --check and git diff --check passed",
+    "earlier_failures": "Initial fallback test caught ordinary const append bypass, then fixed. Earlier overlapping broad build/run had six system-helper failures including missing running test executable (os error 2); final broad run passed all 1041 library tests without concurrent rebuild."
+  },
+  "limitations": [
+    "Native fused lowering remains open",
+    "No release speed or current all50 production claim",
+    "Cancellation batch bound inspected in code; no new cancellation timing test"
+  ],
+  "logs": [
+    {
+      "path": "/tmp/kujo-fused-append-frozen-baseline.log",
+      "sha256": "bc205b49abcfb113306be982424cc8ee4863a3d53ed83f411bed6229152f28e6"
+    },
+    {
+      "path": "/tmp/kujo-fused-append-after.log",
+      "sha256": "a0b0656b482b98605b9e29d344adc0a2b79409a903e6513d980c715c796b1fdf"
+    },
+    {
+      "path": "/tmp/kujo-fused-append-verified.log",
+      "sha256": "e6314ea95bcca6e662efbcd0dac5406393091108f5d09421c80a40b6006ffc2d"
+    },
+    {
+      "path": "/tmp/kujo-fused-append-final.log",
+      "sha256": "487576313d9ff10a069e99f5c6adf2f76cc92dccdc7c045696cd712e81861fde"
+    },
+    {
+      "path": "/tmp/kujo-fused-append-assignment.log",
+      "sha256": "462db49470fb9defcda9243ac929fa30d694c0f01b8c89c0195a6b02a9aac3ec"
+    }
+  ]
+}
