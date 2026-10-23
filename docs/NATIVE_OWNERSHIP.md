@@ -1,11 +1,12 @@
 # Experimental native owned-value lifetime mechanism
 
-Status: **lifetime hooks connected; owned operations pending**. Native invocation
+Status: **lifetime hooks and tagged VM-stack conversion connected; other owned operations pending**. Native invocation
 wrappers and generated function entry/exit helpers now enter and leave lazy root
 scopes. `src/native_owned.rs` is compiled with `runtime-jit`, but generated owned
-loads, operators and callback marshaling do not yet use its codec. It does not repair the eight
-failures in `benchmarks/langarena/jit-owned-values-2026-10-23.json`, enable owned
-arguments, or establish native parity/performance. Existing entry guards remain.
+loads and operators do not yet use its codec. VM-stack pops now encode owned
+callback results, and tagged pushes borrow roots when marshaling callback
+arguments. This repairs the native `str(x)` return path from the original audit;
+it does not establish full native parity/performance. Existing entry guards remain.
 
 The native execution census shows that owned-argument call boundaries are heavily
 exercised. The existing native path uses incompatible VM-stack markers and an
@@ -80,6 +81,12 @@ before leaving its frame. Rust store destruction drops any remaining values, but
 generated normal/error exits still need explicit cleanup while the store is live.
 
 ## Integration gates still open
+
+Tagged stack conversion alone is not complete operand lifetime management. Roots
+currently survive until activation cleanup unless explicitly transferred. Generated
+Pop, Dup, local overwrites and consumed arguments still need ownership-aware code
+before long-running owned loops can claim storage bounded by live operands. Do not
+use this partial integration to widen entry guards or claim a collection speedup.
 
 1. Boundary/function lifetime hooks are connected. Extend their validation to
    real owned-value bytecode, callbacks and imported native execution while

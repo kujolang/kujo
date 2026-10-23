@@ -114,7 +114,11 @@ The [owned-value lifetime foundation](../../docs/NATIVE_OWNERSHIP.md) now provid
 recyclable roots, frame-local cleanup and explicit return promotion. Native
 boundary/function lifetime hooks are connected, with lazy storage for immediate
 paths. Generated owned operations still need integration; mechanism and ABI-probe
-tests are not a language-level parity pass.
+tests are not a language-level parity pass. Tagged VM-stack conversion now uses
+the codec for callback results and argument marshaling. The refreshed
+[owned-stack audit](jit-owned-stack-2026-10-23.json) repairs the native callback
+return probe; seven original mismatches remain. Dead operand and overwritten-local
+release is still required before claiming bounded storage for long owned loops.
 
 The [owned-value audit](jit-owned-values-2026-10-23.json) reproduces eight native
 mismatches on `0c77115`, with VM/interpreter agreement and measured native entries
@@ -122,7 +126,8 @@ for every probe: string/array/dictionary returns, native callback returns and
 arguments, bytecode callback arguments, string equality and empty-string truth.
 The [reproducer](probes/native_owned_values.kujo) records failures rather than
 treating its own successful exit as a parity pass. These are current correctness
-gaps, even though the earlier all-50 benchmark checksum run passed with fallback.
+gaps in that baseline, even though the earlier all-50 benchmark checksum run passed
+with fallback. The refreshed audit above tracks the one repaired case separately.
 
 The string-global audit still returns an integer marker after compilation. Fix the
 complete owned-value path before widening owned argument guards or claiming typed

@@ -1770,6 +1770,15 @@
         "../../tests/jit_immediate_arguments.rs",
         "jit-immediate-arguments-2026-10-23.json"
       ]
+    },
+    {
+      "id": "jit_owned_callback_stack_conversion",
+      "status": "Native callback result now retains owned Value/type through stack pop, return promotion and VM extraction. Tagged push borrows a validated root, preserving COW snapshots. str(x) return audit now passes all three modes; seven other original mismatches remain. Dead operand/overwrite release and generated owned loads/operators remain unfinished; no entry guard widened.",
+      "evidence": [
+        "jit-owned-stack-2026-10-23.json",
+        "../../tests/jit_owned_stack_contracts.rs",
+        "../../docs/NATIVE_OWNERSHIP.md"
+      ]
     }
   ],
   "verification": [
@@ -1992,6 +2001,15 @@
       "scope": "all50 native lifetime hook checksums at 7f89e13",
       "result": "50/50 test-size checksums; all raw sidecar hashes and schemas valid. Four native/dispatch counters match 0c77115 for all50 cases. Debug build with fallback, predating0f4934f guard; not production, current HEAD or speed acceptance. Eight owned-value mismatches remain open.",
       "evidence": "checksums-2026-10-23-native-root-lifetimes-jit.json"
+    },
+    {
+      "scope": "tagged native stack conversion",
+      "result": "Both new boundary tests fail before fix. After fix1023 library tests pass (8 ignored) and30 unique targeted integration tests pass, including VM/interpreter/JIT callback return and callback chaining with actual native-entry evidence. Eight-probe audit now has1 parity pass and7 mismatches, all with native entries. No full50 rerun, production or speed acceptance claimed; dead-operand release pending.",
+      "evidence": [
+        "jit-owned-stack-2026-10-23.json",
+        "../../tests/jit_owned_stack_contracts.rs",
+        "../../src/jit.rs"
+      ]
     }
   ]
 }

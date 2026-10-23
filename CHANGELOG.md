@@ -6,6 +6,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve owned callback results across the experimental native VM-stack boundary
+  instead of replacing them with integer zero. Full native owned-value support
+  and dead-operand lifetime integration remain unfinished.
+
 - Connect lazy ownership scopes to experimental native invocation and recursive
   function exits. Owned-value bytecode support remains incomplete.
 

@@ -111,6 +111,12 @@ impl NativeCallRoots {
         self.values.encode(value)
     }
 
+    /// Borrowing a native operand does not consume its root. This also permits
+    /// a nested scope to marshal a caller's value without taking ownership.
+    pub(crate) fn clone_value(&self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
+        self.values.clone_value(payload, kind)
+    }
+
     pub(crate) fn take_value(&mut self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
         // An empty callee has a logical scope but no physical root frame yet.
         // Do not let the store mistake the caller's frame for the current one.

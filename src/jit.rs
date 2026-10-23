@@ -571,9 +571,14 @@ pub unsafe extern "C" fn jit_stack_pop(ctx: *mut VMContext) -> i64 {
     ctx.return_value_kind = 0;
     if let Some(stack) = ctx.stack_ptr.as_mut() {
         if let Some(value) = stack.pop() {
-            if let Some((payload, kind)) = crate::native_scalar::encode(&value) {
-                ctx.return_value_kind = kind;
-                return payload;
+            match ctx.owned_roots.encode(value) {
+                Ok((payload, kind)) => {
+                    ctx.return_value_kind = kind;
+                    return payload;
+                }
+                Err(error) => {
+                    ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                }
             }
         }
     }
@@ -2407,7 +2412,14 @@ pub unsafe extern "C" fn jit_return_scalar_kind(ctx: *mut VMContext) -> i64 {
 pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, kind: i64) {
     if let Some(ctx) = ctx.as_mut() {
         if let Some(stack) = ctx.stack_ptr.as_mut() {
-            stack.push(crate::native_scalar::decode(value, kind));
+            // The SSA operand can still be used after marshaling (Dup and
+            // peek-style stores). Borrow it; do not consume its native root.
+            match ctx.owned_roots.clone_value(value, kind) {
+                Ok(value) => stack.push(value),
+                Err(error) => {
+                    ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                }
+            }
         }
     }
 }
@@ -9214,6 +9226,43 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_stack_boundary_preserves_owned_values_and_snapshots() {
+        let original = Arc::new(vec![Value::Int(8)]);
+        let mut stack = vec![Value::Array(original.clone())];
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        context.owned_roots.enter().unwrap();
+        // SAFETY: the context and its exclusive stack pointer remain live.
+        unsafe {
+            let payload = jit_stack_pop(&mut context);
+            let kind = context.return_value_kind;
+            assert_eq!(kind, crate::native_owned::OWNED);
+            assert!(stack.is_empty());
+            jit_stack_push_scalar(&mut context, payload, kind);
+            jit_stack_push_scalar(&mut context, payload, kind);
+            let Value::Array(mut changed) = stack.pop().unwrap() else { panic!("array lost") };
+            Arc::make_mut(&mut changed)[0] = Value::Int(99);
+            assert!(matches!(&stack[0], Value::Array(a) if matches!(a[0], Value::Int(8))));
+            assert!(matches!(original[0], Value::Int(8)));
+            context.owned_roots.leave().unwrap();
+            let before = stack.len();
+            jit_stack_push_scalar(&mut context, payload, kind);
+            assert_eq!(stack.len(), before);
+            assert!(context.runtime_error.take().unwrap().contains("StaleHandle"));
+        }
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+    }
+
+    #[test]
+    fn native_stack_boundary_rejects_invalid_kinds() {
+        let mut stack = Vec::new();
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        // SAFETY: context has a live exclusive stack pointer.
+        unsafe { jit_stack_push_scalar(&mut context, 123, 99) };
+        assert!(stack.is_empty());
+        assert!(context.runtime_error.unwrap().contains("InvalidKind"));
+    }
 
     // SAFETY: test callers supply a live context with initialized local values;
     // recursion stays within the normal native depth guard and retains no pointers.
