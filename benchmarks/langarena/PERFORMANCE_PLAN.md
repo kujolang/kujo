@@ -7,6 +7,18 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Native indexed replacement](native-indexed-replacement-2026-10-24.json) and
+  [guarded pop/remove](native-pop-rebinding-2026-10-24.json) pass 1,071 library
+  tests and 184 integration tests, with no exclusions. Unique storage reuse,
+  retained snapshots, fallback effects and readonly errors have coverage.
+  [Readonly initialization](native-readonly-locals-2026-10-24.json) is repaired.
+  The [current static audit](post-pop-index-native-surfaces-2026-10-24.json)
+  reports 158/165 bodies with no unsupported opcode; remaining first blockers are
+  await (1), closure creation (3), captured loads (2), and try (1). This is not
+  native time coverage or speed. Final-candidate all-50 release checksums,
+  production checks, profiling and controlled competitive acceptance remain open.
+
+
 - [Native checked nested writes](native-nested-writes-2026-10-24.json) pass
   1,061 library tests and 155 integration tests, including both-runtime parity.
   Unique rows remain reusable; retained snapshots force COW. Captured named loop

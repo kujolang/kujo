@@ -1431,6 +1431,206 @@ pub unsafe extern "C" fn jit_indexed_write(
     }
 }
 
+/// Conditional pop/remove rebinding. A fallback preserves evaluated call operands.
+#[no_mangle]
+// SAFETY: retained path metadata and tagged operand storage are live; target,
+// dead-pair and operand roots belong to this context. No user callback runs here.
+pub unsafe extern "C" fn jit_try_pop_rebind(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    mutable: i64,
+    name_hash: i64,
+    pair_location: i64,
+    pair_target: i64,
+    pair_kind: i64,
+    shape: *const Vec<Option<String>>,
+    argc: i64,
+    operands: *const i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let mut cache = if ctx.vm_ptr.is_null() {
+        std::mem::take(&mut ctx.path_depth_valid)
+    } else {
+        VM::take_native_path_depth_cache(ctx.vm_ptr.cast())
+    };
+    let result = (|| -> Result<Option<(i64, i64)>, String> {
+        if !(1..=2).contains(&argc) {
+            return Ok(None);
+        }
+        let shape = shape.as_ref().ok_or("Missing native pop path")?;
+        if operands.is_null() {
+            return Err("Missing native pop operands".into());
+        }
+        let count = shape.iter().filter(|step| step.is_none()).count();
+        let operands = std::slice::from_raw_parts(operands, (count + argc as usize + 1) * 2);
+        let original = operands[count * 2];
+        let original_kind = operands[count * 2 + 1];
+        let function_offset = (count + argc as usize) * 2;
+        let native = ctx
+            .owned_roots
+            .native_function_name(operands[function_offset], operands[function_offset + 1])
+            .map_err(|e| format!("Native ownership error: {e:?}"))?;
+        if !matches!((native, argc), (Some("pop"), 1) | (Some("remove"), 2)) {
+            return Ok(None);
+        }
+        // This target is the forthcoming fresh declaration, not an in-scope local.
+        match pair_location {
+            1 if pair_kind == crate::native_owned::OWNED => {
+                *ctx.owned_roots
+                    .current_value_mut(pair_target, pair_kind)
+                    .map_err(|e| format!("Native ownership error: {e:?}"))? = Value::Null;
+            }
+            0 => {
+                if let Some(pair) = usize::try_from(pair_target)
+                    .ok()
+                    .and_then(|n| ctx.local_slots_ptr.as_mut()?.get_mut(n))
+                {
+                    *pair = Value::Null;
+                }
+            }
+            2 => {
+                if let Some(name) =
+                    ctx.var_names_ptr.as_ref().and_then(|names| names.get(&(pair_target as u64)))
+                {
+                    if let Some(pair) =
+                        ctx.locals_ptr.as_mut().and_then(|locals| locals.get_mut(name))
+                    {
+                        *pair = Value::Null;
+                    }
+                }
+            }
+            _ => {}
+        }
+        if mutable == 0 || original_kind != crate::native_owned::OWNED {
+            return Ok(None);
+        }
+        let mut offset = 0;
+        let mut path = Vec::with_capacity(shape.len());
+        for step in shape {
+            path.push(match step {
+                Some(field) => crate::interpreter::assignment::Access::Field(field.clone()),
+                None => {
+                    let index = ctx
+                        .owned_roots
+                        .clone_value(operands[offset], operands[offset + 1])
+                        .map_err(|e| format!("Native ownership error: {e:?}"))?;
+                    offset += 2;
+                    crate::interpreter::assignment::Access::Index(index)
+                }
+            });
+        }
+        let key = if argc == 2 {
+            Some(
+                ctx.owned_roots
+                    .clone_value(operands[count * 2 + 2], operands[count * 2 + 3])
+                    .map_err(|e| format!("Native ownership error: {e:?}"))?,
+            )
+        } else {
+            None
+        };
+        let mut pair = None;
+        let mut apply = |root: &mut Value, snapshot: &mut Option<Value>| {
+            pair = if path.is_empty() {
+                crate::interpreter::assignment::collection_rebinding_path(
+                    root,
+                    &path,
+                    snapshot,
+                    key.as_ref(),
+                )
+            } else {
+                crate::interpreter::assignment::collection_rebinding_path_checked(
+                    root,
+                    &path,
+                    snapshot,
+                    key.as_ref(),
+                    &mut cache,
+                )
+            };
+            pair.is_some()
+        };
+        if location == 1 {
+            if target_kind != crate::native_owned::OWNED {
+                return Ok(None);
+            }
+            ctx.owned_roots
+                .with_rebinding_snapshot(target, original, &mut apply)
+                .map_err(|e| format!("Native ownership error: {e:?}"))?;
+        } else {
+            let value = std::mem::replace(
+                ctx.owned_roots
+                    .current_value_mut(original, original_kind)
+                    .map_err(|e| format!("Native ownership error: {e:?}"))?,
+                Value::Null,
+            );
+            let mut snapshot = Some(value);
+            let mut operation = |root: &mut Value| apply(root, &mut snapshot);
+            match location {
+                0 => {
+                    if let Some(root) = usize::try_from(target)
+                        .ok()
+                        .and_then(|n| ctx.local_slots_ptr.as_mut()?.get_mut(n))
+                    {
+                        operation(root);
+                    }
+                }
+                2 | 3 => {
+                    let name = ctx
+                        .var_names_ptr
+                        .as_ref()
+                        .and_then(|names| names.get(&(name_hash as u64)))
+                        .cloned();
+                    if let Some(name) = name {
+                        if location == 2 {
+                            if let Some(root) =
+                                ctx.locals_ptr.as_mut().and_then(|locals| locals.get_mut(&name))
+                            {
+                                operation(root);
+                            }
+                        } else if let Some(environment) = ctx.loop_environment_ptr.as_mut() {
+                            let _ = environment.mutate_checked(&name, |root| {
+                                operation(root);
+                            });
+                        } else if let Some(vm) = ctx.vm_ptr.cast::<VM>().as_mut() {
+                            vm.try_guarded_global_mutation_from_jit(&name, &mut operation);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            if let Some(value) = snapshot {
+                *ctx.owned_roots
+                    .current_value_mut(original, original_kind)
+                    .map_err(|e| format!("Native ownership error: {e:?}"))? = value;
+            }
+        }
+        pair.map(|value| {
+            ctx.owned_roots.encode(value).map_err(|e| format!("Native ownership error: {e:?}"))
+        })
+        .transpose()
+    })();
+    if ctx.vm_ptr.is_null() {
+        ctx.path_depth_valid = cache;
+    } else {
+        VM::restore_native_path_depth_cache(ctx.vm_ptr.cast(), cache);
+    }
+    match result {
+        Ok(Some((payload, kind))) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Ok(None) => {
+            ctx.return_value_kind = -4;
+            0
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Inspect builtin identity and operand types without retaining artificial aliases.
 #[no_mangle]
 // SAFETY: live exclusive context and live operand handles; no callbacks.
@@ -4954,6 +5154,7 @@ struct BytecodeTranslator {
     update_binding_path_func: Option<FuncRef>,
     append_binding_path_func: Option<FuncRef>,
     guard_append_path_func: Option<FuncRef>,
+    try_pop_rebind_func: Option<FuncRef>,
     loop_resume_enabled: bool,
     loop_resume_guard_func: Option<FuncRef>,
     loop_resume_prepare_func: Option<FuncRef>,
@@ -5142,6 +5343,7 @@ impl BytecodeTranslator {
             update_binding_path_func: None,
             append_binding_path_func: None,
             guard_append_path_func: None,
+            try_pop_rebind_func: None,
             loop_resume_enabled: false,
             loop_resume_guard_func: None,
             loop_resume_prepare_func: None,
@@ -5263,6 +5465,11 @@ impl BytecodeTranslator {
                 | OpCode::GuardAppendPath(target) => {
                     vec![(*target, next), (pc + 1, next)]
                 }
+                OpCode::TryPopRebind(_, _, argc, shape, end) => {
+                    let fallback =
+                        depth.saturating_sub(shape.iter().filter(|step| step.is_none()).count());
+                    vec![(*end, fallback.saturating_sub(*argc)), (pc + 1, fallback)]
+                }
                 OpCode::ForNext(target) => vec![(*target, depth.saturating_sub(2)), (pc + 1, next)],
                 OpCode::TryAppendAssign(_, target) => {
                     vec![(*target, depth.saturating_sub(3)), (pc + 1, depth)]
@@ -5346,6 +5553,9 @@ impl BytecodeTranslator {
             OpCode::FieldGet(_) => (1, 1),
             OpCode::FieldSet(_) => (2, 1),
             OpCode::GuardAppendPath(_) => (0, 0),
+            OpCode::TryPopRebind(_, _, _, shape, _) => {
+                (shape.iter().filter(|step| step.is_none()).count(), 0)
+            }
             OpCode::AppendBindingPath(_, path) => {
                 (3 + path.iter().filter(|step| step.is_none()).count(), 1)
             }
@@ -5916,6 +6126,7 @@ impl BytecodeTranslator {
                 | OpCode::TryStringAppendAssign(_, target)
                 | OpCode::TryAppendAssign(_, target)
                 | OpCode::GuardAppendPath(target)
+                | OpCode::TryPopRebind(_, _, _, _, target)
                 | OpCode::ForNext(target) => {
                     if *target > max_reachable {
                         max_reachable = *target;
@@ -6209,6 +6420,7 @@ impl BytecodeTranslator {
                 | OpCode::TryStringAppendAssign(_, target)
                 | OpCode::TryAppendAssign(_, target)
                 | OpCode::GuardAppendPath(target)
+                | OpCode::TryPopRebind(_, _, _, _, target)
                 | OpCode::ForNext(target) => {
                     if *target < self.function_end {
                         if !self.blocks.contains_key(target) {
@@ -7094,6 +7306,141 @@ impl BytecodeTranslator {
                 let suffix = builder.ins().iconst(types::I64, *rhs as i64);
                 let length = builder.ins().iconst(types::I64, -1);
                 self.append_local(builder, pc, *slot, suffix, length)?;
+            }
+
+            OpCode::TryPopRebind(binding, pair_slot, argc, shape, end) => {
+                use crate::bytecode::MutationBinding;
+                let count = shape.iter().filter(|step| step.is_none()).count();
+                let mut indices = Vec::with_capacity(count);
+                for _ in 0..count {
+                    indices.push(self.pop_value()?);
+                }
+                indices.reverse();
+                let depth = self.value_stack.len();
+                if depth < argc + 1 {
+                    return Err("Pop rebind stack underflow".into());
+                }
+                let calls = self.value_stack[depth - argc - 1..].to_vec();
+                let ctx = self.ctx_param.ok_or("Pop rebind requires context")?;
+                let helper = self.try_pop_rebind_func.ok_or("Pop rebind requires helper")?;
+                let (name, location, target, target_kind, mutable) = match binding {
+                    MutationBinding::Local(slot) => {
+                        let name =
+                            self.local_names.get(*slot).ok_or("Invalid pop binding slot")?.clone();
+                        self.dirty_local_names.insert(name.clone());
+                        let mutable = self
+                            .local_binding_kinds
+                            .get(*slot)
+                            .copied()
+                            .unwrap_or(BytecodeBindingKind::Mutable)
+                            == BytecodeBindingKind::Mutable;
+                        let (location, target, kind) =
+                            if let Some(&variable) = self.local_variables.get(&name) {
+                                (
+                                    1,
+                                    builder.use_var(variable),
+                                    builder.use_var(Variable::new(variable.index() + 1)),
+                                )
+                            } else {
+                                (
+                                    if self.tracks_function_depth { 2 } else { 0 },
+                                    builder.ins().iconst(types::I64, *slot as i64),
+                                    builder.ins().iconst(types::I64, 0),
+                                )
+                            };
+                        (name, location, target, kind, mutable)
+                    }
+                    MutationBinding::Named(name) => (
+                        name.clone(),
+                        3,
+                        builder.ins().iconst(types::I64, 0),
+                        builder.ins().iconst(types::I64, 0),
+                        true,
+                    ),
+                };
+                let pair_name =
+                    self.local_names.get(*pair_slot).ok_or("Invalid pop pair slot")?.clone();
+                self.dirty_local_names.insert(pair_name.clone());
+                let (pair_location, pair_target, pair_kind) =
+                    if let Some(&variable) = self.local_variables.get(&pair_name) {
+                        (
+                            1,
+                            builder.use_var(variable),
+                            builder.use_var(Variable::new(variable.index() + 1)),
+                        )
+                    } else {
+                        let location = if self.tracks_function_depth { 2 } else { 0 };
+                        let target = if location == 2 {
+                            Self::hash_var_name(&pair_name) as i64
+                        } else {
+                            *pair_slot as i64
+                        };
+                        (
+                            location,
+                            builder.ins().iconst(types::I64, target),
+                            builder.ins().iconst(types::I64, 0),
+                        )
+                    };
+                let retained = self.path_shapes.get(shape).ok_or("Missing pop path metadata")?;
+                let shape = builder.ins().iconst(types::I64, Arc::as_ptr(retained) as i64);
+                let values = indices.iter().chain(calls.iter()).copied().collect::<Vec<_>>();
+                let size = u32::try_from(values.len().checked_mul(16).ok_or("Pop path too large")?)
+                    .map_err(|_| "Pop path too large")?;
+                let slot = builder.create_sized_stack_slot(StackSlotData::new(
+                    StackSlotKind::ExplicitSlot,
+                    size,
+                    3,
+                ));
+                for (i, value) in values.iter().enumerate() {
+                    let kind = self.scalar_kind(builder, *value);
+                    builder.ins().stack_store(*value, slot, (i * 16) as i32);
+                    builder.ins().stack_store(kind, slot, (i * 16 + 8) as i32);
+                }
+                let operands = builder.ins().stack_addr(types::I64, slot, 0);
+                let location = builder.ins().iconst(types::I64, location);
+                let mutable = builder.ins().iconst(types::I64, i64::from(mutable));
+                let name_hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                let pair_location = builder.ins().iconst(types::I64, pair_location);
+                let argc_value = builder.ins().iconst(types::I64, *argc as i64);
+                let call = builder.ins().call(
+                    helper,
+                    &[
+                        ctx,
+                        location,
+                        target,
+                        target_kind,
+                        mutable,
+                        name_hash,
+                        pair_location,
+                        pair_target,
+                        pair_kind,
+                        shape,
+                        argc_value,
+                        operands,
+                    ],
+                );
+                let result = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, result);
+                for index in indices {
+                    self.release_operand(builder, index);
+                }
+                let kind = self.scalar_kind(builder, result);
+                let applied = builder.ins().icmp_imm(IntCC::NotEqual, kind, -4);
+                let fallback = *self.blocks.get(&(pc + 1)).ok_or("Missing pop fallback")?;
+                let fallback_args = self.stack_edge_args(builder, pc + 1)?;
+                let success = builder.create_block();
+                builder.ins().brif(applied, success, &[], fallback, &fallback_args);
+                builder.seal_block(success);
+                builder.switch_to_block(success);
+                self.value_stack.truncate(depth - argc - 1);
+                for value in calls {
+                    self.release_operand(builder, value);
+                }
+                self.push_value(result);
+                let success_args = self.stack_edge_args(builder, *end)?;
+                let end_block = *self.blocks.get(end).ok_or("Missing pop success")?;
+                builder.ins().jump(end_block, &success_args);
+                return Ok(true);
             }
 
             OpCode::GuardAppendPath(fallback) => {
@@ -9201,8 +9548,9 @@ impl JitCompiler {
             .instructions
             .iter()
             .filter_map(|instruction| {
-                let (OpCode::UpdateBindingPath(_, shape) | OpCode::AppendBindingPath(_, shape)) =
-                    instruction
+                let (OpCode::UpdateBindingPath(_, shape)
+                | OpCode::AppendBindingPath(_, shape)
+                | OpCode::TryPopRebind(_, _, _, shape, _)) = instruction
                 else {
                     return None;
                 };
@@ -9299,6 +9647,7 @@ impl JitCompiler {
             ("jit_update_binding_path", 8, true),
             ("jit_append_binding_path", 8, true),
             ("jit_guard_append_path", 7, true),
+            ("jit_try_pop_rebind", 12, true),
             ("jit_loop_resume_guard", 3, true),
             ("jit_loop_resume_prepare", 2, true),
             ("jit_loop_dense_view", 2, true),
@@ -9349,6 +9698,7 @@ impl JitCompiler {
                 "jit_update_binding_path" => translator.update_binding_path_func = Some(function),
                 "jit_append_binding_path" => translator.append_binding_path_func = Some(function),
                 "jit_guard_append_path" => translator.guard_append_path_func = Some(function),
+                "jit_try_pop_rebind" => translator.try_pop_rebind_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
                 "jit_loop_resume_prepare" => translator.loop_resume_prepare_func = Some(function),
                 "jit_loop_dense_view" => translator.loop_dense_view_func = Some(function),
@@ -9418,6 +9768,7 @@ impl JitCompiler {
         builder.symbol("jit_update_binding_path", jit_update_binding_path as *const u8);
         builder.symbol("jit_append_binding_path", jit_append_binding_path as *const u8);
         builder.symbol("jit_guard_append_path", jit_guard_append_path as *const u8);
+        builder.symbol("jit_try_pop_rebind", jit_try_pop_rebind as *const u8);
         builder.symbol("jit_loop_resume_guard", jit_loop_resume_guard as *const u8);
         builder.symbol("jit_loop_resume_prepare", jit_loop_resume_prepare as *const u8);
         builder.symbol("jit_loop_dense_view", jit_loop_dense_view as *const u8);
@@ -9545,7 +9896,7 @@ impl JitCompiler {
         for pc in start..=end {
             if let Some(instruction) = chunk.instructions.get(pc) {
                 // Named captured roots require frame cells, not the locked global environment.
-                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _)
+                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::TryPopRebind(crate::bytecode::MutationBinding::Named(name),_,_,_,_)
                     if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
                 {
                     return false;
@@ -9570,7 +9921,7 @@ impl JitCompiler {
         for pc in start..=end {
             if let Some(instruction) = chunk.instructions.get(pc) {
                 // Named captured roots require frame cells, not the locked global environment.
-                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _)
+                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::TryPopRebind(crate::bytecode::MutationBinding::Named(name),_,_,_,_)
                     if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
                 {
                     return false;
@@ -9656,7 +10007,8 @@ impl JitCompiler {
             | OpCode::IndexSetInPlace(_)
             | OpCode::UpdateBindingPath(_, _)
             | OpCode::GuardAppendPath(_)
-            | OpCode::AppendBindingPath(_, _) => true,
+            | OpCode::AppendBindingPath(_, _)
+            | OpCode::TryPopRebind(_, _, _, _, _) => true,
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
             // Guarded fusion remains in the VM until native lowering exists.
             OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => false,
@@ -10243,6 +10595,7 @@ impl JitCompiler {
                         | OpCode::TryStringAppendAssign(_, target)
                         | OpCode::TryAppendAssign(_, target)
                         | OpCode::GuardAppendPath(target)
+                        | OpCode::TryPopRebind(_, _, _, _, target)
                         | OpCode::ForNext(target) => {
                             if *target > max_target {
                                 max_target = *target;
@@ -12083,6 +12436,134 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_pop_rebind_releases_dead_pairs_but_preserves_real_snapshots() {
+        fn leaf(root: &Value) -> &Value {
+            if let Value::Struct { fields, .. } = root {
+                &fields["items"]
+            } else {
+                root
+            }
+        }
+        fn identity(root: &Value) -> (usize, usize, usize) {
+            let parent = if let Value::Struct { fields, .. } = root {
+                Arc::as_ptr(fields) as usize
+            } else {
+                0
+            };
+            let (pointer, len) = match leaf(root) {
+                Value::Array(a) => (Arc::as_ptr(a) as usize, a.len()),
+                Value::Dict(d) => (Arc::as_ptr(d) as usize, d.len()),
+                _ => panic!(),
+            };
+            (parent, pointer, len)
+        }
+        for remove in [false, true] {
+            for nested in [false, true] {
+                for count in [8usize, 128] {
+                    let mut ctx = VMContext::new(
+                        std::ptr::null_mut(),
+                        std::ptr::null_mut(),
+                        std::ptr::null_mut(),
+                    );
+                    ctx.owned_roots.enter().unwrap();
+                    let data = if remove {
+                        Value::Dict(Arc::new(
+                            (0..=count)
+                                .map(|n| (Arc::<str>::from(n.to_string()), Value::Int(n as i64)))
+                                .collect(),
+                        ))
+                    } else {
+                        Value::array((0..=count).map(|n| Value::Int(n as i64)).collect())
+                    };
+                    let state = if nested {
+                        Value::Struct {
+                            name: "Bag".into(),
+                            fields: Arc::new(HashMap::from([("items".into(), data)])),
+                        }
+                    } else {
+                        data
+                    };
+                    let initial = identity(&state);
+                    let (root, kind) = ctx.owned_roots.encode(state).unwrap();
+                    let hash = BytecodeTranslator::hash_var_name("state");
+                    let mut names = HashMap::from([(hash, "state".into())]);
+                    ctx.var_names_ptr = &mut names;
+                    let shape = if nested { vec![Some("items".into())] } else { vec![] };
+                    let (function, function_kind) = ctx
+                        .owned_roots
+                        .encode(Value::NativeFunction(if remove { "remove" } else { "pop" }.into()))
+                        .unwrap();
+                    let (mut old_pair, mut old_kind) = (0, 0);
+                    let mut saved = None;
+                    for step in 0..count {
+                        if step == count - 1 {
+                            saved = Some(ctx.owned_roots.clone_value(root, kind).unwrap());
+                        }
+                        let argument =
+                            leaf(ctx.owned_roots.current_value_mut(root, kind).unwrap()).clone();
+                        let (original, original_kind) = ctx.owned_roots.encode(argument).unwrap();
+                        let key = remove.then(|| {
+                            ctx.owned_roots
+                                .encode(Value::Str(Arc::new((count - step).to_string())))
+                                .unwrap()
+                        });
+                        let mut operands = vec![original, original_kind];
+                        if let Some((key, key_kind)) = key {
+                            operands.extend([key, key_kind]);
+                        }
+                        operands.extend([function, function_kind]);
+                        let pair = unsafe {
+                            jit_try_pop_rebind(
+                                &mut ctx,
+                                1,
+                                root,
+                                kind,
+                                1,
+                                hash as i64,
+                                1,
+                                old_pair,
+                                old_kind,
+                                &shape,
+                                if remove { 2 } else { 1 },
+                                operands.as_ptr(),
+                            )
+                        };
+                        assert!(ctx.runtime_error.is_none(), "{:?}", ctx.runtime_error);
+                        assert_eq!(ctx.return_value_kind, crate::native_owned::OWNED);
+                        // Deliberately keep the prior result live until the helper has run.
+                        ctx.owned_roots.release(old_pair, old_kind).unwrap();
+                        ctx.owned_roots.release(original, original_kind).unwrap();
+                        if let Some((key, key_kind)) = key {
+                            ctx.owned_roots.release(key, key_kind).unwrap();
+                        }
+                        old_pair = pair;
+                        old_kind = ctx.return_value_kind;
+                        let actual =
+                            identity(ctx.owned_roots.current_value_mut(root, kind).unwrap());
+                        assert_eq!(actual.2, count - step);
+                        if step < count - 1 {
+                            assert_eq!((actual.0, actual.1), (initial.0, initial.1));
+                        } else {
+                            assert_ne!(actual.1, initial.1);
+                            if nested {
+                                assert_ne!(actual.0, initial.0);
+                            }
+                        }
+                        assert!(
+                            matches!(ctx.owned_roots.current_value_mut(pair,old_kind).unwrap(),Value::Array(a) if matches!(a[1],Value::Int(v) if v==(count-step) as i64))
+                        );
+                    }
+                    assert_eq!(identity(saved.as_ref().unwrap()).2, 2);
+                    ctx.owned_roots.leave().unwrap();
+                    let (_, live, slots, _) = ctx.owned_roots.storage_state();
+                    assert_eq!(live, 0);
+                    assert!(slots <= 8, "{slots}");
+                }
+            }
+        }
+    }
+
     #[test]
     fn native_path_appends_reuse_nodes_and_bound_operand_roots() {
         for bytes in [false, true] {

@@ -1,0 +1,51 @@
+{
+  "milestone": "Native guarded pop and dictionary removal rebinding",
+  "date": "2026-10-24",
+  "source_parent": "cbf7781",
+  "source_sha256": {
+    "src/jit.rs": "abf5726cc6345146871962f2409ce44bd2899878431b439b3bb44bbd452b913d",
+    "src/vm.rs": "84b948c9d2210cf568c21e4847c38571148382390f85f4eb2b09eee3944fc555"
+  },
+  "changes": [
+    "Compile TryPopRebind with tagged path operands and correct success/fallback stack edges",
+    "Release only the forthcoming fresh pair binding and redundant original snapshot",
+    "Preserve retained snapshots, shadowed calls, RHS target replacement, readonly errors and loop state"
+  ],
+  "verification": {
+    "library_passed": 1071,
+    "library_ignored": 8,
+    "integration_passed": 184,
+    "excluded_tests": [
+
+    ],
+    "log": "/tmp/kujo-native-pop-index-final.log",
+    "format_passed": true,
+    "minimal_build_passed": true,
+    "baseline_log": "/tmp/kujo-native-pop-baseline.log",
+    "focused_log": "/tmp/kujo-native-indexset-paths.log"
+  },
+  "cost_evidence": {
+    "repetitions": [
+      8,
+      128
+    ],
+    "operations": [
+      "pop",
+      "remove"
+    ],
+    "paths": [
+      "root",
+      "nested"
+    ],
+    "unique_parent_and_leaf_storage_reused": true,
+    "retained_snapshot_isolated": true,
+    "max_root_slot_capacity": 8,
+    "live_roots_after_exit": 0
+  },
+  "static_audit": "post-pop-index-native-surfaces-2026-10-24.json",
+  "limitations": [
+    "158/165 bodies have no unsupported opcode; this is not native time coverage",
+    "All50 release and production checks must run on the new frozen candidate",
+    "Controlled competitor, memory/startup and supported-platform gates remain open"
+  ]
+}

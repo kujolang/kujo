@@ -3407,6 +3407,21 @@
         "native-owned-global-assignment-2026-10-24.json",
         "../../tests/jit_global_assignment.rs"
       ]
+    },
+    {
+      "id": "native_readonly_local_initialization",
+      "status": "Fixed at c03dd70; preserve first initialization and reject later readonly stores in native functions and loops.",
+      "evidence": [
+        "native-readonly-locals-2026-10-24.json"
+      ]
+    },
+    {
+      "id": "generic_indexed_replacement_depth",
+      "status": "Fixed VM sparse-integer conversion depth bypass. Existing interpreter resource-limit difference is documented and preserved.",
+      "evidence": [
+        "native-indexed-replacement-2026-10-24.json",
+        "../../docs/VM_INTERPRETER_PARITY_MATRIX.md"
+      ]
     }
   ],
   "verification": [
@@ -3829,6 +3844,11 @@
       "scope": "Frozen e0d956a release test-size matrices",
       "result": "150/150 exact checksums across JIT,VM,interpreter; identities verified and100measurement reports hash/schema checked. Predates native pop/rebind; production pipeline now active separately.",
       "evidence": "checksums-2026-10-24-path-append-release.json"
+    },
+    {
+      "scope": "Native generic indexed replacement, indexed loops and guarded pop/remove",
+      "result": "1071library passed/8ignored;184integration passed with no exclusions; format/minimal build pass; unique storage and snapshot cost gates pass.158/165 static eligible bodies, not native time coverage or speed. New release checksum and production gates remain open.",
+      "evidence": "native-pop-rebinding-2026-10-24.json"
     }
   ]
 }

@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile guarded pop and dictionary removal rebinding through native root,
+  field and indexed paths, preserving retained snapshots, shadowed calls,
+  replacement effects and readonly errors.
+
+
 - Compile generic indexed replacements and local indexed loop operations through
   checked, tagged native paths, preserving evaluation order and value snapshots.
   Enforce the existing VM nesting limit when sparse integer dictionaries convert

@@ -367,6 +367,97 @@ print("PASS")
 }
 
 #[test]
+fn native_pop_rebind_preserves_nested_snapshots_and_shadowed_calls() {
+    let mut source = String::from(
+        r#"
+struct Bag { items: any }
+func stack(input) { mut state := input let pair := pop(state) state = pair[0] return [state,pair[1]] }
+func field(input) { mut state := input let pair := pop(state.items) state.items = pair[0] return [state,pair[1]] }
+func nested(input) { mut state := input let pair := pop(state["rows"][0]) state["rows"][0] = pair[0] return [state,pair[1]] }
+func erase(input,key) { mut state := input let pair := remove(state,key) state = pair[0] return [state,pair[1]] }
+func custom(input) { return [[7],9] }
+func shadow(input,operation) { let pop := operation mut state := input let pair := pop(state) state = pair[0] return [state,pair[1]] }
+let items := [1,2]
+let bag := Bag { items: [1,2] }
+let rows := {"rows": [[1,2]]}
+let mapping := {"a": 1,"b": 2}
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+assert_equal(stack(items),[[1],2])
+assert_equal(field(bag),[Bag { items: [1] },2])
+assert_equal(nested(rows),[{"rows": [[1]]},2])
+assert_equal(erase(mapping,"b"),[{"a": 1},2])
+assert_equal(shadow(items,custom),[[7],9])
+"#,
+        );
+    }
+    source.push_str(
+        r#"
+assert_equal(items,[1,2])
+assert_equal(bag.items,[1,2])
+assert_equal(rows,{"rows": [[1,2]]})
+assert_equal(mapping,{"a": 1,"b": 2})
+print("PASS")
+"#,
+    );
+    check(source, &["stack", "field", "nested", "erase", "shadow"]);
+}
+
+#[test]
+fn native_pop_rebind_preserves_replacement_errors_and_loop_pairs() {
+    let mut source = String::from(
+        r#"
+mut global := {"items": {"a": 1, "b": 2}}
+func key() { global = {"items": {"z": 3}} return "a" }
+func erase_global() { let pair := remove(global["items"],key()) global["items"] = pair[0] return pair[1] }
+func immutable(input) { let state := input let pair := pop(state) state = pair[0] }
+mut caught := 0
+let seed := [1,2]
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+global = {"items": {"a": 1, "b": 2}}
+assert_equal(erase_global(),1)
+assert_equal(global,{"items": {"b": 2}})
+try { immutable(seed) } except error { caught += 1 }
+"#,
+        );
+    }
+    source.push_str("assert_equal(caught,200) assert_equal(seed,[1,2]) print(\"PASS\")");
+    check(source, &["erase_global"]);
+    check(
+        r#"
+struct Bag { items: any }
+func once() {
+    mut state := Bag { items: range(0,200) }
+    let saved := state
+    mut pairs := []
+    mut i := 0
+    while i < 200 {
+        let pair := pop(state.items)
+        state.items = pair[0]
+        pairs = push(pairs,pair)
+        i += 1
+    }
+    assert_equal(state.items,[])
+    assert_equal(saved.items,range(0,200))
+    assert_equal(pairs[0][0],range(0,199))
+    assert_equal(pairs[199],[[],0])
+}
+once()
+print("PASS")
+"#
+        .into(),
+        &[],
+    );
+}
+
+#[test]
 fn native_readonly_stores_preserve_initialization_and_reassignment_errors() {
     let mut source = String::from(
         r#"
