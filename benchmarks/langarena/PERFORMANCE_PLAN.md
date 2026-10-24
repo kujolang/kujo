@@ -8,7 +8,9 @@ a target to test, not a guarantee. This document explains the execution order;
 ## Current evidence and limits
 
 - [Frozen pop/index release JIT checksums](checksums-2026-10-24-native-pop-index-release-jit.json)
-  verify all 50 unchanged test-size cases on `70c7beb`, including report hashes
+  and the [VM](checksums-2026-10-24-native-pop-index-release-vm.json) and
+  [interpreter](checksums-2026-10-24-native-pop-index-release-interpreter.json) reports
+  verify all 150 unchanged test-size cases on `70c7beb`, including report hashes
   and schemas. This predates the scalar-depth optimization; production and
   competitive acceptance remain open.
 
