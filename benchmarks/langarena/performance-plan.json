@@ -119,7 +119,8 @@
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-native-path-write-jit-partial.json",
         "checksums-2026-10-24-native-caller-handler-jit.json",
-        "checksums-2026-10-24-path-append-release.json"
+        "checksums-2026-10-24-path-append-release.json",
+        "checksums-2026-10-24-native-local-borrow-release.json"
       ]
     },
     {

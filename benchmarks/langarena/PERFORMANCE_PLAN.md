@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Current frozen release matrix](checksums-2026-10-24-native-local-borrow-release.json)
+  verifies all 150 unchanged test-size checksums on `d777339`, including fixed
+  dictionary COW and borrowed local indexed reads. All source/input/binary hashes
+  are pinned; JIT and VM measurement reports pass hash and schema verification.
+  Fallback remains allowed. Production and competitive acceptance remain open.
+
 - [Borrowed local indexed reads](native-local-indexed-borrow-2026-10-24.json)
   eliminate per-read temporary root creation for live SSA locals: 9/129 reads
   previously issued 11/131 handles and now issue at most 2. Named/captured loads
