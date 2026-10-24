@@ -56,7 +56,8 @@
         "storage-identity-runtime-2026-10-24.json",
         "local-return-release-2026-10-24.json",
         "native-argument-pool-2026-10-24.json",
-        "builtin-argument-pool-2026-10-24.json"
+        "builtin-argument-pool-2026-10-24.json",
+        "CALLABLE_MARSHALLING_2026_10_24.md"
       ]
     },
     {
