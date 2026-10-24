@@ -109,7 +109,8 @@
         "checksums-2026-10-23-owned-entry-release-vm.json",
         "checksums-2026-10-23-owned-entry-release-interpreter.json",
         "checksums-2026-10-23-native-struct-jit.json",
-        "checksums-2026-10-24-native-path-write-jit-partial.json"
+        "checksums-2026-10-24-native-path-write-jit-partial.json",
+        "checksums-2026-10-24-native-caller-handler-jit.json"
       ]
     },
     {
@@ -3660,6 +3661,11 @@
       "scope": "Native field replacement and VM error unwinding",
       "result": "1066library passed,8ignored;132integrations passed. Native functions/loops, snapshot/root lifetime and caught field errors verified. Does not close guarded append admission.",
       "evidence": "native-field-replacement-2026-10-24.json"
+    },
+    {
+      "scope": "Frozen cb21458 debug JIT all50",
+      "result": "50/50 unchanged test-size checksums with binary/input identities and50 raw report hashes/schemas verified. Predates native FieldSet and guarded path append. No production or competitive acceptance.",
+      "evidence": "checksums-2026-10-24-native-caller-handler-jit.json"
     }
   ]
 }
