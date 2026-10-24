@@ -1,0 +1,137 @@
+{
+  "scope": "Single unchanged test-size Sort::Merge verification for ca0b2dc debug JIT; loaded host, not production/current cb21458 or competitive acceptance.",
+  "identity": {
+    "source_commit": "ca0b2dc6927bbce307ddf090f610ddca8b3cdfb7",
+    "scope": "Frozen default-feature debug VM-lifetime native depth-cache candidate. Unchanged all50 test-size JIT, fallback allowed. Loaded host diagnostic timings, not production or competitive acceptance.",
+    "source_sha256": {
+      "src/jit.rs": "9844773111bfc4f101b717c4eba892aaf821e8eef01a83e8435858e4692fd944",
+      "src/vm.rs": "00be748be1087c797e7ca299401909e328eb99cd145a1f496374afccad05890d",
+      "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
+      "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
+    },
+    "paths": {
+      "binary": "/tmp/kujo-native-depth-cache-2026-10-24/kujo",
+      "port": "/tmp/kujo-native-depth-cache-2026-10-24/benchmarks/langarena/port.kujo",
+      "runner": "/tmp/kujo-native-depth-cache-2026-10-24/benchmarks/langarena/profile.kujo",
+      "config": "/tmp/kujo-native-depth-cache-2026-10-24/benchmarks/langarena/test.json",
+      "production_config": "/tmp/kujo-native-depth-cache-2026-10-24/benchmarks/langarena/run.json",
+      "schema": "/tmp/kujo-native-depth-cache-2026-10-24/schemas/runtime-measurements-v1.schema.json",
+      "driver": "/tmp/kujo-native-measurements-2026-10-23/kujo",
+      "validator": "/tmp/kujo-native-measurements-2026-10-23/validate",
+      "verification_script": "/tmp/kujo-native-depth-cache-2026-10-24/verify-all.rb",
+      "orchestrator": "/tmp/kujo-native-depth-cache-2026-10-24/run-matrix.sh"
+    },
+    "sha256": {
+      "binary": "8bca8d91fa17c73591633252cbabb6c940fa3b73dd431a80e67376976068d0db",
+      "port": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+      "runner": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+      "config": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+      "production_config": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+      "schema": "162970714aa734ef60ee0b8a75ae42fca6c5a25ac1558420040e8a5b57eb4da8",
+      "driver": "83ca999d5752e6aace8d14a80068e3261d781aba12f178206c0326053a8367e5",
+      "validator": "c3da4d584c5293b59e92badd02c3403871ae36f8fddf369ebf6ab87e20e49517",
+      "verification_script": "b17f6f6efff3b8e0e5fee0f62c8b97c58f01d44ae09a66c607d5fd8f71e12739",
+      "orchestrator": "8fe2ee14eec1834a41ccff74fe13c0a56ca049d987e9e59f9a050622f4ef6207"
+    }
+  },
+  "verification": {
+    "passed": 1,
+    "runtime": "jit",
+    "config": "benchmarks/langarena/test.json",
+    "report_sha256": "089e04e8b4c3a8b53e08df0ff993e20a3c565eb3dacca1a829233ee98cdbe26f",
+    "schemas": 1,
+    "rounding": [
+
+    ]
+  },
+  "report": {
+    "binary": "/tmp/kujo-native-depth-cache-2026-10-24/kujo",
+    "config": "benchmarks/langarena/test.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 2548773,
+          "iterations": 2,
+          "name": "Sort::Merge",
+          "size": 100000
+        },
+        "elapsed_ns": 323894396758.0,
+        "exitcode": 0,
+        "measurements": {
+          "path": "merge-test-jit.json.case-24.measurements.json",
+          "report": {
+            "counters": {
+              "bytecode_compile_wall_ns": 98732267,
+              "detached_tasks_observed": 0,
+              "jit_cache_lookup_hits": 0,
+              "jit_cache_lookup_misses": 0,
+              "jit_call_dispatches": 1000036,
+              "jit_compile_entries": 4,
+              "jit_compile_inclusive_wall_ns": 2933158358,
+              "jit_native_boundary_entries": 600001,
+              "jit_native_function_entries": 600001,
+              "jit_owned_argument_dispatches": 600013,
+              "jit_type_guard_failures": 0,
+              "jit_type_guard_passes": 0,
+              "promise_pending_polls": 0,
+              "promise_polls": 0,
+              "promise_ready_polls": 0,
+              "scheduler_rounds": 0,
+              "source_parse_wall_ns": 78979554,
+              "task_bodies_exited": 0,
+              "task_cancellations_published": 0,
+              "task_completions_published": 0,
+              "task_queue_wall_ns": 0,
+              "tasks_admission_rejected": 0,
+              "tasks_admitted": 0,
+              "tasks_started": 0,
+              "vm_call_opcodes": 500112,
+              "vm_capture_cells_created": 0,
+              "vm_capture_value_shallow_bytes": 0,
+              "vm_closures_created": 162,
+              "vm_entries": 1,
+              "vm_generator_resume_attempts": 0,
+              "vm_generator_state_drops": 0,
+              "vm_generator_state_shallow_bytes": 0,
+              "vm_generator_states_created": 0,
+              "vm_inclusive_wall_ns": 323575432514,
+              "vm_native_call_opcodes": 0,
+              "vm_return_opcodes": 400033,
+              "vm_setup_wall_ns": 1862400
+            },
+            "cpu_seconds": 309.32564,
+            "outcome": "success",
+            "process_peak_rss_bytes": 86233088,
+            "runtime": "vm",
+            "runtime_version": "1.9.0",
+            "schema": "kujo.runtime-measurements/v1",
+            "scope": "process",
+            "snapshot_consistency": "independent_counters",
+            "unsupported": [
+              "total_heap_bytes",
+              "total_value_allocations",
+              "total_value_drops",
+              "retained_capture_graph_bytes",
+              "provider_usage",
+              "provider_cost"
+            ],
+            "waited_for_detached": false,
+            "wall_ns": 323694477864
+          },
+          "sha256": "6f31d92bdbb143f8c508254d76be1d99abb4bb40c4f79d8ee2349f7508b30280",
+          "status": "available"
+        },
+        "name": "Sort::Merge",
+        "runtime": "jit",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=329588\n@profile create-done ns=1235717\n@profile prepare-done ns=16736215115\n@profile warmup-1 ns=122081626112\n@profile warmup-done ns=122082439837\n@profile run-1 ns=233013714040\n@profile run-2 ns=323547333486\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "verifier_sha256": "5f1fcd8dfe95ac1d33c34bb6310bad27f7dde51eb3777539ea6bada7ffb447aa"
+}

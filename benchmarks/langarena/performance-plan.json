@@ -3644,6 +3644,11 @@
       "scope": "Native local ownership under caller exception handlers",
       "result": "Private local no longer adds a second owner; same-invocation handler retains its old value.1065library and131integration tests passed.",
       "evidence": "native-caller-handler-rebinding-2026-10-24.json"
+    },
+    {
+      "scope": "Frozen ca0b2dc Sort::Merge recovery",
+      "result": "Unchanged size100000,iterations2,checksum2548773 passed within original600000ms deadline; binary/input/report hashes and one measurement schema verified. Diagnostic debug elapsed323894396758ns. Not current handler candidate, production or competitive acceptance.",
+      "evidence": "checksums-2026-10-24-native-depth-cache-merge-jit.json"
     }
   ]
 }
