@@ -3649,6 +3649,11 @@
       "scope": "Frozen ca0b2dc Sort::Merge recovery",
       "result": "Unchanged size100000,iterations2,checksum2548773 passed within original600000ms deadline; binary/input/report hashes and one measurement schema verified. Diagnostic debug elapsed323894396758ns. Not current handler candidate, production or competitive acceptance.",
       "evidence": "checksums-2026-10-24-native-depth-cache-merge-jit.json"
+    },
+    {
+      "scope": "Frozen cb21458 Sort::Merge verification",
+      "result": "Unchanged checksum passed; binary/input/report hashes and one measurement schema verified. All50 run remains separate. Diagnostic debug elapsed372505484823ns is not a paired performance comparison.",
+      "evidence": "checksums-2026-10-24-native-caller-handler-merge-jit.json"
     }
   ]
 }

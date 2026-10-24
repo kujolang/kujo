@@ -1,0 +1,137 @@
+{
+  "scope": "Single unchanged test-size Sort::Merge verification for cb21458 debug JIT; noisy shared host, not production or competitive acceptance. Predates native FieldSet.",
+  "identity": {
+    "source_commit": "cb214583a033751a9798b9f6cb53905d0161428f",
+    "scope": "Frozen default-feature debug VM-lifetime depth-cache and private-local caller-handler candidate; binary built and exercised by affected integration tests. Unchanged all50 test-size JIT, fallback allowed. Loaded host diagnostic timings, not production or competitive acceptance.",
+    "source_sha256": {
+      "src/jit.rs": "c8f2387059d2d68bee5aacac414f9078ed2ce9d0a6410db78123f789bb3df1a4",
+      "src/vm.rs": "08a1d67cf9e48c598b9b326b41a1e7407fc78079e6dc6643bc930b30d8817582",
+      "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
+      "src/interpreter/assignment.rs": "c87540956dc89bdf872a8d30c08f3fa58f320e4a50864fdfe4809da0549f64a1"
+    },
+    "paths": {
+      "binary": "/tmp/kujo-native-caller-handler-2026-10-24/kujo",
+      "port": "/tmp/kujo-native-caller-handler-2026-10-24/benchmarks/langarena/port.kujo",
+      "runner": "/tmp/kujo-native-caller-handler-2026-10-24/benchmarks/langarena/profile.kujo",
+      "config": "/tmp/kujo-native-caller-handler-2026-10-24/benchmarks/langarena/test.json",
+      "production_config": "/tmp/kujo-native-caller-handler-2026-10-24/benchmarks/langarena/run.json",
+      "schema": "/tmp/kujo-native-caller-handler-2026-10-24/schemas/runtime-measurements-v1.schema.json",
+      "driver": "/tmp/kujo-native-measurements-2026-10-23/kujo",
+      "validator": "/tmp/kujo-native-measurements-2026-10-23/validate",
+      "verification_script": "/tmp/kujo-native-caller-handler-2026-10-24/verify-all.rb",
+      "orchestrator": "/tmp/kujo-native-caller-handler-2026-10-24/run-matrix.sh"
+    },
+    "sha256": {
+      "binary": "84dcb8a661be1d186fcfeedeba8db4b96eb27a3c256f31ee36ae4412c4e5e239",
+      "port": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+      "runner": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+      "config": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+      "production_config": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+      "schema": "162970714aa734ef60ee0b8a75ae42fca6c5a25ac1558420040e8a5b57eb4da8",
+      "driver": "83ca999d5752e6aace8d14a80068e3261d781aba12f178206c0326053a8367e5",
+      "validator": "c3da4d584c5293b59e92badd02c3403871ae36f8fddf369ebf6ab87e20e49517",
+      "verification_script": "b17f6f6efff3b8e0e5fee0f62c8b97c58f01d44ae09a66c607d5fd8f71e12739",
+      "orchestrator": "29b8af6aaa05282f21a9ce3e4229dcd452f69252ccbfaf2b9b16d08b5ceb1441"
+    }
+  },
+  "verification": {
+    "passed": 1,
+    "runtime": "jit",
+    "config": "benchmarks/langarena/test.json",
+    "report_sha256": "0290777626cb5bb8ab3eba07d70ca3793b2f5e3c959bdfb83c3e02158badf83b",
+    "schemas": 1,
+    "rounding": [
+
+    ]
+  },
+  "report": {
+    "binary": "/tmp/kujo-native-caller-handler-2026-10-24/kujo",
+    "config": "benchmarks/langarena/test.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 2548773,
+          "iterations": 2,
+          "name": "Sort::Merge",
+          "size": 100000
+        },
+        "elapsed_ns": 372505484823.0,
+        "exitcode": 0,
+        "measurements": {
+          "path": "merge-test-jit.json.case-24.measurements.json",
+          "report": {
+            "counters": {
+              "bytecode_compile_wall_ns": 66304965,
+              "detached_tasks_observed": 0,
+              "jit_cache_lookup_hits": 0,
+              "jit_cache_lookup_misses": 0,
+              "jit_call_dispatches": 1000036,
+              "jit_compile_entries": 4,
+              "jit_compile_inclusive_wall_ns": 1947539717,
+              "jit_native_boundary_entries": 600001,
+              "jit_native_function_entries": 600001,
+              "jit_owned_argument_dispatches": 600013,
+              "jit_type_guard_failures": 0,
+              "jit_type_guard_passes": 0,
+              "promise_pending_polls": 0,
+              "promise_polls": 0,
+              "promise_ready_polls": 0,
+              "scheduler_rounds": 0,
+              "source_parse_wall_ns": 68693043,
+              "task_bodies_exited": 0,
+              "task_cancellations_published": 0,
+              "task_completions_published": 0,
+              "task_queue_wall_ns": 0,
+              "tasks_admission_rejected": 0,
+              "tasks_admitted": 0,
+              "tasks_started": 0,
+              "vm_call_opcodes": 500112,
+              "vm_capture_cells_created": 0,
+              "vm_capture_value_shallow_bytes": 0,
+              "vm_closures_created": 162,
+              "vm_entries": 1,
+              "vm_generator_resume_attempts": 0,
+              "vm_generator_state_drops": 0,
+              "vm_generator_state_shallow_bytes": 0,
+              "vm_generator_states_created": 0,
+              "vm_inclusive_wall_ns": 372185126411,
+              "vm_native_call_opcodes": 0,
+              "vm_return_opcodes": 400033,
+              "vm_setup_wall_ns": 1959378
+            },
+            "cpu_seconds": 344.031611,
+            "outcome": "success",
+            "process_peak_rss_bytes": 86491136,
+            "runtime": "vm",
+            "runtime_version": "1.9.0",
+            "schema": "kujo.runtime-measurements/v1",
+            "scope": "process",
+            "snapshot_consistency": "independent_counters",
+            "unsupported": [
+              "total_heap_bytes",
+              "total_value_allocations",
+              "total_value_drops",
+              "retained_capture_graph_bytes",
+              "provider_usage",
+              "provider_cost"
+            ],
+            "waited_for_detached": false,
+            "wall_ns": 372284302164
+          },
+          "sha256": "7327752c316c500a6177bd6074e48ccf6825589029a499ee727bbcf629676593",
+          "status": "available"
+        },
+        "name": "Sort::Merge",
+        "runtime": "jit",
+        "status": "passed",
+        "stderr": "Compiler optimization: 26 constants folded, 225 dead instructions removed, 16 peephole optimizations\nJIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=299555\n@profile create-done ns=1005455\n@profile prepare-done ns=12787091305\n@profile warmup-1 ns=142821025449\n@profile warmup-done ns=142821498265\n@profile run-1 ns=272382847751\n@profile run-2 ns=372164991885\nSort::Merge: OK 2548773\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "verifier_sha256": "5f1fcd8dfe95ac1d33c34bb6310bad27f7dde51eb3777539ea6bada7ffb447aa"
+}
