@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Restore builds without `runtime-jit` by keeping the disabled context compatible
+  with shared VM loop setup.
+
 - Compile field reads in experimental native functions and loops using the VM's
   field and method resolver. Preserve typed values, receiver markers, errors and
   function-frame stack cleanup.

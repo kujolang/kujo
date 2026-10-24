@@ -19,6 +19,12 @@ pub struct VMContext {
     pub call_name_ptr: *const u8,
     pub call_name_len: usize,
     pub native_call_depth: usize,
+    // Shared VM setup still constructs loop contexts when JIT is disabled.
+    // Compilation is unavailable, so these fields remain inert.
+    pub(crate) loop_dense_views: HashMap<usize, Box<LoopDenseView>>,
+    pub(crate) loop_environment_ptr: *mut crate::interpreter::Environment,
+    pub(crate) loop_resume_ip: Option<usize>,
+    pub(crate) loop_stack_base: usize,
     pub arg_kinds: [i64; 4],
     pub arg0: i64,
     pub arg1: i64,
@@ -26,6 +32,8 @@ pub struct VMContext {
     pub arg3: i64,
     pub arg_count: i64,
 }
+
+pub(crate) struct LoopDenseView;
 
 impl VMContext {
     pub(crate) fn take_return_value(&mut self, value: i64) -> Value {
@@ -55,6 +63,10 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            loop_dense_views: HashMap::new(),
+            loop_environment_ptr: std::ptr::null_mut(),
+            loop_resume_ip: None,
+            loop_stack_base: 0,
             arg_kinds: [0; 4],
             arg0: 0,
             arg1: 0,
