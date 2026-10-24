@@ -41,7 +41,8 @@
         "post-nested-write-native-surfaces-2026-10-24.json",
         "post-path-append-native-surfaces-2026-10-24.json",
         "fixed-dictionary-cow-2026-10-24.json",
-        "native-local-indexed-borrow-2026-10-24.json"
+        "native-local-indexed-borrow-2026-10-24.json",
+        "native-call-setup-reservation-2026-10-24.json"
       ]
     },
     {
@@ -100,7 +101,8 @@
         "native-nested-writes-2026-10-24.json",
         "native-field-replacement-2026-10-24.json",
         "native-path-append-2026-10-24.json",
-        "native-local-indexed-borrow-2026-10-24.json"
+        "native-local-indexed-borrow-2026-10-24.json",
+        "native-call-setup-reservation-2026-10-24.json"
       ]
     },
     {

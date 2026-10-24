@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "scope": "Reserve native parameter-map capacity once and borrow cached function names. Same warmed owned-argument call probe; compilation/input construction excluded. No elapsed-speed claim.",
+  "before": "native-call-setup-allocations-2026-10-24.json",
+  "after": [
+    {
+      "arity": 1,
+      "calls": 1,
+      "allocations": 5,
+      "requested_bytes": 1580
+    },
+    {
+      "arity": 1,
+      "calls": 128,
+      "allocations": 640,
+      "requested_bytes": 202240
+    },
+    {
+      "arity": 4,
+      "calls": 1,
+      "allocations": 8,
+      "requested_bytes": 2236
+    },
+    {
+      "arity": 4,
+      "calls": 128,
+      "allocations": 1024,
+      "requested_bytes": 286208
+    },
+    {
+      "arity": 8,
+      "calls": 1,
+      "allocations": 12,
+      "requested_bytes": 3540
+    },
+    {
+      "arity": 8,
+      "calls": 128,
+      "allocations": 1536,
+      "requested_bytes": 453120
+    }
+  ],
+  "verification": {
+    "library_passed": 1079,
+    "library_ignored": 8,
+    "integration_passed": 151,
+    "integration_failed": 0,
+    "regression": "tests/native_read_allocation.rs::warmed_compiled_call_setup_has_bounded_allocations",
+    "format": "passed",
+    "minimal_feature_library": "passed"
+  },
+  "hashes": {
+    "/tmp/kujo-call-setup-allocation-after.log": "cf5dc16fd58030be545ac7dca4d3314c5145a8bef5d4288c416b7e523f1c6a58",
+    "/tmp/kujo-call-setup-regressions.log": "63372709f6ac0f88986775f1abd955b5295603c59155d75ed9610371e1a88536",
+    "/tmp/kujo-call-setup-library.log": "a6565cb1fab4b53e40eb46dc9dc8d4f79ac33e5fa55f2ab354a2c3976bd4a6b1",
+    "/tmp/kujo-call-setup-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/kujo-call-setup-minimal.log": "910cc0603ce314a8e48554c4a4829d66fd4ef74837147f6785db394632f45ccd"
+  },
+  "limitations": [
+    "Frozen d777339 release150 checksums predate this small call-setup change. Current-candidate release/production/competitive acceptance remains open.",
+    "Remaining allocations include parameter names, roots and frame state; positional owned arguments are a separate candidate requiring explicit compiler eligibility and fallback coverage."
+  ]
+}

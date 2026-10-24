@@ -8432,8 +8432,8 @@ impl VM {
                             // Ultra-fast: Use empty HashMap - JIT will use VMContext.argN
                             func_locals = HashMap::new();
                         } else {
-                            // Normal path: Create locals HashMap for the function parameters
-                            func_locals = HashMap::new();
+                            // Reserve parameter bindings once; avoid growth during call setup.
+                            func_locals = HashMap::with_capacity(chunk.params.len());
 
                             // Bind arguments to parameter names
                             for (i, param_name) in chunk.params.iter().enumerate() {
@@ -8444,12 +8444,11 @@ impl VM {
                         }
 
                         // Get or create var_names from cache (avoids re-hashing on every call)
-                        let func_name_owned = func_name.to_string();
 
                         // OPTIMIZATION: Get reference to cached var_names instead of cloning
                         // This avoids HashMap clone on every recursive call
                         let cached_var_names_exists =
-                            self.jit_var_names_cache.contains_key(&func_name_owned);
+                            self.jit_var_names_cache.contains_key(func_name);
                         if !cached_var_names_exists {
                             // Build var_names once and cache it
                             let mut cached_var_names = HashMap::new();
@@ -8482,13 +8481,13 @@ impl VM {
                             }
 
                             self.jit_var_names_cache
-                                .insert(func_name_owned.clone(), Arc::new(cached_var_names));
+                                .insert(func_name.to_owned(), Arc::new(cached_var_names));
                         }
 
                         // Get pointer to cached var_names (no clone!)
                         let var_names_ptr: *mut HashMap<u64, String> = self
                             .jit_var_names_cache
-                            .get_mut(&func_name_owned)
+                            .get_mut(func_name)
                             .map(|v| Arc::as_ptr(v) as *mut HashMap<u64, String>)
                             .unwrap_or(std::ptr::null_mut());
 

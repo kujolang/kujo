@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Native call setup reservation](native-call-setup-reservation-2026-10-24.json)
+  reduces warmed allocations per call from 6/10/15 to 5/8/12 at arities 1/4/8
+  by reserving parameter-map capacity and borrowing cached function names.
+  1,079 library tests (8 ignored) and 151 integration tests pass. This preserves
+  the named-parameter path and value semantics; it is not a competitive timing
+  result. Positional owned-argument entry remains a separate candidate.
+
 - [Current QuickSort CPU profile](native-call-boundary-profile-2026-10-24.json)
   preserves the unchanged checksum on `d777339`. Allocation, copying, native
   call dispatch and environment lookup are visible costs. Matching executable
