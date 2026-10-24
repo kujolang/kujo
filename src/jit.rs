@@ -4427,14 +4427,16 @@ pub unsafe extern "C" fn jit_call_function(
     // Preserve the legacy malformed-stack consumption and drop order below.
     let count = usize::try_from(arg_count).unwrap_or(0);
     let args = if count <= stack.len() {
-        // Builtins and interpreter callables consume their vectors rather than
-        // returning them. Do not let them drain the reusable bytecode-call pool.
+        // Bytecode and builtin dispatch return emptied vectors to the pool.
+        // Interpreter callables still consume their vectors.
         let recyclable = stack
             .len()
             .checked_sub(count)
             .and_then(|start| start.checked_sub(1))
             .and_then(|index| stack.get(index))
-            .is_some_and(|callee| matches!(callee, Value::BytecodeFunction { .. }));
+            .is_some_and(|callee| {
+                matches!(callee, Value::BytecodeFunction { .. } | Value::NativeFunction(_))
+            });
         if ctx_ref.vm_ptr.is_null() || !recyclable {
             stack.split_off(stack.len() - count)
         } else {

@@ -190,3 +190,29 @@ fn argument_order_snapshots_and_failures_match_both_runtimes() {
         assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "PASS");
     }
 }
+
+#[test]
+fn warmed_builtin_bridge_does_not_allocate_argument_vectors() {
+    let mut vm = kujo::vm::VM::new();
+    for pass in 0..2 {
+        let inputs: Vec<_> =
+            (0..128).map(|n| vec![Value::NativeFunction("to_int".into()), Value::Int(n)]).collect();
+        ALLOCATIONS.with(|v| v.set(0));
+        REQUESTED_BYTES.with(|v| v.set(0));
+        TRACK.with(|v| v.set(true));
+        for (n, mut stack) in inputs.into_iter().enumerate() {
+            let mut context =
+                VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+            context.vm_ptr = (&mut vm as *mut kujo::vm::VM).cast();
+            // SAFETY: all context views and the exclusively borrowed VM remain live.
+            assert_eq!(unsafe { jit_call_function(&mut context, std::ptr::null(), 1) }, 0);
+            assert!(context.runtime_error.is_none());
+            assert!(matches!(stack.as_slice(), [Value::Int(value)] if *value == n as i64));
+        }
+        TRACK.with(|v| v.set(false));
+        if pass == 1 {
+            assert_eq!(ALLOCATIONS.with(Cell::get), 0, "warmed builtin bridge allocated");
+            assert_eq!(REQUESTED_BYTES.with(Cell::get), 0);
+        }
+    }
+}

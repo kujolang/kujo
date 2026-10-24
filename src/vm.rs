@@ -7289,6 +7289,19 @@ impl VM {
         function: Value,
         mut args: Vec<Value>,
     ) -> Result<Value, String> {
+        let result = self.call_native_function_vm_borrowed(function, &mut args);
+        #[cfg(feature = "runtime-jit")]
+        Self::recycle_native_arguments(&mut self.native_argument_pool, args);
+        result
+    }
+
+    // Keep the argument buffer owned by the caller across early returns and
+    // nested callbacks. Only empty buffers enter the pool after dispatch ends.
+    fn call_native_function_vm_borrowed(
+        &mut self,
+        function: Value,
+        args: &mut Vec<Value>,
+    ) -> Result<Value, String> {
         if let Value::NativeFunction(name) = function {
             if name == "ai_stream_chat"
                 && args.len() == 3
@@ -7297,7 +7310,7 @@ impl VM {
                 let callback = args[2].clone();
                 let result =
                     crate::interpreter::native_functions::http::handle_ai_stream_chat_with_callback_invoker(
-                        &args,
+                        args,
                         |delta, raw| {
                             let value = self
                                 .call_function_from_jit(
@@ -7421,7 +7434,7 @@ impl VM {
                 // Retrieve receiver value left on the VM stack.
                 let image = self.stack.pop().ok_or("Stack underflow getting image")?;
 
-                match Interpreter::call_image_method_impl(&image, method_name, &args) {
+                match Interpreter::call_image_method_impl(&image, method_name, args) {
                     Some(Value::Error(msg)) => return Err(msg),
                     Some(other) => return Ok(other),
                     None => return Err("Expected Image for image method call".to_string()),
@@ -7770,7 +7783,7 @@ impl VM {
                 return Ok(Value::Dict(Arc::new(DictMap::default())));
             }
 
-            if let Some(result) = self.call_vm_higher_order(&name, &args) {
+            if let Some(result) = self.call_vm_higher_order(&name, args) {
                 return result;
             }
 
@@ -7870,7 +7883,7 @@ impl VM {
                 self.interpreter.set_env(Arc::clone(&self.globals));
                 self.interpreter_env_pending = false;
             }
-            let result = self.interpreter.call_native_function_impl(&name, &args);
+            let result = self.interpreter.call_native_function_impl(&name, args);
 
             // Check if the result is an error
             match result {
@@ -10410,6 +10423,29 @@ mod tests {
         assert!(matches!(stack.as_slice(), [Value::Int(7)]));
         assert_eq!(vm.native_argument_pool.len(), 32, "builtin consumed a reusable buffer");
         assert_eq!(vm.native_argument_pool.last().unwrap().as_ptr(), retained);
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn builtin_argument_buffer_recycles_on_success_and_error() {
+        let mut vm = VM::new();
+        for name in ["len", "dict"] {
+            let mut args = unsafe { VM::take_native_arguments(&mut vm, 1) };
+            let pointer = args.as_ptr();
+            let array = Arc::new(vec![Value::Int(7)]);
+            let weak = Arc::downgrade(&array);
+            args.push(Value::Array(array));
+            let result = vm.call_native_function_vm(Value::NativeFunction(name.into()), args);
+            if name == "len" {
+                assert!(matches!(result, Ok(Value::Int(1))));
+            } else {
+                assert!(result.unwrap_err().contains("expects 0 arguments"));
+            }
+            assert!(weak.upgrade().is_none(), "builtin pool retained an argument");
+            assert_eq!(vm.native_argument_pool.len(), 1);
+            assert!(vm.native_argument_pool[0].is_empty());
+            assert_eq!(vm.native_argument_pool[0].as_ptr(), pointer);
+        }
     }
 
     #[cfg(feature = "runtime-jit")]
