@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Immutable dispatch facts (`16b96d5`).** [Diagnostic evidence](CALL_METADATA_2026_10_24.md)
+  reproduces repeated instruction scans on native callbacks and verifies lazy,
+  copy-on-write-invalidated metadata caching. 1,089 library tests and 29 targeted
+  integrations pass. The debug-library probe loses its body-length-dependent
+  dispatch cost; full release timing/checksums for this candidate are pending.
+  Do not inherit the previous runtime's release acceptance automatically.
+
 - **Bounded native callback root reuse (`09c8944`).** Inactive root stores retain
   capacity across calls while active recursive calls remain isolated. The
   [root-pool report](ROOT_POOL_2026_10_24.md) records a 34.6% reduction in JIT

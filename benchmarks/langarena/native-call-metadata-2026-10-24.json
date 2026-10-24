@@ -1,0 +1,23 @@
+{
+  "runtime_source_commit": "16b96d5",
+  "baseline_runtime_source_commit": "09c8944",
+  "scope": "Debug-library diagnostic only; release checksums/timing and production/platform acceptance pending",
+  "before": "padding=0 round=0 calls=10000 ns=53472356\npadding=0 round=1 calls=10000 ns=52251222\npadding=0 round=2 calls=10000 ns=51760065\npadding=0 round=3 calls=10000 ns=48567158\npadding=1000 round=0 calls=10000 ns=283218653\npadding=1000 round=1 calls=10000 ns=285744052\npadding=1000 round=2 calls=10000 ns=292925674\npadding=1000 round=3 calls=10000 ns=279571161\npadding=10000 round=0 calls=10000 ns=2100271034\npadding=10000 round=1 calls=10000 ns=2143638926\npadding=10000 round=2 calls=10000 ns=2151654173\npadding=10000 round=3 calls=10000 ns=2178737584\n",
+  "after": "padding=0 round=0 calls=10000 ns=50590270\npadding=0 round=1 calls=10000 ns=47056450\npadding=0 round=2 calls=10000 ns=47205654\npadding=0 round=3 calls=10000 ns=46813448\npadding=1000 round=0 calls=10000 ns=47203195\npadding=1000 round=1 calls=10000 ns=47118800\npadding=1000 round=2 calls=10000 ns=47202395\npadding=1000 round=3 calls=10000 ns=47919601\npadding=10000 round=0 calls=10000 ns=48732040\npadding=10000 round=1 calls=10000 ns=48354638\npadding=10000 round=2 calls=10000 ns=48990115\npadding=10000 round=3 calls=10000 ns=48232923\n",
+  "probe_binary_sha256": {
+    "before": "81890aedb2428c14a451267613e8381a72d5741c5db2fd88f4c8735778afa982",
+    "after": "ffa6a5c2b60339dfc799a03eebdd3ef64e209fecda405f1118d30f96317d91ef"
+  },
+  "source_sha256": {
+    "src/bytecode.rs": "46837336371c2c02da1cdcaf5428e6ba8f8f2d819a02dc23b0807cd1f45d9560",
+    "src/vm.rs": "1f357c5013d64d97b53fcfe5cc8d696ea74814c90ca0c71256564250f87fb68d",
+    "tests/jit_callback_promotion.rs": "d5cc0f45bf8ed4ad8083ee37235b78b0e4315e2790a6757dccf9d6e91a931002",
+    "benchmarks/langarena/probes/native_call_metadata.rs": "382978d6881ef9044e97d30ae4719e06c879c0c356a8e3f0debbada7bb710684"
+  },
+  "verification": {
+    "library": "1089 passed;8 ignored",
+    "integration": "29 passed",
+    "no_default_check": "passed",
+    "format": "passed"
+  }
+}
