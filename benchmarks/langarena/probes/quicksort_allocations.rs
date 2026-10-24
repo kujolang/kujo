@@ -64,6 +64,8 @@ use std::sync::Arc;
 fn main() {
     let enforce_reuse_budget = std::env::args().any(|arg| arg == "--expect-reuse");
     let enforce_return_budget = std::env::args().any(|arg| arg == "--expect-local-return-budget");
+    let enforce_identity_budget =
+        std::env::args().any(|arg| arg == "--expect-storage-identity-budget");
     let show_histogram = std::env::args().any(|arg| arg == "--histogram");
     let port = std::fs::read_to_string("benchmarks/langarena/port.kujo").unwrap();
     let kernel = port
@@ -131,6 +133,10 @@ fn main() {
                     // dead local maps. The previous runtime exceeds both limits.
                     assert!(ALLOCATIONS.with(Cell::get) < 65_000);
                     assert!(REQUESTED_BYTES.with(Cell::get) < 11_000_000);
+                }
+                if enforce_identity_budget && jit && n == 8192 {
+                    // Root array identity checks must not allocate a traversal vector.
+                    assert!(ALLOCATIONS.with(Cell::get) < 45_000);
                 }
                 assert_eq!(sorted.len(), expected.len());
                 assert!(sorted

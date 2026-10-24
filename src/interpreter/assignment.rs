@@ -965,8 +965,12 @@ mod pop_tests {
 pub(crate) fn same_storage(a: &Value, b: &Value) -> bool {
     // Scalars alone do not benefit from release. Struct field maps are owned,
     // but their storage-backed children can be released without walking payloads.
-    if !matches!(a, Value::Array(_) | Value::Bytes(_) | Value::Dict(_) | Value::Struct { .. }) {
-        return false;
+    match (a, b) {
+        (Value::Array(a), Value::Array(b)) => return Arc::ptr_eq(a, b),
+        (Value::Bytes(a), Value::Bytes(b)) => return Arc::ptr_eq(a, b),
+        (Value::Dict(a), Value::Dict(b)) => return Arc::ptr_eq(a, b),
+        (Value::Struct { .. }, Value::Struct { .. }) => {}
+        _ => return false,
     }
     let mut pending = vec![(a, b)];
     while let Some((a, b)) = pending.pop() {
@@ -999,6 +1003,76 @@ pub(crate) fn same_storage(a: &Value, b: &Value) -> bool {
         }
     }
     true
+}
+
+#[cfg(test)]
+mod storage_identity_tests {
+    use super::*;
+
+    #[test]
+    fn storage_identity_distinguishes_aliases_equal_payloads_and_scalars() {
+        let pairs = [
+            (Value::array(vec![Value::Int(7)]), Value::array(vec![Value::Int(7)])),
+            (Value::Bytes(Arc::new(vec![0, 255])), Value::Bytes(Arc::new(vec![0, 255]))),
+            (Value::Dict(Arc::new(Default::default())), Value::Dict(Arc::new(Default::default()))),
+        ];
+        for (root, equal_payload) in &pairs {
+            assert!(same_storage(root, &root.clone()));
+            assert!(!same_storage(root, equal_payload));
+            assert!(!same_storage(root, &Value::Null));
+            for (other, _) in &pairs {
+                if std::mem::discriminant(root) != std::mem::discriminant(other) {
+                    assert!(!same_storage(root, other));
+                }
+            }
+        }
+        for scalar in [
+            Value::Int(7),
+            Value::Float(0.0),
+            Value::Bool(true),
+            Value::Null,
+            Value::Str(Arc::new("same".into())),
+            Value::IntDict(Arc::new(Default::default())),
+        ] {
+            assert!(!same_storage(&scalar, &scalar.clone()));
+        }
+    }
+
+    #[test]
+    fn storage_identity_preserves_nested_struct_and_float_bit_rules() {
+        let array = Value::array(vec![Value::Int(7)]);
+        let structure = |name: &str, child: Value, scalar: f64| Value::Struct {
+            name: name.into(),
+            fields: Arc::new(
+                [("child".into(), child), ("scalar".into(), Value::Float(scalar))]
+                    .into_iter()
+                    .collect(),
+            ),
+        };
+        let root = structure("State", array.clone(), 0.0);
+        assert!(same_storage(&root, &root.clone()));
+        assert!(same_storage(&root, &structure("State", array.clone(), 0.0)));
+        assert!(!same_storage(&root, &structure("State", array.clone(), -0.0)));
+        assert!(!same_storage(&root, &structure("Other", array.clone(), 0.0)));
+        assert!(!same_storage(&root, &structure("State", Value::array(vec![Value::Int(7)]), 0.0)));
+        assert!(!same_storage(&root, &array));
+        let nan = f64::from_bits(0x7ff8000000000001);
+        assert!(same_storage(
+            &structure("State", array.clone(), nan),
+            &structure("State", array.clone(), nan)
+        ));
+        assert!(!same_storage(
+            &structure("State", array.clone(), nan),
+            &structure("State", array.clone(), f64::from_bits(0x7ff8000000000002))
+        ));
+        let mut left = array.clone();
+        let mut right = array;
+        for _ in 0..128 {
+            left = structure("Node", left, 0.0);
+            right = structure("Node", right, 0.0);
+        }
+        assert!(same_storage(&left, &right));
+    }
 }
 
 /// A function's initial local alias can consume a parameter that is never read
