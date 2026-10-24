@@ -8323,6 +8323,20 @@ impl VM {
         }
     }
 
+    pub(crate) fn try_string_append_global_from_jit(
+        &mut self,
+        name: &str,
+        original: &mut Option<Value>,
+        suffix: &Value,
+    ) -> bool {
+        let mut applied = false;
+        let _ = self.globals.lock().unwrap().mutate_checked(name, |root| {
+            applied =
+                crate::interpreter::assignment::concat_string_rebinding(root, original, suffix);
+        });
+        applied
+    }
+
     /// Call a function from JIT-compiled code
     /// This is invoked by the jit_call_function runtime helper
     pub fn call_function_from_jit(

@@ -1,0 +1,31 @@
+{
+  "scope": "Native guarded string rebinding in functions and loops, preserving VM success/fallback semantics. Guarded array/byte append still unsupported; no production or comparative speed claim.",
+  "source_parent": "5a7c8cb",
+  "source_sha256": {
+    "src/jit.rs": "7a433d9393fe072b7da780e5c1a37777dc302981b50865bdda82b778756ac7c4",
+    "src/vm.rs": "18ea05310a3ad8402678340edef50880fa30494c8ce4c5e5fc255634a89d08a8",
+    "src/native_owned.rs": "26f828ff674f287a562c64af38f75ec31ccc9cc25dfdbad71bd2edbdaa6ca891",
+    "tests/jit_guarded_strings.rs": "9ce696884ad57070f0b1d26e4c0c71d4dcc2ad44db2b8a04ed53fd34ddb32b03"
+  },
+  "verification": {
+    "baseline": "/tmp/kujo-string-guard-before.log: frozen prior candidate passes semantic checks then fails required native compilation due unsupported TryStringAppendAssign",
+    "integration": "/tmp/kujo-string-guard-contracts.log: 152 tests pass including native function and loop guards, globals, scalar operators, errors and parity",
+    "final_alias_case": "/tmp/kujo-string-guard-final.log: both expanded tests pass across interpreter/VM/JIT, including self-append, constant globals and exact RHS effect count",
+    "library": "/tmp/kujo-string-guard-library.log: 1053 passed, 8 ignored, 0 failed",
+    "format": "/tmp/kujo-string-guard-fmt.log: cargo fmt --check passed",
+    "without_jit": "/tmp/kujo-string-guard-no-jit.log: cargo check --no-default-features --lib passed"
+  },
+  "mechanism": [
+    "Success consumes evaluated operands and branches past add/store; fallback retains payloads and kinds",
+    "Current-frame SSA roots release evaluated source aliases through with_rebinding_snapshot",
+    "Physical/named bindings preserve checked mutability and snapshot identity; locked loop globals use borrowed environment without relocking",
+    "RHS mutation of target forces original evaluated operands through ordinary addition; no repeated effects"
+  ],
+  "static_audit": "post-string-guard-native-surfaces-2026-10-23.json",
+  "remaining": [
+    "Guarded array/byte append",
+    "Iteration, nested paths, pop/rebind, captures and closures",
+    "Current-source all50 checksums and production sizes",
+    "Native time coverage, controlled competitors and platform/release acceptance"
+  ]
+}

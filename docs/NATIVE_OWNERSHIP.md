@@ -95,13 +95,16 @@ operations into native code.
 
 ## Storage and ownership
 
-Guarded append lowering has a staged root operation for temporarily moving an
+Guarded append lowering has a root operation for temporarily moving an
 evaluated snapshot out of its handle. Existing rebinding guards can then release
 that artificial alias before mutating the destination. Fallback restores the
 snapshot under the same handle; successful guards consume it, and generated code
 must release the consumed operand root. Both handles must belong to the current
-frame and be distinct. This mechanism is not yet connected to native guarded
-append bytecode; those instructions remain excluded from compilation.
+frame and be distinct. Native guarded string append uses this operation for SSA
+locals and the same checked rebinding semantics for physical locals and globals.
+Its successful edge consumes both operands; its fallback edge keeps their values
+and tags for ordinary addition and assignment. Guards do not invoke user code or
+repeat RHS evaluation. Guarded array/byte append remains excluded from compilation.
 
 Each native root owns an ordinary `Value`. Duplicating a root uses `Value::clone`,
 so arrays, strings and other shared containers retain their existing copy-on-write

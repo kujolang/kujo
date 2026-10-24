@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile guarded string rebinding in native functions and loops while preserving
+  snapshots, RHS evaluation, binding mutability and ordinary addition fallback.
+
 - Preserve channel and ArgParser receivers when a native loop resumes in the VM
   to execute a method call.
 
