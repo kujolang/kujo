@@ -51,3 +51,18 @@ is live. Bound retained capacity and pool length; test unfinished initialization
 errors, recursive calls and teardown for retained values. These are candidates,
 not implemented mechanisms. The ongoing `93e7caa` frozen-release job must finish
 its source checks before further runtime edits.
+
+## Isolated storage-identity experiment
+
+`storage-identity-prototype-2026-10-24.json` preserves a standalone Rust probe
+containing the exact current helper and a candidate with early pointer checks
+for array, byte and dictionary roots. It links the current library for its
+`Value` types; it does not modify that library or the runtime source.
+
+Both helper versions agree on 529 pairs including shared versus distinct
+storage, equal payloads, mismatched types, scalars, nested structs, differing
+struct names and signed floating-point zero. In 40,000 selected root comparisons,
+the current helper allocates 40,000 times and the candidate allocates zero times.
+This confirms the isolated mechanism only. Integrated regression coverage,
+VM/interpreter/JIT behavior and a fresh QuickSort allocation comparison remain
+required before accepting the runtime change.
