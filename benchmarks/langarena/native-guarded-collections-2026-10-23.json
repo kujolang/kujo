@@ -1,0 +1,38 @@
+{
+  "scope": "Native guarded array/byte appends and conditional local rebinding release; no current all50, production or comparative speed claim",
+  "source_parent": "dd64bff",
+  "source_sha256": {
+    "src/jit.rs": "7a716d4980b46b1d1f527215840a118faaa4729583c269d4c3404782a0f64afd",
+    "src/vm.rs": "3fd1e76c8b351c53a14ee8c80a8c0e6e03b196a511bf8412e4c6477173b2ac58",
+    "src/native_owned.rs": "3dfa695cb15f63e05ed0a02f1d11e54a644a76b6d2963fffaed98465166e5965",
+    "tests/jit_guarded_collections.rs": "ce009f9ef88c6d72de2a712a8e1e9729d5aaa81edf80f7915f13673ea6bfbc1d"
+  },
+  "verification": {
+    "baseline": "/tmp/kujo-append-baseline.log: previous dd64bff binary passes semantics but fails both required native compilation/loop-entry tests",
+    "initial_gap": "/tmp/kujo-append-native-tests.log: append lowering alone leaves ReleaseRebindLocal unsupported; both native tests fail",
+    "native": "/tmp/kujo-append-native-tests2.log: native array/byte functions and loops plus string/fallback regressions pass",
+    "library": "/tmp/kujo-append-library.log: 1055 passed, 8 ignored, 0 failed before final borrowed-callable metadata refinement",
+    "integration": "/tmp/kujo-append-contracts.log: 143 passed, 0 failed before final borrowed-callable metadata refinement",
+    "final_helpers": "/tmp/kujo-append-final-helpers.log: 5 passed, 0 failed after borrowed-callable refinement",
+    "final_integration": "/tmp/kujo-append-final-contracts.log: 14 passed after borrowed-callable refinement, including interpreter/VM/JIT native guards and helper ownership",
+    "final_without_jit": "/tmp/kujo-append-final-no-jit.log: cargo check --no-default-features --lib passed",
+    "final_format": "/tmp/kujo-append-final-fmt.log: cargo fmt --check passed"
+  },
+  "mechanism": [
+    "Borrow builtin/function identity instead of cloning owned names or bytecode chunks",
+    "Same VM callable eligibility, nesting limit and storage-identity guards; fallback preserves evaluated operands",
+    "Success consumes three roots and branches past ordinary call/store",
+    "Unique array/byte Arc allocations reused at 8/128 updates; retained snapshot forces COW; root capacity <=8 and no live roots after exit",
+    "Conditional snapshot release preserves mutable matching local argument and skips current exception handlers"
+  ],
+  "static_audit": "post-collection-guard-native-surfaces-2026-10-23.json",
+  "remaining": [
+    "Iteration, nested paths, pop/rebind, captures and closures",
+    "Current candidate all50 and production checksums",
+    "Native time coverage, controlled competitor comparisons and platform/release acceptance"
+  ],
+  "limitations": [
+    "Exception-handler check conservatively retains snapshots when a native callee has a VM caller with a current handler.",
+    "Historical frozen all50 runs do not certify this source."
+  ]
+}

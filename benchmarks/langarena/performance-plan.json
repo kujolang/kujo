@@ -35,7 +35,8 @@
         "nested-state-allocation-audit-2026-10-23.json",
         "post-constructor-native-surfaces-2026-10-23.json",
         "post-field-native-surfaces-2026-10-23.json",
-        "post-string-guard-native-surfaces-2026-10-23.json"
+        "post-string-guard-native-surfaces-2026-10-23.json",
+        "post-collection-guard-native-surfaces-2026-10-23.json"
       ]
     },
     {
@@ -80,7 +81,8 @@
         "callback-field-resolution-2026-10-23.json",
         "native-field-reads-2026-10-23.json",
         "guarded-rebinding-roots-2026-10-23.json",
-        "native-guarded-strings-2026-10-23.json"
+        "native-guarded-strings-2026-10-23.json",
+        "native-guarded-collections-2026-10-23.json"
       ]
     },
     {

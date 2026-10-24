@@ -464,3 +464,19 @@ Batch expensive release builds across coherent tested fixes, but never label an
 older binary as the current candidate. If a hypothesis fails, record the result and
 choose the next measured hotspot. Finishing the plan means satisfying its gates,
 not merely landing code in every area.
+
+### Guarded collection native execution milestone
+
+Native lowering now covers `TryAppendAssign` and conditional `ReleaseRebindLocal`.
+The regression suite requires native functions and loops while preserving COW,
+shadowed builtins, RHS destination replacement and immutable bindings. Deterministic
+helper checks require unique array/byte allocation reuse at 8 and 128 updates,
+retained-snapshot isolation and bounded root capacity. See
+`native-guarded-collections-2026-10-23.json` for verification provenance.
+
+The unchanged 165-function static audit now has 109 functions with no unsupported
+opcode (previously 89). Remaining first blockers: ForNext 25, GuardAppendPath 8,
+TryPopRebind 7, UpdateBindingPath 12, MakeClosure 2 and LoadCapture 2. This is
+eligibility evidence only: actual native time coverage, final-candidate production
+checksums, controlled competitive measurements and release/platform gates remain
+open. Existing frozen benchmark runs do not certify this source revision.
