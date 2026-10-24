@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Positional-argument release matrix](checksums-2026-10-24-native-positional-release.json)
+  verifies all 150 unchanged test-size checksums on frozen `fc48aec`, including
+  positional callback ownership transfer. All 100 measurement reports and
+  source/input/binary identities are verified. Production and competitive
+  acceptance remain open; this predates the root-slot cache candidate.
+
 - [Scalar-array production outcome](production-matmul-scalar-array-2026-10-24.json)
   records the unchanged `3482e53` Matmul timeout after two warmups and four
   measured iterations. No final checksum was obtained.
