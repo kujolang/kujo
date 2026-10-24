@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Reuse unique parent and leaf nodes during checked pop and dictionary removal
+  without dropping retained value snapshots or weakening nesting checks.
+
 - Avoid depth-cache-induced Arc node relocation during checked array and byte
   appends while preserving copy-on-write for retained snapshots.
 

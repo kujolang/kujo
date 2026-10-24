@@ -1,0 +1,189 @@
+{
+  "scope": "Deterministic checked pop/removal Arc-node relocation audit, not elapsed or competitive timing.",
+  "source_parent": "7e5d721",
+  "source_sha256": {
+    "src/interpreter/assignment.rs": "71706e70030f33888ba45d11d4855174da890914eb2ee517c88da765dc8fd12d",
+    "tests/collection_removal_contracts.rs": "b0948f13e555852d04a24c2e9e4a2d772ff3a3db26e166be0132efdc8647f1ea"
+  },
+  "before": [
+    {
+      "iterations": 8,
+      "operation": "pop",
+      "parent": "struct",
+      "parent_relocations": 8,
+      "leaf_relocations": 7
+    },
+    {
+      "iterations": 8,
+      "operation": "pop",
+      "parent": "dictionary",
+      "parent_relocations": 8,
+      "leaf_relocations": 7
+    },
+    {
+      "iterations": 8,
+      "operation": "pop",
+      "parent": "array",
+      "parent_relocations": 8,
+      "leaf_relocations": 7
+    },
+    {
+      "iterations": 8,
+      "operation": "dictionary_remove",
+      "parent": "struct",
+      "parent_relocations": 8,
+      "leaf_relocations": 7
+    },
+    {
+      "iterations": 8,
+      "operation": "dictionary_remove",
+      "parent": "dictionary",
+      "parent_relocations": 8,
+      "leaf_relocations": 7
+    },
+    {
+      "iterations": 8,
+      "operation": "dictionary_remove",
+      "parent": "array",
+      "parent_relocations": 8,
+      "leaf_relocations": 7
+    },
+    {
+      "iterations": 128,
+      "operation": "pop",
+      "parent": "struct",
+      "parent_relocations": 128,
+      "leaf_relocations": 127
+    },
+    {
+      "iterations": 128,
+      "operation": "pop",
+      "parent": "dictionary",
+      "parent_relocations": 128,
+      "leaf_relocations": 127
+    },
+    {
+      "iterations": 128,
+      "operation": "pop",
+      "parent": "array",
+      "parent_relocations": 128,
+      "leaf_relocations": 127
+    },
+    {
+      "iterations": 128,
+      "operation": "dictionary_remove",
+      "parent": "struct",
+      "parent_relocations": 128,
+      "leaf_relocations": 127
+    },
+    {
+      "iterations": 128,
+      "operation": "dictionary_remove",
+      "parent": "dictionary",
+      "parent_relocations": 128,
+      "leaf_relocations": 127
+    },
+    {
+      "iterations": 128,
+      "operation": "dictionary_remove",
+      "parent": "array",
+      "parent_relocations": 128,
+      "leaf_relocations": 127
+    }
+  ],
+  "after": [
+    {
+      "iterations": 8,
+      "operation": "pop",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "operation": "pop",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "operation": "pop",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "operation": "dictionary_remove",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "operation": "dictionary_remove",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "operation": "dictionary_remove",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "operation": "pop",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "operation": "pop",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "operation": "pop",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "operation": "dictionary_remove",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "operation": "dictionary_remove",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "operation": "dictionary_remove",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    }
+  ],
+  "baseline_log": "/tmp/kujo-removal-node-baseline.log",
+  "fixed_log": "/tmp/kujo-removal-node-fixed.log",
+  "mechanism": "Discard weak cache observations along the mutation path after validating the depth bound. Preserve all real aliases and refresh conservative bounds after successful shrinking.",
+  "verification": {
+    "contracts": "/tmp/kujo-removal-node-contracts.log:1063library passed,8ignored;38integrations passed,1ignored; both runtimes cover pairs,parent snapshots,external writes and fallback behavior",
+    "format": "/tmp/kujo-removal-node-format-check.log passed",
+    "minimal": "/tmp/kujo-removal-node-minimal.log passed"
+  },
+  "remaining": "Native append/pop admission and current production/competitive gates remain open."
+}

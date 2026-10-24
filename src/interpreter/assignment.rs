@@ -809,9 +809,12 @@ pub(crate) fn collection_rebinding_path_checked(
     if bound > crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
         return None;
     }
+    // Cache weak references must not force Arc relocation along an otherwise
+    // unique path. Dropping these observations does not change fallback values.
+    cache.release_path(root, path);
     let pair = collection_rebinding_path(root, path, original, key)?;
-    // Shrinking cannot increase the validated bound. Refresh identities after
-    // COW/weak-pointer detachment so the next operation does not rescan payloads.
+    // Shrinking cannot increase the validated bound. Real aliases still detach;
+    // refresh identities so the next operation does not rescan payloads.
     cache.remember_path(root, path, bound);
     Some(pair)
 }
@@ -1412,6 +1415,102 @@ mod checked_append_node_storage_tests {
             }
         }
         eprintln!("checked append Arc-node relocation measurements: {measurements:?}");
+        assert!(measurements.iter().all(|row| row.3 == (0, 0)), "{measurements:?}");
+    }
+}
+
+#[cfg(test)]
+mod checked_removal_node_storage_tests {
+    use super::*;
+
+    fn nodes(root: &Value, path: &[Access]) -> (usize, usize) {
+        let parent = match root {
+            Value::Struct { fields, .. } => Arc::as_ptr(fields) as usize,
+            Value::Dict(map) => Arc::as_ptr(map) as usize,
+            Value::Array(items) => Arc::as_ptr(items) as usize,
+            _ => unreachable!(),
+        };
+        let leaf = match collection_child(root, &path[0]).unwrap() {
+            Value::Array(items) => Arc::as_ptr(items) as usize,
+            Value::Dict(map) => Arc::as_ptr(map) as usize,
+            _ => unreachable!(),
+        };
+        (parent, leaf)
+    }
+
+    fn length(root: &Value, path: &[Access]) -> usize {
+        match collection_child(root, &path[0]).unwrap() {
+            Value::Array(items) => items.len(),
+            Value::Dict(map) => map.len(),
+            _ => unreachable!(),
+        }
+    }
+
+    fn remove(
+        root: &mut Value,
+        path: &[Access],
+        dictionary: bool,
+        index: usize,
+        cache: &mut DepthCache,
+    ) {
+        let mut original = Some(collection_child(root, &path[0]).unwrap().clone());
+        let key = dictionary.then(|| Value::str_ref(&format!("key{index}")));
+        let pair =
+            collection_rebinding_path_checked(root, path, &mut original, key.as_ref(), cache)
+                .unwrap();
+        assert!(original.is_none());
+        drop(pair);
+    }
+
+    #[test]
+    fn checked_removals_preserve_unique_arc_nodes_and_detach_real_snapshots() {
+        let mut measurements = Vec::new();
+        for repetitions in [8, 128] {
+            for dictionary in [false, true] {
+                for container in 0..3 {
+                    let leaf = if dictionary {
+                        Value::dict(
+                            (0..repetitions + 2)
+                                .map(|i| (Arc::from(format!("key{i}")), Value::Int(i as i64)))
+                                .collect(),
+                        )
+                    } else {
+                        Value::array((0..repetitions + 2).map(|i| Value::Int(i as i64)).collect())
+                    };
+                    let (mut root, path) = match container {
+                        0 => (
+                            Value::Struct {
+                                name: "State".into(),
+                                fields: Arc::new([("items".into(), leaf)].into_iter().collect()),
+                            },
+                            vec![Access::Field("items".into())],
+                        ),
+                        1 => (
+                            Value::dict([(Arc::from("items"), leaf)].into_iter().collect()),
+                            vec![Access::Index(Value::str_ref("items"))],
+                        ),
+                        _ => (Value::array(vec![leaf]), vec![Access::Index(Value::Int(0))]),
+                    };
+                    let mut cache = DepthCache::default();
+                    let mut changes = (0, 0);
+                    for index in 0..repetitions {
+                        let before = nodes(&root, &path);
+                        remove(&mut root, &path, dictionary, index, &mut cache);
+                        let after = nodes(&root, &path);
+                        changes.0 += usize::from(before.0 != after.0);
+                        changes.1 += usize::from(before.1 != after.1);
+                    }
+                    measurements.push((repetitions, dictionary, container, changes));
+                    assert_eq!(length(&root, &path), 2);
+                    let snapshot = root.clone();
+                    remove(&mut root, &path, dictionary, repetitions, &mut cache);
+                    assert_eq!(length(&snapshot, &path), 2);
+                    assert_eq!(length(&root, &path), 1);
+                    assert_ne!(nodes(&root, &path), nodes(&snapshot, &path));
+                }
+            }
+        }
+        eprintln!("checked removal Arc-node relocation measurements: {measurements:?}");
         assert!(measurements.iter().all(|row| row.3 == (0, 0)), "{measurements:?}");
     }
 }

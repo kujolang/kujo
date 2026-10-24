@@ -247,3 +247,57 @@ fn failed_nested_pop_writeback_keeps_overdeep_host_state_unchanged() {
         vm.execute(Compiler::new().compile(&parsed.stmts).unwrap()).unwrap();
     }).unwrap().join().unwrap();
 }
+
+#[test]
+fn repeated_checked_removals_preserve_parent_snapshots_and_external_writes() {
+    support::success(
+        r#"
+        struct State { items: array, mapping: any }
+        mut seed := {}
+        mut i := 0
+        while i < 130 { seed["key" + str(i)] = i i += 1 }
+        mut state := State { items: range(0,130), mapping: seed }
+        mut rows := [range(0,130),seed]
+        let initial_state := state
+        let initial_rows := rows
+        i = 0
+        while i < 128 {
+            let a := pop(state.items)
+            state.items = a[0]
+            assert_equal(a[1],129-i)
+            let b := remove(state.mapping,"key" + str(i))
+            state.mapping = b[0]
+            assert_equal(b[1],i)
+            let c := pop(rows[0])
+            rows[0] = c[0]
+            assert_equal(c[1],129-i)
+            let d := remove(rows[1],"key" + str(i))
+            rows[1] = d[0]
+            assert_equal(d[1],i)
+            i += 1
+        }
+        assert_equal(state.items,[0,1])
+        assert_equal(rows[0],[0,1])
+        assert_equal(len(state.mapping),2)
+        assert_equal(len(rows[1]),2)
+        assert_equal(len(initial_state.items),130)
+        assert_equal(len(initial_state.mapping),130)
+        assert_equal(len(initial_rows[0]),130)
+        assert_equal(len(initial_rows[1]),130)
+        let saved := state
+        state.mapping["key128"] = [7]
+        let next := remove(state.mapping,"key128")
+        state.mapping = next[0]
+        assert_equal(next[1],[7])
+        assert_equal(saved.mapping["key128"],128)
+        assert_equal(len(saved.mapping),2)
+        assert_equal(len(state.mapping),1)
+        state.items[0] = -9
+        let last := pop(state.items)
+        state.items = last[0]
+        assert_equal(last[1],1)
+        assert_equal(state.items,[-9])
+        assert_equal(saved.items,[0,1])
+        "#,
+    );
+}

@@ -31,6 +31,9 @@ identities along the destination path before mutation, then remember the updated
 depth bounds. This avoids relocating otherwise unique parent and array nodes
 solely because the cache observes them. Real value aliases still force COW;
 unrelated cached identities retain their external-mutation invalidation behavior.
+Checked pop/removal follows the same rule after obtaining the conservative depth
+bound. Removing weak cache observations on a fallback path changes no values;
+successful shrinking operations refresh the unchanged upper bound afterward.
 
 Regression coverage includes mixed types, four/five arguments, loops, recursion,
 imported helpers, callable arguments, snapshots and failure/success recovery across
