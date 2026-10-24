@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-23",
+  "scope": "Eligible experimental native functions accept typed owned arguments; frame-local parameter transfer preserves value semantics.",
+  "source_sha256": {
+    "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
+    "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+  },
+  "binary_sha256": "e82e90334d5fc39f76bd51705782ac909c3f9496554c526d5d723227186938cb",
+  "verification": {
+    "library_passed": 1044,
+    "library_ignored": 8,
+    "integration_passed": 50,
+    "extended_owned_harness": "2 tests pass, including imported helper and callable arguments",
+    "generated_parity": "24 deterministic functions,200warm calls each, all3modes pass; >=2400nativeentries. Prechange8a593f9 fails native-entry assertion.",
+    "all50_release": [
+      "checksums-2026-10-23-owned-entry-release-jit.json",
+      "checksums-2026-10-23-owned-entry-release-vm.json",
+      "checksums-2026-10-23-owned-entry-release-interpreter.json"
+    ],
+    "all50_debug_jit": "checksums-2026-10-23-owned-entry-jit.json"
+  },
+  "cost_evidence": "Named parameter transfer retains unique array storage through128writes. Scalar/owned200-call release probes each101nativeentries, whereas earlier owned probe had0.",
+  "remaining": [
+    "Native stack indexing is a separate newer candidate",
+    "Field-error parity is a separate newer fix",
+    "Full production/platform/controlled speed/comparator gates remain open",
+    "Debug interpreter QuickSort hit600000ms deadline; timeout retained; separate release interpreter all50pass does not erase that outcome"
+  ],
+  "speed_claim": "None; native counts are not time coverage or competitive scores."
+}

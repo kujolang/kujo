@@ -3373,19 +3373,20 @@ impl VM {
                             captured: _,
                             captured_binding_kinds: _,
                         } => {
-                            let raw_args = args.clone();
-                            let args = self.prepare_bytecode_call_args(chunk, args.clone())?;
+                            let raw_args = args;
+                            let args = self.prepare_bytecode_call_args(chunk, raw_args.clone())?;
 
                             self.record_jit_dispatch(&args);
                             // Track function calls for JIT compilation
                             if self.jit_enabled
                                 && !chunk.is_generator
+                                && !chunk.is_async
+                                && raw_args.len() == args.len()
                                 && !Self::requires_closure_vm(chunk)
-                                // The function JIT parameter ABI carries immediate payloads and kinds.
-                                // Guard before either cache path, including after a
-                                // previously immediate call site receives an owned value.
+                                // Scalar arguments use the immediate ABI; other parameters move
+                                // from named callee bindings into frame-local owned roots.
+                                // Legacy receiver adaptation still requires the VM.
                                 && args.len() == chunk.params.len()
-                                && args.iter().all(|arg| crate::native_scalar::encode(arg).is_some())
                             {
                                 let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
@@ -3515,9 +3516,15 @@ impl VM {
                                                 } else {
                                                     0
                                                 },
-                                                arg_count: args.len() as i64,
+                                                arg_count: if use_fast_args {
+                                                    args.len() as i64
+                                                } else {
+                                                    0
+                                                },
                                             };
 
+                                            drop(args);
+                                            drop(raw_args);
                                             let result_code =
                                                 invoke_compiled_fn(compiled_fn, &mut vm_context);
                                             if let Some(error) = vm_context.runtime_error.take() {
@@ -3821,11 +3828,17 @@ impl VM {
                                         } else {
                                             0
                                         },
-                                        arg_count: args.len() as i64,
+                                        arg_count: if use_fast_args {
+                                            args.len() as i64
+                                        } else {
+                                            0
+                                        },
                                     };
 
                                     // Execute the compiled function!
                                     // Lock is NOT held during execution to allow recursive calls
+                                    drop(args);
+                                    drop(raw_args);
                                     let result_code =
                                         invoke_compiled_fn(*compiled_fn, &mut vm_context);
                                     if let Some(error) = vm_context.runtime_error.take() {
@@ -8313,7 +8326,6 @@ impl VM {
                 if self.jit_enabled
                     && !Self::requires_closure_vm(chunk)
                     && args.len() == chunk.params.len()
-                    && args.iter().all(|arg| crate::native_scalar::encode(arg).is_some())
                 {
                     let func_name = chunk.name.as_deref().unwrap_or("<anonymous>");
 
@@ -8573,11 +8585,12 @@ impl VM {
                             } else {
                                 0
                             },
-                            arg_count: args.len() as i64,
+                            arg_count: if use_fast_args { args.len() as i64 } else { 0 },
                         };
 
                         // Execute the compiled function!
                         // Lock is NOT held during execution to allow recursive calls
+                        drop(args);
                         let result_code = invoke_compiled_fn(compiled_fn, &mut vm_context);
                         if let Some(error) = vm_context.runtime_error.take() {
                             return Err(error);

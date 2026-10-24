@@ -862,6 +862,39 @@ pub unsafe extern "C" fn jit_release_dead_local(
     0
 }
 
+/// Transfer a named parameter into the active native frame.
+#[no_mangle]
+// SAFETY: ctx and its local/name maps remain live and exclusively borrowed.
+// Parameter initialization runs after native frame entry. Transfer the local
+// value into that frame's roots rather than retaining an artificial COW alias.
+pub unsafe extern "C" fn jit_take_parameter(
+    ctx: *mut VMContext,
+    name_hash: i64,
+    _unused: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.return_value_kind = 0;
+    let value = ctx
+        .var_names_ptr
+        .as_ref()
+        .and_then(|names| names.get(&(name_hash as u64)))
+        .and_then(|name| ctx.locals_ptr.as_mut().and_then(|locals| locals.remove(name)));
+    let Some(value) = value else {
+        ctx.runtime_error = Some("Missing native parameter".into());
+        return 0;
+    };
+    match ctx.owned_roots.encode(value) {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
 /// Load a retained immutable literal through the ordinary owned-value codec.
 #[no_mangle]
 // SAFETY: generated code passes a Value allocation retained by JitCompiler for
@@ -3080,19 +3113,22 @@ pub unsafe extern "C" fn jit_get_return_int(ctx: *mut VMContext) -> i64 {
 /// Runtime helper: Get argument value from VMContext.argN field
 /// This enables fast parameter passing without HashMap lookups.
 /// Returns the argument value at the specified index (0-3).
-/// If index >= arg_count or out of range, returns 0.
+/// If this invocation uses named parameters, transfer that parameter instead.
 #[no_mangle]
 // SAFETY:
 // - Preconditions: jit_get_arg is invoked from JIT-compiled code using the C ABI, and `ctx` points to a live
 //   `VMContext` whose nested pointers (`stack_ptr`, `locals_ptr`, `globals_ptr`, etc.) satisfy this
 //   function's null/shape checks for the full call duration with no concurrent mutable aliasing.
 // - Postconditions: all reads/writes stay within VM-owned structures reachable from validated pointers,
-//   and invalid inputs are handled via sentinel returns/early exits without transferring ownership.
-pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64) -> i64 {
+//   immediate arguments retain their bits; named arguments transfer into the current frame's roots.
+pub unsafe extern "C" fn jit_get_arg(ctx: *mut VMContext, index: i64, name_hash: i64) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     ctx.return_value_kind = 0;
-    if index < 0 || index >= ctx.arg_count || index >= 4 {
+    if index < 0 || index >= 4 {
         return 0;
+    }
+    if index >= ctx.arg_count {
+        return jit_take_parameter(ctx, name_hash, 0);
     }
     ctx.return_value_kind = ctx.arg_kinds[index as usize];
     [ctx.arg0, ctx.arg1, ctx.arg2, ctx.arg3][index as usize]
@@ -3938,6 +3974,7 @@ struct BytecodeTranslator {
     owned_operator_func: Option<FuncRef>,
     operand_load_func: Option<FuncRef>,
     literal_load_func: Option<FuncRef>,
+    parameter_load_func: Option<FuncRef>,
     literal_values: HashMap<usize, Arc<Value>>,
     operand_duplicate_func: Option<FuncRef>,
     operand_release_func: Option<FuncRef>,
@@ -4106,6 +4143,7 @@ impl BytecodeTranslator {
             owned_operator_func: None,
             operand_load_func: None,
             literal_load_func: None,
+            parameter_load_func: None,
             literal_values: HashMap::new(),
             operand_duplicate_func: None,
             operand_release_func: None,
@@ -4591,6 +4629,7 @@ impl BytecodeTranslator {
         };
 
         let use_fast_args = get_arg_func.is_some() && params.len() <= 4;
+        let load_var_func = self.parameter_load_func.unwrap_or(load_var_func);
 
         for (i, param_name) in params.iter().enumerate() {
             if let Some(&variable) = self.local_variables.get(param_name) {
@@ -4598,7 +4637,9 @@ impl BytecodeTranslator {
                     // FAST PATH: Load parameter directly from VMContext.argN
                     let get_arg = get_arg_func.unwrap();
                     let index = builder.ins().iconst(types::I64, i as i64);
-                    let call = builder.ins().call(get_arg, &[ctx, index]);
+                    let hash =
+                        builder.ins().iconst(types::I64, Self::hash_var_name(param_name) as i64);
+                    let call = builder.ins().call(get_arg, &[ctx, index, hash]);
                     builder.inst_results(call)[0]
                 } else {
                     // SLOW PATH: Load parameter value from HashMap via runtime call
@@ -4606,7 +4647,7 @@ impl BytecodeTranslator {
                     let name_hash_val = builder.ins().iconst(types::I64, name_hash);
                     let zero = builder.ins().iconst(types::I64, 0);
 
-                    // Call jit_load_variable to get the parameter value from func_locals
+                    // Transfer the parameter from func_locals into this native frame.
                     let call = builder.ins().call(load_var_func, &[ctx, name_hash_val, zero]);
                     builder.inst_results(call)[0]
                 };
@@ -4817,6 +4858,28 @@ impl BytecodeTranslator {
         builder.ins().return_(&[status]);
         builder.switch_to_block(body);
         self.tracks_function_depth = true;
+        Ok(body)
+    }
+
+    fn finish_parameter_initialization(
+        &self,
+        builder: &mut FunctionBuilder,
+        entry: Block,
+    ) -> Result<Block, String> {
+        let ctx = self.ctx_param.ok_or("Missing native context")?;
+        let check = self.runtime_error_func.ok_or("Missing native error helper")?;
+        let call = builder.ins().call(check, &[ctx]);
+        let status = builder.inst_results(call)[0];
+        let failed = builder.ins().icmp_imm(IntCC::NotEqual, status, 0);
+        let failure = builder.create_block();
+        let body = builder.create_block();
+        builder.ins().brif(failed, failure, &[], body, &[]);
+        builder.seal_block(entry);
+        builder.seal_block(failure);
+        builder.switch_to_block(failure);
+        // No body effects ran; never persist uninitialized locals on this exit.
+        self.emit_return(builder, status);
+        builder.switch_to_block(body);
         Ok(body)
     }
 
@@ -7624,6 +7687,7 @@ impl JitCompiler {
             ("jit_owned_operator", 6, true),
             ("jit_load_operand", 3, true),
             ("jit_load_literal", 2, true),
+            ("jit_take_parameter", 3, true),
             ("jit_duplicate_operand", 3, true),
             ("jit_release_operand", 3, true),
             ("jit_release_dead_local", 4, true),
@@ -7658,6 +7722,7 @@ impl JitCompiler {
                 "jit_owned_operator" => translator.owned_operator_func = Some(function),
                 "jit_load_operand" => translator.operand_load_func = Some(function),
                 "jit_load_literal" => translator.literal_load_func = Some(function),
+                "jit_take_parameter" => translator.parameter_load_func = Some(function),
                 "jit_duplicate_operand" => translator.operand_duplicate_func = Some(function),
                 "jit_release_operand" => translator.operand_release_func = Some(function),
                 "jit_release_dead_local" => translator.dead_local_func = Some(function),
@@ -7763,6 +7828,7 @@ impl JitCompiler {
         builder.symbol("jit_return_scalar_kind", jit_return_scalar_kind as *const u8);
         builder.symbol("jit_owned_truth", jit_owned_truth as *const u8);
         builder.symbol("jit_load_literal", jit_load_literal as *const u8);
+        builder.symbol("jit_take_parameter", jit_take_parameter as *const u8);
         builder.symbol("jit_owned_equal", jit_owned_equal as *const u8);
         builder.symbol("jit_owned_operator", jit_owned_operator as *const u8);
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
@@ -9085,10 +9151,11 @@ impl JitCompiler {
                 self.module.declare_func_in_func(store_from_stack_id, &mut builder.func);
 
             // Declare jit_get_arg for fast parameter access
-            // jit_get_arg: fn(*mut VMContext, i64) -> i64
+            // jit_get_arg: fn(*mut VMContext, index, name_hash) -> tagged payload
             let mut get_arg_sig = self.module.make_signature();
             get_arg_sig.params.push(AbiParam::new(types::I64)); // ctx pointer
             get_arg_sig.params.push(AbiParam::new(types::I64)); // arg index
+            get_arg_sig.params.push(AbiParam::new(types::I64)); // parameter name hash
             get_arg_sig.returns.push(AbiParam::new(types::I64)); // arg value
 
             let get_arg_id = self
@@ -9170,6 +9237,8 @@ impl JitCompiler {
                 load_var_ref,
                 get_arg_ref_opt,
             );
+            let entry_block =
+                translator.finish_parameter_initialization(&mut builder, entry_block)?;
 
             // Add entry block to block map
             if !translator.blocks.contains_key(&0) {
@@ -10536,6 +10605,76 @@ mod tests {
         context.owned_roots.leave().unwrap();
         context.owned_roots.leave().unwrap();
         assert_eq!(context.owned_roots.storage_state().1, 0);
+    }
+
+    #[test]
+    fn native_parameter_transfer_preserves_unique_backing_storage() {
+        let hash = BytecodeTranslator::hash_var_name("value");
+        let value = Value::array(vec![Value::Int(0); 128]);
+        let pointer = match &value {
+            Value::Array(values) => values.as_ptr(),
+            _ => unreachable!(),
+        };
+        let mut locals = HashMap::from([("value".into(), value)]);
+        let mut names = HashMap::from([(hash, "value".into())]);
+        let mut context = VMContext::new(std::ptr::null_mut(), &mut locals, std::ptr::null_mut());
+        context.var_names_ptr = &mut names;
+        context.owned_roots.enter().unwrap();
+        // SAFETY: live exclusive context, name map and parameter binding.
+        let root = unsafe { jit_take_parameter(&mut context, hash as i64, 0) };
+        let kind = context.return_value_kind;
+        assert!(context.runtime_error.is_none());
+        assert!(locals.is_empty());
+        match context.owned_roots.current_value_mut(root, kind).unwrap() {
+            Value::Array(values) => assert_eq!(Arc::strong_count(values), 1),
+            _ => panic!("parameter lost its array type"),
+        }
+        for i in 0..128 {
+            // SAFETY: current-scope root and mutable parameter metadata.
+            assert_eq!(
+                unsafe {
+                    jit_indexed_write(&mut context, 1, root, kind, 0, hash as i64, 0, 0, i, 0)
+                },
+                0
+            );
+            assert!(
+                matches!(context.owned_roots.current_value_mut(root, kind).unwrap(), Value::Array(values) if values.as_ptr() == pointer)
+            );
+        }
+        context.owned_roots.leave().unwrap();
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+    }
+
+    #[test]
+    fn missing_native_parameter_fails_before_body_effects_and_releases_frame() {
+        let mut compiler = JitCompiler::new().unwrap();
+        let mut chunk = BytecodeChunk::new();
+        chunk.params.push("value".into());
+        chunk.local_names.push("value".into());
+        chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+        chunk.local_count = 1;
+        let constant = chunk.add_constant(Constant::Int(99));
+        chunk.emit(OpCode::LoadConst(constant));
+        chunk.emit(OpCode::StoreGlobal("effect".into()));
+        chunk.emit(OpCode::Pop);
+        chunk.emit(OpCode::LoadLocal(0));
+        chunk.emit(OpCode::Return);
+        let compiled = compiler.compile_function(&chunk, "missing_parameter").unwrap();
+        let mut names = HashMap::from([
+            (BytecodeTranslator::hash_var_name("value"), "value".into()),
+            (BytecodeTranslator::hash_var_name("effect"), "effect".into()),
+        ]);
+        let mut globals = HashMap::from([("effect".into(), Value::Int(0))]);
+        let mut locals = HashMap::new();
+        let mut stack = Vec::new();
+        let mut context = VMContext::new(&mut stack, &mut locals, &mut globals);
+        context.var_names_ptr = &mut names;
+        assert_ne!(invoke_compiled_fn(compiled, &mut context), 0);
+        assert_eq!(context.runtime_error.as_deref(), Some("Missing native parameter"));
+        assert!(matches!(globals.get("effect"), Some(Value::Int(0))));
+        assert_eq!(context.native_call_depth, 0);
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+        assert!(stack.is_empty());
     }
 
     #[test]

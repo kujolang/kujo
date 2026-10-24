@@ -11,6 +11,11 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Allow owned arguments into eligible experimental native functions. Transfer
+  named parameters into frame-local roots, preserve scalar fast paths, and drop
+  temporary argument aliases before execution. Missing parameters exit before
+  body effects; callbacks, recursion and snapshots retain value semantics.
+
 - Route cold bytecode callbacks outside the inline dispatcher's supported subset
   through the full VM bridge before executing their bodies. Native callers can
   invoke array-building helpers without unsupported-opcode failures or replaying

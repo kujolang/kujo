@@ -1,6 +1,27 @@
 # Experimental native owned-value lifetime mechanism
 
-Status: **named operands, callbacks and truthiness connected; ownership integration incomplete**. Native invocation
+Status: **typed owned arguments connected; broader native coverage and acceptance incomplete**.
+Eligible native functions now transfer named arguments into frame-local roots
+after frame entry. The caller drops temporary argument vectors before invocation,
+so those vectors and the callee's name map do not retain artificial COW aliases.
+Immediate-only calls retain their direct payload/kind path; mixed or owned calls
+use named transfer even when a cached function was originally called with scalars.
+Parameter initialization errors exit before body effects and release the frame.
+
+Regression coverage includes mixed types, four/five arguments, loops, recursion,
+imported helpers, callable arguments, snapshots and failure/success recovery across
+interpreter, VM and JIT. A storage test retains unique array backing storage through
+128 writes after parameter transfer. The frozen candidate passes all 50 test-size
+checksums in release JIT, VM and interpreter modes (150/150), with fallback
+allowed. Production, platform and controlled speed gates remain open. See the
+[candidate evidence](../benchmarks/langarena/owned-argument-entry-2026-10-23.json).
+General stack indexing, nested updates, field/aggregate operations and array-loop
+admission still limit coverage. Native entry counts are not elapsed speed evidence.
+
+The sections below retain earlier staging evidence and the ownership contract;
+statements about former entry exclusions describe those earlier stages.
+
+Native invocation
 wrappers and generated function entry/exit helpers now enter and leave lazy root
 scopes. `src/native_owned.rs` is compiled with `runtime-jit`. Ordinary named loads
 now use tagged roots, preserve local/global/builtin precedence and leave no hidden
@@ -9,7 +30,8 @@ and checked named assignments borrow the tagged value. Specialized collection
 helpers still retain legacy paths. VM-stack pops encode owned
 callback results, and tagged pushes borrow roots when marshaling callback
 arguments. This repairs the native `str(x)` return path from the original audit;
-it does not establish full native parity/performance. Existing entry guards remain.
+it does not establish full native parity/performance. Closure, generator, async
+and legacy receiver-adaptation entry guards remain.
 
 Conditions on tagged owned operands now borrow the root and use `Value::is_truthy`,
 matching VM/interpreter truth rules without cloning the container. Immediate
@@ -25,10 +47,11 @@ Immediate comparisons retain their native paths. The helper validates both kinds
 and identities without cloning collections or allocating new roots. This does not
 close dead-operand release, legacy collection helpers or owned entry guards.
 
-The native execution census shows that owned-argument call boundaries are heavily
-exercised. The existing native path uses incompatible VM-stack markers and an
-append-only object vector. Completing a common lifetime mechanism is a prerequisite
-to replacing those paths; widening entry guards first would expose incorrect values.
+The earlier native execution census showed that owned-argument call boundaries
+were heavily exercised. Legacy paths used incompatible VM-stack markers and an
+append-only object vector. Converted paths now use the common lifetime mechanism;
+remaining legacy paths must be converted and verified before admitting their
+operations into native code.
 
 ## Storage and ownership
 
