@@ -20,7 +20,10 @@ a target to test, not a guarantee. This document explains the execution order;
   diagnostic, with backing/snapshot behavior preserved. Successful VM-managed
   native returns avoid constructing dead local maps; standalone, loop and
   error synchronization remain intact. 1,090 library and 38 targeted integration
-  tests pass. Release timing/checksums and peak-memory verification are pending.
+  tests pass. Frozen release checks pass all 150 test-size cases; QuickSort JIT
+  shows a 1.1631x median paired local speedup (6/7 favorable), while VM is flat.
+  Two peak-memory samples per variant do not show a JIT RSS reduction. Host
+  speed limits changed; production, competitive and platform gates remain open.
 
 - **Immutable dispatch facts (`16b96d5`).** [Diagnostic evidence](CALL_METADATA_2026_10_24.md)
   reproduces repeated instruction scans on native callbacks and verifies lazy,

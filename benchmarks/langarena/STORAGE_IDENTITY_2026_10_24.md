@@ -43,9 +43,8 @@ the previous runtime.
   callback rebinding, call-frame ownership, helpers and loop recovery.
 - No-default-feature compilation, formatting and diff checks pass.
 
-The frozen-release checksum/timing job currently uses the preceding runtime,
-`93e7caa`. Its 150 checksum cases passed; timing and memory samples are being
-repeated after compilation overlap in the first pass. Those results do not
+The preceding runtime, `93e7caa`, passed its frozen-release checksum, timing
+and memory audit, recorded in `LOCAL_RETURN_2026_10_24.md`. Those results do not
 verify this newer runtime. This candidate still needs release verification;
 production completion, argument-buffer costs, clean-server comparison and
 supported-platform gates remain open.

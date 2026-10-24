@@ -52,7 +52,31 @@ The first integration link attempt exhausted local disk space. Cargo cleanup
 removed this checkout's disposable debug build artifacts; serial compilation
 with incremental caches disabled then passed. Source and evidence were retained.
 
-Release timing, the candidate's all-50 checksum matrix, and peak-memory samples
-are pending in a separate frozen-build job. Earlier release acceptance applies
-to `16b96d5`, not this change. Production, clean-server comparison and supported
-platform gates remain open.
+## Frozen release verification
+
+`local-return-release-2026-10-24.json` verifies **150/150 test-size checksums**
+on frozen `93e7caa`, with registry/configuration/output checks and source/binary
+identities. Seven rotating QuickSort rounds compare it with frozen `16b96d5`:
+
+| Runtime | Before median seconds | After median seconds | Median paired speedup | Favorable pairs |
+| --- | ---: | ---: | ---: | ---: |
+| VM | 8.1191 | 8.1557 | 0.9927x | 3/7 |
+| JIT | 2.5272 | 2.2930 | 1.1631x | 6/7 |
+
+All 28 timing samples pass their checksums. CPU speed limits changed from 100%
+to 71%; the JIT result is favorable local evidence, not a clean-server guarantee
+or a Goose/Rust comparison. The unchanged VM path has no demonstrated speedup.
+
+Two `/usr/bin/time -l` samples per runtime/variant also pass checksums. Mean
+maximum RSS is 51.54 → 49.07 MiB for VM and 49.03 → 49.28 MiB for JIT.
+With only two samples and host variation, these are descriptive measurements;
+they do not establish a JIT peak-memory reduction. Cumulative requested bytes
+and resident memory measure different things.
+
+An earlier timing/memory pass overlapped agent-started compilation work. It was
+preserved under `superseded_measurement_pass` and repeated after those jobs
+finished, using the same frozen binaries. The table above uses the repeat.
+
+This verification predates `9f401eb` and subsequent argument-buffer edits.
+Production completion, clean-server comparison and supported-platform gates
+remain open.
