@@ -339,6 +339,16 @@ Key lookup and snapshot creation costs remain; elapsed speed is not yet establis
 
 ## 5. Expand fast compiled execution
 
+The [owned-entry surface audit](owned-entry-native-surfaces-2026-10-23.json)
+records the first unsupported operation in 165 port functions. Eleven unchanged
+test-size cases still record zero native function and boundary entries, despite
+compilation attempts. Blockers include indexed reads, nested updates, field reads,
+array/struct construction, iteration and rebinding operations. These static
+findings identify work to investigate; they do not measure time spent per opcode.
+Array-backed local loop admission is also separate work: the existing specialized
+loop path admits unique integer maps, while ordinary indexed array locals are
+rejected before compilation. Completing stack `IndexGet` alone does not close it.
+
 The [nested-state allocation audit](nested-state-allocation-audit-2026-10-23.json)
 finds no width-dependent repeated-copy cost in its direct/helper update fixture,
 with or without a saved snapshot. All 96 observations preserve the expected result;
