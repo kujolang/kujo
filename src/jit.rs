@@ -175,7 +175,6 @@ impl NativeStackBases {
     fn pop(&mut self) -> Option<usize> {
         self.nested.pop().or_else(|| self.first.take())
     }
-    #[cfg(test)]
     fn is_empty(&self) -> bool {
         self.first.is_none() && self.nested.is_empty()
     }
@@ -2014,7 +2013,14 @@ pub unsafe extern "C" fn jit_release_rebind(
     if mutable == 0 {
         return 0;
     }
-    if ctx.vm_ptr.cast::<VM>().as_ref().is_some_and(|vm| vm.has_current_exception_handler()) {
+    // Whole native functions cannot contain a handler. Their SSA roots and
+    // private named locals die when an error unwinds to the VM caller. A loop,
+    // physical VM slot, or shared map still belongs to that caller's handler.
+    let private_function_local = !ctx.native_stack_bases.is_empty()
+        && (location == 1 || (location == 2 && ctx.locals_ptr != ctx.globals_ptr));
+    if !private_function_local
+        && ctx.vm_ptr.cast::<VM>().as_ref().is_some_and(|vm| vm.has_current_exception_handler())
+    {
         return 0;
     }
     let result = (|| {

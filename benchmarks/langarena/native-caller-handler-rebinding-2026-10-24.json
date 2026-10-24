@@ -1,0 +1,26 @@
+{
+  "scope": "Deterministic ownership retention at native rebind under an outer VM exception handler; not elapsed speed.",
+  "source_parent": "ca0b2dc6927bbce307ddf090f610ddca8b3cdfb7",
+  "source_sha256": {
+    "src/jit.rs": "c8f2387059d2d68bee5aacac414f9078ed2ce9d0a6410db78123f789bb3df1a4",
+    "src/vm.rs": "08a1d67cf9e48c598b9b326b41a1e7407fc78079e6dc6643bc930b30d8817582",
+    "tests/jit_nested_paths.rs": "269de4350a967d7727d578f69ac7d153da47f5542519155ac9fe322f57760ea0"
+  },
+  "reproduction": {
+    "row_elements": 4096,
+    "native_private_local_owners_before": 2,
+    "native_private_local_owners_after": 1,
+    "same_invocation_handler_owners_after": 2
+  },
+  "mechanism": "A live native function frame identifies private SSA or independently mapped named locals; these unwind before reaching an outer VM handler. Physical VM slots, loop contexts and shared maps retain the conservative handler guard. Native functions with exception handlers remain unsupported.",
+  "verification": {
+    "contracts": "1065library passed,8ignored;131integrations passed including caller handlers, same-invocation handlers, failed targets and retained snapshots in interpreter/VM/JIT",
+    "format": "cargo fmt --check passed",
+    "minimal": "cargo check --no-default-features --lib passed"
+  },
+  "logs": [
+    "/tmp/kujo-handler-rebind-baseline.log",
+    "/tmp/kujo-handler-rebind-contracts.log"
+  ],
+  "remaining": "Candidate all50, production and competitive gates remain open. Cache-only frozen MergeSort run is separate."
+}

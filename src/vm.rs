@@ -9878,6 +9878,70 @@ mod tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn native_private_rebind_ignores_only_caller_exception_handlers() {
+        use crate::jit::{jit_enter_function, jit_leave_function, jit_release_rebind, VMContext};
+        for native in [false, true] {
+            let mut vm = VM::new();
+            vm.exception_handlers.push(ExceptionHandlerFrame {
+                catch_ip: 0,
+                stack_offset: 0,
+                frame_offset: 0,
+                scope_depth: 0,
+            });
+            let mut ctx = VMContext::new_with_vm(
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                &mut vm as *mut VM as *mut std::ffi::c_void,
+            );
+            if native {
+                assert_eq!(unsafe { jit_enter_function(&mut ctx) }, 0);
+            } else {
+                ctx.owned_roots.enter().unwrap();
+            }
+            let (target, kind) =
+                ctx.owned_roots.encode(Value::array(vec![Value::Int(1); 4096])).unwrap();
+            let original = ctx.owned_roots.duplicate(target, kind).unwrap();
+            let (function, function_kind) = ctx
+                .owned_roots
+                .encode(Value::BytecodeFunction {
+                    chunk: BytecodeChunk::new(),
+                    captured: HashMap::new(),
+                    captured_binding_kinds: HashMap::new(),
+                })
+                .unwrap();
+            assert_eq!(
+                unsafe {
+                    jit_release_rebind(
+                        &mut ctx,
+                        1,
+                        target,
+                        kind,
+                        original,
+                        kind,
+                        1,
+                        function,
+                        function_kind,
+                    )
+                },
+                0
+            );
+            let strong = match ctx.owned_roots.current_value_mut(original, kind).unwrap() {
+                Value::Array(a) => Arc::strong_count(a),
+                _ => panic!(),
+            };
+            assert_eq!(strong, if native { 1 } else { 2 }, "native={native}");
+            assert_eq!(vm.exception_handlers.len(), 1);
+            if native {
+                unsafe { jit_leave_function(&mut ctx) };
+            } else {
+                ctx.owned_roots.leave().unwrap();
+            }
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn native_generator_steps_refresh_vm_views_after_success_and_failure() {
         use crate::jit::{jit_for_next, VMContext};
         for (fails, alias_globals) in [(false, false), (true, false), (false, true), (true, true)] {

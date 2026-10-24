@@ -190,3 +190,48 @@ fn recursive_native_nested_writes_preserve_caller_snapshots() {
         &["visit"],
     );
 }
+
+#[test]
+fn native_rebinding_under_caller_handlers_preserves_failed_targets_and_snapshots() {
+    let mut source = String::from(
+        r#"
+func alter(input, fail) {
+    mut state := input
+    state[0][0] = state[0][0] + 1
+    if fail { return 1 / 0 }
+    return state
+}
+func rewrite(input, fail) {
+    mut state := input
+    state = alter(state, fail)
+    return state
+}
+func catch_here(input) {
+    mut state := input
+    try { state = alter(state, true) } except error {}
+    return state
+}
+let seed := [[0,1]]
+mut result := [[99]]
+mut caught := 0
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+try { assert_equal(rewrite(seed,false),[[1,1]]) } except error { assert(false) }
+try { result = rewrite(seed,true) } except error { caught += 1 }
+assert_equal(catch_here(seed),seed)
+"#,
+        );
+    }
+    source.push_str(
+        r#"
+assert_equal(caught,200)
+assert_equal(result,[[99]])
+assert_equal(seed,[[0,1]])
+print("PASS")
+"#,
+    );
+    check(source, &["alter", "rewrite"]);
+}

@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Release private native rebinding snapshots under caller exception handlers
+  while retaining same-invocation recovery state and failed assignment targets.
+
 - Reuse nested-value validation across native helper calls while preserving
   snapshot isolation and restoring validation state after assignment errors.
 

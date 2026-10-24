@@ -53,7 +53,8 @@
         "../../tests/bytecode_call_profile.rs",
         "checked-append-node-relocations-2026-10-24.json",
         "checked-removal-node-relocations-2026-10-24.json",
-        "native-depth-cache-2026-10-24.json"
+        "native-depth-cache-2026-10-24.json",
+        "native-caller-handler-rebinding-2026-10-24.json"
       ]
     },
     {
@@ -3638,6 +3639,11 @@
       "scope": "VM-lifetime native nested-write validation cache",
       "result": "128 helper contexts now require one scan instead of 128; semantic/cost and affected integration gates pass. No end-to-end speed claim.",
       "evidence": "native-depth-cache-2026-10-24.json"
+    },
+    {
+      "scope": "Native local ownership under caller exception handlers",
+      "result": "Private local no longer adds a second owner; same-invocation handler retains its old value.1065library and131integration tests passed.",
+      "evidence": "native-caller-handler-rebinding-2026-10-24.json"
     }
   ]
 }

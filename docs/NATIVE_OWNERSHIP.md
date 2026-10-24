@@ -359,3 +359,12 @@ holding the cache. Standalone contexts retain their own cache. Weak identities
 still invalidate after external writes, and retained snapshots still force COW.
 The 4096-element helper fixture requires one scan across 128 contexts, with
 readonly recovery and recursive caller snapshots covered independently.
+
+A VM exception handler does not necessarily belong to a native function.
+An entered native function has no native exception-handler support; its private
+SSA and independent named locals unwind before an outer VM handler can run.
+ReleaseRebindLocal may release those snapshots even with a caller handler.
+Compiled loops, physical VM slots and shared maps retain the conservative guard.
+If native exception handlers are added, this admission assumption must change.
+Regression coverage checks both ownership counts and caller/same-invocation
+recovery, including unchanged failed targets and retained snapshots.
