@@ -90,7 +90,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ]
     },
     {
@@ -125,7 +126,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -154,7 +155,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -165,13 +167,13 @@
         "process_peak_rss_bytes": 16973824
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 0,
-        "native_boundary_entries": 0,
+        "native_function_entries": 25,
+        "native_boundary_entries": 25,
         "compile_attempts": 3,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
@@ -182,7 +184,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -211,7 +213,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -222,10 +225,10 @@
         "process_peak_rss_bytes": 16617472
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -239,7 +242,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -268,7 +271,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -279,10 +283,10 @@
         "process_peak_rss_bytes": 25653248
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 30,
         "native_boundary_entries": 30,
@@ -296,7 +300,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -325,7 +329,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -336,10 +341,10 @@
         "process_peak_rss_bytes": 25952256
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 30,
         "native_boundary_entries": 30,
@@ -353,7 +358,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -382,7 +387,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -393,10 +399,10 @@
         "process_peak_rss_bytes": 18542592
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -410,7 +416,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -439,7 +445,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -450,10 +457,10 @@
         "process_peak_rss_bytes": 20275200
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -467,7 +474,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -496,7 +503,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -507,10 +515,10 @@
         "process_peak_rss_bytes": 21626880
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -524,7 +532,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -553,7 +561,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -564,10 +573,10 @@
         "process_peak_rss_bytes": 24354816
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -581,7 +590,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -610,7 +619,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -621,10 +631,10 @@
         "process_peak_rss_bytes": 18132992
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 9765,
         "native_boundary_entries": 9765,
@@ -638,7 +648,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -667,7 +677,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -678,10 +689,10 @@
         "process_peak_rss_bytes": 18124800
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 9765,
         "native_boundary_entries": 9765,
@@ -695,7 +706,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -724,7 +735,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -735,10 +747,10 @@
         "process_peak_rss_bytes": 16756736
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -752,7 +764,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -781,7 +793,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -792,10 +805,10 @@
         "process_peak_rss_bytes": 18415616
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 15,
         "native_boundary_entries": 15,
@@ -809,7 +822,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -838,7 +851,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -849,10 +863,10 @@
         "process_peak_rss_bytes": 18149376
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 15,
         "native_boundary_entries": 15,
@@ -866,7 +880,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -895,7 +909,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -906,10 +921,10 @@
         "process_peak_rss_bytes": 17924096
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 825,
         "native_boundary_entries": 825,
@@ -923,7 +938,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -952,7 +967,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -963,10 +979,10 @@
         "process_peak_rss_bytes": 17346560
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -980,7 +996,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1009,7 +1025,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1020,13 +1037,13 @@
         "process_peak_rss_bytes": 16801792
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 65365,
-        "native_boundary_entries": 65365,
+        "native_function_entries": 433210,
+        "native_boundary_entries": 433210,
         "compile_attempts": 10,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
@@ -1037,7 +1054,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1066,7 +1083,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1077,10 +1095,10 @@
         "process_peak_rss_bytes": 18644992
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -1094,7 +1112,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1123,7 +1141,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1134,10 +1153,10 @@
         "process_peak_rss_bytes": 23642112
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 2901,
         "native_boundary_entries": 2901,
@@ -1151,7 +1170,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1180,7 +1199,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1191,10 +1211,10 @@
         "process_peak_rss_bytes": 21680128
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 604,
         "native_boundary_entries": 604,
@@ -1208,7 +1228,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1237,7 +1257,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1248,10 +1269,10 @@
         "process_peak_rss_bytes": 19079168
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 3530,
         "native_boundary_entries": 3530,
@@ -1265,7 +1286,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1294,7 +1315,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1305,10 +1327,10 @@
         "process_peak_rss_bytes": 18014208
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -1322,7 +1344,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1351,7 +1373,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1362,10 +1385,10 @@
         "process_peak_rss_bytes": 18571264
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 1104,
         "native_boundary_entries": 1104,
@@ -1379,7 +1402,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1408,7 +1431,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1419,10 +1443,10 @@
         "process_peak_rss_bytes": 17993728
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 947,
         "native_boundary_entries": 947,
@@ -1436,7 +1460,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "single three-second executing-thread sample at 0c77115; not whole-workload attribution",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1465,7 +1489,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1476,10 +1501,10 @@
         "process_peak_rss_bytes": 46120960
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 366708,
         "native_boundary_entries": 366708,
@@ -1493,7 +1518,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1522,7 +1547,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1533,10 +1559,10 @@
         "process_peak_rss_bytes": 92352512
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 399807,
         "native_boundary_entries": 399807,
@@ -1550,7 +1576,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1579,7 +1605,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1590,10 +1617,10 @@
         "process_peak_rss_bytes": 58032128
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 99907,
         "native_boundary_entries": 99907,
@@ -1607,7 +1634,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1636,7 +1663,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1647,10 +1675,10 @@
         "process_peak_rss_bytes": 18776064
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 108,
         "native_boundary_entries": 108,
@@ -1664,7 +1692,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1693,7 +1721,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1704,10 +1733,10 @@
         "process_peak_rss_bytes": 18812928
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 108,
         "native_boundary_entries": 108,
@@ -1721,7 +1750,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1750,7 +1779,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1761,10 +1791,10 @@
         "process_peak_rss_bytes": 18468864
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 344,
         "native_boundary_entries": 344,
@@ -1778,7 +1808,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1807,7 +1837,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1818,14 +1849,14 @@
         "process_peak_rss_bytes": 18681856
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 8808,
-        "native_boundary_entries": 8808,
-        "compile_attempts": 6,
+        "native_function_entries": 7908,
+        "native_boundary_entries": 7908,
+        "compile_attempts": 5,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -1835,7 +1866,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1864,7 +1895,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1875,14 +1907,14 @@
         "process_peak_rss_bytes": 18612224
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 901,
-        "native_boundary_entries": 901,
-        "compile_attempts": 5,
+        "native_function_entries": 1,
+        "native_boundary_entries": 1,
+        "compile_attempts": 3,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -1892,7 +1924,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1921,7 +1953,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1932,14 +1965,14 @@
         "process_peak_rss_bytes": 17113088
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 3543,
-        "native_boundary_entries": 3543,
-        "compile_attempts": 16,
+        "native_function_entries": 168,
+        "native_boundary_entries": 168,
+        "compile_attempts": 7,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -1949,7 +1982,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1978,7 +2011,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1989,14 +2023,14 @@
         "process_peak_rss_bytes": 18558976
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 7862,
-        "native_boundary_entries": 7862,
-        "compile_attempts": 19,
+        "native_function_entries": 6131,
+        "native_boundary_entries": 6131,
+        "compile_attempts": 11,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -2006,7 +2040,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2035,7 +2069,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2046,10 +2081,10 @@
         "process_peak_rss_bytes": 58175488
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 165882,
         "native_boundary_entries": 165882,
@@ -2063,7 +2098,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2092,7 +2127,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2103,10 +2139,10 @@
         "process_peak_rss_bytes": 42663936
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 121889,
         "native_boundary_entries": 121889,
@@ -2120,7 +2156,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2149,7 +2185,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2160,10 +2197,10 @@
         "process_peak_rss_bytes": 42692608
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 133064,
         "native_boundary_entries": 133064,
@@ -2177,7 +2214,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2206,7 +2243,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2217,10 +2255,10 @@
         "process_peak_rss_bytes": 18280448
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 1347,
         "native_boundary_entries": 1347,
@@ -2234,7 +2272,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2263,7 +2301,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2274,10 +2313,10 @@
         "process_peak_rss_bytes": 18341888
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 418,
         "native_boundary_entries": 419,
@@ -2291,7 +2330,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2320,7 +2359,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2331,10 +2371,10 @@
         "process_peak_rss_bytes": 16752640
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 0,
         "native_boundary_entries": 0,
@@ -2348,7 +2388,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2377,7 +2417,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2388,14 +2429,14 @@
         "process_peak_rss_bytes": 18575360
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 97101,
-        "native_boundary_entries": 97101,
-        "compile_attempts": 6,
+        "native_function_entries": 97102,
+        "native_boundary_entries": 97102,
+        "compile_attempts": 5,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -2405,7 +2446,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2434,7 +2475,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2445,10 +2487,10 @@
         "process_peak_rss_bytes": 17006592
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 1,
         "native_boundary_entries": 1,
@@ -2462,7 +2504,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2491,7 +2533,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2502,10 +2545,10 @@
         "process_peak_rss_bytes": 17100800
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 1,
         "native_boundary_entries": 1,
@@ -2519,7 +2562,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2548,7 +2591,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2559,10 +2603,10 @@
         "process_peak_rss_bytes": 17305600
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 1,
         "native_boundary_entries": 1,
@@ -2576,7 +2620,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2605,7 +2649,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2616,10 +2661,10 @@
         "process_peak_rss_bytes": 17895424
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 373,
         "native_boundary_entries": 373,
@@ -2633,7 +2678,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2662,7 +2707,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2673,13 +2719,13 @@
         "process_peak_rss_bytes": 18243584
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 683,
-        "native_boundary_entries": 683,
+        "native_function_entries": 687,
+        "native_boundary_entries": 687,
         "compile_attempts": 9,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
@@ -2690,7 +2736,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2719,7 +2765,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2730,13 +2777,13 @@
         "process_peak_rss_bytes": 18432000
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 3506,
-        "native_boundary_entries": 3506,
+        "native_function_entries": 3511,
+        "native_boundary_entries": 3511,
         "compile_attempts": 11,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
@@ -2747,7 +2794,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2776,7 +2823,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2787,14 +2835,14 @@
         "process_peak_rss_bytes": 18288640
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 416,
-        "native_boundary_entries": 416,
-        "compile_attempts": 5,
+        "native_function_entries": 1166,
+        "native_boundary_entries": 1166,
+        "compile_attempts": 4,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -2804,7 +2852,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2833,7 +2881,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2844,14 +2893,14 @@
         "process_peak_rss_bytes": 18481152
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
-        "native_function_entries": 32,
-        "native_boundary_entries": 32,
-        "compile_attempts": 6,
+        "native_function_entries": 219,
+        "native_boundary_entries": 219,
+        "compile_attempts": 5,
         "limitation": "Counts are not time coverage or a performance acceptance result."
       }
     },
@@ -2861,7 +2910,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2890,7 +2939,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2901,10 +2951,10 @@
         "process_peak_rss_bytes": 18743296
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 504,
         "native_boundary_entries": 504,
@@ -2918,7 +2968,7 @@
       "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
+      "jit_correctness_and_coverage": "Frozen native-struct/owned-loop-persistence candidate passes JIT test-size checksum with hashes/schema verified. Predates callback-field fix; fallback allowed; production/full native coverage/speed unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2947,7 +2997,8 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "checksums-2026-10-23-owned-entry-release-jit.json",
         "checksums-2026-10-23-owned-entry-release-vm.json",
-        "checksums-2026-10-23-owned-entry-release-interpreter.json"
+        "checksums-2026-10-23-owned-entry-release-interpreter.json",
+        "checksums-2026-10-23-native-struct-jit.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2958,10 +3009,10 @@
         "process_peak_rss_bytes": 18456576
       },
       "latest_candidate_native_census": {
-        "artifact": "checksums-2026-10-23-owned-entry-jit.json",
+        "artifact": "checksums-2026-10-23-native-struct-jit.json",
         "runtime_source_sha256": {
-          "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
-          "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+          "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+          "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250"
         },
         "native_function_entries": 1158,
         "native_boundary_entries": 1158,

@@ -7,6 +7,18 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [native-struct candidate JIT matrix](checksums-2026-10-23-native-struct-jit.json)
+  passes all 50 unchanged test-size checksums with binary/input identities,
+  raw measurement hashes and all 50 schemas verified. It includes native struct
+  construction and owned-loop persistence, but predates the callback field fix
+  at `66b60a8`. Forty cases record native function entries; ten record none:
+  Binarytrees::Arena, Matmul::Single/T4/T8/T16, Json::Generate, Etc::Sieve,
+  Etc::NeuralNet, Etc::LogParser and CLBG::Nbody. Entries do not measure native
+  time coverage. VM fallback is allowed; current-HEAD, production and competitive
+  speed acceptance remain open. The separate native-array debug interpreter
+  matrix completed with 49 passes and a retained MergeSort deadline failure;
+  see [debug interpreter results](debug-interpreter-deadlines-2026-10-23.json).
+
 - The [post-constructor static audit](post-constructor-native-surfaces-2026-10-23.json)
   scans the same 165 port function bodies. 72 report no unsupported opcode, up
   from 39 at the owned-entry stage. Remaining first blockers include guarded
