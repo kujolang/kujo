@@ -20,7 +20,11 @@ a target to test, not a guarantee. This document explains the execution order;
   bridge while preserving cached native calls. Its independent regression covers
   native entry, array construction, prior effects, error recovery and unchanged
   assignment targets. All eight compression cases now pass with reports verified;
-  a complete repaired all-50 matrix remains required.
+  the [repaired all-50 JIT matrix](checksums-2026-10-23-cold-callback-jit.json)
+  at `8a593f9` now passes, with every raw report hash and schema verified.
+  This debug run allowed VM fallback and overlapped other local work. It does
+  not certify the newer owned-argument candidate, production sizes or speed.
+  Separate VM/interpreter verification remains in progress.
 
 - The [tagged-owned candidate](checksums-2026-10-23-owned-values-jit.json) at
   `e2797da` passed all 50 test-size JIT checksums, with frozen input/binary identity,
