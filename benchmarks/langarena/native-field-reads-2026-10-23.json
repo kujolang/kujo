@@ -29,9 +29,11 @@
   "candidate_matrix": {
     "source_commit": "f496448",
     "identity": "/tmp/kujo-native-field-2026-10-23/identity.json",
-    "status": "JIT50 test-size checksums verified; VM/interpreter still in progress; known defect disqualifies acceptance",
+    "status": "JIT50 and VM50 test-size checksums verified; interpreter continued separately after shell orchestration failure before launch; known defect disqualifies candidate acceptance",
     "limitation": "Known loop receiver bug independently reproduced in this frozen candidate; suite results cannot override that regression or certify corrected source",
-    "jit_evidence": "checksums-2026-10-23-native-field-jit.json"
+    "jit_evidence": "checksums-2026-10-23-native-field-jit.json",
+    "vm_evidence": "checksums-2026-10-23-native-field-vm.json",
+    "interpreter_continuation": "/tmp/kujo-native-field-2026-10-23/interpreter-continuation.json"
   },
   "followup_loop_receiver": {
     "issue": "Frozen f496448 loses a legacy receiver when a native loop resumes at Call: Stack underflow getting channel",
