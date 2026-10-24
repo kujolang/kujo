@@ -52,7 +52,8 @@
         "native-call-metadata-2026-10-24.json",
         "call-metadata-release-2026-10-24.json",
         "quicksort-allocation-histogram-2026-10-24.json",
-        "native-local-return-2026-10-24.json"
+        "native-local-return-2026-10-24.json",
+        "storage-identity-runtime-2026-10-24.json"
       ]
     },
     {
@@ -79,7 +80,8 @@
         "native-call-metadata-2026-10-24.json",
         "call-metadata-release-2026-10-24.json",
         "quicksort-allocation-histogram-2026-10-24.json",
-        "native-local-return-2026-10-24.json"
+        "native-local-return-2026-10-24.json",
+        "storage-identity-runtime-2026-10-24.json"
       ]
     },
     {

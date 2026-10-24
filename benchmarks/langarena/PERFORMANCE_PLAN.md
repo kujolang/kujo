@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Root storage identity (`9f401eb`).**
+  [Integrated evidence](STORAGE_IDENTITY_2026_10_24.md) confirms 14,632 fewer
+  allocation requests in the 8,192-element QuickSort probe, preserving snapshots
+  and storage backing. The unique JIT case uses 25% fewer requests. 1,092 library
+  and 27 targeted integration tests pass; this candidate's release gates remain
+  open. Argument vectors remain the larger source of requested bytes.
+
 - **Discarded native function locals (`93e7caa`).**
   [Allocation evidence](LOCAL_RETURN_2026_10_24.md) records 53% fewer requests
   and 68% fewer requested bytes for the unique 8,192-element JIT QuickSort
