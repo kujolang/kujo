@@ -14,6 +14,18 @@ function's private local map or bypass the global binding's readonly check.
 Regression tests warm native constructors before checking environment updates,
 catchable readonly errors, effect counts and subsequent successful calls.
 
+Nested binding writes retain immutable path shapes in the JIT compiler and pass
+tagged index/value operands through explicit generated stack storage. The helper
+uses the canonical checked assignment operation and a context-local depth cache;
+unique rows remain reusable and retained aliases still force copy-on-write.
+Named roots resolve through the checked global environment, including names used
+only as mutation destinations. Locked loops use their existing environment guard.
+Named writes to captured bindings, and named writes in lexical-self contexts,
+remain outside loop admission because those destinations require frame cells;
+they must never be redirected to a same-named global.
+Temporary operands are released after successful writes or by frame cleanup on
+error. Nested appends and pop/rebinding remain separate native admission work.
+
 Regression coverage includes mixed types, four/five arguments, loops, recursion,
 imported helpers, callable arguments, snapshots and failure/success recovery across
 interpreter, VM and JIT. A storage test retains unique array backing storage through
@@ -21,8 +33,8 @@ interpreter, VM and JIT. A storage test retains unique array backing storage thr
 checksums in release JIT, VM and interpreter modes (150/150), with fallback
 allowed. Production, platform and controlled speed gates remain open. See the
 [candidate evidence](../benchmarks/langarena/owned-argument-entry-2026-10-23.json).
-Nested updates, field/aggregate operations and array-loop
-admission still limit coverage. Native entry counts are not elapsed speed evidence.
+Nested append/pop operations and closure/exception surfaces still limit coverage.
+Native entry counts are not elapsed speed evidence.
 
 General stack index reads now use tagged operands and the VM indexing contract.
 Success and error exits release frame roots; repeated owned reads have a bounded
@@ -47,8 +59,9 @@ Struct construction retains immutable name/field metadata in the compiler for
 the lifetime of generated code. Typed elements become ordinary struct Values;
 construction follows VM insertion order and nesting checks. Tests cover metadata
 outliving its bytecode chunk, recursive builders, mixed fields, snapshots, native
-loop replacement and bounded roots. Nested updates remain a separate
-native-coverage gap. See [constructor evidence](../benchmarks/langarena/native-struct-construction-2026-10-23.json).
+loop replacement and bounded roots. Nested path writes now use the checked helper
+described above; append/pop admission remains open.
+See [constructor evidence](../benchmarks/langarena/native-struct-construction-2026-10-23.json).
 
 Cold VM callbacks now use the same field resolver as ordinary VM execution,
 including legacy channel/ArgParser/image/server receiver markers. Regressions

@@ -3573,6 +3573,8 @@ impl VM {
                                                 #[cfg(feature = "runtime-jit")]
                                                 vm_owned_views: true,
                                                 #[cfg(feature = "runtime-jit")]
+                                                path_depth_valid: Default::default(),
+                                                #[cfg(feature = "runtime-jit")]
                                                 owned_return: None,
                                                 loop_dense_views: Default::default(),
                                                 loop_environment_ptr: std::ptr::null_mut(),
@@ -3714,6 +3716,8 @@ impl VM {
                                                     owned_roots: Default::default(),
                                                     #[cfg(feature = "runtime-jit")]
                                                     vm_owned_views: true,
+                                                    #[cfg(feature = "runtime-jit")]
+                                                    path_depth_valid: Default::default(),
                                                     #[cfg(feature = "runtime-jit")]
                                                     owned_return: None,
                                                     loop_dense_views: Default::default(),
@@ -3896,6 +3900,8 @@ impl VM {
                                         owned_roots: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         vm_owned_views: true,
+                                        #[cfg(feature = "runtime-jit")]
+                                        path_depth_valid: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
                                         loop_dense_views: Default::default(),
@@ -8277,7 +8283,16 @@ impl VM {
     fn register_jit_local_names(chunk: &BytecodeChunk, names: &mut HashMap<u64, String>) {
         use std::hash::{Hash, Hasher};
         // Slot-only locals can still cross named native helper boundaries.
-        for name in &chunk.local_names {
+        for name in
+            chunk.local_names.iter().chain(chunk.instructions.iter().filter_map(|instruction| {
+                match instruction {
+                    OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) => {
+                        Some(name)
+                    }
+                    _ => None,
+                }
+            }))
+        {
             let mut hasher = std::collections::hash_map::DefaultHasher::new();
             name.hash(&mut hasher);
             names.insert(hasher.finish(), name.clone());
@@ -8343,6 +8358,18 @@ impl VM {
 
     pub(crate) fn has_current_exception_handler(&self) -> bool {
         self.exception_handlers.iter().any(|h| h.frame_offset == self.call_frames.len())
+    }
+
+    pub(crate) fn mutate_global_from_jit(
+        &mut self,
+        name: &str,
+        operation: impl FnOnce(&mut Value) -> Result<(), String>,
+    ) -> Result<(), String> {
+        let mut result = Ok(());
+        self.globals.lock().unwrap().mutate_checked(name, |root| {
+            result = operation(root);
+        })?;
+        result
     }
 
     pub(crate) fn try_guarded_global_mutation_from_jit(
@@ -8449,6 +8476,8 @@ impl VM {
                                         owned_roots: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         vm_owned_views: true,
+                                        #[cfg(feature = "runtime-jit")]
+                                        path_depth_valid: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
                                         loop_dense_views: Default::default(),
@@ -8624,6 +8653,8 @@ impl VM {
                             owned_roots: Default::default(),
                             #[cfg(feature = "runtime-jit")]
                             vm_owned_views: true,
+                            #[cfg(feature = "runtime-jit")]
+                            path_depth_valid: Default::default(),
                             #[cfg(feature = "runtime-jit")]
                             owned_return: None,
                             loop_dense_views: Default::default(),

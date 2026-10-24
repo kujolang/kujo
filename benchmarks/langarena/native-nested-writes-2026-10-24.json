@@ -1,0 +1,31 @@
+{
+  "scope": "Native checked nested binding writes in ordinary functions and loops; captured named roots remain VM-only. No current all50, production or competitive timing acceptance.",
+  "source_parent": "9c2a7c9",
+  "source_sha256": {
+    "src/jit.rs": "86d23d6c8610b4ffd8b91f5931de29657db8b3cd397ccdfc091829a1728e0492",
+    "src/vm.rs": "d6109137df182e68c911bc430f742784af5f525ed1f98305b3bb8b01f17bfe8d",
+    "tests/jit_nested_paths.rs": "57afcfffdccf5f399e922d4cad4672b85797e5147147eba2e17ba9a8362e3a76"
+  },
+  "verification": {
+    "baseline": "/tmp/kujo-path-post-global-baseline.log: both new probes pass interpreter/VM/JIT semantics but fail required function/loop native admission",
+    "capture_boundary": "/tmp/kujo-path-capture-probe.log: pre-admission-guard native loop writes a same-named global instead of captured state; final regression verifies VM fallback and snapshot isolation",
+    "final": "/tmp/kujo-native-path-final-contracts.log: 1061 library passed,8 ignored;155 integration passed, including123 VM/interpreter parity surfaces",
+    "ownership": "Unique outer/row storage remains stable at8/128 repeated writes; retained alias forces COW; compiled repeated owned writes retain <=8 root slots,0 live roots after return and preserve caller slots; retained path metadata survives dropping bytecode",
+    "minimal_features": "/tmp/kujo-native-path-minimal.log: cargo check --no-default-features --lib passed",
+    "format": "/tmp/kujo-native-path-format-check.log: cargo fmt --check passed"
+  },
+  "mechanism": [
+    "Compiler-retained path shapes with tagged payload/kind operands in explicit stack storage",
+    "Canonical update_checked and context-local depth cache preserve checked nesting and COW",
+    "Direct root mutation across SSA, physical and named locals; checked global environment, including write-only names",
+    "Captured/lexical-self named loop destinations remain outside native admission",
+    "Success releases operands; errors retain canonical cleanup and effect ordering"
+  ],
+  "static_audit": "post-nested-write-native-surfaces-2026-10-24.json",
+  "remaining": [
+    "Native nested append, pop/rebinding, await, closures/captures and exception regions",
+    "Current candidate all50 checksum and production acceptance",
+    "CPU/allocation profiles, native time coverage and controlled Goose/Rust comparisons",
+    "Platform/regression/release acceptance"
+  ]
+}

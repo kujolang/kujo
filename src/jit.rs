@@ -135,6 +135,7 @@ pub struct VMContext {
     pub(crate) field_receiver_pending: bool,
     pub(crate) owned_roots: crate::native_owned::NativeCallRoots,
     pub(crate) vm_owned_views: bool,
+    pub(crate) path_depth_valid: crate::interpreter::assignment::DepthCache,
     pub(crate) owned_return: Option<Value>,
     pub(crate) loop_dense_views: HashMap<usize, Box<LoopDenseView>>,
     pub(crate) loop_environment_ptr: *mut crate::interpreter::Environment,
@@ -305,6 +306,7 @@ impl VMContext {
             field_receiver_pending: false,
             owned_roots: Default::default(),
             vm_owned_views: false,
+            path_depth_valid: Default::default(),
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
@@ -345,6 +347,7 @@ impl VMContext {
             field_receiver_pending: false,
             owned_roots: Default::default(),
             vm_owned_views: true,
+            path_depth_valid: Default::default(),
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
@@ -399,6 +402,7 @@ impl VMContext {
             field_receiver_pending: false,
             owned_roots: Default::default(),
             vm_owned_views: false,
+            path_depth_valid: Default::default(),
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
@@ -1313,6 +1317,117 @@ pub unsafe extern "C" fn jit_indexed_write(
         _ => Err("Invalid native indexed write location".into()),
     };
     match target.and_then(|target| VM::set_indexed_value(target, index, value)) {
+        Ok(()) => 0,
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            1
+        }
+    }
+}
+
+/// Checked nested mutation uses retained path metadata and a tagged operand array.
+#[no_mangle]
+// SAFETY: shape points to compiler-retained metadata; operands points to generated
+// stack storage containing one payload/kind pair for every dynamic index followed
+// by the assigned value. Neither allocation escapes this synchronous helper.
+pub unsafe extern "C" fn jit_update_binding_path(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    binding_kind: i64,
+    name_hash: i64,
+    shape: *const Vec<Option<String>>,
+    operands: *const i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let result = (|| {
+        let name = ctx
+            .var_names_ptr
+            .as_ref()
+            .and_then(|names| names.get(&(name_hash as u64)))
+            .ok_or("Native path write has no binding name")?;
+        if location != 3 && binding_kind != 0 {
+            let kind = match binding_kind {
+                1 => BytecodeBindingKind::LetImmutable,
+                2 => BytecodeBindingKind::Const,
+                _ => return Err("Invalid native binding kind".into()),
+            };
+            return Err(VM::local_mutation_error(kind, name));
+        }
+        let shape = shape.as_ref().ok_or("Missing native path metadata")?;
+        if operands.is_null() {
+            return Err("Missing native path operands".into());
+        }
+        let count = shape.iter().filter(|step| step.is_none()).count();
+        let operands = std::slice::from_raw_parts(operands, (count + 1) * 2);
+        let mut path = Vec::with_capacity(shape.len());
+        let mut offset = 0;
+        for step in shape {
+            path.push(match step {
+                Some(field) => crate::interpreter::assignment::Access::Field(field.clone()),
+                None => {
+                    let value = ctx
+                        .owned_roots
+                        .clone_value(operands[offset], operands[offset + 1])
+                        .map_err(|error| format!("Native ownership error: {error:?}"))?;
+                    offset += 2;
+                    crate::interpreter::assignment::Access::Index(value)
+                }
+            });
+        }
+        let value = ctx
+            .owned_roots
+            .clone_value(operands[offset], operands[offset + 1])
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let cache = &mut ctx.path_depth_valid;
+        let operation = |root: &mut Value| {
+            crate::interpreter::assignment::update_checked(root, &path, value, cache)
+        };
+        match location {
+            0 => operation(
+                usize::try_from(target)
+                    .ok()
+                    .and_then(|slot| ctx.local_slots_ptr.as_mut()?.get_mut(slot))
+                    .ok_or("Invalid native path local slot")?,
+            ),
+            1 => {
+                if target_kind != crate::native_owned::OWNED {
+                    let mut scalar = ctx
+                        .owned_roots
+                        .clone_value(target, target_kind)
+                        .map_err(|error| format!("Native ownership error: {error:?}"))?;
+                    return operation(&mut scalar);
+                }
+                operation(
+                    ctx.owned_roots
+                        .current_value_mut(target, target_kind)
+                        .map_err(|error| format!("Native ownership error: {error:?}"))?,
+                )
+            }
+            2 => operation(
+                ctx.locals_ptr
+                    .as_mut()
+                    .and_then(|locals| locals.get_mut(name))
+                    .ok_or("Native path binding is missing")?,
+            ),
+            3 => {
+                if let Some(environment) = ctx.loop_environment_ptr.as_mut() {
+                    let mut result = Ok(());
+                    environment.mutate_checked(name, |root| {
+                        result = operation(root);
+                    })?;
+                    result
+                } else if let Some(vm) = ctx.vm_ptr.cast::<VM>().as_mut() {
+                    vm.mutate_global_from_jit(name, operation)
+                } else {
+                    Err("Native path write requires a VM".into())
+                }
+            }
+            _ => Err("Invalid native path location".into()),
+        }
+    })();
+    match result {
         Ok(()) => 0,
         Err(error) => {
             ctx.runtime_error = Some(error);
@@ -4508,6 +4623,7 @@ pub struct JitCompiler {
     dictionary_keys: HashMap<usize, Arc<Vec<Arc<str>>>>,
     struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
     field_names: HashMap<String, Arc<String>>,
+    path_shapes: HashMap<Vec<Option<String>>, Arc<Vec<Option<String>>>>,
     append_strings: HashMap<usize, Arc<str>>,
     literal_values: HashMap<(u8, Vec<u8>), Arc<Value>>,
 }
@@ -4537,6 +4653,7 @@ struct BytecodeTranslator {
     indexed_read_func: Option<FuncRef>,
     for_next_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
+    update_binding_path_func: Option<FuncRef>,
     loop_resume_enabled: bool,
     loop_resume_guard_func: Option<FuncRef>,
     loop_resume_prepare_func: Option<FuncRef>,
@@ -4605,6 +4722,7 @@ struct BytecodeTranslator {
     field_call_sites: std::collections::HashSet<usize>,
     struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
     field_names: HashMap<String, Arc<String>>,
+    path_shapes: HashMap<Vec<Option<String>>, Arc<Vec<Option<String>>>>,
     /// Make dict with keys function reference (for MakeDictWithKeys opcode)
     make_dict_with_keys_func: Option<FuncRef>,
     /// Append const string in-place helper
@@ -4717,6 +4835,7 @@ impl BytecodeTranslator {
             indexed_read_func: None,
             for_next_func: None,
             indexed_write_func: None,
+            update_binding_path_func: None,
             loop_resume_enabled: false,
             loop_resume_guard_func: None,
             loop_resume_prepare_func: None,
@@ -4772,6 +4891,7 @@ impl BytecodeTranslator {
             field_call_sites: Default::default(),
             struct_shapes: HashMap::new(),
             field_names: HashMap::new(),
+            path_shapes: HashMap::new(),
             make_dict_with_keys_func: None,
             append_const_string_in_place_func: None,
             append_const_char_in_place_func: None,
@@ -6558,6 +6678,89 @@ impl BytecodeTranslator {
                 let suffix = builder.ins().iconst(types::I64, *rhs as i64);
                 let length = builder.ins().iconst(types::I64, -1);
                 self.append_local(builder, pc, *slot, suffix, length)?;
+            }
+
+            OpCode::UpdateBindingPath(binding, shape) => {
+                use crate::bytecode::MutationBinding;
+                let count = shape.iter().filter(|step| step.is_none()).count();
+                let mut indices = Vec::with_capacity(count);
+                for _ in 0..count {
+                    indices.push(self.pop_value()?);
+                }
+                indices.reverse();
+                let value = self.pop_value()?;
+                let ctx = self.ctx_param.ok_or("Path write requires context")?;
+                let helper = self.update_binding_path_func.ok_or("Path write requires helper")?;
+                let (name, location, target, kind, binding_kind) = match binding {
+                    MutationBinding::Local(slot) => {
+                        let name =
+                            self.local_names.get(*slot).ok_or("Invalid path write slot")?.clone();
+                        self.dirty_local_names.insert(name.clone());
+                        let binding_kind = match self
+                            .local_binding_kinds
+                            .get(*slot)
+                            .copied()
+                            .unwrap_or(BytecodeBindingKind::Mutable)
+                        {
+                            BytecodeBindingKind::Mutable => 0,
+                            BytecodeBindingKind::LetImmutable => 1,
+                            BytecodeBindingKind::Const => 2,
+                        };
+                        let (location, target, kind) =
+                            if let Some(&variable) = self.local_variables.get(&name) {
+                                (
+                                    1,
+                                    builder.use_var(variable),
+                                    builder.use_var(Variable::new(variable.index() + 1)),
+                                )
+                            } else {
+                                (
+                                    if self.tracks_function_depth { 2 } else { 0 },
+                                    builder.ins().iconst(types::I64, *slot as i64),
+                                    builder.ins().iconst(types::I64, 0),
+                                )
+                            };
+                        (name, location, target, kind, binding_kind)
+                    }
+                    MutationBinding::Named(name) => (
+                        name.clone(),
+                        3,
+                        builder.ins().iconst(types::I64, 0),
+                        builder.ins().iconst(types::I64, 0),
+                        0,
+                    ),
+                };
+                let retained = self.path_shapes.get(shape).ok_or("Missing retained path shape")?;
+                let shape = builder.ins().iconst(types::I64, Arc::as_ptr(retained) as i64);
+                let size = u32::try_from((count + 1).checked_mul(16).ok_or("Path too large")?)
+                    .map_err(|_| "Path too large")?;
+                let slot = builder.create_sized_stack_slot(StackSlotData::new(
+                    StackSlotKind::ExplicitSlot,
+                    size,
+                    3,
+                ));
+                indices.push(value);
+                for (index, operand) in indices.iter().enumerate() {
+                    let kind = self.scalar_kind(builder, *operand);
+                    builder.ins().stack_store(*operand, slot, (index * 16) as i32);
+                    builder.ins().stack_store(kind, slot, (index * 16 + 8) as i32);
+                }
+                let operands = builder.ins().stack_addr(types::I64, slot, 0);
+                let location = builder.ins().iconst(types::I64, location);
+                let binding_kind = builder.ins().iconst(types::I64, binding_kind);
+                let hash = builder.ins().iconst(types::I64, Self::hash_var_name(&name) as i64);
+                let call = builder.ins().call(
+                    helper,
+                    &[ctx, location, target, kind, binding_kind, hash, shape, operands],
+                );
+                self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                for operand in indices {
+                    self.release_operand(builder, operand);
+                }
+                let null = builder.ins().iconst(types::I64, 0);
+                let kind = builder.ins().iconst(types::I64, crate::native_scalar::NULL);
+                self.scalar_kinds.insert(null, kind);
+                self.push_value(null);
             }
 
             OpCode::IndexSetInPlace(slot_index) => {
@@ -8521,6 +8724,24 @@ impl JitCompiler {
             .collect()
     }
 
+    fn retain_path_shapes(
+        &mut self,
+        chunk: &BytecodeChunk,
+    ) -> HashMap<Vec<Option<String>>, Arc<Vec<Option<String>>>> {
+        chunk
+            .instructions
+            .iter()
+            .filter_map(|instruction| {
+                let OpCode::UpdateBindingPath(_, shape) = instruction else { return None };
+                let retained = self
+                    .path_shapes
+                    .entry(shape.clone())
+                    .or_insert_with(|| Arc::new(shape.clone()));
+                Some((shape.clone(), Arc::clone(retained)))
+            })
+            .collect()
+    }
+
     fn retain_field_names(&mut self, chunk: &BytecodeChunk) -> HashMap<String, Arc<String>> {
         chunk
             .instructions
@@ -8597,6 +8818,7 @@ impl JitCompiler {
             ("jit_indexed_read", 5, true),
             ("jit_for_next", 5, true),
             ("jit_indexed_write", 10, true),
+            ("jit_update_binding_path", 8, true),
             ("jit_loop_resume_guard", 3, true),
             ("jit_loop_resume_prepare", 2, true),
             ("jit_loop_dense_view", 2, true),
@@ -8641,6 +8863,7 @@ impl JitCompiler {
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_for_next" => translator.for_next_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
+                "jit_update_binding_path" => translator.update_binding_path_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
                 "jit_loop_resume_prepare" => translator.loop_resume_prepare_func = Some(function),
                 "jit_loop_dense_view" => translator.loop_dense_view_func = Some(function),
@@ -8707,6 +8930,7 @@ impl JitCompiler {
         builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
         builder.symbol("jit_for_next", jit_for_next as *const u8);
         builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
+        builder.symbol("jit_update_binding_path", jit_update_binding_path as *const u8);
         builder.symbol("jit_loop_resume_guard", jit_loop_resume_guard as *const u8);
         builder.symbol("jit_loop_resume_prepare", jit_loop_resume_prepare as *const u8);
         builder.symbol("jit_loop_dense_view", jit_loop_dense_view as *const u8);
@@ -8799,6 +9023,7 @@ impl JitCompiler {
             dictionary_keys: HashMap::new(),
             struct_shapes: HashMap::new(),
             field_names: HashMap::new(),
+            path_shapes: HashMap::new(),
             append_strings: HashMap::new(),
             literal_values: HashMap::new(),
         })
@@ -8829,6 +9054,12 @@ impl JitCompiler {
     pub fn can_compile_loop(&self, chunk: &BytecodeChunk, start: usize, end: usize) -> bool {
         for pc in start..=end {
             if let Some(instruction) = chunk.instructions.get(pc) {
+                // Named captured roots require frame cells, not the locked global environment.
+                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _)
+                    if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
+                {
+                    return false;
+                }
                 if matches!(instruction, OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_)) {
                     return false;
                 }
@@ -8851,6 +9082,12 @@ impl JitCompiler {
     ) -> bool {
         for pc in start..=end {
             if let Some(instruction) = chunk.instructions.get(pc) {
+                // Named captured roots require frame cells, not the locked global environment.
+                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _)
+                    if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
+                {
+                    return false;
+                }
                 if matches!(instruction, OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_)) {
                     continue;
                 }
@@ -8926,7 +9163,9 @@ impl JitCompiler {
             OpCode::FieldGet(_) | OpCode::IndexGet | OpCode::ForNext(_) => true,
             OpCode::TryStringAppendAssign(_, _) | OpCode::TryAppendAssign(_, _) => true,
             OpCode::IndexSet => false,
-            OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_) => true,
+            OpCode::IndexGetInPlace(_)
+            | OpCode::IndexSetInPlace(_)
+            | OpCode::UpdateBindingPath(_, _) => true,
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
             // Guarded fusion remains in the VM until native lowering exists.
             OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => false,
@@ -8978,6 +9217,7 @@ impl JitCompiler {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
         let field_names = self.retain_field_names(chunk);
+        let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -9376,6 +9616,7 @@ impl JitCompiler {
                 })
                 .collect();
             translator.field_names = field_names;
+            translator.path_shapes = path_shapes;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -9700,6 +9941,7 @@ impl JitCompiler {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
         let field_names = self.retain_field_names(chunk);
+        let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -10123,6 +10365,7 @@ impl JitCompiler {
                 })
                 .collect();
             translator.field_names = field_names;
+            translator.path_shapes = path_shapes;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -10354,6 +10597,7 @@ impl JitCompiler {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
         let field_names = self.retain_field_names(chunk);
+        let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -10420,6 +10664,7 @@ impl JitCompiler {
                 })
                 .collect();
             translator.field_names = field_names;
+            translator.path_shapes = path_shapes;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -10686,6 +10931,7 @@ impl JitCompiler {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
         let field_names = self.retain_field_names(chunk);
+        let path_shapes = self.retain_path_shapes(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -11044,6 +11290,7 @@ impl JitCompiler {
                 })
                 .collect();
             translator.field_names = field_names;
+            translator.path_shapes = path_shapes;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -11340,6 +11587,160 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn compiled_nested_writes_release_operands_and_retain_path_metadata() {
+        for repetitions in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.local_names.push("local".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.emit(OpCode::LoadVar("seed".into()));
+            chunk.emit(OpCode::StoreLocal(0));
+            chunk.emit(OpCode::Pop);
+            let zero = chunk.add_constant(Constant::Int(0));
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadVar("item".into()));
+                chunk.emit(OpCode::LoadConst(zero));
+                chunk.emit(OpCode::LoadConst(zero));
+                chunk.emit(OpCode::UpdateBindingPath(
+                    crate::bytecode::MutationBinding::Local(0),
+                    vec![None, None],
+                ));
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadLocal(0));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "nested_owned_write").unwrap();
+            drop(chunk);
+            let seed = Value::array(vec![Value::array(vec![Value::Int(0)])]);
+            let mut globals = HashMap::from([
+                ("seed".into(), seed.clone()),
+                ("item".into(), Value::Str(Arc::new("new".into()))),
+            ]);
+            let mut names = ["seed", "item", "local"]
+                .into_iter()
+                .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
+                .collect();
+            let mut caller = vec![Value::Int(77)];
+            let mut stack = Vec::new();
+            let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+            context.var_names_ptr = &mut names;
+            context.local_slots_ptr = &mut caller;
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            let expected =
+                Value::array(vec![Value::array(vec![Value::Str(Arc::new("new".into()))])]);
+            assert!(Value::equals(&context.take_return_value(context.return_value), &expected));
+            assert!(Value::equals(&seed, &Value::array(vec![Value::array(vec![Value::Int(0)])])));
+            assert!(matches!(caller.as_slice(), [Value::Int(77)]));
+            let (_, live, capacity, _) = context.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 8, "{repetitions} writes retained {capacity} roots");
+            assert!(stack.is_empty());
+        }
+    }
+
+    #[test]
+    fn native_nested_writes_reuse_unique_rows_and_preserve_aliases() {
+        for repetitions in [8, 128] {
+            let hash = BytecodeTranslator::hash_var_name("state");
+            let mut names = HashMap::from([(hash, "state".into())]);
+            let mut context =
+                VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+            context.var_names_ptr = &mut names;
+            context.owned_roots.enter().unwrap();
+            let (root, kind) = context
+                .owned_roots
+                .encode(Value::array(vec![Value::array(vec![Value::Int(0); 128])]))
+                .unwrap();
+            fn pointers(value: &Value) -> (*const Value, *const Value) {
+                let Value::Array(rows) = value else { panic!() };
+                let Value::Array(row) = &rows[0] else { panic!() };
+                (rows.as_ptr(), row.as_ptr())
+            }
+            let before = pointers(context.owned_roots.current_value_mut(root, kind).unwrap());
+            let shape = vec![None, None];
+            for i in 0..repetitions {
+                let operands = [0, 0, 0, 0, i, 0];
+                // SAFETY: shape, tagged operands and context live through the helper call.
+                assert_eq!(
+                    unsafe {
+                        jit_update_binding_path(
+                            &mut context,
+                            1,
+                            root,
+                            kind,
+                            0,
+                            hash as i64,
+                            &shape,
+                            operands.as_ptr(),
+                        )
+                    },
+                    0,
+                    "{:?}",
+                    context.runtime_error
+                );
+                assert_eq!(
+                    pointers(context.owned_roots.current_value_mut(root, kind).unwrap()),
+                    before
+                );
+            }
+            let snapshot = context.owned_roots.duplicate(root, kind).unwrap();
+            let operands = [0, 0, 0, 0, 999, 0];
+            // SAFETY: same live roots and tagged operand array, with a retained snapshot.
+            assert_eq!(
+                unsafe {
+                    jit_update_binding_path(
+                        &mut context,
+                        1,
+                        root,
+                        kind,
+                        0,
+                        hash as i64,
+                        &shape,
+                        operands.as_ptr(),
+                    )
+                },
+                0
+            );
+            assert_ne!(
+                pointers(context.owned_roots.current_value_mut(root, kind).unwrap()),
+                before
+            );
+            let saved = context.owned_roots.clone_value(snapshot, kind).unwrap();
+            let Value::Array(rows) = saved else { panic!() };
+            let Value::Array(row) = &rows[0] else { panic!() };
+            assert!(matches!(row[0],Value::Int(n) if n == repetitions - 1));
+            // SAFETY: unchanged input lifetime; rejected write must not mutate either row.
+            assert_eq!(
+                unsafe {
+                    jit_update_binding_path(
+                        &mut context,
+                        1,
+                        root,
+                        kind,
+                        1,
+                        hash as i64,
+                        &shape,
+                        operands.as_ptr(),
+                    )
+                },
+                1
+            );
+            assert_eq!(
+                context.runtime_error.as_deref(),
+                Some("Cannot mutate immutable let binding: state")
+            );
+            context.owned_roots.leave().unwrap();
+            let (_, live, capacity, _) = context.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 4, "root storage grew to {capacity}");
+        }
+    }
 
     #[test]
     fn guarded_loop_dense_writes_inline_without_rust_vec_layout_assumptions() {

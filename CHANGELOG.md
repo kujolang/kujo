@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile checked nested binding writes in experimental native functions and
+  loops, preserving snapshots, evaluation order, readonly errors and nesting limits.
+
 - Preserve global bindings and readonly errors when experimental native code
   assigns newly constructed collections; owned values use checked named assignment.
 

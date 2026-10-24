@@ -37,7 +37,8 @@
         "post-field-native-surfaces-2026-10-23.json",
         "post-string-guard-native-surfaces-2026-10-23.json",
         "post-collection-guard-native-surfaces-2026-10-23.json",
-        "post-iteration-native-surfaces-2026-10-24.json"
+        "post-iteration-native-surfaces-2026-10-24.json",
+        "post-nested-write-native-surfaces-2026-10-24.json"
       ]
     },
     {
@@ -85,7 +86,8 @@
         "native-guarded-strings-2026-10-23.json",
         "native-guarded-collections-2026-10-23.json",
         "native-iteration-2026-10-24.json",
-        "native-owned-global-assignment-2026-10-24.json"
+        "native-owned-global-assignment-2026-10-24.json",
+        "native-nested-writes-2026-10-24.json"
       ]
     },
     {
@@ -3607,6 +3609,11 @@
         "checksums-2026-10-23-owned-entry-jit.json",
         "owned-entry-native-surfaces-2026-10-23.json"
       ]
+    },
+    {
+      "scope": "native checked nested writes",
+      "result": "1061 library tests passed (8 ignored),155 integrations passed. Unique row reuse, COW snapshots, bounded roots, metadata lifetime and captured-loop fallback verified. Static eligibility139/165, not execution coverage or speed.",
+      "evidence": "native-nested-writes-2026-10-24.json"
     }
   ]
 }

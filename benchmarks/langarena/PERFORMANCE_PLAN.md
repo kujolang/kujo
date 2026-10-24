@@ -7,6 +7,21 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Native checked nested writes](native-nested-writes-2026-10-24.json) pass
+  1,061 library tests and 155 integration tests, including both-runtime parity.
+  Unique rows remain reusable; retained snapshots force COW. Captured named loop
+  destinations remain on the VM to preserve frame-cell resolution. The
+  [static audit](post-nested-write-native-surfaces-2026-10-24.json) reports 139 of
+  165 bodies without an unsupported opcode, up from 126; this is not native time
+  coverage. Nested append, pop/rebinding, await, captures/closures and exception
+  surfaces remain. Production and controlled competitive acceptance are open.
+
+- [Checked owned global assignment](native-owned-global-assignment-2026-10-24.json)
+  repairs constructor-produced values silently shadowing globals in private
+  native locals and bypassing readonly errors. The earlier iteration release
+  build was cancelled after these defects were reproduced; it produced no new
+  frozen release or all-50 acceptance result.
+
 - The [guarded-string static audit](post-string-guard-native-surfaces-2026-10-23.json)
   reports 89 of the same 165 function bodies without an unsupported opcode,
   up from 83. Guarded array/byte append and iteration are now first blockers in
@@ -86,7 +101,7 @@ a target to test, not a guarantee. This document explains the execution order;
   2.916x on this laptop. That is one workload, not a suite-wide speedup.
 - Nested assignment now avoids reproduced Arc allocation churn. Its noisy paired
   timings do not establish an end-to-end speedup.
-- The latest verified test-size
+- The earlier verified test-size
   [interpreter](checksums-2026-10-23-guarded-append-release-interpreter.json),
   [VM matrix](checksums-2026-10-23-guarded-append-release-vm.json) and
   [JIT matrix](checksums-2026-10-23-guarded-append-release-jit.json) passed all 50 at
