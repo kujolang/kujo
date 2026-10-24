@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [frozen field-read candidate](checksums-2026-10-23-native-field-jit.json)
+  passes all 50 JIT test-size checksums. It still has the independently reproduced
+  native-loop method receiver defect repaired at `ca251a7`; the checksum result
+  does not override that defect or certify the repaired source. Production,
+  native time coverage and comparative speed gates remain open.
+
 - The [post-field static audit](post-field-native-surfaces-2026-10-23.json)
   reports 83 of the same 165 function bodies without an unsupported opcode,
   up from 72. Remaining first blockers include iteration (25), guarded append
