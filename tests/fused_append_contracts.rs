@@ -167,3 +167,64 @@ fn readonly_bindings_and_invalid_target_errors_are_catchable() {
     "#,
     );
 }
+
+#[test]
+fn repeated_field_and_indexed_appends_preserve_retained_snapshots() {
+    check(
+        r#"
+        struct State { items: array, data: bytes }
+        mut state := State { items: [], data: bytes([]) }
+        mut mapping := {"items": [], "data": bytes([])}
+        mut rows := [[],bytes([])]
+        let initial_state := state
+        let initial_mapping := mapping
+        let initial_rows := rows
+        let suffix := bytes([255])
+        mut i := 0
+        while i < 128 {
+            state.items = push(state.items,i)
+            state.data = concat(state.data,suffix)
+            mapping["items"] = append(mapping["items"],i)
+            mapping["data"] = concat(mapping["data"],suffix)
+            rows[0] = push(rows[0],i)
+            rows[1] = concat(rows[1],suffix)
+            i += 1
+        }
+        assert_equal(state.items,range(0,128))
+        assert_equal(mapping["items"],state.items)
+        assert_equal(rows[0],state.items)
+        assert_equal(len(state.data),128)
+        assert_equal(mapping["data"],state.data)
+        assert_equal(rows[1],state.data)
+        let saved_state := state
+        let saved_mapping := mapping
+        let saved_rows := rows
+        state.items = push(state.items,128)
+        state.data = concat(state.data,suffix)
+        mapping["items"] = append(mapping["items"],128)
+        mapping["data"] = concat(mapping["data"],suffix)
+        rows[0] = push(rows[0],128)
+        rows[1] = concat(rows[1],suffix)
+        assert_equal(len(saved_state.items),128)
+        assert_equal(len(saved_state.data),128)
+        assert_equal(len(saved_mapping["items"]),128)
+        assert_equal(len(saved_mapping["data"]),128)
+        assert_equal(len(saved_rows[0]),128)
+        assert_equal(len(saved_rows[1]),128)
+        assert_equal(len(state.items),129)
+        assert_equal(len(state.data),129)
+        assert_equal(len(mapping["items"]),129)
+        assert_equal(len(mapping["data"]),129)
+        assert_equal(len(rows[0]),129)
+        assert_equal(len(rows[1]),129)
+        state.items[0] = -1
+        state.items = push(state.items,129)
+        assert_equal(saved_state.items[0],0)
+        assert_equal(state.items[0],-1)
+        assert_equal(state.items[-1],129)
+        assert_equal(initial_state,State { items: [], data: bytes([]) })
+        assert_equal(initial_mapping,{"items": [], "data": bytes([])})
+        assert_equal(initial_rows,[[],bytes([])])
+        "#,
+    );
+}

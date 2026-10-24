@@ -50,7 +50,8 @@
         "paired-json-2026-10-23.json",
         "paired-assignment-2026-10-23.json",
         "call-frame-allocation-2026-10-23.json",
-        "../../tests/bytecode_call_profile.rs"
+        "../../tests/bytecode_call_profile.rs",
+        "checked-append-node-relocations-2026-10-24.json"
       ]
     },
     {
@@ -3614,6 +3615,11 @@
       "scope": "native checked nested writes",
       "result": "1061 library tests passed (8 ignored),155 integrations passed. Unique row reuse, COW snapshots, bounded roots, metadata lifetime and captured-loop fallback verified. Static eligibility139/165, not execution coverage or speed.",
       "evidence": "native-nested-writes-2026-10-24.json"
+    },
+    {
+      "scope": "checked append unique Arc-node reuse",
+      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1–2 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
+      "evidence": "checked-append-node-relocations-2026-10-24.json"
     }
   ]
 }

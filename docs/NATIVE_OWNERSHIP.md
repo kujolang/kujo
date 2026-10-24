@@ -26,6 +26,12 @@ they must never be redirected to a same-named global.
 Temporary operands are released after successful writes or by frame cleanup on
 error. Nested appends and pop/rebinding remain separate native admission work.
 
+The canonical checked array/byte append operations also release cached weak
+identities along the destination path before mutation, then remember the updated
+depth bounds. This avoids relocating otherwise unique parent and array nodes
+solely because the cache observes them. Real value aliases still force COW;
+unrelated cached identities retain their external-mutation invalidation behavior.
+
 Regression coverage includes mixed types, four/five arguments, loops, recursion,
 imported helpers, callable arguments, snapshots and failure/success recovery across
 interpreter, VM and JIT. A storage test retains unique array backing storage through

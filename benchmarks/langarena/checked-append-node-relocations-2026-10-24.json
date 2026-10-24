@@ -1,0 +1,189 @@
+{
+  "scope": "Deterministic checked append Arc-node relocation audit, not elapsed-time or competitive performance acceptance.",
+  "source_parent": "d439d40",
+  "source_sha256": {
+    "src/interpreter/assignment.rs": "0350bc4fad9e0101c1726f8c4c389c4a2ceef6fafa7ccfce8c49eb236622dfba",
+    "tests/fused_append_contracts.rs": "f47bbc81a0b0de1b03a80860734ba0e099cfdfd00acda1a5893df297831d8886"
+  },
+  "baseline_log": "/tmp/kujo-append-node-baseline.log",
+  "fixed_log": "/tmp/kujo-append-node-fixed.log",
+  "before": [
+    {
+      "iterations": 8,
+      "leaf": "array",
+      "parent": "struct",
+      "parent_relocations": 8,
+      "leaf_relocations": 8
+    },
+    {
+      "iterations": 8,
+      "leaf": "array",
+      "parent": "dictionary",
+      "parent_relocations": 8,
+      "leaf_relocations": 8
+    },
+    {
+      "iterations": 8,
+      "leaf": "array",
+      "parent": "array",
+      "parent_relocations": 8,
+      "leaf_relocations": 8
+    },
+    {
+      "iterations": 8,
+      "leaf": "bytes",
+      "parent": "struct",
+      "parent_relocations": 8,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "bytes",
+      "parent": "dictionary",
+      "parent_relocations": 8,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "bytes",
+      "parent": "array",
+      "parent_relocations": 8,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "array",
+      "parent": "struct",
+      "parent_relocations": 128,
+      "leaf_relocations": 128
+    },
+    {
+      "iterations": 128,
+      "leaf": "array",
+      "parent": "dictionary",
+      "parent_relocations": 128,
+      "leaf_relocations": 128
+    },
+    {
+      "iterations": 128,
+      "leaf": "array",
+      "parent": "array",
+      "parent_relocations": 128,
+      "leaf_relocations": 128
+    },
+    {
+      "iterations": 128,
+      "leaf": "bytes",
+      "parent": "struct",
+      "parent_relocations": 128,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "bytes",
+      "parent": "dictionary",
+      "parent_relocations": 128,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "bytes",
+      "parent": "array",
+      "parent_relocations": 128,
+      "leaf_relocations": 0
+    }
+  ],
+  "after": [
+    {
+      "iterations": 8,
+      "leaf": "array",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "array",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "array",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "bytes",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "bytes",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 8,
+      "leaf": "bytes",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "array",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "array",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "array",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "bytes",
+      "parent": "struct",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "bytes",
+      "parent": "dictionary",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    },
+    {
+      "iterations": 128,
+      "leaf": "bytes",
+      "parent": "array",
+      "parent_relocations": 0,
+      "leaf_relocations": 0
+    }
+  ],
+  "mechanism": "Release only cached weak identities along a validated mutation path before array/byte append, then refresh depth bounds. Real retained aliases still force COW.",
+  "verification": {
+    "contracts": "/tmp/kujo-append-node-contracts.log:1062 library passed,8 ignored;37 integrations passed,1 ignored; VM/interpreter/JIT snapshot and external-write semantics covered",
+    "format": "/tmp/kujo-append-node-format-check.log passed",
+    "minimal": "/tmp/kujo-append-node-minimal.log:no-default-features library check passed"
+  },
+  "remaining": "Native append/pop admission, final production/current-suite checks and controlled competitive profiling remain open. Running fd4d85d JIT matrix predates this performance fix."
+}

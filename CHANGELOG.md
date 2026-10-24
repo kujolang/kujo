@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Avoid depth-cache-induced Arc node relocation during checked array and byte
+  appends while preserving copy-on-write for retained snapshots.
+
 - Compile checked nested binding writes in experimental native functions and
   loops, preserving snapshots, evaluation order, readonly errors and nesting limits.
 

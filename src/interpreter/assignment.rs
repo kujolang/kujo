@@ -625,6 +625,11 @@ pub(crate) fn append_path(
     }
     same &= matches!((destination, original.as_ref()), (Value::Array(a), Some(Value::Array(b))) if Arc::ptr_eq(a,b));
     if same && bound.is_none_or(|n| n <= crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH) {
+        // Drop only the cache weak identities on the mutation path. Otherwise
+        // Arc::make_mut relocates unique nodes even without a retained value alias.
+        if let Some(cache) = cache.as_mut() {
+            cache.release_path(root, path);
+        }
         let mut destination = &mut *root;
         for access in path {
             destination = child_mut(destination, access).expect("validated append path");
@@ -1203,6 +1208,11 @@ pub(crate) fn concat_bytes_path(
     same &= matches!(destination, Value::Bytes(bytes) if Arc::ptr_eq(bytes, source));
     let mut original = Some(original);
     if same && bound.is_none_or(|n| n <= crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH) {
+        // Drop only the cache weak identities on the mutation path. Otherwise
+        // Arc::make_mut relocates unique nodes even without a retained value alias.
+        if let Some(cache) = cache.as_mut() {
+            cache.release_path(root, path);
+        }
         let mut destination = &mut *root;
         for access in path {
             destination = collection_child_mut(destination, access).expect("validated byte path");
@@ -1318,5 +1328,90 @@ mod string_rebinding_tests {
         let mut stale = Some(alias);
         assert!(!concat_string_rebinding(&mut root, &mut stale, &Value::str_ref("d")));
         assert!(stale.is_some());
+    }
+}
+
+#[cfg(test)]
+mod checked_append_node_storage_tests {
+    use super::*;
+
+    fn nodes(root: &Value, path: &[Access]) -> (usize, usize) {
+        let parent = match root {
+            Value::Struct { fields, .. } => Arc::as_ptr(fields) as usize,
+            Value::Dict(map) => Arc::as_ptr(map) as usize,
+            Value::Array(items) => Arc::as_ptr(items) as usize,
+            _ => unreachable!(),
+        };
+        let child = match collection_child(root, &path[0]).unwrap() {
+            Value::Array(items) => Arc::as_ptr(items) as usize,
+            Value::Bytes(bytes) => Arc::as_ptr(bytes) as usize,
+            _ => unreachable!(),
+        };
+        (parent, child)
+    }
+
+    fn length(root: &Value, path: &[Access]) -> usize {
+        match collection_child(root, &path[0]).unwrap() {
+            Value::Array(items) => items.len(),
+            Value::Bytes(bytes) => bytes.len(),
+            _ => unreachable!(),
+        }
+    }
+
+    fn grow(root: &mut Value, path: &[Access], bytes: bool, cache: &mut DepthCache) {
+        let original = collection_child(root, &path[0]).unwrap().clone();
+        if bytes {
+            concat_bytes_path(root, path, original, Value::bytes(vec![255]), Some(cache)).unwrap();
+        } else {
+            append_path(root, path, original, Value::Int(7), Some(cache)).unwrap();
+        }
+    }
+
+    #[test]
+    fn checked_appends_preserve_unique_arc_nodes_and_detach_real_snapshots() {
+        let mut measurements = Vec::new();
+        for repetitions in [8, 128] {
+            for bytes in [false, true] {
+                for container in 0..3 {
+                    let leaf = if bytes {
+                        Value::bytes(Vec::with_capacity(256))
+                    } else {
+                        Value::array(Vec::with_capacity(256))
+                    };
+                    let (mut root, path) = match container {
+                        0 => (
+                            Value::Struct {
+                                name: "State".into(),
+                                fields: Arc::new([("items".into(), leaf)].into_iter().collect()),
+                            },
+                            vec![Access::Field("items".into())],
+                        ),
+                        1 => (
+                            Value::dict([(Arc::from("items"), leaf)].into_iter().collect()),
+                            vec![Access::Index(Value::str_ref("items"))],
+                        ),
+                        _ => (Value::array(vec![leaf]), vec![Access::Index(Value::Int(0))]),
+                    };
+                    let mut cache = DepthCache::default();
+                    let mut changes = (0, 0);
+                    for _ in 0..repetitions {
+                        let before = nodes(&root, &path);
+                        grow(&mut root, &path, bytes, &mut cache);
+                        let after = nodes(&root, &path);
+                        changes.0 += usize::from(before.0 != after.0);
+                        changes.1 += usize::from(before.1 != after.1);
+                    }
+                    measurements.push((repetitions, bytes, container, changes));
+                    assert_eq!(length(&root, &path), repetitions);
+                    let snapshot = root.clone();
+                    grow(&mut root, &path, bytes, &mut cache);
+                    assert_eq!(length(&snapshot, &path), repetitions);
+                    assert_eq!(length(&root, &path), repetitions + 1);
+                    assert_ne!(nodes(&root, &path), nodes(&snapshot, &path));
+                }
+            }
+        }
+        eprintln!("checked append Arc-node relocation measurements: {measurements:?}");
+        assert!(measurements.iter().all(|row| row.3 == (0, 0)), "{measurements:?}");
     }
 }
