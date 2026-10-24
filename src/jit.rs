@@ -1274,19 +1274,47 @@ pub unsafe extern "C" fn jit_indexed_read(
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
     let result = (|| {
-        let object = ctx
-            .owned_roots
-            .borrow_value(object, object_kind)
-            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        // Owned objects are borrowed once, including fallback cases. Construct
+        // the borrowed Cow locally to avoid transferring a full-width Value
+        // through the helper ABI on the common array-read path.
+        let object = if object_kind == crate::native_owned::OWNED {
+            std::borrow::Cow::Borrowed(
+                ctx.owned_roots
+                    .borrow_owned(object)
+                    .map_err(|error| format!("Native ownership error: {error:?}"))?,
+            )
+        } else {
+            ctx.owned_roots
+                .borrow_value(object, object_kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?
+        };
+        if index_kind == crate::native_scalar::INTEGER {
+            if let Value::Array(values) = object.as_ref() {
+                let resolved = if index < 0 { values.len() as i64 + index } else { index };
+                if let Some(element) =
+                    usize::try_from(resolved).ok().and_then(|offset| values.get(offset))
+                {
+                    if let Some(immediate) = crate::native_scalar::encode(element) {
+                        return Ok(immediate);
+                    }
+                    // Match the VM's owned-element clone without repeating the
+                    // validated lookup. The result receives an independent root.
+                    let value = element.clone();
+                    return ctx
+                        .owned_roots
+                        .encode(value)
+                        .map_err(|error| format!("Native ownership error: {error:?}"));
+                }
+            }
+        }
+        // Other collection/index variants and errors retain the VM contract.
         let index = ctx
             .owned_roots
             .borrow_value(index, index_kind)
             .map_err(|error| format!("Native ownership error: {error:?}"))?;
-        VM::get_indexed_value(&object, &index)
-    })()
-    .and_then(|value| {
+        let value = VM::get_indexed_value(&object, &index)?;
         ctx.owned_roots.encode(value).map_err(|error| format!("Native ownership error: {error:?}"))
-    });
+    })();
     match result {
         Ok((payload, kind)) => {
             ctx.return_value_kind = kind;
@@ -13340,6 +13368,83 @@ mod tests {
             assert!(capacity <= 4, "{repetitions} writes retained {capacity} root slots");
             assert!(stack.is_empty());
         }
+    }
+
+    #[test]
+    fn scalar_array_reads_match_vm_bits_bounds_and_owned_fallbacks() {
+        let elements = vec![
+            Value::Int(i64::MIN),
+            Value::Int(i64::MAX),
+            Value::Bool(false),
+            Value::Bool(true),
+            Value::Null,
+            Value::Float(0.0),
+            Value::Float(-0.0),
+            Value::Float(f64::INFINITY),
+            Value::Float(f64::NEG_INFINITY),
+            Value::Float(f64::from_bits(0x7ff8_0000_0000_0042)),
+            Value::Str(Arc::new("owned".into())),
+            Value::array(vec![Value::Int(9)]),
+        ];
+        let array = Value::array(elements);
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.owned_roots.enter().unwrap();
+        let (object, object_kind) = context.owned_roots.encode(array.clone()).unwrap();
+        // The source may belong to the caller's active frame.
+        context.owned_roots.enter().unwrap();
+        let mut indices: Vec<Value> = (-13..=12).map(Value::Int).collect();
+        indices.extend([
+            Value::Int(i64::MIN),
+            Value::Int(i64::MAX),
+            Value::Float(0.5),
+            Value::Float(-1.5),
+            Value::Float(f64::NAN),
+            Value::Float(f64::INFINITY),
+            Value::Bool(false),
+            Value::Str(Arc::new("0".into())),
+        ]);
+        for index in indices {
+            let expected = VM::get_indexed_value(&array, &index);
+            let (index_payload, index_kind) = context.owned_roots.encode(index.clone()).unwrap();
+            context.runtime_error = None;
+            // SAFETY: validated operands remain rooted in live nested frames.
+            let result = unsafe {
+                jit_indexed_read(&mut context, object, object_kind, index_payload, index_kind)
+            };
+            match expected {
+                Ok(value) => {
+                    assert!(
+                        context.runtime_error.is_none(),
+                        "{index:?}: {:?}",
+                        context.runtime_error
+                    );
+                    if let Some((bits, kind)) = crate::native_scalar::encode(&value) {
+                        assert_eq!((result, context.return_value_kind), (bits, kind), "{index:?}");
+                    } else {
+                        let actual = context
+                            .owned_roots
+                            .clone_value(result, context.return_value_kind)
+                            .unwrap();
+                        assert!(Value::equals(&actual, &value));
+                        context.owned_roots.release(result, context.return_value_kind).unwrap();
+                    }
+                }
+                Err(error) => {
+                    assert_eq!(context.runtime_error.as_deref(), Some(error.as_str()), "{index:?}")
+                }
+            }
+            context.owned_roots.release(index_payload, index_kind).unwrap();
+        }
+        context.owned_roots.leave().unwrap();
+        context.owned_roots.release(object, object_kind).unwrap();
+        context.runtime_error = None;
+        // SAFETY: context remains live; stale handles must be rejected, never dereferenced.
+        unsafe {
+            jit_indexed_read(&mut context, object, object_kind, 0, 0);
+        }
+        assert!(context.runtime_error.as_deref().unwrap().starts_with("Native ownership error:"));
+        context.owned_roots.leave().unwrap();
     }
 
     #[test]

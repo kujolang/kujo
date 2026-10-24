@@ -133,6 +133,11 @@ impl NativeCallRoots {
         }
     }
 
+    /// Borrow a validated owned operand without returning a full-width Cow<Value>.
+    pub(crate) fn borrow_owned(&self, payload: i64) -> Result<&Value, OwnershipError> {
+        self.values.get(Handle::from_payload(payload))
+    }
+
     pub(crate) fn duplicate(&mut self, payload: i64, kind: i64) -> Result<i64, OwnershipError> {
         match kind {
             0..=3 => Ok(payload),

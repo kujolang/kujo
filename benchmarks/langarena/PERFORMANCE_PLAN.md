@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Checked native array reads](native-scalar-array-reads-2026-10-24.json)
+  avoid scalar materialization and reuse validated lookups for owned elements.
+  All 1,080 library tests (8 ignored) and 151 integrations pass, including
+  three-runtime value semantics and exact scalar-bit/error checks. Seven paired
+  debug-library probe samples show median reductions of about 44% for scalar
+  arrays and 9% for owned arrays; these are helper costs, not suite speedups.
+  Current-candidate release checksums and production acceptance remain open.
+
 - [Frozen production Matmul outcome](production-matmul-local-borrow-2026-10-24.json)
   on `d777339` reached warmup completion but hit the unchanged 600-second process
   deadline during measured work. Its checksum remains unverified. This diagnostic
@@ -16,7 +24,8 @@ a target to test, not a guarantee. This document explains the execution order;
   on frozen `d777339` identifies indexed-read dispatch, value copying and scalar
   materialization as hot paths. The sample was taken during the first unchanged
   production Matmul warmup; it does not establish a checksum pass or speedup.
-  A checked immediate-array read path is the next measured candidate.
+  The checked array-read change above addresses this helper cost; a new release
+  profile is still required to assess the remaining end-to-end costs.
 
 - [Native call setup reservation](native-call-setup-reservation-2026-10-24.json)
   reduces warmed allocations per call from 6/10/15 to 5/8/12 at arities 1/4/8

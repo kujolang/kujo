@@ -1,0 +1,272 @@
+{
+  "schema_version": 1,
+  "scope": "Checked native integer array reads bypass scalar Value materialization and reuse the validated lookup for owned elements. Debug-library helper probe only; no production or competitive speed claim.",
+  "base_commit": "9e2d31abf1d4af1e809e2289d822a9b9298fca15",
+  "baseline_runtime_commit": "e8a614f",
+  "samples": [
+    {
+      "case": "integer_array",
+      "reads_per_sample": 100000,
+      "before_ns": [
+        42817109,
+        43390559,
+        45357223,
+        43211541,
+        42996300,
+        43152201,
+        45490332
+      ],
+      "after_ns": [
+        24006564,
+        24329037,
+        24165568,
+        24223860,
+        24137050,
+        24116318,
+        24015157
+      ],
+      "median_before_ns": 43211541,
+      "median_after_ns": 24137050,
+      "median_ratio": 0.55857878338567
+    },
+    {
+      "case": "float_array",
+      "reads_per_sample": 100000,
+      "before_ns": [
+        43920267,
+        43038596,
+        44042280,
+        42824036,
+        42995953,
+        43233704,
+        45891874
+      ],
+      "after_ns": [
+        24348903,
+        24335605,
+        24171783,
+        24134420,
+        24452162,
+        24389757,
+        24479903
+      ],
+      "median_before_ns": 43233704,
+      "median_after_ns": 24348903,
+      "median_ratio": 0.5631926193508657
+    },
+    {
+      "case": "float_dictionary",
+      "reads_per_sample": 100000,
+      "before_ns": [
+        92084027,
+        91648607,
+        90692963,
+        92431788,
+        91994492,
+        91778714,
+        92387037
+      ],
+      "after_ns": [
+        87361573,
+        88934336,
+        87696193,
+        87626925,
+        87109608,
+        87202141,
+        87472098
+      ],
+      "median_before_ns": 91994492,
+      "median_after_ns": 87472098,
+      "median_ratio": 0.9508406003263761
+    },
+    {
+      "case": "owned_array",
+      "reads_per_sample": 100000,
+      "before_ns": [
+        151037526,
+        148946531,
+        151104477,
+        149018826,
+        148886531,
+        149576942,
+        150851356
+      ],
+      "after_ns": [
+        136277144,
+        136352045,
+        136793202,
+        135537326,
+        135673897,
+        135279346,
+        135969792
+      ],
+      "median_before_ns": 149576942,
+      "median_after_ns": 135969792,
+      "median_ratio": 0.9090290935350183
+    }
+  ],
+  "raw_runs": {
+    "results": [
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 1,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=42817109\nfloat_array reads=100000 elapsed_ns=43920267\nfloat_dictionary reads=100000 elapsed_ns=92084027\nowned_array reads=100000 elapsed_ns=151037526\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 1,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24006564\nfloat_array reads=100000 elapsed_ns=24348903\nfloat_dictionary reads=100000 elapsed_ns=87361573\nowned_array reads=100000 elapsed_ns=136277144\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 2,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24329037\nfloat_array reads=100000 elapsed_ns=24335605\nfloat_dictionary reads=100000 elapsed_ns=88934336\nowned_array reads=100000 elapsed_ns=136352045\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 2,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=43390559\nfloat_array reads=100000 elapsed_ns=43038596\nfloat_dictionary reads=100000 elapsed_ns=91648607\nowned_array reads=100000 elapsed_ns=148946531\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 3,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=45357223\nfloat_array reads=100000 elapsed_ns=44042280\nfloat_dictionary reads=100000 elapsed_ns=90692963\nowned_array reads=100000 elapsed_ns=151104477\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 3,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24165568\nfloat_array reads=100000 elapsed_ns=24171783\nfloat_dictionary reads=100000 elapsed_ns=87696193\nowned_array reads=100000 elapsed_ns=136793202\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 4,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24223860\nfloat_array reads=100000 elapsed_ns=24134420\nfloat_dictionary reads=100000 elapsed_ns=87626925\nowned_array reads=100000 elapsed_ns=135537326\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 4,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=43211541\nfloat_array reads=100000 elapsed_ns=42824036\nfloat_dictionary reads=100000 elapsed_ns=92431788\nowned_array reads=100000 elapsed_ns=149018826\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 5,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=42996300\nfloat_array reads=100000 elapsed_ns=42995953\nfloat_dictionary reads=100000 elapsed_ns=91994492\nowned_array reads=100000 elapsed_ns=148886531\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 5,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24137050\nfloat_array reads=100000 elapsed_ns=24452162\nfloat_dictionary reads=100000 elapsed_ns=87109608\nowned_array reads=100000 elapsed_ns=135673897\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 6,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24116318\nfloat_array reads=100000 elapsed_ns=24389757\nfloat_dictionary reads=100000 elapsed_ns=87202141\nowned_array reads=100000 elapsed_ns=135279346\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 6,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=43152201\nfloat_array reads=100000 elapsed_ns=43233704\nfloat_dictionary reads=100000 elapsed_ns=91778714\nowned_array reads=100000 elapsed_ns=149576942\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-before",
+        "exitcode": 0,
+        "round": 7,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=45490332\nfloat_array reads=100000 elapsed_ns=45891874\nfloat_dictionary reads=100000 elapsed_ns=92387037\nowned_array reads=100000 elapsed_ns=150851356\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-scalar-read-cost-refined",
+        "exitcode": 0,
+        "round": 7,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=24015157\nfloat_array reads=100000 elapsed_ns=24479903\nfloat_dictionary reads=100000 elapsed_ns=87472098\nowned_array reads=100000 elapsed_ns=135969792\n",
+        "success": true,
+        "variant": 1
+      }
+    ],
+    "scope": "Paired debug-library helper microprobe; no production or competitive-speed claim"
+  },
+  "verification": {
+    "library_passed": 1080,
+    "library_ignored": 8,
+    "integration_passed": 151,
+    "integration_failed": 0,
+    "format": "passed",
+    "minimal_feature_library": "passed",
+    "coverage": "Exact scalar bits including signed zero, NaN payloads and infinities; negative/invalid indexes; stale handles; owned values; VM/interpreter/JIT snapshots and error parity."
+  },
+  "hashes": {
+    "src/jit.rs": "83fa3cb09b88393cfcc7d70455f4bdf6f750874a6bf239823764884d0cb4af95",
+    "src/native_owned.rs": "099a3ba173b1e387da412283be7588ed7557a5b3fe29f8ecc52baa873011ab38",
+    "tests/jit_nested_paths.rs": "62bbbbf633d232993a7640c5394006b291f3275d09cd341ffa907b57aed8e5fa",
+    "benchmarks/langarena/probes/native_indexed_read.rs": "29e4ff0a5fce8f0bff09089028ec94ef2d866b0a25fe0527435516e4cb22c833",
+    "benchmarks/langarena/probes/paired_helpers.kujo": "433178d4348b3ff883d0bc4c05d557b3d1b6fdc59239c685757e47306d3063a7",
+    "/tmp/libkujo-scalar-read-before.rlib": "5d132701e95420601fdea0e2b4d13f39039b66fab596fe9ffebfd64174e76114",
+    "/tmp/libkujo-scalar-read-refined.rlib": "98e1b06c937e1e38abc2cf318ce4f0adf5fdf0d1252ee020100fde9eed86408a",
+    "/tmp/kujo-scalar-read-cost-before": "2edb09d09592b4092bad0e566f589f0be834e83c2d97722b289e9884af3aa3fb",
+    "/tmp/kujo-scalar-read-cost-refined": "ec2653e4e296df4a364c8a622871c5845046a3467d7b3a9951118bb746887c38",
+    "/tmp/kujo-scalar-array-refined-library.log": "98a26f0db50d57fee8a5fbeb4eecf812cc06544bd4498f028c42bdc3fa8896c4",
+    "/tmp/kujo-scalar-array-refined-regressions.log": "6fa1466c7fb5e084d35532e489ae844d2f36bc9b61e8b8a6b603587fa5ed4d58",
+    "/tmp/kujo-scalar-array-refined-minimal.log": "5cc30e285deb5d05daac285267ded4ed8f91f131c24bffee09bd192f513a2d09",
+    "/tmp/kujo-scalar-read-refined-paired.json": "275752626965848d6ff8d7dc2d28126a4fcb43010678b4883117ae7bfb0bd32a"
+  },
+  "limitations": [
+    "Seven alternating sequential samples on a loaded laptop, no concurrent task builds during measurement. Probe executable optimized, linked Kujo library debug-built.",
+    "Initial scalar-only candidate made owned-array median 2.87% slower; refined candidate removes redundant lookup. Original diagnostic retained at /tmp/kujo-scalar-read-paired.json.",
+    "All150 release test-size checksums on d777339 predate this candidate. Current release, production, competitive and portability acceptance remain open."
+  ],
+  "reproduction": {
+    "probe": "probes/native_indexed_read.rs directly exercises the Rust native helper ABI; link each revision library with rustc --edition=2021 -O --extern kujo=<rlib> -L dependency=<deps> and native link directories from Cargo build outputs.",
+    "driver": "kujo run --scheduler-no-timeout probes/paired_helpers.kujo <before-binary> <after-binary> <output-json>"
+  }
+}
