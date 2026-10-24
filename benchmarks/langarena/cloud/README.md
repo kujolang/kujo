@@ -1,9 +1,12 @@
 # Clean Linux benchmark handoff
 
 The full performance objective remains open. This directory prepares an exact
-Linux build baseline; it does not provision resources or claim Linux validation.
-The initial source pin includes runtime fix `09c8944` and evidence `9be62a6`.
-Keep that baseline immutable when later candidate revisions are measured.
+Linux comparison set; it does not provision resources or claim Linux validation.
+The original Kujo baseline is `f037705`, and the candidate is `aa30071` (builtin
+argument reuse). Both use the pinned Rust toolchain and separate target folders.
+The earlier preparation pin `9be62a6` remains historical evidence, not the
+original baseline. Update candidate pins explicitly after accepting further fixes;
+never silently substitute a floating branch or overwrite a prior run directory.
 
 ## Access and machine
 
@@ -28,15 +31,27 @@ PATH. Complete OS updates and any required reboot before measurements. Run as
 an ordinary user, choosing a new directory and a conservative build concurrency:
 
 ```sh
-bash benchmarks/langarena/cloud/prepare-linux.sh /home/benchmark/langa-baseline 2
+bash benchmarks/langarena/cloud/prepare-linux.sh /home/benchmark/langa-comparison 2
 ```
 
 The script installs Rust 1.96.0, checks out immutable Kujo/LangArena/Goose
-revisions, builds release binaries with locked Rust dependencies, uses Goose's
+revisions (including both Kujo versions), builds release binaries with locked Rust dependencies, uses Goose's
 upstream `prod` recipe, and records machine/compiler identities and hashes.
 Its shell bootstrap is necessary before a Kujo executable exists; subsequent
 orchestration uses the repository's Kujo runners. A failed build leaves logs
 and no completion marker. `BUILT_NOT_VERIFIED` means only that builds finished.
+
+Run all comparisons from `$workspace/kujo` using its unchanged benchmark port
+and configuration for **both** Kujo executables:
+
+- Original: `$workspace/kujo-baseline/target/release/kujo`, VM and JIT.
+- Candidate: `$workspace/kujo/target/release/kujo`, VM and JIT; interpreter for parity.
+- Goose: `$workspace/arena/goose/target/benchmark`.
+- Rust: `$workspace/arena/rust/target/release/benchmarks`.
+
+Source revisions, executable hashes and the candidate port/configuration hashes
+are recorded together. Baseline failures must remain visible; do not repair the
+historical runtime or label missing timings as successful comparisons.
 
 ## Required execution gates
 
