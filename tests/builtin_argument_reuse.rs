@@ -8,15 +8,26 @@ fn builtin_callbacks_preserve_snapshots_and_recover_after_errors() {
         &file,
         r#"
         func convert(n) { return to_int(n / 2) }
+        func forward(input) { return input }
+        func nested_array(input) { return forward(forward(input)) }
+        func bad_call(n) { return dict(n) }
         func nested(n) { return convert(n) + len([n, n]) }
         let snapshot := [4, 8, 12]
+        mut failures := 0
         mut i := 0
         while i < 180 {
             assert_equal(map(snapshot, nested), [4, 6, 8])
             assert_equal(snapshot, [4, 8, 12])
             assert_equal(convert(14), 7)
+            mut changed := nested_array(snapshot)
+            changed[0] = i
+            assert_equal(changed, [i, 8, 12])
+            assert_equal(snapshot, [4, 8, 12])
+            try { bad_call(i) } except error { failures += 1 }
+            assert_equal(convert(14), 7)
             i += 1
         }
+        assert_equal(failures, 180)
         mut caught := 0
         try { dict(1) } except error { caught += 1 }
         assert_equal(caught, 1)
@@ -40,7 +51,12 @@ fn builtin_callbacks_preserve_snapshots_and_recover_after_errors() {
         assert!(output.status.success(), "{mode:?}: {stderr}");
         assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "PASS");
         if mode == Some("--jit") {
-            assert!(stderr.contains("Successfully compiled function 'convert'"), "{stderr}");
+            for name in ["convert", "nested_array", "bad_call"] {
+                assert!(
+                    stderr.contains(&format!("Successfully compiled function '{name}'")),
+                    "{stderr}"
+                );
+            }
         }
     }
 }

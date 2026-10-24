@@ -4253,6 +4253,29 @@ pub unsafe extern "C" fn jit_stack_push_scalar(ctx: *mut VMContext, value: i64, 
     }
 }
 
+/// Transfer a consumed operand into the VM stack. Borrowed/peek operations
+/// continue using jit_stack_push_scalar; this helper invalidates an owned root.
+#[no_mangle]
+// SAFETY: ctx and stack are live and exclusive. Owned payloads must belong to
+// the current activation; the root store validates this before moving a value.
+pub unsafe extern "C" fn jit_stack_take_scalar(ctx: *mut VMContext, value: i64, kind: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    let Some(stack) = ctx.stack_ptr.as_mut() else {
+        ctx.runtime_error = Some("Native operand transfer requires a stack".into());
+        return 1;
+    };
+    match ctx.owned_roots.take_value(value, kind) {
+        Ok(value) => {
+            stack.push(value);
+            0
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            1
+        }
+    }
+}
+
 /// Safe wrapper around `jit_set_return_int` for internal Rust callsites that
 /// already hold a valid mutable VM context reference.
 #[inline]
@@ -5268,6 +5291,7 @@ struct BytecodeTranslator {
     loop_dense_view_func: Option<FuncRef>,
     loop_indexed_read_func: Option<FuncRef>,
     scalar_push_func: Option<FuncRef>,
+    scalar_take_func: Option<FuncRef>,
     /// Most recently emitted integer constant and its SSA value. This lets
     /// arithmetic lowering recognize constant divisors without changing the
     /// bytecode stack representation.
@@ -5462,6 +5486,7 @@ impl BytecodeTranslator {
             loop_dense_view_func: None,
             loop_indexed_read_func: None,
             scalar_push_func: None,
+            scalar_take_func: None,
             last_int_constant: None,
             variables: HashMap::new(),
             blocks: HashMap::new(),
@@ -7051,26 +7076,15 @@ impl BytecodeTranslator {
                 }
                 arg_vals.reverse(); // Reverse to get correct order
 
-                if let (Some(ctx), Some(call_func), Some(stack_push)) =
-                    (self.ctx_param, self.call_func, self.stack_push_func)
-                {
-                    // The runtime bridge pops arguments first, then the callable.
-                    if let Some(push) = self.scalar_push_func {
-                        let kind = self.scalar_kind(builder, function_value);
-                        builder.ins().call(push, &[ctx, function_value, kind]);
-                    }
-                    for arg_val in &arg_vals {
-                        if let Some(push) = self.scalar_push_func {
-                            let kind = self.scalar_kind(builder, *arg_val);
-                            builder.ins().call(push, &[ctx, *arg_val, kind]);
-                        } else {
-                            builder.ins().call(stack_push, &[ctx, *arg_val]);
-                        }
-                    }
-
-                    self.release_operand(builder, function_value);
-                    for arg in &arg_vals {
-                        self.release_operand(builder, *arg);
+                if let (Some(ctx), Some(call_func)) = (self.ctx_param, self.call_func) {
+                    // These popped operands are consumed by Call. Transfer them once;
+                    // borrowed/peek marshaling elsewhere retains the original helper.
+                    let take =
+                        self.scalar_take_func.ok_or("Call requires consuming stack transfer")?;
+                    for operand in std::iter::once(function_value).chain(arg_vals.iter().copied()) {
+                        let kind = self.scalar_kind(builder, operand);
+                        let call = builder.ins().call(take, &[ctx, operand, kind]);
+                        self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
                     }
 
                     // A directly consumed FieldGet can insert a legacy receiver
@@ -8803,26 +8817,18 @@ impl BytecodeTranslator {
                     }
                     arg_vals.reverse();
 
-                    if let (Some(ctx), Some(call_func), Some(stack_push)) =
-                        (self.ctx_param, self.call_func, self.stack_push_func)
-                    {
-                        // Push args to VM stack
-                        if let Some(push) = self.scalar_push_func {
-                            let kind = self.scalar_kind(builder, function_value);
-                            builder.ins().call(push, &[ctx, function_value, kind]);
-                        }
-                        for arg_val in &arg_vals {
-                            if let Some(push) = self.scalar_push_func {
-                                let kind = self.scalar_kind(builder, *arg_val);
-                                builder.ins().call(push, &[ctx, *arg_val, kind]);
-                            } else {
-                                builder.ins().call(stack_push, &[ctx, *arg_val]);
-                            }
-                        }
-
-                        self.release_operand(builder, function_value);
-                        for arg in &arg_vals {
-                            self.release_operand(builder, *arg);
+                    if let (Some(ctx), Some(call_func)) = (self.ctx_param, self.call_func) {
+                        // These popped operands are consumed by Call. Transfer them once;
+                        // borrowed/peek marshaling elsewhere retains the original helper.
+                        let take = self
+                            .scalar_take_func
+                            .ok_or("Call requires consuming stack transfer")?;
+                        for operand in
+                            std::iter::once(function_value).chain(arg_vals.iter().copied())
+                        {
+                            let kind = self.scalar_kind(builder, operand);
+                            let call = builder.ins().call(take, &[ctx, operand, kind]);
+                            self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
                         }
 
                         // Call jit_call_function
@@ -9867,6 +9873,7 @@ impl JitCompiler {
             ("jit_loop_dense_view", 2, true),
             ("jit_loop_indexed_read", 4, true),
             ("jit_stack_push_scalar", 3, false),
+            ("jit_stack_take_scalar", 3, true),
             ("jit_scalar_type_error", 6, true),
             ("jit_enter_function", 1, true),
             ("jit_leave_function", 1, false),
@@ -9919,6 +9926,7 @@ impl JitCompiler {
                 "jit_loop_dense_view" => translator.loop_dense_view_func = Some(function),
                 "jit_loop_indexed_read" => translator.loop_indexed_read_func = Some(function),
                 "jit_stack_push_scalar" => translator.scalar_push_func = Some(function),
+                "jit_stack_take_scalar" => translator.scalar_take_func = Some(function),
                 "jit_enter_function" => translator.enter_function_func = Some(function),
                 "jit_leave_function" => translator.leave_function_func = Some(function),
                 _ => translator.scalar_type_error_func = Some(function),
@@ -10026,6 +10034,7 @@ impl JitCompiler {
         builder.symbol("jit_owned_equal", jit_owned_equal as *const u8);
         builder.symbol("jit_owned_operator", jit_owned_operator as *const u8);
         builder.symbol("jit_stack_push_scalar", jit_stack_push_scalar as *const u8);
+        builder.symbol("jit_stack_take_scalar", jit_stack_take_scalar as *const u8);
         builder.symbol("jit_get_return_int", jit_get_return_int as *const u8);
         builder.symbol("jit_get_arg", jit_get_arg as *const u8);
         builder.symbol("jit_enter_function", jit_enter_function as *const u8);
@@ -14644,6 +14653,78 @@ mod tests {
             assert!(context.runtime_error.take().unwrap().contains("StaleHandle"));
         }
         context.owned_roots.leave().unwrap();
+    }
+
+    #[test]
+    fn consuming_stack_transfer_moves_current_roots_and_rejects_reuse() {
+        let mut stack = Vec::with_capacity(8);
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        context.owned_roots.enter().unwrap();
+        let name = String::from("to_int");
+        let pointer = name.as_ptr();
+        let (payload, kind) = context.owned_roots.encode(Value::NativeFunction(name)).unwrap();
+        // SAFETY: live exclusive stack/context; root ownership is checked by helper.
+        unsafe {
+            assert_eq!(jit_stack_take_scalar(&mut context, payload, kind), 0);
+            assert!(matches!(&stack[0], Value::NativeFunction(name) if name.as_ptr() == pointer));
+            assert_eq!(jit_stack_take_scalar(&mut context, payload, kind), 1);
+            assert_eq!(stack.len(), 1);
+            assert!(context.runtime_error.take().unwrap().contains("StaleHandle"));
+            assert_eq!(jit_stack_take_scalar(&mut context, 1, 99), 1);
+            assert_eq!(stack.len(), 1);
+            assert!(context.runtime_error.take().unwrap().contains("InvalidKind"));
+        }
+        let saved = Arc::new(vec![Value::Int(7)]);
+        let (payload, kind) = context.owned_roots.encode(Value::Array(saved.clone())).unwrap();
+        context.owned_roots.enter().unwrap();
+        // A callee with no physical roots must not take a caller's operand.
+        assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
+        assert_eq!(stack.len(), 1);
+        assert!(context.runtime_error.take().unwrap().contains("NotCurrentFrame"));
+        // Also reject caller roots after the nested frame has physical storage.
+        context.owned_roots.encode(Value::NativeFunction("len".into())).unwrap();
+        assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
+        assert_eq!(stack.len(), 1);
+        assert!(context.runtime_error.take().unwrap().contains("NotCurrentFrame"));
+        context.owned_roots.leave().unwrap();
+        context.stack_ptr = std::ptr::null_mut();
+        assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 1);
+        assert!(context.runtime_error.take().unwrap().contains("requires a stack"));
+        context.stack_ptr = &mut stack;
+        assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0);
+        let Value::Array(mut changed) = stack.pop().unwrap() else { panic!("array lost") };
+        assert!(Arc::ptr_eq(&changed, &saved));
+        Arc::make_mut(&mut changed)[0] = Value::Int(9);
+        assert!(matches!(saved[0], Value::Int(7)));
+        context.owned_roots.leave().unwrap();
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+        assert!(context.runtime_error.is_none());
+    }
+
+    #[test]
+    fn consuming_stack_transfer_preserves_immediate_bits_without_roots() {
+        let mut stack = Vec::with_capacity(8);
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        for value in [
+            Value::Int(i64::MIN),
+            Value::Int(i64::MAX),
+            Value::Bool(false),
+            Value::Null,
+            Value::Float(-0.0),
+            Value::Float(f64::from_bits(0x7ff8_0000_0000_0123)),
+        ] {
+            let (payload, kind) = crate::native_scalar::encode(&value).unwrap();
+            assert_eq!(unsafe { jit_stack_take_scalar(&mut context, payload, kind) }, 0);
+            let actual = stack.pop().unwrap();
+            if let (Value::Float(a), Value::Float(b)) = (&value, &actual) {
+                assert_eq!(a.to_bits(), b.to_bits());
+            } else {
+                assert!(Value::equals(&value, &actual));
+            }
+        }
+        assert_eq!(context.owned_roots.depth(), 0);
+        assert_eq!(context.owned_roots.storage_state().1, 0);
+        assert!(context.runtime_error.is_none());
     }
 
     #[test]

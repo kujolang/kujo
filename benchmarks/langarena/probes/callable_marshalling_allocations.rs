@@ -61,40 +61,56 @@ static ALLOCATOR: CountingAllocator = CountingAllocator;
 
 use kujo::jit::{
     jit_enter_function, jit_leave_function, jit_release_operand, jit_stack_pop,
-    jit_stack_push_scalar, VMContext,
+    jit_stack_push_scalar, jit_stack_take_scalar, VMContext,
 };
 
 fn main() {
-    for calls in [1, 128, 8192] {
-        let mut stack = Vec::with_capacity(2);
-        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
-        // SAFETY: independent live stack and context; calls are sequential.
-        assert_eq!(unsafe { jit_enter_function(&mut context) }, 0);
-        ALLOCATIONS.with(|v| v.set(0));
-        REQUESTED_BYTES.with(|v| v.set(0));
-        for _ in 0..calls {
-            stack.push(Value::NativeFunction("to_int".into()));
-            let operand = unsafe { jit_stack_pop(&mut context) };
-            let kind = context.return_value_kind;
+    for consuming in [false, true] {
+        for calls in [1, 128, 8192] {
+            let mut stack = Vec::with_capacity(2);
+            let mut context =
+                VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+            // SAFETY: independent live stack and context; calls are sequential.
+            assert_eq!(unsafe { jit_enter_function(&mut context) }, 0);
+            ALLOCATIONS.with(|v| v.set(0));
+            REQUESTED_BYTES.with(|v| v.set(0));
+            for _ in 0..calls {
+                stack.push(Value::NativeFunction("to_int".into()));
+                let operand = unsafe { jit_stack_pop(&mut context) };
+                let kind = context.return_value_kind;
+                assert!(context.runtime_error.is_none());
+                TRACK.with(|v| v.set(true));
+                if consuming {
+                    assert_eq!(unsafe { jit_stack_take_scalar(&mut context, operand, kind) }, 0);
+                } else {
+                    unsafe { jit_stack_push_scalar(&mut context, operand, kind) };
+                }
+                TRACK.with(|v| v.set(false));
+                assert!(
+                    matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "to_int")
+                );
+                if !consuming {
+                    // The borrowed API must remain reusable; the consuming API is separate.
+                    unsafe { jit_stack_push_scalar(&mut context, operand, kind) };
+                    assert!(
+                        matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "to_int")
+                    );
+                    assert_eq!(unsafe { jit_release_operand(&mut context, operand, kind) }, 0);
+                }
+                assert!(context.runtime_error.is_none());
+            }
+            println!(
+                "consuming={consuming} calls={calls} allocations={} requested_bytes={}",
+                ALLOCATIONS.with(Cell::get),
+                REQUESTED_BYTES.with(Cell::get)
+            );
+            if consuming {
+                assert_eq!(ALLOCATIONS.with(Cell::get), 0);
+                assert_eq!(REQUESTED_BYTES.with(Cell::get), 0);
+            }
+            unsafe { jit_leave_function(&mut context) };
             assert!(context.runtime_error.is_none());
-            TRACK.with(|v| v.set(true));
-            unsafe { jit_stack_push_scalar(&mut context, operand, kind) };
-            TRACK.with(|v| v.set(false));
-            assert!(matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "to_int"));
-            // Borrowed marshalling must leave the operand available for another
-            // read. A future consuming helper must be separate from this API.
-            unsafe { jit_stack_push_scalar(&mut context, operand, kind) };
-            assert!(matches!(stack.pop(), Some(Value::NativeFunction(name)) if name == "to_int"));
-            assert_eq!(unsafe { jit_release_operand(&mut context, operand, kind) }, 0);
-            assert!(context.runtime_error.is_none());
+            assert!(stack.is_empty());
         }
-        println!(
-            "calls={calls} allocations={} requested_bytes={}",
-            ALLOCATIONS.with(Cell::get),
-            REQUESTED_BYTES.with(Cell::get)
-        );
-        unsafe { jit_leave_function(&mut context) };
-        assert!(context.runtime_error.is_none());
-        assert!(stack.is_empty());
     }
 }
