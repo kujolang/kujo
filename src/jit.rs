@@ -4423,16 +4423,23 @@ pub unsafe extern "C" fn jit_call_function(
     // In JIT mode, stack order is: [function, arg0, arg1, ...] (function pushed first by LoadVar)
     // So we need to pop args first (they're on top), then function (at bottom)
 
-    // Pop arguments from stack (in reverse order)
-    let mut args = Vec::new();
-    for _ in 0..arg_count {
-        if let Some(arg) = stack.pop() {
-            args.push(arg);
-        } else {
-            return 4; // Error: stack underflow (not enough args)
+    // Transfer valid calls' ordered suffix without repeated growth or reversal.
+    // Preserve the legacy malformed-stack consumption and drop order below.
+    let count = usize::try_from(arg_count).unwrap_or(0);
+    let args = if count <= stack.len() {
+        stack.split_off(stack.len() - count)
+    } else {
+        let mut args = Vec::new();
+        for _ in 0..arg_count {
+            if let Some(arg) = stack.pop() {
+                args.push(arg);
+            } else {
+                return 4; // Error: stack underflow (not enough args)
+            }
         }
-    }
-    args.reverse(); // Restore original order
+        args.reverse();
+        args
+    };
 
     // Now pop function from stack
     let function = if let Some(f) = stack.pop() {

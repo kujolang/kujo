@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Transfer native callback arguments in order with one exact-sized allocation,
+  preserving owned values, evaluation order and malformed-stack error behavior.
+
 - Count calls from native code toward JIT helper promotion, including the first
   call to loop helpers. Hot helpers reached only through compiled callers can
   now compile under the existing eligibility and fallback rules.

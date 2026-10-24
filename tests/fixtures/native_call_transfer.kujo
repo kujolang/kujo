@@ -1,0 +1,25 @@
+mut order := ""
+func mark(n) { order += str(n) return n }
+func transfer_eight(a,b,c,d,e,f,g,h) {
+    mut changed := a
+    changed[0] += b
+    return [changed,c,d,e,f,g,h]
+}
+func ordered_transfer(seed) {
+    return transfer_eight(seed,mark(1),mark(2),mark(3),mark(4),mark(5),mark(6),mark(7))
+}
+func transfer_failure(a,b,c,d,e,f,g,h) { return a[99] }
+let seed := [10]
+mut i := 0
+mut caught := 0
+while i < 160 {
+    order = ""
+    assert_equal(ordered_transfer(seed), [[11],2,3,4,5,6,7])
+    assert_equal(order,"1234567")
+    assert_equal(seed,[10])
+    try { transfer_failure(seed,1,2,3,4,5,6,7) } except error { caught += 1 }
+    assert_equal(seed,[10])
+    i += 1
+}
+assert_equal(caught,160)
+print("PASS")
