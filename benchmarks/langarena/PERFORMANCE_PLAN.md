@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Production scalar-read profile](native-scalar-index-profile-2026-10-24.json)
+  on frozen `d777339` identifies indexed-read dispatch, value copying and scalar
+  materialization as hot paths. The sample was taken during the first unchanged
+  production Matmul warmup; it does not establish a checksum pass or speedup.
+  A checked immediate-array read path is the next measured candidate.
+
 - [Native call setup reservation](native-call-setup-reservation-2026-10-24.json)
   reduces warmed allocations per call from 6/10/15 to 5/8/12 at arities 1/4/8
   by reserving parameter-map capacity and borrowing cached function names.

@@ -1,0 +1,548 @@
+{
+  "scope": "Early production Matmul::Single CPU sample from frozen d777339. Production run still active when recorded; no completed warmup, checksum or competitive-speed acceptance claimed.",
+  "profile": {
+    "scope": "Top-of-stack sample counts; not native-time percentages or competitive timings. Dynamic JIT addresses may remain unmapped.",
+    "source_commit": "d777339e23eb970b0c25148dbdac5dd2b5932fed",
+    "binary_sha256": "614a8a2e002ac4294622bbc7260b596ffffd39059adae3d6c565e653576a317c",
+    "map_sha256": "149009f3d460c3975aa14fff9ae02bdb109e4e5a77c66171d4c6d354917f3f1b",
+    "sample_sha256": "76c067b0b9cc41e665e72da7b3ad2cdfd4f03f1858047c98bb422a788e32d94e",
+    "uuid": "9756B7C0-1B1A-33D1-990D-5313CE073F3E",
+    "rows": [
+      {
+        "label": "__ulock_wait  (in libsystem_kernel.dylib)",
+        "samples": 4102,
+        "mapped": false
+      },
+      {
+        "label": "_platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)",
+        "samples": 479,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 141,
+        "mapped": true,
+        "offset": 253
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 134,
+        "mapped": true,
+        "offset": 520
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 115,
+        "mapped": true,
+        "offset": 523
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 50,
+        "mapped": true,
+        "offset": 359
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 45,
+        "mapped": true,
+        "offset": 256
+      },
+      {
+        "label": "DYLD-STUB$$_platform_memmove  (in libsystem_platform.dylib)",
+        "samples": 25,
+        "mapped": false
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 19,
+        "mapped": true,
+        "offset": 33
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 18,
+        "mapped": true,
+        "offset": 318
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 17,
+        "mapped": true,
+        "offset": 65
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 12,
+        "mapped": true,
+        "offset": 3733
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 11,
+        "mapped": true,
+        "offset": 5
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 11,
+        "mapped": true,
+        "offset": 20
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 11,
+        "mapped": true,
+        "offset": 86
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 10,
+        "mapped": true,
+        "offset": 471
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 10,
+        "mapped": true,
+        "offset": 486
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 10,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 10,
+        "mapped": true,
+        "offset": 130
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 10,
+        "mapped": true,
+        "offset": 375
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 10,
+        "mapped": true,
+        "offset": 1773
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718f25b]",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 10
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 9,
+        "mapped": true,
+        "offset": 270
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 4
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 8
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 1740
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 3403
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718f341]",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 20
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 195
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 295
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 323
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 497
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 8,
+        "mapped": true,
+        "offset": 770
+      },
+      {
+        "label": "_jit_return_scalar_kind",
+        "samples": 8,
+        "mapped": true,
+        "offset": 1
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 8,
+        "mapped": true,
+        "offset": 9
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 32
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 8,
+        "mapped": true,
+        "offset": 148
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 8,
+        "mapped": true,
+        "offset": 155
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 36
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 143
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 70
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718f182]",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 6
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 63
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 216
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 7,
+        "mapped": true,
+        "offset": 793
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 7,
+        "mapped": true,
+        "offset": 4
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 7,
+        "mapped": true,
+        "offset": 145
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 7,
+        "mapped": true,
+        "offset": 171
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 655
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 94
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718e9b2]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718f4af]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff317190bb4]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff3171915f2]",
+        "samples": 6,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 241
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 6,
+        "mapped": true,
+        "offset": 334
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 6,
+        "mapped": true,
+        "offset": 20
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 10
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 51
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 1452
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 6,
+        "mapped": true,
+        "offset": 151
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 6,
+        "mapped": true,
+        "offset": 315
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 1
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 3392
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 1
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718f361]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718f537]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718fb4d]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff31718fb5f]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff317190b05]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff3171915af]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "???  (in <unknown binary>)  [0x7ff317191623]",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 582
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 771
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 5,
+        "mapped": true,
+        "offset": 812
+      },
+      {
+        "label": "_jit_runtime_failed",
+        "samples": 5,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 0
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 62
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 5,
+        "mapped": true,
+        "offset": 301
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 49
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 128
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 157
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 165
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 62
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 3379
+      },
+      {
+        "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 3726
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 5,
+        "mapped": true,
+        "offset": 51
+      }
+    ]
+  },
+  "production_config": {
+    "name": "Matmul::Single",
+    "checksum": 3655420808,
+    "n": 900,
+    "iterations": 10
+  },
+  "phase_output_at_sample": "@profile create-start ns=371029\n@profile create-done ns=1671221129\n@profile prepare-done ns=1671446325\n",
+  "candidate": "Checked immediate reads from owned arrays could encode scalar elements directly, avoiding temporary Value/Cow materialization. All non-scalar values, invalid roots and index errors must preserve existing VM contracts.",
+  "artifacts": {
+    "matmul-production-sample.txt": "76c067b0b9cc41e665e72da7b3ad2cdfd4f03f1858047c98bb422a788e32d94e",
+    "matmul-production-symbolized.json": "2c8aaa22cdf092170e57db324c8359e31841c6336aa0c8e362a768cb36ce2ddb"
+  }
+}
