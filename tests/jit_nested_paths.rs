@@ -235,3 +235,55 @@ print("PASS")
     );
     check(source, &["alter", "rewrite"]);
 }
+
+#[test]
+fn native_field_replacement_preserves_struct_snapshots() {
+    let mut source = String::from(
+        r#"
+struct Box { item: any }
+func replace(input,value) { mut state := input state.item = value return state }
+let object := Box { item: [1] }
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+assert_equal(replace(object,[9]),Box { item: [9] })
+assert_equal(replace(object,null),Box { item: null })
+assert_equal(replace(object,"snow"),Box { item: "snow" })
+"#,
+        );
+    }
+    source.push_str(
+        r#"
+mut unchanged := 7
+mut caught := 0
+try { unchanged = replace(1,9) } except error { caught += 1 }
+assert_equal(caught,1)
+assert_equal(unchanged,7)
+assert_equal(object,Box { item: [1] })
+print("PASS")
+"#,
+    );
+    check(source, &["replace"]);
+}
+
+#[test]
+fn native_field_loop_preserves_retained_struct_snapshot() {
+    check(
+        r#"
+struct Box { item: any }
+func once() {
+    mut object := Box { item: 0 }
+    let saved := object
+    mut i := 0
+    while i < 200 { object.item = i i += 1 }
+    return [object,saved]
+}
+assert_equal(once(),[Box { item: 199 },Box { item: 0 }])
+print("PASS")
+"#
+        .into(),
+        &[],
+    );
+}

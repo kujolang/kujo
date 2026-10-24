@@ -1061,6 +1061,55 @@ pub unsafe extern "C" fn jit_field_read(
     }
 }
 
+/// Consume a field-write operand through the canonical VM contract.
+#[no_mangle]
+// SAFETY: context roots are exclusive, and name_ptr is compiler-retained metadata.
+// This operation invokes no user callbacks. Operand slots remain live for release.
+pub unsafe extern "C" fn jit_field_write(
+    ctx: *mut VMContext,
+    object: i64,
+    object_kind: i64,
+    value: i64,
+    value_kind: i64,
+    name_ptr: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let result = (|| {
+        let name = (name_ptr as *const String).as_ref().ok_or("Missing native field name")?;
+        let value = ctx
+            .owned_roots
+            .clone_value(value, value_kind)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let object = if object_kind == crate::native_owned::OWNED {
+            std::mem::replace(
+                ctx.owned_roots
+                    .current_value_mut(object, object_kind)
+                    .map_err(|error| format!("Native ownership error: {error:?}"))?,
+                Value::Null,
+            )
+        } else {
+            ctx.owned_roots
+                .clone_value(object, object_kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?
+        };
+        let (updated, context) = VM::set_field_value(object, value, name.clone())?;
+        VM::ensure_value_nesting_depth(&updated, context)?;
+        ctx.owned_roots
+            .encode(updated)
+            .map_err(|error| format!("Native ownership error: {error:?}"))
+    })();
+    match result {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Match Call's argument suffix after an immediately preceding FieldGet.
 #[no_mangle]
 // SAFETY: ctx and its stack are exclusive. No pointers or references escape.
@@ -4736,6 +4785,7 @@ struct BytecodeTranslator {
     make_array_func: Option<FuncRef>,
     make_struct_func: Option<FuncRef>,
     field_read_func: Option<FuncRef>,
+    field_write_func: Option<FuncRef>,
     field_call_func: Option<FuncRef>,
     field_call_sites: std::collections::HashSet<usize>,
     struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
@@ -4905,6 +4955,7 @@ impl BytecodeTranslator {
             make_array_func: None,
             make_struct_func: None,
             field_read_func: None,
+            field_write_func: None,
             field_call_func: None,
             field_call_sites: Default::default(),
             struct_shapes: HashMap::new(),
@@ -5050,6 +5101,7 @@ impl BytecodeTranslator {
 
             // Dict/Array operations
             OpCode::FieldGet(_) => (1, 1),
+            OpCode::FieldSet(_) => (2, 1),
             OpCode::IndexGet => (2, 1), // Pop object + index, push value
             OpCode::IndexSet => (3, 0), // Pop object + index + value, push nothing
             OpCode::UpdateBindingPath(_, path) => {
@@ -6373,6 +6425,27 @@ impl BytecodeTranslator {
                     *self.blocks.get(&(pc + 1)).ok_or("Missing iteration body target")?;
                 builder.ins().brif(exhausted, end_block, &end_args, next_block, &next_args);
                 return Ok(true);
+            }
+
+            OpCode::FieldSet(name) => {
+                let object = self.pop_value()?;
+                let value = self.pop_value()?;
+                let ctx = self.ctx_param.ok_or("Field write requires context")?;
+                let helper = self.field_write_func.ok_or("Field write requires helper")?;
+                let name =
+                    self.field_names.get(name).ok_or("Field write requires retained name")?;
+                let pointer = builder.ins().iconst(types::I64, Arc::as_ptr(name) as i64);
+                let object_kind = self.scalar_kind(builder, object);
+                let value_kind = self.scalar_kind(builder, value);
+                let call = builder
+                    .ins()
+                    .call(helper, &[ctx, object, object_kind, value, value_kind, pointer]);
+                let result = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, result);
+                self.release_operand(builder, object);
+                self.release_operand(builder, value);
+                self.push_value(result);
+                return Ok(false);
             }
 
             OpCode::FieldGet(name) => {
@@ -8765,7 +8838,9 @@ impl JitCompiler {
             .instructions
             .iter()
             .filter_map(|instruction| {
-                let OpCode::FieldGet(name) = instruction else { return None };
+                let (OpCode::FieldGet(name) | OpCode::FieldSet(name)) = instruction else {
+                    return None;
+                };
                 let retained =
                     self.field_names.entry(name.clone()).or_insert_with(|| Arc::new(name.clone()));
                 Some((name.clone(), Arc::clone(retained)))
@@ -8833,6 +8908,7 @@ impl JitCompiler {
             ("jit_make_array", 2, true),
             ("jit_prepare_field_call", 2, true),
             ("jit_field_read", 4, true),
+            ("jit_field_write", 6, true),
             ("jit_indexed_read", 5, true),
             ("jit_for_next", 5, true),
             ("jit_indexed_write", 10, true),
@@ -8878,6 +8954,7 @@ impl JitCompiler {
                 "jit_make_array" => translator.make_array_func = Some(function),
                 "jit_prepare_field_call" => translator.field_call_func = Some(function),
                 "jit_field_read" => translator.field_read_func = Some(function),
+                "jit_field_write" => translator.field_write_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_for_next" => translator.for_next_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
@@ -9016,6 +9093,7 @@ impl JitCompiler {
         );
         builder.symbol("jit_prepare_field_call", jit_prepare_field_call as *const u8);
         builder.symbol("jit_field_read", jit_field_read as *const u8);
+        builder.symbol("jit_field_write", jit_field_write as *const u8);
         builder.symbol("jit_make_struct", jit_make_struct as *const u8);
         builder.symbol("jit_make_array", jit_make_array as *const u8);
         builder.symbol("jit_make_dict", jit_make_dict as *const u8);
@@ -9178,7 +9256,9 @@ impl JitCompiler {
             OpCode::AddInPlace(_) => false,
 
             // Dict/Array operations - in-place ops supported for int paths
-            OpCode::FieldGet(_) | OpCode::IndexGet | OpCode::ForNext(_) => true,
+            OpCode::FieldGet(_) | OpCode::FieldSet(_) | OpCode::IndexGet | OpCode::ForNext(_) => {
+                true
+            }
             OpCode::TryStringAppendAssign(_, _) | OpCode::TryAppendAssign(_, _) => true,
             OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_)
@@ -11605,6 +11685,53 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_field_write_consumes_temporary_without_losing_snapshots() {
+        for count in [8, 128] {
+            let mut ctx =
+                VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+            ctx.owned_roots.enter().unwrap();
+            let fields = Arc::new(HashMap::from([("item".into(), Value::Int(0))]));
+            let pointer = Arc::as_ptr(&fields) as usize;
+            let (mut object, kind) =
+                ctx.owned_roots.encode(Value::Struct { name: "Box".into(), fields }).unwrap();
+            let name = String::from("item");
+            for value in 1..=count {
+                let updated = unsafe {
+                    jit_field_write(&mut ctx, object, kind, value, 0, &name as *const String as i64)
+                };
+                assert!(ctx.runtime_error.is_none());
+                ctx.owned_roots.release(object, kind).unwrap();
+                object = updated;
+                match ctx.owned_roots.current_value_mut(object, kind).unwrap() {
+                    Value::Struct { fields, .. } => {
+                        assert_eq!(Arc::as_ptr(fields) as usize, pointer);
+                        assert!(
+                            matches!(fields.get("item"), Some(Value::Int(actual)) if *actual == value)
+                        );
+                    }
+                    _ => panic!(),
+                }
+            }
+            let saved = ctx.owned_roots.clone_value(object, kind).unwrap();
+            let updated = unsafe {
+                jit_field_write(&mut ctx, object, kind, 999, 0, &name as *const String as i64)
+            };
+            assert!(ctx.runtime_error.is_none());
+            ctx.owned_roots.release(object, kind).unwrap();
+            assert!(
+                matches!(saved,Value::Struct {ref fields,..} if matches!(fields.get("item"),Some(Value::Int(actual)) if *actual == count))
+            );
+            assert!(
+                matches!(ctx.owned_roots.current_value_mut(updated,kind).unwrap(),Value::Struct {fields,..} if matches!(fields.get("item"),Some(Value::Int(999))) && Arc::as_ptr(fields) as usize != pointer)
+            );
+            ctx.owned_roots.leave().unwrap();
+            let (_, live, slots, _) = ctx.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(slots <= 4);
+        }
+    }
+
     #[test]
     fn native_path_depth_cache_survives_helper_call_contexts() {
         fn update(vm: &mut VM, root: Value, value: i64, binding_kind: i64) -> (Value, usize) {

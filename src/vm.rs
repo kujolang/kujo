@@ -1135,6 +1135,70 @@ impl VM {
         }
     }
 
+    pub(crate) fn set_field_value(
+        object: Value,
+        value: Value,
+        field: String,
+    ) -> Result<(Value, &'static str), String> {
+        Ok(match object {
+            Value::Struct { name, mut fields } => {
+                Arc::make_mut(&mut fields).insert(field, value);
+                (Value::Struct { name, fields }, "building struct value")
+            }
+            Value::Dict(dict) => {
+                let mut dict_clone = dict;
+                let dict_mut = Arc::make_mut(&mut dict_clone);
+                dict_mut.insert(Arc::from(field), value);
+                (Value::Dict(dict_clone), "updating dictionary entry")
+            }
+            Value::FixedDict { keys, mut values } => {
+                if let Some(idx) = keys.iter().position(|k| k.as_ref() == field.as_str()) {
+                    values[idx] = value;
+                    (Value::FixedDict { keys, values }, "updating fixed dictionary entry")
+                } else {
+                    let mut dict = DictMap::default();
+                    for (k, v) in keys.iter().cloned().zip(values.into_iter()) {
+                        dict.insert(k, v);
+                    }
+                    dict.insert(Arc::from(field), value);
+                    (Value::Dict(Arc::new(dict)), "updating dictionary entry")
+                }
+            }
+            Value::IntDict(dict) => {
+                let mut dict_clone = DictMap::default();
+                for (k, v) in dict.iter() {
+                    dict_clone.insert(k.to_string().into(), v.clone());
+                }
+                dict_clone.insert(Arc::from(field), value);
+                (Value::Dict(Arc::new(dict_clone)), "updating dictionary entry")
+            }
+            Value::DenseIntDict(values) => match field.parse::<i64>() {
+                Ok(int_key) => {
+                    if int_key < 0 {
+                        let mut int_dict = Self::dense_int_dict_to_int_dict(&values);
+                        int_dict.insert(int_key, value);
+                        (Value::IntDict(Arc::new(int_dict)), "updating integer dictionary entry")
+                    } else {
+                        let mut values = values;
+                        let values_mut = Arc::make_mut(&mut values);
+                        let index = int_key as usize;
+                        if index >= values_mut.len() {
+                            values_mut.resize(index + 1, Value::Null);
+                        }
+                        values_mut[index] = value;
+                        (Value::DenseIntDict(values), "updating dense integer dictionary entry")
+                    }
+                }
+                Err(_) => {
+                    let mut dict = Self::dense_int_dict_to_dict(&values);
+                    dict.insert(Arc::from(field), value);
+                    (Value::Dict(Arc::new(dict)), "updating dictionary entry")
+                }
+            },
+            _ => return Err("Cannot set field on non-struct".to_string()),
+        })
+    }
+
     fn push_checked_value(&mut self, value: Value, context: &str) -> Result<bool, String> {
         if let Err(message) = Self::ensure_value_nesting_depth(&value, context) {
             if self.exception_handlers.is_empty() {
@@ -5507,105 +5571,15 @@ impl VM {
                 OpCode::FieldSet(field) => {
                     let object = self.stack.pop().ok_or("Stack underflow")?;
                     let value = self.stack.pop().ok_or("Stack underflow")?;
-
-                    match object {
-                        Value::Struct { name, mut fields } => {
-                            Arc::make_mut(&mut fields).insert(field, value);
-                            if !self.push_checked_value(
-                                Value::Struct { name, fields },
-                                "building struct value",
-                            )? {
-                                continue;
-                            }
+                    let (updated, context) = match Self::set_field_value(object, value, field) {
+                        Ok(result) => result,
+                        Err(error) => {
+                            self.throw_runtime_value(Value::Error(error))?;
+                            continue;
                         }
-                        Value::Dict(dict) => {
-                            let mut dict_clone = dict;
-                            let dict_mut = Arc::make_mut(&mut dict_clone);
-                            dict_mut.insert(Arc::from(field), value);
-                            if !self.push_checked_value(
-                                Value::Dict(dict_clone),
-                                "updating dictionary entry",
-                            )? {
-                                continue;
-                            }
-                        }
-                        Value::FixedDict { keys, mut values } => {
-                            if let Some(idx) =
-                                keys.iter().position(|k| k.as_ref() == field.as_str())
-                            {
-                                values[idx] = value;
-                                if !self.push_checked_value(
-                                    Value::FixedDict { keys, values },
-                                    "updating fixed dictionary entry",
-                                )? {
-                                    continue;
-                                }
-                            } else {
-                                let mut dict = DictMap::default();
-                                for (k, v) in keys.iter().cloned().zip(values.into_iter()) {
-                                    dict.insert(k, v);
-                                }
-                                dict.insert(Arc::from(field), value);
-                                if !self.push_checked_value(
-                                    Value::Dict(Arc::new(dict)),
-                                    "updating dictionary entry",
-                                )? {
-                                    continue;
-                                }
-                            }
-                        }
-                        Value::IntDict(dict) => {
-                            let mut dict_clone = DictMap::default();
-                            for (k, v) in dict.iter() {
-                                dict_clone.insert(k.to_string().into(), v.clone());
-                            }
-                            dict_clone.insert(Arc::from(field), value);
-                            if !self.push_checked_value(
-                                Value::Dict(Arc::new(dict_clone)),
-                                "updating dictionary entry",
-                            )? {
-                                continue;
-                            }
-                        }
-                        Value::DenseIntDict(values) => match field.parse::<i64>() {
-                            Ok(int_key) => {
-                                if int_key < 0 {
-                                    let mut int_dict = Self::dense_int_dict_to_int_dict(&values);
-                                    int_dict.insert(int_key, value);
-                                    if !self.push_checked_value(
-                                        Value::IntDict(Arc::new(int_dict)),
-                                        "updating integer dictionary entry",
-                                    )? {
-                                        continue;
-                                    }
-                                } else {
-                                    let mut values = values;
-                                    let values_mut = Arc::make_mut(&mut values);
-                                    let index = int_key as usize;
-                                    if index >= values_mut.len() {
-                                        values_mut.resize(index + 1, Value::Null);
-                                    }
-                                    values_mut[index] = value;
-                                    if !self.push_checked_value(
-                                        Value::DenseIntDict(values),
-                                        "updating dense integer dictionary entry",
-                                    )? {
-                                        continue;
-                                    }
-                                }
-                            }
-                            Err(_) => {
-                                let mut dict = Self::dense_int_dict_to_dict(&values);
-                                dict.insert(Arc::from(field), value);
-                                if !self.push_checked_value(
-                                    Value::Dict(Arc::new(dict)),
-                                    "updating dictionary entry",
-                                )? {
-                                    continue;
-                                }
-                            }
-                        },
-                        _ => return Err("Cannot set field on non-struct".to_string()),
+                    };
+                    if !self.push_checked_value(updated, context)? {
+                        continue;
                     }
                 }
 

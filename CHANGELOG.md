@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile ordinary field replacement in experimental native functions and loops,
+  preserving snapshots and nesting checks. Route invalid VM field assignments
+  through exception handlers while retaining failed assignment targets.
+
 - Release private native rebinding snapshots under caller exception handlers
   while retaining same-invocation recovery state and failed assignment targets.
 

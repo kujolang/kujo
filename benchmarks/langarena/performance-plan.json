@@ -91,7 +91,8 @@
         "native-guarded-collections-2026-10-23.json",
         "native-iteration-2026-10-24.json",
         "native-owned-global-assignment-2026-10-24.json",
-        "native-nested-writes-2026-10-24.json"
+        "native-nested-writes-2026-10-24.json",
+        "native-field-replacement-2026-10-24.json"
       ]
     },
     {
@@ -3654,6 +3655,11 @@
       "scope": "Frozen cb21458 Sort::Merge verification",
       "result": "Unchanged checksum passed; binary/input/report hashes and one measurement schema verified. All50 run remains separate. Diagnostic debug elapsed372505484823ns is not a paired performance comparison.",
       "evidence": "checksums-2026-10-24-native-caller-handler-merge-jit.json"
+    },
+    {
+      "scope": "Native field replacement and VM error unwinding",
+      "result": "1066library passed,8ignored;132integrations passed. Native functions/loops, snapshot/root lifetime and caught field errors verified. Does not close guarded append admission.",
+      "evidence": "native-field-replacement-2026-10-24.json"
     }
   ]
 }

@@ -368,3 +368,13 @@ Compiled loops, physical VM slots and shared maps retain the conservative guard.
 If native exception handlers are added, this admission assumption must change.
 Regression coverage checks both ownership counts and caller/same-invocation
 recovery, including unchanged failed targets and retained snapshots.
+
+Native FieldSet consumes the temporary object operand into the shared VM field
+setter, leaving its root slot live and empty until generated operand release.
+Real retained snapshots still force COW; unique temporary struct maps reuse their
+allocation. Field-name metadata is retained by the compiler for compiled-code
+lifetime. The shared setter retains VM dictionary representation transitions;
+source-level dot-assignment parity tests use structs. Both paths retain nesting
+checks. Invalid VM field assignment now unwinds through the normal exception
+path instead of escaping the caller's catch. Guarded field append remains a
+separate native-admission milestone.

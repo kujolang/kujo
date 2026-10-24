@@ -1,0 +1,31 @@
+{
+  "scope": "Native FieldSet admission and VM field-error recovery; prerequisite for field append fallback, not full append admission or speed acceptance.",
+  "source_parent": "7b84895783da6fc8fd18e593169431fc47f16735",
+  "source_sha256": {
+    "src/jit.rs": "912279627d93d156f64bf6e3010c1f1231f8c38484f2049fe0993b5216652e7a",
+    "src/vm.rs": "a189e140572b70dcab371c0382655f43256664ee0ea776eded7be7abab383480",
+    "tests/jit_nested_paths.rs": "096a749f79c4bdde5f9930063a69395393018650d3830575bdaf2753e33bd8a4"
+  },
+  "reproductions": {
+    "native": "Struct field replacement passed interpreter/VM but replace function failed JIT compilation due to FieldSet.",
+    "vm_error": "Frozen cb21458 interpreter caught field assignment on integer and retained target7; VM exited4 instead of entering catch."
+  },
+  "implementation": "Share VM set_field_value across bytecode/native execution, retaining representation conversion, depth contexts and COW semantics. Native field names retained by compiler; owned object slot emptied before mutation, then released normally. VM setter failures now enter normal exception unwinding.",
+  "verification": {
+    "library_passed": 1066,
+    "library_ignored": 8,
+    "integration_passed": 132,
+    "native": "Function and separately compiled loop entry required; scalar/null/collection replacement and retained struct snapshots tested.",
+    "ownership": "8/128 direct native writes retain unique field-map identity, saved snapshot forces COW, zero live roots after leave and capacity<=4.",
+    "errors": "Failed target and catch counter asserted across interpreter,VM,JIT.",
+    "format": "cargo fmt --check passed",
+    "minimal": "cargo check --no-default-features --lib passed"
+  },
+  "logs": [
+    "/tmp/kujo-native-field-set-baseline.log",
+    "/tmp/kujo-field-error-interpreter-baseline.log",
+    "/tmp/kujo-field-error-vm-baseline.log",
+    "/tmp/kujo-native-field-set-contracts-final.log"
+  ],
+  "remaining": "GuardAppendPath/AppendBindingPath and pop native admission, current all50/production, CPU/allocation/native-time profiles, controlled Goose/Rust comparisons and platform/release gates."
+}
