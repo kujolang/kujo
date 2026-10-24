@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "scope": "Borrow live SSA local roots during synchronous indexed reads; preserve ordinary named/captured loads and returned value ownership.",
+  "baseline_source_commit": "514790c",
+  "profile": "native-indexed-read-profile-2026-10-24.json",
+  "before": [
+    {
+      "reads": 9,
+      "issued_handles": 11
+    },
+    {
+      "reads": 129,
+      "issued_handles": 131
+    }
+  ],
+  "after": [
+    {
+      "reads": 9,
+      "issued_handles_upper_bound": 2
+    },
+    {
+      "reads": 129,
+      "issued_handles_upper_bound": 2
+    }
+  ],
+  "verification": {
+    "library_passed": 1078,
+    "library_ignored": 8,
+    "integration_passed": 150,
+    "integration_failed": 0,
+    "cost_test": "jit::tests::compiled_scalar_indexed_reads_do_not_issue_per_read_roots",
+    "semantic_coverage": "jit_nested_paths runs interpreter, VM and JIT; covers returned snapshots, negative/fractional indexes, missing keys, scalar errors, named/captured paths and loop state.",
+    "format": "passed",
+    "minimal_feature_library": "passed"
+  },
+  "log_hashes": {
+    "/tmp/kujo-indexed-root-churn-baseline-corrected.log": "8ed01a3bb2237c61dbbd61ab142324bb4a93729a421da6152c238b7573127c68",
+    "/tmp/kujo-indexed-root-borrow-library.log": "84d2082163f1c88154a8d3b97d0a86ff22d1138633cc7403373d66fdef62ac1a",
+    "/tmp/kujo-indexed-root-borrow-regressions.log": "53fab3fb6062cdfc560bb3b18e4fac85cc30250b10d2dec96bb320d34616e8f3",
+    "/tmp/kujo-indexed-root-borrow-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/tmp/kujo-indexed-root-borrow-minimal.log": "fdabead6e591df1252f8329bc07ba37dae27799e6d823dc9f50355c76c567d99"
+  },
+  "limitations": [
+    "Whole-function handle count, not elapsed-time speedup.",
+    "Initial test directly invoked loop compiler without satisfying runtime entry eligibility; corrected fixture exercises whole-function entry. The initial harness failure is not treated as a language defect.",
+    "All-50 release checksum, production and competitive acceptance remain open."
+  ]
+}

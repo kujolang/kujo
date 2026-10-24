@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Borrowed local indexed reads](native-local-indexed-borrow-2026-10-24.json)
+  eliminate per-read temporary root creation for live SSA locals: 9/129 reads
+  previously issued 11/131 handles and now issue at most 2. Named/captured loads
+  retain their existing paths. 1,078 library tests (8 ignored), 150 integration
+  tests and formatting pass, including three-runtime snapshots and error parity.
+  This is deterministic ownership-cost evidence, not an elapsed-time speedup.
+
 - [Fixed dictionary COW](fixed-dictionary-cow-2026-10-24.json) removes container
   copies from compiled local field reads: all six width/read-count combinations
   now allocate zero bytes, previously up to 17,965,056 bytes. Snapshot writes

@@ -288,6 +288,11 @@ impl NativeCallRoots {
     }
 
     #[cfg(test)]
+    pub(crate) fn issued_handles(&self) -> u64 {
+        self.values.next_handle.expect("test handle counter exhausted") - 1
+    }
+
+    #[cfg(test)]
     pub(crate) fn storage_state(&self) -> (usize, usize, usize, usize) {
         (
             self.depth,

@@ -7779,15 +7779,34 @@ impl BytecodeTranslator {
                 }
                 if self.tracks_function_depth || self.loop_resume_enabled {
                     let index = self.pop_value()?;
-                    // Whole functions own callee bindings; local_slots_ptr
-                    // belongs to their suspended caller, not to this function.
-                    self.translate_instruction(
-                        builder,
-                        pc,
-                        &OpCode::LoadLocal(*slot_index),
-                        constants,
-                    )?;
-                    let object = self.pop_value()?;
+                    // The synchronous read helper runs no user callbacks. A live
+                    // SSA local can therefore lend its root without duplicating
+                    // it for this operand. Named/captured bindings still use the
+                    // ordinary load path. Never borrow the suspended caller's
+                    // physical slots for a whole-function callee.
+                    let borrowed_local = if self.use_local_slots {
+                        self.local_names
+                            .get(*slot_index)
+                            .filter(|name| !self.non_int_locals.contains(*name))
+                            .and_then(|name| self.local_variables.get(name))
+                            .copied()
+                    } else {
+                        None
+                    };
+                    let object = if let Some(variable) = borrowed_local {
+                        let value = builder.use_var(variable);
+                        let kind = builder.use_var(Variable::new(variable.index() + 1));
+                        self.scalar_kinds.insert(value, kind);
+                        value
+                    } else {
+                        self.translate_instruction(
+                            builder,
+                            pc,
+                            &OpCode::LoadLocal(*slot_index),
+                            constants,
+                        )?;
+                        self.pop_value()?
+                    };
                     let ctx = self.ctx_param.ok_or("Indexed read requires context")?;
                     let helper = self.indexed_read_func.ok_or("Indexed read requires helper")?;
                     let object_kind = self.scalar_kind(builder, object);
@@ -7796,7 +7815,9 @@ impl BytecodeTranslator {
                         builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind]);
                     let result = builder.inst_results(call)[0];
                     self.capture_loaded_operand(builder, ctx, result);
-                    self.release_operand(builder, object);
+                    if borrowed_local.is_none() {
+                        self.release_operand(builder, object);
+                    }
                     self.release_operand(builder, index);
                     self.push_value(result);
                     return Ok(false);
@@ -13319,6 +13340,55 @@ mod tests {
             assert!(capacity <= 4, "{repetitions} writes retained {capacity} root slots");
             assert!(stack.is_empty());
         }
+    }
+
+    #[test]
+    fn compiled_scalar_indexed_reads_do_not_issue_per_read_roots() {
+        let mut counts = Vec::new();
+        for reads in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.local_names.push("local".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.emit(OpCode::LoadVar("seed".into()));
+            chunk.emit(OpCode::StoreLocal(0));
+            chunk.emit(OpCode::Pop);
+            let index = chunk.add_constant(Constant::Int(0));
+            for _ in 0..reads {
+                chunk.emit(OpCode::LoadConst(index));
+                chunk.emit(OpCode::IndexGetInPlace(0));
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadConst(index));
+            chunk.emit(OpCode::IndexGetInPlace(0));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "scalar_indexed").unwrap();
+            let seed = Arc::new(vec![Value::Int(7)]);
+            let mut globals = HashMap::from([("seed".into(), Value::Array(seed.clone()))]);
+            let mut names = ["seed", "local"]
+                .into_iter()
+                .map(|name| (BytecodeTranslator::hash_var_name(name), name.to_owned()))
+                .collect();
+            let mut caller = vec![Value::Int(77)];
+            let mut stack = Vec::new();
+            let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), &mut globals);
+            context.var_names_ptr = &mut names;
+            context.local_slots_ptr = &mut caller;
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            let returned = context.take_return_value(context.return_value);
+            assert!(matches!(returned, Value::Int(7)), "reads={reads}: {returned:?}");
+            assert!(matches!(caller.as_slice(), [Value::Int(77)]));
+            assert!(matches!(seed[0], Value::Int(7)));
+            assert_eq!(context.owned_roots.storage_state().1, 0);
+            assert!(stack.is_empty());
+            counts.push((reads + 1, context.owned_roots.issued_handles()));
+        }
+        assert!(counts.iter().all(|(_, issued)| *issued <= 2), "per-read root churn: {counts:?}");
     }
 
     #[test]
