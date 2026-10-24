@@ -332,6 +332,16 @@ Key lookup and snapshot creation costs remain; elapsed speed is not yet establis
 
 ## 5. Expand fast compiled execution
 
+The [nested-state allocation audit](nested-state-allocation-audit-2026-10-23.json)
+finds no width-dependent repeated-copy cost in its direct/helper update fixture,
+with or without a saved snapshot. All 96 observations preserve the expected result;
+eight warmed allocation slopes match at widths 8 and 256. However, JIT-requested
+cases record zero native entries: the helper first encounters unsupported
+`IndexGet`, followed by `UpdateBindingPath`. Prioritize general native nested-path
+reads/writes, with binding checks, error ordering and snapshot isolation, before
+changing COW semantics for this pattern. These are allocation/coverage results,
+not release timing or proof that all nested assignments are optimal.
+
 - Add guarded typed paths for the numerics and collections found in real profiles,
   including floats where workloads require them.
 - Reduce VM/native crossings, redundant loads and boxing on proven hot paths.

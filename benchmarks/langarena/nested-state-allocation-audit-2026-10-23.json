@@ -1,0 +1,1233 @@
+{
+  "date": "2026-10-23",
+  "scope": "Nested dictionary-array-struct updates, direct and helper calls, unique or retained snapshot. Uncommitted owned-entry candidate on8a593f9 runtime source; not a current production acceptance.",
+  "observations": [
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3128,
+      "bytes": 145836
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15127,
+      "bytes": 654572
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5146,
+      "bytes": 567116
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17146,
+      "bytes": 1075916
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3161,
+      "bytes": 174625
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15159,
+      "bytes": 658561
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5426,
+      "bytes": 605825
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17426,
+      "bytes": 1114625
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5543,
+      "bytes": 351789
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 27143,
+      "bytes": 1674989
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 7810,
+      "bytes": 807853
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 29410,
+      "bytes": 2131053
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5562,
+      "bytes": 353889
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 27162,
+      "bytes": 1677089
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 7829,
+      "bytes": 809953
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 29429,
+      "bytes": 2133153
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3129,
+      "bytes": 145924
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15129,
+      "bytes": 654724
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5148,
+      "bytes": 567268
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17148,
+      "bytes": 1076068
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3161,
+      "bytes": 149913
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15161,
+      "bytes": 658713
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5428,
+      "bytes": 605977
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17428,
+      "bytes": 1114777
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5824,
+      "bytes": 363050
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 28224,
+      "bytes": 1689450
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 8091,
+      "bytes": 819114
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 30491,
+      "bytes": 2145514
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5843,
+      "bytes": 365150
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 28243,
+      "bytes": 1691550
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 8110,
+      "bytes": 821214
+    },
+    {
+      "native": 0,
+      "repeat": 0,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 30510,
+      "bytes": 2147614
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3127,
+      "bytes": 145772
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15127,
+      "bytes": 654572
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5146,
+      "bytes": 567116
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17146,
+      "bytes": 1075916
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3159,
+      "bytes": 149761
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15159,
+      "bytes": 658561
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5426,
+      "bytes": 605825
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17426,
+      "bytes": 1114625
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5543,
+      "bytes": 351789
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 27143,
+      "bytes": 1674989
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 7810,
+      "bytes": 807853
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 29410,
+      "bytes": 2131053
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5562,
+      "bytes": 353889
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 27162,
+      "bytes": 1677089
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 7829,
+      "bytes": 809953
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 29429,
+      "bytes": 2133153
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3129,
+      "bytes": 145924
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15129,
+      "bytes": 654724
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5148,
+      "bytes": 567268
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17148,
+      "bytes": 1076068
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3161,
+      "bytes": 149913
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15161,
+      "bytes": 658713
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5428,
+      "bytes": 605977
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17428,
+      "bytes": 1114777
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5824,
+      "bytes": 363050
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 28224,
+      "bytes": 1689450
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 8091,
+      "bytes": 819114
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 30491,
+      "bytes": 2145514
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5843,
+      "bytes": 365150
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 28243,
+      "bytes": 1691550
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 8110,
+      "bytes": 821214
+    },
+    {
+      "native": 0,
+      "repeat": 1,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 30510,
+      "bytes": 2147614
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3127,
+      "bytes": 145772
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15127,
+      "bytes": 654572
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5146,
+      "bytes": 567116
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17146,
+      "bytes": 1075916
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3159,
+      "bytes": 149761
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15159,
+      "bytes": 658561
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5426,
+      "bytes": 605825
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17426,
+      "bytes": 1114625
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5543,
+      "bytes": 351789
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 27143,
+      "bytes": 1674989
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 7810,
+      "bytes": 807853
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 29410,
+      "bytes": 2131053
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5562,
+      "bytes": 353889
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 27162,
+      "bytes": 1677089
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 7829,
+      "bytes": 809953
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": false,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 29429,
+      "bytes": 2133153
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3129,
+      "bytes": 145924
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15129,
+      "bytes": 654724
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5148,
+      "bytes": 567268
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17148,
+      "bytes": 1076068
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 3161,
+      "bytes": 149913
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 15161,
+      "bytes": 658713
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 5428,
+      "bytes": 605977
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": false,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 17428,
+      "bytes": 1114777
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5824,
+      "bytes": 363050
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 28224,
+      "bytes": 1689450
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 200,
+      "allocations": 8091,
+      "bytes": 819114
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": false,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 30491,
+      "bytes": 2145514
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 200,
+      "allocations": 5843,
+      "bytes": 365150
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 8,
+      "writes": 1000,
+      "allocations": 28243,
+      "bytes": 1691550
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 200,
+      "allocations": 8110,
+      "bytes": 821214
+    },
+    {
+      "native": 0,
+      "repeat": 2,
+      "jit": true,
+      "helper": true,
+      "saved": true,
+      "width": 256,
+      "writes": 1000,
+      "allocations": 30510,
+      "bytes": 2147614
+    }
+  ],
+  "verified_slopes": [
+    {
+      "jit_requested": false,
+      "helper": false,
+      "snapshot": false,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        },
+        {
+          "width": 256,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        }
+      ]
+    },
+    {
+      "jit_requested": false,
+      "helper": false,
+      "snapshot": true,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        },
+        {
+          "width": 256,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        }
+      ]
+    },
+    {
+      "jit_requested": false,
+      "helper": true,
+      "snapshot": false,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 21600,
+          "requested_bytes": 1323200
+        },
+        {
+          "width": 256,
+          "allocations": 21600,
+          "requested_bytes": 1323200
+        }
+      ]
+    },
+    {
+      "jit_requested": false,
+      "helper": true,
+      "snapshot": true,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 21600,
+          "requested_bytes": 1323200
+        },
+        {
+          "width": 256,
+          "allocations": 21600,
+          "requested_bytes": 1323200
+        }
+      ]
+    },
+    {
+      "jit_requested": true,
+      "helper": false,
+      "snapshot": false,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        },
+        {
+          "width": 256,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        }
+      ]
+    },
+    {
+      "jit_requested": true,
+      "helper": false,
+      "snapshot": true,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        },
+        {
+          "width": 256,
+          "allocations": 12000,
+          "requested_bytes": 508800
+        }
+      ]
+    },
+    {
+      "jit_requested": true,
+      "helper": true,
+      "snapshot": false,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 22400,
+          "requested_bytes": 1326400
+        },
+        {
+          "width": 256,
+          "allocations": 22400,
+          "requested_bytes": 1326400
+        }
+      ]
+    },
+    {
+      "jit_requested": true,
+      "helper": true,
+      "snapshot": true,
+      "additional_writes": 800,
+      "slopes": [
+        {
+          "width": 8,
+          "allocations": 22400,
+          "requested_bytes": 1326400
+        },
+        {
+          "width": 256,
+          "allocations": 22400,
+          "requested_bytes": 1326400
+        }
+      ]
+    }
+  ],
+  "source": "//! Allocation accounting for bytecode call setup; no wall-clock assertions.\nuse kujo::{compiler::Compiler, interpreter::Value, lexer, parser::Parser, vm::VM};\nuse std::alloc::{GlobalAlloc, Layout, System};\nuse std::cell::Cell;\n\nthread_local! {\n    static TRACK: Cell<bool> = const { Cell::new(false) };\n    static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };\n    static REQUESTED_BYTES: Cell<usize> = const { Cell::new(0) };\n}\n\nstruct CountingAllocator;\nfn record(bytes: usize) {\n    let _ = TRACK.try_with(|enabled| {\n        if enabled.get() {\n            ALLOCATIONS.with(|count| count.set(count.get() + 1));\n            REQUESTED_BYTES.with(|count| count.set(count.get() + bytes));\n        }\n    });\n}\n\n// SAFETY: all allocation operations delegate unchanged to System. Accounting\n// uses allocation-free thread-local Cells and never dereferences allocation data.\nunsafe impl GlobalAlloc for CountingAllocator {\n    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {\n        record(layout.size());\n        // SAFETY: caller supplies a valid allocation layout.\n        unsafe { System.alloc(layout) }\n    }\n    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {\n        record(layout.size());\n        // SAFETY: caller supplies a valid allocation layout.\n        unsafe { System.alloc_zeroed(layout) }\n    }\n    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {\n        // SAFETY: ownership and layout requirements are inherited from the caller.\n        unsafe { System.dealloc(ptr, layout) }\n    }\n    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, size: usize) -> *mut u8 {\n        record(size);\n        // SAFETY: pointer, original layout and new size are supplied by the caller.\n        unsafe { System.realloc(ptr, layout, size) }\n    }\n}\n\n#[global_allocator]\nstatic ALLOCATOR: CountingAllocator = CountingAllocator;\n\nfn main() { kujo::benchmarks::profiler::runtime::start().unwrap(); for repeat in 0..3 { for jit in [false, true] {\n    for helper in [false, true] {\n        for saved in [false, true] {\n            for width in [8, 256] {\n                for writes in [200, 1000] {\n                    let rows = std::iter::repeat(\"Node { value: 0 }\").take(width).collect::<Vec<_>>().join(\",\");\n                    let snapshot = if saved { \"let snapshot := state\" } else { \"\" };\n                    let check = if saved { \"assert_equal(snapshot[\\\"nodes\\\"][0].value, 0)\" } else { \"\" };\n                    let body = if helper { \"state = step(state)\\n\" } else { \"state[\\\"nodes\\\"][0].value += 1\\n\" };\n                    let source = format!(\"struct Node {{ value: int }} func step(input) {{ mut state := input state[\\\"nodes\\\"][0].value += 1 return state }} func work() {{ mut state := {{\\\"nodes\\\": [{rows}]}} {snapshot} {} {check} return state[\\\"nodes\\\"][0].value }} return work()\",body.repeat(writes));\n                    let mut parser = Parser::new(lexer::tokenize(&source).unwrap());\n                    let chunk = Compiler::new().compile(&parser.parse()).unwrap();\n                    let mut vm = VM::new();\n                    vm.set_jit_enabled(jit);\n                    ALLOCATIONS.with(|x| x.set(0)); REQUESTED_BYTES.with(|x| x.set(0));\n                    let before = kujo::benchmarks::profiler::runtime::snapshot(\"success\")[\"counters\"][\"jit_native_function_entries\"].as_u64().unwrap();\n                    TRACK.with(|x| x.set(true));\n                    let result=vm.execute(chunk);\n                    TRACK.with(|x| x.set(false));\n                    assert!(matches!(result.unwrap(),Value::Int(n) if n==writes as i64));\n                    let after = kujo::benchmarks::profiler::runtime::snapshot(\"success\")[\"counters\"][\"jit_native_function_entries\"].as_u64().unwrap(); println!(\"native={},repeat={repeat},jit={jit},helper={helper},saved={saved},width={width},writes={writes},allocations={},bytes={}\",after-before,ALLOCATIONS.with(Cell::get),REQUESTED_BYTES.with(Cell::get));\n                }\n            }\n        }\n    }\n}\n\n}}\n",
+  "bytecode_audit_source": "use kujo::{compiler::Compiler, lexer, parser::Parser, bytecode::Constant, jit::JitCompiler};\nfn main() {\n let source=std::fs::read_to_string(\"/tmp/kujo-owned-entry-2026-10-23/nested-state-native-gap.kujo\").unwrap();\n let mut parser=Parser::new(lexer::tokenize(&source).unwrap());\n let chunk=Compiler::new().compile(&parser.parse()).unwrap();\n let jit=JitCompiler::new().unwrap();\n for c in chunk.constants.iter() { if let Constant::Function(f)=c { if f.name.as_deref()==Some(\"step\") {\n println!(\"{:?}\",jit.first_unsupported_surface(&f));\n for (i,op) in f.instructions.iter().enumerate() { println!(\"{i}: {op:?}\"); }\n }}}\n}\n",
+  "bytecode_audit": "Compiler optimization: 0 constants folded, 1 dead instructions removed, 0 peephole optimizations\nSome(UnsupportedJitSurface { chunk_name: \"step\", instruction_offset: 7, opcode: IndexGet })\n0: LoadLocal(0)\n1: ReleaseDeadLocal(0)\n2: DefineLocal(1)\n3: Pop\n4: LoadConst(0)\n5: IndexGetInPlace(1)\n6: LoadConst(1)\n7: IndexGet\n8: FieldGet(\"value\")\n9: LoadConst(2)\n10: Add\n11: LoadConst(0)\n12: LoadConst(1)\n13: UpdateBindingPath(Local(1), [None, None, Some(\"value\")])\n14: Pop\n15: LoadLocal(1)\n16: Return\n",
+  "sha256": {
+    "/tmp/kujo-nested-state-allocation.rs": "5b7b52f86fb370bdc0ed41909b5a9c52261d2a612de6d606550e8b6f359b3fe8",
+    "/tmp/kujo-nested-state-allocation": "8938a93ebc359f19066a5f0f168f91962749d3e58795b1d698ec5f7382b32d24",
+    "/tmp/kujo-nested-state-allocation.log": "84f32013341384ad60f4c47e753c30323dc9e03925bc38f3ce38283989f4b4af",
+    "/tmp/kujo-native-path-audit.rs": "79465f1754f42c98bb7f394e6226a05ed94a6a0fa3e2e1ef8b21dc0251b86ee4",
+    "/tmp/kujo-native-path-audit.log": "90ba1c85daf11592f13ce482b0d9733096ac2d681007383fc7917ee804c12fca",
+    "target/debug/deps/libkujo-837bbf5b9bf890b9.rlib": "b75c7504e1203f502eafd797269825ceec0a36c5b07f8bded9c83fede1f3c081",
+    "src/jit.rs": "59caeba47daf5207032c93c1d7757a06878de03d43678526b2f6e4401a289a82",
+    "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b"
+  },
+  "build": "rustc --edition=2021 /tmp/kujo-nested-state-allocation.rs -L dependency=target/debug/deps --extern kujo=target/debug/deps/libkujo-837bbf5b9bf890b9.rlib -o /tmp/kujo-nested-state-allocation",
+  "conclusions": [
+    "All96 executions return expected update counts; retained snapshots remain unchanged.",
+    "At warmed repeat2, all8 mode/helper/snapshot combinations have identical extra-write allocation counts and bytes for widths8 and256. This fixture does not reproduce width-dependent repeated copying.",
+    "JIT-requested cases record zero native function entries. First unsupported step opcode is IndexGet at7; UpdateBindingPath at13 also lacks native lowering.",
+    "General native nested-path operations are the next coverage investigation. No evidence here justifies weakening snapshot semantics."
+  ],
+  "limitations": [
+    "Thread-local allocator measures requests on execution thread, not retained/peak process memory. Setup is included; compare slopes, not absolute totals.",
+    "JIT-requested results are VM fallback, not native performance.",
+    "No wall-clock speed claim, no claim that every nested-write pattern is optimal."
+  ]
+}
