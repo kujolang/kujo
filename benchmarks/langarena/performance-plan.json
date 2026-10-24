@@ -48,7 +48,10 @@
         "native-array-read-profile-2026-10-24.json",
         "native-root-read-cache-2026-10-24.json",
         "native-recursive-call-profile-2026-10-24.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "native-call-metadata-2026-10-24.json",
+        "call-metadata-release-2026-10-24.json",
+        "quicksort-allocation-histogram-2026-10-24.json"
       ]
     },
     {
@@ -71,7 +74,10 @@
         "native-scalar-array-reads-2026-10-24.json",
         "native-positional-arguments-2026-10-24.json",
         "native-root-read-cache-2026-10-24.json",
-        "native-call-performance-2026-10-24.json"
+        "native-call-performance-2026-10-24.json",
+        "native-call-metadata-2026-10-24.json",
+        "call-metadata-release-2026-10-24.json",
+        "quicksort-allocation-histogram-2026-10-24.json"
       ]
     },
     {

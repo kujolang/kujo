@@ -11,8 +11,10 @@ a target to test, not a guarantee. This document explains the execution order;
   reproduces repeated instruction scans on native callbacks and verifies lazy,
   copy-on-write-invalidated metadata caching. 1,089 library tests and 29 targeted
   integrations pass. The debug-library probe loses its body-length-dependent
-  dispatch cost; full release timing/checksums for this candidate are pending.
-  Do not inherit the previous runtime's release acceptance automatically.
+  dispatch cost. Frozen release verification now passes all 150 test-size
+  checksums; seven-round QuickSort timing remains inconclusive under changing
+  CPU limits. See `call-metadata-release-2026-10-24.json`; this acceptance does
+  not extend to later runtime edits or production/platform gates.
 
 - **Bounded native callback root reuse (`09c8944`).** Inactive root stores retain
   capacity across calls while active recursive calls remain isolated. The
