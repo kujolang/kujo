@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Mapped borrowed-read release](checksums-2026-10-24-native-borrowed-read-release.json)
+  passes 150 unchanged test-size checksums on `7468173`. Disk exhaustion
+  interrupted the interpreter driver after 35 recorded passes; the remaining
+  15 cases were rerun and the complete matrix verified with recovery provenance.
+  This predates fixed-dictionary COW work and does not close production gates.
+
 - [Borrowed native reads](native-borrowed-read-allocations-2026-10-24.json) avoid
   cloning the entire source container for indexed and field reads. Reading the
   first field 128 times from fixed dictionaries of 8, 128 and 1,024 fields now
