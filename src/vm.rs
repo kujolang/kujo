@@ -1031,7 +1031,7 @@ impl VM {
         }
     }
 
-    fn value_nesting_depth(value: &Value) -> usize {
+    pub(crate) fn value_nesting_depth(value: &Value) -> usize {
         Value::nesting_depth(value)
     }
 
@@ -8323,16 +8323,18 @@ impl VM {
         }
     }
 
-    pub(crate) fn try_string_append_global_from_jit(
+    pub(crate) fn has_current_exception_handler(&self) -> bool {
+        self.exception_handlers.iter().any(|h| h.frame_offset == self.call_frames.len())
+    }
+
+    pub(crate) fn try_guarded_global_mutation_from_jit(
         &mut self,
         name: &str,
-        original: &mut Option<Value>,
-        suffix: &Value,
+        operation: impl FnOnce(&mut Value) -> bool,
     ) -> bool {
         let mut applied = false;
         let _ = self.globals.lock().unwrap().mutate_checked(name, |root| {
-            applied =
-                crate::interpreter::assignment::concat_string_rebinding(root, original, suffix);
+            applied = operation(root);
         });
         applied
     }

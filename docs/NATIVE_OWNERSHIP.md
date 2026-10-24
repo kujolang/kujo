@@ -260,3 +260,24 @@ The isolated tests cover stale handles, signed payload transport, exhaustion,
 cross-frame ownership, zero-copy promotion, COW snapshots, arbitrary unlink order,
 repeated frame cleanup and bounded slot reuse. A deterministic mixed-operation
 model checks nested frames and live roots independently. No speedup is claimed.
+
+## Guarded collection rebinding
+
+`TryAppendAssign` supports native array push/append and byte concat using the
+same checked rebinding operations as the VM. The callable must still resolve to
+the matching builtin; shadowed calls, changed destinations, incompatible types
+and excessive nesting retain the evaluated operands for ordinary fallback.
+Success consumes all three operand roots and skips the fallback call/store.
+Unique storage is reused; retained snapshots and self-appends preserve COW.
+
+`ReleaseRebindLocal` conditionally clears a matching mutable local snapshot before
+an ordinary synchronous helper call. It preserves the already evaluated argument,
+rejects native/async/generator callables, and retains snapshots whenever the VM
+has a current exception handler. This check is conservative for native callees
+whose VM caller has a handler. SSA roots, named locals and physical loop slots
+use the same storage-identity condition.
+
+`tests/jit_guarded_collections.rs` requires actual function and loop native entry
+in addition to interpreter/VM/JIT results. Helper tests compare unique allocation
+identity at 8 and 128 updates, verify COW snapshots, and bound native root storage.
+These are correctness and allocation checks, not competitive speed evidence.

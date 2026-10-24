@@ -156,6 +156,41 @@ impl NativeCallRoots {
         self.values.get(Handle::from_payload(payload)).map(Value::is_truthy)
     }
 
+    /// Borrow callable metadata; cloning a bytecode callable would clone its chunk.
+    pub(crate) fn is_ordinary_function(
+        &self,
+        payload: i64,
+        kind: i64,
+    ) -> Result<bool, OwnershipError> {
+        match kind {
+            0..=3 => Ok(false),
+            OWNED => {
+                let value = self.values.get(Handle::from_payload(payload))?;
+                Ok(
+                    matches!(value, Value::BytecodeFunction { chunk, .. } if !chunk.is_async && !chunk.is_generator)
+                        || matches!(value, Value::Function(..)),
+                )
+            }
+            _ => Err(OwnershipError::InvalidKind(kind)),
+        }
+    }
+
+    /// Inspect callable identity without cloning its owned name on every guard.
+    pub(crate) fn native_function_name(
+        &self,
+        payload: i64,
+        kind: i64,
+    ) -> Result<Option<&str>, OwnershipError> {
+        match kind {
+            0..=3 => Ok(None),
+            OWNED => Ok(match self.values.get(Handle::from_payload(payload))? {
+                Value::NativeFunction(name) => Some(name.as_str()),
+                _ => None,
+            }),
+            _ => Err(OwnershipError::InvalidKind(kind)),
+        }
+    }
+
     /// Temporarily move an evaluated snapshot out of its root so a guarded
     /// rebinding can drop its artificial COW alias before writing. The guard
     /// must leave the snapshot in Some on fallback, and consume it on success.

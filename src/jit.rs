@@ -1773,6 +1773,70 @@ unsafe fn jit_append_target(
     }
 }
 
+/// Release only a local snapshot invisible to a same-invocation exception handler.
+#[no_mangle]
+pub unsafe extern "C" fn jit_release_rebind(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    original: i64,
+    original_kind: i64,
+    mutable: i64,
+    function: i64,
+    function_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    if mutable == 0 {
+        return 0;
+    }
+    if ctx.vm_ptr.cast::<VM>().as_ref().is_some_and(|vm| vm.has_current_exception_handler()) {
+        return 0;
+    }
+    let result = (|| {
+        if !ctx.owned_roots.is_ordinary_function(function, function_kind)? {
+            return Ok(());
+        }
+        let argument = ctx.owned_roots.clone_value(original, original_kind)?;
+        let apply = |root: &mut Value| {
+            if crate::interpreter::assignment::same_storage(root, &argument) {
+                *root = Value::Null;
+            }
+        };
+        match location {
+            1 if target_kind == crate::native_owned::OWNED => {
+                apply(ctx.owned_roots.current_value_mut(target, target_kind)?);
+            }
+            0 => {
+                if let Some(root) = usize::try_from(target)
+                    .ok()
+                    .and_then(|slot| ctx.local_slots_ptr.as_mut()?.get_mut(slot))
+                {
+                    apply(root);
+                }
+            }
+            2 => {
+                if let Some(name) =
+                    ctx.var_names_ptr.as_ref().and_then(|names| names.get(&(target as u64)))
+                {
+                    if let Some(root) =
+                        ctx.locals_ptr.as_mut().and_then(|locals| locals.get_mut(name))
+                    {
+                        apply(root);
+                    }
+                }
+            }
+            _ => {}
+        }
+        Ok::<_, crate::native_owned::OwnershipError>(())
+    })();
+    if let Err(error) = result {
+        ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+        return 1;
+    }
+    0
+}
+
 /// Conditional rebinding returns 1 on success, 0 for the original bytecode fallback.
 #[no_mangle]
 // SAFETY: context, maps and roots are exclusively borrowed by this invocation.
@@ -1840,7 +1904,119 @@ pub unsafe extern "C" fn jit_try_string_append(
                         });
                         applied
                     } else if let Some(vm) = ctx.vm_ptr.cast::<VM>().as_mut() {
-                        vm.try_string_append_global_from_jit(&name, &mut snapshot, &suffix)
+                        vm.try_guarded_global_mutation_from_jit(&name, &mut apply)
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
+            _ => false,
+        };
+        if let Some(value) = snapshot {
+            *ctx.owned_roots.current_value_mut(original, original_kind)? = value;
+        }
+        Ok::<_, crate::native_owned::OwnershipError>(applied)
+    })();
+    match result {
+        Ok(applied) => i64::from(applied),
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
+/// Conditional rebinding returns 1 on success, 0 for the original bytecode fallback.
+#[no_mangle]
+// SAFETY: context, maps and roots are exclusively borrowed by this invocation.
+// The VM global helper is called only outside a locked native-loop environment.
+pub unsafe extern "C" fn jit_try_append(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    original: i64,
+    original_kind: i64,
+    suffix: i64,
+    suffix_kind: i64,
+    mutable: i64,
+    function: i64,
+    function_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    if mutable == 0 || original_kind != crate::native_owned::OWNED {
+        return 0;
+    }
+    let result = (|| {
+        let concat = match ctx.owned_roots.native_function_name(function, function_kind)? {
+            Some("push" | "append") => false,
+            Some("concat") => true,
+            _ => return Ok(false),
+        };
+        let mut item = Some(ctx.owned_roots.clone_value(suffix, suffix_kind)?);
+        if VM::value_nesting_depth(item.as_ref().unwrap())
+            >= crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH
+        {
+            return Ok(false);
+        }
+        if !matches!(
+            ctx.owned_roots.current_value_mut(original, original_kind)?,
+            Value::Array(_) | Value::Bytes(_)
+        ) {
+            return Ok(false);
+        }
+        let mut operation = |root: &mut Value, snapshot: &mut Option<Value>| {
+            if concat {
+                crate::interpreter::assignment::concat_bytes_rebinding(
+                    root,
+                    snapshot,
+                    item.as_ref().unwrap(),
+                )
+            } else {
+                crate::interpreter::assignment::append_rebinding(root, snapshot, &mut item)
+            }
+        };
+        if location == 1 {
+            if target_kind != crate::native_owned::OWNED {
+                return Ok(false);
+            }
+            return ctx.owned_roots.with_rebinding_snapshot(target, original, |root, snapshot| {
+                operation(root, snapshot)
+            });
+        }
+        let value = std::mem::replace(
+            ctx.owned_roots.current_value_mut(original, original_kind)?,
+            Value::Null,
+        );
+        let mut snapshot = Some(value);
+        let mut apply = |root: &mut Value| operation(root, &mut snapshot);
+        let applied = match location {
+            0 => usize::try_from(target)
+                .ok()
+                .and_then(|n| ctx.local_slots_ptr.as_mut()?.get_mut(n))
+                .is_some_and(&mut apply),
+            2 | 3 => {
+                let name = ctx
+                    .var_names_ptr
+                    .as_ref()
+                    .and_then(|names| names.get(&(target as u64)))
+                    .cloned();
+                if let Some(name) = name {
+                    if location == 2 {
+                        ctx.locals_ptr
+                            .as_mut()
+                            .and_then(|locals| locals.get_mut(&name))
+                            .is_some_and(&mut apply)
+                    } else if let Some(environment) = ctx.loop_environment_ptr.as_mut() {
+                        let mut applied = false;
+                        let _ = environment.mutate_checked(&name, |root| {
+                            applied = apply(root);
+                        });
+                        applied
+                    } else if let Some(vm) = ctx.vm_ptr.cast::<VM>().as_mut() {
+                        vm.try_guarded_global_mutation_from_jit(&name, &mut apply)
                     } else {
                         false
                     }
@@ -4257,6 +4433,8 @@ struct BytecodeTranslator {
     append_local_func: Option<FuncRef>,
     append_result_func: Option<FuncRef>,
     try_string_append_func: Option<FuncRef>,
+    try_append_func: Option<FuncRef>,
+    release_rebind_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
     loop_resume_enabled: bool,
@@ -4434,6 +4612,8 @@ impl BytecodeTranslator {
             append_local_func: None,
             append_result_func: None,
             try_string_append_func: None,
+            try_append_func: None,
+            release_rebind_func: None,
             indexed_read_func: None,
             indexed_write_func: None,
             loop_resume_enabled: false,
@@ -4552,7 +4732,8 @@ impl BytecodeTranslator {
             match instruction {
                 OpCode::Jump(target)
                 | OpCode::JumpBack(target)
-                | OpCode::TryStringAppendAssign(_, target) => {
+                | OpCode::TryStringAppendAssign(_, target)
+                | OpCode::TryAppendAssign(_, target) => {
                     if *target <= pc && *target < function_end {
                         // This is a backward jump - record the target as a loop header
                         // The stack depth at the jump is what we need at the header
@@ -4606,6 +4787,7 @@ impl BytecodeTranslator {
             | OpCode::StoreLocal(_)
             | OpCode::DefineLocal(_)
             | OpCode::StoreGlobal(_)
+            | OpCode::ReleaseRebindLocal(_, _)
             | OpCode::ReleaseDeadLocal(_) => (0, 0),
 
             // Binary ops (2 pops, 1 push)
@@ -5123,7 +5305,8 @@ impl BytecodeTranslator {
                 | OpCode::JumpIfFalse(target)
                 | OpCode::JumpIfTrue(target)
                 | OpCode::JumpBack(target)
-                | OpCode::TryStringAppendAssign(_, target) => {
+                | OpCode::TryStringAppendAssign(_, target)
+                | OpCode::TryAppendAssign(_, target) => {
                     if *target > max_reachable {
                         max_reachable = *target;
                     }
@@ -5412,7 +5595,8 @@ impl BytecodeTranslator {
                 | OpCode::JumpIfFalse(target)
                 | OpCode::JumpIfTrue(target)
                 | OpCode::JumpBack(target)
-                | OpCode::TryStringAppendAssign(_, target) => {
+                | OpCode::TryStringAppendAssign(_, target)
+                | OpCode::TryAppendAssign(_, target) => {
                     if *target < self.function_end {
                         if !self.blocks.contains_key(target) {
                             let block = builder.create_block();
@@ -6145,17 +6329,20 @@ impl BytecodeTranslator {
                 }
             }
 
-            OpCode::TryStringAppendAssign(binding, end) => {
+            OpCode::TryStringAppendAssign(binding, end) | OpCode::TryAppendAssign(binding, end) => {
                 use crate::bytecode::MutationBinding;
+                let collection = matches!(instruction, OpCode::TryAppendAssign(_, _));
+                let count = if collection { 3 } else { 2 };
                 let depth = self.value_stack.len();
-                if depth < 2 {
-                    return Err("String append guard stack underflow".into());
+                if depth < count {
+                    return Err("Append guard stack underflow".into());
                 }
-                let original = self.value_stack[depth - 2];
-                let suffix = self.value_stack[depth - 1];
-                let ctx = self.ctx_param.ok_or("String append guard requires context")?;
+                let original = self.value_stack[depth - count];
+                let suffix = self.value_stack[depth - count + 1];
+                let ctx = self.ctx_param.ok_or("Append guard requires context")?;
                 let helper =
-                    self.try_string_append_func.ok_or("String append guard requires helper")?;
+                    if collection { self.try_append_func } else { self.try_string_append_func }
+                        .ok_or("Append guard requires helper")?;
                 let (location, target, target_kind, mutable) = match binding {
                     MutationBinding::Local(slot) => {
                         let name = self
@@ -6203,20 +6390,23 @@ impl BytecodeTranslator {
                 let mutable = builder.ins().iconst(types::I64, i64::from(mutable));
                 let original_kind = self.scalar_kind(builder, original);
                 let suffix_kind = self.scalar_kind(builder, suffix);
-                let call = builder.ins().call(
-                    helper,
-                    &[
-                        ctx,
-                        location,
-                        target,
-                        target_kind,
-                        original,
-                        original_kind,
-                        suffix,
-                        suffix_kind,
-                        mutable,
-                    ],
-                );
+                let mut arguments = vec![
+                    ctx,
+                    location,
+                    target,
+                    target_kind,
+                    original,
+                    original_kind,
+                    suffix,
+                    suffix_kind,
+                    mutable,
+                ];
+                let function = collection.then(|| self.value_stack[depth - 1]);
+                if let Some(function) = function {
+                    arguments.push(function);
+                    arguments.push(self.scalar_kind(builder, function));
+                }
+                let call = builder.ins().call(helper, &arguments);
                 let applied = builder.inst_results(call)[0];
                 let check = builder
                     .ins()
@@ -6230,9 +6420,12 @@ impl BytecodeTranslator {
                 builder.ins().brif(condition, success, &[], fallback, &fallback_args);
                 builder.seal_block(success);
                 builder.switch_to_block(success);
-                self.value_stack.truncate(depth - 2);
+                self.value_stack.truncate(depth - count);
                 self.release_operand(builder, original);
                 self.release_operand(builder, suffix);
+                if let Some(function) = function {
+                    self.release_operand(builder, function);
+                }
                 let args = self.stack_edge_args(builder, *end)?;
                 let destination = *self.blocks.get(end).ok_or("Missing append success target")?;
                 builder.ins().jump(destination, &args);
@@ -6712,6 +6905,81 @@ impl BytecodeTranslator {
                     let zero = builder.ins().iconst(types::I64, 0);
                     self.push_value(zero);
                 }
+            }
+
+            OpCode::ReleaseRebindLocal(slot, count) => {
+                use crate::bytecode::MutationBinding;
+                let depth = self.value_stack.len();
+                if depth <= *count {
+                    return Err("Rebind release stack underflow".into());
+                }
+                let original = self.value_stack[depth - count - 1];
+                let function = self.value_stack[depth - 1];
+                let ctx = self.ctx_param.ok_or("Rebind release requires context")?;
+                let helper = self.release_rebind_func.ok_or("Rebind release requires helper")?;
+                let (location, target, target_kind, mutable) =
+                    match &crate::bytecode::MutationBinding::Local(*slot) {
+                        MutationBinding::Local(slot) => {
+                            let name = self
+                                .local_names
+                                .get(*slot)
+                                .ok_or("Invalid string append slot")?
+                                .clone();
+                            let mutable = self
+                                .local_binding_kinds
+                                .get(*slot)
+                                .copied()
+                                .unwrap_or(BytecodeBindingKind::Mutable)
+                                == BytecodeBindingKind::Mutable;
+                            self.dirty_local_names.insert(name.clone());
+                            if let Some(&variable) = self.local_variables.get(&name) {
+                                (
+                                    1,
+                                    builder.use_var(variable),
+                                    builder.use_var(Variable::new(variable.index() + 1)),
+                                    mutable,
+                                )
+                            } else {
+                                let location = if self.tracks_function_depth { 2 } else { 0 };
+                                let target = if location == 2 {
+                                    Self::hash_var_name(&name) as i64
+                                } else {
+                                    *slot as i64
+                                };
+                                (
+                                    location,
+                                    builder.ins().iconst(types::I64, target),
+                                    builder.ins().iconst(types::I64, 0),
+                                    mutable,
+                                )
+                            }
+                        }
+                        MutationBinding::Named(name) => (
+                            3,
+                            builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64),
+                            builder.ins().iconst(types::I64, 0),
+                            true,
+                        ),
+                    };
+                let location = builder.ins().iconst(types::I64, location);
+                let mutable = builder.ins().iconst(types::I64, i64::from(mutable));
+                let original_kind = self.scalar_kind(builder, original);
+                let function_kind = self.scalar_kind(builder, function);
+                let call = builder.ins().call(
+                    helper,
+                    &[
+                        ctx,
+                        location,
+                        target,
+                        target_kind,
+                        original,
+                        original_kind,
+                        mutable,
+                        function,
+                        function_kind,
+                    ],
+                );
+                self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
             }
 
             OpCode::ReleaseDeadLocal(slot) => {
@@ -8199,6 +8467,8 @@ impl JitCompiler {
             ("jit_append_local", 6, true),
             ("jit_append_result", 1, true),
             ("jit_try_string_append", 9, true),
+            ("jit_try_append", 11, true),
+            ("jit_release_rebind", 9, true),
             ("jit_stack_pop", 1, true),
             ("jit_make_struct", 2, true),
             ("jit_make_array", 2, true),
@@ -8240,6 +8510,8 @@ impl JitCompiler {
                 "jit_append_local" => translator.append_local_func = Some(function),
                 "jit_append_result" => translator.append_result_func = Some(function),
                 "jit_try_string_append" => translator.try_string_append_func = Some(function),
+                "jit_try_append" => translator.try_append_func = Some(function),
+                "jit_release_rebind" => translator.release_rebind_func = Some(function),
                 "jit_stack_pop" => translator.stack_pop_func = Some(function),
                 "jit_make_struct" => translator.make_struct_func = Some(function),
                 "jit_make_array" => translator.make_array_func = Some(function),
@@ -8322,6 +8594,8 @@ impl JitCompiler {
         builder.symbol("jit_append_local", jit_append_local as *const u8);
         builder.symbol("jit_append_result", jit_append_result as *const u8);
         builder.symbol("jit_try_string_append", jit_try_string_append as *const u8);
+        builder.symbol("jit_try_append", jit_try_append as *const u8);
+        builder.symbol("jit_release_rebind", jit_release_rebind as *const u8);
         builder.symbol("jit_store_variable", jit_store_variable as *const u8);
         builder.symbol("jit_assign_variable", jit_assign_variable as *const u8);
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
@@ -8508,6 +8782,7 @@ impl JitCompiler {
             | OpCode::StoreVar(_)
             | OpCode::StoreLocal(_)
             | OpCode::DefineLocal(_)
+            | OpCode::ReleaseRebindLocal(_, _)
             | OpCode::ReleaseDeadLocal(_) => true,
             OpCode::LoadGlobal(_) | OpCode::StoreGlobal(_) => true,
 
@@ -8526,7 +8801,7 @@ impl JitCompiler {
 
             // Dict/Array operations - in-place ops supported for int paths
             OpCode::FieldGet(_) | OpCode::IndexGet => true,
-            OpCode::TryStringAppendAssign(_, _) => true,
+            OpCode::TryStringAppendAssign(_, _) | OpCode::TryAppendAssign(_, _) => true,
             OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_) => true,
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
@@ -9110,7 +9385,8 @@ impl JitCompiler {
                         | OpCode::JumpIfFalse(target)
                         | OpCode::JumpIfTrue(target)
                         | OpCode::JumpBack(target)
-                        | OpCode::TryStringAppendAssign(_, target) => {
+                        | OpCode::TryStringAppendAssign(_, target)
+                        | OpCode::TryAppendAssign(_, target) => {
                             if *target > max_target {
                                 max_target = *target;
                             }
@@ -11955,6 +12231,170 @@ mod tests {
         } else {
             status
         }
+    }
+
+    #[test]
+    fn guarded_collection_helpers_reuse_storage_and_keep_snapshots() {
+        for bytes in [false, true] {
+            for count in [8, 128] {
+                let mut ctx = VMContext::new(
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                );
+                ctx.owned_roots.enter().unwrap();
+                let initial = if bytes {
+                    Value::Bytes(Arc::new(Vec::new()))
+                } else {
+                    Value::Array(Arc::new(Vec::new()))
+                };
+                let (target, kind) = ctx.owned_roots.encode(initial).unwrap();
+                let pointer = match ctx.owned_roots.current_value_mut(target, kind).unwrap() {
+                    Value::Array(v) => Arc::as_ptr(v) as usize,
+                    Value::Bytes(v) => Arc::as_ptr(v) as usize,
+                    _ => unreachable!(),
+                };
+                let (function, function_kind) = ctx
+                    .owned_roots
+                    .encode(Value::NativeFunction(if bytes { "concat" } else { "push" }.into()))
+                    .unwrap();
+                for index in 0..=count {
+                    let saved = if index == count {
+                        Some(ctx.owned_roots.clone_value(target, kind).unwrap())
+                    } else {
+                        None
+                    };
+                    let original = ctx.owned_roots.duplicate(target, kind).unwrap();
+                    let item = if bytes {
+                        Value::Bytes(Arc::new(vec![255]))
+                    } else {
+                        Value::Int(index as i64)
+                    };
+                    let (item, item_kind) = ctx.owned_roots.encode(item).unwrap();
+                    assert_eq!(
+                        unsafe {
+                            jit_try_append(
+                                &mut ctx,
+                                1,
+                                target,
+                                kind,
+                                original,
+                                kind,
+                                item,
+                                item_kind,
+                                1,
+                                function,
+                                function_kind,
+                            )
+                        },
+                        1
+                    );
+                    assert!(ctx.runtime_error.is_none());
+                    ctx.owned_roots.release(original, kind).unwrap();
+                    ctx.owned_roots.release(item, item_kind).unwrap();
+                    let (actual_pointer, len) =
+                        match ctx.owned_roots.current_value_mut(target, kind).unwrap() {
+                            Value::Array(v) => (Arc::as_ptr(v) as usize, v.len()),
+                            Value::Bytes(v) => (Arc::as_ptr(v) as usize, v.len()),
+                            _ => unreachable!(),
+                        };
+                    assert_eq!(len, index + 1);
+                    if let Some(saved) = saved {
+                        assert_ne!(actual_pointer, pointer);
+                        assert!(
+                            matches!(saved, Value::Array(ref v) if v.len()==count)
+                                || matches!(saved, Value::Bytes(ref v) if v.len()==count)
+                        );
+                    } else {
+                        assert_eq!(actual_pointer, pointer);
+                    }
+                }
+                ctx.owned_roots.leave().unwrap();
+                let (_, live, slots, _) = ctx.owned_roots.storage_state();
+                assert_eq!(live, 0);
+                assert!(slots <= 8, "root capacity grew to {slots}");
+            }
+        }
+    }
+
+    #[test]
+    fn guarded_rebind_release_drops_only_matching_mutable_local_snapshot() {
+        let mut ctx =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        ctx.owned_roots.enter().unwrap();
+        let (target, kind) =
+            ctx.owned_roots.encode(Value::Array(Arc::new(vec![Value::Int(1)]))).unwrap();
+        let original = ctx.owned_roots.duplicate(target, kind).unwrap();
+        let (function, function_kind) = ctx
+            .owned_roots
+            .encode(Value::BytecodeFunction {
+                chunk: BytecodeChunk::new(),
+                captured: HashMap::new(),
+                captured_binding_kinds: HashMap::new(),
+            })
+            .unwrap();
+        assert_eq!(
+            unsafe {
+                jit_release_rebind(
+                    &mut ctx,
+                    1,
+                    target,
+                    kind,
+                    original,
+                    kind,
+                    0,
+                    function,
+                    function_kind,
+                )
+            },
+            0
+        );
+        assert!(
+            matches!(ctx.owned_roots.current_value_mut(target,kind).unwrap(),Value::Array(v) if Arc::strong_count(v)==2)
+        );
+        let (different, _) =
+            ctx.owned_roots.encode(Value::Array(Arc::new(vec![Value::Int(2)]))).unwrap();
+        assert_eq!(
+            unsafe {
+                jit_release_rebind(
+                    &mut ctx,
+                    1,
+                    target,
+                    kind,
+                    different,
+                    kind,
+                    1,
+                    function,
+                    function_kind,
+                )
+            },
+            0
+        );
+        assert!(matches!(
+            ctx.owned_roots.current_value_mut(target, kind).unwrap(),
+            Value::Array(_)
+        ));
+        assert_eq!(
+            unsafe {
+                jit_release_rebind(
+                    &mut ctx,
+                    1,
+                    target,
+                    kind,
+                    original,
+                    kind,
+                    1,
+                    function,
+                    function_kind,
+                )
+            },
+            0
+        );
+        assert!(matches!(ctx.owned_roots.current_value_mut(target, kind).unwrap(), Value::Null));
+        assert!(
+            matches!(ctx.owned_roots.current_value_mut(original,kind).unwrap(),Value::Array(v) if Arc::strong_count(v)==1)
+        );
+        ctx.owned_roots.leave().unwrap();
     }
 
     #[test]

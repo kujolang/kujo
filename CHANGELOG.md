@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile guarded array/byte append rebinding and conditional local snapshot release
+  in the experimental JIT, preserving builtin shadowing, RHS effects, value
+  semantics and fallback behavior.
+
 - Compile guarded string rebinding in native functions and loops while preserving
   snapshots, RHS evaluation, binding mutability and ordinary addition fallback.
 
