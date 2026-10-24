@@ -10,6 +10,9 @@ thread_local! {
     static LARGE: Cell<usize> = const { Cell::new(0) };
     static LIMIT: Cell<usize> = const { Cell::new(usize::MAX) };
     static REQUESTED_BYTES: Cell<usize> = const { Cell::new(0) };
+    // Fixed TLS accounting does not allocate inside the allocator callback.
+    // Bucket 2048 combines requests >= 2048 bytes; other buckets are exact sizes.
+    static SIZES: [Cell<usize>; 2049] = const { [const { Cell::new(0) }; 2049] };
 }
 
 struct CountingAllocator;
@@ -21,6 +24,10 @@ fn record(bytes: usize) {
             }
             ALLOCATIONS.with(|count| count.set(count.get() + 1));
             REQUESTED_BYTES.with(|count| count.set(count.get() + bytes));
+            SIZES.with(|sizes| {
+                let count = &sizes[bytes.min(2048)];
+                count.set(count.get() + 1);
+            });
         }
     });
 }
@@ -56,6 +63,7 @@ use kujo::{compiler::Compiler, lexer, parser::Parser, vm::VM};
 use std::sync::Arc;
 fn main() {
     let enforce_reuse_budget = std::env::args().any(|arg| arg == "--expect-reuse");
+    let show_histogram = std::env::args().any(|arg| arg == "--histogram");
     let port = std::fs::read_to_string("benchmarks/langarena/port.kujo").unwrap();
     let kernel = port
         .split("func quick_sort(input, low, high) {")
@@ -103,6 +111,7 @@ fn main() {
                 ALLOCATIONS.with(|v| v.set(0));
                 REQUESTED_BYTES.with(|v| v.set(0));
                 LARGE.with(|v| v.set(0));
+                SIZES.with(|sizes| sizes.iter().for_each(|count| count.set(0)));
                 LIMIT.with(|v| v.set(n * std::mem::size_of::<Value>()));
                 TRACK.with(|v| v.set(true));
                 let result = vm.call_function_from_jit(f, args);
@@ -125,6 +134,16 @@ fn main() {
                     assert!(Value::equals(&Value::Array(snapshot), &Value::Array(make(n))));
                 }
                 println!("AUDIT jit={jit} n={n} shared={shared} allocations={} bytes={} array_sized_allocations={} same_backing={} value_size={}",ALLOCATIONS.with(Cell::get),REQUESTED_BYTES.with(Cell::get),LARGE.with(Cell::get),ptr==sorted.as_ptr(),std::mem::size_of::<Value>());
+                SIZES.with(|sizes| {
+                    assert_eq!(sizes.iter().map(Cell::get).sum::<usize>(), ALLOCATIONS.with(Cell::get));
+                    if show_histogram {
+                        for (size, count) in sizes.iter().enumerate() {
+                            if count.get() != 0 {
+                                println!("SIZE jit={jit} n={n} shared={shared} bytes_bucket={size} count={}", count.get());
+                            }
+                        }
+                    }
+                });
             }
         }
     }
