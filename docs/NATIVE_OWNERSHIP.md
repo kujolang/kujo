@@ -32,6 +32,11 @@ compilation. Spread-marker bytecode remains excluded from native admission.
 Independent tests cover empty/mixed/nested arrays, snapshot isolation, effects,
 error recovery, native loop entry and bounded repeated-construction storage.
 
+Loop locals use tagged SSA even when initialized by collection literals. Their
+normal and exceptional exits persist current values to physical VM slots; updates
+do not stop at the temporary name map. Integer-map fast paths retain their separate
+physical-slot access. Regressions cover arrays/dictionaries and retained snapshots.
+
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.
 

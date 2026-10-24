@@ -56,5 +56,6 @@
     "Release, production, controlled speed and platform gates remain open",
     "Native spreads, structs, field access, nested updates and array-loop admission remain separate gaps"
   ],
-  "speed_claim": "None; tests prove correct native entry and bounded roots, not competitive elapsed time"
+  "speed_claim": "None; tests prove correct native entry and bounded roots, not competitive elapsed time",
+  "followup_correctness_finding": "Independent aggregate loop rebinding regression exposed stale physical VM slots after this candidate. Followup repair and evidence: native-loop-owned-rebinding-2026-10-23.json. Benchmark checksums alone do not certify this path."
 }

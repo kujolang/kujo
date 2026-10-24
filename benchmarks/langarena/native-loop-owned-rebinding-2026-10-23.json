@@ -1,0 +1,23 @@
+{
+  "scope": "Owned native-loop local rebinding must persist to physical VM slots on normal and exceptional exits; preserve snapshots and separate integer-map physical access.",
+  "baseline": "Frozen native-array candidate fails independent array rebinding regression after native entry; new struct loop separately exposed stale99 instead of199.",
+  "staged_jit_sha256": "4d7ed72b5ca9de0999226ec60b3813f5f7c827f083d85721fb9154ffb0db3429",
+  "verification_worktree_jit_sha256": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+  "regression_sha256": "f901ed9c8a396e4acb3bb94f0a8bd6c1ded50451b0b472d3b47e0846378f4979",
+  "verification": {
+    "library_passed": 1049,
+    "library_ignored": 8,
+    "integration_passed": 24,
+    "expanded_regression": "Arrays and dictionaries, normal/caught-error exits, interpreter/VM/JIT; native-loop execution required and snapshots unchanged",
+    "logs": {
+      "/tmp/kujo-loop-owned-rebinding-before.log": "df9bc70e40cc48da8c100b8ed36ea67f516c82f5d39830cd648bf035ec2a07ed",
+      "/tmp/kujo-loop-owned-rebinding-expanded.log": "48541828261b5a9465491db359a409fb6e0202fc8b689a29e449fce62f5ce52e",
+      "/tmp/kujo-native-struct-fixed-contracts.log": "3b504b7cd239aebb0452e6ff8cada9d5f2216465a2571fb6b46998120d7fe900",
+      "/tmp/kujo-native-struct-library-serial.log": "dc41752945352cf6f0bbce9adae6c5355be0dd7e309d325b1c5df7f3a179731b"
+    }
+  },
+  "limits": [
+    "Full-library and integration verification worktree includes separately pending native struct construction",
+    "No production or speed claim"
+  ]
+}

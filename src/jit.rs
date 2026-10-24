@@ -4606,6 +4606,13 @@ impl BytecodeTranslator {
     }
 
     fn scan_non_int_locals(&mut self, instructions: &[OpCode], function_end: usize) {
+        // Loop locals must persist to physical VM slots, not only to the
+        // temporary name map. Tagged SSA handles owned values as well as scalars.
+        // Integer-map slots retain their separate physical-slot path.
+        if self.loop_resume_enabled {
+            return;
+        }
+
         for pc in 0..function_end.saturating_sub(1) {
             let instruction = match instructions.get(pc) {
                 Some(instr) => instr,

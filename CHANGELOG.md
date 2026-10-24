@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Persist owned native-loop locals back to physical VM slots on normal exits
+  and caught errors, preserving updated array/dictionary values and snapshots.
+
 - Compile ordinary array literals in experimental native functions and loops
   using typed operands, checked nesting limits and bounded ownership roots.
   Array spread bytecode continues through the existing fallback.
