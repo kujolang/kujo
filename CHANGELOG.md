@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve channel and ArgParser receivers when a native loop resumes in the VM
+  to execute a method call.
+
 - Restore builds without `runtime-jit` by keeping the disabled context compatible
   with shared VM loop setup.
 

@@ -29,6 +29,18 @@
   "candidate_matrix": {
     "source_commit": "f496448",
     "identity": "/tmp/kujo-native-field-2026-10-23/identity.json",
-    "status": "launched; not yet verified; JIT/VM/interpreter run sequentially and retain failures"
+    "status": "launched; not yet verified; JIT/VM/interpreter run sequentially and retain failures",
+    "limitation": "Known loop receiver bug independently reproduced in this frozen candidate; suite results cannot override that regression or certify corrected source"
+  },
+  "followup_loop_receiver": {
+    "issue": "Frozen f496448 loses a legacy receiver when a native loop resumes at Call: Stack underflow getting channel",
+    "repair": "Guard legacy receiver-producing FieldGet in locked loops and resume before insertion; ordinary struct fields remain native",
+    "source_sha256": "64d3a413b78e3da59f89f7479384aa92b03bf9744deaabefd6b24fda49f94363",
+    "regression": "tests/jit_loop_field_methods.rs",
+    "baseline": "/tmp/kujo-loop-field-before.log: interpreter/VM pass; JIT fails after compiled loop entry",
+    "fixed": "/tmp/kujo-loop-field-after.log: new three-mode regression plus 3 existing field tests pass",
+    "related": "/tmp/kujo-loop-field-contracts.log: 143 callback/loop/parity tests pass",
+    "format": "/tmp/kujo-loop-field-fmt.log: cargo fmt --check passed",
+    "scope": "No current full-library or all-50 claim from this followup; prior library gate and running frozen matrix predate this repair"
   }
 }

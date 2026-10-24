@@ -54,6 +54,9 @@ Legacy receiver markers retain their physical VM stack effects. Native function
 entry records the stack base; every generated function exit discards its suffix,
 including unconsumed receivers, while preserving caller values. Loop regions
 remain in the enclosing VM frame and retain its stack lifetime.
+Locked native loops resume in the VM before legacy receiver-producing field
+lookups. Resuming only at the subsequent call would discard the hidden receiver
+when rebuilding the operand stack. Ordinary struct field reads stay native.
 
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.

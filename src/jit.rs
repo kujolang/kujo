@@ -1247,6 +1247,22 @@ pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, 
     if kind == -1 {
         return 1;
     } // A Call instruction can enter arbitrary user code.
+    if kind == -2 {
+        // A legacy field lookup inserts a physical receiver outside the tagged
+        // operand stack. Resume before that insertion so later callback resume
+        // cannot discard or reorder it while rebuilding the VM stack.
+        return match ctx.owned_roots.clone_value(value, crate::native_owned::OWNED) {
+            Ok(Value::Channel(_) | Value::HttpServer { .. }) => 1,
+            Ok(Value::Struct { name, .. }) => i64::from(name == "ArgParser"),
+            #[cfg(feature = "runtime-image")]
+            Ok(Value::Image { .. }) => 1,
+            Ok(_) => 0,
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                1
+            }
+        };
+    }
     if kind != crate::native_owned::OWNED {
         return 0;
     }
@@ -7379,7 +7395,7 @@ impl BytecodeTranslator {
             | OpCode::LessEqual
             | OpCode::GreaterThan
             | OpCode::GreaterEqual => 2,
-            OpCode::Negate | OpCode::Not => 1,
+            OpCode::Negate | OpCode::Not | OpCode::FieldGet(_) => 1,
             OpCode::Call(_) => 0,
             _ => return Ok(false),
         };
@@ -7414,7 +7430,12 @@ impl BytecodeTranslator {
         builder.ins().brif(owned, inspect, &[], proceed, &[]);
         builder.seal_block(inspect);
         builder.switch_to_block(inspect);
-        let call = builder.ins().call(guard, &[ctx, value, kind]);
+        let guard_kind = if matches!(instruction, OpCode::FieldGet(_)) {
+            builder.ins().iconst(types::I64, -2)
+        } else {
+            kind
+        };
+        let call = builder.ins().call(guard, &[ctx, value, guard_kind]);
         let result = builder.inst_results(call)[0];
         let required = builder.ins().icmp_imm(IntCC::NotEqual, result, 0);
         builder.ins().brif(required, resume, &[], proceed, &[]);
