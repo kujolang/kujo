@@ -45,6 +45,15 @@ pub(crate) enum OwnershipError {
     InvalidKind(i64),
 }
 
+/// A hint into the root store, not an unchecked pointer. Every hit validates the
+/// current slot's handle and liveness; released/recycled slots cannot match.
+#[repr(C)]
+#[derive(Default)]
+pub(crate) struct OwnedReadCache {
+    handle: u64,
+    index: usize,
+}
+
 struct Frame {
     identity: u64,
     head: Option<usize>,
@@ -66,6 +75,8 @@ pub(crate) struct NativeOwnedValues {
     frames: Vec<Frame>,
     next_handle: Option<u64>,
     next_frame: Option<u64>,
+    #[cfg(test)]
+    index_lookups: std::cell::Cell<usize>,
 }
 
 /// Native control flow enters scopes even when it uses only immediates. Defer
@@ -168,6 +179,15 @@ impl NativeCallRoots {
     /// Borrow a validated owned operand without returning a full-width Cow<Value>.
     pub(crate) fn borrow_owned(&self, payload: i64) -> Result<&Value, OwnershipError> {
         self.values.get(Handle::from_payload(payload))
+    }
+
+    #[inline]
+    pub(crate) fn borrow_owned_cached(
+        &self,
+        payload: i64,
+        cache: &mut OwnedReadCache,
+    ) -> Result<&Value, OwnershipError> {
+        self.values.get_cached(Handle::from_payload(payload), cache)
     }
 
     pub(crate) fn duplicate(&mut self, payload: i64, kind: i64) -> Result<i64, OwnershipError> {
@@ -349,6 +369,8 @@ impl Default for NativeOwnedValues {
             frames: Vec::new(),
             next_handle: Some(1),
             next_frame: Some(1),
+            #[cfg(test)]
+            index_lookups: std::cell::Cell::new(0),
         }
     }
 }
@@ -462,11 +484,34 @@ impl NativeOwnedValues {
     }
 
     fn index(&self, handle: Handle) -> Result<usize, OwnershipError> {
+        #[cfg(test)]
+        self.index_lookups.set(self.index_lookups.get() + 1);
         self.lookup.get(&handle.0).copied().ok_or(OwnershipError::StaleHandle)
     }
 
     pub(crate) fn get(&self, handle: Handle) -> Result<&Value, OwnershipError> {
         let index = self.index(handle)?;
+        Ok(self.slots[index].value.as_ref().expect("live native root"))
+    }
+
+    #[inline]
+    fn get_cached(
+        &self,
+        handle: Handle,
+        cache: &mut OwnedReadCache,
+    ) -> Result<&Value, OwnershipError> {
+        if cache.handle == handle.0 {
+            if let Some(slot) = self.slots.get(cache.index) {
+                if slot.handle == handle {
+                    if let Some(value) = slot.value.as_ref() {
+                        return Ok(value);
+                    }
+                }
+            }
+        }
+        let index = self.index(handle)?;
+        cache.handle = handle.0;
+        cache.index = index;
         Ok(self.slots[index].value.as_ref().expect("live native root"))
     }
 
@@ -544,6 +589,57 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn cached_reads_validate_live_slots_and_avoid_repeated_hash_lookups() {
+        assert_eq!(std::mem::size_of::<OwnedReadCache>(), 16);
+        assert_eq!(std::mem::align_of::<OwnedReadCache>(), 8);
+        let mut roots = NativeCallRoots::default();
+        roots.enter().unwrap();
+        let (a, kind) = roots.encode(Value::array(vec![Value::Int(7)])).unwrap();
+        let mut cache = OwnedReadCache::default();
+        let before = roots.values.index_lookups.get();
+        for _ in 0..128 {
+            let Value::Array(values) = roots.borrow_owned_cached(a, &mut cache).unwrap() else {
+                panic!("array")
+            };
+            assert!(matches!(values[0], Value::Int(7)));
+        }
+        assert_eq!(roots.values.index_lookups.get() - before, 1);
+        let old_capacity = roots.values.slots.capacity();
+        roots.enter().unwrap();
+        for _ in 0..512 {
+            roots.encode(Value::array(vec![Value::Bool(true)])).unwrap();
+        }
+        assert!(roots.values.slots.capacity() > old_capacity);
+        assert!(roots.borrow_owned_cached(a, &mut cache).is_ok());
+        roots.leave().unwrap();
+        // A valid cache always reads the current value, including in-place changes.
+        *roots.current_value_mut(a, kind).unwrap() = Value::Str(Arc::new("changed".into()));
+        assert!(
+            matches!(roots.borrow_owned_cached(a, &mut cache).unwrap(), Value::Str(s) if s.as_str()=="changed")
+        );
+        let old_slot = cache.index;
+        roots.release(a, kind).unwrap();
+        assert!(matches!(
+            roots.borrow_owned_cached(a, &mut cache),
+            Err(OwnershipError::StaleHandle)
+        ));
+        let (b, _) = roots.encode(Value::array(vec![Value::Int(9)])).unwrap();
+        assert_eq!(roots.values.index(Handle::from_payload(b)).unwrap(), old_slot);
+        assert!(matches!(
+            roots.borrow_owned_cached(a, &mut cache),
+            Err(OwnershipError::StaleHandle)
+        ));
+        assert!(roots.borrow_owned_cached(b, &mut cache).is_ok());
+        cache.index = usize::MAX;
+        assert!(roots.borrow_owned_cached(b, &mut cache).is_ok());
+        roots.leave().unwrap();
+        assert!(matches!(
+            roots.borrow_owned_cached(b, &mut cache),
+            Err(OwnershipError::StaleHandle)
+        ));
+    }
 
     #[test]
     fn positional_arguments_move_once_and_drop_unconsumed_values_on_exit() {

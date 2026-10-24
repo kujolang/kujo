@@ -7,6 +7,14 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Validated root-slot read hints](native-root-read-cache-2026-10-24.json)
+  eliminate repeated handle-map lookups without retaining array owners or raw
+  element pointers. Every hit validates the live slot and handle. Compiler
+  admission excludes single-read nonloop locals; repeated sites and loop reads
+  can reuse hints. Seven rotating helper-probe rounds favor warm hints, while
+  forced misses add overhead. These debug-library diagnostics do not establish
+  release, production or competitive speed; those gates remain open.
+
 - [Positional-argument release matrix](checksums-2026-10-24-native-positional-release.json)
   verifies all 150 unchanged test-size checksums on frozen `fc48aec`, including
   positional callback ownership transfer. All 100 measurement reports and

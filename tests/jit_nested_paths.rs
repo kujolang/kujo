@@ -2,6 +2,46 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 #[test]
+fn repeated_native_reads_observe_mutation_rebinding_and_preserve_snapshots() {
+    check(
+        r#"
+func cached_rows(seed) {
+    mut rows := seed
+    let snapshot := rows
+    mut total := 0
+    mut i := 0
+    while i < 8 {
+        total += rows[0][0]
+        rows[0][0] += 1
+        total += rows[0][0]
+        i += 1
+    }
+    rows = [[100]]
+    total += rows[0][0]
+    return [total, snapshot, rows]
+}
+func cached_recursive(values, depth) {
+    let first := values[0]
+    if depth == 0 { return first + values[0] }
+    let child := cached_recursive([first + 1], depth - 1)
+    return first + child + values[0]
+}
+let seed := [[1]]
+mut i := 0
+while i < 150 {
+    assert_equal(cached_rows(seed), [180, [[1]], [[100]]])
+    assert_equal(cached_recursive([1], 4), 30)
+    assert_equal(seed, [[1]])
+    i += 1
+}
+print("PASS")
+"#
+        .into(),
+        &["cached_rows", "cached_recursive"],
+    );
+}
+
+#[test]
 fn native_borrowed_reads_preserve_returned_snapshots_and_errors() {
     check(
         r#"

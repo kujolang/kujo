@@ -1287,15 +1287,52 @@ pub unsafe extern "C" fn jit_indexed_read(
     index_kind: i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
+    indexed_read(ctx, object, object_kind, index, index_kind, None)
+}
+
+/// Read with a stack-local root-slot hint. The hint never bypasses handle checks.
+#[no_mangle]
+// SAFETY: ctx is live/exclusive; cache is null or points to an aligned initialized
+// OwnedReadCache in the active generated stack frame, separate from ctx storage.
+pub unsafe extern "C" fn jit_indexed_read_cached(
+    ctx: *mut VMContext,
+    object: i64,
+    object_kind: i64,
+    index: i64,
+    index_kind: i64,
+    cache: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    indexed_read(
+        ctx,
+        object,
+        object_kind,
+        index,
+        index_kind,
+        (cache as *mut crate::native_owned::OwnedReadCache).as_mut(),
+    )
+}
+
+#[inline]
+fn indexed_read(
+    ctx: &mut VMContext,
+    object: i64,
+    object_kind: i64,
+    index: i64,
+    index_kind: i64,
+    cache: Option<&mut crate::native_owned::OwnedReadCache>,
+) -> i64 {
     let result = (|| {
         // Owned objects are borrowed once, including fallback cases. Construct
         // the borrowed Cow locally to avoid transferring a full-width Value
         // through the helper ABI on the common array-read path.
         let object = if object_kind == crate::native_owned::OWNED {
             std::borrow::Cow::Borrowed(
-                ctx.owned_roots
-                    .borrow_owned(object)
-                    .map_err(|error| format!("Native ownership error: {error:?}"))?,
+                match cache {
+                    Some(cache) => ctx.owned_roots.borrow_owned_cached(object, cache),
+                    None => ctx.owned_roots.borrow_owned(object),
+                }
+                .map_err(|error| format!("Native ownership error: {error:?}"))?,
             )
         } else {
             ctx.owned_roots
@@ -5192,6 +5229,8 @@ struct BytecodeTranslator {
     try_append_func: Option<FuncRef>,
     release_rebind_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
+    indexed_read_cached_func: Option<FuncRef>,
+    indexed_read_caches: HashMap<usize, StackSlot>,
     for_next_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
     update_binding_path_func: Option<FuncRef>,
@@ -5381,6 +5420,8 @@ impl BytecodeTranslator {
             try_append_func: None,
             release_rebind_func: None,
             indexed_read_func: None,
+            indexed_read_cached_func: None,
+            indexed_read_caches: HashMap::new(),
             for_next_func: None,
             indexed_write_func: None,
             update_binding_path_func: None,
@@ -5817,6 +5858,70 @@ impl BytecodeTranslator {
             self.use_local_slots = true;
         }
         self.allocate_ssa_locals(builder);
+    }
+
+    // Admit hints only where reads can repeat. Backward-edge intervals keep this
+    // analysis linear even for nested loops.
+    fn repeated_indexed_read_slots(instructions: &[OpCode]) -> HashSet<usize> {
+        let mut starts = vec![0usize; instructions.len()];
+        let mut ends = vec![0usize; instructions.len() + 1];
+        for (pc, instruction) in instructions.iter().enumerate() {
+            let target = match instruction {
+                OpCode::Jump(target)
+                | OpCode::JumpBack(target)
+                | OpCode::JumpIfFalse(target)
+                | OpCode::JumpIfTrue(target)
+                | OpCode::ForNext(target) => *target,
+                _ => continue,
+            };
+            if target <= pc {
+                starts[target] += 1;
+                ends[pc + 1] += 1;
+            }
+        }
+        let mut active = 0;
+        let mut seen = HashSet::new();
+        let mut repeated = HashSet::new();
+        for (pc, instruction) in instructions.iter().enumerate() {
+            active -= ends[pc];
+            active += starts[pc];
+            if let OpCode::IndexGetInPlace(slot) = instruction {
+                if !seen.insert(*slot) || active > 0 {
+                    repeated.insert(*slot);
+                }
+            }
+        }
+        repeated
+    }
+
+    fn initialize_indexed_read_caches(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        instructions: &[OpCode],
+    ) {
+        if !self.tracks_function_depth {
+            return;
+        }
+        let repeated = Self::repeated_indexed_read_slots(instructions);
+        for instruction in instructions {
+            let OpCode::IndexGetInPlace(slot) = instruction else { continue };
+            if !repeated.contains(slot) || self.indexed_read_caches.contains_key(slot) {
+                continue;
+            }
+            let Some(name) = self.local_names.get(*slot) else { continue };
+            if !self.local_variables.contains_key(name) {
+                continue;
+            }
+            let cache = builder.create_sized_stack_slot(StackSlotData::new(
+                StackSlotKind::ExplicitSlot,
+                16,
+                3,
+            ));
+            let zero = builder.ins().iconst(types::I64, 0);
+            builder.ins().stack_store(zero, cache, 0);
+            builder.ins().stack_store(zero, cache, 8);
+            self.indexed_read_caches.insert(*slot, cache);
+        }
     }
 
     // Native activations own their initialization flags. A loop instead consults
@@ -7853,8 +7958,21 @@ impl BytecodeTranslator {
                     let helper = self.indexed_read_func.ok_or("Indexed read requires helper")?;
                     let object_kind = self.scalar_kind(builder, object);
                     let index_kind = self.scalar_kind(builder, index);
-                    let call =
-                        builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind]);
+                    let args = [ctx, object, object_kind, index, index_kind];
+                    let call = if let (Some(_), Some(cache), Some(cached_helper)) = (
+                        borrowed_local,
+                        self.indexed_read_caches.get(slot_index),
+                        self.indexed_read_cached_func,
+                    ) {
+                        let pointer = builder.ins().stack_addr(types::I64, *cache, 0);
+                        builder.ins().call(
+                            cached_helper,
+                            &[ctx, object, object_kind, index, index_kind, pointer],
+                        )
+                    } else {
+                        builder.ins().call(helper, &args)
+                    };
+
                     let result = builder.inst_results(call)[0];
                     self.capture_loaded_operand(builder, ctx, result);
                     if borrowed_local.is_none() {
@@ -9706,6 +9824,7 @@ impl JitCompiler {
             ("jit_field_write", 6, true),
             ("jit_index_set_result", 7, true),
             ("jit_indexed_read", 5, true),
+            ("jit_indexed_read_cached", 6, true),
             ("jit_for_next", 5, true),
             ("jit_indexed_write", 10, true),
             ("jit_update_binding_path", 8, true),
@@ -9757,6 +9876,7 @@ impl JitCompiler {
                 "jit_field_write" => translator.field_write_func = Some(function),
                 "jit_index_set_result" => translator.index_set_result_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
+                "jit_indexed_read_cached" => translator.indexed_read_cached_func = Some(function),
                 "jit_for_next" => translator.for_next_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_update_binding_path" => translator.update_binding_path_func = Some(function),
@@ -9827,6 +9947,7 @@ impl JitCompiler {
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
+        builder.symbol("jit_indexed_read_cached", jit_indexed_read_cached as *const u8);
         builder.symbol("jit_for_next", jit_for_next as *const u8);
         builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
         builder.symbol("jit_update_binding_path", jit_update_binding_path as *const u8);
@@ -10680,6 +10801,7 @@ impl JitCompiler {
             translator.function_end = function_end;
             translator.loop_resume_enabled = loop_end.is_some();
             translator.initialize_readonly_locals(&mut builder, &chunk.params);
+            translator.initialize_indexed_read_caches(&mut builder, &chunk.instructions);
             if let Some(slots) = int_dict_slots.as_ref() {
                 translator.set_int_dict_slots(slots.clone());
             }
@@ -11344,6 +11466,7 @@ impl JitCompiler {
             supports_positional_arguments = translator.use_local_slots
                 && chunk.params.iter().all(|name| translator.local_variables.contains_key(name));
             translator.initialize_readonly_locals(&mut builder, &chunk.params);
+            translator.initialize_indexed_read_caches(&mut builder, &chunk.instructions);
 
             let has_loop = chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
             // Initialize parameter slots with values from the func_locals HashMap
@@ -11638,6 +11761,7 @@ impl JitCompiler {
 
             translator.allocate_parameter_slots(&mut builder, &chunk.params);
             translator.initialize_readonly_locals(&mut builder, &chunk.params);
+            translator.initialize_indexed_read_caches(&mut builder, &chunk.instructions);
 
             // The context remains live for this native activation. Capture the
             // incoming kind in SSA before a recursive call changes the context.
@@ -12244,6 +12368,7 @@ impl JitCompiler {
                 .set_local_slot_int_dict_functions(local_int_dict_get_ref, local_int_dict_set_ref);
             translator.function_end = chunk.instructions.len(); // Process all instructions
             translator.initialize_readonly_locals(&mut builder, &chunk.params);
+            translator.initialize_indexed_read_caches(&mut builder, &chunk.instructions);
 
             // Create blocks for jump targets (this also analyzes loop headers)
             translator.create_blocks(&mut builder, &chunk.instructions, 0)?;
@@ -13395,6 +13520,107 @@ mod tests {
             assert!(capacity <= 4, "{repetitions} writes retained {capacity} root slots");
             assert!(stack.is_empty());
         }
+    }
+
+    #[test]
+    fn indexed_read_cache_admission_requires_repeated_sites_or_loop_reads() {
+        use OpCode::{IndexGetInPlace as Read, JumpBack};
+        assert!(BytecodeTranslator::repeated_indexed_read_slots(&[Read(0)]).is_empty());
+        assert_eq!(
+            BytecodeTranslator::repeated_indexed_read_slots(&[Read(0), Read(1), Read(0)]),
+            HashSet::from([0])
+        );
+        assert_eq!(
+            BytecodeTranslator::repeated_indexed_read_slots(&[
+                Read(0),
+                Read(1),
+                Read(2),
+                JumpBack(2),
+                JumpBack(1),
+                Read(3),
+            ]),
+            HashSet::from([1, 2])
+        );
+        assert!(BytecodeTranslator::repeated_indexed_read_slots(&[
+            OpCode::Jump(2),
+            Read(0),
+            Read(1),
+        ])
+        .is_empty());
+    }
+
+    #[test]
+    fn cached_indexed_reads_match_generic_reads_and_reject_released_handles() {
+        let mut context =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        context.owned_roots.enter().unwrap();
+        let mut cache = crate::native_owned::OwnedReadCache::default();
+        let pointer = &mut cache as *mut _ as i64;
+        let objects = vec![
+            Value::array(vec![
+                Value::Float(-0.0),
+                Value::Float(f64::from_bits(0x7ff8000000000042)),
+                Value::Null,
+                Value::Bool(true),
+                Value::array(vec![Value::Int(8)]),
+            ]),
+            Value::Str(Arc::new("é🙂".into())),
+            Value::Bytes(Arc::new(vec![0, 255])),
+            Value::array(vec![]),
+        ];
+        for object in objects {
+            let (root, kind) = context.owned_roots.encode(object.clone()).unwrap();
+            for index in [
+                Value::Int(0),
+                Value::Int(-1),
+                Value::Int(1),
+                Value::Int(2),
+                Value::Int(3),
+                Value::Int(4),
+                Value::Int(i64::MIN),
+                Value::Float(0.5),
+                Value::Float(f64::NAN),
+                Value::Bool(false),
+            ] {
+                let expected = VM::get_indexed_value(&object, &index);
+                let (i, ik) = context.owned_roots.encode(index).unwrap();
+                context.runtime_error = None;
+                // SAFETY: context/cache are live and disjoint; operands are rooted.
+                let result =
+                    unsafe { jit_indexed_read_cached(&mut context, root, kind, i, ik, pointer) };
+                match expected {
+                    Ok(value) => {
+                        assert!(context.runtime_error.is_none());
+                        if let Some(expected) = crate::native_scalar::encode(&value) {
+                            assert_eq!((result, context.return_value_kind), expected);
+                        } else {
+                            let actual = context
+                                .owned_roots
+                                .clone_value(result, context.return_value_kind)
+                                .unwrap();
+                            assert!(Value::equals(&actual, &value));
+                            context.owned_roots.release(result, context.return_value_kind).unwrap();
+                        }
+                    }
+                    Err(error) => {
+                        assert_eq!(context.runtime_error.as_deref(), Some(error.as_str()))
+                    }
+                }
+                context.owned_roots.release(i, ik).unwrap();
+            }
+            context.owned_roots.release(root, kind).unwrap();
+            context.runtime_error = None;
+            // SAFETY: cache remains live; stale root must fail before value access.
+            unsafe {
+                jit_indexed_read_cached(&mut context, root, kind, 0, 0, pointer);
+            }
+            assert!(context
+                .runtime_error
+                .as_deref()
+                .unwrap()
+                .starts_with("Native ownership error:"));
+        }
+        context.owned_roots.leave().unwrap();
     }
 
     #[test]

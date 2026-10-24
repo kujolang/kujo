@@ -1,0 +1,18 @@
+let options := args()
+assert_equal(len(options), 4)
+let binaries := [options[0], options[1], options[2]]
+mut results := []
+mut round := 0
+while round < 7 {
+    mut slot := 0
+    while slot < 3 {
+        let variant := (round + slot) % 3
+        let output := spawn_process([binaries[variant]], {"timeout_ms": 60000, "max_output_bytes": 1048576})
+        results = push(results, {"round": round + 1, "variant": variant, "binary": binaries[variant], "success": output.success, "exitcode": output.exitcode, "stdout": output.stdout, "stderr": output.stderr})
+        write_file(options[3], to_json({"scope": "Paired debug-library helper microprobe; no production or competitive-speed claim", "results": results}), true)
+        assert(output.success, output.stderr)
+        print("PASS round=" + str(round + 1) + " variant=" + str(variant))
+        slot += 1
+    }
+    round += 1
+}

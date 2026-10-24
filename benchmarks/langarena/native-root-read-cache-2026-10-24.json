@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "scope": "Validated native root-slot hints for repeated indexed reads; no raw Value pointers or additional collection owners.",
+  "base_commit": "1b441f2",
+  "admission": "Whole-function SSA locals with multiple static indexed reads or an indexed read in a backward-edge interval. Single-read nonloop locals and separately compiled loops keep the ordinary helper.",
+  "safety": "Every hit checks slot bounds, matching handle and a live current value. Reallocation, mutation, nested calls, root release and slot reuse cannot expose a stale cached value.",
+  "deterministic_cost": "128 repeated reads require one authoritative handle HashMap lookup instead of 128.",
+  "probe_scope": "Seven rotating rounds,100000 reads per case. Optimized standalone Rust probe links a debug Kujo library. Generic/warm/forced-cold compare helpers from the same candidate before compiler admission refinement; helper code unchanged. Concurrent production work and loaded host: diagnostic only, not end-to-end release or competitive acceptance.",
+  "variants": {
+    "0": "generic",
+    "1": "warm hint",
+    "2": "forced miss each read"
+  },
+  "median_ns": {
+    "integer_array": {
+      "0": 30853356,
+      "1": 13143697,
+      "2": 31398452
+    },
+    "float_array": {
+      "0": 31201315,
+      "1": 13267262,
+      "2": 31694540
+    },
+    "float_dictionary": {
+      "0": 110699119,
+      "1": 95298293,
+      "2": 114417310
+    },
+    "owned_array": {
+      "0": 169718316,
+      "1": 150427482,
+      "2": 175841396
+    }
+  },
+  "raw": {
+    "results": [
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 1,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31516724\nfloat_array reads=100000 elapsed_ns=31438992\nfloat_dictionary reads=100000 elapsed_ns=116785348\nowned_array reads=100000 elapsed_ns=179325851\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 1,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=13085758\nfloat_array reads=100000 elapsed_ns=13318943\nfloat_dictionary reads=100000 elapsed_ns=93552000\nowned_array reads=100000 elapsed_ns=150689782\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 1,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31398452\nfloat_array reads=100000 elapsed_ns=35198863\nfloat_dictionary reads=100000 elapsed_ns=119563929\nowned_array reads=100000 elapsed_ns=175841396\n",
+        "success": true,
+        "variant": 2
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 2,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=16040333\nfloat_array reads=100000 elapsed_ns=15060600\nfloat_dictionary reads=100000 elapsed_ns=109759363\nowned_array reads=100000 elapsed_ns=192690273\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 2,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=33995144\nfloat_array reads=100000 elapsed_ns=38708043\nfloat_dictionary reads=100000 elapsed_ns=121500885\nowned_array reads=100000 elapsed_ns=189428092\n",
+        "success": true,
+        "variant": 2
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 2,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31440605\nfloat_array reads=100000 elapsed_ns=32299429\nfloat_dictionary reads=100000 elapsed_ns=140255660\nowned_array reads=100000 elapsed_ns=183401994\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 3,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=33885790\nfloat_array reads=100000 elapsed_ns=31995117\nfloat_dictionary reads=100000 elapsed_ns=206465909\nowned_array reads=100000 elapsed_ns=193549164\n",
+        "success": true,
+        "variant": 2
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 3,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=30725408\nfloat_array reads=100000 elapsed_ns=31201315\nfloat_dictionary reads=100000 elapsed_ns=119519845\nowned_array reads=100000 elapsed_ns=191237293\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 3,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=13178626\nfloat_array reads=100000 elapsed_ns=13234854\nfloat_dictionary reads=100000 elapsed_ns=95298293\nowned_array reads=100000 elapsed_ns=149240252\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 4,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=30643740\nfloat_array reads=100000 elapsed_ns=31283111\nfloat_dictionary reads=100000 elapsed_ns=110306602\nowned_array reads=100000 elapsed_ns=168417124\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 4,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=13127534\nfloat_array reads=100000 elapsed_ns=13228923\nfloat_dictionary reads=100000 elapsed_ns=94751008\nowned_array reads=100000 elapsed_ns=150427482\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 4,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31236798\nfloat_array reads=100000 elapsed_ns=31356881\nfloat_dictionary reads=100000 elapsed_ns=114131599\nowned_array reads=100000 elapsed_ns=167797358\n",
+        "success": true,
+        "variant": 2
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 5,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=13009389\nfloat_array reads=100000 elapsed_ns=13213341\nfloat_dictionary reads=100000 elapsed_ns=95927704\nowned_array reads=100000 elapsed_ns=150076844\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 5,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31625307\nfloat_array reads=100000 elapsed_ns=31120699\nfloat_dictionary reads=100000 elapsed_ns=114132844\nowned_array reads=100000 elapsed_ns=169391260\n",
+        "success": true,
+        "variant": 2
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 5,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31019734\nfloat_array reads=100000 elapsed_ns=30992176\nfloat_dictionary reads=100000 elapsed_ns=110062038\nowned_array reads=100000 elapsed_ns=169718316\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 6,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31157054\nfloat_array reads=100000 elapsed_ns=31694540\nfloat_dictionary reads=100000 elapsed_ns=113882787\nowned_array reads=100000 elapsed_ns=168777130\n",
+        "success": true,
+        "variant": 2
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 6,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=30853356\nfloat_array reads=100000 elapsed_ns=30825193\nfloat_dictionary reads=100000 elapsed_ns=110699119\nowned_array reads=100000 elapsed_ns=168216921\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 6,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=13172990\nfloat_array reads=100000 elapsed_ns=13267262\nfloat_dictionary reads=100000 elapsed_ns=95507900\nowned_array reads=100000 elapsed_ns=150521196\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-generic",
+        "exitcode": 0,
+        "round": 7,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=30624099\nfloat_array reads=100000 elapsed_ns=31186835\nfloat_dictionary reads=100000 elapsed_ns=110175700\nowned_array reads=100000 elapsed_ns=167931910\n",
+        "success": true,
+        "variant": 0
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-warm",
+        "exitcode": 0,
+        "round": 7,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=13143697\nfloat_array reads=100000 elapsed_ns=13379566\nfloat_dictionary reads=100000 elapsed_ns=94549654\nowned_array reads=100000 elapsed_ns=150091248\n",
+        "success": true,
+        "variant": 1
+      },
+      {
+        "binary": "/tmp/kujo-root-read-cache-cold",
+        "exitcode": 0,
+        "round": 7,
+        "stderr": "",
+        "stdout": "integer_array reads=100000 elapsed_ns=31285855\nfloat_array reads=100000 elapsed_ns=31356339\nfloat_dictionary reads=100000 elapsed_ns=114417310\nowned_array reads=100000 elapsed_ns=184349039\n",
+        "success": true,
+        "variant": 2
+      }
+    ],
+    "scope": "Paired debug-library helper microprobe; no production or competitive-speed claim"
+  },
+  "probe_sha256": {
+    "/tmp/kujo-root-read-cache-probe.rs": "68cab85168a656b0eb3d335c3c44fc8a3507f02a0ce811db3f77ecffc6057fbb",
+    "/tmp/libkujo-root-read-cache-after.rlib": "3ac36ab1b281dbcb85c3517d1b6bfba50327361bf77cac1dba708136d8e5a940",
+    "/tmp/kujo-root-read-cache-generic": "0bceeac8a7dfca44c31c61d2330bc1f7778d207ec74a3dc9a964d9fe1e260298",
+    "/tmp/kujo-root-read-cache-warm": "ccf7c9e49de9bb0843f05cd485cd4833c2fa24403c5bd570f102166b683c7fad",
+    "/tmp/kujo-root-read-cache-cold": "a3ff18aa3e8b559913d10e8146307ea150ac0135b495f4f30b830d8207144155",
+    "/tmp/kujo-root-read-cache-paired.json": "3ed8d5f1d23d5f5de3804ffed3e4fced1a1c6a549010cb783931d96efb21585d"
+  },
+  "verification": {
+    "status": "passed",
+    "library": {
+      "passed": 1085,
+      "ignored": 8
+    },
+    "integration": {
+      "passed": 153,
+      "suites": [
+        "native_read_allocation",
+        "jit_nested_paths",
+        "collection_ownership_contracts",
+        "vm_interpreter_parity_surfaces"
+      ]
+    },
+    "format": "cargo fmt --check passed",
+    "minimal": "cargo check --locked --no-default-features --lib passed",
+    "regressions": "Cached root growth/recycling/mutation/frame cleanup, scalar bit and error parity; repeated native reads with mutation, retained snapshots, root rebinding and recursive calls tested in interpreter, VM and JIT."
+  },
+  "remaining": "Final-candidate release all150 and production checksums, end-to-end performance, memory, Goose/Rust comparisons and platform gates remain open.",
+  "verified_source_and_log_sha256": {
+    "src/jit.rs": "6e82f3ae1f71ea09a7ccd2f5b9dd86694013b0ef4445cd5838ff3fd0d20c1b65",
+    "src/native_owned.rs": "27330b31092141f7b67909487da0a82ae9f6ef863d92066433d727eca7643107",
+    "tests/jit_nested_paths.rs": "20b0d02972cb275c0a1088a635a7bebf7123432e372b89cff190771cefa80abb",
+    "benchmarks/langarena/probes/native_indexed_read_cache.rs": "861b1e56a0974b01af19f86940a46e431077e6c3cda4f3929cd0c22b44565b9a",
+    "benchmarks/langarena/probes/paired_read_cache.kujo": "1dca46d2ce9810582739bcd00f32ac5ef2f16cee01dbdec952802335a1f21b50",
+    "/tmp/kujo-root-read-cache-final-library.log": "78b7291c59df3a1eec9a63caf8ed27de555d6905ae1f98519d36dca143e734b2",
+    "/tmp/kujo-root-read-cache-regressions.log": "6dcbffd18def32a490cfa9842127e9fcec377a0bf9ef8475d26ee35d4f10abb5",
+    "/tmp/kujo-root-read-cache-minimal.log": "c96b00c79d98bd92b14c3934f69df88db9e56801b5c058846694df1e79202b6f",
+    "/tmp/kujo-root-read-cache-final-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
