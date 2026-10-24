@@ -44,6 +44,12 @@ outliving its bytecode chunk, recursive builders, mixed fields, snapshots, nativ
 loop replacement and bounded roots. Field reads and nested updates remain separate
 native-coverage gaps. See [constructor evidence](../benchmarks/langarena/native-struct-construction-2026-10-23.json).
 
+Cold VM callbacks now use the same field resolver as ordinary VM execution,
+including legacy channel/ArgParser/image/server receiver markers. Regressions
+keep the caller hot and the field-using helper cold, checking markers, prior
+effects, failed assignment targets and recovery. Native `FieldGet` lowering is
+still a separate gate; its receiver stack effects must be preserved.
+
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.
 

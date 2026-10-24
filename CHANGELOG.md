@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve receiver markers when native callers invoke fallback functions using
+  channel or ArgParser methods. VM and callback field resolution now share member
+  precedence, method lookup and error behavior.
+
 - Compile struct construction in experimental native functions and loops,
   retaining constructor metadata and preserving field order, value semantics
   and nesting limits.

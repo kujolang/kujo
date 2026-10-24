@@ -1,0 +1,28 @@
+{
+  "scope": "Ordinary VM and compact native callback dispatcher share field resolution, including legacy receiver markers. Native FieldGet lowering remains unsupported.",
+  "source_sha256": {
+    "src/vm.rs": "494eada0b24d7fbdc7e8e511b8795f810a2af74335695409b283dcebd21b52a9",
+    "src/jit.rs": "0c027e7eabec07d4e1379de7af34b8775afc1e537dceedf96ee9e6a2aa4af8bb",
+    "tests/jit_field_methods.rs": "19ee21da476a4c66168c5ceb3e8ea67a4c164cb3f033cf245a7b323a138cfeab"
+  },
+  "verification": {
+    "library_passed": 1050,
+    "library_ignored": 8,
+    "integration_passed": 131,
+    "final_cold_fixtures": "Hot higher-order relay invokes field-using helpers only1-3times; baseline rejects channel send / ArgParser help, fix passes interpreter/VM/JIT and native-entry assertions. Channel failure preserves target/effects and recovery.",
+    "member_contract": "Unit checks field precedence, global method lookup, missing/nonstruct errors and ArgParser receiver-marker precedence",
+    "logs": {
+      "/tmp/kujo-callback-fields-before.log": "5f687a90d18135db7ec6395f663cf2bce86ce230755dc4c6ac5f980e27f42416",
+      "/tmp/kujo-cold-field-before.log": "d75a4b9878ca4f99d6bf4006330f3ea7d5711ff622bfec48687ad35a13427947",
+      "/tmp/kujo-cold-field-after.log": "a10777160249d18aa44575803d1dca40e02dedf461e56fce012fa2b9ca44bfb1",
+      "/tmp/kujo-callback-fields-contracts.log": "fb2eb7f82f142f2613e8afc1d21a995bc95372669690f7bf9a7deacc33b91e1d",
+      "/tmp/kujo-callback-fields-library-serial.log": "312d9d9924367f00ca3689c1106ea5902c626ec91755ab4b52d38648a1f40bc8",
+      "/tmp/kujo-callback-fields-fmtcheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "No native-field compilation or speed claim",
+    "No current-candidate full production/release/platform acceptance",
+    "Dictionary dot-access VM/interpreter compatibility remains separate"
+  ]
+}
