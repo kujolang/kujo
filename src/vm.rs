@@ -427,11 +427,7 @@ pub(crate) struct CallFrame {
 #[allow(dead_code)] // These VM helpers are retained for scheduler/JIT/debug follow-through paths.
 impl VM {
     fn requires_closure_vm(chunk: &BytecodeChunk) -> bool {
-        chunk.is_async
-            || chunk.is_generator
-            || !chunk.upvalues.is_empty()
-            || chunk.lexical_self.is_some()
-            || chunk.instructions.iter().any(|op| matches!(op, OpCode::MakeClosure(_)))
+        chunk.call_metadata().requires_closure_vm
     }
 
     fn capture_slot(&mut self, index: usize) -> Result<Option<CapturedSlot>, String> {
@@ -8288,14 +8284,7 @@ impl VM {
         match &function {
             Value::BytecodeFunction { chunk, captured: _, captured_binding_kinds: _ } => {
                 self.record_jit_dispatch(&args);
-                if Self::requires_closure_vm(chunk)
-                    || chunk.is_async
-                    || chunk.is_generator
-                    || chunk
-                        .instructions
-                        .iter()
-                        .any(|op| matches!(op, OpCode::MakeClosure(_) | OpCode::BeginTry(_)))
-                {
+                if Self::requires_closure_vm(chunk) || chunk.call_metadata().has_try {
                     // Creation needs the full VM dispatcher. Reuse the guarded
                     // bridge, including the caller's capabilities and output.
                     return self.call_interpreter_callable(&function, args);
@@ -8309,8 +8298,7 @@ impl VM {
                         let count = self.function_call_counts.entry(name.to_owned()).or_insert(0);
                         *count = count.saturating_add(1);
                         let calls = *count;
-                        let has_loop =
-                            chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
+                        let has_loop = chunk.call_metadata().has_loop;
                         if calls == JIT_FUNCTION_THRESHOLD || (has_loop && calls == 1) {
                             match self.jit_compile_bytecode_function(&function) {
                                 Ok(true) => {
@@ -8454,8 +8442,7 @@ impl VM {
 
                         // OPTIMIZATION: For simple immediate-valued functions with ≤4 args,
                         // pass arguments directly via VMContext fields instead of HashMap
-                        let has_loop =
-                            chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
+                        let has_loop = chunk.call_metadata().has_loop;
                         let use_fast_args = !has_loop
                             && args.len() <= 4
                             && args.iter().all(|a| crate::native_scalar::encode(a).is_some());

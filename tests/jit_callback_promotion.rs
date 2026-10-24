@@ -1,6 +1,41 @@
 use std::process::Command;
 
 #[test]
+fn hot_dispatch_retains_exception_closure_and_loop_behavior() {
+    let directory = tempfile::tempdir().unwrap();
+    let file = directory.path().join("dispatch.kujo");
+    std::fs::write(&file, r#"
+        func guarded(input) { try { return input[0] } except error { return 41 } }
+        func counted(input) { mut n := 0; mut i := 0; while i < 3 { n += input[0]; i += 1 }; return n }
+        func capture(offset) { return func(x) { return x + offset } }
+        func invoke(f, x) { return f(x) }
+        func relay(input) { return guarded(input) }
+        let saved := [7]
+        let add := capture(5)
+        mut i := 0
+        while i < 180 {
+            assert_equal(relay(saved), 7)
+            assert_equal(relay([]), 41)
+            assert_equal(counted(saved), 21)
+            assert_equal(invoke(add, i), i + 5)
+            assert_equal(saved, [7])
+            i += 1
+        }
+        print("PASS")
+    "#).unwrap();
+    for mode in [None, Some("--interpreter"), Some("--jit")] {
+        let mut command = Command::new(env!("CARGO_BIN_EXE_kujo"));
+        command.args(["run", "--scheduler-no-timeout"]);
+        if let Some(mode) = mode {
+            command.arg(mode);
+        }
+        let output = command.arg(&file).output().unwrap();
+        assert!(output.status.success(), "{mode:?}: {}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "PASS");
+    }
+}
+
+#[test]
 fn quicksort_promotes_pivot_helper_without_changing_snapshots_or_errors() {
     // Use the actual port kernel, so the coverage test cannot silently diverge.
     let port = include_str!("../benchmarks/langarena/port.kujo");

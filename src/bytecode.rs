@@ -476,6 +476,15 @@ pub struct BytecodeChunk(Arc<BytecodeStorage>);
 struct BytecodeStorage {
     data: BytecodeData,
     named_bindings: OnceLock<HashSet<String>>,
+    call_metadata: OnceLock<CallMetadata>,
+}
+
+/// Dispatch facts belong to immutable code storage, not a function's name.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) struct CallMetadata {
+    pub(crate) requires_closure_vm: bool,
+    pub(crate) has_loop: bool,
+    pub(crate) has_try: bool,
 }
 
 impl PartialEq for BytecodeStorage {
@@ -496,6 +505,7 @@ impl std::ops::DerefMut for BytecodeChunk {
     fn deref_mut(&mut self) -> &mut Self::Target {
         let storage = Arc::make_mut(&mut self.0);
         storage.named_bindings.take();
+        storage.call_metadata.take();
         &mut storage.data
     }
 }
@@ -568,7 +578,29 @@ impl BytecodeChunk {
                 is_async: false,
             },
             named_bindings: OnceLock::new(),
+            call_metadata: OnceLock::new(),
         }))
+    }
+
+    pub(crate) fn call_metadata(&self) -> &CallMetadata {
+        self.0.call_metadata.get_or_init(|| {
+            let mut metadata = CallMetadata {
+                requires_closure_vm: self.is_async
+                    || self.is_generator
+                    || !self.upvalues.is_empty()
+                    || self.lexical_self.is_some(),
+                ..CallMetadata::default()
+            };
+            for instruction in &self.instructions {
+                match instruction {
+                    OpCode::MakeClosure(_) => metadata.requires_closure_vm = true,
+                    OpCode::JumpBack(_) => metadata.has_loop = true,
+                    OpCode::BeginTry(_) => metadata.has_try = true,
+                    _ => {}
+                }
+            }
+            metadata
+        })
     }
 
     /// Legacy hand-built chunks can address a slotted parameter by name. Scan
@@ -699,6 +731,44 @@ pub struct ExceptionHandler {
 #[cfg(test)]
 mod sharing_tests {
     use super::*;
+
+    #[test]
+    fn dispatch_metadata_is_shared_by_code_and_invalidated_on_every_edit() {
+        let mut original = BytecodeChunk::new();
+        original.name = Some("same_name".into());
+        assert_eq!(*original.call_metadata(), CallMetadata::default());
+        let mut edited = original.clone();
+        assert!(std::ptr::eq(original.call_metadata(), edited.call_metadata()));
+        edited.instructions.extend([
+            OpCode::MakeClosure(0),
+            OpCode::JumpBack(0),
+            OpCode::BeginTry(0),
+        ]);
+        assert!(edited.0.call_metadata.get().is_none());
+        assert_eq!(
+            *edited.call_metadata(),
+            CallMetadata { requires_closure_vm: true, has_loop: true, has_try: true }
+        );
+        assert_eq!(*original.call_metadata(), CallMetadata::default());
+        edited.instructions.clear();
+        assert_eq!(*edited.call_metadata(), CallMetadata::default());
+        assert_eq!(original, edited, "cache state is not code identity");
+        edited.is_async = true;
+        assert!(edited.call_metadata().requires_closure_vm);
+        edited.is_async = false;
+        assert!(!edited.call_metadata().requires_closure_vm);
+        edited.is_generator = true;
+        assert!(edited.call_metadata().requires_closure_vm);
+        edited.is_generator = false;
+        edited.upvalues.push("capture".into());
+        assert!(edited.call_metadata().requires_closure_vm);
+        edited.upvalues.clear();
+        assert!(!edited.call_metadata().requires_closure_vm);
+        edited.lexical_self = Some("self".into());
+        assert!(edited.call_metadata().requires_closure_vm);
+        edited.lexical_self = None;
+        assert_eq!(*edited.call_metadata(), CallMetadata::default());
+    }
 
     #[test]
     fn named_binding_cache_is_shared_invalidated_and_not_part_of_code_equality() {
