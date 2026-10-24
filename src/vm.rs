@@ -498,7 +498,7 @@ impl VM {
         }
     }
 
-    fn local_reassignment_error(kind: BytecodeBindingKind, name: &str) -> String {
+    pub(crate) fn local_reassignment_error(kind: BytecodeBindingKind, name: &str) -> String {
         match kind {
             BytecodeBindingKind::Mutable => unreachable!("mutable bindings allow reassignment"),
             BytecodeBindingKind::LetImmutable => {
@@ -506,6 +506,23 @@ impl VM {
             }
             BytecodeBindingKind::Const => format!("Cannot reassign const binding: {}", name),
         }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    pub(crate) fn native_local_initialization(
+        &mut self,
+        slot: i64,
+        mark: bool,
+    ) -> Result<bool, String> {
+        let initialized = usize::try_from(slot)
+            .ok()
+            .and_then(|slot| self.call_frames.last_mut()?.local_slot_initialized.get_mut(slot))
+            .ok_or_else(|| format!("Invalid local initialization slot: {slot}"))?;
+        let previous = *initialized;
+        if mark {
+            *initialized = true;
+        }
+        Ok(previous)
     }
 
     pub(crate) fn local_mutation_error(kind: BytecodeBindingKind, name: &str) -> String {

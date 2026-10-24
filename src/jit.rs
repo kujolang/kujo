@@ -1910,6 +1910,46 @@ pub unsafe extern "C" fn jit_arithmetic_error(
     1
 }
 
+/// Read/update physical loop-local initialization, or construct a readonly error.
+#[no_mangle]
+// SAFETY: ctx belongs to the active native call. Physical state access performs
+// no callbacks and does not acquire the environment lock held by native loops.
+pub unsafe extern "C" fn jit_local_initialization(
+    ctx: *mut VMContext,
+    slot: i64,
+    action: i64,
+    binding: i64,
+    name_hash: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    if action == 2 {
+        let name = ctx
+            .var_names_ptr
+            .as_ref()
+            .and_then(|names| names.get(&(name_hash as u64)))
+            .map(String::as_str)
+            .unwrap_or("<local>");
+        let kind = if binding == 1 {
+            BytecodeBindingKind::LetImmutable
+        } else {
+            BytecodeBindingKind::Const
+        };
+        ctx.runtime_error = Some(VM::local_reassignment_error(kind, name));
+        return 1;
+    }
+    let result = (ctx.vm_ptr as *mut VM)
+        .as_mut()
+        .ok_or_else(|| "Missing VM for native local initialization".to_string())
+        .and_then(|vm| vm.native_local_initialization(slot, action == 1));
+    match result {
+        Ok(initialized) => i64::from(initialized),
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            1
+        }
+    }
+}
+
 /// Report a pending error after a direct recursive native call.
 #[no_mangle]
 // SAFETY: ctx points to the live, exclusively borrowed native-call context.
@@ -4961,6 +5001,8 @@ struct BytecodeTranslator {
     /// Local slot names indexed by slot id
     local_names: Vec<String>,
     local_binding_kinds: Vec<BytecodeBindingKind>,
+    readonly_initialization: HashMap<usize, StackSlot>,
+    local_initialization_func: Option<FuncRef>,
     /// End of function body (PC index, exclusive)
     function_end: usize,
     /// Local variable slots - maps variable name to stack slot
@@ -5082,6 +5124,8 @@ impl BytecodeTranslator {
             use_local_slots: false,
             local_names: Vec::new(),
             local_binding_kinds: Vec::new(),
+            readonly_initialization: HashMap::new(),
+            local_initialization_func: None,
             current_function_name: None,
             self_recursion_pending: false,
             self_call_func: None,
@@ -5460,6 +5504,89 @@ impl BytecodeTranslator {
             self.use_local_slots = true;
         }
         self.allocate_ssa_locals(builder);
+    }
+
+    // Native activations own their initialization flags. A loop instead consults
+    // the active VM frame so reentry and subsequent VM stores see the same state.
+    fn initialize_readonly_locals(&mut self, builder: &mut FunctionBuilder, params: &[String]) {
+        if self.loop_resume_enabled {
+            return;
+        }
+        for (index, name) in self.local_names.iter().enumerate() {
+            if !self
+                .local_binding_kinds
+                .get(index)
+                .is_some_and(|kind| *kind != BytecodeBindingKind::Mutable)
+            {
+                continue;
+            }
+            let slot = builder.create_sized_stack_slot(StackSlotData::new(
+                StackSlotKind::ExplicitSlot,
+                8,
+                0,
+            ));
+            let initialized = builder.ins().iconst(types::I64, i64::from(params.contains(name)));
+            builder.ins().stack_store(initialized, slot, 0);
+            self.readonly_initialization.insert(index, slot);
+        }
+    }
+
+    fn check_local_initialization(
+        &mut self,
+        builder: &mut FunctionBuilder,
+        index: usize,
+        define: bool,
+    ) -> Result<(), String> {
+        let kind =
+            self.local_binding_kinds.get(index).copied().unwrap_or(BytecodeBindingKind::Mutable);
+        if kind == BytecodeBindingKind::Mutable {
+            return Ok(());
+        }
+        let ctx = self.ctx_param.ok_or("Local initialization requires context")?;
+        let helper =
+            self.local_initialization_func.ok_or("Local initialization requires helper")?;
+        let slot_index = builder.ins().iconst(types::I64, index as i64);
+        let binding = builder
+            .ins()
+            .iconst(types::I64, if kind == BytecodeBindingKind::LetImmutable { 1 } else { 2 });
+        let name = self.local_names.get(index).ok_or("Invalid local initialization slot")?;
+        let hash = builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+        let local_flag = self.readonly_initialization.get(&index).copied();
+        if !define {
+            let initialized = if self.loop_resume_enabled {
+                let read = builder.ins().iconst(types::I64, 0);
+                let call = builder.ins().call(helper, &[ctx, slot_index, read, binding, hash]);
+                builder.inst_results(call)[0]
+            } else {
+                builder.ins().stack_load(
+                    types::I64,
+                    local_flag.ok_or("Missing native initialization flag")?,
+                    0,
+                )
+            };
+            let failed = builder.create_block();
+            let allowed = builder.create_block();
+            builder.ins().brif(initialized, failed, &[], allowed, &[]);
+            builder.seal_block(failed);
+            builder.switch_to_block(failed);
+            let error = builder.ins().iconst(types::I64, 2);
+            let call = builder.ins().call(helper, &[ctx, slot_index, error, binding, hash]);
+            self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+            builder.ins().jump(allowed, &[]);
+            builder.seal_block(allowed);
+            builder.switch_to_block(allowed);
+        }
+        let one = builder.ins().iconst(types::I64, 1);
+        if self.loop_resume_enabled {
+            builder.ins().call(helper, &[ctx, slot_index, one, binding, hash]);
+        } else {
+            builder.ins().stack_store(
+                one,
+                local_flag.ok_or("Missing native initialization flag")?,
+                0,
+            );
+        }
+        Ok(())
     }
 
     fn allocate_ssa_locals(&mut self, builder: &mut FunctionBuilder) {
@@ -7728,6 +7855,11 @@ impl BytecodeTranslator {
             }
 
             OpCode::StoreLocal(slot) | OpCode::DefineLocal(slot) => {
+                self.check_local_initialization(
+                    builder,
+                    *slot,
+                    matches!(instruction, OpCode::DefineLocal(_)),
+                )?;
                 let value = self.peek_value()?;
 
                 if let Some(name) = self.local_names.get(*slot) {
@@ -7888,6 +8020,11 @@ impl BytecodeTranslator {
             }
 
             OpCode::StoreLocal(slot) | OpCode::DefineLocal(slot) => {
+                self.check_local_initialization(
+                    builder,
+                    *slot,
+                    matches!(instruction, OpCode::DefineLocal(_)),
+                )?;
                 let value = self.peek_value()?;
                 if let Some(name) = self.local_names.get(*slot) {
                     if self.non_int_locals.contains(name) {
@@ -9081,6 +9218,7 @@ impl JitCompiler {
             ("jit_set_return_scalar", 3, true),
             ("jit_return_scalar_kind", 1, true),
             ("jit_runtime_failed", 1, true),
+            ("jit_local_initialization", 5, true),
             ("jit_owned_truth", 2, true),
             ("jit_owned_equal", 5, true),
             ("jit_owned_operator", 6, true),
@@ -9129,6 +9267,7 @@ impl JitCompiler {
                 "jit_set_return_scalar" => translator.scalar_return_func = Some(function),
                 "jit_return_scalar_kind" => translator.scalar_kind_func = Some(function),
                 "jit_runtime_failed" => translator.runtime_error_func = Some(function),
+                "jit_local_initialization" => translator.local_initialization_func = Some(function),
                 "jit_owned_truth" => translator.owned_truth_func = Some(function),
                 "jit_owned_equal" => translator.owned_equal_func = Some(function),
                 "jit_owned_operator" => translator.owned_operator_func = Some(function),
@@ -9241,6 +9380,7 @@ impl JitCompiler {
         builder.symbol("jit_runtime_failed", jit_runtime_failed as *const u8);
         builder.symbol("jit_arithmetic_error", jit_arithmetic_error as *const u8);
         builder.symbol("jit_scalar_type_error", jit_scalar_type_error as *const u8);
+        builder.symbol("jit_local_initialization", jit_local_initialization as *const u8);
         builder.symbol("jit_load_local_slot", jit_load_local_slot as *const u8);
         builder.symbol("jit_store_local_slot", jit_store_local_slot as *const u8);
         builder.symbol("jit_store_variable_from_stack", jit_store_variable_from_stack as *const u8);
@@ -10069,6 +10209,7 @@ impl JitCompiler {
             };
             translator.function_end = function_end;
             translator.loop_resume_enabled = loop_end.is_some();
+            translator.initialize_readonly_locals(&mut builder, &chunk.params);
             if let Some(slots) = int_dict_slots.as_ref() {
                 translator.set_int_dict_slots(slots.clone());
             }
@@ -10721,6 +10862,7 @@ impl JitCompiler {
             // Also allocate stack slots for function parameters
             // Parameters need slots so they can be accessed via the fast path
             translator.allocate_parameter_slots(&mut builder, &chunk.params);
+            translator.initialize_readonly_locals(&mut builder, &chunk.params);
 
             let has_loop = chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
             // Initialize parameter slots with values from the func_locals HashMap
@@ -11014,6 +11156,7 @@ impl JitCompiler {
             );
 
             translator.allocate_parameter_slots(&mut builder, &chunk.params);
+            translator.initialize_readonly_locals(&mut builder, &chunk.params);
 
             // The context remains live for this native activation. Capture the
             // incoming kind in SSA before a recursive call changes the context.
@@ -11617,6 +11760,7 @@ impl JitCompiler {
             translator
                 .set_local_slot_int_dict_functions(local_int_dict_get_ref, local_int_dict_set_ref);
             translator.function_end = chunk.instructions.len(); // Process all instructions
+            translator.initialize_readonly_locals(&mut builder, &chunk.params);
 
             // Create blocks for jump targets (this also analyzes loop headers)
             translator.create_blocks(&mut builder, &chunk.instructions, 0)?;
@@ -12275,6 +12419,56 @@ mod tests {
             let (_, live, capacity, _) = context.owned_roots.storage_state();
             assert_eq!(live, 0);
             assert!(capacity <= 4, "root storage grew to {capacity}");
+        }
+    }
+
+    #[test]
+    fn native_readonly_local_first_store_and_redefinition() {
+        for kind in [BytecodeBindingKind::LetImmutable, BytecodeBindingKind::Const] {
+            for second_define in [false, true] {
+                let mut compiler = JitCompiler::new().unwrap();
+                let mut chunk = BytecodeChunk::new();
+                chunk.local_names.push("value".into());
+                chunk.local_binding_kinds.push(kind);
+                let first = chunk.add_constant(Constant::Int(11));
+                let second = chunk.add_constant(Constant::Int(22));
+                chunk.emit(OpCode::LoadConst(first));
+                chunk.emit(OpCode::StoreLocal(0)); // valid initialization without DefineLocal
+                chunk.emit(OpCode::Pop);
+                chunk.emit(OpCode::LoadConst(second));
+                chunk.emit(if second_define {
+                    OpCode::DefineLocal(0)
+                } else {
+                    OpCode::StoreLocal(0)
+                });
+                chunk.emit(OpCode::Pop);
+                chunk.emit(OpCode::LoadLocal(0));
+                chunk.emit(OpCode::Return);
+                let compiled = compiler.compile_function(&chunk, "readonly_store").unwrap();
+                let mut names = HashMap::from([(
+                    BytecodeTranslator::hash_var_name("value"),
+                    "value".to_owned(),
+                )]);
+                let mut stack = Vec::new();
+                let mut context =
+                    VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+                context.var_names_ptr = &mut names;
+                let status = invoke_compiled_fn(compiled, &mut context);
+                if second_define {
+                    assert_eq!(status, 0, "{:?}", context.runtime_error);
+                    assert!(matches!(
+                        context.take_return_value(context.return_value),
+                        Value::Int(22)
+                    ));
+                } else {
+                    assert_ne!(status, 0);
+                    assert_eq!(
+                        context.runtime_error,
+                        Some(VM::local_reassignment_error(kind, "value"))
+                    );
+                }
+                assert_eq!(context.owned_roots.storage_state().1, 0);
+            }
         }
     }
 

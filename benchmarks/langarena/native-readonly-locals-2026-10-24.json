@@ -1,0 +1,40 @@
+{
+  "milestone": "Checked native readonly local reassignment",
+  "date": "2026-10-24",
+  "parent": "ded833a",
+  "baseline": {
+    "source": "e0d956ae1e3190ccc8fed60e24d83d4339c79260",
+    "binary_sha256": "8a3ede785390c273fa0c78c62788eb7bece9dfc5df650ee297f016d4bc86bf9a",
+    "reproducer": "/tmp/kujo-native-readonly-local-repro.kujo",
+    "jit_log": "/tmp/kujo-readonly-local-jit-baseline.log",
+    "expected_caught": 200,
+    "actual_caught": 99
+  },
+  "change": [
+    "Track native activation initialization independently of value payload/type",
+    "Preserve VM frame initialization flags across native loop execution",
+    "Reject readonly reassignment with canonical diagnostics while allowing first StoreLocal and fresh DefineLocal"
+  ],
+  "verification": {
+    "focused_log": "/tmp/kujo-readonly-regression.log",
+    "contract_log": "/tmp/kujo-readonly-contracts.log",
+    "library_passed": 1069,
+    "library_ignored": 8,
+    "integration_passed": 154,
+    "excluded_known_failure": "native_pop_rebind_preserves_replacement_errors_and_loop_pairs (uncommitted IndexSet fallback gap)",
+    "format_log": "/tmp/kujo-readonly-format.log",
+    "minimal_build_log": "/tmp/kujo-readonly-minimal.log",
+    "format_passed": true,
+    "minimal_build_passed": true
+  },
+  "limitations": [
+    "Gates ran in the worktree with unfinished pop changes; this commit excludes those changes",
+    "No final-source all-50 production or speed acceptance",
+    "Loaded-host production timeouts remain incomplete coverage; no idle-time extrapolation"
+  ],
+  "next": [
+    "Finish generic IndexSet fallback and native pop/remove verification",
+    "Run final-candidate checksum and production gates",
+    "Profile actual hot kernels and complete controlled competitor comparisons"
+  ]
+}

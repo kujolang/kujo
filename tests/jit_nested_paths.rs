@@ -365,3 +365,60 @@ print("PASS")
         &[],
     );
 }
+
+#[test]
+fn native_readonly_stores_preserve_initialization_and_reassignment_errors() {
+    let mut source = String::from(
+        r#"
+func readonly_int(input) { let value := input value = 2 return value }
+func readonly_array(input) { const value := [input] value = [2] return value }
+func redefined(input) {
+    mut sum := 0
+    mut i := 0
+    while i < 3 { let value := input + i sum += value i += 1 }
+    return sum
+}
+mut caught := 0
+mut result := 17
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+try { result = readonly_int(1) } except error { caught += 1 }
+try { result = readonly_array(1) } except error { caught += 1 }
+assert_equal(redefined(3),12)
+"#,
+        );
+    }
+    source.push_str("assert_equal(caught,400) assert_equal(result,17) print(\"PASS\")");
+    check(source, &["readonly_int", "readonly_array", "redefined"]);
+    check(
+        r#"
+func loop_readonly() {
+    let value := 1
+    mut i := 0
+    while i < 200 {
+        i += 1
+        if i == 150 { value = 2 }
+    }
+    return value
+}
+func loop_definitions() {
+    mut i := 0
+    mut sum := 0
+    while i < 200 { let value := i sum += value i += 1 }
+    return sum
+}
+mut caught := 0
+mut result := 17
+try { result = loop_readonly() } except error { caught += 1 }
+assert_equal(caught,1)
+assert_equal(result,17)
+assert_equal(loop_definitions(),19900)
+print("PASS")
+"#
+        .into(),
+        &[],
+    );
+}
