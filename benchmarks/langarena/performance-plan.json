@@ -3958,5 +3958,17 @@
     "remaining": "QuickSort still takes approximately157x Goose and182x Rust measured-loop time in this session. Investigate allocation/value movement, indexed reads/root bookkeeping, repeated call-property scans and debug environment lookups. Full production and platform gates remain open.",
     "evidence": "native-call-performance-2026-10-24.json",
     "timing": "56/56 comparative samples pass. Paired JIT median speedups1.099x across six variants and1.015x in adjacent JIT-only rerun; mixed pairs and thermal speed-limit changes mean no reliable wall-clock improvement claimed."
+  },
+  "native_root_pool": {
+    "date": "2026-10-24",
+    "source_commit": "09c8944",
+    "change": "Recycle bounded empty native callback root stores; preserve independent active frames and monotonic handle identities.",
+    "evidence": "benchmarks/langarena/native-root-pool-2026-10-24.json",
+    "report": "benchmarks/langarena/ROOT_POOL_2026_10_24.md",
+    "allocation_probe": "8192-element unique JIT:190221 to124380 requests;48711508 to28608056 requested bytes. Debug-library diagnostic inputs, not release timing.",
+    "remaining": "VM-mediated native calls, argument transfer, metadata/environment lookup, helper-mediated array access; production and competitive acceptance remain open.",
+    "verification": "1088 library tests (8 ignored),34 targeted integrations,150/150 frozen-release test-size checksums; VM/interpreter/JIT semantics preserved.",
+    "timing": "Seven rotating release rounds: JIT median paired speedup1.1567x,7/7 favorable; VM0.9849x. CPU speed limit100% to48%; local evidence only.",
+    "memory": "Allocation traffic falls; two RSS samples per variant show3.2% higher mean peak RSS after. Cache retention bounded; no peak-memory reduction claim."
   }
 }

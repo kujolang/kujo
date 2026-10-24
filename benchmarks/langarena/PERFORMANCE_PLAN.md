@@ -7,6 +7,15 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Bounded native callback root reuse (`09c8944`).** Inactive root stores retain
+  capacity across calls while active recursive calls remain isolated. The
+  [root-pool report](ROOT_POOL_2026_10_24.md) records a 34.6% reduction in JIT
+  allocation requests and 41.3% reduction in requested bytes for the diagnostic
+  8,192-element QuickSort kernel, with unchanged copy-on-write behavior. This is
+  a partial call-frame improvement; native calls still pass through VM machinery.
+  Release measurements and checksum gates are recorded separately from these
+  structural allocation results. Production and competitive gates remain open.
+
 - **Resumed on 2026-10-24 at the user's request, starting with QuickSort.**
   `9b5694f` restores hot-call promotion for helpers reached from native code;
   `50f8357` transfers callback arguments without repeated vector growth/reversal.
