@@ -3571,6 +3571,8 @@ impl VM {
                                                 #[cfg(feature = "runtime-jit")]
                                                 owned_roots: Default::default(),
                                                 #[cfg(feature = "runtime-jit")]
+                                                vm_owned_views: true,
+                                                #[cfg(feature = "runtime-jit")]
                                                 owned_return: None,
                                                 loop_dense_views: Default::default(),
                                                 loop_environment_ptr: std::ptr::null_mut(),
@@ -3710,6 +3712,8 @@ impl VM {
                                                     field_receiver_pending: false,
                                                     #[cfg(feature = "runtime-jit")]
                                                     owned_roots: Default::default(),
+                                                    #[cfg(feature = "runtime-jit")]
+                                                    vm_owned_views: true,
                                                     #[cfg(feature = "runtime-jit")]
                                                     owned_return: None,
                                                     loop_dense_views: Default::default(),
@@ -3890,6 +3894,8 @@ impl VM {
                                         field_receiver_pending: false,
                                         #[cfg(feature = "runtime-jit")]
                                         owned_roots: Default::default(),
+                                        #[cfg(feature = "runtime-jit")]
+                                        vm_owned_views: true,
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
                                         loop_dense_views: Default::default(),
@@ -8323,6 +8329,18 @@ impl VM {
         }
     }
 
+    /// Callback state restoration may replace frames and relocate scope maps.
+    pub(crate) fn native_context_views(
+        &mut self,
+    ) -> (*mut HashMap<String, Value>, *mut Vec<Value>) {
+        let globals = &mut self.globals.lock().unwrap().scopes[0] as *mut HashMap<String, Value>;
+        let slots = self
+            .call_frames
+            .last_mut()
+            .map_or(std::ptr::null_mut(), |frame| &mut frame.local_slots);
+        (globals, slots)
+    }
+
     pub(crate) fn has_current_exception_handler(&self) -> bool {
         self.exception_handlers.iter().any(|h| h.frame_offset == self.call_frames.len())
     }
@@ -8352,12 +8370,10 @@ impl VM {
                 if Self::requires_closure_vm(chunk)
                     || chunk.is_async
                     || chunk.is_generator
-                    || chunk.instructions.iter().any(|op| {
-                        matches!(
-                            op,
-                            OpCode::MakeClosure(_) | OpCode::ForNext(_) | OpCode::BeginTry(_)
-                        )
-                    })
+                    || chunk
+                        .instructions
+                        .iter()
+                        .any(|op| matches!(op, OpCode::MakeClosure(_) | OpCode::BeginTry(_)))
                 {
                     // Creation needs the full VM dispatcher. Reuse the guarded
                     // bridge, including the caller's capabilities and output.
@@ -8431,6 +8447,8 @@ impl VM {
                                         field_receiver_pending: false,
                                         #[cfg(feature = "runtime-jit")]
                                         owned_roots: Default::default(),
+                                        #[cfg(feature = "runtime-jit")]
+                                        vm_owned_views: true,
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
                                         loop_dense_views: Default::default(),
@@ -8604,6 +8622,8 @@ impl VM {
                             field_receiver_pending: false,
                             #[cfg(feature = "runtime-jit")]
                             owned_roots: Default::default(),
+                            #[cfg(feature = "runtime-jit")]
+                            vm_owned_views: true,
                             #[cfg(feature = "runtime-jit")]
                             owned_return: None,
                             loop_dense_views: Default::default(),
@@ -9800,6 +9820,77 @@ mod tests {
     use crate::parser::Parser;
     use std::thread;
     use std::time::Duration;
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn native_generator_steps_refresh_vm_views_after_success_and_failure() {
+        use crate::jit::{jit_for_next, VMContext};
+        for (fails, alias_globals) in [(false, false), (true, false), (false, true), (true, true)] {
+            let env = Arc::new(Mutex::new(Interpreter::new().env));
+            let mut vm = VM::new();
+            vm.set_globals(env.clone());
+            let source = if fails {
+                "func* values() { missing } let instance := values()"
+            } else {
+                "func* values() { yield 7 } let instance := values()"
+            };
+            let parsed = Parser::new(lexer::tokenize(source).unwrap()).parse();
+            vm.execute(Compiler::new().compile(&parsed).unwrap()).unwrap();
+            vm.call_frames.push(CallFrame {
+                return_ip: 0,
+                stack_offset: 0,
+                locals: HashMap::new(),
+                locals_binding_kinds: HashMap::new(),
+                local_slots: vec![Value::Int(11)],
+                local_slot_binding_kinds: vec![BytecodeBindingKind::Mutable],
+                local_slot_initialized: vec![true],
+                captured: HashMap::new(),
+                captured_binding_kinds: HashMap::new(),
+                captured_slots: Vec::new(),
+                prev_chunk: None,
+            });
+            let generator = env.lock().unwrap().get("instance").unwrap();
+            let mut own_locals = HashMap::new();
+            let mut ctx =
+                VMContext::new(std::ptr::null_mut(), &mut own_locals, std::ptr::null_mut());
+            ctx.vm_ptr = (&mut vm as *mut VM).cast();
+            ctx.vm_owned_views = true;
+            let (globals, slots) = vm.native_context_views();
+            ctx.globals_ptr = globals;
+            if alias_globals {
+                ctx.locals_ptr = globals;
+            }
+            ctx.local_slots_ptr = slots;
+            // Force a scope relocation too, without dereferencing the stale view.
+            {
+                let mut environment = env.lock().unwrap();
+                let mut relocated = Vec::with_capacity(environment.scopes.len() + 128);
+                relocated.append(&mut environment.scopes);
+                environment.scopes = relocated;
+            }
+
+            ctx.owned_roots.enter().unwrap();
+            let (generator, kind) = ctx.owned_roots.encode(generator).unwrap();
+            let result = unsafe {
+                jit_for_next(&mut ctx, generator, kind, 0, crate::native_scalar::INTEGER)
+            };
+            assert_eq!(ctx.runtime_error.is_some(), fails);
+            if !fails {
+                assert_eq!(result, 7);
+            }
+            let (globals_after, slots_after) = vm.native_context_views();
+            assert_ne!(slots, slots_after, "generator restoration must replace caller storage");
+            assert_ne!(globals, globals_after, "fixture must relocate the scope vector");
+            assert_eq!(ctx.globals_ptr, globals_after);
+            assert_eq!(ctx.local_slots_ptr, slots_after);
+            assert_eq!(
+                ctx.locals_ptr,
+                if alias_globals { globals_after } else { &mut own_locals as *mut _ }
+            );
+            assert!(matches!(vm.call_frames.last().unwrap().local_slots[0], Value::Int(11)));
+            ctx.owned_roots.leave().unwrap();
+        }
+    }
 
     #[test]
     fn native_name_tables_remain_stable_across_cache_growth() {

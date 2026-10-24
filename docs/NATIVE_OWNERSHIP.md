@@ -281,3 +281,45 @@ use the same storage-identity condition.
 in addition to interpreter/VM/JIT results. Helper tests compare unique allocation
 identity at 8 and 128 updates, verify COW snapshots, and bound native root storage.
 These are correctness and allocation checks, not competitive speed evidence.
+
+## Native iteration
+
+`ForNext` consumes its iterable and index on both edges. A yielded value carries
+its ordinary payload/kind pair; exhaustion carries no operand. The private helper
+uses kind -4 only as an exhaustion signal, which lowering branches on before any
+language-value use. A yielded null remains distinguishable from exhaustion.
+Array elements are cloned as ordinary Values; bytes become nonnegative integers.
+Iteration retains the language's snapshot semantics when the source is rebound.
+
+Whole native functions step generators through the VM continuation API, preserving
+lazy effects and errors. A locked native loop resumes at the original `ForNext`
+before any generator step, so callbacks cannot reenter the locked environment.
+Cold iteration callbacks still use the existing full VM bridge; compiled callbacks
+can enter native code. Generator bodies are not promoted to native execution.
+
+Loop-header stack depths now follow reachable edges. Return instructions terminate
+analysis paths, and append/iteration success and fallback/exhaustion edges have
+distinct stack effects. Unreachable increments after an early return cannot invent
+loop-carried values. Regression coverage lives in `tests/jit_iteration.rs` and
+bounded-root/error tests beside the native helpers.
+
+Returns reached inside a compiled loop also resume the VM at the original return
+instruction. This transfers the complete evaluated operand stack and persisted
+locals before the VM performs function-frame cleanup. Both immediate and owned
+return values are covered, including the pre-existing hot `while` return case.
+
+VM callbacks may restore cloned call frames or relocate the global-scope vector.
+After generator steps, ordinary function callbacks and overloaded operators,
+`VMContext::refresh_vm_views` refreshes the VM-owned global-map and caller-slot
+pointers on both success and error. It does not replace the native function's own
+named-local map. Locked loops never take this path: they resume the VM before
+callbacks. New callback helpers must preserve this pointer-refresh contract.
+
+`vm_owned_views` records whether those pointers belong to the attached VM.
+VM-created contexts set it; standalone contexts retain their supplied maps and
+slots. Refreshing after callbacks must not silently replace external context
+storage. The relocation regression forces a new scope-vector allocation and
+checks frame replacement on generator success and failure without dereferencing
+stale pointers.
+If a VM-owned context uses the global map as its local map, both aliases refresh
+together. Independently owned native locals remain untouched.

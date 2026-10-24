@@ -11,6 +11,13 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Refresh VM-owned native context pointers after callbacks while preserving
+  external contexts and shared local/global aliases.
+
+- Compile normalized array/byte iteration in experimental native functions and
+  loops, preserving exhaustion, snapshots and lazy generator callbacks. Analyze
+  reachable control-flow edges so early returns do not corrupt loop stack depths.
+
 - Compile guarded array/byte append rebinding and conditional local snapshot release
   in the experimental JIT, preserving builtin shadowing, RHS effects, value
   semantics and fallback behavior.

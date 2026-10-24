@@ -134,6 +134,7 @@ pub struct VMContext {
     pub(crate) native_stack_bases: NativeStackBases,
     pub(crate) field_receiver_pending: bool,
     pub(crate) owned_roots: crate::native_owned::NativeCallRoots,
+    pub(crate) vm_owned_views: bool,
     pub(crate) owned_return: Option<Value>,
     pub(crate) loop_dense_views: HashMap<usize, Box<LoopDenseView>>,
     pub(crate) loop_environment_ptr: *mut crate::interpreter::Environment,
@@ -180,6 +181,22 @@ impl NativeStackBases {
 }
 
 impl VMContext {
+    /// Refresh only VM-owned views; this function's named-local map is separately owned.
+    unsafe fn refresh_vm_views(&mut self) {
+        if !self.vm_owned_views || !self.loop_environment_ptr.is_null() {
+            return;
+        }
+        if let Some(vm) = self.vm_ptr.cast::<VM>().as_mut() {
+            let shared_globals = !self.globals_ptr.is_null() && self.locals_ptr == self.globals_ptr;
+            let (globals, slots) = vm.native_context_views();
+            self.globals_ptr = globals;
+            if shared_globals {
+                self.locals_ptr = globals;
+            }
+            self.local_slots_ptr = slots;
+        }
+    }
+
     #[allow(dead_code)] // Borrowing accessor retained; VM transfers result ownership.
     pub fn scalar_value(&self, value: i64) -> Value {
         if self.return_value_kind == crate::native_owned::OWNED {
@@ -287,6 +304,7 @@ impl VMContext {
             native_stack_bases: Default::default(),
             field_receiver_pending: false,
             owned_roots: Default::default(),
+            vm_owned_views: false,
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
@@ -326,6 +344,7 @@ impl VMContext {
             native_stack_bases: Default::default(),
             field_receiver_pending: false,
             owned_roots: Default::default(),
+            vm_owned_views: true,
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
@@ -379,6 +398,7 @@ impl VMContext {
             native_stack_bases: Default::default(),
             field_receiver_pending: false,
             owned_roots: Default::default(),
+            vm_owned_views: false,
             owned_return: None,
             loop_dense_views: HashMap::new(),
             loop_environment_ptr: std::ptr::null_mut(),
@@ -1066,6 +1086,71 @@ pub unsafe extern "C" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64)
     0
 }
 
+/// One normalized iteration step. Kind -4 denotes exhaustion, never a language value.
+#[no_mangle]
+// SAFETY: tagged operands belong to this context. Locked loops resume before
+// generator callbacks; whole-function callbacks use the VM continuation guard.
+pub unsafe extern "C" fn jit_for_next(
+    ctx: *mut VMContext,
+    object: i64,
+    object_kind: i64,
+    index: i64,
+    index_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let result = (|| {
+        let object = ctx
+            .owned_roots
+            .clone_value(object, object_kind)
+            .map_err(|e| format!("Native ownership error: {e:?}"))?;
+        let value = match object {
+            Value::BytecodeGenerator { .. } => {
+                if !ctx.loop_environment_ptr.is_null() {
+                    return Err("Generator step requires VM loop resume".into());
+                }
+                let vm =
+                    ctx.vm_ptr.cast::<VM>().as_mut().ok_or("Generator step requires VM context")?;
+                let step = vm.generator_next(object);
+                ctx.refresh_vm_views();
+                match step? {
+                    Value::Option { is_some: true, value } => Some(*value),
+                    Value::Option { is_some: false, .. } => None,
+                    _ => return Err("Invalid generator step result".into()),
+                }
+            }
+            Value::Array(values) => {
+                if index_kind != crate::native_scalar::INTEGER || index < 0 {
+                    return Err("ForNext requires a nonnegative index".into());
+                }
+                values.get(index as usize).cloned()
+            }
+            Value::Bytes(values) => {
+                if index_kind != crate::native_scalar::INTEGER || index < 0 {
+                    return Err("ForNext requires a nonnegative index".into());
+                }
+                values.get(index as usize).map(|n| Value::Int(i64::from(*n)))
+            }
+            _ => return Err("ForNext requires a normalized iterable".into()),
+        };
+        match value {
+            Some(value) => {
+                ctx.owned_roots.encode(value).map_err(|e| format!("Native ownership error: {e:?}"))
+            }
+            None => Ok((0, -4)),
+        }
+    })();
+    match result {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Read tagged operands using the VM's indexing and error contracts.
 #[no_mangle]
 // SAFETY: ctx is a live exclusive context. Decode validated root handles rather
@@ -1247,6 +1332,16 @@ pub unsafe extern "C" fn jit_loop_resume_guard(ctx: *mut VMContext, value: i64, 
     if kind == -1 {
         return 1;
     } // A Call instruction can enter arbitrary user code.
+    if kind == -3 {
+        return match ctx.owned_roots.clone_value(value, crate::native_owned::OWNED) {
+            Ok(Value::BytecodeGenerator { .. }) => 1,
+            Ok(_) => 0,
+            Err(error) => {
+                ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+                1
+            }
+        };
+    }
     if kind == -2 {
         // A legacy field lookup inserts a physical receiver outside the tagged
         // operand stack. Resume before that insertion so later callback resume
@@ -1322,6 +1417,7 @@ pub unsafe extern "C" fn jit_owned_operator(
         7..=10 => vm.compare_op(&left, ["<", ">", "<=", ">="][(operation - 7) as usize], &right),
         _ => Err("Invalid native owned operation".into()),
     };
+    ctx.refresh_vm_views();
     match result {
         Ok(value) => match ctx.owned_roots.encode(value) {
             Ok((payload, kind)) => {
@@ -1718,6 +1814,7 @@ pub unsafe extern "C" fn jit_append_local(
         Some(vm) => vm.binary_op(&left, "+", &Value::Str(Arc::new(text.to_owned()))),
         None => Err("Native append operator requires VM context".into()),
     };
+    ctx.refresh_vm_views();
     match result.and_then(|result| {
         if location == 1 {
             let (payload, result_kind) = ctx
@@ -3670,7 +3767,9 @@ pub unsafe extern "C" fn jit_call_function(
     let vm = &mut *(ctx_ref.vm_ptr as *mut VM);
 
     // Call the function through VM
-    match vm.call_function_from_jit(function, args) {
+    let result = vm.call_function_from_jit(function, args);
+    ctx_ref.refresh_vm_views();
+    match result {
         Ok(result) => {
             // Push result to stack
             if std::env::var("DEBUG_JIT_CALL").is_ok() {
@@ -4436,6 +4535,7 @@ struct BytecodeTranslator {
     try_append_func: Option<FuncRef>,
     release_rebind_func: Option<FuncRef>,
     indexed_read_func: Option<FuncRef>,
+    for_next_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
     loop_resume_enabled: bool,
     loop_resume_guard_func: Option<FuncRef>,
@@ -4615,6 +4715,7 @@ impl BytecodeTranslator {
             try_append_func: None,
             release_rebind_func: None,
             indexed_read_func: None,
+            for_next_func: None,
             indexed_write_func: None,
             loop_resume_enabled: false,
             loop_resume_guard_func: None,
@@ -4708,65 +4809,50 @@ impl BytecodeTranslator {
     /// until we reach the jump instruction.
     ///
     /// Returns a HashMap: PC -> expected stack depth for blocks that receive backward jumps
-    fn analyze_loop_headers(instructions: &[OpCode], function_end: usize) -> HashMap<usize, usize> {
-        let mut loop_headers: HashMap<usize, usize> = HashMap::new();
-        let mut pc_stack_depths: HashMap<usize, i32> = HashMap::new();
-        let mut stack_depth: i32 = 0;
-
-        // Simple simulation: track stack depth changes through the bytecode
-        // We're looking for backward jumps and what stack depth they carry
-
-        for (pc, instruction) in instructions.iter().enumerate() {
-            if pc >= function_end {
-                break;
+    fn analyze_loop_headers(
+        instructions: &[OpCode],
+        function_end: usize,
+        entry: usize,
+    ) -> HashMap<usize, usize> {
+        let mut loop_headers = HashMap::new();
+        let mut depths = HashMap::from([(entry, 0usize)]);
+        let mut pending = std::collections::VecDeque::from([entry]);
+        while let Some(pc) = pending.pop_front() {
+            if pc >= function_end || pc >= instructions.len() {
+                continue;
             }
-
-            // Record stack depth at this PC before processing
-            pc_stack_depths.insert(pc, stack_depth);
-
-            // Calculate stack effect of each instruction
+            let depth = depths[&pc];
+            let instruction = &instructions[pc];
             let (pops, pushes) = Self::stack_effect(instruction);
-            stack_depth = (stack_depth - pops as i32 + pushes as i32).max(0);
-
-            // Check for backward jumps (loop back-edges)
-            match instruction {
-                OpCode::Jump(target)
-                | OpCode::JumpBack(target)
-                | OpCode::TryStringAppendAssign(_, target)
-                | OpCode::TryAppendAssign(_, target) => {
-                    if *target <= pc && *target < function_end {
-                        // This is a backward jump - record the target as a loop header
-                        // The stack depth at the jump is what we need at the header
-                        let depth = stack_depth.max(0) as usize;
-                        loop_headers.insert(*target, depth);
-
-                        if std::env::var("DEBUG_JIT").is_ok() {
-                            eprintln!(
-                                "JIT: Found loop header at PC {} with stack depth {}",
-                                target, depth
-                            );
-                        }
-                    }
-                }
+            let next = depth.saturating_sub(pops) + pushes;
+            let edges = match instruction {
+                OpCode::Return | OpCode::ReturnNone => Vec::new(),
+                OpCode::Jump(target) | OpCode::JumpBack(target) => vec![(*target, next)],
                 OpCode::JumpIfTrue(target) | OpCode::JumpIfFalse(target) => {
-                    if *target <= pc && *target < function_end {
-                        // Conditional backward jump - this is a loop back-edge
-                        // Note: Condition stays on stack (peek), so add 1
-                        let depth = stack_depth.max(0) as usize;
-                        loop_headers.insert(*target, depth);
-
-                        if std::env::var("DEBUG_JIT").is_ok() {
-                            eprintln!(
-                                "JIT: Found conditional loop header at PC {} with stack depth {}",
-                                target, depth
-                            );
-                        }
-                    }
+                    vec![(*target, next), (pc + 1, next)]
                 }
-                _ => {}
+                OpCode::ForNext(target) => vec![(*target, depth.saturating_sub(2)), (pc + 1, next)],
+                OpCode::TryAppendAssign(_, target) => {
+                    vec![(*target, depth.saturating_sub(3)), (pc + 1, depth)]
+                }
+                OpCode::TryStringAppendAssign(_, target) => {
+                    vec![(*target, depth.saturating_sub(2)), (pc + 1, depth)]
+                }
+                _ => vec![(pc + 1, next)],
+            };
+            for (target, entry_depth) in edges {
+                if target >= function_end {
+                    continue;
+                }
+                if target <= pc {
+                    loop_headers.insert(target, entry_depth);
+                }
+                if let std::collections::hash_map::Entry::Vacant(entry) = depths.entry(target) {
+                    entry.insert(entry_depth);
+                    pending.push_back(target);
+                }
             }
         }
-
         loop_headers
     }
 
@@ -4819,6 +4905,8 @@ impl BytecodeTranslator {
             OpCode::Jump(_) | OpCode::JumpBack(_) => (0, 0), // No stack effect
             OpCode::JumpIfTrue(_) | OpCode::JumpIfFalse(_) => (0, 0), // Peek, no pop
 
+            OpCode::ForNext(_) => (2, 1), // Exhausted edge consumes both without a result.
+
             // Call (pops args + func, pushes result)
             OpCode::Call(n) => (*n + 1, 1), // Pop n args + 1 func, push result
 
@@ -4831,7 +4919,7 @@ impl BytecodeTranslator {
             }
             OpCode::UpdatePath(path) => (2 + path.iter().filter(|step| step.is_none()).count(), 1),
             OpCode::IndexGetInPlace(_) => (1, 1), // Pop index, load var, push value
-            OpCode::IndexSetInPlace(_) => (2, 0), // Pop index + value, modify variable in place
+            OpCode::IndexSetInPlace(_) => (2, 1), // Pop index/value and produce the assignment placeholder
             OpCode::MakeArray(n) => (*n, 1),
             OpCode::MakeStruct(_, fields) => (fields.len(), 1),
             OpCode::MakeDict(n) => (*n * 2, 1), // Pop N key-value pairs, push dict
@@ -5306,7 +5394,8 @@ impl BytecodeTranslator {
                 | OpCode::JumpIfTrue(target)
                 | OpCode::JumpBack(target)
                 | OpCode::TryStringAppendAssign(_, target)
-                | OpCode::TryAppendAssign(_, target) => {
+                | OpCode::TryAppendAssign(_, target)
+                | OpCode::ForNext(target) => {
                     if *target > max_reachable {
                         max_reachable = *target;
                     }
@@ -5577,12 +5666,13 @@ impl BytecodeTranslator {
         &mut self,
         builder: &mut FunctionBuilder,
         instructions: &[OpCode],
+        entry: usize,
     ) -> Result<(), String> {
         // Calculate and store function_end
         self.function_end = Self::calculate_function_end(instructions);
 
         // STEP 11 FIX: Analyze loop headers to find backward jump targets and their stack depths
-        let loop_headers = Self::analyze_loop_headers(instructions, self.function_end);
+        let loop_headers = Self::analyze_loop_headers(instructions, self.function_end, entry);
 
         // Create blocks for jump targets within function body
         for (pc, instruction) in instructions.iter().enumerate() {
@@ -5596,7 +5686,8 @@ impl BytecodeTranslator {
                 | OpCode::JumpIfTrue(target)
                 | OpCode::JumpBack(target)
                 | OpCode::TryStringAppendAssign(_, target)
-                | OpCode::TryAppendAssign(_, target) => {
+                | OpCode::TryAppendAssign(_, target)
+                | OpCode::ForNext(target) => {
                     if *target < self.function_end {
                         if !self.blocks.contains_key(target) {
                             let block = builder.create_block();
@@ -6118,6 +6209,32 @@ impl BytecodeTranslator {
                             .to_string(),
                     );
                 }
+            }
+
+            OpCode::ForNext(end) => {
+                let index = self.pop_value()?;
+                let object = self.pop_value()?;
+                let ctx = self.ctx_param.ok_or("Iteration requires context")?;
+                let helper = self.for_next_func.ok_or("Iteration requires helper")?;
+                let object_kind = self.scalar_kind(builder, object);
+                let index_kind = self.scalar_kind(builder, index);
+                let call =
+                    builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind]);
+                let result = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, result);
+                let kind = self.scalar_kind(builder, result);
+                self.release_operand(builder, object);
+                self.release_operand(builder, index);
+                let exhausted = builder.ins().icmp_imm(IntCC::Equal, kind, -4);
+                let end_args = self.stack_edge_args(builder, *end)?;
+                let end_block =
+                    *self.blocks.get(end).ok_or("Missing iteration exhaustion target")?;
+                self.push_value(result);
+                let next_args = self.stack_edge_args(builder, pc + 1)?;
+                let next_block =
+                    *self.blocks.get(&(pc + 1)).ok_or("Missing iteration body target")?;
+                builder.ins().brif(exhausted, end_block, &end_args, next_block, &next_args);
+                return Ok(true);
             }
 
             OpCode::FieldGet(name) => {
@@ -7853,9 +7970,10 @@ impl BytecodeTranslator {
             | OpCode::LessThan
             | OpCode::LessEqual
             | OpCode::GreaterThan
-            | OpCode::GreaterEqual => 2,
+            | OpCode::GreaterEqual
+            | OpCode::ForNext(_) => 2,
             OpCode::Negate | OpCode::Not | OpCode::FieldGet(_) => 1,
-            OpCode::Call(_) => 0,
+            OpCode::Call(_) | OpCode::Return | OpCode::ReturnNone => 0,
             _ => return Ok(false),
         };
         let (Some(ctx), Some(guard), Some(prepare), Some(push)) = (
@@ -7891,6 +8009,8 @@ impl BytecodeTranslator {
         builder.switch_to_block(inspect);
         let guard_kind = if matches!(instruction, OpCode::FieldGet(_)) {
             builder.ins().iconst(types::I64, -2)
+        } else if matches!(instruction, OpCode::ForNext(_)) {
+            builder.ins().iconst(types::I64, -3)
         } else {
             kind
         };
@@ -8475,6 +8595,7 @@ impl JitCompiler {
             ("jit_prepare_field_call", 2, true),
             ("jit_field_read", 4, true),
             ("jit_indexed_read", 5, true),
+            ("jit_for_next", 5, true),
             ("jit_indexed_write", 10, true),
             ("jit_loop_resume_guard", 3, true),
             ("jit_loop_resume_prepare", 2, true),
@@ -8518,6 +8639,7 @@ impl JitCompiler {
                 "jit_prepare_field_call" => translator.field_call_func = Some(function),
                 "jit_field_read" => translator.field_read_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
+                "jit_for_next" => translator.for_next_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
                 "jit_loop_resume_prepare" => translator.loop_resume_prepare_func = Some(function),
@@ -8583,6 +8705,7 @@ impl JitCompiler {
         builder.symbol("jit_load_variable", jit_load_variable as *const u8);
         builder.symbol("jit_load_operand", jit_load_operand as *const u8);
         builder.symbol("jit_indexed_read", jit_indexed_read as *const u8);
+        builder.symbol("jit_for_next", jit_for_next as *const u8);
         builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
         builder.symbol("jit_loop_resume_guard", jit_loop_resume_guard as *const u8);
         builder.symbol("jit_loop_resume_prepare", jit_loop_resume_prepare as *const u8);
@@ -8800,7 +8923,7 @@ impl JitCompiler {
             OpCode::AddInPlace(_) => false,
 
             // Dict/Array operations - in-place ops supported for int paths
-            OpCode::FieldGet(_) | OpCode::IndexGet => true,
+            OpCode::FieldGet(_) | OpCode::IndexGet | OpCode::ForNext(_) => true,
             OpCode::TryStringAppendAssign(_, _) | OpCode::TryAppendAssign(_, _) => true,
             OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_) => true,
@@ -9374,7 +9497,7 @@ impl JitCompiler {
             let presealed_current_block = (current_block != entry_block).then_some(current_block);
 
             // Create blocks for jump targets (loop JIT)
-            translator.create_blocks(&mut builder, &chunk.instructions)?;
+            translator.create_blocks(&mut builder, &chunk.instructions, offset)?;
             let function_end = if let Some(loop_end) = loop_end {
                 let mut max_target = loop_end;
                 for (pc, instruction) in
@@ -9386,7 +9509,8 @@ impl JitCompiler {
                         | OpCode::JumpIfTrue(target)
                         | OpCode::JumpBack(target)
                         | OpCode::TryStringAppendAssign(_, target)
-                        | OpCode::TryAppendAssign(_, target) => {
+                        | OpCode::TryAppendAssign(_, target)
+                        | OpCode::ForNext(target) => {
                             if *target > max_target {
                                 max_target = *target;
                             }
@@ -10043,7 +10167,7 @@ impl JitCompiler {
             translator.set_self_call_function(self_func_ref);
 
             // Create blocks for all jump targets
-            translator.create_blocks(&mut builder, &chunk.instructions)?;
+            translator.create_blocks(&mut builder, &chunk.instructions, 0)?;
 
             // OPTIMIZATION: Pre-allocate stack slots for local variables
             // This enables register-based locals - direct memory access instead of
@@ -10331,7 +10455,7 @@ impl JitCompiler {
             translator.set_self_call_function(self_func_ref);
 
             // Create blocks for all jump targets
-            translator.create_blocks(&mut builder, &chunk.instructions)?;
+            translator.create_blocks(&mut builder, &chunk.instructions, 0)?;
 
             // Locals and the direct parameter use paired SSA ownership bindings.
             let param_name = &chunk.params[0];
@@ -10949,7 +11073,7 @@ impl JitCompiler {
             translator.function_end = chunk.instructions.len(); // Process all instructions
 
             // Create blocks for jump targets (this also analyzes loop headers)
-            translator.create_blocks(&mut builder, &chunk.instructions)?;
+            translator.create_blocks(&mut builder, &chunk.instructions, 0)?;
 
             // Add entry block to the map
             if !translator.blocks.contains_key(&0) {
@@ -11237,21 +11361,25 @@ mod tests {
             Value::DenseIntDictIntFull(values) => values.as_ptr(),
             _ => unreachable!(),
         };
-        let mut context =
-            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        let mut stack = Vec::new();
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
         context.local_slots_ptr = &mut slots;
         // No name map: the generic write helper would fail. Success proves the
         // guarded native store ran, using an explicit C-layout data/length view.
         for _ in 0..1000 {
+            context.loop_resume_ip = None;
             assert_eq!(
                 invoke_compiled_fn(compiled, &mut context),
-                0,
+                2,
                 "{:?}",
                 context.runtime_error
             );
             assert!(
                 matches!(&slots[0], Value::DenseIntDictIntFull(values) if values.as_ptr() == pointer && values.as_slice() == [1,99])
             );
+            // The terminal ReturnNone belongs to VM frame cleanup.
+            assert_eq!(context.loop_resume_ip, Some(4));
+            assert!(stack.is_empty());
             assert_eq!(context.loop_dense_views.len(), 1);
             assert_eq!(context.owned_roots.storage_state(), (0, 0, 0, 0));
         }
@@ -12393,6 +12521,119 @@ mod tests {
         assert!(matches!(ctx.owned_roots.current_value_mut(target, kind).unwrap(), Value::Null));
         assert!(
             matches!(ctx.owned_roots.current_value_mut(original,kind).unwrap(),Value::Array(v) if Arc::strong_count(v)==1)
+        );
+        ctx.owned_roots.leave().unwrap();
+    }
+
+    #[test]
+    fn native_iteration_distinguishes_null_from_exhaustion_and_bounds_roots() {
+        for count in [8, 128] {
+            let mut ctx =
+                VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+            ctx.owned_roots.enter().unwrap();
+            let (array, kind) = ctx
+                .owned_roots
+                .encode(Value::Array(Arc::new(vec![
+                    Value::Null,
+                    Value::Str(Arc::new("snow".into())),
+                ])))
+                .unwrap();
+            for _ in 0..count {
+                for index in 0..3 {
+                    let original = ctx.owned_roots.duplicate(array, kind).unwrap();
+                    let result = unsafe {
+                        jit_for_next(&mut ctx, original, kind, index, crate::native_scalar::INTEGER)
+                    };
+                    assert!(ctx.runtime_error.is_none());
+                    let result_kind = ctx.return_value_kind;
+                    match index {
+                        0 => assert_eq!(result_kind, crate::native_scalar::NULL),
+                        1 => assert!(
+                            matches!(ctx.owned_roots.clone_value(result,result_kind).unwrap(),Value::Str(text) if text.as_str()=="snow")
+                        ),
+                        _ => assert_eq!(result_kind, -4),
+                    }
+                    if result_kind != -4 {
+                        ctx.owned_roots.release(result, result_kind).unwrap();
+                    }
+                    ctx.owned_roots.release(original, kind).unwrap();
+                }
+            }
+            ctx.owned_roots.leave().unwrap();
+            let (_, live, capacity, _) = ctx.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 4, "{capacity}");
+        }
+    }
+
+    #[test]
+    fn loop_header_analysis_uses_entry_relative_depth_and_assignment_placeholder() {
+        let code = vec![
+            OpCode::MakeDict(0),
+            OpCode::DefineLocal(0),
+            OpCode::LoadConst(0),
+            OpCode::DefineLocal(1),
+            OpCode::Pop,
+            OpCode::LoadLocal(1),
+            OpCode::LoadConst(1),
+            OpCode::LessThan,
+            OpCode::JumpIfFalse(21),
+            OpCode::Pop,
+            OpCode::LoadConst(0),
+            OpCode::LoadConst(0),
+            OpCode::IndexSetInPlace(0),
+            OpCode::Pop,
+            OpCode::LoadLocal(1),
+            OpCode::LoadConst(1),
+            OpCode::Add,
+            OpCode::StoreLocal(1),
+            OpCode::Pop,
+            OpCode::JumpBack(5),
+            OpCode::ReturnNone,
+            OpCode::Pop,
+            OpCode::ReturnNone,
+        ];
+        assert_eq!(
+            BytecodeTranslator::analyze_loop_headers(&code, code.len(), 0).get(&5),
+            Some(&1)
+        );
+        assert_eq!(
+            BytecodeTranslator::analyze_loop_headers(&code, code.len(), 5).get(&5),
+            Some(&0)
+        );
+        assert_eq!(BytecodeTranslator::stack_effect(&OpCode::IndexSetInPlace(0)), (2, 1));
+        let unreachable = vec![OpCode::LoadConst(0), OpCode::Return, OpCode::JumpBack(0)];
+        assert!(
+            BytecodeTranslator::analyze_loop_headers(&unreachable, unreachable.len(), 0).is_empty()
+        );
+    }
+
+    #[test]
+    fn native_iteration_keeps_byte_values_and_index_errors() {
+        let mut ctx =
+            VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+        ctx.owned_roots.enter().unwrap();
+        let (bytes, kind) = ctx.owned_roots.encode(Value::Bytes(Arc::new(vec![0, 255]))).unwrap();
+        assert_eq!(
+            unsafe { jit_for_next(&mut ctx, bytes, kind, 1, crate::native_scalar::INTEGER) },
+            255
+        );
+        assert_eq!(ctx.return_value_kind, crate::native_scalar::INTEGER);
+        for (index, index_kind) in
+            [(-1, crate::native_scalar::INTEGER), (1, crate::native_scalar::BOOLEAN)]
+        {
+            unsafe { jit_for_next(&mut ctx, bytes, kind, index, index_kind) };
+            assert_eq!(
+                ctx.runtime_error.take().as_deref(),
+                Some("ForNext requires a nonnegative index")
+            );
+        }
+        unsafe {
+            jit_for_next(&mut ctx, 0, crate::native_scalar::NULL, 0, crate::native_scalar::INTEGER)
+        };
+        assert_eq!(
+            ctx.runtime_error.take().as_deref(),
+            Some("ForNext requires a normalized iterable")
         );
         ctx.owned_roots.leave().unwrap();
     }
