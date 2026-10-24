@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile guarded array and byte appends through field/index paths in native
+  functions and loops, preserving snapshots, RHS effects and shadowed calls.
+
 - Compile ordinary field replacement in experimental native functions and loops,
   preserving snapshots and nesting checks. Route invalid VM field assignments
   through exception handlers while retaining failed assignment targets.

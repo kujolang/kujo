@@ -378,3 +378,12 @@ source-level dot-assignment parity tests use structs. Both paths retain nesting
 checks. Invalid VM field assignment now unwinds through the normal exception
 path instead of escaping the caller's catch. Guarded field append remains a
 separate native-admission milestone.
+
+GuardAppendPath inspects callable identity and original operand types without
+cloning callable bodies or consuming stack operands. Rejected guards follow the
+ordinary Call path. AppendBindingPath uses retained path metadata and tagged
+stack storage, consuming temporary original/item roots into canonical array/byte
+append operations while leaving handles live for generated cleanup. It shares
+the VM-lifetime validation cache with UpdateBindingPath. Dynamic indexes execute
+after the guard, preserving RHS effects and destination replacement. Captured
+named loop destinations remain VM-only until frame-cell mutation is supported.

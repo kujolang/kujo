@@ -38,7 +38,8 @@
         "post-string-guard-native-surfaces-2026-10-23.json",
         "post-collection-guard-native-surfaces-2026-10-23.json",
         "post-iteration-native-surfaces-2026-10-24.json",
-        "post-nested-write-native-surfaces-2026-10-24.json"
+        "post-nested-write-native-surfaces-2026-10-24.json",
+        "post-path-append-native-surfaces-2026-10-24.json"
       ]
     },
     {
@@ -92,7 +93,8 @@
         "native-iteration-2026-10-24.json",
         "native-owned-global-assignment-2026-10-24.json",
         "native-nested-writes-2026-10-24.json",
-        "native-field-replacement-2026-10-24.json"
+        "native-field-replacement-2026-10-24.json",
+        "native-path-append-2026-10-24.json"
       ]
     },
     {
@@ -3666,6 +3668,11 @@
       "scope": "Frozen cb21458 debug JIT all50",
       "result": "50/50 unchanged test-size checksums with binary/input identities and50 raw report hashes/schemas verified. Predates native FieldSet and guarded path append. No production or competitive acceptance.",
       "evidence": "checksums-2026-10-24-native-caller-handler-jit.json"
+    },
+    {
+      "scope": "Native guarded path append",
+      "result": "1067library passed/8ignored;140integration passed; unique-node/snapshot/root-capacity cost gates pass.150/165 static eligible bodies, not native time coverage or speed.",
+      "evidence": "native-path-append-2026-10-24.json"
     }
   ]
 }

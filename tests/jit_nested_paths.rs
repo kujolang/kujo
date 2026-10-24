@@ -287,3 +287,81 @@ print("PASS")
         &[],
     );
 }
+
+#[test]
+fn native_guarded_path_appends_preserve_snapshots_and_shadowed_calls() {
+    let mut source = String::from(
+        r#"
+struct Bag { items: any, data: any }
+func field(input,item) { mut state := input state.items = push(state.items,item) return state }
+func nested(input,item) { mut state := input state["rows"][0] = push(state["rows"][0],item) return state }
+func bytes_field(input,item) { mut state := input state.data = concat(state.data,item) return state }
+func custom(input,item) { return [item,input] }
+func shadow(input,operation) { let push := operation mut state := input state.items = push(state.items,9) return state }
+let seed := Bag { items: [1], data: bytes([1]) }
+let rows := {"rows": [[1]]}
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+assert_equal(field(seed,2).items,[1,2])
+assert_equal(nested(rows,2),{"rows": [[1,2]]})
+assert_equal(bytes_field(seed,bytes([2])).data,bytes([1,2]))
+assert_equal(shadow(seed,custom).items,[9,[1]])
+"#,
+        );
+    }
+    source.push_str(
+        r#"
+assert_equal(seed.items,[1])
+assert_equal(seed.data,bytes([1]))
+assert_equal(rows,{"rows": [[1]]})
+print("PASS")
+"#,
+    );
+    check(source, &["field", "nested", "bytes_field", "shadow"]);
+}
+
+#[test]
+fn native_path_append_order_and_loop_snapshots() {
+    let mut source = String::from(
+        r#"
+mut global := {"rows": [[1]]}
+mut order := ""
+func item() { order += "v" global = {"rows": [[7]]} return 2 }
+func index() { order += "i" global = {"rows": [[9]]} return 0 }
+func change() { global["rows"][index()] = push(global["rows"][0],item()) }
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+global = {"rows": [[1]]}
+order = ""
+change()
+assert_equal(global,{"rows": [[1,2]]})
+assert_equal(order,"vi")
+"#,
+        );
+    }
+    source.push_str("print(\"PASS\")");
+    check(source, &["change"]);
+    check(
+        r#"
+struct Bag { items: any }
+func once() {
+    mut state := Bag { items: [] }
+    let saved := state
+    mut i := 0
+    while i < 200 { state.items = push(state.items,i) i += 1 }
+    assert_equal(state.items,range(0,200))
+    assert_equal(saved.items,[])
+}
+once()
+print("PASS")
+"#
+        .into(),
+        &[],
+    );
+}

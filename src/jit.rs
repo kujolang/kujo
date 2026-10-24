@@ -1373,6 +1373,48 @@ pub unsafe extern "C" fn jit_indexed_write(
     }
 }
 
+/// Inspect builtin identity and operand types without retaining artificial aliases.
+#[no_mangle]
+// SAFETY: live exclusive context and live operand handles; no callbacks.
+pub unsafe extern "C" fn jit_guard_append_path(
+    ctx: *mut VMContext,
+    original: i64,
+    original_kind: i64,
+    item: i64,
+    item_kind: i64,
+    function: i64,
+    function_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let result: Result<bool, crate::native_owned::OwnershipError> = (|| {
+        let concat = match ctx.owned_roots.native_function_name(function, function_kind)? {
+            Some("push" | "append") => false,
+            Some("concat") => true,
+            _ => return Ok(false),
+        };
+        if original_kind != crate::native_owned::OWNED {
+            return Ok(false);
+        }
+        let valid = if concat {
+            matches!(ctx.owned_roots.current_value_mut(original, original_kind)?, Value::Bytes(_))
+        } else {
+            matches!(ctx.owned_roots.current_value_mut(original, original_kind)?, Value::Array(_))
+        };
+        if !valid || !concat {
+            return Ok(valid);
+        }
+        Ok(item_kind == crate::native_owned::OWNED
+            && matches!(ctx.owned_roots.current_value_mut(item, item_kind)?, Value::Bytes(_)))
+    })();
+    match result {
+        Ok(value) => i64::from(value),
+        Err(error) => {
+            ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
+            0
+        }
+    }
+}
+
 /// Checked nested mutation uses retained path metadata and a tagged operand array.
 #[no_mangle]
 // SAFETY: shape points to compiler-retained metadata; operands points to generated
@@ -1387,6 +1429,55 @@ pub unsafe extern "C" fn jit_update_binding_path(
     name_hash: i64,
     shape: *const Vec<Option<String>>,
     operands: *const i64,
+) -> i64 {
+    jit_mutate_binding_path(
+        ctx,
+        location,
+        target,
+        target_kind,
+        binding_kind,
+        name_hash,
+        shape,
+        operands,
+        false,
+    )
+}
+
+#[no_mangle]
+// SAFETY: same retained metadata contract, with indices followed by original/item/callable pairs.
+pub unsafe extern "C" fn jit_append_binding_path(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    binding_kind: i64,
+    name_hash: i64,
+    shape: *const Vec<Option<String>>,
+    operands: *const i64,
+) -> i64 {
+    jit_mutate_binding_path(
+        ctx,
+        location,
+        target,
+        target_kind,
+        binding_kind,
+        name_hash,
+        shape,
+        operands,
+        true,
+    )
+}
+
+unsafe fn jit_mutate_binding_path(
+    ctx: *mut VMContext,
+    location: i64,
+    target: i64,
+    target_kind: i64,
+    binding_kind: i64,
+    name_hash: i64,
+    shape: *const Vec<Option<String>>,
+    operands: *const i64,
+    append: bool,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 1 };
     // Native callback contexts are short-lived. Keep validated identities with
@@ -1416,7 +1507,8 @@ pub unsafe extern "C" fn jit_update_binding_path(
             return Err("Missing native path operands".into());
         }
         let count = shape.iter().filter(|step| step.is_none()).count();
-        let operands = std::slice::from_raw_parts(operands, (count + 1) * 2);
+        let operands =
+            std::slice::from_raw_parts(operands, (count + if append { 3 } else { 1 }) * 2);
         let mut path = Vec::with_capacity(shape.len());
         let mut offset = 0;
         for step in shape {
@@ -1432,12 +1524,53 @@ pub unsafe extern "C" fn jit_update_binding_path(
                 }
             });
         }
-        let value = ctx
-            .owned_roots
-            .clone_value(operands[offset], operands[offset + 1])
-            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let concat = append
+            && matches!(
+                ctx.owned_roots
+                    .native_function_name(operands[offset + 4], operands[offset + 5])
+                    .map_err(|error| format!("Native ownership error: {error:?}"))?,
+                Some("concat")
+            );
+        let mut decode = |index: usize, consume: bool| -> Result<Value, String> {
+            let payload = operands[index];
+            let kind = operands[index + 1];
+            if consume && kind == crate::native_owned::OWNED {
+                Ok(std::mem::replace(
+                    ctx.owned_roots
+                        .current_value_mut(payload, kind)
+                        .map_err(|error| format!("Native ownership error: {error:?}"))?,
+                    Value::Null,
+                ))
+            } else {
+                ctx.owned_roots
+                    .clone_value(payload, kind)
+                    .map_err(|error| format!("Native ownership error: {error:?}"))
+            }
+        };
+        let original = if append { Some(decode(offset, true)?) } else { None };
+        let value = decode(offset + if append { 2 } else { 0 }, append)?;
         let operation = |root: &mut Value| {
-            crate::interpreter::assignment::update_checked(root, &path, value, &mut cache)
+            if let Some(original) = original {
+                if concat {
+                    crate::interpreter::assignment::concat_bytes_path(
+                        root,
+                        &path,
+                        original,
+                        value,
+                        Some(&mut cache),
+                    )
+                } else {
+                    crate::interpreter::assignment::append_path(
+                        root,
+                        &path,
+                        original,
+                        value,
+                        Some(&mut cache),
+                    )
+                }
+            } else {
+                crate::interpreter::assignment::update_checked(root, &path, value, &mut cache)
+            }
         };
         match location {
             0 => operation(
@@ -4721,6 +4854,8 @@ struct BytecodeTranslator {
     for_next_func: Option<FuncRef>,
     indexed_write_func: Option<FuncRef>,
     update_binding_path_func: Option<FuncRef>,
+    append_binding_path_func: Option<FuncRef>,
+    guard_append_path_func: Option<FuncRef>,
     loop_resume_enabled: bool,
     loop_resume_guard_func: Option<FuncRef>,
     loop_resume_prepare_func: Option<FuncRef>,
@@ -4904,6 +5039,8 @@ impl BytecodeTranslator {
             for_next_func: None,
             indexed_write_func: None,
             update_binding_path_func: None,
+            append_binding_path_func: None,
+            guard_append_path_func: None,
             loop_resume_enabled: false,
             loop_resume_guard_func: None,
             loop_resume_prepare_func: None,
@@ -5017,7 +5154,9 @@ impl BytecodeTranslator {
             let edges = match instruction {
                 OpCode::Return | OpCode::ReturnNone => Vec::new(),
                 OpCode::Jump(target) | OpCode::JumpBack(target) => vec![(*target, next)],
-                OpCode::JumpIfTrue(target) | OpCode::JumpIfFalse(target) => {
+                OpCode::JumpIfTrue(target)
+                | OpCode::JumpIfFalse(target)
+                | OpCode::GuardAppendPath(target) => {
                     vec![(*target, next), (pc + 1, next)]
                 }
                 OpCode::ForNext(target) => vec![(*target, depth.saturating_sub(2)), (pc + 1, next)],
@@ -5102,6 +5241,10 @@ impl BytecodeTranslator {
             // Dict/Array operations
             OpCode::FieldGet(_) => (1, 1),
             OpCode::FieldSet(_) => (2, 1),
+            OpCode::GuardAppendPath(_) => (0, 0),
+            OpCode::AppendBindingPath(_, path) => {
+                (3 + path.iter().filter(|step| step.is_none()).count(), 1)
+            }
             OpCode::IndexGet => (2, 1), // Pop object + index, push value
             OpCode::IndexSet => (3, 0), // Pop object + index + value, push nothing
             OpCode::UpdateBindingPath(_, path) => {
@@ -5585,6 +5728,7 @@ impl BytecodeTranslator {
                 | OpCode::JumpBack(target)
                 | OpCode::TryStringAppendAssign(_, target)
                 | OpCode::TryAppendAssign(_, target)
+                | OpCode::GuardAppendPath(target)
                 | OpCode::ForNext(target) => {
                     if *target > max_reachable {
                         max_reachable = *target;
@@ -5877,6 +6021,7 @@ impl BytecodeTranslator {
                 | OpCode::JumpBack(target)
                 | OpCode::TryStringAppendAssign(_, target)
                 | OpCode::TryAppendAssign(_, target)
+                | OpCode::GuardAppendPath(target)
                 | OpCode::ForNext(target) => {
                     if *target < self.function_end {
                         if !self.blocks.contains_key(target) {
@@ -6771,17 +6916,59 @@ impl BytecodeTranslator {
                 self.append_local(builder, pc, *slot, suffix, length)?;
             }
 
-            OpCode::UpdateBindingPath(binding, shape) => {
+            OpCode::GuardAppendPath(fallback) => {
+                let depth = self.value_stack.len();
+                if depth < 3 {
+                    return Err("Path append guard stack underflow".into());
+                }
+                let ctx = self.ctx_param.ok_or("Path append guard requires context")?;
+                let helper =
+                    self.guard_append_path_func.ok_or("Path append guard requires helper")?;
+                let mut args = vec![ctx];
+                for index in depth - 3..depth {
+                    let value = self.value_stack[index];
+                    args.push(value);
+                    args.push(self.scalar_kind(builder, value));
+                }
+                let call = builder.ins().call(helper, &args);
+                let valid = builder.inst_results(call)[0];
+                let check = builder
+                    .ins()
+                    .call(self.runtime_error_func.ok_or("Missing runtime error guard")?, &[ctx]);
+                self.exit_on_assignment_error(builder, builder.inst_results(check)[0]);
+                let fallback_args = self.stack_edge_args(builder, *fallback)?;
+                let next_args = self.stack_edge_args(builder, pc + 1)?;
+                let fallback_block = *self.blocks.get(fallback).ok_or("Missing append fallback")?;
+                let next = *self.blocks.get(&(pc + 1)).ok_or("Missing append body")?;
+                builder.ins().brif(valid, next, &next_args, fallback_block, &fallback_args);
+                return Ok(true);
+            }
+
+            OpCode::UpdateBindingPath(binding, shape)
+            | OpCode::AppendBindingPath(binding, shape) => {
                 use crate::bytecode::MutationBinding;
+                let append = matches!(instruction, OpCode::AppendBindingPath(_, _));
                 let count = shape.iter().filter(|step| step.is_none()).count();
                 let mut indices = Vec::with_capacity(count);
                 for _ in 0..count {
                     indices.push(self.pop_value()?);
                 }
                 indices.reverse();
-                let value = self.pop_value()?;
+                let values = if append {
+                    let function = self.pop_value()?;
+                    let item = self.pop_value()?;
+                    let original = self.pop_value()?;
+                    vec![original, item, function]
+                } else {
+                    vec![self.pop_value()?]
+                };
                 let ctx = self.ctx_param.ok_or("Path write requires context")?;
-                let helper = self.update_binding_path_func.ok_or("Path write requires helper")?;
+                let helper = (if append {
+                    self.append_binding_path_func
+                } else {
+                    self.update_binding_path_func
+                })
+                .ok_or("Path write requires helper")?;
                 let (name, location, target, kind, binding_kind) = match binding {
                     MutationBinding::Local(slot) => {
                         let name =
@@ -6823,14 +7010,15 @@ impl BytecodeTranslator {
                 };
                 let retained = self.path_shapes.get(shape).ok_or("Missing retained path shape")?;
                 let shape = builder.ins().iconst(types::I64, Arc::as_ptr(retained) as i64);
-                let size = u32::try_from((count + 1).checked_mul(16).ok_or("Path too large")?)
-                    .map_err(|_| "Path too large")?;
+                let size =
+                    u32::try_from((count + values.len()).checked_mul(16).ok_or("Path too large")?)
+                        .map_err(|_| "Path too large")?;
                 let slot = builder.create_sized_stack_slot(StackSlotData::new(
                     StackSlotKind::ExplicitSlot,
                     size,
                     3,
                 ));
-                indices.push(value);
+                indices.extend(values);
                 for (index, operand) in indices.iter().enumerate() {
                     let kind = self.scalar_kind(builder, *operand);
                     builder.ins().stack_store(*operand, slot, (index * 16) as i32);
@@ -8823,7 +9011,11 @@ impl JitCompiler {
             .instructions
             .iter()
             .filter_map(|instruction| {
-                let OpCode::UpdateBindingPath(_, shape) = instruction else { return None };
+                let (OpCode::UpdateBindingPath(_, shape) | OpCode::AppendBindingPath(_, shape)) =
+                    instruction
+                else {
+                    return None;
+                };
                 let retained = self
                     .path_shapes
                     .entry(shape.clone())
@@ -8913,6 +9105,8 @@ impl JitCompiler {
             ("jit_for_next", 5, true),
             ("jit_indexed_write", 10, true),
             ("jit_update_binding_path", 8, true),
+            ("jit_append_binding_path", 8, true),
+            ("jit_guard_append_path", 7, true),
             ("jit_loop_resume_guard", 3, true),
             ("jit_loop_resume_prepare", 2, true),
             ("jit_loop_dense_view", 2, true),
@@ -8959,6 +9153,8 @@ impl JitCompiler {
                 "jit_for_next" => translator.for_next_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_update_binding_path" => translator.update_binding_path_func = Some(function),
+                "jit_append_binding_path" => translator.append_binding_path_func = Some(function),
+                "jit_guard_append_path" => translator.guard_append_path_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
                 "jit_loop_resume_prepare" => translator.loop_resume_prepare_func = Some(function),
                 "jit_loop_dense_view" => translator.loop_dense_view_func = Some(function),
@@ -9026,6 +9222,8 @@ impl JitCompiler {
         builder.symbol("jit_for_next", jit_for_next as *const u8);
         builder.symbol("jit_indexed_write", jit_indexed_write as *const u8);
         builder.symbol("jit_update_binding_path", jit_update_binding_path as *const u8);
+        builder.symbol("jit_append_binding_path", jit_append_binding_path as *const u8);
+        builder.symbol("jit_guard_append_path", jit_guard_append_path as *const u8);
         builder.symbol("jit_loop_resume_guard", jit_loop_resume_guard as *const u8);
         builder.symbol("jit_loop_resume_prepare", jit_loop_resume_prepare as *const u8);
         builder.symbol("jit_loop_dense_view", jit_loop_dense_view as *const u8);
@@ -9151,7 +9349,7 @@ impl JitCompiler {
         for pc in start..=end {
             if let Some(instruction) = chunk.instructions.get(pc) {
                 // Named captured roots require frame cells, not the locked global environment.
-                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _)
+                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _)
                     if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
                 {
                     return false;
@@ -9179,7 +9377,7 @@ impl JitCompiler {
         for pc in start..=end {
             if let Some(instruction) = chunk.instructions.get(pc) {
                 // Named captured roots require frame cells, not the locked global environment.
-                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _)
+                if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _)
                     if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
                 {
                     return false;
@@ -9263,7 +9461,9 @@ impl JitCompiler {
             OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_)
             | OpCode::IndexSetInPlace(_)
-            | OpCode::UpdateBindingPath(_, _) => true,
+            | OpCode::UpdateBindingPath(_, _)
+            | OpCode::GuardAppendPath(_)
+            | OpCode::AppendBindingPath(_, _) => true,
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
             // Guarded fusion remains in the VM until native lowering exists.
             OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => false,
@@ -9849,6 +10049,7 @@ impl JitCompiler {
                         | OpCode::JumpBack(target)
                         | OpCode::TryStringAppendAssign(_, target)
                         | OpCode::TryAppendAssign(_, target)
+                        | OpCode::GuardAppendPath(target)
                         | OpCode::ForNext(target) => {
                             if *target > max_target {
                                 max_target = *target;
@@ -11685,6 +11886,117 @@ impl Default for JitCompiler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn native_path_appends_reuse_nodes_and_bound_operand_roots() {
+        for bytes in [false, true] {
+            for count in [8usize, 128] {
+                let mut ctx = VMContext::new(
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                );
+                ctx.owned_roots.enter().unwrap();
+                let leaf = if bytes {
+                    Value::Bytes(Arc::new(Vec::with_capacity(count + 1)))
+                } else {
+                    Value::Array(Arc::new(Vec::with_capacity(count + 1)))
+                };
+                let fields = Arc::new(HashMap::from([("items".into(), leaf)]));
+                let parent_pointer = Arc::as_ptr(&fields) as usize;
+                let leaf_pointer = match &fields["items"] {
+                    Value::Array(a) => Arc::as_ptr(a) as usize,
+                    Value::Bytes(a) => Arc::as_ptr(a) as usize,
+                    _ => panic!(),
+                };
+                let (root, kind) =
+                    ctx.owned_roots.encode(Value::Struct { name: "Bag".into(), fields }).unwrap();
+                let hash = BytecodeTranslator::hash_var_name("state");
+                let mut names = HashMap::from([(hash, "state".into())]);
+                ctx.var_names_ptr = &mut names;
+                let shape = vec![Some("items".into())];
+                let (function, function_kind) = ctx
+                    .owned_roots
+                    .encode(Value::NativeFunction(if bytes { "concat" } else { "push" }.into()))
+                    .unwrap();
+                let mut snapshot = None;
+                for step in 0..=count {
+                    if step == count {
+                        snapshot = Some(ctx.owned_roots.clone_value(root, kind).unwrap());
+                    }
+                    let original = match ctx.owned_roots.current_value_mut(root, kind).unwrap() {
+                        Value::Struct { fields, .. } => fields["items"].clone(),
+                        _ => panic!(),
+                    };
+                    let (original, original_kind) = ctx.owned_roots.encode(original).unwrap();
+                    let item = if bytes { Value::Bytes(Arc::new(vec![1])) } else { Value::Int(1) };
+                    let (item, item_kind) = ctx.owned_roots.encode(item).unwrap();
+                    assert_eq!(
+                        unsafe {
+                            jit_guard_append_path(
+                                &mut ctx,
+                                original,
+                                original_kind,
+                                item,
+                                item_kind,
+                                function,
+                                function_kind,
+                            )
+                        },
+                        1
+                    );
+                    let operands =
+                        [original, original_kind, item, item_kind, function, function_kind];
+                    assert_eq!(
+                        unsafe {
+                            jit_append_binding_path(
+                                &mut ctx,
+                                1,
+                                root,
+                                kind,
+                                0,
+                                hash as i64,
+                                &shape,
+                                operands.as_ptr(),
+                            )
+                        },
+                        0,
+                        "{:?}",
+                        ctx.runtime_error
+                    );
+                    ctx.owned_roots.release(original, original_kind).unwrap();
+                    ctx.owned_roots.release(item, item_kind).unwrap();
+                    let Value::Struct { fields, .. } =
+                        ctx.owned_roots.current_value_mut(root, kind).unwrap()
+                    else {
+                        panic!()
+                    };
+                    let (pointer, len) = match &fields["items"] {
+                        Value::Array(a) => (Arc::as_ptr(a) as usize, a.len()),
+                        Value::Bytes(a) => (Arc::as_ptr(a) as usize, a.len()),
+                        _ => panic!(),
+                    };
+                    assert_eq!(len, step + 1);
+                    if step < count {
+                        assert_eq!(Arc::as_ptr(fields) as usize, parent_pointer);
+                        assert_eq!(pointer, leaf_pointer);
+                    } else {
+                        assert_ne!(Arc::as_ptr(fields) as usize, parent_pointer);
+                        assert_ne!(pointer, leaf_pointer);
+                    }
+                }
+                let Some(Value::Struct { fields, .. }) = snapshot else { panic!() };
+                assert!(
+                    matches!(&fields["items"],Value::Array(a) if a.len()==count)
+                        || matches!(&fields["items"],Value::Bytes(a) if a.len()==count)
+                );
+                ctx.owned_roots.leave().unwrap();
+                let (_, live, slots, _) = ctx.owned_roots.storage_state();
+                assert_eq!(live, 0);
+                assert!(slots <= 6, "{slots}");
+            }
+        }
+    }
+
     #[test]
     fn native_field_write_consumes_temporary_without_losing_snapshots() {
         for count in [8, 128] {

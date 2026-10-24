@@ -1,0 +1,26 @@
+{
+  "scope": "Native guarded array/byte append through field/index paths, with ordinary-call fallback; not production or speed acceptance.",
+  "source_parent": "910864b79457416e1e78a71c719d0c603caf0626",
+  "source_sha256": {
+    "src/jit.rs": "d0138a9dc98aa46f1604801aac66bcd16e7ac8439de20134fc2e3064bc2dd577",
+    "tests/jit_nested_paths.rs": "268113cac1d8e0f85614f27e53a261e8053c3fe75915f813c86ccf4ca96b2d74"
+  },
+  "baseline": "Native-required test failed because GuardAppendPath/AppendBindingPath were unsupported; interpreter and VM semantics passed.",
+  "mechanism": "Inspect original callable/types without retaining aliases; preserve untouched operands on fallback. Retain path metadata and tagged stack operands, consume append temporaries into canonical append_path/concat_bytes_path and reuse VM validation cache. Captured named loop destinations remain excluded.",
+  "verification": {
+    "library_passed": 1067,
+    "library_ignored": 8,
+    "integration_passed": 140,
+    "semantics": "Native function/loop entry, shadowed-call fallback, array/byte snapshots, RHS/index evaluation order and destination replacement verified across interpreter/VM/JIT.",
+    "cost": "At8/128 array and byte appends, unique parent/leaf Arc identities remain unchanged; retained snapshots detach, retain old lengths, and live roots return to0 with capacity<=6.",
+    "format": "cargo fmt --check passed",
+    "minimal": "cargo check --no-default-features --lib passed"
+  },
+  "logs": [
+    "/tmp/kujo-native-path-append-baseline.log",
+    "/tmp/kujo-native-path-append-targeted.log",
+    "/tmp/kujo-native-path-append-contracts.log"
+  ],
+  "static_audit": "post-path-append-native-surfaces-2026-10-24.json",
+  "remaining": "Native pop/rebind, await, closures/captures and try remain first unsupported surfaces; final all50/production/competitive/platform gates open."
+}
