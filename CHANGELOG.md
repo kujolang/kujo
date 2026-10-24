@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile field reads in experimental native functions and loops using the VM's
+  field and method resolver. Preserve typed values, receiver markers, errors and
+  function-frame stack cleanup.
+
 - Preserve receiver markers when native callers invoke fallback functions using
   channel or ArgParser methods. VM and callback field resolution now share member
   precedence, method lookup and error behavior.

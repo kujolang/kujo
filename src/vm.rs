@@ -3565,6 +3565,10 @@ impl VM {
                                                 call_name_len: func_name.len(),
                                                 native_call_depth: 0,
                                                 #[cfg(feature = "runtime-jit")]
+                                                native_stack_bases: Default::default(),
+                                                #[cfg(feature = "runtime-jit")]
+                                                field_receiver_pending: false,
+                                                #[cfg(feature = "runtime-jit")]
                                                 owned_roots: Default::default(),
                                                 #[cfg(feature = "runtime-jit")]
                                                 owned_return: None,
@@ -3700,6 +3704,10 @@ impl VM {
                                                     call_name_ptr: func_name.as_ptr(),
                                                     call_name_len: func_name.len(),
                                                     native_call_depth: 0,
+                                                    #[cfg(feature = "runtime-jit")]
+                                                    native_stack_bases: Default::default(),
+                                                    #[cfg(feature = "runtime-jit")]
+                                                    field_receiver_pending: false,
                                                     #[cfg(feature = "runtime-jit")]
                                                     owned_roots: Default::default(),
                                                     #[cfg(feature = "runtime-jit")]
@@ -3876,6 +3884,10 @@ impl VM {
                                         call_name_ptr: func_name.as_ptr(),
                                         call_name_len: func_name.len(),
                                         native_call_depth: 0,
+                                        #[cfg(feature = "runtime-jit")]
+                                        native_stack_bases: Default::default(),
+                                        #[cfg(feature = "runtime-jit")]
+                                        field_receiver_pending: false,
                                         #[cfg(feature = "runtime-jit")]
                                         owned_roots: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
@@ -8398,6 +8410,10 @@ impl VM {
                                         call_name_len: func_name.len(),
                                         native_call_depth: 0,
                                         #[cfg(feature = "runtime-jit")]
+                                        native_stack_bases: Default::default(),
+                                        #[cfg(feature = "runtime-jit")]
+                                        field_receiver_pending: false,
+                                        #[cfg(feature = "runtime-jit")]
                                         owned_roots: Default::default(),
                                         #[cfg(feature = "runtime-jit")]
                                         owned_return: None,
@@ -8566,6 +8582,10 @@ impl VM {
                             call_name_ptr: func_name.as_ptr(),
                             call_name_len: func_name.len(),
                             native_call_depth: 0,
+                            #[cfg(feature = "runtime-jit")]
+                            native_stack_bases: Default::default(),
+                            #[cfg(feature = "runtime-jit")]
+                            field_receiver_pending: false,
                             #[cfg(feature = "runtime-jit")]
                             owned_roots: Default::default(),
                             #[cfg(feature = "runtime-jit")]

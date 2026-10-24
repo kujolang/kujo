@@ -75,7 +75,8 @@
         "native-array-construction-2026-10-23.json",
         "native-loop-owned-rebinding-2026-10-23.json",
         "native-struct-construction-2026-10-23.json",
-        "callback-field-resolution-2026-10-23.json"
+        "callback-field-resolution-2026-10-23.json",
+        "native-field-reads-2026-10-23.json"
       ]
     },
     {

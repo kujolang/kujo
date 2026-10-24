@@ -131,6 +131,8 @@ pub struct VMContext {
     pub call_name_ptr: *const u8,
     pub call_name_len: usize,
     pub native_call_depth: usize,
+    pub(crate) native_stack_bases: NativeStackBases,
+    pub(crate) field_receiver_pending: bool,
     pub(crate) owned_roots: crate::native_owned::NativeCallRoots,
     pub(crate) owned_return: Option<Value>,
     pub(crate) loop_dense_views: HashMap<usize, Box<LoopDenseView>>,
@@ -150,6 +152,31 @@ pub struct VMContext {
 pub(crate) struct LoopDenseView {
     data: *mut i64,
     len: usize,
+}
+
+/// Keep ordinary native frame entry allocation-free. Only nested invocations
+/// sharing a context need overflow storage.
+#[derive(Default)]
+pub(crate) struct NativeStackBases {
+    first: Option<usize>,
+    nested: Vec<usize>,
+}
+
+impl NativeStackBases {
+    fn push(&mut self, base: usize) {
+        if self.first.is_none() {
+            self.first = Some(base);
+        } else {
+            self.nested.push(base);
+        }
+    }
+    fn pop(&mut self) -> Option<usize> {
+        self.nested.pop().or_else(|| self.first.take())
+    }
+    #[cfg(test)]
+    fn is_empty(&self) -> bool {
+        self.first.is_none() && self.nested.is_empty()
+    }
 }
 
 impl VMContext {
@@ -257,6 +284,8 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            native_stack_bases: Default::default(),
+            field_receiver_pending: false,
             owned_roots: Default::default(),
             owned_return: None,
             loop_dense_views: HashMap::new(),
@@ -294,6 +323,8 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            native_stack_bases: Default::default(),
+            field_receiver_pending: false,
             owned_roots: Default::default(),
             owned_return: None,
             loop_dense_views: HashMap::new(),
@@ -345,6 +376,8 @@ impl VMContext {
             call_name_ptr: std::ptr::null(),
             call_name_len: 0,
             native_call_depth: 0,
+            native_stack_bases: Default::default(),
+            field_receiver_pending: false,
             owned_roots: Default::default(),
             owned_return: None,
             loop_dense_views: HashMap::new(),
@@ -960,6 +993,77 @@ pub unsafe extern "C" fn jit_load_operand(
             0
         }
     }
+}
+
+/// Resolve a native field through the VM contract, preserving legacy receivers.
+#[no_mangle]
+// SAFETY: ctx is exclusive; name_ptr points into compiler-retained Arc<String>
+// metadata. Global lookup uses the already-borrowed map and never locks the VM.
+pub unsafe extern "C" fn jit_field_read(
+    ctx: *mut VMContext,
+    object: i64,
+    kind: i64,
+    name_ptr: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    ctx.field_receiver_pending = false;
+    let result = (|| {
+        let name = (name_ptr as *const String).as_ref().ok_or("Missing native field name")?;
+        let object = ctx
+            .owned_roots
+            .clone_value(object, kind)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let (value, receiver) = VM::get_field_value(&object, name, |method| {
+            ctx.globals_ptr.as_ref().and_then(|globals| globals.get(method)).cloned()
+        })?;
+        let encoded = ctx
+            .owned_roots
+            .encode(value)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        if let Some(receiver) = receiver {
+            ctx.stack_ptr.as_mut().ok_or("Missing native receiver stack")?.push(receiver);
+            ctx.field_receiver_pending = true;
+        }
+        Ok::<_, String>(encoded)
+    })();
+    match result {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
+/// Match Call's argument suffix after an immediately preceding FieldGet.
+#[no_mangle]
+// SAFETY: ctx and its stack are exclusive. No pointers or references escape.
+pub unsafe extern "C" fn jit_prepare_field_call(ctx: *mut VMContext, count: i64) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 1 };
+    if !std::mem::take(&mut ctx.field_receiver_pending) {
+        return 0;
+    }
+    // With zero arguments the hidden receiver already has the VM layout.
+    if count == 0 {
+        return 0;
+    }
+    let base = usize::try_from(count)
+        .ok()
+        .and_then(|n| n.checked_add(2))
+        .and_then(|n| ctx.stack_ptr.as_ref()?.len().checked_sub(n));
+    let Some(base) = base else {
+        ctx.runtime_error = Some("Stack underflow preparing field call".into());
+        return 1;
+    };
+    let stack = &mut *ctx.stack_ptr;
+    // [second receiver, callable, first receiver, user arguments]
+    // becomes [first receiver, callable, user arguments, second receiver].
+    stack.swap(base, base + 2);
+    stack[base + 2..].rotate_left(1);
+    0
 }
 
 /// Read tagged operands using the VM's indexing and error contracts.
@@ -3170,6 +3274,7 @@ pub unsafe extern "C" fn jit_enter_function(ctx: *mut VMContext) -> i64 {
         ctx.runtime_error = Some(format!("Native ownership error: {error:?}"));
         return 1;
     }
+    ctx.native_stack_bases.push(ctx.stack_ptr.as_ref().map_or(0, Vec::len));
     measurement::add(Metric::JitNativeFunctionEntries, 1);
     0
 }
@@ -3189,6 +3294,13 @@ pub unsafe extern "C" fn jit_leave_function(ctx: *mut VMContext) {
         }
         if let Err(error) = ctx.owned_roots.leave() {
             ctx.runtime_error.get_or_insert_with(|| format!("Native ownership error: {error:?}"));
+        }
+        // A field method marker may leave an unconsumed receiver. Like a VM
+        // frame, native functions discard their own stack suffix on every exit.
+        if let Some(base) = ctx.native_stack_bases.pop() {
+            if let Some(stack) = ctx.stack_ptr.as_mut() {
+                stack.truncate(base);
+            }
         }
         if let Some(vm) = (ctx.vm_ptr as *mut VM).as_mut() {
             vm.leave_native_function();
@@ -4013,6 +4125,7 @@ pub struct JitCompiler {
     // Key-vector allocations embedded in native instructions must outlive code.
     dictionary_keys: HashMap<usize, Arc<Vec<Arc<str>>>>,
     struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
+    field_names: HashMap<String, Arc<String>>,
     append_strings: HashMap<usize, Arc<str>>,
     literal_values: HashMap<(u8, Vec<u8>), Arc<Value>>,
 }
@@ -4101,7 +4214,11 @@ struct BytecodeTranslator {
     make_dict_func: Option<FuncRef>,
     make_array_func: Option<FuncRef>,
     make_struct_func: Option<FuncRef>,
+    field_read_func: Option<FuncRef>,
+    field_call_func: Option<FuncRef>,
+    field_call_sites: std::collections::HashSet<usize>,
     struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
+    field_names: HashMap<String, Arc<String>>,
     /// Make dict with keys function reference (for MakeDictWithKeys opcode)
     make_dict_with_keys_func: Option<FuncRef>,
     /// Append const string in-place helper
@@ -4260,7 +4377,11 @@ impl BytecodeTranslator {
             make_dict_func: None,
             make_array_func: None,
             make_struct_func: None,
+            field_read_func: None,
+            field_call_func: None,
+            field_call_sites: Default::default(),
             struct_shapes: HashMap::new(),
+            field_names: HashMap::new(),
             make_dict_with_keys_func: None,
             append_const_string_in_place_func: None,
             append_const_char_in_place_func: None,
@@ -4409,6 +4530,7 @@ impl BytecodeTranslator {
             OpCode::Call(n) => (*n + 1, 1), // Pop n args + 1 func, push result
 
             // Dict/Array operations
+            OpCode::FieldGet(_) => (1, 1),
             OpCode::IndexGet => (2, 1), // Pop object + index, push value
             OpCode::IndexSet => (3, 0), // Pop object + index + value, push nothing
             OpCode::UpdateBindingPath(_, path) => {
@@ -5650,6 +5772,16 @@ impl BytecodeTranslator {
                         self.release_operand(builder, *arg);
                     }
 
+                    // A directly consumed FieldGet can insert a legacy receiver
+                    // into the VM argument suffix. Reproduce that stack layout.
+                    if self.field_call_sites.contains(&pc) {
+                        let count = builder.ins().iconst(types::I64, *arg_count as i64);
+                        let prepare =
+                            self.field_call_func.ok_or("Field call requires receiver helper")?;
+                        let call = builder.ins().call(prepare, &[ctx, count]);
+                        self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                    }
+
                     // Call jit_call_function
                     let null_ptr = builder.ins().iconst(types::I64, 0);
                     let arg_count_val = builder.ins().iconst(types::I64, *arg_count as i64);
@@ -5689,6 +5821,21 @@ impl BytecodeTranslator {
                             .to_string(),
                     );
                 }
+            }
+
+            OpCode::FieldGet(name) => {
+                let object = self.pop_value()?;
+                let ctx = self.ctx_param.ok_or("Field read requires context")?;
+                let helper = self.field_read_func.ok_or("Field read requires helper")?;
+                let name = self.field_names.get(name).ok_or("Field read requires retained name")?;
+                let pointer = builder.ins().iconst(types::I64, Arc::as_ptr(name) as i64);
+                let kind = self.scalar_kind(builder, object);
+                let call = builder.ins().call(helper, &[ctx, object, kind, pointer]);
+                let result = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, result);
+                self.release_operand(builder, object);
+                self.push_value(result);
+                return Ok(false);
             }
 
             OpCode::IndexGet => {
@@ -7774,6 +7921,19 @@ impl JitCompiler {
             .collect()
     }
 
+    fn retain_field_names(&mut self, chunk: &BytecodeChunk) -> HashMap<String, Arc<String>> {
+        chunk
+            .instructions
+            .iter()
+            .filter_map(|instruction| {
+                let OpCode::FieldGet(name) = instruction else { return None };
+                let retained =
+                    self.field_names.entry(name.clone()).or_insert_with(|| Arc::new(name.clone()));
+                Some((name.clone(), Arc::clone(retained)))
+            })
+            .collect()
+    }
+
     fn retain_struct_shapes(
         &mut self,
         chunk: &BytecodeChunk,
@@ -7829,6 +7989,8 @@ impl JitCompiler {
             ("jit_stack_pop", 1, true),
             ("jit_make_struct", 2, true),
             ("jit_make_array", 2, true),
+            ("jit_prepare_field_call", 2, true),
+            ("jit_field_read", 4, true),
             ("jit_indexed_read", 5, true),
             ("jit_indexed_write", 10, true),
             ("jit_loop_resume_guard", 3, true),
@@ -7867,6 +8029,8 @@ impl JitCompiler {
                 "jit_stack_pop" => translator.stack_pop_func = Some(function),
                 "jit_make_struct" => translator.make_struct_func = Some(function),
                 "jit_make_array" => translator.make_array_func = Some(function),
+                "jit_prepare_field_call" => translator.field_call_func = Some(function),
+                "jit_field_read" => translator.field_read_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
@@ -7996,6 +8160,8 @@ impl JitCompiler {
             "jit_dense_int_dict_int_full_set_ptr",
             jit_dense_int_dict_int_full_set_ptr as *const u8,
         );
+        builder.symbol("jit_prepare_field_call", jit_prepare_field_call as *const u8);
+        builder.symbol("jit_field_read", jit_field_read as *const u8);
         builder.symbol("jit_make_struct", jit_make_struct as *const u8);
         builder.symbol("jit_make_array", jit_make_array as *const u8);
         builder.symbol("jit_make_dict", jit_make_dict as *const u8);
@@ -8020,6 +8186,7 @@ impl JitCompiler {
             compiled_fn_info: HashMap::new(),
             dictionary_keys: HashMap::new(),
             struct_shapes: HashMap::new(),
+            field_names: HashMap::new(),
             append_strings: HashMap::new(),
             literal_values: HashMap::new(),
         })
@@ -8143,7 +8310,7 @@ impl JitCompiler {
             OpCode::AddInPlace(_) => false,
 
             // Dict/Array operations - in-place ops supported for int paths
-            OpCode::IndexGet => true,
+            OpCode::FieldGet(_) | OpCode::IndexGet => true,
             OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_) => true,
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
@@ -8196,6 +8363,7 @@ impl JitCompiler {
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let field_names = self.retain_field_names(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -8584,6 +8752,16 @@ impl JitCompiler {
             // Translate bytecode instructions to Cranelift IR
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.field_call_sites = chunk
+                .instructions
+                .windows(2)
+                .enumerate()
+                .filter_map(|(pc, pair)| {
+                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
+                        .then_some(pc + 1)
+                })
+                .collect();
+            translator.field_names = field_names;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -8904,6 +9082,7 @@ impl JitCompiler {
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let field_names = self.retain_field_names(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -9317,6 +9496,16 @@ impl JitCompiler {
             // Create BytecodeTranslator for this function
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.field_call_sites = chunk
+                .instructions
+                .windows(2)
+                .enumerate()
+                .filter_map(|(pc, pair)| {
+                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
+                        .then_some(pc + 1)
+                })
+                .collect();
+            translator.field_names = field_names;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -9547,6 +9736,7 @@ impl JitCompiler {
     ) -> Result<CompiledFnWithArg, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let field_names = self.retain_field_names(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -9603,6 +9793,16 @@ impl JitCompiler {
             // Create BytecodeTranslator with direct-arg mode enabled
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.field_call_sites = chunk
+                .instructions
+                .windows(2)
+                .enumerate()
+                .filter_map(|(pc, pair)| {
+                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
+                        .then_some(pc + 1)
+                })
+                .collect();
+            translator.field_names = field_names;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -9868,6 +10068,7 @@ impl JitCompiler {
     ) -> Result<CompiledFn, String> {
         self.retain_dictionary_keys(chunk);
         let literal_values = self.retain_literal_values(chunk);
+        let field_names = self.retain_field_names(chunk);
         let struct_shapes = self.retain_struct_shapes(chunk);
         measurement::add(Metric::JitCompileEntries, 1);
         let _measurement = measurement::Span::new(Metric::JitCompileWallNs);
@@ -10216,6 +10417,16 @@ impl JitCompiler {
             // Initialize translator
             let mut translator = BytecodeTranslator::new();
             translator.literal_values = literal_values;
+            translator.field_call_sites = chunk
+                .instructions
+                .windows(2)
+                .enumerate()
+                .filter_map(|(pc, pair)| {
+                    matches!((&pair[0], &pair[1]), (OpCode::FieldGet(_), OpCode::Call(_)))
+                        .then_some(pc + 1)
+                })
+                .collect();
+            translator.field_names = field_names;
             translator.struct_shapes = struct_shapes;
             Self::declare_scalar_helpers(&mut self.module, &mut builder, &mut translator)?;
             translator.arithmetic_error_func =
@@ -11133,6 +11344,82 @@ mod tests {
         assert_eq!(weak.strong_count(), 1);
         drop(result);
         assert!(weak.upgrade().is_none());
+    }
+
+    #[test]
+    fn compiled_field_metadata_and_receivers_have_bounded_lifetimes() {
+        for (repetitions, fail_after_reads) in [(8, false), (128, false), (8, true)] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.params.push("item".into());
+            chunk.local_names.push("item".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.local_count = 1;
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadLocal(0));
+                chunk.emit(OpCode::FieldGet("help".into()));
+                chunk.emit(OpCode::Pop);
+            }
+            if fail_after_reads {
+                let index = chunk.add_constant(Constant::Int(3));
+                chunk.emit(OpCode::LoadConst(index));
+            } else {
+                chunk.emit(OpCode::LoadLocal(0));
+            }
+            chunk.emit(OpCode::FieldGet("help".into()));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "field_lifetime").unwrap();
+            let weak = Arc::downgrade(compiler.field_names.values().next().unwrap());
+            drop(chunk);
+            assert_eq!(weak.strong_count(), 1);
+            for item in [
+                Value::Struct {
+                    name: "Holder".into(),
+                    fields: HashMap::from([("help".into(), Value::array(vec![Value::Int(7)]))])
+                        .into(),
+                },
+                Value::Struct { name: "ArgParser".into(), fields: HashMap::new().into() },
+                Value::Int(3),
+            ] {
+                let expected = VM::get_field_value(
+                    if fail_after_reads { &Value::Int(3) } else { &item },
+                    "help",
+                    |_| None,
+                );
+                let mut locals = HashMap::from([("item".into(), item)]);
+                let mut names =
+                    HashMap::from([(BytecodeTranslator::hash_var_name("item"), "item".into())]);
+                let mut stack = vec![Value::Int(41)];
+                let mut context = VMContext::new(&mut stack, &mut locals, std::ptr::null_mut());
+                context.var_names_ptr = &mut names;
+                let status = invoke_compiled_fn(compiled, &mut context);
+                match expected {
+                    Ok((value, _)) => {
+                        assert_eq!(status, 0, "{:?}", context.runtime_error);
+                        let result = context.take_return_value(context.return_value);
+                        match (&result, &value) {
+                            (Value::NativeFunction(a), Value::NativeFunction(b)) => {
+                                assert_eq!(a, b)
+                            }
+                            _ => assert!(Value::equals(&result, &value)),
+                        }
+                    }
+                    Err(error) => {
+                        assert_ne!(status, 0);
+                        assert_eq!(context.runtime_error.as_deref(), Some(error.as_str()));
+                    }
+                }
+                let (_, live, capacity, _) = context.owned_roots.storage_state();
+                assert_eq!(live, 0);
+                assert!(capacity <= 5, "{repetitions} reads retained {capacity} roots");
+                assert_eq!(context.native_call_depth, 0);
+                assert!(context.native_stack_bases.is_empty());
+                assert_eq!(stack.len(), 1);
+                assert!(matches!(stack[0], Value::Int(41)));
+            }
+            drop(compiler);
+            assert!(weak.upgrade().is_none());
+        }
     }
 
     #[test]

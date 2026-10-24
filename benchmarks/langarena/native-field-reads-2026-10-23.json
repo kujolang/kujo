@@ -1,0 +1,28 @@
+{
+  "scope": "Experimental native FieldGet lowering; no production or competitive speed acceptance claim",
+  "baseline_commit": "210fd34",
+  "source_sha256": {
+    "src/jit.rs": "8858db06943d83066905bda6672e64b24c70af0ccaeadbeb18e545444bea759d",
+    "src/vm.rs": "38759569404f46c52a268a6ca6921a292ce76054537278a82fc40d638da5cea2",
+    "tests/jit_field_reads.rs": "2ce64801b3326d58df0db0eef22bf1cd97a02552e9fa23ae88257925a6c7fb07"
+  },
+  "behavior": [
+    "Compiler-retained field names and tagged owned results use shared VM resolver without relocking globals",
+    "Legacy direct field calls restore VM receiver argument ordering",
+    "Native function stack cleanup preserves caller prefix on success and error; ordinary frame bases stored inline",
+    "Loop field results persist typed values and snapshots"
+  ],
+  "verification": {
+    "baseline": "/tmp/kujo-native-fields-before.log: all three native-coverage regressions fail on frozen prior build; semantic interpreter/VM checks succeed",
+    "intermediate_failure": "/tmp/kujo-native-fields-tests.log: initial lowering exposed Channel.send extra argument; corrected receiver layout before acceptance",
+    "unit": "/tmp/kujo-native-fields-unit.log: metadata lifetime, bounded roots, discarded/returned receiver and error cleanup passed",
+    "library": "/tmp/kujo-native-fields-library.log: 1051 passed, 8 ignored, zero failures",
+    "integration": "/tmp/kujo-native-fields-contracts.log: 132 passed across six targets, new regressions run interpreter/VM/JIT",
+    "format": "/tmp/kujo-native-fields-fmt.log: cargo fmt --check passed",
+    "no_jit": "/tmp/kujo-native-fields-no-jit.log: existing disabled context missing loop fields; separate repair required"
+  },
+  "remaining": [
+    "Current candidate all-50 matrix",
+    "Production sizes, native time coverage, controlled comparative speed, platform acceptance"
+  ]
+}

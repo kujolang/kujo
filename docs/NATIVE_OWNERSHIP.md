@@ -41,14 +41,19 @@ Struct construction retains immutable name/field metadata in the compiler for
 the lifetime of generated code. Typed elements become ordinary struct Values;
 construction follows VM insertion order and nesting checks. Tests cover metadata
 outliving its bytecode chunk, recursive builders, mixed fields, snapshots, native
-loop replacement and bounded roots. Field reads and nested updates remain separate
-native-coverage gaps. See [constructor evidence](../benchmarks/langarena/native-struct-construction-2026-10-23.json).
+loop replacement and bounded roots. Nested updates remain a separate
+native-coverage gap. See [constructor evidence](../benchmarks/langarena/native-struct-construction-2026-10-23.json).
 
 Cold VM callbacks now use the same field resolver as ordinary VM execution,
 including legacy channel/ArgParser/image/server receiver markers. Regressions
 keep the caller hot and the field-using helper cold, checking markers, prior
-effects, failed assignment targets and recovery. Native `FieldGet` lowering is
-still a separate gate; its receiver stack effects must be preserved.
+effects, failed assignment targets and recovery. Native `FieldGet` now uses the
+same resolver with compiler-retained field names and tagged result roots. Global
+method lookup reads the borrowed environment without acquiring its mutex again.
+Legacy receiver markers retain their physical VM stack effects. Native function
+entry records the stack base; every generated function exit discards its suffix,
+including unconsumed receivers, while preserving caller values. Loop regions
+remain in the enclosing VM frame and retain its stack lifetime.
 
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.
