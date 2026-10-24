@@ -13,7 +13,10 @@ a target to test, not a guarantee. This document explains the execution order;
   UUID/map hashes support attribution; counts include idle threads and are not
   speed ratios. A targeted regression confirms the compiled-call bridge already
   consumes unique collection storage and preserves shared snapshots; the suspected
-  retained-argument copy was disproven. Call setup allocation still needs measurement.
+  retained-argument copy was disproven. [Warmed call setup measurements](native-call-setup-allocations-2026-10-24.json)
+  record 6/10/15 allocations per call at arities 1/4/8, excluding compilation and
+  argument construction. Reducing named parameter binding and dispatch setup is
+  the next measured candidate; not every measured allocation is assumed removable.
 
 - [Current frozen release matrix](checksums-2026-10-24-native-local-borrow-release.json)
   verifies all 150 unchanged test-size checksums on `d777339`, including fixed

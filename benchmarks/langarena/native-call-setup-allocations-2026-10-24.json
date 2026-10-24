@@ -1,0 +1,50 @@
+{
+  "scope": "Warmed VM::call_function_from_jit with owned array argument and scalar result. Compilation, function clone and argument construction excluded; consumption/drop included. Deterministic allocation baseline, not speed or proof all allocations are removable.",
+  "runtime_source_commit": "d777339",
+  "recording_commit": "b2c6062bbaf8881737a1a2c09676b2fc2e3a4f6e",
+  "measurements": [
+    {
+      "arity": 1,
+      "calls": 1,
+      "allocations": 6,
+      "requested_bytes": 1590
+    },
+    {
+      "arity": 1,
+      "calls": 128,
+      "allocations": 768,
+      "requested_bytes": 203520
+    },
+    {
+      "arity": 4,
+      "calls": 1,
+      "allocations": 10,
+      "requested_bytes": 2906
+    },
+    {
+      "arity": 4,
+      "calls": 128,
+      "allocations": 1280,
+      "requested_bytes": 371968
+    },
+    {
+      "arity": 8,
+      "calls": 1,
+      "allocations": 15,
+      "requested_bytes": 5514
+    },
+    {
+      "arity": 8,
+      "calls": 128,
+      "allocations": 1920,
+      "requested_bytes": 705792
+    }
+  ],
+  "hashes": {
+    "/tmp/kujo-call-setup-allocation-probe.rs": "90dc0321b428e4976517c5806aa788c2451c2ade51b80e0b8a022987bca88ca7",
+    "/tmp/kujo-call-setup-allocation-probe": "e5a2103efd4179db61582c10d8e464e4444ad1c443b937534d8a504cceef91eb",
+    "/tmp/kujo-call-setup-allocation-baseline.log": "cb9a1bf020bd2440512c60ab8e6c5e402c0fb5f92927d8af9e31e45c19fae1cd",
+    "src/vm.rs": "5a375965cb214dca053c5dc63ed145ad01a618716bace2ee4507800532b08bea",
+    "src/jit.rs": "31433d70bd2846c8c8f129c76a273c46cd68d2adc5495489fbb3c8986bbe43ab"
+  }
+}
