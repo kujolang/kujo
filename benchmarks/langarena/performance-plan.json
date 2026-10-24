@@ -2,7 +2,7 @@
   "schema_version": 1,
   "objective": "Execute the full approved Kujo performance plan, preserving semantics and workloads; competitive performance must be measured, never presumed.",
   "baseline_source_commit": "f037705",
-  "status": "in_progress",
+  "status": "paused_for_user_review",
   "constraints": [
     "No Kostya contact or upstream submission",
     "No changed algorithms, inputs, iterations, warmups or checksums",
@@ -134,7 +134,9 @@
         "checksums-2026-10-24-path-append-release.json",
         "checksums-2026-10-24-native-local-borrow-release.json",
         "checksums-2026-10-24-native-scalar-array-release.json",
-        "checksums-2026-10-24-native-positional-release.json"
+        "checksums-2026-10-24-native-positional-release.json",
+        "checksums-2026-10-24-native-root-cache-release.json",
+        "production-paused-2026-10-24.json"
       ]
     },
     {
@@ -3871,5 +3873,17 @@
       "result": "1071library passed/8ignored;184integration passed with no exclusions; format/minimal build pass; unique storage and snapshot cost gates pass.158/165 static eligible bodies, not native time coverage or speed. New release checksum and production gates remain open.",
       "evidence": "native-pop-rebinding-2026-10-24.json"
     }
-  ]
+  ],
+  "review_pause": {
+    "date": "2026-10-24",
+    "request": "User requested pause after current round verification to review before further fixes.",
+    "latest_verified_runtime_source": "faf9f95",
+    "test_size": "All150 unchanged release checksums across JIT/VM/interpreter verified.",
+    "production": "Six completed JIT timeouts on3482e53; MatmulT8 cancelled at user pause, not failed. No production VM cases completed in this sweep.",
+    "unapplied_candidates": [
+      "Native callback hot-call promotion",
+      "Single-allocation native argument suffix transfer"
+    ],
+    "remaining": "Full production completion, candidate revalidation after further changes, Goose/Rust competitive measurement, performance regression and supported-platform/release acceptance."
+  }
 }

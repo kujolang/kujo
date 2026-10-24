@@ -7,6 +7,17 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Paused for user review on 2026-10-24.** The
+  [root-cache release matrix](checksums-2026-10-24-native-root-cache-release.json)
+  verifies all 150 unchanged test-size checksums on frozen `faf9f95`, with
+  source/input/binary identities and 100 measurement reports verified. The
+  [partial production record](production-paused-2026-10-24.json) retains six
+  completed JIT timeouts on `3482e53`; Matmul T8 was cancelled at the user's
+  request, not classified as a failure. The production sweep is stopped.
+  Callback hot-call promotion and argument-transfer fixes remain unapplied
+  drafts. Production completion, competitive speed and platform gates remain
+  open. Resume implementation only when the user asks.
+
 - [Recursive-call production sample](native-recursive-call-profile-2026-10-24.json)
   retains matched executable/map evidence from frozen `3482e53` running
   Brainfuck::Recursion. Allocation/copying and environment lookup appear in the

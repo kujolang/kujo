@@ -1,0 +1,186 @@
+{
+  "scope": "Partial production diagnostic on frozen3482e53. Six completed timeouts, followed by user-requested cancellation of MatmulT8; not all50 acceptance or a competitive-speed comparison.",
+  "identity": {
+    "source_commit": "3482e532e95bf8338f2061c02be476ade6c6d604",
+    "binary_sha256": "076fa6d7abee5e0eac3787f9a4d6760d692e8657f2044a5a05941296cca5e4b8",
+    "frozen_identity_sha256": "51339ebb66d18c3a42b64400425d2f0a2ffffe3f3ead48486fdc1d068ea6aee2",
+    "driver_sha256": "55afd22f9a6845d12ad50fb305fbe7d98925ef4fc8b7654504179232b4db7fd1",
+    "scope": "All50 production JIT and VM attempts, sequential children,600000ms per case; retain existing exact Matmul Single JIT timeout rather than rerun. Loaded-host diagnostics, not controlled competition."
+  },
+  "report": {
+    "binary": "/tmp/kujo-native-scalar-array-release-2026-10-24/kujo",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 75497436,
+          "depth": 20,
+          "iterations": 30,
+          "name": "Binarytrees::Obj"
+        },
+        "elapsed_ns": 600068403995.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "production-jit-case-0.json.case-0.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Binarytrees::Obj",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=100752\n@profile create-done ns=310589\n@profile prepare-done ns=482758\n@profile warmup-1 ns=48826229305\n@profile warmup-2 ns=106004889804\n@profile warmup-3 ns=158795019616\n@profile warmup-4 ns=212048045806\n@profile warmup-5 ns=271189202386\n@profile warmup-6 ns=323212294668\n@profile warmup-done ns=323212499642\n@profile run-1 ns=376383291488\n@profile run-3 ns=484943664827\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 75497436,
+          "depth": 20,
+          "iterations": 30,
+          "name": "Binarytrees::Arena"
+        },
+        "elapsed_ns": 600072645527.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "production-jit-case-1.json.case-1.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Binarytrees::Arena",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=110871\n@profile create-done ns=348893\n@profile prepare-done ns=551340\n@profile warmup-1 ns=63911089294\n@profile warmup-2 ns=122492531914\n@profile warmup-3 ns=177232532424\n@profile warmup-4 ns=236527213657\n@profile warmup-5 ns=294512937165\n@profile warmup-6 ns=352209353018\n@profile warmup-done ns=352209569510\n@profile run-1 ns=409135078832\n@profile run-3 ns=526288435377\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 954437102,
+          "iterations": 1,
+          "name": "Brainfuck::Array",
+          "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+          "warmup_iterations": 1000,
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+        },
+        "elapsed_ns": 600016343561.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "production-jit-case-2.json.case-2.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Brainfuck::Array",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=110557\n@profile create-done ns=347998\n@profile prepare-done ns=552559\n@profile warmup-1 ns=290360609\n@profile warmup-100 ns=7653418194\n@profile warmup-200 ns=15267606178\n@profile warmup-300 ns=22849776464\n@profile warmup-400 ns=30425348574\n@profile warmup-500 ns=37982314888\n@profile warmup-600 ns=45560365441\n@profile warmup-700 ns=55047311663\n@profile warmup-800 ns=63787040112\n@profile warmup-900 ns=72399269988\n@profile warmup-1000 ns=81009834025\n@profile warmup-done ns=81010076303\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 954437102,
+          "iterations": 1,
+          "name": "Brainfuck::Recursion",
+          "program": ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++[>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[>++++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.",
+          "warmup_iterations": 1000,
+          "warmup_program": "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
+        },
+        "elapsed_ns": 600017560834.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "production-jit-case-3.json.case-3.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Brainfuck::Recursion",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=129342\n@profile create-done ns=415099\n@profile prepare-done ns=651565\n@profile warmup-1 ns=227665888\n@profile warmup-100 ns=5366549616\n@profile warmup-200 ns=15130803544\n@profile warmup-300 ns=25458992861\n@profile warmup-400 ns=35123341193\n@profile warmup-500 ns=43356662045\n@profile warmup-600 ns=51253097052\n@profile warmup-700 ns=59074312601\n@profile warmup-800 ns=66711260629\n@profile warmup-900 ns=74839958992\n@profile warmup-1000 ns=84515677316\n@profile warmup-done ns=84516142000\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 3655420808,
+          "iterations": 10,
+          "n": 900,
+          "name": "Matmul::Single"
+        },
+        "elapsed_ns": 600075714838.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "matmul-production-jit.json.case-4.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Matmul::Single",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=92599\n@profile create-done ns=1784991840\n@profile prepare-done ns=1785268490\n@profile warmup-1 ns=88809005410\n@profile warmup-2 ns=188653782450\n@profile warmup-done ns=188654031100\n@profile run-1 ns=281812129084\n@profile run-2 ns=375559088877\n@profile run-3 ns=455192398626\n@profile run-4 ns=550405891204\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      },
+      {
+        "config": {
+          "checksum": 3655420808,
+          "iterations": 10,
+          "n": 900,
+          "name": "Matmul::T4"
+        },
+        "elapsed_ns": 600072607293.0,
+        "exitcode": -1,
+        "measurements": {
+          "path": "production-jit-case-5.json.case-5.measurements.json",
+          "reason": "Error { line: 0, message: empty or oversized measurement report, stack: [load_measurements] }",
+          "status": "unavailable"
+        },
+        "name": "Matmul::T4",
+        "runtime": "jit",
+        "status": "timeout",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=112209\n@profile create-done ns=2213944310\n@profile prepare-done ns=2214184435\n@profile warmup-1 ns=538212561994\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "pause": {
+    "reason": "User requested pause after current fix verification; production sweep stopped independently. Completed reports retained; in-flight MatmulT8 cancelled, not a benchmark failure.",
+    "time": "2026-10-24T12:03:10Z",
+    "parent": [
+      91798,
+      70467,
+      "/tmp/kujo-native-measurements-2026-10-23/kujo run --scheduler-no-timeout production-sweep.kujo"
+    ],
+    "children": [
+      [
+        12579,
+        91798,
+        "/tmp/kujo-native-measurements-2026-10-23/kujo run --scheduler-no-timeout benchmarks/langarena/profile.kujo /tmp/kujo-native-scalar-array-release-2026-10-24/kujo benchmarks/langarena/run.json production-jit-case-6.json 600000 jit 0 1 Matmul::T8 measurements"
+      ],
+      [
+        12580,
+        12579,
+        "/tmp/kujo-native-scalar-array-release-2026-10-24/kujo run --scheduler-no-timeout --jit --measurements production-jit-case-6.json.case-6.measurements.json benchmarks/langarena/port.kujo benchmarks/langarena/run.json Matmul::T8 --profile"
+      ]
+    ]
+  },
+  "remaining": "No VM production cases completed by this sweep. Resume only on user authorization; validate retained per-case reports before resuming.",
+  "sha256": {
+    "all50-production-jit.json": "eb82c9794c06920b06895b19c1badfe7050749090508d5e9c451cb9378f381cf",
+    "production-sweep-identity.json": "a4282285366f98f12f6d9e66c64a53d62c8c92368f21e84b489ccd8566903e61",
+    "pause-request-2026-10-24.json": "4b2536589da168bc7fc4407c47546cb516051929348ead1d4deb9531d7014dd2"
+  }
+}
