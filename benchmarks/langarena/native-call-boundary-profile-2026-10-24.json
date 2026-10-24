@@ -248,16 +248,18 @@
     "exitcode": 0,
     "checksum_passed": true,
     "scope": "Unchanged test-size diagnostic CPU sample, not competitive timing",
-    "stdout_sha256": "f23d8966bb0ae20174e89eb6b80309cde2b15bbe266cc1e677928a6e6881eeea"
+    "stdout_sha256": "f23d8966bb0ae20174e89eb6b80309cde2b15bbe266cc1e677928a6e6881eeea",
+    "unique_argument_regression": "passed"
   },
   "source_findings": [
     "Mapped getenv caller at executable offset0x106427e is jit_call_function; environment lookup costs require further measurement.",
-    "VM::call_function_from_jit clones arguments into local bindings and retains the argument vector through native invocation. A unique-storage regression is being evaluated before any fix."
+    "The retained-argument hypothesis was disproven: VM::call_function_from_jit already drops args before native invocation. New compiled_callback_consumes_unique_collection_arguments regression passes for unique and shared arrays at widths8/1024. Parameter-map/call-setup allocation remains a profiling candidate, not a confirmed copying defect."
   ],
   "artifacts": {
     "quicksort-sample.txt": "03404352a135a4608b749820516ab2ac8a262a33efd572a0b4af25f2fcf32016",
     "quicksort-profile.stdout": "f23d8966bb0ae20174e89eb6b80309cde2b15bbe266cc1e677928a6e6881eeea",
     "quicksort-profile.stderr": "86b225cfea3c7c41cf3496dc74fed4de00e893cd1893bc6e6ff513d3798d792f",
-    "quicksort-profile-verification.json": "e6250728281b5a3c1d9b2861e632a4269577a97970a8d4b7989d1e499f29111a"
+    "quicksort-profile-verification.json": "e6250728281b5a3c1d9b2861e632a4269577a97970a8d4b7989d1e499f29111a",
+    "/tmp/kujo-native-call-argument-baseline.log": "e6d18dcd48c56ce33a302720643947ff5533f58f330c0bfc877c4f0e68862fe5"
   }
 }

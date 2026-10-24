@@ -11,8 +11,9 @@ a target to test, not a guarantee. This document explains the execution order;
   preserves the unchanged checksum on `d777339`. Allocation, copying, native
   call dispatch and environment lookup are visible costs. Matching executable
   UUID/map hashes support attribution; counts include idle threads and are not
-  speed ratios. Argument ownership at the compiled-call bridge is the next
-  candidate under a unique-storage regression.
+  speed ratios. A targeted regression confirms the compiled-call bridge already
+  consumes unique collection storage and preserves shared snapshots; the suspected
+  retained-argument copy was disproven. Call setup allocation still needs measurement.
 
 - [Current frozen release matrix](checksums-2026-10-24-native-local-borrow-release.json)
   verifies all 150 unchanged test-size checksums on `d777339`, including fixed

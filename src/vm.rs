@@ -10256,6 +10256,55 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn compiled_callback_consumes_unique_collection_arguments() {
+        let chunk = compile_chunk(
+            r#"
+            func replace_first(input) {
+                mut data := input
+                data[0] = 9
+                return data
+            }
+        "#,
+        );
+        let function_chunk = chunk
+            .constants
+            .iter()
+            .find_map(|constant| match constant {
+                Constant::Function(function) => Some((**function).clone()),
+                _ => None,
+            })
+            .unwrap();
+        let function = Value::BytecodeFunction {
+            chunk: function_chunk,
+            captured: HashMap::new(),
+            captured_binding_kinds: HashMap::new(),
+        };
+        let mut vm = VM::new();
+        vm.set_jit_enabled(true);
+        assert!(vm.jit_compile_bytecode_function(&function).unwrap());
+        for width in [8, 1024] {
+            for shared in [false, true] {
+                let values = Arc::new(vec![Value::Int(7); width]);
+                let pointer = values.as_ptr();
+                let snapshot = shared.then(|| values.clone());
+                let result = vm
+                    .call_function_from_jit(function.clone(), vec![Value::Array(values)])
+                    .unwrap();
+                let Value::Array(result) = result else { panic!("expected array") };
+                assert!(matches!(result[0], Value::Int(9)));
+                assert!(result[1..].iter().all(|v| matches!(v, Value::Int(7))));
+                if let Some(snapshot) = snapshot {
+                    assert_ne!(result.as_ptr(), pointer);
+                    assert!(snapshot.iter().all(|v| matches!(v, Value::Int(7))));
+                } else {
+                    assert_eq!(result.as_ptr(), pointer, "unique argument copied at width {width}");
+                }
+            }
+        }
+    }
+
     #[test]
     fn test_async_function_definition() {
         let code = r#"
