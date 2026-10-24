@@ -85,7 +85,8 @@ pub(crate) struct NativeOwnedValues {
 pub(crate) struct NativeCallRoots {
     values: NativeOwnedValues,
     depth: usize,
-    pending_arguments: Option<(usize, std::vec::IntoIter<Value>)>,
+    pending_arguments: Option<(usize, Vec<Value>)>,
+    argument_buffer: Vec<Value>,
 }
 
 impl NativeCallRoots {
@@ -95,6 +96,8 @@ impl NativeCallRoots {
     pub(crate) fn is_reusable(&self) -> bool {
         self.depth == 0
             && self.pending_arguments.is_none()
+            && self.argument_buffer.is_empty()
+            && self.argument_buffer.capacity() <= 256
             && self.values.frames.is_empty()
             && self.values.lookup.is_empty()
             && self.values.slots.capacity() <= 256
@@ -110,7 +113,9 @@ impl NativeCallRoots {
             return Err(OwnershipError::FrameOrder);
         }
         if !values.is_empty() {
-            self.pending_arguments = Some((0, values.into_iter()));
+            self.pending_arguments = Some((0, values));
+        } else if values.capacity() <= 256 {
+            self.argument_buffer = values;
         }
         Ok(())
     }
@@ -121,12 +126,34 @@ impl NativeCallRoots {
         if self.depth != 2 || usize::try_from(index).ok() != Some(*next) {
             return Some(Err(OwnershipError::FrameOrder));
         }
-        let value = values.next().ok_or(OwnershipError::FrameOrder);
+        let value = values
+            .get_mut(*next)
+            .map(|value| std::mem::replace(value, Value::Null))
+            .ok_or(OwnershipError::FrameOrder);
         *next += 1;
-        if values.len() == 0 {
-            self.pending_arguments = None;
+        if *next == values.len() {
+            self.finish_arguments();
         }
         Some(value)
+    }
+
+    fn finish_arguments(&mut self) {
+        if let Some((_, mut values)) = self.pending_arguments.take() {
+            // Consumed slots are Null. Keep the remaining values in declaration
+            // order so unwinding drops them in the same order as IntoIter did.
+            values.clear();
+            if values.capacity() <= 256 {
+                self.argument_buffer = values;
+            }
+        }
+    }
+
+    /// Only an unwound invocation can return an empty buffer to the VM pool.
+    pub(crate) fn take_argument_buffer(&mut self) -> Option<Vec<Value>> {
+        if self.depth != 0 || self.pending_arguments.is_some() || !self.argument_buffer.is_empty() {
+            return None;
+        }
+        Some(std::mem::take(&mut self.argument_buffer))
     }
 
     pub(crate) fn depth(&self) -> usize {
@@ -149,7 +176,7 @@ impl NativeCallRoots {
         }
         self.depth -= 1;
         if self.depth == 0 {
-            self.pending_arguments = None;
+            self.finish_arguments();
         }
         Ok(())
     }
@@ -619,6 +646,9 @@ mod tests {
         roots.leave().unwrap();
         roots.leave().unwrap();
         assert!(roots.is_reusable());
+        let argument_capacity = roots.argument_buffer.capacity();
+        roots.set_arguments(Vec::with_capacity(257)).unwrap();
+        assert_eq!(roots.argument_buffer.capacity(), argument_capacity);
         assert!(weak.upgrade().is_none());
         for _ in 0..100 {
             roots.enter().unwrap();
@@ -688,6 +718,58 @@ mod tests {
             roots.borrow_owned_cached(b, &mut cache),
             Err(OwnershipError::StaleHandle)
         ));
+    }
+
+    #[test]
+    fn argument_buffers_are_returned_only_after_full_unwind() {
+        let mut arguments = Vec::with_capacity(4);
+        arguments.extend([Value::Int(11), Value::Int(22)]);
+        let pointer = arguments.as_ptr();
+        let mut roots = NativeCallRoots::default();
+        roots.set_arguments(arguments).unwrap();
+        assert!(roots.take_argument_buffer().is_none());
+        roots.enter().unwrap();
+        roots.enter().unwrap();
+        assert!(matches!(roots.take_argument(1), Some(Err(OwnershipError::FrameOrder))));
+        assert!(matches!(roots.take_argument(0), Some(Ok(Value::Int(11)))));
+        assert!(matches!(roots.take_argument(1), Some(Ok(Value::Int(22)))));
+        assert!(roots.take_argument_buffer().is_none());
+        roots.leave().unwrap();
+        assert!(roots.take_argument_buffer().is_none());
+        roots.leave().unwrap();
+        let mut arguments = roots.take_argument_buffer().unwrap();
+        assert!(arguments.is_empty());
+        assert_eq!(arguments.as_ptr(), pointer);
+        assert_eq!(arguments.capacity(), 4);
+
+        let value = Arc::new(vec![Value::Int(9)]);
+        let weak = Arc::downgrade(&value);
+        arguments.extend([Value::Int(33), Value::Array(value)]);
+        roots.set_arguments(arguments).unwrap();
+        roots.enter().unwrap();
+        roots.enter().unwrap();
+        assert!(matches!(roots.take_argument(0), Some(Ok(Value::Int(33)))));
+        roots.leave().unwrap();
+        assert!(weak.upgrade().is_some());
+        roots.leave().unwrap();
+        assert!(weak.upgrade().is_none(), "unconsumed argument retained after unwind");
+        let arguments = roots.take_argument_buffer().unwrap();
+        assert!(arguments.is_empty());
+        assert_eq!(arguments.as_ptr(), pointer);
+        assert!(roots.is_reusable());
+
+        let mut oversized = Vec::with_capacity(257);
+        oversized.push(Value::Int(44));
+        roots.set_arguments(oversized).unwrap();
+        roots.enter().unwrap();
+        roots.enter().unwrap();
+        assert!(matches!(roots.take_argument(0), Some(Ok(Value::Int(44)))));
+        assert_eq!(roots.argument_buffer.capacity(), 0, "oversized buffer retained");
+        roots.leave().unwrap();
+        roots.leave().unwrap();
+        assert!(roots.is_reusable());
+        roots.set_arguments(Vec::with_capacity(257)).unwrap();
+        assert_eq!(roots.argument_buffer.capacity(), 0);
     }
 
     #[test]

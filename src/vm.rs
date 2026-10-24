@@ -129,6 +129,9 @@ pub struct VM {
     /// store; this pool retains capacity only after the invocation has unwound.
     #[cfg(feature = "runtime-jit")]
     native_root_pool: Vec<crate::native_owned::NativeCallRoots>,
+    /// Empty buffers only; active calls own their argument storage exclusively.
+    #[cfg(feature = "runtime-jit")]
+    native_argument_pool: Vec<Vec<Value>>,
 
     /// Maximum recursion depth observed (for profiling)
     max_recursion_depth: usize,
@@ -656,6 +659,8 @@ impl VM {
             native_call_depth: 0,
             #[cfg(feature = "runtime-jit")]
             native_root_pool: Vec::new(),
+            #[cfg(feature = "runtime-jit")]
+            native_argument_pool: Vec::new(),
             max_recursion_depth: 0,
             inline_cache: HashMap::new(),
             int_key_cache: HashMap::new(),
@@ -8226,6 +8231,26 @@ impl VM {
         self.exception_handlers.iter().any(|h| h.frame_offset == self.call_frames.len())
     }
 
+    /// Borrow only the pool field: native helpers can hold a disjoint stack
+    /// reference while transferring its argument suffix. No callback runs here.
+    #[cfg(feature = "runtime-jit")]
+    pub(crate) unsafe fn take_native_arguments(vm: *mut Self, count: usize) -> Vec<Value> {
+        // SAFETY: caller supplies a live VM, with exclusive access to this pool.
+        let pool = unsafe { &mut *std::ptr::addr_of_mut!((*vm).native_argument_pool) };
+        let mut arguments = pool.pop().unwrap_or_default();
+        debug_assert!(arguments.is_empty());
+        arguments.reserve_exact(count);
+        arguments
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    fn recycle_native_arguments(pool: &mut Vec<Vec<Value>>, mut arguments: Vec<Value>) {
+        arguments.clear();
+        if pool.len() < 32 && (1..=256).contains(&arguments.capacity()) {
+            pool.push(arguments);
+        }
+    }
+
     #[cfg(test)]
     pub(crate) fn native_path_depth_scan_count(&self) -> usize {
         self.path_depth_valid.scan_count()
@@ -8621,11 +8646,19 @@ impl VM {
                                 .set_arguments(args)
                                 .map_err(|error| format!("Native ownership error: {error:?}"))?;
                         } else {
-                            drop(args);
+                            Self::recycle_native_arguments(&mut self.native_argument_pool, args);
                         }
                         #[cfg(not(feature = "runtime-jit"))]
                         drop(args);
                         let result_code = invoke_compiled_fn(compiled_fn, &mut vm_context);
+
+                        #[cfg(feature = "runtime-jit")]
+                        if let Some(arguments) = vm_context.owned_roots.take_argument_buffer() {
+                            Self::recycle_native_arguments(
+                                &mut self.native_argument_pool,
+                                arguments,
+                            );
+                        }
 
                         // The boundary has moved any owned return out of the root
                         // store and unwound its scopes, including on language errors.
@@ -10339,6 +10372,48 @@ mod tests {
 
     #[cfg(feature = "runtime-jit")]
     #[test]
+    fn native_argument_pool_is_empty_bounded_and_exclusive() {
+        let mut vm = VM::new();
+        // SAFETY: exclusive VM with no native execution or outstanding pool borrow.
+        let first = unsafe { VM::take_native_arguments(&mut vm, 3) };
+        let pointer = first.as_ptr();
+        let second = unsafe { VM::take_native_arguments(&mut vm, 3) };
+        assert_ne!(pointer, second.as_ptr(), "active buffers must not alias");
+        VM::recycle_native_arguments(&mut vm.native_argument_pool, first);
+        let mut reused = unsafe { VM::take_native_arguments(&mut vm, 3) };
+        assert_eq!(reused.as_ptr(), pointer);
+        assert!(reused.is_empty());
+        let value = Arc::new(vec![Value::Int(7)]);
+        let weak = Arc::downgrade(&value);
+        reused.push(Value::Array(value));
+        VM::recycle_native_arguments(&mut vm.native_argument_pool, reused);
+        assert!(weak.upgrade().is_none(), "pool retained an argument");
+        VM::recycle_native_arguments(&mut vm.native_argument_pool, second);
+        let before = vm.native_argument_pool.len();
+        VM::recycle_native_arguments(&mut vm.native_argument_pool, Vec::with_capacity(257));
+        VM::recycle_native_arguments(&mut vm.native_argument_pool, Vec::new());
+        assert_eq!(vm.native_argument_pool.len(), before);
+        for _ in 0..64 {
+            VM::recycle_native_arguments(&mut vm.native_argument_pool, Vec::with_capacity(1));
+        }
+        assert_eq!(vm.native_argument_pool.len(), 32);
+        assert!(vm.native_argument_pool.iter().all(|v| v.is_empty() && v.capacity() <= 256));
+
+        let retained = vm.native_argument_pool.last().unwrap().as_ptr();
+        let mut stack = vec![Value::NativeFunction("to_int".into()), Value::Int(7)];
+        let mut context =
+            crate::jit::VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        context.vm_ptr = (&mut vm as *mut VM).cast();
+        // SAFETY: context, independent stack and VM are live and exclusively held.
+        assert_eq!(unsafe { crate::jit::jit_call_function(&mut context, std::ptr::null(), 1) }, 0);
+        assert!(context.runtime_error.is_none());
+        assert!(matches!(stack.as_slice(), [Value::Int(7)]));
+        assert_eq!(vm.native_argument_pool.len(), 32, "builtin consumed a reusable buffer");
+        assert_eq!(vm.native_argument_pool.last().unwrap().as_ptr(), retained);
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
     fn compiled_callback_reuses_empty_roots_after_success_and_error() {
         let chunk = compile_chunk(
             "func update(input, index) { mut data := input; data[index] = 9; return data }",
@@ -10376,6 +10451,9 @@ mod tests {
             }
             assert!(matches!(snapshot[0], Value::Int(7)));
             assert_eq!(Arc::strong_count(&snapshot), 1, "pool retained a value");
+            assert!(!vm.native_argument_pool.is_empty());
+            assert!(vm.native_argument_pool.len() <= 32);
+            assert!(vm.native_argument_pool.iter().all(|v| v.is_empty() && v.capacity() <= 256));
             assert_eq!(vm.native_root_pool.len(), 1);
             let roots = &vm.native_root_pool[0];
             assert!(roots.is_reusable());

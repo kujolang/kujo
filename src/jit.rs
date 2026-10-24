@@ -4427,7 +4427,23 @@ pub unsafe extern "C" fn jit_call_function(
     // Preserve the legacy malformed-stack consumption and drop order below.
     let count = usize::try_from(arg_count).unwrap_or(0);
     let args = if count <= stack.len() {
-        stack.split_off(stack.len() - count)
+        // Builtins and interpreter callables consume their vectors rather than
+        // returning them. Do not let them drain the reusable bytecode-call pool.
+        let recyclable = stack
+            .len()
+            .checked_sub(count)
+            .and_then(|start| start.checked_sub(1))
+            .and_then(|index| stack.get(index))
+            .is_some_and(|callee| matches!(callee, Value::BytecodeFunction { .. }));
+        if ctx_ref.vm_ptr.is_null() || !recyclable {
+            stack.split_off(stack.len() - count)
+        } else {
+            // Borrow only the VM pool field, disjoint from the live stack borrow.
+            // The returned vector belongs exclusively to this invocation.
+            let mut args = VM::take_native_arguments(ctx_ref.vm_ptr.cast::<VM>(), count);
+            args.extend(stack.drain(stack.len() - count..));
+            args
+        }
     } else {
         let mut args = Vec::new();
         for _ in 0..arg_count {

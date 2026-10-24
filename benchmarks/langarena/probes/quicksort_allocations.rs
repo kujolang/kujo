@@ -66,6 +66,8 @@ fn main() {
     let enforce_return_budget = std::env::args().any(|arg| arg == "--expect-local-return-budget");
     let enforce_identity_budget =
         std::env::args().any(|arg| arg == "--expect-storage-identity-budget");
+    let enforce_argument_budget =
+        std::env::args().any(|arg| arg == "--expect-argument-pool-budget");
     let show_histogram = std::env::args().any(|arg| arg == "--histogram");
     let port = std::fs::read_to_string("benchmarks/langarena/port.kujo").unwrap();
     let kernel = port
@@ -137,6 +139,10 @@ fn main() {
                 if enforce_identity_budget && jit && n == 8192 {
                     // Root array identity checks must not allocate a traversal vector.
                     assert!(ALLOCATIONS.with(Cell::get) < 45_000);
+                }
+                if enforce_argument_budget && jit && n == 8192 {
+                    assert!(ALLOCATIONS.with(Cell::get) < 25_000);
+                    assert!(REQUESTED_BYTES.with(Cell::get) < 2_500_000);
                 }
                 assert_eq!(sorted.len(), expected.len());
                 assert!(sorted
