@@ -24,7 +24,7 @@
     "Native stack indexing is a separate newer candidate",
     "Field-error parity is a separate newer fix",
     "Full production/platform/controlled speed/comparator gates remain open",
-    "Debug interpreter QuickSort hit600000ms deadline; timeout retained; separate release interpreter all50pass does not erase that outcome"
+    "Debug interpreter QuickSort and MergeSort hit600000ms deadlines; both retained in debug-interpreter-deadlines-2026-10-23.json; separate release interpreter all50pass does not erase those outcomes"
   ],
   "speed_claim": "None; native counts are not time coverage or competitive scores."
 }

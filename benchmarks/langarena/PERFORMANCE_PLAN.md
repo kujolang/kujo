@@ -14,7 +14,9 @@ a target to test, not a guarantee. This document explains the execution order;
   this does not establish full native coverage, production acceptance or competitive
   speed. Subsequent native stack-index and field-error fixes remain separate
   candidates requiring their own gates. The earlier debug interpreter QuickSort
-  deadline failure remains recorded; the separate release pass does not erase it.
+  and MergeSort deadline failures remain recorded in the
+  [completed debug interpreter matrices](debug-interpreter-deadlines-2026-10-23.json);
+  the separate release pass does not erase them.
 
 - The [literal-enabled current matrix](checksums-2026-10-23-native-literals-jit.json)
   at `70606e8` records 42 passing test-size JIT checksums and eight compression
