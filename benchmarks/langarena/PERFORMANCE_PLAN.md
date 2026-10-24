@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Current QuickSort CPU profile](native-call-boundary-profile-2026-10-24.json)
+  preserves the unchanged checksum on `d777339`. Allocation, copying, native
+  call dispatch and environment lookup are visible costs. Matching executable
+  UUID/map hashes support attribution; counts include idle threads and are not
+  speed ratios. Argument ownership at the compiled-call bridge is the next
+  candidate under a unique-storage regression.
+
 - [Current frozen release matrix](checksums-2026-10-24-native-local-borrow-release.json)
   verifies all 150 unchanged test-size checksums on `d777339`, including fixed
   dictionary COW and borrowed local indexed reads. All source/input/binary hashes

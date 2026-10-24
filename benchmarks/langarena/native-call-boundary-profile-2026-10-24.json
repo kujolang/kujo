@@ -1,0 +1,263 @@
+{
+  "scope": "Unchanged test-size QuickSort CPU profile; correctness passed, not competitive timing. Idle-thread sample counts must not be used as active-time denominators.",
+  "profile": {
+    "scope": "Top-of-stack sample counts; not native-time percentages or competitive timings. Dynamic JIT addresses may remain unmapped.",
+    "source_commit": "d777339e23eb970b0c25148dbdac5dd2b5932fed",
+    "binary_sha256": "614a8a2e002ac4294622bbc7260b596ffffd39059adae3d6c565e653576a317c",
+    "map_sha256": "149009f3d460c3975aa14fff9ae02bdb109e4e5a77c66171d4c6d354917f3f1b",
+    "sample_sha256": "03404352a135a4608b749820516ab2ac8a262a33efd572a0b4af25f2fcf32016",
+    "uuid": "9756B7C0-1B1A-33D1-990D-5313CE073F3E",
+    "rows": [
+      {
+        "label": "__ulock_wait  (in libsystem_kernel.dylib)",
+        "samples": 3462,
+        "mapped": false
+      },
+      {
+        "label": "_platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)",
+        "samples": 200,
+        "mapped": false
+      },
+      {
+        "label": "__findenv_locked  (in libsystem_c.dylib)",
+        "samples": 93,
+        "mapped": false
+      },
+      {
+        "label": "tiny_malloc_should_clear  (in libsystem_malloc.dylib)",
+        "samples": 69,
+        "mapped": false
+      },
+      {
+        "label": "free_tiny  (in libsystem_malloc.dylib)",
+        "samples": 59,
+        "mapped": false
+      },
+      {
+        "label": "tiny_free_no_lock  (in libsystem_malloc.dylib)",
+        "samples": 48,
+        "mapped": false
+      },
+      {
+        "label": "tiny_malloc_from_free_list  (in libsystem_malloc.dylib)",
+        "samples": 43,
+        "mapped": false
+      },
+      {
+        "label": "rack_get_thread_index  (in libsystem_malloc.dylib)",
+        "samples": 39,
+        "mapped": false
+      },
+      {
+        "label": "tiny_free_list_add_ptr  (in libsystem_malloc.dylib)",
+        "samples": 33,
+        "mapped": false
+      },
+      {
+        "label": "__ZN4kujo2vm2VM22call_function_from_jit17hd9040cf0f26a3a2cE",
+        "samples": 19,
+        "mapped": true,
+        "offset": 575
+      },
+      {
+        "label": "szone_malloc_type_malloc  (in libsystem_malloc.dylib)",
+        "samples": 19,
+        "mapped": false
+      },
+      {
+        "label": "__ZN4kujo2vm2VM22call_function_from_jit17hd9040cf0f26a3a2cE",
+        "samples": 17,
+        "mapped": true,
+        "offset": 812
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 16,
+        "mapped": true,
+        "offset": 520
+      },
+      {
+        "label": "_szone_free  (in libsystem_malloc.dylib)",
+        "samples": 16,
+        "mapped": false
+      },
+      {
+        "label": "_platform_memcmp$VARIANT$Base  (in libsystem_platform.dylib)",
+        "samples": 15,
+        "mapped": false
+      },
+      {
+        "label": "_tiny_check_and_zero_inline_meta_from_freelist  (in libsystem_malloc.dylib)",
+        "samples": 15,
+        "mapped": false
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 13,
+        "mapped": true,
+        "offset": 33
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 12,
+        "mapped": true,
+        "offset": 253
+      },
+      {
+        "label": "_jit_indexed_read",
+        "samples": 12,
+        "mapped": true,
+        "offset": 523
+      },
+      {
+        "label": "DYLD-STUB$$_platform_memmove  (in libsystem_platform.dylib)",
+        "samples": 12,
+        "mapped": false
+      },
+      {
+        "label": "_platform_bzero$VARIANT$Haswell  (in libsystem_platform.dylib)",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "set_tiny_meta_header_in_use  (in libsystem_malloc.dylib)",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "szone_malloc_should_clear  (in libsystem_malloc.dylib)",
+        "samples": 11,
+        "mapped": false
+      },
+      {
+        "label": "_jit_release_operand",
+        "samples": 10,
+        "mapped": true,
+        "offset": 285
+      },
+      {
+        "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 334
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 9,
+        "mapped": true,
+        "offset": 927
+      },
+      {
+        "label": "get_tiny_previous_free_msize  (in libsystem_malloc.dylib)",
+        "samples": 9,
+        "mapped": false
+      },
+      {
+        "label": "__ZN4kujo12native_owned15NativeCallRoots12borrow_value17hfe6bca529b33b49aE",
+        "samples": 8,
+        "mapped": true,
+        "offset": 359
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 8,
+        "mapped": true,
+        "offset": 2284
+      },
+      {
+        "label": "pthread_mutex_lock  (in libsystem_pthread.dylib)",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "tiny_free_list_remove_ptr  (in libsystem_malloc.dylib)",
+        "samples": 8,
+        "mapped": false
+      },
+      {
+        "label": "__ZN4kujo2vm2VM19requires_closure_vm17hc97fd4de8103543dE",
+        "samples": 7,
+        "mapped": true,
+        "offset": 92
+      },
+      {
+        "label": "__ZN71_$LT$core..hash..sip..Hasher$LT$S$GT$$u20$as$u20$core..hash..Hasher$GT$5write17h30460f5ec8535b61E",
+        "samples": 7,
+        "mapped": true,
+        "offset": 250
+      },
+      {
+        "label": "_free  (in libsystem_malloc.dylib)",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "_malloc_zone_malloc  (in libsystem_malloc.dylib)",
+        "samples": 7,
+        "mapped": false
+      },
+      {
+        "label": "_jit_indexed_write",
+        "samples": 6,
+        "mapped": true,
+        "offset": 1059
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 62
+      },
+      {
+        "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 118
+      },
+      {
+        "label": "__ZN4kujo2vm2VM22call_function_from_jit17hd9040cf0f26a3a2cE",
+        "samples": 6,
+        "mapped": true,
+        "offset": 790
+      },
+      {
+        "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+        "samples": 6,
+        "mapped": true,
+        "offset": 51
+      },
+      {
+        "label": "_jit_load_operand",
+        "samples": 5,
+        "mapped": true,
+        "offset": 1291
+      },
+      {
+        "label": "DYLD-STUB$$memcpy  (in kujo)",
+        "samples": 5,
+        "mapped": false
+      },
+      {
+        "label": "os_unfair_lock_lock_with_options  (in libsystem_platform.dylib)",
+        "samples": 5,
+        "mapped": false
+      }
+    ]
+  },
+  "verification": {
+    "exitcode": 0,
+    "checksum_passed": true,
+    "scope": "Unchanged test-size diagnostic CPU sample, not competitive timing",
+    "stdout_sha256": "f23d8966bb0ae20174e89eb6b80309cde2b15bbe266cc1e677928a6e6881eeea"
+  },
+  "source_findings": [
+    "Mapped getenv caller at executable offset0x106427e is jit_call_function; environment lookup costs require further measurement.",
+    "VM::call_function_from_jit clones arguments into local bindings and retains the argument vector through native invocation. A unique-storage regression is being evaluated before any fix."
+  ],
+  "artifacts": {
+    "quicksort-sample.txt": "03404352a135a4608b749820516ab2ac8a262a33efd572a0b4af25f2fcf32016",
+    "quicksort-profile.stdout": "f23d8966bb0ae20174e89eb6b80309cde2b15bbe266cc1e677928a6e6881eeea",
+    "quicksort-profile.stderr": "86b225cfea3c7c41cf3496dc74fed4de00e893cd1893bc6e6ff513d3798d792f",
+    "quicksort-profile-verification.json": "e6250728281b5a3c1d9b2861e632a4269577a97970a8d4b7989d1e499f29111a"
+  }
+}
