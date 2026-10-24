@@ -1,0 +1,60 @@
+{
+  "scope": "Native ordinary array literals for functions and loops, preserving typed elements, source order, value semantics and nesting errors. Spread-marker bytecode remains VM-only.",
+  "identity": {
+    "parent_commit": "c2333c01f5c830b8fb0c166c49ef0cf2e94b2cdc",
+    "scope": "Uncommitted native array construction debug candidate; diagnostic checksums only, not speed acceptance",
+    "source_sha256": {
+      "src/jit.rs": "61067b3719ab80b76996e0ca6df7b11e344fdb0209d34b6ba1e2dae105ec7dc8",
+      "src/vm.rs": "833df7dc2701e4245324d26497c70388d9ba6c5d31fcff4a5989870f4ba46250",
+      "tests/jit_array_constructors.rs": "1ea2245195a79aa3e5a18efdb68101e670f1bb316ad51d09f9007259fda5058f",
+      "tests/jit_loop_collection_contracts.rs": "759e3689498c8c890e4dceee491e42f9315715192b561aba7108964c30e84810"
+    },
+    "paths": {
+      "binary": "/tmp/kujo-native-array-2026-10-23/kujo",
+      "port": "/tmp/kujo-native-array-2026-10-23/benchmarks/langarena/port.kujo",
+      "runner": "/tmp/kujo-native-array-2026-10-23/benchmarks/langarena/profile.kujo",
+      "config": "/tmp/kujo-native-array-2026-10-23/benchmarks/langarena/test.json",
+      "production_config": "/tmp/kujo-native-array-2026-10-23/benchmarks/langarena/run.json",
+      "schema": "/tmp/kujo-native-array-2026-10-23/schemas/runtime-measurements-v1.schema.json",
+      "driver": "/tmp/kujo-native-measurements-2026-10-23/kujo",
+      "validator": "/tmp/kujo-native-measurements-2026-10-23/validate",
+      "verification_script": "/tmp/kujo-native-array-2026-10-23/verify-all.rb",
+      "orchestrator": "/tmp/kujo-native-array-2026-10-23/run-matrix.sh"
+    },
+    "sha256": {
+      "binary": "4eb8cf268d1e469d0e276d6f58e90caafdb74766bc8981d0659a215aead69fb0",
+      "port": "2f23ccdc04a5f059539648887a80998a17a28450da63f87c257a998efde441f6",
+      "runner": "80ec65430417cfe78770326c4b90eb8c9facb00d0b2467dbea47e600e2324d77",
+      "config": "424371dd25f3fa3f779789c823a05dbe90d2eddbc2a3ca3c5e4319252c572797",
+      "production_config": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f",
+      "schema": "162970714aa734ef60ee0b8a75ae42fca6c5a25ac1558420040e8a5b57eb4da8",
+      "driver": "83ca999d5752e6aace8d14a80068e3261d781aba12f178206c0326053a8367e5",
+      "validator": "c3da4d584c5293b59e92badd02c3403871ae36f8fddf369ebf6ab87e20e49517",
+      "verification_script": "b17f6f6efff3b8e0e5fee0f62c8b97c58f01d44ae09a66c607d5fd8f71e12739",
+      "orchestrator": "5a3413bba560dd852f3f3ab2ffd72b3f363929eb0aa0db0e4beabeb4230d0c18"
+    }
+  },
+  "verification": {
+    "library_passed": 1047,
+    "library_ignored": 8,
+    "integration_passed": 39,
+    "initial_targeted_library_passed": 15,
+    "baseline": "Pre-change frozen native-index binary passes semantic checks but fails native compilation assertions for array-building functions",
+    "loop_failure_and_fix": "First loop regression failed native entry: MakeArray requires tagged stack pop. Registering tagged pop in shared helper declarations fixes the same test.",
+    "storage": "8 and128 repeated constructions retain <=5 root slots, zero live roots/native depth/VM stack on return",
+    "logs": {
+      "/tmp/kujo-native-array-expanded-before.log": "fde0a981771c2d9f57b47af41f91e512efbf5528a6ea35ed7032e167f44d9e89",
+      "/tmp/kujo-native-array-unit.log": "a37b4f9f7d65683def8cd86b7894b6045babed3aa19adba90b0aaf52e71bef70",
+      "/tmp/kujo-native-array-final-contracts.log": "106f53ea205138cc8fa44c534dbe2555fadd85ad52878579b32ee2dcd4b945a7",
+      "/tmp/kujo-array-loop.log": "f82d56e6a34ae6b8bc0c81af0e4ccb52d2b1d4076ce7e061f201f8daa6a376e6",
+      "/tmp/kujo-native-array-fixed-contracts.log": "3ef25d4ec4880c1e67da0dbaf9f238cdf2053a838a2fbdbf53b485f21db79d02",
+      "/tmp/kujo-native-array-library-serial.log": "6b3e9a9deba08a316c11bef871a20c8f139e969474a65b207d6a1d8eb6e48ce6"
+    }
+  },
+  "remaining": [
+    "All50 candidate matrix running at /tmp/kujo-native-array-2026-10-23; no complete candidate matrix claim",
+    "Release, production, controlled speed and platform gates remain open",
+    "Native spreads, structs, field access, nested updates and array-loop admission remain separate gaps"
+  ],
+  "speed_claim": "None; tests prove correct native entry and bounded roots, not competitive elapsed time"
+}

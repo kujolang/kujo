@@ -68,7 +68,10 @@
         "cold-callback-2026-10-23.json",
         "owned-entry-native-surfaces-2026-10-23.json",
         "nested-state-allocation-audit-2026-10-23.json",
-        "owned-argument-entry-2026-10-23.json"
+        "owned-argument-entry-2026-10-23.json",
+        "native-stack-index-2026-10-23.json",
+        "field-error-parity-2026-10-23.json",
+        "native-array-construction-2026-10-23.json"
       ]
     },
     {

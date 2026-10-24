@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile ordinary array literals in experimental native functions and loops
+  using typed operands, checked nesting limits and bounded ownership roots.
+  Array spread bytecode continues through the existing fallback.
+
 - Compile general stack index reads in the experimental JIT with typed operands,
   checked indexing errors and bounded owned-value root storage.
 

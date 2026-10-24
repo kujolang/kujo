@@ -24,6 +24,14 @@ storage regression. The [frozen stack-index candidate](../benchmarks/langarena/c
 passes all 50 JIT test-size checksums, with fallback allowed. It predates the
 separate field-error fix and does not establish production or speed acceptance.
 
+Ordinary array literals now marshal typed elements in source order, release
+consumed roots and return an independently rooted array. Construction checks the
+same value-nesting limit as the VM and preserves preceding stack values on error.
+The tagged stack-pop helper is registered for loop compilation as well as function
+compilation. Spread-marker bytecode remains excluded from native admission.
+Independent tests cover empty/mixed/nested arrays, snapshot isolation, effects,
+error recovery, native loop entry and bounded repeated-construction storage.
+
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.
 

@@ -10066,15 +10066,16 @@ mod tests {
         let chunk = compile_chunk(
             r#"
             values := [1, 2, 3]
-            return values[0]
+            expanded := [...values]
+            return expanded[0]
             "#,
         );
 
         let vm = VM::new();
         let error =
-            vm.validate_jit_supported_surfaces(&chunk).expect_err("array ops are not JIT-safe");
+            vm.validate_jit_supported_surfaces(&chunk).expect_err("array spread remains VM-only");
         assert!(error.contains("unsupported opcode"));
-        assert!(error.contains("MakeArray") || error.contains("IndexGet"));
+        assert!(error.contains("PushArrayMarker") || error.contains("MakeArrayFromMarker"));
     }
 
     #[test]

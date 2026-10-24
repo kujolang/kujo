@@ -3883,6 +3883,27 @@ pub extern "C" fn jit_make_dict(ctx: *mut VMContext, num_pairs: i64) -> i64 {
     .unwrap_or(0)
 }
 
+/// Build an array from typed values marshaled in source order. Spread markers
+/// remain VM-only bytecode and cannot enter a compiled region.
+#[no_mangle]
+pub extern "C" fn jit_make_array(ctx: *mut VMContext, count: i64) -> i64 {
+    with_vm_stack_mut(ctx, |vm_ctx, stack| {
+        let Some(start) = usize::try_from(count).ok().and_then(|n| stack.len().checked_sub(n))
+        else {
+            vm_ctx.runtime_error = Some("Stack underflow in MakeArray".into());
+            return 0;
+        };
+        let value = Value::Array(Arc::new(stack.drain(start..).collect()));
+        if let Err(error) = VM::ensure_value_nesting_depth(&value, "building array literal") {
+            vm_ctx.runtime_error = Some(error);
+            return 0;
+        }
+        stack.push(value);
+        1
+    })
+    .unwrap_or(0)
+}
+
 /// Build a fixed-key dictionary. `keys_ptr` is Arc::as_ptr of a key vector
 /// retained by the JIT compiler for the entire lifetime of the generated code.
 /// Returns 1 after pushing the dictionary, or 0 with a runtime error.
@@ -4044,6 +4065,7 @@ struct BytecodeTranslator {
     dict_set_func: Option<FuncRef>,
     /// Make dict function reference (for MakeDict opcode)
     make_dict_func: Option<FuncRef>,
+    make_array_func: Option<FuncRef>,
     /// Make dict with keys function reference (for MakeDictWithKeys opcode)
     make_dict_with_keys_func: Option<FuncRef>,
     /// Append const string in-place helper
@@ -4200,6 +4222,7 @@ impl BytecodeTranslator {
             dict_get_func: None,
             dict_set_func: None,
             make_dict_func: None,
+            make_array_func: None,
             make_dict_with_keys_func: None,
             append_const_string_in_place_func: None,
             append_const_char_in_place_func: None,
@@ -4356,7 +4379,8 @@ impl BytecodeTranslator {
             OpCode::UpdatePath(path) => (2 + path.iter().filter(|step| step.is_none()).count(), 1),
             OpCode::IndexGetInPlace(_) => (1, 1), // Pop index, load var, push value
             OpCode::IndexSetInPlace(_) => (2, 0), // Pop index + value, modify variable in place
-            OpCode::MakeDict(n) => (*n * 2, 1),   // Pop N key-value pairs, push dict
+            OpCode::MakeArray(n) => (*n, 1),
+            OpCode::MakeDict(n) => (*n * 2, 1), // Pop N key-value pairs, push dict
             OpCode::MakeDictWithKeys(keys) => (keys.len(), 1), // Pop N values, push dict
 
             // Default for unknown opcodes - assume neutral
@@ -4589,7 +4613,10 @@ impl BytecodeTranslator {
             };
             let next_instruction = instructions.get(pc + 1);
 
-            if matches!(instruction, OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_)) {
+            if matches!(
+                instruction,
+                OpCode::MakeArray(_) | OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_)
+            ) {
                 if let Some(next) = next_instruction {
                     match next {
                         OpCode::StoreLocal(slot) | OpCode::DefineLocal(slot) => {
@@ -5660,6 +5687,33 @@ impl BytecodeTranslator {
                 } else {
                     return Err("IndexSet requires context and dict_set function".to_string());
                 }
+            }
+
+            OpCode::MakeArray(count) => {
+                let ctx = self.ctx_param.ok_or("MakeArray requires context")?;
+                let helper = self.make_array_func.ok_or("MakeArray requires helper")?;
+                let push = self.scalar_push_func.ok_or("MakeArray requires tagged stack push")?;
+                let mut operands = Vec::with_capacity(*count);
+                for _ in 0..*count {
+                    operands.push(self.pop_value()?);
+                }
+                for operand in operands.into_iter().rev() {
+                    let kind = self.scalar_kind(builder, operand);
+                    builder.ins().call(push, &[ctx, operand, kind]);
+                    self.release_operand(builder, operand);
+                }
+                let count = builder.ins().iconst(types::I64, *count as i64);
+                let call = builder.ins().call(helper, &[ctx, count]);
+                let success = builder.inst_results(call)[0];
+                let failed = builder.ins().icmp_imm(IntCC::Equal, success, 0);
+                let status = builder.ins().uextend(types::I64, failed);
+                self.exit_on_assignment_error(builder, status);
+                let pop = self.stack_pop_func.ok_or("MakeArray requires tagged stack pop")?;
+                let call = builder.ins().call(pop, &[ctx]);
+                let value = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, value);
+                self.push_value(value);
+                return Ok(false);
             }
 
             OpCode::MakeDict(num_pairs) => {
@@ -7674,6 +7728,8 @@ impl JitCompiler {
             ("jit_release_dead_local", 4, true),
             ("jit_append_local", 6, true),
             ("jit_append_result", 1, true),
+            ("jit_stack_pop", 1, true),
+            ("jit_make_array", 2, true),
             ("jit_indexed_read", 5, true),
             ("jit_indexed_write", 10, true),
             ("jit_loop_resume_guard", 3, true),
@@ -7709,6 +7765,8 @@ impl JitCompiler {
                 "jit_release_dead_local" => translator.dead_local_func = Some(function),
                 "jit_append_local" => translator.append_local_func = Some(function),
                 "jit_append_result" => translator.append_result_func = Some(function),
+                "jit_stack_pop" => translator.stack_pop_func = Some(function),
+                "jit_make_array" => translator.make_array_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
                 "jit_loop_resume_guard" => translator.loop_resume_guard_func = Some(function),
@@ -7838,6 +7896,7 @@ impl JitCompiler {
             "jit_dense_int_dict_int_full_set_ptr",
             jit_dense_int_dict_int_full_set_ptr as *const u8,
         );
+        builder.symbol("jit_make_array", jit_make_array as *const u8);
         builder.symbol("jit_make_dict", jit_make_dict as *const u8);
         builder.symbol("jit_make_dict_with_keys", jit_make_dict_with_keys as *const u8);
         builder.symbol(
@@ -7988,7 +8047,7 @@ impl JitCompiler {
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
             // Guarded fusion remains in the VM until native lowering exists.
             OpCode::AppendConstCharUntilLocalInPlace(_, _, _, _) => false,
-            OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_) => true,
+            OpCode::MakeArray(_) | OpCode::MakeDict(_) | OpCode::MakeDictWithKeys(_) => true,
 
             // Everything else is unsupported - causes code to skip JIT
             // This includes: CallNative, Arrays, Dicts, Generators, Async, etc.
@@ -10961,6 +11020,78 @@ mod tests {
         assert_eq!(weak.strong_count(), 1);
         drop(result);
         assert!(weak.upgrade().is_none());
+    }
+
+    #[test]
+    fn array_helper_checks_shape_depth_and_preserves_stack_prefix() {
+        let mut stack = vec![Value::Int(99), Value::Bool(true), Value::Null];
+        let mut context = VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+        assert_eq!(jit_make_array(&mut context, 2), 1);
+        let result = stack.pop().unwrap();
+        assert!(Value::equals(&result, &Value::array(vec![Value::Bool(true), Value::Null])));
+        for count in [-1, 2] {
+            assert_eq!(jit_make_array(&mut context, count), 0);
+            assert_eq!(
+                context.runtime_error.take().as_deref(),
+                Some("Stack underflow in MakeArray")
+            );
+            assert!(matches!(stack.as_slice(), [Value::Int(99)]));
+        }
+        // Retain every level so teardown never recursively drops a deep chain.
+        let mut levels = vec![Value::Int(7)];
+        for _ in 0..crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+            levels.push(Value::array(vec![levels.last().unwrap().clone()]));
+        }
+        stack.push(levels.last().unwrap().clone());
+        assert_eq!(jit_make_array(&mut context, 1), 0);
+        assert!(context.runtime_error.take().unwrap().contains("building array literal"));
+        assert!(matches!(stack.as_slice(), [Value::Int(99)]));
+        while levels.pop().is_some() {}
+        assert_eq!(jit_make_array(&mut context, 0), 1);
+        assert!(Value::equals(&stack.pop().unwrap(), &Value::array(vec![])));
+    }
+
+    #[test]
+    fn compiled_array_literals_bound_root_storage() {
+        for repetitions in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.params.push("item".into());
+            chunk.local_names.push("item".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.local_count = 1;
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadLocal(0));
+                chunk.emit(OpCode::MakeArray(1));
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadLocal(0));
+            chunk.emit(OpCode::MakeArray(1));
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "array_lifetime").unwrap();
+            let item = Value::array(vec![Value::Int(7)]);
+            let mut locals = HashMap::from([("item".into(), item.clone())]);
+            let mut names =
+                HashMap::from([(BytecodeTranslator::hash_var_name("item"), "item".into())]);
+            let mut stack = Vec::new();
+            let mut context = VMContext::new(&mut stack, &mut locals, std::ptr::null_mut());
+            context.var_names_ptr = &mut names;
+            assert_eq!(
+                invoke_compiled_fn(compiled, &mut context),
+                0,
+                "{:?}",
+                context.runtime_error
+            );
+            assert!(Value::equals(
+                &context.take_return_value(context.return_value),
+                &Value::array(vec![item])
+            ));
+            let (_, live, capacity, _) = context.owned_roots.storage_state();
+            assert_eq!(live, 0);
+            assert!(capacity <= 5, "{repetitions} constructions retained {capacity} roots");
+            assert_eq!(context.native_call_depth, 0);
+            assert!(stack.is_empty());
+        }
     }
 
     #[test]

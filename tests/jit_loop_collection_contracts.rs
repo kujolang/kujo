@@ -37,6 +37,25 @@ fn check(source: &str) {
 }
 
 #[test]
+fn loop_array_literals_preserve_types_after_native_entry() {
+    check(
+        r#"
+        func once() {
+            mut i := 0
+            mut total := 0
+            while i < 200 {
+                total += len([i,true,null])
+                i += 1
+            }
+            return total
+        }
+        assert_equal(once(),600)
+        print("PASS")
+        "#,
+    );
+}
+
+#[test]
 fn loop_nested_index_reads_preserve_owned_operands_after_native_entry() {
     check(
         r#"
