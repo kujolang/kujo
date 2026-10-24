@@ -27,5 +27,6 @@
     "Current candidate all50 checksum and production acceptance",
     "CPU/allocation profiles, native time coverage and controlled Goose/Rust comparisons",
     "Platform/regression/release acceptance"
-  ]
+  ],
+  "source_commit": "fd4d85df83c48d1cf04fd1ec2cc4cb68810d31df"
 }
