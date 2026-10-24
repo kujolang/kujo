@@ -5,6 +5,18 @@ Last updated: 2026-10-10
 This matrix is the release-facing record for VM, interpreter, and compiler
 parity. New runtime work must update the table and its named test evidence.
 
+## Indexed replacement depth policy (2026-10-24)
+
+The VM and experimental JIT enforce the 4,096-level value-nesting limit for
+ordinary indexed replacement, including sparse integer dictionary conversion.
+The interpreter currently accepts the deeper replacement; this remains a
+compatibility difference, not a promise of identical resource limits. This
+optimization does not add a new interpreter restriction. Both paths retain
+value snapshots. The seven-representation regression is
+`jit::tests::generic_index_replacement_preserves_runtime_depth_policies`.
+Native indexed replacement and loop behavior also have three-mode source tests
+in `tests/jit_nested_paths.rs`.
+
 ## 2026-09-06 imported callback bridge
 
 Imported interpreter functions can invoke VM-defined callbacks through the full

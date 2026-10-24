@@ -422,3 +422,127 @@ print("PASS")
         &[],
     );
 }
+
+#[test]
+fn native_generic_index_replacement_preserves_snapshots_and_errors() {
+    let mut source = String::from(
+        r#"
+mut state := [0]
+func put(index,value) { state[index] = value return state }
+mut order := ""
+func rhs() { order += "v" state = [7,8] return 9 }
+func key() { order += "k" return 1 }
+func ordered_index() { state[key()] = rhs() return state }
+let array_seed := [1,2]
+let bytes_seed := bytes([1,2])
+let dict_seed := {"a": [1]}
+mut caught := 0
+"#,
+    );
+    for _ in 0..200 {
+        source.push_str(
+            r#"
+state = array_seed
+assert_equal(put(-1,"x"),[1,"x"])
+state = bytes_seed
+assert_equal(put(1,255),bytes([1,255]))
+state = dict_seed
+assert_equal(put("a",[2]),{"a": [2]})
+assert_equal(put("b",null),{"a": [2],"b": null})
+state = {}
+put(0,11)
+put(2,33)
+put(1,22)
+assert_equal(state[0],11)
+assert_equal(state[1],22)
+assert_equal(state[2],33)
+put("1","text")
+assert_equal(state[1],"text")
+put(-1,44)
+assert_equal(state[-1],44)
+put("name",[5])
+assert_equal(state["name"],[5])
+order = ""
+assert_equal(ordered_index(),[7,9])
+assert_equal(order,"vk")
+"#,
+        );
+    }
+    source.push_str(
+        r#"
+state = array_seed
+try { put(99,3) } except error { caught += 1 }
+assert_equal(state,array_seed)
+try { put("wrong",3) } except error { caught += 1 }
+assert_equal(state,array_seed)
+state = bytes_seed
+try { put(0,256) } except error { caught += 1 }
+assert_equal(state,bytes_seed)
+state = 17
+try { put(0,3) } except error { caught += 1 }
+assert_equal(state,17)
+assert_equal(caught,4)
+assert_equal(array_seed,[1,2])
+assert_equal(bytes_seed,bytes([1,2]))
+assert_equal(dict_seed,{"a": [1]})
+print("PASS")
+"#,
+    );
+    check(source, &["put", "ordered_index"]);
+}
+
+#[test]
+fn native_generic_index_loops_preserve_local_types_and_readonly_errors() {
+    check(
+        r#"
+func work(seed) {
+    mut state := seed
+    let saved := state
+    mut i := 0
+    mut total := 0
+    while i < 200 {
+        state[0] = i
+        total += state[0]
+        i += 1
+    }
+    assert_equal(total,19900)
+    assert_equal(state[0],199)
+    assert_equal(saved,seed)
+    return state
+}
+func changing() {
+    mut state := {}
+    state[0] = 0
+    let saved := state
+    mut i := 0
+    while i < 200 {
+        if i == 150 { state[0] = "changed" } else { state[0] = i }
+        if i == 150 { assert_equal(state[0],"changed") } else { assert_equal(state[0],i) }
+        i += 1
+    }
+    assert_equal(saved[0],0)
+    assert_equal(state[0],199)
+}
+func readonly() {
+    let state := [1]
+    mut i := 0
+    while i < 200 {
+        i += 1
+        if i == 150 { state[0] = 2 }
+    }
+    return state
+}
+assert_equal(work([0]),[199])
+assert_equal(work(bytes([0])),bytes([199]))
+changing()
+mut caught := 0
+mut result := 17
+try { result = readonly() } except error { caught += 1 }
+assert_equal(caught,1)
+assert_equal(result,17)
+print("PASS")
+"#
+        .into(),
+        &[],
+    );
+}

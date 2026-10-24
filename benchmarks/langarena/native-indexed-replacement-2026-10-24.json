@@ -1,0 +1,50 @@
+{
+  "milestone": "Native generic indexed replacement and checked local indexed loops",
+  "date": "2026-10-24",
+  "source_parent": "c03dd70",
+  "changes": [
+    "Correct generic stack protocol: [value, object, index] -> [updated object]",
+    "Share the existing VM replacement implementation and integer-key cache with tagged native operands",
+    "Enable generic local indexed loop reads and writes through checked SSA ownership paths",
+    "Repair reproduced VM sparse-integer dictionary conversion depth-check bypass"
+  ],
+  "verification": {
+    "library_passed": 1071,
+    "library_ignored": 8,
+    "integration_passed": 184,
+    "excluded_tests": [
+
+    ],
+    "log": "/tmp/kujo-native-pop-index-final.log",
+    "format_log": "/tmp/kujo-native-pop-index-final-format.log",
+    "minimal_build_log": "/tmp/kujo-native-pop-index-minimal.log",
+    "format_passed": true,
+    "minimal_build_passed": true,
+    "depth_baseline_log": "/tmp/kujo-index-depth-baseline.log",
+    "depth_repaired_log": "/tmp/kujo-index-depth-repaired.log"
+  },
+  "cost_evidence": {
+    "repetitions": [
+      8,
+      128
+    ],
+    "representations": [
+      "array",
+      "bytes"
+    ],
+    "unique_storage_reused": true,
+    "retained_snapshot_isolated": true,
+    "max_live_roots": 2,
+    "max_root_slot_capacity": 4,
+    "live_roots_after_exit": 0
+  },
+  "compatibility": [
+    "Seven representation depth regression covers VM, native helper and interpreter",
+    "Interpreter retains its existing acceptance of values beyond the VM depth limit; documented in VM_INTERPRETER_PARITY_MATRIX.md"
+  ],
+  "limitations": [
+    "Tests ran with the subsequent pop/rebind changes present; this commit excludes that feature",
+    "No final-candidate all50 checksum, production or speed acceptance",
+    "Earlier cost test assumed three capacity slots; corrected to Vec minimum four and strengthened with live-root assertions; negative log retained at /tmp/kujo-native-indexset-regressions.log"
+  ]
+}

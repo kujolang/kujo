@@ -1110,6 +1110,64 @@ pub unsafe extern "C" fn jit_field_write(
     }
 }
 
+/// Consume generic indexed replacement operands using the VM's exact contract.
+#[no_mangle]
+// SAFETY: ctx owns the tagged roots for this activation. The key-cache callback
+// performs no user calls; consumed root slots remain live for generated release.
+pub unsafe extern "C" fn jit_index_set_result(
+    ctx: *mut VMContext,
+    object: i64,
+    object_kind: i64,
+    index: i64,
+    index_kind: i64,
+    value: i64,
+    value_kind: i64,
+) -> i64 {
+    let Some(ctx) = ctx.as_mut() else { return 0 };
+    let result = (|| {
+        let index = ctx
+            .owned_roots
+            .clone_value(index, index_kind)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let value = ctx
+            .owned_roots
+            .clone_value(value, value_kind)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let object = if object_kind == crate::native_owned::OWNED {
+            std::mem::replace(
+                ctx.owned_roots
+                    .current_value_mut(object, object_kind)
+                    .map_err(|error| format!("Native ownership error: {error:?}"))?,
+                Value::Null,
+            )
+        } else {
+            ctx.owned_roots
+                .clone_value(object, object_kind)
+                .map_err(|error| format!("Native ownership error: {error:?}"))?
+        };
+        let updated = VM::index_set_result(object, index, value, |key| {
+            if let Some(vm) = ctx.vm_ptr.cast::<VM>().as_mut() {
+                vm.int_key_string(key)
+            } else {
+                Arc::from(key.to_string())
+            }
+        })?;
+        ctx.owned_roots
+            .encode(updated)
+            .map_err(|error| format!("Native ownership error: {error:?}"))
+    })();
+    match result {
+        Ok((payload, kind)) => {
+            ctx.return_value_kind = kind;
+            payload
+        }
+        Err(error) => {
+            ctx.runtime_error = Some(error);
+            0
+        }
+    }
+}
+
 /// Match Call's argument suffix after an immediately preceding FieldGet.
 #[no_mangle]
 // SAFETY: ctx and its stack are exclusive. No pointers or references escape.
@@ -4961,6 +5019,7 @@ struct BytecodeTranslator {
     make_struct_func: Option<FuncRef>,
     field_read_func: Option<FuncRef>,
     field_write_func: Option<FuncRef>,
+    index_set_result_func: Option<FuncRef>,
     field_call_func: Option<FuncRef>,
     field_call_sites: std::collections::HashSet<usize>,
     struct_shapes: HashMap<NativeStructShape, Arc<NativeStructShape>>,
@@ -5137,6 +5196,7 @@ impl BytecodeTranslator {
             make_struct_func: None,
             field_read_func: None,
             field_write_func: None,
+            index_set_result_func: None,
             field_call_func: None,
             field_call_sites: Default::default(),
             struct_shapes: HashMap::new(),
@@ -5290,7 +5350,7 @@ impl BytecodeTranslator {
                 (3 + path.iter().filter(|step| step.is_none()).count(), 1)
             }
             OpCode::IndexGet => (2, 1), // Pop object + index, push value
-            OpCode::IndexSet => (3, 0), // Pop object + index + value, push nothing
+            OpCode::IndexSet => (3, 1), // [value, object, index] -> [updated object]
             OpCode::UpdateBindingPath(_, path) => {
                 (1 + path.iter().filter(|step| step.is_none()).count(), 1)
             }
@@ -6753,33 +6813,26 @@ impl BytecodeTranslator {
             }
 
             OpCode::IndexSet => {
-                // Dict/Array set: Pop value, index, and object
-                // Stack: [object, index, value] -> []
-
-                if let (Some(ctx), Some(dict_set_ref)) = (self.ctx_param, self.dict_set_func) {
-                    // Pop value, index, and object from JIT stack
-                    let _value = self.pop_value()?;
-                    let _index = self.pop_value()?;
-                    let _object = self.pop_value()?;
-
-                    // Push them to VM stack for runtime helper
-                    if let Some(stack_push) = self.stack_push_func {
-                        builder.ins().call(stack_push, &[ctx, _object]);
-                        builder.ins().call(stack_push, &[ctx, _index]);
-                        builder.ins().call(stack_push, &[ctx, _value]);
-                    }
-
-                    // Call the helper
-                    let call = builder.ins().call(dict_set_ref, &[ctx]);
-                    let _success = builder.inst_results(call)[0];
-
-                    // The modified dict/array is left on the VM stack by jit_dict_set
-                    // We don't need to pop it here as IndexSet has 0 stack push effect
-
-                    return Ok(false);
-                } else {
-                    return Err("IndexSet requires context and dict_set function".to_string());
-                }
+                let index = self.pop_value()?;
+                let object = self.pop_value()?;
+                let value = self.pop_value()?;
+                let ctx = self.ctx_param.ok_or("Indexed replacement requires context")?;
+                let helper =
+                    self.index_set_result_func.ok_or("Indexed replacement requires helper")?;
+                let object_kind = self.scalar_kind(builder, object);
+                let index_kind = self.scalar_kind(builder, index);
+                let value_kind = self.scalar_kind(builder, value);
+                let call = builder.ins().call(
+                    helper,
+                    &[ctx, object, object_kind, index, index_kind, value, value_kind],
+                );
+                let result = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, result);
+                self.release_operand(builder, index);
+                self.release_operand(builder, object);
+                self.release_operand(builder, value);
+                self.push_value(result);
+                return Ok(false);
             }
 
             OpCode::MakeStruct(name, fields) => {
@@ -7174,7 +7227,7 @@ impl BytecodeTranslator {
                     self.loop_indexed_access(builder, *slot_index, true)?;
                     return Ok(false);
                 }
-                if self.tracks_function_depth {
+                if self.tracks_function_depth || self.loop_resume_enabled {
                     let index = self.pop_value()?;
                     let value = self.pop_value()?;
                     let name = self
@@ -7376,7 +7429,7 @@ impl BytecodeTranslator {
                     self.loop_indexed_access(builder, *slot_index, false)?;
                     return Ok(false);
                 }
-                if self.tracks_function_depth {
+                if self.tracks_function_depth || self.loop_resume_enabled {
                     let index = self.pop_value()?;
                     // Whole functions own callee bindings; local_slots_ptr
                     // belongs to their suspended caller, not to this function.
@@ -9239,6 +9292,7 @@ impl JitCompiler {
             ("jit_prepare_field_call", 2, true),
             ("jit_field_read", 4, true),
             ("jit_field_write", 6, true),
+            ("jit_index_set_result", 7, true),
             ("jit_indexed_read", 5, true),
             ("jit_for_next", 5, true),
             ("jit_indexed_write", 10, true),
@@ -9288,6 +9342,7 @@ impl JitCompiler {
                 "jit_prepare_field_call" => translator.field_call_func = Some(function),
                 "jit_field_read" => translator.field_read_func = Some(function),
                 "jit_field_write" => translator.field_write_func = Some(function),
+                "jit_index_set_result" => translator.index_set_result_func = Some(function),
                 "jit_indexed_read" => translator.indexed_read_func = Some(function),
                 "jit_for_next" => translator.for_next_func = Some(function),
                 "jit_indexed_write" => translator.indexed_write_func = Some(function),
@@ -9432,6 +9487,7 @@ impl JitCompiler {
         builder.symbol("jit_prepare_field_call", jit_prepare_field_call as *const u8);
         builder.symbol("jit_field_read", jit_field_read as *const u8);
         builder.symbol("jit_field_write", jit_field_write as *const u8);
+        builder.symbol("jit_index_set_result", jit_index_set_result as *const u8);
         builder.symbol("jit_make_struct", jit_make_struct as *const u8);
         builder.symbol("jit_make_array", jit_make_array as *const u8);
         builder.symbol("jit_make_dict", jit_make_dict as *const u8);
@@ -9492,9 +9548,6 @@ impl JitCompiler {
                 if matches!(instruction, OpCode::UpdateBindingPath(crate::bytecode::MutationBinding::Named(name), _) | OpCode::AppendBindingPath(crate::bytecode::MutationBinding::Named(name), _)
                     if chunk.upvalues.contains(name) || chunk.lexical_self.is_some())
                 {
-                    return false;
-                }
-                if matches!(instruction, OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_)) {
                     return false;
                 }
                 if !self.is_supported_opcode(instruction, &chunk.constants) {
@@ -9598,7 +9651,7 @@ impl JitCompiler {
                 true
             }
             OpCode::TryStringAppendAssign(_, _) | OpCode::TryAppendAssign(_, _) => true,
-            OpCode::IndexSet => false,
+            OpCode::IndexSet => true,
             OpCode::IndexGetInPlace(_)
             | OpCode::IndexSetInPlace(_)
             | OpCode::UpdateBindingPath(_, _)
@@ -12470,6 +12523,151 @@ mod tests {
                 assert_eq!(context.owned_roots.storage_state().1, 0);
             }
         }
+    }
+
+    #[test]
+    fn native_generic_index_replacement_reuses_unique_storage_and_bounds_roots() {
+        for repetitions in [8, 128] {
+            for bytes in [false, true] {
+                let mut stack = Vec::new();
+                let mut ctx =
+                    VMContext::new(&mut stack, std::ptr::null_mut(), std::ptr::null_mut());
+                ctx.owned_roots.enter().unwrap();
+                let seed = if bytes {
+                    Value::bytes(vec![0, 1])
+                } else {
+                    Value::array(vec![Value::Int(0), Value::Int(1)])
+                };
+                let pointer = |value: &Value| match value {
+                    Value::Array(items) => Arc::as_ptr(items) as usize,
+                    Value::Bytes(items) => Arc::as_ptr(items) as usize,
+                    _ => panic!("unexpected indexed representation"),
+                };
+                let initial = pointer(&seed);
+                let (mut root, kind) = ctx.owned_roots.encode(seed).unwrap();
+                for index in 0..repetitions {
+                    // SAFETY: all operands are live native roots or tagged integers.
+                    let updated =
+                        unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, index, 0) };
+                    assert!(ctx.runtime_error.is_none(), "{:?}", ctx.runtime_error);
+                    assert_eq!(ctx.owned_roots.storage_state().1, 2);
+                    ctx.owned_roots.release(root, kind).unwrap();
+                    assert_eq!(ctx.owned_roots.storage_state().1, 1);
+                    root = updated;
+                    assert_eq!(
+                        pointer(ctx.owned_roots.current_value_mut(root, kind).unwrap()),
+                        initial
+                    );
+                }
+                let saved = ctx.owned_roots.clone_value(root, kind).unwrap();
+                // A genuine retained snapshot must force isolation.
+                let updated = unsafe { jit_index_set_result(&mut ctx, root, kind, 0, 0, 200, 0) };
+                ctx.owned_roots.release(root, kind).unwrap();
+                assert_ne!(
+                    pointer(ctx.owned_roots.current_value_mut(updated, kind).unwrap()),
+                    initial
+                );
+                assert!(
+                    matches!(VM::get_indexed_value(&saved,&Value::Int(0)).unwrap(),Value::Int(n) if n==repetitions-1)
+                );
+                assert!(matches!(
+                    VM::get_indexed_value(
+                        ctx.owned_roots.current_value_mut(updated, kind).unwrap(),
+                        &Value::Int(0)
+                    )
+                    .unwrap(),
+                    Value::Int(200)
+                ));
+                ctx.owned_roots.leave().unwrap();
+                let (_, live, capacity, _) = ctx.owned_roots.storage_state();
+                assert_eq!(live, 0);
+                // Vec's minimum allocation holds four slots; live roots stay at two.
+                assert!(capacity <= 4, "{repetitions} updates retained {capacity} root slots");
+            }
+        }
+    }
+
+    #[test]
+    fn generic_index_replacement_preserves_runtime_depth_policies() {
+        let mut levels = vec![Value::Int(7)];
+        for _ in 0..crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH {
+            levels.push(Value::array(vec![levels.last().unwrap().clone()]));
+        }
+        let seeds = vec![
+            Value::array(vec![Value::Int(1)]),
+            Value::Dict(Arc::new([(Arc::from("0"), Value::Int(1))].into_iter().collect())),
+            Value::FixedDict { keys: Arc::new(vec![Arc::from("0")]), values: vec![Value::Int(1)] },
+            Value::IntDict(Arc::new([(0, Value::Int(1))].into_iter().collect())),
+            Value::DenseIntDict(Arc::new(vec![Value::Int(1)])),
+            Value::DenseIntDictInt(Arc::new(vec![Some(1)])),
+            Value::DenseIntDictIntFull(Arc::new(vec![1])),
+        ];
+        let mut failures = Vec::new();
+        let tokens = crate::lexer::tokenize("target[0] = incoming").unwrap();
+        let program = crate::parser::Parser::new(tokens).parse();
+        let chunk = crate::compiler::Compiler::new().compile(&program).unwrap();
+        assert!(chunk.instructions.iter().any(|op| matches!(op, OpCode::IndexSet)));
+        for seed in seeds {
+            let mut interpreter = crate::interpreter::Interpreter::new();
+            interpreter.env.define("target".into(), seed.clone());
+            interpreter.env.define("incoming".into(), levels.last().unwrap().clone());
+            let error = interpreter
+                .eval_stmt_repl(&program[0])
+                .err()
+                .map(|error| error.to_string())
+                .unwrap_or_default();
+            // The existing interpreter does not enforce the VM's value-depth
+            // limit. Preserve that compatibility policy while testing COW.
+            if !error.is_empty() {
+                failures.push(format!("interpreter {seed:?}: {error}"));
+            }
+            let target = interpreter.env.get("target").unwrap();
+            if Value::nesting_depth(&target)
+                != crate::runtime_limits::DEFAULT_MAX_VALUE_NESTING_DEPTH + 1
+            {
+                failures.push(format!("interpreter failed replacement for {seed:?}"));
+            }
+            if !matches!(VM::get_indexed_value(&seed, &Value::Int(0)).unwrap(), Value::Int(1)) {
+                failures.push("interpreter mutated retained seed".into());
+            }
+            let mut environment = crate::interpreter::Environment::new();
+            environment.define("target".into(), seed.clone());
+            environment.define("incoming".into(), levels.last().unwrap().clone());
+            let environment = Arc::new(std::sync::Mutex::new(environment));
+            let mut vm = VM::new();
+            vm.set_globals(Arc::clone(&environment));
+            let error = vm.execute_until_suspend(chunk.clone()).err().unwrap_or_default();
+            if !error.contains("Maximum data nesting depth") {
+                failures.push(format!("VM {seed:?}: {error}"));
+            }
+
+            let mut ctx =
+                VMContext::new(std::ptr::null_mut(), std::ptr::null_mut(), std::ptr::null_mut());
+            ctx.owned_roots.enter().unwrap();
+            let snapshot = seed.clone();
+            let (object, kind) = ctx.owned_roots.encode(seed).unwrap();
+            let (value, value_kind) =
+                ctx.owned_roots.encode(levels.last().unwrap().clone()).unwrap();
+            // SAFETY: all handles belong to this active context.
+            unsafe {
+                jit_index_set_result(&mut ctx, object, kind, 0, 0, value, value_kind);
+            }
+            if !ctx
+                .runtime_error
+                .as_deref()
+                .is_some_and(|error| error.starts_with("Maximum data nesting depth"))
+            {
+                failures.push(format!("{snapshot:?}: {:?}", ctx.runtime_error));
+            }
+            assert!(matches!(
+                VM::get_indexed_value(&snapshot, &Value::Int(0)).unwrap(),
+                Value::Int(1)
+            ));
+            ctx.owned_roots.leave().unwrap();
+            assert_eq!(ctx.owned_roots.storage_state().1, 0);
+        }
+        while levels.pop().is_some() {}
+        assert!(failures.is_empty(), "missing depth errors: {failures:?}");
     }
 
     #[test]

@@ -11,6 +11,12 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile generic indexed replacements and local indexed loop operations through
+  checked, tagged native paths, preserving evaluation order and value snapshots.
+  Enforce the existing VM nesting limit when sparse integer dictionaries convert
+  to general values during indexed replacement.
+
+
 - Compile guarded array and byte appends through field/index paths in native
   functions and loops, preserving snapshots, RHS effects and shadowed calls.
 
