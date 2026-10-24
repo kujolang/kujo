@@ -1,0 +1,64 @@
+{
+  "archive_manifest_sha256": "133d99335666bc97b520366e0eb376b7d9e2980f9ee8788d71f1d38b9465b023",
+  "schemas_verified": 17,
+  "campaigns": [
+    {
+      "source_commit": "ac3fe6c3c702c2004cbae2af8b33b2bfc993da39",
+      "checkpoint": "all50-run-vm.json",
+      "rows": 16,
+      "verified_passed": [
+        "Base64::Encode",
+        "Base64::Decode",
+        "Json::Generate",
+        "Json::ParseDom",
+        "Json::ParseMapping",
+        "CSV::Parse"
+      ],
+      "status_counts": {
+        "timeout": 10,
+        "passed": 6
+      },
+      "production_config_sha256": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f"
+    },
+    {
+      "source_commit": "ac3fe6c3c702c2004cbae2af8b33b2bfc993da39",
+      "checkpoint": "all50-run-jit.json",
+      "rows": 50,
+      "verified_passed": [
+        "Base64::Encode",
+        "Base64::Decode",
+        "Json::Generate",
+        "Json::ParseDom",
+        "Json::ParseMapping",
+        "CSV::Parse",
+        "Etc::Words",
+        "Etc::LogParser",
+        "Sort::Self",
+        "Compress::LZWEncode",
+        "Compress::LZWDecode"
+      ],
+      "status_counts": {
+        "timeout": 39,
+        "passed": 11
+      },
+      "production_config_sha256": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f"
+    },
+    {
+      "source_commit": "e0d956ae1e3190ccc8fed60e24d83d4339c79260",
+      "checkpoint": "all50-production-jit.json",
+      "rows": 5,
+      "verified_passed": [
+
+      ],
+      "status_counts": {
+        "timeout": 5
+      },
+      "production_config_sha256": "8fe7baed41e8eb0a233057c4406446029f7e5d792cf3a3ac6fc7e714964a155f"
+    }
+  ],
+  "limitations": [
+    "Superseded production candidates; incomplete matrices retained",
+    "Explicitly cancelled active cases have no checksum acceptance",
+    "Shared-host timings are diagnostic, not competitive comparisons"
+  ]
+}

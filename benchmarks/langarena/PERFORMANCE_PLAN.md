@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Archived production checkpoints](superseded-production-checkpoints-2026-10-24.json)
+  retain 17 verified successful reports from superseded candidates. The earlier
+  JIT matrix had 11 passes and 39 timeouts; its VM run stopped after 6 passes
+  and 10 timeouts. The next candidate recorded five JIT timeouts before
+  cancellation. Active cancelled cases remain unverified. These loaded-host
+  runs do not establish competitive speed or current-candidate acceptance.
+
 - [Native indexed replacement](native-indexed-replacement-2026-10-24.json) and
   [guarded pop/remove](native-pop-rebinding-2026-10-24.json) pass 1,071 library
   tests and 184 integration tests, with no exclusions. Unique storage reuse,
