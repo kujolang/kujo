@@ -33,7 +33,8 @@
         "quicksort-cpu-sample-2026-10-23.txt",
         "owned-entry-native-surfaces-2026-10-23.json",
         "nested-state-allocation-audit-2026-10-23.json",
-        "post-constructor-native-surfaces-2026-10-23.json"
+        "post-constructor-native-surfaces-2026-10-23.json",
+        "post-field-native-surfaces-2026-10-23.json"
       ]
     },
     {

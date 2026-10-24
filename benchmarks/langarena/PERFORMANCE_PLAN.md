@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [post-field static audit](post-field-native-surfaces-2026-10-23.json)
+  reports 83 of the same 165 function bodies without an unsupported opcode,
+  up from 72. Remaining first blockers include iteration (25), guarded append
+  (23), nested binding updates (9), guarded string append (8) and pop/rebind (6).
+  These counts are static function surfaces, not native time coverage or speed.
+  The field candidate still requires its all-50 and production gates.
+
 - The [native-struct candidate JIT matrix](checksums-2026-10-23-native-struct-jit.json)
   passes all 50 unchanged test-size checksums with binary/input identities,
   raw measurement hashes and all 50 schemas verified. It includes native struct
