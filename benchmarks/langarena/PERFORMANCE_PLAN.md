@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Borrowed native reads](native-borrowed-read-allocations-2026-10-24.json) avoid
+  cloning the entire source container for indexed and field reads. Reading the
+  first field 128 times from fixed dictionaries of 8, 128 and 1,024 fields now
+  allocates zero bytes in the helper probe. Root lifetimes, returned snapshots
+  and errors pass 1,073 library tests (8 ignored) and 166 integration tests
+  across VM, interpreter and native execution. This is not competitive timing.
+
 - [Frozen pop/index release JIT checksums](checksums-2026-10-24-native-pop-index-release-jit.json)
   and the [VM](checksums-2026-10-24-native-pop-index-release-vm.json) and
   [interpreter](checksums-2026-10-24-native-pop-index-release-interpreter.json) reports

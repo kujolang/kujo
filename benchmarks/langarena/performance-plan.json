@@ -56,7 +56,8 @@
         "checked-removal-node-relocations-2026-10-24.json",
         "native-depth-cache-2026-10-24.json",
         "native-caller-handler-rebinding-2026-10-24.json",
-        "scalar-depth-allocations-2026-10-24.json"
+        "scalar-depth-allocations-2026-10-24.json",
+        "native-borrowed-read-allocations-2026-10-24.json"
       ]
     },
     {

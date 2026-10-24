@@ -10,6 +10,7 @@
 
 use crate::interpreter::Value;
 use nohash_hasher::BuildNoHashHasher;
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub(crate) const OWNED: i64 = 4;
@@ -115,6 +116,21 @@ impl NativeCallRoots {
     /// a nested scope to marshal a caller's value without taking ownership.
     pub(crate) fn clone_value(&self, payload: i64, kind: i64) -> Result<Value, OwnershipError> {
         self.values.clone_value(payload, kind)
+    }
+
+    /// Inspect a validated operand without cloning its container. The borrow
+    /// prevents root mutation until the read finishes; immediate scalars need
+    /// only a stack-local decoded Value. Caller-owned roots remain readable.
+    pub(crate) fn borrow_value(
+        &self,
+        payload: i64,
+        kind: i64,
+    ) -> Result<Cow<'_, Value>, OwnershipError> {
+        match kind {
+            0..=3 => Ok(Cow::Owned(crate::native_scalar::decode(payload, kind))),
+            OWNED => Ok(Cow::Borrowed(self.values.get(Handle::from_payload(payload))?)),
+            _ => Err(OwnershipError::InvalidKind(kind)),
+        }
     }
 
     pub(crate) fn duplicate(&mut self, payload: i64, kind: i64) -> Result<i64, OwnershipError> {
@@ -486,6 +502,34 @@ impl NativeOwnedValues {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn borrowed_reads_preserve_root_identity_and_validate_lifetimes() {
+        let mut roots = NativeCallRoots::default();
+        roots.enter().unwrap();
+        let value = Value::FixedDict {
+            keys: Arc::new(vec![Arc::from("key")]),
+            values: vec![Value::Int(7)],
+        };
+        let (payload, kind) = roots.encode(value).unwrap();
+        let original = match roots.borrow_value(payload, kind).unwrap().as_ref() {
+            Value::FixedDict { values, .. } => values.as_ptr(),
+            _ => panic!("expected fixed dictionary"),
+        };
+        roots.enter().unwrap();
+        let borrowed = roots.borrow_value(payload, kind).unwrap();
+        assert!(matches!(&borrowed, Cow::Borrowed(_)));
+        assert!(
+            matches!(borrowed.as_ref(), Value::FixedDict { values, .. } if values.as_ptr() == original)
+        );
+        drop(borrowed);
+        assert!(matches!(roots.borrow_value(7, 0).unwrap().as_ref(), Value::Int(7)));
+        assert!(matches!(roots.borrow_value(payload, 99), Err(OwnershipError::InvalidKind(99))));
+        roots.leave().unwrap();
+        assert!(roots.borrow_value(payload, kind).is_ok());
+        roots.leave().unwrap();
+        assert!(matches!(roots.borrow_value(payload, kind), Err(OwnershipError::StaleHandle)));
+    }
 
     #[test]
     fn guarded_rebinding_reuses_unique_storage_and_preserves_snapshots() {

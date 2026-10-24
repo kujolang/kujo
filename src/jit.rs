@@ -1034,7 +1034,7 @@ pub unsafe extern "C" fn jit_field_read(
         let name = (name_ptr as *const String).as_ref().ok_or("Missing native field name")?;
         let object = ctx
             .owned_roots
-            .clone_value(object, kind)
+            .borrow_value(object, kind)
             .map_err(|error| format!("Native ownership error: {error:?}"))?;
         let (value, receiver) = VM::get_field_value(&object, name, |method| {
             ctx.globals_ptr.as_ref().and_then(|globals| globals.get(method)).cloned()
@@ -1273,19 +1273,20 @@ pub unsafe extern "C" fn jit_indexed_read(
     index_kind: i64,
 ) -> i64 {
     let Some(ctx) = ctx.as_mut() else { return 0 };
-    let result = ctx
-        .owned_roots
-        .clone_value(object, object_kind)
-        .and_then(|object| {
-            ctx.owned_roots.clone_value(index, index_kind).map(|index| (object, index))
-        })
-        .map_err(|error| format!("Native ownership error: {error:?}"))
-        .and_then(|(object, index)| VM::get_indexed_value(&object, &index))
-        .and_then(|value| {
-            ctx.owned_roots
-                .encode(value)
-                .map_err(|error| format!("Native ownership error: {error:?}"))
-        });
+    let result = (|| {
+        let object = ctx
+            .owned_roots
+            .borrow_value(object, object_kind)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        let index = ctx
+            .owned_roots
+            .borrow_value(index, index_kind)
+            .map_err(|error| format!("Native ownership error: {error:?}"))?;
+        VM::get_indexed_value(&object, &index)
+    })()
+    .and_then(|value| {
+        ctx.owned_roots.encode(value).map_err(|error| format!("Native ownership error: {error:?}"))
+    });
     match result {
         Ok((payload, kind)) => {
             ctx.return_value_kind = kind;

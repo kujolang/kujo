@@ -1,0 +1,83 @@
+{
+  "scope": "Borrow validated roots for native indexed/field reads; returned Values retain ordinary copy/value semantics. Fixed-dictionary first-key reads avoid whole-container copies. No timing claim and no change to linear key lookup.",
+  "source_parent": "fb7e25663d5e00ae5212d0c4099cf0b76dcfb75c",
+  "measurements": [
+    {
+      "fields": 8,
+      "operation": "indexed",
+      "reads": 128,
+      "before_allocations": 128,
+      "before_requested_bytes": 139264,
+      "after_allocations": 0,
+      "after_requested_bytes": 0
+    },
+    {
+      "fields": 8,
+      "operation": "field",
+      "reads": 128,
+      "before_allocations": 128,
+      "before_requested_bytes": 139264,
+      "after_allocations": 0,
+      "after_requested_bytes": 0
+    },
+    {
+      "fields": 128,
+      "operation": "indexed",
+      "reads": 128,
+      "before_allocations": 128,
+      "before_requested_bytes": 2228224,
+      "after_allocations": 0,
+      "after_requested_bytes": 0
+    },
+    {
+      "fields": 128,
+      "operation": "field",
+      "reads": 128,
+      "before_allocations": 128,
+      "before_requested_bytes": 2228224,
+      "after_allocations": 0,
+      "after_requested_bytes": 0
+    },
+    {
+      "fields": 1024,
+      "operation": "indexed",
+      "reads": 128,
+      "before_allocations": 128,
+      "before_requested_bytes": 17825792,
+      "after_allocations": 0,
+      "after_requested_bytes": 0
+    },
+    {
+      "fields": 1024,
+      "operation": "field",
+      "reads": 128,
+      "before_allocations": 128,
+      "before_requested_bytes": 17825792,
+      "after_allocations": 0,
+      "after_requested_bytes": 0
+    }
+  ],
+  "baseline_probe_sha256": "a74a88daf443f107686989cc184c76871e3e62601bf3dfbf09a5f31a59fbfd13",
+  "baseline_binary_sha256": "3fd70447d3ac6dccb90fd7a2809bcdc1c75b98555bf699fd33ca75b10c0ff97b",
+  "verification": {
+    "library_passed": 1073,
+    "library_ignored": 8,
+    "integration_passed": 166,
+    "format_passed": true,
+    "minimal_lib_check_passed": true,
+    "logs": [
+      "/tmp/kujo-native-borrowed-read-library.log",
+      "/tmp/kujo-native-borrowed-read-regressions-final.log"
+    ],
+    "notes": [
+      "Initial unit test misplaced outside test module failed compilation; moved before final gate",
+      "Initial cross-runtime fixture used unsupported interpreter dictionary dot access; corrected to canonical dictionary indexing and struct fields before final gate"
+    ]
+  },
+  "source_sha256": {
+    "src/native_owned.rs": "8b1f21255d591016e895bf73180d59ae17c7d3a4966b6a34648dfc5fe5b42b0f",
+    "src/jit.rs": "2f7c242165ad6715eabe9898565b10f7ed445a2a464bbbeaa824e124beaaa92a",
+    "tests/native_read_allocation.rs": "1f8f3b907e062f1157d1972318af9b2f255b3f1782910ab92829b60f4b9a703b",
+    "tests/jit_nested_paths.rs": "cef031df5644eb8d683c222885d3b431fe3719305702a4bc608392efbf5b69ab"
+  }
+}

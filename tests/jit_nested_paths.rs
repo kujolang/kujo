@@ -2,6 +2,42 @@ use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
 #[test]
+fn native_borrowed_reads_preserve_returned_snapshots_and_errors() {
+    check(
+        r#"
+func borrowed_index(value, key) { return value[key] }
+func borrowed_field(value) { return value.rows }
+struct ReadHolder { rows: any }
+let seed := {"rows": [[1,2]], "other": 9}
+let holder := ReadHolder { rows: [[1,2]] }
+mut caught := 0
+mut i := 0
+while i < 200 {
+    mut indexed := borrowed_index(seed, "rows")
+    mut field := borrowed_field(holder)
+    indexed[0][0] = 8
+    field[0][1] = 9
+    assert_equal(seed["rows"], [[1,2]])
+    assert_equal(holder.rows, [[1,2]])
+    assert_equal(indexed, [[8,2]])
+    assert_equal(field, [[1,9]])
+    assert_equal(borrowed_index([3,4], -1), 4)
+    assert_equal(borrowed_index([3,4], 0.5), 3)
+    assert_equal(borrowed_index(bytes([0,255]), 1), 255)
+    assert_equal(borrowed_index("é🙂", 1), "🙂")
+    try { borrowed_index(seed, "absent") } except e { caught += 1 }
+    try { borrowed_field(7) } except e { caught += 1 }
+    i += 1
+}
+assert_equal(caught, 400)
+print("PASS")
+"#
+        .into(),
+        &["borrowed_index", "borrowed_field"],
+    );
+}
+
+#[test]
 fn native_nested_writes_preserve_values_errors_and_evaluation_order() {
     let mut source = String::from(
         r#"
