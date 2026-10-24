@@ -45,7 +45,8 @@
         "native-call-setup-reservation-2026-10-24.json",
         "native-scalar-array-reads-2026-10-24.json",
         "native-array-read-profile-2026-10-24.json",
-        "native-root-read-cache-2026-10-24.json"
+        "native-root-read-cache-2026-10-24.json",
+        "native-recursive-call-profile-2026-10-24.json"
       ]
     },
     {

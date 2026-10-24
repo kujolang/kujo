@@ -1,0 +1,465 @@
+{
+  "scope": "Top-of-stack sample counts; not native-time percentages or competitive timings. Dynamic JIT addresses may remain unmapped.",
+  "source_commit": "3482e532e95bf8338f2061c02be476ade6c6d604",
+  "binary_sha256": "076fa6d7abee5e0eac3787f9a4d6760d692e8657f2044a5a05941296cca5e4b8",
+  "map_sha256": "976e2478822512337deeaeb57c09bd0c6858e8cd1a0e05c9a793205a1ccb1ef8",
+  "sample_sha256": "12f5d8a0f79ae70ebbecd2e3f47a0fb97394bc5d94a545b3e151a423d2adcce9",
+  "uuid": "ED91D7B8-58C0-3D6F-82EC-BB77F7ADC7C6",
+  "rows": [
+    {
+      "label": "__ulock_wait  (in libsystem_kernel.dylib)",
+      "samples": 6046,
+      "mapped": false
+    },
+    {
+      "label": "_platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)",
+      "samples": 332,
+      "mapped": false
+    },
+    {
+      "label": "__findenv_locked  (in libsystem_c.dylib)",
+      "samples": 147,
+      "mapped": false
+    },
+    {
+      "label": "free_tiny  (in libsystem_malloc.dylib)",
+      "samples": 128,
+      "mapped": false
+    },
+    {
+      "label": "tiny_malloc_should_clear  (in libsystem_malloc.dylib)",
+      "samples": 102,
+      "mapped": false
+    },
+    {
+      "label": "tiny_free_no_lock  (in libsystem_malloc.dylib)",
+      "samples": 77,
+      "mapped": false
+    },
+    {
+      "label": "tiny_free_list_add_ptr  (in libsystem_malloc.dylib)",
+      "samples": 64,
+      "mapped": false
+    },
+    {
+      "label": "tiny_malloc_from_free_list  (in libsystem_malloc.dylib)",
+      "samples": 55,
+      "mapped": false
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "samples": 47,
+      "mapped": true,
+      "offset": 334
+    },
+    {
+      "label": "rack_get_thread_index  (in libsystem_malloc.dylib)",
+      "samples": 43,
+      "mapped": false
+    },
+    {
+      "label": "_jit_release_operand",
+      "samples": 38,
+      "mapped": true,
+      "offset": 285
+    },
+    {
+      "label": "_szone_free  (in libsystem_malloc.dylib)",
+      "samples": 35,
+      "mapped": false
+    },
+    {
+      "label": "__ZN4kujo2vm2VM22call_function_from_jit17hd9040cf0f26a3a2cE",
+      "samples": 34,
+      "mapped": true,
+      "offset": 587
+    },
+    {
+      "label": "DYLD-STUB$$_platform_memmove  (in libsystem_platform.dylib)",
+      "samples": 32,
+      "mapped": false
+    },
+    {
+      "label": "_platform_memcmp$VARIANT$Base  (in libsystem_platform.dylib)",
+      "samples": 29,
+      "mapped": false
+    },
+    {
+      "label": "_malloc_zone_malloc  (in libsystem_malloc.dylib)",
+      "samples": 24,
+      "mapped": false
+    },
+    {
+      "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+      "samples": 23,
+      "mapped": true,
+      "offset": 1229
+    },
+    {
+      "label": "szone_malloc_should_clear  (in libsystem_malloc.dylib)",
+      "samples": 23,
+      "mapped": false
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+      "samples": 22,
+      "mapped": true,
+      "offset": 79
+    },
+    {
+      "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "samples": 21,
+      "mapped": true,
+      "offset": 141
+    },
+    {
+      "label": "_platform_bzero$VARIANT$Haswell  (in libsystem_platform.dylib)",
+      "samples": 19,
+      "mapped": false
+    },
+    {
+      "label": "free_small  (in libsystem_malloc.dylib)",
+      "samples": 19,
+      "mapped": false
+    },
+    {
+      "label": "set_tiny_meta_header_in_use  (in libsystem_malloc.dylib)",
+      "samples": 19,
+      "mapped": false
+    },
+    {
+      "label": "_free  (in libsystem_malloc.dylib)",
+      "samples": 18,
+      "mapped": false
+    },
+    {
+      "label": "_tiny_check_and_zero_inline_meta_from_freelist  (in libsystem_malloc.dylib)",
+      "samples": 18,
+      "mapped": false
+    },
+    {
+      "label": "get_tiny_previous_free_msize  (in libsystem_malloc.dylib)",
+      "samples": 18,
+      "mapped": false
+    },
+    {
+      "label": "_jit_duplicate_operand",
+      "samples": 17,
+      "mapped": true,
+      "offset": 140
+    },
+    {
+      "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+      "samples": 13,
+      "mapped": true,
+      "offset": 1162
+    },
+    {
+      "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+      "samples": 13,
+      "mapped": true,
+      "offset": 33
+    },
+    {
+      "label": "os_unfair_lock_lock_with_options  (in libsystem_platform.dylib)",
+      "samples": 13,
+      "mapped": false
+    },
+    {
+      "label": "small_free_list_add_ptr  (in libsystem_malloc.dylib)",
+      "samples": 13,
+      "mapped": false
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+      "samples": 12,
+      "mapped": true,
+      "offset": 169
+    },
+    {
+      "label": "tiny_free_list_remove_ptr  (in libsystem_malloc.dylib)",
+      "samples": 12,
+      "mapped": false
+    },
+    {
+      "label": "_jit_indexed_read",
+      "samples": 11,
+      "mapped": true,
+      "offset": 955
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "samples": 11,
+      "mapped": true,
+      "offset": 337
+    },
+    {
+      "label": "DYLD-STUB$$memcpy  (in kujo)",
+      "samples": 11,
+      "mapped": false
+    },
+    {
+      "label": "free  (in libsystem_malloc.dylib)",
+      "samples": 11,
+      "mapped": false
+    },
+    {
+      "label": "small_malloc_should_clear  (in libsystem_malloc.dylib)",
+      "samples": 11,
+      "mapped": false
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+      "samples": 10,
+      "mapped": true,
+      "offset": 356
+    },
+    {
+      "label": "__ZN4kujo2vm2VM19requires_closure_vm17hc97fd4de8103543dE",
+      "samples": 10,
+      "mapped": true,
+      "offset": 92
+    },
+    {
+      "label": "__ZN4kujo2vm2VM22call_function_from_jit17hd9040cf0f26a3a2cE",
+      "samples": 10,
+      "mapped": true,
+      "offset": 97
+    },
+    {
+      "label": "_platform_memset$VARIANT$Haswell  (in libsystem_platform.dylib)",
+      "samples": 10,
+      "mapped": false
+    },
+    {
+      "label": "__ZN4kujo11interpreter11Interpreter15is_builtin_name17h9fb35e2b46f85d8cE",
+      "samples": 9,
+      "mapped": true,
+      "offset": 127
+    },
+    {
+      "label": "__ZN4kujo11interpreter10assignment5write17h9985f8805e0cbc74E",
+      "samples": 8,
+      "mapped": true,
+      "offset": 1369
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+      "samples": 8,
+      "mapped": true,
+      "offset": 201
+    },
+    {
+      "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+      "samples": 8,
+      "mapped": true,
+      "offset": 65
+    },
+    {
+      "label": "malloc  (in libsystem_malloc.dylib)",
+      "samples": 8,
+      "mapped": false
+    },
+    {
+      "label": "small_malloc_from_free_list  (in libsystem_malloc.dylib)",
+      "samples": 8,
+      "mapped": false
+    },
+    {
+      "label": "_jit_release_operand",
+      "samples": 7,
+      "mapped": true,
+      "offset": 288
+    },
+    {
+      "label": "__RNvNtNtNtCsfJuDB63p7eE_3std3sys3env4unix13env_read_lock.llvm.7297527715975214666",
+      "samples": 7,
+      "mapped": true,
+      "offset": 71
+    },
+    {
+      "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "samples": 7,
+      "mapped": true,
+      "offset": 118
+    },
+    {
+      "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "samples": 7,
+      "mapped": true,
+      "offset": 1028
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+      "samples": 7,
+      "mapped": true,
+      "offset": 315
+    },
+    {
+      "label": "pthread_mutex_lock  (in libsystem_pthread.dylib)",
+      "samples": 7,
+      "mapped": false
+    },
+    {
+      "label": "???  (in <unknown binary>)  [0x7fde5522f59b]",
+      "samples": 6,
+      "mapped": false
+    },
+    {
+      "label": "_jit_for_next",
+      "samples": 6,
+      "mapped": true,
+      "offset": 318
+    },
+    {
+      "label": "_jit_indexed_read",
+      "samples": 6,
+      "mapped": true,
+      "offset": 1111
+    },
+    {
+      "label": "__ZN4core3ptr41drop_in_place$LT$kujo..jit..VMContext$GT$17h9c9bc4a444589b07E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 0
+    },
+    {
+      "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 62
+    },
+    {
+      "label": "__ZN4kujo11interpreter16native_functions20call_native_function17hc38186377971a269E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 72
+    },
+    {
+      "label": "__ZN4kujo12native_owned15NativeCallRoots6encode17h9017b786ad4055d3E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 1030
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 122
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues11clone_value17hd5a152e680278a29E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 130
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 201
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 221
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues6unlink17h80f898e0fc3bcc35E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 116
+    },
+    {
+      "label": "__ZN5alloc4sync16Arc$LT$T$C$A$GT$8make_mut17h0c583ba94538f0e4E",
+      "samples": 6,
+      "mapped": true,
+      "offset": 294
+    },
+    {
+      "label": "getenv  (in libsystem_c.dylib)",
+      "samples": 6,
+      "mapped": false
+    },
+    {
+      "label": "_jit_runtime_failed",
+      "samples": 5,
+      "mapped": true,
+      "offset": 1
+    },
+    {
+      "label": "_jit_store_variable",
+      "samples": 5,
+      "mapped": true,
+      "offset": 0
+    },
+    {
+      "label": "__RNvNtCsfJuDB63p7eE_3std3env4__var",
+      "samples": 5,
+      "mapped": true,
+      "offset": 104
+    },
+    {
+      "label": "__ZN4core3ptr52drop_in_place$LT$kujo..interpreter..value..Value$GT$17haeb8a799a8b5d616E",
+      "samples": 5,
+      "mapped": true,
+      "offset": 0
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+      "samples": 5,
+      "mapped": true,
+      "offset": 71
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues4take17hcd605dbbb64a3ab9E",
+      "samples": 5,
+      "mapped": true,
+      "offset": 116
+    },
+    {
+      "label": "__ZN4kujo12native_owned17NativeOwnedValues6remove17h27e083cbe418ce57E",
+      "samples": 5,
+      "mapped": true,
+      "offset": 296
+    },
+    {
+      "label": "__ZN4kujo2vm2VM17get_indexed_value17h177bf32e1e078787E",
+      "samples": 5,
+      "mapped": true,
+      "offset": 317
+    },
+    {
+      "label": "__ZN70_$LT$kujo..interpreter..value..Value$u20$as$u20$core..clone..Clone$GT$5clone17hb8f690eca0e39320E",
+      "samples": 5,
+      "mapped": true,
+      "offset": 2284
+    },
+    {
+      "label": "__ZN83_$LT$hashbrown..map..HashMap$LT$K$C$V$C$S$C$A$GT$$u20$as$u20$core..clone..Clone$GT$5clone17h74b3e217d096242dE",
+      "samples": 5,
+      "mapped": true,
+      "offset": 498
+    },
+    {
+      "label": "DYLD-STUB$$_platform_memset  (in libsystem_platform.dylib)",
+      "samples": 5,
+      "mapped": false
+    },
+    {
+      "label": "os_unfair_lock_unlock  (in libsystem_platform.dylib)",
+      "samples": 5,
+      "mapped": false
+    },
+    {
+      "label": "small_free_list_remove_ptr_no_clear  (in libsystem_malloc.dylib)",
+      "samples": 5,
+      "mapped": false
+    }
+  ],
+  "workload": "Brainfuck::Recursion, unchanged production run.json, frozen3482e53, live JIT sweep",
+  "interpretation": "Top samples include allocation/copying and environment lookup. Matched linker map resolves caller offsets0x1064752,0x1064104,0x106434e to jit_call_function, then std::env::__var/getenv. Investigate DEBUG_JIT_CALL queries without changing dynamic environment semantics. Counts include idle threads and are not native-time percentages.",
+  "raw_sample_path": "/tmp/kujo-native-scalar-array-release-2026-10-24/brainfuck-recursion-production-sample.txt",
+  "status": "Profile only; production case still running at collection, no checksum or speed claim."
+}

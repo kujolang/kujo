@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- [Recursive-call production sample](native-recursive-call-profile-2026-10-24.json)
+  retains matched executable/map evidence from frozen `3482e53` running
+  Brainfuck::Recursion. Allocation/copying and environment lookup appear in the
+  sample; mapped callers identify `jit_call_function` debug-flag checks as an
+  investigation target. This is not a completed production result or a timing
+  comparison, and any change must preserve observable environment behavior.
+
 - [Validated root-slot read hints](native-root-read-cache-2026-10-24.json)
   eliminate repeated handle-map lookups without retaining array owners or raw
   element pointers. Every hit validates the live slot and handle. Compiler
