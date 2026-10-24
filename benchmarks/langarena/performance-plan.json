@@ -67,7 +67,8 @@
         "native-literals-2026-10-23.json",
         "cold-callback-2026-10-23.json",
         "owned-entry-native-surfaces-2026-10-23.json",
-        "nested-state-allocation-audit-2026-10-23.json"
+        "nested-state-allocation-audit-2026-10-23.json",
+        "owned-argument-entry-2026-10-23.json"
       ]
     },
     {
@@ -79,7 +80,10 @@
         "checksums-2026-10-23-native-arguments-jit.json",
         "native-execution-census-2026-10-23.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ]
     },
     {
@@ -110,11 +114,11 @@
   "benchmarks": [
     {
       "name": "Binarytrees::Obj",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -140,7 +144,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -164,11 +171,11 @@
     },
     {
       "name": "Binarytrees::Arena",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -194,7 +201,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -218,11 +228,11 @@
     },
     {
       "name": "Brainfuck::Array",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -248,7 +258,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -272,11 +285,11 @@
     },
     {
       "name": "Brainfuck::Recursion",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -302,7 +315,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -326,11 +342,11 @@
     },
     {
       "name": "Matmul::Single",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -356,7 +372,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -380,11 +399,11 @@
     },
     {
       "name": "Matmul::T4",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -410,7 +429,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -434,11 +456,11 @@
     },
     {
       "name": "Matmul::T8",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -464,7 +486,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -488,11 +513,11 @@
     },
     {
       "name": "Matmul::T16",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -518,7 +543,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -542,11 +570,11 @@
     },
     {
       "name": "Base64::Encode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -572,7 +600,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -596,11 +627,11 @@
     },
     {
       "name": "Base64::Decode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -626,7 +657,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -650,11 +684,11 @@
     },
     {
       "name": "Json::Generate",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -680,7 +714,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -704,11 +741,11 @@
     },
     {
       "name": "Json::ParseDom",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -734,7 +771,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -758,11 +798,11 @@
     },
     {
       "name": "Json::ParseMapping",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -788,7 +828,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -812,11 +855,11 @@
     },
     {
       "name": "CSV::Parse",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -842,7 +885,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -866,11 +912,11 @@
     },
     {
       "name": "Etc::Sieve",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -896,7 +942,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -920,11 +969,11 @@
     },
     {
       "name": "Etc::TextRaytracer",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -950,7 +999,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -974,11 +1026,11 @@
     },
     {
       "name": "Etc::NeuralNet",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1004,7 +1056,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1028,11 +1083,11 @@
     },
     {
       "name": "Etc::CacheSimulation",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1058,7 +1113,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1082,11 +1140,11 @@
     },
     {
       "name": "Etc::GameOfLife",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1112,7 +1170,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1136,11 +1197,11 @@
     },
     {
       "name": "Etc::Words",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1166,7 +1227,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1190,11 +1254,11 @@
     },
     {
       "name": "Etc::LogParser",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1220,7 +1284,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1244,11 +1311,11 @@
     },
     {
       "name": "Template::Regex",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1274,7 +1341,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1298,11 +1368,11 @@
     },
     {
       "name": "Template::Parse",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1328,7 +1398,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1352,11 +1425,11 @@
     },
     {
       "name": "Sort::Quick",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "single three-second executing-thread sample at 0c77115; not whole-workload attribution",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1382,7 +1455,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1406,11 +1482,11 @@
     },
     {
       "name": "Sort::Merge",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1436,7 +1512,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1460,11 +1539,11 @@
     },
     {
       "name": "Sort::Self",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1490,7 +1569,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1514,11 +1596,11 @@
     },
     {
       "name": "Graph::BFS",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1544,7 +1626,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1568,11 +1653,11 @@
     },
     {
       "name": "Graph::DFS",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1598,7 +1683,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1622,11 +1710,11 @@
     },
     {
       "name": "Graph::AStar",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1652,7 +1740,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1676,11 +1767,11 @@
     },
     {
       "name": "Hash::SHA256",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1706,7 +1797,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1730,11 +1824,11 @@
     },
     {
       "name": "Hash::CRC32",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1760,7 +1854,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1784,11 +1881,11 @@
     },
     {
       "name": "Calculator::Ast",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1814,7 +1911,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1838,11 +1938,11 @@
     },
     {
       "name": "Calculator::Interpreter",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1868,7 +1968,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1892,11 +1995,11 @@
     },
     {
       "name": "Maze::Generator",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1922,7 +2025,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1946,11 +2052,11 @@
     },
     {
       "name": "Maze::BFS",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -1976,7 +2082,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2000,11 +2109,11 @@
     },
     {
       "name": "Maze::AStar",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2030,7 +2139,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2054,11 +2166,11 @@
     },
     {
       "name": "CLBG::Fannkuchredux",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2084,7 +2196,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2108,11 +2223,11 @@
     },
     {
       "name": "CLBG::Mandelbrot",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2138,7 +2253,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2162,11 +2280,11 @@
     },
     {
       "name": "CLBG::Nbody",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2192,7 +2310,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2216,11 +2337,11 @@
     },
     {
       "name": "CLBG::Spectralnorm",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2246,7 +2367,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2270,11 +2394,11 @@
     },
     {
       "name": "Compress::BWTEncode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2300,7 +2424,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2324,11 +2451,11 @@
     },
     {
       "name": "Compress::BWTDecode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2354,7 +2481,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2378,11 +2508,11 @@
     },
     {
       "name": "Compress::HuffEncode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2408,7 +2538,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2432,11 +2565,11 @@
     },
     {
       "name": "Compress::HuffDecode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2462,7 +2595,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2486,11 +2622,11 @@
     },
     {
       "name": "Compress::ArithEncode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2516,7 +2652,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2540,11 +2679,11 @@
     },
     {
       "name": "Compress::ArithDecode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2570,7 +2709,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2594,11 +2736,11 @@
     },
     {
       "name": "Compress::LZWEncode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2624,7 +2766,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2648,11 +2793,11 @@
     },
     {
       "name": "Compress::LZWDecode",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2678,7 +2823,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2702,11 +2850,11 @@
     },
     {
       "name": "Distance::Jaro",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2732,7 +2880,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -2756,11 +2907,11 @@
     },
     {
       "name": "Distance::NGram",
-      "test_vm": "passed at ac3fe6c release test-size; newer owned-entry candidate VM verification in progress",
-      "test_interpreter": "passed at ac3fe6c release test-size; later source changes require revalidation",
+      "test_vm": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
+      "test_interpreter": "passed at f559179 release test-size; subsequent runtime changes require separate verification",
       "production_vm": "pending",
       "production_interpreter": "pending",
-      "jit_correctness_and_coverage": "Owned-entry frozen debug candidate based on8a593f9 passes test-size checksum; runtime source hashes pinned in evidence. Fallback allowed; production and full native coverage unproven.",
+      "jit_correctness_and_coverage": "Owned-entry release candidate committed at f559179 passes test-size checksum, with pinned runtime and binary hashes. Fallback allowed; production, full native coverage and competitive speed remain unproven.",
       "cpu_profile": "pending",
       "allocation_profile": "pending",
       "peak_memory": "test-size JIT process peak recorded in native census at 0c77115; production and comparisons pending",
@@ -2786,7 +2937,10 @@
         "checksums-2026-10-23-guarded-append-release-vm.json",
         "checksums-2026-10-23-guarded-append-release-interpreter.json",
         "checksums-2026-10-23-cold-callback-jit.json",
-        "checksums-2026-10-23-owned-entry-jit.json"
+        "checksums-2026-10-23-owned-entry-jit.json",
+        "checksums-2026-10-23-owned-entry-release-jit.json",
+        "checksums-2026-10-23-owned-entry-release-vm.json",
+        "checksums-2026-10-23-owned-entry-release-interpreter.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
