@@ -55,7 +55,8 @@
         "native-local-return-2026-10-24.json",
         "storage-identity-runtime-2026-10-24.json",
         "local-return-release-2026-10-24.json",
-        "native-argument-pool-2026-10-24.json"
+        "native-argument-pool-2026-10-24.json",
+        "builtin-argument-pool-2026-10-24.json"
       ]
     },
     {
@@ -85,7 +86,8 @@
         "native-local-return-2026-10-24.json",
         "storage-identity-runtime-2026-10-24.json",
         "local-return-release-2026-10-24.json",
-        "native-argument-pool-2026-10-24.json"
+        "native-argument-pool-2026-10-24.json",
+        "builtin-argument-pool-2026-10-24.json"
       ]
     },
     {
@@ -160,9 +162,7 @@
       "id": "regression_gates",
       "scope": "Both-runtime semantic tests, differential/generated JIT tests, deterministic cost/scaling checks and controlled performance CI; investigate repeatable >5% slowdowns",
       "status": "pending",
-      "evidence": [
-
-      ]
+      "evidence": []
     },
     {
       "id": "competitive_targets",
@@ -176,9 +176,7 @@
       "id": "release_acceptance",
       "scope": "Full relevant tests, Linux/macOS and supported-architecture gates, default-feature release artifacts, official local runner integration, concrete maintainer questions; no contact/submission without authorization",
       "status": "pending",
-      "evidence": [
-
-      ]
+      "evidence": []
     }
   ],
   "benchmarks": [
@@ -3577,7 +3575,7 @@
     },
     {
       "scope": "seven-round paired nested assignment candidate ebe4258 versus JSON27fd599",
-      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754–1.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
+      "result": "56/56 checksum-valid samples. QuickSort paired speedup median0.981x,range0.754\u20131.343x; no defensible end-to-end speedup from this noisy host. Deterministic Arc reuse improvement remains verified, controlled-host performance acceptance pending. No own builds/profiling overlapped timings.",
       "evidence": "paired-assignment-2026-10-23.json"
     },
     {
@@ -3882,7 +3880,7 @@
     },
     {
       "scope": "checked append unique Arc-node reuse",
-      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1–2 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
+      "result": "Across12 array/byte and struct/dictionary/array scenarios at8/128 updates, parent/leaf relocations fall from1\u20132 per append to0; real snapshots still detach.1062library and37integration tests pass. No elapsed-time claim.",
       "evidence": "checked-append-node-relocations-2026-10-24.json"
     },
     {

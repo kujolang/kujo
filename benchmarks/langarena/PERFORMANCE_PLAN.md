@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Builtin argument reuse (`aa30071`).** [Evidence](BUILTIN_ARGUMENT_POOL_2026_10_24.md)
+  records JIT QuickSort unique allocations 21,954→14,638 and requested bytes
+  1,084,600→89,624. 1,095 library and 125 integration tests pass, including a
+  warmed zero-allocation builtin bridge regression. Release timing, current
+  all-50 checksums and peak-memory gates remain pending.
+
 - **Callback argument buffers (`1174b7b`).**
   [Allocation and semantic evidence](ARGUMENT_POOL_2026_10_24.md) records about
   50% fewer requests and 88% fewer cumulative requested bytes for the unique
