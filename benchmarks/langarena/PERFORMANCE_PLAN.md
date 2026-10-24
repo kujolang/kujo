@@ -7,6 +7,13 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- The [owned-argument candidate JIT matrix](checksums-2026-10-23-owned-entry-jit.json)
+  passes all 50 unchanged test-size checksums. Frozen runtime source/binary/input
+  identity and every raw report hash/schema are recorded and verified. This is
+  a debug candidate based on `8a593f9`, with runtime changes still uncommitted
+  pending the wider gate. VM fallback remains allowed; separate VM/interpreter,
+  release, production and competitive timing gates are not established by it.
+
 - The [literal-enabled current matrix](checksums-2026-10-23-native-literals-jit.json)
   at `70606e8` records 42 passing test-size JIT checksums and eight compression
   runtime failures. All report hashes and schemas were verified. Newly compiled
