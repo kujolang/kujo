@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Route VM field-access errors through exception handlers. Missing struct fields
+  and reads from non-struct values now preserve failed assignment targets and
+  prior effects when caught, including calls from native code.
+
 - Allow owned arguments into eligible experimental native functions. Transfer
   named parameters into frame-local roots, preserve scalar fast paths, and drop
   temporary argument aliases before execution. Missing parameters exit before

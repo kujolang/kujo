@@ -1,0 +1,30 @@
+{
+  "scope": "Route VM FieldGet errors through catch handlers, preserving prior effects and failed targets. Successful field and method dispatch unchanged.",
+  "source_sha256": {
+    "src/vm.rs": "88a75c61c2dd8058996f007d85f560348c807e6613f567b8911098c71b3849af",
+    "src/jit.rs": "cbe0d96036b33828808478a94f7abbc31fa8135672ec78ce1a6e1ac366625f25",
+    "tests/field_error_contracts.rs": "5c8337f3db592432e53a017dce0e3b30e862d539c33b9fc63a60566724175082"
+  },
+  "verification": {
+    "library_passed": 1045,
+    "library_ignored": 8,
+    "integration_passed": 129,
+    "modes": [
+      "interpreter",
+      "vm",
+      "jit"
+    ],
+    "baseline": "Expanded regression fails on frozen owned-entry release VM with Field not found: value",
+    "logs": {
+      "/tmp/kujo-field-error-library-serial.log": "cfdef59cdf4f09625289c747728f24411b81773fcbbd80383dcfbcee7deaab1f",
+      "/tmp/kujo-field-error-final-contracts.log": "9d5d135c805b27b5e0fc49af9e6ecae7b4447239e0410e3103e84dc37285f0ea",
+      "/tmp/kujo-field-error-expanded-before.log": "5703f64c0587a50608b6df8837511f4dc00b43c996b910599c3a590de9a040ca",
+      "/tmp/kujo-current-fmtcheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "Verification worktree includes separately pending native IndexGet lowering",
+    "No production or speed claim",
+    "Dictionary dot-access parity remains a separate investigation"
+  ]
+}

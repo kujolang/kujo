@@ -5175,91 +5175,101 @@ impl VM {
                 OpCode::FieldGet(field) => {
                     let object = self.stack.pop().ok_or("Stack underflow")?;
 
-                    let result = match &object {
-                        Value::Struct { name, fields } => {
-                            if name == "ArgParser" {
-                                match field.as_str() {
-                                    "add_argument" | "parse" | "help" => {
-                                        self.stack.push(object.clone());
-                                        Value::NativeFunction(format!(
-                                            "__arg_parser_method_{}",
-                                            field
-                                        ))
-                                    }
-                                    _ => {
-                                        if let Some(value) = fields.get(&field) {
-                                            value.clone()
-                                        } else {
-                                            let method_name = format!("{}.{}", name, field);
-                                            let global =
-                                                self.globals.lock().unwrap().get(&method_name);
-                                            global
-                                                .ok_or_else(|| {
-                                                    format!("Field not found: {}", field)
-                                                })?
-                                                .clone()
+                    let result = (|| {
+                        let value = match &object {
+                            Value::Struct { name, fields } => {
+                                if name == "ArgParser" {
+                                    match field.as_str() {
+                                        "add_argument" | "parse" | "help" => {
+                                            self.stack.push(object.clone());
+                                            Value::NativeFunction(format!(
+                                                "__arg_parser_method_{}",
+                                                field
+                                            ))
+                                        }
+                                        _ => {
+                                            if let Some(value) = fields.get(&field) {
+                                                value.clone()
+                                            } else {
+                                                let method_name = format!("{}.{}", name, field);
+                                                let global =
+                                                    self.globals.lock().unwrap().get(&method_name);
+                                                global
+                                                    .ok_or_else(|| {
+                                                        format!("Field not found: {}", field)
+                                                    })?
+                                                    .clone()
+                                            }
                                         }
                                     }
-                                }
-                            } else if let Some(value) = fields.get(&field) {
-                                value.clone()
-                            } else {
-                                let method_name = format!("{}.{}", name, field);
-                                let global = self.globals.lock().unwrap().get(&method_name);
-                                global.ok_or_else(|| format!("Field not found: {}", field))?.clone()
-                            }
-                        }
-                        Value::Dict(dict) => {
-                            dict.get(field.as_str()).cloned().unwrap_or(Value::Null)
-                        }
-                        Value::FixedDict { keys, values } => {
-                            let idx = keys.iter().position(|k| k.as_ref() == field.as_str());
-                            idx.and_then(|i| values.get(i).cloned()).unwrap_or(Value::Null)
-                        }
-                        Value::IntDict(dict) => match field.parse::<i64>() {
-                            Ok(int_key) => dict.get(&int_key).cloned().unwrap_or(Value::Null),
-                            Err(_) => Value::Null,
-                        },
-                        Value::DenseIntDict(values) => match field.parse::<i64>() {
-                            Ok(int_key) => {
-                                if int_key < 0 {
-                                    Value::Null
+                                } else if let Some(value) = fields.get(&field) {
+                                    value.clone()
                                 } else {
-                                    values.get(int_key as usize).cloned().unwrap_or(Value::Null)
+                                    let method_name = format!("{}.{}", name, field);
+                                    let global = self.globals.lock().unwrap().get(&method_name);
+                                    global
+                                        .ok_or_else(|| format!("Field not found: {}", field))?
+                                        .clone()
                                 }
                             }
-                            Err(_) => Value::Null,
-                        },
-                        Value::Channel(_) => {
-                            // For channels, we need to push the channel back on the stack
-                            // and return a marker that this is a method call
-                            // The Call opcode will handle the actual method invocation
-                            self.stack.push(object.clone());
-                            Value::NativeFunction(format!("__channel_method_{}", field))
-                        }
-                        #[cfg(feature = "runtime-image")]
-                        Value::Image { .. } => {
-                            // Mirror channel method marker behavior for image method dispatch.
-                            self.stack.push(object.clone());
-                            Value::NativeFunction(format!("__image_method_{}", field))
-                        }
-                        Value::HttpServer { .. } => match field.as_str() {
-                            "route" | "route_upload" | "listen" | "start" => {
-                                // Mirror method marker behavior used by channel/image dispatch.
-                                self.stack.push(object.clone());
-                                Value::NativeFunction(format!("__http_server_method_{}", field))
+                            Value::Dict(dict) => {
+                                dict.get(field.as_str()).cloned().unwrap_or(Value::Null)
                             }
-                            _ => return Err(format!("HttpServer has no method '{}'", field)),
-                        },
-                        _ => {
-                            return Err(format!(
-                                "Cannot access field or method '{}' on non-struct value",
-                                field
-                            ))
+                            Value::FixedDict { keys, values } => {
+                                let idx = keys.iter().position(|k| k.as_ref() == field.as_str());
+                                idx.and_then(|i| values.get(i).cloned()).unwrap_or(Value::Null)
+                            }
+                            Value::IntDict(dict) => match field.parse::<i64>() {
+                                Ok(int_key) => dict.get(&int_key).cloned().unwrap_or(Value::Null),
+                                Err(_) => Value::Null,
+                            },
+                            Value::DenseIntDict(values) => match field.parse::<i64>() {
+                                Ok(int_key) => {
+                                    if int_key < 0 {
+                                        Value::Null
+                                    } else {
+                                        values.get(int_key as usize).cloned().unwrap_or(Value::Null)
+                                    }
+                                }
+                                Err(_) => Value::Null,
+                            },
+                            Value::Channel(_) => {
+                                // For channels, we need to push the channel back on the stack
+                                // and return a marker that this is a method call
+                                // The Call opcode will handle the actual method invocation
+                                self.stack.push(object.clone());
+                                Value::NativeFunction(format!("__channel_method_{}", field))
+                            }
+                            #[cfg(feature = "runtime-image")]
+                            Value::Image { .. } => {
+                                // Mirror channel method marker behavior for image method dispatch.
+                                self.stack.push(object.clone());
+                                Value::NativeFunction(format!("__image_method_{}", field))
+                            }
+                            Value::HttpServer { .. } => match field.as_str() {
+                                "route" | "route_upload" | "listen" | "start" => {
+                                    // Mirror method marker behavior used by channel/image dispatch.
+                                    self.stack.push(object.clone());
+                                    Value::NativeFunction(format!("__http_server_method_{}", field))
+                                }
+                                _ => return Err(format!("HttpServer has no method '{}'", field)),
+                            },
+                            _ => {
+                                return Err(format!(
+                                    "Cannot access field or method '{}' on non-struct value",
+                                    field
+                                ))
+                            }
+                        };
+                        Ok::<Value, String>(value)
+                    })();
+                    match result {
+                        Ok(value) => self.stack.push(value),
+                        Err(error) => {
+                            self.throw_runtime_value(Value::Error(error))?;
+                            continue;
                         }
-                    };
-
-                    self.stack.push(result);
+                    }
                 }
 
                 OpCode::TryPopRebind(binding, pair_slot, argc, shape, end) => {
