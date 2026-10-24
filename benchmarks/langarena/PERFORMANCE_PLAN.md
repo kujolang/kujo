@@ -7,6 +7,12 @@ a target to test, not a guarantee. This document explains the execution order;
 
 ## Current evidence and limits
 
+- **Consumed native call operands (`4e42bd2`).** [Evidence](CONSUMING_CALLS_2026_10_24.md)
+  records zero isolated marshalling allocations and QuickSort JIT unique requests
+  14,638→7,322. Borrowed APIs stay reusable; nested ownership and errors pass
+  1,097 library and 40 integration tests. This candidate still needs release
+  checksum, elapsed-time and peak-memory verification.
+
 - **Builtin argument reuse (`aa30071`).** [Evidence](BUILTIN_ARGUMENT_POOL_2026_10_24.md)
   records JIT QuickSort unique allocations 21,954→14,638 and requested bytes
   1,084,600→89,624. 1,095 library and 125 integration tests pass, including a

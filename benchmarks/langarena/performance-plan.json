@@ -58,7 +58,8 @@
         "native-argument-pool-2026-10-24.json",
         "builtin-argument-pool-2026-10-24.json",
         "CALLABLE_MARSHALLING_2026_10_24.md",
-        "builtin-pool-release-2026-10-24.json"
+        "builtin-pool-release-2026-10-24.json",
+        "consuming-calls-2026-10-24.json"
       ]
     },
     {
@@ -89,7 +90,8 @@
         "storage-identity-runtime-2026-10-24.json",
         "local-return-release-2026-10-24.json",
         "native-argument-pool-2026-10-24.json",
-        "builtin-argument-pool-2026-10-24.json"
+        "builtin-argument-pool-2026-10-24.json",
+        "consuming-calls-2026-10-24.json"
       ]
     },
     {
