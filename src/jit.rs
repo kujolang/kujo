@@ -7170,16 +7170,16 @@ impl BytecodeTranslator {
 
             OpCode::StoreVar(name) => {
                 if let (Some(ctx), Some(assign)) = (self.ctx_param, self.named_assignment_func) {
-                    if !self.non_int_locals.contains(name) {
-                        let value = self.peek_value()?;
-                        let hash =
-                            builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
-                        let kind = self.scalar_kind(builder, value);
-                        let named = builder.ins().iconst(types::I64, 0);
-                        let call = builder.ins().call(assign, &[ctx, hash, value, kind, named]);
-                        self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
-                        return Ok(false);
-                    }
+                    // Tagged assignment handles owned values too. The legacy stack
+                    // store writes private locals and must not shadow a global or
+                    // bypass its readonly binding check for collection constructors.
+                    let value = self.peek_value()?;
+                    let hash = builder.ins().iconst(types::I64, Self::hash_var_name(name) as i64);
+                    let kind = self.scalar_kind(builder, value);
+                    let named = builder.ins().iconst(types::I64, 0);
+                    let call = builder.ins().call(assign, &[ctx, hash, value, kind, named]);
+                    self.exit_on_assignment_error(builder, builder.inst_results(call)[0]);
+                    return Ok(false);
                 }
                 // IMPORTANT: StoreVar PEEKS at the stack (doesn't pop)
                 // The value remains on stack after assignment

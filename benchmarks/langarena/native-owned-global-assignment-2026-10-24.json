@@ -1,0 +1,22 @@
+{
+  "scope": "Checked named assignment for constructed owned values; no new production or speed acceptance.",
+  "source_parent": "ed201bd",
+  "source_sha256": {
+    "src/jit.rs": "65420bf808709080a4165d12c8ae3e42077198077dbd7398f1f71e8e29367085",
+    "tests/jit_global_assignment.rs": "b99b2b3f3afa73dec7000841e7606cb19e9dbe68b69a7658eb174801b6205d4f"
+  },
+  "baseline": {
+    "source": "04eb988",
+    "binary_sha256": "dd1711c6dbb6321e2e559cf3015292732d82dbb245a06db840e44de305f6b2e8",
+    "log": "/tmp/kujo-owned-global-baseline.log",
+    "result": "Both new regressions pass interpreter/VM and fail JIT: global constructor write stays private; readonly assignment fails to raise."
+  },
+  "verification": {
+    "assignment_tests": "/tmp/kujo-owned-global-tests.log: 6 passed",
+    "related_contracts": "/tmp/kujo-owned-global-contracts.log: 19 passed",
+    "format": "/tmp/kujo-owned-global-format.log: cargo fmt --check passed",
+    "nested_followup": "/tmp/kujo-path-post-global-baseline.log: both new nested-path probes now pass semantics, fail required native admission only"
+  },
+  "release_candidate": "Iteration release build session32639 deliberately cancelled (exit143) after reproduced correctness defects made candidate unsuitable. No release freeze or fresh all50 result produced.",
+  "mechanism": "All StoreVar values use the tagged checked assignment helper, including constructor-produced owned values. Legacy non-int map insertion no longer shadows globals or bypasses readonly checks."
+}

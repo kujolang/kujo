@@ -8,6 +8,12 @@ Immediate-only calls retain their direct payload/kind path; mixed or owned calls
 use named transfer even when a cached function was originally called with scalars.
 Parameter initialization errors exit before body effects and release the frame.
 
+Named assignment uses the tagged checked helper for both immediate and owned
+values. A collection constructor must not redirect a global write into the native
+function's private local map or bypass the global binding's readonly check.
+Regression tests warm native constructors before checking environment updates,
+catchable readonly errors, effect counts and subsequent successful calls.
+
 Regression coverage includes mixed types, four/five arguments, loops, recursion,
 imported helpers, callable arguments, snapshots and failure/success recovery across
 interpreter, VM and JIT. A storage test retains unique array backing storage through

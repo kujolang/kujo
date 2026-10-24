@@ -84,7 +84,8 @@
         "guarded-rebinding-roots-2026-10-23.json",
         "native-guarded-strings-2026-10-23.json",
         "native-guarded-collections-2026-10-23.json",
-        "native-iteration-2026-10-24.json"
+        "native-iteration-2026-10-24.json",
+        "native-owned-global-assignment-2026-10-24.json"
       ]
     },
     {
@@ -3235,6 +3236,14 @@
         "jit-owned-equality-2026-10-23.json",
         "../../src/native_owned.rs",
         "../../tests/jit_owned_stack_contracts.rs"
+      ]
+    },
+    {
+      "id": "native_constructed_global_assignment",
+      "status": "Fixed; 25 targeted integration tests passed across assignment, callbacks, iteration and collection contracts. Current production/speed acceptance remains open.",
+      "evidence": [
+        "native-owned-global-assignment-2026-10-24.json",
+        "../../tests/jit_global_assignment.rs"
       ]
     }
   ],

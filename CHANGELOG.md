@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Preserve global bindings and readonly errors when experimental native code
+  assigns newly constructed collections; owned values use checked named assignment.
+
 - Refresh VM-owned native context pointers after callbacks while preserving
   external contexts and shared local/global aliases.
 

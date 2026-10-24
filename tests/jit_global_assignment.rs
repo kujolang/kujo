@@ -173,3 +173,59 @@ print("PASS")
         "recurse",
     );
 }
+
+#[test]
+fn native_constructed_global_assignment_updates_environment_and_enforces_readonly() {
+    run(
+        r#"
+        mut state := {"rows": [[1,2]]}
+        const fixed := {"rows": [[1,2]]}
+        mut effects := 0
+        func replace(value) { state = {"rows": [[value,8]]} return 9 }
+        func locked(value) {
+            if value > 0 { effects += 1 fixed = {"rows": [[value,8]]} effects += 100 }
+            return 9
+        }
+        mut i := 0
+        while i < 200 {
+            assert_equal(replace(i),9)
+            assert_equal(state,{"rows": [[i,8]]})
+            assert_equal(locked(0),9)
+            i += 1
+        }
+        mut caught := 0
+        try { locked(7) } except error { caught += 1 }
+        assert_equal(caught,1)
+        assert_equal(effects,1)
+        assert_equal(fixed,{"rows": [[1,2]]})
+        assert_equal(replace(42),9)
+        assert_equal(state,{"rows": [[42,8]]})
+        print("PASS")
+        "#,
+        "replace",
+    );
+}
+
+#[test]
+fn native_constructed_readonly_global_assignment_is_atomic_and_catchable() {
+    run(
+        r#"
+        const fixed := {"rows": [[1,2]]}
+        mut effects := 0
+        func locked(value) {
+            if value > 0 { effects += 1 fixed = {"rows": [[value,8]]} effects += 100 }
+            return 9
+        }
+        mut i := 0
+        while i < 200 { assert_equal(locked(0),9) i += 1 }
+        mut caught := 0
+        try { locked(7) } except error { caught += 1 }
+        assert_equal(caught,1)
+        assert_equal(effects,1)
+        assert_equal(fixed,{"rows": [[1,2]]})
+        assert_equal(locked(0),9)
+        print("PASS")
+        "#,
+        "locked",
+    );
+}
