@@ -11,6 +11,9 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Compile general stack index reads in the experimental JIT with typed operands,
+  checked indexing errors and bounded owned-value root storage.
+
 - Route VM field-access errors through exception handlers. Missing struct fields
   and reads from non-struct values now preserve failed assignment targets and
   prior effects when caught, including calls from native code.

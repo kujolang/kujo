@@ -15,8 +15,14 @@ interpreter, VM and JIT. A storage test retains unique array backing storage thr
 checksums in release JIT, VM and interpreter modes (150/150), with fallback
 allowed. Production, platform and controlled speed gates remain open. See the
 [candidate evidence](../benchmarks/langarena/owned-argument-entry-2026-10-23.json).
-General stack indexing, nested updates, field/aggregate operations and array-loop
+Nested updates, field/aggregate operations and array-loop
 admission still limit coverage. Native entry counts are not elapsed speed evidence.
+
+General stack index reads now use tagged operands and the VM indexing contract.
+Success and error exits release frame roots; repeated owned reads have a bounded
+storage regression. The [frozen stack-index candidate](../benchmarks/langarena/checksums-2026-10-23-native-stack-index-jit.json)
+passes all 50 JIT test-size checksums, with fallback allowed. It predates the
+separate field-error fix and does not establish production or speed acceptance.
 
 The sections below retain earlier staging evidence and the ownership contract;
 statements about former entry exclusions describe those earlier stages.

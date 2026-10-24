@@ -5616,39 +5616,20 @@ impl BytecodeTranslator {
             }
 
             OpCode::IndexGet => {
-                // Dict/Array get: Pop index and object, push result
-                // Stack: [object, index] -> [value]
-
-                if let (Some(ctx), Some(dict_get_ref)) = (self.ctx_param, self.dict_get_func) {
-                    // Pop index and object from JIT stack
-                    let _index = self.pop_value()?;
-                    let _object = self.pop_value()?;
-
-                    // Push them to VM stack for runtime helper
-                    if let Some(stack_push) = self.stack_push_func {
-                        builder.ins().call(stack_push, &[ctx, _object]);
-                        builder.ins().call(stack_push, &[ctx, _index]);
-                    }
-
-                    // Call the helper
-                    let call = builder.ins().call(dict_get_ref, &[ctx]);
-                    let _success = builder.inst_results(call)[0];
-
-                    // Pop result from VM stack
-                    if let Some(stack_pop) = self.stack_pop_func {
-                        let call = builder.ins().call(stack_pop, &[ctx]);
-                        let result = builder.inst_results(call)[0];
-                        self.capture_scalar_kind(builder, ctx, result);
-                        self.push_value(result);
-                    } else {
-                        let zero = builder.ins().iconst(types::I64, 0);
-                        self.push_value(zero);
-                    }
-
-                    return Ok(false);
-                } else {
-                    return Err("IndexGet requires context and dict_get function".to_string());
-                }
+                let index = self.pop_value()?;
+                let object = self.pop_value()?;
+                let ctx = self.ctx_param.ok_or("Indexed read requires context")?;
+                let helper = self.indexed_read_func.ok_or("Indexed read requires helper")?;
+                let object_kind = self.scalar_kind(builder, object);
+                let index_kind = self.scalar_kind(builder, index);
+                let call =
+                    builder.ins().call(helper, &[ctx, object, object_kind, index, index_kind]);
+                let result = builder.inst_results(call)[0];
+                self.capture_loaded_operand(builder, ctx, result);
+                self.release_operand(builder, object);
+                self.release_operand(builder, index);
+                self.push_value(result);
+                return Ok(false);
             }
 
             OpCode::IndexSet => {
@@ -8001,7 +7982,8 @@ impl JitCompiler {
             OpCode::AddInPlace(_) => false,
 
             // Dict/Array operations - in-place ops supported for int paths
-            OpCode::IndexGet | OpCode::IndexSet => false,
+            OpCode::IndexGet => true,
+            OpCode::IndexSet => false,
             OpCode::IndexGetInPlace(_) | OpCode::IndexSetInPlace(_) => true,
             OpCode::AppendConstStringInPlace(_, _) | OpCode::AppendConstCharInPlace(_, _) => true,
             // Guarded fusion remains in the VM until native lowering exists.
@@ -10605,6 +10587,59 @@ mod tests {
         context.owned_roots.leave().unwrap();
         context.owned_roots.leave().unwrap();
         assert_eq!(context.owned_roots.storage_state().1, 0);
+    }
+
+    #[test]
+    fn compiled_stack_index_reads_bound_owned_operand_storage() {
+        for repetitions in [8, 128] {
+            let mut compiler = JitCompiler::new().unwrap();
+            let mut chunk = BytecodeChunk::new();
+            chunk.params.push("rows".into());
+            chunk.local_names.push("rows".into());
+            chunk.local_binding_kinds.push(BytecodeBindingKind::Mutable);
+            chunk.local_count = 1;
+            let index = chunk.add_constant(Constant::Int(0));
+            for _ in 0..repetitions {
+                chunk.emit(OpCode::LoadLocal(0));
+                chunk.emit(OpCode::LoadConst(index));
+                chunk.emit(OpCode::IndexGet);
+                chunk.emit(OpCode::Pop);
+            }
+            chunk.emit(OpCode::LoadLocal(0));
+            chunk.emit(OpCode::LoadConst(index));
+            chunk.emit(OpCode::IndexGet);
+            chunk.emit(OpCode::Return);
+            let compiled = compiler.compile_function(&chunk, "stack_index_lifetime").unwrap();
+            let expected = Value::array(vec![Value::Int(7)]);
+            let input = Value::array(vec![expected.clone()]);
+            let mut names =
+                HashMap::from([(BytecodeTranslator::hash_var_name("rows"), "rows".into())]);
+            for invalid in [false, true] {
+                let mut locals = HashMap::from([(
+                    "rows".into(),
+                    if invalid { Value::Int(7) } else { input.clone() },
+                )]);
+                let mut stack = Vec::new();
+                let mut context = VMContext::new(&mut stack, &mut locals, std::ptr::null_mut());
+                context.var_names_ptr = &mut names;
+                let status = invoke_compiled_fn(compiled, &mut context);
+                if invalid {
+                    assert_ne!(status, 0);
+                    assert!(context.runtime_error.is_some());
+                } else {
+                    assert_eq!(status, 0, "{:?}", context.runtime_error);
+                    assert!(Value::equals(
+                        &context.take_return_value(context.return_value),
+                        &expected
+                    ));
+                }
+                let (_, live, capacity, _) = context.owned_roots.storage_state();
+                assert_eq!(live, 0);
+                assert!(capacity <= 6, "{repetitions} reads retained {capacity} roots");
+                assert_eq!(context.native_call_depth, 0);
+                assert!(stack.is_empty());
+            }
+        }
     }
 
     #[test]

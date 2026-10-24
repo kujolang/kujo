@@ -37,6 +37,28 @@ fn check(source: &str) {
 }
 
 #[test]
+fn loop_nested_index_reads_preserve_owned_operands_after_native_entry() {
+    check(
+        r#"
+        func once() {
+            mut mapping := {}
+            mapping[0] = [7,8]
+            mut i := 0
+            mut total := 0
+            while i < 200 {
+                mapping[1] = i
+                total += mapping[0][1]
+                i += 1
+            }
+            return total
+        }
+        assert_equal(once(),1600)
+        print("PASS")
+    "#,
+    );
+}
+
+#[test]
 fn loop_literal_loads_preserve_owned_values_after_native_entry() {
     check(
         r#"

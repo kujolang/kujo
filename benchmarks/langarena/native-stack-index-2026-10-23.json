@@ -1,0 +1,31 @@
+{
+  "scope": "General native stack IndexGet lowering with tagged operands and VM error semantics",
+  "source_sha256": {
+    "src/jit.rs": "cbe0d96036b33828808478a94f7abbc31fa8135672ec78ce1a6e1ac366625f25",
+    "src/vm.rs": "c27714949ebbc7f82235cf1ecf4814651feed9e7120d594afbfaebb71e70f34b",
+    "tests/jit_owned_arguments.rs": "45e6a43d08ef651333ea91687ba32345ec853fe8abffccaa4da613fed944160b",
+    "tests/jit_nested_index_contracts.rs": "d7f715b376848d5c39e5ba6519d9ea8a6957f7da54df3c19a777579d3b28ca7e",
+    "tests/jit_loop_collection_contracts.rs": "ccac91f82a1746c8f42cd25179403c88e644f18ce4aa8148ffda9133c6d25652",
+    "tests/jit_generated_value_parity.rs": "6af05ee26006820bbc75e9f3f2f412ba23d6a1087017a161424470f183c04ae9"
+  },
+  "verification": {
+    "library_passed": 1045,
+    "library_ignored": 8,
+    "integration_passed": 45,
+    "all50_jit": "checksums-2026-10-23-native-stack-index-jit.json",
+    "baseline": "Frozen owned-entry release fails native admission assertion for select/from_call/effectful",
+    "storage": "8 and128 owned reads retain <=6 root slots; success/error exits leave zero live roots, native depth and VM stack entries",
+    "logs": {
+      "/tmp/kujo-native-index-before.log": "7892d307911c790eb1b828f9dabdeb983bca21d2e2dea69d7c95f9c30077ffd2",
+      "/tmp/kujo-native-index-integration.log": "54a5560aebf022dad234164107a0670d466738f01152bc83cd121b19c310a21d",
+      "/tmp/kujo-native-index-library-serial.log": "4526b05ff363aed3f1ad54b547b28294a8d280656fd99a1eb1e3fa63e40a0c81",
+      "/tmp/kujo-field-error-final-contracts.log": "9d5d135c805b27b5e0fc49af9e6ecae7b4447239e0410e3103e84dc37285f0ea"
+    }
+  },
+  "limits": [
+    "Initial parallel library run hit process-cancellation deadline; isolated rerun and full serial suite passed; original failure retained in /tmp/kujo-native-index-contracts.log",
+    "Fallback allowed; no full native time coverage or speed claim",
+    "Array-backed loop admission, nested updates and production/platform gates remain open",
+    "Frozen all50 JIT candidate predates separate FieldGet fix"
+  ]
+}
