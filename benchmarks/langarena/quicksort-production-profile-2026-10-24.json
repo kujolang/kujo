@@ -1,0 +1,49 @@
+{
+  "runtime_commit": "aa30071",
+  "binary_sha256": "5eb32077c48b63013e7ae03eed8d3207d0affa96a69ce303cc90cce9bcef22b0",
+  "binary_uuid": "36354E0F-FD19-3636-BA8A-4B00B77E7F86",
+  "scope": "One production-size JIT checksum and partial-symbol CPU diagnostic on preceding audited release; not latest4e42bd2 acceptance or competitive timing",
+  "production_report": {
+    "binary": "/tmp/kujo-builtin-release-2026-10-24/kujo",
+    "config": "benchmarks/langarena/run.json",
+    "results": [
+      {
+        "config": {
+          "checksum": 61757772,
+          "iterations": 50,
+          "name": "Sort::Quick",
+          "size": 400000
+        },
+        "elapsed_ns": 301125982559.0,
+        "exitcode": 0,
+        "name": "Sort::Quick",
+        "runtime": "jit",
+        "status": "passed",
+        "stderr": "JIT opt-in requested; unsupported bytecode regions will use the VM (unsupported opcode in chunk '<script>' at instruction 0: MakeClosure(0)).\n",
+        "stderr_truncated": false,
+        "stdout": "@profile create-start ns=521874\n@profile create-done ns=764324\n@profile prepare-done ns=3089986875\n@profile warmup-1 ns=7030293565\n@profile warmup-2 ns=11045986044\n@profile warmup-3 ns=15308255245\n@profile warmup-4 ns=19592573264\n@profile warmup-5 ns=24558437024\n@profile warmup-6 ns=29720714566\n@profile warmup-7 ns=35092151809\n@profile warmup-8 ns=40470303158\n@profile warmup-9 ns=45869137104\n@profile warmup-10 ns=51256574111\n@profile warmup-done ns=51256785017\n@profile run-1 ns=56628735178\n@profile run-5 ns=76830400382\n@profile run-10 ns=100707270486\n@profile run-15 ns=124642478547\n@profile run-20 ns=149331464913\n@profile run-25 ns=172884882767\n@profile run-30 ns=196894426970\n@profile run-35 ns=220671002745\n@profile run-40 ns=245517378767\n@profile run-45 ns=273591065391\n@profile run-50 ns=300997709674\nSort::Quick: OK 61757772\nSummary: 1, 1, 0\n",
+        "stdout_truncated": false,
+        "timeout_ms": 600000
+      }
+    ],
+    "runtime": "jit"
+  },
+  "sampling": {
+    "command": "/usr/bin/sample 53873 10 5 -file sample.txt",
+    "raw_archive": "quicksort-aa30071-cpu-2026-10-24.txt.gz",
+    "raw_sha256": "43bce30c75755c5ac1c3da254f512815116e06c69f18c45cd4871e4253f26c04",
+    "archive_sha256": "84e285b90c244dec4d1ff60b5c021f136090872e64c64de82e1c6b1912adef10",
+    "visible_top_of_stack": "__ulock_wait  (in libsystem_kernel.dylib)        3112\n        _platform_memmove$VARIANT$Haswell  (in libsystem_platform.dylib)        206\n        __findenv_locked  (in libsystem_c.dylib)        134\n        ???  (in kujo)  load address 0x10bc7c000 + 0xd2b54a  [0x10c9a754a]        53\n        ???  (in kujo)  load address 0x10bc7c000 + 0x156a3a7  [0x10d1e63a7]        18\n        ???  (in kujo)  load address 0x10bc7c000 + 0x15487ab  [0x10d1c47ab]        17\n        ???  (in kujo)  load address 0x10bc7c000 + 0x107bb8d  [0x10ccf7b8d]        15\n        ???  (in kujo)  load address 0x10bc7c000 + 0x902486  [0x10c57e486]        13\n        ???  (in kujo)  load address 0x10bc7c000 + 0xbdc85e  [0x10c85885e]        13\n        DYLD-STUB$$_platform_memmove  (in libsystem_platform.dylib)        12\n        _platform_memcmp$VARIANT$Base  (in libsystem_platform.dylib)        12\n        ???  (in kujo)  load address 0x10bc7c000 + 0xe2b564  [0x10caa7564]        11\n        ???  (in kujo)  load address 0x10bc7c000 + 0xf5b57c  [0x10cbd757c]        11\n        os_unfair_lock_lock_with_options  (in libsystem_platform.dylib)        10\n        os_unfair_lock_unlock  (in libsystem_platform.dylib)        10\n        DYLD-STUB$$memcpy  (in kujo)        9\n        tiny_malloc_should_clear  (in libsystem_malloc.dylib)        9\n        ???  (in kujo)  load address 0x10bc7c000 + 0x1071fe3  [0x10ccedfe3]        8\n        ???  (in kujo)  load address 0x10bc7c000 + 0xd2b578  [0x10c9a7578]        8\n        ???  (in kujo)  load address 0x10bc7c000 + 0x106e73c  [0x10ccea73c]        7\n        ???  (in kujo)  load address 0x10bc7c000 + 0x1071f23  [0x10ccedf23]        7\n        ???  (in kujo)  load address 0x10bc7c000 + 0x10734a4  [0x10ccef4a4]        7\n        ???  (in kujo)  load address 0x10bc7c000 + 0x107bb90  [0x10ccf7b90]        7\n        ???  (in kujo)  load address 0x10bc7c000 + 0x902683  [0x10c57e683]        7\n        free_tiny  (in libsystem_malloc.dylib)        7\n        pthread_mutex_lock  (in libsystem_pthread.dylib)        7\n        ???  (in kujo)  load address 0x10bc7c000 + 0xe32203  [0x10caae203]        6\n        pthread_mutex_unlock  (in libsystem_pthread.dylib)        6\n        ???  (in kujo)  load address 0x10bc7c000 + 0x107d3e6  [0x10ccf93e6]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0x1562d88  [0x10d1ded88]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0x1562d8e  [0x10d1ded8e]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0x90244e  [0x10c57e44e]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0xbdc08e  [0x10c85808e]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0xe2b552  [0x10caa7552]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0xf5acd1  [0x10cbd6cd1]        5\n        ???  (in kujo)  load address 0x10bc7c000 + 0xf5b02f  [0x10cbd702f]        5\n        _szone_free  (in libsystem_malloc.dylib)        5",
+    "limitations": [
+      "Process includes idle threads; counts are not CPU percentages.",
+      "Kujo executable is stripped and no matching symbol map was available; internal runtime frames remain unattributed.",
+      "Sample was taken during production warmup after preparation.",
+      "Release compilation overlapped this diagnostic; elapsed time is not speed acceptance."
+    ]
+  },
+  "next_steps": [
+    "Obtain symbol information matching the exact candidate binary for internal attribution.",
+    "Reproduce any proposed environment lookup or value movement optimization before changing semantics.",
+    "Complete latest-candidate production/platform/competitor gates separately."
+  ]
+}

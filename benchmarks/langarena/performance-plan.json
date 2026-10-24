@@ -59,7 +59,8 @@
         "builtin-argument-pool-2026-10-24.json",
         "CALLABLE_MARSHALLING_2026_10_24.md",
         "builtin-pool-release-2026-10-24.json",
-        "consuming-calls-2026-10-24.json"
+        "consuming-calls-2026-10-24.json",
+        "quicksort-production-profile-2026-10-24.json"
       ]
     },
     {
@@ -160,7 +161,8 @@
         "checksums-2026-10-24-native-positional-release.json",
         "checksums-2026-10-24-native-root-cache-release.json",
         "production-paused-2026-10-24.json",
-        "builtin-pool-release-2026-10-24.json"
+        "builtin-pool-release-2026-10-24.json",
+        "quicksort-production-profile-2026-10-24.json"
       ]
     },
     {
@@ -1675,7 +1677,8 @@
         "checksums-2026-10-23-native-struct-jit.json",
         "checksums-2026-10-24-path-append-release.json",
         "native-call-performance-2026-10-24.json",
-        "builtin-pool-release-2026-10-24.json"
+        "builtin-pool-release-2026-10-24.json",
+        "quicksort-production-profile-2026-10-24.json"
       ],
       "native_census": {
         "source_commit": "0c77115",
@@ -1697,6 +1700,11 @@
         "native_boundary_entries": 533800,
         "compile_attempts": 3,
         "limitation": "Entries may include harness helpers; not measured native kernel time or speed acceptance."
+      },
+      "production_jit": "passed at aa30071: unchanged400000 elements/50 iterations/checksum61757772. One preceding-release case; latest4e42bd2/full-suite acceptance pending.",
+      "latest_cpu_profile": {
+        "evidence": "quicksort-production-profile-2026-10-24.json",
+        "limit": "Partial-symbol warmup sample; idle threads and concurrent compilation; not CPU percentages or timing acceptance."
       }
     },
     {
