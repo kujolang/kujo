@@ -8294,6 +8294,38 @@ impl VM {
                     // bridge, including the caller's capabilities and output.
                     return self.call_interpreter_callable(&function, args);
                 }
+                // Native callers must contribute to the same hot-call policy as
+                // VM Call opcodes. Otherwise a parent can compile just before its
+                // helper reaches the threshold and strand that helper in fallback.
+                if self.jit_enabled && args.len() == chunk.params.len() {
+                    let name = chunk.name.as_deref().unwrap_or("<anonymous>");
+                    if !self.compiled_functions.contains_key(name) {
+                        let count = self.function_call_counts.entry(name.to_owned()).or_insert(0);
+                        *count = count.saturating_add(1);
+                        let calls = *count;
+                        let has_loop =
+                            chunk.instructions.iter().any(|op| matches!(op, OpCode::JumpBack(_)));
+                        if calls == JIT_FUNCTION_THRESHOLD || (has_loop && calls == 1) {
+                            match self.jit_compile_bytecode_function(&function) {
+                                Ok(true) => {
+                                    if std::env::var("DEBUG_JIT").is_ok() {
+                                        eprintln!("JIT: Successfully compiled function '{}' from native callback", name);
+                                    }
+                                }
+                                Err(error) => {
+                                    if std::env::var("DEBUG_JIT").is_ok() {
+                                        eprintln!(
+                                            "JIT: Native callback compilation skipped for '{}': {}",
+                                            name, error
+                                        );
+                                    }
+                                }
+                                Ok(false) => {}
+                            }
+                        }
+                    }
+                }
+
                 // OPTIMIZATION: Check if target function is JIT-compiled
                 // If so, make direct JIT → JIT call for maximum performance
                 if self.jit_enabled
@@ -10269,6 +10301,32 @@ mod tests {
             Ok(Value::Int(value)) => assert_eq!(value, 42),
             Ok(other) => panic!("Expected int 42, got {:?}", other),
             Err(error) => panic!("Expected success, got VM error: {}", error),
+        }
+    }
+
+    #[cfg(feature = "runtime-jit")]
+    #[test]
+    fn native_callbacks_promote_hot_helpers_and_loop_helpers() {
+        for (source, threshold) in [
+            ("func helper(a) { return a[0] }", JIT_FUNCTION_THRESHOLD),
+            ("func helper(a) { mut n := 0; mut i := 0; while i < 3 { n += a[0]; i += 1 }; return n }", 1),
+        ] {
+            let chunk = compile_chunk(source);
+            let function_chunk = chunk.constants.iter().find_map(|c| match c {
+                Constant::Function(f) => Some((**f).clone()), _ => None,
+            }).unwrap();
+            let function = Value::BytecodeFunction { chunk: function_chunk, captured: HashMap::new(), captured_binding_kinds: HashMap::new() };
+            let mut vm = VM::new();
+            vm.set_jit_enabled(true);
+            let snapshot = Arc::new(vec![Value::Int(7)]);
+            for call in 1..=threshold+2 {
+                let result = vm.call_function_from_jit(function.clone(), vec![Value::Array(snapshot.clone())]).unwrap();
+                assert!(matches!(result, Value::Int(n) if n == if threshold==1 {21} else {7}));
+                assert_eq!(vm.compiled_functions.contains_key("helper"), call>=threshold);
+                assert!(matches!(snapshot[0],Value::Int(7)));
+            }
+            // Invalid arity remains a language error after native promotion.
+            assert!(vm.call_function_from_jit(function, vec![]).is_err());
         }
     }
 

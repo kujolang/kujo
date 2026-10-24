@@ -11,6 +11,10 @@ This file records user-visible changes to Kujo, following
 
 ## [Unreleased]
 
+- Count calls from native code toward JIT helper promotion, including the first
+  call to loop helpers. Hot helpers reached only through compiled callers can
+  now compile under the existing eligibility and fallback rules.
+
 - Compile guarded pop and dictionary removal rebinding through native root,
   field and indexed paths, preserving retained snapshots, shadowed calls,
   replacement effects and readonly errors.
